@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util.spatialrules;
 
 import com.graphhopper.jackson.Jackson;
+import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
@@ -38,6 +39,7 @@ import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.TopologyException;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -49,6 +51,7 @@ import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 /**
  * @author Robin Boldt
@@ -220,5 +223,24 @@ public class SpatialRuleHelperTest {
             }
         }
         assertTrue("Border polygons should be limited by max bbox", aroundSanMarino.covers(mergedBBox));
+    }
+    
+    @Test
+    public void testInvalidTopology() throws IOException {
+        GeometryFactory factory = new GeometryFactory();
+        JsonFeature bowtie = new JsonFeature();
+        bowtie.setGeometry(factory.createPolygon(new Coordinate[] { new Coordinate(9, 50),
+                        new Coordinate(9, 51), new Coordinate(11, 50), new Coordinate(11, 51),
+                        new Coordinate(9, 50) }));
+        bowtie.setProperties(Collections.singletonMap("ADM0_A3", "bowtie"));
+        JsonFeatureCollection coll = new JsonFeatureCollection();
+        coll.getFeatures().add(bowtie);
+        
+        try {
+            SpatialRuleHelper.getBorders(Collections.singletonList(coll), "ADM0_A3", new Envelope(-180, 180, -90, 90));
+            fail("Border polygon generation should fail for invalid topologies");
+        } catch (Exception e) {
+            assertTrue(e instanceof TopologyException);
+        }
     }
 }
