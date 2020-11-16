@@ -29,7 +29,6 @@ import java.util.zip.InflaterInputStream;
  */
 public class PbfBlobDecoder implements Runnable {
     private static final Logger log = LoggerFactory.getLogger(PbfBlobDecoder.class);
-    private final boolean checkData = false;
     private final String blobType;
     private final byte[] rawBlob;
     private final PbfBlobDecoderListener listener;
@@ -75,8 +74,7 @@ public class PbfBlobDecoder implements Runnable {
         List<String> supportedFeatures = Arrays.asList("OsmSchema-V0.6", "DenseNodes");
         List<String> unsupportedFeatures = new ArrayList<>();
         for (String feature : header.getRequiredFeaturesList()) {
-            if (supportedFeatures.contains(feature)) {
-            } else {
+            if (!supportedFeatures.contains(feature)) {
                 unsupportedFeatures.add(feature);
             }
         }
@@ -84,7 +82,7 @@ public class PbfBlobDecoder implements Runnable {
         // We can't continue if there are any unsupported features. We wait
         // until now so that we can display all unsupported features instead of
         // just the first one we encounter.
-        if (unsupportedFeatures.size() > 0) {
+        if (!unsupportedFeatures.isEmpty()) {
             throw new RuntimeException("PBF file contains unsupported features " + unsupportedFeatures);
         }
 
@@ -110,33 +108,51 @@ public class PbfBlobDecoder implements Runnable {
          */
     }
 
-    private Map<String, Object> buildTags(List<Integer> keys, List<Integer> values, PbfFieldDecoder fieldDecoder) {
-
-        // Ensure parallel lists are of equal size.
-        if (checkData) {
-            if (keys.size() != values.size()) {
-                throw new RuntimeException("Number of tag keys (" + keys.size() + ") and tag values ("
-                        + values.size() + ") don't match");
-            }
+    private Map<String, Object> buildNodeTags(Osmformat.Node node, PbfFieldDecoder fieldDecoder) {
+        if (node.getKeysList().isEmpty()) {
+            return null;
         }
 
-        Iterator<Integer> keyIterator = keys.iterator();
-        Iterator<Integer> valueIterator = values.iterator();
-        if (keyIterator.hasNext()) {
-            Map<String, Object> tags = new HashMap<>(keys.size());
-            while (keyIterator.hasNext()) {
-                String key = fieldDecoder.decodeString(keyIterator.next());
-                String value = fieldDecoder.decodeString(valueIterator.next());
-                tags.put(key, value);
-            }
-            return tags;
+        Map<String, Object> tags = new HashMap<>(node.getKeysCount());
+        for (int i = 0; i < node.getKeysCount(); i++) {
+            String key = fieldDecoder.decodeString(node.getKeys(i));
+            String value = fieldDecoder.decodeString(node.getVals(i));
+            tags.put(key, value);
         }
-        return null;
+        return tags;
+    }
+    
+    private Map<String, Object> buildWayTags(Osmformat.Way way, PbfFieldDecoder fieldDecoder) {
+        if (way.getKeysList().isEmpty()) {
+            return null;
+        }
+
+        Map<String, Object> tags = new HashMap<>(way.getKeysCount());
+        for (int i = 0; i < way.getKeysCount(); i++) {
+            String key = fieldDecoder.decodeString(way.getKeys(i));
+            String value = fieldDecoder.decodeString(way.getVals(i));
+            tags.put(key, value);
+        }
+        return tags;
+    }
+    
+    private Map<String, Object> buildRelationTags(Osmformat.Relation relation, PbfFieldDecoder fieldDecoder) {
+        if (relation.getKeysList().isEmpty()) {
+            return null;
+        }
+
+        Map<String, Object> tags = new HashMap<>(relation.getKeysCount());
+        for (int i = 0; i < relation.getKeysCount(); i++) {
+            String key = fieldDecoder.decodeString(relation.getKeys(i));
+            String value = fieldDecoder.decodeString(relation.getVals(i));
+            tags.put(key, value);
+        }
+        return tags;
     }
 
     private void processNodes(List<Osmformat.Node> nodes, PbfFieldDecoder fieldDecoder) {
         for (Osmformat.Node node : nodes) {
-            Map<String, Object> tags = buildTags(node.getKeysList(), node.getValsList(), fieldDecoder);
+            Map<String, Object> tags = buildNodeTags(node, fieldDecoder);
 
             ReaderNode osmNode = new ReaderNode(node.getId(), fieldDecoder.decodeLatitude(node
                     .getLat()), fieldDecoder.decodeLatitude(node.getLon()));
@@ -148,20 +164,6 @@ public class PbfBlobDecoder implements Runnable {
     }
 
     private void processNodes(Osmformat.DenseNodes nodes, PbfFieldDecoder fieldDecoder) {
-        List<Long> idList = nodes.getIdList();
-        List<Long> latList = nodes.getLatList();
-        List<Long> lonList = nodes.getLonList();
-
-        // Ensure parallel lists are of equal size.
-        if (checkData) {
-            if ((idList.size() != latList.size()) || (idList.size() != lonList.size())) {
-                throw new RuntimeException("Number of ids (" + idList.size() + "), latitudes (" + latList.size()
-                        + "), and longitudes (" + lonList.size() + ") don't match");
-            }
-        }
-
-        Iterator<Integer> keysValuesIterator = nodes.getKeysValsList().iterator();
-
         /*
          Osmformat.DenseInfo denseInfo;
          if (nodes.hasDenseinfo()) {
@@ -173,15 +175,16 @@ public class PbfBlobDecoder implements Runnable {
         long nodeId = 0;
         long latitude = 0;
         long longitude = 0;
+        int keyValueIndex = 0;
 //		int userId = 0;
 //		int userSid = 0;
 //		long timestamp = 0;
 //		long changesetId = 0;
-        for (int i = 0; i < idList.size(); i++) {
+        for (int i = 0; i < nodes.getIdCount(); i++) {
             // Delta decode node fields.
-            nodeId += idList.get(i);
-            latitude += latList.get(i);
-            longitude += lonList.get(i);
+            nodeId += nodes.getId(i);
+            latitude += nodes.getLat(i);
+            longitude += nodes.getLon(i);
 
             /*
              if (denseInfo != null) {
@@ -210,22 +213,16 @@ public class PbfBlobDecoder implements Runnable {
             // in the same PBF array. Each set of tags is delimited by an index
             // with a value of 0.
             Map<String, Object> tags = null;
-            while (keysValuesIterator.hasNext()) {
-                int keyIndex = keysValuesIterator.next();
+            while (keyValueIndex < nodes.getKeysValsCount()) {
+                int keyIndex = nodes.getKeysVals(keyValueIndex++);
                 if (keyIndex == 0) {
                     break;
                 }
-                if (checkData) {
-                    if (!keysValuesIterator.hasNext()) {
-                        throw new RuntimeException(
-                                "The PBF DenseInfo keys/values list contains a key with no corresponding value.");
-                    }
-                }
-                int valueIndex = keysValuesIterator.next();
+                int valueIndex = nodes.getKeysVals(keyValueIndex++);
 
                 if (tags == null) {
                     // divide by 2 as key&value, multiple by 2 because of the better approximation
-                    tags = new HashMap<>(Math.max(3, 2 * (nodes.getKeysValsList().size() / 2) / idList.size()));
+                    tags = new HashMap<>(Math.max(3, 2 * (nodes.getKeysValsCount() / 2) / nodes.getIdCount()));
                 }
 
                 tags.put(fieldDecoder.decodeString(keyIndex), fieldDecoder.decodeString(valueIndex));
@@ -241,15 +238,15 @@ public class PbfBlobDecoder implements Runnable {
 
     private void processWays(List<Osmformat.Way> ways, PbfFieldDecoder fieldDecoder) {
         for (Osmformat.Way way : ways) {
-            Map<String, Object> tags = buildTags(way.getKeysList(), way.getValsList(), fieldDecoder);
+            Map<String, Object> tags = buildWayTags(way, fieldDecoder);
 
             // Build up the list of way nodes for the way. The node ids are
             // delta encoded meaning that each id is stored as a delta against
             // the previous one.
             long nodeId = 0;
             LongArrayList wayNodes = new LongArrayList(way.getRefsCount());
-            for (long nodeIdOffset : way.getRefsList()) {
-                nodeId += nodeIdOffset;
+            for (int i = 0; i < way.getRefsCount(); i++) {
+                nodeId += way.getRefs(i);
                 wayNodes.add(nodeId);
             }
             
@@ -260,56 +257,39 @@ public class PbfBlobDecoder implements Runnable {
         }
     }
 
-    private void buildRelationMembers(ReaderRelation relation,
-                                      List<Long> memberIds, List<Integer> memberRoles, List<Osmformat.Relation.MemberType> memberTypes,
-                                      PbfFieldDecoder fieldDecoder) {
-
-        // Ensure parallel lists are of equal size.
-        if (checkData) {
-            if ((memberIds.size() != memberRoles.size()) || (memberIds.size() != memberTypes.size())) {
-                throw new RuntimeException("Number of member ids (" + memberIds.size() + "), member roles ("
-                        + memberRoles.size() + "), and member types (" + memberTypes.size() + ") don't match");
-            }
-        }
-
-        Iterator<Long> memberIdIterator = memberIds.iterator();
-        Iterator<Integer> memberRoleIterator = memberRoles.iterator();
-        Iterator<Osmformat.Relation.MemberType> memberTypeIterator = memberTypes.iterator();
-
+    private void buildRelationMembers(ReaderRelation readerRelation, Osmformat.Relation pbfRelation, PbfFieldDecoder fieldDecoder) {
         // Build up the list of relation members for the way. The member ids are
         // delta encoded meaning that each id is stored as a delta against
         // the previous one.
         long refId = 0;
-        while (memberIdIterator.hasNext()) {
-            Osmformat.Relation.MemberType memberType = memberTypeIterator.next();
-            refId += memberIdIterator.next();
-
-            int entityType = ReaderRelation.Member.NODE;
-            if (memberType == Osmformat.Relation.MemberType.WAY) {
+        for (int i = 0; i < pbfRelation.getMemidsCount(); i++) {
+            refId += pbfRelation.getMemids(i);
+            Osmformat.Relation.MemberType memberType = pbfRelation.getTypes(i);
+            
+            int entityType;
+            if (memberType == Osmformat.Relation.MemberType.NODE) {
+                entityType = ReaderRelation.Member.NODE;
+            } else if (memberType == Osmformat.Relation.MemberType.WAY) {
                 entityType = ReaderRelation.Member.WAY;
-            } else if (memberType == Osmformat.Relation.MemberType.RELATION) {
+            } else {
                 entityType = ReaderRelation.Member.RELATION;
             }
-            if (checkData) {
-                if (entityType == ReaderRelation.Member.NODE && memberType != Osmformat.Relation.MemberType.NODE) {
-                    throw new RuntimeException("Member type of " + memberType + " is not supported.");
-                }
-            }
 
-            ReaderRelation.Member member = new ReaderRelation.Member(entityType, refId, fieldDecoder.decodeString(memberRoleIterator.next()));
-            relation.add(member);
+            ReaderRelation.Member member = new ReaderRelation.Member(entityType, refId,
+                            fieldDecoder.decodeString(pbfRelation.getRolesSid(i)));
+            readerRelation.add(member);
         }
     }
+    
 
     private void processRelations(List<Osmformat.Relation> relations, PbfFieldDecoder fieldDecoder) {
         for (Osmformat.Relation relation : relations) {
-            Map<String, Object> tags = buildTags(relation.getKeysList(), relation.getValsList(), fieldDecoder);
+            Map<String, Object> tags = buildRelationTags(relation, fieldDecoder);
 
             ReaderRelation osmRelation = new ReaderRelation(relation.getId());
             osmRelation.setTags(tags);
 
-            buildRelationMembers(osmRelation, relation.getMemidsList(), relation.getRolesSidList(),
-                    relation.getTypesList(), fieldDecoder);
+            buildRelationMembers(osmRelation, relation, fieldDecoder);
 
             // Add the bound object to the results.
             decodedEntities.add(osmRelation);
@@ -342,8 +322,9 @@ public class PbfBlobDecoder implements Runnable {
             } else if ("OSMData".equals(blobType)) {
                 processOsmPrimitives(readBlobContent());
 
-            } else if (log.isDebugEnabled())
-                log.debug("Skipping unrecognised blob type " + blobType);
+            } else {
+                log.debug("Skipping unrecognised blob type {}", blobType);
+            }
         } catch (IOException e) {
             throw new RuntimeException("Unable to process PBF blob", e);
         }
