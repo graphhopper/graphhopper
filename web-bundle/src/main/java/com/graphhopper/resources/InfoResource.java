@@ -21,6 +21,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.Constants;
 import org.locationtech.jts.geom.Envelope;
@@ -71,6 +72,7 @@ public class InfoResource {
         public String version = Constants.VERSION;
         public boolean elevation;
         public Map<String, List<Object>> encoded_values;
+        public List<String> spatial_rules;
         public String import_date;
         public String data_date;
     }
@@ -115,6 +117,10 @@ public class InfoResource {
                 continue;
             }
             info.encoded_values.put(encodedValue.getName(), possibleValueList);
+        }
+        info.spatial_rules = new ArrayList<>();
+        for (SpatialRule rule : config.getSpatialRules()) {
+            info.spatial_rules.add(rule.getId());
         }
         return info;
     }
