@@ -5,13 +5,16 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.util.Instruction;
 import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.PointList;
+import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.shapes.GHPoint;
 import okhttp3.OkHttpClient;
 import org.junit.Ignore;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -48,6 +51,13 @@ public class Examples {
         // defaults to English
         req.setLocale(Locale.GERMAN);
 
+        // Optionally add path details
+        req.setPathDetails(Arrays.asList(
+                Parameters.Details.STREET_NAME,
+                Parameters.Details.AVERAGE_SPEED,
+                Parameters.Details.EDGE_ID
+        ));
+
         GHResponse fullRes = gh.route(req);
 
         if (fullRes.hasErrors())
@@ -65,6 +75,11 @@ public class Examples {
         InstructionList il = res.getInstructions();
         for (Instruction i : il) {
             // System.out.println(i.getName());
+        }
+        // get path details
+        List<PathDetail> pathDetails = res.getPathDetails().get(Parameters.Details.STREET_NAME);
+        for (PathDetail detail : pathDetails) {
+//            System.out.println(detail.getValue());
         }
     }
 
