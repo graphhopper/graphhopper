@@ -128,20 +128,19 @@ public class GpxFromInstructionsTest {
 
     @Test
     public void testCreateGPX() {
-        InstructionAnnotation ea = InstructionAnnotation.EMPTY;
         InstructionList instructions = new InstructionList(trMap.getWithFallBack(Locale.US));
         PointList pl = new PointList();
         pl.add(49.942576, 11.580384);
         pl.add(49.941858, 11.582422);
-        instructions.add(new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, pl).setDistance(240).setTime(15000));
+        instructions.add(new Instruction(Instruction.CONTINUE_ON_STREET, "temp", pl).setDistance(240).setTime(15000));
 
         pl = new PointList();
         pl.add(49.941575, 11.583501);
-        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", ea, pl).setDistance(25).setTime(4000));
+        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", pl).setDistance(25).setTime(4000));
 
         pl = new PointList();
         pl.add(49.941389, 11.584311);
-        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", ea, pl).setDistance(25).setTime(3000));
+        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", pl).setDistance(25).setTime(3000));
         instructions.add(new FinishInstruction(49.941029, 11.584514, 0));
 
         List<GPXEntry> result = GpxFromInstructions.createGPXList(instructions);
@@ -164,8 +163,7 @@ public class GpxFromInstructionsTest {
         pl.add(52.555423473315, 13.43890086052345);
         pl.add(52.555550691982, 13.43946393816465);
         pl.add(52.555619423589, 13.43886994061328);
-        RoundaboutInstruction instr = new RoundaboutInstruction(Instruction.USE_ROUNDABOUT, "streetname",
-                InstructionAnnotation.EMPTY, pl)
+        RoundaboutInstruction instr = new RoundaboutInstruction(Instruction.USE_ROUNDABOUT, "streetname", pl)
                 .setRadian(2.058006514284998d)
                 .setExitNumber(3)
                 .setExited();
@@ -185,7 +183,7 @@ public class GpxFromInstructionsTest {
         PointList pl = new PointList();
         pl.add(0.000001, 0.000001);
         pl.add(-0.000123, -0.000125);
-        Instruction instruction = new Instruction(0, "do it", null, pl);
+        Instruction instruction = new Instruction(0, "do it", pl);
         instructions.add(instruction);
         instructions.add(new FinishInstruction(0.000852, 0.000852, 0));
 
@@ -242,14 +240,13 @@ public class GpxFromInstructionsTest {
 
     @Test
     public void testCalcAzimuthAndGetDirection() {
-        InstructionAnnotation ea = InstructionAnnotation.EMPTY;
         PointList pl = new PointList();
         pl.add(49.942, 11.584);
 
         PointList nextPl = new PointList();
         nextPl.add(49.942, 11.582);
-        Instruction currI = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, pl);
-        Instruction nextI = new Instruction(Instruction.CONTINUE_ON_STREET, "next", ea, nextPl);
+        Instruction currI = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", pl);
+        Instruction nextI = new Instruction(Instruction.CONTINUE_ON_STREET, "next", nextPl);
 
         assertEquals(270, GpxFromInstructions.calcAzimuth(currI, nextI), .1);
         assertEquals("W", GpxFromInstructions.calcDirection(currI, nextI));
@@ -257,7 +254,7 @@ public class GpxFromInstructionsTest {
         PointList p2 = new PointList();
         p2.add(49.942, 11.580);
         p2.add(49.944, 11.582);
-        Instruction i2 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, p2);
+        Instruction i2 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", p2);
 
         assertEquals(32.76, GpxFromInstructions.calcAzimuth(i2, null), .1);
         assertEquals("NE", GpxFromInstructions.calcDirection(i2, null));
@@ -265,7 +262,7 @@ public class GpxFromInstructionsTest {
         PointList p3 = new PointList();
         p3.add(49.942, 11.580);
         p3.add(49.944, 11.580);
-        Instruction i3 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, p3);
+        Instruction i3 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", p3);
 
         assertEquals(0, GpxFromInstructions.calcAzimuth(i3, null), .1);
         assertEquals("N", GpxFromInstructions.calcDirection(i3, null));
@@ -273,13 +270,13 @@ public class GpxFromInstructionsTest {
         PointList p4 = new PointList();
         p4.add(49.940, 11.580);
         p4.add(49.920, 11.586);
-        Instruction i4 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, p4);
+        Instruction i4 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", p4);
 
         assertEquals("S", GpxFromInstructions.calcDirection(i4, null));
 
         PointList p5 = new PointList();
         p5.add(49.940, 11.580);
-        Instruction i5 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, p5);
+        Instruction i5 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", p5);
 
         assertTrue(Double.isNaN(GpxFromInstructions.calcAzimuth(i5, null)));
         assertEquals("", GpxFromInstructions.calcDirection(i5, null));

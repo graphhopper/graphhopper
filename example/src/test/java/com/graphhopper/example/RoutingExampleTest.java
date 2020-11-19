@@ -7,5 +7,6 @@ public class RoutingExampleTest {
     @Test
     public void main() {
         RoutingExample.main(new String[]{"../"});
+        RoutingExampleTC.main(new String[]{"../"});
     }
 }

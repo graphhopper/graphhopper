@@ -59,8 +59,8 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
 
     protected WheelchairFlagEncoder(int speedBits, double speedFactor) {
         super(speedBits, speedFactor);
-        restrictions.add("wheelchair");
 
+        restrictions.add("wheelchair");
         absoluteBarriers.add("handrail");
         absoluteBarriers.add("wall");
         absoluteBarriers.add("turnstile");

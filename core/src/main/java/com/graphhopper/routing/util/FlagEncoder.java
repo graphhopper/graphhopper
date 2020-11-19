@@ -20,7 +20,6 @@ package com.graphhopper.routing.util;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.util.spatialrules.TransportationMode;
 
 /**
  * This class provides methods to define how a value (like speed or direction) converts to a flag

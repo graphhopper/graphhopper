@@ -22,7 +22,7 @@ package com.graphhopper.util;
  */
 public class FinishInstruction extends Instruction {
     public FinishInstruction(String name, final double lat, final double lon, final double ele) {
-        super(FINISH, name, InstructionAnnotation.EMPTY, new PointList(2, !Double.isNaN(ele)) {
+        super(FINISH, name, new PointList(2, !Double.isNaN(ele)) {
             {
                 add(lat, lon, ele);
             }
@@ -30,7 +30,7 @@ public class FinishInstruction extends Instruction {
     }
 
     public FinishInstruction(final double lat, final double lon, final double ele) {
-        super(FINISH, "", InstructionAnnotation.EMPTY, new PointList(2, !Double.isNaN(ele)) {
+        super(FINISH, "", new PointList(2, !Double.isNaN(ele)) {
             {
                 add(lat, lon, ele);
             }

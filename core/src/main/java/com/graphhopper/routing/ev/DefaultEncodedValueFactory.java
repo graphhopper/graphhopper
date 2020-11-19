@@ -61,7 +61,7 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             enc = new EnumEncodedValue<>(Toll.KEY, Toll.class);
         } else if (TrackType.KEY.equals(name)) {
             enc = new EnumEncodedValue<>(TrackType.KEY, TrackType.class);
-        } else if (name.endsWith(RouteNetwork.key(""))) {
+        } else if (BikeNetwork.KEY.equals(name) || FootNetwork.KEY.equals(name)) {
             enc = new EnumEncodedValue<>(name, RouteNetwork.class);
         } else if (Hazmat.KEY.equals(name)) {
             enc = new EnumEncodedValue<>(Hazmat.KEY, Hazmat.class);

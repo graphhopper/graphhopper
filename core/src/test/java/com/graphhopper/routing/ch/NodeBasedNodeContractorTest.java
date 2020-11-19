@@ -66,7 +66,7 @@ public class NodeBasedNodeContractorTest {
     private NodeContractor createNodeContractor(CHGraph chGraph) {
         CHPreparationGraph prepareGraph = CHPreparationGraph.nodeBased(chGraph.getNodes(), chGraph.getOriginalEdges());
         CHPreparationGraph.buildFromGraph(prepareGraph, chGraph.getBaseGraph(), chGraph.getCHConfig().getWeighting());
-        NodeBasedNodeContractor.ShortcutHandler shortcutInserter = new NodeBasedShortcutHandler(chGraph);
+        NodeBasedNodeContractor.ShortcutHandler shortcutInserter = new NodeBasedShortcutInserter(chGraph);
         NodeContractor nodeContractor = new NodeBasedNodeContractor(prepareGraph, shortcutInserter, new PMap());
         nodeContractor.initFromGraph();
         nodeContractor.prepareContraction();
@@ -133,8 +133,8 @@ public class NodeBasedNodeContractorTest {
                 expectedShortcut(4, 6, iter8to4, iter6to8, false, true),
                 expectedShortcut(4, 6, iter4to5, iter5to6, true, false),
                 // there should be two different shortcuts for both directions!
-                expectedShortcut(1, 6, lg.getEdgeIteratorState(7, 4), lg.getEdgeIteratorState(8, 6), true, false),
-                expectedShortcut(1, 6, lg.getEdgeIteratorState(7, 1), lg.getEdgeIteratorState(9, 4), false, true)
+                expectedShortcut(1, 6, lg.getEdgeIteratorState(8, 4), lg.getEdgeIteratorState(7, 6), true, false),
+                expectedShortcut(1, 6, lg.getEdgeIteratorState(8, 1), lg.getEdgeIteratorState(9, 4), false, true)
         );
     }
 
@@ -333,11 +333,12 @@ public class NodeBasedNodeContractorTest {
     }
 
     private void contractInOrder(CHGraph chGraph, int... nodeIds) {
+        setMaxLevelOnAllNodes();
         NodeContractor nodeContractor = createNodeContractor(chGraph);
         int level = 0;
         for (int n : nodeIds) {
-            nodeContractor.contractNode(n);
             chGraph.setLevel(n, level);
+            nodeContractor.contractNode(n);
             level++;
         }
         nodeContractor.finishContraction();

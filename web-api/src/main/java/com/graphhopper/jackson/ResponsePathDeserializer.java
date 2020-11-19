@@ -95,14 +95,9 @@ public class ResponsePathDeserializer extends JsonDeserializer<ResponsePath> {
                         instPL.add(pointList, j);
                     }
 
-                    InstructionAnnotation ia = InstructionAnnotation.EMPTY;
-                    if (jsonObj.has("annotation_importance") && jsonObj.has("annotation_text")) {
-                        ia = new InstructionAnnotation(jsonObj.get("annotation_importance").asInt(), jsonObj.get("annotation_text").asText());
-                    }
-
                     Instruction instr;
                     if (sign == Instruction.USE_ROUNDABOUT || sign == Instruction.LEAVE_ROUNDABOUT) {
-                        RoundaboutInstruction ri = new RoundaboutInstruction(sign, text, ia, instPL);
+                        RoundaboutInstruction ri = new RoundaboutInstruction(sign, text, instPL);
 
                         if (jsonObj.has("exit_number")) {
                             ri.setExitNumber(jsonObj.get("exit_number").asInt());
@@ -122,14 +117,14 @@ public class ResponsePathDeserializer extends JsonDeserializer<ResponsePath> {
 
                         instr = ri;
                     } else if (sign == Instruction.REACHED_VIA) {
-                        ViaInstruction tmpInstr = new ViaInstruction(text, ia, instPL);
+                        ViaInstruction tmpInstr = new ViaInstruction(text, instPL);
                         tmpInstr.setViaCount(viaCount);
                         viaCount++;
                         instr = tmpInstr;
                     } else if (sign == Instruction.FINISH) {
                         instr = new FinishInstruction(text, instPL, 0);
                     } else {
-                        instr = new Instruction(sign, text, ia, instPL);
+                        instr = new Instruction(sign, text, instPL);
                         if (sign == Instruction.CONTINUE_ON_STREET) {
                             if (jsonObj.has("heading")) {
                                 instr.setExtraInfo("heading", jsonObj.get("heading").asDouble());
