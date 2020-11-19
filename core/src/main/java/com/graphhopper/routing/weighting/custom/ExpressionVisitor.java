@@ -38,8 +38,8 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
         this.nameValidator = nameValidator;
     }
 
-    // allow only certain methods and other identifiers (constants and like encoded values)
-    boolean isValidVariableName(String identifier) {
+    // allow only methods and other identifiers (constants and encoded values)
+    boolean isValidIdentifier(String identifier) {
         if (nameValidator.isValid(identifier)) {
             if (!Character.isUpperCase(identifier.charAt(0)))
                 result.guessedVariables.add(identifier);
@@ -52,20 +52,22 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
     public Boolean visitRvalue(Java.Rvalue rv) throws Exception {
         if (rv instanceof Java.AmbiguousName) {
             Java.AmbiguousName n = (Java.AmbiguousName) rv;
-            if (n.identifiers.length < 1 || n.identifiers.length > 2)
-                return false;
-            // road_class, edge.getDistance, Math.sqrt
-            return isValidVariableName(n.identifiers[0]);
+            if (n.identifiers.length == 1)
+                // e.g. like road_class
+                return isValidIdentifier(n.identifiers[0]);
+            return false;
         }
         if (rv instanceof Java.Literal)
             return true;
         if (rv instanceof Java.MethodInvocation) {
             Java.MethodInvocation mi = (Java.MethodInvocation) rv;
             if (allowedMethods.contains(mi.methodName)) {
-                // skip methods like this.in for now
+                // skip methods like this.in() for now
                 if (mi.target == null)
                     return false;
-                return mi.target.accept(this); // Math.sqrt
+                // edge.getDistance, Math.sqrt => check target name (edge or Math)
+                Java.AmbiguousName n = (Java.AmbiguousName) mi.target.toRvalue();
+                return n.identifiers.length == 2 && isValidIdentifier(n.identifiers[0]);
             }
             return false;
         }
@@ -121,6 +123,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
                 if (result.ok) {
                     result.converted = new StringBuilder(expression.length());
                     int start = 0;
+                    // Insert class name to avoid conflict if e.g. enum values are identically named (e.g. bike_network != OTHER)
                     for (Map.Entry<Integer, String> inject : visitor.injects.entrySet()) {
                         String value = toEncodedValueClassName(inject.getValue());
                         result.converted.append(expression, start, inject.getKey()).append(value).append('.');
