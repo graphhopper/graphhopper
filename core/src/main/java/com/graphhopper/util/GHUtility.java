@@ -168,7 +168,7 @@ public class GHUtility {
 
     public static void buildRandomGraph(Graph graph, Random random, int numNodes, double meanDegree, boolean allowLoops,
                                         boolean allowZeroDistance, DecimalEncodedValue randomSpeedEnc,
-                                        double pNonZeroLoop, double pBothDir, double pRandomOffset) {
+                                        double pNonZeroLoop, double pBothDir, double pRandomDistanceOffset) {
         if (numNodes < 2 || meanDegree < 1) {
             throw new IllegalArgumentException("numNodes must be >= 2, meanDegree >= 1");
         }
@@ -196,7 +196,7 @@ public class GHUtility {
                 distance = Math.max(0.001, distance);
             }
             // add some random offset, but also allow duplicate edges with same weight
-            if (random.nextDouble() < pRandomOffset)
+            if (random.nextDouble() < pRandomDistanceOffset)
                 distance += random.nextDouble() * distance * 0.01;
             minDist = Math.min(minDist, distance);
             maxDist = Math.max(maxDist, distance);
