@@ -43,6 +43,7 @@ import java.util.List;
  * @author Peter Karich
  * @author ratrun
  * @author Robin Boldt
+ * @author guqing
  */
 public class PathMerger {
     private static final DouglasPeucker DP = new DouglasPeucker();
@@ -149,7 +150,7 @@ public class PathMerger {
         }
 
         if (enableInstructions) {
-            fullInstructions = updateInstructionsWithContext(fullInstructions);
+            updateInstructionsWithContext(fullInstructions);
             responsePath.setInstructions(fullInstructions);
         }
 
@@ -176,12 +177,9 @@ public class PathMerger {
      * points into the opposite direction of the route.
      * At a waypoint it can transform the continue to a u-turn if the route involves turning.
      */
-    private InstructionList updateInstructionsWithContext(InstructionList instructions) {
-        Instruction instruction;
-        Instruction nextInstruction;
-
+    private void updateInstructionsWithContext(InstructionList instructions) {
         for (int i = 0; i < instructions.size() - 1; i++) {
-            instruction = instructions.get(i);
+            Instruction instruction = instructions.get(i);
 
             if (i == 0 && !Double.isNaN(favoredHeading) && instruction.extraInfo.containsKey("heading")) {
                 double heading = (double) instruction.extraInfo.get("heading");
@@ -194,7 +192,7 @@ public class PathMerger {
             }
 
             if (instruction.getSign() == Instruction.REACHED_VIA) {
-                nextInstruction = instructions.get(i + 1);
+                Instruction nextInstruction = instructions.get(i + 1);
                 if (nextInstruction.getSign() != Instruction.CONTINUE_ON_STREET
                         || !instruction.extraInfo.containsKey("last_heading")
                         || !nextInstruction.extraInfo.containsKey("heading")) {
@@ -211,8 +209,6 @@ public class PathMerger {
                 }
             }
         }
-
-        return instructions;
     }
 
     private void calcAscendDescend(final ResponsePath responsePath, final PointList pointList) {
