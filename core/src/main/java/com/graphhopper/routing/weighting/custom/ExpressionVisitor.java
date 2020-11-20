@@ -23,6 +23,7 @@ import org.codehaus.janino.*;
 import java.io.StringReader;
 import java.util.*;
 
+import static com.graphhopper.routing.weighting.custom.CustomWeighting.FIRST_MATCH;
 import static com.graphhopper.routing.weighting.custom.ExpressionBuilder.toEncodedValueClassName;
 
 class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
@@ -99,6 +100,44 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
     @Override
     public Boolean visitConstructorInvocation(Java.ConstructorInvocation ci) {
         return false;
+    }
+
+    static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator, String exceptionInfo,
+                                 Set<String> createObjects, Map<String, Object> map,
+                                 ExpressionBuilder.CodeBuilder codeBuilder, String lastStmt, boolean firstMatch) {
+        if (!(map instanceof LinkedHashMap))
+            throw new IllegalArgumentException("map needs to be ordered for " + exceptionInfo + " but was " + map.getClass().getSimpleName());
+
+        int count = 0;
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            String expression = entry.getKey();
+            if (expression.equals(CustomWeightingOld.CATCH_ALL))
+                throw new IllegalArgumentException("replace all '*' expressions with 'true'");
+            if (firstMatch) {
+                if ("true".equals(expression) && count + 1 != map.size())
+                    throw new IllegalArgumentException("'true' in " + FIRST_MATCH + " must come as last expression but was " + count);
+            } else if (expression.equals(FIRST_MATCH)) { // do not allow further nested blocks
+                if (!(entry.getValue() instanceof LinkedHashMap))
+                    throw new IllegalArgumentException("entries for " + expression + " in " + exceptionInfo + " are invalid");
+                parseExpressions(expressions, nameInConditionValidator, exceptionInfo + " " + expression,
+                        createObjects, (Map<String, Object>) entry.getValue(), codeBuilder, "", true);
+                continue;
+            }
+
+            Object numberObj = entry.getValue();
+            if (!(numberObj instanceof Number))
+                throw new IllegalArgumentException("value is not a Number " + numberObj);
+            ExpressionVisitor.ParseResult parseResult = parseExpression(expression, nameInConditionValidator);
+            if (!parseResult.ok)
+                throw new IllegalArgumentException("key is an invalid simple condition: " + expression);
+            createObjects.addAll(parseResult.guessedVariables);
+            Number number = (Number) numberObj;
+            if (firstMatch && count > 0)
+                expressions.append("else ");
+            expressions.append("if (" + parseResult.converted + ") {" + codeBuilder.create(number) + "}\n");
+            count++;
+        }
+        expressions.append(lastStmt);
     }
 
     /**

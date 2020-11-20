@@ -42,13 +42,9 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.*;
 
-import static com.graphhopper.routing.weighting.custom.CustomWeighting.FIRST_MATCH;
-import static com.graphhopper.routing.weighting.custom.ExpressionVisitor.parseExpression;
-
 class ExpressionBuilder {
     static final String AREA_PREFIX = "in_area_";
-
-    // note: we only need to synchronize the get and put methods alone. No need for synch of an iteration or the block
+    // note: we only need to synchronize the get and put methods alone. No need to synch the iteration or the block
     // where more work would be needed. E.g. we do not care for the rare case where two identical classes are created
     // and only one is cached. We could use CachingJavaSourceClassLoader but 1. we would need to use a single compiler
     // across threads and 2. the statements (for priority and speed) are still unnecessarily created
@@ -70,6 +66,7 @@ class ExpressionBuilder {
         Java.CompilationUnit cu;
         try {
             String key = customModel.toString() + ",global:" + globalMaxSpeed + ",fallback:" + maxSpeedFallback;
+            if (key.length() > 400_000) throw new IllegalArgumentException("Custom Model too big: " + key.length());
             Class clazz = cache.get(key);
             if (clazz == null) {
                 HashSet<String> priorityVariables = new LinkedHashSet<>();
@@ -79,7 +76,6 @@ class ExpressionBuilder {
                 String classTemplate = createClassTemplate(priorityVariables, speedVariables, lookup);
                 cu = (Java.CompilationUnit) new Parser(new org.codehaus.janino.Scanner("source", new StringReader(classTemplate))).
                         parseAbstractCompilationUnit();
-                // add the parsed expressions (converted to BlockStatement) via DeepCopier:
                 cu = injectStatements(priorityStatements, speedStatements, cu);
                 // mydebug(cu);
                 SimpleCompiler sc = new SimpleCompiler();
@@ -89,10 +85,8 @@ class ExpressionBuilder {
                 cache.put(key, clazz);
             }
 
+            // The class does not need to be thread-safe as we create an instead per request
             CustomWeightingHelper prio = (CustomWeightingHelper) clazz.getDeclaredConstructor().newInstance();
-            customModel.getAreas().keySet().stream().forEach(areaId -> {
-                if (areaId.length() > 20) throw new IllegalArgumentException("Area id too long: " + areaId.length());
-            });
             prio.init(lookup, avgSpeedEnc, customModel.getAreas());
             return prio;
         } catch (Exception ex) {
@@ -106,32 +100,11 @@ class ExpressionBuilder {
         }
     }
 
-    private static Java.CompilationUnit injectStatements(List<Java.BlockStatement> priorityStatements,
-                                                         List<Java.BlockStatement> speedStatements,
-                                                         Java.CompilationUnit cu) throws CompileException {
-        cu = new DeepCopier() {
-            @Override
-            public Java.FieldDeclaration copyFieldDeclaration(Java.FieldDeclaration subject) throws CompileException {
-                // for https://github.com/janino-compiler/janino/issues/135
-                Java.FieldDeclaration fd = super.copyFieldDeclaration(subject);
-                fd.setEnclosingScope(subject.getEnclosingScope());
-                return fd;
-            }
-
-            @Override
-            public Java.MethodDeclarator copyMethodDeclarator(Java.MethodDeclarator subject) throws CompileException {
-                if (subject.name.equals("getSpeed") && !speedStatements.isEmpty()) {
-                    return copyMethod(subject, this, speedStatements);
-                } else if (subject.name.equals("getPriority")) {
-                    return copyMethod(subject, this, priorityStatements);
-                } else {
-                    return super.copyMethodDeclarator(subject);
-                }
-            }
-        }.copyCompilationUnit(cu);
-        return cu;
-    }
-
+    /**
+     * Parse the expressions from CustomModel relevant for the method getSpeed - see createClassTemplate.
+     *
+     * @return the created statements (parsed expressions)
+     */
     private static List<Java.BlockStatement> createGetSpeedStatements(Set<String> speedVariables,
                                                                       CustomModel customModel, EncodedValueLookup lookup,
                                                                       double globalMaxSpeed, double maxSpeedFallback) throws Exception {
@@ -155,6 +128,11 @@ class ExpressionBuilder {
         return speedStatements;
     }
 
+    /**
+     * Parse the expressions from CustomModel relevant for the method getPriority - see createClassTemplate.
+     *
+     * @return the created statements (parsed expressions)
+     */
     private static List<Java.BlockStatement> createGetPriorityStatements(Set<String> priorityVariables,
                                                                          CustomModel customModel, EncodedValueLookup lookup) throws Exception {
         List<Java.BlockStatement> priorityStatements = new ArrayList<>();
@@ -184,13 +162,17 @@ class ExpressionBuilder {
         return name.startsWith(AREA_PREFIX) || allowedNames.contains(name);
     }
 
+    /**
+     * For the methods getSpeed and getPriority we declare variables that contain the encoded value of the current edge
+     * or if an area contains the current edge.
+     */
     private static String getVariableDeclaration(EncodedValueLookup lookup, String arg) {
         if (arg.startsWith(AREA_PREFIX)) {
             String id = arg.substring(AREA_PREFIX.length());
             return "boolean " + arg + " = " + CustomWeightingHelper.class.getSimpleName() + ".in(this.area_" + id + ", edge);\n";
         } else if (lookup.hasEncodedValue(arg)) {
             EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
-            return getPrimitive(enc.getClass()) + " " + arg + " = reverse ? " +
+            return getReturnType(enc) + " " + arg + " = reverse ? " +
                     "edge.getReverse((" + getInterface(enc) + ") this." + arg + "_enc) : " +
                     "edge.get((" + getInterface(enc) + ") this." + arg + "_enc);\n";
         } else if (isValidVariableName(arg)) {
@@ -200,23 +182,28 @@ class ExpressionBuilder {
         }
     }
 
+    /**
+     * @return the interface as string of the provided EncodedValue, e.g. IntEncodedValue (only interface) or BooleanEncodedValue (first interface)
+     */
     private static String getInterface(EncodedValue enc) {
-        if (enc.getClass().getInterfaces().length == 0)
-            return enc.getClass().getSimpleName();
+        if (enc.getClass().getInterfaces().length == 0) return enc.getClass().getSimpleName();
         return enc.getClass().getInterfaces()[0].getSimpleName();
     }
 
-    private static String getPrimitive(Class clazz) {
-        String name = clazz.getSimpleName();
+    private static String getReturnType(EncodedValue encodedValue) {
+        String name = encodedValue.getClass().getSimpleName();
         if (name.contains("Enum")) return "Enum";
         if (name.contains("Decimal")) return "double";
         if (name.contains("Int")) return "int";
         if (name.contains("Boolean")) return "boolean";
-        throw new IllegalArgumentException("Unsupported class " + name);
+        throw new IllegalArgumentException("Unsupported EncodedValue " + name);
     }
 
     /**
-     * Create the class source file from the detected variables with proper imports and declarations if EncodedValue
+     * Create the class source file from the detected variables (priorityVariables and speedVariables). We assume that
+     * these variables are safe although they are user input because we collected them from parsing via Janino. This
+     * means that the source file is free from user input and could be directly compiled. Before we do this we still
+     * have to inject that parsed and safe user expressions in a later step.
      */
     private static String createClassTemplate(Set<String> priorityVariables, Set<String> speedVariables, EncodedValueLookup lookup) {
         final StringBuilder importSourceCode = new StringBuilder("import com.graphhopper.routing.ev.*;\n");
@@ -296,59 +283,50 @@ class ExpressionBuilder {
     private static List<Java.BlockStatement> verifyExpressions(StringBuilder expressions, String info, Set<String> createObjects,
                                                                Map<String, Object> map, EncodedValueLookup lookup,
                                                                CodeBuilder codeBuilder, String lastStmt) throws Exception {
-        // TODO can or should we reuse Java.Atom created in parseAndGuessParametersFromCondition?
-        internalVerifyExpressions(expressions, info, createObjects, map, lookup, codeBuilder, lastStmt, false);
-        return new Parser(new org.codehaus.janino.Scanner(info, new StringReader(expressions.toString()))).
-                parseBlockStatements();
-    }
-
-    private static void internalVerifyExpressions(StringBuilder expressions, String info, Set<String> createObjects,
-                                                  Map<String, Object> map, EncodedValueLookup lookup,
-                                                  CodeBuilder codeBuilder, String lastStmt, boolean firstMatch) {
-        if (!(map instanceof LinkedHashMap))
-            throw new IllegalArgumentException("map needs to be ordered for " + info + " but was " + map.getClass().getSimpleName());
         // allow variables, all encoded values, constants
         ExpressionVisitor.NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
                 || name.toUpperCase(Locale.ROOT).equals(name) || isValidVariableName(name);
-
-        int count = 0;
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            String expression = entry.getKey();
-            if (expression.equals(CustomWeightingOld.CATCH_ALL))
-                throw new IllegalArgumentException("replace all '*' expressions with 'true'");
-            if (firstMatch) {
-                if ("true".equals(expression) && count + 1 != map.size())
-                    throw new IllegalArgumentException("'true' in " + FIRST_MATCH + " must come as last expression but was " + count);
-            } else if (expression.equals(FIRST_MATCH)) { // do not allow further nested blocks
-                if (!(entry.getValue() instanceof LinkedHashMap))
-                    throw new IllegalArgumentException("entries for " + expression + " in " + info + " are invalid");
-                internalVerifyExpressions(expressions, info + " " + expression, createObjects,
-                        (Map<String, Object>) entry.getValue(), lookup, codeBuilder, "", true);
-                continue;
-            }
-
-            Object numberObj = entry.getValue();
-            if (!(numberObj instanceof Number))
-                throw new IllegalArgumentException("value is not a Number " + numberObj);
-            ExpressionVisitor.ParseResult parseResult = parseExpression(expression, nameInConditionValidator);
-            if (!parseResult.ok)
-                throw new IllegalArgumentException("key is an invalid simple condition: " + expression);
-            createObjects.addAll(parseResult.guessedVariables);
-            Number number = (Number) numberObj;
-            if (firstMatch && count > 0)
-                expressions.append("else ");
-            expressions.append("if (" + parseResult.converted + ") {" + codeBuilder.create(number) + "}\n");
-            count++;
-        }
-        expressions.append(lastStmt);
+        ExpressionVisitor.parseExpressions(expressions, nameInConditionValidator, info, createObjects, map, codeBuilder, lastStmt, false);
+        return new Parser(new org.codehaus.janino.Scanner(info, new StringReader(expressions.toString()))).
+                parseBlockStatements();
     }
 
     interface CodeBuilder {
         String create(Number n);
     }
 
-    private static Java.MethodDeclarator copyMethod(Java.MethodDeclarator subject, DeepCopier deepCopier,
-                                                    List<Java.BlockStatement> statements) {
+    /**
+     * Injects the already parsed expressions (converted to BlockStatement) via janinos DeepCopier to the provided
+     * CompilationUnit cu (a class file).
+     */
+    private static Java.CompilationUnit injectStatements(List<Java.BlockStatement> priorityStatements,
+                                                         List<Java.BlockStatement> speedStatements,
+                                                         Java.CompilationUnit cu) throws CompileException {
+        cu = new DeepCopier() {
+            @Override
+            public Java.FieldDeclaration copyFieldDeclaration(Java.FieldDeclaration subject) throws CompileException {
+                // for https://github.com/janino-compiler/janino/issues/135
+                Java.FieldDeclaration fd = super.copyFieldDeclaration(subject);
+                fd.setEnclosingScope(subject.getEnclosingScope());
+                return fd;
+            }
+
+            @Override
+            public Java.MethodDeclarator copyMethodDeclarator(Java.MethodDeclarator subject) throws CompileException {
+                if (subject.name.equals("getSpeed") && !speedStatements.isEmpty()) {
+                    return injectStatements(subject, this, speedStatements);
+                } else if (subject.name.equals("getPriority")) {
+                    return injectStatements(subject, this, priorityStatements);
+                } else {
+                    return super.copyMethodDeclarator(subject);
+                }
+            }
+        }.copyCompilationUnit(cu);
+        return cu;
+    }
+
+    private static Java.MethodDeclarator injectStatements(Java.MethodDeclarator subject, DeepCopier deepCopier,
+                                                          List<Java.BlockStatement> statements) {
         try {
             if (statements.isEmpty())
                 throw new IllegalArgumentException("Statements cannot be empty when copying method");
