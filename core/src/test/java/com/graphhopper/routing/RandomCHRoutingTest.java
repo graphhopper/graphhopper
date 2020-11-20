@@ -27,6 +27,7 @@ import org.junit.runners.Parameterized;
 import java.util.*;
 
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
@@ -160,16 +161,17 @@ public class RandomCHRoutingTest {
                 RoutingAlgorithm refAlgo = new Dijkstra(queryGraph, w, traversalMode);
                 Path refPath = refAlgo.calcPath(from, to);
                 double refWeight = refPath.getWeight();
-                if (!refPath.isFound()) {
-                    numPathsNotFound++;
-                    continue;
-                }
 
                 QueryRoutingCHGraph routingCHGraph = new QueryRoutingCHGraph(chGraph, queryGraph);
                 RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(routingCHGraph).createAlgo(new PMap().putObject("stall_on_demand", true));
+
                 Path path = algo.calcPath(from, to);
-                if (!path.isFound()) {
+                if (refPath.isFound() && !path.isFound())
                     fail("path not found for " + from + "->" + to + ", expected weight: " + refWeight);
+                assertEquals(refPath.isFound(), path.isFound());
+                if (!path.isFound()) {
+                    numPathsNotFound++;
+                    continue;
                 }
 
                 double weight = path.getWeight();

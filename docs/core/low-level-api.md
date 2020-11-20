@@ -44,4 +44,4 @@ create new virtual nodes or if close enough use the existing junction node.
 
 ### Handle graph and routing algorithms
 
-See [this code](../example/src/test/java/com/graphhopper/example/LowLevelAPIExampleTest.java) about how to the use the low level API.
+See [this code](../../example/src/main/java/com/graphhopper/example/LowLevelAPIExample.java) for more details about using the low level API.

@@ -45,8 +45,8 @@ import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
-public class RouteResourceTurnCostsTest {
-    private static final String DIR = "./target/route-resource-turn-costs-gh/";
+public class RouteResourceTurnCostsLegacyTest {
+    private static final String DIR = "./target/route-resource-turn-costs-legacy-gh/";
     private static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
     private static GraphHopperServerConfiguration createConfig() {
@@ -60,22 +60,16 @@ public class RouteResourceTurnCostsTest {
                 putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
                         new Profile("my_car_turn_costs").setVehicle("car").setWeighting("fastest").setTurnCosts(true),
-                        new Profile("my_car_no_turn_costs").setVehicle("car").setWeighting("fastest").setTurnCosts(false),
-                        new Profile("my_custom_car_turn_costs").setVehicle("car").setWeighting("custom").setTurnCosts(true).putHint("custom_model_file", "empty"),
-                        new Profile("my_custom_car_no_turn_costs").setVehicle("car").setWeighting("custom").setTurnCosts(false).putHint("custom_model_file", "empty")
+                        new Profile("my_car_no_turn_costs").setVehicle("car").setWeighting("fastest").setTurnCosts(false)
                 ))
                 .setCHProfiles(Arrays.asList(
                         new CHProfile("my_car_turn_costs"),
-                        new CHProfile("my_car_no_turn_costs"),
-                        new CHProfile("my_custom_car_turn_costs"),
-                        new CHProfile("my_custom_car_no_turn_costs")
+                        new CHProfile("my_car_no_turn_costs")
                 ))
                 .setLMProfiles(Arrays.asList(
                         new LMProfile("my_car_no_turn_costs"),
-                        new LMProfile("my_custom_car_no_turn_costs"),
                         // no need for a second LM preparation: we can just cross query here
-                        new LMProfile("my_car_turn_costs").setPreparationProfile("my_car_no_turn_costs"),
-                        new LMProfile("my_custom_car_turn_costs").setPreparationProfile("my_custom_car_no_turn_costs")
+                        new LMProfile("my_car_turn_costs").setPreparationProfile("my_car_no_turn_costs")
                 ));
         return config;
     }
@@ -88,28 +82,42 @@ public class RouteResourceTurnCostsTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"flex", "LM", "CH"})
-    public void canToggleTurnCostsOnOff(String mode) {
-        assertDistance(mode, "my_car_turn_costs", emptyList(), 1044);
-        assertDistance(mode, "my_car_no_turn_costs", emptyList(), 400);
-        assertDistance(mode, "my_custom_car_turn_costs", emptyList(), 1044);
-        assertDistance(mode, "my_custom_car_no_turn_costs", emptyList(), 400);
+    public void canToggleTurnCostsOnOff_legacy(String mode) {
+        // profile+legacy is not allowed
+        assertError(mode, "my_car_turn_costs", true, null, emptyList(),
+                "Since you are using the 'profile' parameter, do not use the 'edge_based' parameter. You used 'edge_based=true'");
+        assertError(mode, "my_car_turn_costs", false, null, emptyList(),
+                "Since you are using the 'profile' parameter, do not use the 'edge_based' parameter. You used 'edge_based=false'");
+        assertError(mode, "my_car_turn_costs", null, true, emptyList(),
+                "Since you are using the 'profile' parameter, do not use the 'turn_costs' parameter. You used 'turn_costs=true'");
+        assertError(mode, "my_car_turn_costs", null, false, emptyList(),
+                "Since you are using the 'profile' parameter, do not use the 'turn_costs' parameter. You used 'turn_costs=false");
+
+        assertDistance(mode, null, null, emptyList(), 1044);
+        assertDistance(mode, true, null, emptyList(), 1044);
+        assertDistance(mode, null, true, emptyList(), 1044);
+        assertDistance(mode, false, null, emptyList(), 400);
+        assertDistance(mode, null, false, emptyList(), 400);
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"flex", "LM", "CH"})
-    public void curbsides(String mode) {
-        assertDistance(mode, "my_car_turn_costs", Arrays.asList("left", "left"), 1459);
-        assertError(mode, "my_car_no_turn_costs", Arrays.asList("left", "left"), "To make use of the curbside parameter you need to use a profile that supports turn costs");
+    public void curbsides_legacy(String mode) {
+        assertDistance(mode, null, null, Arrays.asList("left", "left"), 1459);
+        assertDistance(mode, true, null, Arrays.asList("left", "left"), 1459);
+        assertDistance(mode, null, true, Arrays.asList("left", "left"), 1459);
+        assertError(mode, null, false, null, Arrays.asList("left", "left"), "Disabling 'edge_based' when using 'curbside' is not allowed");
+        assertError(mode, null, null, false, Arrays.asList("left", "left"), "Disabling 'turn_costs' when using 'curbside' is not allowed");
     }
 
-    private void assertDistance(String mode, String profile, List<String> curbsides, double expectedDistance) {
-        assertDistance(doGet(mode, profile, curbsides), expectedDistance);
-        assertDistance(doPost(mode, profile, curbsides), expectedDistance);
+    private void assertDistance(String mode, Boolean edgeBased, Boolean turnCosts, List<String> curbsides, double expectedDistance) {
+        assertDistance(doGet(mode, null, edgeBased, turnCosts, curbsides), expectedDistance);
+        assertDistance(doPost(mode, null, edgeBased, turnCosts, curbsides), expectedDistance);
     }
 
-    private void assertError(String mode, String profile, List<String> curbsides, String... expectedErrors) {
-        assertError(doGet(mode, profile, curbsides), expectedErrors);
-        assertError(doPost(mode, profile, curbsides), expectedErrors);
+    private void assertError(String mode, String profile, Boolean edgeBased, Boolean turnCosts, List<String> curbsides, String... expectedErrors) {
+        assertError(doGet(mode, profile, edgeBased, turnCosts, curbsides), expectedErrors);
+        assertError(doPost(mode, profile, edgeBased, turnCosts, curbsides), expectedErrors);
     }
 
     private void assertDistance(Response response, double expectedDistance) {
@@ -131,7 +139,7 @@ public class RouteResourceTurnCostsTest {
         }
     }
 
-    private String getUrlParams(String mode, String profile, List<String> curbsides) {
+    private String getUrlParams(String mode, String profile, Boolean edgeBased, Boolean turnCosts, List<String> curbsides) {
         String urlParams = "point=55.813357,37.5958585&point=55.811042,37.594689";
         for (String curbside : curbsides)
             urlParams += "&curbside=" + curbside;
@@ -139,12 +147,16 @@ public class RouteResourceTurnCostsTest {
             urlParams += "&ch.disable=true";
         if (mode.equals("flex"))
             urlParams += "&ch.disable=true&lm.disable=true";
+        if (edgeBased != null)
+            urlParams += "&edge_based=" + edgeBased;
+        if (turnCosts != null)
+            urlParams += "&turn_costs=" + turnCosts;
         if (profile != null)
             urlParams += "&profile=" + profile;
         return urlParams;
     }
 
-    private String getJsonStr(String mode, String profile, List<String> curbsides) {
+    private String getJsonStr(String mode, String profile, Boolean edgeBased, Boolean turnCosts, List<String> curbsides) {
         String jsonStr = "{";
         jsonStr += "\"points\": [[37.5958585,55.813357],[37.594689,55.811042]]";
         if (!curbsides.isEmpty()) {
@@ -155,17 +167,21 @@ public class RouteResourceTurnCostsTest {
             jsonStr += ", \"ch.disable\": true";
         if (mode.equals("flex"))
             jsonStr += ", \"ch.disable\": true, \"lm.disable\": true";
+        if (edgeBased != null)
+            jsonStr += ", \"edge_based\": " + edgeBased;
+        if (turnCosts != null)
+            jsonStr += ", \"turn_costs\": " + turnCosts;
         if (profile != null)
             jsonStr += ", \"profile\": \"" + profile + "\"";
         jsonStr += "}";
         return jsonStr;
     }
 
-    private Response doGet(String mode, String profile, List<String> curbsides) {
-        return clientTarget(app, "/route?" + getUrlParams(mode, profile, curbsides)).request().buildGet().invoke();
+    private Response doGet(String mode, String profile, Boolean edgeBased, Boolean turnCosts, List<String> curbsides) {
+        return clientTarget(app, "/route?" + getUrlParams(mode, profile, edgeBased, turnCosts, curbsides)).request().buildGet().invoke();
     }
 
-    private Response doPost(String mode, String profile, List<String> curbsides) {
-        return clientTarget(app, "/route?").request().post(Entity.json(getJsonStr(mode, profile, curbsides)));
+    private Response doPost(String mode, String profile, Boolean edgeBased, Boolean turnCosts, List<String> curbsides) {
+        return clientTarget(app, "/route?").request().post(Entity.json(getJsonStr(mode, profile, edgeBased, turnCosts, curbsides)));
     }
 }

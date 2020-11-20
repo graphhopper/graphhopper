@@ -103,6 +103,7 @@ class QueryRoutingCHGraphTest {
         graph.edge(1, 2, 10, true);
         graph.freeze();
         assertEquals(2, graph.getEdges());
+        setIdentityLevels(chGraph);
         chGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1);
 
         QueryGraph queryGraph = QueryGraph.create(graph, Collections.<Snap>emptyList());
@@ -202,6 +203,7 @@ class QueryRoutingCHGraphTest {
         addEdge(graph, 1, 2);
         graph.freeze();
         assertEquals(2, graph.getEdges());
+        setIdentityLevels(chGraph);
         chGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1);
 
         Snap snap = new Snap(50.00, 10.05);
@@ -265,6 +267,7 @@ class QueryRoutingCHGraphTest {
         EdgeIteratorState edge = addEdge(graph, 0, 1);
         addEdge(graph, 1, 2);
         graph.freeze();
+        setIdentityLevels(chGraph);
         chGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1);
 
         Snap snap = new Snap(50.00, 10.05);
@@ -330,6 +333,7 @@ class QueryRoutingCHGraphTest {
                 .setReverse(encoder.getAverageSpeedEnc(), 30);
         addEdge(graph, 1, 2);
         graph.freeze();
+        setIdentityLevels(chGraph);
         chGraph.shortcut(0, 2, PrepareEncoder.getScDirMask(), 20, 0, 1);
 
         // without query graph
@@ -501,6 +505,7 @@ class QueryRoutingCHGraphTest {
         DecimalEncodedValue turnCostEnc = encodingManager.getDecimalEncodedValue(TurnCost.key(encoder.toString()));
         graph.getTurnCostStorage().set(turnCostEnc, 0, 1, 1, 5);
         graph.freeze();
+        setIdentityLevels(chGraph);
         chGraph.shortcut(0, 2, PrepareEncoder.getScDirMask(), 20, 0, 1);
 
         // without virtual nodes
@@ -540,6 +545,12 @@ class QueryRoutingCHGraphTest {
 
         // check the turn weight between these edges
         assertEquals(5, queryCHGraph.getTurnWeight(expectedEdge31, 1, expectedEdge14));
+    }
+
+    public static void setIdentityLevels(CHGraph chGraph) {
+        for (int i = 0; i < chGraph.getNodes(); i++) {
+            chGraph.setLevel(i, i);
+        }
     }
 
     private void assertGetEdgeIteratorState(RoutingCHGraph graph, int base, int adj, int origEdge) {

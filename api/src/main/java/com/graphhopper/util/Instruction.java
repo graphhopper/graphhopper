@@ -43,7 +43,6 @@ public class Instruction {
     public static final int PT_TRANSFER = 102;
     public static final int PT_END_TRIP = 103;
     protected PointList points;
-    protected final InstructionAnnotation annotation;
     protected boolean rawName;
     protected int sign;
     protected String name;
@@ -55,11 +54,10 @@ public class Instruction {
      * The points, distances and times have exactly the same count. The last point of this
      * instruction is not duplicated here and should be in the next one.
      */
-    public Instruction(int sign, String name, InstructionAnnotation ia, PointList pl) {
+    public Instruction(int sign, String name, PointList pl) {
         this.sign = sign;
         this.name = name;
         this.points = pl;
-        this.annotation = ia;
     }
 
     /**
@@ -68,10 +66,6 @@ public class Instruction {
      */
     public void setUseRawName() {
         rawName = true;
-    }
-
-    public InstructionAnnotation getAnnotation() {
-        return annotation;
     }
 
     /**

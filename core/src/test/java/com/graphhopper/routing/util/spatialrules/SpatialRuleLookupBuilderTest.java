@@ -63,23 +63,23 @@ public class SpatialRuleLookupBuilderTest {
 
         // Berlin
         assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRules(52.5243700, 13.4105300).
-                getAccess(RoadClass.TRACK, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+                getAccess(RoadClass.TRACK, TransportationMode.CAR, RoadAccess.YES));
         assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRules(52.5243700, 13.4105300).
-                getAccess(RoadClass.PRIMARY, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+                getAccess(RoadClass.PRIMARY, TransportationMode.CAR, RoadAccess.YES));
 
         // Paris -> empty rule
         assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRules(48.864716, 2.349014).
-                getAccess(RoadClass.TRACK, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+                getAccess(RoadClass.TRACK, TransportationMode.CAR, RoadAccess.YES));
         assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRules(48.864716, 2.349014).
-                getAccess(RoadClass.PRIMARY, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+                getAccess(RoadClass.PRIMARY, TransportationMode.CAR, RoadAccess.YES));
 
         // Austria
         assertEquals(RoadAccess.FORESTRY, spatialRuleLookup.lookupRules(48.204484, 16.107888).
-                getAccess(RoadClass.TRACK, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+                getAccess(RoadClass.TRACK, TransportationMode.CAR, RoadAccess.YES));
         assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRules(48.210033, 16.363449).
-                getAccess(RoadClass.PRIMARY, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+                getAccess(RoadClass.PRIMARY, TransportationMode.CAR, RoadAccess.YES));
         assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRules(48.210033, 16.363449).
-                getAccess(RoadClass.LIVING_STREET, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+                getAccess(RoadClass.LIVING_STREET, TransportationMode.CAR, RoadAccess.YES));
     }
 
     @Test

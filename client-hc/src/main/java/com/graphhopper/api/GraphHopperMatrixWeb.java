@@ -15,11 +15,11 @@ public class GraphHopperMatrixWeb {
     private String key;
 
     public GraphHopperMatrixWeb() {
-        this(new GHMatrixBatchRequester());
+        this(new GHMatrixSyncRequester());
     }
 
     public GraphHopperMatrixWeb(String serviceUrl) {
-        this(new GHMatrixBatchRequester(serviceUrl));
+        this(new GHMatrixSyncRequester(serviceUrl));
     }
 
     public GraphHopperMatrixWeb(GHMatrixAbstractRequester requester) {

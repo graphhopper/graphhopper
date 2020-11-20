@@ -29,7 +29,6 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.PMap;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -81,19 +80,9 @@ public class AlternativeRouteCHTest {
         // Carefully construct the CH so that the forward tree and the backward tree
         // meet on all four possible paths from 5 to 10
         // 5 ---> 11 will be reachable via shortcuts, as 11 is on shortest path 5 --> 12
-        final List<Integer> nodeOrdering = Arrays.asList(0, 10, 12, 4, 3, 2, 5, 1, 6, 7, 8, 9, 11);
+        final int[] nodeOrdering = new int[]{0, 10, 12, 4, 3, 2, 5, 1, 6, 7, 8, 9, 11};
         PrepareContractionHierarchies contractionHierarchies = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
-        contractionHierarchies.useFixedNodeOrdering(new NodeOrderingProvider() {
-            @Override
-            public int getNodeIdForLevel(int level) {
-                return nodeOrdering.get(level);
-            }
-
-            @Override
-            public int getNumNodes() {
-                return nodeOrdering.size();
-            }
-        });
+        contractionHierarchies.useFixedNodeOrdering(NodeOrderingProvider.fromArray(nodeOrdering));
         contractionHierarchies.doWork();
         return graph;
     }
