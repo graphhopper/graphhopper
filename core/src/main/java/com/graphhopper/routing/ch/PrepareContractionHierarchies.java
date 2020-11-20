@@ -171,7 +171,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         } else {
             logger.info("Creating CH prepare graph, {}", getMemInfo());
             prepareGraph = CHPreparationGraph.nodeBased(graph.getNodes(), graph.getEdges());
-            NodeBasedNodeContractor.ShortcutHandler shortcutInserter = new NodeBasedShortcutHandler(chGraph);
+            NodeBasedNodeContractor.ShortcutHandler shortcutInserter = new NodeBasedShortcutInserter(chGraph);
             nodeContractor = new NodeBasedNodeContractor(prepareGraph, shortcutInserter, pMap);
         }
         maxLevel = nodes;
@@ -339,8 +339,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         if (isContracted(node))
             throw new IllegalArgumentException("Node " + node + " was contracted already");
         contractionSW.start();
-        IntContainer neighbors = nodeContractor.contractNode(node);
         chGraph.setLevel(node, level);
+        IntContainer neighbors = nodeContractor.contractNode(node);
         contractionSW.stop();
         return neighbors;
     }

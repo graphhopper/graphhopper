@@ -66,7 +66,7 @@ public class NodeBasedNodeContractorTest {
     private NodeContractor createNodeContractor(CHGraph chGraph) {
         CHPreparationGraph prepareGraph = CHPreparationGraph.nodeBased(chGraph.getNodes(), chGraph.getOriginalEdges());
         CHPreparationGraph.buildFromGraph(prepareGraph, chGraph.getBaseGraph(), chGraph.getCHConfig().getWeighting());
-        NodeBasedNodeContractor.ShortcutHandler shortcutInserter = new NodeBasedShortcutHandler(chGraph);
+        NodeBasedNodeContractor.ShortcutHandler shortcutInserter = new NodeBasedShortcutInserter(chGraph);
         NodeContractor nodeContractor = new NodeBasedNodeContractor(prepareGraph, shortcutInserter, new PMap());
         nodeContractor.initFromGraph();
         nodeContractor.prepareContraction();
@@ -333,11 +333,12 @@ public class NodeBasedNodeContractorTest {
     }
 
     private void contractInOrder(CHGraph chGraph, int... nodeIds) {
+        setMaxLevelOnAllNodes();
         NodeContractor nodeContractor = createNodeContractor(chGraph);
         int level = 0;
         for (int n : nodeIds) {
-            nodeContractor.contractNode(n);
             chGraph.setLevel(n, level);
+            nodeContractor.contractNode(n);
             level++;
         }
         nodeContractor.finishContraction();

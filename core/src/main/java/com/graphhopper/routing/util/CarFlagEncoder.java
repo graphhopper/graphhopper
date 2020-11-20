@@ -75,6 +75,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         setSpeedTwoDirections(properties.getBool("speed_two_directions", false));
 
         intendedValues.add("yes");
+        intendedValues.add("designated");
         intendedValues.add("permissive");
 
         potentialBarriers.add("gate");
