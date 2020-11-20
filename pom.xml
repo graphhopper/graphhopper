@@ -266,7 +266,7 @@
 
     <repositories>
         <repository>
-            <id>github</id>
+            <id>baremaps</id>
             <name>GitHub Baremaps Apache Maven Packages</name>
             <url>https://maven.pkg.github.com/baremaps/baremaps</url>
         </repository>
