@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.json.geo.JsonFeature;
+import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.util.Parameters;
 
 import java.util.*;
@@ -150,21 +151,27 @@ public class CustomModel {
             mergedCM.distanceInfluence = queryModel.distanceInfluence;
         }
 
-        // example
-        // max_speed: { road_class: { secondary : 0.4 } }
-        // or
-        // priority:  { max_weight: { "<3.501": 0.7 } }
+        // MaxSpeed entries we merge via picking the minimum and values above 1 are allowed
+        // max_speed: { road_class == secondary : 40 }
+        CheckOp ignore = o1 -> o1;
         for (Map.Entry<String, Object> queryEntry : queryModel.getMaxSpeed().entrySet()) {
             Object value = mergedCM.maxSpeedMap.get(queryEntry.getKey());
-            applyChange(mergedCM.maxSpeedMap, value, queryEntry);
+            applyChange(mergedCM.maxSpeedMap, value, queryEntry, Math::min, ignore);
         }
+        // SpeedFactor and Priority will be merged via multiplication
+        MergeOp multiplyOp = (o1, o2) -> o1 * o2;
+        CheckOp maxFactor = o1 -> {
+            if (o1 > 1) throw new IllegalArgumentException("Factor cannot be larger than 1 but was " + o1);
+            return o1;
+        };
         for (Map.Entry<String, Object> queryEntry : queryModel.getSpeedFactor().entrySet()) {
             Object value = mergedCM.speedFactorMap.get(queryEntry.getKey());
-            applyChange(mergedCM.speedFactorMap, value, queryEntry);
+            applyChange(mergedCM.speedFactorMap, value, queryEntry, multiplyOp, maxFactor);
         }
+        // priority:  { max_weight < 3.501: 0.7 }
         for (Map.Entry<String, Object> queryEntry : queryModel.getPriority().entrySet()) {
             Object value = mergedCM.priorityMap.get(queryEntry.getKey());
-            applyChange(mergedCM.priorityMap, value, queryEntry);
+            applyChange(mergedCM.priorityMap, value, queryEntry, multiplyOp, maxFactor);
         }
         for (Map.Entry<String, JsonFeature> entry : queryModel.getAreas().entrySet()) {
             if (mergedCM.areas.containsKey(entry.getKey()))
@@ -175,92 +182,46 @@ public class CustomModel {
         return mergedCM;
     }
 
-    private static void applyChange(Map<String, Object> mergedSuperMap,
-                                    Object mergedObj, Map.Entry<String, Object> querySuperEntry) {
-        if (mergedObj == null) {
-            // no need for a merge
-            mergedSuperMap.put(querySuperEntry.getKey(), querySuperEntry.getValue());
-            return;
-        }
-        if (!(mergedObj instanceof Map))
-            throw new IllegalArgumentException(querySuperEntry.getKey() + ": entry is not a map: " + mergedObj);
-        Object queryObj = querySuperEntry.getValue();
-        if (!(queryObj instanceof Map))
-            throw new IllegalArgumentException(querySuperEntry.getKey() + ": query entry is not a map: " + queryObj);
+    private interface MergeOp {
+        double op(double op1, double op2);
+    }
 
-        Map<Object, Object> mergedMap = (Map) mergedObj;
-        Map<Object, Object> queryMap = (Map) queryObj;
-        for (Map.Entry queryEntry : queryMap.entrySet()) {
-            if (queryEntry.getKey() == null || queryEntry.getKey().toString().isEmpty())
-                throw new IllegalArgumentException(querySuperEntry.getKey() + ": key cannot be null or empty");
-            String key = queryEntry.getKey().toString();
-            if (isComparison(key))
-                continue;
+    private interface CheckOp {
+        double op(double op1);
+    }
 
-            Object mergedValue = mergedMap.get(key);
-            if (mergedValue == null) {
-                mergedMap.put(key, queryEntry.getValue());
-            } else if (multiply(queryEntry.getValue(), mergedValue) != null) {
-                // existing value needs to be multiplied
-                mergedMap.put(key, multiply(queryEntry.getValue(), mergedValue));
-            } else {
-                throw new IllegalArgumentException(querySuperEntry.getKey() + ": cannot merge value " + queryEntry.getValue() + " for key " + key + ", merged value: " + mergedValue);
-            }
-        }
-
-        // now special handling for comparison keys start e.g. <2 or >3.0, see testMergeComparisonKeys
-        // this could be simplified if CustomModel would be already an abstract syntax tree :)
-        List<String> queryComparisonKeys = getComparisonKeys(queryMap);
-        if (queryComparisonKeys.isEmpty())
-            return;
-        if (queryComparisonKeys.size() > 1)
-            throw new IllegalArgumentException(querySuperEntry.getKey() + ": entry in " + querySuperEntry.getValue() + " must not contain more than one key comparison but contained " + queryComparisonKeys);
-        char opChar = queryComparisonKeys.get(0).charAt(0);
-        List<String> mergedComparisonKeys = getComparisonKeys(mergedMap);
-        if (mergedComparisonKeys.isEmpty()) {
-            mergedMap.put(queryComparisonKeys.get(0), queryMap.get(queryComparisonKeys.get(0)));
-        } else if (mergedComparisonKeys.get(0).charAt(0) == opChar) {
-            if (multiply(queryMap.get(queryComparisonKeys.get(0)), mergedMap.get(mergedComparisonKeys.get(0))) != 0)
-                throw new IllegalArgumentException(querySuperEntry.getKey() + ": currently only blocking comparisons are allowed, but query was " + queryMap.get(queryComparisonKeys.get(0)) + " and server side: " + mergedMap.get(mergedComparisonKeys.get(0)));
-
-            try {
-                double comparisonMergedValue = Double.parseDouble(mergedComparisonKeys.get(0).substring(1));
-                double comparisonQueryValue = Double.parseDouble(queryComparisonKeys.get(0).substring(1));
-                if (opChar == '<') {
-                    if (comparisonMergedValue > comparisonQueryValue)
-                        throw new IllegalArgumentException(querySuperEntry.getKey() + ": only use a comparison key with a bigger value than " + comparisonMergedValue + " but was " + comparisonQueryValue);
-                } else if (opChar == '>') {
-                    if (comparisonMergedValue < comparisonQueryValue)
-                        throw new IllegalArgumentException(querySuperEntry.getKey() + ": only use a comparison key with a smaller value than " + comparisonMergedValue + " but was " + comparisonQueryValue);
-                } else {
-                    throw new IllegalArgumentException(querySuperEntry.getKey() + ": only use a comparison key with < or > as operator but was " + opChar);
+    private static void applyChange(Map<String, Object> mergedSuperMap, Object mergedObj,
+                                    Map.Entry<String, Object> querySuperEntry, MergeOp merge, CheckOp check) {
+        String key = querySuperEntry.getKey();
+        if (CustomWeighting.FIRST_MATCH.equals(key)) {
+            mergedObj = mergedSuperMap.get(key);
+            if (mergedObj == null) {
+                if (!(querySuperEntry.getValue() instanceof Map))
+                    throw new IllegalArgumentException(key + " must be a map");
+                Map<String, Object> tmp = (Map<String, Object>) querySuperEntry.getValue();
+                tmp.values().stream().forEach(o -> check.op(toNum(o)));
+                mergedSuperMap.put(key, tmp);
+            } else if (mergedObj instanceof LinkedHashMap) {
+                Map<String, Object> map = (Map<String, Object>) querySuperEntry.getValue();
+                mergedSuperMap = (Map<String, Object>) mergedSuperMap.get(key);
+                for (Map.Entry<String, Object> queryEntry : map.entrySet()) {
+                    Object value = map.get(queryEntry.getKey());
+                    applyChange(mergedSuperMap, value, queryEntry, merge, check);
                 }
-                mergedMap.remove(mergedComparisonKeys.get(0));
-                mergedMap.put(queryComparisonKeys.get(0), queryMap.get(queryComparisonKeys.get(0)));
-            } catch (NumberFormatException ex) {
-                throw new IllegalArgumentException(querySuperEntry.getKey() + ": number in one of the 'comparison' keys for " + querySuperEntry.getKey() + " wasn't parsable: " + queryComparisonKeys + " (" + mergedComparisonKeys + ")");
+            } else {
+                throw new IllegalArgumentException("Merged object is not a map but was " + mergedObj.getClass());
             }
-        } else {
-            throw new IllegalArgumentException(querySuperEntry.getKey() + ": comparison keys must match but did not: " + queryComparisonKeys.get(0) + " vs " + mergedComparisonKeys.get(0));
+            return;
         }
+
+        mergedSuperMap.put(key, mergedObj == null
+                ? check.op(toNum(querySuperEntry.getValue()))
+                : merge.op(toNum(mergedObj), check.op(toNum(querySuperEntry.getValue()))));
     }
 
-    static Double multiply(Object queryValue, Object mergedValue) {
-        if (queryValue instanceof Number && mergedValue instanceof Number)
-            return ((Number) queryValue).doubleValue() * ((Number) mergedValue).doubleValue();
-        return null;
-    }
-
-    static boolean isComparison(String key) {
-        return key.startsWith("<") || key.startsWith(">");
-    }
-
-    private static List<String> getComparisonKeys(Map<Object, Object> map) {
-        List<String> list = new ArrayList<>();
-        for (Map.Entry queryEntry : map.entrySet()) {
-            String key = queryEntry.getKey().toString();
-            if (isComparison(key)) list.add(key);
-        }
-        return list;
+    private static double toNum(Object queryValue) {
+        if (!(queryValue instanceof Number))
+            throw new IllegalArgumentException("Not a number " + queryValue);
+        return ((Number) queryValue).doubleValue();
     }
 }
