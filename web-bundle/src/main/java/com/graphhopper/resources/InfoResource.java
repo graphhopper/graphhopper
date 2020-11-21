@@ -101,8 +101,8 @@ public class InfoResource {
         for (EncodedValue encodedValue : evList) {
             List<Object> possibleValueList = new ArrayList<>();
             if (encodedValue instanceof EnumEncodedValue) {
-                for (Object o : ((EnumEncodedValue) encodedValue).getValues()) {
-                    possibleValueList.add(o.toString());
+                for (Enum o : ((EnumEncodedValue) encodedValue).getValues()) {
+                    possibleValueList.add(o.name());
                 }
             } else if (encodedValue instanceof BooleanEncodedValue) {
                 possibleValueList.add("true");
