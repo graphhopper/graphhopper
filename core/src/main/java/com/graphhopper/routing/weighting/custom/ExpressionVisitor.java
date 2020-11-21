@@ -111,7 +111,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
         int count = 0;
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             String expression = entry.getKey();
-            if (expression.equals("*"))
+            if (expression.equals("*")) // remove in >= 4.0
                 throw new IllegalArgumentException("replace all '*' expressions with 'true'");
             if (firstMatch) {
                 if ("true".equals(expression) && count + 1 != map.size())

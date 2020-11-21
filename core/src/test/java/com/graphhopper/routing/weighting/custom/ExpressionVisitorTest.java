@@ -9,7 +9,7 @@ import static com.graphhopper.routing.weighting.custom.ExpressionBuilder.isValid
 import static com.graphhopper.routing.weighting.custom.ExpressionVisitor.parseExpression;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ExpressionBuilderTest {
+public class ExpressionVisitorTest {
 
     @Test
     public void protectUsFromStuff() {

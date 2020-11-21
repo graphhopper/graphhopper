@@ -70,7 +70,7 @@ import com.graphhopper.util.EdgeIteratorState;
  * calculated via the speed_factor is simply overwritten. Edges that are not accessible according to the access flags of
  * the base vehicle always get assigned an infinite weight and this cannot be changed (yet) using this weighting.
  */
-public class CustomWeighting extends AbstractWeighting {
+public final class CustomWeighting extends AbstractWeighting {
     public static final String NAME = "custom";
     /**
      * constant that starts if-then-else-if block

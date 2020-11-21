@@ -220,11 +220,10 @@ class ExpressionBuilder {
                 if (!EncodingManager.isSharedEV(enc))
                     continue;
                 String className = toEncodedValueClassName(arg);
-
                 classSourceCode.append("protected " + enc.getClass().getSimpleName() + " " + arg + "_enc;\n");
                 initSourceCode.append("if (lookup.hasEncodedValue(\"" + arg + "\")) ");
-                initSourceCode.append("this." + arg + "_enc = (" + enc.getClass().getSimpleName() + ") lookup.getEncodedValue(\"" + arg + "\", "
-                        + className + ".class);\n");
+                initSourceCode.append("this." + arg + "_enc = (" + enc.getClass().getSimpleName()
+                        + ") lookup.getEncodedValue(\"" + arg + "\", " + className + ".class);\n");
             } else if (arg.startsWith(AREA_PREFIX)) {
                 if (!includedAreaImports) {
                     importSourceCode.append("import " + BBox.class.getName() + ";\n");
