@@ -153,9 +153,9 @@ can be influenced by the different fields of such a custom model.
   
 #### Customizing `speed`
 
-For every edge a default speed is inherited from the base vehicle, but you have multiple options to adjust it.
+For every road segment a default speed is inherited from the base vehicle, but you have multiple options to adjust it.
 The first thing you can do is rescaling the default speeds using the `speed_factor` section. For example this is how you
-can reduce the the speed of every edge that has the value 'motorway' for the category 'road_class' to fifty percent of 
+can reduce the speed of every road segment that has the value MOTORWAY for the category 'road_class' to fifty percent of 
 the default speed that is normally used by the base vehicle for this road class:
 ```yaml
 speed_factor:
