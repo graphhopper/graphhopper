@@ -19,6 +19,7 @@ package com.graphhopper.gtfs;
 
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
+import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.util.EdgeIterator;
 
@@ -48,12 +49,12 @@ public class MultiCriteriaLabelSetting {
     private final List<Label> targetLabels;
     private long startTime;
     private int blockedRouteTypes;
-    private final PtEncodedValues flagEncoder;
+    private final IntEncodedValue validityEnc;
+    private final EnumEncodedValue<GtfsStorage.EdgeType> typeEnc;
     private final IntObjectMap<List<Label>> fromMap;
     private final PriorityQueue<Label> fromHeap;
     private final int maxVisitedNodes;
     private final boolean reverse;
-    private final boolean ptOnly;
     private final boolean mindTransfers;
     private final boolean profileQuery;
     private int visitedNodes;
@@ -62,15 +63,15 @@ public class MultiCriteriaLabelSetting {
     private double betaWalkTime = 1.0;
     private long limitStreetTime = Long.MAX_VALUE;
 
-    public MultiCriteriaLabelSetting(GraphExplorer explorer, PtEncodedValues flagEncoder, boolean reverse, boolean ptOnly, boolean mindTransfers, boolean profileQuery, int maxVisitedNodes, List<Label> solutions) {
-        this.flagEncoder = flagEncoder;
+    public MultiCriteriaLabelSetting(GraphExplorer explorer, PtEncodedValues flagEncoder, boolean reverse, boolean mindTransfers, boolean profileQuery, int maxVisitedNodes, List<Label> solutions) {
         this.maxVisitedNodes = maxVisitedNodes;
         this.explorer = explorer;
         this.reverse = reverse;
-        this.ptOnly = ptOnly;
         this.mindTransfers = mindTransfers;
         this.profileQuery = profileQuery;
         this.targetLabels = solutions;
+        this.validityEnc = flagEncoder.getValidityIdEnc();
+        this.typeEnc = flagEncoder.getTypeEnc();
 
         queueComparator = Comparator
                 .comparingLong(this::weight)
@@ -114,7 +115,7 @@ public class MultiCriteriaLabelSetting {
 
         MultiCriteriaLabelSettingSpliterator(int from) {
             super(0, 0);
-            Label label = new Label(startTime, EdgeIterator.NO_EDGE, from, 0, 0.0, null, 0, 0, false, null);
+            Label label = new Label(startTime, EdgeIterator.NO_EDGE, from, 0, null, 0, 0, false, null);
             ArrayList<Label> labels = new ArrayList<>(1);
             labels.add(label);
             fromMap.put(from, labels);
@@ -128,11 +129,8 @@ public class MultiCriteriaLabelSetting {
             } else {
                 Label label = fromHeap.poll();
                 action.accept(label);
-                final IntEncodedValue validityEnc = flagEncoder.getValidityIdEnc();
                 explorer.exploreEdgesAround(label).forEach(edge -> {
-                    GtfsStorage.EdgeType edgeType = edge.get(flagEncoder.getTypeEnc());
-                    if (edgeType == GtfsStorage.EdgeType.ENTER_PT && reverse && ptOnly) return;
-                    if (edgeType == GtfsStorage.EdgeType.EXIT_PT && !reverse && ptOnly) return;
+                    GtfsStorage.EdgeType edgeType = edge.get(typeEnc);
                     if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT) && (blockedRouteTypes & (1 << edge.get(validityEnc))) != 0)
                         return;
                     long nextTime;
@@ -152,7 +150,6 @@ public class MultiCriteriaLabelSetting {
                             firstPtDepartureTime = nextTime + label.walkTime;
                         }
                     }
-                    double walkDistanceOnCurrentLeg = (!reverse && edgeType == GtfsStorage.EdgeType.BOARD || reverse && edgeType == GtfsStorage.EdgeType.ALIGHT) ? 0 : (label.walkDistanceOnCurrentLeg + edge.getDistance());
                     long walkTime = label.walkTime + (edgeType == GtfsStorage.EdgeType.HIGHWAY || edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT ? ((reverse ? -1 : 1) * (nextTime - label.currentTime)) : 0);
                     if (walkTime > limitStreetTime)
                         return;
@@ -184,14 +181,14 @@ public class MultiCriteriaLabelSetting {
                         }
                     }
                     if (!reverse && edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK && residualDelay > 0) {
-                        Label newImpossibleLabelForDelayedTrip = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, walkDistanceOnCurrentLeg, firstPtDepartureTime, walkTime, residualDelay, true, label);
+                        Label newImpossibleLabelForDelayedTrip = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, residualDelay, true, label);
                         insertIfNotDominated(sptEntries, newImpossibleLabelForDelayedTrip);
                         nextTime += residualDelay;
                         residualDelay = 0;
-                        Label newLabel = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, walkDistanceOnCurrentLeg, firstPtDepartureTime, walkTime, residualDelay, impossible, label);
+                        Label newLabel = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, residualDelay, impossible, label);
                         insertIfNotDominated(sptEntries, newLabel);
                     } else {
-                        Label newLabel = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, walkDistanceOnCurrentLeg, firstPtDepartureTime, walkTime, residualDelay, impossible, label);
+                        Label newLabel = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, residualDelay, impossible, label);
                         insertIfNotDominated(sptEntries, newLabel);
                     }
                 });
