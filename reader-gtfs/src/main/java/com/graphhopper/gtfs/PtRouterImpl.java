@@ -225,13 +225,13 @@ public final class PtRouterImpl implements PtRouter {
 
         private List<List<Label.Transition>> findPaths(int startNode, int destNode) {
             StopWatch stopWatch = new StopWatch().start();
-            final GraphExplorer accessEgressGraphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, !arriveBy, true, false, walkSpeedKmH, false);
+            final GraphExplorer accessEgressGraphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, !arriveBy, true, false, walkSpeedKmH, false, blockedRouteTypes);
             boolean reverse = !arriveBy;
             GtfsStorage.EdgeType edgeType = reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT;
             MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, ptEncodedValues, reverse, false, false, maxVisitedNodesForRequest, new ArrayList<>());
             stationRouter.setBetaWalkTime(betaWalkTime);
             stationRouter.setLimitStreetTime(limitStreetTime);
-            Iterator<Label> stationIterator = stationRouter.calcLabels(destNode, initialTime, blockedRouteTypes).iterator();
+            Iterator<Label> stationIterator = stationRouter.calcLabels(destNode, initialTime).iterator();
             List<Label> stationLabels = new ArrayList<>();
             while (stationIterator.hasNext()) {
                 Label label = stationIterator.next();
@@ -249,7 +249,7 @@ public final class PtRouterImpl implements PtRouter {
                 reverseSettledSet.put(stationLabel.adjNode, stationLabel);
             }
 
-            GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, arriveBy, false, true, walkSpeedKmH, false);
+            GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, arriveBy, false, true, walkSpeedKmH, false, blockedRouteTypes);
             List<Label> discoveredSolutions = new ArrayList<>();
             MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, arriveBy, !ignoreTransfers, profileQuery, maxVisitedNodesForRequest, discoveredSolutions);
             router.setBetaTransfers(betaTransfers);
@@ -264,7 +264,7 @@ public final class PtRouterImpl implements PtRouter {
             } else {
                 smallestStationLabelWeight = Long.MAX_VALUE;
             }
-            Iterator<Label> iterator = router.calcLabels(startNode, initialTime, blockedRouteTypes).iterator();
+            Iterator<Label> iterator = router.calcLabels(startNode, initialTime).iterator();
             Map<Label, Label> originalSolutions = new HashMap<>();
 
             Label walkSolution = null;

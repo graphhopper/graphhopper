@@ -202,11 +202,11 @@ public class GraphHopperGtfs extends GraphHopperOSM {
         QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, Collections.emptyList());
         FastestWeighting accessEgressWeighting = new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder("foot"));
         PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
-        final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, getGtfsStorage(), RealtimeFeed.empty(getGtfsStorage()), true, true, false, 5.0, false);
+        final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, getGtfsStorage(), RealtimeFeed.empty(getGtfsStorage()), true, true, false, 5.0, false, 0);
         getGtfsStorage().getStationNodes().values().stream().distinct().forEach(stationNode -> {
             MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, true, false, false, Integer.MAX_VALUE, new ArrayList<>());
             router.setLimitStreetTime(Duration.ofMinutes(2).toMillis());
-            Iterator<Label> iterator = router.calcLabels(stationNode, Instant.ofEpochMilli(0), 0).iterator();
+            Iterator<Label> iterator = router.calcLabels(stationNode, Instant.ofEpochMilli(0)).iterator();
             while (iterator.hasNext()) {
                 Label label = iterator.next();
                 if (label.parent != null) {
@@ -252,10 +252,10 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                     points.add(graphHopperStorage.getNodeAccess().getLat(tonode), graphHopperStorage.getNodeAccess().getLon(tonode));
 
                     QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, Collections.emptyList());
-                    final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, getGtfsStorage(), realtimeFeed, false, true, false, 5.0, false);
+                    final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, getGtfsStorage(), realtimeFeed, false, true, false, 5.0, false, 0);
 
                     MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, false, false, false, Integer.MAX_VALUE, new ArrayList<>());
-                    Iterator<Label> iterator = router.calcLabels(fromnode, Instant.ofEpochMilli(0), 0).iterator();
+                    Iterator<Label> iterator = router.calcLabels(fromnode, Instant.ofEpochMilli(0)).iterator();
                     Label solution = null;
                     while (iterator.hasNext()) {
                         Label label = iterator.next();

@@ -20,6 +20,7 @@ package com.graphhopper.gtfs;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
@@ -50,11 +51,14 @@ public final class GraphExplorer {
     private final boolean ptOnly;
     private final double walkSpeedKmH;
     private final boolean ignoreValidities;
+    private final IntEncodedValue validityEnc;
+    private final int blockedRouteTypes;
 
-    public GraphExplorer(Graph graph, Weighting accessEgressWeighting, PtEncodedValues flagEncoder, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, boolean walkOnly, boolean ptOnly, double walkSpeedKmh, boolean ignoreValidities) {
+    public GraphExplorer(Graph graph, Weighting accessEgressWeighting, PtEncodedValues flagEncoder, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, boolean walkOnly, boolean ptOnly, double walkSpeedKmh, boolean ignoreValidities, int blockedRouteTypes) {
         this.accessEgressWeighting = accessEgressWeighting;
         this.accessEnc = accessEgressWeighting.getFlagEncoder().getAccessEnc();
         this.ignoreValidities = ignoreValidities;
+        this.blockedRouteTypes = blockedRouteTypes;
         DefaultEdgeFilter accessEgressIn = DefaultEdgeFilter.inEdges(accessEgressWeighting.getFlagEncoder());
         DefaultEdgeFilter accessEgressOut = DefaultEdgeFilter.outEdges(accessEgressWeighting.getFlagEncoder());
         DefaultEdgeFilter ptIn = DefaultEdgeFilter.inEdges(flagEncoder.getAccessEnc());
@@ -64,6 +68,7 @@ public final class GraphExplorer {
         this.edgeExplorer = graph.createEdgeExplorer(reverse ? in : out);
         this.flagEncoder = flagEncoder;
         this.typeEnc = flagEncoder.getTypeEnc();
+        this.validityEnc = flagEncoder.getValidityIdEnc();
         this.gtfsStorage = gtfsStorage;
         this.realtimeFeed = realtimeFeed;
         this.reverse = reverse;
@@ -117,6 +122,9 @@ public final class GraphExplorer {
                         continue;
                     }
                     if (edgeType == GtfsStorage.EdgeType.EXIT_PT && !reverse && ptOnly) {
+                        continue;
+                    }
+                    if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT) && (blockedRouteTypes & (1 << edgeIterator.get(validityEnc))) != 0) {
                         continue;
                     }
                     action.accept(edgeIterator);
@@ -193,7 +201,7 @@ public final class GraphExplorer {
     private boolean isValidOn(EdgeIteratorState edge, long instant) {
         GtfsStorage.EdgeType edgeType = edge.get(typeEnc);
         if (edgeType == GtfsStorage.EdgeType.BOARD || edgeType == GtfsStorage.EdgeType.ALIGHT) {
-            final int validityId = edge.get(flagEncoder.getValidityIdEnc());
+            final int validityId = edge.get(validityEnc);
             final GtfsStorage.Validity validity = realtimeFeed.getValidity(validityId);
             final int trafficDay = (int) ChronoUnit.DAYS.between(validity.start, Instant.ofEpochMilli(instant).atZone(validity.zoneId).toLocalDate());
             return trafficDay >= 0 && validity.validity.get(trafficDay);

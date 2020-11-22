@@ -48,7 +48,6 @@ public class MultiCriteriaLabelSetting {
     private final Comparator<Label> queueComparator;
     private final List<Label> targetLabels;
     private long startTime;
-    private int blockedRouteTypes;
     private final IntEncodedValue validityEnc;
     private final EnumEncodedValue<GtfsStorage.EdgeType> typeEnc;
     private final IntObjectMap<List<Label>> fromMap;
@@ -83,17 +82,15 @@ public class MultiCriteriaLabelSetting {
         fromMap = new IntObjectHashMap<>();
     }
 
-    public Stream<Label> calcLabels(int from, Instant startTime, int blockedRouteTypes) {
+    public Stream<Label> calcLabels(int from, Instant startTime) {
         this.startTime = startTime.toEpochMilli();
-        this.blockedRouteTypes = blockedRouteTypes;
         return StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from), false)
                 .limit(maxVisitedNodes)
                 .peek(label -> visitedNodes++);
     }
 
-    public void calcLabels(int from, Instant startTime, int blockedRouteTypes, SPTVisitor visitor, Predicate<Label> predicate) {
+    public void calcLabels(int from, Instant startTime, SPTVisitor visitor, Predicate<Label> predicate) {
         this.startTime = startTime.toEpochMilli();
-        this.blockedRouteTypes = blockedRouteTypes;
         Iterator<Label> iterator = StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from), false).iterator();
         Label l;
         while (iterator.hasNext() && predicate.test(l = iterator.next())) {
@@ -130,9 +127,6 @@ public class MultiCriteriaLabelSetting {
                 Label label = fromHeap.poll();
                 action.accept(label);
                 explorer.exploreEdgesAround(label).forEach(edge -> {
-                    GtfsStorage.EdgeType edgeType = edge.get(typeEnc);
-                    if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT) && (blockedRouteTypes & (1 << edge.get(validityEnc))) != 0)
-                        return;
                     long nextTime;
                     if (reverse) {
                         nextTime = label.currentTime - explorer.calcTravelTimeMillis(edge, label.currentTime);
@@ -141,6 +135,7 @@ public class MultiCriteriaLabelSetting {
                     }
                     int nTransfers = label.nTransfers + explorer.calcNTransfers(edge);
                     Long firstPtDepartureTime = label.departureTime;
+                    GtfsStorage.EdgeType edgeType = edge.get(typeEnc);
                     if (!reverse && (edgeType == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK || edgeType == GtfsStorage.EdgeType.WAIT)) {
                         if (label.nTransfers == 0) {
                             firstPtDepartureTime = nextTime - label.walkTime;
