@@ -20,7 +20,6 @@ package com.graphhopper.gtfs;
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.util.EdgeIterator;
 
 import java.time.Instant;
@@ -48,7 +47,6 @@ public class MultiCriteriaLabelSetting {
     private final Comparator<Label> queueComparator;
     private final List<Label> targetLabels;
     private long startTime;
-    private final IntEncodedValue validityEnc;
     private final EnumEncodedValue<GtfsStorage.EdgeType> typeEnc;
     private final IntObjectMap<List<Label>> fromMap;
     private final PriorityQueue<Label> fromHeap;
@@ -69,7 +67,6 @@ public class MultiCriteriaLabelSetting {
         this.mindTransfers = mindTransfers;
         this.profileQuery = profileQuery;
         this.targetLabels = solutions;
-        this.validityEnc = flagEncoder.getValidityIdEnc();
         this.typeEnc = flagEncoder.getTypeEnc();
 
         queueComparator = Comparator
