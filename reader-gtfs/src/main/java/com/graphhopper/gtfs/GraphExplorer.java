@@ -46,8 +46,8 @@ public final class GraphExplorer {
     private final boolean reverse;
     private final Weighting accessEgressWeighting;
     private final boolean walkOnly;
-    private double walkSpeedKmH;
-    private boolean ignoreValidities;
+    private final double walkSpeedKmH;
+    private final boolean ignoreValidities;
 
     public GraphExplorer(Graph graph, Weighting accessEgressWeighting, PtEncodedValues flagEncoder, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, boolean walkOnly, double walkSpeedKmh, boolean ignoreValidities) {
         this.accessEgressWeighting = accessEgressWeighting;
@@ -103,12 +103,17 @@ public final class GraphExplorer {
             }
 
             private EdgeIteratorState findEnterEdge() {
-                ArrayList<EdgeIteratorState> allEnterEdges = new ArrayList<>();
-                allEnterEdges.add(edgeIterator.detach(false));
+                EdgeIteratorState first = edgeIterator.detach(false);
+                long firstTT = calcTravelTimeMillis(edgeIterator, label.currentTime);
                 while (edgeIterator.next()) {
-                    allEnterEdges.add(edgeIterator.detach(false));
+                    long nextTT = calcTravelTimeMillis(edgeIterator, label.currentTime);
+                    if (nextTT < firstTT) {
+                        EdgeIteratorState result = edgeIterator.detach(false);
+                        while (edgeIterator.next());
+                        return result;
+                    }
                 }
-                return allEnterEdges.stream().min(Comparator.comparingLong(e -> calcTravelTimeMillis(e, label.currentTime))).get();
+                return first;
             }
 
         }, false);
@@ -118,7 +123,6 @@ public final class GraphExplorer {
         GtfsStorage.EdgeType edgeType = edge.get(flagEncoder.getTypeEnc());
         switch (edgeType) {
             case HIGHWAY:
-                // todo: why do we not account for turn times here ?
                 return (long) (accessEgressWeighting.calcEdgeMillis(edge, reverse) * (5.0 / walkSpeedKmH));
             case ENTER_TIME_EXPANDED_NETWORK:
                 if (reverse) {
@@ -182,11 +186,9 @@ public final class GraphExplorer {
 
     private class EdgeIteratorStatePredicate implements Predicate<EdgeIteratorState> {
         private final Label label;
-        boolean foundEnteredTimeExpandedNetworkEdge;
 
         EdgeIteratorStatePredicate(Label label) {
             this.label = label;
-            foundEnteredTimeExpandedNetworkEdge = false;
         }
 
         @Override
