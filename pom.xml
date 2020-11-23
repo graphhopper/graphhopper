@@ -264,14 +264,6 @@
         </plugins>
     </build>
 
-    <repositories>
-        <repository>
-            <id>baremaps</id>
-            <name>GitHub Baremaps Apache Maven Packages</name>
-            <url>https://maven.pkg.github.com/baremaps/baremaps</url>
-        </repository>
-    </repositories>
-
     <distributionManagement>
         <repository>
             <id>github</id>
