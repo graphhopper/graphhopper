@@ -138,6 +138,8 @@ class GtfsReader {
     }
 
     void buildPtNetwork() {
+        LOGGER.info("Building transit graph for feed {}", feed.feedId);
+        i = graph.getNodes();
         createTrips();
         wireUpStops();
         insertGtfsTransfers();

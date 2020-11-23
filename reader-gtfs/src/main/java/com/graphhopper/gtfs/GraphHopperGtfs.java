@@ -181,18 +181,18 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                                 t.transfer.min_transfer_time = (int) (t.time / 1000L);
                                 gtfsFeed.transfers.put(t.id, t.transfer);
                             });
-                    LOGGER.info("Building transit graph for feed {}", gtfsFeed.feedId);
-                    gtfsReader.buildPtNetwork();
                     readers.put(id, gtfsReader);
                 });
+                //
+                streetNetworkIndex.close();
+                LocationIndexTree locationIndex = new LocationIndexTree(getGraphHopperStorage(), getGraphHopperStorage().getDirectory());
+                locationIndex.prepareIndex();
+                setLocationIndex(locationIndex);
+                readers.forEach((id, gtfsReader) -> gtfsReader.buildPtNetwork());
                 insertTransfersBetweenFeeds(readers);
             } catch (Exception e) {
                 throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
             }
-            streetNetworkIndex.close();
-            LocationIndexTree locationIndex = new LocationIndexTree(getGraphHopperStorage(), getGraphHopperStorage().getDirectory());
-            locationIndex.prepareIndex();
-            setLocationIndex(locationIndex);
         }
     }
 
