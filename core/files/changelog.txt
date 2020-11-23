@@ -5,6 +5,8 @@
     removed Dockerfile
     the second argument of the VirtualEdgeIteratorState constructor is now an edge key (was an edge id before)
     removed instruction annotations(cycleway, off_bike, ford, ferry, private, toll)
+    support for custom SpatialRules, #2177
+    the encoded value `country` has been replaced with the more generic term `spatial_rule`
 
 2.0
     AbstractFlagEncoder#getMaxSpeed returns now Double#NaN instead of -1 if no maxspeed was found
