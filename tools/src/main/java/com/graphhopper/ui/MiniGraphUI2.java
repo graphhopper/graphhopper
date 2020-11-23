@@ -21,8 +21,6 @@ package com.graphhopper.ui;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.coll.GHBitSet;
-import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
@@ -56,8 +54,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -85,15 +83,17 @@ public class MiniGraphUI2 {
     int currentPosY;
     private Path path;
     private final LocationIndexTree index;
-    private String latLon = "";
+//    private String latLon = "";
     private final GraphicsWrapper mg;
-    private JPanel infoPanel;
+//    private JPanel infoPanel;
     private LayeredPanel mainPanel;
     private MapLayer roadsLayer;
-    private boolean fastPaint = false;
+//    private boolean fastPaint = false;
     private boolean showTiles = false;
-    private Snap fromRes;
-    private Snap toRes;
+    boolean plotNodes = true;
+
+    private volatile Snap fromRes;
+    private volatile Snap toRes;
 
     public MiniGraphUI2(GraphHopper hopper, boolean debug, boolean useCH) {
         this.graph = hopper.getGraphHopperStorage();
@@ -111,29 +111,31 @@ public class MiniGraphUI2 {
         // prepare node quadtree to 'enter' the graph. create a 313*313 grid => <3km
 //         this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
         this.index = (LocationIndexTree) hopper.getLocationIndex();
-        infoPanel = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                g.setColor(Color.WHITE);
-                Rectangle b = infoPanel.getBounds();
-                g.fillRect(0, 0, b.width, b.height);
-
-                g.setColor(Color.BLUE);
-                g.drawString(latLon, 40, 20);
-                g.drawString("scale:" + mg.getScaleX(), 40, 40);
-                final Rectangle bb = mainPanel.getBounds();
-                g.drawString(mg.setBounds(0, bb.width, 0, bb.height).toLessPrecisionString(), 40, 60);
-            }
-        };
+//        infoPanel = new JPanel() {
+//            @Override
+//            protected void paintComponent(Graphics g) {
+//                g.setColor(Color.WHITE);
+//                Rectangle b = infoPanel.getBounds();
+//                g.fillRect(0, 0, b.width, b.height);
+//
+//                g.setColor(Color.BLUE);
+//                g.drawString(latLon, 40, 20);
+//                g.drawString("scale:" + mg.getScaleX(), 40, 40);
+//                final Rectangle bb = mainPanel.getBounds();
+//                g.drawString(mg.setBounds(0, bb.width, 0, bb.height).toLessPrecisionString(), 40, 60);
+//            }
+//        };
 
         mainPanel = new LayeredPanel();
 
         // TODO make it correct with bitset-skipping too
-        final GHBitSet bitset = new GHTBitSet(graph.getNodes());
+//        final GHBitSet bitset = new GHTBitSet(graph.getNodes());
+
         mainPanel.addLayer(roadsLayer = new DefaultMapLayer() {
 
 
-            final Random rand = new Random();
+//            final Random rand = new Random();
+            final Color[] speedColors = generateColors(15);
 
             @Override
             public void paintComponent(final Graphics2D g2) {
@@ -141,10 +143,10 @@ public class MiniGraphUI2 {
 //                int locs = graph.getNodes();
                 Rectangle d = getBounds();
                 BBox b = mg.setBounds(0, d.width, 0, d.height);
-                if (fastPaint) {
-                    rand.setSeed(0);
-                    bitset.clear();
-                }
+//                if (fastPaint) {
+//                    rand.setSeed(0);
+//                    bitset.clear();
+//                }
 
 //                g2.setColor(Color.BLUE);
 //                double fromLat = 42.56819, fromLon = 1.603231;
@@ -160,68 +162,20 @@ public class MiniGraphUI2 {
 //                plotPath(path, g2, 1);
                 g2.setColor(Color.black);
 
-                Color[] speedColors = generateColors(15);
+
                 AllEdgesIterator edge = graph.getAllEdges();
                 while (edge.next()) {
-                    if (fastPaint && rand.nextInt(30) > 1)
-                        continue;
 
-                    int nodeIndex = edge.getBaseNode();
-                    double lat = na.getLatitude(nodeIndex);
-                    double lon = na.getLongitude(nodeIndex);
-                    int nodeId = edge.getAdjNode();
-                    double lat2 = na.getLatitude(nodeId);
-                    double lon2 = na.getLongitude(nodeId);
+                    int i = edge.getBaseNode();
+                    double lat = na.getLatitude(i);
+                    double lon = na.getLongitude(i);
 
-                    // mg.plotText(g2, lat, lon, "" + nodeIndex);
-                    if (!b.contains(lat, lon) && !b.contains(lat2, lon2))
-                        continue;
+                    int j = edge.getAdjNode();
+                    double lat2 = na.getLatitude(j);
+                    double lon2 = na.getLongitude(j);
 
-                    int sum = nodeIndex + nodeId;
-                    if (fastPaint) {
-                        if (bitset.contains(sum))
-                            continue;
-
-                        bitset.add(sum);
-                    }
-
-                    // mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, iter.getName());
-                    //mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, "s:" + (int) encoder.getSpeed(iter.getFlags()));
-                    double speed = edge.get(avSpeedEnc);
-                    Color color;
-                    if (speed >= 120) {
-                        // red
-                        color = speedColors[12];
-                    } else if (speed >= 100) {
-                        color = speedColors[10];
-                    } else if (speed >= 80) {
-                        color = speedColors[8];
-                    } else if (speed >= 60) {
-                        color = speedColors[6];
-                    } else if (speed >= 50) {
-                        color = speedColors[5];
-                    } else if (speed >= 40) {
-                        color = speedColors[4];
-                    } else if (speed >= 30) {
-                        color = Color.GRAY;
-                    } else {
-                        color = Color.LIGHT_GRAY;
-                    }
-
-                    g2.setColor(color);
-                    boolean fwd = edge.get(accessEnc);
-                    boolean bwd = edge.getReverse(accessEnc);
-                    float width = speed > 90 ? 1f : 0.8f;
-                    PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
-                    final int n = pl.size();
-                    g2.setStroke(new BasicStroke(width));
-                    for (int i = 1; i < n; i++) {
-                        if (fwd && !bwd) {
-                            mg.plotDirectedEdge(g2, pl.getLatitude(i - 1), pl.getLongitude(i - 1), pl.getLatitude(i), pl.getLongitude(i), 1);
-                        } else {
-                            mg.plotEdge(g2, pl.getLatitude(i - 1), pl.getLongitude(i - 1), pl.getLatitude(i), pl.getLongitude(i), 1);
-                        }
-                    }
+                    if (b.contains(lat, lon) || b.contains(lat2, lon2))
+                        plotEdge(g2, edge);
                 }
 
                 if (showTiles) {
@@ -249,26 +203,76 @@ public class MiniGraphUI2 {
 //
                 }
 
-                g2.setColor(Color.WHITE);
-                g2.fillRect(0, 0, 1000, 20);
-                for (int i = 4; i < speedColors.length; i++) {
-                    g2.setColor(speedColors[i]);
-                    g2.drawString(String.valueOf(i * 10), i * 30 - 100, 10);
-                }
+//                g2.setColor(Color.WHITE);
+//                g2.fillRect(0, 0, 1000, 20);
+//                for (int i = 4; i < speedColors.length; i++) {
+//                    g2.setColor(speedColors[i]);
+//                    g2.drawString(String.valueOf(i * 10), i * 30 - 100, 10);
+//                }
 
                 g2.setColor(Color.BLACK);
             }
+
+            private void plotEdge(Graphics2D g2, AllEdgesIterator edge) {
+                // mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, iter.getName());
+                //mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, "s:" + (int) encoder.getSpeed(iter.getFlags()));
+                double speed = edge.get(avSpeedEnc);
+                Color color;
+                if (speed >= 120) {
+                    // red
+                    color = speedColors[12];
+                } else if (speed >= 100) {
+                    color = speedColors[10];
+                } else if (speed >= 80) {
+                    color = speedColors[8];
+                } else if (speed >= 60) {
+                    color = speedColors[6];
+                } else if (speed >= 50) {
+                    color = speedColors[5];
+                } else if (speed >= 40) {
+                    color = speedColors[4];
+                } else if (speed >= 30) {
+                    color = Color.GRAY;
+                } else {
+                    color = Color.LIGHT_GRAY;
+                }
+
+                g2.setColor(color);
+                boolean fwd = edge.get(accessEnc);
+                boolean bwd = edge.getReverse(accessEnc);
+                float width = speed > 90 ? 1f : 0.8f;
+
+                plotWayGeometry(g2, fwd, bwd, width,
+                        edge.fetchWayGeometry(FetchMode.ALL));
+            }
+
+            private void plotWayGeometry(Graphics2D g2, boolean fwd, boolean bwd, float width, PointList pl) {
+                final int n = pl.size();
+                g2.setStroke(new BasicStroke(width));
+                for (int s = 1; s < n; s++) {
+                    if (fwd && !bwd) {
+                        mg.plotDirectedEdge(g2, pl.getLatitude(s - 1), pl.getLongitude(s - 1), pl.getLatitude(s), pl.getLongitude(s), -1);
+                    } else {
+                        mg.plotEdge(g2, pl.getLatitude(s - 1), pl.getLongitude(s - 1), pl.getLatitude(s), pl.getLongitude(s), -1);
+                    }
+                }
+            }
         });
 
+
         mainPanel.addLayer(pathLayer = new DefaultMapLayer() {
+
+
             @Override
             public void paintComponent(final Graphics2D g2) {
                 if (fromRes == null || toRes == null)
                     return;
 
+
+                RoutingAlgorithm algo = createAlgo(hopper);
+
                 makeTransparent(g2);
                 QueryGraph qGraph = QueryGraph.create(graph, fromRes, toRes);
-                RoutingAlgorithm algo = createAlgo(hopper);
                 if (algo instanceof DebugAlgo) {
                     ((DebugAlgo) algo).setGraphics2D(g2);
                 }
@@ -313,18 +317,18 @@ public class MiniGraphUI2 {
 
         if (debug) {
             // disable double buffering for debugging drawing - nice! when do we need DebugGraphics then?
-            RepaintManager repaintManager = RepaintManager.currentManager(mainPanel);
-            repaintManager.setDoubleBufferingEnabled(false);
+            RepaintManager.currentManager(mainPanel).setDoubleBufferingEnabled(false);
             mainPanel.setBuffering(false);
         }
     }
 
-    public static void main(String[] strs) {
-        PMap args = PMap.read(strs);
-        args.putObject("datareader.file", args.getString("datareader.file", "core/files/monaco.osm.gz"));
-        args.putObject("graph.location", args.getString("graph.location", "tools/target/mini-graph-ui-gh"));
-        args.putObject("graph.flag_encoders", args.getString("graph.flag_encoders", "car"));
-        GraphHopperConfig ghConfig = new GraphHopperConfig(args);
+    public static void main(String[] strs) throws InvocationTargetException, InterruptedException {
+        PMap a = PMap.read(strs);
+        a.putObject("datareader.file", a.getString("datareader.file", "core/files/monaco.osm.gz"));
+        a.putObject("graph.location", a.getString("graph.location", "tools/target/mini-graph-ui-gh"));
+        a.putObject("graph.flag_encoders", a.getString("graph.flag_encoders", "car"));
+
+        GraphHopperConfig ghConfig = new GraphHopperConfig(a);
         ghConfig.setProfiles(Collections.singletonList(
                 new Profile("profile")
                         .setVehicle("car")
@@ -336,10 +340,12 @@ public class MiniGraphUI2 {
         ghConfig.setLMProfiles(Collections.singletonList(
                 new LMProfile("profile")
         ));
-        GraphHopper hopper = new GraphHopperOSM().init(ghConfig).importOrLoad();
-        boolean debug = args.getBool("minigraphui.debug", false);
-        boolean useCH = args.getBool("minigraphui.useCH", false);
-        new MiniGraphUI2(hopper, debug, useCH).visualize();
+        GraphHopper hopper = new GraphHopperOSM()
+                .init(ghConfig).importOrLoad();
+        new MiniGraphUI2(hopper,
+                a.getBool("minigraphui.debug", false),
+                a.getBool("minigraphui.useCH", false))
+                .visualize();
     }
 
     private RoutingAlgorithm createAlgo(GraphHopper hopper) {
@@ -411,7 +417,6 @@ public class MiniGraphUI2 {
         }
 
 
-        boolean plotNodes = false;
         IntIndexedContainer nodes = tmpPath.calcNodes();
         if (plotNodes) {
             final int n = nodes.size();
@@ -443,17 +448,19 @@ public class MiniGraphUI2 {
         int frameWidth = 1200;
         JFrame frame = new JFrame("GraphHopper UI - Small&Ugly ;)");
 
-        //frame.setIgnoreRepaint(true);
-        frame.setLayout(new BorderLayout());
-        frame.add(mainPanel, BorderLayout.CENTER);
-        frame.add(infoPanel, BorderLayout.NORTH);
+        mainPanel.setIgnoreRepaint(true);
+        frame.setIgnoreRepaint(true);
+        //frame.setLayout(new BorderLayout());
+        frame.setContentPane(mainPanel);
+//        frame.add(mainPanel, BorderLayout.CENTER);
+//        frame.add(infoPanel, BorderLayout.NORTH);
 
-        infoPanel.setPreferredSize(new Dimension(300, 100));
+//        infoPanel.setPreferredSize(new Dimension(300, 100));
 
         // scale
         mainPanel.addMouseWheelListener(e -> {
             mg.scale(e.getX(), e.getY(), e.getWheelRotation() < 0);
-            repaint(true, true);
+            repaint();
         });
 
         // listener to investigate findID behavior
@@ -486,16 +493,18 @@ public class MiniGraphUI2 {
                     fromLat = mg.getLat(e.getY());
                     fromLon = mg.getLon(e.getX());
                 } else {
-                    double toLat = mg.getLat(e.getY());
-                    double toLon = mg.getLon(e.getX());
-                    StopWatch sw = new StopWatch().start();
-                    logger.info("start searching from {},{} to {},{}", fromLat, fromLon, toLat, toLon);
-                    // get from and to node id
-                    fromRes = index.findClosest(fromLat, fromLon, EdgeFilter.ALL_EDGES);
-                    toRes = index.findClosest(toLat, toLon, EdgeFilter.ALL_EDGES);
-                    logger.info("found ids {} -> {} in {}s", fromRes, toRes, sw.stop().getSeconds());
+                    SwingUtilities.invokeLater(()->{
+                        double toLat = mg.getLat(e.getY());
+                        double toLon = mg.getLon(e.getX());
+                        StopWatch sw = new StopWatch().start();
+                        logger.info("start searching from {},{} to {},{}", fromLat, fromLon, toLat, toLon);
+                        // get from and to node id
+                        fromRes = index.findClosest(fromLat, fromLon, EdgeFilter.ALL_EDGES);
+                        toRes = index.findClosest(toLat, toLon, EdgeFilter.ALL_EDGES);
+                        logger.info("found ids {} -> {} in {}s", fromRes, toRes, sw.stop().getSeconds());
+                        repaint();
+                    });
 
-                    repaintPaths();
                 }
 
                 fromDone = !fromDone;
@@ -504,7 +513,7 @@ public class MiniGraphUI2 {
             @Override
             public void mouseDragged(MouseEvent e) {
                 dragging = true;
-                fastPaint = true;
+//                fastPaint = true;
                 update(e);
                 updateLatLon(e);
             }
@@ -514,14 +523,14 @@ public class MiniGraphUI2 {
                 if (dragging) {
                     // update only if mouse release comes from dragging! (at the moment equal to fastPaint)
                     dragging = false;
-                    fastPaint = false;
+//                    fastPaint = false;
                     update(e);
                 }
             }
 
-            public void update(MouseEvent e) {
+            void update(MouseEvent e) {
                 mg.setNewOffset(e.getX() - currentPosX, e.getY() - currentPosY);
-                repaint(true, true);
+                repaint();
             }
 
             @Override
@@ -558,30 +567,29 @@ public class MiniGraphUI2 {
         frame.setVisible(true);
     }
 
-    public void visualize() {
-        try {
-            SwingUtilities.invokeAndWait(this::init);
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
+    public void visualize() throws InvocationTargetException, InterruptedException {
+        SwingUtilities.invokeAndWait(this::init);
     }
 
     void updateLatLon(MouseEvent e) {
-        latLon = mg.getLat(e.getY()) + "," + mg.getLon(e.getX());
-        infoPanel.repaint();
+//        latLon = mg.getLat(e.getY()) + "," + mg.getLon(e.getX());
+//        infoPanel.repaint();
         currentPosX = e.getX();
         currentPosY = e.getY();
     }
 
-    void repaintPaths() {
-        repaint(false, true);
-    }
+//    void repaintPaths() {
+//        repaint(false, true);
+//    }
 
-    void repaint(boolean roads, boolean paths) {
+    void repaint() {
+
         if (repainting.compareAndSet(false, true)) {
             SwingUtilities.invokeLater(() -> {
-                repainting.set(false);
+                if (!repainting.getAndSet(false))
+                    return;
 
+                boolean roads = true, paths = true;
                 // avoid threading as there should be no updated to scale or offset while painting
                 // (would to lead to artifacts)
                 //final StopWatch sw = new StopWatch().start();
@@ -591,7 +599,8 @@ public class MiniGraphUI2 {
                 if (roads)
                     roadsLayer.repaint();
 
-                mainPanel.repaint();
+                //mainPanel.repaint();
+                mainPanel.updateUI();
 
                 //logger.info("roads painting took " + sw.stop().getSeconds() + " sec");
             });

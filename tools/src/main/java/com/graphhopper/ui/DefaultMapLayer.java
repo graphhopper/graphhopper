@@ -50,7 +50,8 @@ public abstract class DefaultMapLayer implements MapLayer {
             return;
         }
         if (image != null) {
-            mainGraphics.drawImage(image, op, bounds.x, bounds.y);
+            //mainGraphics.drawImage(image, op, bounds.x, bounds.y);
+            mainGraphics.drawImage(image, bounds.x, bounds.y, null);
         }
     }
 

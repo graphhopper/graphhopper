@@ -145,7 +145,7 @@ class BaseGraph implements Graph {
     }
 
     private long toPointer(int edgeId) {
-        assert isInBounds(edgeId) : "edgeId " + edgeId + " not in bounds [0," + edgeCount + ")";
+        //assert isInBounds(edgeId) : "edgeId " + edgeId + " not in bounds [0," + edgeCount + ")";
         return (long) edgeId * edgeEntryBytes;
     }
 
@@ -975,14 +975,9 @@ class BaseGraph implements Graph {
 
         @Override
         public boolean next() {
-            edgeId++;
-            if (edgeId >= baseGraph.edgeCount)
+            if (!baseGraph.loadEdge(++edgeId, this))
                 return false;
-            edgePointer = baseGraph.toPointer(edgeId);
-            baseNode = baseGraph.getNodeA(edgePointer);
-            adjNode = baseGraph.getNodeB(edgePointer);
-            freshFlags = false;
-            reverse = false;
+            freshFlags = reverse = false;
             return true;
         }
 
@@ -1005,6 +1000,16 @@ class BaseGraph implements Graph {
             }
             return iter;
         }
+    }
+
+    private boolean loadEdge(int edgeId, AllEdgeIterator i) {
+        if (edgeId >= edgeCount)
+            return false;
+
+        long edgePointer = i.edgePointer = toPointer(edgeId);
+        i.baseNode = getNodeA(edgePointer);
+        i.adjNode = getNodeB(edgePointer);
+        return true;
     }
 
     static class EdgeIteratorStateImpl implements EdgeIteratorState {

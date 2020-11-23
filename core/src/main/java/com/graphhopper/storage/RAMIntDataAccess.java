@@ -218,10 +218,7 @@ class RAMIntDataAccess extends AbstractDataAccess {
         int bufferIndex = (int) (tmpIndex >>> segmentSizeIntsPower);
         int index = (int) (tmpIndex & indexDivisor);
         int oldVal = segments[bufferIndex][index];
-        if (tmpIndex * 4 == bytePos)
-            segments[bufferIndex][index] = oldVal & 0xFFFF0000 | value & 0x0000FFFF;
-        else
-            segments[bufferIndex][index] = oldVal & 0x0000FFFF | value << 16;
+        segments[bufferIndex][index] = ((tmpIndex * 4) == bytePos) ? ((oldVal & 0xFFFF0000) | (value & 0x0000FFFF)) : ((oldVal & 0x0000FFFF) | (value << 16));
     }
 
     @Override
@@ -233,10 +230,7 @@ class RAMIntDataAccess extends AbstractDataAccess {
         long tmpIndex = bytePos >> 2;
         int bufferIndex = (int) (tmpIndex >> segmentSizeIntsPower);
         int index = (int) (tmpIndex & indexDivisor);
-        if (tmpIndex * 4 == bytePos)
-            return (short) (segments[bufferIndex][index] & 0x0000FFFFL);
-        else
-            return (short) (segments[bufferIndex][index] >> 16);
+        return ((tmpIndex * 4) == bytePos) ? (short) (segments[bufferIndex][index] & 0x0000FFFFL) : (short) (segments[bufferIndex][index] >> 16);
     }
 
     @Override
@@ -309,8 +303,6 @@ class RAMIntDataAccess extends AbstractDataAccess {
 
     @Override
     public DAType getType() {
-        if (isStoring())
-            return DAType.RAM_INT_STORE;
-        return DAType.RAM_INT;
+        return isStoring() ? DAType.RAM_INT_STORE : DAType.RAM_INT;
     }
 }

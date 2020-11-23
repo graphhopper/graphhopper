@@ -754,8 +754,9 @@ public class GraphHopper implements GraphHopperAPI {
         if (!allowWrites && dataAccessType.isMMap())
             dataAccessType = DAType.MMAP_RO;
 
-        GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
-        ghStorage = new GraphHopperStorage(dir, encodingManager, hasElevation(), encodingManager.needsTurnCostsSupport(), defaultSegmentSize);
+        ghStorage = new GraphHopperStorage(
+                new GHDirectory(ghLocation, dataAccessType),
+                encodingManager, hasElevation(), encodingManager.needsTurnCostsSupport(), defaultSegmentSize);
 
         checkProfilesConsistency();
 
@@ -803,12 +804,12 @@ public class GraphHopper implements GraphHopperAPI {
             if (!encodingManager.hasEncoder(profile.getVehicle())) {
                 throw new IllegalArgumentException("Unknown vehicle '" + profile.getVehicle() + "' in profile: " + profile + ". Make sure all vehicles used in 'profiles' exist in 'graph.flag_encoders'");
             }
-            FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
-            if (profile.isTurnCosts() && !encoder.supportsTurnCosts()) {
-                throw new IllegalArgumentException("The profile '" + profile.getName() + "' was configured with " +
-                        "'turn_costs=true', but the corresponding vehicle '" + profile.getVehicle() + "' does not support turn costs." +
-                        "\nYou need to add `|turn_costs=true` to the vehicle in `graph.flag_encoders`");
-            }
+//            FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
+//            if (profile.isTurnCosts() && !encoder.supportsTurnCosts()) {
+//                throw new IllegalArgumentException("The profile '" + profile.getName() + "' was configured with " +
+//                        "'turn_costs=true', but the corresponding vehicle '" + profile.getVehicle() + "' does not support turn costs." +
+//                        "\nYou need to add `|turn_costs=true` to the vehicle in `graph.flag_encoders`");
+//            }
             try {
                 createWeighting(profile, new PMap());
             } catch (IllegalArgumentException e) {
@@ -827,8 +828,9 @@ public class GraphHopper implements GraphHopperAPI {
             }
         }
 
-        Set<String> chProfileSet = new LinkedHashSet<>(chPreparationHandler.getCHProfiles().size());
-        for (CHProfile chProfile : chPreparationHandler.getCHProfiles()) {
+        final List<CHProfile> chProfiles = chPreparationHandler.getCHProfiles();
+        Set<String> chProfileSet = new LinkedHashSet<>(chProfiles.size());
+        for (CHProfile chProfile : chProfiles) {
             boolean added = chProfileSet.add(chProfile.getProfile());
             if (!added) {
                 throw new IllegalArgumentException("Duplicate CH reference to profile '" + chProfile.getProfile() + "'");
@@ -837,8 +839,9 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("CH profile references unknown profile '" + chProfile.getProfile() + "'");
             }
         }
-        Map<String, LMProfile> lmProfileMap = new LinkedHashMap<>(lmPreparationHandler.getLMProfiles().size());
-        for (LMProfile lmProfile : lmPreparationHandler.getLMProfiles()) {
+        final List<LMProfile> lmProfiles = lmPreparationHandler.getLMProfiles();
+        Map<String, LMProfile> lmProfileMap = new LinkedHashMap<>(lmProfiles.size());
+        for (LMProfile lmProfile : lmProfiles) {
             LMProfile previous = lmProfileMap.put(lmProfile.getProfile(), lmProfile);
             if (previous != null) {
                 throw new IllegalArgumentException("Multiple LM profiles are using the same profile '" + lmProfile.getProfile() + "'");
@@ -850,7 +853,7 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("LM profile references unknown preparation profile '" + lmProfile.getPreparationProfile() + "'");
             }
         }
-        for (LMProfile lmProfile : lmPreparationHandler.getLMProfiles()) {
+        for (LMProfile lmProfile : lmProfiles) {
             if (lmProfile.usesOtherPreparation() && !lmProfileMap.containsKey(lmProfile.getPreparationProfile())) {
                 throw new IllegalArgumentException("Unknown LM preparation profile '" + lmProfile.getPreparationProfile() + "' in LM profile '" + lmProfile.getProfile() + "' cannot be used as preparation_profile");
             }
@@ -871,11 +874,10 @@ public class GraphHopper implements GraphHopperAPI {
 
         for (CHProfile chProfile : chPreparationHandler.getCHProfiles()) {
             Profile profile = profilesByName.get(chProfile.getProfile());
-            if (profile.isTurnCosts()) {
-                chPreparationHandler.addCHConfig(CHConfig.edgeBased(profile.getName(), createWeighting(profile, new PMap())));
-            } else {
-                chPreparationHandler.addCHConfig(CHConfig.nodeBased(profile.getName(), createWeighting(profile, new PMap())));
-            }
+            final String n = profile.getName();
+            final Weighting w = createWeighting(profile, new PMap());
+            chPreparationHandler.addCHConfig(
+                profile.isTurnCosts() ? CHConfig.edgeBased(n, w) : CHConfig.nodeBased(n, w));
         }
     }
 
@@ -896,8 +898,8 @@ public class GraphHopper implements GraphHopperAPI {
             // turn costs, see discussion in #1960
             // Running the preparation without turn costs is also useful to allow e.g. changing the u_turn_costs per
             // request (we have to use the minimum weight settings (= no turn costs) for the preparation)
-            Weighting weighting = createWeighting(profile, new PMap(), true);
-            lmPreparationHandler.addLMConfig(new LMConfig(profile.getName(), weighting));
+            lmPreparationHandler.addLMConfig(new LMConfig(profile.getName(),
+                    createWeighting(profile, new PMap(), true)));
         }
     }
 

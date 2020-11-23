@@ -69,11 +69,13 @@ public class GraphicsWrapper {
 
     public void plotDirectedEdge(Graphics2D g2, double lat, double lon, double lat2, double lon2, float width) {
 
-        g2.setStroke(new BasicStroke(width));
-        int startLon = (int) getX(lon);
-        int startLat = (int) getY(lat);
-        int destLon = (int) getX(lon2);
-        int destLat = (int) getY(lat2);
+        if (width>0)
+            g2.setStroke(new BasicStroke(width));
+
+        int startLon = (int) Math.round(getX(lon));
+        int startLat = (int) Math.round(getY(lat));
+        int destLon = (int) Math.round(getX(lon2));
+        int destLat = (int) Math.round(getY(lat2));
 
         g2.drawLine(startLon, startLat, destLon, destLat);
 
@@ -95,8 +97,9 @@ public class GraphicsWrapper {
     }
 
     public void plotEdge(Graphics2D g2, double lat, double lon, double lat2, double lon2, float width) {
-        g2.setStroke(new BasicStroke(width));
-        g2.drawLine((int) getX(lon), (int) getY(lat), (int) getX(lon2), (int) getY(lat2));
+        if (width>0)
+            g2.setStroke(new BasicStroke(width));
+        g2.drawLine((int) Math.round(getX(lon)), (int) Math.round(getY(lat)), (int) Math.round(getX(lon2)), (int) Math.round(getY(lat2)));
     }
 
     public void plotEdge(Graphics2D g2, double lat, double lon, double lat2, double lon2) {
@@ -134,10 +137,12 @@ public class GraphicsWrapper {
 
     public void plotNode(Graphics2D g2, NodeAccess na, int loc, Color c, int size, String text) {
         double lat = na.getLatitude(loc);
-        double lon = na.getLongitude(loc);
-        if (lat < bounds.minLat || lat > bounds.maxLat || lon < bounds.minLon || lon > bounds.maxLon) {
+        if (lat < bounds.minLat || lat > bounds.maxLat)
             return;
-        }
+
+        double lon = na.getLongitude(loc);
+        if (lon < bounds.minLon || lon > bounds.maxLon)
+            return;
 
         Color old = g2.getColor();
         g2.setColor(c);
@@ -146,9 +151,8 @@ public class GraphicsWrapper {
     }
 
     public void plot(Graphics2D g2, double lat, double lon, int width) {
-        double x = getX(lon);
-        double y = getY(lat);
-        g2.fillOval((int) x, (int) y, width, width);
+        g2.fillOval((int) Math.round(getX(lon)), (int) Math.round(getY(lat)),
+                width, width);
     }
 
     public void scale(int x, int y, boolean zoomIn) {
@@ -189,12 +193,6 @@ public class GraphicsWrapper {
     }
 
     public BBox setBounds(int minX, int maxX, int minY, int maxY) {
-        double minLon = getLon(minX);
-        double maxLon = getLon(maxX);
-
-        double maxLat = getLat(minY);
-        double minLat = getLat(maxY);
-        bounds = new BBox(minLon, maxLon, minLat, maxLat);
-        return bounds;
+        return bounds = new BBox(getLon(minX), getLon(maxX), getLat(maxY), getLat(minY));
     }
 }
