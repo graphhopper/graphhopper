@@ -21,12 +21,10 @@ import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.RouteNetwork;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
 import org.codehaus.commons.compiler.CompileException;
@@ -51,7 +49,8 @@ class ExpressionBuilder {
     // where more work would be needed. E.g. we do not care for the race condition where two identical classes are created
     // and only one is cached. We could use CachingJavaSourceClassLoader but 1. we would need to use a single compiler
     // across threads and 2. the statements (for priority and speed) are still unnecessarily created.
-    static final Map<String, Class> cache = Collections.synchronizedMap(new LinkedHashMap<String, Class>() {
+    // Use accessOrder==true to remove oldest accessed entry, not oldest inserted.
+    static final Map<String, Class> cache = Collections.synchronizedMap(new LinkedHashMap<String, Class>(CACHE_SIZE, 0.75f, true) {
         @Override
         protected boolean removeEldestEntry(Map.Entry eldest) {
             return size() > CACHE_SIZE;
