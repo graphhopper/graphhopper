@@ -254,6 +254,10 @@ public class LocationIndexTree implements LocationIndex {
         if (dataAccess.getHeader(0) != MAGIC_INT)
             throw new IllegalStateException("incorrect location index version, expected:" + MAGIC_INT);
 
+        if (dataAccess.getHeader(1 * 4) != calcChecksum())
+            throw new IllegalStateException("location index was opened with incorrect graph: "
+                    + dataAccess.getHeader(1 * 4) + " vs. " + calcChecksum());
+
         setMinResolutionInMeter(dataAccess.getHeader(2 * 4));
         prepareAlgo();
         initialized = true;
