@@ -31,29 +31,30 @@ import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
 import org.codehaus.commons.compiler.CompileException;
 import org.codehaus.commons.compiler.Location;
-import org.codehaus.janino.Java;
-import org.codehaus.janino.Parser;
-import org.codehaus.janino.SimpleCompiler;
-import org.codehaus.janino.Unparser;
+import org.codehaus.commons.compiler.io.Readers;
+import org.codehaus.janino.Scanner;
+import org.codehaus.janino.*;
 import org.codehaus.janino.util.DeepCopier;
 import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
 
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 class ExpressionBuilder {
+    static final AtomicLong longVal = new AtomicLong(1);
     static final String AREA_PREFIX = "in_area_";
-    // note: we only need to synchronize the get and put methods alone. No need to synch the iteration or the block
-    // where more work would be needed. E.g. we do not care for the rare case where two identical classes are created
-    // and only one is cached. We could use CachingJavaSourceClassLoader but 1. we would need to use a single compiler
-    // across threads and 2. the statements (for priority and speed) are still unnecessarily created
-    static final Map<String, Class> cache = Collections.synchronizedMap(new LinkedHashMap<String, Class>() {
-        int count = Runtime.getRuntime().availableProcessors();
+    static final int CACHE_SIZE = Integer.getInteger("com.graphhopper.routing.weighting.custom.cache_size", 500)
+            * Runtime.getRuntime().availableProcessors();
 
+    // Note: we only need to synchronize the get and put methods alone. No need to synch the iteration or the block
+    // where more work would be needed. E.g. we do not care for the race condition where two identical classes are created
+    // and only one is cached. We could use CachingJavaSourceClassLoader but 1. we would need to use a single compiler
+    // across threads and 2. the statements (for priority and speed) are still unnecessarily created.
+    static final Map<String, Class> cache = Collections.synchronizedMap(new LinkedHashMap<String, Class>() {
         @Override
         protected boolean removeEldestEntry(Map.Entry eldest) {
-            return size() > 500 * count;
+            return size() > CACHE_SIZE;
         }
     });
 
@@ -73,24 +74,23 @@ class ExpressionBuilder {
                 List<Java.BlockStatement> priorityStatements = createGetPriorityStatements(priorityVariables, customModel, lookup);
                 HashSet<String> speedVariables = new LinkedHashSet<>();
                 List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup, globalMaxSpeed, maxSpeedFallback);
-                String classTemplate = createClassTemplate(priorityVariables, speedVariables, lookup);
+                // Create different class name, which is required only for debugging.
+                // TODO does it improve performance? I.e. will the JIT be confused if different classes have the same name and it mixes performance stats?
+                long counter = longVal.incrementAndGet();
+                String classTemplate = createClassTemplate(counter, priorityVariables, speedVariables, lookup);
                 cu = (Java.CompilationUnit) new Parser(new org.codehaus.janino.Scanner("source", new StringReader(classTemplate))).
                         parseAbstractCompilationUnit();
                 cu = injectStatements(priorityStatements, speedStatements, cu);
-                // mydebug(cu);
-                SimpleCompiler sc = new SimpleCompiler();
-                // sc.setWarningHandler((handle, message, location) -> System.out.println(handle + ", " + message + ", " + location));
-                sc.cook(cu);
-                clazz = sc.getClassLoader().loadClass("com.graphhopper.Test");
+                SimpleCompiler sc = createCompiler(counter, cu);
+                clazz = sc.getClassLoader().loadClass("com.graphhopper.Test" + counter);
                 cache.put(key, clazz);
             }
 
-            // The class does not need to be thread-safe as we create an instead per request
+            // The class does not need to be thread-safe as we create an instance per request
             CustomWeightingHelper prio = (CustomWeightingHelper) clazz.getDeclaredConstructor().newInstance();
             prio.init(lookup, avgSpeedEnc, customModel.getAreas());
             return prio;
         } catch (Exception ex) {
-            // mydebug(cu);
             String location = "";
             if (ex instanceof CompileException) {
                 location = " in " + ((CompileException) ex).getLocation().getFileName();
@@ -148,14 +148,6 @@ class ExpressionBuilder {
         return priorityStatements;
     }
 
-    private static void mydebug(Java.CompilationUnit cu) {
-        if (cu != null) {
-            StringWriter sw = new StringWriter();
-            Unparser.unparse(cu, sw);
-            System.out.println(sw.toString());
-        }
-    }
-
     private static final Set<String> allowedNames = new HashSet<>(Arrays.asList("edge", "Math"));
 
     static boolean isValidVariableName(String name) {
@@ -205,7 +197,7 @@ class ExpressionBuilder {
      * means that the source file is free from user input and could be directly compiled. Before we do this we still
      * have to inject that parsed and safe user expressions in a later step.
      */
-    private static String createClassTemplate(Set<String> priorityVariables, Set<String> speedVariables, EncodedValueLookup lookup) {
+    private static String createClassTemplate(long counter, Set<String> priorityVariables, Set<String> speedVariables, EncodedValueLookup lookup) {
         final StringBuilder importSourceCode = new StringBuilder("import com.graphhopper.routing.ev.*;\n");
         importSourceCode.append("import java.util.Map;\n");
         final StringBuilder classSourceCode = new StringBuilder(100);
@@ -219,11 +211,10 @@ class ExpressionBuilder {
                 EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
                 if (!EncodingManager.isSharedEV(enc))
                     continue;
-                String className = toEncodedValueClassName(arg);
                 classSourceCode.append("protected " + enc.getClass().getSimpleName() + " " + arg + "_enc;\n");
                 initSourceCode.append("if (lookup.hasEncodedValue(\"" + arg + "\")) ");
                 initSourceCode.append("this." + arg + "_enc = (" + enc.getClass().getSimpleName()
-                        + ") lookup.getEncodedValue(\"" + arg + "\", " + className + ".class);\n");
+                        + ") lookup.getEncodedValue(\"" + arg + "\", EncodedValue.class);\n");
             } else if (arg.startsWith(AREA_PREFIX)) {
                 if (!includedAreaImports) {
                     importSourceCode.append("import " + BBox.class.getName() + ";\n");
@@ -252,11 +243,11 @@ class ExpressionBuilder {
                 + "import " + EncodedValueLookup.class.getName() + ";\n"
                 + "import " + EdgeIteratorState.class.getName() + ";\n"
                 + importSourceCode
-                + "\npublic class Test extends " + CustomWeightingHelper.class.getSimpleName() + " {\n"
+                + "\npublic class Test" + counter + " extends " + CustomWeightingHelper.class.getSimpleName() + " {\n"
                 + classSourceCode
                 + "   @Override\n"
                 + "   public void init(EncodedValueLookup lookup, "
-                + DecimalEncodedValue.class.getName() + " avgSpeedEnc, Map<String, JsonFeature> areas) {\n"
+                + DecimalEncodedValue.class.getName() + " avgSpeedEnc, Map<String, com.graphhopper.json.geo.JsonFeature> areas) {\n"
                 + initSourceCode
                 + "   }\n\n"
                 // we need these placeholder methods so that the hooks in DeepCopier are invoked
@@ -349,10 +340,28 @@ class ExpressionBuilder {
         }
     }
 
-    static String toEncodedValueClassName(String arg) {
-        if (arg.isEmpty()) throw new IllegalArgumentException("Cannot be empty");
-        if (arg.endsWith(RouteNetwork.key(""))) return RouteNetwork.class.getSimpleName();
-        String clazz = Helper.underScoreToCamelCase(arg);
-        return Character.toUpperCase(clazz.charAt(0)) + clazz.substring(1);
+    private static SimpleCompiler createCompiler(long counter, Java.AbstractCompilationUnit cu) throws CompileException {
+        if (Boolean.getBoolean(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE)) {
+            try {
+                StringWriter sw = new StringWriter();
+                Unparser.unparse(cu, sw);
+                // System.out.println(sw.toString());
+                File dir = new File("./src/main/java/com/graphhopper");
+                File temporaryFile = new File(dir, "Test" + counter + ".java");
+                Reader reader = Readers.teeReader(
+                        new StringReader(sw.toString()), // in
+                        new FileWriter(temporaryFile),   // out
+                        true               // closeWriterOnEoi
+                );
+                return new SimpleCompiler(temporaryFile.getAbsolutePath(), reader);
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        } else {
+            SimpleCompiler compiler = new SimpleCompiler();
+            // compiler.setWarningHandler((handle, message, location) -> System.out.println(handle + ", " + message + ", " + location));
+            compiler.cook(cu);
+            return compiler;
+        }
     }
 }
