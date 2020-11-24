@@ -22,7 +22,9 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.graphhopper.util.Parameters.Details.*;
 
@@ -38,7 +40,11 @@ public class PathDetailsBuilderFactory {
     public List<PathDetailsBuilder> createPathDetailsBuilders(List<String> requestedPathDetails, EncodedValueLookup evl, Weighting weighting) {
         List<PathDetailsBuilder> builders = new ArrayList<>();
         
+        Set<String> uniqueDetails = new HashSet<>();
         for (String pathDetail : requestedPathDetails) {
+            if (!uniqueDetails.add(pathDetail)) {
+                throw new IllegalArgumentException("Duplicate path detail requested: " + pathDetail);
+            }
             builders.add(createPathDetailsBuilder(pathDetail, evl, weighting));
         }
 
