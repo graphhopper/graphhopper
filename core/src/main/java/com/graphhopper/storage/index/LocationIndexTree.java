@@ -307,9 +307,12 @@ public class LocationIndexTree implements LocationIndex {
     }
 
     int calcChecksum() {
-        // do not include the edges as we could get problem with CHGraph due to shortcuts
-        // ^ graph.getAllEdges().count();
-        return graph.getNodes();
+        // Just some property of the graph this LocationIndex was created for.
+        // Intention is to more-or-less ensure that we aren't loading a LocationIndex for a totally different
+        // Graph. This is a possibility because the LocationIndex is normally the first thing that's written to disk.
+        // And in that case we want to avoid loading it instead of regenerating it.
+        BBox bounds = graph.getBounds();
+        return Objects.hash(Helper.round6(bounds.minLon), Helper.round6(bounds.maxLon), Helper.round6(bounds.minLat), Helper.round6(bounds.maxLat));
     }
 
     @Override
