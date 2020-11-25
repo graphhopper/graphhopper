@@ -72,13 +72,12 @@ class ExpressionBuilder {
                                         double globalMaxSpeed, double maxSpeedFallback, DecimalEncodedValue avgSpeedEnc) {
         Java.CompilationUnit cu;
         try {
-            String key = customModel.toString() + ",global:" + globalMaxSpeed + ",fallback:" + maxSpeedFallback;
-            if (key.length() > 400_000) throw new IllegalArgumentException("Custom Model too big: " + key.length());
-
-            Class clazz = CACHE.get(key);
-            if (clazz == null)
-                clazz = DYN_CACHE.get(key);
-            if (clazz == null) {
+//            String key = customModel.toString() + ",global:" + globalMaxSpeed + ",fallback:" + maxSpeedFallback;
+//            if (key.length() > 400_000) throw new IllegalArgumentException("Custom Model too big: " + key.length());
+//            Class clazz = CACHE.get(key);
+//            if (clazz == null)
+//                clazz = DYN_CACHE.get(key);
+//            if (clazz == null) {
                 HashSet<String> priorityVariables = new LinkedHashSet<>();
                 List<Java.BlockStatement> priorityStatements = createGetPriorityStatements(priorityVariables, customModel, lookup);
                 HashSet<String> speedVariables = new LinkedHashSet<>();
@@ -91,9 +90,9 @@ class ExpressionBuilder {
                         parseAbstractCompilationUnit();
                 cu = injectStatements(priorityStatements, speedStatements, cu);
                 SimpleCompiler sc = createCompiler(counter, cu);
-                clazz = sc.getClassLoader().loadClass("com.graphhopper.Test" + counter);
-                (CACHE.size() < CACHE_SIZE ? CACHE : DYN_CACHE).put(key, clazz);
-            }
+               Class clazz = sc.getClassLoader().loadClass("com.graphhopper.Test" + counter);
+//                (CACHE.size() < CACHE_SIZE ? CACHE : DYN_CACHE).put(key, clazz);
+//            }
 
             // The class does not need to be thread-safe as we create an instance per request
             CustomWeightingHelper prio = (CustomWeightingHelper) clazz.getDeclaredConstructor().newInstance();
