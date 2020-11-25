@@ -1071,7 +1071,6 @@ public class GraphHopper implements GraphHopperAPI {
             ensureWriteAccess();
 
             if (closeEarly) {
-                locationIndex.flush();
                 locationIndex.close();
                 ghStorage.flushAndCloseEarly();
             }

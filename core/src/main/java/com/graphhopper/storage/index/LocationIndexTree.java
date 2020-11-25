@@ -307,9 +307,7 @@ public class LocationIndexTree implements LocationIndex {
     }
 
     int calcChecksum() {
-        // do not include the edges as we could get problem with CHGraph due to shortcuts
-        // ^ graph.getAllEdges().count();
-        return graph.getNodes();
+        return graph.getNodes() ^ graph.getAllEdges().length();
     }
 
     @Override
