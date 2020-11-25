@@ -122,7 +122,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
   private long locations;
   private long skippedLocations;
   private final EncodingManager encodingManager;
-  private int workerThreads = 2;
+  private int workerThreads = Runtime.getRuntime().availableProcessors();
   // Using the correct Map<Long, Integer> is hard. We need a memory efficient and fast solution for big data sets!
   //
   // very slow: new SparseLongLongArray
