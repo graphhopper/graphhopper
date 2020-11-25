@@ -102,7 +102,7 @@ public class SpatialRuleLookupJTS implements SpatialRuleLookup {
         Point point = geometryFactory.createPoint(new Coordinate(lon, lat));
         List<SpatialRule> applicableRules = new ArrayList<>();
         for (SpatialRuleContainer container : containers) {
-            if (container.containsProperly(point)) {
+            if (container.covers(point)) {
                 applicableRules.addAll(container.getRules());
             }
         }
