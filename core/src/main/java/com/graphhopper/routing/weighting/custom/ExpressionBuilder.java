@@ -40,20 +40,27 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 class ExpressionBuilder {
-    static final AtomicLong longVal = new AtomicLong(1);
-    static final String AREA_PREFIX = "in_area_";
-    static final int CACHE_SIZE = Integer.getInteger("com.graphhopper.routing.weighting.custom.cache_size", 500)
-            * Runtime.getRuntime().availableProcessors();
+    private static final AtomicLong longVal = new AtomicLong(1);
+    private static final String AREA_PREFIX = "in_area_";
+    private static final Set<String> allowedNames = new HashSet<>(Arrays.asList("edge", "Math"));
+    private static final boolean JANINO_DEBUG = Boolean.getBoolean(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE);
 
-    // Note: we only need to synchronize the get and put methods alone. No need to synch the iteration or the block
-    // where more work would be needed. E.g. we do not care for the race condition where two identical classes are created
-    // and only one is cached. We could use CachingJavaSourceClassLoader but 1. we would need to use a single compiler
-    // across threads and 2. the statements (for priority and speed) are still unnecessarily created.
+    // Without a cache we get 50% slower routing and 300% slower routingLM8. CH requests and preparation is unaffected
+    // as cached weighting from preparation is used. This cache ensures that the first Weighting classes which are
+    // considered important are never removed regardless of how frequent other Weightings are created and accessed.
+    // Note: we only need to synchronize the get and put methods alone. E.g. we do not care for the race condition where
+    // two identical classes are created and only one is overwritten. We could use CachingJavaSourceClassLoader from
+    // Janino but 1. we would need to use a single compiler across threads and 2. the statements (for priority and speed)
+    // are still unnecessarily created.
+    private static final int CACHE_SIZE = Integer.getInteger("com.graphhopper.routing.weighting.custom.cache_size", 10);
+    private static final Map<String, Class> CACHE = Collections.synchronizedMap(new HashMap<>(CACHE_SIZE));
+
+    // Introduce a dynamic cache to remember different Weighting classes, but throws away less frequently used classes.
     // Use accessOrder==true to remove oldest accessed entry, not oldest inserted.
-    static final Map<String, Class> cache = Collections.synchronizedMap(new LinkedHashMap<String, Class>(CACHE_SIZE, 0.75f, true) {
-        @Override
+    private static final int DYN_CACHE_SIZE = Integer.getInteger("com.graphhopper.routing.weighting.custom.dynamic_cache_size", 1000);
+    private static final Map<String, Class> DYN_CACHE = Collections.synchronizedMap(new LinkedHashMap<String, Class>(DYN_CACHE_SIZE, 0.75f, true) {
         protected boolean removeEldestEntry(Map.Entry eldest) {
-            return size() > CACHE_SIZE;
+            return size() > DYN_CACHE_SIZE;
         }
     });
 
@@ -67,14 +74,17 @@ class ExpressionBuilder {
         try {
             String key = customModel.toString() + ",global:" + globalMaxSpeed + ",fallback:" + maxSpeedFallback;
             if (key.length() > 400_000) throw new IllegalArgumentException("Custom Model too big: " + key.length());
-            Class clazz = cache.get(key);
+
+            Class clazz = CACHE.get(key);
+            if (clazz == null)
+                clazz = DYN_CACHE.get(key);
             if (clazz == null) {
                 HashSet<String> priorityVariables = new LinkedHashSet<>();
                 List<Java.BlockStatement> priorityStatements = createGetPriorityStatements(priorityVariables, customModel, lookup);
                 HashSet<String> speedVariables = new LinkedHashSet<>();
                 List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup, globalMaxSpeed, maxSpeedFallback);
                 // Create different class name, which is required only for debugging.
-                // TODO does it improve performance? I.e. will the JIT be confused if different classes have the same name and it mixes performance stats?
+                // TODO does it improve performance? I.e. will the JIT be confused if different classes have the same name and it mixes performance stats? See https://github.com/janino-compiler/janino/issues/137
                 long counter = longVal.incrementAndGet();
                 String classTemplate = createClassTemplate(counter, priorityVariables, speedVariables, lookup);
                 cu = (Java.CompilationUnit) new Parser(new org.codehaus.janino.Scanner("source", new StringReader(classTemplate))).
@@ -82,7 +92,7 @@ class ExpressionBuilder {
                 cu = injectStatements(priorityStatements, speedStatements, cu);
                 SimpleCompiler sc = createCompiler(counter, cu);
                 clazz = sc.getClassLoader().loadClass("com.graphhopper.Test" + counter);
-                cache.put(key, clazz);
+                (CACHE.size() < CACHE_SIZE ? CACHE : DYN_CACHE).put(key, clazz);
             }
 
             // The class does not need to be thread-safe as we create an instance per request
@@ -91,10 +101,8 @@ class ExpressionBuilder {
             return prio;
         } catch (Exception ex) {
             String location = "";
-            if (ex instanceof CompileException) {
+            if (ex instanceof CompileException)
                 location = " in " + ((CompileException) ex).getLocation().getFileName();
-                // ex.printStackTrace();
-            }
             throw new IllegalArgumentException("Cannot compile expression " + location + ", " + ex.getMessage(), ex);
         }
     }
@@ -146,8 +154,6 @@ class ExpressionBuilder {
                 parseBlockStatements());
         return priorityStatements;
     }
-
-    private static final Set<String> allowedNames = new HashSet<>(Arrays.asList("edge", "Math"));
 
     static boolean isValidVariableName(String name) {
         return name.startsWith(AREA_PREFIX) || allowedNames.contains(name);
@@ -340,7 +346,7 @@ class ExpressionBuilder {
     }
 
     private static SimpleCompiler createCompiler(long counter, Java.AbstractCompilationUnit cu) throws CompileException {
-        if (Boolean.getBoolean(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE)) {
+        if (JANINO_DEBUG) {
             try {
                 StringWriter sw = new StringWriter();
                 Unparser.unparse(cu, sw);
