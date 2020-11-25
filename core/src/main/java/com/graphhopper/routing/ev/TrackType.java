@@ -21,8 +21,7 @@ import com.graphhopper.util.Helper;
 
 /**
  * This enum defines the track type of an edge which describes how well-maintained a certain track is.
- * If not tagged the value will be MISSING (the default and easiest grad) and all edges that do not fit get OTHER as
- * value (the worst grade).
+ * If not tagged the value will be MISSING and all tracktype values that do not fit get OTHER as value.
  *
  * @see <a href="https://wiki.openstreetmap.org/wiki/Tracktype">Tracktype Wiki</a>
  */
