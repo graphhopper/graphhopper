@@ -27,10 +27,12 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
+import org.locationtech.jts.algorithm.ConvexHull;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.prep.PreparedPolygon;
 import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
 import org.locationtech.jts.triangulate.ConstraintVertex;
 import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
@@ -72,34 +74,8 @@ public class JTSTriangulator implements Triangulator {
             }
         });
 
-        // Get at least all nodes within our bounding box (I think convex hull would be enough.)
-        // I think then we should have all possible encroaching points. (Proof needed.)
-        Envelope envelope = new Envelope();
-        zs.keySet().forEach(envelope::expandToInclude);
-        graphHopper.getLocationIndex().query(BBox.fromEnvelope(envelope), new LocationIndex.Visitor() {
-            @Override
-            public void onNode(int nodeId) {
-                Coordinate nodeCoordinate = new Coordinate(na.getLongitude(nodeId), na.getLatitude(nodeId));
-                zs.merge(nodeCoordinate, Double.MAX_VALUE, Math::min);
-            }
-        });
-        zs.forEach((coordinate, z) -> coordinate.z = z);
-
-        Set<Coordinate> sites = zs.keySet();
-        if (sites.size() > graphHopper.getRouterConfig().getMaxVisitedNodes() / 3)
-            throw new IllegalArgumentException("Too many nodes would be included in post processing (" + sites.size() + "). Let us know if you need this increased.");
-
-        // Sites may contain repeated coordinates. Especially for edge-based traversal, that's expected -- we visit
-        // each node multiple times.
-        // But that's okay, the triangulator de-dupes by itself, and it keeps the first z-value it sees, which is
-        // what we want.
-
-        Collection<ConstraintVertex> constraintVertices = sites.stream().map(ConstraintVertex::new).collect(Collectors.toList());
-        ConformingDelaunayTriangulator conformingDelaunayTriangulator = new ConformingDelaunayTriangulator(constraintVertices, tolerance);
-        conformingDelaunayTriangulator.setConstraints(new ArrayList<>(), new ArrayList<>());
-        conformingDelaunayTriangulator.formInitialDelaunay();
-        conformingDelaunayTriangulator.enforceConstraints();
-        Geometry convexHull = conformingDelaunayTriangulator.getConvexHull();
+        GeometryFactory fact = new GeometryFactory();
+        Geometry convexHull = new ConvexHull(zs.keySet().toArray(new Coordinate[0]), fact).getConvexHull();
 
         // If there's only one site (and presumably also if the convex hull is otherwise degenerated),
         // the triangulation only contains the frame, and not the site within the frame. Not sure if I agree with that.
@@ -110,11 +86,33 @@ public class JTSTriangulator implements Triangulator {
         // the idea is that every real (non-frame) vertex has positive-length-edges around it that can be traversed
         // to get a non-empty polygon.
         // So we exclude this case for now (it is indeed only a corner-case).
-
         if (!(convexHull instanceof Polygon)) {
             throw new IllegalArgumentException("Too few points found. "
                     + "Please try a different 'point' or a larger 'time_limit'.");
         }
+
+        // Get at least all nodes within our convex hull.
+        // I think then we should have all possible encroaching points. (Proof needed.)
+        PreparedPolygon preparedConvexHull = new PreparedPolygon((Polygon) convexHull);
+        graphHopper.getLocationIndex().query(BBox.fromEnvelope(convexHull.getEnvelopeInternal()), new LocationIndex.Visitor() {
+            @Override
+            public void onNode(int nodeId) {
+                Coordinate nodeCoordinate = new Coordinate(na.getLongitude(nodeId), na.getLatitude(nodeId));
+                if (preparedConvexHull.contains(fact.createPoint(nodeCoordinate)))
+                    zs.merge(nodeCoordinate, Double.MAX_VALUE, Math::min);
+            }
+        });
+        zs.forEach((coordinate, z) -> coordinate.z = z);
+
+        Set<Coordinate> sites = zs.keySet();
+        if (sites.size() > graphHopper.getRouterConfig().getMaxVisitedNodes() / 3)
+            throw new IllegalArgumentException("Too many nodes would be included in post processing (" + sites.size() + "). Let us know if you need this increased.");
+
+        Collection<ConstraintVertex> constraintVertices = sites.stream().map(ConstraintVertex::new).collect(Collectors.toList());
+        ConformingDelaunayTriangulator conformingDelaunayTriangulator = new ConformingDelaunayTriangulator(constraintVertices, tolerance);
+        conformingDelaunayTriangulator.setConstraints(new ArrayList<>(), new ArrayList<>());
+        conformingDelaunayTriangulator.formInitialDelaunay();
+        conformingDelaunayTriangulator.enforceConstraints();
 
         QuadEdgeSubdivision tin = conformingDelaunayTriangulator.getSubdivision();
         for (Vertex vertex : (Collection<Vertex>) tin.getVertices(true)) {
