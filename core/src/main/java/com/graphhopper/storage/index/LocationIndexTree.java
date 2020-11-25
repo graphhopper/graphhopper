@@ -214,9 +214,9 @@ public class LocationIndexTree implements LocationIndex {
         return bm;
     }
 
-    InMemConstructionIndex getPrepareInMemIndex() {
+    InMemConstructionIndex getPrepareInMemIndex(EdgeIterator edgeIterator) {
         InMemConstructionIndex memIndex = new InMemConstructionIndex(entries[0]);
-        memIndex.prepare();
+        memIndex.prepare(edgeIterator);
         return memIndex;
     }
 
@@ -276,13 +276,17 @@ public class LocationIndexTree implements LocationIndex {
 
     @Override
     public LocationIndex prepareIndex() {
+        return prepareIndex(graph.getAllEdges());
+    }
+
+    public LocationIndex prepareIndex(EdgeIterator edgeIterator) {
         if (initialized)
             throw new IllegalStateException("Call prepareIndex only once");
 
         StopWatch sw = new StopWatch().start();
         prepareAlgo();
         // in-memory preparation
-        InMemConstructionIndex inMem = getPrepareInMemIndex();
+        InMemConstructionIndex inMem = getPrepareInMemIndex(edgeIterator);
 
         // compact & store to dataAccess
         dataAccess.create(64 * 1024);
@@ -839,8 +843,7 @@ public class LocationIndexTree implements LocationIndex {
             root = new InMemTreeEntry(noOfSubEntries);
         }
 
-        void prepare() {
-            final EdgeIterator allIter = graph.getAllEdges();
+        void prepare(EdgeIterator allIter) {
             try {
                 while (allIter.next()) {
                     int nodeA = allIter.getBaseNode();
