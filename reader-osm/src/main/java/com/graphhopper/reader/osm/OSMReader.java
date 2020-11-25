@@ -194,7 +194,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         + "total:" + (int) (sw1.getSeconds() + sw2.getSeconds()) + "s");
   }
 
-  void read(File osmFile, EntityHandler handler) {
+  void handle(File osmFile, EntityHandler handler) {
     try {
       ForkJoinPool pool = new ForkJoinPool(workerThreads);
       pool.submit(() -> {
@@ -217,7 +217,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
    */
   void preProcess(File osmFile) {
     LOGGER.info("Starting to process OSM file: '" + osmFile + "'");
-    read(osmFile, new EntityHandler() {
+    handle(osmFile, new EntityHandler() {
       @Override
       public void handle(Header header) {
         if (header.getReplicationTimestamp() != null) {
@@ -339,7 +339,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
 
     LongIntMap nodeFilter = getNodeMap();
     AtomicLong counter = new AtomicLong(1);
-    read(osmFile, new EntityHandler() {
+    handle(osmFile, new EntityHandler() {
       @Override
       public void handle(Header header) {
         // do nothing
@@ -351,9 +351,9 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
       }
 
       @Override
-      public void handle(Node item) {
-        if (nodeFilter.get(item.getId()) != EMPTY_NODE) {
-          processNode(toReaderNode(item));
+      public void handle(Node node) {
+        if (nodeFilter.get(node.getId()) != EMPTY_NODE) {
+          processNode(toReaderNode(node));
         }
       }
 
