@@ -18,14 +18,17 @@
 
 package com.graphhopper.isochrone.algorithm;
 
-import com.graphhopper.routing.RouterConfig;
+import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PointList;
+import com.graphhopper.util.shapes.BBox;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
@@ -33,29 +36,27 @@ import org.locationtech.jts.triangulate.ConstraintVertex;
 import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
 import org.locationtech.jts.triangulate.quadedge.Vertex;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
 public class JTSTriangulator implements Triangulator {
 
-    private final RouterConfig routerConfig;
+    private final GraphHopper graphHopper;
 
-    public JTSTriangulator(RouterConfig routerConfig) {
-        this.routerConfig = routerConfig;
+    public JTSTriangulator(GraphHopper graphHopper) {
+        this.graphHopper = graphHopper;
     }
 
     public Result triangulate(Snap snap, QueryGraph queryGraph, ShortestPathTree shortestPathTree, ToDoubleFunction<ShortestPathTree.IsoLabel> fz, double tolerance) {
         final NodeAccess na = queryGraph.getNodeAccess();
-        Collection<Coordinate> sites = new ArrayList<>();
+        Map<Coordinate, Double> zs = new HashMap<>();
         shortestPathTree.search(snap.getClosestNode(), label -> {
             double exploreValue = fz.applyAsDouble(label);
             double lat = na.getLatitude(label.node);
             double lon = na.getLongitude(label.node);
             Coordinate site = new Coordinate(lon, lat);
-            site.z = exploreValue;
-            sites.add(site);
+            zs.merge(site, exploreValue, Math::min);
 
             // add a pillar node to increase precision a bit for longer roads
             if (label.parent != null) {
@@ -66,13 +67,26 @@ public class JTSTriangulator implements Triangulator {
                     double lat2 = innerPoints.getLat(midIndex);
                     double lon2 = innerPoints.getLon(midIndex);
                     Coordinate site2 = new Coordinate(lon2, lat2);
-                    site2.z = exploreValue;
-                    sites.add(site2);
+                    zs.merge(site2, exploreValue, Math::min);
                 }
             }
         });
 
-        if (sites.size() > routerConfig.getMaxVisitedNodes() / 3)
+        // Get at least all nodes within our bounding box (I think convex hull would be enough.)
+        // I think then we should have all possible encroaching points. (Proof needed.)
+        Envelope envelope = new Envelope();
+        zs.keySet().forEach(envelope::expandToInclude);
+        graphHopper.getLocationIndex().query(BBox.fromEnvelope(envelope), new LocationIndex.Visitor() {
+            @Override
+            public void onNode(int nodeId) {
+                Coordinate nodeCoordinate = new Coordinate(na.getLongitude(nodeId), na.getLatitude(nodeId));
+                zs.merge(nodeCoordinate, Double.MAX_VALUE, Math::min);
+            }
+        });
+        zs.forEach((coordinate, z) -> coordinate.z = z);
+
+        Set<Coordinate> sites = zs.keySet();
+        if (sites.size() > graphHopper.getRouterConfig().getMaxVisitedNodes() / 3)
             throw new IllegalArgumentException("Too many nodes would be included in post processing (" + sites.size() + "). Let us know if you need this increased.");
 
         // Sites may contain repeated coordinates. Especially for edge-based traversal, that's expected -- we visit
