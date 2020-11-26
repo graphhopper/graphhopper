@@ -205,11 +205,11 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
   void handle(File osmFile, EntityHandler handler) {
     ForkJoinPool pool = ForkJoinPool.commonPool();
     LinkedBlockingQueue<Entity> queue = new LinkedBlockingQueue<>(10000);
-    ArrayList<Entity> batch = new ArrayList<>(1000);
+    ArrayDeque<Entity> batch = new ArrayDeque<>(1000);
 
     Future producer = pool.submit(() -> {
       try {
-        OpenStreetMap.entityStream(osmFile.toPath(), true).forEachOrdered(entity -> {
+        OpenStreetMap.entityStream(osmFile.toPath(), false).forEach(entity -> {
           try {
             queue.put(entity);
           } catch (InterruptedException e) {
@@ -224,10 +224,9 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     Future consumer = pool.submit(() -> {
       while (!(producer.isDone() && queue.isEmpty())) {
         queue.drainTo(batch, 1000);
-        for (Entity entity : batch) {
-          handler.accept(entity);
+        while (!batch.isEmpty()) {
+          handler.accept(batch.poll());
         }
-        batch.clear();
       }
     });
 
