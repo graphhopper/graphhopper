@@ -1,7 +1,7 @@
 // This software is released into the Public Domain.  See copying.txt for details.
 package com.graphhopper.reader.osm.pbf;
 
-import com.carrotsearch.hppc.LongIndexedContainer;
+import com.carrotsearch.hppc.LongArrayList;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderNode;
@@ -248,18 +248,19 @@ public class PbfBlobDecoder implements Runnable {
     private void processWays(List<Osmformat.Way> ways, PbfFieldDecoder fieldDecoder) {
         for (Osmformat.Way way : ways) {
             Map<String, Object> tags = buildTags(way.getKeysList(), way.getValsList(), fieldDecoder);
-            ReaderWay osmWay = new ReaderWay(way.getId());
-            osmWay.setTags(tags);
 
             // Build up the list of way nodes for the way. The node ids are
             // delta encoded meaning that each id is stored as a delta against
             // the previous one.
             long nodeId = 0;
-            LongIndexedContainer wayNodes = osmWay.getNodes();
+            LongArrayList wayNodes = new LongArrayList(way.getRefsCount());
             for (long nodeIdOffset : way.getRefsList()) {
                 nodeId += nodeIdOffset;
                 wayNodes.add(nodeId);
             }
+            
+            ReaderWay osmWay = new ReaderWay(way.getId(), wayNodes);
+            osmWay.setTags(tags);
 
             decodedEntities.add(osmWay);
         }
