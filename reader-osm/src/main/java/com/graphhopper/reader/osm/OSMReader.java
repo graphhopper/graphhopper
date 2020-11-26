@@ -209,7 +209,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
 
     Future producer = pool.submit(() -> {
       try {
-        OpenStreetMap.entityStream(osmFile.toPath(), true).forEach(entity -> {
+        OpenStreetMap.entityStream(osmFile.toPath(), true).forEachOrdered(entity -> {
           try {
             queue.put(entity);
           } catch (InterruptedException e) {
