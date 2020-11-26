@@ -347,10 +347,10 @@ public class Helper {
     }
 
     /**
-     * Creates a SimpleDateFormat with ROOT locale.
+     * Creates a SimpleDateFormat with ENGLISH locale.
      */
     public static DateFormat createFormatter(String str) {
-        DateFormat df = new SimpleDateFormat(str, Locale.ROOT);
+        DateFormat df = new SimpleDateFormat(str, Locale.ENGLISH);
         df.setTimeZone(UTC);
         return df;
     }
