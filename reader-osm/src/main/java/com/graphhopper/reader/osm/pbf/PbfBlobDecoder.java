@@ -15,9 +15,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.*;
-import java.util.zip.DataFormatException;
-import java.util.zip.Inflater;
+import java.util.zip.InflaterInputStream;
 
 /**
  * Converts PBF block data into decoded entities ready to be passed into an Osmosis pipeline. This
@@ -48,34 +49,27 @@ public class PbfBlobDecoder implements Runnable {
         this.listener = listener;
     }
 
-    private byte[] readBlobContent() throws IOException {
+    private InputStream readBlobContent() throws IOException {
         Fileformat.Blob blob = Fileformat.Blob.parseFrom(rawBlob);
-        byte[] blobData;
 
         if (blob.hasRaw()) {
-            blobData = blob.getRaw().toByteArray();
-        } else if (blob.hasZlibData()) {
-            Inflater inflater = new Inflater();
-            inflater.setInput(blob.getZlibData().toByteArray());
-            blobData = new byte[blob.getRawSize()];
-            try {
-                inflater.inflate(blobData);
-            } catch (DataFormatException e) {
-                throw new RuntimeException("Unable to decompress PBF blob.", e);
-            }
-            if (!inflater.finished()) {
-                throw new RuntimeException("PBF blob contains incomplete compressed data.");
-            }
-            inflater.end();
-        } else {
-            throw new RuntimeException("PBF blob uses unsupported compression, only raw or zlib may be used.");
+            return blob.getRaw().newInput();
         }
-
-        return blobData;
+        
+        if (blob.hasZlibData()) {
+            return new InflaterInputStream(blob.getZlibData().newInput());
+        }
+        
+        throw new RuntimeException("PBF blob uses unsupported compression, only raw or zlib may be used.");
     }
 
-    private void processOsmHeader(byte[] data) throws InvalidProtocolBufferException {
-        Osmformat.HeaderBlock header = Osmformat.HeaderBlock.parseFrom(data);
+    private void processOsmHeader(InputStream data) throws InvalidProtocolBufferException {
+        Osmformat.HeaderBlock header;
+        try {
+            header = Osmformat.HeaderBlock.parseFrom(data);
+        } catch (IOException e) {
+             throw new UncheckedIOException(e);
+        }
 
         // Build the list of active and unsupported features in the file.
         List<String> supportedFeatures = Arrays.asList("OsmSchema-V0.6", "DenseNodes");
@@ -322,8 +316,13 @@ public class PbfBlobDecoder implements Runnable {
         }
     }
 
-    private void processOsmPrimitives(byte[] data) throws InvalidProtocolBufferException {
-        Osmformat.PrimitiveBlock block = Osmformat.PrimitiveBlock.parseFrom(data);
+    private void processOsmPrimitives(InputStream data) throws InvalidProtocolBufferException {
+        Osmformat.PrimitiveBlock block;
+        try {
+            block = Osmformat.PrimitiveBlock.parseFrom(data);
+        } catch (IOException e) {
+             throw new UncheckedIOException(e);
+        }
         PbfFieldDecoder fieldDecoder = new PbfFieldDecoder(block);
 
         for (Osmformat.PrimitiveGroup primitiveGroup : block.getPrimitivegroupList()) {
