@@ -5,6 +5,7 @@
     removed Dockerfile
     the second argument of the VirtualEdgeIteratorState constructor is now an edge key (was an edge id before)
     removed instruction annotations(cycleway, off_bike, ford, ferry, private, toll)
+    the boundaries file is now expected to provide the countrycodes via the `ISO3166-1:alpha3` property
 
 2.0
     AbstractFlagEncoder#getMaxSpeed returns now Double#NaN instead of -1 if no maxspeed was found
