@@ -31,7 +31,7 @@ public class ReaderRelation extends ReaderElement {
     protected List<Member> members;
 
     public ReaderRelation(long id) {
-        super(id, RELATION, 2);
+        super(id, RELATION);
     }
 
     @Override

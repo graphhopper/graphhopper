@@ -116,7 +116,7 @@ public class PbfBlobDecoder implements Runnable {
          */
     }
 
-    private Map<String, String> buildTags(List<Integer> keys, List<Integer> values, PbfFieldDecoder fieldDecoder) {
+    private Map<String, Object> buildTags(List<Integer> keys, List<Integer> values, PbfFieldDecoder fieldDecoder) {
 
         // Ensure parallel lists are of equal size.
         if (checkData) {
@@ -129,7 +129,7 @@ public class PbfBlobDecoder implements Runnable {
         Iterator<Integer> keyIterator = keys.iterator();
         Iterator<Integer> valueIterator = values.iterator();
         if (keyIterator.hasNext()) {
-            Map<String, String> tags = new HashMap<>(keys.size());
+            Map<String, Object> tags = new HashMap<>(keys.size());
             while (keyIterator.hasNext()) {
                 String key = fieldDecoder.decodeString(keyIterator.next());
                 String value = fieldDecoder.decodeString(valueIterator.next());
@@ -142,7 +142,7 @@ public class PbfBlobDecoder implements Runnable {
 
     private void processNodes(List<Osmformat.Node> nodes, PbfFieldDecoder fieldDecoder) {
         for (Osmformat.Node node : nodes) {
-            Map<String, String> tags = buildTags(node.getKeysList(), node.getValsList(), fieldDecoder);
+            Map<String, Object> tags = buildTags(node.getKeysList(), node.getValsList(), fieldDecoder);
 
             ReaderNode osmNode = new ReaderNode(node.getId(), fieldDecoder.decodeLatitude(node
                     .getLat()), fieldDecoder.decodeLatitude(node.getLon()));
@@ -215,7 +215,7 @@ public class PbfBlobDecoder implements Runnable {
             // Build the tags. The key and value string indexes are sequential
             // in the same PBF array. Each set of tags is delimited by an index
             // with a value of 0.
-            Map<String, String> tags = null;
+            Map<String, Object> tags = null;
             while (keysValuesIterator.hasNext()) {
                 int keyIndex = keysValuesIterator.next();
                 if (keyIndex == 0) {
@@ -247,7 +247,7 @@ public class PbfBlobDecoder implements Runnable {
 
     private void processWays(List<Osmformat.Way> ways, PbfFieldDecoder fieldDecoder) {
         for (Osmformat.Way way : ways) {
-            Map<String, String> tags = buildTags(way.getKeysList(), way.getValsList(), fieldDecoder);
+            Map<String, Object> tags = buildTags(way.getKeysList(), way.getValsList(), fieldDecoder);
             ReaderWay osmWay = new ReaderWay(way.getId());
             osmWay.setTags(tags);
 
@@ -308,7 +308,7 @@ public class PbfBlobDecoder implements Runnable {
 
     private void processRelations(List<Osmformat.Relation> relations, PbfFieldDecoder fieldDecoder) {
         for (Osmformat.Relation relation : relations) {
-            Map<String, String> tags = buildTags(relation.getKeysList(), relation.getValsList(), fieldDecoder);
+            Map<String, Object> tags = buildTags(relation.getKeysList(), relation.getValsList(), fieldDecoder);
 
             ReaderRelation osmRelation = new ReaderRelation(relation.getId());
             osmRelation.setTags(tags);

@@ -18,7 +18,6 @@
 package com.graphhopper.reader;
 
 import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Base class for all network objects
@@ -34,16 +33,11 @@ public abstract class ReaderElement {
     public static final int FILEHEADER = 3;
     private final int type;
     private final long id;
-    private final Map<String, Object> properties;
+    private Map<String, Object> properties;
 
     protected ReaderElement(long id, int type) {
-        this(id, type, 4);
-    }
-
-    protected ReaderElement(long id, int type, int propertyMapSize) {
         this.id = id;
         this.type = type;
-        properties = new HashMap<>(propertyMapSize);
     }
 
     public long getId() {
@@ -51,7 +45,7 @@ public abstract class ReaderElement {
     }
 
     protected String tagsToString() {
-        if (properties.isEmpty())
+        if (properties == null || properties.isEmpty())
             return "<empty>";
 
         StringBuilder tagTxt = new StringBuilder();
@@ -65,27 +59,29 @@ public abstract class ReaderElement {
     }
 
     protected Map<String, Object> getTags() {
-        return properties;
+        return properties != null ? properties : Collections.emptyMap();
     }
 
-    public void setTags(Map<String, String> newTags) {
-        properties.clear();
-        if (newTags != null)
-            for (Entry<String, String> e : newTags.entrySet()) {
-                setTag(e.getKey(), e.getValue());
-            }
+    public void setTags(Map<String, Object> newTags) {
+        properties = newTags;
     }
 
     public boolean hasTags() {
-        return !properties.isEmpty();
+        return properties != null && !properties.isEmpty();
     }
 
     public String getTag(String name) {
+        if (properties == null) {
+            return null;
+        }
         return (String) properties.get(name);
     }
 
     @SuppressWarnings("unchecked")
     public <T> T getTag(String key, T defaultValue) {
+        if (properties == null) {
+            return defaultValue;
+        }
         T val = (T) properties.get(key);
         if (val == null)
             return defaultValue;
@@ -93,6 +89,9 @@ public abstract class ReaderElement {
     }
 
     public List<String> getKeysWithPrefix(String keyPrefix) {
+        if (properties == null) {
+            return Collections.emptyList();
+        }
         List<String> keys = new ArrayList<>();
         for (String key : properties.keySet()) {
             if (key.startsWith(keyPrefix)) {
@@ -103,6 +102,9 @@ public abstract class ReaderElement {
     }
 
     public void setTag(String name, Object value) {
+        if (properties == null) {
+            properties = new HashMap<>();
+        }
         properties.put(name, value);
     }
 
@@ -110,6 +112,9 @@ public abstract class ReaderElement {
      * Check that the object has a given tag with a given value.
      */
     public boolean hasTag(String key, Object value) {
+        if (properties == null) {
+            return false;
+        }
         return value.equals(getTag(key, ""));
     }
 
@@ -118,6 +123,9 @@ public abstract class ReaderElement {
      * for presence of the tag
      */
     public boolean hasTag(String key, String... values) {
+        if (properties == null) {
+            return false;
+        }
         Object value = properties.get(key);
         if (value == null)
             return false;
@@ -137,6 +145,9 @@ public abstract class ReaderElement {
      * Check that a given tag has one of the specified values.
      */
     public final boolean hasTag(String key, Collection<String> values) {
+        if (properties == null) {
+            return false;
+        }
         return values.contains(getTag(key, ""));
     }
 
@@ -145,6 +156,9 @@ public abstract class ReaderElement {
      * hierarchical access restrictions
      */
     public boolean hasTag(List<String> keyList, Collection<String> values) {
+        if (properties == null) {
+            return false;
+        }
         for (String key : keyList) {
             if (values.contains(getTag(key, "")))
                 return true;
@@ -153,6 +167,9 @@ public abstract class ReaderElement {
     }
 
     public boolean hasTagWithKeyPrefix(String keyPrefix) {
+        if (properties == null) {
+            return false;
+        }
         for (String key : properties.keySet()) {
             if (key.startsWith(keyPrefix)) {
                 return true;
@@ -165,6 +182,9 @@ public abstract class ReaderElement {
      * Returns the first existing tag of the specified list where the order is important.
      */
     public String getFirstPriorityTag(List<String> restrictions) {
+        if (properties == null) {
+            return "";
+        }
         for (String str : restrictions) {
             if (hasTag(str))
                 return getTag(str);
@@ -173,11 +193,15 @@ public abstract class ReaderElement {
     }
 
     public void removeTag(String name) {
-        properties.remove(name);
+        if (properties != null) {
+            properties.remove(name);
+        }
     }
 
     public void clearTags() {
-        properties.clear();
+        if (properties != null) {
+            properties.clear();
+        }
     }
 
     public int getType() {
@@ -190,6 +214,9 @@ public abstract class ReaderElement {
 
     @Override
     public String toString() {
+        if (properties == null) {
+            return "{}";
+        }
         return properties.toString();
     }
 }
