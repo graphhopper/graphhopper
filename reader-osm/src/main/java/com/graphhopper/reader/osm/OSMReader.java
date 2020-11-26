@@ -22,6 +22,7 @@ import static com.graphhopper.util.Helper.nf;
 import com.baremaps.osm.EntityHandler;
 import com.baremaps.osm.OpenStreetMap;
 import com.baremaps.osm.domain.Bound;
+import com.baremaps.osm.domain.Entity;
 import com.baremaps.osm.domain.Header;
 import com.baremaps.osm.domain.Member;
 import com.baremaps.osm.domain.Node;
@@ -67,13 +68,20 @@ import com.graphhopper.util.shapes.GHPoint;
 import java.io.File;
 import java.io.IOException;
 import java.time.ZoneOffset;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -195,15 +203,37 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
   }
 
   void handle(File osmFile, EntityHandler handler) {
-    try {
-      ForkJoinPool pool = new ForkJoinPool(workerThreads);
-      pool.submit(() -> {
-        try {
-          OpenStreetMap.entityStream(osmFile.toPath(), true).forEachOrdered(handler);
-        } catch (IOException exception) {
-          exception.printStackTrace();
+    ForkJoinPool pool = ForkJoinPool.commonPool();
+    LinkedBlockingQueue<Entity> queue = new LinkedBlockingQueue<>(10000);
+    ArrayList<Entity> batch = new ArrayList<>(1000);
+
+    Future producer = pool.submit(() -> {
+      try {
+        OpenStreetMap.entityStream(osmFile.toPath(), true).forEach(entity -> {
+          try {
+            queue.put(entity);
+          } catch (InterruptedException e) {
+            e.printStackTrace();
+          }
+        });
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    });
+
+    Future consumer = pool.submit(() -> {
+      while (!(producer.isDone() && queue.isEmpty())) {
+        queue.drainTo(batch, 1000);
+        for (Entity entity : batch) {
+          handler.accept(entity);
         }
-      }).get();
+        batch.clear();
+      }
+    });
+
+    try {
+      consumer.get();
+      producer.get();
     } catch (InterruptedException e) {
       e.printStackTrace();
     } catch (ExecutionException e) {
@@ -217,6 +247,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
    */
   void preProcess(File osmFile) {
     LOGGER.info("Starting to process OSM file: '" + osmFile + "'");
+
     handle(osmFile, new EntityHandler() {
       @Override
       public void handle(Header header) {
@@ -243,7 +274,8 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
           LongIndexedContainer wayNodes = way.getNodes();
           int s = wayNodes.size();
           for (int index = 0; index < s; index++) {
-            prepareHighwayNode(wayNodes.get(index));
+            long osmId = wayNodes.get(index);
+            prepareHighwayNode(osmId);
           }
         }
       }
@@ -339,6 +371,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
 
     LongIntMap nodeFilter = getNodeMap();
     AtomicLong counter = new AtomicLong(1);
+
     handle(osmFile, new EntityHandler() {
       @Override
       public void handle(Header header) {
@@ -635,6 +668,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     int tmpGHNodeId = getNodeMap().get(osmId);
     if (tmpGHNodeId == EMPTY_NODE) {
       // osmId is used exactly once
+
       getNodeMap().put(osmId, PILLAR_NODE);
     } else if (tmpGHNodeId > EMPTY_NODE) {
       // mark node as tower node as it occurred at least twice times
