@@ -177,16 +177,16 @@ public class SPTResource {
                                 sb.append(label.prevCoordinate == null ? 0 : label.prevTimeMillis);
                                 continue;
                             case "longitude":
-                                sb.append(label.coordinate.lon);
+                                sb.append(Helper.round6(label.coordinate.lon));
                                 continue;
                             case "prev_longitude":
-                                sb.append(label.prevCoordinate == null ? null : label.prevCoordinate.lon);
+                                sb.append(label.prevCoordinate == null ? null : Helper.round6(label.prevCoordinate.lon));
                                 continue;
                             case "latitude":
-                                sb.append(label.coordinate.lat);
+                                sb.append(Helper.round6(label.coordinate.lat));
                                 continue;
                             case "prev_latitude":
-                                sb.append(label.prevCoordinate == null ? null : label.prevCoordinate.lat);
+                                sb.append(label.prevCoordinate == null ? null : Helper.round6(label.prevCoordinate.lat));
                                 continue;
                         }
 
