@@ -28,6 +28,10 @@ import com.baremaps.osm.domain.Member;
 import com.baremaps.osm.domain.Node;
 import com.baremaps.osm.domain.Relation;
 import com.baremaps.osm.domain.Way;
+import com.baremaps.osm.pbf.Blob;
+import com.baremaps.osm.pbf.BlobSpliterator;
+import com.baremaps.osm.pbf.DataBlockReader;
+import com.baremaps.osm.pbf.PbfEntityReader;
 import com.carrotsearch.hppc.IntLongMap;
 import com.carrotsearch.hppc.LongArrayList;
 import com.carrotsearch.hppc.LongIndexedContainer;
@@ -65,8 +69,11 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.time.ZoneOffset;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -74,6 +81,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Queue;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -83,6 +94,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -202,14 +215,31 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         + "total:" + (int) (sw1.getSeconds() + sw2.getSeconds()) + "s");
   }
 
-  void handle(File osmFile, EntityHandler handler) {
-    ForkJoinPool pool = ForkJoinPool.commonPool();
-    LinkedBlockingQueue<Entity> queue = new LinkedBlockingQueue<>(10000);
-    ArrayDeque<Entity> batch = new ArrayDeque<>(1000);
-
-    Future producer = pool.submit(() -> {
+  Runnable pbfReader(BlockingQueue<Entity> queue, File file) {
+    return () -> {
       try {
-        OpenStreetMap.entityStream(osmFile.toPath(), false).forEach(entity -> {
+        InputStream inputStream = new BufferedInputStream(Files.newInputStream(file.toPath()));
+        new PbfEntityReader(inputStream, true).streamBlocks().forEach(block -> {
+          synchronized (queue) {
+            block.forEach(entity -> {
+              try {
+                queue.put(entity);
+              } catch (InterruptedException e) {
+                e.printStackTrace();
+              }
+            });
+          }
+        });
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    };
+  }
+
+  Runnable xmlReader(BlockingQueue<Entity> queue, File file) {
+    return () -> {
+      try {
+        OpenStreetMap.entityStream(file.toPath()).forEach(entity -> {
           try {
             queue.put(entity);
           } catch (InterruptedException e) {
@@ -219,7 +249,17 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
       } catch (IOException e) {
         e.printStackTrace();
       }
-    });
+    };
+  }
+
+  void handle(File osmFile, EntityHandler handler) {
+    ForkJoinPool pool = ForkJoinPool.commonPool();
+    LinkedBlockingQueue<Entity> queue = new LinkedBlockingQueue<>(100_000);
+    ArrayDeque<Entity> batch = new ArrayDeque<>(1000);
+
+    Future producer = osmFile.getName().endsWith(".pbf")
+        ? pool.submit(pbfReader(queue, osmFile))
+        : pool.submit(xmlReader(queue, osmFile));
 
     Future consumer = pool.submit(() -> {
       while (!(producer.isDone() && queue.isEmpty())) {
