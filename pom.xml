@@ -19,10 +19,10 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <slf4j.version>1.7.26</slf4j.version>
         <log4j.version>1.2.17</log4j.version>
-        <gh.version>835b94415acfcc63b7da3d1b16d287dba14b7d85</gh.version>
+        <gh.version>ec53afeb4e37a0e8f30d4506e96c56123ecdb094</gh.version>
 
-        <dropwizard.version>2.0.8</dropwizard.version>
-        <jackson.version>2.10.3</jackson.version>
+        <dropwizard.version>2.0.16</dropwizard.version>
+        <jackson.version>2.11.3</jackson.version>
 
         <org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>4
         </org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>
