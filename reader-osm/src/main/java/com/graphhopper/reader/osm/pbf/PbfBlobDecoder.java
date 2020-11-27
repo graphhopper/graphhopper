@@ -90,22 +90,6 @@ public class PbfBlobDecoder implements Runnable {
         long milliSecondDate = header.getOsmosisReplicationTimestamp();
         fileheader.setTag("timestamp", Helper.createFormatter().format(new Date(milliSecondDate * 1000)));
         decodedEntities.add(fileheader);
-
-        // Build a new bound object which corresponds to the header.
-/*
-         Bound bound;
-         if (header.hasBbox()) {
-         HeaderBBox bbox = header.getBbox();
-         bound = new Bound(bbox.getRight() * COORDINATE_SCALING_FACTOR, bbox.getLeft() * COORDINATE_SCALING_FACTOR,
-         bbox.getTop() * COORDINATE_SCALING_FACTOR, bbox.getBottom() * COORDINATE_SCALING_FACTOR,
-         header.getSource());
-         } else {
-         bound = new Bound(header.getSource());
-         }
-
-         // Add the bound object to the results.
-         decodedEntities.add(new BoundContainer(bound));
-         */
     }
 
     private Map<String, Object> buildNodeTags(Osmformat.Node node, PbfFieldDecoder fieldDecoder) {
@@ -164,51 +148,16 @@ public class PbfBlobDecoder implements Runnable {
     }
 
     private void processNodes(Osmformat.DenseNodes nodes, PbfFieldDecoder fieldDecoder) {
-        /*
-         Osmformat.DenseInfo denseInfo;
-         if (nodes.hasDenseinfo()) {
-         denseInfo = nodes.getDenseinfo();
-         } else {
-         denseInfo = null;
-         }
-         */
         long nodeId = 0;
         long latitude = 0;
         long longitude = 0;
         int keyValueIndex = 0;
-//		int userId = 0;
-//		int userSid = 0;
-//		long timestamp = 0;
-//		long changesetId = 0;
         for (int i = 0; i < nodes.getIdCount(); i++) {
             // Delta decode node fields.
             nodeId += nodes.getId(i);
             latitude += nodes.getLat(i);
             longitude += nodes.getLon(i);
 
-            /*
-             if (denseInfo != null) {
-             // Delta decode dense info fields.
-             userId += denseInfo.getUid(i);
-             userSid += denseInfo.getUserSid(i);
-             timestamp += denseInfo.getTimestamp(i);
-             changesetId += denseInfo.getChangeset(i);
-
-             // Build the user, but only if one exists.
-             OsmUser user;
-             if (userId >= 0) {
-             user = new OsmUser(userId, fieldDecoder.decodeString(userSid));
-             } else {
-             user = OsmUser.NONE;
-             }
-
-             entityData = new CommonEntityData(nodeId, denseInfo.getVersion(i),
-             fieldDecoder.decodeTimestamp(timestamp), user, changesetId);
-             } else {
-             entityData = new CommonEntityData(nodeId, EMPTY_VERSION, EMPTY_TIMESTAMP, OsmUser.NONE,
-             EMPTY_CHANGESET);
-             }
-             */
             // Build the tags. The key and value string indexes are sequential
             // in the same PBF array. Each set of tags is delimited by an index
             // with a value of 0.
