@@ -170,7 +170,8 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
                         LongIndexedContainer wayNodes = way.getNodes();
                         int s = wayNodes.size();
                         for (int index = 0; index < s; index++) {
-                            prepareHighwayNode(wayNodes.get(index));
+                            long osmId = wayNodes.get(index);
+                            prepareHighwayNode(osmId, getNodeMap().get(osmId));
                         }
 
                         if (++tmpWayCounter % 10_000_000 == 0) {
@@ -259,8 +260,9 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
             while ((item = in.getNext()) != null) {
                 switch (item.getType()) {
                     case ReaderElement.NODE:
-                        if (nodeFilter.get(item.getId()) != EMPTY_NODE) {
-                            processNode((ReaderNode) item);
+                        int graphIndex = nodeFilter.get(item.getId());
+                        if (graphIndex != EMPTY_NODE) {
+                            processNode((ReaderNode) item, graphIndex);
                         }
                         break;
 
@@ -476,9 +478,9 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
             return Double.NaN;
     }
 
-    protected void processNode(ReaderNode node) {
+    protected void processNode(ReaderNode node, int graphIndex) {
         if (isInBounds(node)) {
-            addNode(node);
+            addNode(node, graphIndex);
 
             // analyze node tags for barriers
             if (node.hasTags()) {
@@ -493,17 +495,16 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         }
     }
 
-    boolean addNode(ReaderNode node) {
-        int nodeType = getNodeMap().get(node.getId());
-        if (nodeType == EMPTY_NODE)
+    boolean addNode(ReaderNode node, int graphIndex) {
+        if (graphIndex == EMPTY_NODE)
             return false;
 
         double lat = node.getLat();
         double lon = node.getLon();
         double ele = getElevation(node);
-        if (nodeType == TOWER_NODE) {
+        if (graphIndex == TOWER_NODE) {
             addTowerNode(node.getId(), lat, lon, ele);
-        } else if (nodeType == PILLAR_NODE) {
+        } else if (graphIndex == PILLAR_NODE) {
             pillarInfo.setNode(nextPillarId, lat, lon, ele);
             getNodeMap().put(node.getId(), nextPillarId + 3);
             nextPillarId++;
@@ -541,17 +542,24 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         }
     }
 
-    void prepareHighwayNode(long osmId) {
-        int tmpGHNodeId = getNodeMap().get(osmId);
-        if (tmpGHNodeId == EMPTY_NODE) {
+    int prepareHighwayNode(long osmId, int tmpGraphIndex) {
+        int graphIndex;
+        if (tmpGraphIndex == EMPTY_NODE) {
             // osmId is used exactly once
-            getNodeMap().put(osmId, PILLAR_NODE);
-        } else if (tmpGHNodeId > EMPTY_NODE) {
+            graphIndex = PILLAR_NODE;
+        } else if (tmpGraphIndex > EMPTY_NODE) {
             // mark node as tower node as it occurred at least twice times
-            getNodeMap().put(osmId, TOWER_NODE);
+            graphIndex = TOWER_NODE;
         } else {
             // tmpIndex is already negative (already tower node)
+            graphIndex = tmpGraphIndex;
         }
+        
+        if (graphIndex != tmpGraphIndex) {
+            getNodeMap().put(osmId, graphIndex);
+        }
+        
+        return graphIndex;
     }
 
     int addTowerNode(long osmId, double lat, double lon, double ele) {
@@ -767,8 +775,8 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         }
 
         final long id = newNode.getId();
-        prepareHighwayNode(id);
-        addNode(newNode);
+        graphIndex = prepareHighwayNode(id, graphIndex);
+        addNode(newNode, graphIndex);
         return id;
     }
 
