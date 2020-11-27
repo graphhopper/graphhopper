@@ -243,7 +243,7 @@ public class IsochroneResourceTest {
         Geometry polygon0 = featureCollection.getFeatures().get(0).getGeometry();
         assertIs2D(polygon0);
 
-        assertTrue(polygon0.contains(geometryFactory.createPoint(new Coordinate(1.527057, 42.507145))));
+        assertTrue(polygon0.contains(geometryFactory.createPoint(new Coordinate(1.527303, 42.507334))));
         assertFalse(polygon0.contains(geometryFactory.createPoint(new Coordinate(1.525404, 42.507081))));
     }
 
@@ -287,6 +287,7 @@ public class IsochroneResourceTest {
                 .queryParam("point", "42.531073,1.573792")
                 .queryParam("time_limit", 5 * 60)
                 .queryParam("buckets", 2)
+                .queryParam("full_geometry", true)
                 .queryParam("type", "geojson")
                 .queryParam(BLOCK_AREA, "42.558067,1.589429,100")
                 .request().buildGet().invoke();
@@ -302,7 +303,7 @@ public class IsochroneResourceTest {
         assertFalse(polygon1.contains(geometryFactory.createPoint(new Coordinate(1.589756, 42.558012))));
         assertFalse(polygon1.contains(geometryFactory.createPoint(new Coordinate(1.635246, 42.53841))));
 
-        assertTrue(polygon1.contains(geometryFactory.createPoint(new Coordinate(1.58864, 42.554582))));
+        assertTrue(polygon1.contains(geometryFactory.createPoint(new Coordinate(1.588554, 42.554365))));
     }
 
     @Test
