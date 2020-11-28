@@ -18,6 +18,7 @@
 package com.graphhopper.isochrone.algorithm;
 
 import com.carrotsearch.hppc.IntObjectHashMap;
+import com.carrotsearch.hppc.cursors.ObjectCursor;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.AbstractRoutingAlgorithm;
 import com.graphhopper.routing.Path;
@@ -28,6 +29,8 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.PriorityQueue;
 import java.util.function.Consumer;
 
@@ -159,20 +162,32 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
                 IsoLabel label = fromMap.get(nextTraversalId);
                 if (label == null) {
                     label = new IsoLabel(iter.getAdjNode(), iter.getEdge(), nextWeight, nextTime, nextDistance, currentLabel);
+                    fromMap.put(nextTraversalId, label);
                     if (getExploreValue(label) <= limit) {
-                        fromMap.put(nextTraversalId, label);
                         queueByWeighting.add(label);
                     }
                 } else if (label.weight > nextWeight) {
                     label.deleted = true;
                     label = new IsoLabel(iter.getAdjNode(), iter.getEdge(), nextWeight, nextTime, nextDistance, currentLabel);
+                    fromMap.put(nextTraversalId, label);
                     if (getExploreValue(label) <= limit) {
-                        fromMap.put(nextTraversalId, label);
                         queueByWeighting.add(label);
                     }
                 }
             }
         }
+    }
+
+    public Collection<IsoLabel> getIsochroneEdges() {
+        // assert alreadyRun
+        ArrayList<IsoLabel> result = new ArrayList<>();
+        for (ObjectCursor<IsoLabel> cursor : fromMap.values()) {
+            if (getExploreValue(cursor.value) > limit) {
+                assert cursor.value.parent == null || getExploreValue(cursor.value.parent) <= limit;
+                result.add(cursor.value);
+            }
+        }
+        return result;
     }
 
     private double getExploreValue(IsoLabel label) {
