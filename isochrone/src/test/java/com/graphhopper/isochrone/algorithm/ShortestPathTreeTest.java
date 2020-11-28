@@ -17,10 +17,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -119,7 +119,23 @@ public class ShortestPathTreeTest {
     }
 
     @Test
-    public void testSearch25Seconds() {
+    public void testSPTAndIsochrone25Seconds() {
+        List<ShortestPathTree.IsoLabel> result = new ArrayList<>();
+        ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(carEncoder, new PMap()), false, TraversalMode.NODE_BASED);
+        instance.setTimeLimit(25_000);
+        instance.search(0, result::add);
+        assertEquals(3, result.size());
+        assertAll(
+                () -> assertEquals(0, result.get(0).time), () -> assertEquals(0, result.get(0).node),
+                () -> assertEquals(9000, result.get(1).time), () -> assertEquals(4, result.get(1).node),
+                () -> assertEquals(18000, result.get(2).time), () -> assertEquals(6, result.get(2).node)
+        );
+        Collection<ShortestPathTree.IsoLabel> isochroneEdges = instance.getIsochroneEdges();
+        assertArrayEquals(new int[]{1, 7}, isochroneEdges.stream().mapToInt(l -> l.node).sorted().toArray());
+    }
+
+    @Test
+    public void testSPT26Seconds() {
         List<ShortestPathTree.IsoLabel> result = new ArrayList<>();
         ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(carEncoder, new PMap()), false, TraversalMode.NODE_BASED);
         instance.setTimeLimit(26_000);
