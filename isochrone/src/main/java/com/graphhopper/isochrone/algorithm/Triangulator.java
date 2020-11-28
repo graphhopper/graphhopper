@@ -19,6 +19,7 @@
 package com.graphhopper.isochrone.algorithm;
 
 import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.index.Snap;
 
 import java.util.Collection;
@@ -38,6 +39,6 @@ public interface Triangulator {
 
     }
 
-    Result triangulate(Snap snap, QueryGraph queryGraph, ShortestPathTree shortestPathTree, ToDoubleFunction<ShortestPathTree.IsoLabel> fz, double tolerance);
+    Result triangulate(Snap snap, QueryGraph queryGraph, ShortestPathTree shortestPathTree, ToDoubleFunction<ShortestPathTree.IsoLabel> fz, EdgeFilter edgeFilter, double tolerance);
 
 }

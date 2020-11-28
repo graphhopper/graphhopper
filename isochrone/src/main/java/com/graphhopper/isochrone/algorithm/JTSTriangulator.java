@@ -20,9 +20,11 @@ package com.graphhopper.isochrone.algorithm;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
+import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PointList;
@@ -50,7 +52,7 @@ public class JTSTriangulator implements Triangulator {
         this.graphHopper = graphHopper;
     }
 
-    public Result triangulate(Snap snap, QueryGraph queryGraph, ShortestPathTree shortestPathTree, ToDoubleFunction<ShortestPathTree.IsoLabel> fz, double tolerance) {
+    public Result triangulate(Snap snap, QueryGraph queryGraph, ShortestPathTree shortestPathTree, ToDoubleFunction<ShortestPathTree.IsoLabel> fz, EdgeFilter edgeFilter, double tolerance) {
         final NodeAccess na = queryGraph.getNodeAccess();
         List<ShortestPathTree.IsoLabel> labels = new ArrayList<>();
         shortestPathTree.search(snap.getClosestNode(), labels::add);
@@ -97,10 +99,15 @@ public class JTSTriangulator implements Triangulator {
         // Get at least all nodes within our convex hull.
         // I think then we should have all possible encroaching points. (Proof needed.)
         PreparedPolygon preparedConvexHull = new PreparedPolygon((Polygon) convexHull);
-        graphHopper.getLocationIndex().query(BBox.fromEnvelope(convexHull.getEnvelopeInternal()), new LocationIndex.Visitor() {
+        EdgeExplorer edgeExplorer = graphHopper.getGraphHopperStorage().createEdgeExplorer(edgeFilter);
+        graphHopper.getLocationIndex().query(BBox.fromEnvelope(convexHull.getEnvelopeInternal()), new LocationIndex.EdgeVisitor(edgeExplorer) {
             @Override
-            public void onNode(int nodeId) {
-                Coordinate nodeCoordinate = new Coordinate(na.getLongitude(nodeId), na.getLatitude(nodeId));
+            public void onEdge(EdgeIteratorState edge, int nodeA, int nodeB) {
+                PointList points = edge.fetchWayGeometry(FetchMode.TOWER_ONLY);
+                points.forEach(point -> handleNode(new Coordinate(point.lon, point.lat)));
+            }
+
+            private void handleNode(Coordinate nodeCoordinate) {
                 if (preparedConvexHull.contains(fact.createPoint(nodeCoordinate)))
                     zs.merge(nodeCoordinate, Double.MAX_VALUE, Math::min);
             }

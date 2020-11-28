@@ -138,7 +138,7 @@ public class IsochroneResource {
             fz = l -> l.time;
         }
 
-        Triangulator.Result result = triangulator.triangulate(snap, queryGraph, shortestPathTree, fz, degreesFromMeters(toleranceInMeter));
+        Triangulator.Result result = triangulator.triangulate(snap, queryGraph, shortestPathTree, fz, edgeFilter, degreesFromMeters(toleranceInMeter));
 
         ContourBuilder contourBuilder = new ContourBuilder(result.triangulation);
         ArrayList<Geometry> isochrones = new ArrayList<>();
