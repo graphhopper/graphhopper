@@ -52,8 +52,11 @@ public class JTSTriangulator implements Triangulator {
 
     public Result triangulate(Snap snap, QueryGraph queryGraph, ShortestPathTree shortestPathTree, ToDoubleFunction<ShortestPathTree.IsoLabel> fz, double tolerance) {
         final NodeAccess na = queryGraph.getNodeAccess();
+        List<ShortestPathTree.IsoLabel> labels = new ArrayList<>();
+        shortestPathTree.search(snap.getClosestNode(), labels::add);
+        labels.addAll(shortestPathTree.getIsochroneEdges());
         Map<Coordinate, Double> zs = new HashMap<>();
-        shortestPathTree.search(snap.getClosestNode(), label -> {
+        labels.forEach(label -> {
             double exploreValue = fz.applyAsDouble(label);
             double lat = na.getLatitude(label.node);
             double lon = na.getLongitude(label.node);
