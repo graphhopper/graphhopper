@@ -115,13 +115,13 @@ public class IsochroneResource {
         double limit;
         if (weightLimit.get() > 0) {
             limit = weightLimit.get();
-            shortestPathTree.setWeightLimit(limit + Math.max(limit * 0.14, 2_000));
+            shortestPathTree.setWeightLimit(limit);
         } else if (distanceLimitInMeter.get() > 0) {
             limit = distanceLimitInMeter.get();
-            shortestPathTree.setDistanceLimit(limit + Math.max(limit * 0.14, 2_000));
+            shortestPathTree.setDistanceLimit(limit);
         } else {
             limit = timeLimitInSeconds.get() * 1000;
-            shortestPathTree.setTimeLimit(limit + Math.max(limit * 0.14, 200_000));
+            shortestPathTree.setTimeLimit(limit);
         }
         ArrayList<Double> zs = new ArrayList<>();
         double delta = limit / nBuckets.get();
