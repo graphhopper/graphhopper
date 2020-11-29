@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.geohash.SpatialKeyAlgo;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 
@@ -26,6 +27,22 @@ import static java.lang.Math.*;
  * @author Peter Karich
  */
 public class DistanceCalcEarth implements DistanceCalc {
+    public static void main(String[] args) {
+        System.out.println(Integer.MAX_VALUE / 360f);
+        System.out.println(new DistanceCalcEarth().calcDist(0, 0, 0.000001, 0));
+        System.out.println(new DistanceCalcEarth().calcDist(0, 0, 0.0000001, 0));
+        System.out.println(new DistanceCalcEarth().calcDist(0, 0, 0, 0.000001));
+        System.out.println(new DistanceCalcEarth().calcDist(0, 0, 0, 0.0000001));
+        SpatialKeyAlgo algo = new SpatialKeyAlgo(62);
+        GHPoint p = new GHPoint();
+        algo.decode(algo.encode(0, 179.00001), p);
+        System.out.println(p);
+        algo.decode(algo.encode(0, 179.000001), p);
+        System.out.println(p);
+        algo.decode(algo.encode(0, 179.0000001), p);
+        System.out.println(p);
+    }
+
     /**
      * mean radius of the earth
      */
@@ -298,19 +315,19 @@ public class DistanceCalcEarth implements DistanceCalc {
         double sinHalfDeltaLon = sin(deltaLon / 2);
 
         double a = sinHalfDeltaLat * sinHalfDeltaLat + cosLat1 * cosLat2 * sinHalfDeltaLon * sinHalfDeltaLon;
-        double angularDistance =  2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        double angularDistance = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         double sinDistance = sin(angularDistance);
 
         if (angularDistance == 0) return new GHPoint(lat1, lon1);
 
-        double A = Math.sin((1-f)*angularDistance) / sinDistance;
-        double B = Math.sin(f*angularDistance) / sinDistance;
+        double A = Math.sin((1 - f) * angularDistance) / sinDistance;
+        double B = Math.sin(f * angularDistance) / sinDistance;
 
         double x = A * cosLat1 * cos(lon1radians) + B * cosLat2 * cos(lon2radians);
         double y = A * cosLat1 * sin(lon1radians) + B * cosLat2 * sin(lon2radians);
         double z = A * sin(lat1radians) + B * sin(lat2radians);
 
-        double midLat = Math.toDegrees(Math.atan2(z, Math.sqrt(x*x + y*y)));
+        double midLat = Math.toDegrees(Math.atan2(z, Math.sqrt(x * x + y * y)));
         double midLon = Math.toDegrees(Math.atan2(y, x));
 
         return new GHPoint(midLat, midLon);

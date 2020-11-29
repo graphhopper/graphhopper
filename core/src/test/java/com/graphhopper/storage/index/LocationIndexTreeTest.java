@@ -115,7 +115,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
                 set.add(nodeId);
             }
         });
-        assertEquals(17, set.size());
+        assertEquals(15, set.size());
         assertTrue(set.containsAll(Arrays.asList(2, 3, 4, 5, 6)));
         assertFalse(set.containsAll(Arrays.asList(17, 18, 25, 30)));
     }
@@ -129,7 +129,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         assertEquals(IntArrayList.from(new int[]{4, 4}), index.getEntries());
 
         assertEquals(4, inMemIndex.getEntriesOf(0).size());
-        assertEquals(10, inMemIndex.getEntriesOf(1).size());
+        assertEquals(12, inMemIndex.getEntriesOf(1).size());
         assertEquals(0, inMemIndex.getEntriesOf(2).size());
         // [LEAF 0 {} {0, 2}, LEAF 2 {} {0, 1}, LEAF 1 {} {2}, LEAF 3 {} {1}, LEAF 8 {} {0}, LEAF 10 {} {0}, LEAF 9 {} {0}, LEAF 4 {} {2}, LEAF 6 {} {0, 1, 2, 3}, LEAF 5 {} {0, 2, 3}, LEAF 7 {} {1, 2, 3}, LEAF 13 {} {1}]        
         // System.out.println(inMemIndex.getLayer(2));
@@ -174,8 +174,8 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         index.prepareAlgo();
         LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex();
         assertEquals(IntArrayList.from(new int[]{4, 4}), index.getEntries());
-        assertEquals(3, inMemIndex.getEntriesOf(0).size());
-        assertEquals(5, inMemIndex.getEntriesOf(1).size());
+        assertEquals(4, inMemIndex.getEntriesOf(0).size());
+        assertEquals(7, inMemIndex.getEntriesOf(1).size());
         assertEquals(0, inMemIndex.getEntriesOf(2).size());
 
         index.dataAccess.create(10);
@@ -200,7 +200,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         // The other subnetwork is already perfect {26}.
         // For compaction see: https://github.com/graphhopper/graphhopper/blob/5594f7f9d98d932f365557dc37b4b2d3b7abf698/core/src/main/java/com/graphhopper/storage/index/Location2NodesNtree.java#L277
         GHIntHashSet set = new GHIntHashSet();
-        set.addAll(28, 27, 26, 24, 23, 21, 19, 18, 16, 14, 6, 5, 4, 3, 2, 1, 0);
+        set.addAll(27, 26, 24, 23, 21, 19, 18, 16, 14, 5, 4, 3, 2, 1, 0);
 
         GHIntHashSet foundIds = new GHIntHashSet();
         index.findNetworkEntries(49.950, 11.5732, foundIds, 0);
@@ -215,8 +215,8 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         assertEquals(IntArrayList.from(new int[]{16, 4, 4}), index.getEntries());
 
         assertEquals(13, inMemIndex.getEntriesOf(0).size());
-        assertEquals(33, inMemIndex.getEntriesOf(1).size());
-        assertEquals(69, inMemIndex.getEntriesOf(2).size());
+        assertEquals(36, inMemIndex.getEntriesOf(1).size());
+        assertEquals(73, inMemIndex.getEntriesOf(2).size());
         assertEquals(0, inMemIndex.getEntriesOf(3).size());
 
         index.dataAccess.create(1024);

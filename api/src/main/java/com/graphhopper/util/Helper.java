@@ -21,6 +21,7 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -31,13 +32,13 @@ import java.util.Map.Entry;
  * @author Peter Karich
  */
 public class Helper {
-    public static final Charset UTF_CS = Charset.forName("UTF-8");
+    public static final Charset UTF_CS = StandardCharsets.UTF_8;
     public static final TimeZone UTC = TimeZone.getTimeZone("UTC");
     public static final long MB = 1L << 20;
-    // +- 180 and +-90 => let use use 400
-    private static final float DEGREE_FACTOR = Integer.MAX_VALUE / 400f;
+    // OSM has 7 decimal places
+    private static final double DEGREE_FACTOR = 1e6;
     // milli meter is a bit extreme but we have integers
-    private static final float ELE_FACTOR = 1000f;
+    private static final double ELE_FACTOR = 1000f;
 
     private Helper() {
     }
@@ -324,6 +325,10 @@ public class Helper {
     public static double round(double value, int decimalPlaces) {
         double factor = Math.pow(10, decimalPlaces);
         return Math.round(value * factor) / factor;
+    }
+
+    public static double round7(double value) {
+        return round(value, 7);
     }
 
     public static double round6(double value) {
