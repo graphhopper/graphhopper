@@ -24,8 +24,10 @@ import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.Directory;
@@ -191,7 +193,9 @@ public class GraphHopperGtfs extends GraphHopperOSM {
             }
             streetNetworkIndex.close();
             LocationIndexTree locationIndex = new LocationIndexTree(getGraphHopperStorage(), getGraphHopperStorage().getDirectory());
-            locationIndex.prepareIndex();
+            PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(getEncodingManager());
+            EnumEncodedValue<GtfsStorage.EdgeType> typeEnc = ptEncodedValues.getTypeEnc();
+            locationIndex.prepareIndex(edgeState -> edgeState.get(typeEnc) == GtfsStorage.EdgeType.HIGHWAY);
             setLocationIndex(locationIndex);
         }
     }
