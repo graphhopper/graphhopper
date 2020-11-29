@@ -125,7 +125,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         Graph graph = createTestGraph(encodingManager);
         LocationIndexTree index = createIndexNoPrepare(graph, 50000);
         index.prepareAlgo();
-        LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex(graph.getAllEdges());
+        LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex(EdgeFilter.ALL_EDGES);
         assertEquals(IntArrayList.from(new int[]{4, 4}), index.getEntries());
 
         assertEquals(4, inMemIndex.getEntriesOf(0).size());
@@ -172,7 +172,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         Graph graph = createTestGraph2();
         LocationIndexTree index = createIndexNoPrepare(graph, 500);
         index.prepareAlgo();
-        LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex(graph.getAllEdges());
+        LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex(EdgeFilter.ALL_EDGES);
         assertEquals(IntArrayList.from(new int[]{4, 4}), index.getEntries());
         assertEquals(3, inMemIndex.getEntriesOf(0).size());
         assertEquals(5, inMemIndex.getEntriesOf(1).size());
@@ -212,7 +212,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         Graph graph = createTestGraph(encodingManager);
         LocationIndexTree index = createIndexNoPrepare(graph, 10000);
         index.prepareAlgo();
-        LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex(graph.getAllEdges());
+        LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex(EdgeFilter.ALL_EDGES);
         assertEquals(IntArrayList.from(new int[]{16, 4, 4}), index.getEntries());
 
         assertEquals(13, inMemIndex.getEntriesOf(0).size());

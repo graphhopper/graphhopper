@@ -25,6 +25,7 @@ import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.geohash.SpatialKeyAlgo;
+import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
@@ -214,9 +215,9 @@ public class LocationIndexTree implements LocationIndex {
         return bm;
     }
 
-    InMemConstructionIndex getPrepareInMemIndex(EdgeIterator edgeIterator) {
+    InMemConstructionIndex getPrepareInMemIndex(EdgeFilter edgeFilter) {
         InMemConstructionIndex memIndex = new InMemConstructionIndex(entries[0]);
-        memIndex.prepare(edgeIterator);
+        memIndex.prepare(edgeFilter);
         return memIndex;
     }
 
@@ -276,17 +277,17 @@ public class LocationIndexTree implements LocationIndex {
 
     @Override
     public LocationIndex prepareIndex() {
-        return prepareIndex(graph.getAllEdges());
+        return prepareIndex(EdgeFilter.ALL_EDGES);
     }
 
-    public LocationIndex prepareIndex(EdgeIterator edgeIterator) {
+    public LocationIndex prepareIndex(EdgeFilter edgeFilter) {
         if (initialized)
             throw new IllegalStateException("Call prepareIndex only once");
 
         StopWatch sw = new StopWatch().start();
         prepareAlgo();
         // in-memory preparation
-        InMemConstructionIndex inMem = getPrepareInMemIndex(edgeIterator);
+        InMemConstructionIndex inMem = getPrepareInMemIndex(edgeFilter);
 
         // compact & store to dataAccess
         dataAccess.create(64 * 1024);
@@ -843,9 +844,12 @@ public class LocationIndexTree implements LocationIndex {
             root = new InMemTreeEntry(noOfSubEntries);
         }
 
-        void prepare(EdgeIterator allIter) {
+        void prepare(EdgeFilter edgeFilter) {
+            AllEdgesIterator allIter = graph.getAllEdges();
             try {
                 while (allIter.next()) {
+                    if (!edgeFilter.accept(allIter))
+                        continue;
                     int nodeA = allIter.getBaseNode();
                     int nodeB = allIter.getAdjNode();
                     double lat1 = nodeAccess.getLatitude(nodeA);
