@@ -7,6 +7,7 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.http.GHPointParam;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
+import com.graphhopper.isochrone.algorithm.ReadableQuadEdge;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.isochrone.algorithm.Triangulator;
 import com.graphhopper.json.geo.JsonFeature;
@@ -24,6 +25,7 @@ import io.dropwizard.jersey.params.IntParam;
 import io.dropwizard.jersey.params.LongParam;
 import org.hibernate.validator.constraints.Range;
 import org.locationtech.jts.geom.*;
+import org.locationtech.jts.triangulate.quadedge.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +39,7 @@ import javax.ws.rs.core.UriInfo;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.function.ToDoubleFunction;
 
 import static com.graphhopper.resources.IsochroneResource.ResponseType.geojson;
@@ -166,6 +169,25 @@ public class IsochroneResource {
             feature.setGeometry(isochrone);
             features.add(feature);
         }
+//        GeometryFactory geometryFactory = new GeometryFactory();
+//        HashSet<Vertex> vertexHashSet = new HashSet<Vertex>();
+//        for (ReadableQuadEdge edge : result.triangulation.getEdges()) {
+//            vertexHashSet.add(edge.orig());
+//            vertexHashSet.add(edge.dest());
+//            JsonFeature feature = new JsonFeature();
+//            feature.setGeometry(geometryFactory.createLineString(new Coordinate[]{edge.orig().getCoordinate(), edge.dest().getCoordinate()}));
+//            HashMap<String, Object> properties = new HashMap<>();
+//            feature.setProperties(properties);
+//            features.add(feature);
+//        }
+//        for (Vertex vertex : vertexHashSet) {
+//            JsonFeature feature = new JsonFeature();
+//            feature.setGeometry(geometryFactory.createPoint(vertex.getCoordinate()));
+//            HashMap<String, Object> properties = new HashMap<>();
+//            properties.put("z", vertex.getZ());
+//            feature.setProperties(properties);
+//            features.add(feature);
+//        }
         ObjectNode json = JsonNodeFactory.instance.objectNode();
 
         sw.stop();
