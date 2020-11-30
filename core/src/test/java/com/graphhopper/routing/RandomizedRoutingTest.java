@@ -28,17 +28,17 @@ import com.graphhopper.routing.lm.PerfectApproximator;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.ArrayUtil;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
-import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -49,9 +49,9 @@ import java.util.*;
 
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
+import static com.graphhopper.util.GHUtility.createRandomSnaps;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 /**
@@ -243,8 +243,7 @@ public class RandomizedRoutingTest {
         index.prepareIndex();
         List<String> strictViolations = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
-            List<GHPoint> points = getRandomPoints(graph.getBounds(), 2, index, rnd);
-            List<Snap> snaps = findSnaps(index, points);
+            List<Snap> snaps = createRandomSnaps(graph.getBounds(), index, rnd, 2);
             QueryGraph queryGraph = QueryGraph.create(graph, snaps);
 
             int source = snaps.get(0).getClosestNode();
@@ -260,31 +259,6 @@ public class RandomizedRoutingTest {
             System.out.println(strictViolations);
             fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries + ", seed: " + seed);
         }
-    }
-
-    static List<GHPoint> getRandomPoints(BBox bounds, int numPoints, LocationIndex index, Random rnd) {
-        List<GHPoint> points = new ArrayList<>(numPoints);
-        final int maxAttempts = 100 * numPoints;
-        int attempts = 0;
-        while (attempts < maxAttempts && points.size() < numPoints) {
-            double lat = rnd.nextDouble() * (bounds.maxLat - bounds.minLat) + bounds.minLat;
-            double lon = rnd.nextDouble() * (bounds.maxLon - bounds.minLon) + bounds.minLon;
-            Snap snap = index.findClosest(lat, lon, EdgeFilter.ALL_EDGES);
-            if (snap.isValid()) {
-                points.add(new GHPoint(lat, lon));
-            }
-            attempts++;
-        }
-        assertEquals("could not find valid random points after " + attempts + " attempts", numPoints, points.size());
-        return points;
-    }
-
-    private List<Snap> findSnaps(LocationIndexTree index, List<GHPoint> ghPoints) {
-        List<Snap> result = new ArrayList<>(ghPoints.size());
-        for (GHPoint ghPoint : ghPoints) {
-            result.add(index.findClosest(ghPoint.getLat(), ghPoint.getLon(), DefaultEdgeFilter.ALL_EDGES));
-        }
-        return result;
     }
 
     private List<String> comparePaths(Path refPath, Path path, int source, int target, long seed) {

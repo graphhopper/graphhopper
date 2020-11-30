@@ -26,6 +26,8 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
+import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -252,6 +254,33 @@ public class GHUtility {
                 }
             }
         }
+    }
+
+    public static List<Snap> createRandomSnaps(BBox bbox, LocationIndex locationIndex, Random rnd, int numVirtualNodes) {
+        int count = 0;
+        List<Snap> snaps = new ArrayList<>(numVirtualNodes);
+        while (snaps.size() < numVirtualNodes) {
+            if (count > numVirtualNodes * 100) {
+                throw new IllegalArgumentException("Could not create enough virtual edges");
+            }
+            Snap snap = getRandomSnap(locationIndex, rnd, bbox);
+            if (snap.isValid() && (snap.getSnappedPosition().equals(Snap.Position.EDGE) || snap.getSnappedPosition().equals(Snap.Position.PILLAR)))
+                snaps.add(snap);
+            count++;
+        }
+        return snaps;
+    }
+
+    public static Snap getRandomSnap(LocationIndex locationIndex, Random rnd, BBox bbox) {
+        return locationIndex.findClosest(
+                randomDoubleInRange(rnd, bbox.minLat, bbox.maxLat),
+                randomDoubleInRange(rnd, bbox.minLon, bbox.maxLon),
+                EdgeFilter.ALL_EDGES
+        );
+    }
+
+    public static double randomDoubleInRange(Random rnd, double min, double max) {
+        return min + rnd.nextDouble() * (max - min);
     }
 
     public static void printInfo(final Graph g, int startNode, final int counts, final EdgeFilter filter) {
