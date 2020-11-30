@@ -202,13 +202,12 @@ public class RandomCHRoutingTest {
         int count = 0;
         List<Snap> snaps = new ArrayList<>(numVirtualNodes);
         while (snaps.size() < numVirtualNodes) {
-            if (count > numVirtualNodes * 100) {
+            if (count > numVirtualNodes * 100)
                 throw new IllegalArgumentException("Could not create enough virtual edges");
-            }
             Snap snap = findSnap(rnd, bbox);
-            if (snap.getSnappedPosition().equals(Snap.Position.EDGE)) {
+            // make sure we actually do insert virtual nodes/edges
+            if (snap.getSnappedPosition().equals(Snap.Position.EDGE) || snap.getSnappedPosition().equals(Snap.Position.PILLAR))
                 snaps.add(snap);
-            }
             count++;
         }
         return snaps;

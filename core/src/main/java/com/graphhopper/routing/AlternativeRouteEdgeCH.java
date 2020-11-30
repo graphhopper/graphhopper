@@ -101,7 +101,7 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
             // s -> v and v -> t need not be shortest paths. In fact, they can sometimes be pretty strange.
             // We still use this preliminary path to filter for shared path length with other alternatives,
             // so we don't have to work so much.
-            Path preliminaryRoute = createPathExtractor(graph).extract(fromSPTEntry, toSPTEntry, fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath());
+            Path preliminaryRoute = createPathExtractor().extract(fromSPTEntry, toSPTEntry, fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath());
             double preliminaryShare = calculateShare(preliminaryRoute);
             if (preliminaryShare > maxShareFactor) {
                 return true;
