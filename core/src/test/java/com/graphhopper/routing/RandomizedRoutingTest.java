@@ -28,10 +28,7 @@ import com.graphhopper.routing.lm.PerfectApproximator;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -243,7 +240,7 @@ public class RandomizedRoutingTest {
         index.prepareIndex();
         List<String> strictViolations = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
-            List<Snap> snaps = createRandomSnaps(graph.getBounds(), index, rnd, 2);
+            List<Snap> snaps = createRandomSnaps(graph.getBounds(), index, rnd, 2, true, EdgeFilter.ALL_EDGES);
             QueryGraph queryGraph = QueryGraph.create(graph, snaps);
 
             int source = snaps.get(0).getClosestNode();

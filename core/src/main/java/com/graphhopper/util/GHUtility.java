@@ -256,26 +256,29 @@ public class GHUtility {
         }
     }
 
-    public static List<Snap> createRandomSnaps(BBox bbox, LocationIndex locationIndex, Random rnd, int numVirtualNodes) {
+    public static List<Snap> createRandomSnaps(BBox bbox, LocationIndex locationIndex, Random rnd, int numVirtualNodes, boolean acceptTower, EdgeFilter filter) {
         int count = 0;
         List<Snap> snaps = new ArrayList<>(numVirtualNodes);
         while (snaps.size() < numVirtualNodes) {
             if (count > numVirtualNodes * 100) {
                 throw new IllegalArgumentException("Could not create enough virtual edges");
             }
-            Snap snap = getRandomSnap(locationIndex, rnd, bbox);
-            if (snap.isValid() && (snap.getSnappedPosition().equals(Snap.Position.EDGE) || snap.getSnappedPosition().equals(Snap.Position.PILLAR)))
+            Snap snap = getRandomSnap(locationIndex, rnd, bbox, filter);
+            boolean accepted = snap.isValid();
+            if (!acceptTower)
+                accepted = accepted && !snap.getSnappedPosition().equals(Snap.Position.TOWER);
+            if (accepted)
                 snaps.add(snap);
             count++;
         }
         return snaps;
     }
 
-    public static Snap getRandomSnap(LocationIndex locationIndex, Random rnd, BBox bbox) {
+    public static Snap getRandomSnap(LocationIndex locationIndex, Random rnd, BBox bbox, EdgeFilter filter) {
         return locationIndex.findClosest(
                 randomDoubleInRange(rnd, bbox.minLat, bbox.maxLat),
                 randomDoubleInRange(rnd, bbox.minLon, bbox.maxLon),
-                EdgeFilter.ALL_EDGES
+                filter
         );
     }
 

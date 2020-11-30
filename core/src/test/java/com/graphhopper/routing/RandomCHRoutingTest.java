@@ -6,6 +6,7 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
@@ -146,7 +147,7 @@ public class RandomCHRoutingTest {
         for (int j = 0; j < numQueryGraph; j++) {
             // add virtual nodes and edges, because they can change the routing behavior and/or produce bugs, e.g.
             // when via-points are used
-            List<Snap> snaps = createRandomSnaps(graph.getBounds(), locationIndex, rnd, numVirtualNodes);
+            List<Snap> snaps = createRandomSnaps(graph.getBounds(), locationIndex, rnd, numVirtualNodes, false, EdgeFilter.ALL_EDGES);
             QueryGraph queryGraph = QueryGraph.create(graph, snaps);
 
             int numQueries = 100;
