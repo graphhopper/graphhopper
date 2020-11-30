@@ -255,10 +255,16 @@ public class PbfBlobDecoder implements Runnable {
         PbfFieldDecoder fieldDecoder = new PbfFieldDecoder(block);
 
         for (Osmformat.PrimitiveGroup primitiveGroup : block.getPrimitivegroupList()) {
-            processNodes(primitiveGroup.getDense(), fieldDecoder);
-            processNodes(primitiveGroup.getNodesList(), fieldDecoder);
-            processWays(primitiveGroup.getWaysList(), fieldDecoder);
-            processRelations(primitiveGroup.getRelationsList(), fieldDecoder);
+            // A PrimitiveGroup MUST NEVER contain different types of objects.
+            if (!primitiveGroup.getNodesList().isEmpty()) {
+                processNodes(primitiveGroup.getNodesList(), fieldDecoder);
+            } else if (!primitiveGroup.getDense().getIdList().isEmpty()) {
+                processNodes(primitiveGroup.getDense(), fieldDecoder);
+            } else if (!primitiveGroup.getWaysList().isEmpty()) {
+                processWays(primitiveGroup.getWaysList(), fieldDecoder);
+            } else if (!primitiveGroup.getRelationsList().isEmpty()) {
+                processRelations(primitiveGroup.getRelationsList(), fieldDecoder);
+            }
         }
     }
 
