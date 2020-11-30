@@ -5,7 +5,9 @@ import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.util.Helper;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.util.PolygonExtracter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,11 +17,8 @@ import static com.graphhopper.util.Helper.toLowerCase;
 
 public class SpatialRuleLookupBuilder {
 
-    public interface SpatialRuleFactory {
-        SpatialRule createSpatialRule(String id, final List<Polygon> borders);
-    }
-
     private static final Logger logger = LoggerFactory.getLogger(SpatialRuleLookupBuilder.class);
+    private static final GeometryFactory FAC = new GeometryFactory();
 
     /**
      * Builds a SpatialRuleLookup by passing the provided JSON features into the provided
@@ -38,7 +37,9 @@ public class SpatialRuleLookupBuilder {
      */
     public static SpatialRuleLookup buildIndex(List<JsonFeatureCollection> jsonFeatureCollections, String jsonIdField,
                                                SpatialRuleFactory spatialRuleFactory, Envelope maxBBox) {
-        Envelope envelope = new Envelope();
+        
+        Geometry bboxGeometry = FAC.toGeometry(maxBBox);
+        
         List<SpatialRule> spatialRules = new ArrayList<>();
         Map<String, JsonFeature> featureMap = new HashMap<>();
         for (JsonFeatureCollection featureCollection : jsonFeatureCollections) {
@@ -53,27 +54,27 @@ public class SpatialRuleLookupBuilder {
                 List<Polygon> borders = new ArrayList<>();
                 for (int i = 0; i < jsonFeature.getGeometry().getNumGeometries(); i++) {
                     Geometry poly = jsonFeature.getGeometry().getGeometryN(i);
-                    if (poly instanceof Polygon)
-                        borders.add((Polygon) poly);
-                    else
+                    if (poly instanceof Polygon) {
+                        Geometry intersection = bboxGeometry.intersection(poly);
+                        if (!intersection.isEmpty()) {
+                            PolygonExtracter.getPolygons(intersection, borders);
+                        }
+                    } else {
                         throw new IllegalArgumentException("Geometry for " + id + " (" + i + ") not supported " + poly.getClass().getSimpleName());
+                    }
                 }
 
-                SpatialRule spatialRule = spatialRuleFactory.createSpatialRule(Helper.toLowerCase(id), borders);
+                SpatialRule spatialRule = borders.isEmpty() ? null : spatialRuleFactory.createSpatialRule(Helper.toLowerCase(id), borders);
                 if (spatialRule != null) {
                     spatialRules.add(spatialRule);
-                    for (Polygon polygon : spatialRule.getBorders()) {
-                        envelope.expandToInclude(polygon.getEnvelopeInternal());
-                    }
                 }
             }
         }
 
-        Envelope calculatedBounds = envelope.intersection(maxBBox);
-        if (calculatedBounds.isNull())
+        if (spatialRules.isEmpty())
             return SpatialRuleLookup.EMPTY;
 
-        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupJTS(spatialRules, calculatedBounds);
+        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupJTS(spatialRules);
         logger.info("Created the SpatialRuleLookup with the following rules: {}", Arrays.toString(spatialRules.toArray()));
         return spatialRuleLookup;
     }
