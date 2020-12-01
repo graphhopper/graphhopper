@@ -180,6 +180,29 @@ public class CustomWeightingTest {
     }
 
     @Test
+    public void testBoolean() {
+        carFE = new CarFlagEncoder();
+        BooleanEncodedValue specialEnc = new SimpleBooleanEncodedValue("special", true);
+        encodingManager = new EncodingManager.Builder().add(carFE).add(specialEnc).build();
+        avSpeedEnc = carFE.getAverageSpeedEnc();
+        graphHopperStorage = new GraphBuilder(encodingManager).create();
+
+        BooleanEncodedValue accessEnc = carFE.getAccessEnc();
+        EdgeIteratorState edge = graphHopperStorage.edge(0, 1).set(accessEnc, true).setReverse(accessEnc, true).
+                set(avSpeedEnc, 15).set(specialEnc, false).setReverse(specialEnc, true).setDistance(10);
+
+        CustomModel vehicleModel = new CustomModel();
+        assertEquals(3.1, createWeighting(vehicleModel).calcEdgeWeight(edge, false), 0.01);
+        Map map = new LinkedHashMap<>();
+        map.put("false", 0.4);
+        map.put("true", 0.8);
+        vehicleModel.getPriority().put("special", map);
+        CustomWeighting weighting = createWeighting(vehicleModel);
+        assertEquals(6.7, weighting.calcEdgeWeight(edge, false), 0.01);
+        assertEquals(3.7, weighting.calcEdgeWeight(edge, true), 0.01);
+    }
+
+    @Test
     public void testPriority() {
         CustomModel vehicleModel = new CustomModel();
 
