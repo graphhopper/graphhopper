@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.ev;
 
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 
@@ -53,8 +54,8 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
      *                           direction.
      */
     public UnsignedIntEncodedValue(String name, int bits, boolean storeTwoDirections) {
-        if (!name.toLowerCase(Locale.ROOT).equals(name))
-            throw new IllegalArgumentException("EncodedValue name must be lower case but was " + name);
+        if (!EncodingManager.isValidEncodedValue(name))
+            throw new IllegalArgumentException("EncodedValue name wasn't valid: " + name + ". Use lower case letters, underscore and numbers only.");
         if (bits <= 0)
             throw new IllegalArgumentException(name + ": bits cannot be zero or negative");
         if (bits > 31)

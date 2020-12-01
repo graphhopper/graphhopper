@@ -17,6 +17,7 @@ The core module includes the following software:
  * com.fasterxml.jackson.core:jackson-annotations (Apache License)
  * org.locationtech:jts (EDL), see #1039
  * AngleCalc.atan2 from Jim Shima, 1999 (public domain)
+ * list of Java keywords in EncodingManager from janino compiler (BSD-3-Clause license)
 
 reader-osm:
 
@@ -43,12 +44,6 @@ web:
  * com.fasterxml.jackson.core:jackson-databind (Apache license)
  * com.google.inject (Apache license)
  * some images from mapbox https://www.mapbox.com/maki/, BSD License, see core/files
-
-android:
-
- * android (Apache license)
- * org.mapsforge, LGPL
- * VTM, LGPL
 
 ## Data
 
