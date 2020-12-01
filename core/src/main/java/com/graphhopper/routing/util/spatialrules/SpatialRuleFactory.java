@@ -15,9 +15,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package com.graphhopper.routing.util.spatialrules;
 
-package com.graphhopper.routing;
+import java.util.List;
 
-public interface BidirPathExtractor {
-    Path extract(SPTEntry fwdEntry, SPTEntry bwdEntry, double bestWeight);
+import org.locationtech.jts.geom.Polygon;
+
+public interface SpatialRuleFactory {
+    
+    SpatialRule createSpatialRule(String id, final List<Polygon> borders);
+    
+    static SpatialRuleFactory EMPTY = (id, borders) -> null;
 }

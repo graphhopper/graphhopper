@@ -45,8 +45,9 @@ public class SpatialRuleLookupJTS implements SpatialRuleLookup {
     private final Envelope maxBounds;
     private final STRtree index;
     
-    public SpatialRuleLookupJTS(List<SpatialRule> spatialRules, Envelope maxBounds) {
+    public SpatialRuleLookupJTS(List<SpatialRule> spatialRules) {
         this.index = new STRtree();
+        this.maxBounds = new Envelope();
         
         Map<Polygon, SpatialRuleContainer> containerMap = new HashMap<>();
         List<SpatialRule> registeredRules = new ArrayList<>();
@@ -61,9 +62,6 @@ public class SpatialRuleLookupJTS implements SpatialRuleLookup {
             boolean registered = false;
             for (Polygon border : rule.getBorders()) {
                 Envelope borderEnvelope = border.getEnvelopeInternal();
-                if (!maxBounds.intersects(borderEnvelope)) {
-                    continue;
-                }
                 
                 SpatialRuleContainer container = containerMap.get(border);
                 if (container == null) {
@@ -72,6 +70,7 @@ public class SpatialRuleLookupJTS implements SpatialRuleLookup {
                     index.insert(borderEnvelope, container);
                 }
                 container.addRule(rule);
+                maxBounds.expandToInclude(borderEnvelope);
                 registered = true;
             }
             
@@ -83,7 +82,6 @@ public class SpatialRuleLookupJTS implements SpatialRuleLookup {
         index.build();
 
         this.rules = Collections.unmodifiableList(registeredRules);
-        this.maxBounds = maxBounds;
     }
 
     @Override
@@ -104,7 +102,7 @@ public class SpatialRuleLookupJTS implements SpatialRuleLookup {
         Point point = geometryFactory.createPoint(new Coordinate(lon, lat));
         List<SpatialRule> applicableRules = new ArrayList<>();
         for (SpatialRuleContainer container : containers) {
-            if (container.containsProperly(point)) {
+            if (container.covers(point)) {
                 applicableRules.addAll(container.getRules());
             }
         }

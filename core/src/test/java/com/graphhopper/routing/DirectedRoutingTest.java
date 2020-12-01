@@ -37,7 +37,6 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
-import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -46,10 +45,10 @@ import org.junit.runners.Parameterized;
 
 import java.util.*;
 
-import static com.graphhopper.routing.RandomizedRoutingTest.getRandomPoints;
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+import static com.graphhopper.util.GHUtility.createRandomSnaps;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
@@ -230,8 +229,7 @@ public class DirectedRoutingTest {
         index.prepareIndex();
         List<String> strictViolations = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
-            List<GHPoint> points = getRandomPoints(graph.getBounds(), 2, index, rnd);
-            List<Snap> snaps = snapPoints(index, points);
+            List<Snap> snaps = createRandomSnaps(graph.getBounds(), index, rnd, 2, true, EdgeFilter.ALL_EDGES);
             QueryGraph queryGraph = QueryGraph.create(graph, snaps);
 
             int source = snaps.get(0).getClosestNode();
@@ -256,14 +254,6 @@ public class DirectedRoutingTest {
         if (strictViolations.size() > Math.max(1, 0.05 * numQueries)) {
             fail("Too many strict violations, with seed: " + seed + " - " + strictViolations.size() + " / " + numQueries);
         }
-    }
-
-    private List<Snap> snapPoints(LocationIndexTree index, List<GHPoint> ghPoints) {
-        List<Snap> result = new ArrayList<>(ghPoints.size());
-        for (GHPoint ghPoint : ghPoints) {
-            result.add(index.findClosest(ghPoint.getLat(), ghPoint.getLon(), DefaultEdgeFilter.ALL_EDGES));
-        }
-        return result;
     }
 
     private List<String> comparePaths(Path refPath, Path path, int source, int target, boolean checkNodes, long seed) {
