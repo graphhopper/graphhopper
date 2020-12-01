@@ -813,7 +813,8 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     // copied from janino
-    private static final Set<String> JAVA_KEYWORDS = new HashSet<>(Arrays.asList(
+    private static final Set<String> KEYWORDS = new HashSet<>(Arrays.asList(
+            "first_match",
             "abstract", "assert",
             "boolean", "break", "byte",
             "case", "catch", "char", "class", "const", "continue",
@@ -834,7 +835,7 @@ public class EncodingManager implements EncodedValueLookup {
 
     public static boolean isValidEncodedValue(String name) {
         // first character must be a lower case letter
-        if (name.isEmpty() || !isLowerLetter(name.charAt(0)) || JAVA_KEYWORDS.contains(name)) return false;
+        if (name.isEmpty() || !isLowerLetter(name.charAt(0)) || KEYWORDS.contains(name)) return false;
 
         int dotCount = 0;
         for (int i = 1; i < name.length(); i++) {
