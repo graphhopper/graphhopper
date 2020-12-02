@@ -23,25 +23,25 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.config.CustomArea;
+import com.graphhopper.config.CustomAreaFile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.GraphHopperGtfs;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.lm.LandmarkStorage;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupHelper;
+import com.graphhopper.routing.util.CustomModel;
+import com.graphhopper.routing.util.area.CustomAreaHelper;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.util.Parameters;
-import com.graphhopper.util.shapes.BBox;
 import io.dropwizard.lifecycle.Managed;
-import org.locationtech.jts.geom.Envelope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -74,22 +74,18 @@ public class GraphHopperManaged implements Managed {
         if (!configuration.getString("spatial_rules.location", "").isEmpty()) {
             throw new RuntimeException("spatial_rules.location has been deprecated. Please use spatial_rules.borders_directory instead.");
         }
-        String spatialRuleBordersDirLocation = configuration.getString("spatial_rules.borders_directory", "");
-        if (!spatialRuleBordersDirLocation.isEmpty()) {
-            final Envelope maxBounds = BBox.toEnvelope(BBox.parseBBoxString(configuration.getString("spatial_rules.max_bbox", "-180, 180, -90, 90")));
-            final Path bordersDirectory = Paths.get(spatialRuleBordersDirLocation);
-            List<JsonFeatureCollection> jsonFeatureCollections = new ArrayList<>();
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(bordersDirectory, "*.{geojson,json}")) {
-                for (Path borderFile : stream) {
-                    try (BufferedReader reader = Files.newBufferedReader(borderFile, StandardCharsets.UTF_8)) {
-                        JsonFeatureCollection jsonFeatureCollection = localObjectMapper.readValue(reader, JsonFeatureCollection.class);
-                        jsonFeatureCollections.add(jsonFeatureCollection);
-                    }
-                }
+        
+        List<CustomArea> customAreas = new ArrayList<>();
+        for (CustomAreaFile customAreaFile : configuration.getCustomAreaFiles()) {
+            try {
+                customAreas.addAll(load(customAreaFile, localObjectMapper));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            SpatialRuleLookupHelper.buildAndInjectCountrySpatialRules(graphHopper, maxBounds, jsonFeatureCollections);
+        }
+        if (!customAreas.isEmpty()) {
+            logger.info("Loaded the following custom areas: {}", customAreas);
+            configuration.setCustomAreas(customAreas);
         }
 
         ObjectMapper yamlOM = Jackson.initObjectMapper(new ObjectMapper(new YAMLFactory()));
@@ -149,5 +145,14 @@ public class GraphHopperManaged implements Managed {
         graphHopper.close();
     }
 
+    private List<CustomArea> load(CustomAreaFile customAreaFile, ObjectMapper objectMapper) throws IOException {
+        final Path geojsonFile = Paths.get(customAreaFile.getLocation());
+        JsonFeatureCollection jsonFeatureCollection;
+        try (BufferedReader reader = Files.newBufferedReader(geojsonFile, StandardCharsets.UTF_8)) {
+            jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
+        }
+
+        return CustomAreaHelper.loadAreas(customAreaFile, jsonFeatureCollection);
+    }
 
 }
