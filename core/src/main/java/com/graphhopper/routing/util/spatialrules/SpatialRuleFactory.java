@@ -15,23 +15,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.ev;
+package com.graphhopper.routing.util.spatialrules;
 
 import java.util.List;
 
-public interface EncodedValueLookup {
+import org.locationtech.jts.geom.Polygon;
 
-    List<EncodedValue> getEncodedValues();
-
-    <T extends EncodedValue> T getEncodedValue(String key, Class<T> encodedValueType);
-
-    BooleanEncodedValue getBooleanEncodedValue(String key);
-
-    IntEncodedValue getIntEncodedValue(String key);
-
-    DecimalEncodedValue getDecimalEncodedValue(String key);
-
-    <T extends Enum> EnumEncodedValue<T> getEnumEncodedValue(String key, Class<T> enumType);
-
-    boolean hasEncodedValue(String key);
+public interface SpatialRuleFactory {
+    
+    SpatialRule createSpatialRule(String id, final List<Polygon> borders);
+    
+    static SpatialRuleFactory EMPTY = (id, borders) -> null;
 }

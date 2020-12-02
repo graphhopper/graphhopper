@@ -105,8 +105,8 @@ public class PtIsochroneResource {
         }
 
         PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(encodingManager);
-        GraphExplorer graphExplorer = new GraphExplorer(queryGraph, new FastestWeighting(encodingManager.getEncoder("foot")), ptEncodedValues, gtfsStorage, RealtimeFeed.empty(gtfsStorage), reverseFlow, false, 5.0, reverseFlow);
-        MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, reverseFlow, false, false, false, 1000000, Collections.emptyList());
+        GraphExplorer graphExplorer = new GraphExplorer(queryGraph, new FastestWeighting(encodingManager.getEncoder("foot")), ptEncodedValues, gtfsStorage, RealtimeFeed.empty(gtfsStorage), reverseFlow, false, false, 5.0, reverseFlow, blockedRouteTypes);
+        MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, reverseFlow, false, false, 1000000, Collections.emptyList());
 
         Map<Coordinate, Double> z1 = new HashMap<>();
         NodeAccess nodeAccess = queryGraph.getNodeAccess();
@@ -117,11 +117,11 @@ public class PtIsochroneResource {
         };
 
         if (format.equals("multipoint")) {
-            router.calcLabels(snap.getClosestNode(), initialTime, blockedRouteTypes, sptVisitor, label -> label.currentTime <= targetZ);
+            router.calcLabels(snap.getClosestNode(), initialTime, sptVisitor, label -> label.currentTime <= targetZ);
             MultiPoint exploredPoints = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
             return wrap(exploredPoints);
         } else {
-            router.calcLabels(snap.getClosestNode(), initialTime, blockedRouteTypes, sptVisitor, label -> label.currentTime <= targetZ);
+            router.calcLabels(snap.getClosestNode(), initialTime, sptVisitor, label -> label.currentTime <= targetZ);
             MultiPoint exploredPoints = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
 
             // Get at least all nodes within our bounding box (I think convex hull would be enough.)

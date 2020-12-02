@@ -606,11 +606,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
     }
 
-    // todonow: EdgeAccess was a really bad interface: it was used to 'sneak in' some different behavior (edge access)
-    // into edge iterators so it could be used for CH. but this was very twisted and we want a different edge iteration
-    // for CH anyway. then again having some kind of 'access' class to abstract away the data access probably makes sense
-    // so maybe try this again now that edgeAccess is gone.
-
     private int getEdgeRef(int nodeId) {
         return nodesCH.getInt((long) nodeId * nodeCHEntryBytes + N_CH_REF);
     }

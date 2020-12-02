@@ -27,6 +27,8 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.io.*;
 import java.lang.reflect.Constructor;
+import java.util.ArrayDeque;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -40,8 +42,10 @@ import java.util.zip.ZipInputStream;
  * @author Nop
  */
 public class OSMInputFile implements Sink, OSMInput {
+    private static final int MAX_BATCH_SIZE = 1_000;
     private final InputStream bis;
     private final BlockingQueue<ReaderElement> itemQueue;
+    private final Queue<ReaderElement> itemBatch;
     Thread pbfReaderThread;
     private boolean eof;
     // for xml parsing
@@ -55,6 +59,7 @@ public class OSMInputFile implements Sink, OSMInput {
     public OSMInputFile(File file) throws IOException {
         bis = decode(file);
         itemQueue = new LinkedBlockingQueue<>(50_000);
+        itemBatch = new ArrayDeque<>(MAX_BATCH_SIZE);
     }
 
     public OSMInputFile open() throws XMLStreamException {
@@ -255,7 +260,7 @@ public class OSMInputFile implements Sink, OSMInput {
     }
 
     public int getUnprocessedElements() {
-        return itemQueue.size();
+        return itemQueue.size() + itemBatch.size();
     }
 
     @Override
@@ -264,22 +269,24 @@ public class OSMInputFile implements Sink, OSMInput {
     }
 
     private ReaderElement getNextPBF() {
-        ReaderElement next = null;
-        while (next == null) {
+        while (itemBatch.isEmpty()) {
             if (!hasIncomingData && itemQueue.isEmpty()) {
-                // we are done, stop polling
-                eof = true;
-                break;
+                return null; // signal EOF
             }
-
-            try {
-                // we cannot use "itemQueue.take()" as it blocks and hasIncomingData can change
-                next = itemQueue.poll(10, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException ex) {
-                eof = true;
-                break;
+            
+            if (itemQueue.drainTo(itemBatch, MAX_BATCH_SIZE) == 0) {
+                try {
+                    ReaderElement element = itemQueue.poll(100, TimeUnit.MILLISECONDS);
+                    if (element != null) {
+                        return element; // short circuit
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return null; // signal EOF
+                }
             }
         }
-        return next;
+        
+        return itemBatch.poll();
     }
 }

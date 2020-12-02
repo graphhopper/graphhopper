@@ -33,6 +33,19 @@ public enum Country {
     public static EnumEncodedValue<Country> create() {
         return new EnumEncodedValue<>(Country.KEY, Country.class);
     }
+    
+    public static Country find(String name) {
+        if (name == null || name.isEmpty())
+            return DEFAULT;
+        
+        for (Country country : values()) {
+            if (country.name.equalsIgnoreCase(name)) {
+                return country;
+            }
+        }
+        
+        return DEFAULT;
+    }
 
     @Override
     public String toString() {

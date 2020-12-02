@@ -21,6 +21,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.Constants;
 import org.locationtech.jts.geom.Envelope;
@@ -96,13 +97,15 @@ public class InfoResource {
         info.data_date = storage.getProperties().get("datareader.data.date");
 
         // do not list all supported encoded values like the none-shared ones or *.turn_costs
-        List<EncodedValue> evList = storage.getEncodingManager().getAllShared();
+        List<EncodedValue> evList = storage.getEncodingManager().getEncodedValues();
         info.encoded_values = new LinkedHashMap<>();
         for (EncodedValue encodedValue : evList) {
             List<Object> possibleValueList = new ArrayList<>();
-            if (encodedValue instanceof EnumEncodedValue) {
-                for (Enum o : ((EnumEncodedValue) encodedValue).getValues()) {
-                    possibleValueList.add(o.name());
+            if (!EncodingManager.isSharedEncodedValues(encodedValue)) {
+                // skip
+            } else if (encodedValue instanceof EnumEncodedValue) {
+                for (Object o : ((EnumEncodedValue) encodedValue).getValues()) {
+                    possibleValueList.add(o.toString());
                 }
             } else if (encodedValue instanceof BooleanEncodedValue) {
                 possibleValueList.add("true");

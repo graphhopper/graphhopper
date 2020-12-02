@@ -42,7 +42,7 @@ public class SpatialRuleLookupJTSTest {
         spatialRules.add(austria);
 
         // create lookup with bbox just for DEU (for space reduction)
-        SpatialRuleLookupJTS lookup = new SpatialRuleLookupJTS(spatialRules, deBorder.getEnvelopeInternal());
+        SpatialRuleLookupJTS lookup = new SpatialRuleLookupJTS(spatialRules);
         SpatialRule rule = getFirstRule(lookup, 1.5, 1.5);
         assertSame(germany, rule);
         assertEquals("DEU", rule.getId());
@@ -63,7 +63,7 @@ public class SpatialRuleLookupJTSTest {
             }
         };
 
-        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupJTS(Collections.singletonList(germanySpatialRule), new Envelope(-180, 180, -90, 90));
+        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupJTS(Collections.singletonList(germanySpatialRule));
 
         // Far from the border of Germany, in Germany
         assertSame(germanySpatialRule, getFirstRule(spatialRuleLookup, 48.777106, 9.180769));
@@ -97,14 +97,14 @@ public class SpatialRuleLookupJTSTest {
         List<SpatialRule> spatialRules = new ArrayList<>();
         spatialRules.add(s1);
         
-        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupJTS(spatialRules, p1.getEnvelopeInternal());
+        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupJTS(spatialRules);
         
         assertSame(null, getFirstRule(spatialRuleLookup, 3, 5));
 
         Polygon p2 = FAC.createPolygon(hole);
         SpatialRule s2 = getSpatialRule(p2, "2");
         spatialRules.add(s2);
-        spatialRuleLookup = new SpatialRuleLookupJTS(spatialRules, p1.getEnvelopeInternal());
+        spatialRuleLookup = new SpatialRuleLookupJTS(spatialRules);
         
         assertSame(s2, getFirstRule(spatialRuleLookup, 3, 5));
     }
@@ -121,7 +121,7 @@ public class SpatialRuleLookupJTSTest {
         spatialRules.add(getSpatialRule(p3, "2"));
         spatialRules.add(getSpatialRule(p4, "3"));
 
-        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupJTS(spatialRules, new Envelope(1, 2, 1, 2));
+        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupJTS(spatialRules);
 
         assertEquals("0", spatialRuleLookup.getRules().get(0).getId());
         assertEquals("3", spatialRuleLookup.getRules().get(3).getId());
@@ -158,8 +158,7 @@ public class SpatialRuleLookupJTSTest {
         };
         spatialRules.add(austria);
 
-        SpatialRuleLookupJTS lookup = new SpatialRuleLookupJTS(spatialRules,
-                        new Envelope(0, 3, 0, 3));
+        SpatialRuleLookupJTS lookup = new SpatialRuleLookupJTS(spatialRules);
         SpatialRuleSet set = lookup.lookupRules(1.5, 1.25);
         assertEquals(2, set.getRules().size());
         // Since Austria is priority 500, Germany should be the first, Austria

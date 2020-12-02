@@ -3,10 +3,7 @@ package com.graphhopper.routing.weighting.custom;
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.json.geo.JsonFeature;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.MaxSpeed;
-import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.EncodingManager;
@@ -18,9 +15,6 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
-import org.codehaus.commons.compiler.CompileException;
-import org.codehaus.commons.compiler.IScriptEvaluator;
-import org.codehaus.janino.ScriptEvaluator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -50,6 +44,27 @@ class CustomWeightingTest {
         maxSpeedEnc = encodingManager.getDecimalEncodedValue(MaxSpeed.KEY);
         roadClassEnc = encodingManager.getEnumEncodedValue(KEY, RoadClass.class);
         graphHopperStorage = new GraphBuilder(encodingManager).create();
+    }
+
+    @Test
+    public void testBoolean() {
+        carFE = new CarFlagEncoder();
+        BooleanEncodedValue specialEnc = new SimpleBooleanEncodedValue("special", true);
+        encodingManager = new EncodingManager.Builder().add(carFE).add(specialEnc).build();
+        avSpeedEnc = carFE.getAverageSpeedEnc();
+        graphHopperStorage = new GraphBuilder(encodingManager).create();
+
+        BooleanEncodedValue accessEnc = carFE.getAccessEnc();
+        EdgeIteratorState edge = graphHopperStorage.edge(0, 1).set(accessEnc, true).setReverse(accessEnc, true).
+                set(avSpeedEnc, 15).set(specialEnc, false).setReverse(specialEnc, true).setDistance(10);
+
+        CustomModel vehicleModel = new CustomModel();
+        assertEquals(3.1, createWeighting(vehicleModel).calcEdgeWeight(edge, false), 0.01);
+        vehicleModel.getPriority().put("special == true", 0.8);
+        vehicleModel.getPriority().put("special == false", 0.4);
+        Weighting weighting = createWeighting(vehicleModel);
+        assertEquals(6.7, weighting.calcEdgeWeight(edge, false), 0.01);
+        assertEquals(3.7, weighting.calcEdgeWeight(edge, true), 0.01);
     }
 
     @Test

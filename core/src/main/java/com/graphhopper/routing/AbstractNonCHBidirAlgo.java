@@ -77,8 +77,8 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
      */
     protected abstract SPTEntry createEntry(EdgeIteratorState edge, double weight, SPTEntry parent, boolean reverse);
 
-    protected BidirPathExtractor createPathExtractor(Graph graph, Weighting weighting) {
-        return new BidirPathExtractor(graph, weighting);
+    protected DefaultBidirPathExtractor createPathExtractor(Graph graph, Weighting weighting) {
+        return new DefaultBidirPathExtractor(graph, weighting);
     }
 
     protected void postInitFrom() {

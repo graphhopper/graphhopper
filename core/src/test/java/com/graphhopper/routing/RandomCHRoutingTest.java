@@ -17,7 +17,6 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
-import com.graphhopper.util.shapes.BBox;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,6 +26,7 @@ import org.junit.runners.Parameterized;
 import java.util.*;
 
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
+import static com.graphhopper.util.GHUtility.createRandomSnaps;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -147,7 +147,7 @@ public class RandomCHRoutingTest {
         for (int j = 0; j < numQueryGraph; j++) {
             // add virtual nodes and edges, because they can change the routing behavior and/or produce bugs, e.g.
             // when via-points are used
-            List<Snap> snaps = createSnaps(rnd, numVirtualNodes);
+            List<Snap> snaps = createRandomSnaps(graph.getBounds(), locationIndex, rnd, numVirtualNodes, false, EdgeFilter.ALL_EDGES);
             QueryGraph queryGraph = QueryGraph.create(graph, snaps);
 
             int numQueries = 100;
@@ -195,35 +195,6 @@ public class RandomCHRoutingTest {
                         Helper.join("\n", strictViolations));
             }
         }
-    }
-
-    private List<Snap> createSnaps(Random rnd, int numVirtualNodes) {
-        BBox bbox = graph.getBounds();
-        int count = 0;
-        List<Snap> snaps = new ArrayList<>(numVirtualNodes);
-        while (snaps.size() < numVirtualNodes) {
-            if (count > numVirtualNodes * 100) {
-                throw new IllegalArgumentException("Could not create enough virtual edges");
-            }
-            Snap snap = findSnap(rnd, bbox);
-            if (snap.getSnappedPosition().equals(Snap.Position.EDGE)) {
-                snaps.add(snap);
-            }
-            count++;
-        }
-        return snaps;
-    }
-
-    private Snap findSnap(Random rnd, BBox bbox) {
-        return locationIndex.findClosest(
-                randomDoubleInRange(rnd, bbox.minLat, bbox.maxLat),
-                randomDoubleInRange(rnd, bbox.minLon, bbox.maxLon),
-                EdgeFilter.ALL_EDGES
-        );
-    }
-
-    private double randomDoubleInRange(Random rnd, double min, double max) {
-        return min + rnd.nextDouble() * (max - min);
     }
 
     /**

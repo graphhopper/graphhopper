@@ -23,6 +23,7 @@ import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleFactory;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -75,7 +76,7 @@ public class GraphHopperOSM extends GraphHopper {
         if (landmarkSplittingFeatureCollection != null && !landmarkSplittingFeatureCollection.getFeatures().isEmpty()) {
             SpatialRuleLookup ruleLookup = SpatialRuleLookupBuilder.buildIndex(
                     Collections.singletonList(landmarkSplittingFeatureCollection), "area",
-                    new SpatialRuleLookupBuilder.SpatialRuleFactory() {
+                    new SpatialRuleFactory() {
                         @Override
                         public SpatialRule createSpatialRule(final String id,
                                         List<Polygon> polygons) {

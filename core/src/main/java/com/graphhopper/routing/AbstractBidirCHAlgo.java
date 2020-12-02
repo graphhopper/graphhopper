@@ -23,6 +23,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.*;
 
 import java.util.PriorityQueue;
+import java.util.function.Supplier;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 
@@ -40,6 +41,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
     protected RoutingCHEdgeExplorer inEdgeExplorer;
     protected RoutingCHEdgeExplorer outEdgeExplorer;
     protected CHEdgeFilter levelEdgeFilter;
+    private Supplier<BidirPathExtractor> pathExtractorSupplier;
 
     public AbstractBidirCHAlgo(RoutingCHGraph graph, TraversalMode tMode) {
         super(tMode);
@@ -50,6 +52,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
         outEdgeExplorer = graph.createOutEdgeExplorer();
         inEdgeExplorer = graph.createInEdgeExplorer();
         levelEdgeFilter = new CHLevelEdgeFilter(graph);
+        pathExtractorSupplier = () -> new NodeBasedCHBidirPathExtractor(graph);
         int size = Math.min(Math.max(200, graph.getNodes() / 10), 150_000);
         initCollections(size);
     }
@@ -73,10 +76,6 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
      * @param reverse true if we are currently looking at the backward search, false otherwise
      */
     protected abstract SPTEntry createEntry(int edge, int adjNode, int incEdge, double weight, SPTEntry parent, boolean reverse);
-
-    protected BidirPathExtractor createPathExtractor(RoutingCHGraph graph) {
-        return new NodeBasedCHBidirPathExtractor(graph);
-    }
 
     @Override
     protected void postInitFrom() {
@@ -249,9 +248,17 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
     @Override
     protected Path extractPath() {
         if (finished())
-            return createPathExtractor(graph).extract(bestFwdEntry, bestBwdEntry, bestWeight);
+            return createPathExtractor().extract(bestFwdEntry, bestBwdEntry, bestWeight);
 
         return createEmptyPath();
+    }
+
+    public void setPathExtractorSupplier(Supplier<BidirPathExtractor> pathExtractorSupplier) {
+        this.pathExtractorSupplier = pathExtractorSupplier;
+    }
+
+    BidirPathExtractor createPathExtractor() {
+        return pathExtractorSupplier.get();
     }
 
     protected Path createEmptyPath() {

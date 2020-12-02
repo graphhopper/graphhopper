@@ -25,18 +25,20 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Peter Karich
  * @author easbar
  */
-public class BidirPathExtractorTest {
-    private FlagEncoder carEncoder = new CarFlagEncoder(5, 5, 10);
+public class DefaultBidirPathExtractorTest {
+    private final FlagEncoder carEncoder = new CarFlagEncoder(5, 5, 10);
     private final EncodingManager encodingManager = EncodingManager.create(carEncoder);
 
     Graph createGraph() {
@@ -50,7 +52,7 @@ public class BidirPathExtractorTest {
         SPTEntry fwdEntry = new SPTEntry(0, 2, 0);
         fwdEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 10);
         SPTEntry bwdEntry = new SPTEntry(EdgeIterator.NO_EDGE, 2, 0);
-        Path p = BidirPathExtractor.extractPath(g, new FastestWeighting(carEncoder), fwdEntry, bwdEntry, 0);
+        Path p = DefaultBidirPathExtractor.extractPath(g, new FastestWeighting(carEncoder), fwdEntry, bwdEntry, 0);
         assertEquals(IntArrayList.from(1, 2), p.calcNodes());
         assertEquals(10, p.getDistance(), 1e-4);
     }
@@ -73,7 +75,7 @@ public class BidirPathExtractorTest {
         SPTEntry bwdEntry = new SPTEntry(1, 2, 1.2);
         bwdEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 3, 0);
 
-        Path p = BidirPathExtractor.extractPath(g, new FastestWeighting(carEncoder, new DefaultTurnCostProvider(carEncoder, turnCostStorage)), fwdEntry, bwdEntry, 0);
+        Path p = DefaultBidirPathExtractor.extractPath(g, new FastestWeighting(carEncoder, new DefaultTurnCostProvider(carEncoder, turnCostStorage)), fwdEntry, bwdEntry, 0);
         p.setWeight(5 + 1.8);
 
         assertEquals(IntArrayList.from(1, 2, 3), p.calcNodes());

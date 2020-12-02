@@ -48,6 +48,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
         BooleanEncodedValue accessEnc = graph.getWeighting().getFlagEncoder().getAccessEnc();
         innerInExplorer = graph.getBaseGraph().createEdgeExplorer(DefaultEdgeFilter.inEdges(accessEnc));
         innerOutExplorer = graph.getBaseGraph().createEdgeExplorer(DefaultEdgeFilter.outEdges(accessEnc));
+        setPathExtractorSupplier(() -> new EdgeBasedCHBidirPathExtractor(graph));
     }
 
     @Override
@@ -112,11 +113,6 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
                 bestWeight = newWeight;
             }
         }
-    }
-
-    @Override
-    protected BidirPathExtractor createPathExtractor(RoutingCHGraph graph) {
-        return new EdgeBasedCHBidirPathExtractor(graph);
     }
 
     @Override

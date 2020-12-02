@@ -67,7 +67,7 @@ class SpatialRuleContainer {
         return this.rules.size();
     }
 
-    public boolean containsProperly(Point point) {
+    public boolean covers(Point point) {
         Coordinate coord = point.getCoordinate();
         
         for (Envelope line : filledLines) {
@@ -76,7 +76,7 @@ class SpatialRuleContainer {
             }
         }
         
-        return preparedPolygon.containsProperly(point);
+        return preparedPolygon.intersects(point);
     }
 
     public SpatialRuleContainer copy() {

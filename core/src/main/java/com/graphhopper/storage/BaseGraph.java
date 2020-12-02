@@ -608,7 +608,7 @@ class BaseGraph implements Graph {
     @Override
     public EdgeIteratorState getEdgeIteratorState(int edgeId, int adjNode) {
         if (!isInBounds(edgeId))
-            throw new IllegalStateException("edgeId " + edgeId + " out of bounds");
+            throw new IllegalStateException("edgeId " + edgeId + " out of bounds, edgeCount: " + edgeCount);
         checkAdjNodeBounds(adjNode);
         EdgeIteratorStateImpl edge = new EdgeIteratorStateImpl(this);
         if (edge.init(edgeId, adjNode))

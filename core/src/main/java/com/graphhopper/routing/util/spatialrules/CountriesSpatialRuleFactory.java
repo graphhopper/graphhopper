@@ -7,23 +7,17 @@ import org.locationtech.jts.geom.Polygon;
 
 import java.util.List;
 
-import static com.graphhopper.util.Helper.toUpperCase;
-
-public class CountriesSpatialRuleFactory implements SpatialRuleLookupBuilder.SpatialRuleFactory {
-
+public class CountriesSpatialRuleFactory implements SpatialRuleFactory {
+    
     @Override
     public SpatialRule createSpatialRule(String id, List<Polygon> polygons) {
-        try {
-            Country country = Country.valueOf(toUpperCase(id));
-            switch (country) {
-                case AUT:
-                    return new AustriaSpatialRule(polygons);
-                case DEU:
-                    return new GermanySpatialRule(polygons);
-            }
-        } catch (Exception ex) {
+        switch (Country.find(id)) {
+        case AUT:
+            return new AustriaSpatialRule(polygons);
+        case DEU:
+            return new GermanySpatialRule(polygons);
+        default:
+            return null;
         }
-
-        return null;
     }
 }

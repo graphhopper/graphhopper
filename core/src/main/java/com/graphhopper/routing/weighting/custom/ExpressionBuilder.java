@@ -214,7 +214,7 @@ class ExpressionBuilder {
         for (String arg : set) {
             if (lookup.hasEncodedValue(arg)) {
                 EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
-                if (!EncodingManager.isSharedEV(enc))
+                if (!EncodingManager.isSharedEncodedValues(enc))
                     continue;
                 classSourceCode.append("protected " + enc.getClass().getSimpleName() + " " + arg + "_enc;\n");
                 initSourceCode.append("if (lookup.hasEncodedValue(\"" + arg + "\")) ");
