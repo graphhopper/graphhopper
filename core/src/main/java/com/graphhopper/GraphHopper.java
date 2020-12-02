@@ -18,6 +18,7 @@
 package com.graphhopper;
 
 import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.CustomArea;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.dem.*;
@@ -42,11 +43,11 @@ import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoderFactory;
+import com.graphhopper.routing.util.area.CustomAreaHelper;
+import com.graphhopper.routing.util.area.CustomAreaLookup;
+import com.graphhopper.routing.util.area.CustomAreaLookupJTS;
 import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
-import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
@@ -1048,18 +1049,13 @@ public class GraphHopper implements GraphHopperAPI {
         }
 
         if (landmarkSplittingFeatureCollection != null && !landmarkSplittingFeatureCollection.getFeatures().isEmpty()) {
-            SpatialRuleLookup ruleLookup = SpatialRuleLookupBuilder.buildIndex(
-                    Collections.singletonList(landmarkSplittingFeatureCollection), "area",
-                    (id, polygons) -> new AbstractSpatialRule(polygons) {
-                        @Override
-                        public String getId() {
-                            return id;
-                        }
-                    });
+            List<CustomArea> landmarkAreas = CustomAreaHelper.loadAreas(landmarkSplittingFeatureCollection, "area");
+            CustomAreaLookup landmarkAreaLookup = landmarkAreas.isEmpty() ? CustomAreaLookup.EMPTY : new CustomAreaLookupJTS(landmarkAreas);
+
             for (PrepareLandmarks prep : getLMPreparationHandler().getPreparations()) {
                 // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
-                if (ruleLookup != null && !ruleLookup.getRules().isEmpty()) {
-                    prep.setSpatialRuleLookup(ruleLookup);
+                if (landmarkAreaLookup != CustomAreaLookup.EMPTY) {
+                    prep.setCustomAreaLookup(landmarkAreaLookup);
                 }
             }
         }

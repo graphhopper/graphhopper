@@ -17,13 +17,14 @@
  */
 package com.graphhopper.routing.lm;
 
+import com.graphhopper.config.CustomArea;
 import com.graphhopper.routing.RoutingAlgorithmTest;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
+import com.graphhopper.routing.util.area.CustomAreaLookup;
+import com.graphhopper.routing.util.area.LookupResult;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleSet;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.DataAccess;
@@ -41,6 +42,7 @@ import org.locationtech.jts.geom.Polygon;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.*;
 
@@ -190,46 +192,41 @@ public class LandmarkStorageTest {
         RoutingAlgorithmTest.initBiGraph(graph, encoder);
 
         LandmarkStorage storage = new LandmarkStorage(graph, new RAMDirectory(), new LMConfig("c", new FastestWeighting(encoder)), 2);
-        final SpatialRule ruleRight = new AbstractSpatialRule(Collections.<Polygon>emptyList()) {
+        final CustomArea areaRight = new CustomArea("right", Collections.<Polygon>emptyList());
+        final CustomArea areaLeft = new CustomArea("left", Collections.<Polygon>emptyList());
+        
+        final CustomAreaLookup lookup = new CustomAreaLookup() {
+            
             @Override
-            public String getId() {
-                return "right";
-            }
-        };
-        final SpatialRule ruleLeft = new AbstractSpatialRule(Collections.<Polygon>emptyList()) {
-            @Override
-            public String getId() {
-                return "left";
-            }
-        };
-        final SpatialRuleLookup lookup = new SpatialRuleLookup() {
-
-            private final List<SpatialRule> rules = Arrays.asList(ruleLeft, ruleRight);
-
-            @Override
-            public SpatialRuleSet lookupRules(double lat, double lon) {
-                SpatialRule rule;
+            public LookupResult lookup(double lat, double lon) {
                 if (lon > 0.00105) {
-                    rule = ruleRight;
-                } else {
-                    rule = ruleLeft;
+                    return new LookupResult(Collections.singletonList(areaRight), SpatialRuleSet.EMPTY);
                 }
-
-                return new SpatialRuleSet(Collections.singletonList(rule), rules.indexOf(rule) + 1);
+                return new LookupResult(Collections.singletonList(areaLeft), SpatialRuleSet.EMPTY);
             }
-
-            @Override
-            public List<SpatialRule> getRules() {
-                return rules;
-            }
-
+            
             @Override
             public Envelope getBounds() {
                 return new Envelope(-180d, 180d, -90d, 90d);
             }
-        };
 
-        storage.setSpatialRuleLookup(lookup);
+            @Override
+            public List<CustomArea> getAreas() {
+                return Arrays.asList(areaRight, areaLeft);
+            }
+
+            @Override
+            public List<SpatialRule> getRules() {
+                return Collections.emptyList();
+            }
+
+            @Override
+            public Map<String, Integer> getEncodedValueMap() {
+                return Collections.emptyMap();
+            }
+        };
+        
+        storage.setCustomAreaLookup(lookup);
         storage.setMinimumNodes(2);
         storage.createLandmarks();
         assertEquals(3, storage.getSubnetworksWithLandmarks());
