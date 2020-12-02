@@ -26,6 +26,8 @@ import com.graphhopper.routing.ev.RouteNetwork;
 import com.graphhopper.storage.IntsRef;
 import org.junit.Test;
 
+import java.util.Arrays;
+
 import static org.junit.Assert.*;
 
 /**
@@ -273,6 +275,21 @@ public class EncodingManagerTest {
             if (!encoder.toString().equals("foot"))
                 assertFalse(encoder.toString(), accessEnc.getBool(true, edgeFlags));
             assertTrue(encoder.toString(), roundaboutEnc.getBool(false, edgeFlags));
+        }
+    }
+
+    @Test
+    public void validEV() {
+        for (String str : Arrays.asList("blup_test", "test", "test12", "tes$0", "blup.test", "blup_te.st_")) {
+            assertTrue(str, EncodingManager.isValidEncodedValue(str));
+        }
+
+        for (String str : Arrays.asList("Test", "12test", "test|3", "test{34", "test,21", "täst", "blup.two.three", "blup..test")) {
+            assertFalse(str, EncodingManager.isValidEncodedValue(str));
+        }
+
+        for (String str : Arrays.asList("break", "switch")) {
+            assertFalse(str, EncodingManager.isValidEncodedValue(str));
         }
     }
 }
