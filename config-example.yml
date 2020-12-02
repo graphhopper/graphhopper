@@ -159,18 +159,23 @@ graphhopper:
 
 
 
-  ##### Spatial Rules #####
-  # Spatial Rules require some configuration and only work with the DataFlagEncoder.
+  ##### Custom Areas & Spatial Rules #####
 
-
-  # Spatial Rules require you to provide Polygons in which the rules are enforced
-  # The line below contains the default location for the files which define these borders
-  # spatial_rules.borders_directory: core/files/spatialrules
-
-  # You can define the maximum BBox for which spatial rules are loaded.
-  # You might want to do this if you are only importing a small area and don't need rules for other countries.
-  # Having less rules, might result in a smaller graph. The line below contains the world-wide bounding box, uncomment and adapt to your need.
-  # spatial_rules.max_bbox: -180,180,-90,90
+  # Custom Areas are loaded from user provided GeoJSON files. A registered SpatialRule is enforced for an area if it has the same ID.
+  # The following fields can be configured for each custom area file:
+  # - location (required): the path of the GeoJSON file
+  # - id_field (required): they GeoJSON property of the (multi)polygons to be used as the ID of the resulting area
+  # - encoded_value (optional, default: ""): the encoded value to be used if the area should be stored in the graph
+  # - encoded_value_limit (optional, default: -1): expected number of encountered areas to be stored in the encoded value. Defaults to the number of areas if -1.
+  # - max_bbox (optional, default: -180,180,-90,90): maximum BBox for which custom areas are loaded. Having less areas, might result in a smaller graph.
+  custom_area_files: []
+  
+  # custom_area_files:
+  #   - location: core/files/spatialrules/countries.geojson
+  #     id_field: "ISO3166-1:alpha3"
+  #     encoded_value: country
+  #     encoded_value_limit: 63
+  #     max_bbox: -180,180,-90,90
 
 # Dropwizard server configuration
 server:

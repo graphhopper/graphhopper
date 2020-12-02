@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.CustomAreaFile;
 import com.graphhopper.config.LMProfile;
 
 import java.util.List;
@@ -33,6 +34,9 @@ public interface GraphHopperConfigMixIn {
 
     @JsonProperty("profiles_lm")
     GraphHopperConfig setLMProfiles(List<LMProfile> lmProfiles);
+
+    @JsonProperty("custom_area_files")
+    GraphHopperConfig setCustomAreaFiles(List<CustomAreaFile> customAreaFiles);
 
     // We can add explicit configuration properties to GraphHopperConfig (for example to allow lists or nested objects),
     // everything else is stored in a HashMap

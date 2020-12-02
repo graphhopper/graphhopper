@@ -19,8 +19,11 @@
 package com.graphhopper;
 
 import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.CustomArea;
+import com.graphhopper.config.CustomAreaFile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.util.PMap;
 
 import java.util.ArrayList;
@@ -37,6 +40,9 @@ public class GraphHopperConfig {
     private List<Profile> profiles = new ArrayList<>();
     private List<CHProfile> chProfiles = new ArrayList<>();
     private List<LMProfile> lmProfiles = new ArrayList<>();
+    private List<CustomAreaFile> customAreaFiles = new ArrayList<>();
+    private List<CustomArea> customAreas = new ArrayList<>();
+    private List<SpatialRule> spatialRules = new ArrayList<>();
     private final PMap map;
 
     public GraphHopperConfig() {
@@ -48,6 +54,8 @@ public class GraphHopperConfig {
         profiles = new ArrayList<>(otherConfig.profiles);
         chProfiles = new ArrayList<>(otherConfig.chProfiles);
         lmProfiles = new ArrayList<>(otherConfig.lmProfiles);
+        customAreas = new ArrayList<>(otherConfig.customAreas);
+        spatialRules = new ArrayList<>(otherConfig.spatialRules);
     }
 
     public GraphHopperConfig(PMap pMap) {
@@ -78,6 +86,34 @@ public class GraphHopperConfig {
 
     public GraphHopperConfig setLMProfiles(List<LMProfile> lmProfiles) {
         this.lmProfiles = lmProfiles;
+        return this;
+    }
+
+    public List<CustomAreaFile> getCustomAreaFiles() {
+        return customAreaFiles;
+    }
+    
+    public GraphHopperConfig setCustomAreaFiles(List<CustomAreaFile> customAreaFiles) {
+        this.customAreaFiles = customAreaFiles;
+        return this;
+    }
+
+    public List<CustomArea> getCustomAreas()  {
+        return customAreas;
+    }
+    
+    public GraphHopperConfig setCustomAreas(List<CustomArea> customAreas)  {
+        this.customAreas = customAreas;
+        return this;
+    }
+    
+
+    public List<SpatialRule> getSpatialRules()  {
+        return spatialRules;
+    }
+    
+    public GraphHopperConfig setSpatialRules(List<SpatialRule> spatialRules)  {
+        this.spatialRules = spatialRules;
         return this;
     }
 
@@ -134,6 +170,16 @@ public class GraphHopperConfig {
         sb.append("profiles_lm:\n");
         for (LMProfile profile : lmProfiles) {
             sb.append(profile);
+            sb.append("\n");
+        }
+        sb.append("custom_areas:\n");
+        for (CustomArea area : customAreas) {
+            sb.append(area.getId());
+            sb.append("\n");
+        }
+        sb.append("spatial_rules:\n");
+        for (SpatialRule rule : spatialRules) {
+            sb.append(rule.getId());
             sb.append("\n");
         }
         sb.append("properties:\n");
