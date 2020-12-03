@@ -23,13 +23,17 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.area.CustomAreaLookup;
+import com.graphhopper.routing.util.area.LookupResult;
 import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
+import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 import static com.graphhopper.util.Helper.toLowerCase;
@@ -55,6 +59,7 @@ public class EncodingManager implements EncodedValueLookup {
     private EncodedValue.InitializerConfig turnCostConfig;
     private EncodedValue.InitializerConfig relationConfig;
     private EncodedValue.InitializerConfig edgeConfig;
+    private CustomAreaLookup customAreaLookup = CustomAreaLookup.EMPTY;
 
     /**
      * Instantiate manager with the given list of encoders. The manager knows several default
@@ -203,6 +208,12 @@ public class EncodingManager implements EncodedValueLookup {
             em.add(tagParsers, factory, tagParserString);
             return this;
         }
+        
+        public Builder setCustomAreaLookup(CustomAreaLookup customAreaLookup) {
+            check();
+            em.setCustomAreaLookup(encodedValueList, customAreaLookup);
+            return this;
+        }
 
         public Builder addTurnCostParser(TurnCostParser parser) {
             check();
@@ -295,13 +306,8 @@ public class EncodingManager implements EncodedValueLookup {
                 _addRelationTagParser(tagParser);
             }
 
-            List<SpatialRuleParser> insertLater = new ArrayList<>();
             for (TagParser tagParser : tagParsers) {
-                if (SpatialRuleParser.class.isAssignableFrom(tagParser.getClass())) {
-                    insertLater.add((SpatialRuleParser) tagParser);
-                } else {
-                    _addEdgeTagParser(tagParser, false, false);
-                }
+                _addEdgeTagParser(tagParser, false, false);
             }
 
             for (EncodedValue ev : encodedValueList) {
@@ -321,13 +327,6 @@ public class EncodingManager implements EncodedValueLookup {
             if (!em.hasEncodedValue(RoadAccess.KEY)) {
                 // TODO introduce road_access for different vehicles? But how to create it in DefaultTagParserFactory?
                 _addEdgeTagParser(new OSMRoadAccessParser(), false, false);
-            }
-
-            // ensure that SpatialRuleParsers come after required EncodedValues like max_speed or road_access
-            // TODO can we avoid this hack without complex dependency management?
-            boolean insert = true;
-            for (SpatialRuleParser srp : insertLater) {
-                _addEdgeTagParser(srp, false, insert);
             }
 
             if (dateRangeParser == null)
@@ -426,6 +425,13 @@ public class EncodingManager implements EncodedValueLookup {
             PMap map = new PMap(entry);
             TagParser tp = factory.create(entry, map);
             returnList.add(tp);
+        }
+    }
+    
+    private void setCustomAreaLookup(List<EncodedValue> returnList, CustomAreaLookup customAreaLookup) {
+        this.customAreaLookup = customAreaLookup;
+        for (Entry<String, List<String>> entry : customAreaLookup.getEncodedValueMap().entrySet()) {
+            returnList.add(new StringEncodedValue(entry.getKey(), entry.getValue()));
         }
     }
 
@@ -612,6 +618,15 @@ public class EncodingManager implements EncodedValueLookup {
      */
     public IntsRef handleWayTags(ReaderWay way, AcceptWay acceptWay, IntsRef relationFlags) {
         IntsRef edgeFlags = createEdgeFlags();
+        if (customAreaLookup != CustomAreaLookup.EMPTY) {
+            GHPoint estimatedCenter = way.getTag("estimated_center", null);
+            if (estimatedCenter != null) {
+                LookupResult result = customAreaLookup.lookup(estimatedCenter.lat,
+                                estimatedCenter.lon);
+                way.setTag("custom_areas", result.getAreas());
+                way.setTag("spatial_rule_set", result.getRuleSet());
+            }
+        }
         for (TagParser parser : edgeTagParsers) {
             parser.handleWayTags(edgeFlags, way, acceptWay.isFerry(), relationFlags);
         }
