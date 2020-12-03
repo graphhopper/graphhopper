@@ -1209,31 +1209,31 @@ class BaseGraph implements Graph {
         }
 
         @Override
-        public <T extends Enum> T get(EnumEncodedValue<T> property) {
+        public <T extends Enum<?>> T get(EnumEncodedValue<T> property) {
             return property.getEnum(reverse, getFlags());
         }
 
         @Override
-        public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T value) {
+        public <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T value) {
             property.setEnum(reverse, getFlags(), value);
             baseGraph.writeFlags(edgePointer, getFlags());
             return this;
         }
 
         @Override
-        public <T extends Enum> T getReverse(EnumEncodedValue<T> property) {
+        public <T extends Enum<?>> T getReverse(EnumEncodedValue<T> property) {
             return property.getEnum(!reverse, getFlags());
         }
 
         @Override
-        public <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
+        public <T extends Enum<?>> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
             property.setEnum(!reverse, getFlags(), value);
             baseGraph.writeFlags(edgePointer, getFlags());
             return this;
         }
 
         @Override
-        public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
+        public <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
             if (!property.isStoreTwoDirections())
                 throw new IllegalArgumentException("EncodedValue " + property.getName() + " supports only one direction");
             property.setEnum(reverse, getFlags(), fwd);

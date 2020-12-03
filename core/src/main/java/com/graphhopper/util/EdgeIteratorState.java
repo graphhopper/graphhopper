@@ -182,15 +182,15 @@ public interface EdgeIteratorState {
 
     EdgeIteratorState set(DecimalEncodedValue property, double fwd, double bwd);
 
-    <T extends Enum> T get(EnumEncodedValue<T> property);
+    <T extends Enum<?>> T get(EnumEncodedValue<T> property);
 
-    <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T value);
+    <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T value);
 
-    <T extends Enum> T getReverse(EnumEncodedValue<T> property);
+    <T extends Enum<?>> T getReverse(EnumEncodedValue<T> property);
 
-    <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value);
+    <T extends Enum<?>> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value);
 
-    <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd);
+    <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd);
 
     String getName();
 

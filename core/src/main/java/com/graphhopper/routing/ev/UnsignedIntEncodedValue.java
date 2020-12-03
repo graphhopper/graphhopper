@@ -207,7 +207,7 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
      * Produces a static hashcode for an Enum arrays that is platform independent and still compatible to the default
      * of openjdk.
      */
-    static int staticHashCode(Enum... vals) {
+    static int staticHashCode(Enum<?>... vals) {
         if (vals == null)
             return 0;
         int len = vals.length;

@@ -264,27 +264,27 @@ public class WrapperGraph implements Graph {
             }
 
             @Override
-            public <T extends Enum> T get(EnumEncodedValue<T> property) {
+            public <T extends Enum<?>> T get(EnumEncodedValue<T> property) {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public <T extends Enum> T getReverse(EnumEncodedValue<T> property) {
+            public <T extends Enum<?>> T getReverse(EnumEncodedValue<T> property) {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T value) {
+            public <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T value) {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
+            public <T extends Enum<?>> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
+            public <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
                 throw new UnsupportedOperationException();
             }
 
@@ -500,29 +500,29 @@ public class WrapperGraph implements Graph {
                     }
 
                     @Override
-                    public <T extends Enum> T get(EnumEncodedValue<T> property) {
+                    public <T extends Enum<?>> T get(EnumEncodedValue<T> property) {
                         return current.get(property);
                     }
 
                     @Override
-                    public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T value) {
+                    public <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T value) {
                         current.set(property, value);
                         return this;
                     }
 
                     @Override
-                    public <T extends Enum> T getReverse(EnumEncodedValue<T> property) {
+                    public <T extends Enum<?>> T getReverse(EnumEncodedValue<T> property) {
                         return current.getReverse(property);
                     }
 
                     @Override
-                    public <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
+                    public <T extends Enum<?>> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
                         current.setReverse(property, value);
                         return this;
                     }
 
                     @Override
-                    public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
+                    public <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
                         current.set(property, fwd, bwd);
                         return this;
                     }

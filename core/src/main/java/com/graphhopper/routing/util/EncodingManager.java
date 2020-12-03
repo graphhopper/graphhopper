@@ -772,10 +772,10 @@ public class EncodingManager implements EncodedValueLookup {
         return getEncodedValue(key, DecimalEncodedValue.class);
     }
 
-    @Override
     @SuppressWarnings("unchecked")
-    public <T extends Enum> EnumEncodedValue<T> getEnumEncodedValue(String key, Class<T> type) {
-        return (EnumEncodedValue<T>) getEncodedValue(key, EnumEncodedValue.class);
+    @Override
+    public <T extends Enum<?>> EnumEncodedValue<T> getEnumEncodedValue(String key, Class<T> type) {
+        return getEncodedValue(key, EnumEncodedValue.class);
     }
 
     @Override

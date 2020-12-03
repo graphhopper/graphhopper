@@ -201,29 +201,29 @@ class VirtualEdgeIterator implements EdgeIterator {
     }
 
     @Override
-    public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T value) {
+    public <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T value) {
         getCurrentEdge().set(property, value);
         return this;
     }
 
     @Override
-    public <T extends Enum> T get(EnumEncodedValue<T> property) {
+    public <T extends Enum<?>> T get(EnumEncodedValue<T> property) {
         return getCurrentEdge().get(property);
     }
 
     @Override
-    public <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
+    public <T extends Enum<?>> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
         getCurrentEdge().setReverse(property, value);
         return this;
     }
 
     @Override
-    public <T extends Enum> T getReverse(EnumEncodedValue<T> property) {
+    public <T extends Enum<?>> T getReverse(EnumEncodedValue<T> property) {
         return getCurrentEdge().getReverse(property);
     }
 
     @Override
-    public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
+    public <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
         getCurrentEdge().set(property, fwd, bwd);
         return this;
     }

@@ -519,12 +519,12 @@ public class GHUtility {
             }
 
             @Override
-            public <T extends Enum> T get(EnumEncodedValue<T> property) {
+            public <T extends Enum<?>> T get(EnumEncodedValue<T> property) {
                 return property.getEnum(false, flags);
             }
 
             @Override
-            public <T extends Enum> T getReverse(EnumEncodedValue<T> property) {
+            public <T extends Enum<?>> T getReverse(EnumEncodedValue<T> property) {
                 return property.getEnum(true, flags);
             }
 
@@ -883,27 +883,27 @@ public class GHUtility {
         }
 
         @Override
-        public <T extends Enum> T get(EnumEncodedValue<T> property) {
+        public <T extends Enum<?>> T get(EnumEncodedValue<T> property) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T value) {
+        public <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T value) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public <T extends Enum> T getReverse(EnumEncodedValue<T> property) {
+        public <T extends Enum<?>> T getReverse(EnumEncodedValue<T> property) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
+        public <T extends Enum<?>> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
+        public <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
