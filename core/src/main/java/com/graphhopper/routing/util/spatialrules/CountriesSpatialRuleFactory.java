@@ -3,19 +3,16 @@ package com.graphhopper.routing.util.spatialrules;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.util.spatialrules.countries.AustriaSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
-import org.locationtech.jts.geom.Polygon;
-
-import java.util.List;
 
 public class CountriesSpatialRuleFactory implements SpatialRuleFactory {
     
     @Override
-    public SpatialRule createSpatialRule(String id, List<Polygon> polygons) {
+    public SpatialRule createSpatialRule(String id) {
         switch (Country.find(id)) {
         case AUT:
-            return new AustriaSpatialRule(polygons);
+            return new AustriaSpatialRule();
         case DEU:
-            return new GermanySpatialRule(polygons);
+            return new GermanySpatialRule();
         default:
             return null;
         }

@@ -30,18 +30,15 @@ import com.graphhopper.routing.util.TransportationMode;
  * @author Thomas Butz
  */
 public class SpatialRuleSet {
-    public static final SpatialRuleSet EMPTY = new SpatialRuleSet(Collections.<SpatialRule>emptyList(), 0);
+    public static final SpatialRuleSet EMPTY = new SpatialRuleSet(Collections.<SpatialRule>emptyList());
     
     private final List<SpatialRule> rules;
-    private final int spatialId;
 
     /**
-     * @param rules     a List of rules, ordered according to how they are to be applied
-     * @param spatialId the index of the rule with the highest priority
+     * @param rules a List of rules, ordered according to how they are to be applied
      */
-    public SpatialRuleSet(List<SpatialRule> rules, int spatialId) {
+    public SpatialRuleSet(List<SpatialRule> rules) {
         this.rules = Collections.unmodifiableList(rules);
-        this.spatialId = spatialId;
     }
     
     /**
@@ -81,14 +78,6 @@ public class SpatialRuleSet {
      */
     public List<SpatialRule> getRules() {
         return rules;
-    }
-
-    /**
-     * @return the id of the rule with the highest priority or
-     *         <i>0</i> if the set doesn't contain any rules
-     */
-    public int getSpatialId() {
-        return spatialId;
     }
 
     @Override
