@@ -26,15 +26,15 @@ import com.graphhopper.*;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.CustomArea;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleFactory;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
+import com.graphhopper.routing.util.area.CustomAreaHelper;
+import com.graphhopper.routing.util.area.CustomAreaLookup;
+import com.graphhopper.routing.util.area.CustomAreaLookupJTS;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
@@ -275,7 +275,7 @@ public class Measurement {
                 }
             }
             if (!isEmpty(countryBordersDirectory)) {
-                measureSpatialRuleLookup(countryBordersDirectory, count * 100);
+                measureCustomAreaLookup(countryBordersDirectory, count * 100);
             }
 
         } catch (Exception ex) {
@@ -554,32 +554,25 @@ public class Measurement {
     }
 
 
-    private void measureSpatialRuleLookup(String countryBordersDirectory, int count) {
+    private void measureCustomAreaLookup(String countryBordersDirectory, int count) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JtsModule());
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
-        List<JsonFeatureCollection> jsonFeatureCollections = new ArrayList<>();
+        List<CustomArea> areas = new ArrayList<>();
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(countryBordersDirectory), "*.{geojson,json}")) {
             for (Path borderFile : stream) {
                 try (BufferedReader reader = Files.newBufferedReader(borderFile, StandardCharsets.UTF_8)) {
                     JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
-                    jsonFeatureCollections.add(jsonFeatureCollection);
+                    areas.addAll(CustomAreaHelper.loadAreas(jsonFeatureCollection, "ISO3166-1:alpha3"));
                 }
             }
         } catch (IOException e) {
-            logger.error("Failed to load borders.", e);
+            logger.error("Failed to load areas.", e);
             return;
         }
 
-        SpatialRuleFactory rulePerCountryFactory = (id, borders) -> new AbstractSpatialRule(borders) {
-            @Override
-            public String getId() {
-                return id;
-            }
-        };
-
-        final SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(jsonFeatureCollections, "ISO3166-1:alpha3", rulePerCountryFactory);
+        final CustomAreaLookup areaLookup = new CustomAreaLookupJTS(areas);
 
         // generate random points in central Europe
         final List<GHPoint> randomPoints = new ArrayList<>(count);
@@ -591,7 +584,7 @@ public class Measurement {
 
         MiniPerfTest lookupPerfTest = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
             GHPoint point = randomPoints.get(run);
-            return spatialRuleLookup.lookupRules(point.lat, point.lon).getRules().size();
+            return areaLookup.lookup(point.lat, point.lon).getAreas().size();
         });
 
         print("spatialrulelookup", lookupPerfTest);
