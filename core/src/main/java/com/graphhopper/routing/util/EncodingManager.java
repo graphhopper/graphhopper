@@ -475,6 +475,9 @@ public class EncodingManager implements EncodedValueLookup {
     private void addEncodedValue(EncodedValue ev, boolean withNamespace) {
         if (hasEncodedValue(ev.getName()))
             throw new IllegalStateException("EncodedValue " + ev.getName() + " already exists " + encodedValueMap.get(ev.getName()) + " vs " + ev);
+        String normalizedKey = ev.getName().replaceAll(SPECIAL_SEPARATOR, "_");
+        if (hasEncodedValue(normalizedKey))
+            throw new IllegalStateException("EncodedValue " + ev.getName() + " collides with " + normalizedKey);
         if (!withNamespace && !isSharedEncodedValues(ev))
             throw new IllegalArgumentException("EncodedValue " + ev.getName() + " must not contain namespace character '" + SPECIAL_SEPARATOR + "'");
         if (withNamespace && isSharedEncodedValues(ev))

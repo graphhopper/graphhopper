@@ -105,23 +105,22 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
 
     static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator, String exceptionInfo,
                                  Set<String> createObjects, Map<String, Object> map,
-                                 ExpressionBuilder.CodeBuilder codeBuilder, String lastStmt, boolean firstMatch) {
+                                 ExpressionBuilder.CodeBuilder codeBuilder, String lastStmt, String firstMatch) {
         if (!(map instanceof LinkedHashMap))
             throw new IllegalArgumentException("map needs to be ordered for " + exceptionInfo + " but was " + map.getClass().getSimpleName());
 
         int count = 0;
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             String expression = entry.getKey();
-            if (expression.equals("*")) // remove in >= 4.0
-                throw new IllegalArgumentException("replace all '*' expressions with 'true'");
-            if (firstMatch) {
+            if (!firstMatch.isEmpty()) {
                 if ("true".equals(expression) && count + 1 != map.size())
-                    throw new IllegalArgumentException("'true' in " + FIRST_MATCH + " must come as last expression but was " + count);
-            } else if (expression.equals(FIRST_MATCH)) { // do not allow further nested blocks
+                    throw new IllegalArgumentException("'true' in " + firstMatch + " must come as last expression but was " + count);
+            } else if (expression.startsWith(FIRST_MATCH)) {
+                // allow multiple: first_match_i, first_match_ii, .. but do not allow nested first_match blocks
                 if (!(entry.getValue() instanceof LinkedHashMap))
                     throw new IllegalArgumentException("entries for " + expression + " in " + exceptionInfo + " are invalid");
                 parseExpressions(expressions, nameInConditionValidator, exceptionInfo + " " + expression,
-                        createObjects, (Map<String, Object>) entry.getValue(), codeBuilder, "", true);
+                        createObjects, (Map<String, Object>) entry.getValue(), codeBuilder, "", expression);
                 continue;
             }
 
@@ -133,7 +132,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
                 throw new IllegalArgumentException("key is an invalid simple condition: " + expression);
             createObjects.addAll(parseResult.guessedVariables);
             Number number = (Number) numberObj;
-            if (firstMatch && count > 0)
+            if (!firstMatch.isEmpty() && count > 0)
                 expressions.append("else ");
             expressions.append("if (" + parseResult.converted + ") {" + codeBuilder.create(number) + "}\n");
             count++;

@@ -286,7 +286,7 @@ class ExpressionBuilder {
         // allow variables, all encoded values, constants
         ExpressionVisitor.NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
                 || name.toUpperCase(Locale.ROOT).equals(name) || isValidVariableName(name);
-        ExpressionVisitor.parseExpressions(expressions, nameInConditionValidator, info, createObjects, map, codeBuilder, lastStmt, false);
+        ExpressionVisitor.parseExpressions(expressions, nameInConditionValidator, info, createObjects, map, codeBuilder, lastStmt, "");
         return new Parser(new org.codehaus.janino.Scanner(info, new StringReader(expressions.toString()))).
                 parseBlockStatements();
     }

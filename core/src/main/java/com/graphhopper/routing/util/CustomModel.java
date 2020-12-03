@@ -19,6 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 
 import java.util.*;
@@ -193,7 +194,7 @@ public class CustomModel {
     private static void applyChange(Map<String, Object> mergedSuperMap, Object mergedObj,
                                     Map.Entry<String, Object> querySuperEntry, MergeOp merge, CheckOp check) {
         String key = querySuperEntry.getKey();
-        if (CustomWeighting.FIRST_MATCH.equals(key)) {
+        if (!Helper.isEmpty(key) && key.startsWith(CustomWeighting.FIRST_MATCH)) {
             mergedObj = mergedSuperMap.get(key);
             if (mergedObj == null) {
                 if (!(querySuperEntry.getValue() instanceof Map))
