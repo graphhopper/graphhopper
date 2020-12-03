@@ -46,23 +46,24 @@ class ExpressionBuilder {
     private static final boolean JANINO_DEBUG = Boolean.getBoolean(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE);
 
     // Without a cache we get 50% slower routing and 300% slower routingLM8. CH requests and preparation is unaffected
-    // as cached weighting from preparation is used. This cache ensures that the first Weighting classes which are
-    // considered important are never removed regardless of how frequent other Weightings are created and accessed.
-    // Note: we only need to synchronize the get and put methods alone. E.g. we do not care for the race condition where
-    // two identical classes are created and only one is overwritten. We could use CachingJavaSourceClassLoader from
+    // as cached weighting from preparation is used. This cache ensures that the first Weighting classes, typically the
+    // ones specified in the profiles, are never removed regardless of how frequent other Weightings are created and accessed.
+    // We only need to synchronize the get and put methods alone. E.g. we do not care for the race condition where
+    // two identical classes are requested and one of them is overwritten. We could use CachingJavaSourceClassLoader from
     // Janino but 1. we would need to use a single compiler across threads and 2. the statements (for priority and speed)
     // are still unnecessarily created.
-    private static final int CACHE_SIZE = Integer.getInteger("com.graphhopper.routing.weighting.custom.cache_size", 10);
+    private static final int CACHE_SIZE = Integer.getInteger("graphhopper.custom_weighting.cache_size", 10);
     private static final Map<String, Class> CACHE = Collections.synchronizedMap(new HashMap<>(CACHE_SIZE));
 
-    // Introduce a dynamic cache to remember different Weighting classes, but throws away less frequently used classes.
+    // Introduce a dynamic cache to remember different Weighting classes, but throw away less frequently used classes.
     // Use accessOrder==true to remove oldest accessed entry, not oldest inserted.
-    private static final int DYN_CACHE_SIZE = Integer.getInteger("com.graphhopper.routing.weighting.custom.dynamic_cache_size", 1000);
-    private static final Map<String, Class> DYN_CACHE = Collections.synchronizedMap(new LinkedHashMap<String, Class>(DYN_CACHE_SIZE, 0.75f, true) {
-        protected boolean removeEldestEntry(Map.Entry eldest) {
-            return size() > DYN_CACHE_SIZE;
-        }
-    });
+    private static final int DYN_CACHE_SIZE = Integer.getInteger("graphhopper.custom_weighting.dynamic_cache_size", 1000);
+    private static final Map<String, Class> DYN_CACHE = Collections.synchronizedMap(
+            new LinkedHashMap<String, Class>(DYN_CACHE_SIZE, 0.75f, true) {
+                protected boolean removeEldestEntry(Map.Entry eldest) {
+                    return size() > DYN_CACHE_SIZE;
+                }
+            });
 
     /**
      * This method compiles a new subclass of CustomWeightingHelper composed from the provided CustomModel caches this
@@ -76,7 +77,7 @@ class ExpressionBuilder {
             if (key.length() > 400_000) throw new IllegalArgumentException("Custom Model too big: " + key.length());
 
             Class clazz = CACHE.get(key);
-            if (clazz == null)
+            if (DYN_CACHE_SIZE > 0 && clazz == null)
                 clazz = DYN_CACHE.get(key);
             if (clazz == null) {
                 HashSet<String> priorityVariables = new LinkedHashSet<>();
@@ -84,7 +85,8 @@ class ExpressionBuilder {
                 HashSet<String> speedVariables = new LinkedHashSet<>();
                 List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup, globalMaxSpeed, maxSpeedFallback);
                 // Create different class name, which is required only for debugging.
-                // TODO does it improve performance? I.e. will the JIT be confused if different classes have the same name and it mixes performance stats? See https://github.com/janino-compiler/janino/issues/137
+                // TODO does it improve performance too? I.e. it could be that the JIT is confused if different classes
+                //  have the same name and it mixes performance stats. See https://github.com/janino-compiler/janino/issues/137
                 long counter = longVal.incrementAndGet();
                 String classTemplate = createClassTemplate(counter, priorityVariables, speedVariables, lookup);
                 cu = (Java.CompilationUnit) new Parser(new org.codehaus.janino.Scanner("source", new StringReader(classTemplate))).
@@ -92,7 +94,10 @@ class ExpressionBuilder {
                 cu = injectStatements(priorityStatements, speedStatements, cu);
                 SimpleCompiler sc = createCompiler(counter, cu);
                 clazz = sc.getClassLoader().loadClass("com.graphhopper.Test" + counter);
-                (CACHE.size() < CACHE_SIZE ? CACHE : DYN_CACHE).put(key, clazz);
+                if (CACHE.size() < CACHE_SIZE)
+                    CACHE.put(key, clazz);
+                else if (DYN_CACHE_SIZE > 0)
+                    DYN_CACHE.put(key, clazz);
             }
 
             // The class does not need to be thread-safe as we create an instance per request
