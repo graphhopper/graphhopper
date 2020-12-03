@@ -191,6 +191,16 @@ public interface EdgeIteratorState {
     <T extends Enum<?>> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value);
 
     <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd);
+    
+    String get(StringEncodedValue property);
+    
+    EdgeIteratorState set(StringEncodedValue property, String value);
+    
+    String getReverse(StringEncodedValue property);
+    
+    EdgeIteratorState setReverse(StringEncodedValue property, String value);
+    
+    EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd);
 
     String getName();
 

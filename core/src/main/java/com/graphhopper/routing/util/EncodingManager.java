@@ -779,6 +779,11 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     @Override
+    public StringEncodedValue getStringEncodedValue(String key) {
+        return getEncodedValue(key, StringEncodedValue.class);
+    }
+
+    @Override
     public <T extends EncodedValue> T getEncodedValue(String key, Class<T> encodedValueType) {
         EncodedValue ev = encodedValueMap.get(key);
         if (ev == null)

@@ -21,6 +21,7 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.IntEncodedValue;
+import com.graphhopper.routing.ev.StringEncodedValue;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
@@ -269,6 +270,37 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
             throw new IllegalArgumentException("EncodedValue " + property.getName() + " supports only one direction");
         property.setEnum(reverse, edgeFlags, fwd);
         property.setEnum(!reverse, edgeFlags, bwd);
+        return this;
+    }
+    
+    @Override
+    public String get(StringEncodedValue property) {
+        return property.getString(reverse, edgeFlags);
+    }
+    
+    @Override
+    public EdgeIteratorState set(StringEncodedValue property, String value) {
+        property.setString(reverse, edgeFlags, value);
+        return this;
+    }
+    
+    @Override
+    public String getReverse(StringEncodedValue property) {
+        return property.getString(!reverse, edgeFlags);
+    }
+    
+    @Override
+    public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
+        property.setString(!reverse, edgeFlags, value);
+        return this;
+    }
+    
+    @Override
+    public EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd) {
+        if (!property.isStoreTwoDirections())
+            throw new IllegalArgumentException("EncodedValue " + property.getName() + " supports only one direction");
+        property.setString(reverse, edgeFlags, fwd);
+        property.setString(!reverse, edgeFlags, bwd);
         return this;
     }
 

@@ -220,6 +220,22 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
     }
 
     /**
+     * Produces a static hashcode for an String arrays that is platform independent and still compatible to the default
+     * of openjdk.
+     */
+    static int staticHashCode(String... vals) {
+        if (vals == null)
+            return 0;
+        int len = vals.length;
+        int val = 1;
+        for (int idx = 0; idx < len; ++idx) {
+            val = 31 * val + Helper.staticHashCode(vals[idx]);
+        }
+
+        return val;
+    }
+
+    /**
      * Produces a static hashcode for an integer arrays that is platform independent and still compatible to the default
      * of openjdk
      *

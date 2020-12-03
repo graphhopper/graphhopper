@@ -23,6 +23,7 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.IntEncodedValue;
+import com.graphhopper.routing.ev.StringEncodedValue;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.BaseGraph.AllEdgeIterator;
@@ -933,6 +934,36 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         @Override
         public <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
             checkShortcut(false, "set(EnumEncodedValue<T>, T, T)");
+            return edgeIterable.set(property, fwd, bwd);
+        }
+        
+        @Override
+        public String get(StringEncodedValue property) {
+            checkShortcut(false, "get(StringEncodedValue)");
+            return edgeIterable.get(property);
+        }
+        
+        @Override
+        public EdgeIteratorState set(StringEncodedValue property, String value) {
+            checkShortcut(false, "set(StringEncodedValue, String)");
+            return edgeIterable.set(property, value);
+        }
+        
+        @Override
+        public String getReverse(StringEncodedValue property) {
+            checkShortcut(false, "getReverse(StringEncodedValue)");
+            return edgeIterable.getReverse(property);
+        }
+        
+        @Override
+        public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
+            checkShortcut(false, "setReverse(StringEncodedValue, String)");
+            return edgeIterable.setReverse(property, value);
+        }
+        
+        @Override
+        public EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd) {
+            checkShortcut(false, "set(StringEncodedValue, String, String)");
             return edgeIterable.set(property, fwd, bwd);
         }
 

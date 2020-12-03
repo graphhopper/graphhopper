@@ -21,6 +21,7 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.IntEncodedValue;
+import com.graphhopper.routing.ev.StringEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -1238,6 +1239,40 @@ class BaseGraph implements Graph {
                 throw new IllegalArgumentException("EncodedValue " + property.getName() + " supports only one direction");
             property.setEnum(reverse, getFlags(), fwd);
             property.setEnum(!reverse, getFlags(), bwd);
+            baseGraph.writeFlags(edgePointer, getFlags());
+            return this;
+        }
+        
+        @Override
+        public String get(StringEncodedValue property) {
+            return property.getString(reverse, getFlags());
+        }
+        
+        @Override
+        public EdgeIteratorState set(StringEncodedValue property, String value) {
+            property.setString(reverse, getFlags(), value);
+            baseGraph.writeFlags(edgePointer, getFlags());
+            return this;
+        }
+        
+        @Override
+        public String getReverse(StringEncodedValue property) {
+            return property.getString(!reverse, getFlags());
+        }
+        
+        @Override
+        public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
+            property.setString(!reverse, getFlags(), value);
+            baseGraph.writeFlags(edgePointer, getFlags());
+            return this;
+        }
+        
+        @Override
+        public EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd) {
+            if (!property.isStoreTwoDirections())
+                throw new IllegalArgumentException("EncodedValue " + property.getName() + " supports only one direction");
+            property.setString(reverse, getFlags(), fwd);
+            property.setString(!reverse, getFlags(), bwd);
             baseGraph.writeFlags(edgePointer, getFlags());
             return this;
         }
