@@ -29,7 +29,6 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.GraphHopperGtfs;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.lm.LandmarkStorage;
-import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.area.CustomAreaHelper;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
@@ -72,7 +71,10 @@ public class GraphHopperManaged implements Managed {
             graphHopper = new GraphHopper(landmarkSplittingFeatureCollection);
         }
         if (!configuration.getString("spatial_rules.location", "").isEmpty()) {
-            throw new RuntimeException("spatial_rules.location has been deprecated. Please use spatial_rules.borders_directory instead.");
+            throw new RuntimeException("spatial_rules.location has been deprecated. Please use custom_area_files instead.");
+        }
+        if (!configuration.getString("spatial_rules.borders_directory", "").isEmpty()) {
+            throw new RuntimeException("spatial_rules.borders_directory has been deprecated. Please use custom_area_files instead.");
         }
         
         List<CustomArea> customAreas = new ArrayList<>();
