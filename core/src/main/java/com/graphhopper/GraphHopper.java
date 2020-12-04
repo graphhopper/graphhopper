@@ -48,6 +48,8 @@ import com.graphhopper.routing.util.area.CustomAreaLookup;
 import com.graphhopper.routing.util.area.CustomAreaLookupJTS;
 import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
+import com.graphhopper.routing.util.spatialrules.CountriesSpatialRuleFactory;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
@@ -517,7 +519,8 @@ public class GraphHopper implements GraphHopperAPI {
     private EncodingManager createEncodingManager(GraphHopperConfig ghConfig) {
         String flagEncodersStr = ghConfig.getString("graph.flag_encoders", "");
         String encodedValueStr = ghConfig.getString("graph.encoded_values", "");
-        if (flagEncodersStr.isEmpty() && encodedValueStr.isEmpty()) {
+        List<CustomArea> customAreas = ghConfig.getCustomAreas();
+        if (flagEncodersStr.isEmpty() && encodedValueStr.isEmpty() && customAreas.isEmpty()) {
             return null;
         } else {
             EncodingManager.Builder emBuilder = new EncodingManager.Builder();
@@ -529,6 +532,13 @@ public class GraphHopper implements GraphHopperAPI {
             emBuilder.setEnableInstructions(ghConfig.getBool("datareader.instructions", true));
             emBuilder.setPreferredLanguage(ghConfig.getString("datareader.preferred_language", ""));
             emBuilder.setDateRangeParser(DateRangeParser.createInstance(ghConfig.getString("datareader.date_range_parser_day", "")));
+            if (!customAreas.isEmpty()) {
+                List<SpatialRule> spatialRules = new ArrayList<>(ghConfig.getSpatialRules());
+                List<SpatialRule> countryRules = new ArrayList<>(CountriesSpatialRuleFactory.getRules());
+                countryRules.removeAll(spatialRules); // let the user override our rules
+                spatialRules.addAll(countryRules);
+                emBuilder.setCustomAreaLookup(new CustomAreaLookupJTS(customAreas, spatialRules));
+            }
             return emBuilder.build();
         }
     }
