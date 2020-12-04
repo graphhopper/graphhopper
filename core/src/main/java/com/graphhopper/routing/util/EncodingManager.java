@@ -314,6 +314,8 @@ public class EncodingManager implements EncodedValueLookup {
                 em.addEncodedValue(ev, false);
             }
 
+            if (!em.getCustomAreaLookup().getEncodedValueMap().isEmpty())
+                _addEdgeTagParser(new CustomAreaParser(), false, false);
             if (!em.hasEncodedValue(Roundabout.KEY))
                 _addEdgeTagParser(new OSMRoundaboutParser(), false, false);
             if (!em.hasEncodedValue(RoadClass.KEY))
@@ -767,6 +769,10 @@ public class EncodingManager implements EncodedValueLookup {
                 list.add(encoder.getAccessEnc());
         }
         return list;
+    }
+    
+    public CustomAreaLookup getCustomAreaLookup() {
+        return customAreaLookup;
     }
 
     @Override
