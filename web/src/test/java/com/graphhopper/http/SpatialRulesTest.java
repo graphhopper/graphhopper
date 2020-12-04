@@ -18,6 +18,7 @@
 package com.graphhopper.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.graphhopper.config.CustomAreaFile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
@@ -49,15 +50,16 @@ public class SpatialRulesTest {
 
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
-        // The EncodedValue "country" requires the setting "spatial_rules.borders_directory" as "country" does not load via DefaultTagParserFactory
-        // TODO should we automatically detect this somehow and include a default country file?
+        CustomAreaFile customAreaFile = new CustomAreaFile("../core/files/spatialrules/countries.geojson");
+        customAreaFile.setIdField("ISO3166-1:alpha3");
+        customAreaFile.setEncodedValue("countries");
+        customAreaFile.setFilter("deu,aut");
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "car").
-                putObject("graph.encoded_values", "country,road_environment,road_class,road_access,max_speed").
-                putObject("spatial_rules.borders_directory", "../core/files/spatialrules").
-                putObject("spatial_rules.max_bbox", "11.4,11.7,49.9,50.1").
+                putObject("graph.encoded_values", "road_environment,road_class,road_access,max_speed").
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
+                setCustomAreaFiles(Collections.singletonList(customAreaFile)).
                 setProfiles(Collections.singletonList(new Profile("profile").setVehicle("car").setWeighting("fastest")));
         return config;
     }
