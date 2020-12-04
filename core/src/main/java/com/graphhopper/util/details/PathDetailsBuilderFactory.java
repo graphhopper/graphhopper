@@ -76,7 +76,7 @@ public class PathDetailsBuilderFactory {
 
         for (String key : Arrays.asList(RoadClass.KEY, RoadEnvironment.KEY, Surface.KEY, RoadAccess.KEY,
                 BikeNetwork.KEY, FootNetwork.KEY, Toll.KEY, TrackType.KEY, Hazmat.KEY, HazmatTunnel.KEY,
-                HazmatWater.KEY, Country.KEY)) {
+                HazmatWater.KEY)) {
             if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
                 builders.add(new EnumDetails<>(key, evl.getEnumEncodedValue(key, Enum.class)));
         }

@@ -17,34 +17,17 @@
  */
 package com.graphhopper.routing.ev;
 
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
+
 /**
- * This enum defines a country value that can be stored per edge.
+ * This enum defines countrycodes used by the country specific {@link SpatialRule SpatialRules} 
  */
 public enum Country {
-    DEFAULT("default"), DEU("deu"), AUT("aut");
-    public static final String KEY = "country";
-
+    DEU("deu"), AUT("aut");
     private final String name;
 
     Country(String name) {
         this.name = name;
-    }
-
-    public static EnumEncodedValue<Country> create() {
-        return new EnumEncodedValue<>(Country.KEY, Country.class);
-    }
-    
-    public static Country find(String name) {
-        if (name == null || name.isEmpty())
-            return DEFAULT;
-        
-        for (Country country : values()) {
-            if (country.name.equalsIgnoreCase(name)) {
-                return country;
-            }
-        }
-        
-        return DEFAULT;
     }
 
     @Override
