@@ -794,10 +794,10 @@ public class EncodingManager implements EncodedValueLookup {
         return (T) ev;
     }
 
-    private static final String SPECIAL_SEPARATOR = ".";
+    private static final String SPECIAL_SEPARATOR = "__";
 
     public static boolean isSharedEncodedValues(EncodedValue ev) {
-        return !ev.getName().contains(SPECIAL_SEPARATOR);
+        return isValidEncodedValue(ev.getName()) && !ev.getName().contains(SPECIAL_SEPARATOR);
     }
 
     /**
@@ -840,11 +840,13 @@ public class EncodingManager implements EncodedValueLookup {
         int dotCount = 0;
         for (int i = 1; i < name.length(); i++) {
             char c = name.charAt(i);
-            if (c == '.') {
-                if (dotCount > 0) return false;
+            if (c == '_') {
+                if (dotCount > 1) return false;
                 dotCount++;
-            } else if (!isLowerLetter(c) && !isNumber(c) && c != '_' && c != '$') {
+            } else if (!isLowerLetter(c) && !isNumber(c)) {
                 return false;
+            } else {
+                dotCount = 0;
             }
         }
         return true;
