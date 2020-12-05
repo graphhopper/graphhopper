@@ -21,7 +21,7 @@ import java.util.List;
 
 public interface EncodedValueLookup {
 
-    List<EncodedValue> getAllShared();
+    List<EncodedValue> getEncodedValues();
 
     <T extends EncodedValue> T getEncodedValue(String key, Class<T> encodedValueType);
 
