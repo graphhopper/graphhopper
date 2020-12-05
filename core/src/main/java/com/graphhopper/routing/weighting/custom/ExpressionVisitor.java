@@ -75,15 +75,18 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
         }
         if (rv instanceof Java.BinaryOperation) {
             Java.BinaryOperation binOp = (Java.BinaryOperation) rv;
-            if (!binOp.lhs.accept(this) || !binOp.rhs.accept(this))
-                return false;
-            if (binOp.lhs instanceof Java.AmbiguousName && binOp.rhs instanceof Java.AmbiguousName) {
-                if (nameValidator.isValid(binOp.lhs.toString()) &&
-                        binOp.rhs.toString().toUpperCase(Locale.ROOT).equals(binOp.rhs.toString())) {
-                    injects.put(binOp.rhs.getLocation().getColumnNumber() - 1, binOp.lhs.toString());
+            if (binOp.lhs instanceof Java.AmbiguousName && binOp.rhs instanceof Java.AmbiguousName
+                    && (binOp.operator.equals("==") || binOp.operator.equals("!="))) {
+                Java.AmbiguousName lhs = (Java.AmbiguousName) binOp.lhs;
+                Java.AmbiguousName rhs = (Java.AmbiguousName) binOp.rhs;
+                // Make enum explicit as NO or OTHER can occur in other enums so convert "toll == NO" to "toll == Toll.NO"
+                if (rhs.identifiers.length == 1 && lhs.identifiers.length == 1 && nameValidator.isValid(lhs.identifiers[0])
+                        && rhs.identifiers[0].toUpperCase(Locale.ROOT).equals(rhs.identifiers[0])) {
+                    String value = toEncodedValueClassName(binOp.lhs.toString());
+                    injects.put(binOp.rhs.getLocation().getColumnNumber() - 1, value + ".");
                 }
             }
-            return true;
+            return binOp.lhs.accept(this) && binOp.rhs.accept(this);
         }
         return false;
     }
@@ -162,10 +165,8 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
                 if (result.ok) {
                     result.converted = new StringBuilder(expression.length());
                     int start = 0;
-                    // Insert class name to avoid conflict if e.g. enum values are identically named (e.g. bike_network != OTHER)
                     for (Map.Entry<Integer, String> inject : visitor.injects.entrySet()) {
-                        String value = toEncodedValueClassName(inject.getValue());
-                        result.converted.append(expression, start, inject.getKey()).append(value).append('.');
+                        result.converted.append(expression, start, inject.getKey()).append(inject.getValue());
                         start = inject.getKey();
                     }
                     result.converted.append(expression.substring(start));

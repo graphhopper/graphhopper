@@ -53,6 +53,7 @@ class ExpressionBuilder {
     // Janino but 1. we would need to use a single compiler across threads and 2. the statements (for priority and speed)
     // are still unnecessarily created.
     private static final int CACHE_SIZE = Integer.getInteger("graphhopper.custom_weighting.cache_size", 10);
+    // TODO perf compare with ConcurrentHashMap, but I guess, if there is a difference at all, it is not big for small maps
     private static final Map<String, Class> CACHE = Collections.synchronizedMap(new HashMap<>(CACHE_SIZE));
 
     // Introduce a dynamic cache to remember different Weighting classes, but throw away less frequently used classes.
@@ -173,6 +174,7 @@ class ExpressionBuilder {
             String id = arg.substring(AREA_PREFIX.length());
             return "boolean " + arg + " = " + CustomWeightingHelper.class.getSimpleName() + ".in(this.area_" + id + ", edge);\n";
         } else if (lookup.hasEncodedValue(arg)) {
+            check(arg);
             EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
             return getReturnType(enc) + " " + arg + " = reverse ? " +
                     "edge.getReverse((" + getInterface(enc) + ") this." + arg + "_enc) : " +
@@ -201,6 +203,10 @@ class ExpressionBuilder {
         throw new IllegalArgumentException("Unsupported EncodedValue " + name);
     }
 
+    static void check(String encValue) {
+        if(encValue.contains(".")) throw new IllegalArgumentException("encoded value with invalid name: " + encValue);
+    }
+
     /**
      * Create the class source file from the detected variables (priorityVariables and speedVariables). We assume that
      * these variables are safe although they are user input because we collected them from parsing via Janino. This
@@ -218,6 +224,7 @@ class ExpressionBuilder {
         set.addAll(speedVariables);
         for (String arg : set) {
             if (lookup.hasEncodedValue(arg)) {
+                check(arg);
                 EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
                 if (!EncodingManager.isSharedEncodedValues(enc))
                     continue;

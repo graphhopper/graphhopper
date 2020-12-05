@@ -53,6 +53,8 @@ public class ExpressionVisitorTest {
         assertEquals("road_class == RoadClass.PRIMARY", parseExpression("road_class == PRIMARY", validVariable).converted.toString());
         assertEquals("toll == Toll.NO", parseExpression("toll == NO", validVariable).converted.toString());
         assertEquals("toll == Toll.NO || road_class == RoadClass.NO", parseExpression("toll == NO || road_class == NO", validVariable).converted.toString());
+        // no need to inject:
+        assertNull(parseExpression("toll == Toll.NO", validVariable).converted);
     }
 
     @Test
