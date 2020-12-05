@@ -794,7 +794,7 @@ public class EncodingManager implements EncodedValueLookup {
         return (T) ev;
     }
 
-    private static final String SPECIAL_SEPARATOR = "__";
+    private static final String SPECIAL_SEPARATOR = "$";
 
     public static boolean isSharedEncodedValues(EncodedValue ev) {
         return isValidEncodedValue(ev.getName()) && !ev.getName().contains(SPECIAL_SEPARATOR);
@@ -837,16 +837,19 @@ public class EncodingManager implements EncodedValueLookup {
         // first character must be a lower case letter
         if (name.isEmpty() || !isLowerLetter(name.charAt(0)) || KEYWORDS.contains(name)) return false;
 
-        int dotCount = 0;
+        int dollarCount = 0, underscoreCount = 0;
         for (int i = 1; i < name.length(); i++) {
             char c = name.charAt(i);
-            if (c == '_') {
-                if (dotCount > 1) return false;
-                dotCount++;
+            if (c == '$') {
+                if (dollarCount > 0) return false;
+                dollarCount++;
+            } else if (c == '_') {
+                if (underscoreCount > 0) return false;
+                underscoreCount++;
             } else if (!isLowerLetter(c) && !isNumber(c)) {
                 return false;
             } else {
-                dotCount = 0;
+                underscoreCount = 0;
             }
         }
         return true;
