@@ -65,20 +65,6 @@ public class FootFlagEncoderTest {
     }
 
     @Test
-    public void testBasics() {
-        IntsRef edgeFlags = encodingManager.createEdgeFlags();
-        footEncoder.flagsDefault(edgeFlags, true, true);
-        assertEquals(FootFlagEncoder.MEAN_SPEED, footEncoder.getSpeed(edgeFlags), 1e-1);
-
-        IntsRef ef1 = encodingManager.createEdgeFlags();
-        footEncoder.flagsDefault(ef1, true, false);
-        IntsRef ef2 = encodingManager.createEdgeFlags();
-        footEncoder.flagsDefault(ef2, false, true);
-        assertEquals(footAccessEnc.getBool(false, ef1), footAccessEnc.getBool(true, ef2));
-        assertEquals(footEncoder.getSpeed(ef1), footEncoder.getSpeed(ef1), 1e-1);
-    }
-
-    @Test
     public void testCombined() {
         Graph g = new GraphBuilder(encodingManager).create();
         FlagEncoder carEncoder = encodingManager.getEncoder("car");

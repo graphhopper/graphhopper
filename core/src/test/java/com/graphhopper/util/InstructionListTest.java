@@ -21,16 +21,11 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.RoadAccess;
-import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.NodeAccess;
@@ -92,27 +87,27 @@ public class InstructionListTest {
         na.setNode(6, 1.0, 1.0);
         na.setNode(7, 1.0, 1.1);
         na.setNode(8, 1.0, 1.2);
-        g.edge(0, 1, 10000, true).setName("0-1");
-        g.edge(1, 2, 11000, true).setName("1-2");
+        GHUtility.setProperties(g.edge(0, 1).setDistance(10000), carEncoder, 60, true, true).setName("0-1");
+        GHUtility.setProperties(g.edge(1, 2).setDistance(11000), carEncoder, 60, true, true).setName("1-2");
 
-        g.edge(0, 3, 11000, true);
-        g.edge(1, 4, 10000, true).setName("1-4");
-        g.edge(2, 5, 11000, true).setName("5-2");
+        GHUtility.setProperties(g.edge(0, 3).setDistance(11000), carEncoder, 60, true, true);
+        GHUtility.setProperties(g.edge(1, 4).setDistance(10000), carEncoder, 60, true, true).setName("1-4");
+        GHUtility.setProperties(g.edge(2, 5).setDistance(11000), carEncoder, 60, true, true).setName("5-2");
 
-        g.edge(3, 6, 11000, true).setName("3-6");
-        g.edge(4, 7, 10000, true).setName("4-7");
-        g.edge(5, 8, 10000, true).setName("5-8");
+        GHUtility.setProperties(g.edge(3, 6).setDistance(11000), carEncoder, 60, true, true).setName("3-6");
+        GHUtility.setProperties(g.edge(4, 7).setDistance(10000), carEncoder, 60, true, true).setName("4-7");
+        GHUtility.setProperties(g.edge(5, 8).setDistance(10000), carEncoder, 60, true, true).setName("5-8");
 
-        g.edge(6, 7, 11000, true).setName("6-7");
-        EdgeIteratorState iter = g.edge(7, 8, 10000, true);
+        GHUtility.setProperties(g.edge(6, 7).setDistance(11000), carEncoder, 60, true, true).setName("6-7");
+        EdgeIteratorState iter = GHUtility.setProperties(g.edge(7, 8).setDistance(10000), carEncoder, 60, true, true);
         PointList list = new PointList();
         list.add(1.0, 1.15);
         list.add(1.0, 1.16);
         iter.setWayGeometry(list);
         iter.setName("7-8");
         // missing edge name
-        g.edge(9, 10, 10000, true);
-        EdgeIteratorState iter2 = g.edge(8, 9, 20000, true);
+        GHUtility.setProperties(g.edge(9, 10).setDistance(10000), carEncoder, 60, true, true);
+        EdgeIteratorState iter2 = GHUtility.setProperties(g.edge(8, 9).setDistance(20000), carEncoder, 60, true, true);
         list.clear();
         list.add(1.0, 1.3);
         iter2.setName("8-9");
@@ -184,10 +179,10 @@ public class InstructionListTest {
         na.setNode(3, 10.0, 10.08);
         na.setNode(4, 10.1, 10.10);
         na.setNode(5, 10.2, 10.13);
-        g.edge(3, 4, 100, true).setName("3-4");
-        g.edge(4, 5, 100, true).setName("4-5");
+        GHUtility.setProperties(g.edge(3, 4).setDistance(100), carEncoder, 60, true, true).setName("3-4");
+        GHUtility.setProperties(g.edge(4, 5).setDistance(100), carEncoder, 60, true, true).setName("4-5");
 
-        EdgeIteratorState iter = g.edge(2, 4, 100, true);
+        EdgeIteratorState iter = GHUtility.setProperties(g.edge(2, 4).setDistance(100), carEncoder, 60, true, true);
         iter.setName("2-4");
         PointList list = new PointList();
         list.add(10.20, 10.05);
@@ -224,10 +219,10 @@ public class InstructionListTest {
         na.setNode(3, 10.0, 10.05);
         na.setNode(4, 10.1, 10.10);
         na.setNode(5, 10.2, 10.15);
-        g.edge(3, 4, 100, true).setName("street");
-        g.edge(4, 5, 100, true).setName("4-5");
+        GHUtility.setProperties(g.edge(3, 4).setDistance(100), carEncoder, 60, true, true).setName("street");
+        GHUtility.setProperties(g.edge(4, 5).setDistance(100), carEncoder, 60, true, true).setName("4-5");
 
-        EdgeIteratorState iter = g.edge(2, 4, 100, true);
+        EdgeIteratorState iter = GHUtility.setProperties(g.edge(2, 4).setDistance(100), carEncoder, 60, true, true);
         iter.setName("street");
         PointList list = new PointList();
         list.add(10.20, 10.05);
@@ -258,9 +253,9 @@ public class InstructionListTest {
         na.setNode(2, 51.73458, 9.225442);
         na.setNode(3, 51.734643, 9.22541);
         na.setNode(4, 51.734451, 9.225436);
-        g.edge(1, 2, 10, true);
-        g.edge(2, 3, 10, true);
-        g.edge(2, 4, 10, true);
+        GHUtility.setProperties(g.edge(1, 2).setDistance(10), carEncoder, 60, true, true);
+        GHUtility.setProperties(g.edge(2, 3).setDistance(10), carEncoder, 60, true, true);
+        GHUtility.setProperties(g.edge(2, 4).setDistance(10), carEncoder, 60, true, true);
 
         ShortestWeighting weighting = new ShortestWeighting(carEncoder);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 3);
@@ -287,9 +282,9 @@ public class InstructionListTest {
         na.setNode(2, 48.748577, 9.322152);
         na.setNode(3, 48.748776, 9.321889);
         na.setNode(4, 48.74847, 9.322299);
-        g.edge(1, 2, 10, true);
-        g.edge(2, 3, 10, true);
-        g.edge(2, 4, 10, true);
+        GHUtility.setProperties(g.edge(1, 2).setDistance(10), carEncoder, 60, true, true);
+        GHUtility.setProperties(g.edge(2, 3).setDistance(10), carEncoder, 60, true, true);
+        GHUtility.setProperties(g.edge(2, 4).setDistance(10), carEncoder, 60, true, true);
 
         ShortestWeighting weighting = new ShortestWeighting(carEncoder);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 3);
@@ -326,12 +321,12 @@ public class InstructionListTest {
         na.setNode(6, 15.1, 10.1);
         na.setNode(7, 15.1, 9.8);
 
-        g.edge(1, 2, 10000, true).setName("1-2");
-        g.edge(2, 3, 10000, true).setName("2-3");
-        g.edge(2, 6, 10000, true).setName("2-6");
-        g.edge(3, 4, 10000, true).setName("3-4").setWayGeometry(waypoint);
-        g.edge(3, 7, 10000, true).setName("3-7");
-        g.edge(4, 5, 10000, true).setName("4-5");
+        GHUtility.setProperties(g.edge(1, 2).setDistance(10000), carEncoder, 60, true, true).setName("1-2");
+        GHUtility.setProperties(g.edge(2, 3).setDistance(10000), carEncoder, 60, true, true).setName("2-3");
+        GHUtility.setProperties(g.edge(2, 6).setDistance(10000), carEncoder, 60, true, true).setName("2-6");
+        GHUtility.setProperties(g.edge(3, 4).setDistance(10000), carEncoder, 60, true, true).setName("3-4").setWayGeometry(waypoint);
+        GHUtility.setProperties(g.edge(3, 7).setDistance(10000), carEncoder, 60, true, true).setName("3-7");
+        GHUtility.setProperties(g.edge(4, 5).setDistance(10000), carEncoder, 60, true, true).setName("4-5");
 
         ShortestWeighting weighting = new ShortestWeighting(carEncoder);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 5);

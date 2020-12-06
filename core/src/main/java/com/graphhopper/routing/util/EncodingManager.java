@@ -673,14 +673,6 @@ public class EncodingManager implements EncodedValueLookup {
         return new IntsRef(2);
     }
 
-    public IntsRef flagsDefault(boolean forward, boolean backward) {
-        IntsRef intsRef = createEdgeFlags();
-        for (AbstractFlagEncoder encoder : edgeEncoders) {
-            encoder.flagsDefault(intsRef, forward, backward);
-        }
-        return intsRef;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

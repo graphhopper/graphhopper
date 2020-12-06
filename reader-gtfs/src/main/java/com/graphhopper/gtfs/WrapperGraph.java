@@ -98,11 +98,6 @@ public class WrapperGraph implements Graph {
     }
 
     @Override
-    public EdgeIteratorState edge(int a, int b, double distance, boolean bothDirections) {
-        throw new RuntimeException();
-    }
-
-    @Override
     public EdgeIteratorState getEdgeIteratorState(int edgeId, int adjNode) {
         EdgeIteratorState edgeIteratorState = extraEdges.get(edgeId);
         if (edgeIteratorState != null) {

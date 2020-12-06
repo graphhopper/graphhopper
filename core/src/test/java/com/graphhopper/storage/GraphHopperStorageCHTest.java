@@ -129,7 +129,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         //            3  2
         graph = createGHStorage();
         EdgeExplorer baseCarOutExplorer = graph.createEdgeExplorer(carOutFilter);
-        graph.edge(4, 1, 30, true);
+        GHUtility.setProperties(graph.edge(4, 1).setDistance(30), carEncoder, 60, true, true);
         graph.freeze();
 
         CHGraph lg = getGraph(graph);
@@ -222,8 +222,8 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     public void weightExact() {
         graph = createGHStorage();
         CHGraph chGraph = getGraph(graph);
-        graph.edge(0, 1, 1, false);
-        graph.edge(1, 2, 1, false);
+        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), carEncoder, 60, true, false);
+        GHUtility.setProperties(graph.edge(1, 2).setDistance(1), carEncoder, 60, true, false);
         graph.freeze();
         setIdentityLevels(chGraph);
 
@@ -295,8 +295,8 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     @Test
     public void testSimpleShortcutCreationAndTraversal() {
         graph = createGHStorage();
-        graph.edge(1, 3, 10, true);
-        graph.edge(3, 4, 10, true);
+        GHUtility.setProperties(graph.edge(1, 3).setDistance(10), carEncoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(3, 4).setDistance(10), carEncoder, 60, true, true);
         graph.freeze();
 
         CHGraph lg = getGraph(graph);
@@ -312,8 +312,8 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     @Test
     public void testAddShortcutSkippedEdgesWriteRead() {
         graph = createGHStorage();
-        final EdgeIteratorState edge1 = graph.edge(1, 3, 10, true);
-        final EdgeIteratorState edge2 = graph.edge(3, 4, 10, true);
+        final EdgeIteratorState edge1 = GHUtility.setProperties(graph.edge(1, 3).setDistance(10), carEncoder, 60, true, true);
+        final EdgeIteratorState edge2 = GHUtility.setProperties(graph.edge(3, 4).setDistance(10), carEncoder, 60, true, true);
         graph.freeze();
 
         CHGraph lg = getGraph(graph);
@@ -333,8 +333,8 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     @Test
     public void testAddShortcutSkippedEdgesWriteRead_writeWithCHEdgeIterator() {
         graph = createGHStorage();
-        final EdgeIteratorState edge1 = graph.edge(1, 3, 10, true);
-        final EdgeIteratorState edge2 = graph.edge(3, 4, 10, true);
+        final EdgeIteratorState edge1 = GHUtility.setProperties(graph.edge(1, 3).setDistance(10), carEncoder, 60, true, true);
+        final EdgeIteratorState edge2 = GHUtility.setProperties(graph.edge(3, 4).setDistance(10), carEncoder, 60, true, true);
         graph.freeze();
 
         CHGraph lg = getGraph(graph);
@@ -353,8 +353,8 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     @Test(expected = IllegalStateException.class)
     public void testAddShortcut_edgeBased_throwsIfNotConfiguredForEdgeBased() {
         graph = newGHStorage(false, false);
-        graph.edge(0, 1, 1, false);
-        graph.edge(1, 2, 1, false);
+        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), carEncoder, 60, true, false);
+        GHUtility.setProperties(graph.edge(1, 2).setDistance(1), carEncoder, 60, true, false);
         graph.freeze();
         addShortcut(getGraph(graph), 0, 2, true, 0, 1, 0, 1, 2);
     }
@@ -363,8 +363,8 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     public void testAddShortcut_edgeBased() {
         // 0 -> 1 -> 2
         graph = newGHStorage(false, true);
-        graph.edge(0, 1, 1, false);
-        graph.edge(1, 2, 3, false);
+        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), carEncoder, 60, true, false);
+        GHUtility.setProperties(graph.edge(1, 2).setDistance(3), carEncoder, 60, true, false);
         graph.freeze();
         CHGraph lg = getGraph(this.graph);
         setIdentityLevels(lg);
@@ -380,8 +380,8 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     @Test
     public void testGetEdgeIterator() {
         graph = newGHStorage(false, true);
-        graph.edge(0, 1, 1, false);
-        graph.edge(1, 2, 1, false);
+        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), carEncoder, 60, true, false);
+        GHUtility.setProperties(graph.edge(1, 2).setDistance(1), carEncoder, 60, true, false);
         graph.freeze();
         CHGraph lg = getGraph(graph);
         setIdentityLevels(lg);

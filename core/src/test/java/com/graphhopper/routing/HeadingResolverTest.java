@@ -20,13 +20,16 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.DistanceCalcEuclidean;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.Test;
 
@@ -41,7 +44,8 @@ class HeadingResolverTest {
         // 7 -- 8 --- 3
         //     /|\
         //    6 5 4
-        EncodingManager em = EncodingManager.create("car");
+        FlagEncoder encoder = new CarFlagEncoder();
+        EncodingManager em = EncodingManager.create(encoder);
         GraphHopperStorage graph = new GraphBuilder(em).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 49.5073, 1.5545);
@@ -54,14 +58,14 @@ class HeadingResolverTest {
         na.setNode(7, 48.8611, 1.2194);
         na.setNode(8, 48.8538, 2.3950);
 
-        graph.edge(8, 0, 10, true); // edge 0
-        graph.edge(8, 1, 10, true); // edge 1
-        graph.edge(8, 2, 10, true); // edge 2
-        graph.edge(8, 3, 10, true); // edge 3
-        graph.edge(8, 4, 10, true); // edge 4
-        graph.edge(8, 5, 10, true); // edge 5
-        graph.edge(8, 6, 10, true); // edge 6
-        graph.edge(8, 7, 10, true); // edge 7
+        GHUtility.setProperties(graph.edge(8, 0).setDistance(10), encoder, 60, true, true); // edge 0
+        GHUtility.setProperties(graph.edge(8, 1).setDistance(10), encoder, 60, true, true); // edge 1
+        GHUtility.setProperties(graph.edge(8, 2).setDistance(10), encoder, 60, true, true); // edge 2
+        GHUtility.setProperties(graph.edge(8, 3).setDistance(10), encoder, 60, true, true); // edge 3
+        GHUtility.setProperties(graph.edge(8, 4).setDistance(10), encoder, 60, true, true); // edge 4
+        GHUtility.setProperties(graph.edge(8, 5).setDistance(10), encoder, 60, true, true); // edge 5
+        GHUtility.setProperties(graph.edge(8, 6).setDistance(10), encoder, 60, true, true); // edge 6
+        GHUtility.setProperties(graph.edge(8, 7).setDistance(10), encoder, 60, true, true); // edge 7
 
         HeadingResolver resolver = new HeadingResolver(graph);
         // using default tolerance
@@ -82,14 +86,17 @@ class HeadingResolverTest {
         //    1 -|
         // |- 0 -|
         // |- 2
-        EncodingManager em = EncodingManager.create("car");
+        FlagEncoder encoder = new CarFlagEncoder();
+        EncodingManager em = EncodingManager.create(encoder);
         GraphHopperStorage graph = new GraphBuilder(em).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(1, 0.01, 0.00);
         na.setNode(0, 0.00, 0.00);
         na.setNode(2, -0.01, 0.00);
-        graph.edge(0, 1, 10, true).setWayGeometry(Helper.createPointList(0.00, 0.01, 0.01, 0.01));
-        graph.edge(0, 2, 10, true).setWayGeometry(Helper.createPointList(0.00, -0.01, -0.01, -0.01));
+        GHUtility.setProperties(graph.edge(0, 1).setDistance(10), encoder, 60, true, true).
+                setWayGeometry(Helper.createPointList(0.00, 0.01, 0.01, 0.01));
+        GHUtility.setProperties(graph.edge(0, 2).setDistance(10), encoder, 60, true, true).
+                setWayGeometry(Helper.createPointList(0.00, -0.01, -0.01, -0.01));
         HeadingResolver resolver = new HeadingResolver(graph);
         resolver.setTolerance(120);
         // asking for the edges not going east returns 0-2
@@ -102,13 +109,14 @@ class HeadingResolverTest {
     public void withQueryGraph() {
         //    2
         // 0 -x- 1
-        EncodingManager em = EncodingManager.create("car");
+        FlagEncoder encoder = new CarFlagEncoder();
+        EncodingManager em = EncodingManager.create(encoder);
         GraphHopperStorage graph = new GraphBuilder(em).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 48.8611, 1.2194);
         na.setNode(1, 48.8538, 2.3950);
 
-        EdgeIteratorState edge = graph.edge(0, 1, 10, true);
+        EdgeIteratorState edge = GHUtility.setProperties(graph.edge(0, 1).setDistance(10), encoder, 60, true, true);
         Snap snap = createSnap(edge, 48.859, 2.00, 0);
         QueryGraph queryGraph = QueryGraph.create(graph, snap);
         HeadingResolver resolver = new HeadingResolver(queryGraph);

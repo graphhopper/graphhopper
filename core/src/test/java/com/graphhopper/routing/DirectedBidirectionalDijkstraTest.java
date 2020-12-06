@@ -69,8 +69,8 @@ public class DirectedBidirectionalDijkstraTest {
     public void connectionNotFound() {
         // nodes 0 and 2 are not connected
         // 0 -> 1     2 -> 3
-        graph.edge(0, 1, 1, false);
-        graph.edge(2, 3, 1, false);
+        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), encoder, 60, true, false);
+        GHUtility.setProperties(graph.edge(2, 3).setDistance(1), encoder, 60, true, false);
 
         Path path = calcPath(0, 3, 0, 1);
         assertNotFound(path);
@@ -78,7 +78,7 @@ public class DirectedBidirectionalDijkstraTest {
 
     @Test
     public void singleEdge() {
-        graph.edge(0, 1, 1, true);
+        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), encoder, 60, true, true);
 
         // source edge does not exist -> no path
         assertNotFound(calcPath(0, 1, 5, 0));
@@ -97,8 +97,8 @@ public class DirectedBidirectionalDijkstraTest {
     @Test
     public void simpleGraph() {
         // 0 -> 1 -> 2
-        graph.edge(0, 1, 1, true);
-        graph.edge(1, 2, 1, true);
+        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(1, 2).setDistance(1), encoder, 60, true, true);
 
         // source edge does not exist -> no path
         assertNotFound(calcPath(0, 2, 5, 0));
@@ -122,9 +122,9 @@ public class DirectedBidirectionalDijkstraTest {
         // 0 - 1
         //  \  |
         //   - 2
-        graph.edge(0, 1, 1, true);
-        graph.edge(0, 2, 1, true);
-        graph.edge(1, 2, 1, true);
+        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(0, 2).setDistance(1), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(1, 2).setDistance(1), encoder, 60, true, true);
         assertPath(calcPath(0, 0, 0, 1), 0.18, 3, 180, nodes(0, 1, 2, 0));
         assertPath(calcPath(0, 0, 1, 0), 0.18, 3, 180, nodes(0, 2, 1, 0));
         // without restrictions the weight should be zero
@@ -140,15 +140,15 @@ public class DirectedBidirectionalDijkstraTest {
         // 0 = 1 - 2 - 3 = 4
         //  \      |      /
         //   - 5 - 6 - 7 -
-        int costlySource = graph.edge(0, 1, 5, true).getEdge();
-        graph.edge(1, 2, 1, true);
-        graph.edge(2, 3, 1, true);
-        int costlyTarget = graph.edge(3, 4, 5, true).getEdge();
-        int cheapSource = graph.edge(0, 5, 1, true).getEdge();
-        graph.edge(5, 6, 1, true);
-        graph.edge(6, 7, 1, true);
-        int cheapTarget = graph.edge(7, 4, 1, true).getEdge();
-        graph.edge(2, 6, 1, true);
+        int costlySource = GHUtility.setProperties(graph.edge(0, 1).setDistance(5), encoder, 60, true, true).getEdge();
+        GHUtility.setProperties(graph.edge(1, 2).setDistance(1), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(2, 3).setDistance(1), encoder, 60, true, true);
+        int costlyTarget = GHUtility.setProperties(graph.edge(3, 4).setDistance(5), encoder, 60, true, true).getEdge();
+        int cheapSource = GHUtility.setProperties(graph.edge(0, 5).setDistance(1), encoder, 60, true, true).getEdge();
+        GHUtility.setProperties(graph.edge(5, 6).setDistance(1), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(6, 7).setDistance(1), encoder, 60, true, true);
+        int cheapTarget = GHUtility.setProperties(graph.edge(7, 4).setDistance(1), encoder, 60, true, true).getEdge();
+        GHUtility.setProperties(graph.edge(2, 6).setDistance(1), encoder, 60, true, true);
 
         assertPath(calcPath(0, 4, cheapSource, cheapTarget), 0.24, 4, 240, nodes(0, 5, 6, 7, 4));
         assertPath(calcPath(0, 4, cheapSource, costlyTarget), 0.54, 9, 540, nodes(0, 5, 6, 2, 3, 4));
@@ -164,10 +164,10 @@ public class DirectedBidirectionalDijkstraTest {
         //  \     /
         //   - 3 -
         // we cannot go from 0 to 2 if we enforce north-south or south-north
-        int sourceNorth = graph.edge(0, 1, 1, true).getEdge();
-        int sourceSouth = graph.edge(0, 3, 2, true).getEdge();
-        int targetNorth = graph.edge(1, 2, 3, true).getEdge();
-        int targetSouth = graph.edge(3, 2, 4, true).getEdge();
+        int sourceNorth = GHUtility.setProperties(graph.edge(0, 1).setDistance(1), encoder, 60, true, true).getEdge();
+        int sourceSouth = GHUtility.setProperties(graph.edge(0, 3).setDistance(2), encoder, 60, true, true).getEdge();
+        int targetNorth = GHUtility.setProperties(graph.edge(1, 2).setDistance(3), encoder, 60, true, true).getEdge();
+        int targetSouth = GHUtility.setProperties(graph.edge(3, 2).setDistance(4), encoder, 60, true, true).getEdge();
 
         assertPath(calcPath(0, 2, sourceNorth, targetNorth), 0.24, 4, 240, nodes(0, 1, 2));
         assertNotFound(calcPath(0, 2, sourceNorth, targetSouth));
@@ -180,11 +180,11 @@ public class DirectedBidirectionalDijkstraTest {
         // 0 <- 1 <- 2
         //  \   |   /
         //   >--3-->
-        graph.edge(0, 3, 1, false);
-        graph.edge(1, 0, 1, false);
-        graph.edge(3, 2, 1, false);
-        graph.edge(2, 1, 1, false);
-        graph.edge(1, 3, 1, true);
+        GHUtility.setProperties(graph.edge(0, 3).setDistance(1), encoder, 60, true, false);
+        GHUtility.setProperties(graph.edge(1, 0).setDistance(1), encoder, 60, true, false);
+        GHUtility.setProperties(graph.edge(3, 2).setDistance(1), encoder, 60, true, false);
+        GHUtility.setProperties(graph.edge(2, 1).setDistance(1), encoder, 60, true, false);
+        GHUtility.setProperties(graph.edge(1, 3).setDistance(1), encoder, 60, true, true);
 
         assertPath(calcPath(0, 2, 0, 2), 0.12, 2, 120, nodes(0, 3, 2));
         assertNotFound(calcPath(0, 2, 1, 2));
@@ -201,15 +201,15 @@ public class DirectedBidirectionalDijkstraTest {
         // 2 - 3
         // |   |
         // 5 - 4
-        int north = graph.edge(1, 0, 1, true).getEdge();
-        int south = graph.edge(1, 2, 1, true).getEdge();
-        graph.edge(2, 5, 1, false);
-        graph.edge(5, 4, 1, false);
-        graph.edge(4, 3, 1, false);
-        graph.edge(3, 2, 1, false);
-        graph.edge(1, 0, 1, false);
-        graph.edge(0, 6, 1, false);
-        int targetEdge = graph.edge(6, 7, 1, false).getEdge();
+        int north = GHUtility.setProperties(graph.edge(1, 0).setDistance(1), encoder, 60, true, true).getEdge();
+        int south = GHUtility.setProperties(graph.edge(1, 2).setDistance(1), encoder, 60, true, true).getEdge();
+        GHUtility.setProperties(graph.edge(2, 5).setDistance(1), encoder, 60, true, false);
+        GHUtility.setProperties(graph.edge(5, 4).setDistance(1), encoder, 60, true, false);
+        GHUtility.setProperties(graph.edge(4, 3).setDistance(1), encoder, 60, true, false);
+        GHUtility.setProperties(graph.edge(3, 2).setDistance(1), encoder, 60, true, false);
+        GHUtility.setProperties(graph.edge(1, 0).setDistance(1), encoder, 60, true, false);
+        GHUtility.setProperties(graph.edge(0, 6).setDistance(1), encoder, 60, true, false);
+        int targetEdge = GHUtility.setProperties(graph.edge(6, 7).setDistance(1), encoder, 60, true, false).getEdge();
         assertPath(calcPath(1, 7, north, targetEdge), 0.18, 3, 180, nodes(1, 0, 6, 7));
         assertPath(calcPath(1, 7, south, targetEdge), 0.54, 9, 540, nodes(1, 2, 5, 4, 3, 2, 1, 0, 6, 7));
     }
@@ -219,13 +219,13 @@ public class DirectedBidirectionalDijkstraTest {
         // 0---6--1 -> 2
         // |          /
         // 5 <- 4 <- 3
-        graph.edge(0, 6, 1, true);
-        graph.edge(6, 1, 1, true);
-        graph.edge(1, 2, 1, false);
-        graph.edge(2, 3, 1, false);
-        graph.edge(3, 4, 1, false);
-        graph.edge(4, 5, 1, false);
-        graph.edge(5, 0, 1, false);
+        GHUtility.setProperties(graph.edge(0, 6).setDistance(1), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(6, 1).setDistance(1), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(1, 2).setDistance(1), encoder, 60, true, false);
+        GHUtility.setProperties(graph.edge(2, 3).setDistance(1), encoder, 60, true, false);
+        GHUtility.setProperties(graph.edge(3, 4).setDistance(1), encoder, 60, true, false);
+        GHUtility.setProperties(graph.edge(4, 5).setDistance(1), encoder, 60, true, false);
+        GHUtility.setProperties(graph.edge(5, 0).setDistance(1), encoder, 60, true, false);
         assertPath(calcPath(6, 0, 1, 6), 0.36, 6, 360, nodes(6, 1, 2, 3, 4, 5, 0));
     }
 
@@ -237,18 +237,18 @@ public class DirectedBidirectionalDijkstraTest {
         //   9     2     10
         //   |    / \    |
         //   8 = 7   6 = 5
-        graph.edge(0, 1, 1, true);
-        graph.edge(1, 2, 1, true);
-        graph.edge(2, 3, 1, true);
-        graph.edge(3, 4, 3, true);
-        int rightNorth = graph.edge(4, 10, 1, true).getEdge();
-        int rightSouth = graph.edge(10, 5, 1, true).getEdge();
-        graph.edge(5, 6, 2, true);
-        graph.edge(6, 2, 1, true);
-        graph.edge(2, 7, 1, true);
-        graph.edge(7, 8, 9, true);
-        int leftSouth = graph.edge(8, 9, 1, true).getEdge();
-        int leftNorth = graph.edge(9, 0, 1, true).getEdge();
+        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(1, 2).setDistance(1), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(2, 3).setDistance(1), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(3, 4).setDistance(3), encoder, 60, true, true);
+        int rightNorth = GHUtility.setProperties(graph.edge(4, 10).setDistance(1), encoder, 60, true, true).getEdge();
+        int rightSouth = GHUtility.setProperties(graph.edge(10, 5).setDistance(1), encoder, 60, true, true).getEdge();
+        GHUtility.setProperties(graph.edge(5, 6).setDistance(2), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(6, 2).setDistance(1), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(2, 7).setDistance(1), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(7, 8).setDistance(9), encoder, 60, true, true);
+        int leftSouth = GHUtility.setProperties(graph.edge(8, 9).setDistance(1), encoder, 60, true, true).getEdge();
+        int leftNorth = GHUtility.setProperties(graph.edge(9, 0).setDistance(1), encoder, 60, true, true).getEdge();
 
         // make paths fully deterministic by applying some turn costs at junction node 2
         setTurnCost(7, 2, 3, 1);
@@ -276,10 +276,10 @@ public class DirectedBidirectionalDijkstraTest {
     public void enforceLoopEdge() {
         //  o       o
         //  0 - 1 - 2
-        graph.edge(0, 0, 1, true);
-        graph.edge(0, 1, 1, true);
-        graph.edge(1, 2, 1, true);
-        graph.edge(2, 2, 1, true);
+        GHUtility.setProperties(graph.edge(0, 0).setDistance(1), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(1, 2).setDistance(1), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(2, 2).setDistance(1), encoder, 60, true, true);
 
         assertPath(calcPath(0, 2, ANY_EDGE, ANY_EDGE), 0.12, 2, 120, nodes(0, 1, 2));
         assertPath(calcPath(0, 2, 1, 2), 0.12, 2, 120, nodes(0, 1, 2));
@@ -292,9 +292,9 @@ public class DirectedBidirectionalDijkstraTest {
     @Test
     public void sourceAndTargetAreNeighbors() {
         // 0-1-2-3
-        graph.edge(0, 1, 100, true);
-        graph.edge(1, 2, 100, true);
-        graph.edge(2, 3, 100, true);
+        GHUtility.setProperties(graph.edge(0, 1).setDistance(100), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(1, 2).setDistance(100), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(2, 3).setDistance(100), encoder, 60, true, true);
         assertPath(calcPath(1, 2, ANY_EDGE, ANY_EDGE), 6, 100, 6000, nodes(1, 2));
         assertPath(calcPath(1, 2, 1, ANY_EDGE), 6, 100, 6000, nodes(1, 2));
         assertPath(calcPath(1, 2, ANY_EDGE, 1), 6, 100, 6000, nodes(1, 2));
@@ -317,13 +317,13 @@ public class DirectedBidirectionalDijkstraTest {
         // 0 - 1 - 2
         // |   |   |
         // 3 - 4 - 5
-        graph.edge(0, 1, 1, true);
-        graph.edge(1, 2, 1, true);
-        graph.edge(1, 4, 1, true);
-        graph.edge(0, 3, 1, true);
-        graph.edge(3, 4, 1, true);
-        graph.edge(4, 5, 1, true);
-        graph.edge(5, 2, 1, true);
+        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(1, 2).setDistance(1), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(1, 4).setDistance(1), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(0, 3).setDistance(1), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(3, 4).setDistance(1), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(4, 5).setDistance(1), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(5, 2).setDistance(1), encoder, 60, true, true);
 
         setRestriction(0, 3, 4);
         setTurnCost(4, 5, 2, 6);
@@ -346,17 +346,17 @@ public class DirectedBidirectionalDijkstraTest {
         // 0 -- 1 -- 6
         // |         |
         // 7 -- 8 -- 9
-        int right0 = graph.edge(0, 1, 10, true).getEdge();
-        graph.edge(1, 2, 10, true);
-        graph.edge(2, 3, 10, true);
-        graph.edge(3, 4, 10, true);
-        graph.edge(4, 5, 10, true);
-        graph.edge(5, 2, 1000, true);
-        int left6 = graph.edge(1, 6, 10, true).getEdge();
-        int left0 = graph.edge(0, 7, 10, true).getEdge();
-        graph.edge(7, 8, 10, true);
-        graph.edge(8, 9, 10, true);
-        int right6 = graph.edge(9, 6, 10, true).getEdge();
+        int right0 = GHUtility.setProperties(graph.edge(0, 1).setDistance(10), encoder, 60, true, true).getEdge();
+        GHUtility.setProperties(graph.edge(1, 2).setDistance(10), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(2, 3).setDistance(10), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(3, 4).setDistance(10), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(4, 5).setDistance(10), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(5, 2).setDistance(1000), encoder, 60, true, true);
+        int left6 = GHUtility.setProperties(graph.edge(1, 6).setDistance(10), encoder, 60, true, true).getEdge();
+        int left0 = GHUtility.setProperties(graph.edge(0, 7).setDistance(10), encoder, 60, true, true).getEdge();
+        GHUtility.setProperties(graph.edge(7, 8).setDistance(10), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(8, 9).setDistance(10), encoder, 60, true, true);
+        int right6 = GHUtility.setProperties(graph.edge(9, 6).setDistance(10), encoder, 60, true, true).getEdge();
 
         // enforce p-turn (using the loop in clockwise direction)
         setRestriction(0, 1, 6);
@@ -394,7 +394,8 @@ public class DirectedBidirectionalDijkstraTest {
 
         Random rnd = new Random(seed);
         int numNodes = 100;
-        GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, 0.8);
+        GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.2, true, true,
+                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), 60d, 0.7, 0.8, 0.8);
         GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, turnCostStorage);
 
         long numStrictViolations = 0;
@@ -424,13 +425,13 @@ public class DirectedBidirectionalDijkstraTest {
         // 0 - 1 - 2 - 3
         // |           |
         // 4 --- 5 --- 6
-        EdgeIteratorState edge1 = graph.edge(0, 1, 10, true);
-        graph.edge(1, 2, 10, true);
-        EdgeIteratorState edge2 = graph.edge(2, 3, 10, true);
-        graph.edge(0, 4, 100, true);
-        graph.edge(4, 5, 100, true);
-        graph.edge(5, 6, 100, true);
-        graph.edge(6, 3, 100, true);
+        EdgeIteratorState edge1 = GHUtility.setProperties(graph.edge(0, 1).setDistance(10), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(1, 2).setDistance(10), encoder, 60, true, true);
+        EdgeIteratorState edge2 = GHUtility.setProperties(graph.edge(2, 3).setDistance(10), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(0, 4).setDistance(100), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(4, 5).setDistance(100), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(5, 6).setDistance(100), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(6, 3).setDistance(100), encoder, 60, true, true);
 
         // usually we would take the direct route
         assertPath(calcPath(0, 3, ANY_EDGE, ANY_EDGE), 1.8, 30, 1800, nodes(0, 1, 2, 3));
@@ -469,12 +470,12 @@ public class DirectedBidirectionalDijkstraTest {
         // 0 -- 1 -> 2
         // |         |
         // 5 <- 4 <- 3
-        graph.edge(0, 1, 1, true);
-        graph.edge(1, 2, 1, false);
-        graph.edge(2, 3, 1, false);
-        graph.edge(3, 4, 1, false);
-        graph.edge(4, 5, 1, false);
-        graph.edge(5, 0, 1, false);
+        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(1, 2).setDistance(1), encoder, 60, true, false);
+        GHUtility.setProperties(graph.edge(2, 3).setDistance(1), encoder, 60, true, false);
+        GHUtility.setProperties(graph.edge(3, 4).setDistance(1), encoder, 60, true, false);
+        GHUtility.setProperties(graph.edge(4, 5).setDistance(1), encoder, 60, true, false);
+        GHUtility.setProperties(graph.edge(5, 0).setDistance(1), encoder, 60, true, false);
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 1, 0);
         na.setNode(1, 1, 1);

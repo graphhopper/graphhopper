@@ -68,11 +68,6 @@ public interface Graph {
     EdgeIteratorState edge(int a, int b);
 
     /**
-     * Use edge(a,b).setDistance().setFlags instead
-     */
-    EdgeIteratorState edge(int a, int b, double distance, boolean bothDirections);
-
-    /**
      * Returns a wrapper over the specified edgeId.
      *
      * @param adjNode is the node that will be returned via getAdjNode(). If adjNode is

@@ -25,6 +25,7 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.CHEdgeExplorer;
 import com.graphhopper.util.CHEdgeIterator;
+import com.graphhopper.util.GHUtility;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -43,9 +44,9 @@ public class DefaultEdgeFilterTest {
         // 0-1
         //  \|
         //   2
-        graph.edge(0, 1, 1, false);
-        graph.edge(1, 2, 2, false);
-        graph.edge(2, 0, 3, false);
+        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), encoder, 60, true, false);
+        GHUtility.setProperties(graph.edge(1, 2).setDistance(2), encoder, 60, true, false);
+        GHUtility.setProperties(graph.edge(2, 0).setDistance(3), encoder, 60, true, false);
         graph.freeze();
         // add loop shortcut in 'fwd' direction
         addShortcut(chGraph, 0, 0, true, 0, 2);

@@ -271,19 +271,6 @@ public class CarFlagEncoderTest {
         assertFalse(accessEnc.getBool(false, edgeFlags));
         assertTrue(accessEnc.getBool(true, edgeFlags));
 
-        encoder.flagsDefault(edgeFlags, true, true);
-        assertTrue(accessEnc.getBool(false, edgeFlags));
-        assertTrue(accessEnc.getBool(true, edgeFlags));
-
-        encoder.flagsDefault(edgeFlags, true, false);
-        assertTrue(accessEnc.getBool(false, edgeFlags));
-        assertFalse(accessEnc.getBool(true, edgeFlags));
-
-        encoder.flagsDefault(edgeFlags, true, true);
-        // disable access
-        accessEnc.setBool(false, edgeFlags, false);
-        accessEnc.setBool(true, edgeFlags, false);
-        assertFalse(accessEnc.getBool(false, edgeFlags));
         accessEnc.setBool(false, edgeFlags, false);
         accessEnc.setBool(true, edgeFlags, false);
         assertFalse(accessEnc.getBool(true, edgeFlags));

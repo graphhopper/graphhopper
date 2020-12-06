@@ -18,7 +18,6 @@
 
 package com.graphhopper.util.gpx;
 
-import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
@@ -29,7 +28,6 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import org.junit.Before;
@@ -79,12 +77,12 @@ public class GpxFromInstructionsTest {
         na.setNode(6, 15.1, 10.1);
         na.setNode(7, 15.1, 9.8);
 
-        g.edge(1, 2, 7000, true).setName("1-2").setFlags(flagsForSpeed(carManager, 70));
-        g.edge(2, 3, 8000, true).setName("2-3").setFlags(flagsForSpeed(carManager, 80));
-        g.edge(2, 6, 10000, true).setName("2-6").setFlags(flagsForSpeed(carManager, 10));
-        g.edge(3, 4, 9000, true).setName("3-4").setFlags(flagsForSpeed(carManager, 90));
-        g.edge(3, 7, 10000, true).setName("3-7").setFlags(flagsForSpeed(carManager, 10));
-        g.edge(4, 5, 10000, true).setName("4-5").setFlags(flagsForSpeed(carManager, 100));
+        GHUtility.setProperties(g.edge(1, 2).setDistance(7000).setName("1-2"), carEncoder, 63, true, true);
+        GHUtility.setProperties(g.edge(2, 3).setDistance(8000).setName("2-3"), carEncoder, 72, true, true);
+        GHUtility.setProperties(g.edge(2, 6).setDistance(10000).setName("2-6"), carEncoder, 9, true, true);
+        GHUtility.setProperties(g.edge(3, 4).setDistance(9000).setName("3-4"), carEncoder, 81, true, true);
+        GHUtility.setProperties(g.edge(3, 7).setDistance(10000).setName("3-7"), carEncoder, 9, true, true);
+        GHUtility.setProperties(g.edge(4, 5).setDistance(10000).setName("4-5"), carEncoder, 90, true, true);
 
         ShortestWeighting weighting = new ShortestWeighting(carEncoder);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
@@ -200,15 +198,6 @@ public class GpxFromInstructionsTest {
         assertEquals("_", GpxFromInstructions.simpleXMLEscape("<"));
         assertEquals("_blup_", GpxFromInstructions.simpleXMLEscape("<blup>"));
         assertEquals("a&amp;b", GpxFromInstructions.simpleXMLEscape("a&b"));
-    }
-
-    private IntsRef flagsForSpeed(EncodingManager encodingManager, int speedKmPerHour) {
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("highway", "motorway");
-        way.setTag("maxspeed", String.format("%d km/h", speedKmPerHour));
-        EncodingManager.AcceptWay map = new EncodingManager.AcceptWay();
-        encodingManager.acceptWay(way, map);
-        return encodingManager.handleWayTags(way, map, encodingManager.createRelationFlags());
     }
 
     private void verifyGPX(String gpx) {

@@ -245,7 +245,7 @@ class BaseGraph implements Graph {
         E_NODEB = nextEdgeEntryIndex(4);
         E_LINKA = nextEdgeEntryIndex(4);
         E_LINKB = nextEdgeEntryIndex(4);
-        E_FLAGS = nextEdgeEntryIndex(encodingManager.getIntsForFlags() * 4);
+        E_FLAGS = nextEdgeEntryIndex(intsForFlags * 4);
 
         E_DIST = nextEdgeEntryIndex(4);
         E_GEO = nextEdgeEntryIndex(4);
@@ -341,11 +341,6 @@ class BaseGraph implements Graph {
     @Override
     public BBox getBounds() {
         return bounds;
-    }
-
-    @Override
-    public EdgeIteratorState edge(int a, int b, double distance, boolean bothDirection) {
-        return edge(a, b).setDistance(distance).setFlags(encodingManager.flagsDefault(true, bothDirection));
     }
 
     private void setSegmentSize(int bytes) {

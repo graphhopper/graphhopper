@@ -277,11 +277,6 @@ public class QueryGraph implements Graph {
     }
 
     @Override
-    public EdgeIteratorState edge(int a, int b, double distance, boolean bothDirections) {
-        throw exc();
-    }
-
-    @Override
     public Graph copyTo(Graph g) {
         throw exc();
     }

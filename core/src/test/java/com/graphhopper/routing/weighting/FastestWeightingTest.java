@@ -106,8 +106,8 @@ public class FastestWeightingTest {
     public void calcWeightAndTime_withTurnCosts() {
         Graph graph = new GraphBuilder(encodingManager).create();
         Weighting weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()));
-        graph.edge(0, 1, 100, true);
-        EdgeIteratorState edge = graph.edge(1, 2, 100, true);
+        GHUtility.setProperties(graph.edge(0,1).setDistance(100),encoder,60,true, true);
+        EdgeIteratorState edge = GHUtility.setProperties(graph.edge(1,2).setDistance(100),encoder,60,true, true);
         // turn costs are given in seconds
         setTurnCost(graph, 0, 1, 2, 5);
         assertEquals(6 + 5, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
@@ -118,7 +118,7 @@ public class FastestWeightingTest {
     public void calcWeightAndTime_uTurnCosts() {
         Graph graph = new GraphBuilder(encodingManager).create();
         Weighting weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage(), 40));
-        EdgeIteratorState edge = graph.edge(0, 1, 100, true);
+        EdgeIteratorState edge = GHUtility.setProperties(graph.edge(0,1).setDistance(100),encoder,60,true, true);
         assertEquals(6 + 40, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
         assertEquals((6 + 40) * 1000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
     }
@@ -127,8 +127,8 @@ public class FastestWeightingTest {
     public void calcWeightAndTime_withTurnCosts_shortest() {
         Graph graph = new GraphBuilder(encodingManager).create();
         Weighting weighting = new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()));
-        graph.edge(0, 1, 100, true);
-        EdgeIteratorState edge = graph.edge(1, 2, 100, true);
+        GHUtility.setProperties(graph.edge(0,1).setDistance(100),encoder,60,true, true);
+        EdgeIteratorState edge = GHUtility.setProperties(graph.edge(1,2).setDistance(100),encoder,60,true, true);
         // turn costs are given in seconds
         setTurnCost(graph, 0, 1, 2, 5);
         // todo: for the shortest weighting turn costs cannot be interpreted as seconds? at least when they are added

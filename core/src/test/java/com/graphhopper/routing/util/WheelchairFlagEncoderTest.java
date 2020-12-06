@@ -51,20 +51,6 @@ public class WheelchairFlagEncoderTest {
     }
 
     @Test
-    public void testBasics() {
-        IntsRef edgeFlags = encodingManager.createEdgeFlags();
-        wheelchairEncoder.flagsDefault(edgeFlags, true, true);
-        assertEquals(FootFlagEncoder.MEAN_SPEED, wheelchairAvSpeedEnc.getDecimal(false, edgeFlags), .1);
-
-        IntsRef ef1 = encodingManager.createEdgeFlags();
-        wheelchairEncoder.flagsDefault(ef1, true, false);
-        IntsRef ef2 = encodingManager.createEdgeFlags();
-        wheelchairEncoder.flagsDefault(ef2, false, true);
-        assertEquals(wheelchairAccessEnc.getBool(false, ef1), wheelchairAccessEnc.getBool(true, ef2));
-        assertEquals(wheelchairAvSpeedEnc.getDecimal(false, ef1), wheelchairAvSpeedEnc.getDecimal(false, ef1), .1);
-    }
-
-    @Test
     public void testCombined() {
         Graph g = new GraphBuilder(encodingManager).create();
         FlagEncoder carEncoder = encodingManager.getEncoder("car");

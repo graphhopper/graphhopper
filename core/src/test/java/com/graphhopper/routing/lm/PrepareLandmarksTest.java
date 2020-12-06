@@ -33,6 +33,7 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
@@ -185,8 +186,8 @@ public class PrepareLandmarksTest {
 
     @Test
     public void testStoreAndLoad() {
-        graph.edge(0, 1, 80_000, true);
-        graph.edge(1, 2, 80_000, true);
+        GHUtility.setProperties(graph.edge(0, 1).setDistance(80_000), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(1, 2).setDistance(80_000), encoder, 60, true, true);
         String fileStr = "./target/tmp-lm";
         Helper.removeDir(new File(fileStr));
 

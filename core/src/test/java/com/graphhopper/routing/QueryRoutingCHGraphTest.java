@@ -31,6 +31,7 @@ import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -65,8 +66,8 @@ class QueryRoutingCHGraphTest {
     @Test
     public void basic() {
         // 0-1-2
-        graph.edge(0, 1, 10, true);
-        graph.edge(1, 2, 10, true);
+        GHUtility.setProperties(graph.edge(0, 1).setDistance(10), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(1, 2).setDistance(10), encoder, 60, true, true);
         graph.freeze();
         assertEquals(2, graph.getEdges());
 
@@ -99,8 +100,8 @@ class QueryRoutingCHGraphTest {
     public void withShortcuts() {
         // 0-1-2
         //  \-/
-        graph.edge(0, 1, 10, true);
-        graph.edge(1, 2, 10, true);
+        GHUtility.setProperties(graph.edge(0, 1).setDistance(10), encoder, 60, true, true);
+        GHUtility.setProperties(graph.edge(1, 2).setDistance(10), encoder, 60, true, true);
         graph.freeze();
         assertEquals(2, graph.getEdges());
         setIdentityLevels(chGraph);
@@ -249,7 +250,7 @@ class QueryRoutingCHGraphTest {
 
     @Test
     public void getBaseGraph() {
-        graph.edge(0, 1, 10, true);
+        GHUtility.setProperties(graph.edge(0, 1).setDistance(10), encoder, 60, true, true);
         QueryGraph queryGraph = QueryGraph.create(graph, Collections.<Snap>emptyList());
         assertSame(graph.getBaseGraph(), routingCHGraph.getBaseGraph());
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
@@ -637,7 +638,7 @@ class QueryRoutingCHGraphTest {
     private EdgeIteratorState addEdge(Graph graph, int from, int to) {
         NodeAccess na = graph.getNodeAccess();
         double dist = DistancePlaneProjection.DIST_PLANE.calcDist(na.getLat(from), na.getLon(from), na.getLat(to), na.getLon(to));
-        return graph.edge(from, to, dist, true);
+        return GHUtility.setProperties(graph.edge(from, to).setDistance(dist), encoder, 60, true, true);
     }
 
 }

@@ -168,8 +168,11 @@ public class GHUtility {
                 "graph.edge(%d, %d, %f, %s); // edgeId=%s\n", from, to, edge.getDistance(), fwd && bwd ? "true" : "false", edge.getEdge());
     }
 
+    /**
+     * @param speed if null a random speed will be assign to every edge
+     */
     public static void buildRandomGraph(Graph graph, Random random, int numNodes, double meanDegree, boolean allowLoops,
-                                        boolean allowZeroDistance, DecimalEncodedValue randomSpeedEnc,
+                                        boolean allowZeroDistance, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, Double speed,
                                         double pNonZeroLoop, double pBothDir, double pRandomDistanceOffset) {
         if (numNodes < 2 || meanDegree < 1) {
             throw new IllegalArgumentException("numNodes must be >= 2, meanDegree >= 1");
@@ -204,14 +207,13 @@ public class GHUtility {
             maxDist = Math.max(maxDist, distance);
             // using bidirectional edges will increase mean degree of graph above given value
             boolean bothDirections = random.nextDouble() < pBothDir;
-            EdgeIteratorState edge = graph.edge(from, to, distance, bothDirections);
-            double fwdSpeed = 10 + random.nextDouble() * 110;
-            double bwdSpeed = 10 + random.nextDouble() * 110;
-            if (randomSpeedEnc != null) {
-                edge.set(randomSpeedEnc, fwdSpeed);
-                if (randomSpeedEnc.isStoreTwoDirections())
-                    edge.setReverse(randomSpeedEnc, bwdSpeed);
-            }
+            EdgeIteratorState edge = graph.edge(from, to).setDistance(distance).set(accessEnc, true);
+            if (bothDirections) edge.setReverse(accessEnc, true);
+            double fwdSpeed = speed != null ? speed : 10 + random.nextDouble() * 110;
+            double bwdSpeed = speed != null ? speed : 10 + random.nextDouble() * 110;
+            edge.set(speedEnc, fwdSpeed);
+            if (speedEnc.isStoreTwoDirections())
+                edge.setReverse(speedEnc, bwdSpeed);
             numEdges++;
         }
         LOGGER.debug(String.format(Locale.ROOT, "Finished building random graph" +
@@ -651,6 +653,15 @@ public class GHUtility {
         avSpeedEnc.setDecimal(false, edgeFlags, fwdSpeed);
         avSpeedEnc.setDecimal(true, edgeFlags, bwdSpeed);
         return edgeFlags;
+    }
+
+    public static void setProperties(List<EdgeIteratorState> edges, EncodingManager em, boolean fwd, boolean bwd) {
+        for (FlagEncoder encoder : em.fetchEdgeEncoders()) {
+            double s = encoder.getMaxSpeed() / 2;
+            for (EdgeIteratorState edge : edges) {
+                GHUtility.setProperties(edge, encoder, s, fwd, bwd);
+            }
+        }
     }
 
     public static EdgeIteratorState setProperties(EdgeIteratorState edge, FlagEncoder encoder, double averageSpeed, boolean fwd, boolean bwd) {
