@@ -85,7 +85,7 @@ public class PrincetonReader {
                     throw new RuntimeException("incorrect read!? from:" + from + ", to:" + to + ", dist:" + dist);
                 }
 
-                GHUtility.setProperties(graph.edge(from, to).setDistance(dist), encoder,60, true, false);
+                GHUtility.setSpeed(60, true, false, encoder, graph.edge(from, to).setDistance(dist));
             }
         } catch (Exception ex) {
             throw new RuntimeException("Problem in line " + lineNo, ex);

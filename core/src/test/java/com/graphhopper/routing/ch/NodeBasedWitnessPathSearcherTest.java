@@ -105,13 +105,13 @@ class NodeBasedWitnessPathSearcherTest {
         //   /    |
         //  4-----3
         //
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(0, 2).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(0, 4).setDistance(3), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(3), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(4, 3).setDistance(2), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(5, 1).setDistance(2), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 4).setDistance(3));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(3));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 3).setDistance(2));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 1).setDistance(2));
         graph.freeze();
     }
 

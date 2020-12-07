@@ -77,27 +77,27 @@ public class ShortestPathTreeTest {
         // 4-5-- |
         // |/ \--7
         // 6----/
-        GHUtility.setProperties(((Graph) graph).edge(0, 1).setDistance(70), carEncoder, 10, true, false);
-        GHUtility.setProperties(((Graph) graph).edge(0, 4).setDistance(50), carEncoder, 20, true, false);
+        GHUtility.setSpeed(10, true, false, carEncoder, ((Graph) graph).edge(0, 1).setDistance(70));
+        GHUtility.setSpeed(20, true, false, carEncoder, ((Graph) graph).edge(0, 4).setDistance(50));
 
-        GHUtility.setProperties(((Graph) graph).edge(1, 4).setDistance(70), carEncoder, 10, true, true);
-        GHUtility.setProperties(((Graph) graph).edge(1, 5).setDistance(70), carEncoder, 10, true, true);
-        GHUtility.setProperties(((Graph) graph).edge(1, 2).setDistance(200), carEncoder, 10, true, true);
+        GHUtility.setSpeed(10, true, true, carEncoder, ((Graph) graph).edge(1, 4).setDistance(70));
+        GHUtility.setSpeed(10, true, true, carEncoder, ((Graph) graph).edge(1, 5).setDistance(70));
+        GHUtility.setSpeed(10, true, true, carEncoder, ((Graph) graph).edge(1, 2).setDistance(200));
 
-        GHUtility.setProperties(((Graph) graph).edge(5, 2).setDistance(50), carEncoder, 10, true, false);
-        GHUtility.setProperties(((Graph) graph).edge(2, 3).setDistance(50), carEncoder, 10, true, false);
+        GHUtility.setSpeed(10, true, false, carEncoder, ((Graph) graph).edge(5, 2).setDistance(50));
+        GHUtility.setSpeed(10, true, false, carEncoder, ((Graph) graph).edge(2, 3).setDistance(50));
 
-        GHUtility.setProperties(((Graph) graph).edge(5, 3).setDistance(110), carEncoder, 20, true, false);
-        GHUtility.setProperties(((Graph) graph).edge(3, 7).setDistance(70), carEncoder, 10, true, false);
+        GHUtility.setSpeed(20, true, false, carEncoder, ((Graph) graph).edge(5, 3).setDistance(110));
+        GHUtility.setSpeed(10, true, false, carEncoder, ((Graph) graph).edge(3, 7).setDistance(70));
 
-        GHUtility.setProperties(((Graph) graph).edge(4, 6).setDistance(50), carEncoder, 20, true, false);
-        GHUtility.setProperties(((Graph) graph).edge(5, 4).setDistance(70), carEncoder, 10, true, false);
+        GHUtility.setSpeed(20, true, false, carEncoder, ((Graph) graph).edge(4, 6).setDistance(50));
+        GHUtility.setSpeed(10, true, false, carEncoder, ((Graph) graph).edge(5, 4).setDistance(70));
 
-        GHUtility.setProperties(((Graph) graph).edge(5, 6).setDistance(70), carEncoder, 10, true, false);
-        GHUtility.setProperties(((Graph) graph).edge(7, 5).setDistance(50), carEncoder, 20, true, false);
+        GHUtility.setSpeed(10, true, false, carEncoder, ((Graph) graph).edge(5, 6).setDistance(70));
+        GHUtility.setSpeed(20, true, false, carEncoder, ((Graph) graph).edge(7, 5).setDistance(50));
 
-        GHUtility.setProperties(((Graph) graph).edge(6, 7).setDistance(50), carEncoder, 20, true, true);
-        GHUtility.setProperties(((Graph) graph).edge(3, 8).setDistance(25), carEncoder, 20, true, true);
+        GHUtility.setSpeed(20, true, true, carEncoder, ((Graph) graph).edge(6, 7).setDistance(50));
+        GHUtility.setSpeed(20, true, true, carEncoder, ((Graph) graph).edge(3, 8).setDistance(25));
     }
 
     private int countDirectedEdges(GraphHopperStorage graph) {

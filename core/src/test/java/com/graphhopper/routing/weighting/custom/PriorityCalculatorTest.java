@@ -43,7 +43,7 @@ class PriorityCalculatorTest {
         // and depending on additional properties of the edge we set in the tests
         FlagEncoder encoder = new CarFlagEncoder();
         em = EncodingManager.create(encoder);
-        edge = GHUtility.setProperties(new GraphBuilder(em).create().edge(0, 1).setDistance(1000), encoder, 60, true, true);
+        edge = GHUtility.setSpeed(60, true, true, encoder, new GraphBuilder(em).create().edge(0, 1).setDistance(1000));
     }
 
     @Test

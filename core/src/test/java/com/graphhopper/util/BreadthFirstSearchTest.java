@@ -65,18 +65,18 @@ public class BreadthFirstSearchTest {
 
         FlagEncoder encoder = new CarFlagEncoder();
         Graph g = new GraphBuilder(EncodingManager.create(encoder)).create();
-        GHUtility.setProperties(g.edge(0, 1).setDistance(85), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(0, 2).setDistance(217), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(0, 3).setDistance(173), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(0, 5).setDistance(173), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(1, 6).setDistance(75), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(2, 7).setDistance(51), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(3, 8).setDistance(23), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(4, 8).setDistance(793), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(8, 10).setDistance(343), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(6, 9).setDistance(72), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(9, 10).setDistance(8), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(5, 10).setDistance(1), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(85));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 2).setDistance(217));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 3).setDistance(173));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 5).setDistance(173));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 6).setDistance(75));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 7).setDistance(51));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(3, 8).setDistance(23));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(4, 8).setDistance(793));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(8, 10).setDistance(343));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(6, 9).setDistance(72));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(9, 10).setDistance(8));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(5, 10).setDistance(1));
 
         bfs.start(g.createEdgeExplorer(), 0);
 
@@ -105,12 +105,12 @@ public class BreadthFirstSearchTest {
 
         FlagEncoder encoder = new CarFlagEncoder();
         Graph g = new GraphBuilder(EncodingManager.create(encoder)).create();
-        GHUtility.setProperties(g.edge(1, 2).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(g.edge(2, 3).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(g.edge(3, 4).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(g.edge(1, 5).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(g.edge(5, 6).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(g.edge(6, 4).setDistance(1), encoder, 60, true, false);
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(3, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 5).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(5, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(6, 4).setDistance(1));
 
         bfs.start(g.createEdgeExplorer(), 1);
 

@@ -68,7 +68,7 @@ public class CustomWeightingTest {
     @Test
     public void speedOnly() {
         // 50km/h -> 72s per km, 100km/h -> 36s per km
-        EdgeIteratorState edge = GHUtility.setProperties(graph.edge(0, 1).setDistance(1000), carFE, 60, true, true)
+        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, carFE, graph.edge(0, 1).setDistance(1000))
                 .set(avSpeedEnc, 50).setReverse(avSpeedEnc, 100);
         assertEquals(72, createWeighting(new CustomModel().setDistanceInfluence(0)).calcEdgeWeight(edge, false), 1.e-6);
         assertEquals(36, createWeighting(new CustomModel().setDistanceInfluence(0)).calcEdgeWeight(edge, true), 1.e-6);
@@ -77,9 +77,9 @@ public class CustomWeightingTest {
     @Test
     public void withPriority() {
         // 25km/h -> 144s per km, 50km/h -> 72s per km, 100km/h -> 36s per km
-        EdgeIteratorState slow = GHUtility.setProperties(graph.edge(0, 1).setDistance(1000), carFE, 60, true, true).set(avSpeedEnc, 25).set(roadClassEnc, SECONDARY);
-        EdgeIteratorState medium = GHUtility.setProperties(graph.edge(0, 1).setDistance(1000), carFE, 60, true, true).set(avSpeedEnc, 50).set(roadClassEnc, SECONDARY);
-        EdgeIteratorState fast = GHUtility.setProperties(graph.edge(0, 1).setDistance(1000), carFE, 60, true, true).set(avSpeedEnc, 100).set(roadClassEnc, SECONDARY);
+        EdgeIteratorState slow = GHUtility.setSpeed(60, true, true, carFE, graph.edge(0, 1).setDistance(1000)).set(avSpeedEnc, 25).set(roadClassEnc, SECONDARY);
+        EdgeIteratorState medium = GHUtility.setSpeed(60, true, true, carFE, graph.edge(0, 1).setDistance(1000)).set(avSpeedEnc, 50).set(roadClassEnc, SECONDARY);
+        EdgeIteratorState fast = GHUtility.setSpeed(60, true, true, carFE, graph.edge(0, 1).setDistance(1000)).set(avSpeedEnc, 100).set(roadClassEnc, SECONDARY);
 
         // without priority costs fastest weighting is the same as custom weighting
         assertEquals(144, new FastestWeighting(carFE, NO_TURN_COST_PROVIDER).calcEdgeWeight(slow, false), .1);
@@ -124,9 +124,9 @@ public class CustomWeightingTest {
 
     @Test
     public void testBasic() {
-        EdgeIteratorState primary = GHUtility.setProperties(graph.edge(0, 1).setDistance(10), carFE, 60, true, true).
+        EdgeIteratorState primary = GHUtility.setSpeed(60, true, true, carFE, graph.edge(0, 1).setDistance(10)).
                 set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80);
-        EdgeIteratorState secondary = GHUtility.setProperties(graph.edge(1, 2).setDistance(10), carFE, 60, true, true).
+        EdgeIteratorState secondary = GHUtility.setSpeed(60, true, true, carFE, graph.edge(1, 2).setDistance(10)).
                 set(roadClassEnc, SECONDARY).set(avSpeedEnc, 70);
 
         CustomModel vehicleModel = new CustomModel();
@@ -152,7 +152,7 @@ public class CustomWeightingTest {
 
     @Test
     public void testMaxSpeedMap() {
-        EdgeIteratorState primary = GHUtility.setProperties(graph.edge(0, 1).setDistance(10), carFE, 60, true, true).
+        EdgeIteratorState primary = GHUtility.setSpeed(60, true, true, carFE, graph.edge(0, 1).setDistance(10)).
                 set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80);
         CustomModel vehicleModel = new CustomModel();
 
@@ -168,7 +168,7 @@ public class CustomWeightingTest {
 
     @Test
     public void testSpeedFactorBooleanEV() {
-        EdgeIteratorState edge = GHUtility.setProperties(graph.edge(0, 1).setDistance(10), carFE, 60, true, true).set(avSpeedEnc, 15);
+        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, carFE, graph.edge(0, 1).setDistance(10)).set(avSpeedEnc, 15);
         CustomModel vehicleModel = new CustomModel();
         assertEquals(3.1, createWeighting(vehicleModel).calcEdgeWeight(edge, false), 0.01);
         // here we increase weight for edges that are road class links
@@ -213,7 +213,7 @@ public class CustomWeightingTest {
         vehicleModel.getPriority().put(KEY, map);
         CustomWeighting weighting = createWeighting(vehicleModel);
 
-        EdgeIteratorState edge = GHUtility.setProperties(graph.edge(0, 1).setDistance(10), carFE, 60, true, true).set(avSpeedEnc, 15);
+        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, carFE, graph.edge(0, 1).setDistance(10)).set(avSpeedEnc, 15);
         assertEquals(3.1, weighting.calcEdgeWeight(edge, false), 0.01);
         // we increase weight for motorways
         edge.set(roadClassEnc, MOTORWAY);
@@ -228,8 +228,8 @@ public class CustomWeightingTest {
     @Test
     public void testAvoidHighSpeed() {
         CustomWeighting weighting = createWeighting(new CustomModel());
-        EdgeIteratorState slowEdge = GHUtility.setProperties(graph.edge(0, 1).setDistance(10), carFE, 60, true, true).set(avSpeedEnc, 15).set(maxSpeedEnc, 50);
-        EdgeIteratorState fastEdge = GHUtility.setProperties(graph.edge(1, 2).setDistance(10), carFE, 60, true, true).set(avSpeedEnc, 60).set(maxSpeedEnc, 70);
+        EdgeIteratorState slowEdge = GHUtility.setSpeed(60, true, true, carFE, graph.edge(0, 1).setDistance(10)).set(avSpeedEnc, 15).set(maxSpeedEnc, 50);
+        EdgeIteratorState fastEdge = GHUtility.setSpeed(60, true, true, carFE, graph.edge(1, 2).setDistance(10)).set(avSpeedEnc, 60).set(maxSpeedEnc, 70);
         assertEquals(3.10, weighting.calcEdgeWeight(slowEdge, false), 0.01);
         assertEquals(1.30, weighting.calcEdgeWeight(fastEdge, false), 0.01);
 
@@ -255,8 +255,8 @@ public class CustomWeightingTest {
     public void testIntEncodedValue() {
         // currently we have no inbuilt encoded value that requires int but it is not bad to have for e.g. lanes
         CustomWeighting weighting = createWeighting(new CustomModel());
-        EdgeIteratorState slowEdge = GHUtility.setProperties(graph.edge(0, 1).setDistance(10), carFE, 60, true, true).set(avSpeedEnc, 15).set(laneEnc, 0);
-        EdgeIteratorState fastEdge = GHUtility.setProperties(graph.edge(1, 2).setDistance(10), carFE, 60, true, true).set(avSpeedEnc, 60).set(laneEnc, 2);
+        EdgeIteratorState slowEdge = GHUtility.setSpeed(60, true, true, carFE, graph.edge(0, 1).setDistance(10)).set(avSpeedEnc, 15).set(laneEnc, 0);
+        EdgeIteratorState fastEdge = GHUtility.setSpeed(60, true, true, carFE, graph.edge(1, 2).setDistance(10)).set(avSpeedEnc, 60).set(laneEnc, 2);
         assertEquals(3.10, weighting.calcEdgeWeight(slowEdge, false), 0.01);
         assertEquals(1.30, weighting.calcEdgeWeight(fastEdge, false), 0.01);
 
@@ -300,11 +300,11 @@ public class CustomWeightingTest {
         // a bit in the north where my_area is:
         graph.getNodeAccess().setNode(2, 51.054506, 13.723432);
         graph.getNodeAccess().setNode(3, 51.053589, 13.730679);
-        EdgeIteratorState edge1 = GHUtility.setProperties(graph.edge(0, 1).setDistance(500), carFE, 60, true, true).set(avSpeedEnc, 15);
+        EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, carFE, graph.edge(0, 1).setDistance(500)).set(avSpeedEnc, 15);
         assertEquals(120, weighting.calcEdgeWeight(edge1, false), 0.01);
 
         // intersect polygon => increase weight (it doubles, because distance influence is zero)
-        EdgeIteratorState edge2 = GHUtility.setProperties(graph.edge(2, 3).setDistance(500), carFE, 60, true, true).set(avSpeedEnc, 15);
+        EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, carFE, graph.edge(2, 3).setDistance(500)).set(avSpeedEnc, 15);
         assertTrue(poly.intersects(edge2.fetchWayGeometry(FetchMode.ALL).toLineString(false)));
         assertEquals(240, weighting.calcEdgeWeight(edge2, false), 0.01);
     }

@@ -186,8 +186,8 @@ public class PrepareLandmarksTest {
 
     @Test
     public void testStoreAndLoad() {
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(80_000), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(80_000), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(80_000));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(80_000));
         String fileStr = "./target/tmp-lm";
         Helper.removeDir(new File(fileStr));
 

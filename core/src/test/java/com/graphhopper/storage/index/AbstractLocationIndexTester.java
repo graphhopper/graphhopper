@@ -28,6 +28,7 @@ import org.junit.Test;
 import java.io.Closeable;
 import java.io.File;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
@@ -111,14 +112,18 @@ public abstract class AbstractLocationIndexTester {
         na.setNode(4, 6, 1);
         na.setNode(5, 4, 4);
         na.setNode(6, 4.5, -0.5);
-        GHUtility.setProperties(Arrays.asList(g.edge(0, 1).setDistance(3.5),
+        List<EdgeIteratorState> list = Arrays.asList(g.edge(0, 1).setDistance(3.5),
                 g.edge(0, 2).setDistance(2.5),
                 g.edge(2, 3).setDistance(1),
                 g.edge(3, 4).setDistance(3.2),
                 g.edge(1, 4).setDistance(2.4),
                 g.edge(3, 5).setDistance(1.5),
                 // make sure 6 is connected
-                g.edge(6, 4).setDistance(1.2)), em, true, true);
+                g.edge(6, 4).setDistance(1.2));
+        for (FlagEncoder encoder : em.fetchEdgeEncoders()) {
+            double speed = encoder.getMaxSpeed() / 2;
+            GHUtility.setSpeed(speed, speed, encoder, list);
+        }
     }
 
     @Test
@@ -151,7 +156,7 @@ public abstract class AbstractLocationIndexTester {
 
         idx = createIndex(g, -1);
         // if we would use less array entries then some points gets the same key so avoid that for this test
-        // e.g. for 16 we get "expected 6 but was 9" i.e 6 was overwritten by node j9 which is a bit closer to the grid center        
+        // e.g. for 16 we get "expected 6 but was 9" i.e 6 was overwritten by node j9 which is a bit closer to the grid center
         // go through every point of the graph if all points are reachable
         NodeAccess na = g.getNodeAccess();
         for (int i = 0; i < locs; i++) {
@@ -302,26 +307,26 @@ public abstract class AbstractLocationIndexTester {
         // => 17 locations
 
         FlagEncoder encoder = encodingManager.getEncoder("car");
-        GHUtility.setProperties(graph.edge(a0, b1).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(c2, b1).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(c2, d3).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(f5, b1).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(e4, f5).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(m12, d3).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(e4, k10).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(f5, d3).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(f5, i8).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(f5, j9).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(k10, g6).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(j9, l11).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(i8, l11).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(i8, h7).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(k10, n13).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(k10, o14).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(l11, p15).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(m12, p15).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(q16, p15).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(q16, m12).setDistance(1), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(a0, b1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(c2, b1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(c2, d3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(f5, b1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(e4, f5).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(m12, d3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(e4, k10).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(f5, d3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(f5, i8).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(f5, j9).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(k10, g6).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(j9, l11).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(i8, l11).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(i8, h7).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(k10, n13).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(k10, o14).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(l11, p15).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(m12, p15).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(q16, p15).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(q16, m12).setDistance(1));
         return graph;
     }
 

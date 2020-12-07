@@ -91,7 +91,7 @@ public class LandmarkStorageTest {
 
     @Test
     public void testSetGetWeight() {
-        GHUtility.setProperties(graph.edge(0,1).setDistance(40.1),encoder,60,true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(40.1));
         Directory dir = new RAMDirectory();
         DataAccess da = dir.find("landmarks_c1");
         da.create(2000);
@@ -118,12 +118,12 @@ public class LandmarkStorageTest {
 
     @Test
     public void testWithSubnetworks() {
-        GHUtility.setProperties(graph.edge(0,1).setDistance(10.1),encoder,60,true, true);
-        GHUtility.setProperties(graph.edge(1,2).setDistance(10.2),encoder,60,true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10.1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(10.2));
 
         graph.edge(2, 4).set(encoder.getAccessEnc(), false).setReverse(encoder.getAccessEnc(), false);
-        GHUtility.setProperties(graph.edge(4,5).setDistance(10.5),encoder,60,true, true);
-        GHUtility.setProperties(graph.edge(5,6).setDistance(10.6),encoder,60,true, false);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 5).setDistance(10.5));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 6).setDistance(10.6));
 
         LandmarkStorage storage = new LandmarkStorage(graph, new RAMDirectory(), new LMConfig("c1", new FastestWeighting(encoder)), 2);
         storage.setMinimumNodes(2);
@@ -137,11 +137,11 @@ public class LandmarkStorageTest {
     public void testWithSubnetworks2() {
         // should not happen with subnetwork preparation
         // 0 - 1 - 2 = 3 - 4
-        GHUtility.setProperties(graph.edge(0,1).setDistance(10.1),encoder,60,true, true);
-        GHUtility.setProperties(graph.edge(1,2).setDistance(10.2),encoder,60,true, true);
-        GHUtility.setProperties(graph.edge(2,3).setDistance(10.3),encoder,60,true, false);
-        GHUtility.setProperties(graph.edge(3,2).setDistance(10.2),encoder,60,true, false);
-        GHUtility.setProperties(graph.edge(3,4).setDistance(10.4),encoder,60,true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10.1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(10.2));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(10.3));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 2).setDistance(10.2));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(10.4));
 
         LandmarkStorage storage = new LandmarkStorage(graph, new RAMDirectory(), new LMConfig("c", new FastestWeighting(encoder)), 2);
         storage.setMinimumNodes(3);
@@ -154,12 +154,12 @@ public class LandmarkStorageTest {
     public void testWithOnewaySubnetworks() {
         // should not happen with subnetwork preparation
         // create an indifferent problem: node 2 and 3 are part of two 'disconnected' subnetworks
-        GHUtility.setProperties(graph.edge(0,1).setDistance(10.1),encoder,60,true, true);
-        GHUtility.setProperties(graph.edge(1,2).setDistance(10.2),encoder,60,true, false);
-        GHUtility.setProperties(graph.edge(2,3).setDistance(10.3),encoder,60,true, false);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10.1));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(10.2));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(10.3));
 
-        GHUtility.setProperties(graph.edge(4,5).setDistance(10.5),encoder,60,true, true);
-        GHUtility.setProperties(graph.edge(5,2).setDistance(10.2),encoder,60,true, false);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 5).setDistance(10.5));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 2).setDistance(10.2));
 
         LandmarkStorage storage = new LandmarkStorage(graph, new RAMDirectory(), new LMConfig("c", new FastestWeighting(encoder)), 2);
         storage.setMinimumNodes(2);
@@ -172,9 +172,9 @@ public class LandmarkStorageTest {
     @Test
     public void testWeightingConsistence() {
         // create an indifferent problem: shortest weighting can pass the speed==0 edge but fastest cannot (?)
-        GHUtility.setProperties(graph.edge(0,1).setDistance(10.1),encoder,60,true, true);
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(10), encoder, 0.9, true, true);
-        GHUtility.setProperties(graph.edge(2,3).setDistance(10.3),encoder,60,true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10.1));
+        GHUtility.setSpeed(0.9, true, true, encoder, graph.edge(1, 2).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(10.3));
 
         LandmarkStorage storage = new LandmarkStorage(graph, new RAMDirectory(), new LMConfig("c", new FastestWeighting(encoder)), 2);
         storage.setMinimumNodes(2);

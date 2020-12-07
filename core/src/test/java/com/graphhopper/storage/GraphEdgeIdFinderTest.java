@@ -43,11 +43,11 @@ public class GraphEdgeIdFinderTest {
         // 0-1-2
         // | |
         // 3-4
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(3, 4).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(0, 3).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(1, 4).setDistance(1), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 4).setDistance(1));
         updateDistancesFor(graph, 0, 0.01, 0.00);
         updateDistancesFor(graph, 1, 0.01, 0.01);
         updateDistancesFor(graph, 2, 0.01, 0.02);
@@ -78,19 +78,19 @@ public class GraphEdgeIdFinderTest {
         // 04-05-06-07
         // |  |
         // 08-09-10-11
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), encoder, 60, true, true); // 0
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(1), encoder, 60, true, true); // 1
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(1), encoder, 60, true, true); // 2
-        GHUtility.setProperties(graph.edge(0, 4).setDistance(1), encoder, 60, true, true); // 3
-        GHUtility.setProperties(graph.edge(1, 5).setDistance(1), encoder, 60, true, true); // 4
-        GHUtility.setProperties(graph.edge(4, 5).setDistance(1), encoder, 60, true, true); // 5
-        GHUtility.setProperties(graph.edge(5, 6).setDistance(1), encoder, 60, true, true); // 6
-        GHUtility.setProperties(graph.edge(6, 7).setDistance(1), encoder, 60, true, true); // 7
-        GHUtility.setProperties(graph.edge(4, 8).setDistance(1), encoder, 60, true, true); // 8
-        GHUtility.setProperties(graph.edge(5, 9).setDistance(1), encoder, 60, true, true); // 9
-        GHUtility.setProperties(graph.edge(8, 9).setDistance(1), encoder, 60, true, true); // 10
-        GHUtility.setProperties(graph.edge(9, 10).setDistance(1), encoder, 60, true, true); // 11
-        GHUtility.setProperties(graph.edge(10, 11).setDistance(1), encoder, 60, true, true); // 12
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1)); // 0
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(1)); // 1
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(1)); // 2
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 4).setDistance(1)); // 3
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 5).setDistance(1)); // 4
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 5).setDistance(1)); // 5
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 6).setDistance(1)); // 6
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 7).setDistance(1)); // 7
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 8).setDistance(1)); // 8
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 9).setDistance(1)); // 9
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(8, 9).setDistance(1)); // 10
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(9, 10).setDistance(1)); // 11
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(10, 11).setDistance(1)); // 12
 
         updateDistancesFor(graph, 0, 2, 0);
         updateDistancesFor(graph, 1, 2, 1);

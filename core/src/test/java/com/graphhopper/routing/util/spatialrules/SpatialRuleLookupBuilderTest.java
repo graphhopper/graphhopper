@@ -163,10 +163,10 @@ public class SpatialRuleLookupBuilderTest {
 
         Graph graph = new GraphBuilder(em).create();
         FlagEncoder encoder = em.getEncoder("car");
-        EdgeIteratorState e1 = GHUtility.setProperties(graph.edge(0, 1).setDistance(1), encoder, 60, true, true);
-        EdgeIteratorState e2 = GHUtility.setProperties(graph.edge(0, 2).setDistance(1), encoder, 60, true, true);
-        EdgeIteratorState e3 = GHUtility.setProperties(graph.edge(0, 3).setDistance(1), encoder, 60, true, true);
-        EdgeIteratorState e4 = GHUtility.setProperties(graph.edge(0, 4).setDistance(1), encoder, 60, true, true);
+        EdgeIteratorState e1 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1));
+        EdgeIteratorState e2 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 2).setDistance(1));
+        EdgeIteratorState e3 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 3).setDistance(1));
+        EdgeIteratorState e4 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 4).setDistance(1));
         updateDistancesFor(graph, 0, 0.00, 0.00);
         updateDistancesFor(graph, 1, 0.01, 0.01);
         updateDistancesFor(graph, 2, -0.01, -0.01);

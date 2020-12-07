@@ -67,13 +67,13 @@ public class DepthFirstSearchTest {
         EncodingManager em = EncodingManager.create("car");
         FlagEncoder encoder = em.getEncoder("car");
         Graph g = new GraphBuilder(em).create();
-        GHUtility.setProperties(g.edge(1, 2).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(g.edge(1, 5).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(g.edge(1, 4).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(g.edge(2, 3).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(g.edge(3, 4).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(g.edge(5, 6).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(g.edge(6, 4).setDistance(1), encoder, 60, true, false);
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 5).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(3, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(5, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(6, 4).setDistance(1));
 
         dfs.start(g.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder)), 1);
 
@@ -102,11 +102,11 @@ public class DepthFirstSearchTest {
         EncodingManager em = EncodingManager.create("car");
         FlagEncoder encoder = em.getEncoder("car");
         Graph g = new GraphBuilder(em).create();
-        GHUtility.setProperties(g.edge(1, 2).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(g.edge(1, 4).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(1, 3).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(g.edge(2, 3).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(g.edge(4, 3).setDistance(1), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(4, 3).setDistance(1));
 
         dfs.start(g.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder)), 1);
 

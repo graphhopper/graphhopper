@@ -122,19 +122,19 @@ public class DijkstraBidirectionCHTest {
     public void testStallingNodesReducesNumberOfVisitedNodes() {
         ShortestWeighting weighting = new ShortestWeighting(carEncoder);
         GraphHopperStorage graph = createGHStorage(weighting);
-        GHUtility.setProperties(graph.edge(8, 9).setDistance(100), carEncoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(8, 3).setDistance(2), carEncoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(8, 5).setDistance(1), carEncoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(8, 6).setDistance(1), carEncoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(8, 7).setDistance(1), carEncoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(2), carEncoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(1, 8).setDistance(1), carEncoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(3), carEncoder, 60, true, false);
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(8, 9).setDistance(100));
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(8, 3).setDistance(2));
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(8, 5).setDistance(1));
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(8, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(8, 7).setDistance(1));
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(1, 2).setDistance(2));
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(1, 8).setDistance(1));
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(2, 3).setDistance(3));
         for (int i = 3; i < 7; ++i) {
-            GHUtility.setProperties(graph.edge(i, i + 1).setDistance(1), carEncoder, 60, true, false);
+            GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(i, i + 1).setDistance(1));
         }
-        GHUtility.setProperties(graph.edge(9, 0).setDistance(1), carEncoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(3, 9).setDistance(200), carEncoder, 60, true, false);
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(9, 0).setDistance(1));
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(3, 9).setDistance(200));
         CHGraph chGraph = graph.getCHGraph();
 
         // explicitly set the node levels equal to the node ids
@@ -183,11 +183,11 @@ public class DijkstraBidirectionCHTest {
     private void runTestWithDirectionDependentEdgeSpeed(double speed, double revSpeed, int from, int to, IntArrayList expectedPath, FlagEncoder encoder) {
         FastestWeighting weighting = new FastestWeighting(encoder);
         GraphHopperStorage graph = createGHStorage(weighting);
-        EdgeIteratorState edge = GHUtility.setProperties(graph.edge(0, 1).setDistance(2), encoder, encoder.getMaxSpeed() / 2, true, true);
+        EdgeIteratorState edge = GHUtility.setSpeed(encoder.getMaxSpeed() / 2, true, true, encoder, graph.edge(0, 1).setDistance(2));
         DecimalEncodedValue avSpeedEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(encoder, "average_speed"));
         edge.set(avSpeedEnc, speed).setReverse(avSpeedEnc, revSpeed);
 
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(1), encoder, encoder.getMaxSpeed() / 2, true, true);
+        GHUtility.setSpeed(encoder.getMaxSpeed() / 2, true, true, encoder, graph.edge(1, 2).setDistance(1));
 
         CHGraph chGraph = graph.getCHGraph();
         for (int i = 0; i < 3; ++i) {

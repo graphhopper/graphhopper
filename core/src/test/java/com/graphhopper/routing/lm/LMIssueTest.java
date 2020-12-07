@@ -116,13 +116,13 @@ public class LMIssueTest {
         na.setNode(3, 49.403009, 9.708364);
         na.setNode(4, 49.409021, 9.703622);
         // 30s
-        GHUtility.setProperties(graph.edge(4, 3).setDistance(1000), encoder, 60, true, true).set(speedEnc, 120);
-        GHUtility.setProperties(graph.edge(0, 2).setDistance(1000), encoder, 60, true, false).set(speedEnc, 120);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 3).setDistance(1000)).set(speedEnc, 120);
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 2).setDistance(1000)).set(speedEnc, 120);
         // 360s
-        GHUtility.setProperties(graph.edge(1, 3).setDistance(1000), encoder, 60, true, true).set(speedEnc, 10);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 3).setDistance(1000)).set(speedEnc, 10);
         // 80s
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(1000), encoder, 60, true, false).set(speedEnc, 45);
-        GHUtility.setProperties(graph.edge(1, 4).setDistance(1000), encoder, 60, true, true).set(speedEnc, 45);
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 1).setDistance(1000)).set(speedEnc, 45);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 4).setDistance(1000)).set(speedEnc, 45);
         preProcessGraph();
 
         int source = 0;
@@ -158,13 +158,13 @@ public class LMIssueTest {
         na.setNode(7, 49.406965, 9.702660);
         na.setNode(8, 49.405227, 9.702863);
         na.setNode(9, 49.409411, 9.709085);
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(623.197000), encoder, 112, true, true);
-        GHUtility.setProperties(graph.edge(5, 1).setDistance(741.414000), encoder, 13, true, true);
-        GHUtility.setProperties(graph.edge(9, 4).setDistance(1140.835000), encoder, 35, true, true);
-        GHUtility.setProperties(graph.edge(5, 6).setDistance(670.689000), encoder, 18, true, true);
-        GHUtility.setProperties(graph.edge(5, 9).setDistance(80.731000), encoder, 88, true, false);
-        GHUtility.setProperties(graph.edge(0, 9).setDistance(273.948000), encoder, 82, true, true);
-        GHUtility.setProperties(graph.edge(4, 0).setDistance(956.552000), encoder, 60, true, true);
+        GHUtility.setSpeed(112, true, true, encoder, graph.edge(0, 1).setDistance(623.197000));
+        GHUtility.setSpeed(13, true, true, encoder, graph.edge(5, 1).setDistance(741.414000));
+        GHUtility.setSpeed(35, true, true, encoder, graph.edge(9, 4).setDistance(1140.835000));
+        GHUtility.setSpeed(18, true, true, encoder, graph.edge(5, 6).setDistance(670.689000));
+        GHUtility.setSpeed(88, true, false, encoder, graph.edge(5, 9).setDistance(80.731000));
+        GHUtility.setSpeed(82, true, true, encoder, graph.edge(0, 9).setDistance(273.948000));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 0).setDistance(956.552000));
         preProcessGraph();
 
         int source = 5;

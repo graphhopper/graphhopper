@@ -76,13 +76,13 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         na.setNode(2, -1, -1);
         na.setNode(3, -0.4, 0.9);
         na.setNode(4, -0.6, 1.6);
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(0, 2).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(0, 4).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(1, 3).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(2, 4).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(3, 4).setDistance(1), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(1));
         return graph;
     }
 
@@ -249,9 +249,9 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         na.setNode(2, 51.2, 9.4);
         na.setNode(3, 49, 10);
 
-        GHUtility.setProperties(graph.edge(1, 0).setDistance(1000), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(0, 2).setDistance(1000), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(0, 3).setDistance(1000), encoder, 60, true, true).setWayGeometry(Helper.createPointList(51.21, 9.43));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 0).setDistance(1000));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 2).setDistance(1000));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 3).setDistance(1000)).setWayGeometry(Helper.createPointList(51.21, 9.43));
         LocationIndex index = createIndex(graph, -1);
         assertEquals(2, findID(index, 51.2, 9.4));
     }
@@ -274,14 +274,14 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         na.setNode(2, -1, -1);
         na.setNode(3, -0.4, 0.9);
         na.setNode(4, -0.6, 1.6);
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(0, 2).setDistance(1), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 2).setDistance(1));
         // insert A and B, without this we would get 0 for 0,0
-        GHUtility.setProperties(graph.edge(0, 4).setDistance(1), encoder, 60, true, true).setWayGeometry(Helper.createPointList(1, 1));
-        GHUtility.setProperties(graph.edge(1, 3).setDistance(1), encoder, 60, true, true).setWayGeometry(Helper.createPointList(0, 0));
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(2, 4).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(3, 4).setDistance(1), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 4).setDistance(1)).setWayGeometry(Helper.createPointList(1, 1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 3).setDistance(1)).setWayGeometry(Helper.createPointList(0, 0));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(1));
         return graph;
     }
 
@@ -304,9 +304,9 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         na.setNode(20, 52, 9);
         na.setNode(30, 51.2, 9.4);
         na.setNode(50, 49, 10);
-        GHUtility.setProperties(g.edge(20, 50).setDistance(1), encoder, 60, true, true).setWayGeometry(Helper.createPointList(51.25, 9.43));
-        GHUtility.setProperties(g.edge(10, 20).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(20, 30).setDistance(1), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(20, 50).setDistance(1)).setWayGeometry(Helper.createPointList(51.25, 9.43));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(10, 20).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(20, 30).setDistance(1));
 
         LocationIndex index = createIndex(g, 2000);
         assertEquals(20, findID(index, 51.25, 9.43));
@@ -381,44 +381,44 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         // top right
         na.setNode(101, 49.96053, 11.58814);
 
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(3, 4).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(4, 5).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(6, 7).setDistance(10), encoder, 60, true, true);
+        GHUtility.setSpeed(60, 60, encoder,
+                graph.edge(0, 1).setDistance(10),
+                graph.edge(1, 2).setDistance(10),
+                graph.edge(2, 3).setDistance(10),
+                graph.edge(3, 4).setDistance(10),
+                graph.edge(4, 5).setDistance(10),
+                graph.edge(6, 7).setDistance(10),
+                graph.edge(2, 8).setDistance(10),
+                graph.edge(2, 9).setDistance(10),
+                graph.edge(3, 10).setDistance(10),
+                graph.edge(4, 11).setDistance(10),
+                graph.edge(5, 12).setDistance(10),
+                graph.edge(6, 13).setDistance(10),
 
-        GHUtility.setProperties(graph.edge(2, 8).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(2, 9).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(3, 10).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(4, 11).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(5, 12).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(6, 13).setDistance(10), encoder, 60, true, true);
+                graph.edge(1, 14).setDistance(10),
+                graph.edge(2, 15).setDistance(10),
+                graph.edge(5, 16).setDistance(10),
+                graph.edge(14, 15).setDistance(10),
+                graph.edge(16, 17).setDistance(10),
+                graph.edge(16, 20).setDistance(10),
+                graph.edge(16, 25).setDistance(10),
 
-        GHUtility.setProperties(graph.edge(1, 14).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(2, 15).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(5, 16).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(14, 15).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(16, 17).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(16, 20).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(16, 25).setDistance(10), encoder, 60, true, true);
+                graph.edge(18, 14).setDistance(10),
+                graph.edge(18, 19).setDistance(10),
+                graph.edge(18, 21).setDistance(10),
+                graph.edge(19, 21).setDistance(10),
+                graph.edge(21, 24).setDistance(10),
+                graph.edge(23, 24).setDistance(10),
+                graph.edge(24, 25).setDistance(10),
+                graph.edge(26, 27).setDistance(10),
+                graph.edge(27, 28).setDistance(10),
+                graph.edge(28, 29).setDistance(10),
 
-        GHUtility.setProperties(graph.edge(18, 14).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(18, 19).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(18, 21).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(19, 21).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(21, 24).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(23, 24).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(24, 25).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(26, 27).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(27, 28).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(28, 29).setDistance(10), encoder, 60, true, true);
-
-        GHUtility.setProperties(graph.edge(24, 30).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(24, 31).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(26, 32).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(27, 33).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(28, 34).setDistance(10), encoder, 60, true, true);
+                graph.edge(24, 30).setDistance(10),
+                graph.edge(24, 31).setDistance(10),
+                graph.edge(26, 32).setDistance(10),
+                graph.edge(27, 33).setDistance(10),
+                graph.edge(28, 34).setDistance(10));
         return graph;
     }
 
@@ -469,10 +469,10 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
                 int index = lonIdx * 10 + latIdx;
                 na.setNode(index, 0.01 * latIdx, 0.01 * lonIdx);
                 if (latIdx < MAX - 1)
-                    GHUtility.setProperties(graph.edge(index, index + 1).setDistance(1000), carEncoder, 60, true, true);
+                    GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(index, index + 1).setDistance(1000));
 
                 if (lonIdx < MAX - 1)
-                    GHUtility.setProperties(graph.edge(index, index + 10).setDistance(1000), carEncoder, 60, true, true);
+                    GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(index, index + 10).setDistance(1000));
             }
         }
 
@@ -519,22 +519,23 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         na.setNode(7, 0, -179.5);
 
         // just use 1 as distance which is incorrect but does not matter in this unit case
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(0, 4).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(1, 5).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(4, 5).setDistance(1), encoder, 60, true, true);
+        GHUtility.setSpeed(60, 60, encoder,
+                graph.edge(0, 1).setDistance(1),
+                graph.edge(0, 4).setDistance(1),
+                graph.edge(1, 5).setDistance(1),
+                graph.edge(4, 5).setDistance(1),
 
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(2, 6).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(3, 7).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(6, 7).setDistance(1), encoder, 60, true, true);
+                graph.edge(2, 3).setDistance(1),
+                graph.edge(2, 6).setDistance(1),
+                graph.edge(3, 7).setDistance(1),
+                graph.edge(6, 7).setDistance(1));
 
         // as last edges: create cross boundary edges
         // See #667 where the recommendation is to adjust the import and introduce two pillar nodes 
         // where the connection is cross boundary and would be okay if ignored as real length is 0
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(1), encoder, 60, true, true).setWayGeometry(Helper.createPointList(0, 180, 0, -180));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(1)).setWayGeometry(Helper.createPointList(0, 180, 0, -180));
         // but this unit test succeeds even without this adjusted import:
-        GHUtility.setProperties(graph.edge(5, 6).setDistance(1), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 6).setDistance(1));
 
         LocationIndexTree index = createIndexNoPrepare(graph, 500);
         index.prepareIndex();

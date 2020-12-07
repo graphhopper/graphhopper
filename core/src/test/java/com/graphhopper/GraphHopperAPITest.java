@@ -44,8 +44,8 @@ public class GraphHopperAPITest {
         na.setNode(2, 42.1, 10.2);
         na.setNode(3, 42, 10.4);
 
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(10), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(10));
     }
 
     @Test
@@ -61,9 +61,9 @@ public class GraphHopperAPITest {
         NodeAccess na = graph.getNodeAccess();
         na.setNode(4, 41.9, 10.2);
 
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(10), encoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(0, 4).setDistance(40), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(4, 3).setDistance(40), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 4).setDistance(40));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 3).setDistance(40));
 
         GraphHopper instance = createGraphHopper(vehicle).
                 setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
@@ -125,8 +125,8 @@ public class GraphHopperAPITest {
         na.setNode(2, 42.1, 10.2, 1);
         na.setNode(3, 42, 10.4, 1);
 
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(10), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(10));
 
         final AtomicInteger counter = new AtomicInteger(0);
         GraphHopper instance = createGraphHopper(vehicle)

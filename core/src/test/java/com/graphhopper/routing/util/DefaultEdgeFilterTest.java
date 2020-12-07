@@ -44,9 +44,9 @@ public class DefaultEdgeFilterTest {
         // 0-1
         //  \|
         //   2
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(2), encoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(2, 0).setDistance(3), encoder, 60, true, false);
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(2));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 0).setDistance(3));
         graph.freeze();
         // add loop shortcut in 'fwd' direction
         addShortcut(chGraph, 0, 0, true, 0, 2);

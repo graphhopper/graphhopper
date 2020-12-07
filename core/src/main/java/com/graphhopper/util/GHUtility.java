@@ -623,48 +623,46 @@ public class GHUtility {
         return edgeKey / 2;
     }
 
-    public static IntsRef setProperties(IntsRef edgeFlags, FlagEncoder encoder, double averageSpeed, boolean fwd, boolean bwd) {
-        if (averageSpeed < 0.0001 && (fwd || bwd))
-            throw new IllegalStateException("Zero speed is only allowed if edge will get inaccessible. Otherwise Weighting can produce inconsistent results");
+    public static IntsRef setSpeed(double fwdSpeed, double bwdSpeed, FlagEncoder encoder, IntsRef edgeFlags) {
+        if (fwdSpeed < 0 || bwdSpeed < 0)
+            throw new IllegalArgumentException("Speed must be positive but wasn't! fwdSpeed:" + fwdSpeed + ", bwdSpeed:" + bwdSpeed);
 
         BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        DecimalEncodedValue avSpeedEnc = encoder.getAverageSpeedEnc();
-        accessEnc.setBool(false, edgeFlags, fwd);
-        accessEnc.setBool(true, edgeFlags, bwd);
-        if (fwd)
-            avSpeedEnc.setDecimal(false, edgeFlags, averageSpeed);
-        if (bwd)
-            avSpeedEnc.setDecimal(true, edgeFlags, averageSpeed);
+        DecimalEncodedValue avgSpeedEnc = encoder.getAverageSpeedEnc();
+
+        avgSpeedEnc.setDecimal(false, edgeFlags, fwdSpeed);
+        if (fwdSpeed > 0)
+            accessEnc.setBool(false, edgeFlags, true);
+
+        if (avgSpeedEnc.isStoreTwoDirections())
+            avgSpeedEnc.setDecimal(true, edgeFlags, bwdSpeed);
+        if (bwdSpeed > 0)
+            accessEnc.setBool(true, edgeFlags, true);
         return edgeFlags;
     }
 
-    public static EdgeIteratorState setProperties(EdgeIteratorState edge, FlagEncoder encoder, double fwdSpeed, double bwdSpeed) {
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        edge.set(accessEnc, true).setReverse(accessEnc, true);
-        DecimalEncodedValue avSpeedEnc = encoder.getAverageSpeedEnc();
-        return edge.set(avSpeedEnc, fwdSpeed).setReverse(avSpeedEnc, bwdSpeed);
+    public static void setSpeed(double fwdSpeed, double bwdSpeed, FlagEncoder encoder, EdgeIteratorState... edges) {
+        setSpeed(fwdSpeed, bwdSpeed, encoder, Arrays.asList(edges));
     }
 
-    public static IntsRef setProperties(IntsRef edgeFlags, FlagEncoder encoder, double fwdSpeed, double bwdSpeed) {
+    public static void setSpeed(double fwdSpeed, double bwdSpeed, FlagEncoder encoder, Collection<EdgeIteratorState> edges) {
+        if (fwdSpeed < 0 || bwdSpeed < 0)
+            throw new IllegalArgumentException("Speed must be positive but wasn't! fwdSpeed:" + fwdSpeed + ", bwdSpeed:" + bwdSpeed);
         BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        accessEnc.setBool(false, edgeFlags, true);
-        accessEnc.setBool(true, edgeFlags, true);
-        DecimalEncodedValue avSpeedEnc = encoder.getAverageSpeedEnc();
-        avSpeedEnc.setDecimal(false, edgeFlags, fwdSpeed);
-        avSpeedEnc.setDecimal(true, edgeFlags, bwdSpeed);
-        return edgeFlags;
-    }
+        DecimalEncodedValue avgSpeedEnc = encoder.getAverageSpeedEnc();
+        for (EdgeIteratorState edge : edges) {
+            edge.set(avgSpeedEnc, fwdSpeed);
+            if (fwdSpeed > 0)
+                edge.set(accessEnc, true);
 
-    public static void setProperties(List<EdgeIteratorState> edges, EncodingManager em, boolean fwd, boolean bwd) {
-        for (FlagEncoder encoder : em.fetchEdgeEncoders()) {
-            double s = encoder.getMaxSpeed() / 2;
-            for (EdgeIteratorState edge : edges) {
-                GHUtility.setProperties(edge, encoder, s, fwd, bwd);
-            }
+            if (avgSpeedEnc.isStoreTwoDirections())
+                edge.setReverse(avgSpeedEnc, bwdSpeed);
+            if (bwdSpeed > 0)
+                edge.setReverse(accessEnc, true);
         }
     }
 
-    public static EdgeIteratorState setProperties(EdgeIteratorState edge, FlagEncoder encoder, double averageSpeed, boolean fwd, boolean bwd) {
+    public static EdgeIteratorState setSpeed(double averageSpeed, boolean fwd, boolean bwd, FlagEncoder encoder, EdgeIteratorState edge) {
         if (averageSpeed < 0.0001 && (fwd || bwd))
             throw new IllegalStateException("Zero speed is only allowed if edge will get inaccessible. Otherwise Weighting can produce inconsistent results");
 

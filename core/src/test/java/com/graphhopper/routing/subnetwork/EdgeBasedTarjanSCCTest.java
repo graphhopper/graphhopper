@@ -50,7 +50,7 @@ class EdgeBasedTarjanSCCTest {
     public void linearSingle() {
         GraphHopperStorage g = new GraphBuilder(em).create();
         // 0 - 1
-        GHUtility.setProperties(g.edge(0,1).setDistance(1),encoder,60,true, true);
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(1));
         EdgeBasedTarjanSCC tarjan = new EdgeBasedTarjanSCC(g, accessEnc, NO_TURN_COST_PROVIDER, false);
         ConnectedComponents result = tarjan.findComponentsRecursive();
         assertEquals(2, result.getEdgeKeys());
@@ -65,8 +65,8 @@ class EdgeBasedTarjanSCCTest {
     public void linearSimple() {
         GraphHopperStorage g = new GraphBuilder(em).create();
         // 0 - 1 - 2
-        GHUtility.setProperties(g.edge(0,1).setDistance(1),encoder,60,true, true);
-        GHUtility.setProperties(g.edge(1,2).setDistance(1),encoder,60,true, true);
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 2).setDistance(1));
         EdgeBasedTarjanSCC tarjan = new EdgeBasedTarjanSCC(g, accessEnc, NO_TURN_COST_PROVIDER, false);
         ConnectedComponents result = tarjan.findComponentsRecursive();
         assertEquals(4, result.getEdgeKeys());
@@ -81,8 +81,8 @@ class EdgeBasedTarjanSCCTest {
     public void linearOneWay() {
         GraphHopperStorage g = new GraphBuilder(em).create();
         // 0 -> 1 -> 2
-        GHUtility.setProperties(g.edge(0,1).setDistance(1),encoder,60,true, false);
-        GHUtility.setProperties(g.edge(1,2).setDistance(1),encoder,60,true, false);
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(1));
         EdgeBasedTarjanSCC tarjan = new EdgeBasedTarjanSCC(g, accessEnc, NO_TURN_COST_PROVIDER, false);
         ConnectedComponents result = tarjan.findComponentsRecursive();
         assertEquals(4, result.getEdgeKeys());
@@ -98,9 +98,9 @@ class EdgeBasedTarjanSCCTest {
     public void linearBidirectionalEdge() {
         GraphHopperStorage g = new GraphBuilder(em).create();
         // 0 -> 1 - 2 <- 3
-        GHUtility.setProperties(g.edge(0,1).setDistance(1),encoder,60,true, false);
-        GHUtility.setProperties(g.edge(1,2).setDistance(1),encoder,60,true, true);
-        GHUtility.setProperties(g.edge(3,2).setDistance(1),encoder,60,true, false);
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(3, 2).setDistance(1));
         EdgeBasedTarjanSCC tarjan = new EdgeBasedTarjanSCC(g, accessEnc, NO_TURN_COST_PROVIDER, false);
         ConnectedComponents result = tarjan.findComponentsRecursive();
         assertEquals(6, result.getEdgeKeys());
@@ -118,14 +118,14 @@ class EdgeBasedTarjanSCCTest {
         // 0 - 1 - 2 - 4 - 5
         //     |    \- 6 - 7
         //     3        \- 8
-        GHUtility.setProperties(g.edge(0,1).setDistance(1),encoder,60,true, true);
-        GHUtility.setProperties(g.edge(1,2).setDistance(1),encoder,60,true, true);
-        GHUtility.setProperties(g.edge(1,3).setDistance(1),encoder,60,true, true);
-        GHUtility.setProperties(g.edge(2,4).setDistance(1),encoder,60,true, true);
-        GHUtility.setProperties(g.edge(2,6).setDistance(1),encoder,60,true, true);
-        GHUtility.setProperties(g.edge(4,5).setDistance(1),encoder,60,true, true);
-        GHUtility.setProperties(g.edge(6,7).setDistance(1),encoder,60,true, true);
-        GHUtility.setProperties(g.edge(6,8).setDistance(1),encoder,60,true, true);
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(4, 5).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(6, 7).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(6, 8).setDistance(1));
         EdgeBasedTarjanSCC tarjan = new EdgeBasedTarjanSCC(g, accessEnc, NO_TURN_COST_PROVIDER, false);
         ConnectedComponents result = tarjan.findComponentsRecursive();
         assertEquals(16, result.getEdgeKeys());
@@ -141,11 +141,11 @@ class EdgeBasedTarjanSCCTest {
         GraphHopperStorage g = new GraphBuilder(em).create();
         // 3<-0->2-1o
         //    o
-        GHUtility.setProperties(g.edge(0,0).setDistance(1),encoder,60,true, true);// edge-keys 0,1
-        GHUtility.setProperties(g.edge(0,2).setDistance(1),encoder,60,true, false); // edge-keys 2,3
-        GHUtility.setProperties(g.edge(0,3).setDistance(1),encoder,60,true, false); // edge-keys 4,5
-        GHUtility.setProperties(g.edge(2,1).setDistance(1),encoder,60,true, true); // edge-keys 6,7
-        GHUtility.setProperties(g.edge(1,1).setDistance(1),encoder,60,true, true); // edge-keys 8,9
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 0).setDistance(1));// edge-keys 0,1
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(0, 2).setDistance(1)); // edge-keys 2,3
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(0, 3).setDistance(1)); // edge-keys 4,5
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 1).setDistance(1)); // edge-keys 6,7
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 1).setDistance(1)); // edge-keys 8,9
         EdgeBasedTarjanSCC tarjan = new EdgeBasedTarjanSCC(g, accessEnc, NO_TURN_COST_PROVIDER, false);
         ConnectedComponents result = tarjan.findComponentsRecursive();
         assertEquals(10, result.getEdgeKeys());
@@ -169,15 +169,15 @@ class EdgeBasedTarjanSCCTest {
         //     |   |       |
         //     |    \< 6 - 7
         //     3        \- 8
-        GHUtility.setProperties(g.edge(0,1).setDistance(1),encoder,60,true, true); // edge-keys 0,1
-        GHUtility.setProperties(g.edge(2,1).setDistance(1),encoder,60,true, false); // edge-keys 2,3
-        GHUtility.setProperties(g.edge(1,3).setDistance(1),encoder,60,true, true); // edge-keys 4,5
-        GHUtility.setProperties(g.edge(2,4).setDistance(1),encoder,60,true, true); // edge-keys 6,7
-        GHUtility.setProperties(g.edge(6,2).setDistance(1),encoder,60,true, false); // edge-keys 8,9
-        GHUtility.setProperties(g.edge(4,5).setDistance(1),encoder,60,true, false); // edge-keys 10,11
-        GHUtility.setProperties(g.edge(5,7).setDistance(1),encoder,60,true, true); // edge-keys 12,13
-        GHUtility.setProperties(g.edge(6,7).setDistance(1),encoder,60,true, true); // edge-keys 14,15
-        GHUtility.setProperties(g.edge(6,8).setDistance(1),encoder,60,true, true); // edge-keys 16,17
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(1)); // edge-keys 0,1
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 1).setDistance(1)); // edge-keys 2,3
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 3).setDistance(1)); // edge-keys 4,5
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 4).setDistance(1)); // edge-keys 6,7
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(6, 2).setDistance(1)); // edge-keys 8,9
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(4, 5).setDistance(1)); // edge-keys 10,11
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(5, 7).setDistance(1)); // edge-keys 12,13
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(6, 7).setDistance(1)); // edge-keys 14,15
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(6, 8).setDistance(1)); // edge-keys 16,17
         EdgeBasedTarjanSCC tarjan = new EdgeBasedTarjanSCC(g, accessEnc, NO_TURN_COST_PROVIDER, false);
         ConnectedComponents result = tarjan.findComponentsRecursive();
         assertEquals(18, result.getEdgeKeys());
@@ -200,11 +200,11 @@ class EdgeBasedTarjanSCCTest {
         // 0->1
         // |  |
         // 3<-2->4
-        GHUtility.setProperties(g.edge(0,1).setDistance(1),encoder,60,true, false); // edge-keys 0,1
-        GHUtility.setProperties(g.edge(1,2).setDistance(1),encoder,60,true, false); // edge-keys 2,3
-        GHUtility.setProperties(g.edge(2,3).setDistance(1),encoder,60,true, false); // edge-keys 4,5
-        GHUtility.setProperties(g.edge(3,0).setDistance(1),encoder,60,true, false); // edge-keys 6,7
-        GHUtility.setProperties(g.edge(2,4).setDistance(1),encoder,60,true, false); // edge-keys 8,9
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(0, 1).setDistance(1)); // edge-keys 0,1
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(1)); // edge-keys 2,3
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 3).setDistance(1)); // edge-keys 4,5
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(3, 0).setDistance(1)); // edge-keys 6,7
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 4).setDistance(1)); // edge-keys 8,9
 
         // first lets check what happens without turn costs
         EdgeBasedTarjanSCC tarjan = new EdgeBasedTarjanSCC(g, accessEnc, NO_TURN_COST_PROVIDER, false);

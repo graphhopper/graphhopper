@@ -134,7 +134,7 @@ public class RoundTripRoutingTest {
         //    |-1 0 1
         GraphHopperStorage graph = new GraphBuilder(em).create();
         for (int i = 0; i < 8; ++i) {
-            GHUtility.setProperties(graph.edge(i, (i + 1) % 8).setDistance(1), carFE, 60, true, true);
+            GHUtility.setSpeed(60, true, true, carFE, graph.edge(i, (i + 1) % 8).setDistance(1));
         }
         updateDistancesFor(graph, 0, 1, -1);
         updateDistancesFor(graph, 1, 1, 0);

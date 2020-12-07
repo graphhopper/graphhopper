@@ -137,8 +137,8 @@ public class RoutingAlgorithmTest {
     public void testCalcShortestPath_sourceEqualsTarget() {
         // 0-1-2
         GraphHopperStorage graph = createGHStorage();
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(2), carEncoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 2).setDistance(2));
 
         Path p = calcPath(graph, 0, 0);
         assertPathFromEqualsTo(p, 0);
@@ -150,11 +150,11 @@ public class RoutingAlgorithmTest {
         //    |  |
         //    3--4
         GraphHopperStorage graph = createGHStorage();
-        GHUtility.setProperties(graph.edge(0, 2).setDistance(9), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(2, 1).setDistance(2), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(11), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(3, 4).setDistance(6), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(4, 1).setDistance(9), carEncoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 2).setDistance(9));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(2, 1).setDistance(2));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(2, 3).setDistance(11));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 4).setDistance(6));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(4, 1).setDistance(9));
         Path p = calcPath(graph, 0, 4);
         assertEquals(p.toString(), 20, p.getDistance(), 1e-4);
         assertEquals(nodes(0, 2, 1, 4), p.calcNodes());
@@ -164,10 +164,10 @@ public class RoutingAlgorithmTest {
     public void testBidirectionalLinear() {
         //3--2--1--4--5
         GraphHopperStorage graph = createGHStorage();
-        GHUtility.setProperties(graph.edge(2, 1).setDistance(2), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(11), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(5, 4).setDistance(6), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(4, 1).setDistance(9), carEncoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(2, 1).setDistance(2));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(2, 3).setDistance(11));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(5, 4).setDistance(6));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(4, 1).setDistance(9));
         Path p = calcPath(graph, 3, 5);
         assertEquals(p.toString(), 28, p.getDistance(), 1e-4);
         assertEquals(nodes(3, 2, 1, 4, 5), p.calcNodes());
@@ -197,26 +197,26 @@ public class RoutingAlgorithmTest {
     // |/ \--7
     // 6----/
     static void initDirectedAndDiffSpeed(Graph graph, FlagEncoder enc) {
-        GHUtility.setProperties(graph.edge(0, 1), enc, 10, true, false);
-        GHUtility.setProperties(graph.edge(0, 4), enc, 100, true, false);
+        GHUtility.setSpeed(10, true, false, enc, graph.edge(0, 1));
+        GHUtility.setSpeed(100, true, false, enc, graph.edge(0, 4));
 
-        GHUtility.setProperties(graph.edge(1, 4), enc, 10, true, true);
-        GHUtility.setProperties(graph.edge(1, 5), enc, 10, true, true);
-        EdgeIteratorState edge12 = GHUtility.setProperties(graph.edge(1, 2), enc, 10, true, true);
+        GHUtility.setSpeed(10, true, true, enc, graph.edge(1, 4));
+        GHUtility.setSpeed(10, true, true, enc, graph.edge(1, 5));
+        EdgeIteratorState edge12 = GHUtility.setSpeed(10, true, true, enc, graph.edge(1, 2));
 
-        GHUtility.setProperties(graph.edge(5, 2), enc, 10, true, false);
-        GHUtility.setProperties(graph.edge(2, 3), enc, 10, true, false);
+        GHUtility.setSpeed(10, true, false, enc, graph.edge(5, 2));
+        GHUtility.setSpeed(10, true, false, enc, graph.edge(2, 3));
 
-        EdgeIteratorState edge53 = GHUtility.setProperties(graph.edge(5, 3), enc, 20, true, false);
-        GHUtility.setProperties(graph.edge(3, 7), enc, 10, true, false);
+        EdgeIteratorState edge53 = GHUtility.setSpeed(20, true, false, enc, graph.edge(5, 3));
+        GHUtility.setSpeed(10, true, false, enc, graph.edge(3, 7));
 
-        GHUtility.setProperties(graph.edge(4, 6), enc, 100, true, false);
-        GHUtility.setProperties(graph.edge(5, 4), enc, 10, true, false);
+        GHUtility.setSpeed(100, true, false, enc, graph.edge(4, 6));
+        GHUtility.setSpeed(10, true, false, enc, graph.edge(5, 4));
 
-        GHUtility.setProperties(graph.edge(5, 6), enc, 10, true, false);
-        GHUtility.setProperties(graph.edge(7, 5), enc, 100, true, false);
+        GHUtility.setSpeed(10, true, false, enc, graph.edge(5, 6));
+        GHUtility.setSpeed(100, true, false, enc, graph.edge(7, 5));
 
-        GHUtility.setProperties(graph.edge(6, 7), enc, 100, true, true);
+        GHUtility.setSpeed(100, true, true, enc, graph.edge(6, 7));
 
         updateDistancesFor(graph, 0, 0.002, 0);
         updateDistancesFor(graph, 1, 0.002, 0.001);
@@ -244,63 +244,63 @@ public class RoutingAlgorithmTest {
 
     static void initFootVsCar(FlagEncoder carEncoder, FlagEncoder footEncoder, Graph graph) {
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(7000);
-        GHUtility.setProperties(edge, footEncoder, 5, true, true);
-        GHUtility.setProperties(edge, carEncoder, 10, true, false);
+        GHUtility.setSpeed(5, true, true, footEncoder, edge);
+        GHUtility.setSpeed(10, true, false, carEncoder, edge);
         edge = graph.edge(0, 4).setDistance(5000);
-        GHUtility.setProperties(edge, footEncoder, 5, true, true);
-        GHUtility.setProperties(edge, carEncoder, 20, true, false);
+        GHUtility.setSpeed(5, true, true, footEncoder, edge);
+        GHUtility.setSpeed(20, true, false, carEncoder, edge);
 
-        GHUtility.setProperties(graph.edge(1, 4).setDistance(7000), carEncoder, 10, true, true);
-        GHUtility.setProperties(graph.edge(1, 5).setDistance(7000), carEncoder, 10, true, true);
+        GHUtility.setSpeed(10, true, true, carEncoder, graph.edge(1, 4).setDistance(7000));
+        GHUtility.setSpeed(10, true, true, carEncoder, graph.edge(1, 5).setDistance(7000));
         edge = graph.edge(1, 2).setDistance(20000);
-        GHUtility.setProperties(edge, footEncoder, 5, true, true);
-        GHUtility.setProperties(edge, carEncoder, 10, true, true);
+        GHUtility.setSpeed(5, true, true, footEncoder, edge);
+        GHUtility.setSpeed(10, true, true, carEncoder, edge);
 
-        GHUtility.setProperties(graph.edge(5, 2).setDistance(5000), carEncoder, 10, true, false);
+        GHUtility.setSpeed(10, true, false, carEncoder, graph.edge(5, 2).setDistance(5000));
         edge = graph.edge(2, 3).setDistance(5000);
-        GHUtility.setProperties(edge, footEncoder, 5, true, true);
-        GHUtility.setProperties(edge, carEncoder, 10, true, false);
+        GHUtility.setSpeed(5, true, true, footEncoder, edge);
+        GHUtility.setSpeed(10, true, false, carEncoder, edge);
 
-        GHUtility.setProperties(graph.edge(5, 3).setDistance(11000), carEncoder, 20, true, false);
+        GHUtility.setSpeed(20, true, false, carEncoder, graph.edge(5, 3).setDistance(11000));
         edge = graph.edge(3, 7).setDistance(7000);
-        GHUtility.setProperties(edge, footEncoder, 5, true, true);
-        GHUtility.setProperties(edge, carEncoder, 10, true, false);
+        GHUtility.setSpeed(5, true, true, footEncoder, edge);
+        GHUtility.setSpeed(10, true, false, carEncoder, edge);
 
-        GHUtility.setProperties(graph.edge(4, 6).setDistance(5000), carEncoder, 20, true, false);
+        GHUtility.setSpeed(20, true, false, carEncoder, graph.edge(4, 6).setDistance(5000));
         edge = graph.edge(5, 4).setDistance(7000);
-        GHUtility.setProperties(edge, footEncoder, 5, true, true);
-        GHUtility.setProperties(edge, carEncoder, 10, true, false);
+        GHUtility.setSpeed(5, true, true, footEncoder, edge);
+        GHUtility.setSpeed(10, true, false, carEncoder, edge);
 
-        GHUtility.setProperties(graph.edge(5, 6).setDistance(7000), carEncoder, 10, true, false);
+        GHUtility.setSpeed(10, true, false, carEncoder, graph.edge(5, 6).setDistance(7000));
         edge = graph.edge(7, 5).setDistance(5000);
-        GHUtility.setProperties(edge, footEncoder, 5, true, true);
-        GHUtility.setProperties(edge, carEncoder, 20, true, false);
+        GHUtility.setSpeed(5, true, true, footEncoder, edge);
+        GHUtility.setSpeed(20, true, false, carEncoder, edge);
 
-        GHUtility.setProperties(graph.edge(6, 7).setDistance(5000), carEncoder, 20, true, true);
+        GHUtility.setSpeed(20, true, true, carEncoder, graph.edge(6, 7).setDistance(5000));
     }
 
     // see test-graph.svg !
     static void initTestStorage(Graph graph, FlagEncoder encoder) {
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(7), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(0, 4).setDistance(6), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(7));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 4).setDistance(6));
 
-        GHUtility.setProperties(graph.edge(1, 4).setDistance(2), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(1, 5).setDistance(8), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(2), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 4).setDistance(2));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 5).setDistance(8));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(2));
 
-        GHUtility.setProperties(graph.edge(2, 5).setDistance(5), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(2), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 5).setDistance(5));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(2));
 
-        GHUtility.setProperties(graph.edge(3, 5).setDistance(2), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(3, 7).setDistance(10), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 5).setDistance(2));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 7).setDistance(10));
 
-        GHUtility.setProperties(graph.edge(4, 6).setDistance(4), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(4, 5).setDistance(7), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 6).setDistance(4));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 5).setDistance(7));
 
-        GHUtility.setProperties(graph.edge(5, 6).setDistance(2), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(5, 7).setDistance(1), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 6).setDistance(2));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 7).setDistance(1));
 
-        EdgeIteratorState edge6_7 = GHUtility.setProperties(graph.edge(6, 7).setDistance(5), encoder, 60, true, true);
+        EdgeIteratorState edge6_7 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 7).setDistance(5));
 
         updateDistancesFor(graph, 0, 0.0010, 0.00001);
         updateDistancesFor(graph, 1, 0.0008, 0.0000);
@@ -329,18 +329,18 @@ public class RoutingAlgorithmTest {
         // 7-5-6
         //  \|
         //   8
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(7), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(5, 6).setDistance(2), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(5, 7).setDistance(1), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(5, 8).setDistance(1), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(7, 8).setDistance(1), carEncoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 1).setDistance(7));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(5, 6).setDistance(2));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(5, 7).setDistance(1));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(5, 8).setDistance(1));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(7, 8).setDistance(1));
         assertFalse(calcPath(graph, 0, 5).isFound());
 
         // disconnected as directed graph
         // 2-0->1
         graph = createGHStorage();
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), carEncoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(0, 2).setDistance(1), carEncoder, 60, true, true);
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 2).setDistance(1));
         assertFalse(calcPath(graph, 1, 2).isFound());
         assertTrue(calcPath(graph, 2, 1).isFound());
     }
@@ -365,15 +365,15 @@ public class RoutingAlgorithmTest {
     // see wikipedia-graph.svg !
     private GraphHopperStorage createWikipediaTestGraph() {
         GraphHopperStorage graph = createGHStorage();
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(7), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(0, 2).setDistance(9), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(0, 5).setDistance(14), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(10), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(1, 3).setDistance(15), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(2, 5).setDistance(2), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(11), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(3, 4).setDistance(6), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(4, 5).setDistance(9), carEncoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 1).setDistance(7));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 2).setDistance(9));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 5).setDistance(14));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 2).setDistance(10));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 3).setDistance(15));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(2, 5).setDistance(2));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(2, 3).setDistance(11));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 4).setDistance(6));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(4, 5).setDistance(9));
         return graph;
     }
 
@@ -399,16 +399,16 @@ public class RoutingAlgorithmTest {
     //  7-6----5
     public static void initBiGraph(Graph graph, FlagEncoder encoder) {
         // distance will be overwritten in second step as we need to calculate it from lat,lon
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(3, 4).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(4, 5).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(5, 6).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(6, 7).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(7, 0).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(3, 8).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(8, 6).setDistance(1), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 5).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 7).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(7, 0).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 8).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(8, 6).setDistance(1));
 
         // we need lat,lon for edge precise queries because the distances of snapped point
         // to adjacent nodes is calculated from lat,lon of the necessary points
@@ -433,16 +433,16 @@ public class RoutingAlgorithmTest {
         // \   /   /
         //  7-6-5-/
         GraphHopperStorage graph = createGHStorage();
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(1), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(1), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(3, 4).setDistance(1), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(4, 5).setDistance(1), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(5, 6).setDistance(1), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(6, 7).setDistance(1), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(7, 0).setDistance(1), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(3, 8).setDistance(1), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(8, 6).setDistance(1), carEncoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(4, 5).setDistance(1));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(5, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(6, 7).setDistance(1));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(7, 0).setDistance(1));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 8).setDistance(1));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(8, 6).setDistance(1));
 
         // run the same query twice, this can be interesting because in the second call algorithms that pre-process
         // the graph might depend on the state of the graph after the first call 
@@ -480,16 +480,16 @@ public class RoutingAlgorithmTest {
         // |    8  |
         // \   /   /
         //  7-6-5-/
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(100), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(1), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(1), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(3, 4).setDistance(1), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(4, 5).setDistance(20), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(5, 6).setDistance(10), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(6, 7).setDistance(5), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(7, 0).setDistance(5), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(3, 8).setDistance(20), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(8, 6).setDistance(20), carEncoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 1).setDistance(100));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(4, 5).setDistance(20));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(5, 6).setDistance(10));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(6, 7).setDistance(5));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(7, 0).setDistance(5));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 8).setDistance(20));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(8, 6).setDistance(20));
     }
 
     @Test
@@ -533,7 +533,7 @@ public class RoutingAlgorithmTest {
                     if (print)
                         System.out.print(" " + (int) dist + "\t           ");
 
-                    GHUtility.setProperties(tmpGraph.edge(matrix[w][h], matrix[w][h - 1]).setDistance(dist), encoder, 60, true, true);
+                    GHUtility.setSpeed(60, true, true, encoder, tmpGraph.edge(matrix[w][h], matrix[w][h - 1]).setDistance(dist));
                 }
             }
             if (print) {
@@ -551,7 +551,7 @@ public class RoutingAlgorithmTest {
                     float dist = 5 + Math.abs(rand.nextInt(5));
                     if (print)
                         System.out.print("-- " + (int) dist + "\t-- ");
-                    GHUtility.setProperties(tmpGraph.edge(matrix[w][h], matrix[w - 1][h]).setDistance(dist), encoder, 60, true, true);
+                    GHUtility.setSpeed(60, true, true, encoder, tmpGraph.edge(matrix[w][h], matrix[w - 1][h]).setDistance(dist));
                 }
                 if (print)
                     System.out.print("(" + matrix[w][h] + ")\t");
@@ -578,8 +578,8 @@ public class RoutingAlgorithmTest {
     public void testCannotCalculateSP() {
         // 0->1->2
         GraphHopperStorage graph = createGHStorage();
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), carEncoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(1), carEncoder, 60, true, false);
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(1, 2).setDistance(1));
         Path p = calcPath(graph, 0, 2);
         assertEquals(p.toString(), 3, p.calcNodes().size());
     }
@@ -587,12 +587,12 @@ public class RoutingAlgorithmTest {
     @Test
     public void testDirectedGraphBug1() {
         GraphHopperStorage graph = createGHStorage();
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(3), carEncoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(2.99), carEncoder, 60, true, false);
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(0, 1).setDistance(3));
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(1, 2).setDistance(2.99));
 
-        GHUtility.setProperties(graph.edge(0, 3).setDistance(2), carEncoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(3, 4).setDistance(3), carEncoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(4, 2).setDistance(1), carEncoder, 60, true, false);
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(0, 3).setDistance(2));
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(3, 4).setDistance(3));
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(4, 2).setDistance(1));
 
         Path p = calcPath(graph, 0, 2);
         assertEquals(p.toString(), nodes(0, 1, 2), p.calcNodes());
@@ -605,10 +605,10 @@ public class RoutingAlgorithmTest {
         //    | /
         //    3<
         GraphHopperStorage graph = createGHStorage();
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), carEncoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(1), carEncoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(1), carEncoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(3, 1).setDistance(4), carEncoder, 60, true, true);
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 1).setDistance(4));
 
         Path p = calcPath(graph, 0, 3);
         assertEquals(nodes(0, 1, 2, 3), p.calcNodes());
@@ -622,21 +622,21 @@ public class RoutingAlgorithmTest {
     public void testWithCoordinates() {
         Weighting weighting = new ShortestWeighting(carEncoder);
         GraphHopperStorage graph = createGHStorage(false, weighting);
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(2), carEncoder, 60, true, true).
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 1).setDistance(2)).
                 setWayGeometry(Helper.createPointList(1.5, 1));
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(2), carEncoder, 60, true, true).
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(2, 3).setDistance(2)).
                 setWayGeometry(Helper.createPointList(0, 1.5));
-        GHUtility.setProperties(graph.edge(3, 4).setDistance(2), carEncoder, 60, true, true).
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 4).setDistance(2)).
                 setWayGeometry(Helper.createPointList(0, 2));
 
         // duplicate but the second edge is longer
-        GHUtility.setProperties(graph.edge(0, 2).setDistance(1.2), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(0, 2).setDistance(1.5), carEncoder, 60, true, true).
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 2).setDistance(1.2));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 2).setDistance(1.5)).
                 setWayGeometry(Helper.createPointList(0.5, 0));
 
-        GHUtility.setProperties(graph.edge(1, 3).setDistance(1.3), carEncoder, 60, true, true).
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 3).setDistance(1.3)).
                 setWayGeometry(Helper.createPointList(0.5, 1.5));
-        GHUtility.setProperties(graph.edge(1, 4).setDistance(1), carEncoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 4).setDistance(1));
 
         updateDistancesFor(graph, 0, 1, 0.6);
         updateDistancesFor(graph, 1, 1, 1.5);
@@ -712,11 +712,11 @@ public class RoutingAlgorithmTest {
         // 0->1\
         // |    2
         // 4<-3/
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(7), carEncoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(7), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(7), carEncoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(3, 4).setDistance(7), carEncoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(4, 0).setDistance(7), carEncoder, 60, true, true);
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(0, 1).setDistance(7));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 2).setDistance(7));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(2, 3).setDistance(7));
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(3, 4).setDistance(7));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(4, 0).setDistance(7));
 
         updateDistancesFor(graph, 4, 0, 0);
         updateDistancesFor(graph, 0, 0.00010, 0);
@@ -779,7 +779,7 @@ public class RoutingAlgorithmTest {
         GraphHopperStorage graph = createGHStorage(true, fastestWeighting);
         initEleGraph(graph, bike2Encoder, 18);
         // force the other path
-        GHUtility.setProperties(GHUtility.getEdge(graph, 0, 3), bike2Encoder, 10, false, true);
+        GHUtility.setSpeed(10, false, true, bike2Encoder, GHUtility.getEdge(graph, 0, 3));
 
         // for two weights per edge it happened that Path (and also the Weighting) read the wrong side
         // of the speed and read 0 => infinity weight => overflow of millis => negative millis!
@@ -945,7 +945,7 @@ public class RoutingAlgorithmTest {
         // refreshed
         ghStorage = createGHStorage(false, footWeighting, carWeighting);
         initFootVsCar(carEncoder, footEncoder, ghStorage);
-        GHUtility.setProperties(GHUtility.getEdge(ghStorage, 4, 6), carEncoder, 20, false, false);
+        GHUtility.setSpeed(20, false, false, carEncoder, GHUtility.getEdge(ghStorage, 4, 6));
 
         // ... car needs to take another way
         Path carPath2 = calcPath(ghStorage, carWeighting, 0, 7);
@@ -965,25 +965,25 @@ public class RoutingAlgorithmTest {
     // | |\|
     // 8-9-10
     private void initEleGraph(Graph graph, FlagEncoder encoder, double s) {
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(10), encoder, s, true, true);
-        GHUtility.setProperties(graph.edge(0, 4).setDistance(12), encoder, s, true, true);
-        GHUtility.setProperties(graph.edge(0, 3).setDistance(5), encoder, s, true, true);
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(10), encoder, s, true, true);
-        GHUtility.setProperties(graph.edge(1, 4).setDistance(5), encoder, s, true, true);
-        GHUtility.setProperties(graph.edge(3, 5).setDistance(5), encoder, s, true, false);
-        GHUtility.setProperties(graph.edge(5, 6).setDistance(10), encoder, s, true, true);
-        GHUtility.setProperties(graph.edge(5, 8).setDistance(10), encoder, s, true, true);
-        GHUtility.setProperties(graph.edge(6, 4).setDistance(5), encoder, s, true, true);
-        GHUtility.setProperties(graph.edge(6, 7).setDistance(10), encoder, s, true, true);
-        GHUtility.setProperties(graph.edge(6, 10).setDistance(12), encoder, s, true, true);
-        GHUtility.setProperties(graph.edge(6, 9).setDistance(12), encoder, s, true, true);
-        GHUtility.setProperties(graph.edge(2, 11).setDistance(5), encoder, s, true, false);
-        GHUtility.setProperties(graph.edge(4, 11).setDistance(10), encoder, s, true, true);
-        GHUtility.setProperties(graph.edge(7, 11).setDistance(5), encoder, s, true, true);
-        GHUtility.setProperties(graph.edge(7, 10).setDistance(5), encoder, s, true, true);
-        GHUtility.setProperties(graph.edge(8, 9).setDistance(10), encoder, s, true, false);
-        GHUtility.setProperties(graph.edge(9, 8).setDistance(9), encoder, s, true, false);
-        GHUtility.setProperties(graph.edge(10, 9).setDistance(10), encoder, s, true, false);
+        GHUtility.setSpeed(s, true, true, encoder, graph.edge(0, 1).setDistance(10));
+        GHUtility.setSpeed(s, true, true, encoder, graph.edge(0, 4).setDistance(12));
+        GHUtility.setSpeed(s, true, true, encoder, graph.edge(0, 3).setDistance(5));
+        GHUtility.setSpeed(s, true, true, encoder, graph.edge(1, 2).setDistance(10));
+        GHUtility.setSpeed(s, true, true, encoder, graph.edge(1, 4).setDistance(5));
+        GHUtility.setSpeed(s, true, false, encoder, graph.edge(3, 5).setDistance(5));
+        GHUtility.setSpeed(s, true, true, encoder, graph.edge(5, 6).setDistance(10));
+        GHUtility.setSpeed(s, true, true, encoder, graph.edge(5, 8).setDistance(10));
+        GHUtility.setSpeed(s, true, true, encoder, graph.edge(6, 4).setDistance(5));
+        GHUtility.setSpeed(s, true, true, encoder, graph.edge(6, 7).setDistance(10));
+        GHUtility.setSpeed(s, true, true, encoder, graph.edge(6, 10).setDistance(12));
+        GHUtility.setSpeed(s, true, true, encoder, graph.edge(6, 9).setDistance(12));
+        GHUtility.setSpeed(s, true, false, encoder, graph.edge(2, 11).setDistance(5));
+        GHUtility.setSpeed(s, true, true, encoder, graph.edge(4, 11).setDistance(10));
+        GHUtility.setSpeed(s, true, true, encoder, graph.edge(7, 11).setDistance(5));
+        GHUtility.setSpeed(s, true, true, encoder, graph.edge(7, 10).setDistance(5));
+        GHUtility.setSpeed(s, true, false, encoder, graph.edge(8, 9).setDistance(10));
+        GHUtility.setSpeed(s, true, false, encoder, graph.edge(9, 8).setDistance(9));
+        GHUtility.setSpeed(s, true, false, encoder, graph.edge(10, 9).setDistance(10));
         updateDistancesFor(graph, 0, 3, 0);
         updateDistancesFor(graph, 3, 2.5, 0);
         updateDistancesFor(graph, 5, 1, 0);

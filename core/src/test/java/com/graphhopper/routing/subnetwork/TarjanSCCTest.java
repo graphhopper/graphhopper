@@ -49,15 +49,15 @@ class TarjanSCCTest {
         // 4 < 1 - 2
         // |   |
         // <-- 8 - 11 - 12 < 9 - 15
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(1, 4).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(1, 8).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(2, 4).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(8, 4).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(8, 11).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(12, 11).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(9, 12).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(9, 15).setDistance(1), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 8).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(8, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(8, 11).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(12, 11).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(9, 12).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(9, 15).setDistance(1));
 
         // large network
         // 5 --------
@@ -65,17 +65,17 @@ class TarjanSCCTest {
         // 3 - 0 - 13
         //   \ |
         //     7
-        GHUtility.setProperties(graph.edge(0, 13).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(0, 3).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(0, 7).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(3, 7).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(3, 5).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(13, 5).setDistance(1), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 13).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 7).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 7).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 5).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(13, 5).setDistance(1));
 
         // small network
         // 6 - 14 - 10
-        GHUtility.setProperties(graph.edge(6, 14).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(10, 14).setDistance(1), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 14).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(10, 14).setDistance(1));
 
         TarjanSCC tarjan = new TarjanSCC(graph, accessEnc, false);
         TarjanSCC.ConnectedComponents scc = tarjan.findComponentsRecursive();
@@ -98,17 +98,17 @@ class TarjanSCCTest {
         //  \ |      \<-----/
         //    2
         GraphHopperStorage graph = new GraphBuilder(em).create();
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(2, 0).setDistance(1), encoder, 60, true, false);
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 0).setDistance(1));
 
-        GHUtility.setProperties(graph.edge(1, 3).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(3, 4).setDistance(1), encoder, 60, true, false);
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 4).setDistance(1));
 
-        GHUtility.setProperties(graph.edge(4, 5).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(5, 6).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(6, 7).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(7, 4).setDistance(1), encoder, 60, true, false);
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(4, 5).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(6, 7).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(7, 4).setDistance(1));
 
         TarjanSCC tarjan = new TarjanSCC(graph, accessEnc, false);
         TarjanSCC.ConnectedComponents scc = tarjan.findComponentsRecursive();
@@ -147,30 +147,30 @@ class TarjanSCCTest {
         //        8        15-16
 
         // oneway main road
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(3, 4).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(4, 5).setDistance(1), encoder, 60, true, false);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(4, 5).setDistance(1));
 
         // going south from main road
-        GHUtility.setProperties(graph.edge(3, 6).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(6, 7).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(7, 8).setDistance(1), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 7).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(7, 8).setDistance(1));
 
         // connects the two nodes 2 and 4
-        GHUtility.setProperties(graph.edge(4, 9).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(9, 10).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(10, 11).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(11, 2).setDistance(1), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 9).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(9, 10).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(10, 11).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(11, 2).setDistance(1));
 
         // eastern part (only connected by a single directed edge to the rest of the graph)
-        GHUtility.setProperties(graph.edge(5, 12).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(12, 13).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(13, 14).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(14, 15).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(15, 13).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(15, 16).setDistance(1), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 12).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(12, 13).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(13, 14).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(14, 15).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(15, 13).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(15, 16).setDistance(1));
 
         FlagEncoder encoder = em.fetchEdgeEncoders().iterator().next();
         TarjanSCC tarjan = new TarjanSCC(graph, encoder.getAccessEnc(), false);

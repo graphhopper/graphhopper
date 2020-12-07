@@ -58,23 +58,23 @@ public class AlternativeRouteCHTest {
         // has to be locally-shortest to be considered.
         // So we get all three alternatives.
 
-        GHUtility.setProperties(graph.edge(5, 6).setDistance(10000), carFE, 60, true, true);
-        GHUtility.setProperties(graph.edge(6, 3).setDistance(10000), carFE, 60, true, true);
-        GHUtility.setProperties(graph.edge(3, 4).setDistance(10000), carFE, 60, true, true);
-        GHUtility.setProperties(graph.edge(4, 10).setDistance(10000), carFE, 60, true, true);
+        GHUtility.setSpeed(60, true, true, carFE, graph.edge(5, 6).setDistance(10000));
+        GHUtility.setSpeed(60, true, true, carFE, graph.edge(6, 3).setDistance(10000));
+        GHUtility.setSpeed(60, true, true, carFE, graph.edge(3, 4).setDistance(10000));
+        GHUtility.setSpeed(60, true, true, carFE, graph.edge(4, 10).setDistance(10000));
 
-        GHUtility.setProperties(graph.edge(6, 7).setDistance(10000), carFE, 60, true, true);
-        GHUtility.setProperties(graph.edge(7, 8).setDistance(10000), carFE, 60, true, true);
-        GHUtility.setProperties(graph.edge(8, 4).setDistance(10000), carFE, 60, true, true);
+        GHUtility.setSpeed(60, true, true, carFE, graph.edge(6, 7).setDistance(10000));
+        GHUtility.setSpeed(60, true, true, carFE, graph.edge(7, 8).setDistance(10000));
+        GHUtility.setSpeed(60, true, true, carFE, graph.edge(8, 4).setDistance(10000));
 
-        GHUtility.setProperties(graph.edge(5, 1).setDistance(10000), carFE, 60, true, true);
-        GHUtility.setProperties(graph.edge(1, 9).setDistance(10000), carFE, 60, true, true);
-        GHUtility.setProperties(graph.edge(9, 2).setDistance(10000), carFE, 60, true, true);
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(10000), carFE, 60, true, true);
+        GHUtility.setSpeed(60, true, true, carFE, graph.edge(5, 1).setDistance(10000));
+        GHUtility.setSpeed(60, true, true, carFE, graph.edge(1, 9).setDistance(10000));
+        GHUtility.setSpeed(60, true, true, carFE, graph.edge(9, 2).setDistance(10000));
+        GHUtility.setSpeed(60, true, true, carFE, graph.edge(2, 3).setDistance(10000));
 
-        GHUtility.setProperties(graph.edge(4, 11).setDistance(9000), carFE, 60, true, true);
-        GHUtility.setProperties(graph.edge(11, 12).setDistance(9000), carFE, 60, true, true);
-        GHUtility.setProperties(graph.edge(12, 10).setDistance(10000), carFE, 60, true, true);
+        GHUtility.setSpeed(60, true, true, carFE, graph.edge(4, 11).setDistance(9000));
+        GHUtility.setSpeed(60, true, true, carFE, graph.edge(11, 12).setDistance(9000));
+        GHUtility.setSpeed(60, true, true, carFE, graph.edge(12, 10).setDistance(10000));
 
         graph.freeze();
 

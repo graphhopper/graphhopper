@@ -510,40 +510,40 @@ public class PathTest {
         na.setNode(10, 52.5135, 13.348);
         na.setNode(11, 52.514, 13.347);
 
-        GHUtility.setProperties(graph.edge(2, 1).setDistance(5), encoder, 60, true, false).setName("MainStreet 2 1");
-        GHUtility.setProperties(graph.edge(1, 11).setDistance(5), encoder, 60, true, false).setName("MainStreet 1 11");
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 1).setDistance(5)).setName("MainStreet 2 1");
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 11).setDistance(5)).setName("MainStreet 1 11");
 
         // roundabout
         EdgeIteratorState tmpEdge;
-        tmpEdge = GHUtility.setProperties(graph.edge(3, 9).setDistance(2), encoder, 60, true, false).setName("3-9");
+        tmpEdge = GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 9).setDistance(2)).setName("3-9");
         BooleanEncodedValue carManagerRoundabout = carManager.getBooleanEncodedValue(Roundabout.KEY);
         carManagerRoundabout.setBool(false, tmpEdge.getFlags(), true);
         tmpEdge.setFlags(tmpEdge.getFlags());
-        tmpEdge = GHUtility.setProperties(graph.edge(9, 10).setDistance(2), encoder, 60, true, false).setName("9-10");
+        tmpEdge = GHUtility.setSpeed(60, true, false, encoder, graph.edge(9, 10).setDistance(2)).setName("9-10");
         carManagerRoundabout.setBool(false, tmpEdge.getFlags(), true);
         tmpEdge.setFlags(tmpEdge.getFlags());
-        tmpEdge = GHUtility.setProperties(graph.edge(6, 10).setDistance(2), encoder, 60, true, false).setName("6-10");
+        tmpEdge = GHUtility.setSpeed(60, true, false, encoder, graph.edge(6, 10).setDistance(2)).setName("6-10");
         carManagerRoundabout.setBool(false, tmpEdge.getFlags(), true);
         tmpEdge.setFlags(tmpEdge.getFlags());
-        tmpEdge = GHUtility.setProperties(graph.edge(10, 1).setDistance(2), encoder, 60, true, false).setName("10-1");
+        tmpEdge = GHUtility.setSpeed(60, true, false, encoder, graph.edge(10, 1).setDistance(2)).setName("10-1");
         carManagerRoundabout.setBool(false, tmpEdge.getFlags(), true);
         tmpEdge.setFlags(tmpEdge.getFlags());
-        tmpEdge = GHUtility.setProperties(graph.edge(3, 2).setDistance(5), encoder, 60, true, false).setName("2-3");
+        tmpEdge = GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 2).setDistance(5)).setName("2-3");
         carManagerRoundabout.setBool(false, tmpEdge.getFlags(), true);
         tmpEdge.setFlags(tmpEdge.getFlags());
-        tmpEdge = GHUtility.setProperties(graph.edge(4, 3).setDistance(5), encoder, 60, true, false).setName("3-4");
+        tmpEdge = GHUtility.setSpeed(60, true, false, encoder, graph.edge(4, 3).setDistance(5)).setName("3-4");
         carManagerRoundabout.setBool(false, tmpEdge.getFlags(), true);
         tmpEdge.setFlags(tmpEdge.getFlags());
-        tmpEdge = GHUtility.setProperties(graph.edge(5, 4).setDistance(5), encoder, 60, true, false).setName("4-5");
+        tmpEdge = GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 4).setDistance(5)).setName("4-5");
         carManagerRoundabout.setBool(false, tmpEdge.getFlags(), true);
         tmpEdge.setFlags(tmpEdge.getFlags());
-        tmpEdge = GHUtility.setProperties(graph.edge(2, 5).setDistance(5), encoder, 60, true, false).setName("5-2");
+        tmpEdge = GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 5).setDistance(5)).setName("5-2");
         carManagerRoundabout.setBool(false, tmpEdge.getFlags(), true);
         tmpEdge.setFlags(tmpEdge.getFlags());
 
-        GHUtility.setProperties(graph.edge(4, 7).setDistance(5), encoder, 60, true, true).setName("MainStreet 4 7");
-        GHUtility.setProperties(graph.edge(5, 8).setDistance(5), encoder, 60, true, true).setName("5-8");
-        GHUtility.setProperties(graph.edge(3, 6).setDistance(5), encoder, 60, true, true).setName("3-6");
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 7).setDistance(5)).setName("MainStreet 4 7");
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 8).setDistance(5)).setName("5-8");
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 6).setDistance(5)).setName("3-6");
 
         ShortestWeighting weighting = new ShortestWeighting(encoder);
         Path p = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED)
@@ -619,9 +619,9 @@ public class PathTest {
         na.setNode(3, 48.982611, 13.121012);
         na.setNode(4, 48.982336, 13.121002);
 
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(5), encoder, 60, true, true).setName("Regener Weg");
-        GHUtility.setProperties(graph.edge(2, 4).setDistance(5), encoder, 60, true, true).setName("Regener Weg");
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(5), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(5)).setName("Regener Weg");
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 4).setDistance(5)).setName("Regener Weg");
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(5));
 
         ShortestWeighting weighting = new ShortestWeighting(encoder);
         Path p = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED)
@@ -652,9 +652,9 @@ public class PathTest {
         EnumEncodedValue<RoadClass> roadClassEnc = carManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         BooleanEncodedValue roadClassLinkEnc = carManager.getBooleanEncodedValue(RoadClassLink.KEY);
 
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(5), encoder, 60, true, true).setName("A 8").set(roadClassEnc, RoadClass.MOTORWAY).set(roadClassLinkEnc, false);
-        GHUtility.setProperties(graph.edge(2, 4).setDistance(5), encoder, 60, true, true).setName("A 8").set(roadClassEnc, RoadClass.MOTORWAY).set(roadClassLinkEnc, false);
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(5), encoder, 60, true, true).set(roadClassEnc, RoadClass.MOTORWAY).set(roadClassLinkEnc, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(5)).setName("A 8").set(roadClassEnc, RoadClass.MOTORWAY).set(roadClassLinkEnc, false);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 4).setDistance(5)).setName("A 8").set(roadClassEnc, RoadClass.MOTORWAY).set(roadClassLinkEnc, false);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(5)).set(roadClassEnc, RoadClass.MOTORWAY).set(roadClassLinkEnc, true);
 
         ShortestWeighting weighting = new ShortestWeighting(encoder);
         Path p = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED)
@@ -680,9 +680,9 @@ public class PathTest {
         na.setNode(3, 48.630558, 9.459851);
         na.setNode(4, 48.63054, 9.459406);
 
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(5), encoder, 60, true, false).setName("A 8");
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(5), encoder, 60, true, false).setName("A 8");
-        GHUtility.setProperties(graph.edge(4, 2).setDistance(5), encoder, 60, true, false).setName("A 8");
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(5)).setName("A 8");
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(5)).setName("A 8");
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(4, 2).setDistance(5)).setName("A 8");
 
         ShortestWeighting weighting = new ShortestWeighting(encoder);
         Path p = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED)
@@ -709,9 +709,9 @@ public class PathTest {
         na.setNode(3, 48.706805, 9.162995);
         na.setNode(4, 48.706705, 9.16329);
 
-        GHUtility.setProperties(g.edge(1, 2).setDistance(5), encoder, 60, true, false).setName("A 8");
-        GHUtility.setProperties(g.edge(2, 3).setDistance(5), encoder, 60, true, false).setName("A 8");
-        GHUtility.setProperties(g.edge(2, 4).setDistance(5), encoder, 60, true, false).setName("A 8");
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(5)).setName("A 8");
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 3).setDistance(5)).setName("A 8");
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 4).setDistance(5)).setName("A 8");
 
         ShortestWeighting weighting = new ShortestWeighting(encoder);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
@@ -739,9 +739,9 @@ public class PathTest {
         na.setNode(3, -33.824415, 151.188177);
         na.setNode(4, -33.824437, 151.187925);
 
-        GHUtility.setProperties(g.edge(1, 2).setDistance(5), encoder, 60, true, false).setName("Pacific Highway");
-        GHUtility.setProperties(g.edge(2, 3).setDistance(5), encoder, 60, true, false).setName("Pacific Highway");
-        GHUtility.setProperties(g.edge(4, 2).setDistance(5), encoder, 60, true, true).setName("Greenwich Road");
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(5)).setName("Pacific Highway");
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 3).setDistance(5)).setName("Pacific Highway");
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(4, 2).setDistance(5)).setName("Greenwich Road");
 
         ShortestWeighting weighting = new ShortestWeighting(encoder);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
@@ -774,9 +774,9 @@ public class PathTest {
         EnumEncodedValue<RoadClass> roadClassEnc = carManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         BooleanEncodedValue roadClassLinkEnc = carManager.getBooleanEncodedValue(RoadClassLink.KEY);
 
-        GHUtility.setProperties(g.edge(1, 2).setDistance(5), encoder, 60, true, true).setName("B 156").set(roadClassEnc, RoadClass.PRIMARY).set(roadClassLinkEnc, false);
-        GHUtility.setProperties(g.edge(2, 4).setDistance(5), encoder, 60, true, true).setName("S 108").set(roadClassEnc, RoadClass.SECONDARY).set(roadClassLinkEnc, false);
-        GHUtility.setProperties(g.edge(2, 3).setDistance(5), encoder, 60, true, true).setName("B 156").set(roadClassEnc, RoadClass.PRIMARY).set(roadClassLinkEnc, false);
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 2).setDistance(5)).setName("B 156").set(roadClassEnc, RoadClass.PRIMARY).set(roadClassLinkEnc, false);
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 4).setDistance(5)).setName("S 108").set(roadClassEnc, RoadClass.SECONDARY).set(roadClassLinkEnc, false);
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 3).setDistance(5)).setName("B 156").set(roadClassEnc, RoadClass.PRIMARY).set(roadClassLinkEnc, false);
 
         ShortestWeighting weighting = new ShortestWeighting(encoder);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
@@ -808,9 +808,9 @@ public class PathTest {
         na.setNode(3, 48.982611, 13.121012);
         na.setNode(4, 48.982565, 13.121002);
 
-        GHUtility.setProperties(g.edge(1, 2).setDistance(5), encoder, 60, true, true).setName("Regener Weg");
-        GHUtility.setProperties(g.edge(2, 4).setDistance(5), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(2, 3).setDistance(5), encoder, 60, true, true).setName("Regener Weg");
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 2).setDistance(5)).setName("Regener Weg");
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 4).setDistance(5));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 3).setDistance(5)).setName("Regener Weg");
 
         ShortestWeighting weighting = new ShortestWeighting(encoder);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
@@ -838,9 +838,9 @@ public class PathTest {
         na.setNode(3, 48.412034, 15.599411);
         na.setNode(4, 48.411927, 15.599197);
 
-        GHUtility.setProperties(g.edge(1, 2).setDistance(5), encoder, 60, true, true).setName("Stöhrgasse");
-        GHUtility.setProperties(g.edge(2, 3).setDistance(5), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(2, 4).setDistance(5), encoder, 60, true, true).setName("Stöhrgasse");
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 2).setDistance(5)).setName("Stöhrgasse");
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 3).setDistance(5));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 4).setDistance(5)).setName("Stöhrgasse");
 
         ShortestWeighting weighting = new ShortestWeighting(encoder);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
@@ -871,12 +871,12 @@ public class PathTest {
         na.setNode(6, 48.402422, 9.996067);
         na.setNode(7, 48.402604, 9.994962);
 
-        GHUtility.setProperties(g.edge(1, 2).setDistance(5), encoder, 60, true, false).setName("Olgastraße");
-        GHUtility.setProperties(g.edge(2, 3).setDistance(5), encoder, 60, true, false).setName("Olgastraße");
-        GHUtility.setProperties(g.edge(6, 5).setDistance(5), encoder, 60, true, false).setName("Olgastraße");
-        GHUtility.setProperties(g.edge(5, 4).setDistance(5), encoder, 60, true, false).setName("Olgastraße");
-        GHUtility.setProperties(g.edge(2, 5).setDistance(5), encoder, 60, true, true).setName("Neithardtstraße");
-        GHUtility.setProperties(g.edge(5, 7).setDistance(5), encoder, 60, true, true).setName("Neithardtstraße");
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(5)).setName("Olgastraße");
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 3).setDistance(5)).setName("Olgastraße");
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(6, 5).setDistance(5)).setName("Olgastraße");
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(5, 4).setDistance(5)).setName("Olgastraße");
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 5).setDistance(5)).setName("Neithardtstraße");
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(5, 7).setDistance(5)).setName("Neithardtstraße");
 
         ShortestWeighting weighting = new ShortestWeighting(encoder);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
@@ -907,12 +907,12 @@ public class PathTest {
         na.setNode(6, -33.885692, 151.181445);
         na.setNode(7, -33.885692, 151.181445);
 
-        GHUtility.setProperties(g.edge(1, 2).setDistance(5), encoder, 60, true, false).setName("Parramatta Road");
-        GHUtility.setProperties(g.edge(2, 3).setDistance(5), encoder, 60, true, false).setName("Parramatta Road");
-        GHUtility.setProperties(g.edge(4, 5).setDistance(5), encoder, 60, true, false).setName("Parramatta Road");
-        GHUtility.setProperties(g.edge(5, 6).setDistance(5), encoder, 60, true, false).setName("Parramatta Road");
-        GHUtility.setProperties(g.edge(2, 5).setDistance(5), encoder, 60, true, true).setName("Larkin Street");
-        GHUtility.setProperties(g.edge(5, 7).setDistance(5), encoder, 60, true, true).setName("Larkin Street");
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(5)).setName("Parramatta Road");
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 3).setDistance(5)).setName("Parramatta Road");
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(4, 5).setDistance(5)).setName("Parramatta Road");
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(5, 6).setDistance(5)).setName("Parramatta Road");
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 5).setDistance(5)).setName("Larkin Street");
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(5, 7).setDistance(5)).setName("Larkin Street");
 
         ShortestWeighting weighting = new ShortestWeighting(encoder);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
@@ -969,9 +969,9 @@ public class PathTest {
         na.setNode(3, 48.764149, 8.678926);
         na.setNode(4, 48.764085, 8.679183);
 
-        GHUtility.setProperties(g.edge(1, 3).setDistance(5), encoder, 60, true, true).setName("Talstraße, K 4313");
-        GHUtility.setProperties(g.edge(2, 3).setDistance(5), encoder, 60, true, true).setName("Calmbacher Straße, K 4312");
-        GHUtility.setProperties(g.edge(3, 4).setDistance(5), encoder, 60, true, true).setName("Calmbacher Straße, K 4312");
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 3).setDistance(5)).setName("Talstraße, K 4313");
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 3).setDistance(5)).setName("Calmbacher Straße, K 4312");
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(3, 4).setDistance(5)).setName("Calmbacher Straße, K 4312");
 
         ShortestWeighting weighting = new ShortestWeighting(encoder);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
@@ -1020,23 +1020,23 @@ public class PathTest {
         w.setTag("maxspeed", "50");
 
         EdgeIteratorState tmpEdge;
-        tmpEdge = GHUtility.setProperties(graph.edge(1, 2).setDistance(5), encoder, 60, true, true).setName("1-2");
+        tmpEdge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(5)).setName("1-2");
         EncodingManager.AcceptWay map = new EncodingManager.AcceptWay();
         assertTrue(carManager.acceptWay(w, map));
         IntsRef relFlags = carManager.createRelationFlags();
         tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
-        tmpEdge = GHUtility.setProperties(graph.edge(4, 5).setDistance(5), encoder, 60, true, true).setName("4-5");
+        tmpEdge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 5).setDistance(5)).setName("4-5");
         tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
 
         w.setTag("maxspeed", "100");
-        tmpEdge = GHUtility.setProperties(graph.edge(2, 3).setDistance(5), encoder, 60, true, true).setName("2-3");
+        tmpEdge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(5)).setName("2-3");
         tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
 
         w.setTag("maxspeed", "10");
-        tmpEdge = GHUtility.setProperties(graph.edge(3, 4).setDistance(10), encoder, 60, true, true).setName("3-4");
+        tmpEdge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(10)).setName("3-4");
         tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
 
-        tmpEdge = GHUtility.setProperties(graph.edge(5, 6).setDistance(0.01), encoder, 60, true, true).setName("3-4");
+        tmpEdge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 6).setDistance(0.01)).setName("3-4");
         tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
 
         return graph;
@@ -1112,8 +1112,11 @@ public class PathTest {
             bothDir.add(g.edge(17, 18).setDistance(5));
             bothDir.add(g.edge(17, 19).setDistance(5));
 
-            GHUtility.setProperties(bothDir, em, true, true);
-            GHUtility.setProperties(oneDir, em, true, false);
+            for (FlagEncoder encoder : em.fetchEdgeEncoders()) {
+                double speed = encoder.getMaxSpeed() / 2;
+                GHUtility.setSpeed(speed, speed, encoder, bothDir);
+                GHUtility.setSpeed(speed, 0, encoder, oneDir);
+            }
 
             setRoundabout(clockwise);
             inverse3to9();

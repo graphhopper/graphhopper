@@ -61,12 +61,12 @@ public class ShortcutUnpackerTest {
         DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
         double fwdSpeed = 60;
         double bwdSpeed = 30;
-        GHUtility.setProperties(graph.edge(0,1).setDistance(1),encoder,60,true, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        GHUtility.setProperties(graph.edge(1,2).setDistance(1),encoder,60,true, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        GHUtility.setProperties(graph.edge(2,3).setDistance(1),encoder,60,true, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        GHUtility.setProperties(graph.edge(3,4).setDistance(1),encoder,60,true, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        GHUtility.setProperties(graph.edge(4,5).setDistance(1),encoder,60,true, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        GHUtility.setProperties(graph.edge(5,6).setDistance(1),encoder,60,true, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed); // edge 5
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1)).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(1)).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(1)).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(1)).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 5).setDistance(1)).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 6).setDistance(1)).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed); // edge 5
         graph.freeze();
 
         setCHLevels(1, 3, 5, 4, 2, 0, 6);
@@ -156,12 +156,12 @@ public class ShortcutUnpackerTest {
         DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
         double fwdSpeed = 60;
         double bwdSpeed = 30;
-        GHUtility.setProperties(graph.edge(0,1).setDistance(1),encoder,60,true, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        GHUtility.setProperties(graph.edge(1,2).setDistance(1),encoder,60,true, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        GHUtility.setProperties(graph.edge(2,3).setDistance(1),encoder,60,true, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        GHUtility.setProperties(graph.edge(3,4).setDistance(1),encoder,60,true, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        GHUtility.setProperties(graph.edge(4,1).setDistance(1),encoder,60,true, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        GHUtility.setProperties(graph.edge(1,5).setDistance(1),encoder,60,true, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1)).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(1)).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(1)).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(1)).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 1).setDistance(1)).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 5).setDistance(1)).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
         graph.freeze();
 
         setCHLevels(2, 4, 3, 1, 5, 0);
@@ -233,12 +233,12 @@ public class ShortcutUnpackerTest {
         DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
         double fwdSpeed = 60;
         double bwdSpeed = 30;
-        EdgeIteratorState edge0 = GHUtility.setProperties(graph.edge(0,1).setDistance(1),encoder,60,true, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        EdgeIteratorState edge1 = GHUtility.setProperties(graph.edge(1,2).setDistance(1),encoder,60,true, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        EdgeIteratorState edge2 = GHUtility.setProperties(graph.edge(2,3).setDistance(1),encoder,60,true, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        EdgeIteratorState edge3 = GHUtility.setProperties(graph.edge(3,4).setDistance(1),encoder,60,true, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        EdgeIteratorState edge4 = GHUtility.setProperties(graph.edge(4,5).setDistance(1),encoder,60,true, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        EdgeIteratorState edge5 = GHUtility.setProperties(graph.edge(5,6).setDistance(1),encoder,60,true, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
+        EdgeIteratorState edge0 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1)).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
+        EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(1)).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
+        EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(1)).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
+        EdgeIteratorState edge3 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(1)).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
+        EdgeIteratorState edge4 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 5).setDistance(1)).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
+        EdgeIteratorState edge5 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 6).setDistance(1)).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
         graph.freeze();
 
         // turn costs ->

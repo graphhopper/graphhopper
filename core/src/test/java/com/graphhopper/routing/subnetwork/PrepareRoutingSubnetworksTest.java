@@ -52,18 +52,18 @@ public class PrepareRoutingSubnetworksTest {
         // 0 - 1 - 3 - 7 - 8
         // |       |
         // 2 -------
-        GHUtility.setProperties(g.edge(0, 1).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(1, 3).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(0, 2).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(2, 3).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(3, 7).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(7, 8).setDistance(1), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(3, 7).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(7, 8).setDistance(1));
         // connecting both but do no set access yet
         g.edge(3, 4).setDistance(1);
 
-        GHUtility.setProperties(g.edge(4, 5).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(5, 6).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(4, 6).setDistance(1), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(4, 5).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(5, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(4, 6).setDistance(1));
         return g;
     }
 
@@ -154,12 +154,12 @@ public class PrepareRoutingSubnetworksTest {
         GraphHopperStorage g = createSubnetworkTestStorage(em, carEncoder);
         AllEdgesIterator allIter = g.getAllEdges();
         while (allIter.next()) {
-            GHUtility.setProperties(allIter, bikeEncoder, bikeEncoder.getMaxSpeed() / 2, true, true);
+            GHUtility.setSpeed(bikeEncoder.getMaxSpeed() / 2, true, true, bikeEncoder, allIter);
         }
 
         EdgeIteratorState edge = GHUtility.getEdge(g, 3, 4);
-        GHUtility.setProperties(edge, carEncoder, 10, false, false);
-        GHUtility.setProperties(edge, bikeEncoder, 5, true, true);
+        GHUtility.setSpeed(10, false, false, carEncoder, edge);
+        GHUtility.setSpeed(5, true, true, bikeEncoder, edge);
         List<PrepareRoutingSubnetworks.PrepareJob> prepareJobs = Arrays.asList(
                 new PrepareRoutingSubnetworks.PrepareJob(carEncoder.toString(), carEncoder.getAccessEnc(), null),
                 new PrepareRoutingSubnetworks.PrepareJob(bikeEncoder.toString(), bikeEncoder.getAccessEnc(), null)
@@ -175,8 +175,8 @@ public class PrepareRoutingSubnetworksTest {
 
         // now we block the edge for both vehicles, in which case the smaller subnetwork gets removed
         edge = GHUtility.getEdge(g, 3, 4);
-        GHUtility.setProperties(edge, carEncoder, 10, false, false);
-        GHUtility.setProperties(edge, bikeEncoder, 5, false, false);
+        GHUtility.setSpeed(10, false, false, carEncoder, edge);
+        GHUtility.setSpeed(5, false, false, bikeEncoder, edge);
         instance = new PrepareRoutingSubnetworks(g, prepareJobs);
         instance.setMinNetworkSize(5);
         instance.doWork();
@@ -185,17 +185,17 @@ public class PrepareRoutingSubnetworksTest {
     GraphHopperStorage createSubnetworkTestStorageWithOneWays(EncodingManager em) {
         GraphHopperStorage g = new GraphBuilder(em).create();
         // 0 - 1 - 2 - 3 - 4 <- 5 - 6
-        GHUtility.setProperties(g.edge(0, 1).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(1, 2).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(2, 3).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(3, 4).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(5, 4).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(g.edge(5, 6).setDistance(1), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(3, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(5, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(5, 6).setDistance(1));
 
         // 7 -> 8 - 9 - 10
-        GHUtility.setProperties(g.edge(7, 8).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(g.edge(8, 9).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(9, 10).setDistance(1), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(7, 8).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(8, 9).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(9, 10).setDistance(1));
 
         return g;
     }
@@ -236,11 +236,11 @@ public class PrepareRoutingSubnetworksTest {
     public void testNodeOrderingRegression() {
         // 1 -> 2 -> 0 - 3 - 4 - 5
         GraphHopperStorage g = new GraphBuilder(em).create();
-        GHUtility.setProperties(g.edge(1, 2).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(g.edge(2, 0).setDistance(1), encoder, 60, true, false);
-        GHUtility.setProperties(g.edge(0, 3).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(3, 4).setDistance(1), encoder, 60, true, true);
-        GHUtility.setProperties(g.edge(4, 5).setDistance(1), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 0).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(3, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(4, 5).setDistance(1));
 
         PrepareRoutingSubnetworks.PrepareJob job = new PrepareRoutingSubnetworks.PrepareJob("car", accessEnc, null);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(job)).

@@ -49,7 +49,7 @@ public class DefaultBidirPathExtractorTest {
     @Test
     public void testExtract() {
         Graph graph = createGraph();
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(10), carEncoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 2).setDistance(10));
         SPTEntry fwdEntry = new SPTEntry(0, 2, 0);
         fwdEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 10);
         SPTEntry bwdEntry = new SPTEntry(EdgeIterator.NO_EDGE, 2, 0);
@@ -62,8 +62,8 @@ public class DefaultBidirPathExtractorTest {
     public void testExtract2() {
         // 1->2->3
         Graph graph = createGraph();
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(10), carEncoder, 60, true, false);
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(20), carEncoder, 60, true, false);
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(1, 2).setDistance(10));
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(2, 3).setDistance(20));
         // add some turn costs at node 2 where fwd&bwd searches meet. these costs have to be included in the
         // weight and the time of the path
         TurnCostStorage turnCostStorage = graph.getTurnCostStorage();

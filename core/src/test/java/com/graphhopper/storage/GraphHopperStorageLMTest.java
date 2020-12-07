@@ -31,7 +31,7 @@ public class GraphHopperStorageLMTest {
         way_0_1.setTag("highway", "primary");
         way_0_1.setTag("maxheight", "4.4");
 
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(1), carFlagEncoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, carFlagEncoder, graph.edge(0, 1).setDistance(1));
         updateDistancesFor(graph, 0, 0.00, 0.00);
         updateDistancesFor(graph, 1, 0.01, 0.01);
         graph.getEdgeIteratorState(0, 1).setFlags(
@@ -42,7 +42,7 @@ public class GraphHopperStorageLMTest {
         way_1_2.setTag("highway", "primary");
         way_1_2.setTag("maxweight", "45");
 
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(1), carFlagEncoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, carFlagEncoder, graph.edge(1, 2).setDistance(1));
         updateDistancesFor(graph, 2, 0.02, 0.02);
         graph.getEdgeIteratorState(1, 2).setFlags(
                 carFlagEncoder.handleWayTags(encodingManager.createEdgeFlags(), way_1_2, Access.WAY));

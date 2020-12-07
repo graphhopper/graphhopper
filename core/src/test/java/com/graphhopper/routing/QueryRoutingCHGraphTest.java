@@ -66,8 +66,8 @@ class QueryRoutingCHGraphTest {
     @Test
     public void basic() {
         // 0-1-2
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(10), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(10));
         graph.freeze();
         assertEquals(2, graph.getEdges());
 
@@ -100,8 +100,8 @@ class QueryRoutingCHGraphTest {
     public void withShortcuts() {
         // 0-1-2
         //  \-/
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(10), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(1, 2).setDistance(10), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(10));
         graph.freeze();
         assertEquals(2, graph.getEdges());
         setIdentityLevels(chGraph);
@@ -250,7 +250,7 @@ class QueryRoutingCHGraphTest {
 
     @Test
     public void getBaseGraph() {
-        GHUtility.setProperties(graph.edge(0, 1).setDistance(10), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10));
         QueryGraph queryGraph = QueryGraph.create(graph, Collections.<Snap>emptyList());
         assertSame(graph.getBaseGraph(), routingCHGraph.getBaseGraph());
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
@@ -638,7 +638,7 @@ class QueryRoutingCHGraphTest {
     private EdgeIteratorState addEdge(Graph graph, int from, int to) {
         NodeAccess na = graph.getNodeAccess();
         double dist = DistancePlaneProjection.DIST_PLANE.calcDist(na.getLat(from), na.getLon(from), na.getLat(to), na.getLon(to));
-        return GHUtility.setProperties(graph.edge(from, to).setDistance(dist), encoder, 60, true, true);
+        return GHUtility.setSpeed(60, true, true, encoder, graph.edge(from, to).setDistance(dist));
     }
 
 }

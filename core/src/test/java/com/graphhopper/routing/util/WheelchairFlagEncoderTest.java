@@ -504,14 +504,14 @@ public class WheelchairFlagEncoderTest {
         na.setNode(1, 51.1, 12.002, 55);
         EdgeIteratorState edge0 = gs.edge(0, 1).setWayGeometry(Helper.createPointList3D(51.1, 12.0011, 49, 51.1, 12.0015, 55));
         edge0.setDistance(100);
-        GHUtility.setProperties(edge0, wheelchairEncoder, 5, 5);
+        GHUtility.setSpeed(5, 5, wheelchairEncoder, edge0);
 
         // incline of 10% over all
         na.setNode(2, 51.2, 12.101, 50);
         na.setNode(3, 51.2, 12.102, 60);
         EdgeIteratorState edge1 = gs.edge(2, 3).setWayGeometry(Helper.createPointList3D(51.2, 12.1011, 49, 51.2, 12.1015, 55));
         edge1.setDistance(100);
-        GHUtility.setProperties(edge1, wheelchairEncoder, 5, 5);
+        GHUtility.setSpeed(5, 5, wheelchairEncoder, edge1);
         return gs;
     }
 

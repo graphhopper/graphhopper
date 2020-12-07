@@ -68,23 +68,23 @@ public class AlternativeRouteEdgeCHTest {
         // So we get all three alternatives.
 
         FlagEncoder encoder = carFE;
-        GHUtility.setProperties(graph.edge(5, 6).setDistance(10000), encoder, 60, true, true);
-        EdgeIteratorState e6_3 = GHUtility.setProperties(graph.edge(6, 3).setDistance(10000), encoder, 60, true, true);
-        EdgeIteratorState e3_4 = GHUtility.setProperties(graph.edge(3, 4).setDistance(10000), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(4, 10).setDistance(10000), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 6).setDistance(10000));
+        EdgeIteratorState e6_3 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 3).setDistance(10000));
+        EdgeIteratorState e3_4 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(10000));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 10).setDistance(10000));
 
-        GHUtility.setProperties(graph.edge(6, 7).setDistance(10000), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(7, 8).setDistance(10000), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(8, 4).setDistance(10000), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 7).setDistance(10000));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(7, 8).setDistance(10000));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(8, 4).setDistance(10000));
 
-        GHUtility.setProperties(graph.edge(5, 1).setDistance(10000), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(1, 9).setDistance(10000), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(9, 2).setDistance(10000), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(2, 3).setDistance(10000), encoder, 60, true, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 1).setDistance(10000));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 9).setDistance(10000));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(9, 2).setDistance(10000));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(10000));
 
-        EdgeIteratorState e4_11 = GHUtility.setProperties(graph.edge(4, 11).setDistance(9000), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(11, 12).setDistance(9000), encoder, 60, true, true);
-        GHUtility.setProperties(graph.edge(12, 10).setDistance(10000), encoder, 60, true, true);
+        EdgeIteratorState e4_11 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 11).setDistance(9000));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(11, 12).setDistance(9000));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(12, 10).setDistance(10000));
 
         TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
         DecimalEncodedValue carTurnCost = em.getDecimalEncodedValue(TurnCost.key(carFE.toString()));
