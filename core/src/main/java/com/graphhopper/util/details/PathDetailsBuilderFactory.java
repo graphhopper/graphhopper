@@ -62,6 +62,11 @@ public class PathDetailsBuilderFactory {
             if (checkSuffix.endsWith(getKey("", "priority")) && evl.hasEncodedValue(checkSuffix))
                 builders.add(new DecimalDetails(checkSuffix, evl.getDecimalEncodedValue(checkSuffix)));
         }
+        
+        for (String checkPrefix : requestedPathDetails) {
+            if (checkPrefix.startsWith(CustomArea.key("")) && evl.hasEncodedValue(checkPrefix))
+                builders.add(new StringDetails(checkPrefix, evl.getStringEncodedValue(checkPrefix)));
+        }
 
         for (String key : Arrays.asList(MaxSpeed.KEY, MaxWidth.KEY, MaxHeight.KEY, MaxWeight.KEY,
                 MaxAxleLoad.KEY, MaxLength.KEY)) {
