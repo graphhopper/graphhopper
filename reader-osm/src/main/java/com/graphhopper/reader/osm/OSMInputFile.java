@@ -17,16 +17,21 @@
  */
 package com.graphhopper.reader.osm;
 
-import com.graphhopper.reader.ReaderElement;
-import com.graphhopper.reader.osm.pbf.PbfReader;
-import com.graphhopper.reader.osm.pbf.Sink;
-
-import java.io.*;
-import java.util.ArrayDeque;
-import java.util.Queue;
+import java.io.File;
+import java.io.IOException;
+import java.util.Iterator;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import com.graphhopper.reader.ReaderBlock;
+import com.graphhopper.reader.ReaderElement;
+import com.graphhopper.reader.osm.pbf.PbfReader;
 
 /**
  * A readable OSM file.
@@ -34,130 +39,79 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Nop
  */
-public class OSMInputFile implements Sink, OSMInput {
-    private static final int MAX_BATCH_SIZE = 1_000;
-    private final InputStream bis;
-    private final BlockingQueue<ReaderElement> itemQueue;
-    private final Queue<ReaderElement> itemBatch;
-    Thread pbfReaderThread;
-    private boolean eof;
-    private boolean hasIncomingData;
-    private int workerThreads = -1;
-
-    public OSMInputFile(File file) throws IOException {
-        bis = decode(file);
-        itemQueue = new LinkedBlockingQueue<>(50_000);
-        itemBatch = new ArrayDeque<>(MAX_BATCH_SIZE);
+public class OSMInputFile implements OSMInput {
+    private static final int MAX_CONCURRENT_BLOBS = 10;
+    
+    private final ExecutorService executorService;
+    private final BlockingQueue<Future<ReaderBlock>> itemQueue;
+    private final AtomicBoolean parsing = new AtomicBoolean(true);
+    private final Thread pbfReaderThread;
+    private Iterator<ReaderElement> iter;
+    
+    public OSMInputFile(File file) {
+        this(file, 1);
     }
 
-    public OSMInputFile open() {
-        hasIncomingData = true;
-        if (workerThreads <= 0)
-            workerThreads = 1;
-
-        PbfReader reader = new PbfReader(bis, this, workerThreads);
-        pbfReaderThread = new Thread(reader, "PBF Reader");
-        pbfReaderThread.start();
-        return this;
-    }
-
-    /**
-     * Currently on for pbf format. Default is number of cores.
-     */
-    public OSMInputFile setWorkerThreads(int num) {
-        workerThreads = num;
-        return this;
-    }
-
-    private InputStream decode(File file) throws IOException {
-        InputStream ips = null;
-        try {
-            ips = new BufferedInputStream(new FileInputStream(file), 50000);
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-        ips.mark(10);
-
-        // check file header
-        byte[] header = new byte[6];
-        if (ips.read(header) < 0)
-            throw new IllegalArgumentException("Input file is not of valid type " + file.getPath());
-
-        if (header[0] == 0 && header[1] == 0 && header[2] == 0
-                && header[4] == 10 && header[5] == 9
-                && (header[3] == 13 || header[3] == 14)) {
-            ips.reset();
-            return ips;
-        }
-        
-        throw new IllegalArgumentException("Input file is not of valid type " + file.getPath());
+    public OSMInputFile(File file, int workerThreads) {
+        this.executorService = Executors.newFixedThreadPool(workerThreads);
+        this.itemQueue = new LinkedBlockingQueue<>(MAX_CONCURRENT_BLOBS);
+        PbfReader reader = new PbfReader(file, executorService, itemQueue, parsing);
+        this.pbfReaderThread = new Thread(reader, "PBF Reader");
+        this.pbfReaderThread.setDaemon(true);
+        this.pbfReaderThread.start();
     }
 
     @Override
     public ReaderElement getNext() {
-        if (eof)
-            throw new IllegalStateException("EOF reached");
-
-        ReaderElement item = getNextPBF();
-
-        if (item != null)
-            return item;
-
-        eof = true;
-        return null;
-    }
-
-    public boolean isEOF() {
-        return eof;
+        if (iter != null && iter.hasNext()) {
+            return iter.next();
+        }
+        
+        ReaderBlock block;
+        try {
+            Future<ReaderBlock> futureBlock = itemQueue.take();
+            block = futureBlock.get();
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return null;
+        }
+        
+        if (block.getElements() == null) {
+            return null; // signal EOF
+        }
+        
+        this.iter = block.getElements().iterator();
+        if (iter.hasNext()) {
+            return iter.next();
+        }
+        
+        return getNext();
     }
 
     @Override
     public void close() throws IOException {
-        eof = true;
-        bis.close();
         // if exception happened on OSMInputFile-thread we need to shutdown the pbf handling
-        if (pbfReaderThread != null && pbfReaderThread.isAlive())
+        parsing.set(false);
+        if (pbfReaderThread.isAlive()) {
             pbfReaderThread.interrupt();
-    }
-
-    @Override
-    public void process(ReaderElement item) {
+            try {
+                pbfReaderThread.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        executorService.shutdown();
         try {
-            // blocks if full
-            itemQueue.put(item);
-        } catch (InterruptedException ex) {
-            throw new RuntimeException(ex);
+            executorService.awaitTermination(100L, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
-    }
-
-    public int getUnprocessedElements() {
-        return itemQueue.size() + itemBatch.size();
     }
 
     @Override
-    public void complete() {
-        hasIncomingData = false;
-    }
-
-    private ReaderElement getNextPBF() {
-        while (itemBatch.isEmpty()) {
-            if (!hasIncomingData && itemQueue.isEmpty()) {
-                return null; // signal EOF
-            }
-            
-            if (itemQueue.drainTo(itemBatch, MAX_BATCH_SIZE) == 0) {
-                try {
-                    ReaderElement element = itemQueue.poll(100, TimeUnit.MILLISECONDS);
-                    if (element != null) {
-                        return element; // short circuit
-                    }
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    return null; // signal EOF
-                }
-            }
-        }
-        
-        return itemBatch.poll();
+    public int getUnprocessedElements() {
+        return itemQueue.size();
     }
 }

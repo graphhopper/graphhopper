@@ -157,7 +157,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
      */
     void preProcess(File osmFile) {
         LOGGER.info("Starting to process OSM file: '" + osmFile + "'");
-        try (OSMInput in = openOsmInputFile(osmFile)) {
+        try (OSMInput in = new OSMInputFile(osmFile, workerThreads)) {
             long tmpWayCounter = 1;
             long tmpRelationCounter = 1;
             ReaderElement item;
@@ -252,7 +252,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         long wayStart = -1;
         long relationStart = -1;
         long counter = 1;
-        try (OSMInput in = openOsmInputFile(osmFile)) {
+        try (OSMInput in = new OSMInputFile(osmFile, workerThreads)) {
             LongIntMap nodeFilter = getNodeMap();
 
             ReaderElement item;
@@ -300,10 +300,6 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         finishedReading();
         if (graph.getNodes() == 0)
             throw new RuntimeException("Graph after reading OSM must not be empty. Read " + counter + " items and " + locations + " locations");
-    }
-
-    protected OSMInput openOsmInputFile(File osmFile) throws IOException {
-        return new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
     }
 
     /**

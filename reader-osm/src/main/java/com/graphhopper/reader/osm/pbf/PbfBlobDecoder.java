@@ -3,6 +3,7 @@ package com.graphhopper.reader.osm.pbf;
 
 import com.carrotsearch.hppc.LongArrayList;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.graphhopper.reader.ReaderBlock;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.zip.InflaterInputStream;
 
 /**
@@ -27,29 +29,22 @@ import java.util.zip.InflaterInputStream;
  *
  * @author Brett Henderson
  */
-public class PbfBlobDecoder implements Runnable {
+public class PbfBlobDecoder implements Callable<ReaderBlock> {
     private static final Logger log = LoggerFactory.getLogger(PbfBlobDecoder.class);
-    private final String blobType;
-    private final byte[] rawBlob;
-    private final PbfBlobDecoderListener listener;
-    private List<ReaderElement> decodedEntities;
+    private final PbfRawBlob rawBlob;
 
     /**
      * Creates a new instance.
      * <p>
      *
-     * @param blobType The type of blob.
-     * @param rawBlob  The raw data of the blob.
-     * @param listener The listener for receiving decoding results.
+     * @param rawBlob the {@link PbfRawBlob} to be decoded
      */
-    public PbfBlobDecoder(String blobType, byte[] rawBlob, PbfBlobDecoderListener listener) {
-        this.blobType = blobType;
+    public PbfBlobDecoder(PbfRawBlob rawBlob) {
         this.rawBlob = rawBlob;
-        this.listener = listener;
     }
 
     private InputStream readBlobContent() throws IOException {
-        Fileformat.Blob blob = Fileformat.Blob.parseFrom(rawBlob);
+        Fileformat.Blob blob = Fileformat.Blob.parseFrom(rawBlob.getData());
 
         if (blob.hasRaw()) {
             return blob.getRaw().newInput();
@@ -62,7 +57,7 @@ public class PbfBlobDecoder implements Runnable {
         throw new RuntimeException("PBF blob uses unsupported compression, only raw or zlib may be used.");
     }
 
-    private void processOsmHeader(InputStream data) throws InvalidProtocolBufferException {
+    private OSMFileHeader processOsmHeader(InputStream data) throws InvalidProtocolBufferException {
         Osmformat.HeaderBlock header;
         try {
             header = Osmformat.HeaderBlock.parseFrom(data);
@@ -89,7 +84,7 @@ public class PbfBlobDecoder implements Runnable {
         OSMFileHeader fileheader = new OSMFileHeader();
         long milliSecondDate = header.getOsmosisReplicationTimestamp();
         fileheader.setTag("timestamp", Helper.createFormatter().format(new Date(milliSecondDate * 1000)));
-        decodedEntities.add(fileheader);
+        return fileheader;
     }
 
     private Map<String, Object> buildNodeTags(Osmformat.Node node, PbfFieldDecoder fieldDecoder) {
@@ -134,7 +129,7 @@ public class PbfBlobDecoder implements Runnable {
         return tags;
     }
 
-    private void processNodes(List<Osmformat.Node> nodes, PbfFieldDecoder fieldDecoder) {
+    private void processNodes(List<Osmformat.Node> nodes, PbfFieldDecoder fieldDecoder, List<ReaderElement> decodedEntities) {
         for (Osmformat.Node node : nodes) {
             Map<String, Object> tags = buildNodeTags(node, fieldDecoder);
 
@@ -147,7 +142,7 @@ public class PbfBlobDecoder implements Runnable {
         }
     }
 
-    private void processNodes(Osmformat.DenseNodes nodes, PbfFieldDecoder fieldDecoder) {
+    private void processNodes(Osmformat.DenseNodes nodes, PbfFieldDecoder fieldDecoder, List<ReaderElement> decodedEntities) {
         long nodeId = 0;
         long latitude = 0;
         long longitude = 0;
@@ -185,7 +180,7 @@ public class PbfBlobDecoder implements Runnable {
         }
     }
 
-    private void processWays(List<Osmformat.Way> ways, PbfFieldDecoder fieldDecoder) {
+    private void processWays(List<Osmformat.Way> ways, PbfFieldDecoder fieldDecoder, List<ReaderElement> decodedEntities) {
         for (Osmformat.Way way : ways) {
             Map<String, Object> tags = buildWayTags(way, fieldDecoder);
 
@@ -231,7 +226,7 @@ public class PbfBlobDecoder implements Runnable {
     }
     
 
-    private void processRelations(List<Osmformat.Relation> relations, PbfFieldDecoder fieldDecoder) {
+    private void processRelations(List<Osmformat.Relation> relations, PbfFieldDecoder fieldDecoder, List<ReaderElement> decodedEntities) {
         for (Osmformat.Relation relation : relations) {
             Map<String, Object> tags = buildRelationTags(relation, fieldDecoder);
 
@@ -245,7 +240,7 @@ public class PbfBlobDecoder implements Runnable {
         }
     }
 
-    private void processOsmPrimitives(InputStream data) throws InvalidProtocolBufferException {
+    private List<ReaderElement> processOsmPrimitives(InputStream data) throws InvalidProtocolBufferException {
         Osmformat.PrimitiveBlock block;
         try {
             block = Osmformat.PrimitiveBlock.parseFrom(data);
@@ -254,45 +249,34 @@ public class PbfBlobDecoder implements Runnable {
         }
         PbfFieldDecoder fieldDecoder = new PbfFieldDecoder(block);
 
+        List<ReaderElement> elements = new ArrayList<>();
         for (Osmformat.PrimitiveGroup primitiveGroup : block.getPrimitivegroupList()) {
             // A PrimitiveGroup MUST NEVER contain different types of objects.
             if (!primitiveGroup.getNodesList().isEmpty()) {
-                processNodes(primitiveGroup.getNodesList(), fieldDecoder);
+                processNodes(primitiveGroup.getNodesList(), fieldDecoder, elements);
             } else if (!primitiveGroup.getDense().getIdList().isEmpty()) {
-                processNodes(primitiveGroup.getDense(), fieldDecoder);
+                processNodes(primitiveGroup.getDense(), fieldDecoder, elements);
             } else if (!primitiveGroup.getWaysList().isEmpty()) {
-                processWays(primitiveGroup.getWaysList(), fieldDecoder);
+                processWays(primitiveGroup.getWaysList(), fieldDecoder, elements);
             } else if (!primitiveGroup.getRelationsList().isEmpty()) {
-                processRelations(primitiveGroup.getRelationsList(), fieldDecoder);
+                processRelations(primitiveGroup.getRelationsList(), fieldDecoder, elements);
             }
         }
+        
+        return elements;
     }
-
-    private void runAndTrapExceptions() {
-        try {
-            decodedEntities = new ArrayList<>();
-            if ("OSMHeader".equals(blobType)) {
-                processOsmHeader(readBlobContent());
-
-            } else if ("OSMData".equals(blobType)) {
-                processOsmPrimitives(readBlobContent());
-
-            } else {
-                log.debug("Skipping unrecognised blob type {}", blobType);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to process PBF blob", e);
-        }
-    }
-
+    
     @Override
-    public void run() {
-        try {
-            runAndTrapExceptions();
-            listener.complete(decodedEntities);
-
-        } catch (RuntimeException e) {
-            listener.error(e);
+    public ReaderBlock call() throws Exception {
+        List<ReaderElement> elements;
+        if ("OSMHeader".equals(rawBlob.getType())) {
+            elements = Collections.singletonList(processOsmHeader(readBlobContent()));
+        } else if ("OSMData".equals(rawBlob.getType())) {
+            elements = processOsmPrimitives(readBlobContent());
+        } else {
+            log.debug("Skipping unrecognised blob type {}", rawBlob.getType());
+            elements = Collections.emptyList();
         }
+        return new ReaderBlock(elements);
     }
 }
