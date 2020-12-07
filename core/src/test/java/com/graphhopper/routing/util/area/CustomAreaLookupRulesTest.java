@@ -24,8 +24,8 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TransportationMode;
-import com.graphhopper.routing.util.parsers.SpatialRuleParser;
 import com.graphhopper.routing.util.spatialrules.CountriesSpatialRuleFactory;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
@@ -33,6 +33,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
@@ -50,6 +51,7 @@ import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 /**
  * @author Robin Boldt
@@ -127,40 +129,23 @@ public class CustomAreaLookupRulesTest {
         final GeometryFactory fac = new GeometryFactory();
         Polygon polygon = fac.createPolygon(new Coordinate[]{
                 new Coordinate(0, 0), new Coordinate(0, 1), new Coordinate(1, 1), new Coordinate(1, 0), new Coordinate(0, 0)});
-        final SpatialRule germany = new GermanySpatialRule(Collections.singletonList(polygon));
+        final SpatialRule germanyRule = new GermanySpatialRule();
+        
+        CustomArea germanyArea = new CustomArea(germanyRule.getId(), Collections.singletonList(polygon), "country");
 
-        SpatialRuleLookup index = new SpatialRuleLookup() {
-            @Override
-            public SpatialRuleSet lookupRules(double lat, double lon) {
-                for (Polygon polygon : germany.getBorders()) {
-                    if (polygon.covers(fac.createPoint(new Coordinate(lon, lat)))) {
-                        return new SpatialRuleSet(Collections.singletonList(germany), 1);
-                    }
-                }
-                return SpatialRuleSet.EMPTY;
-            }
-            
-            @Override
-            public List<SpatialRule> getRules() {
-                return Collections.singletonList(germany);
-            }
+        CustomAreaLookup lookup = new CustomAreaLookupJTS(Collections.singletonList(germanyArea), Collections.singletonList(germanyRule));
 
-            @Override
-            public Envelope getBounds() {
-                return new Envelope(-180, 180, -90, 90);
-            }
-        };
-
-        EncodingManager em = new EncodingManager.Builder().add(new SpatialRuleParser(index, Country.create())).add(new CarFlagEncoder(new PMap())).build();
-        IntEncodedValue countrySpatialIdEnc = em.getIntEncodedValue(Country.KEY);
+        EncodingManager em = new EncodingManager.Builder().setCustomAreaLookup(lookup).add(new CarFlagEncoder(new PMap())).build();
+        StringEncodedValue countryIdEnc = em.getStringEncodedValue(com.graphhopper.routing.ev.CustomArea.key("country"));
         EnumEncodedValue<RoadAccess> tmpRoadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
         DecimalEncodedValue tmpCarMaxSpeedEnc = em.getDecimalEncodedValue(MaxSpeed.KEY);
 
         Graph graph = new GraphBuilder(em).create();
-        EdgeIteratorState e1 = graph.edge(0, 1, 1, true);
-        EdgeIteratorState e2 = graph.edge(0, 2, 1, true);
-        EdgeIteratorState e3 = graph.edge(0, 3, 1, true);
-        EdgeIteratorState e4 = graph.edge(0, 4, 1, true);
+        FlagEncoder encoder = em.getEncoder("car");
+        EdgeIteratorState e1 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1));
+        EdgeIteratorState e2 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 2).setDistance(1));
+        EdgeIteratorState e3 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 3).setDistance(1));
+        EdgeIteratorState e4 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 4).setDistance(1));
         updateDistancesFor(graph, 0, 0.00, 0.00);
         updateDistancesFor(graph, 1, 0.01, 0.01);
         updateDistancesFor(graph, 2, -0.01, -0.01);
@@ -181,8 +166,8 @@ public class CustomAreaLookupRulesTest {
         e2.setFlags(em.handleWayTags(way2, map, relFlags));
         assertEquals(RoadAccess.YES, e2.get(tmpRoadAccessEnc));
 
-        assertEquals(index.getRules().indexOf(germany), e1.get(countrySpatialIdEnc)-1);
-        assertEquals(0, e2.get(countrySpatialIdEnc));
+        assertEquals(germanyArea.getId(), e1.get(countryIdEnc));
+        assertNull(e2.get(countryIdEnc));
 
         ReaderWay livingStreet = new ReaderWay(29L);
         livingStreet.setTag("highway", "living_street");

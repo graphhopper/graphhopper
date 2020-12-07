@@ -151,6 +151,7 @@ public class EncodingManager implements EncodedValueLookup {
         private DateRangeParser dateRangeParser;
         private final List<AbstractFlagEncoder> flagEncoderList = new ArrayList<>();
         private final List<EncodedValue> encodedValueList = new ArrayList<>();
+        private final List<EncodedValue> customEncodedValueList = new ArrayList<>();
         private final List<TagParser> tagParsers = new ArrayList<>();
         private final List<TurnCostParser> turnCostParsers = new ArrayList<>();
         private final List<RelationTagParser> relationTagParsers = new ArrayList<>();
@@ -211,7 +212,7 @@ public class EncodingManager implements EncodedValueLookup {
         
         public Builder setCustomAreaLookup(CustomAreaLookup customAreaLookup) {
             check();
-            em.setCustomAreaLookup(encodedValueList, customAreaLookup);
+            em.setCustomAreaLookup(customEncodedValueList, customAreaLookup);
             return this;
         }
 
@@ -309,6 +310,10 @@ public class EncodingManager implements EncodedValueLookup {
 
             for (EncodedValue ev : encodedValueList) {
                 em.addEncodedValue(ev, false);
+            }
+            
+            for (EncodedValue ev : customEncodedValueList) {
+                em.addEncodedValue(ev, true);
             }
 
             if (!em.getCustomAreaLookup().getEncodedValueMap().isEmpty())
@@ -427,10 +432,10 @@ public class EncodingManager implements EncodedValueLookup {
         }
     }
     
-    private void setCustomAreaLookup(List<EncodedValue> returnList, CustomAreaLookup customAreaLookup) {
+    private void setCustomAreaLookup(List<EncodedValue> customEncodedValueList, CustomAreaLookup customAreaLookup) {
         this.customAreaLookup = customAreaLookup;
         for (Entry<String, List<String>> entry : customAreaLookup.getEncodedValueMap().entrySet()) {
-            returnList.add(new StringEncodedValue(entry.getKey(), entry.getValue()));
+            customEncodedValueList.add(new StringEncodedValue(entry.getKey(), entry.getValue()));
         }
     }
 

@@ -37,10 +37,14 @@ public class CustomArea {
     private final String encodedValue;
     private final int encodedValueLimit;
     
-    public CustomArea(String id, List<Polygon> borders, String encodedValue, int encodedValueLimit) {
+    public CustomArea(String id, List<Polygon> borders, String encodedValueSuffix, int encodedValueLimit) {
         this.id = id;
         this.borders = Collections.unmodifiableList(new ArrayList<>(borders));
-        this.encodedValue = encodedValue;
+        if (encodedValueSuffix != null && !encodedValueSuffix.isEmpty()) {
+            this.encodedValue = com.graphhopper.routing.ev.CustomArea.key(encodedValueSuffix);
+        } else {
+            this.encodedValue = "";
+        }
         this.encodedValueLimit = encodedValueLimit;
     }
     
