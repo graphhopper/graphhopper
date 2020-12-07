@@ -34,7 +34,7 @@ public class GraphHopperConfigModuleTest {
         ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
         objectMapper.registerModule(new GraphHopperConfigModule());
         objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
-        GraphHopperConfig graphHopperConfig = objectMapper.readValue(getClass().getResourceAsStream("config.yml"), GraphHopperConfig.class);
+        GraphHopperConfig graphHopperConfig = objectMapper.readValue(getClass().getResourceAsStream("config.yml"), GraphHopperYAMLConfig.class);
         // The dot in the key is no special symbol in YAML. It's just part of the string.
         Assertions.assertEquals(graphHopperConfig.getInt("index.max_region_search", 0), 100);
         // So when I think this refers to a YAML hierarchy, I'll be disappointed!
