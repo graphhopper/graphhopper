@@ -841,6 +841,12 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
+        public EdgeIteratorState set(BooleanEncodedValue property, boolean fwd, boolean bwd) {
+            checkShortcut(false, "set(BooleanEncodedValue, boolean, boolean)");
+            return edgeIterable.set(property, fwd, bwd);
+        }
+
+        @Override
         public int get(IntEncodedValue property) {
             checkShortcut(false, "get(IntEncodedValue)");
             return edgeIterable.get(property);
@@ -862,6 +868,12 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public EdgeIteratorState setReverse(IntEncodedValue property, int value) {
             checkShortcut(false, "setReverse(IntEncodedValue, int)");
             return edgeIterable.setReverse(property, value);
+        }
+
+        @Override
+        public EdgeIteratorState set(IntEncodedValue property, int fwd, int bwd) {
+            checkShortcut(false, "set(IntEncodedValue, int, int)");
+            return edgeIterable.set(property, fwd, bwd);
         }
 
         @Override
@@ -889,6 +901,12 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
+        public EdgeIteratorState set(DecimalEncodedValue property, double fwd, double bwd) {
+            checkShortcut(false, "set(DecimalEncodedValue, double, double)");
+            return edgeIterable.set(property, fwd, bwd);
+        }
+
+        @Override
         public <T extends Enum> T get(EnumEncodedValue<T> property) {
             checkShortcut(false, "get(EnumEncodedValue<T>)");
             return edgeIterable.get(property);
@@ -910,6 +928,12 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
             checkShortcut(false, "setReverse(EnumEncodedValue<T>, T)");
             return edgeIterable.setReverse(property, value);
+        }
+
+        @Override
+        public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
+            checkShortcut(false, "set(EnumEncodedValue<T>, T, T)");
+            return edgeIterable.set(property, fwd, bwd);
         }
 
         @Override

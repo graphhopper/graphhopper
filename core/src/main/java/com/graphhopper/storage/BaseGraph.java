@@ -1131,6 +1131,15 @@ class BaseGraph implements Graph {
         }
 
         @Override
+        public EdgeIteratorState set(BooleanEncodedValue property, boolean fwd, boolean bwd) {
+            property.setBool(reverse, getFlags(), fwd);
+            if (property.isStoreTwoDirections())
+                property.setBool(!reverse, getFlags(), bwd);
+            baseGraph.writeFlags(edgePointer, getFlags());
+            return this;
+        }
+
+        @Override
         public int get(IntEncodedValue property) {
             return property.getInt(reverse, getFlags());
         }
@@ -1150,6 +1159,15 @@ class BaseGraph implements Graph {
         @Override
         public EdgeIteratorState setReverse(IntEncodedValue property, int value) {
             property.setInt(!reverse, getFlags(), value);
+            baseGraph.writeFlags(edgePointer, getFlags());
+            return this;
+        }
+
+        @Override
+        public EdgeIteratorState set(IntEncodedValue property, int fwd, int bwd) {
+            property.setInt(reverse, getFlags(), fwd);
+            if (property.isStoreTwoDirections())
+                property.setInt(!reverse, getFlags(), bwd);
             baseGraph.writeFlags(edgePointer, getFlags());
             return this;
         }
@@ -1179,6 +1197,15 @@ class BaseGraph implements Graph {
         }
 
         @Override
+        public EdgeIteratorState set(DecimalEncodedValue property, double fwd, double bwd) {
+            property.setDecimal(reverse, getFlags(), fwd);
+            if (property.isStoreTwoDirections())
+                property.setDecimal(!reverse, getFlags(), bwd);
+            baseGraph.writeFlags(edgePointer, getFlags());
+            return this;
+        }
+
+        @Override
         public <T extends Enum> T get(EnumEncodedValue<T> property) {
             return property.getEnum(reverse, getFlags());
         }
@@ -1198,6 +1225,15 @@ class BaseGraph implements Graph {
         @Override
         public <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
             property.setEnum(!reverse, getFlags(), value);
+            baseGraph.writeFlags(edgePointer, getFlags());
+            return this;
+        }
+
+        @Override
+        public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
+            property.setEnum(reverse, getFlags(), fwd);
+            if (property.isStoreTwoDirections())
+                property.setEnum(!reverse, getFlags(), bwd);
             baseGraph.writeFlags(edgePointer, getFlags());
             return this;
         }

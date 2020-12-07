@@ -819,6 +819,11 @@ public class GHUtility {
         }
 
         @Override
+        public EdgeIteratorState set(BooleanEncodedValue property, boolean fwd, boolean bwd) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
         public int get(IntEncodedValue property) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
@@ -835,6 +840,11 @@ public class GHUtility {
 
         @Override
         public EdgeIteratorState setReverse(IntEncodedValue property, int value) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public EdgeIteratorState set(IntEncodedValue property, int fwd, int bwd) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
@@ -859,6 +869,11 @@ public class GHUtility {
         }
 
         @Override
+        public EdgeIteratorState set(DecimalEncodedValue property, double fwd, double bwd) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
         public <T extends Enum> T get(EnumEncodedValue<T> property) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
@@ -875,6 +890,11 @@ public class GHUtility {
 
         @Override
         public <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 

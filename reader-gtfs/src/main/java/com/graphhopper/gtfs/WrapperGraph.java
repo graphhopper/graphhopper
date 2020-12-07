@@ -209,6 +209,11 @@ public class WrapperGraph implements Graph {
             }
 
             @Override
+            public EdgeIteratorState set(BooleanEncodedValue property, boolean fwd, boolean bwd) {
+                return this;
+            }
+
+            @Override
             public int get(IntEncodedValue property) {
                 throw new UnsupportedOperationException();
             }
@@ -225,6 +230,11 @@ public class WrapperGraph implements Graph {
 
             @Override
             public EdgeIteratorState setReverse(IntEncodedValue property, int value) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EdgeIteratorState set(IntEncodedValue property, int fwd, int bwd) {
                 throw new UnsupportedOperationException();
             }
 
@@ -249,6 +259,11 @@ public class WrapperGraph implements Graph {
             }
 
             @Override
+            public EdgeIteratorState set(DecimalEncodedValue property, double fwd, double bwd) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
             public <T extends Enum> T get(EnumEncodedValue<T> property) {
                 throw new UnsupportedOperationException();
             }
@@ -265,6 +280,11 @@ public class WrapperGraph implements Graph {
 
             @Override
             public <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
                 throw new UnsupportedOperationException();
             }
 
@@ -304,6 +324,7 @@ public class WrapperGraph implements Graph {
 
                     EdgeIteratorState current = null;
                     EdgeIterator baseGraphEdgeIterator = baseGraphIterator();
+
                     private EdgeIterator baseGraphIterator() {
                         if (baseNode < mainGraph.getNodes()) {
                             return baseGraphEdgeExplorer.setBaseNode(baseNode);
@@ -322,7 +343,7 @@ public class WrapperGraph implements Graph {
                                 baseGraphEdgeIterator = null;
                             }
                         }
-                        while(iterator.hasNext()) {
+                        while (iterator.hasNext()) {
                             current = iterator.next();
                             if (filter.accept(current)) {
                                 return true;
@@ -417,6 +438,12 @@ public class WrapperGraph implements Graph {
                     }
 
                     @Override
+                    public EdgeIteratorState set(BooleanEncodedValue property, boolean fwd, boolean bwd) {
+                        current.set(property, fwd, bwd);
+                        return this;
+                    }
+
+                    @Override
                     public int get(IntEncodedValue property) {
                         return current.get(property);
                     }
@@ -435,6 +462,12 @@ public class WrapperGraph implements Graph {
                     @Override
                     public EdgeIteratorState setReverse(IntEncodedValue property, int value) {
                         current.setReverse(property, value);
+                        return this;
+                    }
+
+                    @Override
+                    public EdgeIteratorState set(IntEncodedValue property, int fwd, int bwd) {
+                        current.set(property, fwd, bwd);
                         return this;
                     }
 
@@ -461,6 +494,12 @@ public class WrapperGraph implements Graph {
                     }
 
                     @Override
+                    public EdgeIteratorState set(DecimalEncodedValue property, double fwd, double bwd) {
+                        current.set(property, fwd, bwd);
+                        return this;
+                    }
+
+                    @Override
                     public <T extends Enum> T get(EnumEncodedValue<T> property) {
                         return current.get(property);
                     }
@@ -479,6 +518,12 @@ public class WrapperGraph implements Graph {
                     @Override
                     public <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
                         current.setReverse(property, value);
+                        return this;
+                    }
+
+                    @Override
+                    public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
+                        current.set(property, fwd, bwd);
                         return this;
                     }
 
