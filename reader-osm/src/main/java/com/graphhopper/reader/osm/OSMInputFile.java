@@ -26,8 +26,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.graphhopper.reader.ReaderBlock;
 import com.graphhopper.reader.ReaderElement;
@@ -53,7 +55,7 @@ public class OSMInputFile implements OSMInput {
     }
 
     public OSMInputFile(File file, int workerThreads) {
-        this.executorService = Executors.newFixedThreadPool(workerThreads);
+        this.executorService = Executors.newFixedThreadPool(workerThreads, getThreadFactory());
         this.itemQueue = new LinkedBlockingQueue<>(MAX_CONCURRENT_BLOBS);
         PbfReader reader = new PbfReader(file, executorService, itemQueue, parsing);
         this.pbfReaderThread = new Thread(reader, "PBF Reader");
@@ -113,5 +115,20 @@ public class OSMInputFile implements OSMInput {
     @Override
     public int getUnprocessedElements() {
         return itemQueue.size();
+    }
+    
+    private static ThreadFactory getThreadFactory() {
+        return new ThreadFactory() {
+            
+            private final AtomicInteger count = new AtomicInteger(0);
+            
+            @Override
+            public Thread newThread(Runnable r) {
+                Thread t = new Thread(r);
+                t.setName("pbf-blob-decoder-" + count.getAndIncrement());
+                t.setDaemon(true);
+                return t;
+            }
+        };
     }
 }
