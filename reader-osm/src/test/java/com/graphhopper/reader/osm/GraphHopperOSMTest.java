@@ -41,6 +41,8 @@ import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.shapes.GHPoint3D;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -703,11 +705,26 @@ public class GraphHopperOSMTest {
         assertEquals(2, instance.getGraphHopperStorage().getAllEdges().length());
 
         // A to E only for foot
-        GHResponse grsp = instance.route(new GHRequest(11.1, 50, 11.19, 52).setProfile(profile));
-        assertFalse(grsp.hasErrors());
+        GHResponse grsp = instance.route(new GHRequest(11.10000000001, 50.00001, 11.19, 52).setProfile(profile));
+        assertFalse(Objects.toString(grsp.getErrors()), grsp.hasErrors());
         ResponsePath rsp = grsp.getBest();
+        
+        assertEquals(3, rsp.getPoints().size());
+        
+        GHPoint3D p0 = rsp.getPoints().get(0);
+        GHPoint3D p1 = rsp.getPoints().get(1);
+        GHPoint3D p2 = rsp.getPoints().get(2);
+        
+        double delta = 0.00001d;
+        assertEquals(11.1d, p0.getLat(), delta);
+        assertEquals(50d, p0.getLon(), delta);
+        
+        assertEquals(10d, p1.getLat(), delta);
+        assertEquals(51d, p1.getLon(), delta);
+
         // the last points snaps to the edge
-        assertEquals(Helper.createPointList(11.1, 50, 10, 51, 11.194015, 51.995013), rsp.getPoints());
+        assertEquals(11.194015d, p2.getLat(), delta);
+        assertEquals(51.995013d, p2.getLon(), delta);
     }
 
     @Test
