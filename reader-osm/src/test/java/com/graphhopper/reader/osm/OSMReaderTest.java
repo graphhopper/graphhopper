@@ -659,28 +659,6 @@ public class OSMReaderTest {
     }
 
     @Test
-    public void testReadEleFromCustomOSM() {
-        GraphHopper hopper = new GraphHopperFacade("custom-osm-ele.xml") {
-            @Override
-            protected DataReader createReader(GraphHopperStorage tmpGraph) {
-                return initDataReader(new OSMReader(tmpGraph) {
-                    @Override
-                    protected double getElevation(ReaderNode node) {
-                        return node.getEle();
-                    }
-                });
-            }
-        }.setElevation(true).importOrLoad();
-
-        Graph graph = hopper.getGraphHopperStorage();
-        int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
-        int n50 = AbstractGraphStorageTester.getIdOf(graph, 49);
-
-        EdgeIteratorState edge = GHUtility.getEdge(graph, n20, n50);
-        assertEquals(Helper.createPointList3D(52, 9, -10, 51.25, 9.43, 100, 49, 10, -30), edge.fetchWayGeometry(FetchMode.ALL));
-    }
-
-    @Test
     public void testReadEleFromDataProvider() {
         GraphHopper hopper = new GraphHopperFacade("test-osm5.xml");
         // get N10E046.hgt.zip
