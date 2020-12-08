@@ -19,6 +19,8 @@ android/libs/graphhopper-*-android.jar
 /web/dependency-reduced-pom.xml
 /web/node
 *.pbf
+!/core/files/*.pbf
+!/reader-gtfs/files/*.pbf
 !/reader-osm/src/test/resources/com/graphhopper/reader/osm/*.pbf
 *.dem
 *.log
