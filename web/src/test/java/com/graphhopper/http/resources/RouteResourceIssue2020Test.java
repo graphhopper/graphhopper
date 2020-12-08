@@ -33,7 +33,7 @@ public class RouteResourceIssue2020Test {
                 putObject("graph.flag_encoders", "car").
                 putObject("routing.ch.disabling_allowed", true).
                 putObject("prepare.lm.split_area_location", "../core/files/split.geo.json").
-                putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
+                putObject("datareader.file", "../core/files/north-bayreuth.osm.pbf").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
                 putObject("graph.location", DIR).
                 setProfiles(Collections.singletonList(new Profile("my_car").setVehicle("car").setWeighting("fastest"))).

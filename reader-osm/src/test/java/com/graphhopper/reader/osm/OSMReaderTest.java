@@ -57,15 +57,13 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class OSMReaderTest {
-    private final String file1 = "test-osm.xml";
-    private final String file2 = "test-osm2.xml";
-    private final String file3 = "test-osm3.xml";
-    private final String file4 = "test-osm4.xml";
-    // test-osm6.pbf was created by running "osmconvert test-osm6.xml --timestamp=2014-01-02T00:10:14Z -o=test-osm6.pbf"
-    // The osmconvert tool can be found here: http://wiki.openstreetmap.org/wiki/Osmconvert
-    private final String file6 = "test-osm6.pbf";
-    private final String file7 = "test-osm7.xml";
-    private final String fileBarriers = "test-barriers.xml";
+    private final String file1 = "test.osm.pbf";
+    private final String file2 = "test2.osm.pbf";
+    private final String file3 = "test3.osm.pbf";
+    private final String file4 = "test4.osm.pbf";
+    private final String file6 = "test6.osm.pbf";
+    private final String file7 = "test7.osm.pbf";
+    private final String fileBarriers = "test-barriers.osm.pbf";
     private final String dir = "./target/tmp/test-db";
     private CarFlagEncoder carEncoder;
     private BooleanEncodedValue carAccessEnc;
@@ -332,7 +330,7 @@ public class OSMReaderTest {
 
     @Test
     public void testNegativeIds() {
-        String fileNegIds = "test-osm-negative-ids.xml";
+        String fileNegIds = "test-osm-negative-ids.osm.pbf";
         GraphHopper hopper = new GraphHopperFacade(fileNegIds).importOrLoad();
         Graph graph = hopper.getGraphHopperStorage();
         assertEquals(4, graph.getNodes());
@@ -398,7 +396,7 @@ public class OSMReaderTest {
         //     C - D
         //      \ /
         //   A - B - E
-        GraphHopper hopper = new GraphHopperFacade("test-avoid-loops.xml").importOrLoad();
+        GraphHopper hopper = new GraphHopperFacade("test-avoid-loops.osm.pbf").importOrLoad();
         checkLoop(hopper);
     }
 
@@ -421,15 +419,15 @@ public class OSMReaderTest {
 
     @Test
     public void avoidsLoopEdgesIdenticalLatLon_1533() {
-        checkLoop(new GraphHopperFacade("test-avoid-loops2.xml").importOrLoad());
+        checkLoop(new GraphHopperFacade("test-avoid-loops2.osm.pbf").importOrLoad());
     }
 
     @Test
     public void avoidsLoopEdgesIdenticalNodeIds_1533() {
         // We can handle the following case with the proper result:
-        checkLoop(new GraphHopperFacade("test-avoid-loops3.xml").importOrLoad());
+        checkLoop(new GraphHopperFacade("test-avoid-loops3.osm.pbf").importOrLoad());
         // We cannot handle the following case, i.e. no loop is created. so we only check that there are no loops
-        GraphHopper hopper = new GraphHopperFacade("test-avoid-loops4.xml").importOrLoad();
+        GraphHopper hopper = new GraphHopperFacade("test-avoid-loops4.osm.pbf").importOrLoad();
         GraphHopperStorage graph = hopper.getGraphHopperStorage();
         AllEdgesIterator iter = graph.getAllEdges();
         assertEquals(2, iter.length());
@@ -494,7 +492,7 @@ public class OSMReaderTest {
 
     @Test
     public void testTurnRestrictions() {
-        String fileTurnRestrictions = "test-restrictions.xml";
+        String fileTurnRestrictions = "test-restrictions.osm.pbf";
         GraphHopper hopper = new GraphHopperFacade(fileTurnRestrictions, true, "").
                 importOrLoad();
 
@@ -564,7 +562,7 @@ public class OSMReaderTest {
 
     @Test
     public void testRoadAttributes() {
-        String fileRoadAttributes = "test-road-attributes.xml";
+        String fileRoadAttributes = "test-road-attributes.osm.pbf";
         GraphHopper hopper = new GraphHopperFacade(fileRoadAttributes);
         CarFlagEncoder encoder = new CarFlagEncoder();
         hopper.setEncodingManager(new EncodingManager.Builder().
@@ -660,7 +658,7 @@ public class OSMReaderTest {
 
     @Test
     public void testReadEleFromDataProvider() {
-        GraphHopper hopper = new GraphHopperFacade("test-osm5.xml");
+        GraphHopper hopper = new GraphHopperFacade("test5.osm.pbf");
         // get N10E046.hgt.zip
         ElevationProvider provider = new SRTMProvider(GraphHopperTest.DIR);
         hopper.setElevationProvider(provider);
@@ -701,7 +699,7 @@ public class OSMReaderTest {
         EncodingManager manager = new EncodingManager.Builder().add(bike).add(truck).add(car).build();
 
         GraphHopper hopper = new GraphHopperOSM().
-                setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
+                setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.osm.pbf").getFile()).
                 setGraphHopperLocation(dir).setEncodingManager(manager).
                 setProfiles(
                         new Profile("bike").setVehicle("bike").setWeighting("fastest"),
@@ -740,7 +738,7 @@ public class OSMReaderTest {
 
     @Test
     public void testConditionalTurnRestriction() {
-        String fileConditionalTurnRestrictions = "test-conditional-turn-restrictions.xml";
+        String fileConditionalTurnRestrictions = "test-conditional-turn-restrictions.osm.pbf";
         GraphHopper hopper = new GraphHopperFacade(fileConditionalTurnRestrictions, true, "").
                 setMinNetworkSize(0).
                 importOrLoad();
@@ -809,7 +807,7 @@ public class OSMReaderTest {
 
     @Test
     public void testMultipleTurnRestrictions() {
-        String fileMultipleConditionalTurnRestrictions = "test-multiple-conditional-turn-restrictions.xml";
+        String fileMultipleConditionalTurnRestrictions = "test-multiple-conditional-turn-restrictions.osm.pbf";
         GraphHopper hopper = new GraphHopperFacade(fileMultipleConditionalTurnRestrictions, true, "").
                 importOrLoad();
 
@@ -870,7 +868,7 @@ public class OSMReaderTest {
 
     @Test
     public void testDataDateWithinPBF() {
-        GraphHopper hopper = new GraphHopperFacade("test-osm6.pbf")
+        GraphHopper hopper = new GraphHopperFacade(file6)
                 .setMinNetworkSize(0)
                 .importOrLoad();
         GraphHopperStorage graph = hopper.getGraphHopperStorage();
@@ -880,7 +878,7 @@ public class OSMReaderTest {
 
     @Test
     public void testCrossBoundary_issue667() {
-        GraphHopper hopper = new GraphHopperFacade("test-osm-waterway.xml").importOrLoad();
+        GraphHopper hopper = new GraphHopperFacade("test-osm-waterway.osm.pbf").importOrLoad();
         Snap snap = hopper.getLocationIndex().findClosest(0.1, 179.5, EdgeFilter.ALL_EDGES);
         assertTrue(snap.isValid());
         assertEquals(0.1, snap.getSnappedPoint().lat, 0.1);

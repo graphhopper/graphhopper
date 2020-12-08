@@ -52,7 +52,7 @@ public class GraphHopperLandmarksTest {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "car").
-                putObject("datareader.file", "../core/files/belarus-east.osm.gz").
+                putObject("datareader.file", "../core/files/belarus-east.osm.pbf").
                 putObject("prepare.min_network_size", 0).
                 putObject("routing.ch.disabling_allowed", true).
                 putObject("routing.lm.disabling_allowed", true).

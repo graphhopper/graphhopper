@@ -41,7 +41,7 @@ public class GpxTravelTimeConsistencyTest {
 
     public static final String DIR = "../core/files";
     private static final String graphFileFoot = "target/gpxtraveltimeconsistency-it";
-    private static final String osmFile = DIR + "/monaco.osm.gz";
+    private static final String osmFile = DIR + "/monaco.osm.pbf";
     private static GraphHopper hopper;
 
     @BeforeAll

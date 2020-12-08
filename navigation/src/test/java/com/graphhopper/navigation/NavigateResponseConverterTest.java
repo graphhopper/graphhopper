@@ -26,7 +26,7 @@ import static org.junit.Assert.assertTrue;
 public class NavigateResponseConverterTest {
 
     private static final String graphFolder = "target/graphhopper-test-car";
-    private static final String osmFile = "../core/files/andorra.osm.gz";
+    private static final String osmFile = "../core/files/andorra.osm.pbf";
     private static GraphHopper hopper;
     private static final String vehicle = "car";
     private static final String profile = "my_car";

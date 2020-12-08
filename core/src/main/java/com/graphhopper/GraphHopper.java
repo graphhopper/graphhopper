@@ -369,7 +369,7 @@ public class GraphHopper implements GraphHopperAPI {
 
     /**
      * This file can be any file type supported by the DataReader. E.g. for the OSMReader it is the
-     * OSM xml (.osm), a compressed xml (.osm.zip or .osm.gz) or a protobuf file (.pbf)
+     * OSM protobuf file (.pbf)
      */
     public GraphHopper setDataReaderFile(String dataReaderFileStr) {
         ensureNotLoaded();

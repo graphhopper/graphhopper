@@ -56,7 +56,7 @@ public class SpatialRulesTest {
                 putObject("graph.encoded_values", "country,road_environment,road_class,road_access,max_speed").
                 putObject("spatial_rules.borders_directory", "../core/files/spatialrules").
                 putObject("spatial_rules.max_bbox", "11.4,11.7,49.9,50.1").
-                putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
+                putObject("datareader.file", "../core/files/north-bayreuth.osm.pbf").
                 putObject("graph.location", DIR).
                 setProfiles(Collections.singletonList(new Profile("profile").setVehicle("car").setWeighting("fastest")));
         return config;

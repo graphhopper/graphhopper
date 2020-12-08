@@ -95,7 +95,7 @@ public class MiniGraphUI {
 
     public static void main(String[] strs) {
         PMap args = PMap.read(strs);
-        args.putObject("datareader.file", args.getString("datareader.file", "core/files/monaco.osm.gz"));
+        args.putObject("datareader.file", args.getString("datareader.file", "core/files/monaco.osm.pbf"));
         args.putObject("graph.location", args.getString("graph.location", "tools/target/mini-graph-ui-gh"));
         args.putObject("graph.flag_encoders", args.getString("graph.flag_encoders", "car"));
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);

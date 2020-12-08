@@ -67,13 +67,13 @@ public class GraphHopperTest {
     public static final String DIR = "../core/files";
 
     // map locations
-    private static final String BAYREUTH = DIR + "/north-bayreuth.osm.gz";
-    private static final String BERLIN = DIR + "/berlin-siegessaeule.osm.gz";
-    private static final String KREMS = DIR + "/krems.osm.gz";
-    private static final String LAUF = DIR + "/Laufamholzstrasse.osm.xml";
-    private static final String MONACO = DIR + "/monaco.osm.gz";
-    private static final String MOSCOW = DIR + "/moscow.osm.gz";
-    private static final String ESSEN = DIR + "/edge_based_subnetwork.osm.xml.gz";
+    private static final String BAYREUTH = DIR + "/north-bayreuth.osm.pbf";
+    private static final String BERLIN = DIR + "/berlin-siegessaeule.osm.pbf";
+    private static final String KREMS = DIR + "/krems.osm.pbf";
+    private static final String LAUF = DIR + "/Laufamholzstrasse.osm.pbf";
+    private static final String MONACO = DIR + "/monaco.osm.pbf";
+    private static final String MOSCOW = DIR + "/moscow.osm.pbf";
+    private static final String ESSEN = DIR + "/edge_based_subnetwork.osm.pbf";
 
     // when creating GH instances make sure to use this as the GH location such that it will be cleaned between tests
     private static final String GH_LOCATION = "target/graphhopper-test-gh";

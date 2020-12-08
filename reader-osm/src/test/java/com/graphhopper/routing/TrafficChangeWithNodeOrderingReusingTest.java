@@ -40,7 +40,7 @@ import static org.junit.runners.Parameterized.Parameters;
 public class TrafficChangeWithNodeOrderingReusingTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TrafficChangeWithNodeOrderingReusingTest.class);
     // make sure to increase xmx/xms for the JVM created by the surefire plugin in parent pom.xml when using bigger maps
-    private static final String OSM_FILE = "../core/files/monaco.osm.gz";
+    private static final String OSM_FILE = "../core/files/monaco.osm.pbf";
 
     private final GraphHopperStorage ghStorage;
     private final int maxDeviationPercentage;

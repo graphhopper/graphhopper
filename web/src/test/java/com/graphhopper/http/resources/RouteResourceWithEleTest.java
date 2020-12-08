@@ -52,7 +52,7 @@ public class RouteResourceWithEleTest {
                 putObject("graph.elevation.cachedir", "../core/files/").
                 putObject("prepare.min_network_size", 0).
                 putObject("graph.flag_encoders", "car").
-                putObject("datareader.file", "../core/files/monaco.osm.gz").
+                putObject("datareader.file", "../core/files/monaco.osm.pbf").
                 putObject("graph.location", dir).
                 setProfiles(Collections.singletonList(
                         new Profile("profile").setVehicle("car").setWeighting("fastest")

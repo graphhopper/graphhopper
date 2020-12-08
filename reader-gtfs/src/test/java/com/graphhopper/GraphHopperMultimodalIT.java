@@ -51,7 +51,7 @@ public class GraphHopperMultimodalIT {
     public static void init() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
         ghConfig.putObject("graph.flag_encoders", "car,foot");
-        ghConfig.putObject("datareader.file", "files/beatty.osm");
+        ghConfig.putObject("datareader.file", "files/beatty.osm.pbf");
         ghConfig.putObject("gtfs.file", "files/sample-feed.zip");
         ghConfig.putObject("graph.location", GRAPH_LOC);
         Helper.removeDir(new File(GRAPH_LOC));

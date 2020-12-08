@@ -61,9 +61,9 @@ import static org.junit.Assert.*;
  */
 public class GraphHopperOSMTest {
     private static final String ghLoc = "./target/tmp/ghosm";
-    private static final String testOsm = "./src/test/resources/com/graphhopper/reader/osm/test-osm.xml";
-    private static final String testOsm3 = "./src/test/resources/com/graphhopper/reader/osm/test-osm3.xml";
-    private static final String testOsm8 = "./src/test/resources/com/graphhopper/reader/osm/test-osm8.xml";
+    private static final String testOsm = "./src/test/resources/com/graphhopper/reader/osm/test.osm.pbf";
+    private static final String testOsm3 = "./src/test/resources/com/graphhopper/reader/osm/test3.osm.pbf";
+    private static final String testOsm8 = "./src/test/resources/com/graphhopper/reader/osm/test8.osm.pbf";
     private GraphHopper instance;
 
     @Before
@@ -170,7 +170,7 @@ public class GraphHopperOSMTest {
         final GraphHopper gh = createGraphHopper("car").
                 setStoreOnFlush(true).
                 setGraphHopperLocation(ghLoc).
-                setDataReaderFile("../core/files/monaco.osm.gz");
+                setDataReaderFile("../core/files/monaco.osm.pbf");
         gh.importOrLoad();
 
         final NodeAccess na = gh.getGraphHopperStorage().getNodeAccess();
