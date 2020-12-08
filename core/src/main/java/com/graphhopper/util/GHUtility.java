@@ -634,8 +634,12 @@ public class GHUtility {
         if (fwdSpeed > 0)
             accessEnc.setBool(false, edgeFlags, true);
 
-        if (avgSpeedEnc.isStoreTwoDirections())
+        if (bwdSpeed > 0 && (fwdSpeed != bwdSpeed || avgSpeedEnc.isStoreTwoDirections())) {
+            if (!avgSpeedEnc.isStoreTwoDirections())
+                throw new IllegalArgumentException("EncodedValue " + avgSpeedEnc.getName() + " supports only one direction " +
+                        "but two different speeds were specified " + fwdSpeed + " " + bwdSpeed);
             avgSpeedEnc.setDecimal(true, edgeFlags, bwdSpeed);
+        }
         if (bwdSpeed > 0)
             accessEnc.setBool(true, edgeFlags, true);
         return edgeFlags;
@@ -655,8 +659,12 @@ public class GHUtility {
             if (fwdSpeed > 0)
                 edge.set(accessEnc, true);
 
-            if (avgSpeedEnc.isStoreTwoDirections())
+            if (bwdSpeed > 0 && (fwdSpeed != bwdSpeed || avgSpeedEnc.isStoreTwoDirections())) {
+                if (!avgSpeedEnc.isStoreTwoDirections())
+                    throw new IllegalArgumentException("EncodedValue " + avgSpeedEnc.getName() + " supports only one direction " +
+                            "but two different speeds were specified " + fwdSpeed + " " + bwdSpeed);
                 edge.setReverse(avgSpeedEnc, bwdSpeed);
+            }
             if (bwdSpeed > 0)
                 edge.setReverse(accessEnc, true);
         }

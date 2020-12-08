@@ -172,8 +172,10 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
 
     @Override
     public EdgeIteratorState set(BooleanEncodedValue property, boolean fwd, boolean bwd) {
+        if (!property.isStoreTwoDirections())
+            throw new IllegalArgumentException("EncodedValue " + property.getName() + " supports only one direction");
         property.setBool(reverse, edgeFlags, fwd);
-        if (property.isStoreTwoDirections()) property.setBool(!reverse, edgeFlags, bwd);
+        property.setBool(!reverse, edgeFlags, bwd);
         return this;
     }
 
@@ -201,8 +203,10 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
 
     @Override
     public EdgeIteratorState set(IntEncodedValue property, int fwd, int bwd) {
+        if (!property.isStoreTwoDirections())
+            throw new IllegalArgumentException("EncodedValue " + property.getName() + " supports only one direction");
         property.setInt(reverse, edgeFlags, fwd);
-        if (property.isStoreTwoDirections()) property.setInt(!reverse, edgeFlags, bwd);
+        property.setInt(!reverse, edgeFlags, bwd);
         return this;
     }
 
@@ -230,8 +234,10 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
 
     @Override
     public EdgeIteratorState set(DecimalEncodedValue property, double fwd, double bwd) {
+        if (!property.isStoreTwoDirections())
+            throw new IllegalArgumentException("EncodedValue " + property.getName() + " supports only one direction");
         property.setDecimal(reverse, edgeFlags, fwd);
-        if (property.isStoreTwoDirections()) property.setDecimal(!reverse, edgeFlags, bwd);
+        property.setDecimal(!reverse, edgeFlags, bwd);
         return this;
     }
 
@@ -259,8 +265,10 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
 
     @Override
     public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
+        if (!property.isStoreTwoDirections())
+            throw new IllegalArgumentException("EncodedValue " + property.getName() + " supports only one direction");
         property.setEnum(reverse, edgeFlags, fwd);
-        if (property.isStoreTwoDirections()) property.setEnum(!reverse, edgeFlags, bwd);
+        property.setEnum(!reverse, edgeFlags, bwd);
         return this;
     }
 

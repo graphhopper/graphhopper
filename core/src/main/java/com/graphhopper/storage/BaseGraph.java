@@ -1132,9 +1132,10 @@ class BaseGraph implements Graph {
 
         @Override
         public EdgeIteratorState set(BooleanEncodedValue property, boolean fwd, boolean bwd) {
+            if (!property.isStoreTwoDirections())
+                throw new IllegalArgumentException("EncodedValue " + property.getName() + " supports only one direction");
             property.setBool(reverse, getFlags(), fwd);
-            if (property.isStoreTwoDirections())
-                property.setBool(!reverse, getFlags(), bwd);
+            property.setBool(!reverse, getFlags(), bwd);
             baseGraph.writeFlags(edgePointer, getFlags());
             return this;
         }
@@ -1165,9 +1166,10 @@ class BaseGraph implements Graph {
 
         @Override
         public EdgeIteratorState set(IntEncodedValue property, int fwd, int bwd) {
+            if (!property.isStoreTwoDirections())
+                throw new IllegalArgumentException("EncodedValue " + property.getName() + " supports only one direction");
             property.setInt(reverse, getFlags(), fwd);
-            if (property.isStoreTwoDirections())
-                property.setInt(!reverse, getFlags(), bwd);
+            property.setInt(!reverse, getFlags(), bwd);
             baseGraph.writeFlags(edgePointer, getFlags());
             return this;
         }
@@ -1198,9 +1200,10 @@ class BaseGraph implements Graph {
 
         @Override
         public EdgeIteratorState set(DecimalEncodedValue property, double fwd, double bwd) {
+            if (!property.isStoreTwoDirections())
+                throw new IllegalArgumentException("EncodedValue " + property.getName() + " supports only one direction");
             property.setDecimal(reverse, getFlags(), fwd);
-            if (property.isStoreTwoDirections())
-                property.setDecimal(!reverse, getFlags(), bwd);
+            property.setDecimal(!reverse, getFlags(), bwd);
             baseGraph.writeFlags(edgePointer, getFlags());
             return this;
         }
@@ -1231,9 +1234,10 @@ class BaseGraph implements Graph {
 
         @Override
         public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
+            if (!property.isStoreTwoDirections())
+                throw new IllegalArgumentException("EncodedValue " + property.getName() + " supports only one direction");
             property.setEnum(reverse, getFlags(), fwd);
-            if (property.isStoreTwoDirections())
-                property.setEnum(!reverse, getFlags(), bwd);
+            property.setEnum(!reverse, getFlags(), bwd);
             baseGraph.writeFlags(edgePointer, getFlags());
             return this;
         }
