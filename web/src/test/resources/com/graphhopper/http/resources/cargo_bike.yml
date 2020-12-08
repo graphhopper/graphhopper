@@ -16,7 +16,7 @@ priority:
   surface:
     sand: 0.5
   # prefer better tracks
-  track_type: { other: 1.0, grade1: 1.0, "*": 0.9 }
+  track_type: { grade1: 1.0, "*": 0.9 }
   # prefer official bike routes
   bike_network: { other: 0.5 }
   # avoid all situations where we have to get off the bike
