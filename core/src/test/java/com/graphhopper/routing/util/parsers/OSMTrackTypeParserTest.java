@@ -60,7 +60,7 @@ public class OSMTrackTypeParserTest {
         IntsRef intsRef = em.createEdgeFlags();
         readerWay.setTag("tracktype", "unknownstuff");
         parser.handleWayTags(intsRef, readerWay, false, relFlags);
-        assertEquals(TrackType.OTHER, ttEnc.getEnum(false, intsRef));
+        assertEquals(TrackType.MISSING, ttEnc.getEnum(false, intsRef));
     }
 
     @Test

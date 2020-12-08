@@ -157,14 +157,15 @@ public class ShortestPathTreeTest {
         instance.search(0, result::add);
         assertEquals(9, result.size());
         assertAll(
-                () -> assertEquals(0, result.get(0).time),
-                () -> assertEquals(9000, result.get(1).time),
-                () -> assertEquals(18000, result.get(2).time),
-                () -> assertEquals(25200, result.get(3).time),
-                () -> assertEquals(27000, result.get(4).time),
-                () -> assertEquals(36000, result.get(5).time),
-                () -> assertEquals(54000, result.get(6).time),
-                () -> assertEquals(55800, result.get(7).time)
+                () -> assertEquals(0, result.get(0).time), () -> assertEquals(0, result.get(0).node),
+                () -> assertEquals(9000, result.get(1).time), () -> assertEquals(4, result.get(1).node),
+                () -> assertEquals(18000, result.get(2).time), () -> assertEquals(6, result.get(2).node),
+                () -> assertEquals(25200, result.get(3).time), () -> assertEquals(1, result.get(3).node),
+                () -> assertEquals(27000, result.get(4).time), () -> assertEquals(7, result.get(4).node),
+                () -> assertEquals(36000, result.get(5).time), () -> assertEquals(5, result.get(5).node),
+                () -> assertEquals(54000, result.get(6).time), () -> assertEquals(2, result.get(6).node),
+                () -> assertEquals(55800, result.get(7).time), () -> assertEquals(3, result.get(7).node),
+                () -> assertEquals(60300, result.get(8).time), () -> assertEquals(8, result.get(8).node)
         );
     }
 

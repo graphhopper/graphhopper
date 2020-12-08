@@ -256,11 +256,12 @@ public class GHUtility {
         }
     }
 
-    public static List<Snap> createRandomSnaps(BBox bbox, LocationIndex locationIndex, Random rnd, int numVirtualNodes, boolean acceptTower, EdgeFilter filter) {
-        int count = 0;
-        List<Snap> snaps = new ArrayList<>(numVirtualNodes);
-        while (snaps.size() < numVirtualNodes) {
-            if (count > numVirtualNodes * 100) {
+    public static List<Snap> createRandomSnaps(BBox bbox, LocationIndex locationIndex, Random rnd, int numPoints, boolean acceptTower, EdgeFilter filter) {
+        int maxTries = numPoints * 100;
+        int tries = 0;
+        List<Snap> snaps = new ArrayList<>(numPoints);
+        while (snaps.size() < numPoints) {
+            if (tries > maxTries) {
                 throw new IllegalArgumentException("Could not create enough virtual edges");
             }
             Snap snap = getRandomSnap(locationIndex, rnd, bbox, filter);
@@ -269,7 +270,7 @@ public class GHUtility {
                 accepted = accepted && !snap.getSnappedPosition().equals(Snap.Position.TOWER);
             if (accepted)
                 snaps.add(snap);
-            count++;
+            tries++;
         }
         return snaps;
     }

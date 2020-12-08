@@ -13,7 +13,7 @@ priority:
   road_class == STEPS: 0
   surface == SAND: 0.5
   # prefer better tracks
-  track_type != OTHER && track_type != GRADE1: 0.9
+  track_type != MISSING && track_type != GRADE1: 0.9
   # prefer official bike routes
   bike_network == OTHER: 0.5
   # avoid all situations where we have to get off the bike
