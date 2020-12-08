@@ -79,20 +79,18 @@ public class AlternativeRouteTest {
          5--6-7---8
         
          */
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 9).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(9, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 10).setDistance(1));
-
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 6).setDistance(1));
-
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 7).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(7, 8).setDistance(1));
-
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 5).setDistance(2));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 8).setDistance(1));
+        GHUtility.setSpeed(60, 60, encoder,
+                graph.edge(1, 9).setDistance(1),
+                graph.edge(9, 2).setDistance(1),
+                graph.edge(2, 3).setDistance(1),
+                graph.edge(3, 4).setDistance(1),
+                graph.edge(4, 10).setDistance(1),
+                graph.edge(5, 6).setDistance(1),
+                graph.edge(6, 7).setDistance(1),
+                graph.edge(7, 8).setDistance(1),
+                graph.edge(1, 5).setDistance(2),
+                graph.edge(6, 3).setDistance(1),
+                graph.edge(4, 8).setDistance(1));
 
         updateDistancesFor(graph, 5, 0.00, 0.05);
         updateDistancesFor(graph, 6, 0.00, 0.10);

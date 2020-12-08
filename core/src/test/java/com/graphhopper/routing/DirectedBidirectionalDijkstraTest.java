@@ -237,18 +237,20 @@ public class DirectedBidirectionalDijkstraTest {
         //   9     2     10
         //   |    / \    |
         //   8 = 7   6 = 5
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(3));
-        int rightNorth = GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 10).setDistance(1)).getEdge();
-        int rightSouth = GHUtility.setSpeed(60, true, true, encoder, graph.edge(10, 5).setDistance(1)).getEdge();
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 6).setDistance(2));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 7).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(7, 8).setDistance(9));
-        int leftSouth = GHUtility.setSpeed(60, true, true, encoder, graph.edge(8, 9).setDistance(1)).getEdge();
-        int leftNorth = GHUtility.setSpeed(60, true, true, encoder, graph.edge(9, 0).setDistance(1)).getEdge();
+        EdgeIteratorState rightNorth, rightSouth, leftSouth, leftNorth;
+        GHUtility.setSpeed(60, 60, encoder,
+                graph.edge(0, 1).setDistance(1),
+                graph.edge(1, 2).setDistance(1),
+                graph.edge(2, 3).setDistance(1),
+                graph.edge(3, 4).setDistance(3),
+                rightNorth = graph.edge(4, 10).setDistance(1),
+                rightSouth = graph.edge(10, 5).setDistance(1),
+                graph.edge(5, 6).setDistance(2),
+                graph.edge(6, 2).setDistance(1),
+                graph.edge(2, 7).setDistance(1),
+                graph.edge(7, 8).setDistance(9),
+                leftSouth = graph.edge(8, 9).setDistance(1),
+                leftNorth = graph.edge(9, 0).setDistance(1));
 
         // make paths fully deterministic by applying some turn costs at junction node 2
         setTurnCost(7, 2, 3, 1);
@@ -258,16 +260,16 @@ public class DirectedBidirectionalDijkstraTest {
         setTurnCost(1, 2, 7, 9);
 
         final double unitEdgeWeight = 0.06;
-        assertPath(calcPath(9, 9, leftNorth, leftSouth),
+        assertPath(calcPath(9, 9, leftNorth.getEdge(), leftSouth.getEdge()),
                 23 * unitEdgeWeight + 5, 23, (long) ((23 * unitEdgeWeight + 5) * 1000),
                 nodes(9, 0, 1, 2, 3, 4, 10, 5, 6, 2, 7, 8, 9));
-        assertPath(calcPath(9, 9, leftSouth, leftNorth),
+        assertPath(calcPath(9, 9, leftSouth.getEdge(), leftNorth.getEdge()),
                 14 * unitEdgeWeight, 14, (long) ((14 * unitEdgeWeight) * 1000),
                 nodes(9, 8, 7, 2, 1, 0, 9));
-        assertPath(calcPath(9, 10, leftSouth, rightSouth),
+        assertPath(calcPath(9, 10, leftSouth.getEdge(), rightSouth.getEdge()),
                 15 * unitEdgeWeight + 3, 15, (long) ((15 * unitEdgeWeight + 3) * 1000),
                 nodes(9, 8, 7, 2, 6, 5, 10));
-        assertPath(calcPath(9, 10, leftSouth, rightNorth),
+        assertPath(calcPath(9, 10, leftSouth.getEdge(), rightNorth.getEdge()),
                 16 * unitEdgeWeight + 1, 16, (long) ((16 * unitEdgeWeight + 1) * 1000),
                 nodes(9, 8, 7, 2, 3, 4, 10));
     }

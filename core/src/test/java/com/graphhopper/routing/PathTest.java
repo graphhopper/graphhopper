@@ -871,12 +871,14 @@ public class PathTest {
         na.setNode(6, 48.402422, 9.996067);
         na.setNode(7, 48.402604, 9.994962);
 
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(5)).setName("Olgastraße");
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 3).setDistance(5)).setName("Olgastraße");
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(6, 5).setDistance(5)).setName("Olgastraße");
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(5, 4).setDistance(5)).setName("Olgastraße");
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 5).setDistance(5)).setName("Neithardtstraße");
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(5, 7).setDistance(5)).setName("Neithardtstraße");
+        GHUtility.setSpeed(60, 0, encoder,
+                g.edge(1, 2).setDistance(5).setName("Olgastraße"),
+                g.edge(2, 3).setDistance(5).setName("Olgastraße"),
+                g.edge(6, 5).setDistance(5).setName("Olgastraße"),
+                g.edge(5, 4).setDistance(5).setName("Olgastraße"));
+        GHUtility.setSpeed(60, 60, encoder,
+                g.edge(2, 5).setDistance(5).setName("Neithardtstraße"),
+                g.edge(5, 7).setDistance(5).setName("Neithardtstraße"));
 
         ShortestWeighting weighting = new ShortestWeighting(encoder);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
@@ -907,12 +909,14 @@ public class PathTest {
         na.setNode(6, -33.885692, 151.181445);
         na.setNode(7, -33.885692, 151.181445);
 
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(5)).setName("Parramatta Road");
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 3).setDistance(5)).setName("Parramatta Road");
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(4, 5).setDistance(5)).setName("Parramatta Road");
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(5, 6).setDistance(5)).setName("Parramatta Road");
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 5).setDistance(5)).setName("Larkin Street");
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(5, 7).setDistance(5)).setName("Larkin Street");
+        GHUtility.setSpeed(60, 0, encoder,
+                g.edge(1, 2).setDistance(5).setName("Parramatta Road"),
+                g.edge(2, 3).setDistance(5).setName("Parramatta Road"),
+                g.edge(4, 5).setDistance(5).setName("Parramatta Road"),
+                g.edge(5, 6).setDistance(5).setName("Parramatta Road"));
+        GHUtility.setSpeed(60, 60, encoder,
+                g.edge(2, 5).setDistance(5).setName("Larkin Street"),
+                g.edge(5, 7).setDistance(5).setName("Larkin Street"));
 
         ShortestWeighting weighting = new ShortestWeighting(encoder);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
