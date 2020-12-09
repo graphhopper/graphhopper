@@ -48,7 +48,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class LandmarkStorageTest {
-    private GraphHopperStorage ghStorage;
+    private GraphHopperStorage graph;
     private FlagEncoder encoder;
     private EncodingManager encodingManager;
 
@@ -56,22 +56,22 @@ public class LandmarkStorageTest {
     public void setUp() {
         encoder = new CarFlagEncoder();
         encodingManager = EncodingManager.create(encoder);
-        ghStorage = new GraphHopperStorage(new RAMDirectory(),
+        graph = new GraphHopperStorage(new RAMDirectory(),
                 encodingManager, false);
-        ghStorage.create(1000);
+        graph.create(1000);
     }
 
     @After
     public void tearDown() {
-        if (ghStorage != null)
-            ghStorage.close();
+        if (graph != null)
+            graph.close();
     }
 
     @Test
     public void testInfiniteWeight() {
         Directory dir = new RAMDirectory();
-        EdgeIteratorState edge = ghStorage.edge(0, 1);
-        int res = new LandmarkStorage(ghStorage, dir, new LMConfig("c1", new FastestWeighting(encoder) {
+        EdgeIteratorState edge = graph.edge(0, 1);
+        int res = new LandmarkStorage(graph, dir, new LMConfig("c1", new FastestWeighting(encoder) {
             @Override
             public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
                 return Integer.MAX_VALUE * 2L;
@@ -80,7 +80,7 @@ public class LandmarkStorageTest {
         assertEquals(Integer.MAX_VALUE, res);
 
         dir = new RAMDirectory();
-        res = new LandmarkStorage(ghStorage, dir, new LMConfig("c2", new FastestWeighting(encoder) {
+        res = new LandmarkStorage(graph, dir, new LMConfig("c2", new FastestWeighting(encoder) {
             @Override
             public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
                 return Double.POSITIVE_INFINITY;
@@ -91,12 +91,12 @@ public class LandmarkStorageTest {
 
     @Test
     public void testSetGetWeight() {
-        ghStorage.edge(0, 1, 40, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(40.1));
         Directory dir = new RAMDirectory();
         DataAccess da = dir.find("landmarks_c1");
         da.create(2000);
 
-        LandmarkStorage lms = new LandmarkStorage(ghStorage, dir, new LMConfig("c1", new FastestWeighting(encoder)), 4).
+        LandmarkStorage lms = new LandmarkStorage(graph, dir, new LMConfig("c1", new FastestWeighting(encoder)), 4).
                 setMaximumWeight(LandmarkStorage.PRECISION);
         // 2^16=65536, use -1 for infinity and -2 for maximum
         lms.setWeight(0, 65536);
@@ -118,14 +118,14 @@ public class LandmarkStorageTest {
 
     @Test
     public void testWithSubnetworks() {
-        ghStorage.edge(0, 1, 10, true);
-        ghStorage.edge(1, 2, 10, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10.1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(10.2));
 
-        ghStorage.edge(2, 4).set(encoder.getAccessEnc(), false).setReverse(encoder.getAccessEnc(), false);
-        ghStorage.edge(4, 5, 10, true);
-        ghStorage.edge(5, 6, 10, false);
+        graph.edge(2, 4).set(encoder.getAccessEnc(), false, false);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 5).setDistance(10.5));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 6).setDistance(10.6));
 
-        LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new LMConfig("c1", new FastestWeighting(encoder)), 2);
+        LandmarkStorage storage = new LandmarkStorage(graph, new RAMDirectory(), new LMConfig("c1", new FastestWeighting(encoder)), 2);
         storage.setMinimumNodes(2);
         storage.createLandmarks();
         assertEquals(3, storage.getSubnetworksWithLandmarks());
@@ -137,13 +137,13 @@ public class LandmarkStorageTest {
     public void testWithSubnetworks2() {
         // should not happen with subnetwork preparation
         // 0 - 1 - 2 = 3 - 4
-        ghStorage.edge(0, 1, 10, true);
-        ghStorage.edge(1, 2, 10, true);
-        ghStorage.edge(2, 3, 10, false);
-        ghStorage.edge(3, 2, 10, false);
-        ghStorage.edge(3, 4, 10, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10.1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(10.2));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(10.3));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 2).setDistance(10.2));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(10.4));
 
-        LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new LMConfig("c", new FastestWeighting(encoder)), 2);
+        LandmarkStorage storage = new LandmarkStorage(graph, new RAMDirectory(), new LMConfig("c", new FastestWeighting(encoder)), 2);
         storage.setMinimumNodes(3);
         storage.createLandmarks();
         assertEquals(2, storage.getSubnetworksWithLandmarks());
@@ -154,14 +154,14 @@ public class LandmarkStorageTest {
     public void testWithOnewaySubnetworks() {
         // should not happen with subnetwork preparation
         // create an indifferent problem: node 2 and 3 are part of two 'disconnected' subnetworks
-        ghStorage.edge(0, 1, 10, true);
-        ghStorage.edge(1, 2, 10, false);
-        ghStorage.edge(2, 3, 10, false);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10.1));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(10.2));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(10.3));
 
-        ghStorage.edge(4, 5, 10, true);
-        ghStorage.edge(5, 2, 10, false);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 5).setDistance(10.5));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 2).setDistance(10.2));
 
-        LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new LMConfig("c", new FastestWeighting(encoder)), 2);
+        LandmarkStorage storage = new LandmarkStorage(graph, new RAMDirectory(), new LMConfig("c", new FastestWeighting(encoder)), 2);
         storage.setMinimumNodes(2);
         storage.createLandmarks();
 
@@ -172,11 +172,11 @@ public class LandmarkStorageTest {
     @Test
     public void testWeightingConsistence() {
         // create an indifferent problem: shortest weighting can pass the speed==0 edge but fastest cannot (?)
-        ghStorage.edge(0, 1, 10, true);
-        GHUtility.setProperties(ghStorage.edge(1, 2).setDistance(10), encoder, 0.9, true, true);
-        ghStorage.edge(2, 3, 10, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10.1));
+        GHUtility.setSpeed(0.9, true, true, encoder, graph.edge(1, 2).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(10.3));
 
-        LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new LMConfig("c", new FastestWeighting(encoder)), 2);
+        LandmarkStorage storage = new LandmarkStorage(graph, new RAMDirectory(), new LMConfig("c", new FastestWeighting(encoder)), 2);
         storage.setMinimumNodes(2);
         storage.createLandmarks();
 
@@ -186,9 +186,9 @@ public class LandmarkStorageTest {
 
     @Test
     public void testWithBorderBlocking() {
-        RoutingAlgorithmTest.initBiGraph(ghStorage);
+        RoutingAlgorithmTest.initBiGraph(graph, encoder);
 
-        LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new LMConfig("c", new FastestWeighting(encoder)), 2);
+        LandmarkStorage storage = new LandmarkStorage(graph, new RAMDirectory(), new LMConfig("c", new FastestWeighting(encoder)), 2);
         final SpatialRule ruleRight = new AbstractSpatialRule(Collections.<Polygon>emptyList()) {
             @Override
             public String getId() {
@@ -202,7 +202,7 @@ public class LandmarkStorageTest {
             }
         };
         final SpatialRuleLookup lookup = new SpatialRuleLookup() {
-            
+
             private final List<SpatialRule> rules = Arrays.asList(ruleLeft, ruleRight);
 
             @Override
@@ -214,9 +214,9 @@ public class LandmarkStorageTest {
                     rule = ruleLeft;
                 }
 
-                return new SpatialRuleSet(Collections.singletonList(rule), rules.indexOf(rule)+1);
+                return new SpatialRuleSet(Collections.singletonList(rule), rules.indexOf(rule) + 1);
             }
-            
+
             @Override
             public List<SpatialRule> getRules() {
                 return rules;

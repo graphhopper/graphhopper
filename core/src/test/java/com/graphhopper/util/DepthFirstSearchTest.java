@@ -65,17 +65,17 @@ public class DepthFirstSearchTest {
         };
 
         EncodingManager em = EncodingManager.create("car");
-        FlagEncoder fe = em.getEncoder("car");
+        FlagEncoder encoder = em.getEncoder("car");
         Graph g = new GraphBuilder(em).create();
-        g.edge(1, 2, 1, false);
-        g.edge(1, 5, 1, false);
-        g.edge(1, 4, 1, false);
-        g.edge(2, 3, 1, false);
-        g.edge(3, 4, 1, false);
-        g.edge(5, 6, 1, false);
-        g.edge(6, 4, 1, false);
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 5).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(3, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(5, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(6, 4).setDistance(1));
 
-        dfs.start(g.createEdgeExplorer(DefaultEdgeFilter.outEdges(fe)), 1);
+        dfs.start(g.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder)), 1);
 
         assertTrue(counter > 0);
         assertEquals("[1, 2, 3, 4, 5, 6]", list.toString());
@@ -100,15 +100,15 @@ public class DepthFirstSearchTest {
         };
 
         EncodingManager em = EncodingManager.create("car");
-        FlagEncoder fe = em.getEncoder("car");
+        FlagEncoder encoder = em.getEncoder("car");
         Graph g = new GraphBuilder(em).create();
-        g.edge(1, 2, 1, false);
-        g.edge(1, 4, 1, true);
-        g.edge(1, 3, 1, false);
-        g.edge(2, 3, 1, false);
-        g.edge(4, 3, 1, true);
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(4, 3).setDistance(1));
 
-        dfs.start(g.createEdgeExplorer(DefaultEdgeFilter.outEdges(fe)), 1);
+        dfs.start(g.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder)), 1);
 
         assertTrue(counter > 0);
         assertEquals("[1, 2, 3, 4]", list.toString());

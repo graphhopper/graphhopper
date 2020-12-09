@@ -75,13 +75,13 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         na.setNode(1, 11, 20, 1);
         na.setNode(2, 12, 12, 0.4);
 
-        EdgeIteratorState iter2 = graph.edge(0, 1, 100, true);
+        EdgeIteratorState iter2 = GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 1).setDistance(100));
         iter2.setWayGeometry(Helper.createPointList3D(1.5, 1, 0, 2, 3, 0));
-        EdgeIteratorState iter1 = graph.edge(0, 2, 200, true);
+        EdgeIteratorState iter1 = GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 2).setDistance(200));
         iter1.setWayGeometry(Helper.createPointList3D(3.5, 4.5, 0, 5, 6, 0));
-        graph.edge(9, 10, 200, true);
-        graph.edge(9, 11, 200, true);
-        graph.edge(1, 2, 120, false);
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(9, 10).setDistance(200));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(9, 11).setDistance(200));
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(1, 2).setDistance(120));
 
         iter1.setName("named street1");
         iter2.setName("named street2");
@@ -98,7 +98,8 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
         assertEquals("named street1", graph.getEdgeIteratorState(iter1.getEdge(), iter1.getAdjNode()).getName());
         assertEquals("named street2", graph.getEdgeIteratorState(iter2.getEdge(), iter2.getAdjNode()).getName());
-        graph.edge(3, 4, 123, true).setWayGeometry(Helper.createPointList3D(4.4, 5.5, 0, 6.6, 7.7, 0));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 4).setDistance(123)).
+                setWayGeometry(Helper.createPointList3D(4.4, 5.5, 0, 6.6, 7.7, 0));
         checkGraph(graph);
     }
 
@@ -191,13 +192,13 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         // a typical usage where we create independent EdgeIteratorState's BUT due to the IntsRef reference they are no more independent
         GraphHopperStorage storage = createGHStorage();
         Graph graph = storage.getBaseGraph();
-        graph.edge(0, 1, 10, true);
-        graph.edge(1, 2, 10, true);
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 1).setDistance(10));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 2).setDistance(10));
 
         EdgeIteratorState edge0 = graph.getEdgeIteratorState(0, Integer.MIN_VALUE);
         EdgeIteratorState edge1 = graph.getEdgeIteratorState(1, Integer.MIN_VALUE);
-        edge0.set(carAccessEnc, true).setReverse(carAccessEnc, false);
-        edge1.set(carAccessEnc, false).setReverse(carAccessEnc, true);
+        edge0.set(carAccessEnc, true, false);
+        edge1.set(carAccessEnc, false, true);
 
         assertFalse(edge1.get(carAccessEnc));
         assertTrue(edge1.getReverse(carAccessEnc));
@@ -229,9 +230,9 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         Graph graph = storage.getBaseGraph();
         IntsRef ref = encodingManager.createEdgeFlags();
         ref.ints[0] = 12;
-        graph.edge(1, 2, 10, true).setFlags(ref);
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 2).setDistance(10)).setFlags(ref);
         ref.ints[0] = 13;
-        graph.edge(1, 3, 10, true).setFlags(ref);
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 3).setDistance(10)).setFlags(ref);
 
         EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(1);
         assertTrue(iter.next());
@@ -255,8 +256,8 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         na.setNode(1, 8, 13);
         na.setNode(2, 2, 10);
         na.setNode(3, 5, 9);
-        graph.edge(1, 2, 10, true);
-        graph.edge(1, 3, 10, true);
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 2).setDistance(10));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 3).setDistance(10));
         int nodes = graph.getNodes();
         int edges = graph.getAllEdges().length();
         graph.flush();
@@ -294,7 +295,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     @Test
     public void testEdgeKey() {
         GraphHopperStorage g = new GraphBuilder(encodingManager).create();
-        g.edge(0, 1, 10, true);
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 1).setDistance(10));
         // storage direction
         assertEdge(g.getEdgeIteratorState(0, Integer.MIN_VALUE), 0, 1, false, 0, 0);
         // reverse direction
@@ -308,7 +309,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     @Test
     public void testEdgeKey_loop() {
         GraphHopperStorage g = new GraphBuilder(encodingManager).create();
-        g.edge(0, 0, 10, true);
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 0).setDistance(10));
         // storage direction
         assertEdge(g.getEdgeIteratorState(0, Integer.MIN_VALUE), 0, 0, false, 0, 0);
         // reverse direction cannot be retrieved, we get forward direction anyway

@@ -14,6 +14,7 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.shapes.Circle;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,7 +36,7 @@ public class BlockAreaWeightingTest {
         em = EncodingManager.create(Arrays.asList(encoder));
         graph = new GraphBuilder(em).create();
         // 0-1
-        graph.edge(0, 1, 1, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1));
         updateDistancesFor(graph, 0, 0.00, 0.00);
         updateDistancesFor(graph, 1, 0.01, 0.01);
     }

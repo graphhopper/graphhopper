@@ -168,8 +168,11 @@ public class GHUtility {
                 "graph.edge(%d, %d, %f, %s); // edgeId=%s\n", from, to, edge.getDistance(), fwd && bwd ? "true" : "false", edge.getEdge());
     }
 
+    /**
+     * @param speed if null a random speed will be assign to every edge
+     */
     public static void buildRandomGraph(Graph graph, Random random, int numNodes, double meanDegree, boolean allowLoops,
-                                        boolean allowZeroDistance, DecimalEncodedValue randomSpeedEnc,
+                                        boolean allowZeroDistance, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, Double speed,
                                         double pNonZeroLoop, double pBothDir, double pRandomDistanceOffset) {
         if (numNodes < 2 || meanDegree < 1) {
             throw new IllegalArgumentException("numNodes must be >= 2, meanDegree >= 1");
@@ -204,14 +207,13 @@ public class GHUtility {
             maxDist = Math.max(maxDist, distance);
             // using bidirectional edges will increase mean degree of graph above given value
             boolean bothDirections = random.nextDouble() < pBothDir;
-            EdgeIteratorState edge = graph.edge(from, to, distance, bothDirections);
-            double fwdSpeed = 10 + random.nextDouble() * 110;
-            double bwdSpeed = 10 + random.nextDouble() * 110;
-            if (randomSpeedEnc != null) {
-                edge.set(randomSpeedEnc, fwdSpeed);
-                if (randomSpeedEnc.isStoreTwoDirections())
-                    edge.setReverse(randomSpeedEnc, bwdSpeed);
-            }
+            EdgeIteratorState edge = graph.edge(from, to).setDistance(distance).set(accessEnc, true);
+            if (bothDirections) edge.setReverse(accessEnc, true);
+            double fwdSpeed = speed != null ? speed : 10 + random.nextDouble() * 110;
+            double bwdSpeed = speed != null ? speed : 10 + random.nextDouble() * 110;
+            edge.set(speedEnc, fwdSpeed);
+            if (speedEnc.isStoreTwoDirections())
+                edge.setReverse(speedEnc, bwdSpeed);
             numEdges++;
         }
         LOGGER.debug(String.format(Locale.ROOT, "Finished building random graph" +
@@ -622,39 +624,54 @@ public class GHUtility {
         return edgeKey / 2;
     }
 
-    public static IntsRef setProperties(IntsRef edgeFlags, FlagEncoder encoder, double averageSpeed, boolean fwd, boolean bwd) {
-        if (averageSpeed < 0.0001 && (fwd || bwd))
-            throw new IllegalStateException("Zero speed is only allowed if edge will get inaccessible. Otherwise Weighting can produce inconsistent results");
+    public static IntsRef setSpeed(double fwdSpeed, double bwdSpeed, FlagEncoder encoder, IntsRef edgeFlags) {
+        if (fwdSpeed < 0 || bwdSpeed < 0)
+            throw new IllegalArgumentException("Speed must be positive but wasn't! fwdSpeed:" + fwdSpeed + ", bwdSpeed:" + bwdSpeed);
 
         BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        DecimalEncodedValue avSpeedEnc = encoder.getAverageSpeedEnc();
-        accessEnc.setBool(false, edgeFlags, fwd);
-        accessEnc.setBool(true, edgeFlags, bwd);
-        if (fwd)
-            avSpeedEnc.setDecimal(false, edgeFlags, averageSpeed);
-        if (bwd)
-            avSpeedEnc.setDecimal(true, edgeFlags, averageSpeed);
+        DecimalEncodedValue avgSpeedEnc = encoder.getAverageSpeedEnc();
+
+        avgSpeedEnc.setDecimal(false, edgeFlags, fwdSpeed);
+        if (fwdSpeed > 0)
+            accessEnc.setBool(false, edgeFlags, true);
+
+        if (bwdSpeed > 0 && (fwdSpeed != bwdSpeed || avgSpeedEnc.isStoreTwoDirections())) {
+            if (!avgSpeedEnc.isStoreTwoDirections())
+                throw new IllegalArgumentException("EncodedValue " + avgSpeedEnc.getName() + " supports only one direction " +
+                        "but two different speeds were specified " + fwdSpeed + " " + bwdSpeed);
+            avgSpeedEnc.setDecimal(true, edgeFlags, bwdSpeed);
+        }
+        if (bwdSpeed > 0)
+            accessEnc.setBool(true, edgeFlags, true);
         return edgeFlags;
     }
 
-    public static EdgeIteratorState setProperties(EdgeIteratorState edge, FlagEncoder encoder, double fwdSpeed, double bwdSpeed) {
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        edge.set(accessEnc, true).setReverse(accessEnc, true);
-        DecimalEncodedValue avSpeedEnc = encoder.getAverageSpeedEnc();
-        return edge.set(avSpeedEnc, fwdSpeed).setReverse(avSpeedEnc, bwdSpeed);
+    public static void setSpeed(double fwdSpeed, double bwdSpeed, FlagEncoder encoder, EdgeIteratorState... edges) {
+        setSpeed(fwdSpeed, bwdSpeed, encoder, Arrays.asList(edges));
     }
 
-    public static IntsRef setProperties(IntsRef edgeFlags, FlagEncoder encoder, double fwdSpeed, double bwdSpeed) {
+    public static void setSpeed(double fwdSpeed, double bwdSpeed, FlagEncoder encoder, Collection<EdgeIteratorState> edges) {
+        if (fwdSpeed < 0 || bwdSpeed < 0)
+            throw new IllegalArgumentException("Speed must be positive but wasn't! fwdSpeed:" + fwdSpeed + ", bwdSpeed:" + bwdSpeed);
         BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        accessEnc.setBool(false, edgeFlags, true);
-        accessEnc.setBool(true, edgeFlags, true);
-        DecimalEncodedValue avSpeedEnc = encoder.getAverageSpeedEnc();
-        avSpeedEnc.setDecimal(false, edgeFlags, fwdSpeed);
-        avSpeedEnc.setDecimal(true, edgeFlags, bwdSpeed);
-        return edgeFlags;
+        DecimalEncodedValue avgSpeedEnc = encoder.getAverageSpeedEnc();
+        for (EdgeIteratorState edge : edges) {
+            edge.set(avgSpeedEnc, fwdSpeed);
+            if (fwdSpeed > 0)
+                edge.set(accessEnc, true);
+
+            if (bwdSpeed > 0 && (fwdSpeed != bwdSpeed || avgSpeedEnc.isStoreTwoDirections())) {
+                if (!avgSpeedEnc.isStoreTwoDirections())
+                    throw new IllegalArgumentException("EncodedValue " + avgSpeedEnc.getName() + " supports only one direction " +
+                            "but two different speeds were specified " + fwdSpeed + " " + bwdSpeed);
+                edge.setReverse(avgSpeedEnc, bwdSpeed);
+            }
+            if (bwdSpeed > 0)
+                edge.setReverse(accessEnc, true);
+        }
     }
 
-    public static EdgeIteratorState setProperties(EdgeIteratorState edge, FlagEncoder encoder, double averageSpeed, boolean fwd, boolean bwd) {
+    public static EdgeIteratorState setSpeed(double averageSpeed, boolean fwd, boolean bwd, FlagEncoder encoder, EdgeIteratorState edge) {
         if (averageSpeed < 0.0001 && (fwd || bwd))
             throw new IllegalStateException("Zero speed is only allowed if edge will get inaccessible. Otherwise Weighting can produce inconsistent results");
 
@@ -811,6 +828,11 @@ public class GHUtility {
         }
 
         @Override
+        public EdgeIteratorState set(BooleanEncodedValue property, boolean fwd, boolean bwd) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
         public int get(IntEncodedValue property) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
@@ -827,6 +849,11 @@ public class GHUtility {
 
         @Override
         public EdgeIteratorState setReverse(IntEncodedValue property, int value) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public EdgeIteratorState set(IntEncodedValue property, int fwd, int bwd) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
@@ -851,6 +878,11 @@ public class GHUtility {
         }
 
         @Override
+        public EdgeIteratorState set(DecimalEncodedValue property, double fwd, double bwd) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
         public <T extends Enum> T get(EnumEncodedValue<T> property) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
@@ -867,6 +899,11 @@ public class GHUtility {
 
         @Override
         public <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 

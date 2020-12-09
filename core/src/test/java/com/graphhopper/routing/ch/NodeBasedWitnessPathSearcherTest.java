@@ -28,6 +28,7 @@ import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -104,13 +105,13 @@ class NodeBasedWitnessPathSearcherTest {
         //   /    |
         //  4-----3
         //
-        graph.edge(0, 1, 1, true);
-        graph.edge(0, 2, 1, true);
-        graph.edge(0, 4, 3, true);
-        graph.edge(1, 2, 3, true);
-        graph.edge(2, 3, 1, true);
-        graph.edge(4, 3, 2, true);
-        graph.edge(5, 1, 2, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 4).setDistance(3));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(3));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 3).setDistance(2));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 1).setDistance(2));
         graph.freeze();
     }
 

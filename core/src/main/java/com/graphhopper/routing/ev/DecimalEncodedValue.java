@@ -25,9 +25,4 @@ public interface DecimalEncodedValue extends EncodedValue {
      * The double value this EncodedValue accepts for setDecimal without throwing an exception.
      */
     double getMaxDecimal();
-
-    /**
-     * @return true if this EncodedValue can store a different value for its reverse direction
-     */
-    boolean isStoreTwoDirections();
 }

@@ -49,7 +49,7 @@ public class MotorcycleFlagEncoderTest {
                 setWayGeometry(Helper.createPointList3D(51.1, 12.0011, 49, 51.1, 12.0015, 55));
         edge.setDistance(100);
 
-        edge.set(accessEnc, true).setReverse(accessEnc, true).set(encoder.getAverageSpeedEnc(), 10.0).setReverse(encoder.getAverageSpeedEnc(), 15.0);
+        edge.set(accessEnc, true, true).set(encoder.getAverageSpeedEnc(), 10.0, 15.0);
         return gs;
     }
 

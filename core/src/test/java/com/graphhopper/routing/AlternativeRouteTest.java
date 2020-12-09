@@ -30,6 +30,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.util.GHUtility;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -46,10 +47,11 @@ public class AlternativeRouteTest {
     private final Weighting weighting;
     private final TraversalMode traversalMode;
     private final GraphHopperStorage graph;
+    private final FlagEncoder carFE;
 
     public AlternativeRouteTest(TraversalMode tMode) {
         this.traversalMode = tMode;
-        FlagEncoder carFE = new CarFlagEncoder();
+        carFE = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(carFE);
         graph = new GraphBuilder(em).withTurnCosts(true).create();
         TurnCostProvider turnCostProvider = tMode.isEdgeBased()
@@ -69,7 +71,7 @@ public class AlternativeRouteTest {
         });
     }
 
-    public static void initTestGraph(Graph graph) {
+    public static void initTestGraph(Graph graph, FlagEncoder encoder) {
         /* 9
          _/\
          1  2-3-4-10
@@ -77,20 +79,18 @@ public class AlternativeRouteTest {
          5--6-7---8
         
          */
-        graph.edge(1, 9, 1, true);
-        graph.edge(9, 2, 1, true);
-        graph.edge(2, 3, 1, true);
-        graph.edge(3, 4, 1, true);
-        graph.edge(4, 10, 1, true);
-
-        graph.edge(5, 6, 1, true);
-
-        graph.edge(6, 7, 1, true);
-        graph.edge(7, 8, 1, true);
-
-        graph.edge(1, 5, 2, true);
-        graph.edge(6, 3, 1, true);
-        graph.edge(4, 8, 1, true);
+        GHUtility.setSpeed(60, 60, encoder,
+                graph.edge(1, 9).setDistance(1),
+                graph.edge(9, 2).setDistance(1),
+                graph.edge(2, 3).setDistance(1),
+                graph.edge(3, 4).setDistance(1),
+                graph.edge(4, 10).setDistance(1),
+                graph.edge(5, 6).setDistance(1),
+                graph.edge(6, 7).setDistance(1),
+                graph.edge(7, 8).setDistance(1),
+                graph.edge(1, 5).setDistance(2),
+                graph.edge(6, 3).setDistance(1),
+                graph.edge(4, 8).setDistance(1));
 
         updateDistancesFor(graph, 5, 0.00, 0.05);
         updateDistancesFor(graph, 6, 0.00, 0.10);
@@ -107,7 +107,7 @@ public class AlternativeRouteTest {
 
     @Test
     public void testCalcAlternatives() {
-        initTestGraph(graph);
+        initTestGraph(graph, carFE);
         AlternativeRoute altDijkstra = new AlternativeRoute(graph, weighting, traversalMode);
         altDijkstra.setMaxShareFactor(0.5);
         altDijkstra.setMaxWeightFactor(2);
@@ -135,7 +135,7 @@ public class AlternativeRouteTest {
 
     @Test
     public void testCalcAlternatives2() {
-        initTestGraph(graph);
+        initTestGraph(graph, carFE);
         AlternativeRoute altDijkstra = new AlternativeRoute(graph, weighting, traversalMode);
         altDijkstra.setMaxPaths(3);
         altDijkstra.setMaxShareFactor(0.7);
@@ -171,7 +171,7 @@ public class AlternativeRouteTest {
 
     @Test
     public void testDisconnectedAreas() {
-        initTestGraph(graph);
+        initTestGraph(graph, carFE);
 
         // one single disconnected node
         updateDistancesFor(graph, 20, 0.00, -0.01);

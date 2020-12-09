@@ -899,26 +899,25 @@ public class GraphHopperOSMTest {
         na.setNode(7, 0.000, 0.001);
         na.setNode(8, 0.001, 0.001);
 
-        g.edge(0, 1, 100, true);
-        g.edge(1, 2, 100, true);
-        g.edge(2, 3, 100, true);
-        g.edge(3, 4, 100, true);
-        g.edge(4, 5, 100, true);
-        g.edge(5, 6, 100, true);
-        g.edge(6, 7, 100, true);
-        g.edge(7, 0, 100, true);
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 1).setDistance(100));
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(1, 2).setDistance(100));
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(2, 3).setDistance(100));
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(3, 4).setDistance(100));
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(4, 5).setDistance(100));
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(5, 6).setDistance(100));
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(6, 7).setDistance(100));
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(7, 0).setDistance(100));
 
-        g.edge(1, 8, 110, true);
-        g.edge(3, 8, 110, true);
-        g.edge(5, 8, 110, true);
-        g.edge(7, 8, 110, true);
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(1, 8).setDistance(110));
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(3, 8).setDistance(110));
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(5, 8).setDistance(110));
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(7, 8).setDistance(110));
 
         GraphHopper tmp = new GraphHopperOSM().
                 setEncodingManager(encodingManager).
                 setProfiles(new Profile("profile").setVehicle("car").setWeighting("fastest"));
         tmp.setGraphHopperStorage(g);
         tmp.postProcessing();
-
         return tmp;
     }
 

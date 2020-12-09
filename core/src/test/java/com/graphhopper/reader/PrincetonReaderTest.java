@@ -17,9 +17,7 @@
  */
 package com.graphhopper.reader;
 
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeExplorer;
@@ -37,13 +35,14 @@ import static org.junit.Assert.assertEquals;
  * @author Peter Karich
  */
 public class PrincetonReaderTest {
-    private EncodingManager encodingManager = EncodingManager.create("car");
-    private EdgeFilter carOutEdges = DefaultEdgeFilter.outEdges(encodingManager.getEncoder("car"));
+    private FlagEncoder encoder = new CarFlagEncoder();
+    private EncodingManager encodingManager = EncodingManager.create(encoder);
+    private EdgeFilter carOutEdges = DefaultEdgeFilter.outEdges(encoder);
 
     @Test
     public void testRead() {
         Graph graph = new GraphBuilder(encodingManager).create();
-        new PrincetonReader(graph).setStream(PrincetonReader.class.getResourceAsStream("tinyEWD.txt")).read();
+        new PrincetonReader(graph, encoder).setStream(PrincetonReader.class.getResourceAsStream("tinyEWD.txt")).read();
         assertEquals(8, graph.getNodes());
         EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
         assertEquals(2, count(explorer.setBaseNode(0)));
@@ -53,7 +52,7 @@ public class PrincetonReaderTest {
     @Test
     public void testMediumRead() throws IOException {
         Graph graph = new GraphBuilder(encodingManager).create();
-        new PrincetonReader(graph).setStream(new GZIPInputStream(PrincetonReader.class.getResourceAsStream("mediumEWD.txt.gz"))).read();
+        new PrincetonReader(graph, encoder).setStream(new GZIPInputStream(PrincetonReader.class.getResourceAsStream("mediumEWD.txt.gz"))).read();
         assertEquals(250, graph.getNodes());
         EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
         assertEquals(13, count(explorer.setBaseNode(244)));

@@ -17,7 +17,9 @@
  */
 package com.graphhopper.reader;
 
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 
 import java.io.BufferedReader;
@@ -31,10 +33,12 @@ import java.io.InputStreamReader;
  * @author Peter Karich
  */
 public class PrincetonReader {
-    private Graph graph;
+    private final FlagEncoder encoder;
+    private final Graph graph;
     private InputStream is;
 
-    public PrincetonReader(Graph graph) {
+    public PrincetonReader(Graph graph, FlagEncoder encoder) {
+        this.encoder = encoder;
         this.graph = graph;
     }
 
@@ -81,7 +85,7 @@ public class PrincetonReader {
                     throw new RuntimeException("incorrect read!? from:" + from + ", to:" + to + ", dist:" + dist);
                 }
 
-                graph.edge(from, to, dist, false);
+                GHUtility.setSpeed(60, true, false, encoder, graph.edge(from, to).setDistance(dist));
             }
         } catch (Exception ex) {
             throw new RuntimeException("Problem in line " + lineNo, ex);
