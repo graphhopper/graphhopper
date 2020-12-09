@@ -65,26 +65,11 @@ public class FootFlagEncoderTest {
     }
 
     @Test
-    public void testBasics() {
-        IntsRef edgeFlags = encodingManager.createEdgeFlags();
-        footEncoder.flagsDefault(edgeFlags, true, true);
-        assertEquals(FootFlagEncoder.MEAN_SPEED, footEncoder.getSpeed(edgeFlags), 1e-1);
-
-        IntsRef ef1 = encodingManager.createEdgeFlags();
-        footEncoder.flagsDefault(ef1, true, false);
-        IntsRef ef2 = encodingManager.createEdgeFlags();
-        footEncoder.flagsDefault(ef2, false, true);
-        assertEquals(footAccessEnc.getBool(false, ef1), footAccessEnc.getBool(true, ef2));
-        assertEquals(footEncoder.getSpeed(ef1), footEncoder.getSpeed(ef1), 1e-1);
-    }
-
-    @Test
     public void testCombined() {
         Graph g = new GraphBuilder(encodingManager).create();
-        FlagEncoder carEncoder = encodingManager.getEncoder("car");
         EdgeIteratorState edge = g.edge(0, 1);
-        edge.set(footAvSpeedEnc, 10.0).set(footAccessEnc, true).setReverse(footAccessEnc, true);
-        edge.set(carAvSpeedEnc, 100.0).set(carAccessEnc, true).setReverse(carAccessEnc, false);
+        edge.set(footAvSpeedEnc, 10.0).set(footAccessEnc, true, true);
+        edge.set(carAvSpeedEnc, 100.0).set(carAccessEnc, true, false);
 
         assertEquals(10, edge.get(footAvSpeedEnc), 1e-1);
         assertTrue(edge.get(footAccessEnc));
@@ -104,9 +89,9 @@ public class FootFlagEncoderTest {
     @Test
     public void testGraph() {
         Graph g = new GraphBuilder(encodingManager).create();
-        g.edge(0, 1).setDistance(10).set(footAvSpeedEnc, 10.0).set(footAccessEnc, true).setReverse(footAccessEnc, true);
-        g.edge(0, 2).setDistance(10).set(footAvSpeedEnc, 5.0).set(footAccessEnc, true).setReverse(footAccessEnc, true);
-        g.edge(1, 3).setDistance(10).set(footAvSpeedEnc, 10.0).set(footAccessEnc, true).setReverse(footAccessEnc, true);
+        g.edge(0, 1).setDistance(10).set(footAvSpeedEnc, 10.0).set(footAccessEnc, true, true);
+        g.edge(0, 2).setDistance(10).set(footAvSpeedEnc, 5.0).set(footAccessEnc, true, true);
+        g.edge(1, 3).setDistance(10).set(footAvSpeedEnc, 10.0).set(footAccessEnc, true, true);
         EdgeExplorer out = g.createEdgeExplorer(DefaultEdgeFilter.outEdges(footEncoder));
         assertEquals(GHUtility.asSet(1, 2), GHUtility.getNeighbors(out.setBaseNode(0)));
         assertEquals(GHUtility.asSet(0, 3), GHUtility.getNeighbors(out.setBaseNode(1)));

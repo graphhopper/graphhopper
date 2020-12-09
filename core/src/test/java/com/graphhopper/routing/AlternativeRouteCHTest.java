@@ -26,6 +26,7 @@ import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.Test;
 
@@ -57,23 +58,21 @@ public class AlternativeRouteCHTest {
         // has to be locally-shortest to be considered.
         // So we get all three alternatives.
 
-        graph.edge(5, 6, 10000, true);
-        graph.edge(6, 3, 10000, true);
-        graph.edge(3, 4, 10000, true);
-        graph.edge(4, 10, 10000, true);
-
-        graph.edge(6, 7, 10000, true);
-        graph.edge(7, 8, 10000, true);
-        graph.edge(8, 4, 10000, true);
-
-        graph.edge(5, 1, 10000, true);
-        graph.edge(1, 9, 10000, true);
-        graph.edge(9, 2, 10000, true);
-        graph.edge(2, 3, 10000, true);
-
-        graph.edge(4, 11, 9000, true);
-        graph.edge(11, 12, 9000, true);
-        graph.edge(12, 10, 10000, true);
+        GHUtility.setSpeed(60, 60, carFE,
+                graph.edge(5, 6).setDistance(10000),
+                graph.edge(6, 3).setDistance(10000),
+                graph.edge(3, 4).setDistance(10000),
+                graph.edge(4, 10).setDistance(10000),
+                graph.edge(6, 7).setDistance(10000),
+                graph.edge(7, 8).setDistance(10000),
+                graph.edge(8, 4).setDistance(10000),
+                graph.edge(5, 1).setDistance(10000),
+                graph.edge(1, 9).setDistance(10000),
+                graph.edge(9, 2).setDistance(10000),
+                graph.edge(2, 3).setDistance(10000),
+                graph.edge(4, 11).setDistance(9000),
+                graph.edge(11, 12).setDistance(9000),
+                graph.edge(12, 10).setDistance(10000));
 
         graph.freeze();
 

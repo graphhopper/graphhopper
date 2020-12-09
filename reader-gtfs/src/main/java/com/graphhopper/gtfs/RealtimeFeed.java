@@ -213,11 +213,6 @@ public class RealtimeFeed {
             }
 
             @Override
-            public EdgeIteratorState edge(int a, int b, double distance, boolean bothDirections) {
-                return null;
-            }
-
-            @Override
             public EdgeIteratorState getEdgeIteratorState(int edgeId, int adjNode) {
                 return null;
             }

@@ -4,7 +4,6 @@ import com.carrotsearch.hppc.DoubleArrayList;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.ch.ShortcutUnpacker;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
@@ -58,15 +57,14 @@ public class ShortcutUnpackerTest {
     @Test
     public void testUnpacking() {
         // 0-1-2-3-4-5-6
-        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
-        double fwdSpeed = 60;
-        double bwdSpeed = 30;
-        graph.edge(0, 1, 1, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        graph.edge(1, 2, 1, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        graph.edge(2, 3, 1, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        graph.edge(3, 4, 1, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        graph.edge(4, 5, 1, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        graph.edge(5, 6, 1, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed); // edge 5
+        GHUtility.setSpeed(60, 30, encoder,
+                graph.edge(0, 1).setDistance(1),
+                graph.edge(1, 2).setDistance(1),
+                graph.edge(2, 3).setDistance(1),
+                graph.edge(3, 4).setDistance(1),
+                graph.edge(4, 5).setDistance(1),
+                graph.edge(5, 6).setDistance(1) // edge 5
+        );
         graph.freeze();
 
         setCHLevels(1, 3, 5, 4, 2, 0, 6);
@@ -153,15 +151,13 @@ public class ShortcutUnpackerTest {
         //   2   4
         //    \ /
         // 0 - 1 - 5
-        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
-        double fwdSpeed = 60;
-        double bwdSpeed = 30;
-        graph.edge(0, 1, 1, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        graph.edge(1, 2, 1, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        graph.edge(2, 3, 1, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        graph.edge(3, 4, 1, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        graph.edge(4, 1, 1, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        graph.edge(1, 5, 1, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
+        GHUtility.setSpeed(60, 30, encoder,
+                graph.edge(0, 1).setDistance(1),
+                graph.edge(1, 2).setDistance(1),
+                graph.edge(2, 3).setDistance(1),
+                graph.edge(3, 4).setDistance(1),
+                graph.edge(4, 1).setDistance(1),
+                graph.edge(1, 5).setDistance(1));
         graph.freeze();
 
         setCHLevels(2, 4, 3, 1, 5, 0);
@@ -230,15 +226,14 @@ public class ShortcutUnpackerTest {
         //      2 5 3 2 1 4 6      turn costs ->
         // prev 0-1-2-3-4-5-6 next
         //      1 0 1 4 2 3 2      turn costs <-
-        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
-        double fwdSpeed = 60;
-        double bwdSpeed = 30;
-        EdgeIteratorState edge0 = graph.edge(0, 1, 1, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        EdgeIteratorState edge1 = graph.edge(1, 2, 1, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        EdgeIteratorState edge2 = graph.edge(2, 3, 1, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        EdgeIteratorState edge3 = graph.edge(3, 4, 1, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        EdgeIteratorState edge4 = graph.edge(4, 5, 1, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
-        EdgeIteratorState edge5 = graph.edge(5, 6, 1, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
+        EdgeIteratorState edge0, edge1, edge2, edge3, edge4, edge5;
+        GHUtility.setSpeed(60, 30, encoder,
+                edge0 = graph.edge(0, 1).setDistance(1),
+                edge1 = graph.edge(1, 2).setDistance(1),
+                edge2 = graph.edge(2, 3).setDistance(1),
+                edge3 = graph.edge(3, 4).setDistance(1),
+                edge4 = graph.edge(4, 5).setDistance(1),
+                edge5 = graph.edge(5, 6).setDistance(1));
         graph.freeze();
 
         // turn costs ->

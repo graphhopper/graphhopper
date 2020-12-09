@@ -43,8 +43,7 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
         na.setNode(1, 51.1, 12.002, 60);
         EdgeIteratorState edge = gs.edge(0, 1).
                 setWayGeometry(Helper.createPointList3D(51.1, 12.0011, 49, 51.1, 12.0015, 55));
-        edge.setDistance(100);
-        GHUtility.setProperties(edge, encoder, 10, 15);
+        GHUtility.setSpeed(10, 15, encoder, edge.setDistance(100));
         return gs;
     }
 
@@ -76,7 +75,7 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
 
     @Test
     public void testSetSpeed0_issue367() {
-        IntsRef edgeFlags = GHUtility.setProperties(encodingManager.createEdgeFlags(), encoder, 10, 10);
+        IntsRef edgeFlags = GHUtility.setSpeed(10, 10, encoder, encodingManager.createEdgeFlags());
         assertEquals(10, encoder.getSpeed(false, edgeFlags), .1);
         assertEquals(10, encoder.getSpeed(true, edgeFlags), .1);
 

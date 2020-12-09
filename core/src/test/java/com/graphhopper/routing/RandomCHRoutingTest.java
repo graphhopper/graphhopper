@@ -85,7 +85,8 @@ public class RandomCHRoutingTest {
         // we may not use an offset when query graph is involved, otherwise traveling via virtual edges will not be
         // the same as taking the direct edge!
         double pOffset = 0;
-        GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.5, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, pOffset);
+        GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.5, true, true,
+                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), 60d, 0.7, 0.9, pOffset);
         if (traversalMode.isEdgeBased()) {
             GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, graph.getTurnCostStorage());
         }
@@ -129,7 +130,8 @@ public class RandomCHRoutingTest {
         Assume.assumeTrue(traversalMode.isEdgeBased());
         long seed = 60643479675316L;
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, rnd, 50, 2.5, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, 0.0);
+        GHUtility.buildRandomGraph(graph, rnd, 50, 2.5, true, true,
+                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), 60d, 0.7, 0.9, 0.0);
         GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, graph.getTurnCostStorage());
         runRandomTest(rnd, 20);
     }
@@ -227,7 +229,7 @@ public class RandomCHRoutingTest {
             maxDist = Math.max(maxDist, distance);
             // using bidirectional edges will increase mean degree of graph above given value
             boolean bothDirections = random.nextDouble() < pBothDir;
-            EdgeIteratorState edge = graph.edge(from, to, distance, bothDirections);
+            EdgeIteratorState edge = GHUtility.setSpeed(60, true, bothDirections, encoder, graph.edge(from, to).setDistance(distance));
             double fwdSpeed = 10 + random.nextDouble() * 120;
             double bwdSpeed = 10 + random.nextDouble() * 120;
             DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
