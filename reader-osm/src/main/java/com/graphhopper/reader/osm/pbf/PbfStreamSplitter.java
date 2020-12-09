@@ -104,15 +104,4 @@ public class PbfStreamSplitter implements Iterator<PbfRawBlob> {
     public void remove() {
         throw new UnsupportedOperationException();
     }
-
-    public void release() {
-        if (dis != null) {
-            try {
-                dis.close();
-            } catch (IOException e) {
-                log.log(Level.SEVERE, "Unable to close PBF stream.", e);
-            }
-        }
-        dis = null;
-    }
 }
