@@ -193,7 +193,7 @@ A fast and production ready map visualization for the Desktop can be implemented
 Here is a list of the more detailed features:
 
  * Based on Java and simple start for developers via Maven.
- * Works out of the box with OpenStreetMap (osm/xml and pbf) and can be adapted to custom data
+ * Works out of the box with OpenStreetMap (pbf) and can be adapted to custom data
  * OpenStreetMap integration: stores and considers road type, speed limit, the surface, barriers, access restrictions, ferries, [conditional access restrictions](https://github.com/graphhopper/graphhopper/pull/621), ...
  * GraphHopper is fast. And with the so called "Contraction Hierarchies" it can be even faster (enabled by default).
  * Memory efficient data structures, algorithms and [the low and high level API](../stable/docs/core/low-level-api.md) is tuned towards ease of use and efficiency
