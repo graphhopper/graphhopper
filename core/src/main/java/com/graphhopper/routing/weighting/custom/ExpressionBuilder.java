@@ -226,8 +226,6 @@ class ExpressionBuilder {
             if (lookup.hasEncodedValue(arg)) {
                 check(arg);
                 EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
-                if (!EncodingManager.isSharedEncodedValues(enc))
-                    continue;
                 classSourceCode.append("protected " + enc.getClass().getSimpleName() + " " + arg + "_enc;\n");
                 initSourceCode.append("if (lookup.hasEncodedValue(\"" + arg + "\")) ");
                 initSourceCode.append("this." + arg + "_enc = (" + enc.getClass().getSimpleName()
