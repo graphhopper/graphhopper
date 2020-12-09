@@ -48,11 +48,11 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.google.transit</groupId>
-            <artifactId>gtfs-realtime-bindings</artifactId>
-            <version>0.0.4</version>
-        </dependency>
+		<dependency>
+			<groupId>io.mobilitydata.transit</groupId>
+			<artifactId>gtfs-realtime-bindings</artifactId>
+			<version>0.0.5</version>
+		</dependency>
         <dependency>
             <groupId>javax.inject</groupId>
             <artifactId>javax.inject</artifactId>
