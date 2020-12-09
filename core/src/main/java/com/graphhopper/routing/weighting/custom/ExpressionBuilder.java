@@ -45,7 +45,7 @@ class ExpressionBuilder {
     private static final Set<String> allowedNames = new HashSet<>(Arrays.asList("edge", "Math"));
     private static final boolean JANINO_DEBUG = Boolean.getBoolean(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE);
 
-    // Without a cache we get 50% slower routing and 300% slower routingLM8. CH requests and preparation is unaffected
+    // TODO without a cache we get X% slower routing and Y% slower routingLM8. CH requests and preparation is unaffected
     // as cached weighting from preparation is used. This cache ensures that the first Weighting classes, typically the
     // ones specified in the profiles, are never removed regardless of how frequent other Weightings are created and accessed.
     // We only need to synchronize the get and put methods alone. E.g. we do not care for the race condition where
