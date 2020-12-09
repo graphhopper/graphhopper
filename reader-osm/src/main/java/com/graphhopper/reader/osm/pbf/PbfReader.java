@@ -26,7 +26,7 @@ public class PbfReader implements Runnable {
     private final File file;
     private final ExecutorService executorService;
     private final BlockingQueue<Future<ReaderBlock>> resultQueue;
-    private final AtomicBoolean parsing;
+    private final AtomicBoolean parsing = new AtomicBoolean(true);
 
     /**
      * Creates a new instance.
@@ -35,13 +35,11 @@ public class PbfReader implements Runnable {
      * @param file        The file to read.
      * @param executor    The {@link ExecutorService} used to process blobs
      * @param resultQueue Queue to receive blob decoding results
-     * @param parsing     allows to abort parsing
      */
-    public PbfReader(File file, ExecutorService executor, BlockingQueue<Future<ReaderBlock>> resultQueue, AtomicBoolean parsing) {
+    public PbfReader(File file, ExecutorService executor, BlockingQueue<Future<ReaderBlock>> resultQueue) {
         this.file = file;
         this.executorService = executor;
         this.resultQueue = resultQueue;
-        this.parsing = parsing;
     }
 
     @Override
@@ -66,6 +64,10 @@ public class PbfReader implements Runnable {
                 Thread.currentThread().interrupt();
             }
         }
+    }
+    
+    public void stop() {
+        parsing.set(false);
     }
     
     private void validatePbfHeader(DataInputStream in) throws IOException {

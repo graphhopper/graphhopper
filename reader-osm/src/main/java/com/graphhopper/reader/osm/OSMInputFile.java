@@ -28,7 +28,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.graphhopper.reader.ReaderBlock;
@@ -40,13 +39,14 @@ import com.graphhopper.reader.osm.pbf.PbfReader;
  * <p>
  *
  * @author Nop
+ * @author Thomas Butz
  */
 public class OSMInputFile implements OSMInput {
     private static final int MAX_CONCURRENT_BLOBS = 10;
     
     private final ExecutorService executorService;
     private final BlockingQueue<Future<ReaderBlock>> itemQueue;
-    private final AtomicBoolean parsing = new AtomicBoolean(true);
+    private final PbfReader pbfReader;
     private final Thread pbfReaderThread;
     private Iterator<ReaderElement> iter;
     
@@ -57,8 +57,8 @@ public class OSMInputFile implements OSMInput {
     public OSMInputFile(File file, int workerThreads) {
         this.executorService = Executors.newFixedThreadPool(workerThreads, getThreadFactory());
         this.itemQueue = new LinkedBlockingQueue<>(MAX_CONCURRENT_BLOBS);
-        PbfReader reader = new PbfReader(file, executorService, itemQueue, parsing);
-        this.pbfReaderThread = new Thread(reader, "PBF Reader");
+        this.pbfReader = new PbfReader(file, executorService, itemQueue);
+        this.pbfReaderThread = new Thread(pbfReader, "PBF Reader");
         this.pbfReaderThread.setDaemon(true);
         this.pbfReaderThread.start();
     }
@@ -94,8 +94,7 @@ public class OSMInputFile implements OSMInput {
 
     @Override
     public void close() throws IOException {
-        // if exception happened on OSMInputFile-thread we need to shutdown the pbf handling
-        parsing.set(false);
+        pbfReader.stop();
         if (pbfReaderThread.isAlive()) {
             pbfReaderThread.interrupt();
             try {
