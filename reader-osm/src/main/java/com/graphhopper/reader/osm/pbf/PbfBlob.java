@@ -1,16 +1,17 @@
 // This software is released into the Public Domain.  See copying.txt for details.
 package com.graphhopper.reader.osm.pbf;
 
+import org.openstreetmap.osmosis.osmbinary.Fileformat.Blob;
+
 /**
- * Represents a single piece of raw blob data extracted from the PBF stream. It has not yet been
- * decoded into a PBF blob object.
+ * Represents a single piece of blob data extracted from the PBF stream.
  * <p>
  *
  * @author Brett Henderson
  */
-public class PbfRawBlob {
+public class PbfBlob {
     private String type;
-    private byte[] data;
+    private Blob blob;
 
     /**
      * Creates a new instance.
@@ -18,11 +19,11 @@ public class PbfRawBlob {
      *
      * @param type The type of data represented by this blob. This corresponds to the type field in
      *             the blob header.
-     * @param data The raw contents of the blob in binary undecoded form.
+     * @param blob The {@link Blob}
      */
-    public PbfRawBlob(String type, byte[] data) {
+    public PbfBlob(String type, Blob blob) {
         this.type = type;
-        this.data = data;
+        this.blob = blob;
     }
 
     /**
@@ -37,12 +38,12 @@ public class PbfRawBlob {
     }
 
     /**
-     * Gets the raw contents of the blob in binary undecoded form.
+     * Gets the {@link Blob}.
      * <p>
      *
-     * @return The raw blob data.
+     * @return The blob data.
      */
-    public byte[] getData() {
-        return data;
+    public Blob getBlob() {
+        return blob;
     }
 }

@@ -2,11 +2,13 @@
 package com.graphhopper.reader.osm.pbf;
 
 import org.openstreetmap.osmosis.osmbinary.Fileformat;
+import org.openstreetmap.osmosis.osmbinary.Fileformat.Blob;
 
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -17,12 +19,11 @@ import java.util.logging.Logger;
  *
  * @author Brett Henderson
  */
-public class PbfStreamSplitter implements Iterator<PbfRawBlob> {
+public class PbfStreamSplitter implements Iterator<PbfBlob> {
     private static Logger log = Logger.getLogger(PbfStreamSplitter.class.getName());
     private DataInputStream dis;
     private int dataBlockCount;
-    private boolean eof;
-    private PbfRawBlob nextBlob;
+    private PbfBlob nextBlob;
 
     /**
      * Creates a new instance.
@@ -33,27 +34,23 @@ public class PbfStreamSplitter implements Iterator<PbfRawBlob> {
     public PbfStreamSplitter(DataInputStream pbfStream) {
         dis = pbfStream;
         dataBlockCount = 0;
-        eof = false;
+        nextBlob = getNextBlob();
     }
 
     private Fileformat.BlobHeader readHeader(int headerLength) throws IOException {
         byte[] headerBuffer = new byte[headerLength];
         dis.readFully(headerBuffer);
-
-        Fileformat.BlobHeader blobHeader = Fileformat.BlobHeader.parseFrom(headerBuffer);
-
-        return blobHeader;
+        return Fileformat.BlobHeader.parseFrom(headerBuffer);
     }
 
-    private byte[] readRawBlob(Fileformat.BlobHeader blobHeader) throws IOException {
+    private PbfBlob readBlob(Fileformat.BlobHeader blobHeader) throws IOException {
         byte[] rawBlob = new byte[blobHeader.getDatasize()];
-
         dis.readFully(rawBlob);
-
-        return rawBlob;
+        Blob blob = Fileformat.Blob.parseFrom(rawBlob);
+        return new PbfBlob(blobHeader.getType(), blob);
     }
 
-    private void getNextBlob() {
+    private PbfBlob getNextBlob() {
         try {
             // Read the length of the next header block. This is the only time
             // we should expect to encounter an EOF exception. In all other
@@ -62,8 +59,7 @@ public class PbfStreamSplitter implements Iterator<PbfRawBlob> {
             try {
                 headerLength = dis.readInt();
             } catch (EOFException e) {
-                eof = true;
-                return;
+                return null;
             }
 
             if (log.isLoggable(Level.FINER)) {
@@ -74,9 +70,7 @@ public class PbfStreamSplitter implements Iterator<PbfRawBlob> {
             if (log.isLoggable(Level.FINER)) {
                 log.finer("Processing blob of type " + blobHeader.getType() + ".");
             }
-            byte[] blobData = readRawBlob(blobHeader);
-
-            nextBlob = new PbfRawBlob(blobHeader.getType(), blobData);
+            return readBlob(blobHeader);
 
         } catch (IOException e) {
             throw new RuntimeException("Unable to get next blob from PBF stream.", e);
@@ -85,17 +79,16 @@ public class PbfStreamSplitter implements Iterator<PbfRawBlob> {
 
     @Override
     public boolean hasNext() {
-        if (nextBlob == null && !eof) {
-            getNextBlob();
-        }
-
         return nextBlob != null;
     }
 
     @Override
-    public PbfRawBlob next() {
-        PbfRawBlob result = nextBlob;
-        nextBlob = null;
+    public PbfBlob next() {
+        if (!hasNext()) {
+            throw new NoSuchElementException();
+        }
+        PbfBlob result = nextBlob;
+        nextBlob = getNextBlob();
 
         return result;
     }

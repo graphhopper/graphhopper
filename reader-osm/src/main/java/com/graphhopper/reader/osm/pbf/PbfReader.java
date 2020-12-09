@@ -51,8 +51,8 @@ public class PbfReader implements Runnable {
             
             PbfStreamSplitter streamSplitter = new PbfStreamSplitter(din);
             while (parsing.get() && streamSplitter.hasNext()) {
-                PbfRawBlob rawBlob = streamSplitter.next();
-                Future<ReaderBlock> futureBlockResult = executorService.submit(new PbfBlobDecoder(rawBlob));
+                PbfBlob pbfBlob = streamSplitter.next();
+                Future<ReaderBlock> futureBlockResult = executorService.submit(new PbfBlobDecoder(pbfBlob));
                 resultQueue.put(futureBlockResult);
             }
             // signal EOF
@@ -74,7 +74,7 @@ public class PbfReader implements Runnable {
         in.mark(10);
         // check file header
         byte[] header = new byte[6];
-        if (in.read(header) < 0) {
+        if (in.read(header) < header.length) {
             throw new IOException("Unable to read from input file: " + file.getPath());
         }
         in.reset();

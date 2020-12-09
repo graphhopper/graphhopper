@@ -10,7 +10,7 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.OSMFileHeader;
 import com.graphhopper.util.Helper;
-import org.openstreetmap.osmosis.osmbinary.Fileformat;
+import org.openstreetmap.osmosis.osmbinary.Fileformat.Blob;
 import org.openstreetmap.osmosis.osmbinary.Osmformat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,21 +31,21 @@ import java.util.zip.InflaterInputStream;
  */
 public class PbfBlobDecoder implements Callable<ReaderBlock> {
     private static final Logger log = LoggerFactory.getLogger(PbfBlobDecoder.class);
-    private final PbfRawBlob rawBlob;
+    private final String type;
+    private final Blob blob;
 
     /**
      * Creates a new instance.
      * <p>
      *
-     * @param rawBlob the {@link PbfRawBlob} to be decoded
+     * @param pbfBlob the {@link PbfBlob} to be decoded
      */
-    public PbfBlobDecoder(PbfRawBlob rawBlob) {
-        this.rawBlob = rawBlob;
+    public PbfBlobDecoder(PbfBlob pbfBlob) {
+        this.type = pbfBlob.getType();
+        this.blob = pbfBlob.getBlob();
     }
 
-    private InputStream readBlobContent() throws IOException {
-        Fileformat.Blob blob = Fileformat.Blob.parseFrom(rawBlob.getData());
-
+    private InputStream readBlobContent() {
         if (blob.hasRaw()) {
             return blob.getRaw().newInput();
         }
@@ -269,12 +269,12 @@ public class PbfBlobDecoder implements Callable<ReaderBlock> {
     @Override
     public ReaderBlock call() throws Exception {
         List<ReaderElement> elements;
-        if ("OSMHeader".equals(rawBlob.getType())) {
+        if ("OSMHeader".equals(type)) {
             elements = Collections.singletonList(processOsmHeader(readBlobContent()));
-        } else if ("OSMData".equals(rawBlob.getType())) {
+        } else if ("OSMData".equals(type)) {
             elements = processOsmPrimitives(readBlobContent());
         } else {
-            log.debug("Skipping unrecognised blob type {}", rawBlob.getType());
+            log.debug("Skipping unrecognised blob type {}", type);
             elements = Collections.emptyList();
         }
         return new ReaderBlock(elements);
