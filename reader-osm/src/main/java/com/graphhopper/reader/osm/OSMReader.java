@@ -33,7 +33,6 @@ import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -303,7 +302,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
             throw new RuntimeException("Graph after reading OSM must not be empty. Read " + counter + " items and " + locations + " locations");
     }
 
-    protected OSMInput openOsmInputFile(File osmFile) throws XMLStreamException, IOException {
+    protected OSMInput openOsmInputFile(File osmFile) throws IOException {
         return new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
     }
 
