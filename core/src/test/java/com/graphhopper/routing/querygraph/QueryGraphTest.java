@@ -340,7 +340,7 @@ public class QueryGraphTest {
         // in the case of identical nodes the wayGeometry defines the direction!
         EdgeIteratorState edge = g.edge(0, 0).
                 setDistance(100).
-                set(accessEnc, true).setReverse(accessEnc, false).set(avSpeedEnc, 20.0).
+                set(accessEnc, true, false).set(avSpeedEnc, 20.0).
                 setWayGeometry(Helper.createPointList(0.001, 0, 0, 0.001));
 
         Snap snap = new Snap(0.0011, 0.0009);
@@ -910,8 +910,7 @@ public class QueryGraphTest {
         double dist = DistanceCalcEarth.DIST_EARTH.calcDist(na.getLat(0), na.getLon(0), na.getLat(1), na.getLon(1));
         // this time we store the edge the other way
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 0).setDistance(dist));
-        edge.set(speedEnc, 100);
-        edge.setReverse(speedEnc, 50);
+        edge.set(speedEnc, 100, 50);
 
         // query graph
         Snap snap = createLocationResult(50.00, 10.15, edge, 0, EDGE);

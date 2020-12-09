@@ -197,8 +197,8 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
         EdgeIteratorState edge0 = graph.getEdgeIteratorState(0, Integer.MIN_VALUE);
         EdgeIteratorState edge1 = graph.getEdgeIteratorState(1, Integer.MIN_VALUE);
-        edge0.set(carAccessEnc, true).setReverse(carAccessEnc, false);
-        edge1.set(carAccessEnc, false).setReverse(carAccessEnc, true);
+        edge0.set(carAccessEnc, true, false);
+        edge1.set(carAccessEnc, false, true);
 
         assertFalse(edge1.get(carAccessEnc));
         assertTrue(edge1.getReverse(carAccessEnc));

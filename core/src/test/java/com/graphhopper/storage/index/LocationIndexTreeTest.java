@@ -480,10 +480,10 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         AllEdgesIterator iter = graph.getAllEdges();
         BooleanEncodedValue accessEnc = bikeEncoder.getAccessEnc();
         while (iter.next()) {
-            iter.set(accessEnc, false).setReverse(accessEnc, false);
+            iter.set(accessEnc, false, false);
         }
         for (EdgeIteratorState edge : Arrays.asList(GHUtility.getEdge(graph, 0, 1), GHUtility.getEdge(graph, 1, 2))) {
-            edge.set(accessEnc, true).setReverse(accessEnc, true);
+            edge.set(accessEnc, true, true);
         }
 
         LocationIndexTree index = createIndexNoPrepare(graph, 500);

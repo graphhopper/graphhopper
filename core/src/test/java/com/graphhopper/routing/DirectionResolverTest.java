@@ -70,9 +70,7 @@ public class DirectionResolverTest {
         addNode(0, 0, 0);
         addNode(1, 0.1, 0.1);
         // with edges without access flags (blocked edges)
-        graph.edge(0, 1)
-                .set(encoder.getAccessEnc(), false)
-                .setReverse(encoder.getAccessEnc(), false);
+        graph.edge(0, 1).set(encoder.getAccessEnc(), false, false);
 
         checkResult(0, impossible());
         checkResult(1, impossible());

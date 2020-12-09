@@ -107,8 +107,7 @@ class PriorityCalculatorTest {
         EnumEncodedValue<RoadClass> roadClass = em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         DecimalEncodedValue maxSpeedEnc = em.getDecimalEncodedValue(MaxSpeed.KEY);
         edge.set(roadClass, RoadClass.PRIMARY);
-        edge.set(maxSpeedEnc, 110);
-        edge.setReverse(maxSpeedEnc, 50);
+        edge.set(maxSpeedEnc, 110, 50);
 
         Map<String, Object> maxSpeedMap = new LinkedHashMap<>();
         maxSpeedMap.put("<100", 0.5);

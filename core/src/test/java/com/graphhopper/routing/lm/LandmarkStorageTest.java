@@ -121,7 +121,7 @@ public class LandmarkStorageTest {
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10.1));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(10.2));
 
-        graph.edge(2, 4).set(encoder.getAccessEnc(), false).setReverse(encoder.getAccessEnc(), false);
+        graph.edge(2, 4).set(encoder.getAccessEnc(), false, false);
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 5).setDistance(10.5));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 6).setDistance(10.6));
 

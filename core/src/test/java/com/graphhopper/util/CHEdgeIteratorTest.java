@@ -45,8 +45,8 @@ public class CHEdgeIteratorTest {
         GraphHopperStorage g = new GraphBuilder(encodingManager).setCHConfigs(CHConfig.nodeBased("p", weighting)).create();
         BooleanEncodedValue accessEnc = carFlagEncoder.getAccessEnc();
         DecimalEncodedValue avSpeedEnc = carFlagEncoder.getAverageSpeedEnc();
-        g.edge(0, 1).setDistance(12).set(accessEnc, true).setReverse(accessEnc, true).set(avSpeedEnc, 10.0);
-        g.edge(0, 2).setDistance(13).set(accessEnc, true).setReverse(accessEnc, true).set(avSpeedEnc, 20.0);
+        g.edge(0, 1).setDistance(12).set(accessEnc, true, true).set(avSpeedEnc, 10.0);
+        g.edge(0, 2).setDistance(13).set(accessEnc, true, true).set(avSpeedEnc, 20.0);
         g.freeze();
 
         CHGraph lg = g.getCHGraph();
@@ -60,7 +60,7 @@ public class CHEdgeIteratorTest {
         assertEquals(10.0, iter.getReverse(avSpeedEnc), .1);
 
         // update setProperties
-        iter.set(accessEnc, true).setReverse(accessEnc, false).set(avSpeedEnc, 20.0);
+        iter.set(accessEnc, true, false).set(avSpeedEnc, 20.0);
         assertEquals(12, iter.getDistance(), 1e-4);
 
         // update distance

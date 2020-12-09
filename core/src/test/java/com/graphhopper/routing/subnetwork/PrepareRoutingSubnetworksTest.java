@@ -137,7 +137,7 @@ public class PrepareRoutingSubnetworksTest {
                 GHUtility.getEdge(g, 4, 6))
         ) {
             for (FlagEncoder encoder : em.fetchEdgeEncoders()) {
-                edge.set(encoder.getAccessEnc(), false).setReverse(encoder.getAccessEnc(), false);
+                edge.set(encoder.getAccessEnc(), false, false);
             }
         }
 

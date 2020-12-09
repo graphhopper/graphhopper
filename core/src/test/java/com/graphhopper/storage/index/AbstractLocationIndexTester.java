@@ -343,7 +343,7 @@ public abstract class AbstractLocationIndexTester {
         FlagEncoder encoder = encodingManager.getEncoder("foot");
         BooleanEncodedValue accessEnc = encoder.getAccessEnc();
         while (iter.next()) {
-            iter.set(accessEnc, false).setReverse(accessEnc, false);
+            iter.set(accessEnc, false, false);
         }
         idx.close();
 

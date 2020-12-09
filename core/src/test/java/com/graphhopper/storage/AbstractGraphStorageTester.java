@@ -760,7 +760,7 @@ public abstract class AbstractGraphStorageTester {
         });
         manager = EncodingManager.create(list);
         graph = new GraphHopperStorage(new RAMDirectory(), manager, false).create(defaultSize);
-        edgeIter = graph.edge(0, 1).set(access0Enc, true).setReverse(access0Enc, false);
+        edgeIter = graph.edge(0, 1).set(access0Enc, true, false);
         assertTrue(edgeIter.get(access0Enc));
         assertFalse(edgeIter.getReverse(access0Enc));
     }

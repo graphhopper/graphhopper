@@ -186,7 +186,7 @@ public class DijkstraBidirectionCHTest {
         GraphHopperStorage graph = createGHStorage(weighting);
         EdgeIteratorState edge = GHUtility.setSpeed(encoder.getMaxSpeed() / 2, true, true, encoder, graph.edge(0, 1).setDistance(2));
         DecimalEncodedValue avSpeedEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(encoder, "average_speed"));
-        edge.set(avSpeedEnc, speed).setReverse(avSpeedEnc, revSpeed);
+        edge.set(avSpeedEnc, speed, revSpeed);
 
         GHUtility.setSpeed(encoder.getMaxSpeed() / 2, true, true, encoder, graph.edge(1, 2).setDistance(1));
 

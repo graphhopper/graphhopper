@@ -796,10 +796,10 @@ public class RoutingAlgorithmTest {
         EdgeIteratorState edge12 = graph.edge(1, 2).setDistance(10);
         BooleanEncodedValue carAccessEnc = carEncoder.getAccessEnc();
         DecimalEncodedValue carAvSpeedEnc = carEncoder.getAverageSpeedEnc();
-        edge01.set(carAvSpeedEnc, 0.0).set(carAccessEnc, true).setReverse(carAccessEnc, true);
+        edge01.set(carAvSpeedEnc, 0.0).set(carAccessEnc, true, true);
         edge01.setFlags(edge01.getFlags());
 
-        edge12.set(carAvSpeedEnc, 0.0).set(carAccessEnc, true).setReverse(carAccessEnc, true);
+        edge12.set(carAvSpeedEnc, 0.0).set(carAccessEnc, true, true);
         edge12.setFlags(edge12.getFlags());
 
         try {

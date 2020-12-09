@@ -70,10 +70,10 @@ public class PathTest {
         na.setNode(1, 1.0, 0.1);
         na.setNode(2, 2.0, 0.1);
 
-        EdgeIteratorState edge1 = g.edge(0, 1).setDistance(1000).set(carAccessEnc, true).setReverse(carAccessEnc, true).set(carAvSpeedEnv, 10.0);
+        EdgeIteratorState edge1 = g.edge(0, 1).setDistance(1000).set(carAccessEnc, true, true).set(carAvSpeedEnv, 10.0);
 
         edge1.setWayGeometry(Helper.createPointList(8, 1, 9, 1));
-        EdgeIteratorState edge2 = g.edge(2, 1).setDistance(2000).set(carAccessEnc, true).setReverse(carAccessEnc, true).set(carAvSpeedEnv, 50.0);
+        EdgeIteratorState edge2 = g.edge(2, 1).setDistance(2000).set(carAccessEnc, true, true).set(carAvSpeedEnv, 50.0);
         edge2.setWayGeometry(Helper.createPointList(11, 1, 10, 1));
 
         SPTEntry e1 = new SPTEntry(edge2.getEdge(), 2, 1);
@@ -110,7 +110,7 @@ public class PathTest {
         // force minor change for instructions
         edge2.setName("2");
         na.setNode(3, 1.0, 1.0);
-        g.edge(1, 3).setDistance(1000).set(carAccessEnc, true).setReverse(carAccessEnc, true).set(carAvSpeedEnv, 10.0);
+        g.edge(1, 3).setDistance(1000).set(carAccessEnc, true, true).set(carAvSpeedEnv, 10.0);
 
         e1 = new SPTEntry(edge2.getEdge(), 2, 1);
         e1.parent = new SPTEntry(edge1.getEdge(), 1, 1);
@@ -173,22 +173,22 @@ public class PathTest {
         na.setNode(4, 7.5, 0.25);
         na.setNode(5, 5.0, 1.0);
 
-        EdgeIteratorState edge1 = g.edge(0, 1).setDistance(1000).set(carAccessEnc, true).setReverse(carAccessEnc, true).set(carAvSpeedEnv, 50.0);
+        EdgeIteratorState edge1 = g.edge(0, 1).setDistance(1000).set(carAccessEnc, true, true).set(carAvSpeedEnv, 50.0);
         edge1.setWayGeometry(Helper.createPointList());
         edge1.setName("Street 1");
-        EdgeIteratorState edge2 = g.edge(1, 2).setDistance(1000).set(carAccessEnc, true).setReverse(carAccessEnc, true).set(carAvSpeedEnv, 50.0);
+        EdgeIteratorState edge2 = g.edge(1, 2).setDistance(1000).set(carAccessEnc, true, true).set(carAvSpeedEnv, 50.0);
         edge2.setWayGeometry(Helper.createPointList());
         edge2.setName("Street 2");
-        EdgeIteratorState edge3 = g.edge(2, 3).setDistance(1000).set(carAccessEnc, true).setReverse(carAccessEnc, true).set(carAvSpeedEnv, 50.0);
+        EdgeIteratorState edge3 = g.edge(2, 3).setDistance(1000).set(carAccessEnc, true, true).set(carAvSpeedEnv, 50.0);
         edge3.setWayGeometry(Helper.createPointList());
         edge3.setName("Street 3");
-        EdgeIteratorState edge4 = g.edge(3, 4).setDistance(500).set(carAccessEnc, true).setReverse(carAccessEnc, true).set(carAvSpeedEnv, 50.0);
+        EdgeIteratorState edge4 = g.edge(3, 4).setDistance(500).set(carAccessEnc, true, true).set(carAvSpeedEnv, 50.0);
         edge4.setWayGeometry(Helper.createPointList());
         edge4.setName("Street 4");
 
-        g.edge(1, 5).setDistance(10000).set(carAccessEnc, true).setReverse(carAccessEnc, true).set(carAvSpeedEnv, 50.0);
-        g.edge(2, 5).setDistance(10000).set(carAccessEnc, true).setReverse(carAccessEnc, true).set(carAvSpeedEnv, 50.0);
-        g.edge(3, 5).setDistance(100000).set(carAccessEnc, true).setReverse(carAccessEnc, true).set(carAvSpeedEnv, 50.0);
+        g.edge(1, 5).setDistance(10000).set(carAccessEnc, true, true).set(carAvSpeedEnv, 50.0);
+        g.edge(2, 5).setDistance(10000).set(carAccessEnc, true, true).set(carAvSpeedEnv, 50.0);
+        g.edge(3, 5).setDistance(100000).set(carAccessEnc, true, true).set(carAvSpeedEnv, 50.0);
 
         SPTEntry e1 = new SPTEntry(edge4.getEdge(), 4, 1);
         e1.parent = new SPTEntry(edge3.getEdge(), 3, 1);

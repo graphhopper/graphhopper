@@ -330,8 +330,7 @@ class QueryRoutingCHGraphTest {
         na.setNode(2, 50.00, 10.20);
         EdgeIteratorState edge = addEdge(graph, 0, 1)
                 // use different speeds for the two directions
-                .set(encoder.getAverageSpeedEnc(), 90)
-                .setReverse(encoder.getAverageSpeedEnc(), 30);
+                .set(encoder.getAverageSpeedEnc(), 90, 30);
         addEdge(graph, 1, 2);
         graph.freeze();
         setIdentityLevels(chGraph);
@@ -426,10 +425,8 @@ class QueryRoutingCHGraphTest {
         // we set the access flags, but do use direction dependent speeds to make sure we are testing whether or not the
         // access flags are respected and the weight calculation does not simply rely on the speed, see this forum issue
         // https://discuss.graphhopper.com/t/speed-and-access-when-setbothdirections-true-false/5695
-        edge.set(encoder.getAccessEnc(), true);
-        edge.setReverse(encoder.getAccessEnc(), false);
-        edge.set(encoder.getAverageSpeedEnc(), 60);
-        edge.setReverse(encoder.getAverageSpeedEnc(), 60);
+        edge.set(encoder.getAccessEnc(), true, false);
+        edge.set(encoder.getAverageSpeedEnc(), 60, 60);
         graph.freeze();
 
         // without query graph
