@@ -157,7 +157,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
      */
     void preProcess(File osmFile) {
         LOGGER.info("Starting to process OSM file: '" + osmFile + "'");
-        try (OSMInput in = new OSMInputFile(osmFile, workerThreads)) {
+        try (OSMInputFile in = new OSMInputFile(osmFile, workerThreads)) {
             long tmpWayCounter = 1;
             long tmpRelationCounter = 1;
             ReaderElement item;
@@ -252,7 +252,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         long wayStart = -1;
         long relationStart = -1;
         long counter = 1;
-        try (OSMInput in = new OSMInputFile(osmFile, workerThreads)) {
+        try (OSMInputFile in = new OSMInputFile(osmFile, workerThreads)) {
             LongIntMap nodeFilter = getNodeMap();
 
             ReaderElement item;

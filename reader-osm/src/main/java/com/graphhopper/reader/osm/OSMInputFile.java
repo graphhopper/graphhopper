@@ -41,7 +41,7 @@ import com.graphhopper.reader.osm.pbf.PbfReader;
  * @author Nop
  * @author Thomas Butz
  */
-public class OSMInputFile implements OSMInput {
+public class OSMInputFile implements AutoCloseable {
     private static final int MAX_CONCURRENT_BLOBS = 10;
     
     private final ExecutorService executorService;
@@ -63,7 +63,6 @@ public class OSMInputFile implements OSMInput {
         this.pbfReaderThread.start();
     }
 
-    @Override
     public ReaderElement getNext() {
         if (iter != null && iter.hasNext()) {
             return iter.next();
@@ -111,7 +110,6 @@ public class OSMInputFile implements OSMInput {
         }
     }
 
-    @Override
     public int getUnprocessedElements() {
         return itemQueue.size();
     }
