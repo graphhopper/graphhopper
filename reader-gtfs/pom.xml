@@ -45,7 +45,7 @@
             <artifactId>slf4j-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.google.transit</groupId>
+            <groupId>io.mobilitydata.transit</groupId>
             <artifactId>gtfs-realtime-bindings</artifactId>
         </dependency>
         <dependency>
