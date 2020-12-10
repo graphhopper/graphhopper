@@ -110,7 +110,7 @@ public class OSMInputFile implements AutoCloseable {
         }
     }
 
-    public int getUnprocessedElements() {
+    public int getUnprocessedBlocks() {
         return itemQueue.size();
     }
     

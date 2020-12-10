@@ -289,8 +289,8 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
                 }
             }
 
-            if (in.getUnprocessedElements() > 0)
-                throw new IllegalStateException("Still unprocessed elements in reader queue " + in.getUnprocessedElements());
+            if (in.getUnprocessedBlocks() > 0)
+                throw new IllegalStateException("Still unprocessed blocks in reader queue " + in.getUnprocessedBlocks());
 
             // logger.info("storage nodes:" + storage.nodes() + " vs. graph nodes:" + storage.getGraph().nodes());
         } catch (Exception ex) {
