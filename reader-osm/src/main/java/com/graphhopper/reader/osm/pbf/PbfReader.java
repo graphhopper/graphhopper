@@ -7,10 +7,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.graphhopper.reader.ReaderBlock;
@@ -52,14 +50,16 @@ public class PbfReader implements Runnable {
             PbfStreamSplitter streamSplitter = new PbfStreamSplitter(din);
             while (parsing.get() && streamSplitter.hasNext()) {
                 PbfBlob pbfBlob = streamSplitter.next();
-                Future<ReaderBlock> futureBlockResult = executorService.submit(new PbfBlobDecoder(pbfBlob));
-                resultQueue.put(futureBlockResult);
+                Future<ReaderBlock> blockResult = executorService.submit(new PbfBlobDecoder(pbfBlob));
+                resultQueue.put(blockResult);
             }
             // signal EOF
-            resultQueue.put(new StaticFuture<>(new ReaderBlock(null)));
+            Future<ReaderBlock> eofResult = executorService.submit(() -> {}, new ReaderBlock(null));
+            resultQueue.put(eofResult);
         } catch (Exception e) {
             try {
-                resultQueue.put(new StaticFuture<>(null, e));
+                Future<ReaderBlock> errorResult = executorService.submit(() -> { throw e; });
+                resultQueue.put(errorResult);
             } catch (InterruptedException e1) {
                 Thread.currentThread().interrupt();
             }
@@ -84,49 +84,5 @@ public class PbfReader implements Runnable {
             return;
         }
         throw new IOException("Not a valid pbf file: " + file.getPath());
-    }
-    
-    private static class StaticFuture<V> implements Future<V> {
-        
-        private final V result;
-        private final Exception exception;
-        
-        public StaticFuture(V result) {
-            this(result, null);
-        }
-        
-        public StaticFuture(V result, Exception e) {
-            this.result = result;
-            this.exception = e;
-        }
-
-        @Override
-        public boolean cancel(boolean mayInterruptIfRunning) {
-            return false;
-        }
-
-        @Override
-        public boolean isCancelled() {
-            return false;
-        }
-
-        @Override
-        public boolean isDone() {
-            return true;
-        }
-
-        @Override
-        public V get() throws ExecutionException {
-            if (exception != null) {
-                throw new ExecutionException(exception);
-            }
-            return result;
-        }
-
-        @Override
-        public V get(long timeout, TimeUnit unit) throws ExecutionException {
-            return get();
-        }
-        
     }
 }
