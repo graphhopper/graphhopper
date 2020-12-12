@@ -22,6 +22,7 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.util.CustomModel;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.shapes.BBox;
@@ -88,7 +89,7 @@ class ExpressionBuilder {
                 // TODO does it improve performance too? I.e. it could be that the JIT is confused if different classes
                 //  have the same name and it mixes performance stats. See https://github.com/janino-compiler/janino/issues/137
                 long counter = longVal.incrementAndGet();
-                String classTemplate = createClassTemplate(counter, priorityVariables, speedVariables, lookup);
+                String classTemplate = createClassTemplate(counter, priorityVariables, speedVariables, lookup, customModel);
                 cu = (Java.CompilationUnit) new Parser(new org.codehaus.janino.Scanner("source", new StringReader(classTemplate))).
                         parseAbstractCompilationUnit();
                 cu = injectStatements(priorityStatements, speedStatements, cu);
@@ -204,7 +205,8 @@ class ExpressionBuilder {
      * means that the source file is free from user input and could be directly compiled. Before we do this we still
      * have to inject that parsed and safe user expressions in a later step.
      */
-    private static String createClassTemplate(long counter, Set<String> priorityVariables, Set<String> speedVariables, EncodedValueLookup lookup) {
+    private static String createClassTemplate(long counter, Set<String> priorityVariables, Set<String> speedVariables,
+                                              EncodedValueLookup lookup, CustomModel customModel) {
         final StringBuilder importSourceCode = new StringBuilder("import com.graphhopper.routing.ev.*;\n");
         importSourceCode.append("import java.util.Map;\n");
         final StringBuilder classSourceCode = new StringBuilder(100);
@@ -231,9 +233,12 @@ class ExpressionBuilder {
                 }
 
                 String id = arg.substring(IN_AREA_PREFIX.length());
+                if (!EncodingManager.isValidEncodedValue(id))
+                    throw new IllegalArgumentException("Area has invalid name: " + arg);
+                if (!customModel.getAreas().containsKey(id))
+                    throw new IllegalArgumentException("Area '" + id + "' wasn't found");
                 classSourceCode.append("protected " + Polygon.class.getSimpleName() + " " + arg + ";\n");
                 initSourceCode.append("JsonFeature feature = (JsonFeature) areas.get(\"" + id + "\");\n");
-                initSourceCode.append("if(feature == null) throw new IllegalArgumentException(\"Area '" + id + "' wasn't found\");\n");
                 initSourceCode.append("this." + arg + " = new Polygon(new PreparedGeometryFactory().create(feature.getGeometry()));\n");
             } else {
                 if (!isValidVariableName(arg))
