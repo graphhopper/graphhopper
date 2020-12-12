@@ -18,11 +18,14 @@
 
 package com.graphhopper.http.resources;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
+import com.graphhopper.jackson.Jackson;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
@@ -58,7 +61,7 @@ public class IsochroneResourceIssue2181Test {
                 putObject("graph.location", DIR).
                 putObject("prepare.min_network_size", 0). // We want those encroaching nodes
                 setProfiles(Arrays.asList(
-                        new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(true)
+                        new Profile("car").setVehicle("car").setWeighting("shortest").setTurnCosts(true)
                 ));
         return config;
     }
@@ -81,4 +84,16 @@ public class IsochroneResourceIssue2181Test {
         assertTrue(polygon.contains(geometryFactory.createPoint(new Coordinate(24.02584, 54.59485))));
         assertFalse(polygon.contains(geometryFactory.createPoint(new Coordinate(24.0438, 54.59706))));
     }
+
+    @Test
+    public void containsPointWhereCDTIsNeeded() throws JsonProcessingException {
+        Response response = clientTarget(app, "/isochrone?profile=car&point=54.59485,24.02584&distance_limit=1200&type=geojson")
+                .request().buildGet().invoke();
+        JsonFeatureCollection collection = response.readEntity(JsonFeatureCollection.class);
+        Polygon polygon = (Polygon) collection.getFeatures().get(0).getGeometry();
+        ObjectMapper objectMapper = Jackson.newObjectMapper();
+        System.out.println(objectMapper.writeValueAsString(collection));
+        assertTrue(polygon.contains(geometryFactory.createPoint(new Coordinate(24.0225076675415,54.60071000748455))));
+    }
+
 }

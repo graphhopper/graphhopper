@@ -29,6 +29,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.GHPoint3D;
 import org.locationtech.jts.algorithm.ConvexHull;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
@@ -56,7 +57,8 @@ public class JTSTriangulator implements Triangulator {
         final NodeAccess na = queryGraph.getNodeAccess();
         List<ShortestPathTree.IsoLabel> labels = new ArrayList<>();
         shortestPathTree.search(snap.getClosestNode(), labels::add);
-        labels.addAll(shortestPathTree.getIsochroneEdges());
+        Collection<ShortestPathTree.IsoLabel> isochroneEdges = shortestPathTree.getIsochroneEdges();
+        labels.addAll(isochroneEdges);
         Map<Coordinate, Double> zs = new HashMap<>();
         labels.forEach(label -> {
             double exploreValue = fz.applyAsDouble(label);
@@ -64,16 +66,11 @@ public class JTSTriangulator implements Triangulator {
             double lon = na.getLongitude(label.node);
             Coordinate site = new Coordinate(lon, lat);
             zs.merge(site, exploreValue, Math::min);
-
-            // add a pillar node to increase precision a bit for longer roads
             if (label.parent != null) {
                 EdgeIteratorState edge = queryGraph.getEdgeIteratorState(label.edge, label.node);
-                PointList innerPoints = edge.fetchWayGeometry(FetchMode.PILLAR_ONLY);
-                if (innerPoints.getSize() > 0) {
-                    int midIndex = innerPoints.getSize() / 2;
-                    double lat2 = innerPoints.getLat(midIndex);
-                    double lon2 = innerPoints.getLon(midIndex);
-                    Coordinate site2 = new Coordinate(lon2, lat2);
+                PointList pillarNodes = edge.fetchWayGeometry(FetchMode.PILLAR_ONLY);
+                for (GHPoint3D pillarNode : pillarNodes) {
+                    Coordinate site2 = new Coordinate(pillarNode.lon, pillarNode.lat);
                     zs.merge(site2, exploreValue, Math::min);
                 }
             }
