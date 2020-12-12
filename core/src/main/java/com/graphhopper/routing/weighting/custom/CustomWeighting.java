@@ -96,16 +96,16 @@ public final class CustomWeighting extends AbstractWeighting {
 
         headingPenaltySeconds = customModel.getHeadingPenalty();
         baseVehicleAccessEnc = baseFlagEncoder.getAccessEnc();
+        if (customModel.getMaxSpeedFallback() != null && customModel.getMaxSpeedFallback() > baseFlagEncoder.getMaxSpeed())
+            throw new IllegalArgumentException("max_speed_fallback cannot be bigger than max_speed " + baseFlagEncoder.getMaxSpeed());
         double maxSpeedTmp = customModel.getMaxSpeedFallback() == null ? baseFlagEncoder.getMaxSpeed() : customModel.getMaxSpeedFallback();
-        if (customModel.getMaxSpeedFallback() != null && customModel.getMaxSpeedFallback() > maxSpeedTmp)
-            throw new IllegalArgumentException("max_speed_fallback cannot be bigger than max_speed " + maxSpeedTmp);
         cwHelper = ExpressionBuilder.create(customModel, lookup, baseFlagEncoder.getMaxSpeed(), maxSpeedTmp, baseFlagEncoder.getAverageSpeedEnc());
         maxSpeed = maxSpeedTmp / SPEED_CONV;
 
         // given unit is s/km -> convert to s/m
         this.distanceInfluence = customModel.getDistanceInfluence() / 1000.0;
         if (this.distanceInfluence < 0)
-            throw new IllegalArgumentException("maximum distance_influence cannot be negative " + this.distanceInfluence);
+            throw new IllegalArgumentException("distance_influence cannot be negative " + this.distanceInfluence);
     }
 
     public CustomWeighting(FlagEncoder baseFlagEncoder, TurnCostProvider turnCostProvider, CustomWeightingHelper cwHelper,
@@ -119,7 +119,7 @@ public final class CustomWeighting extends AbstractWeighting {
         // given unit is s/km -> convert to s/m
         this.distanceInfluence = distanceInfluence / 1000.0;
         if (this.distanceInfluence < 0)
-            throw new IllegalArgumentException("maximum distance_influence cannot be negative " + this.distanceInfluence);
+            throw new IllegalArgumentException("distance_influence cannot be negative " + this.distanceInfluence);
     }
 
     @Override

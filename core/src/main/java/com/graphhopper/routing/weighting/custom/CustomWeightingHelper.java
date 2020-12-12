@@ -29,12 +29,14 @@ import com.graphhopper.util.shapes.Polygon;
 import java.util.Map;
 
 /**
- * This class makes it easy to control priority and speed for the CustomWeighting.
+ * This class is for internal usage only. It is subclassed by Janino, then special expressions are injected into init,
+ * getSpeed and getPriority. At the end an instance is created and used in CustomWeighting.
  */
 public class CustomWeightingHelper {
     protected DecimalEncodedValue avg_speed_enc;
+    protected static boolean DEFAULT = true;
 
-    public CustomWeightingHelper() {
+    protected CustomWeightingHelper() {
     }
 
     public void init(EncodedValueLookup lookup, DecimalEncodedValue avgSpeedEnc, Map<String, JsonFeature> areas) {

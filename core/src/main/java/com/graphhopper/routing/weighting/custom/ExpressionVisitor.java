@@ -124,25 +124,25 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
 
         int count = 0;
         for (Map.Entry<String, Object> entry : map.entrySet()) {
-            String expression = entry.getKey();
+            String singleExpression = entry.getKey();
             if (!firstMatch.isEmpty()) {
-                if ("true".equals(expression) && count + 1 != map.size())
-                    throw new IllegalArgumentException("'true' in " + firstMatch + " must come as last expression but was " + count);
-            } else if (expression.startsWith(FIRST_MATCH)) {
+                if (("DEFAULT".equals(singleExpression) || "true".equals(singleExpression)) && count + 1 != map.size())
+                    throw new IllegalArgumentException("'" + singleExpression + "' in " + firstMatch + " must come as last expression but was " + count);
+            } else if (singleExpression.startsWith(FIRST_MATCH)) {
                 // allow multiple: first_match_i, first_match_ii, .. but do not allow nested first_match blocks
                 if (!(entry.getValue() instanceof LinkedHashMap))
-                    throw new IllegalArgumentException("entries for " + expression + " in " + exceptionInfo + " are invalid");
-                parseExpressions(expressions, nameInConditionValidator, exceptionInfo + " " + expression,
-                        createObjects, (Map<String, Object>) entry.getValue(), codeBuilder, "", expression);
+                    throw new IllegalArgumentException("entries for " + singleExpression + " in " + exceptionInfo + " are invalid");
+                parseExpressions(expressions, nameInConditionValidator, exceptionInfo + " " + singleExpression,
+                        createObjects, (Map<String, Object>) entry.getValue(), codeBuilder, "", singleExpression);
                 continue;
             }
 
             Object numberObj = entry.getValue();
             if (!(numberObj instanceof Number))
                 throw new IllegalArgumentException("value is not a Number " + numberObj);
-            ExpressionVisitor.ParseResult parseResult = parseExpression(expression, nameInConditionValidator);
+            ExpressionVisitor.ParseResult parseResult = parseExpression(singleExpression, nameInConditionValidator);
             if (!parseResult.ok)
-                throw new IllegalArgumentException("key is an invalid simple condition: " + expression);
+                throw new IllegalArgumentException("key is an invalid simple condition: " + singleExpression);
             createObjects.addAll(parseResult.guessedVariables);
             Number number = (Number) numberObj;
             if (!firstMatch.isEmpty() && count > 0)

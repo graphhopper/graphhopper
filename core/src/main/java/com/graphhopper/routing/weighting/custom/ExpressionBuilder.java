@@ -302,6 +302,8 @@ class ExpressionBuilder {
                                                          List<Java.BlockStatement> speedStatements,
                                                          Java.CompilationUnit cu) throws CompileException {
         cu = new DeepCopier() {
+            boolean speedInjected = false;
+            boolean priorityInjected = false;
             @Override
             public Java.FieldDeclaration copyFieldDeclaration(Java.FieldDeclaration subject) throws CompileException {
                 // for https://github.com/janino-compiler/janino/issues/135
@@ -312,9 +314,11 @@ class ExpressionBuilder {
 
             @Override
             public Java.MethodDeclarator copyMethodDeclarator(Java.MethodDeclarator subject) throws CompileException {
-                if (subject.name.equals("getSpeed") && !speedStatements.isEmpty()) {
+                if (subject.name.equals("getSpeed") && !speedStatements.isEmpty() && !speedInjected) {
+                    speedInjected = true;
                     return injectStatements(subject, this, speedStatements);
-                } else if (subject.name.equals("getPriority")) {
+                } else if (subject.name.equals("getPriority") && !priorityStatements.isEmpty() && !priorityInjected) {
+                    priorityInjected = true;
                     return injectStatements(subject, this, priorityStatements);
                 } else {
                     return super.copyMethodDeclarator(subject);
@@ -342,7 +346,6 @@ class ExpressionBuilder {
                     deepCopier.copyOptionalStatements(statements)
             );
             statements.forEach(st -> st.setEnclosingScope(methodDecl));
-            statements.clear();
             return methodDecl;
         } catch (Exception ex) {
             throw new RuntimeException(ex);

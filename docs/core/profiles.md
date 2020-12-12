@@ -169,56 +169,24 @@ speed_factor:
   road_class == PRIMARY || road_class == TERTIARY: 0.7
 ```
 
-Please note the OR operator `||` that says that if one of the expressions is true the value 0.7 is used.
+The OR-operator `||` means if one of the expressions is true then the value `0.7` is used.
+Or you can use multiple categories to influence the speed factor:
 
-or use multiple categories to influence the speed factor
 ```yaml
 speed_factor:
   road_class == MOTORWAY: 0.5
   road_environment == TUNNEL: 0.8
 ```
 
-You can use only two operators `==` (equality) and `!=` inequality.
+You can use only two operators `==` (equality) and `!=` inequality for these non-numeric categories.
 
-If a road segment matches multiple expressions the speed factor values will be multiplied. For example, here the speed factor of
-a road segment that has `road_class==MOTORWAY` will be `0.5`, the speed factor of a road segment that additionally has
-`road_environment==TUNNEL` will be `0.4` and the speed factor of a road segment that has `road_class==SECONDARY` and
-`road_environment==TUNNEL` will be `0.8`. You can avoid this by using the "first_match" directive:
+There are other categories like `get_off_bike` that are of boolean type. You set the speed factor like this:
 
 ```yaml
 speed_factor:
-  first_match:
-    road_class == MOTORWAY: 0.5
-    road_environment == TUNNEL: 0.8
+  get_off_bike: 0.6
 ```
 
-Now even if a road segment fulfills both conditions only the first will be used and no multiplication happens. If you
-know a programming language than the previous statements are "if" clauses and expressions under "first_match" are
-"if-then-else-if" clauses.
-
-Instead of setting the speed factors for certain values you can instead set the speed factors for all *other* values
-using the unconditional expression `true`:
-```yaml
-speed_factor:
-  true: 0.5
-  first_match:
-    road_environment == TUNNEL: 0.8
-    true: 0.6
-```
-
-This is usually used in the `first_match' directive.
-
-So in this example we set a speed factor of `0.5` independent of any category or value and all `road_environment`
-values yield a speed factor of `0.6` *except* `TUNNEL` which gets a speed factor of `0.8`. And as mentioned above
-for road segments that match multiple of these rules the different factors get multiplied, i.e. `0.5*0.6` or `0.5*0.8`.
-
-For encoded values with boolean values, like `get_off_bike` you set the speed factor like this:
-```yaml
-speed_factor:
-  first_match:
-    get_off_bike: 0.6
-    true: 0.9
-```
 which means that for edges with `get_off_bike==true` the speed factor will be `0.6` and otherwise it will be `0.9`.
 You can skip any of these values to retain the default.
 
@@ -244,6 +212,58 @@ entry. If multiple rules match for a given edge the most restrictive rule will d
 
 Values for `max_speed` must be in the range `[0,max_vehicle_speed]` where `max_vehicle_speed` is the maximum speed that
 is set for the base vehicle, and you cannot change.
+
+#### `first_match`
+
+If a road segment matches multiple expressions the speed factor values will be multiplied. In this example:
+
+```yaml
+speed_factor:
+  road_class == MOTORWAY: 0.5
+  road_environment == TUNNEL: 0.8
+```
+
+the speed factor of a road segment that has `road_class == MOTORWAY` will be `0.5`, the speed factor of a road segment that
+additionally has
+`road_environment == TUNNEL` will be `0.4` and the speed factor of a road segment that has `road_class == SECONDARY` and
+`road_environment == TUNNEL` will be `0.8`. You can avoid the multiplication by using the `first_match`-directive:
+
+```yaml
+speed_factor:
+  first_match:
+    road_class == MOTORWAY: 0.5
+    road_environment == TUNNEL: 0.8
+```
+
+Now even if a road segment fulfills both conditions only the first will be used and no multiplication happens. If you
+know a programming language then usually if-clauses are used and expressions under the `first_match`-directive are
+if-then-else-if-clauses. It can be used to reduce complexity, e.g. this:
+
+```yaml
+speed_factor:
+  surface == SAND: 0.3
+  road_class == MOTORWAY: 0.9
+  road_class != MOTORWAY && road_environment == TUNNEL: 0.5
+  road_class != MOTORWAY && road_environment != TUNNEL: 0.7
+```
+
+can be converted to:
+
+```yaml
+speed_factor:
+  surface == SAND: 0.3
+  first_match:
+    road_class == MOTORWAY: 0.9
+    road_environment == TUNNEL: 0.5
+    DEFAULT: 0.7
+```
+
+Which means that the condition `surface == SAND` is always checked. And the expression `road_environment == TUNNEL`
+is only checked if `road_class == MOTORWAY` is **not** `true`. The last expression (with a value of `0.7`) is the
+unconditional `DEFAULT`-directive and is usually used in the last expression of the `first_match`-directive. Multiple
+`first_match`-directives are possible via appending `_1` or `_2` like `first_match_1`.
+
+#### `areas`
 
 You can also modify the speed for all road segments in a certain area. To do this first add some areas to the `areas`
 section of the custom model and then use this name to set a `speed_factor` or `max_speed` for this area. In the following
