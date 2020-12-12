@@ -56,6 +56,7 @@ public class IsochroneResourceIssue2181Test {
                 putObject("graph.flag_encoders", "car|turn_costs=true").
                 putObject("datareader.file", "../core/files/issue-2181.osm.gz").
                 putObject("graph.location", DIR).
+                putObject("prepare.min_network_size", 0). // We want those encroaching nodes
                 setProfiles(Arrays.asList(
                         new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(true)
                 ));
