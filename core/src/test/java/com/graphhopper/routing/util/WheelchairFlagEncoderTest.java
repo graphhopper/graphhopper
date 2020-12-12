@@ -51,26 +51,12 @@ public class WheelchairFlagEncoderTest {
     }
 
     @Test
-    public void testBasics() {
-        IntsRef edgeFlags = encodingManager.createEdgeFlags();
-        wheelchairEncoder.flagsDefault(edgeFlags, true, true);
-        assertEquals(FootFlagEncoder.MEAN_SPEED, wheelchairAvSpeedEnc.getDecimal(false, edgeFlags), .1);
-
-        IntsRef ef1 = encodingManager.createEdgeFlags();
-        wheelchairEncoder.flagsDefault(ef1, true, false);
-        IntsRef ef2 = encodingManager.createEdgeFlags();
-        wheelchairEncoder.flagsDefault(ef2, false, true);
-        assertEquals(wheelchairAccessEnc.getBool(false, ef1), wheelchairAccessEnc.getBool(true, ef2));
-        assertEquals(wheelchairAvSpeedEnc.getDecimal(false, ef1), wheelchairAvSpeedEnc.getDecimal(false, ef1), .1);
-    }
-
-    @Test
     public void testCombined() {
         Graph g = new GraphBuilder(encodingManager).create();
         FlagEncoder carEncoder = encodingManager.getEncoder("car");
         EdgeIteratorState edge = g.edge(0, 1);
-        edge.set(wheelchairAvSpeedEnc, 10.0).set(wheelchairAccessEnc, true).setReverse(wheelchairAccessEnc, true);
-        edge.set(carAvSpeedEnc, 100.0).set(carAccessEnc, true).setReverse(carAccessEnc, false);
+        edge.set(wheelchairAvSpeedEnc, 10.0).set(wheelchairAccessEnc, true, true);
+        edge.set(carAvSpeedEnc, 100.0).set(carAccessEnc, true, false);
 
         assertEquals(10, edge.get(wheelchairAvSpeedEnc), .1);
         assertTrue(edge.get(wheelchairAccessEnc));
@@ -90,9 +76,9 @@ public class WheelchairFlagEncoderTest {
     @Test
     public void testGraph() {
         Graph g = new GraphBuilder(encodingManager).create();
-        g.edge(0, 1).setDistance(10).set(wheelchairAvSpeedEnc, 10.0).set(wheelchairAccessEnc, true).setReverse(wheelchairAccessEnc, true);
-        g.edge(0, 2).setDistance(10).set(wheelchairAvSpeedEnc, 5.0).set(wheelchairAccessEnc, true).setReverse(wheelchairAccessEnc, true);
-        g.edge(1, 3).setDistance(10).set(wheelchairAvSpeedEnc, 10.0).set(wheelchairAccessEnc, true).setReverse(wheelchairAccessEnc, true);
+        g.edge(0, 1).setDistance(10).set(wheelchairAvSpeedEnc, 10.0).set(wheelchairAccessEnc, true, true);
+        g.edge(0, 2).setDistance(10).set(wheelchairAvSpeedEnc, 5.0).set(wheelchairAccessEnc, true, true);
+        g.edge(1, 3).setDistance(10).set(wheelchairAvSpeedEnc, 10.0).set(wheelchairAccessEnc, true, true);
         EdgeExplorer out = g.createEdgeExplorer(DefaultEdgeFilter.outEdges(wheelchairEncoder));
         assertEquals(GHUtility.asSet(1, 2), GHUtility.getNeighbors(out.setBaseNode(0)));
         assertEquals(GHUtility.asSet(0, 3), GHUtility.getNeighbors(out.setBaseNode(1)));
@@ -518,14 +504,14 @@ public class WheelchairFlagEncoderTest {
         na.setNode(1, 51.1, 12.002, 55);
         EdgeIteratorState edge0 = gs.edge(0, 1).setWayGeometry(Helper.createPointList3D(51.1, 12.0011, 49, 51.1, 12.0015, 55));
         edge0.setDistance(100);
-        GHUtility.setProperties(edge0, wheelchairEncoder, 5, 5);
+        GHUtility.setSpeed(5, 5, wheelchairEncoder, edge0);
 
         // incline of 10% over all
         na.setNode(2, 51.2, 12.101, 50);
         na.setNode(3, 51.2, 12.102, 60);
         EdgeIteratorState edge1 = gs.edge(2, 3).setWayGeometry(Helper.createPointList3D(51.2, 12.1011, 49, 51.2, 12.1015, 55));
         edge1.setDistance(100);
-        GHUtility.setProperties(edge1, wheelchairEncoder, 5, 5);
+        GHUtility.setSpeed(5, 5, wheelchairEncoder, edge1);
         return gs;
     }
 

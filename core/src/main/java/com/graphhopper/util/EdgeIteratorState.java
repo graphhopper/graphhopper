@@ -66,6 +66,11 @@ public interface EdgeIteratorState {
         public void setBool(boolean reverse, IntsRef ref, boolean value) {
             throw new IllegalStateException("reverse state cannot be modified");
         }
+
+        @Override
+        public boolean isStoreTwoDirections() {
+            return false;
+        }
     };
 
     /**
@@ -155,6 +160,8 @@ public interface EdgeIteratorState {
 
     EdgeIteratorState setReverse(BooleanEncodedValue property, boolean value);
 
+    EdgeIteratorState set(BooleanEncodedValue property, boolean fwd, boolean bwd);
+
     int get(IntEncodedValue property);
 
     EdgeIteratorState set(IntEncodedValue property, int value);
@@ -162,6 +169,8 @@ public interface EdgeIteratorState {
     int getReverse(IntEncodedValue property);
 
     EdgeIteratorState setReverse(IntEncodedValue property, int value);
+
+    EdgeIteratorState set(IntEncodedValue property, int fwd, int bwd);
 
     double get(DecimalEncodedValue property);
 
@@ -171,6 +180,8 @@ public interface EdgeIteratorState {
 
     EdgeIteratorState setReverse(DecimalEncodedValue property, double value);
 
+    EdgeIteratorState set(DecimalEncodedValue property, double fwd, double bwd);
+
     <T extends Enum> T get(EnumEncodedValue<T> property);
 
     <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T value);
@@ -178,6 +189,8 @@ public interface EdgeIteratorState {
     <T extends Enum> T getReverse(EnumEncodedValue<T> property);
 
     <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value);
+
+    <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd);
 
     String getName();
 

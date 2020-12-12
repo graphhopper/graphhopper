@@ -21,14 +21,15 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.RoadEnvironment;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -42,8 +43,9 @@ class SpeedCalculatorTest {
     SpeedCalculatorTest() {
         // in this test we use the same edge for every test and check the calculated speed for different custom models
         // and depending on additional properties of the edge we set in the tests
-        em = EncodingManager.create("car");
-        edge = new GraphBuilder(em).create().edge(0, 1, 1000, true);
+        FlagEncoder encoder = new CarFlagEncoder();
+        em = EncodingManager.create(encoder);
+        edge = GHUtility.setSpeed(60, true, true, encoder, new GraphBuilder(em).create().edge(0, 1).setDistance(1000));
     }
 
     @Test

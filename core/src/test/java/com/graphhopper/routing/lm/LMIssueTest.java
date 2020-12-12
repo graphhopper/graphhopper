@@ -26,6 +26,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
+import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -115,13 +116,13 @@ public class LMIssueTest {
         na.setNode(3, 49.403009, 9.708364);
         na.setNode(4, 49.409021, 9.703622);
         // 30s
-        graph.edge(4, 3, 1000, true).set(speedEnc, 120);
-        graph.edge(0, 2, 1000, false).set(speedEnc, 120);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 3).setDistance(1000)).set(speedEnc, 120);
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 2).setDistance(1000)).set(speedEnc, 120);
         // 360s
-        graph.edge(1, 3, 1000, true).set(speedEnc, 10);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 3).setDistance(1000)).set(speedEnc, 10);
         // 80s
-        graph.edge(0, 1, 1000, false).set(speedEnc, 45);
-        graph.edge(1, 4, 1000, true).set(speedEnc, 45);
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 1).setDistance(1000)).set(speedEnc, 45);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 4).setDistance(1000)).set(speedEnc, 45);
         preProcessGraph();
 
         int source = 0;
@@ -133,7 +134,6 @@ public class LMIssueTest {
         assertEquals(refPath.getTime(), path.getTime(), 50);
         assertEquals(refPath.calcNodes(), path.calcNodes());
     }
-
 
     @ParameterizedTest
     @EnumSource
@@ -158,13 +158,13 @@ public class LMIssueTest {
         na.setNode(7, 49.406965, 9.702660);
         na.setNode(8, 49.405227, 9.702863);
         na.setNode(9, 49.409411, 9.709085);
-        graph.edge(0, 1, 623.197000, true).set(speedEnc, 112);
-        graph.edge(5, 1, 741.414000, true).set(speedEnc, 13);
-        graph.edge(9, 4, 1140.835000, true).set(speedEnc, 35);
-        graph.edge(5, 6, 670.689000, true).set(speedEnc, 18);
-        graph.edge(5, 9, 80.731000, false).set(speedEnc, 88);
-        graph.edge(0, 9, 273.948000, true).set(speedEnc, 82);
-        graph.edge(4, 0, 956.552000, true).set(speedEnc, 60);
+        GHUtility.setSpeed(112, true, true, encoder, graph.edge(0, 1).setDistance(623.197000));
+        GHUtility.setSpeed(13, true, true, encoder, graph.edge(5, 1).setDistance(741.414000));
+        GHUtility.setSpeed(35, true, true, encoder, graph.edge(9, 4).setDistance(1140.835000));
+        GHUtility.setSpeed(18, true, true, encoder, graph.edge(5, 6).setDistance(670.689000));
+        GHUtility.setSpeed(88, true, false, encoder, graph.edge(5, 9).setDistance(80.731000));
+        GHUtility.setSpeed(82, true, true, encoder, graph.edge(0, 9).setDistance(273.948000));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 0).setDistance(956.552000));
         preProcessGraph();
 
         int source = 5;

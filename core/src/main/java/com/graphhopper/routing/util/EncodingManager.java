@@ -673,14 +673,6 @@ public class EncodingManager implements EncodedValueLookup {
         return new IntsRef(2);
     }
 
-    public IntsRef flagsDefault(boolean forward, boolean backward) {
-        IntsRef intsRef = createEdgeFlags();
-        for (AbstractFlagEncoder encoder : edgeEncoders) {
-            encoder.flagsDefault(intsRef, forward, backward);
-        }
-        return intsRef;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -794,10 +786,10 @@ public class EncodingManager implements EncodedValueLookup {
         return (T) ev;
     }
 
-    private static final String SPECIAL_SEPARATOR = ".";
+    private static final String SPECIAL_SEPARATOR = "$";
 
     public static boolean isSharedEncodedValues(EncodedValue ev) {
-        return !ev.getName().contains(SPECIAL_SEPARATOR);
+        return isValidEncodedValue(ev.getName()) && !ev.getName().contains(SPECIAL_SEPARATOR);
     }
 
     /**
@@ -820,31 +812,38 @@ public class EncodingManager implements EncodedValueLookup {
             "case", "catch", "char", "class", "const", "continue",
             "default", "do", "double",
             "else", "enum", "extends",
-            "final", "finally", "float", "for",
+            "false", "final", "finally", "float", "for",
             "goto",
             "if", "implements", "import", "instanceof", "int", "interface",
             "long",
-            "native", "new",
-            "package", "private", "protected", "public",
-            "return",
-            "short", "static", "strictfp", "super", "switch", "synchronized",
-            "this", "throw", "throws", "transient", "try",
-            "void", "volatile",
-            "while"
+            "native", "new", "non-sealed", "null",
+            "package", "permits", "private", "protected", "public",
+            "record", "return",
+            "sealed", "short", "static", "strictfp", "super", "switch", "synchronized",
+            "this", "throw", "throws", "transient", "true", "try",
+            "var", "void", "volatile",
+            "while",
+            "yield",
+            "_"
     ));
 
     public static boolean isValidEncodedValue(String name) {
         // first character must be a lower case letter
         if (name.isEmpty() || !isLowerLetter(name.charAt(0)) || KEYWORDS.contains(name)) return false;
 
-        int dotCount = 0;
+        int dollarCount = 0, underscoreCount = 0;
         for (int i = 1; i < name.length(); i++) {
             char c = name.charAt(i);
-            if (c == '.') {
-                if (dotCount > 0) return false;
-                dotCount++;
-            } else if (!isLowerLetter(c) && !isNumber(c) && c != '_' && c != '$') {
+            if (c == '$') {
+                if (dollarCount > 0) return false;
+                dollarCount++;
+            } else if (c == '_') {
+                if (underscoreCount > 0) return false;
+                underscoreCount++;
+            } else if (!isLowerLetter(c) && !isNumber(c)) {
                 return false;
+            } else {
+                underscoreCount = 0;
             }
         }
         return true;

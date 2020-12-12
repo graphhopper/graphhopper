@@ -31,6 +31,7 @@ import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -65,8 +66,8 @@ class QueryRoutingCHGraphTest {
     @Test
     public void basic() {
         // 0-1-2
-        graph.edge(0, 1, 10, true);
-        graph.edge(1, 2, 10, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(10));
         graph.freeze();
         assertEquals(2, graph.getEdges());
 
@@ -99,8 +100,8 @@ class QueryRoutingCHGraphTest {
     public void withShortcuts() {
         // 0-1-2
         //  \-/
-        graph.edge(0, 1, 10, true);
-        graph.edge(1, 2, 10, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(10));
         graph.freeze();
         assertEquals(2, graph.getEdges());
         setIdentityLevels(chGraph);
@@ -249,7 +250,7 @@ class QueryRoutingCHGraphTest {
 
     @Test
     public void getBaseGraph() {
-        graph.edge(0, 1, 10, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10));
         QueryGraph queryGraph = QueryGraph.create(graph, Collections.<Snap>emptyList());
         assertSame(graph.getBaseGraph(), routingCHGraph.getBaseGraph());
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
@@ -329,8 +330,7 @@ class QueryRoutingCHGraphTest {
         na.setNode(2, 50.00, 10.20);
         EdgeIteratorState edge = addEdge(graph, 0, 1)
                 // use different speeds for the two directions
-                .set(encoder.getAverageSpeedEnc(), 90)
-                .setReverse(encoder.getAverageSpeedEnc(), 30);
+                .set(encoder.getAverageSpeedEnc(), 90, 30);
         addEdge(graph, 1, 2);
         graph.freeze();
         setIdentityLevels(chGraph);
@@ -425,10 +425,8 @@ class QueryRoutingCHGraphTest {
         // we set the access flags, but do use direction dependent speeds to make sure we are testing whether or not the
         // access flags are respected and the weight calculation does not simply rely on the speed, see this forum issue
         // https://discuss.graphhopper.com/t/speed-and-access-when-setbothdirections-true-false/5695
-        edge.set(encoder.getAccessEnc(), true);
-        edge.setReverse(encoder.getAccessEnc(), false);
-        edge.set(encoder.getAverageSpeedEnc(), 60);
-        edge.setReverse(encoder.getAverageSpeedEnc(), 60);
+        edge.set(encoder.getAccessEnc(), true, false);
+        edge.set(encoder.getAverageSpeedEnc(), 60, 60);
         graph.freeze();
 
         // without query graph
@@ -637,7 +635,7 @@ class QueryRoutingCHGraphTest {
     private EdgeIteratorState addEdge(Graph graph, int from, int to) {
         NodeAccess na = graph.getNodeAccess();
         double dist = DistancePlaneProjection.DIST_PLANE.calcDist(na.getLat(from), na.getLon(from), na.getLat(to), na.getLon(to));
-        return graph.edge(from, to, dist, true);
+        return GHUtility.setSpeed(60, true, true, encoder, graph.edge(from, to).setDistance(dist));
     }
 
 }

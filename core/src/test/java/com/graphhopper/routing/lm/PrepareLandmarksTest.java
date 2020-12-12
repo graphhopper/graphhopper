@@ -33,6 +33,7 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
@@ -88,11 +89,11 @@ public class PrepareLandmarksTest {
                 // do not connect first with last column!
                 double speed = 20 + rand.nextDouble() * 30;
                 if (wIndex + 1 < width)
-                    graph.edge(node, node + 1).set(accessEnc, true).setReverse(accessEnc, true).set(avSpeedEnc, speed);
+                    graph.edge(node, node + 1).set(accessEnc, true, true).set(avSpeedEnc, speed);
 
                 // avoid dead ends
                 if (hIndex + 1 < height)
-                    graph.edge(node, node + width).set(accessEnc, true).setReverse(accessEnc, true).set(avSpeedEnc, speed);
+                    graph.edge(node, node + width).set(accessEnc, true, true).set(avSpeedEnc, speed);
 
                 updateDistancesFor(graph, node, -hIndex / 50.0, wIndex / 50.0);
             }
@@ -185,8 +186,8 @@ public class PrepareLandmarksTest {
 
     @Test
     public void testStoreAndLoad() {
-        graph.edge(0, 1, 80_000, true);
-        graph.edge(1, 2, 80_000, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(80_000));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(80_000));
         String fileStr = "./target/tmp-lm";
         Helper.removeDir(new File(fileStr));
 

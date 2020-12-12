@@ -774,7 +774,7 @@ public class RoutingAlgorithmWithOSMTest {
         final GraphHopperStorage graph = new GraphBuilder(eManager).create();
 
         String bigFile = "10000EWD.txt.gz";
-        new PrincetonReader(graph).setStream(new GZIPInputStream(PrincetonReader.class.getResourceAsStream(bigFile))).read();
+        new PrincetonReader(graph, eManager.getEncoder("car")).setStream(new GZIPInputStream(PrincetonReader.class.getResourceAsStream(bigFile))).read();
         GraphHopper hopper = new GraphHopper() {
             {
                 setEncodingManager(eManager);

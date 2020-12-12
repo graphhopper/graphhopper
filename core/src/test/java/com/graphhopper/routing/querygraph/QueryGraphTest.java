@@ -77,8 +77,9 @@ public class QueryGraphTest {
         na.setNode(0, 1, 0);
         na.setNode(1, 1, 2.5);
         na.setNode(2, 0, 0);
-        g.edge(0, 2, 10, true);
-        g.edge(0, 1, 10, true).setWayGeometry(Helper.createPointList(1.5, 1, 1.5, 1.5));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 2).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(10)).
+                setWayGeometry(Helper.createPointList(1.5, 1, 1.5, 1.5));
     }
 
     @Test
@@ -157,8 +158,8 @@ public class QueryGraphTest {
         na.setNode(1, 1, 2.5);
         na.setNode(2, 0, 0);
         na.setNode(3, 0, 1);
-        g.edge(0, 2, 10, true);
-        g.edge(0, 1, 10, true).setWayGeometry(Helper.createPointList(1.5, 1, 1.5, 1.5));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 2).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(10)).setWayGeometry(Helper.createPointList(1.5, 1, 1.5, 1.5));
         g.edge(1, 3);
 
         final int baseNode = 1;
@@ -238,7 +239,7 @@ public class QueryGraphTest {
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0, 0);
         na.setNode(1, 0, 1);
-        g.edge(0, 1, 10, false);
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(0, 1).setDistance(10));
 
         EdgeIteratorState edge = GHUtility.getEdge(g, 0, 1);
         Snap res1 = createLocationResult(0.1, 0.1, edge, 0, EDGE);
@@ -301,10 +302,10 @@ public class QueryGraphTest {
         //    |  |
         //    x---
         //
-        g.edge(0, 1, 10, true);
-        g.edge(1, 3, 10, true);
-        g.edge(3, 4, 10, true);
-        EdgeIteratorState edge = g.edge(1, 3, 20, true).setWayGeometry(Helper.createPointList(-0.001, 0.001, -0.001, 0.002));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 3).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(3, 4).setDistance(10));
+        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 3).setDistance(20)).setWayGeometry(Helper.createPointList(-0.001, 0.001, -0.001, 0.002));
         updateDistancesFor(g, 0, 0, 0);
         updateDistancesFor(g, 1, 0, 0.001);
         updateDistancesFor(g, 3, 0, 0.002);
@@ -333,13 +334,13 @@ public class QueryGraphTest {
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0, 0);
         na.setNode(1, 0, -0.001);
-        g.edge(0, 1, 10, true);
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(10));
         BooleanEncodedValue accessEnc = encoder.getAccessEnc();
         DecimalEncodedValue avSpeedEnc = encoder.getAverageSpeedEnc();
         // in the case of identical nodes the wayGeometry defines the direction!
         EdgeIteratorState edge = g.edge(0, 0).
                 setDistance(100).
-                set(accessEnc, true).setReverse(accessEnc, false).set(avSpeedEnc, 20.0).
+                set(accessEnc, true, false).set(avSpeedEnc, 20.0).
                 setWayGeometry(Helper.createPointList(0.001, 0, 0, 0.001));
 
         Snap snap = new Snap(0.0011, 0.0009);
@@ -451,7 +452,8 @@ public class QueryGraphTest {
          */
         g.getNodeAccess().setNode(nodeA, 1, 0);
         g.getNodeAccess().setNode(nodeB, 1, 10);
-        g.edge(nodeA, nodeB, 10, false).setWayGeometry(Helper.createPointList(1.5, 3, 1.5, 7));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(nodeA, nodeB).setDistance(10)).
+                setWayGeometry(Helper.createPointList(1.5, 3, 1.5, 7));
 
         // assert the behavior for classic edgeIterator        
         assertEdgeIdsStayingEqual(inExplorer, outExplorer, nodeA, nodeB);
@@ -505,8 +507,8 @@ public class QueryGraphTest {
         na.setNode(1, .00, .01);
         na.setNode(2, .01, .01);
 
-        EdgeIteratorState edge0 = graphWithTurnCosts.edge(0, 1, 10, true);
-        EdgeIteratorState edge1 = graphWithTurnCosts.edge(2, 1, 10, true);
+        EdgeIteratorState edge0 = GHUtility.setSpeed(60, true, true, encoder, graphWithTurnCosts.edge(0, 1).setDistance(10));
+        EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, encoder, graphWithTurnCosts.edge(2, 1).setDistance(10));
 
         Weighting weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graphWithTurnCosts.getTurnCostStorage()));
 
@@ -552,10 +554,11 @@ public class QueryGraphTest {
         //  x    |
         //  |    |
         //  0    1
-        NodeAccess na = ((Graph) g).getNodeAccess();
+        NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0, 0);
         na.setNode(1, 0, 2);
-        ((Graph) g).edge(0, 1, 10, true).setWayGeometry(Helper.createPointList(2, 0, 2, 2));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(10)).
+                setWayGeometry(Helper.createPointList(2, 0, 2, 2));
         EdgeIteratorState edge = GHUtility.getEdge(g, 0, 1);
 
         // snap on first vertical part of way (upward, base is in south)
@@ -622,7 +625,7 @@ public class QueryGraphTest {
         //       2
         na.setNode(0, 0, 0);
         na.setNode(1, 0, 2);
-        EdgeIteratorState edge = g.edge(0, 1, 10, true);
+        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(10));
 
         Snap snap = fakeEdgeSnap(edge, 0, 1, 0);
         QueryGraph queryGraph = QueryGraph.create(g, snap);
@@ -649,10 +652,11 @@ public class QueryGraphTest {
         //  |    |
         //  |    |
         //  0    1
-        NodeAccess na = ((Graph) g).getNodeAccess();
+        NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0, 0);
         na.setNode(1, 0, 2);
-        ((Graph) g).edge(0, 1, 10, true).setWayGeometry(Helper.createPointList(2, 0, 2, 2));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(10)).
+                setWayGeometry(Helper.createPointList(2, 0, 2, 2));
         EdgeIteratorState edge = GHUtility.getEdge(g, 0, 1);
 
         // snap on first vertical part of way (upward)
@@ -711,7 +715,8 @@ public class QueryGraphTest {
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0, 0);
         na.setNode(1, 0.3, 0.3);
-        g.edge(0, 1, 10, true).setWayGeometry(Helper.createPointList(0.1, 0.1, 0.2, 0.2));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(10)).
+                setWayGeometry(Helper.createPointList(0.1, 0.1, 0.2, 0.2));
 
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory());
         locationIndex.prepareIndex();
@@ -752,7 +757,8 @@ public class QueryGraphTest {
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0, 0);
         na.setNode(1, 0.5, 0.1);
-        g.edge(0, 1, 10, true).setWayGeometry(Helper.createPointList(0.1, 0.1, 0.2, 0.2));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(10)).
+                setWayGeometry(Helper.createPointList(0.1, 0.1, 0.2, 0.2));
 
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory());
         locationIndex.prepareIndex();
@@ -797,7 +803,8 @@ public class QueryGraphTest {
         dist += distCalc.calcDist(0, 0, 1, 0);
         dist += distCalc.calcDist(1, 0, 1, 1);
         dist += distCalc.calcDist(1, 1, 0, 1);
-        g.edge(0, 1, dist, true).setWayGeometry(Helper.createPointList(1, 0, 1, 1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(dist)).
+                setWayGeometry(Helper.createPointList(1, 0, 1, 1));
         LocationIndexTree index = new LocationIndexTree(g, new RAMDirectory());
         index.prepareIndex();
         Snap snap = index.findClosest(1.01, 0.7, EdgeFilter.ALL_EDGES);
@@ -827,7 +834,7 @@ public class QueryGraphTest {
         na.setNode(0, 50.00, 10.10);
         na.setNode(1, 50.00, 10.20);
         double dist = DistanceCalcEarth.DIST_EARTH.calcDist(na.getLat(0), na.getLon(0), na.getLat(1), na.getLon(1));
-        EdgeIteratorState edge = g.edge(0, 1, dist, true);
+        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(dist));
         edge.set(speedEnc, 50);
         edge.setReverse(speedEnc, 100);
 
@@ -902,9 +909,8 @@ public class QueryGraphTest {
         na.setNode(1, 50.00, 10.20);
         double dist = DistanceCalcEarth.DIST_EARTH.calcDist(na.getLat(0), na.getLon(0), na.getLat(1), na.getLon(1));
         // this time we store the edge the other way
-        EdgeIteratorState edge = g.edge(1, 0, dist, true);
-        edge.set(speedEnc, 100);
-        edge.setReverse(speedEnc, 50);
+        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 0).setDistance(dist));
+        edge.set(speedEnc, 100, 50);
 
         // query graph
         Snap snap = createLocationResult(50.00, 10.15, edge, 0, EDGE);

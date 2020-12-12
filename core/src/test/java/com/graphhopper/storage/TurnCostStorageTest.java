@@ -24,6 +24,7 @@ import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.util.GHUtility;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -52,12 +53,13 @@ public class TurnCostStorageTest {
     // 2--3
     // |
     // 4
-    public static void initGraph(Graph g) {
-        g.edge(0, 1, 3, true);
-        g.edge(0, 2, 1, true);
-        g.edge(1, 3, 1, true);
-        g.edge(2, 3, 1, true);
-        g.edge(2, 4, 1, true);
+    public static void initGraph(GraphHopperStorage g) {
+        GHUtility.setSpeed(60, 60, g.getEncodingManager().getEncoder("car"),
+                g.edge(0, 1).setDistance(3),
+                g.edge(0, 2).setDistance(1),
+                g.edge(1, 3).setDistance(1),
+                g.edge(2, 3).setDistance(1),
+                g.edge(2, 4).setDistance(1));
     }
 
     /**

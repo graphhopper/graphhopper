@@ -179,7 +179,6 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         routeMap.put(REGIONAL, VERY_NICE.getValue());
         routeMap.put(LOCAL, PREFER.getValue());
 
-        speedDefault = highwaySpeeds.get("cycleway");
         setAvoidSpeedLimit(71);
     }
 

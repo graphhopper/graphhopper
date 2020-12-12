@@ -64,7 +64,8 @@ public class LMApproximatorTest {
         GraphHopperStorage graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).create();
 
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, 0.8);
+        GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true,
+                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), 60d,0.7, 0.8, 0.8);
 
         Weighting weighting = new FastestWeighting(encoder);
 

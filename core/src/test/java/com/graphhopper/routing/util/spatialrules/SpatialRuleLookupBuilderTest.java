@@ -23,6 +23,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.parsers.SpatialRuleParser;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
@@ -30,6 +31,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
@@ -58,11 +60,11 @@ public class SpatialRuleLookupBuilderTest {
     private static SpatialRuleLookup createLookup() throws IOException {
         return createLookup(new Envelope(-180, 180, -90, 90));
     }
-    
+
     private static SpatialRuleLookup createLookup(Envelope maxBounds) throws IOException {
         final FileReader reader = new FileReader(COUNTRIES_FILE);
         List<JsonFeatureCollection> feats = Collections.singletonList(
-                        Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class));
+                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class));
         return SpatialRuleLookupBuilder.buildIndex(feats, "ISO3166-1:alpha3", new CountriesSpatialRuleFactory());
     }
 
@@ -142,7 +144,7 @@ public class SpatialRuleLookupBuilderTest {
                 }
                 return SpatialRuleSet.EMPTY;
             }
-            
+
             @Override
             public List<SpatialRule> getRules() {
                 return Collections.singletonList(germany);
@@ -160,10 +162,11 @@ public class SpatialRuleLookupBuilderTest {
         DecimalEncodedValue tmpCarMaxSpeedEnc = em.getDecimalEncodedValue(MaxSpeed.KEY);
 
         Graph graph = new GraphBuilder(em).create();
-        EdgeIteratorState e1 = graph.edge(0, 1, 1, true);
-        EdgeIteratorState e2 = graph.edge(0, 2, 1, true);
-        EdgeIteratorState e3 = graph.edge(0, 3, 1, true);
-        EdgeIteratorState e4 = graph.edge(0, 4, 1, true);
+        FlagEncoder encoder = em.getEncoder("car");
+        EdgeIteratorState e1 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1));
+        EdgeIteratorState e2 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 2).setDistance(1));
+        EdgeIteratorState e3 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 3).setDistance(1));
+        EdgeIteratorState e4 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 4).setDistance(1));
         updateDistancesFor(graph, 0, 0.00, 0.00);
         updateDistancesFor(graph, 1, 0.01, 0.01);
         updateDistancesFor(graph, 2, -0.01, -0.01);
@@ -184,7 +187,7 @@ public class SpatialRuleLookupBuilderTest {
         e2.setFlags(em.handleWayTags(way2, map, relFlags));
         assertEquals(RoadAccess.YES, e2.get(tmpRoadAccessEnc));
 
-        assertEquals(index.getRules().indexOf(germany), e1.get(countrySpatialIdEnc)-1);
+        assertEquals(index.getRules().indexOf(germany), e1.get(countrySpatialIdEnc) - 1);
         assertEquals(0, e2.get(countrySpatialIdEnc));
 
         ReaderWay livingStreet = new ReaderWay(29L);
