@@ -26,6 +26,7 @@ import java.io.StringReader;
 import java.util.*;
 
 import static com.graphhopper.routing.weighting.custom.CustomWeighting.FIRST_MATCH;
+import static com.graphhopper.routing.weighting.custom.ExpressionBuilder.IN_AREA_PREFIX;
 
 class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
 
@@ -54,9 +55,18 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
     public Boolean visitRvalue(Java.Rvalue rv) throws Exception {
         if (rv instanceof Java.AmbiguousName) {
             Java.AmbiguousName n = (Java.AmbiguousName) rv;
-            if (n.identifiers.length == 1)
-                // e.g. like road_class
-                return isValidIdentifier(n.identifiers[0]);
+            if (n.identifiers.length == 1) {
+                String arg = n.identifiers[0];
+                if (arg.startsWith(IN_AREA_PREFIX)) {
+                    injects.put(n.getLocation().getColumnNumber() - 1, CustomWeightingHelper.class.getSimpleName() + ".in(this.");
+                    injects.put(n.getLocation().getColumnNumber() - 1 + arg.length(), ", edge)");
+                    result.guessedVariables.add(arg);
+                    return true;
+                } else {
+                    // e.g. like road_class
+                    return isValidIdentifier(arg);
+                }
+            }
             return false;
         }
         if (rv instanceof Java.Literal)

@@ -22,7 +22,6 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.util.CustomModel;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.shapes.BBox;
@@ -41,7 +40,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 class ExpressionBuilder {
     private static final AtomicLong longVal = new AtomicLong(1);
-    private static final String AREA_PREFIX = "in_area_";
+    static final String IN_AREA_PREFIX = "in_area_";
     private static final Set<String> allowedNames = new HashSet<>(Arrays.asList("edge", "Math"));
     private static final boolean JANINO_DEBUG = Boolean.getBoolean(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE);
 
@@ -162,7 +161,7 @@ class ExpressionBuilder {
     }
 
     static boolean isValidVariableName(String name) {
-        return name.startsWith(AREA_PREFIX) || allowedNames.contains(name);
+        return name.startsWith(IN_AREA_PREFIX) || allowedNames.contains(name);
     }
 
     /**
@@ -170,11 +169,7 @@ class ExpressionBuilder {
      * or if an area contains the current edge.
      */
     private static String getVariableDeclaration(EncodedValueLookup lookup, String arg) {
-        if (arg.startsWith(AREA_PREFIX)) {
-            String id = arg.substring(AREA_PREFIX.length());
-            return "boolean " + arg + " = " + CustomWeightingHelper.class.getSimpleName() + ".in(this.area_" + id + ", edge);\n";
-        } else if (lookup.hasEncodedValue(arg)) {
-            check(arg);
+        if (lookup.hasEncodedValue(arg)) {
             EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
             return getReturnType(enc) + " " + arg + " = reverse ? " +
                     "edge.getReverse((" + getInterface(enc) + ") this." + arg + "_enc) : " +
@@ -203,10 +198,6 @@ class ExpressionBuilder {
         throw new IllegalArgumentException("Unsupported EncodedValue " + name);
     }
 
-    static void check(String encValue) {
-        if(encValue.contains(".")) throw new IllegalArgumentException("encoded value with invalid name: " + encValue);
-    }
-
     /**
      * Create the class source file from the detected variables (priorityVariables and speedVariables). We assume that
      * these variables are safe although they are user input because we collected them from parsing via Janino. This
@@ -224,13 +215,12 @@ class ExpressionBuilder {
         set.addAll(speedVariables);
         for (String arg : set) {
             if (lookup.hasEncodedValue(arg)) {
-                check(arg);
                 EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
                 classSourceCode.append("protected " + enc.getClass().getSimpleName() + " " + arg + "_enc;\n");
                 initSourceCode.append("if (lookup.hasEncodedValue(\"" + arg + "\")) ");
                 initSourceCode.append("this." + arg + "_enc = (" + enc.getClass().getSimpleName()
                         + ") lookup.getEncodedValue(\"" + arg + "\", EncodedValue.class);\n");
-            } else if (arg.startsWith(AREA_PREFIX)) {
+            } else if (arg.startsWith(IN_AREA_PREFIX)) {
                 if (!includedAreaImports) {
                     importSourceCode.append("import " + BBox.class.getName() + ";\n");
                     importSourceCode.append("import " + GHUtility.class.getName() + ";\n");
@@ -240,12 +230,11 @@ class ExpressionBuilder {
                     includedAreaImports = true;
                 }
 
-                String id = arg.substring(AREA_PREFIX.length());
-                String varName = "area_" + id;
-                classSourceCode.append("protected " + Polygon.class.getSimpleName() + " " + varName + ";\n");
+                String id = arg.substring(IN_AREA_PREFIX.length());
+                classSourceCode.append("protected " + Polygon.class.getSimpleName() + " " + arg + ";\n");
                 initSourceCode.append("JsonFeature feature = (JsonFeature) areas.get(\"" + id + "\");\n");
                 initSourceCode.append("if(feature == null) throw new IllegalArgumentException(\"Area '" + id + "' wasn't found\");\n");
-                initSourceCode.append("this." + varName + " = new Polygon(new PreparedGeometryFactory().create(feature.getGeometry()));\n");
+                initSourceCode.append("this." + arg + " = new Polygon(new PreparedGeometryFactory().create(feature.getGeometry()));\n");
             } else {
                 if (!isValidVariableName(arg))
                     throw new IllegalArgumentException("Variable not supported: " + arg);

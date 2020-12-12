@@ -53,6 +53,11 @@ public class ExpressionVisitorTest {
         assertEquals("road_class == RoadClass.PRIMARY", parseExpression("road_class == PRIMARY", validVariable).converted.toString());
         assertEquals("toll == Toll.NO", parseExpression("toll == NO", validVariable).converted.toString());
         assertEquals("toll == Toll.NO || road_class == RoadClass.NO", parseExpression("toll == NO || road_class == NO", validVariable).converted.toString());
+
+        // convert in_area variable to function call:
+        assertEquals(CustomWeightingHelper.class.getSimpleName() + ".in(this.in_area_custom_1, edge)",
+                parseExpression("in_area_custom_1", validVariable).converted.toString());
+
         // no need to inject:
         assertNull(parseExpression("toll == Toll.NO", validVariable).converted);
     }
