@@ -28,7 +28,7 @@ import com.graphhopper.util.DistancePlaneProjection;
  * @author easbar
  */
 public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD {
-    private final boolean useHeuristicForNodeOrder = false;
+    private final boolean useHeuristicForNodeOrder = true;
     private BalancedWeightApproximator weightApprox;
 
     public AStarBidirectionEdgeCHNoSOD(RoutingCHGraph graph) {
@@ -44,12 +44,12 @@ public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD 
 
     @Override
     protected boolean fromEntryCanBeSkipped() {
-        return currFrom.weight + weightApprox.approximate(currFrom.adjNode, false) > bestWeight;
+        return getMinCurrFromPathWeight() > bestWeight;
     }
 
     @Override
     protected boolean toEntryCanBeSkipped() {
-        return currTo.weight + weightApprox.approximate(currTo.adjNode, true) > bestWeight;
+        return getMinCurrToPathWeight() > bestWeight;
     }
 
     @Override
