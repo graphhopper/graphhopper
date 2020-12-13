@@ -22,6 +22,8 @@ import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.DijkstraBidirectionEdgeCHNoSOD;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -51,7 +53,7 @@ import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Here we test if Contraction Hierarchies work with turn costs, i.e. we first contract the graph and then run
@@ -905,7 +907,7 @@ public class CHTurnCostTest {
         // travel via the virtual node 7 to node 1. From there we cannot go to 6 because of the one-way so we go back
         // to node 2 (no u-turn because of the duplicate edge) on edge1. And this is were the journey ends: we cannot
         // go to 8 because of the turn restriction from edge1 to edge4 -> there should not be a path!
-        assertFalse("there should not be a path, but found: " + path.calcNodes(), path.isFound());
+        assertFalse(path.isFound(), "there should not be a path, but found: " + path.calcNodes());
     }
 
     @ParameterizedTest
@@ -933,7 +935,7 @@ public class CHTurnCostTest {
         graph.freeze();
         prepareCH(0, 1, 2, 3, 4, 5);
         assertEquals(5, chGraph.getBaseGraph().getEdges());
-        assertEquals("expected two shortcuts: 3->5 and 5->3", 7, chGraph.getEdges());
+        assertEquals(7, chGraph.getEdges(), "expected two shortcuts: 3->5 and 5->3");
         // there should be no path from 2 to 1, because of the turn restriction and because u-turns are not allowed
         assertFalse(findPathUsingDijkstra(2, 1).isFound());
         compareCHQueryWithDijkstra(2, 1);
@@ -944,11 +946,11 @@ public class CHTurnCostTest {
         index.prepareIndex();
         Snap snap = index.findClosest(0.1, 0.15, EdgeFilter.ALL_EDGES);
         QueryGraph queryGraph = QueryGraph.create(graph, snap);
-        assertEquals("expected one virtual node", 1, queryGraph.getNodes() - chGraph.getNodes());
+        assertEquals(1, queryGraph.getNodes() - chGraph.getNodes(), "expected one virtual node");
         QueryRoutingCHGraph routingCHGraph = new QueryRoutingCHGraph(chGraph, queryGraph);
         RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(routingCHGraph).createAlgo(new PMap().putObject(ALGORITHM, algo));
         Path path = chAlgo.calcPath(2, 1);
-        assertFalse("no path should be found, but found " + path.calcNodes(), path.isFound());
+        assertFalse(path.isFound(), "no path should be found, but found " + path.calcNodes());
     }
 
     @ParameterizedTest
@@ -971,7 +973,7 @@ public class CHTurnCostTest {
         assertEquals(0, snap.getClosestEdge().getEdge());
         RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(chGraph, queryGraph).createAlgo(new PMap().putObject(ALGORITHM, algo));
         Path path = chAlgo.calcPath(0, 2);
-        assertTrue("it should be possible to route via a virtual node, but no path found", path.isFound());
+        assertTrue(path.isFound(), "it should be possible to route via a virtual node, but no path found");
         assertEquals(IntArrayList.from(0, 3, 1, 2), path.calcNodes());
         assertEquals(DistancePlaneProjection.DIST_PLANE.calcDist(0.00, 0.00, 0.03, 0.03), path.getDistance(), 1.e-1);
     }
@@ -1051,6 +1053,41 @@ public class CHTurnCostTest {
         assertEquals(dijkstraPath.getWeight(), path.getWeight(), 1.e-2);
         assertEquals(dijkstraPath.getDistance(), path.getDistance(), 1.e-2);
         assertEquals(dijkstraPath.getTime(), path.getTime());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {DIJKSTRA_BI, ASTAR_BI})
+    public void test_astar_issue2061(String algo) {
+        // here the direct path 0-2-3-4-5 is clearly the shortest, however there was a bug in the a-star(-like)
+        // algo: first the non-optimal path 0-1-5 is found, but before we find the actual shortest path we explore
+        // node 6 during the forward search. the path 0-6-x-5 cannot possibly be the shortest path because 0-6-5
+        // is already worse than 0-1-5, even if there was a beeline link from 6 to 5. the problem was that then we
+        // cancelled the entire fwd search instead of simply stalling node 6.
+        //       |-------1-|
+        // 7-6---0---2-3-4-5
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+        graph.edge(0, 1).set(accessEnc, true).set(speedEnc, 60);
+        graph.edge(1, 5).set(accessEnc, true).set(speedEnc, 60);
+        graph.edge(0, 2).set(accessEnc, true).set(speedEnc, 60);
+        graph.edge(2, 3).set(accessEnc, true).set(speedEnc, 60);
+        graph.edge(3, 4).set(accessEnc, true).set(speedEnc, 60);
+        graph.edge(4, 5).set(accessEnc, true).set(speedEnc, 60);
+        graph.edge(0, 6).set(accessEnc, true).set(speedEnc, 60);
+        graph.edge(6, 7).set(accessEnc, true).set(speedEnc, 60);
+        updateDistancesFor(graph, 0, 46.5, 9.7);
+        updateDistancesFor(graph, 1, 46.9, 9.8);
+        updateDistancesFor(graph, 2, 46.7, 9.7);
+        updateDistancesFor(graph, 4, 46.9, 9.7);
+        updateDistancesFor(graph, 3, 46.8, 9.7);
+        updateDistancesFor(graph, 5, 47.0, 9.7);
+        updateDistancesFor(graph, 6, 46.3, 9.7);
+        updateDistancesFor(graph, 7, 46.2, 9.7);
+        graph.freeze();
+        automaticPrepareCH();
+        RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(new PMap().putObject(ALGORITHM, algo));
+        Path path = chAlgo.calcPath(0, 5);
+        assertEquals(IntArrayList.from(0, 2, 3, 4, 5), path.calcNodes());
     }
 
     /**
@@ -1136,10 +1173,10 @@ public class CHTurnCostTest {
         int expectedWeight = expectedEdgeWeight + expectedTurnCosts;
         int expectedDistance = expectedEdgeWeight;
         int expectedTime = expectedEdgeWeight * 60 + expectedTurnCosts * 1000;
-        assertEquals("Normal Dijkstra did not find expected path.", expectedPath, dijkstraPath.calcNodes());
-        assertEquals("Normal Dijkstra did not calculate expected weight.", expectedWeight, dijkstraPath.getWeight(), 1.e-6);
-        assertEquals("Normal Dijkstra did not calculate expected distance.", expectedDistance, dijkstraPath.getDistance(), 1.e-6);
-        assertEquals("Normal Dijkstra did not calculate expected time.", expectedTime, dijkstraPath.getTime(), 1.e-6);
+        assertEquals(expectedPath, dijkstraPath.calcNodes(), "Normal Dijkstra did not find expected path.");
+        assertEquals(expectedWeight, dijkstraPath.getWeight(), 1.e-6, "Normal Dijkstra did not calculate expected weight.");
+        assertEquals(expectedDistance, dijkstraPath.getDistance(), 1.e-6, "Normal Dijkstra did not calculate expected distance.");
+        assertEquals(expectedTime, dijkstraPath.getTime(), 2, "Normal Dijkstra did not calculate expected time.");
     }
 
     private void checkPathUsingCH(IntArrayList expectedPath, int expectedEdgeWeight, int expectedTurnCosts, int from, int to, int[] contractionOrder) {
@@ -1147,10 +1184,10 @@ public class CHTurnCostTest {
         int expectedWeight = expectedEdgeWeight + expectedTurnCosts;
         int expectedDistance = expectedEdgeWeight;
         int expectedTime = expectedEdgeWeight * 60 + expectedTurnCosts * 1000;
-        assertEquals("Contraction Hierarchies did not find expected path. contraction order=" + contractionOrder, expectedPath, chPath.calcNodes());
-        assertEquals("Contraction Hierarchies did not calculate expected weight.", expectedWeight, chPath.getWeight(), 1.e-6);
-        assertEquals("Contraction Hierarchies did not calculate expected distance.", expectedDistance, chPath.getDistance(), 1.e-6);
-        assertEquals("Contraction Hierarchies did not calculate expected time.", expectedTime, chPath.getTime(), 1.e-6);
+        assertEquals(expectedPath, chPath.calcNodes(), "Contraction Hierarchies did not find expected path. contraction order=" + Arrays.toString(contractionOrder));
+        assertEquals(expectedWeight, chPath.getWeight(), 1.e-6, "Contraction Hierarchies did not calculate expected weight.");
+        assertEquals(expectedDistance, chPath.getDistance(), 1.e-6, "Contraction Hierarchies did not calculate expected distance.");
+        assertEquals(expectedTime, chPath.getTime(), 2, "Contraction Hierarchies did not calculate expected time.");
     }
 
     private Path findPathUsingDijkstra(int from, int to) {

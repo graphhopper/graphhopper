@@ -43,13 +43,23 @@ public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD 
     }
 
     @Override
+    protected boolean fromEntryCanBeSkipped() {
+        return currFrom.weight + weightApprox.approximate(currFrom.adjNode, false) > bestWeight;
+    }
+
+    @Override
+    protected boolean toEntryCanBeSkipped() {
+        return currTo.weight + weightApprox.approximate(currTo.adjNode, true) > bestWeight;
+    }
+
+    @Override
     protected boolean fwdSearchCanBeStopped() {
-        return getMinCurrFromPathWeight() > bestWeight;
+        return useHeuristicForNodeOrder && currFrom.weight > bestWeight;
     }
 
     @Override
     protected boolean bwdSearchCanBeStopped() {
-        return getMinCurrToPathWeight() > bestWeight;
+        return useHeuristicForNodeOrder && currTo.weight > bestWeight;
     }
 
     @Override

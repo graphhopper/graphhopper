@@ -55,9 +55,7 @@ public class CHRoutingAlgorithmFactory {
     }
 
     private BidirRoutingAlgorithm createAlgoEdgeBased(RoutingCHGraph g, PMap opts) {
-        // todo: AStar is much faster for edge-based but currently we cannot make it the default because
-        //       of #2061
-        String defaultAlgo = DIJKSTRA_BI;
+        String defaultAlgo = ASTAR_BI;
         String algo = opts.getString(ALGORITHM, defaultAlgo);
         if (Helper.isEmpty(algo))
             algo = defaultAlgo;
