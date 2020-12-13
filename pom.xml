@@ -74,6 +74,8 @@
         <module>isochrone</module>
         <module>reader-gtfs</module>
         <module>tools</module>
+        <module>hmm-lib</module>
+        <module>matching-core</module>
         <module>web-bundle</module>
         <module>api</module>
         <module>web-api</module>
