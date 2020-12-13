@@ -66,12 +66,16 @@ class ExpressionBuilder {
                 }
             });
 
+    private ExpressionBuilder() {
+        // utility class
+    }
+
     /**
      * This method compiles a new subclass of CustomWeightingHelper composed from the provided CustomModel caches this
      * and returns an instance.
      */
-    static CustomWeightingHelper create(CustomModel customModel, EncodedValueLookup lookup,
-                                        double globalMaxSpeed, double maxSpeedFallback, DecimalEncodedValue avgSpeedEnc) {
+    static SpeedAndAccessProvider create(CustomModel customModel, EncodedValueLookup lookup,
+                                         double globalMaxSpeed, double maxSpeedFallback, DecimalEncodedValue avgSpeedEnc) {
         Java.CompilationUnit cu;
         try {
             String key = customModel.toString() + ",global:" + globalMaxSpeed + ",fallback:" + maxSpeedFallback;
@@ -304,6 +308,7 @@ class ExpressionBuilder {
         cu = new DeepCopier() {
             boolean speedInjected = false;
             boolean priorityInjected = false;
+
             @Override
             public Java.FieldDeclaration copyFieldDeclaration(Java.FieldDeclaration subject) throws CompileException {
                 // for https://github.com/janino-compiler/janino/issues/135

@@ -93,14 +93,12 @@ public final class CustomWeighting extends AbstractWeighting {
                                          CustomModel customModel) {
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");
-        double distanceInfluence = customModel.getDistanceInfluence();
-        double headingPenaltySeconds = customModel.getHeadingPenalty();
         if (customModel.getMaxSpeedFallback() != null && customModel.getMaxSpeedFallback() > baseFlagEncoder.getMaxSpeed())
             throw new IllegalArgumentException("max_speed_fallback cannot be bigger than max_speed " + baseFlagEncoder.getMaxSpeed());
         double maxSpeedTmp = customModel.getMaxSpeedFallback() == null ? baseFlagEncoder.getMaxSpeed() : customModel.getMaxSpeedFallback();
-        CustomWeightingHelper cwHelper = ExpressionBuilder.create(customModel, lookup, baseFlagEncoder.getMaxSpeed(), maxSpeedTmp, baseFlagEncoder.getAverageSpeedEnc());
-        Parameters parameters = new Parameters(cwHelper::getSpeed, cwHelper::getPriority, maxSpeedTmp, distanceInfluence, headingPenaltySeconds);
-
+        SpeedAndAccessProvider speedAndAccessProvider = ExpressionBuilder.create(customModel, lookup, baseFlagEncoder.getMaxSpeed(), maxSpeedTmp, baseFlagEncoder.getAverageSpeedEnc());
+        Parameters parameters = new Parameters(speedAndAccessProvider::getSpeed, speedAndAccessProvider::getPriority,
+                maxSpeedTmp, customModel.getDistanceInfluence(), customModel.getHeadingPenalty());
         return new CustomWeighting(baseFlagEncoder, turnCostProvider, parameters);
     }
 
