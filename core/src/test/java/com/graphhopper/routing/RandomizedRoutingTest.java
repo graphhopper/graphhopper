@@ -124,10 +124,12 @@ public class RandomizedRoutingTest {
         maxTurnCosts = 10;
         dir = new RAMDirectory();
         // todo: this test fails sometimes with MotorCycleEncoder (for dijkstra, LM and CH) unless we disable turn costs! #1972
-        encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
+        encoder = new MotorcycleFlagEncoder(new PMap().putObject("speed_bits", 5).
+                putObject("speed_factor", 5).
+                putObject("max_turn_costs", maxTurnCosts));
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager)
-                .setCHConfigStrings("p1|car|fastest|node", "p2|car|fastest|edge")
+                .setCHConfigStrings("p1|motorcycle|fastest|node", "p2|motorcycle|fastest|edge")
                 .setDir(dir)
                 .create();
         turnCostStorage = graph.getTurnCostStorage();
