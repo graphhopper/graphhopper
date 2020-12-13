@@ -117,7 +117,8 @@ public class DirectedRoutingTest {
     public void init() {
         dir = new RAMDirectory();
         maxTurnCosts = 10;
-        // todo: make this work for MotorCycleFlagEncoder, #1972
+        // todo: this test only works with speedTwoDirections=false (as long as loops are enabled), otherwise it will
+        // fail sometimes for edge-based algorithms, #1631
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).build();
