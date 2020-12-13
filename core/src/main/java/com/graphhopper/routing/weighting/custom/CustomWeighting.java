@@ -86,7 +86,8 @@ public final class CustomWeighting extends AbstractWeighting {
     private final double maxSpeed;
     private final double distanceInfluence;
     private final double headingPenaltySeconds;
-    private final CustomWeightingHelper cwHelper;
+    private final EdgeToDoubleMapping edgeToSpeedMapping;
+    private final EdgeToDoubleMapping edgeToPriorityMapping;
 
     public static CustomWeighting create(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup, TurnCostProvider turnCostProvider,
                                          CustomModel customModel) {
@@ -98,13 +99,15 @@ public final class CustomWeighting extends AbstractWeighting {
             throw new IllegalArgumentException("max_speed_fallback cannot be bigger than max_speed " + baseFlagEncoder.getMaxSpeed());
         double maxSpeedTmp = customModel.getMaxSpeedFallback() == null ? baseFlagEncoder.getMaxSpeed() : customModel.getMaxSpeedFallback();
         CustomWeightingHelper cwHelper = ExpressionBuilder.create(customModel, lookup, baseFlagEncoder.getMaxSpeed(), maxSpeedTmp, baseFlagEncoder.getAverageSpeedEnc());
-        return new CustomWeighting(baseFlagEncoder, turnCostProvider, cwHelper, maxSpeedTmp, distanceInfluence, headingPenaltySeconds);
+        return new CustomWeighting(baseFlagEncoder, turnCostProvider, cwHelper::getSpeed, cwHelper::getPriority, maxSpeedTmp, distanceInfluence, headingPenaltySeconds);
     }
 
-    public CustomWeighting(FlagEncoder baseFlagEncoder, TurnCostProvider turnCostProvider, CustomWeightingHelper cwHelper,
+    public CustomWeighting(FlagEncoder baseFlagEncoder, TurnCostProvider turnCostProvider,
+                           EdgeToDoubleMapping edgeToSpeedMapping, EdgeToDoubleMapping edgeToPriorityMapping,
                            double maxSpeed, double distanceInfluence, double headingPenaltySeconds) {
         super(baseFlagEncoder, turnCostProvider);
-        this.cwHelper = cwHelper;
+        this.edgeToSpeedMapping = edgeToSpeedMapping;
+        this.edgeToPriorityMapping = edgeToPriorityMapping;
         this.baseVehicleAccessEnc = baseFlagEncoder.getAccessEnc();
         this.headingPenaltySeconds = headingPenaltySeconds;
         this.maxSpeed = maxSpeed / SPEED_CONV;
@@ -129,7 +132,7 @@ public final class CustomWeighting extends AbstractWeighting {
         double distanceCosts = distance * distanceInfluence;
         if (Double.isInfinite(distanceCosts))
             return Double.POSITIVE_INFINITY;
-        double priority = cwHelper.getPriority(edgeState, reverse);
+        double priority = edgeToPriorityMapping.apply(edgeState, reverse);
         return seconds / priority + distanceCosts;
     }
 
@@ -142,11 +145,13 @@ public final class CustomWeighting extends AbstractWeighting {
         if (reverse ? !edgeState.getReverse(baseVehicleAccessEnc) : !edgeState.get(baseVehicleAccessEnc))
             return Double.POSITIVE_INFINITY;
 
-        double speed = cwHelper.getSpeed(edgeState, reverse);
+        double speed = edgeToSpeedMapping.apply(edgeState, reverse);
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
         if (speed < 0)
             throw new IllegalArgumentException("Speed cannot be negative");
+        // TODO should we add this check?
+        // assert speed < maxSpeed;
 
         double seconds = distance / speed * SPEED_CONV;
         // add penalty at start/stop/via points
@@ -162,4 +167,10 @@ public final class CustomWeighting extends AbstractWeighting {
     public String getName() {
         return NAME;
     }
+
+    @FunctionalInterface
+    public interface EdgeToDoubleMapping {
+        double apply(EdgeIteratorState edge, boolean reverse);
+    }
+
 }
