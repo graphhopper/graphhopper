@@ -76,39 +76,47 @@ class ExpressionBuilder {
      */
     static SpeedAndAccessProvider create(CustomModel customModel, EncodedValueLookup lookup,
                                          double globalMaxSpeed, double maxSpeedFallback, DecimalEncodedValue avgSpeedEnc) {
-        Java.CompilationUnit cu;
+        String key = customModel.toString() + ",global:" + globalMaxSpeed + ",fallback:" + maxSpeedFallback;
+        if (key.length() > 400_000) throw new IllegalArgumentException("Custom Model too big: " + key.length());
+
+        Class clazz = CACHE.get(key);
+        if (DYN_CACHE_SIZE > 0 && clazz == null)
+            clazz = DYN_CACHE.get(key);
+        if (clazz == null) {
+            clazz = createClazz(customModel, lookup, globalMaxSpeed, maxSpeedFallback);
+            if (CACHE.size() < CACHE_SIZE)
+                CACHE.put(key, clazz);
+            else if (DYN_CACHE_SIZE > 0)
+                DYN_CACHE.put(key, clazz);
+        }
+
         try {
-            String key = customModel.toString() + ",global:" + globalMaxSpeed + ",fallback:" + maxSpeedFallback;
-            if (key.length() > 400_000) throw new IllegalArgumentException("Custom Model too big: " + key.length());
-
-            Class clazz = CACHE.get(key);
-            if (DYN_CACHE_SIZE > 0 && clazz == null)
-                clazz = DYN_CACHE.get(key);
-            if (clazz == null) {
-                HashSet<String> priorityVariables = new LinkedHashSet<>();
-                List<Java.BlockStatement> priorityStatements = createGetPriorityStatements(priorityVariables, customModel, lookup);
-                HashSet<String> speedVariables = new LinkedHashSet<>();
-                List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup, globalMaxSpeed, maxSpeedFallback);
-                // Create different class name, which is required only for debugging.
-                // TODO does it improve performance too? I.e. it could be that the JIT is confused if different classes
-                //  have the same name and it mixes performance stats. See https://github.com/janino-compiler/janino/issues/137
-                long counter = longVal.incrementAndGet();
-                String classTemplate = createClassTemplate(counter, priorityVariables, speedVariables, lookup, customModel);
-                cu = (Java.CompilationUnit) new Parser(new org.codehaus.janino.Scanner("source", new StringReader(classTemplate))).
-                        parseAbstractCompilationUnit();
-                cu = injectStatements(priorityStatements, speedStatements, cu);
-                SimpleCompiler sc = createCompiler(counter, cu);
-                clazz = sc.getClassLoader().loadClass("com.graphhopper.Test" + counter);
-                if (CACHE.size() < CACHE_SIZE)
-                    CACHE.put(key, clazz);
-                else if (DYN_CACHE_SIZE > 0)
-                    DYN_CACHE.put(key, clazz);
-            }
-
             // The class does not need to be thread-safe as we create an instance per request
             CustomWeightingHelper prio = (CustomWeightingHelper) clazz.getDeclaredConstructor().newInstance();
             prio.init(lookup, avgSpeedEnc, customModel.getAreas());
             return prio;
+        } catch (ReflectiveOperationException ex) {
+            throw new IllegalArgumentException("Cannot compile expression " + ex.getMessage(), ex);
+        }
+    }
+
+    private static Class createClazz(CustomModel customModel, EncodedValueLookup lookup, double globalMaxSpeed,
+                                     double maxSpeedFallback) {
+        HashSet<String> priorityVariables = new LinkedHashSet<>();
+        try {
+            List<Java.BlockStatement> priorityStatements = createGetPriorityStatements(priorityVariables, customModel, lookup);
+            HashSet<String> speedVariables = new LinkedHashSet<>();
+            List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup, globalMaxSpeed, maxSpeedFallback);
+            // Create different class name, which is required only for debugging.
+            // TODO does it improve performance too? I.e. it could be that the JIT is confused if different classes
+            //  have the same name and it mixes performance stats. See https://github.com/janino-compiler/janino/issues/137
+            long counter = longVal.incrementAndGet();
+            String classTemplate = createClassTemplate(counter, priorityVariables, speedVariables, lookup, customModel);
+            Java.CompilationUnit cu = (Java.CompilationUnit) new Parser(new Scanner("source", new StringReader(classTemplate))).
+                    parseAbstractCompilationUnit();
+            cu = injectStatements(priorityStatements, speedStatements, cu);
+            SimpleCompiler sc = createCompiler(counter, cu);
+            return sc.getClassLoader().loadClass("com.graphhopper.Test" + counter);
         } catch (Exception ex) {
             String location = "";
             if (ex instanceof CompileException)
