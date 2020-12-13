@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.matching.http;
+package com.graphhopper.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -202,7 +202,7 @@ public class MapMatchingResource {
         return m;
     }
 
-    static JsonNode convertToTree(MatchResult result, boolean elevation, boolean pointsEncoded) {
+    public static JsonNode convertToTree(MatchResult result, boolean elevation, boolean pointsEncoded) {
         ObjectNode root = JsonNodeFactory.instance.objectNode();
         ObjectNode diary = root.putObject("diary");
         ArrayNode entries = diary.putArray("entries");

@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.matching;
+package com.graphhopper.http;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GraphHopper;
@@ -28,8 +28,9 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
@@ -42,10 +43,10 @@ import static org.hamcrest.core.Is.is;
 public class RoutingAdditivityTest {
 
     private static final String GH_LOCATION = "../target/routing-additivity-test-gh";
-    private GraphHopper graphHopper;
+    private static GraphHopper graphHopper;
 
-    @Before
-    public void setup() {
+    @BeforeAll
+    public static void setup() {
         Helper.removeDir(new File(GH_LOCATION));
         CarFlagEncoder encoder = new CarFlagEncoder();
         graphHopper = new GraphHopperOSM();
@@ -56,6 +57,11 @@ public class RoutingAdditivityTest {
         graphHopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         graphHopper.getRouterConfig().setLMDisablingAllowed(true);
         graphHopper.importOrLoad();
+    }
+
+    @AfterAll
+    public static void cleanup() {
+        graphHopper = null;
     }
 
 

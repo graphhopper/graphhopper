@@ -15,20 +15,23 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.matching.http;
+package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.http.GraphHopperApplication;
+import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
-import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import io.dropwizard.testing.junit5.DropwizardAppExtension;
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
@@ -41,12 +44,14 @@ import static org.junit.Assert.*;
 /**
  * @author easbar
  */
+@ExtendWith(DropwizardExtensionsSupport.class)
 public class MapMatchingResourceProfileTest {
 
     private static final String DIR = "../target/mapmatchingtest";
+    public static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
-    private static MapMatchingServerConfiguration createConfig() {
-        MapMatchingServerConfiguration config = new MapMatchingServerConfiguration();
+    private static GraphHopperServerConfiguration createConfig() {
+        GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "car|turn_costs=true,bike").
                 putObject("datareader.file", "../map-data/leipzig_germany.osm.pbf").
@@ -69,11 +74,8 @@ public class MapMatchingResourceProfileTest {
         return config;
     }
 
-    @ClassRule
-    public static final DropwizardAppRule<MapMatchingServerConfiguration> app = new DropwizardAppRule<>(MapMatchingApplication.class, createConfig());
-
-    @BeforeClass
-    @AfterClass
+    @BeforeAll
+    @AfterAll
     public static void cleanUp() {
         Helper.removeDir(new File(DIR));
     }

@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.matching;
+package com.graphhopper.http;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.GHRequest;
@@ -23,6 +23,10 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.matching.EdgeMatch;
+import com.graphhopper.matching.MapMatching;
+import com.graphhopper.matching.MatchResult;
+import com.graphhopper.matching.Observation;
 import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.CarFlagEncoder;
@@ -79,6 +83,7 @@ public class MapMatchingTest {
     @AfterClass
     public static void after() {
         Helper.removeDir(new File(GH_LOCATION));
+        graphHopper = null;
     }
 
     @Parameterized.Parameters(name = "{0}")

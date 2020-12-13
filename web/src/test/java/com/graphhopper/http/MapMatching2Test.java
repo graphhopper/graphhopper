@@ -15,12 +15,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.matching;
+package com.graphhopper.http;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.matching.EdgeMatch;
+import com.graphhopper.matching.MapMatching;
+import com.graphhopper.matching.MatchResult;
+import com.graphhopper.matching.State;
 import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.CarFlagEncoder;
@@ -36,7 +40,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
-import static com.graphhopper.matching.MapMatchingTest.fetchStreets;
+import static com.graphhopper.http.MapMatchingTest.fetchStreets;
 import static org.junit.Assert.*;
 
 /**
