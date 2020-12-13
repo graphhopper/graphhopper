@@ -88,24 +88,17 @@ public final class CustomWeighting extends AbstractWeighting {
     private final double headingPenaltySeconds;
     private final CustomWeightingHelper cwHelper;
 
-    public CustomWeighting(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup, TurnCostProvider turnCostProvider,
-                           CustomModel customModel) {
-        super(baseFlagEncoder, turnCostProvider);
+    public static CustomWeighting create(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup, TurnCostProvider turnCostProvider,
+                                         CustomModel customModel) {
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");
-
-        headingPenaltySeconds = customModel.getHeadingPenalty();
-        baseVehicleAccessEnc = baseFlagEncoder.getAccessEnc();
+        double distanceInfluence = customModel.getDistanceInfluence();
+        double headingPenaltySeconds = customModel.getHeadingPenalty();
         if (customModel.getMaxSpeedFallback() != null && customModel.getMaxSpeedFallback() > baseFlagEncoder.getMaxSpeed())
             throw new IllegalArgumentException("max_speed_fallback cannot be bigger than max_speed " + baseFlagEncoder.getMaxSpeed());
         double maxSpeedTmp = customModel.getMaxSpeedFallback() == null ? baseFlagEncoder.getMaxSpeed() : customModel.getMaxSpeedFallback();
-        cwHelper = ExpressionBuilder.create(customModel, lookup, baseFlagEncoder.getMaxSpeed(), maxSpeedTmp, baseFlagEncoder.getAverageSpeedEnc());
-        maxSpeed = maxSpeedTmp / SPEED_CONV;
-
-        // given unit is s/km -> convert to s/m
-        this.distanceInfluence = customModel.getDistanceInfluence() / 1000.0;
-        if (this.distanceInfluence < 0)
-            throw new IllegalArgumentException("distance_influence cannot be negative " + this.distanceInfluence);
+        CustomWeightingHelper cwHelper = ExpressionBuilder.create(customModel, lookup, baseFlagEncoder.getMaxSpeed(), maxSpeedTmp, baseFlagEncoder.getAverageSpeedEnc());
+        return new CustomWeighting(baseFlagEncoder, turnCostProvider, cwHelper, maxSpeedTmp, distanceInfluence, headingPenaltySeconds);
     }
 
     public CustomWeighting(FlagEncoder baseFlagEncoder, TurnCostProvider turnCostProvider, CustomWeightingHelper cwHelper,
