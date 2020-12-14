@@ -34,7 +34,6 @@ import java.util.Map;
  */
 public class CustomWeightingHelper implements SpeedAndAccessProvider {
     protected DecimalEncodedValue avg_speed_enc;
-    protected static boolean DEFAULT = true;
 
     protected CustomWeightingHelper() {
     }

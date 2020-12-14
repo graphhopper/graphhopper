@@ -126,7 +126,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             String singleExpression = entry.getKey();
             if (!firstMatch.isEmpty()) {
-                if (("DEFAULT".equals(singleExpression) || "true".equals(singleExpression)) && count + 1 != map.size())
+                if ("true".equals(singleExpression) && count + 1 != map.size())
                     throw new IllegalArgumentException("'" + singleExpression + "' in " + firstMatch + " must come as last expression but was " + count);
             } else if (singleExpression.startsWith(FIRST_MATCH)) {
                 // allow multiple: first_match_i, first_match_ii, .. but do not allow nested first_match blocks

@@ -163,7 +163,7 @@ class CustomWeightingTest {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("road_class != PRIMARY", 0.5);
         map.put("road_class == SECONDARY", 0.7);
-        map.put("DEFAULT", 0.9);
+        map.put("true", 0.9);
         vehicleModel.getPriority().put(FIRST_MATCH, map);
         assertEquals(1.2, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
         assertEquals(1.73, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
@@ -191,7 +191,7 @@ class CustomWeightingTest {
         Map<String, Object> map = new LinkedHashMap<>();
         vehicleModel.getPriority().put(FIRST_MATCH, map);
         map.put("road_class == PRIMARY", 1.0);
-        map.put("DEFAULT", 0.5);
+        map.put("true", 0.5);
         vehicleModel.getSpeedFactor().put("road_class != PRIMARY", 0.9);
         assertEquals(1.15, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
         assertEquals(1.84, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
@@ -254,7 +254,7 @@ class CustomWeightingTest {
         assertEquals(1.34, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
 
         map = new LinkedHashMap<>();
-        map.put("DEFAULT", 0.9);
+        map.put("true", 0.9);
         map.put("road_class == SECONDARY", 0.8);
         vehicleModel.getPriority().put(FIRST_MATCH, map);
         assertThrows(IllegalArgumentException.class, () -> createWeighting(vehicleModel).calcEdgeWeight(primary, false));
