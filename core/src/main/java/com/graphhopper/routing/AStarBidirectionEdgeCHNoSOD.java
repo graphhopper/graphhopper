@@ -28,7 +28,7 @@ import com.graphhopper.util.DistancePlaneProjection;
  * @author easbar
  */
 public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD {
-    private final boolean useHeuristicForNodeOrder = true;
+    private final boolean useHeuristicForNodeOrder = false;
     private BalancedWeightApproximator weightApprox;
 
     public AStarBidirectionEdgeCHNoSOD(RoutingCHGraph graph) {
