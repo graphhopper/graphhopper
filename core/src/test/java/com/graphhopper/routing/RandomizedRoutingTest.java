@@ -198,7 +198,7 @@ public class RandomizedRoutingTest {
         final int numQueries = 50;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true,
-                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), 60d, 0.7, 0.8, 0.8);
+                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, 0.7, 0.8, 0.8);
         GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, turnCostStorage);
 //        GHUtility.printGraphForUnitTest(graph, encoder);
         preProcessGraph();
@@ -235,7 +235,7 @@ public class RandomizedRoutingTest {
         double pOffset = 0;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 50, 2.2, true, true,
-                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), 60d, 0.7, 0.8, pOffset);
+                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, 0.7, 0.8, pOffset);
         GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, turnCostStorage);
 //        GHUtility.printGraphForUnitTest(graph, encoder);
         preProcessGraph();
