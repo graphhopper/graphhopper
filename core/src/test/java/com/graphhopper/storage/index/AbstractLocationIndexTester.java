@@ -20,16 +20,15 @@ package com.graphhopper.storage.index;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.File;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
@@ -74,8 +73,9 @@ public abstract class AbstractLocationIndexTester {
 
     @Test
     public void testSimpleGraph() {
-        Graph g = AbstractLocationIndexTester.this.createGHStorage(EncodingManager.create("car"));
-        initSimpleGraph(g);
+        EncodingManager em = EncodingManager.create("car");
+        Graph g = AbstractLocationIndexTester.this.createGHStorage(em);
+        initSimpleGraph(g, em);
 
         idx = createIndex(g, -1);
         assertEquals(4, findID(idx, 5, 2));
@@ -91,7 +91,7 @@ public abstract class AbstractLocationIndexTester {
         Helper.close((Closeable) g);
     }
 
-    public void initSimpleGraph(Graph g) {
+    public static void initSimpleGraph(Graph g, EncodingManager em) {
         //  6 |       4
         //  5 |           
         //    |     6
@@ -112,20 +112,25 @@ public abstract class AbstractLocationIndexTester {
         na.setNode(4, 6, 1);
         na.setNode(5, 4, 4);
         na.setNode(6, 4.5, -0.5);
-        g.edge(0, 1, 3.5, true);
-        g.edge(0, 2, 2.5, true);
-        g.edge(2, 3, 1, true);
-        g.edge(3, 4, 3.2, true);
-        g.edge(1, 4, 2.4, true);
-        g.edge(3, 5, 1.5, true);
-        // make sure 6 is connected
-        g.edge(6, 4, 1.2, true);
+        List<EdgeIteratorState> list = Arrays.asList(g.edge(0, 1).setDistance(3.5),
+                g.edge(0, 2).setDistance(2.5),
+                g.edge(2, 3).setDistance(1),
+                g.edge(3, 4).setDistance(3.2),
+                g.edge(1, 4).setDistance(2.4),
+                g.edge(3, 5).setDistance(1.5),
+                // make sure 6 is connected
+                g.edge(6, 4).setDistance(1.2));
+        for (FlagEncoder encoder : em.fetchEdgeEncoders()) {
+            double speed = encoder.getMaxSpeed() / 2;
+            GHUtility.setSpeed(speed, speed, encoder, list);
+        }
     }
 
     @Test
     public void testSimpleGraph2() {
-        Graph g = AbstractLocationIndexTester.this.createGHStorage(EncodingManager.create("car"));
-        initSimpleGraph(g);
+        EncodingManager em = EncodingManager.create("car");
+        Graph g = AbstractLocationIndexTester.this.createGHStorage(em);
+        initSimpleGraph(g, em);
 
         idx = createIndex(g, -1);
         assertEquals(4, findID(idx, 5, 2));
@@ -151,7 +156,7 @@ public abstract class AbstractLocationIndexTester {
 
         idx = createIndex(g, -1);
         // if we would use less array entries then some points gets the same key so avoid that for this test
-        // e.g. for 16 we get "expected 6 but was 9" i.e 6 was overwritten by node j9 which is a bit closer to the grid center        
+        // e.g. for 16 we get "expected 6 but was 9" i.e 6 was overwritten by node j9 which is a bit closer to the grid center
         // go through every point of the graph if all points are reachable
         NodeAccess na = g.getNodeAccess();
         for (int i = 0; i < locs; i++) {
@@ -301,26 +306,27 @@ public abstract class AbstractLocationIndexTester {
         na.setNode(16, 5, 5);
         // => 17 locations
 
-        graph.edge(a0, b1, 1, true);
-        graph.edge(c2, b1, 1, true);
-        graph.edge(c2, d3, 1, true);
-        graph.edge(f5, b1, 1, true);
-        graph.edge(e4, f5, 1, true);
-        graph.edge(m12, d3, 1, true);
-        graph.edge(e4, k10, 1, true);
-        graph.edge(f5, d3, 1, true);
-        graph.edge(f5, i8, 1, true);
-        graph.edge(f5, j9, 1, true);
-        graph.edge(k10, g6, 1, true);
-        graph.edge(j9, l11, 1, true);
-        graph.edge(i8, l11, 1, true);
-        graph.edge(i8, h7, 1, true);
-        graph.edge(k10, n13, 1, true);
-        graph.edge(k10, o14, 1, true);
-        graph.edge(l11, p15, 1, true);
-        graph.edge(m12, p15, 1, true);
-        graph.edge(q16, p15, 1, true);
-        graph.edge(q16, m12, 1, true);
+        FlagEncoder encoder = encodingManager.getEncoder("car");
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(a0, b1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(c2, b1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(c2, d3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(f5, b1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(e4, f5).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(m12, d3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(e4, k10).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(f5, d3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(f5, i8).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(f5, j9).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(k10, g6).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(j9, l11).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(i8, l11).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(i8, h7).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(k10, n13).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(k10, o14).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(l11, p15).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(m12, p15).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(q16, p15).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(q16, m12).setDistance(1));
         return graph;
     }
 
@@ -328,7 +334,7 @@ public abstract class AbstractLocationIndexTester {
     public void testDifferentVehicles() {
         final EncodingManager encodingManager = EncodingManager.create("car,foot");
         Graph g = AbstractLocationIndexTester.this.createGHStorage(encodingManager);
-        initSimpleGraph(g);
+        initSimpleGraph(g, encodingManager);
         idx = createIndex(g, -1);
         assertEquals(1, findID(idx, 1, -1));
 
@@ -337,7 +343,7 @@ public abstract class AbstractLocationIndexTester {
         FlagEncoder encoder = encodingManager.getEncoder("foot");
         BooleanEncodedValue accessEnc = encoder.getAccessEnc();
         while (iter.next()) {
-            iter.set(accessEnc, false).setReverse(accessEnc, false);
+            iter.set(accessEnc, false, false);
         }
         idx.close();
 

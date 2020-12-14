@@ -29,6 +29,7 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.GHPoint;
@@ -120,7 +121,7 @@ public class RoundTripRoutingTest {
 
     private Graph createTestGraph() {
         Graph graph = new GraphHopperStorage(new RAMDirectory(), em, false, true).create(1000);
-        AlternativeRouteTest.initTestGraph(graph);
+        AlternativeRouteTest.initTestGraph(graph, carFE);
         return graph;
     }
 
@@ -133,7 +134,7 @@ public class RoundTripRoutingTest {
         //    |-1 0 1
         GraphHopperStorage graph = new GraphBuilder(em).create();
         for (int i = 0; i < 8; ++i) {
-            graph.edge(i, (i + 1) % 8, 1, true);
+            GHUtility.setSpeed(60, true, true, carFE, graph.edge(i, (i + 1) % 8).setDistance(1));
         }
         updateDistancesFor(graph, 0, 1, -1);
         updateDistancesFor(graph, 1, 1, 0);

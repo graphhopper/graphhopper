@@ -54,7 +54,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected final Set<String> potentialBarriers = new HashSet<>(5);
     protected final int speedBits;
     protected final double speedFactor;
-    protected double speedDefault;
     private final int maxTurnCosts;
     private long encoderBit;
     protected BooleanEncodedValue accessEnc;
@@ -205,18 +204,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         }
 
         return 0;
-    }
-
-    /**
-     * Sets default flags with specified access.
-     */
-    protected void flagsDefault(IntsRef edgeFlags, boolean forward, boolean backward) {
-        if (forward)
-            avgSpeedEnc.setDecimal(false, edgeFlags, speedDefault);
-        if (backward && avgSpeedEnc.isStoreTwoDirections())
-            avgSpeedEnc.setDecimal(true, edgeFlags, speedDefault);
-        accessEnc.setBool(false, edgeFlags, forward);
-        accessEnc.setBool(true, edgeFlags, backward);
     }
 
     @Override

@@ -29,6 +29,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -47,12 +48,12 @@ public class DefaultBidirPathExtractorTest {
 
     @Test
     public void testExtract() {
-        Graph g = createGraph();
-        g.edge(1, 2, 10, true);
+        Graph graph = createGraph();
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 2).setDistance(10));
         SPTEntry fwdEntry = new SPTEntry(0, 2, 0);
         fwdEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 10);
         SPTEntry bwdEntry = new SPTEntry(EdgeIterator.NO_EDGE, 2, 0);
-        Path p = DefaultBidirPathExtractor.extractPath(g, new FastestWeighting(carEncoder), fwdEntry, bwdEntry, 0);
+        Path p = DefaultBidirPathExtractor.extractPath(graph, new FastestWeighting(carEncoder), fwdEntry, bwdEntry, 0);
         assertEquals(IntArrayList.from(1, 2), p.calcNodes());
         assertEquals(10, p.getDistance(), 1e-4);
     }
@@ -60,12 +61,12 @@ public class DefaultBidirPathExtractorTest {
     @Test
     public void testExtract2() {
         // 1->2->3
-        Graph g = createGraph();
-        g.edge(1, 2, 10, false);
-        g.edge(2, 3, 20, false);
+        Graph graph = createGraph();
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(1, 2).setDistance(10));
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(2, 3).setDistance(20));
         // add some turn costs at node 2 where fwd&bwd searches meet. these costs have to be included in the
         // weight and the time of the path
-        TurnCostStorage turnCostStorage = g.getTurnCostStorage();
+        TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
         DecimalEncodedValue turnCostEnc = encodingManager.getDecimalEncodedValue(TurnCost.key(carEncoder.toString()));
         turnCostStorage.set(turnCostEnc, 0, 2, 1, 5);
 
@@ -75,7 +76,7 @@ public class DefaultBidirPathExtractorTest {
         SPTEntry bwdEntry = new SPTEntry(1, 2, 1.2);
         bwdEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 3, 0);
 
-        Path p = DefaultBidirPathExtractor.extractPath(g, new FastestWeighting(carEncoder, new DefaultTurnCostProvider(carEncoder, turnCostStorage)), fwdEntry, bwdEntry, 0);
+        Path p = DefaultBidirPathExtractor.extractPath(graph, new FastestWeighting(carEncoder, new DefaultTurnCostProvider(carEncoder, turnCostStorage)), fwdEntry, bwdEntry, 0);
         p.setWeight(5 + 1.8);
 
         assertEquals(IntArrayList.from(1, 2, 3), p.calcNodes());

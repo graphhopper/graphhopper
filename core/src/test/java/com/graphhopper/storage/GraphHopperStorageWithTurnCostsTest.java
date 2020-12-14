@@ -21,6 +21,7 @@ import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import org.junit.Test;
 
@@ -58,13 +59,13 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
         na.setNode(1, 11, 20, 1);
         na.setNode(2, 12, 12, 0.4);
 
-        EdgeIteratorState iter2 = graph.edge(0, 1, 100, true);
+        EdgeIteratorState iter2 = GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 1).setDistance(100));
         iter2.setWayGeometry(Helper.createPointList3D(1.5, 1, 0, 2, 3, 0));
-        EdgeIteratorState iter1 = graph.edge(0, 2, 200, true);
+        EdgeIteratorState iter1 = GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 2).setDistance(200));
         iter1.setWayGeometry(Helper.createPointList3D(3.5, 4.5, 0, 5, 6, 0));
-        graph.edge(9, 10, 200, true);
-        graph.edge(9, 11, 200, true);
-        graph.edge(1, 2, 120, false);
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(9, 10).setDistance(200));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(9, 11).setDistance(200));
+        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(1, 2).setDistance(120));
 
         setTurnCost(iter1.getEdge(), 0, iter2.getEdge(), 1337);
         setTurnCost(iter2.getEdge(), 0, iter1.getEdge(), 666);
@@ -91,7 +92,8 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
         assertEquals(815, getTurnCost(iter2, 1, iter1), .1);
         assertEquals(0, getTurnCost(iter2, 3, iter1), .1);
 
-        graph.edge(3, 4, 123, true).setWayGeometry(Helper.createPointList3D(4.4, 5.5, 0, 6.6, 7.7, 0));
+        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 4).setDistance(123)).
+                setWayGeometry(Helper.createPointList3D(4.4, 5.5, 0, 6.6, 7.7, 0));
         checkGraph(graph);
     }
 
@@ -116,10 +118,10 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
 
         // Make node 50 the 'center' node
         for (int nodeId = 51; nodeId < 100; nodeId++) {
-            graph.edge(50, nodeId, r.nextDouble(), true);
+            GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(50, nodeId).setDistance(r.nextDouble()));
         }
         for (int nodeId = 0; nodeId < 50; nodeId++) {
-            graph.edge(nodeId, 50, r.nextDouble(), true);
+            GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(nodeId, 50).setDistance(r.nextDouble()));
         }
 
         // add 100 turn cost entries around node 50

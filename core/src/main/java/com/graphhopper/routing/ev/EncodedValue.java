@@ -45,6 +45,11 @@ public interface EncodedValue {
      */
     int getVersion();
 
+    /**
+     * @return true if this EncodedValue can store a different value for its reverse direction
+     */
+    boolean isStoreTwoDirections();
+
     class InitializerConfig {
         int dataIndex = -1;
         int shift = 32;
