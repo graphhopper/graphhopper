@@ -38,7 +38,7 @@ class ExpressionBuilderTest {
         CustomModel customModel = new CustomModel();
         customModel.getPriority().put("road_class == PRIMARY", 0.5);
         SpeedAndAccessProvider speedAndAccessProvider = ExpressionBuilder.create(customModel, encodingManager,
-                encoder.getMaxSpeed(), encoder.getMaxSpeed(), encoder.getAverageSpeedEnc());
+                encoder.getMaxSpeed(), encoder.getAverageSpeedEnc());
 
         EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         GraphHopperStorage graph = new GraphBuilder(encodingManager).create();

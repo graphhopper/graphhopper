@@ -74,16 +74,16 @@ class ExpressionBuilder {
      * This method compiles a new subclass of CustomWeightingHelper composed from the provided CustomModel caches this
      * and returns an instance.
      */
-    static SpeedAndAccessProvider create(CustomModel customModel, EncodedValueLookup lookup,
-                                         double globalMaxSpeed, double maxSpeedFallback, DecimalEncodedValue avgSpeedEnc) {
-        String key = customModel.toString() + ",global:" + globalMaxSpeed + ",fallback:" + maxSpeedFallback;
+    static SpeedAndAccessProvider create(CustomModel customModel, EncodedValueLookup lookup, double globalMaxSpeed,
+                                         DecimalEncodedValue avgSpeedEnc) {
+        String key = customModel.toString() + ",global:" + globalMaxSpeed;
         if (key.length() > 400_000) throw new IllegalArgumentException("Custom Model too big: " + key.length());
 
         Class clazz = CACHE.get(key);
         if (DYN_CACHE_SIZE > 0 && clazz == null)
             clazz = DYN_CACHE.get(key);
         if (clazz == null) {
-            clazz = createClazz(customModel, lookup, globalMaxSpeed, maxSpeedFallback);
+            clazz = createClazz(customModel, lookup, globalMaxSpeed);
             if (CACHE.size() < CACHE_SIZE)
                 CACHE.put(key, clazz);
             else if (DYN_CACHE_SIZE > 0)
@@ -100,13 +100,12 @@ class ExpressionBuilder {
         }
     }
 
-    private static Class createClazz(CustomModel customModel, EncodedValueLookup lookup, double globalMaxSpeed,
-                                     double maxSpeedFallback) {
+    private static Class createClazz(CustomModel customModel, EncodedValueLookup lookup, double globalMaxSpeed) {
         HashSet<String> priorityVariables = new LinkedHashSet<>();
         try {
             List<Java.BlockStatement> priorityStatements = createGetPriorityStatements(priorityVariables, customModel, lookup);
             HashSet<String> speedVariables = new LinkedHashSet<>();
-            List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup, globalMaxSpeed, maxSpeedFallback);
+            List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup, globalMaxSpeed);
             // Create different class name, which is required only for debugging.
             // TODO does it improve performance too? I.e. it could be that the JIT is confused if different classes
             //  have the same name and it mixes performance stats. See https://github.com/janino-compiler/janino/issues/137
@@ -132,17 +131,16 @@ class ExpressionBuilder {
      */
     private static List<Java.BlockStatement> createGetSpeedStatements(Set<String> speedVariables,
                                                                       CustomModel customModel, EncodedValueLookup lookup,
-                                                                      double globalMaxSpeed, double maxSpeedFallback) throws Exception {
+                                                                      double globalMaxSpeed) throws Exception {
         List<Java.BlockStatement> speedStatements = new ArrayList<>();
         speedStatements.addAll(verifyExpressions(new StringBuilder(), "speed_factor_user_statements", speedVariables,
                 customModel.getSpeedFactor(), lookup,
                 num -> "speed *= " + num + ";\n", ""));
-        StringBuilder codeSB = new StringBuilder("boolean applied = false;\n");
+        StringBuilder codeSB = new StringBuilder("");
         speedStatements.addAll(verifyExpressions(codeSB, "max_speed_user_statements",
                 speedVariables, customModel.getMaxSpeed(), lookup,
-                num -> "applied = true; speed = Math.min(speed," + num + ");",
-                "if (!applied && speed > " + maxSpeedFallback + ") return " + maxSpeedFallback + ";\n" +
-                        "return Math.min(speed, " + globalMaxSpeed + ");\n"));
+                num -> "speed = Math.min(speed," + num + ");",
+                "return Math.min(speed, " + globalMaxSpeed + ");\n"));
         String speedMethodStartBlock = "double speed = super.getRawSpeed(edge, reverse);\n";
         // a bit inefficient to possibly define variables twice, but for now we have two separate methods
         for (String arg : speedVariables) {
