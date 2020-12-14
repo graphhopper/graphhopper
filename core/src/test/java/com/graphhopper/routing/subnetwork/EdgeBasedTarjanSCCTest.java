@@ -251,7 +251,7 @@ class EdgeBasedTarjanSCCTest {
         long seed = System.nanoTime();
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(g, rnd, 500, 2, true, true,
-                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, 0.8, 0.7, 0);
+                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), 60d, 0.8, 0.7, 0);
         ConnectedComponents implicit = new EdgeBasedTarjanSCC(g, accessEnc, NO_TURN_COST_PROVIDER, excludeSingle).findComponentsRecursive();
         ConnectedComponents explicit = new EdgeBasedTarjanSCC(g, accessEnc, NO_TURN_COST_PROVIDER, excludeSingle).findComponents();
 
