@@ -86,38 +86,32 @@ public final class CustomWeighting extends AbstractWeighting {
     private final double maxSpeed;
     private final double distanceInfluence;
     private final double headingPenaltySeconds;
-    private final CustomWeightingHelper cwHelper;
+    private final EdgeToDoubleMapping edgeToSpeedMapping;
+    private final EdgeToDoubleMapping edgeToPriorityMapping;
 
-    public CustomWeighting(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup, TurnCostProvider turnCostProvider,
-                           CustomModel customModel) {
-        super(baseFlagEncoder, turnCostProvider);
+    public static CustomWeighting create(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup, TurnCostProvider turnCostProvider,
+                                         CustomModel customModel) {
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");
-
-        headingPenaltySeconds = customModel.getHeadingPenalty();
-        baseVehicleAccessEnc = baseFlagEncoder.getAccessEnc();
         if (customModel.getMaxSpeedFallback() != null && customModel.getMaxSpeedFallback() > baseFlagEncoder.getMaxSpeed())
             throw new IllegalArgumentException("max_speed_fallback cannot be bigger than max_speed " + baseFlagEncoder.getMaxSpeed());
         double maxSpeedTmp = customModel.getMaxSpeedFallback() == null ? baseFlagEncoder.getMaxSpeed() : customModel.getMaxSpeedFallback();
-        cwHelper = ExpressionBuilder.create(customModel, lookup, baseFlagEncoder.getMaxSpeed(), maxSpeedTmp, baseFlagEncoder.getAverageSpeedEnc());
-        maxSpeed = maxSpeedTmp / SPEED_CONV;
-
-        // given unit is s/km -> convert to s/m
-        this.distanceInfluence = customModel.getDistanceInfluence() / 1000.0;
-        if (this.distanceInfluence < 0)
-            throw new IllegalArgumentException("distance_influence cannot be negative " + this.distanceInfluence);
+        SpeedAndAccessProvider speedAndAccessProvider = ExpressionBuilder.create(customModel, lookup, baseFlagEncoder.getMaxSpeed(), maxSpeedTmp, baseFlagEncoder.getAverageSpeedEnc());
+        Parameters parameters = new Parameters(speedAndAccessProvider::getSpeed, speedAndAccessProvider::getPriority,
+                maxSpeedTmp, customModel.getDistanceInfluence(), customModel.getHeadingPenalty());
+        return new CustomWeighting(baseFlagEncoder, turnCostProvider, parameters);
     }
 
-    public CustomWeighting(FlagEncoder baseFlagEncoder, TurnCostProvider turnCostProvider, CustomWeightingHelper cwHelper,
-                           double maxSpeed, double distanceInfluence, double headingPenaltySeconds) {
+    public CustomWeighting(FlagEncoder baseFlagEncoder, TurnCostProvider turnCostProvider, Parameters parameters) {
         super(baseFlagEncoder, turnCostProvider);
-        this.cwHelper = cwHelper;
+        this.edgeToSpeedMapping = parameters.getEdgeToSpeedMapping();
+        this.edgeToPriorityMapping = parameters.getEdgeToPriorityMapping();
         this.baseVehicleAccessEnc = baseFlagEncoder.getAccessEnc();
-        this.headingPenaltySeconds = headingPenaltySeconds;
-        this.maxSpeed = maxSpeed / SPEED_CONV;
+        this.headingPenaltySeconds = parameters.getHeadingPenaltySeconds();
+        this.maxSpeed = parameters.getMaxSpeed() / SPEED_CONV;
 
         // given unit is s/km -> convert to s/m
-        this.distanceInfluence = distanceInfluence / 1000.0;
+        this.distanceInfluence = parameters.getDistanceInfluence() / 1000.0;
         if (this.distanceInfluence < 0)
             throw new IllegalArgumentException("distance_influence cannot be negative " + this.distanceInfluence);
     }
@@ -136,7 +130,7 @@ public final class CustomWeighting extends AbstractWeighting {
         double distanceCosts = distance * distanceInfluence;
         if (Double.isInfinite(distanceCosts))
             return Double.POSITIVE_INFINITY;
-        double priority = cwHelper.getPriority(edgeState, reverse);
+        double priority = edgeToPriorityMapping.get(edgeState, reverse);
         return seconds / priority + distanceCosts;
     }
 
@@ -149,11 +143,13 @@ public final class CustomWeighting extends AbstractWeighting {
         if (reverse ? !edgeState.getReverse(baseVehicleAccessEnc) : !edgeState.get(baseVehicleAccessEnc))
             return Double.POSITIVE_INFINITY;
 
-        double speed = cwHelper.getSpeed(edgeState, reverse);
+        double speed = edgeToSpeedMapping.get(edgeState, reverse);
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
         if (speed < 0)
             throw new IllegalArgumentException("Speed cannot be negative");
+        // TODO should we add this check?
+        // assert speed < maxSpeed;
 
         double seconds = distance / speed * SPEED_CONV;
         // add penalty at start/stop/via points
@@ -168,5 +164,47 @@ public final class CustomWeighting extends AbstractWeighting {
     @Override
     public String getName() {
         return NAME;
+    }
+
+    @FunctionalInterface
+    public interface EdgeToDoubleMapping {
+        double get(EdgeIteratorState edge, boolean reverse);
+    }
+
+    private static class Parameters {
+        private final EdgeToDoubleMapping edgeToSpeedMapping;
+        private final EdgeToDoubleMapping edgeToPriorityMapping;
+        private final double maxSpeed;
+        private final double distanceInfluence;
+        private final double headingPenaltySeconds;
+
+        private Parameters(EdgeToDoubleMapping edgeToSpeedMapping, EdgeToDoubleMapping edgeToPriorityMapping,
+                           double maxSpeed, double distanceInfluence, double headingPenaltySeconds) {
+            this.edgeToSpeedMapping = edgeToSpeedMapping;
+            this.edgeToPriorityMapping = edgeToPriorityMapping;
+            this.maxSpeed = maxSpeed;
+            this.distanceInfluence = distanceInfluence;
+            this.headingPenaltySeconds = headingPenaltySeconds;
+        }
+
+        public EdgeToDoubleMapping getEdgeToSpeedMapping() {
+            return edgeToSpeedMapping;
+        }
+
+        public EdgeToDoubleMapping getEdgeToPriorityMapping() {
+            return edgeToPriorityMapping;
+        }
+
+        public double getMaxSpeed() {
+            return maxSpeed;
+        }
+
+        public double getDistanceInfluence() {
+            return distanceInfluence;
+        }
+
+        public double getHeadingPenaltySeconds() {
+            return headingPenaltySeconds;
+        }
     }
 }

@@ -76,7 +76,7 @@ public class DefaultWeightingFactory implements WeightingFactory {
             CustomProfile customProfile = (CustomProfile) profile;
             queryCustomModel = queryCustomModel == null ?
                     customProfile.getCustomModel() : CustomModel.merge(customProfile.getCustomModel(), queryCustomModel);
-            weighting = new CustomWeighting(encoder, encodingManager, turnCostProvider, queryCustomModel);
+            weighting = CustomWeighting.create(encoder, encodingManager, turnCostProvider, queryCustomModel);
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
             weighting = new ShortestWeighting(encoder, turnCostProvider);
         } else if ("fastest".equalsIgnoreCase(weightingStr)) {
