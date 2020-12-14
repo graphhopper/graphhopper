@@ -38,7 +38,7 @@
         </dependency>
         <dependency>
             <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-map-matching-core</artifactId>
+            <artifactId>graphhopper-map-matching</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
