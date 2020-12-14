@@ -178,8 +178,6 @@ speed_factor:
   road_environment == TUNNEL: 0.8
 ```
 
-You can use only two operators `==` (equality) and `!=` inequality for these non-numeric categories.
-
 There are other categories like `get_off_bike` that are of boolean type. You set the speed factor like this:
 
 ```yaml
