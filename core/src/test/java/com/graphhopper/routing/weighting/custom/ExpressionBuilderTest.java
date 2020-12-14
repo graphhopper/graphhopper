@@ -37,9 +37,8 @@ class ExpressionBuilderTest {
         EncodingManager encodingManager = EncodingManager.create(encoder);
         CustomModel customModel = new CustomModel();
         customModel.getPriority().put("road_class == PRIMARY", 0.5);
-        // todo: can we get rid of this line here?
-        double maxSpeedFallback = customModel.getMaxSpeedFallback() == null ? encoder.getMaxSpeed() : customModel.getMaxSpeedFallback();
-        SpeedAndAccessProvider speedAndAccessProvider = ExpressionBuilder.create(customModel, encodingManager, encoder.getMaxSpeed(), maxSpeedFallback, encoder.getAverageSpeedEnc());
+        SpeedAndAccessProvider speedAndAccessProvider = ExpressionBuilder.create(customModel, encodingManager,
+                encoder.getMaxSpeed(), encoder.getMaxSpeed(), encoder.getAverageSpeedEnc());
 
         EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
