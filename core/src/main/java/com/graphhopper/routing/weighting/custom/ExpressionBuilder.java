@@ -116,7 +116,7 @@ class ExpressionBuilder {
                     parseAbstractCompilationUnit();
             cu = injectStatements(priorityStatements, speedStatements, cu);
             SimpleCompiler sc = createCompiler(counter, cu);
-            return sc.getClassLoader().loadClass("com.graphhopper.Test" + counter);
+            return sc.getClassLoader().loadClass("com.graphhopper.JaninoCustomWeightingHelperSubclass" + counter);
         } catch (Exception ex) {
             String location = "";
             if (ex instanceof CompileException)
@@ -264,7 +264,7 @@ class ExpressionBuilder {
                 + "import " + EncodedValueLookup.class.getName() + ";\n"
                 + "import " + EdgeIteratorState.class.getName() + ";\n"
                 + importSourceCode
-                + "\npublic class Test" + counter + " extends " + CustomWeightingHelper.class.getSimpleName() + " {\n"
+                + "\npublic class JaninoCustomWeightingHelperSubclass" + counter + " extends " + CustomWeightingHelper.class.getSimpleName() + " {\n"
                 + classSourceCode
                 + "   @Override\n"
                 + "   public void init(EncodedValueLookup lookup, "
@@ -372,7 +372,7 @@ class ExpressionBuilder {
                 Unparser.unparse(cu, sw);
                 // System.out.println(sw.toString());
                 File dir = new File("./src/main/java/com/graphhopper");
-                File temporaryFile = new File(dir, "Test" + counter + ".java");
+                File temporaryFile = new File(dir, "JaninoCustomWeightingHelperSubclass" + counter + ".java");
                 Reader reader = Readers.teeReader(
                         new StringReader(sw.toString()), // in
                         new FileWriter(temporaryFile),   // out
