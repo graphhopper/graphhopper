@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<gpx xmlns="http://www.topografix.com/GPX/1/1" creator="MapSource 6.16.3" version="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+  <trk>
+    <name>converted track</name>
+    <trkseg>
+            <trkpt lat="45.24443688057394" lon="19.70705632120371"><ele>382</ele><time>2010-01-01T01:00:53Z</time></trkpt>
+            <trkpt lat="45.244557744418756" lon="19.70795754343271"><ele>382</ele><time>2010-01-01T01:01:53Z</time></trkpt>
+            <trkpt lat="45.24481457923517" lon="19.709523953497406"><ele>382</ele><time>2010-01-01T01:02:53Z</time></trkpt>
+            <trkpt lat="45.24516205978563" lon="19.71006039530039"><ele>382</ele><time>2010-01-01T01:03:53Z</time></trkpt>
+            <trkpt lat="45.24513184416995" lon="19.710961617529392"><ele>382</ele><time>2010-01-01T01:04:53Z</time></trkpt>
+            <trkpt lat="45.24540378413238" lon="19.71250656992197"><ele>382</ele><time>2010-01-01T01:05:53Z</time></trkpt>
+            <trkpt lat="45.245690830458216" lon="19.713021554052826"><ele>382</ele><time>2010-01-01T01:06:53Z</time></trkpt>
+        <trkpt lat="45.24563039977332" lon="19.713944233953953"><ele>382</ele><time>2010-01-01T01:07:53Z</time></trkpt>
+            <trkpt lat="45.24517716758746" lon="19.71370819956064"><ele>382</ele><time>2010-01-01T01:08:53Z</time></trkpt>
+            <trkpt lat="45.24482968712937" lon="19.71398714929819"><ele>382</ele><time>2010-01-01T01:09:53Z</time></trkpt>
+            <trkpt lat="45.24458796033977" lon="19.713622368872166"><ele>382</ele><time>2010-01-01T01:10:53Z</time></trkpt>
+        <trkpt lat="45.244210260171826" lon="19.713515080511566"><ele>382</ele><time>2010-01-01T01:11:53Z</time></trkpt>
+            <trkpt lat="45.244557744418756" lon="19.71428755670786"><ele>382</ele><time>2010-01-01T01:12:53Z</time></trkpt>
+            <trkpt lat="45.2443764485551" lon="19.714502133429047"><ele>382</ele><time>2010-01-01T01:13:53Z</time></trkpt>
+            <trkpt lat="45.244708823863164" lon="19.71527460962534"><ele>382</ele><time>2010-01-01T01:14:53Z</time></trkpt>
+            <trkpt lat="45.24460306829425" lon="19.71548918634653"><ele>382</ele><time>2010-01-01T01:15:53Z</time></trkpt>
+        <trkpt lat="45.244905226540226" lon="19.716197289526463"><ele>382</ele><time>2010-01-01T01:16:53Z</time></trkpt>    
+    </trkseg>
+  </trk>
+</gpx>
