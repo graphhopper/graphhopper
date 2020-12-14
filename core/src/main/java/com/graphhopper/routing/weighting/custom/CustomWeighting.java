@@ -130,7 +130,7 @@ public final class CustomWeighting extends AbstractWeighting {
         double distanceCosts = distance * distanceInfluence;
         if (Double.isInfinite(distanceCosts))
             return Double.POSITIVE_INFINITY;
-        double priority = edgeToPriorityMapping.apply(edgeState, reverse);
+        double priority = edgeToPriorityMapping.get(edgeState, reverse);
         return seconds / priority + distanceCosts;
     }
 
@@ -143,7 +143,7 @@ public final class CustomWeighting extends AbstractWeighting {
         if (reverse ? !edgeState.getReverse(baseVehicleAccessEnc) : !edgeState.get(baseVehicleAccessEnc))
             return Double.POSITIVE_INFINITY;
 
-        double speed = edgeToSpeedMapping.apply(edgeState, reverse);
+        double speed = edgeToSpeedMapping.get(edgeState, reverse);
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
         if (speed < 0)
@@ -168,7 +168,7 @@ public final class CustomWeighting extends AbstractWeighting {
 
     @FunctionalInterface
     public interface EdgeToDoubleMapping {
-        double apply(EdgeIteratorState edge, boolean reverse);
+        double get(EdgeIteratorState edge, boolean reverse);
     }
 
     private static class Parameters {
