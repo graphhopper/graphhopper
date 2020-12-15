@@ -39,7 +39,7 @@
             <artifactId>dropwizard-configurable-assets-bundle</artifactId>
         </dependency>
 
-        <!-- Pt web client dependencies-->
+        <!-- Pt and map-matching web client dependencies-->
         <dependency>
             <groupId>org.webjars.npm</groupId>
             <artifactId>react</artifactId>
