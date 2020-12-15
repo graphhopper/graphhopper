@@ -60,7 +60,7 @@ public class MapMatching2Test {
     public void testIssue13() throws IOException {
         CarFlagEncoder encoder = new CarFlagEncoder();
         GraphHopper hopper = new GraphHopperOSM();
-        hopper.setDataReaderFile("../map-data/map-issue13.osm.gz");
+        hopper.setDataReaderFile("../map-matching/files/map-issue13.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
         hopper.setEncodingManager(EncodingManager.create(encoder));
         hopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
@@ -92,7 +92,7 @@ public class MapMatching2Test {
     public void testIssue70() throws IOException {
         CarFlagEncoder encoder = new CarFlagEncoder();
         GraphHopper hopper = new GraphHopperOSM();
-        hopper.setDataReaderFile("../map-data/issue-70.osm.gz");
+        hopper.setDataReaderFile("../map-matching/files/issue-70.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
         hopper.setEncodingManager(EncodingManager.create(encoder));
         hopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
@@ -119,7 +119,7 @@ public class MapMatching2Test {
     public void testIssue127() throws IOException {
         CarFlagEncoder encoder = new CarFlagEncoder();
         GraphHopper hopper = new GraphHopperOSM();
-        hopper.setDataReaderFile("../map-data/map-issue13.osm.gz");
+        hopper.setDataReaderFile("../map-matching/files/map-issue13.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
         hopper.setEncodingManager(EncodingManager.create(encoder));
         hopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));

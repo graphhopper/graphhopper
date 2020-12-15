@@ -54,7 +54,7 @@ public class MapMatchingResourceProfileTest {
         GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "car|turn_costs=true,bike").
-                putObject("datareader.file", "../map-data/leipzig_germany.osm.pbf").
+                putObject("datareader.file", "../map-matching/files/leipzig_germany.osm.pbf").
                 putObject("graph.location", DIR).
                 putObject(Parameters.CH.INIT_DISABLING_ALLOWED, true).
                 putObject(Parameters.Landmark.INIT_DISABLING_ALLOWED, true).

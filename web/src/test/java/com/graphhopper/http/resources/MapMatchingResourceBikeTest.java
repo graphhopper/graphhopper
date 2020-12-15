@@ -49,7 +49,7 @@ public class MapMatchingResourceBikeTest {
         GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "bike").
-                putObject("datareader.file", "../map-data/leipzig_germany.osm.pbf").
+                putObject("datareader.file", "../map-matching/files/leipzig_germany.osm.pbf").
                 putObject("graph.location", DIR).
                 setProfiles(Collections.singletonList(new Profile("fast_bike").setVehicle("bike").setWeighting("fastest")));
         return config;
