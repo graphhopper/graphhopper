@@ -28,6 +28,7 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -106,7 +107,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
     }
 
     @Test
-    public void testQuery() {
+    public void testBoundingBoxQuery1() {
         Graph graph = createTestGraph2();
         LocationIndexTree index = createIndex(graph, 500);
         final ArrayList set = new ArrayList();
@@ -119,6 +120,21 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         assertEquals(17, set.size());
         assertTrue(set.containsAll(Arrays.asList(2, 3, 4, 5, 6)));
         assertFalse(set.containsAll(Arrays.asList(17, 18, 25, 30)));
+    }
+
+    @Test
+    @Ignore
+    public void testBoundingBoxQuery2() {
+        Graph graph = createTestGraph2();
+        LocationIndexTree index = createIndex(graph, 500);
+        final ArrayList set = new ArrayList();
+        index.query(graph.getBounds(), new LocationIndex.Visitor() {
+            @Override
+            public void onNode(int nodeId) {
+                set.add(nodeId);
+            }
+        });
+        assertEquals(graph.getNodes(), set.size());
     }
 
     @Test
