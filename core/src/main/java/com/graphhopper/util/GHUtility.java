@@ -209,8 +209,12 @@ public class GHUtility {
             boolean bothDirections = random.nextDouble() < pBothDir;
             EdgeIteratorState edge = graph.edge(from, to).setDistance(distance).set(accessEnc, true);
             if (bothDirections) edge.setReverse(accessEnc, true);
-            double fwdSpeed = speed != null ? speed : 10 + random.nextDouble() * 110;
-            double bwdSpeed = speed != null ? speed : 10 + random.nextDouble() * 110;
+            double fwdSpeed = 10 + random.nextDouble() * 110;
+            double bwdSpeed = 10 + random.nextDouble() * 110;
+            // if an explicit speed is given we discard the random speeds and use the given one instead
+            if (speed != null) {
+                fwdSpeed = bwdSpeed = speed;
+            }
             edge.set(speedEnc, fwdSpeed);
             if (speedEnc.isStoreTwoDirections())
                 edge.setReverse(speedEnc, bwdSpeed);

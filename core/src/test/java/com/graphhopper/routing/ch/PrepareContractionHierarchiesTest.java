@@ -531,7 +531,7 @@ public class PrepareContractionHierarchiesTest {
         long seed = System.nanoTime();
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(ghStorage, rnd, numNodes, 1.3, true, true,
-                carFlagEncoder.getAccessEnc(), carFlagEncoder.getAverageSpeedEnc(), 60d, 0.7, 0.9, 0.8);
+                carFlagEncoder.getAccessEnc(), carFlagEncoder.getAverageSpeedEnc(), null, 0.7, 0.9, 0.8);
         ghStorage.freeze();
 
         // create CH for cars

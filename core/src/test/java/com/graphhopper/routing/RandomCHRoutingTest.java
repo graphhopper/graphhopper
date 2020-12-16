@@ -86,7 +86,7 @@ public class RandomCHRoutingTest {
         // the same as taking the direct edge!
         double pOffset = 0;
         GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.5, true, true,
-                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), 60d, 0.7, 0.9, pOffset);
+                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, 0.7, 0.9, pOffset);
         if (traversalMode.isEdgeBased()) {
             GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, graph.getTurnCostStorage());
         }
@@ -131,7 +131,7 @@ public class RandomCHRoutingTest {
         long seed = 60643479675316L;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 50, 2.5, true, true,
-                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), 60d, 0.7, 0.9, 0.0);
+                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, 0.7, 0.9, 0.0);
         GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, graph.getTurnCostStorage());
         runRandomTest(rnd, 20);
     }

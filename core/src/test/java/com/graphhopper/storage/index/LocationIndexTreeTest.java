@@ -30,10 +30,7 @@ import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -106,7 +103,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
     }
 
     @Test
-    public void testQuery() {
+    public void testBoundingBoxQuery1() {
         Graph graph = createTestGraph2();
         LocationIndexTree index = createIndex(graph, 500);
         final ArrayList set = new ArrayList();
@@ -119,6 +116,26 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         assertEquals(17, set.size());
         assertTrue(set.containsAll(Arrays.asList(2, 3, 4, 5, 6)));
         assertFalse(set.containsAll(Arrays.asList(17, 18, 25, 30)));
+    }
+
+    @Test
+    public void testBoundingBoxQuery2() {
+        Graph graph = createTestGraph2();
+        LocationIndexTree index = createIndex(graph, 500);
+        final HashSet<Integer> nodes = new HashSet<>();
+        final HashSet<Integer> edges = new HashSet<>();
+        index.query(graph.getBounds(), new LocationIndex.EdgeVisitor(graph.createEdgeExplorer()) {
+            @Override
+            public void onEdge(EdgeIteratorState edge, int nodeA, int nodeB) {
+                edges.add(edge.getEdge());
+                nodes.add(nodeA);
+                nodes.add(nodeB);
+            }
+        });
+        // all nodes 0-34 with edges
+        assertEquals(35, nodes.size());
+        // that the number of edges is identical is only accidental
+        assertEquals(35, graph.getEdges());
     }
 
     @Test
@@ -331,12 +348,6 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         FlagEncoder encoder = encodingManager.getEncoder("car");
         Graph graph = createGHStorage(new RAMDirectory(), encodingManager, false);
         NodeAccess na = graph.getNodeAccess();
-        na.setNode(8, 49.94553, 11.57214);
-        na.setNode(9, 49.94553, 11.57314);
-        na.setNode(10, 49.94553, 11.57414);
-        na.setNode(11, 49.94553, 11.57514);
-        na.setNode(12, 49.94553, 11.57614);
-        na.setNode(13, 49.94553, 11.57714);
 
         na.setNode(0, 49.94653, 11.57114);
         na.setNode(1, 49.94653, 11.57214);
@@ -346,6 +357,13 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         na.setNode(5, 49.94653, 11.57614);
         na.setNode(6, 49.94653, 11.57714);
         na.setNode(7, 49.94653, 11.57814);
+
+        na.setNode(8, 49.94553, 11.57214);
+        na.setNode(9, 49.94553, 11.57314);
+        na.setNode(10, 49.94553, 11.57414);
+        na.setNode(11, 49.94553, 11.57514);
+        na.setNode(12, 49.94553, 11.57614);
+        na.setNode(13, 49.94553, 11.57714);
 
         na.setNode(14, 49.94753, 11.57214);
         na.setNode(15, 49.94753, 11.57314);
@@ -371,8 +389,6 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         na.setNode(31, 49.95153, 11.57314);
         na.setNode(32, 49.95153, 11.57514);
         na.setNode(33, 49.95153, 11.57614);
-        na.setNode(34, 49.95153, 11.57714);
-
         na.setNode(34, 49.95153, 11.57714);
 
         // to create correct bounds
@@ -417,6 +433,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
                 graph.edge(24, 30).setDistance(10),
                 graph.edge(24, 31).setDistance(10),
                 graph.edge(26, 32).setDistance(10),
+                graph.edge(26, 22).setDistance(10),
                 graph.edge(27, 33).setDistance(10),
                 graph.edge(28, 34).setDistance(10));
         return graph;
