@@ -196,7 +196,7 @@ class TarjanSCCTest {
         long seed = System.nanoTime();
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(g, rnd, 1_000, 2, true, true,
-                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, 0.8, 0.7, 0);
+                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), 60d, 0.8, 0.7, 0);
         TarjanSCC.ConnectedComponents implicit = new TarjanSCC(g, accessEnc, excludeSingle).findComponentsRecursive();
         TarjanSCC.ConnectedComponents explicit = new TarjanSCC(g, accessEnc, excludeSingle).findComponents();
 

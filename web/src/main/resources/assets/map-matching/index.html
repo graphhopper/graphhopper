@@ -1,0 +1,44 @@
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <title>GraphHopper Map Matching Demo</title>
+        <script type="text/javascript" src="/webjars/jquery/2.2.3/jquery.min.js"></script>
+        <script type="text/javascript" src='js/togeojson.js'></script>
+        
+        <script type="text/javascript" src='js/GHUtil.js'></script>
+
+        <script src="/webjars/leaflet/1.5.1/leaflet.js"></script>
+        <link rel="stylesheet" href="/webjars/leaflet/1.5.1/leaflet.css" />
+
+        <link rel="stylesheet" href="css/style.css" />
+
+        <script type="text/javascript" src="js/demo.js?v=1"></script>
+    </head>
+    <body>        
+        <div id="main">
+            <div id="logo" class="left">
+                <a href="https://graphhopper.com">
+                    <img src="img/header.png" alt="GraphHopper Logo"/>
+                </a>
+            </div>                        
+
+            <div id="map-matching" class="tab-content">
+
+                <div id="map-matching-response">
+
+                </div>
+                <div id="map-matching-error">
+                </div>
+
+                <div id="map-matching-map" style="cursor: default; height:600px; width: 800px;"></div>
+            </div>
+            <br/>
+            <br/>
+            Vehicles: <input type="text" value="car" id="vehicle-input"/>
+            <br/>
+            GPS accuracy: <input type="number" value="20" id="accuracy-input"/>
+            <br/>
+            <input type="file" id="matching-file-input" />
+        </div>
+    </body>
+</html>

@@ -902,7 +902,7 @@ public class RoutingAlgorithmTest {
         Random rnd = new Random(seed);
         // we're not including loops otherwise duplicate nodes in path might fail the test
         GHUtility.buildRandomGraph(graph, rnd, 10, 2.0, false, true,
-                carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc(), 60d, 0.7, 0.7, 0.7);
+                carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc(), null, 0.7, 0.7, 0.7);
         final PathCalculator refCalculator = new DijkstraCalculator();
         int numRuns = 100;
         for (int i = 0; i < numRuns; i++) {

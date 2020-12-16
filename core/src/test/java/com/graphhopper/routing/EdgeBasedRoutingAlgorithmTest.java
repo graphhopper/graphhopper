@@ -155,7 +155,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         EncodingManager em = createEncodingManager(false);
         GraphHopperStorage g = createStorage(em);
         GHUtility.buildRandomGraph(g, rnd, 50, 2.2, true, true,
-                carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc(), 60d, 0.8, 0.8, 0.8);
+                carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc(), null, 0.8, 0.8, 0.8);
         GHUtility.addRandomTurnCosts(g, seed, em, carEncoder, 3, tcs);
         g.freeze();
         int numPathsNotFound = 0;
