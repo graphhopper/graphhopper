@@ -15,8 +15,8 @@ This library was initially created for HMM-based map matching according to the p
 In: Proceedings of the 17th ACM SIGSPATIAL international conference on advances in geographic
 information systems. ACM, 2009. S. 336-343."
 
-[Graphhopper](https://graphhopper.com/) [map matching](https://github.com/graphhopper/map-matching)
-is now using the hmm-lib for matching GPS positions to OpenStreetMap maps. 
+[Graphhopper](https://graphhopper.com/) [map matching](https://github.com/graphhopper/graphhopper/tree/master/map-matching)
+is using the hmm-lib for matching GPS positions to the OpenStreetMap road network.
 
 The [offline-map-matching](https://github.com/bmwcarit/offline-map-matching) project
 demonstrates how to use the hmm-lib for map matching but does not provide integration to any
