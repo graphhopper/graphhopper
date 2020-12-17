@@ -452,9 +452,9 @@ public class LocationIndexTree implements LocationIndex {
                     }
 
                     @Override
-                    public void onNode(int nodeId) {
-                        if (set.add(nodeId))
-                            function.onNode(nodeId);
+                    public void onEdge(int edgeId) {
+                        if (set.add(edgeId))
+                            function.onEdge(edgeId);
                     }
                 }, 0);
     }
@@ -468,13 +468,13 @@ public class LocationIndexTree implements LocationIndex {
             int nextIntPointer = dataAccess.getInt(pointer);
             if (nextIntPointer < 0) {
                 // single data entries (less disc space)
-                function.onNode(-(nextIntPointer + 1));
+                function.onEdge(-(nextIntPointer + 1));
             } else {
                 long maxPointer = (long) nextIntPointer * 4;
                 // loop through every leaf entry => nextIntPointer is maxPointer
                 for (long leafPointer = pointer + 4; leafPointer < maxPointer; leafPointer += 4) {
                     // we could read the whole info at once via getBytes instead of getInt
-                    function.onNode(dataAccess.getInt(leafPointer));
+                    function.onEdge(dataAccess.getInt(leafPointer));
                 }
             }
             return;
@@ -594,30 +594,27 @@ public class LocationIndexTree implements LocationIndex {
             final GHBitSet checkBitset = new GHTBitSet(new GHIntHashSet(storedNetworkEntryIds));
             // find nodes from the network entries which are close to 'point'
             final EdgeExplorer explorer = graph.createEdgeExplorer();
-            storedNetworkEntryIds.forEach(new IntPredicate() {
-                @Override
-                public boolean apply(int networkEntryNodeId) {
-                    new XFirstSearchCheck(queryLat, queryLon, checkBitset, edgeFilter) {
-                        @Override
-                        protected double getQueryDistance() {
-                            return closestMatch.getQueryDistance();
-                        }
+            storedNetworkEntryIds.forEach((IntPredicate) edgeId -> {
+                new XFirstSearchCheck(queryLat, queryLon, checkBitset, edgeFilter) {
+                    @Override
+                    protected double getQueryDistance() {
+                        return closestMatch.getQueryDistance();
+                    }
 
-                        @Override
-                        protected boolean check(int node, double normedDist, int wayIndex, EdgeIteratorState edge, Snap.Position pos) {
-                            if (normedDist < closestMatch.getQueryDistance()) {
-                                closestMatch.setQueryDistance(normedDist);
-                                closestMatch.setClosestNode(node);
-                                closestMatch.setClosestEdge(edge.detach(false));
-                                closestMatch.setWayIndex(wayIndex);
-                                closestMatch.setSnappedPosition(pos);
-                                return true;
-                            }
-                            return false;
+                    @Override
+                    protected boolean check(int node, double normedDist, int wayIndex, EdgeIteratorState edge, Snap.Position pos) {
+                        if (normedDist < closestMatch.getQueryDistance()) {
+                            closestMatch.setQueryDistance(normedDist);
+                            closestMatch.setClosestNode(node);
+                            closestMatch.setClosestEdge(edge.detach(false));
+                            closestMatch.setWayIndex(wayIndex);
+                            closestMatch.setSnappedPosition(pos);
+                            return true;
                         }
-                    }.start(explorer, networkEntryNodeId);
-                    return true;
-                }
+                        return false;
+                    }
+                }.start(explorer, graph.getEdgeIteratorStateForKey(edgeId * 2).getBaseNode());
+                return true;
             });
 
             // do early finish only if something was found (#318)
@@ -850,6 +847,7 @@ public class LocationIndexTree implements LocationIndex {
                 while (allIter.next()) {
                     if (!edgeFilter.accept(allIter))
                         continue;
+                    int edge = allIter.getEdge();
                     int nodeA = allIter.getBaseNode();
                     int nodeB = allIter.getAdjNode();
                     double lat1 = nodeAccess.getLatitude(nodeA);
@@ -861,13 +859,13 @@ public class LocationIndexTree implements LocationIndex {
                     for (int i = 0; i < len; i++) {
                         lat2 = points.getLatitude(i);
                         lon2 = points.getLongitude(i);
-                        addNode(nodeA, nodeB, lat1, lon1, lat2, lon2);
+                        addValue(edge, lat1, lon1, lat2, lon2);
                         lat1 = lat2;
                         lon1 = lon2;
                     }
                     lat2 = nodeAccess.getLatitude(nodeB);
                     lon2 = nodeAccess.getLongitude(nodeB);
-                    addNode(nodeA, nodeB, lat1, lon1, lat2, lon2);
+                    addValue(edge, lat1, lon1, lat2, lon2);
                 }
             } catch (Exception ex) {
                 logger.error("Problem! base:" + allIter.getBaseNode() + ", adj:" + allIter.getAdjNode()
@@ -875,16 +873,16 @@ public class LocationIndexTree implements LocationIndex {
             }
         }
 
-        void addNode(final int nodeA, final int nodeB,
-                     final double lat1, final double lon1,
-                     final double lat2, final double lon2) {
+        void addValue(final int nodeA,
+                      final double lat1, final double lon1,
+                      final double lat2, final double lon2) {
             PointEmitter pointEmitter = new PointEmitter() {
                 @Override
                 public void set(double lat, double lon) {
                     long key = keyAlgo.encode(lat, lon);
                     long keyPart = createReverseKey(key);
                     // no need to feed both nodes as we search neighbors in fillIDs
-                    addNode(root, nodeA, 0, keyPart, key);
+                    addValue(root, nodeA, 0, keyPart, key);
                 }
             };
 
@@ -895,10 +893,10 @@ public class LocationIndexTree implements LocationIndex {
             }
         }
 
-        void addNode(InMemEntry entry, int nodeId, int depth, long keyPart, long key) {
+        void addValue(InMemEntry entry, int value, int depth, long keyPart, long key) {
             if (entry.isLeaf()) {
                 InMemLeafEntry leafEntry = (InMemLeafEntry) entry;
-                leafEntry.addNode(nodeId);
+                leafEntry.addNode(value);
             } else {
                 int index = (int) (bitmasks[depth] & keyPart);
                 keyPart = keyPart >>> shifts[depth];
@@ -914,7 +912,7 @@ public class LocationIndexTree implements LocationIndex {
                     treeEntry.setSubEntry(index, subentry);
                 }
 
-                addNode(subentry, nodeId, depth, keyPart, key);
+                addValue(subentry, value, depth, keyPart, key);
             }
         }
 

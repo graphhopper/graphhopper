@@ -90,36 +90,7 @@ public interface LocationIndex extends Storable<LocationIndex> {
         public void onTile(BBox bbox, int depth) {
         }
 
-        public abstract void onNode(int nodeId);
+        public abstract void onEdge(int edgeId);
     }
 
-    /**
-     * This abstract class allows to visit every edge from the stored nodes in the LocationIndex for a requested area.
-     * It visits all edges once and inside the queryBBox. Also (a few) more nodes slightly outside of queryBBox could be
-     * returned that you can avoid via doing an explicit BBox check of the coordinates.
-     */
-    abstract class EdgeVisitor extends Visitor {
-
-        private final IntHashSet edgeIds = new IntHashSet();
-        private final IntHashSet nodeIds = new IntHashSet();
-        private final EdgeExplorer edgeExplorer;
-
-        public EdgeVisitor(EdgeExplorer edgeExplorer) {
-            this.edgeExplorer = edgeExplorer;
-        }
-
-        public final void onNode(int nodeId) {
-            if (!nodeIds.add(nodeId))
-                return;
-
-            EdgeIterator iter = edgeExplorer.setBaseNode(nodeId);
-            while (iter.next()) {
-                if (!edgeIds.add(iter.getEdge()))
-                    continue;
-                onEdge(iter, nodeId, iter.getAdjNode());
-            }
-        }
-
-        public abstract void onEdge(EdgeIteratorState edge, int nodeA, int nodeB);
-    }
 }

@@ -32,7 +32,8 @@ import org.junit.Test;
 
 import java.util.*;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Peter Karich
@@ -103,147 +104,34 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
     }
 
     @Test
-    public void testBoundingBoxQuery1() {
-        Graph graph = createTestGraph2();
-        LocationIndexTree index = createIndex(graph, 500);
-        final ArrayList set = new ArrayList();
-        index.query(new BBox(11.57314, 11.57614, 49.94553, 49.94853), new LocationIndex.Visitor() {
-            @Override
-            public void onNode(int nodeId) {
-                set.add(nodeId);
-            }
-        });
-        assertEquals(17, set.size());
-        assertTrue(set.containsAll(Arrays.asList(2, 3, 4, 5, 6)));
-        assertFalse(set.containsAll(Arrays.asList(17, 18, 25, 30)));
-    }
-
-    @Test
     public void testBoundingBoxQuery2() {
         Graph graph = createTestGraph2();
         LocationIndexTree index = createIndex(graph, 500);
-        final HashSet<Integer> nodes = new HashSet<>();
         final HashSet<Integer> edges = new HashSet<>();
-        index.query(graph.getBounds(), new LocationIndex.EdgeVisitor(graph.createEdgeExplorer()) {
+        index.query(graph.getBounds(), new LocationIndex.Visitor() {
             @Override
-            public void onEdge(EdgeIteratorState edge, int nodeA, int nodeB) {
-                edges.add(edge.getEdge());
-                nodes.add(nodeA);
-                nodes.add(nodeB);
+            public void onEdge(int edgeId) {
+                edges.add(edgeId);
             }
         });
-        // all nodes 0-34 with edges
-        assertEquals(35, nodes.size());
-        // that the number of edges is identical is only accidental
-        assertEquals(35, graph.getEdges());
+        // All edges (see testgraph2.jpg)
+        assertEquals(edges.size(), graph.getEdges());
     }
 
     @Test
-    public void testInMemIndex() {
-        Graph graph = createTestGraph(encodingManager);
-        LocationIndexTree index = createIndexNoPrepare(graph, 50000);
-        index.prepareAlgo();
-        LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex(EdgeFilter.ALL_EDGES);
-        assertEquals(IntArrayList.from(new int[]{4, 4}), index.getEntries());
-
-        assertEquals(4, inMemIndex.getEntriesOf(0).size());
-        assertEquals(10, inMemIndex.getEntriesOf(1).size());
-        assertEquals(0, inMemIndex.getEntriesOf(2).size());
-        // [LEAF 0 {} {0, 2}, LEAF 2 {} {0, 1}, LEAF 1 {} {2}, LEAF 3 {} {1}, LEAF 8 {} {0}, LEAF 10 {} {0}, LEAF 9 {} {0}, LEAF 4 {} {2}, LEAF 6 {} {0, 1, 2, 3}, LEAF 5 {} {0, 2, 3}, LEAF 7 {} {1, 2, 3}, LEAF 13 {} {1}]        
-        // System.out.println(inMemIndex.getLayer(2));
-
-        index.dataAccess.create(10);
-        inMemIndex.store(inMemIndex.root, LocationIndexTree.START_POINTER);
-        // [LEAF 0 {2} {},    LEAF 2 {1} {},    LEAF 1 {2} {}, LEAF 3 {1} {}, LEAF 8 {0} {}, LEAF 10 {0} {}, LEAF 9 {0} {}, LEAF 4 {2} {}, LEAF 6 {0, 3} {},       LEAF 5 {0, 2, 3} {}, LEAF 7 {1, 2, 3} {}, LEAF 13 {1} {}]
-        // System.out.println(inMemIndex.getLayer(2));
-
-        GHIntHashSet set = new GHIntHashSet();
-        set.add(0);
-
-        GHIntHashSet foundIds = new GHIntHashSet();
-        index.findNetworkEntries(0.5, -0.5, foundIds, 0);
-        assertEquals(set, foundIds);
-
-        set.add(1);
-        set.add(2);
-        foundIds.clear();
-        index.findNetworkEntries(-0.5, -0.9, foundIds, 0);
-        index.findNetworkEntries(-0.5, -0.9, foundIds, 1);
-        assertEquals(set, foundIds);
-        assertEquals(2, findID(index, -0.5, -0.9));
-
-        // The optimization if(dist > normedHalf) => feed nodeA or nodeB
-        // although this reduces chance of nodes outside of the tile
-        // in practice it even increases file size!?
-        // Is this due to the CHGraph disconnect problem?
-//        set.clear();
-//        set.add(4);
-//        assertEquals(set, index.findNetworkEntries(-0.7, 1.5));
-//        
-//        set.clear();
-//        set.add(4);
-//        assertEquals(set, index.findNetworkEntries(-0.5, 0.5));
-    }
-
-    @Test
-    public void testInMemIndex2() {
+    public void testBoundingBoxQuery1() {
         Graph graph = createTestGraph2();
-        LocationIndexTree index = createIndexNoPrepare(graph, 500);
-        index.prepareAlgo();
-        LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex(EdgeFilter.ALL_EDGES);
-        assertEquals(IntArrayList.from(new int[]{4, 4}), index.getEntries());
-        assertEquals(3, inMemIndex.getEntriesOf(0).size());
-        assertEquals(5, inMemIndex.getEntriesOf(1).size());
-        assertEquals(0, inMemIndex.getEntriesOf(2).size());
-
-        index.dataAccess.create(10);
-        inMemIndex.store(inMemIndex.root, LocationIndexTree.START_POINTER);
-
-        // 0
-        assertEquals(2L, index.keyAlgo.encode(49.94653, 11.57114));
-        // 1
-        assertEquals(3L, index.keyAlgo.encode(49.94653, 11.57214));
-        // 28
-        assertEquals(6L, index.keyAlgo.encode(49.95053, 11.57714));
-        // 29
-        assertEquals(6L, index.keyAlgo.encode(49.95053, 11.57814));
-        // 8
-        assertEquals(1L, index.keyAlgo.encode(49.94553, 11.57214));
-        // 34
-        assertEquals(12L, index.keyAlgo.encode(49.95153, 11.57714));
-
-        // Query near point 25 (49.95053, 11.57314).
-        // If we would have a perfect compaction (takes a lot longer) we would
-        // get only 0 or any node in the lefter greater subgraph.
-        // The other subnetwork is already perfect {26}.
-        // For compaction see: https://github.com/graphhopper/graphhopper/blob/5594f7f9d98d932f365557dc37b4b2d3b7abf698/core/src/main/java/com/graphhopper/storage/index/Location2NodesNtree.java#L277
-        GHIntHashSet set = new GHIntHashSet();
-        set.addAll(28, 27, 26, 24, 23, 21, 19, 18, 16, 14, 6, 5, 4, 3, 2, 1, 0);
-
-        GHIntHashSet foundIds = new GHIntHashSet();
-        index.findNetworkEntries(49.950, 11.5732, foundIds, 0);
-        assertEquals(set, foundIds);
-    }
-
-    @Test
-    public void testInMemIndex3() {
-        Graph graph = createTestGraph(encodingManager);
-        LocationIndexTree index = createIndexNoPrepare(graph, 10000);
-        index.prepareAlgo();
-        LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex(EdgeFilter.ALL_EDGES);
-        assertEquals(IntArrayList.from(new int[]{16, 4, 4}), index.getEntries());
-
-        assertEquals(13, inMemIndex.getEntriesOf(0).size());
-        assertEquals(33, inMemIndex.getEntriesOf(1).size());
-        assertEquals(69, inMemIndex.getEntriesOf(2).size());
-        assertEquals(0, inMemIndex.getEntriesOf(3).size());
-
-        index.dataAccess.create(1024);
-        inMemIndex.store(inMemIndex.root, LocationIndexTree.START_POINTER);
-        assertEquals(1 << 20, index.getCapacity());
-
-        Snap res = index.findClosest(-.5, -.5, EdgeFilter.ALL_EDGES);
-        assertEquals(1, res.getClosestNode());
+        LocationIndexTree index = createIndex(graph, 500);
+        final ArrayList edges = new ArrayList();
+        BBox bbox = new BBox(11.57314, 11.57614, 49.94553, 49.94853);
+        index.query(bbox, new LocationIndex.Visitor() {
+            @Override
+            public void onEdge(int edgeId) {
+                edges.add(edgeId);
+            }
+        });
+        // Also all edges (see testgraph2.jpg)
+        assertEquals(edges.size(), graph.getEdges());
     }
 
     @Test

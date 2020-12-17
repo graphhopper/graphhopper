@@ -20,7 +20,10 @@ package com.graphhopper.storage.index;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.Helper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,7 +35,6 @@ import java.util.List;
 import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author Peter Karich
@@ -146,56 +148,6 @@ public abstract class AbstractLocationIndexTester {
         }
         assertEquals(6, findID(idx, 4, -2));
         assertEquals(5, findID(idx, 3, 3));
-        Helper.close((Closeable) g);
-    }
-
-    @Test
-    public void testGrid() {
-        Graph g = createSampleGraph(EncodingManager.create("car"));
-        int locs = g.getNodes();
-
-        idx = createIndex(g, -1);
-        // if we would use less array entries then some points gets the same key so avoid that for this test
-        // e.g. for 16 we get "expected 6 but was 9" i.e 6 was overwritten by node j9 which is a bit closer to the grid center
-        // go through every point of the graph if all points are reachable
-        NodeAccess na = g.getNodeAccess();
-        for (int i = 0; i < locs; i++) {
-            double lat = na.getLatitude(i);
-            double lon = na.getLongitude(i);
-            assertEquals("nodeId:" + i + " " + (float) lat + "," + (float) lon, i, findID(idx, lat, lon));
-        }
-
-        // hit random lat,lon and compare result to full index
-        Random rand = new Random(12);
-        LocationIndex fullIndex;
-        if (hasEdgeSupport())
-            fullIndex = new Location2IDFullWithEdgesIndex(g);
-        else
-            fullIndex = new Location2IDFullIndex(g);
-
-        DistanceCalc dist = new DistanceCalcEarth();
-        for (int i = 0; i < 100; i++) {
-            double lat = rand.nextDouble() * 5;
-            double lon = rand.nextDouble() * 5;
-            int fullId = findID(fullIndex, lat, lon);
-            double fullLat = na.getLatitude(fullId);
-            double fullLon = na.getLongitude(fullId);
-            float fullDist = (float) dist.calcDist(lat, lon, fullLat, fullLon);
-            int newId = findID(idx, lat, lon);
-            double newLat = na.getLatitude(newId);
-            double newLon = na.getLongitude(newId);
-            float newDist = (float) dist.calcDist(lat, lon, newLat, newLon);
-
-            if (testGridIgnore(i)) {
-                continue;
-            }
-
-            assertTrue(i + " orig:" + (float) lat + "," + (float) lon
-                            + " full:" + fullLat + "," + fullLon + " fullDist:" + fullDist
-                            + " found:" + newLat + "," + newLon + " foundDist:" + newDist,
-                    Math.abs(fullDist - newDist) < 50000);
-        }
-        fullIndex.close();
         Helper.close((Closeable) g);
     }
 

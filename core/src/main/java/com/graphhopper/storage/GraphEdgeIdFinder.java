@@ -72,10 +72,11 @@ public class GraphEdgeIdFinder {
      * This method fills the edgeIds hash with edgeIds found inside the specified shape
      */
     public void findEdgesInShape(final GHIntHashSet edgeIds, final Shape shape, EdgeFilter filter) {
-        locationIndex.query(shape.getBounds(), new LocationIndex.EdgeVisitor(graph.createEdgeExplorer(filter)) {
+        locationIndex.query(shape.getBounds(), new LocationIndex.Visitor() {
             @Override
-            public void onEdge(EdgeIteratorState edge, int nodeA, int nodeB) {
-                if (shape.intersects(edge.fetchWayGeometry(FetchMode.ALL).makeImmutable()))
+            public void onEdge(int edgeId) {
+                EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeId * 2);
+                if (filter.accept(edge) && shape.intersects(edge.fetchWayGeometry(FetchMode.ALL).makeImmutable()))
                     edgeIds.add(edge.getEdge());
             }
         });
