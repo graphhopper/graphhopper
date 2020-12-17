@@ -72,10 +72,6 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 public final class CustomWeighting extends AbstractWeighting {
     public static final String NAME = "custom";
-    /**
-     * constant that starts if-then-else-if block
-     */
-    public static final String FIRST_MATCH = "first_match";
 
     /**
      * Converting to seconds is not necessary but makes adding other penalties easier (e.g. turn

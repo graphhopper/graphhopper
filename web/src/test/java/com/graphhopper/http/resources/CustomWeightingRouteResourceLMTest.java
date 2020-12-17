@@ -95,7 +95,8 @@ public class CustomWeightingRouteResourceLMTest {
         String yamlQuery = "points: [[1.529106,42.506567], [1.54006,42.511178]]\n" +
                 "profile: car_custom\n" +
                 "priority:\n" +
-                "  road_class != SECONDARY: 0.5\n";
+                "  - if: road_class != SECONDARY\n" +
+                "    then: 0.5\n";
         JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 1317, 5);
@@ -104,7 +105,11 @@ public class CustomWeightingRouteResourceLMTest {
         yamlQuery = "points: [[1.5274,42.506211], [1.54006,42.511178]]\n" +
                 "profile: car_custom\n" +
                 "priority:\n" +
-                "  first_match: { road_class == RESIDENTIAL: 0.8, road_class == PRIMARY: 1, true: 0.66 }";
+                "  - if: road_class == RESIDENTIAL\n" +
+                "    then: 0.8\n" +
+                "  - else if: road_class == PRIMARY\n" +
+                "    then: 1\n" +
+                "  - else: 0.66\n";
         yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
         path = yamlNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 1707, 5);
@@ -115,7 +120,8 @@ public class CustomWeightingRouteResourceLMTest {
         String yamlQuery = "points: [[1.533365, 42.506211], [1.523924, 42.520605]]\n" +
                 "profile: car_custom\n" +
                 "priority:\n" +
-                "  road_environment == TUNNEL: 0.1\n";
+                "  - if: road_environment == TUNNEL\n" +
+                "    then: 0.1\n";
         JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 2437, 5);
@@ -142,7 +148,8 @@ public class CustomWeightingRouteResourceLMTest {
         String yamlQuery = "points: [[1.540875,42.510672], [1.54212,42.511131]]\n" +
                 "profile: foot_custom\n" +
                 "priority:\n" +
-                "  road_class == STEPS: 0\n";
+                "  - if: road_class == STEPS\n" +
+                "    then: 0\n";
         JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 328, 5);

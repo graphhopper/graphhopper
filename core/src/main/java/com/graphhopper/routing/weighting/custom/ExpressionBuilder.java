@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.json.Clause;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValue;
@@ -290,12 +291,12 @@ class ExpressionBuilder {
      * @return the created if-then (and elseif) expressions
      */
     private static List<Java.BlockStatement> verifyExpressions(StringBuilder expressions, String info, Set<String> createObjects,
-                                                               Map<String, Object> map, EncodedValueLookup lookup,
+                                                               List<Clause> list, EncodedValueLookup lookup,
                                                                CodeBuilder codeBuilder, String lastStmt) throws Exception {
         // allow variables, all encoded values, constants
         ExpressionVisitor.NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
                 || name.toUpperCase(Locale.ROOT).equals(name) || isValidVariableName(name);
-        ExpressionVisitor.parseExpressions(expressions, nameInConditionValidator, info, createObjects, map, codeBuilder, lastStmt, "");
+        ExpressionVisitor.parseExpressions(expressions, nameInConditionValidator, info, createObjects, list, codeBuilder, lastStmt);
         return new Parser(new org.codehaus.janino.Scanner(info, new StringReader(expressions.toString()))).
                 parseBlockStatements();
     }

@@ -2,12 +2,10 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.graphhopper.json.Clause;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.CustomModel;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.OSMBikeNetworkTagParser;
 import com.graphhopper.routing.util.parsers.OSMHazmatParser;
 import com.graphhopper.routing.util.parsers.OSMTollParser;
@@ -20,12 +18,8 @@ import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import static com.graphhopper.routing.ev.RoadClass.*;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
-import static com.graphhopper.routing.weighting.custom.CustomWeighting.FIRST_MATCH;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CustomWeightingTest {
@@ -79,7 +73,7 @@ class CustomWeightingTest {
         assertEquals(36, createWeighting(model).calcEdgeWeight(fast, false), .1);
 
         // if we reduce the priority we get higher edge weights
-        model.getPriority().put("road_class == SECONDARY", 0.5);
+        model.getPriority().add(Clause.createIf("road_class == SECONDARY", 0.5));
         // the absolute priority costs depend on the speed, so setting priority=0.5 means a lower absolute weight
         // weight increase for fast edges and a higher absolute increase for slower edges
         assertEquals(2 * 144, createWeighting(model).calcEdgeWeight(slow, false), .1);
@@ -113,7 +107,7 @@ class CustomWeightingTest {
         CustomModel vehicleModel = new CustomModel();
         assertEquals(3.1, createWeighting(vehicleModel).calcEdgeWeight(edge, false), 0.01);
         // here we increase weight for edges that are road class links
-        vehicleModel.getPriority().put(RoadClassLink.KEY, 0.5);
+        vehicleModel.getPriority().add(Clause.createIf(RoadClassLink.KEY, 0.5));
         Weighting weighting = createWeighting(vehicleModel);
         BooleanEncodedValue rcLinkEnc = encodingManager.getBooleanEncodedValue(RoadClassLink.KEY);
         assertEquals(3.1, weighting.calcEdgeWeight(edge.set(rcLinkEnc, false), false), 0.01);
@@ -134,44 +128,11 @@ class CustomWeightingTest {
 
         CustomModel vehicleModel = new CustomModel();
         assertEquals(3.1, createWeighting(vehicleModel).calcEdgeWeight(edge, false), 0.01);
-        vehicleModel.getPriority().put("special == true", 0.8);
-        vehicleModel.getPriority().put("special == false", 0.4);
+        vehicleModel.getPriority().add(Clause.createIf("special == true", 0.8));
+        vehicleModel.getPriority().add(Clause.createIf("special == false", 0.4));
         Weighting weighting = createWeighting(vehicleModel);
         assertEquals(6.7, weighting.calcEdgeWeight(edge, false), 0.01);
         assertEquals(3.7, weighting.calcEdgeWeight(edge, true), 0.01);
-    }
-
-    @Test
-    public void testPriority() {
-        EdgeIteratorState primary = graph.edge(0, 1).setDistance(10).
-                set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80).set(accessEnc, true, true);
-        EdgeIteratorState secondary = graph.edge(1, 2).setDistance(10).
-                set(roadClassEnc, SECONDARY).set(avSpeedEnc, 70).set(accessEnc, true, true);
-
-        CustomModel vehicleModel = new CustomModel();
-        vehicleModel.getPriority().put("road_class != PRIMARY", 0.5);
-
-        assertEquals(1.15, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
-        assertEquals(1.73, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
-
-        vehicleModel = new CustomModel();
-        vehicleModel.getPriority().put("road_class != PRIMARY", 0.5);
-        assertEquals(1.15, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
-        assertEquals(1.73, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
-
-        vehicleModel = new CustomModel();
-        Map<String, Object> map = new LinkedHashMap<>();
-        map.put("road_class != PRIMARY", 0.5);
-        map.put("road_class == SECONDARY", 0.7);
-        map.put("true", 0.9);
-        vehicleModel.getPriority().put(FIRST_MATCH, map);
-        assertEquals(1.2, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
-        assertEquals(1.73, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
-
-        // force integer value
-        vehicleModel = new CustomModel();
-        vehicleModel.getPriority().put("road_class == PRIMARY", 1);
-        assertEquals(1.15, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
     }
 
     @Test
@@ -182,17 +143,15 @@ class CustomWeightingTest {
                 set(roadClassEnc, SECONDARY).set(avSpeedEnc, 70).set(accessEnc, true, true);
 
         CustomModel vehicleModel = new CustomModel();
-        vehicleModel.getPriority().put("road_class != PRIMARY", 0.5);
-        vehicleModel.getSpeedFactor().put("road_class != PRIMARY", 0.9);
+        vehicleModel.getPriority().add(Clause.createIf("road_class != PRIMARY", 0.5));
+        vehicleModel.getSpeedFactor().add(Clause.createIf("road_class != PRIMARY", 0.9));
         assertEquals(1.15, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
         assertEquals(1.84, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
 
         vehicleModel = new CustomModel();
-        Map<String, Object> map = new LinkedHashMap<>();
-        vehicleModel.getPriority().put(FIRST_MATCH, map);
-        map.put("road_class == PRIMARY", 1.0);
-        map.put("true", 0.5);
-        vehicleModel.getSpeedFactor().put("road_class != PRIMARY", 0.9);
+        vehicleModel.getPriority().add(Clause.createIf("road_class == PRIMARY", 1.0));
+        vehicleModel.getPriority().add(Clause.createElse(0.5));
+        vehicleModel.getSpeedFactor().add(Clause.createIf("road_class != PRIMARY", 0.9));
         assertEquals(1.15, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
         assertEquals(1.84, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
     }
@@ -205,12 +164,12 @@ class CustomWeightingTest {
                 set(roadClassEnc, SECONDARY).set(avSpeedEnc, 70).set(accessEnc, true, true);
 
         CustomModel vehicleModel = new CustomModel();
-        vehicleModel.getPriority().put("road_class == PRIMARY", 0.9);
-        vehicleModel.getSpeedFactor().put("road_class == PRIMARY", 0.8);
+        vehicleModel.getPriority().add(Clause.createIf("road_class == PRIMARY", 0.9));
+        vehicleModel.getSpeedFactor().add(Clause.createIf("road_class == PRIMARY", 0.8));
         assertEquals(1.33, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
         assertEquals(1.21, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
 
-        vehicleModel.getMaxSpeed().put("road_class != PRIMARY", 50);
+        vehicleModel.getMaxSpeed().add(Clause.createIf("road_class != PRIMARY", 50));
         assertEquals(1.33, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
         assertEquals(1.42, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
     }
@@ -223,13 +182,13 @@ class CustomWeightingTest {
                 set(avSpeedEnc, 80).set(accessEnc, true, true);
 
         CustomModel vehicleModel = new CustomModel();
-        vehicleModel.getSpeedFactor().put("toll != NO", 0.8);
-        vehicleModel.getSpeedFactor().put("hazmat != NO", 0.8);
+        vehicleModel.getSpeedFactor().add(Clause.createIf("toll != NO", 0.8));
+        vehicleModel.getSpeedFactor().add(Clause.createIf("hazmat != NO", 0.8));
         assertEquals(1.26, createWeighting(vehicleModel).calcEdgeWeight(withToll, false), 0.01);
         assertEquals(1.26, createWeighting(vehicleModel).calcEdgeWeight(noToll, false), 0.01);
 
         vehicleModel = new CustomModel();
-        vehicleModel.getSpeedFactor().put("bike_network != OTHER", 0.8);
+        vehicleModel.getSpeedFactor().add(Clause.createIf("bike_network != OTHER", 0.8));
         assertEquals(1.26, createWeighting(vehicleModel).calcEdgeWeight(withToll, false), 0.01);
         assertEquals(1.26, createWeighting(vehicleModel).calcEdgeWeight(noToll, false), 0.01);
     }
@@ -242,22 +201,15 @@ class CustomWeightingTest {
                 set(roadClassEnc, SECONDARY).set(avSpeedEnc, 70).set(accessEnc, true, true);
 
         CustomModel vehicleModel = new CustomModel();
-        vehicleModel.getSpeedFactor().put("road_class == PRIMARY", 0.8);
+        vehicleModel.getSpeedFactor().add(Clause.createIf("road_class == PRIMARY", 0.8));
         assertEquals(1.26, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
         assertEquals(1.21, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
 
-        Map<String, Object> map = new LinkedHashMap<>();
-        map.put("road_class == PRIMARY", 0.9);
-        map.put("road_class == SECONDARY", 0.8);
-        vehicleModel.getPriority().put(FIRST_MATCH, map);
+        vehicleModel.getPriority().add(Clause.createIf("road_class == PRIMARY", 0.9));
+        vehicleModel.getPriority().add(Clause.createElseIf("road_class == SECONDARY", 0.8));
+
         assertEquals(1.33, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
         assertEquals(1.34, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
-
-        map = new LinkedHashMap<>();
-        map.put("true", 0.9);
-        map.put("road_class == SECONDARY", 0.8);
-        vehicleModel.getPriority().put(FIRST_MATCH, map);
-        assertThrows(IllegalArgumentException.class, () -> createWeighting(vehicleModel).calcEdgeWeight(primary, false));
     }
 
     @Test
@@ -266,7 +218,7 @@ class CustomWeightingTest {
         EdgeIteratorState edge50 = graph.edge(1, 2).setDistance(10).set(avSpeedEnc, 50).set(accessEnc, true, true);
 
         CustomModel vehicleModel = new CustomModel();
-        vehicleModel.getPriority().put("car$average_speed > 40", 0.5);
+        vehicleModel.getPriority().add(Clause.createIf("car$average_speed > 40", 0.5));
 
         assertEquals(1.60, createWeighting(vehicleModel).calcEdgeWeight(edge40, false), 0.01);
         assertEquals(2.14, createWeighting(vehicleModel).calcEdgeWeight(edge50, false), 0.01);
@@ -280,8 +232,8 @@ class CustomWeightingTest {
                 set(roadClassEnc, SECONDARY).set(avSpeedEnc, 70).set(accessEnc, true, true);
 
         CustomModel vehicleModel = new CustomModel();
-        vehicleModel.getPriority().put("road_class == PRIMARY", 1.0);
-        vehicleModel.getPriority().put("in_area_custom1", 0.5);
+        vehicleModel.getPriority().add(Clause.createIf("road_class == PRIMARY", 1.0));
+        vehicleModel.getPriority().add(Clause.createIf("in_area_custom1", 0.5));
 
         ObjectMapper om = new ObjectMapper().registerModule(new JtsModule());
         JsonFeature json = om.readValue("{ \"geometry\":{ \"type\": \"Polygon\", \"coordinates\": " +
@@ -298,7 +250,7 @@ class CustomWeightingTest {
         String message = assertThrows(IllegalArgumentException.class, () -> createWeighting(new CustomModel().setMaxSpeedFallback(150.)))
                 .getMessage();
         assertTrue(message.contains("max_speed_fallback cannot be bigger than max_speed 140"));
-        assertEquals(50+30, createWeighting(new CustomModel().setMaxSpeedFallback(72.).setDistanceInfluence(30)).getMinWeight(1000));
+        assertEquals(50 + 30, createWeighting(new CustomModel().setMaxSpeedFallback(72.).setDistanceInfluence(30)).getMinWeight(1000));
     }
 
     private Weighting createWeighting(CustomModel vehicleModel) {

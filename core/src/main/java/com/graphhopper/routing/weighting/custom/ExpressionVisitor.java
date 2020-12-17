@@ -18,6 +18,7 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.ev.RouteNetwork;
+import com.graphhopper.json.Clause;
 import com.graphhopper.util.Helper;
 import org.codehaus.janino.Scanner;
 import org.codehaus.janino.*;
@@ -25,7 +26,6 @@ import org.codehaus.janino.*;
 import java.io.StringReader;
 import java.util.*;
 
-import static com.graphhopper.routing.weighting.custom.CustomWeighting.FIRST_MATCH;
 import static com.graphhopper.routing.weighting.custom.ExpressionBuilder.IN_AREA_PREFIX;
 
 class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
@@ -117,38 +117,43 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
     }
 
     static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator, String exceptionInfo,
-                                 Set<String> createObjects, Map<String, Object> map,
-                                 ExpressionBuilder.CodeBuilder codeBuilder, String lastStmt, String firstMatch) {
-        if (!(map instanceof LinkedHashMap))
-            throw new IllegalArgumentException("map needs to be ordered for " + exceptionInfo + " but was " + map.getClass().getSimpleName());
+                                 Set<String> createObjects, List<Clause> list,
+                                 ExpressionBuilder.CodeBuilder codeBuilder, String lastStmt) {
 
-        int count = 0;
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            String singleExpression = entry.getKey();
-            if (!firstMatch.isEmpty()) {
-                if ("true".equals(singleExpression) && count + 1 != map.size())
-                    throw new IllegalArgumentException("'" + singleExpression + "' in " + firstMatch + " must come as last expression but was " + count);
-            } else if (singleExpression.startsWith(FIRST_MATCH)) {
-                // allow multiple: first_match_i, first_match_ii, .. but do not allow nested first_match blocks
-                if (!(entry.getValue() instanceof LinkedHashMap))
-                    throw new IllegalArgumentException("entries for " + singleExpression + " in " + exceptionInfo + " are invalid");
-                parseExpressions(expressions, nameInConditionValidator, exceptionInfo + " " + singleExpression,
-                        createObjects, (Map<String, Object>) entry.getValue(), codeBuilder, "", singleExpression);
-                continue;
+        for (Clause clause : list) {
+            if (clause.getElse() != null) {
+                if (clause.getElseIf() != null)
+                    throw new IllegalArgumentException("When the 'else' value is used no 'else if' clause must be used");
+                if (clause.getIf() != null)
+                    throw new IllegalArgumentException("When the 'else' value is used no 'if' clause must be used");
+                if (clause.getThen() != null)
+                    throw new IllegalArgumentException("When the 'else' value is used no 'then' must be used");
+
+                expressions.append("else {" + codeBuilder.create(clause.getElse()) + "}\n");
+            } else {
+                boolean elseifClause = false;
+                String singleExpression;
+                if (clause.getIf() != null) {
+                    if (clause.getElseIf() != null)
+                        throw new IllegalArgumentException("When the 'if' clause is used no 'else if' clause must be used");
+
+                    singleExpression = clause.getIf();
+                } else if (clause.getElseIf() != null) {
+                    elseifClause = true;
+                    singleExpression = clause.getElseIf();
+                } else {
+                    throw new IllegalArgumentException("The clause must be either 'if', 'else if' or 'else'");
+                }
+
+                ExpressionVisitor.ParseResult parseResult = parseExpression(singleExpression, nameInConditionValidator);
+                if (!parseResult.ok)
+                    throw new IllegalArgumentException("Invalid simple condition: " + singleExpression);
+                createObjects.addAll(parseResult.guessedVariables);
+
+                if (elseifClause)
+                    expressions.append("else ");
+                expressions.append("if (" + parseResult.converted + ") {" + codeBuilder.create(clause.getThen()) + "}\n");
             }
-
-            Object numberObj = entry.getValue();
-            if (!(numberObj instanceof Number))
-                throw new IllegalArgumentException("value is not a Number " + numberObj);
-            ExpressionVisitor.ParseResult parseResult = parseExpression(singleExpression, nameInConditionValidator);
-            if (!parseResult.ok)
-                throw new IllegalArgumentException("key is an invalid simple condition: " + singleExpression);
-            createObjects.addAll(parseResult.guessedVariables);
-            Number number = (Number) numberObj;
-            if (!firstMatch.isEmpty() && count > 0)
-                expressions.append("else ");
-            expressions.append("if (" + parseResult.converted + ") {" + codeBuilder.create(number) + "}\n");
-            count++;
         }
         expressions.append(lastStmt);
     }

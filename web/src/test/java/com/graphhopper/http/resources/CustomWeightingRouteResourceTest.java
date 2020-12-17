@@ -95,7 +95,8 @@ public class CustomWeightingRouteResourceTest {
         yamlQuery += "" +
                 "priority:\n" +
                 // a faster road (see #2021)? or maybe do both?
-                "  in_area_custom1: " + priority + "\n" +
+                "  - if: in_area_custom1\n" +
+                "    then: " + priority + "\n" +
                 "areas:\n" +
                 "  custom1:\n" +
                 "    type: \"Feature\"\n" +

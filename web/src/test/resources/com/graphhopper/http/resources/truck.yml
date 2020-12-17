@@ -6,17 +6,23 @@
 # multiplied e.g. if road_class==MOTORWAY and road_environment==TUNNEL, then the resulting speed is
 # average_speed*0.85*0.9 except when first_match is used.
 speed_factor:
-  road_environment == TUNNEL: 0.85
+  - if: road_environment == TUNNEL
+    then: 0.85
   # trucks should be a bit slower on certain road classes compared to the 'base' car
-  road_class == MOTORWAY: 0.85
-  road_class == PRIMARY: 0.9
+  - if: road_class == MOTORWAY
+    then: 0.85
+  - if: road_class == PRIMARY
+    then: 0.9
 
 # You can lower the average speed for certain conditions via this max_speed entry. The speed_factor is applied before
 # this operation. See the following example that sets the maximum speed to 95km/h for motorways.
 max_speed:
-  road_class == MOTORWAY: 95
-  road_class == RESIDENTIAL: 30
-  road_environment == BRIDGE: 85
+  - if: road_class == MOTORWAY
+    then: 95
+  - if: road_class == RESIDENTIAL
+    then: 30
+  - if: road_environment == BRIDGE
+    then: 85
 
 # Trucks are slower so limit all speed to this value. In km/h
 # If none of the conditions in the map above apply use the fallback, if specified:
@@ -33,27 +39,36 @@ distance_influence: 90
 # To prefer a certain case you lower the priority of all other entries. See the road_class entry where motorways are preferred.
 # If two conditions are met the values will be multiplied except when first_match is used.
 priority:
-  first_match:
-    road_class == RESIDENTIAL: 0.4
-    road_class != MOTORWAY: 0.9
+  - if: road_class == RESIDENTIAL
+    then: 0.4
+  - else if: road_class != MOTORWAY
+    then: 0.9
     # and if you do not want that routes go over tracks just exclude them:
     # road_class==TRACK: 0
   # let's assume we transport gas: so NEVER go on restricted roads with hazmat==NO
-  hazmat == NO: 0
+  - if: hazmat == NO
+    then: 0
   # avoid destination-only roads
   # TODO include private and delivery only access for base car profile so that we can avoid it here, but not exclude it
-  road_access == DESTINATION: 0.1
+  - if: road_access == DESTINATION
+    then: 0.1
   # avoid turns if possible and links are one simple indication for that
-  road_class_link: 0.5
+  - if: road_class_link
+    then: 0.5
   # avoid toll roads
-  toll != NO: 0.5
+  - if: toll != NO
+    then: 0.5
   # avoid a certain area
-  in_area_custom1: 0.5
-  max_weight < 4.5: 0
-  max_height < 3.8: 0
-  max_width < 2.5: 0
+  - if: in_area_custom1
+    then: 0.5
+  - if: max_weight < 4.5
+    then: 0
+  - if: max_height < 3.8
+    then: 0
+  - if: max_width < 2.5
+    then: 0
 
 areas:
   custom1:
     type: "Feature"
-    geometry: { type: "Polygon", coordinates: [[[13.722, 51.053], [13.722, 51.055], [13.731, 51.055], [13.731, 51.053], [13.722, 51.053]]] }
+    geometry: { type: "Polygon", coordinates: [ [ [ 13.722, 51.053 ], [ 13.722, 51.055 ], [ 13.731, 51.055 ], [ 13.731, 51.053 ], [ 13.722, 51.053 ] ] ] }
