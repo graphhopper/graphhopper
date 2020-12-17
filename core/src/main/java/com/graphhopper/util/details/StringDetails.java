@@ -15,25 +15,34 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.ev;
+package com.graphhopper.util.details;
 
-import java.util.List;
+import com.graphhopper.routing.ev.StringEncodedValue;
+import com.graphhopper.util.EdgeIteratorState;
 
-public interface EncodedValueLookup {
+public class StringDetails extends AbstractPathDetailsBuilder {
 
-    List<EncodedValue> getEncodedValues();
+    private final StringEncodedValue ev;
+    private String currentVal = null;
 
-    <T extends EncodedValue> T getEncodedValue(String key, Class<T> encodedValueType);
+    public StringDetails(String name, StringEncodedValue ev) {
+        super(name);
+        this.ev = ev;
+    }
 
-    BooleanEncodedValue getBooleanEncodedValue(String key);
+    @Override
+    protected Object getCurrentValue() {
+        return currentVal;
+    }
 
-    IntEncodedValue getIntEncodedValue(String key);
-
-    DecimalEncodedValue getDecimalEncodedValue(String key);
-
-    <T extends Enum<?>> EnumEncodedValue<T> getEnumEncodedValue(String key, Class<T> enumType);
-    
-    StringEncodedValue getStringEncodedValue(String key);
-
-    boolean hasEncodedValue(String key);
+    @Override
+    public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
+        String val = edge.get(ev);
+        // we can use the reference equality here
+        if (val != currentVal) {
+            this.currentVal = val;
+            return true;
+        }
+        return false;
+    }
 }
