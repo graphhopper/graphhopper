@@ -30,11 +30,11 @@ package com.graphhopper.storage.index;
  * @author Peter Karich
  */
 public class BresenhamLine {
-    public static void calcPoints(int y1, int x1, int y2, int x2, PointEmitter emitter) {
-        bresenham(y1, x1, y2, x2, emitter);
+    public static void calcPoints(int y1, int x1, int y2, int x2, PointConsumer consumer) {
+        bresenham(y1, x1, y2, x2, consumer);
     }
 
-    public static void bresenham(int y1, int x1, int y2, int x2, PointEmitter emitter) {
+    public static void bresenham(int y1, int x1, int y2, int x2, PointConsumer consumer) {
         boolean latIncreasing = y1 < y2;
         boolean lonIncreasing = x1 < x2;
         int dLat = Math.abs(y2 - y1), sLat = latIncreasing ? 1 : -1;
@@ -42,7 +42,7 @@ public class BresenhamLine {
         int err = dLon - dLat;
 
         while (true) {
-            emitter.set(y1, x1);
+            consumer.set(y1, x1);
             if (y1 == y2 && x1 == x2)
                 break;
 
@@ -64,20 +64,22 @@ public class BresenhamLine {
      */
     public static void calcPoints(final double lat1, final double lon1,
                                   final double lat2, final double lon2,
-                                  final PointEmitter emitter,
-                                  final double offsetLat, final double offsetLon,
-                                  final double deltaLat, final double deltaLon) {
+                                  final double offsetLat, final double offsetLon, final double deltaLat, final double deltaLon, final PointConsumer pointConsumer) {
         // round to make results of bresenham closer to correct solution
         int y1 = (int) ((lat1 - offsetLat) / deltaLat);
         int x1 = (int) ((lon1 - offsetLon) / deltaLon);
         int y2 = (int) ((lat2 - offsetLat) / deltaLat);
         int x2 = (int) ((lon2 - offsetLon) / deltaLon);
-        bresenham(y1, x1, y2, x2, new PointEmitter() {
-            @Override
-            public void set(double lat, double lon) {
-                // +.1 to move more near the center of the tile
-                emitter.set((lat + .1) * deltaLat + offsetLat, (lon + .1) * deltaLon + offsetLon);
-            }
+        bresenham(y1, x1, y2, x2, (lat, lon) -> {
+            // +.1 to move more near the center of the tile
+            pointConsumer.set((lat + .1) * deltaLat + offsetLat, (lon + .1) * deltaLon + offsetLon);
         });
+    }
+
+    /**
+     * @author Peter Karich
+     */
+    public interface PointConsumer {
+        void set(double lat, double lon);
     }
 }

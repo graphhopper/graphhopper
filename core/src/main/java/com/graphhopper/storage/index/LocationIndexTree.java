@@ -876,20 +876,14 @@ public class LocationIndexTree implements LocationIndex {
         void addValue(final int nodeA,
                       final double lat1, final double lon1,
                       final double lat2, final double lon2) {
-            PointEmitter pointEmitter = new PointEmitter() {
-                @Override
-                public void set(double lat, double lon) {
-                    long key = keyAlgo.encode(lat, lon);
-                    long keyPart = createReverseKey(key);
-                    // no need to feed both nodes as we search neighbors in fillIDs
-                    addValue(root, nodeA, 0, keyPart, key);
-                }
-            };
-
             if (!distCalc.isCrossBoundary(lon1, lon2)) {
-                BresenhamLine.calcPoints(lat1, lon1, lat2, lon2, pointEmitter,
-                        graph.getBounds().minLat, graph.getBounds().minLon,
-                        deltaLat, deltaLon);
+                BresenhamLine.calcPoints(lat1, lon1, lat2, lon2, graph.getBounds().minLat, graph.getBounds().minLon, deltaLat, deltaLon,
+                        (lat, lon) -> {
+                            long key = keyAlgo.encode(lat, lon);
+                            long keyPart = createReverseKey(key);
+                            // no need to feed both nodes as we search neighbors in fillIDs
+                            addValue(root, nodeA, 0, keyPart, key);
+                        });
             }
         }
 
