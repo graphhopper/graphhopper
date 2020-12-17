@@ -43,6 +43,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -63,6 +65,7 @@ import static org.junit.Assert.fail;
  */
 @RunWith(Parameterized.class)
 public class RandomizedRoutingTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RandomizedRoutingTest.class);
     private final Algo algo;
     private final boolean prepareCH;
     private final boolean prepareLM;
@@ -208,7 +211,7 @@ public class RandomizedRoutingTest {
         for (int i = 0; i < numQueries; i++) {
             int source = getRandom(rnd);
             int target = getRandom(rnd);
-//            System.out.println("source: " + source + ", target: " + target);
+//            LOGGER.info("source: " + source + ", target: " + target);
             Path refPath = new DijkstraBidirectionRef(graph, weighting, traversalMode)
                     .calcPath(source, target);
             Path path = createAlgo()
@@ -217,7 +220,7 @@ public class RandomizedRoutingTest {
         }
         if (strictViolations.size() > 3) {
             for (String strictViolation : strictViolations) {
-                System.out.println("strict violation: " + strictViolation);
+                LOGGER.info("strict violation: " + strictViolation);
             }
             fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries + ", seed: " + seed);
         }
@@ -258,7 +261,7 @@ public class RandomizedRoutingTest {
         // we do not do a strict check because there can be ambiguity, for example when there are zero weight loops.
         // however, when there are too many deviations we fail
         if (strictViolations.size() > 3) {
-            System.out.println(strictViolations);
+            LOGGER.warn(strictViolations.toString());
             fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries + ", seed: " + seed);
         }
     }
@@ -268,9 +271,9 @@ public class RandomizedRoutingTest {
         double refWeight = refPath.getWeight();
         double weight = path.getWeight();
         if (Math.abs(refWeight - weight) > 1.e-2) {
-            System.out.println("expected: " + refPath.calcNodes());
-            System.out.println("given:    " + path.calcNodes());
-            System.out.println("seed: " + seed);
+            LOGGER.warn("expected: " + refPath.calcNodes());
+            LOGGER.warn("given:    " + path.calcNodes());
+            LOGGER.warn("seed: " + seed);
             fail("wrong weight: " + source + "->" + target + "\nexpected: " + refWeight + "\ngiven:    " + weight + "\nseed: " + seed);
         }
         if (Math.abs(path.getDistance() - refPath.getDistance()) > 1.e-1) {
@@ -335,7 +338,7 @@ public class RandomizedRoutingTest {
         double distAC = getDist(shorterPath.get(a), longerPath.get(c));
         if (Math.abs(distABC - distAC) > 0.1)
             return false;
-        System.out.println("Distance " + shorterPath.get(a) + "-" + longerPath.get(c) + " is the same as distance " +
+        LOGGER.info("Distance " + shorterPath.get(a) + "-" + longerPath.get(c) + " is the same as distance " +
                 longerPath.get(a) + "-" + longerPath.get(b) + "-" + longerPath.get(c) + " -> there are multiple possibilities " +
                 "for shortest paths");
         return true;
