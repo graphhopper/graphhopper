@@ -18,6 +18,7 @@
 
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
@@ -34,6 +35,7 @@ import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.ArrayUtil;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.Before;
@@ -282,15 +284,67 @@ public class RandomizedRoutingTest {
         if (!refNodes.equals(pathNodes)) {
             // sometimes paths are only different because of a zero weight loop. we do not consider these as strict
             // violations, see: #1864
-            if (!ArrayUtil.withoutConsecutiveDuplicates(refNodes).equals(ArrayUtil.withoutConsecutiveDuplicates(pathNodes))) {
+            boolean isStrictViolation = !ArrayUtil.withoutConsecutiveDuplicates(refNodes).equals(ArrayUtil.withoutConsecutiveDuplicates(pathNodes));
+            // sometimes there are paths including an edge a-c that has the same distance as the two edges a-b-c. in this
+            // case both options are valid best paths. we only check for this most simple and frequent case here...
+            if (pathsEqualExceptOneEdge(refNodes, pathNodes))
+                isStrictViolation = false;
+            if (isStrictViolation)
                 strictViolations.add("wrong nodes " + source + "->" + target + "\nexpected: " + refNodes + "\ngiven:    " + pathNodes);
-            }
         }
         return strictViolations;
     }
 
     private int getRandom(Random rnd) {
         return rnd.nextInt(graph.getNodes());
+    }
+
+    /**
+     * Sometimes the graph can contain edges like this:
+     * A--C
+     * \-B|
+     * where A-C is the same distance as A-B-C. In this case the shortest path is not well defined in terms of nodes.
+     * This method check if two node-paths are equal with the exception of such an edge.
+     */
+    private boolean pathsEqualExceptOneEdge(IntIndexedContainer p1, IntIndexedContainer p2) {
+        if (p1.equals(p2))
+            throw new IllegalArgumentException("paths are equal");
+        if (Math.abs(p1.size() - p2.size()) != 1)
+            return false;
+        IntIndexedContainer shorterPath = p1.size() < p2.size() ? p1 : p2;
+        IntIndexedContainer longerPath = p1.size() < p2.size() ? p2 : p1;
+        if (shorterPath.size() < 2)
+            return false;
+        IntArrayList indicesWithDifferentNodes = new IntArrayList();
+        for (int i = 1; i < shorterPath.size(); i++) {
+            if (shorterPath.get(i - indicesWithDifferentNodes.size()) != longerPath.get(i)) {
+                indicesWithDifferentNodes.add(i);
+            }
+        }
+        if (indicesWithDifferentNodes.size() != 1)
+            return false;
+        int b = indicesWithDifferentNodes.get(0);
+        int a = b - 1;
+        int c = b + 1;
+        assert shorterPath.get(a) == longerPath.get(a);
+        assert shorterPath.get(b) != longerPath.get(b);
+        if (shorterPath.get(b) != longerPath.get(c))
+            return false;
+        double distABC = getDist(longerPath.get(a), longerPath.get(b)) + getDist(longerPath.get(b), longerPath.get(c));
+
+        double distAC = getDist(shorterPath.get(a), longerPath.get(c));
+        if (Math.abs(distABC - distAC) > 0.1)
+            return false;
+        System.out.println("Distance " + shorterPath.get(a) + "-" + longerPath.get(c) + " is the same as distance " +
+                longerPath.get(a) + "-" + longerPath.get(b) + "-" + longerPath.get(c) + " -> there are multiple possibilities " +
+                "for shortest paths");
+        return true;
+    }
+
+    private double getDist(int p, int q) {
+        EdgeIteratorState edge = GHUtility.getEdge(graph, p, q);
+        if (edge == null) return Double.POSITIVE_INFINITY;
+        return edge.getDistance();
     }
 
 }
