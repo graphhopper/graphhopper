@@ -22,7 +22,7 @@ import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 
 import java.util.Arrays;
-import java.util.Locale;
+import java.util.Collection;
 import java.util.Objects;
 
 /**
@@ -230,6 +230,21 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
         int val = 1;
         for (int idx = 0; idx < len; ++idx) {
             val = 31 * val + Helper.staticHashCode(vals[idx]);
+        }
+
+        return val;
+    }
+    
+    /**
+     * Produces a static hashcode for a collection of Strings that is platform independent and still compatible to the default
+     * of openjdk.
+     */
+    static int staticHashCode(Collection<String> vals) {
+        if (vals == null)
+            return 0;
+        int val = 1;
+        for (String str : vals) {
+            val = 31 * val + Helper.staticHashCode(str);
         }
 
         return val;
