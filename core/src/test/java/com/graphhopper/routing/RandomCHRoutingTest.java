@@ -22,6 +22,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -32,6 +34,7 @@ import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
 public class RandomCHRoutingTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RandomCHRoutingTest.class);
     private final TraversalMode traversalMode;
     private final int maxTurnCosts;
     private final int uTurnCosts;
@@ -80,13 +83,13 @@ public class RandomCHRoutingTest {
         // bugs (e.g. use intellij 'run until stop/failure').
         int numNodes = 50;
         long seed = System.nanoTime();
-        System.out.println("seed: " + seed);
+        LOGGER.info("seed: " + seed);
         Random rnd = new Random(seed);
         // we may not use an offset when query graph is involved, otherwise traveling via virtual edges will not be
         // the same as taking the direct edge!
         double pOffset = 0;
         GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.5, true, true,
-                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), 60d, 0.7, 0.9, pOffset);
+                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, 0.7, 0.9, pOffset);
         if (traversalMode.isEdgeBased()) {
             GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, graph.getTurnCostStorage());
         }
@@ -131,7 +134,7 @@ public class RandomCHRoutingTest {
         long seed = 60643479675316L;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 50, 2.5, true, true,
-                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), 60d, 0.7, 0.9, 0.0);
+                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, 0.7, 0.9, 0.0);
         GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, graph.getTurnCostStorage());
         runRandomTest(rnd, 20);
     }
@@ -178,8 +181,8 @@ public class RandomCHRoutingTest {
 
                 double weight = path.getWeight();
                 if (Math.abs(refWeight - weight) > 1.e-2) {
-                    System.out.println("expected: " + refPath.calcNodes());
-                    System.out.println("given:    " + path.calcNodes());
+                    LOGGER.warn("expected: " + refPath.calcNodes());
+                    LOGGER.warn("given:    " + path.calcNodes());
                     fail("wrong weight: " + from + "->" + to + ", dijkstra: " + refWeight + " vs. ch: " + path.getWeight());
                 }
                 if (Math.abs(path.getDistance() - refPath.getDistance()) > 1.e-1) {

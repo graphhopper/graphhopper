@@ -38,6 +38,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -51,6 +53,7 @@ import static org.junit.Assert.*;
  */
 @RunWith(Parameterized.class)
 public class EdgeBasedRoutingAlgorithmTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedRoutingAlgorithmTest.class);
     private final String algoStr;
     private FlagEncoder carEncoder;
     private TurnCostStorage tcs;
@@ -155,7 +158,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         EncodingManager em = createEncodingManager(false);
         GraphHopperStorage g = createStorage(em);
         GHUtility.buildRandomGraph(g, rnd, 50, 2.2, true, true,
-                carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc(), 60d, 0.8, 0.8, 0.8);
+                carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc(), null, 0.8, 0.8, 0.8);
         GHUtility.addRandomTurnCosts(g, seed, em, carEncoder, 3, tcs);
         g.freeze();
         int numPathsNotFound = 0;
@@ -180,8 +183,8 @@ public class EdgeBasedRoutingAlgorithmTest {
 
             double weight = path.getWeight();
             if (Math.abs(refWeight - weight) > 1.e-2) {
-                System.out.println("expected: " + refPath.calcNodes());
-                System.out.println("given:    " + path.calcNodes());
+                LOGGER.warn("expected: " + refPath.calcNodes());
+                LOGGER.warn("given:    " + path.calcNodes());
                 fail("wrong weight: " + from + "->" + to + ", dijkstra: " + refWeight + " vs. " + algoStr + ": " + path.getWeight());
             }
             if (Math.abs(path.getDistance() - refPath.getDistance()) > 1.e-1) {

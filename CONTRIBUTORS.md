@@ -19,6 +19,7 @@ Here is an overview:
  * chollemans, fixes like #1482
  * ChristianSeitzer, motorcycle improvements
  * ChristophKaser, agrees to the project's CLA, improved Android compatibility #1207
+ * chucre, add special JSON output format, see #41
  * daisy1754, fixed usage of graphhopper.sh script
  * dardin88, instructions improved
  * dewos, web API bug fixes
@@ -44,6 +45,7 @@ Here is an overview:
  * JohannesPelzer, improved GPX information and various other things
  * karussell, one of the core developers
  * khuebner, initial turn costs support
+ * kodonnell, adding support for CH and other algorithms (#60) and penalizing inner-link U-turns (#88)
  * legraina, improved docker for dockerhub
  * lmar, improved instructions
  * manueltimita, fixes like #1651
@@ -64,10 +66,11 @@ Here is an overview:
  * ratrun, route relations, GPX information, bike handling etc
  * rodneyodonnell, improved dead end removal (PrepareRoutingSubnetworks) and fords
  * rodo, more descriptions
+ * rory, support milisecond gpx timestamps, see #4 
  * seeebiii, motorcycle improvements
  * sguill, fixes like #1683
  * skienzl, imperial units for /navigate, related to #2071
- * stefanholder, Stefan Holder, BMW AG, refactored unfavoring of virtual edges #885
+ * stefanholder, Stefan Holder, BMW AG, creating and integrating the hmm-lib (#49, #66, #69) and penalizing inner-link U-turns (#88, #91), refactored unfavoring of virtual edges #885
  * stevensnoeijen, fixes like #1568
  * Svantulden, improved documentation and nearest API
  * taulinger, hopefully more to come 

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?><gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" creator="Graphhopper" version="1.1" xmlns:gh="https://graphhopper.com/public/schema/gpx/1.1">
+<metadata><copyright author="OpenStreetMap contributors"/><link href="http://graphhopper.com"><text>GraphHopper GPX</text></link><time>2015-02-06T07:36:46+00:00</time></metadata>
+<rte>
+<rtept lat="51.343657" lon="12.360708"><desc>continue onto Gustav-Adolf-Straße</desc><extensions><gh:distance>257.0</gh:distance><gh:time>37006</gh:time><gh:direction>E</gh:direction><gh:azimuth>77.0</gh:azimuth><gh:sign>0</gh:sign></extensions></rtept>
+<rtept lat="51.344439" lon="12.36419"><desc>turn left onto Leibnizstraße</desc><extensions><gh:distance>60.6</gh:distance><gh:time>8731</gh:time><gh:direction>N</gh:direction><gh:azimuth>337.0</gh:azimuth><gh:sign>-2</gh:sign></extensions></rtept>
+<rtept lat="51.344967" lon="12.363973"><extensions><gh:distance>0.0</gh:distance><gh:time>0</gh:time><gh:direction>N</gh:direction><gh:azimuth>0.0</gh:azimuth><gh:sign>5</gh:sign></extensions></rtept>
+<rtept lat="51.344967" lon="12.363973"><desc>continue onto Leibnizstraße</desc><extensions><gh:distance>46.4</gh:distance><gh:time>6676</gh:time><gh:direction>N</gh:direction><gh:azimuth>337.0</gh:azimuth><gh:sign>0</gh:sign></extensions></rtept>
+<rtept lat="51.345371" lon="12.363807"><desc>turn left onto Hinrichsenstraße</desc><extensions><gh:distance>188.9</gh:distance><gh:time>27197</gh:time><gh:direction>W</gh:direction><gh:azimuth>258.0</gh:azimuth><gh:sign>-2</gh:sign></extensions></rtept>
+<rtept lat="51.344814" lon="12.361238"><extensions><gh:distance>0.0</gh:distance><gh:time>0</gh:time><gh:direction>N</gh:direction><gh:azimuth>0.0</gh:azimuth><gh:sign>5</gh:sign></extensions></rtept>
+<rtept lat="51.344814" lon="12.361238"><desc>continue onto Hinrichsenstraße</desc><extensions><gh:distance>30.3</gh:distance><gh:time>4364</gh:time><gh:direction>W</gh:direction><gh:azimuth>258.0</gh:azimuth><gh:sign>0</gh:sign></extensions></rtept>
+<rtept lat="51.344735" lon="12.36082"><desc>turn sharp left onto Tschaikowskistraße</desc><extensions><gh:distance>229.2</gh:distance><gh:time>27504</gh:time><gh:direction>SE</gh:direction><gh:azimuth>142.0</gh:azimuth><gh:sign>-3</gh:sign></extensions></rtept>
+<rtept lat="51.342784" lon="12.361882"><extensions><gh:distance>0.0</gh:distance><gh:time>0</gh:time><gh:sign>4</gh:sign></extensions></rtept></rte>
+<trk><name>GraphHopper Track</name><trkseg>
+<trkpt lat="51.343657" lon="12.360708"><time>2015-02-06T07:36:46+00:00</time></trkpt>
+<trkpt lat="51.344095" lon="12.362617"><time>2015-02-06T07:37:06+00:00</time></trkpt>
+<trkpt lat="51.344439" lon="12.36419"><time>2015-02-06T07:37:23+00:00</time></trkpt>
+<trkpt lat="51.344967" lon="12.363973"><time>2015-02-06T07:37:32+00:00</time></trkpt>
+<trkpt lat="51.345371" lon="12.363807"><time>2015-02-06T07:37:39+00:00</time></trkpt>
+<trkpt lat="51.345011" lon="12.36216"><time>2015-02-06T07:37:56+00:00</time></trkpt>
+<trkpt lat="51.344814" lon="12.361238"><time>2015-02-06T07:38:06+00:00</time></trkpt>
+<trkpt lat="51.344768" lon="12.361025"><time>2015-02-06T07:38:08+00:00</time></trkpt>
+<trkpt lat="51.344735" lon="12.36082"><time>2015-02-06T07:38:10+00:00</time></trkpt>
+<trkpt lat="51.344632" lon="12.3609"><time>2015-02-06T07:38:12+00:00</time></trkpt>
+<trkpt lat="51.343796" lon="12.361337"><time>2015-02-06T07:38:23+00:00</time></trkpt>
+<trkpt lat="51.342784" lon="12.361882"><time>2015-02-06T07:38:38+00:00</time></trkpt></trkseg></trk></gpx>

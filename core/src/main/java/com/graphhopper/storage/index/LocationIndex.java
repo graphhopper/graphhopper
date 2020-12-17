@@ -69,13 +69,15 @@ public interface LocationIndex extends Storable<LocationIndex> {
     void setSegmentSize(int bytes);
 
     /**
-     * This method explores the nodes in this LocationIndex with the specified Visitor. It guarantees to visit all
-     * unique nodes included in the queryBBox but it could visit more.
+     * This method explores the LocationIndex with the specified Visitor. It visits only the stored nodes (and only once)
+     * and limited by the queryBBox. Note that for every edge only one node has to be stored and to get all nodes
+     * (or edges) you should better use EdgeVisitor. Also (a few) more nodes slightly outside of queryBBox could be
+     * returned that you can avoid via doing an explicit BBox check of the coordinates.
      */
     void query(BBox queryBBox, Visitor function);
 
     /**
-     * This interface allows to visit every node stored in the leafs of a LocationIndex.
+     * This interface allows to visit nodes stored in the LocationIndex.
      */
     abstract class Visitor {
         public boolean isTileInfo() {
@@ -83,7 +85,7 @@ public interface LocationIndex extends Storable<LocationIndex> {
         }
 
         /**
-         * This method is called if isTileInfo is enabled.
+         * This method is called if isTileInfo returns true.
          */
         public void onTile(BBox bbox, int depth) {
         }
@@ -92,8 +94,9 @@ public interface LocationIndex extends Storable<LocationIndex> {
     }
 
     /**
-     * This abstract class allows to visit every edge from the stored nodes in the leafs of the tree for a requested
-     * area. It guarantees to visit all unique edges included in the queryBBox but it could be more.
+     * This abstract class allows to visit every edge from the stored nodes in the LocationIndex for a requested area.
+     * It visits all edges once and inside the queryBBox. Also (a few) more nodes slightly outside of queryBBox could be
+     * returned that you can avoid via doing an explicit BBox check of the coordinates.
      */
     abstract class EdgeVisitor extends Visitor {
 
