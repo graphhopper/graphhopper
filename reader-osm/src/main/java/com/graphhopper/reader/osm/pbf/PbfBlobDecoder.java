@@ -237,7 +237,7 @@ public class PbfBlobDecoder implements Runnable {
                 tags.put(fieldDecoder.decodeString(keyIndex), fieldDecoder.decodeString(valueIndex));
             }
 
-            ReaderNode node = new ReaderNode(nodeId, ((double) latitude) / 10000000, ((double) longitude) / 10000000);
+            ReaderNode node = new ReaderNode(nodeId, fieldDecoder.decodeLatitude(latitude), fieldDecoder.decodeLongitude(longitude));
             node.setTags(tags);
 
             // Add the bound object to the results.
