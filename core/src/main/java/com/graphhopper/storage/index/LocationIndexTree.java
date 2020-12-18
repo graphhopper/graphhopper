@@ -661,70 +661,66 @@ public class LocationIndexTree implements LocationIndex {
             final GHBitSet exploredNodes = new GHTBitSet(new GHIntHashSet(set));
             final EdgeExplorer explorer = graph.createEdgeExplorer(edgeFilter);
 
-            set.forEach(new IntPredicate() {
+            set.forEach((IntPredicate) edgeId -> {
+                new XFirstSearchCheck(queryLat, queryLon, exploredNodes, edgeFilter) {
+                    @Override
+                    protected double getQueryDistance() {
+                        // do not skip search if distance is 0 or near zero (equalNormedDelta)
+                        return Double.MAX_VALUE;
+                    }
 
-                @Override
-                public boolean apply(int node) {
-                    new XFirstSearchCheck(queryLat, queryLon, exploredNodes, edgeFilter) {
-                        @Override
-                        protected double getQueryDistance() {
-                            // do not skip search if distance is 0 or near zero (equalNormedDelta)
-                            return Double.MAX_VALUE;
-                        }
+                    @Override
+                    protected boolean check(int node, double normedDist, int wayIndex, EdgeIteratorState edge, Snap.Position pos) {
+                        if (normedDist < returnAllResultsWithin
+                                || snaps.isEmpty()
+                                || snaps.get(0).getQueryDistance() > normedDist) {
+                            // TODO: refactor below:
+                            // - should only add edges within search radius (below allows the
+                            // returning of a candidate outside search radius if it's the only
+                            // one). Removing this test would simplify it a lot and probably
+                            // match the expected behaviour (see method description)
+                            // - create Snap first and the add/set as required - clean up
+                            // the index tracking business.
 
-                        @Override
-                        protected boolean check(int node, double normedDist, int wayIndex, EdgeIteratorState edge, Snap.Position pos) {
-                            if (normedDist < returnAllResultsWithin
-                                    || snaps.isEmpty()
-                                    || snaps.get(0).getQueryDistance() > normedDist) {
-                                // TODO: refactor below:
-                                // - should only add edges within search radius (below allows the
-                                // returning of a candidate outside search radius if it's the only
-                                // one). Removing this test would simplify it a lot and probably
-                                // match the expected behaviour (see method description)
-                                // - create Snap first and the add/set as required - clean up
-                                // the index tracking business.
+                            int index = -1;
+                            for (int snapIndex = 0; snapIndex < snaps.size(); snapIndex++) {
+                                Snap snap = snaps.get(snapIndex);
+                                // overwrite older snaps which are potentially more far away than returnAllResultsWithin
+                                if (snap.getQueryDistance() > returnAllResultsWithin) {
+                                    index = snapIndex;
+                                    break;
+                                }
 
-                                int index = -1;
-                                for (int snapIndex = 0; snapIndex < snaps.size(); snapIndex++) {
-                                    Snap snap = snaps.get(snapIndex);
-                                    // overwrite older snaps which are potentially more far away than returnAllResultsWithin
-                                    if (snap.getQueryDistance() > returnAllResultsWithin) {
+                                // avoid duplicate edges
+                                if (snap.getClosestEdge().getEdge() == edge.getEdge()) {
+                                    if (snap.getQueryDistance() < normedDist) {
+                                        // do not add current edge
+                                        return true;
+                                    } else {
+                                        // overwrite old edge with current
                                         index = snapIndex;
                                         break;
                                     }
-
-                                    // avoid duplicate edges
-                                    if (snap.getClosestEdge().getEdge() == edge.getEdge()) {
-                                        if (snap.getQueryDistance() < normedDist) {
-                                            // do not add current edge
-                                            return true;
-                                        } else {
-                                            // overwrite old edge with current
-                                            index = snapIndex;
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                Snap snap = new Snap(queryLat, queryLon);
-                                snap.setQueryDistance(normedDist);
-                                snap.setClosestNode(node);
-                                snap.setClosestEdge(edge.detach(false));
-                                snap.setWayIndex(wayIndex);
-                                snap.setSnappedPosition(pos);
-
-                                if (index < 0) {
-                                    snaps.add(snap);
-                                } else {
-                                    snaps.set(index, snap);
                                 }
                             }
-                            return true;
+
+                            Snap snap = new Snap(queryLat, queryLon);
+                            snap.setQueryDistance(normedDist);
+                            snap.setClosestNode(node);
+                            snap.setClosestEdge(edge.detach(false));
+                            snap.setWayIndex(wayIndex);
+                            snap.setSnappedPosition(pos);
+
+                            if (index < 0) {
+                                snaps.add(snap);
+                            } else {
+                                snaps.set(index, snap);
+                            }
                         }
-                    }.start(explorer, node);
-                    return true;
-                }
+                        return true;
+                    }
+                }.start(explorer, graph.getEdgeIteratorStateForKey(edgeId * 2).getBaseNode());
+                return true;
             });
         }
 
