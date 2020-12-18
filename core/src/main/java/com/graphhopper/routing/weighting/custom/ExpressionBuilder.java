@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.json.Clause;
+import com.graphhopper.json.Statement;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValue;
@@ -134,15 +134,9 @@ class ExpressionBuilder {
                                                                       CustomModel customModel, EncodedValueLookup lookup,
                                                                       double globalMaxSpeed) throws Exception {
         List<Java.BlockStatement> speedStatements = new ArrayList<>();
-        speedStatements.addAll(verifyExpressions(new StringBuilder(), "speed_factor_user_statements", speedVariables,
-                customModel.getSpeedFactor(), lookup,
-                num -> "speed *= " + num + ";\n", ""));
-        StringBuilder codeSB = new StringBuilder("");
-        speedStatements.addAll(verifyExpressions(codeSB, "max_speed_user_statements",
-                speedVariables, customModel.getMaxSpeed(), lookup,
-                num -> "speed = Math.min(speed," + num + ");",
-                "return Math.min(speed, " + globalMaxSpeed + ");\n"));
-        String speedMethodStartBlock = "double speed = super.getRawSpeed(edge, reverse);\n";
+        speedStatements.addAll(verifyExpressions(new StringBuilder(), "speed_user_statements", speedVariables,
+                customModel.getSpeed(), lookup, "return Math.min(value, " + globalMaxSpeed + ");\n"));
+        String speedMethodStartBlock = "double value = super.getRawSpeed(edge, reverse);\n";
         // a bit inefficient to possibly define variables twice, but for now we have two separate methods
         for (String arg : speedVariables) {
             speedMethodStartBlock += getVariableDeclaration(lookup, arg);
@@ -161,8 +155,7 @@ class ExpressionBuilder {
                                                                          CustomModel customModel, EncodedValueLookup lookup) throws Exception {
         List<Java.BlockStatement> priorityStatements = new ArrayList<>();
         priorityStatements.addAll(verifyExpressions(new StringBuilder("double value = 1;\n"), "priority_user_statements",
-                priorityVariables, customModel.getPriority(), lookup,
-                num -> "value *= " + num + ";\n", "return value;"));
+                priorityVariables, customModel.getPriority(), lookup, "return value;"));
         String priorityMethodStartBlock = "";
         for (String arg : priorityVariables) {
             priorityMethodStartBlock += getVariableDeclaration(lookup, arg);
@@ -291,18 +284,14 @@ class ExpressionBuilder {
      * @return the created if-then (and elseif) expressions
      */
     private static List<Java.BlockStatement> verifyExpressions(StringBuilder expressions, String info, Set<String> createObjects,
-                                                               List<Clause> list, EncodedValueLookup lookup,
-                                                               CodeBuilder codeBuilder, String lastStmt) throws Exception {
+                                                               List<Statement> list, EncodedValueLookup lookup,
+                                                               String lastStmt) throws Exception {
         // allow variables, all encoded values, constants
         ExpressionVisitor.NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
                 || name.toUpperCase(Locale.ROOT).equals(name) || isValidVariableName(name);
-        ExpressionVisitor.parseExpressions(expressions, nameInConditionValidator, info, createObjects, list, codeBuilder, lastStmt);
+        ExpressionVisitor.parseExpressions(expressions, nameInConditionValidator, info, createObjects, list, lastStmt);
         return new Parser(new org.codehaus.janino.Scanner(info, new StringReader(expressions.toString()))).
                 parseBlockStatements();
-    }
-
-    interface CodeBuilder {
-        String create(Number n);
     }
 
     /**

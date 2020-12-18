@@ -22,7 +22,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.MultiException;
 import com.graphhopper.ResponsePath;
-import com.graphhopper.json.Clause;
+import com.graphhopper.json.Statement;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.shapes.GHPoint;
@@ -32,7 +32,7 @@ public class GraphHopperModule extends SimpleModule {
 
     public GraphHopperModule() {
         setMixInAnnotation(GHRequest.class, GHRequestMixIn.class);
-        addDeserializer(Clause.class, new ClauseDeserializer());
+        addDeserializer(Statement.class, new StatementDeserializer());
         addDeserializer(GHResponse.class, new GHResponseDeserializer());
         addDeserializer(ResponsePath.class, new ResponsePathDeserializer());
         addDeserializer(Envelope.class, new JtsEnvelopeDeserializer());

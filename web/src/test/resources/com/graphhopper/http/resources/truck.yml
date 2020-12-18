@@ -1,11 +1,11 @@
 # For a custom request you need to specify a profile (with weighting=custom) but on import we don't need this
 # profile: car
 
-# The formula is defined in CustomWeighting, where the speed_factor can be used to decrease speed.
+# The formula is defined in CustomWeighting, where the "multiply with" operation can be used to decrease speed.
 # The minimum value is 0 and the maximum is 1. If two conditions are satisfied the values are
 # multiplied e.g. if road_class==MOTORWAY and road_environment==TUNNEL, then the resulting speed is
-# average_speed*0.85*0.9 except when first_match is used.
-speed_factor:
+# average_speed*0.85*0.9
+speed:
   - if: road_environment == TUNNEL
     multiply with: 0.85
   # trucks should be a bit slower on certain road classes compared to the 'base' car
@@ -13,10 +13,7 @@ speed_factor:
     multiply with: 0.85
   - if: road_class == PRIMARY
     multiply with: 0.9
-
-# You can lower the average speed for certain conditions via this max_speed entry. The speed_factor is applied before
-# this operation. See the following example that sets the maximum speed to 95km/h for motorways.
-max_speed:
+  # You can lower the average speed for certain conditions via the "limit to" operation:
   - if: road_class == MOTORWAY
     limit to: 95
   - if: road_class == RESIDENTIAL

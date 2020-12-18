@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.json.Clause;
+import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.RouteNetwork;
 import com.graphhopper.util.Helper;
 import org.codehaus.janino.Scanner;
@@ -117,24 +117,22 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
     }
 
     static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator, String exceptionInfo,
-                                 Set<String> createObjects, List<Clause> list,
-                                 ExpressionBuilder.CodeBuilder codeBuilder, String lastStmt) {
+                                 Set<String> createObjects, List<Statement> list, String lastStmt) {
 
-        for (Clause clause : list) {
-            if (clause.getCondition() == Clause.Cond.ELSE) {
-                if (!Helper.isEmpty(clause.getExpression()))
+        for (Statement statement : list) {
+            if (statement.getKeyword() == Statement.Keyword.ELSE) {
+                if (!Helper.isEmpty(statement.getExpression()))
                     throw new IllegalArgumentException("");
 
-                expressions.append("else {" + codeBuilder.create(clause.getValue()) + "}\n");
-            } else if (clause.getCondition() == Clause.Cond.ELSEIF || clause.getCondition() == Clause.Cond.IF) {
-                boolean elseifClause = clause.getCondition() == Clause.Cond.ELSEIF;
-                ExpressionVisitor.ParseResult parseResult = parseExpression(clause.getExpression(), nameInConditionValidator);
+                expressions.append("else {" + statement.getOperation().buildClause(statement.getValue()) + "; }\n");
+            } else if (statement.getKeyword() == Statement.Keyword.ELSEIF || statement.getKeyword() == Statement.Keyword.IF) {
+                ExpressionVisitor.ParseResult parseResult = parseExpression(statement.getExpression(), nameInConditionValidator);
                 if (!parseResult.ok)
-                    throw new IllegalArgumentException("Invalid simple condition: " + clause.getExpression());
+                    throw new IllegalArgumentException(exceptionInfo + " invalid simple condition: " + statement.getExpression());
                 createObjects.addAll(parseResult.guessedVariables);
-                if (elseifClause)
+                if (statement.getKeyword() == Statement.Keyword.ELSEIF)
                     expressions.append("else ");
-                expressions.append("if (" + parseResult.converted + ") {" + codeBuilder.create(clause.getValue()) + "}\n");
+                expressions.append("if (" + parseResult.converted + ") {" + statement.getOperation().buildClause(statement.getValue()) + "; }\n");
             } else {
                 throw new IllegalArgumentException("The clause must be either 'if', 'else if' or 'else'");
             }

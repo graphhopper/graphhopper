@@ -7,7 +7,6 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.json.Clause;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.EncodingManager;
@@ -18,7 +17,8 @@ import com.graphhopper.util.shapes.GHPoint;
 import java.util.Arrays;
 import java.util.Locale;
 
-import static com.graphhopper.json.Clause.Op.MULT;
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
 
 public class RoutingExample {
     public static void main(String[] args) {
@@ -148,7 +148,7 @@ public class RoutingExample {
         CustomModel model = new CustomModel();
         req.putHint(CustomModel.KEY, model);
         model.setMaxSpeedFallback(100d);
-        model.getPriority().add(Clause.If("road_class == PRIMARY", MULT, 0.5));
+        model.getPriority().add(If("road_class == PRIMARY", MULTIPLY, 0.5));
 
         res = hopper.route(req);
         if (res.hasErrors())

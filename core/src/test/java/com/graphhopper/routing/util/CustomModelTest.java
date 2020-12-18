@@ -18,12 +18,14 @@
 
 package com.graphhopper.routing.util;
 
-import com.graphhopper.json.Clause;
+import com.graphhopper.json.Statement;
 import org.junit.jupiter.api.Test;
 
 import java.util.Iterator;
 
-import static com.graphhopper.json.Clause.Op.MULT;
+import static com.graphhopper.json.Statement.ElseIf;
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -32,7 +34,7 @@ public class CustomModelTest {
     @Test
     public void testTooBigFactor() {
         CustomModel truck = new CustomModel();
-        truck.getPriority().add(Clause.If("max_width < 3", MULT, 10));
+        truck.getPriority().add(If("max_width < 3", MULTIPLY, 10));
         // it is ok server-side CustomModel
         assertEquals(1, CustomModel.merge(truck, new CustomModel()).getPriority().size());
         // but not for query CustomModel
@@ -42,11 +44,11 @@ public class CustomModelTest {
     @Test
     public void testMergeComparisonKeys() {
         CustomModel truck = new CustomModel();
-        truck.getPriority().add(Clause.If("max_width < 3", MULT, 0));
+        truck.getPriority().add(If("max_width < 3", MULTIPLY, 0));
         CustomModel car = new CustomModel();
-        car.getPriority().add(Clause.If("max_width<2", MULT, 0));
+        car.getPriority().add(If("max_width<2", MULTIPLY, 0));
         CustomModel bike = new CustomModel();
-        bike.getPriority().add(Clause.If("max_weight<0.02", MULT, 0));
+        bike.getPriority().add(If("max_weight<0.02", MULTIPLY, 0));
 
         assertEquals(2, CustomModel.merge(bike, car).getPriority().size());
         assertEquals(1, bike.getPriority().size());
@@ -56,10 +58,10 @@ public class CustomModelTest {
     @Test
     public void testMergeElse() {
         CustomModel truck = new CustomModel();
-        truck.getPriority().add(Clause.If("max_width < 3", MULT, 0));
+        truck.getPriority().add(If("max_width < 3", MULTIPLY, 0));
 
         CustomModel car = new CustomModel();
-        car.getPriority().add(Clause.If("max_width < 2", MULT, 0));
+        car.getPriority().add(If("max_width < 2", MULTIPLY, 0));
 
         CustomModel merged = CustomModel.merge(truck, car);
         assertEquals(2, merged.getPriority().size());
@@ -70,10 +72,10 @@ public class CustomModelTest {
     public void testMergeEmptyModel() {
         CustomModel emptyCar = new CustomModel();
         CustomModel car = new CustomModel();
-        car.getPriority().add(Clause.If("road_class==primary", MULT, 0.5));
-        car.getPriority().add(Clause.ElseIf("road_class==tertiary", MULT, 0.8));
+        car.getPriority().add(If("road_class==primary", MULTIPLY, 0.5));
+        car.getPriority().add(ElseIf("road_class==tertiary", MULTIPLY, 0.8));
 
-        Iterator<Clause> iter = CustomModel.merge(emptyCar, car).getPriority().iterator();
+        Iterator<Statement> iter = CustomModel.merge(emptyCar, car).getPriority().iterator();
         assertEquals(0.5, iter.next().getValue());
         assertEquals(0.8, iter.next().getValue());
 

@@ -18,7 +18,6 @@
 
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.json.Clause;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
@@ -32,7 +31,9 @@ import com.graphhopper.util.EdgeIteratorState;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static com.graphhopper.json.Clause.Op.MULT;
+import static com.graphhopper.json.Statement.*;
+import static com.graphhopper.json.Statement.Op.LIMIT;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.routing.ev.RoadClass.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -57,7 +58,7 @@ class ExpressionBuilderTest {
     @Test
     void setPriorityForRoadClass() {
         CustomModel customModel = new CustomModel();
-        customModel.getPriority().add(Clause.If("road_class == PRIMARY", MULT, 0.5));
+        customModel.getPriority().add(If("road_class == PRIMARY", MULTIPLY, 0.5));
         SpeedAndAccessProvider speedAndAccessProvider = ExpressionBuilder.create(customModel, encodingManager,
                 encoder.getMaxSpeed(), avgSpeedEnc);
 
@@ -79,10 +80,10 @@ class ExpressionBuilderTest {
                 set(roadClassEnc, TERTIARY).set(avgSpeedEnc, 70).set(encoder.getAccessEnc(), true, true);
 
         CustomModel customModel = new CustomModel();
-        customModel.getPriority().add(Clause.If("road_class == PRIMARY", MULT, 0.5));
-        customModel.getPriority().add(Clause.ElseIf("road_class == SECONDARY", MULT, 0.7));
-        customModel.getPriority().add(Clause.Else(MULT, 0.9));
-        customModel.getPriority().add(Clause.If("road_environment != FERRY", MULT, 0.8));
+        customModel.getPriority().add(If("road_class == PRIMARY", MULTIPLY, 0.5));
+        customModel.getPriority().add(ElseIf("road_class == SECONDARY", MULTIPLY, 0.7));
+        customModel.getPriority().add(Else(MULTIPLY, 0.9));
+        customModel.getPriority().add(If("road_environment != FERRY", MULTIPLY, 0.8));
 
         SpeedAndAccessProvider speedAndAccessProvider = ExpressionBuilder.create(customModel, encodingManager,
                 encoder.getMaxSpeed(), avgSpeedEnc);
@@ -93,8 +94,8 @@ class ExpressionBuilderTest {
 
         // force integer value
         customModel = new CustomModel();
-        customModel.getPriority().add(Clause.If("road_class == PRIMARY", MULT, 1));
-        customModel.getPriority().add(Clause.If("road_class == SECONDARY", MULT, 0.9));
+        customModel.getPriority().add(If("road_class == PRIMARY", MULTIPLY, 1));
+        customModel.getPriority().add(If("road_class == SECONDARY", MULTIPLY, 0.9));
         speedAndAccessProvider = ExpressionBuilder.create(customModel, encodingManager,
                 encoder.getMaxSpeed(), avgSpeedEnc);
         assertEquals(1, speedAndAccessProvider.getPriority(primary, false), 0.01);
@@ -102,16 +103,41 @@ class ExpressionBuilderTest {
     }
 
     @Test
+    public void testSpeedFactorAndPriorityAndMaxSpeed() {
+        EdgeIteratorState primary = graph.edge(0, 1).setDistance(10).
+                set(roadClassEnc, PRIMARY).set(avgSpeedEnc, 80).set(encoder.getAccessEnc(), true, true);
+        EdgeIteratorState secondary = graph.edge(1, 2).setDistance(10).
+                set(roadClassEnc, SECONDARY).set(avgSpeedEnc, 70).set(encoder.getAccessEnc(), true, true);
+
+        CustomModel customModel = new CustomModel();
+        customModel.getPriority().add(If("road_class == PRIMARY", MULTIPLY, 0.9));
+        customModel.getSpeed().add(If("road_class == PRIMARY", MULTIPLY, 0.8));
+        SpeedAndAccessProvider speedAndAccessProvider = ExpressionBuilder.create(customModel, encodingManager,
+                encoder.getMaxSpeed(), avgSpeedEnc);
+        assertEquals(0.9, speedAndAccessProvider.getPriority(primary, false), 0.01);
+        assertEquals(64, speedAndAccessProvider.getSpeed(primary, false), 0.01);
+
+        assertEquals(1, speedAndAccessProvider.getPriority(secondary, false), 0.01);
+        assertEquals(70, speedAndAccessProvider.getSpeed(secondary, false), 0.01);
+
+        customModel.getSpeed().add(If("road_class != PRIMARY", LIMIT, 50));
+        speedAndAccessProvider = ExpressionBuilder.create(customModel, encodingManager,
+                encoder.getMaxSpeed(), avgSpeedEnc);
+        assertEquals(64, speedAndAccessProvider.getSpeed(primary, false), 0.01);
+        assertEquals(50, speedAndAccessProvider.getSpeed(secondary, false), 0.01);
+    }
+
+    @Test
     void testIllegalOrder() {
         CustomModel customModel = new CustomModel();
-        customModel.getPriority().add(Clause.Else(MULT, 0.9));
-        customModel.getPriority().add(Clause.If("road_environment != FERRY", MULT, 0.8));
+        customModel.getPriority().add(Else(MULTIPLY, 0.9));
+        customModel.getPriority().add(If("road_environment != FERRY", MULTIPLY, 0.8));
         assertThrows(IllegalArgumentException.class, () -> ExpressionBuilder.create(customModel, encodingManager,
                 encoder.getMaxSpeed(), avgSpeedEnc));
 
         CustomModel customModel2 = new CustomModel();
-        customModel2.getPriority().add(Clause.ElseIf("road_environment != FERRY", MULT, 0.9));
-        customModel2.getPriority().add(Clause.If("road_class != PRIMARY", MULT, 0.8));
+        customModel2.getPriority().add(ElseIf("road_environment != FERRY", MULTIPLY, 0.9));
+        customModel2.getPriority().add(If("road_class != PRIMARY", MULTIPLY, 0.8));
         assertThrows(IllegalArgumentException.class, () -> ExpressionBuilder.create(customModel2, encodingManager,
                 encoder.getMaxSpeed(), avgSpeedEnc));
     }

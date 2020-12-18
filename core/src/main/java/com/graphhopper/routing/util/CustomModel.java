@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.json.Clause;
+import com.graphhopper.json.Statement;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.util.Parameters;
 
@@ -36,9 +36,8 @@ public class CustomModel {
     private Double headingPenalty = Parameters.Routing.DEFAULT_HEADING_PENALTY;
     // default value derived from the cost for time e.g. 25€/hour and for distance 0.5€/km, for trucks this is usually larger
     private double distanceInfluence = DEFAULT_D_I;
-    private List<Clause> speedFactorClauses = new ArrayList<>();
-    private List<Clause> maxSpeedClauses = new ArrayList<>();
-    private List<Clause> priorityClauses = new ArrayList<>();
+    private List<Statement> speedStatements = new ArrayList<>();
+    private List<Statement> priorityStatements = new ArrayList<>();
     private Map<String, JsonFeature> areas = new HashMap<>();
 
     public CustomModel() {
@@ -49,9 +48,8 @@ public class CustomModel {
         this.headingPenalty = toCopy.headingPenalty;
         this.distanceInfluence = toCopy.distanceInfluence;
 
-        speedFactorClauses = deepCopy(toCopy.getSpeedFactor());
-        maxSpeedClauses = deepCopy(toCopy.getMaxSpeed());
-        priorityClauses = deepCopy(toCopy.getPriority());
+        speedStatements = deepCopy(toCopy.getSpeed());
+        priorityStatements = deepCopy(toCopy.getPriority());
 
         areas.putAll(toCopy.getAreas());
     }
@@ -76,12 +74,8 @@ public class CustomModel {
         }
     }
 
-    public List<Clause> getSpeedFactor() {
-        return speedFactorClauses;
-    }
-
-    public List<Clause> getMaxSpeed() {
-        return maxSpeedClauses;
+    public List<Statement> getSpeed() {
+        return speedStatements;
     }
 
     public CustomModel setMaxSpeedFallback(Double maxSpeedFallback) {
@@ -93,8 +87,8 @@ public class CustomModel {
         return maxSpeedFallback;
     }
 
-    public List<Clause> getPriority() {
-        return priorityClauses;
+    public List<Statement> getPriority() {
+        return priorityStatements;
     }
 
     public CustomModel setAreas(Map<String, JsonFeature> areas) {
@@ -130,8 +124,8 @@ public class CustomModel {
 
     private String createContentString() {
         // used to check against stored custom models, see #2026
-        return "distanceInfluence=" + distanceInfluence + "|speedFactor=" + speedFactorClauses + "|maxSpeed=" + maxSpeedClauses +
-                "|maxSpeedFallback=" + maxSpeedFallback + "|priorityMap=" + priorityClauses + "|areas=" + areas;
+        return "distanceInfluence=" + distanceInfluence + "|speedFactor=" + speedStatements +
+                "|maxSpeedFallback=" + maxSpeedFallback + "|priorityMap=" + priorityStatements + "|areas=" + areas;
     }
 
     /**
@@ -151,14 +145,14 @@ public class CustomModel {
             mergedCM.distanceInfluence = queryModel.distanceInfluence;
         }
 
-        // TODO NOW ensure all lists start with ifClause!
+        checkFirst(queryModel.getSpeed());
+        checkFirst(queryModel.getPriority());
 
         check(queryModel.getPriority());
-        check(queryModel.getSpeedFactor());
+        check(queryModel.getSpeed());
 
-        mergedCM.maxSpeedClauses.addAll(queryModel.getMaxSpeed());
-        mergedCM.speedFactorClauses.addAll(queryModel.getSpeedFactor());
-        mergedCM.priorityClauses.addAll(queryModel.getPriority());
+        mergedCM.speedStatements.addAll(queryModel.getSpeed());
+        mergedCM.priorityStatements.addAll(queryModel.getPriority());
 
         for (Map.Entry<String, JsonFeature> entry : queryModel.getAreas().entrySet()) {
             if (mergedCM.areas.containsKey(entry.getKey()))
@@ -169,10 +163,15 @@ public class CustomModel {
         return mergedCM;
     }
 
-    private static void check(List<Clause> list) {
-        for (Clause clause : list) {
-            if (clause.getValue() > 1)
-                throw new IllegalArgumentException("factor cannot be larger than 1 but was " + clause.getValue());
+    private static void checkFirst(List<Statement> priority) {
+        if (!priority.isEmpty() && priority.get(0).getKeyword() != Statement.Keyword.IF)
+            throw new IllegalArgumentException("First statement needs to be an if statement but was " + priority.get(0).getKeyword().getName());
+    }
+
+    private static void check(List<Statement> list) {
+        for (Statement statement : list) {
+            if (statement.getOperation() == Statement.Op.MULTIPLY && statement.getValue() > 1)
+                throw new IllegalArgumentException("factor cannot be larger than 1 but was " + statement.getValue());
         }
     }
 }
