@@ -96,7 +96,7 @@ public class CustomWeightingRouteResourceLMTest {
                 "profile: car_custom\n" +
                 "priority:\n" +
                 "  - if: road_class != SECONDARY\n" +
-                "    then: 0.5\n";
+                "    multiply with: 0.5\n";
         JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 1317, 5);
@@ -106,10 +106,11 @@ public class CustomWeightingRouteResourceLMTest {
                 "profile: car_custom\n" +
                 "priority:\n" +
                 "  - if: road_class == RESIDENTIAL\n" +
-                "    then: 0.8\n" +
+                "    multiply with: 0.8\n" +
                 "  - else if: road_class == PRIMARY\n" +
-                "    then: 1\n" +
-                "  - else: 0.66\n";
+                "    multiply with: 1\n" +
+                "  - else:\n" +
+                "    multiply with: 0.66\n";
         yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
         path = yamlNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 1707, 5);
@@ -121,7 +122,7 @@ public class CustomWeightingRouteResourceLMTest {
                 "profile: car_custom\n" +
                 "priority:\n" +
                 "  - if: road_environment == TUNNEL\n" +
-                "    then: 0.1\n";
+                "    multiply with: 0.1\n";
         JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 2437, 5);
@@ -149,7 +150,7 @@ public class CustomWeightingRouteResourceLMTest {
                 "profile: foot_custom\n" +
                 "priority:\n" +
                 "  - if: road_class == STEPS\n" +
-                "    then: 0\n";
+                "    multiply with: 0\n";
         JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 328, 5);

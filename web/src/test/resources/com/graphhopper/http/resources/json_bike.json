@@ -1,8 +1,8 @@
 {
   "max_speed": [
-    { "if": "road_class==PRIMARY", "then": 28 }
+    { "if": "road_class==PRIMARY", "multiply with": 28 }
   ],
   "priority": [
-    { "if": "max_width < 1.2", "then": 0 }
+    { "if": "max_width < 1.2", "multiply with": 0 }
   ]
 }

@@ -18,65 +18,61 @@
 package com.graphhopper.json;
 
 public class Clause {
-    // either if or else-if with thenValue
-    private String ifClause;
-    private String elseIfClause;
-    private Double thenValue;
-    // or just elseValue
-    private Double elseValue;
+    private final Cond condition;
+    private final String expression;
+    private final Op operation;
+    private final double value;
 
-    // for JSON
-    public Clause() {
+    public Clause(Cond condition, String expression, Op operation, double value) {
+        this.condition = condition;
+        this.expression = expression;
+        this.value = value;
+        this.operation = operation;
     }
 
-    private Clause(String ifClause, String elseIfClause, Double elseValue, Double thenValue) {
-        this.ifClause = ifClause;
-        this.elseIfClause = elseIfClause;
-        this.elseValue = elseValue;
-        this.thenValue = thenValue;
+    public Cond getCondition() {
+        return condition;
     }
 
-    public void setIf(String ifClause) {
-        this.ifClause = ifClause;
+    public String getExpression() {
+        return expression;
     }
 
-    public String getIf() {
-        return ifClause;
+    public Op getOperation() {
+        return operation;
     }
 
-    public void setElseIf(String elseIfClause) {
-        this.elseIfClause = elseIfClause;
+    public double getValue() {
+        return value;
     }
 
-    public String getElseIf() {
-        return elseIfClause;
+    public enum Cond {
+        IF, ELSEIF, ELSE
     }
 
-    public void setElse(Double elseValue) {
-        this.elseValue = elseValue;
+    public enum Op {
+        MULT("multiply with"), LIMIT("limit to");
+
+        String name;
+
+        Op(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
     }
 
-    public Double getElse() {
-        return elseValue;
+    public static Clause If(String expression, Op op, double thenValue) {
+        return new Clause(Cond.IF, expression, op, thenValue);
     }
 
-    public void setThen(Double thenValue) {
-        this.thenValue = thenValue;
+    public static Clause ElseIf(String expression, Op op, double thenValue) {
+        return new Clause(Cond.ELSEIF, expression, op, thenValue);
     }
 
-    public Double getThen() {
-        return thenValue;
-    }
-
-    public static Clause If(String clause, double thenValue) {
-        return new Clause(clause, null, null, thenValue);
-    }
-
-    public static Clause ElseIf(String clause, double thenValue) {
-        return new Clause(null, clause, null, thenValue);
-    }
-
-    public static Clause Else(double elseValue) {
-        return new Clause(null, null, elseValue, null);
+    public static Clause Else(Op op, double elseValue) {
+        return new Clause(Cond.ELSE, null, op, elseValue);
     }
 }

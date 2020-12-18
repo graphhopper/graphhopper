@@ -4,7 +4,7 @@
 # let's assume cargo bikes are e-bikes and we should lower speed to prefer shorter and not faster routes automatically
 max_speed:
   - if: road_class == PRIMARY
-    then: 28
+    limit to: 28
 
 # if no other condition matches
 max_speed_fallback: 25
@@ -12,19 +12,19 @@ max_speed_fallback: 25
 priority:
   # exclude steps
   - if: road_class == STEPS
-    then: 0
+    multiply with: 0
   - if: surface == SAND
-    then: 0.5
+    multiply with: 0.5
   # prefer better tracks
   - if: track_type != MISSING && track_type != GRADE1
-    then: 0.9
+    multiply with: 0.9
   # prefer official bike routes
   - if: bike_network == OTHER
-    then: 0.5
+    multiply with: 0.5
   # avoid all situations where we have to get off the bike
   - if: get_off_bike
-    then: 0.5
+    multiply with: 0.5
   - if: max_height < 2.3
-    then: 0
+    multiply with: 0
   # oneliner
-  - { if: "max_width < 1.2", then: 0 }
+  - { if: "max_width < 1.2", multiply with: 0 }

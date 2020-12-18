@@ -7,22 +7,22 @@
 # average_speed*0.85*0.9 except when first_match is used.
 speed_factor:
   - if: road_environment == TUNNEL
-    then: 0.85
+    multiply with: 0.85
   # trucks should be a bit slower on certain road classes compared to the 'base' car
   - if: road_class == MOTORWAY
-    then: 0.85
+    multiply with: 0.85
   - if: road_class == PRIMARY
-    then: 0.9
+    multiply with: 0.9
 
 # You can lower the average speed for certain conditions via this max_speed entry. The speed_factor is applied before
 # this operation. See the following example that sets the maximum speed to 95km/h for motorways.
 max_speed:
   - if: road_class == MOTORWAY
-    then: 95
+    limit to: 95
   - if: road_class == RESIDENTIAL
-    then: 30
+    limit to: 30
   - if: road_environment == BRIDGE
-    then: 85
+    limit to: 85
 
 # Trucks are slower so limit all speed to this value. In km/h
 # If none of the conditions in the map above apply use the fallback, if specified:
@@ -40,33 +40,34 @@ distance_influence: 90
 # If two conditions are met the values will be multiplied except when first_match is used.
 priority:
   - if: road_class == RESIDENTIAL
-    then: 0.4
+    multiply with: 0.4
   - else if: road_class != MOTORWAY
-    then: 0.9
+    multiply with: 0.9
     # and if you do not want that routes go over tracks just exclude them:
-    # road_class==TRACK: 0
+    # else if: road_class==TRACK
+    # multiply with: 0
   # let's assume we transport gas: so NEVER go on restricted roads with hazmat==NO
   - if: hazmat == NO
-    then: 0
+    multiply with: 0
   # avoid destination-only roads
   # TODO include private and delivery only access for base car profile so that we can avoid it here, but not exclude it
   - if: road_access == DESTINATION
-    then: 0.1
+    multiply with: 0.1
   # avoid turns if possible and links are one simple indication for that
   - if: road_class_link
-    then: 0.5
+    multiply with: 0.5
   # avoid toll roads
   - if: toll != NO
-    then: 0.5
+    multiply with: 0.5
   # avoid a certain area
   - if: in_area_custom1
-    then: 0.5
+    multiply with: 0.5
   - if: max_weight < 4.5
-    then: 0
+    multiply with: 0
   - if: max_height < 3.8
-    then: 0
+    multiply with: 0
   - if: max_width < 2.5
-    then: 0
+    multiply with: 0
 
 areas:
   custom1:

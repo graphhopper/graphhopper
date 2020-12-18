@@ -1,24 +1,24 @@
 # this is a heavily customized model used to benchmark routing with a custom weighting
-speed_factor:
+speed:
  - if: road_class == MOTORWAY
-   then: 0.85
+   multiply with: 0.85
  - else if: road_class == PRIMARY
-   then: 0.9
+   multiply with: 0.9
 
 priority:
   - if: max_height < 3.8
-    then: 0
+    multiply with: 0
   - if: max_width < 2.5
-    then: 0
+    multiply with: 0
 
   - if: road_class == PRIMARY
-    then: 0.5
+    multiply with: 0.5
   - else if: road_class != MOTORWAY
-    then: 0.9
+    multiply with: 0.9
 
   - if: toll != NO
-    then: 0.5
+    multiply with: 0.5
   - if: hazmat == NO
-    then: 0
+    multiply with: 0
 
 max_speed_fallback: 110

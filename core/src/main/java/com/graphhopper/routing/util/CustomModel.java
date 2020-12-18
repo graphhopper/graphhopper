@@ -171,20 +171,8 @@ public class CustomModel {
 
     private static void check(List<Clause> list) {
         for (Clause clause : list) {
-            if (clause.getElse() != null) {
-                if (clause.getElse() > 1)
-                    throw new IllegalArgumentException("factor cannot be larger than 1 but was " + clause.getElse());
-            } else if (clause.getThen() != null) {
-                if (clause.getThen() > 1)
-                    throw new IllegalArgumentException("factor cannot be larger than 1 but was " + clause.getThen());
-            } else {
-                if (clause.getIf() != null)
-                    throw new IllegalArgumentException("factor not specified for " + clause.getIf());
-                else if (clause.getElseIf() != null)
-                    throw new IllegalArgumentException("factor not specified for " + clause.getElseIf());
-                else
-                    throw new IllegalArgumentException("factor not specified");
-            }
+            if (clause.getValue() > 1)
+                throw new IllegalArgumentException("factor cannot be larger than 1 but was " + clause.getValue());
         }
     }
 }

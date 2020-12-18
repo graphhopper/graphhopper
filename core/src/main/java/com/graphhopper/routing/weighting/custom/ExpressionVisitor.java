@@ -17,8 +17,8 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.routing.ev.RouteNetwork;
 import com.graphhopper.json.Clause;
+import com.graphhopper.routing.ev.RouteNetwork;
 import com.graphhopper.util.Helper;
 import org.codehaus.janino.Scanner;
 import org.codehaus.janino.*;
@@ -121,38 +121,22 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
                                  ExpressionBuilder.CodeBuilder codeBuilder, String lastStmt) {
 
         for (Clause clause : list) {
-            if (clause.getElse() != null) {
-                if (clause.getElseIf() != null)
-                    throw new IllegalArgumentException("When the 'else' value is used no 'else if' clause must be used");
-                if (clause.getIf() != null)
-                    throw new IllegalArgumentException("When the 'else' value is used no 'if' clause must be used");
-                if (clause.getThen() != null)
-                    throw new IllegalArgumentException("When the 'else' value is used no 'then' must be used");
+            if (clause.getCondition() == Clause.Cond.ELSE) {
+                if (!Helper.isEmpty(clause.getExpression()))
+                    throw new IllegalArgumentException("");
 
-                expressions.append("else {" + codeBuilder.create(clause.getElse()) + "}\n");
-            } else {
-                boolean elseifClause = false;
-                String singleExpression;
-                if (clause.getIf() != null) {
-                    if (clause.getElseIf() != null)
-                        throw new IllegalArgumentException("When the 'if' clause is used no 'else if' clause must be used");
-
-                    singleExpression = clause.getIf();
-                } else if (clause.getElseIf() != null) {
-                    elseifClause = true;
-                    singleExpression = clause.getElseIf();
-                } else {
-                    throw new IllegalArgumentException("The clause must be either 'if', 'else if' or 'else'");
-                }
-
-                ExpressionVisitor.ParseResult parseResult = parseExpression(singleExpression, nameInConditionValidator);
+                expressions.append("else {" + codeBuilder.create(clause.getValue()) + "}\n");
+            } else if (clause.getCondition() == Clause.Cond.ELSEIF || clause.getCondition() == Clause.Cond.IF) {
+                boolean elseifClause = clause.getCondition() == Clause.Cond.ELSEIF;
+                ExpressionVisitor.ParseResult parseResult = parseExpression(clause.getExpression(), nameInConditionValidator);
                 if (!parseResult.ok)
-                    throw new IllegalArgumentException("Invalid simple condition: " + singleExpression);
+                    throw new IllegalArgumentException("Invalid simple condition: " + clause.getExpression());
                 createObjects.addAll(parseResult.guessedVariables);
-
                 if (elseifClause)
                     expressions.append("else ");
-                expressions.append("if (" + parseResult.converted + ") {" + codeBuilder.create(clause.getThen()) + "}\n");
+                expressions.append("if (" + parseResult.converted + ") {" + codeBuilder.create(clause.getValue()) + "}\n");
+            } else {
+                throw new IllegalArgumentException("The clause must be either 'if', 'else if' or 'else'");
             }
         }
         expressions.append(lastStmt);

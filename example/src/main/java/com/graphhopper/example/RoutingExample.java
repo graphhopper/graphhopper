@@ -18,6 +18,8 @@ import com.graphhopper.util.shapes.GHPoint;
 import java.util.Arrays;
 import java.util.Locale;
 
+import static com.graphhopper.json.Clause.Op.MULT;
+
 public class RoutingExample {
     public static void main(String[] args) {
         String relDir = args.length == 1 ? args[0] : "";
@@ -146,7 +148,7 @@ public class RoutingExample {
         CustomModel model = new CustomModel();
         req.putHint(CustomModel.KEY, model);
         model.setMaxSpeedFallback(100d);
-        model.getPriority().add(Clause.If("road_class == PRIMARY", 0.5));
+        model.getPriority().add(Clause.If("road_class == PRIMARY", MULT, 0.5));
 
         res = hopper.route(req);
         if (res.hasErrors())
