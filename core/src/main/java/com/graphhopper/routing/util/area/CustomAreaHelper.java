@@ -19,9 +19,8 @@ package com.graphhopper.routing.util.area;
 
 import com.graphhopper.config.CustomArea;
 import com.graphhopper.config.CustomAreaFile;
-import com.graphhopper.json.geo.JsonFeature;
-import com.graphhopper.json.geo.JsonFeatureCollection;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.JsonFeature;
+import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.util.shapes.BBox;
 
 import org.locationtech.jts.geom.Envelope;
@@ -51,15 +50,10 @@ public class CustomAreaHelper {
     
     public static List<CustomArea> loadAreas(CustomAreaFile customAreaFile, JsonFeatureCollection geoJson) {
         String idField = customAreaFile.getIdField();
-        Set<String> filter;
-        if (customAreaFile.getFilter().isEmpty()) {
-            filter = Collections.emptySet();
-        } else {
-            filter = new HashSet<>(Arrays.asList(Helper.toLowerCase(customAreaFile.getFilter()).split(",")));
-        }
         Envelope bbox = BBox.toEnvelope(BBox.parseBBoxString(customAreaFile.getMaxBbox()));
+        int evLimit = customAreaFile.getEncodedValueLimit() == -1 ? geoJson.getFeatures().size() : customAreaFile.getEncodedValueLimit();
         
-        return loadAreas(geoJson, idField, filter, bbox, customAreaFile.getEncodedValue());
+        return loadAreas(geoJson, idField, bbox, customAreaFile.getEncodedValue(), evLimit);
     }
     
     public static List<CustomArea> loadAreas(JsonFeatureCollection geoJson, String idField) {
@@ -67,9 +61,9 @@ public class CustomAreaHelper {
     }
     
     public static List<CustomArea> loadAreas(JsonFeatureCollection geoJson, String idField, Envelope bbox) {
-        return loadAreas(geoJson, idField, Collections.emptySet(), bbox, "");
+        return loadAreas(geoJson, idField, bbox, "", -1);
     }
-    
+
     /**
      * Extracts the borders from the given {@link JsonFeatureCollection} and attempts to create a
      * {@link CustomArea} for each feature.
@@ -79,28 +73,28 @@ public class CustomAreaHelper {
      * @param idField
      *            the property of the {@link JsonFeature} to be used as the ID when creating the
      *            areas
-     * @param filter
-     *            an optional filter which will only retain areas with fitting IDs
      * @param bbox
      *            the generated {@link CustomArea CustomAreas} are guaranteed to be within the
      *            {@link Envelope}. Only parts of the border {@link Polygon Polygons} within the
      *            boundingbox are retained.
+     * @param encodedValue
+     *            the name to be used for the encoded value: {@link CustomArea#getEncodedValue()}
+     * @param encodedValueLimit
+     *            the expected number of entries to be stored in the encoded value:
+     *            {@link CustomArea#getEncodedValueLimit()}
      * @return a (possibly empty) List of {@link CustomArea CustomAreas}
      */
-    private static List<CustomArea> loadAreas(JsonFeatureCollection geoJson, String idField, Set<String> filter, Envelope bbox,
-                    String encodedValue) {
+    private static List<CustomArea> loadAreas(JsonFeatureCollection geoJson, String idField,
+                    Envelope bbox, String encodedValue, int encodedValueLimit) {
         Geometry bboxGeometry = FAC.toGeometry(bbox);
 
         List<CustomArea> customAreas = new ArrayList<>();
         for (JsonFeature jsonFeature : geoJson.getFeatures()) {
             String id = getId(jsonFeature, idField);
-            if (!filter.isEmpty() && !filter.contains(id)) {
-                continue;
-            }
             List<Polygon> borders = intersections(jsonFeature.getGeometry(), id, bboxGeometry);
 
             if (!borders.isEmpty()) {
-                customAreas.add(new CustomArea(id, borders, encodedValue));
+                customAreas.add(new CustomArea(id, borders, encodedValue, encodedValueLimit));
             }
         }
         

@@ -55,10 +55,10 @@ public interface CustomAreaLookup {
 
     /**
      * @return maps the name of each encoded value retrieved from
-     *         {@link CustomArea#getEncodedValue()} to List if {@link CustomArea#getId() IDs} which
-     *         are associated with it
+     *         {@link CustomArea#getEncodedValue()} to the expected number of entries retrieved from
+     *         {@link CustomArea#getEncodedValueLimit()}
      */
-    Map<String, List<String>> getEncodedValueMap();
+    Map<String, Integer> getEncodedValueMap();
 
     /**
      * @return the bounds of the SpatialRuleLookup
@@ -82,7 +82,7 @@ public interface CustomAreaLookup {
         }
         
         @Override
-        public Map<String, List<String>> getEncodedValueMap() {
+        public Map<String, Integer> getEncodedValueMap() {
             return Collections.emptyMap();
         }
 

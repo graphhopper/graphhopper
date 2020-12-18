@@ -53,7 +53,7 @@ public class SpatialRulesTest {
         CustomAreaFile customAreaFile = new CustomAreaFile("../core/files/spatialrules/countries.geojson");
         customAreaFile.setIdField("ISO3166-1:alpha3");
         customAreaFile.setEncodedValue("countries");
-        customAreaFile.setFilter("deu,aut");
+        customAreaFile.setMaxBbox("5,15,47,55"); // germany
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "car").
                 putObject("graph.encoded_values", "road_environment,road_class,road_access,max_speed").

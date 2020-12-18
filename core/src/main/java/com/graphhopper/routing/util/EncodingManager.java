@@ -434,7 +434,7 @@ public class EncodingManager implements EncodedValueLookup {
     
     private void setCustomAreaLookup(List<EncodedValue> customEncodedValueList, CustomAreaLookup customAreaLookup) {
         this.customAreaLookup = customAreaLookup;
-        for (Entry<String, List<String>> entry : customAreaLookup.getEncodedValueMap().entrySet()) {
+        for (Entry<String, Integer> entry : customAreaLookup.getEncodedValueMap().entrySet()) {
             customEncodedValueList.add(new StringEncodedValue(entry.getKey(), entry.getValue()));
         }
     }

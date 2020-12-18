@@ -39,7 +39,7 @@ public class CustomAreaLookupJTS implements CustomAreaLookup {
     
     private final List<CustomArea> areas;
     private final List<SpatialRule> rules;
-    private final Map<String, List<String>> encodedValues;
+    private final Map<String, Integer> encodedValues;
     private final Envelope maxBounds;
     private final STRtree index;
     
@@ -77,10 +77,17 @@ public class CustomAreaLookupJTS implements CustomAreaLookup {
             }
         }
         
-        Map<String, List<String>> evs = areas.stream()
-                        .filter(e -> e.getEncodedValue() != null)
-                        .filter(e -> !e.getEncodedValue().isEmpty())
-                        .collect(groupingBy(CustomArea::getEncodedValue, TreeMap::new, mapping(CustomArea::getId, toList())));
+        Map<String, Integer> evs = new TreeMap<>();
+        for (CustomArea area : areas) {
+            String ev = area.getEncodedValue();
+            if (ev == null || ev.isEmpty()) {
+                continue;
+            }
+            if (evs.containsKey(ev) && evs.get(ev) != area.getEncodedValueLimit()) {
+                throw new IllegalStateException("Different limits configured for the encoded value " + ev);
+            }
+            evs.put(ev, area.getEncodedValueLimit());
+        }
         
         this.encodedValues = Collections.unmodifiableMap(evs);
 
@@ -136,7 +143,7 @@ public class CustomAreaLookupJTS implements CustomAreaLookup {
     }
     
     @Override
-    public Map<String, List<String>> getEncodedValueMap() {
+    public Map<String, Integer> getEncodedValueMap() {
         return encodedValues;
     }
 

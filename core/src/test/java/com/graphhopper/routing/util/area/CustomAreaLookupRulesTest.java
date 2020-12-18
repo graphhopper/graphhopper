@@ -19,7 +19,6 @@ package com.graphhopper.routing.util.area;
 
 import com.graphhopper.config.CustomArea;
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
@@ -34,6 +33,7 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
@@ -131,7 +131,7 @@ public class CustomAreaLookupRulesTest {
                 new Coordinate(0, 0), new Coordinate(0, 1), new Coordinate(1, 1), new Coordinate(1, 0), new Coordinate(0, 0)});
         final SpatialRule germanyRule = new GermanySpatialRule();
         
-        CustomArea germanyArea = new CustomArea(germanyRule.getId(), Collections.singletonList(polygon), "country");
+        CustomArea germanyArea = new CustomArea(germanyRule.getId(), Collections.singletonList(polygon), "country", 1);
 
         CustomAreaLookup lookup = new CustomAreaLookupJTS(Collections.singletonList(germanyArea), Collections.singletonList(germanyRule));
 
