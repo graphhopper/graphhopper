@@ -31,11 +31,6 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
-import com.graphhopper.util.shapes.GHPoint3D;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.LineString;
-import org.locationtech.jts.linearref.LinearLocation;
-import org.locationtech.jts.linearref.LocationIndexedLine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -634,56 +629,6 @@ public class LocationIndexTree implements LocationIndex {
         }
 
         return closestMatch;
-    }
-
-    /**
-     * Returns all edges that are within the specified radius around the queried position.
-     * Searches at most 9 cells to avoid performance problems. Hence, if the radius is larger than
-     * the cell width then not all edges might be returned.
-     * <p>
-     * TODO: either clarify the method name and description (to only search e.g. 9 tiles) or
-     * refactor so it can handle a radius larger than 9 tiles. Also remove reference to 'NClosest',
-     * which is misleading, and don't always return at least one value. See map-matching #65.
-     * TODO: tidy up logic - see comments in graphhopper #994.
-     *
-     * @param radius in meters
-     */
-    public List<Snap> findNClosest(final double queryLat, final double queryLon,
-                                   final EdgeFilter edgeFilter, double radius) {
-        Coordinate queryPoint = new Coordinate(queryLon, queryLat);
-        double rLon = (radius * 360.0 / preciseDistCalc.calcCircumference(queryLat));
-        double rLat = radius / DistanceCalcEarth.METERS_PER_DEGREE;
-        IntArrayList edges = new IntArrayList();
-        query(new BBox(queryLon - rLon, queryLon + rLon, queryLat - rLat, queryLat + rLat),
-                new Visitor() {
-                    @Override
-                    public void onEdge(int edgeId) {
-                        edges.add(edgeId);
-                    }
-                });
-        List<Snap> snaps = new ArrayList<>();
-        for (IntCursor cursor : edges) {
-            EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorStateForKey(cursor.value * 2).detach(false);
-            if (!edgeFilter.accept(edgeIteratorState))
-                continue;
-            PointList fullPL = edgeIteratorState.fetchWayGeometry(FetchMode.ALL);
-            LineString edgeGeometry = fullPL.toLineString(false);
-            edgeGeometry.setUserData(edgeIteratorState);
-            LocationIndexedLine locationIndexedLine = new LocationIndexedLine(edgeGeometry);
-            LinearLocation linearLocation = locationIndexedLine.project(queryPoint);
-            Coordinate projection = locationIndexedLine.extractPoint(linearLocation);
-            double dist = DistanceCalcEarth.DIST_EARTH.calcDist(queryLat, queryLon, projection.y, projection.x);
-            if (dist > radius)
-                continue;
-            Snap snap = new Snap(queryLat, queryLon);
-            snap.setClosestEdge(edgeIteratorState);
-            snap.setSnappedPosition(Snap.Position.EDGE);
-            snap.setSnappedPoint(new GHPoint3D(projection.y, projection.x, Double.NaN));
-            snap.setQueryDistance(dist);
-            snap.setWayIndex(linearLocation.getSegmentIndex() > fullPL.size() - 2 ? linearLocation.getSegmentIndex() - 1 : linearLocation.getSegmentIndex());
-            snaps.add(snap);
-        }
-        return snaps;
     }
 
     // make entries static as otherwise we get an additional reference to this class (memory waste)

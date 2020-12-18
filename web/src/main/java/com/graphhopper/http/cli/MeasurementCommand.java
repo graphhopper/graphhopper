@@ -26,7 +26,6 @@ import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.matching.Observation;
 import com.graphhopper.reader.osm.GraphHopperOSM;
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.*;
@@ -101,7 +100,6 @@ public class MeasurementCommand extends Command {
         // start tests:
         StopWatch sw = new StopWatch().start();
         try {
-            printLocationIndexMatchQuery(locationIndex);
             printTimeOfMapMatchQuery(graphHopper, mapMatching);
             System.gc();
         } catch (Exception ex) {
@@ -128,23 +126,6 @@ public class MeasurementCommand extends Command {
                         "Problem while writing measurements", ex);
             }
         }
-    }
-
-    /**
-     * Test the performance of finding candidate points for the index (which is run for every GPX
-     * entry).
-     */
-    private void printLocationIndexMatchQuery(final LocationIndexTree idx) {
-        final double latDelta = bbox.maxLat - bbox.minLat;
-        final double lonDelta = bbox.maxLon - bbox.minLon;
-        final Random rand = new Random(seed);
-        MiniPerfTest miniPerf = new MiniPerfTest()
-                .setIterations(count).start((warmup, run) -> {
-                    double lat = rand.nextDouble() * latDelta + bbox.minLat;
-                    double lon = rand.nextDouble() * lonDelta + bbox.minLon;
-                    return idx.findNClosest(lat, lon, EdgeFilter.ALL_EDGES, rand.nextDouble() * 500).size();
-                });
-        print("location_index_match", miniPerf);
     }
 
     /**
