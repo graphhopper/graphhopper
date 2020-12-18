@@ -31,7 +31,7 @@ public class CustomModelTest {
     @Test
     public void testTooBigFactor() {
         CustomModel truck = new CustomModel();
-        truck.getPriority().add(Clause.createIf("max_width < 3", 10));
+        truck.getPriority().add(Clause.If("max_width < 3", 10));
         // it is ok server-side CustomModel
         assertEquals(1, CustomModel.merge(truck, new CustomModel()).getPriority().size());
         // but not for query CustomModel
@@ -41,11 +41,11 @@ public class CustomModelTest {
     @Test
     public void testMergeComparisonKeys() {
         CustomModel truck = new CustomModel();
-        truck.getPriority().add(Clause.createIf("max_width < 3", 0));
+        truck.getPriority().add(Clause.If("max_width < 3", 0));
         CustomModel car = new CustomModel();
-        car.getPriority().add(Clause.createIf("max_width<2", 0));
+        car.getPriority().add(Clause.If("max_width<2", 0));
         CustomModel bike = new CustomModel();
-        bike.getPriority().add(Clause.createIf("max_weight<0.02", 0));
+        bike.getPriority().add(Clause.If("max_weight<0.02", 0));
 
         assertEquals(2, CustomModel.merge(bike, car).getPriority().size());
         assertEquals(1, bike.getPriority().size());
@@ -55,10 +55,10 @@ public class CustomModelTest {
     @Test
     public void testMergeElse() {
         CustomModel truck = new CustomModel();
-        truck.getPriority().add(Clause.createIf("max_width < 3", 0));
+        truck.getPriority().add(Clause.If("max_width < 3", 0));
 
         CustomModel car = new CustomModel();
-        car.getPriority().add(Clause.createIf("max_width < 2", 0));
+        car.getPriority().add(Clause.If("max_width < 2", 0));
 
         CustomModel merged = CustomModel.merge(truck, car);
         assertEquals(2, merged.getPriority().size());
@@ -69,8 +69,8 @@ public class CustomModelTest {
     public void testMergeEmptyModel() {
         CustomModel emptyCar = new CustomModel();
         CustomModel car = new CustomModel();
-        car.getPriority().add(Clause.createIf("road_class==primary", 0.5));
-        car.getPriority().add(Clause.createElseIf("road_class==tertiary", 0.8));
+        car.getPriority().add(Clause.If("road_class==primary", 0.5));
+        car.getPriority().add(Clause.ElseIf("road_class==tertiary", 0.8));
 
         Iterator<Clause> iter = CustomModel.merge(emptyCar, car).getPriority().iterator();
         assertEquals(0.5, iter.next().getThen());

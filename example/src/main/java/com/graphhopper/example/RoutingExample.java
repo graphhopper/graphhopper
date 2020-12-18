@@ -146,7 +146,7 @@ public class RoutingExample {
         CustomModel model = new CustomModel();
         req.putHint(CustomModel.KEY, model);
         model.setMaxSpeedFallback(100d);
-        model.getPriority().add(Clause.createIf("road_class == PRIMARY", 0.5));
+        model.getPriority().add(Clause.If("road_class == PRIMARY", 0.5));
 
         res = hopper.route(req);
         if (res.hasErrors())

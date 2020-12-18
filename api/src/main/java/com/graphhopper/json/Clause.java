@@ -68,15 +68,15 @@ public class Clause {
         return thenValue;
     }
 
-    public static Clause createIf(String clause, double thenValue) {
+    public static Clause If(String clause, double thenValue) {
         return new Clause(clause, null, null, thenValue);
     }
 
-    public static Clause createElseIf(String clause, double thenValue) {
+    public static Clause ElseIf(String clause, double thenValue) {
         return new Clause(null, clause, null, thenValue);
     }
 
-    public static Clause createElse(double elseValue) {
+    public static Clause Else(double elseValue) {
         return new Clause(null, null, elseValue, null);
     }
 }

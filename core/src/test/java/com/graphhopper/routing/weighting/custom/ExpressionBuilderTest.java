@@ -56,7 +56,7 @@ class ExpressionBuilderTest {
     @Test
     void setPriorityForRoadClass() {
         CustomModel customModel = new CustomModel();
-        customModel.getPriority().add(Clause.createIf("road_class == PRIMARY", 0.5));
+        customModel.getPriority().add(Clause.If("road_class == PRIMARY", 0.5));
         SpeedAndAccessProvider speedAndAccessProvider = ExpressionBuilder.create(customModel, encodingManager,
                 encoder.getMaxSpeed(), avgSpeedEnc);
 
@@ -78,10 +78,10 @@ class ExpressionBuilderTest {
                 set(roadClassEnc, TERTIARY).set(avgSpeedEnc, 70).set(encoder.getAccessEnc(), true, true);
 
         CustomModel customModel = new CustomModel();
-        customModel.getPriority().add(Clause.createIf("road_class == PRIMARY", 0.5));
-        customModel.getPriority().add(Clause.createElseIf("road_class == SECONDARY", 0.7));
-        customModel.getPriority().add(Clause.createElse(0.9));
-        customModel.getPriority().add(Clause.createIf("road_environment != FERRY", 0.8));
+        customModel.getPriority().add(Clause.If("road_class == PRIMARY", 0.5));
+        customModel.getPriority().add(Clause.ElseIf("road_class == SECONDARY", 0.7));
+        customModel.getPriority().add(Clause.Else(0.9));
+        customModel.getPriority().add(Clause.If("road_environment != FERRY", 0.8));
 
         SpeedAndAccessProvider speedAndAccessProvider = ExpressionBuilder.create(customModel, encodingManager,
                 encoder.getMaxSpeed(), avgSpeedEnc);
@@ -92,8 +92,8 @@ class ExpressionBuilderTest {
 
         // force integer value
         customModel = new CustomModel();
-        customModel.getPriority().add(Clause.createIf("road_class == PRIMARY", 1));
-        customModel.getPriority().add(Clause.createIf("road_class == SECONDARY", 0.9));
+        customModel.getPriority().add(Clause.If("road_class == PRIMARY", 1));
+        customModel.getPriority().add(Clause.If("road_class == SECONDARY", 0.9));
         speedAndAccessProvider = ExpressionBuilder.create(customModel, encodingManager,
                 encoder.getMaxSpeed(), avgSpeedEnc);
         assertEquals(1, speedAndAccessProvider.getPriority(primary, false), 0.01);
@@ -103,14 +103,14 @@ class ExpressionBuilderTest {
     @Test
     void testIllegalOrder() {
         CustomModel customModel = new CustomModel();
-        customModel.getPriority().add(Clause.createElse(0.9));
-        customModel.getPriority().add(Clause.createIf("road_environment != FERRY", 0.8));
+        customModel.getPriority().add(Clause.Else(0.9));
+        customModel.getPriority().add(Clause.If("road_environment != FERRY", 0.8));
         assertThrows(IllegalArgumentException.class, () -> ExpressionBuilder.create(customModel, encodingManager,
                 encoder.getMaxSpeed(), avgSpeedEnc));
 
         CustomModel customModel2 = new CustomModel();
-        customModel2.getPriority().add(Clause.createElseIf("road_environment != FERRY", 0.9));
-        customModel2.getPriority().add(Clause.createIf("road_class != PRIMARY", 0.8));
+        customModel2.getPriority().add(Clause.ElseIf("road_environment != FERRY", 0.9));
+        customModel2.getPriority().add(Clause.If("road_class != PRIMARY", 0.8));
         assertThrows(IllegalArgumentException.class, () -> ExpressionBuilder.create(customModel2, encodingManager,
                 encoder.getMaxSpeed(), avgSpeedEnc));
     }
