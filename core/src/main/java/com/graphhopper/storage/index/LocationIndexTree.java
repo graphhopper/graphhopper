@@ -31,6 +31,11 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.shapes.GHPoint3D;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.linearref.LinearLocation;
+import org.locationtech.jts.linearref.LocationIndexedLine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -645,98 +650,39 @@ public class LocationIndexTree implements LocationIndex {
      */
     public List<Snap> findNClosest(final double queryLat, final double queryLon,
                                    final EdgeFilter edgeFilter, double radius) {
-        // Return ALL results which are very close and e.g. within the GPS signal accuracy.
-        // Also important to get all edges if GPS point is close to a junction.
-        final double returnAllResultsWithin = distCalc.calcNormalizedDist(radius);
-
-        // implement a cheap priority queue via List, sublist and Collections.sort
-        final List<Snap> snaps = new ArrayList<>();
-        GHIntHashSet set = new GHIntHashSet();
-
-        // Doing 2 iterations means searching 9 tiles.
-        for (int iteration = 0; iteration < 2; iteration++) {
-            // should we use the return value of earlyFinish?
-            findNetworkEntries(queryLat, queryLon, set, iteration);
-
-            final GHBitSet exploredNodes = new GHTBitSet(new GHIntHashSet(set));
-            final EdgeExplorer explorer = graph.createEdgeExplorer(edgeFilter);
-
-            set.forEach((IntPredicate) edgeId -> {
-                new XFirstSearchCheck(queryLat, queryLon, exploredNodes, edgeFilter) {
+        Coordinate queryPoint = new Coordinate(queryLon, queryLat);
+        double rLon = (radius * 360.0 / preciseDistCalc.calcCircumference(queryLat));
+        double rLat = radius / DistanceCalcEarth.METERS_PER_DEGREE;
+        IntArrayList edges = new IntArrayList();
+        query(new BBox(queryLon - rLon, queryLon + rLon, queryLat - rLat, queryLat + rLat),
+                new Visitor() {
                     @Override
-                    protected double getQueryDistance() {
-                        // do not skip search if distance is 0 or near zero (equalNormedDelta)
-                        return Double.MAX_VALUE;
+                    public void onEdge(int edgeId) {
+                        edges.add(edgeId);
                     }
-
-                    @Override
-                    protected boolean check(int node, double normedDist, int wayIndex, EdgeIteratorState edge, Snap.Position pos) {
-                        if (normedDist < returnAllResultsWithin
-                                || snaps.isEmpty()
-                                || snaps.get(0).getQueryDistance() > normedDist) {
-                            // TODO: refactor below:
-                            // - should only add edges within search radius (below allows the
-                            // returning of a candidate outside search radius if it's the only
-                            // one). Removing this test would simplify it a lot and probably
-                            // match the expected behaviour (see method description)
-                            // - create Snap first and the add/set as required - clean up
-                            // the index tracking business.
-
-                            int index = -1;
-                            for (int snapIndex = 0; snapIndex < snaps.size(); snapIndex++) {
-                                Snap snap = snaps.get(snapIndex);
-                                // overwrite older snaps which are potentially more far away than returnAllResultsWithin
-                                if (snap.getQueryDistance() > returnAllResultsWithin) {
-                                    index = snapIndex;
-                                    break;
-                                }
-
-                                // avoid duplicate edges
-                                if (snap.getClosestEdge().getEdge() == edge.getEdge()) {
-                                    if (snap.getQueryDistance() < normedDist) {
-                                        // do not add current edge
-                                        return true;
-                                    } else {
-                                        // overwrite old edge with current
-                                        index = snapIndex;
-                                        break;
-                                    }
-                                }
-                            }
-
-                            Snap snap = new Snap(queryLat, queryLon);
-                            snap.setQueryDistance(normedDist);
-                            snap.setClosestNode(node);
-                            snap.setClosestEdge(edge.detach(false));
-                            snap.setWayIndex(wayIndex);
-                            snap.setSnappedPosition(pos);
-
-                            if (index < 0) {
-                                snaps.add(snap);
-                            } else {
-                                snaps.set(index, snap);
-                            }
-                        }
-                        return true;
-                    }
-                }.start(explorer, graph.getEdgeIteratorStateForKey(edgeId * 2).getBaseNode());
-                return true;
-            });
+                });
+        List<Snap> snaps = new ArrayList<>();
+        for (IntCursor cursor : edges) {
+            EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorStateForKey(cursor.value * 2).detach(false);
+            if (!edgeFilter.accept(edgeIteratorState))
+                continue;
+            PointList fullPL = edgeIteratorState.fetchWayGeometry(FetchMode.ALL);
+            LineString edgeGeometry = fullPL.toLineString(false);
+            edgeGeometry.setUserData(edgeIteratorState);
+            LocationIndexedLine locationIndexedLine = new LocationIndexedLine(edgeGeometry);
+            LinearLocation linearLocation = locationIndexedLine.project(queryPoint);
+            Coordinate projection = locationIndexedLine.extractPoint(linearLocation);
+            double dist = DistanceCalcEarth.DIST_EARTH.calcDist(queryLat, queryLon, projection.y, projection.x);
+            if (dist > radius)
+                continue;
+            Snap snap = new Snap(queryLat, queryLon);
+            snap.setClosestEdge(edgeIteratorState);
+            snap.setSnappedPosition(Snap.Position.EDGE);
+            snap.setSnappedPoint(new GHPoint3D(projection.y, projection.x, Double.NaN));
+            snap.setQueryDistance(dist);
+            snap.setWayIndex(linearLocation.getSegmentIndex() > fullPL.size() - 2 ? linearLocation.getSegmentIndex() - 1 : linearLocation.getSegmentIndex());
+            snaps.add(snap);
         }
-
-        // TODO: pass boolean argument for whether or not to sort? Can be expensive if not required.
-        Collections.sort(snaps, SNAP_COMPARATOR);
-
-        for (Snap snap : snaps) {
-            if (snap.isValid()) {
-                // denormalize distance
-                snap.setQueryDistance(distCalc.calcDenormalizedDist(snap.getQueryDistance()));
-                snap.calcSnappedPoint(distCalc);
-            } else {
-                throw new IllegalStateException("Invalid Snap should not happen here: " + snap);
-            }
-        }
-
         return snaps;
     }
 
