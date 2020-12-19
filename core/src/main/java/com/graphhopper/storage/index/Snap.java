@@ -133,10 +133,6 @@ public class Snap {
         return snappedPoint;
     }
 
-    public void setSnappedPoint(GHPoint3D snappedPoint) {
-        this.snappedPoint = snappedPoint;
-    }
-
     /**
      * Calculates the closet point on the edge from the query point.
      */
