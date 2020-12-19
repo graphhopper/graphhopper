@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.Locale;
 
 import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 
 public class RoutingExample {
@@ -147,8 +148,10 @@ public class RoutingExample {
         // and also the blog posts https://www.graphhopper.com/?s=customizable+routing
         CustomModel model = new CustomModel();
         req.putHint(CustomModel.KEY, model);
-        model.setMaxSpeedFallback(100d);
-        model.getPriority().add(If("road_class == PRIMARY", MULTIPLY, 0.5));
+        model.addToPriority(If("road_class == PRIMARY", MULTIPLY, 0.5));
+
+        // unconditional limit to 100km/h
+        model.addToPriority(If("true", LIMIT, 100));
 
         res = hopper.route(req);
         if (res.hasErrors())

@@ -378,20 +378,27 @@ class ExpressionBuilder {
         }
     }
 
-    public static double findMaxSpeed(CustomModel customModel, double maxSpeed) {
+    public static double findMaxSpeed(CustomModel customModel, final double maxSpeed) {
         double globalMin_maxSpeed = maxSpeed;
         double blockMax_maxSpeed = 0;
         for (Statement statement : customModel.getSpeed()) {
             // Lowering the max_speed estimate should not be hard for MULTIPLY too, but for now do this only for 'limit to'
             if (statement.getOperation() == Statement.Op.LIMIT) {
                 if (statement.getValue() > maxSpeed)
-                    throw new IllegalArgumentException("Can never apply 'limit to': " + statement.getValue() + " because maximum vehicle speed is " + maxSpeed);
-                blockMax_maxSpeed = Math.max(blockMax_maxSpeed, statement.getValue());
-                if (statement.getKeyword() == Statement.Keyword.ELSE
-                        || statement.getKeyword() == Statement.Keyword.IF && "true".equals(statement.getExpression())) {
+                    throw new IllegalArgumentException("Can never apply 'limit to': " + statement.getValue()
+                            + " because maximum vehicle speed is " + maxSpeed);
+
+                if (statement.getKeyword() == Statement.Keyword.ELSE) {
                     globalMin_maxSpeed = Math.min(blockMax_maxSpeed, maxSpeed);
-                    blockMax_maxSpeed = 0;
+                } else if (statement.getKeyword() == Statement.Keyword.IF) {
+                    if ("true".equals(statement.getExpression())) {
+                        blockMax_maxSpeed = globalMin_maxSpeed = Math.min(statement.getValue(), maxSpeed);
+                    } else {
+                        blockMax_maxSpeed = statement.getValue();
+                    }
                 }
+                if (globalMin_maxSpeed <= 0)
+                    throw new IllegalArgumentException("speed is always limited to 0. This must not be but results from " + statement);
             }
         }
 
