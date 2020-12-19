@@ -120,7 +120,7 @@ public class MapMatchingTest {
         }
 
         // create street names
-        assertEquals(Arrays.asList("Platnerstraße", "Platnerstraße", "Platnerstraße"),
+        assertEquals(Arrays.asList("Platnerstraße"),
                 fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 1.5);
 
@@ -132,8 +132,7 @@ public class MapMatchingTest {
         mapMatching.setMeasurementErrorSigma(5);
         mr = mapMatching.match(inputGPXEntries);
 
-        assertEquals(Arrays.asList("Windmühlenstraße", "Windmühlenstraße", "Bayrischer Platz",
-                "Bayrischer Platz", "Bayrischer Platz"), fetchStreets(mr.getEdgeMatches()));
+        assertEquals(Arrays.asList("Windmühlenstraße", "Bayrischer Platz"), fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), .1);
 
         ResponsePath route = graphHopper.route(new GHRequest(
@@ -218,8 +217,7 @@ public class MapMatchingTest {
         MapMatching mapMatching = new MapMatching(graphHopper, hints);
         mapMatching.setMeasurementErrorSigma(20);
         MatchResult mr = mapMatching.match(gpx.trk.get(0).getEntries());
-        assertEquals(Arrays.asList("Weinligstraße", "Weinligstraße", "Weinligstraße",
-                "Fechnerstraße", "Fechnerstraße"), fetchStreets(mr.getEdgeMatches()));
+        assertEquals(Arrays.asList("Weinligstraße", "Fechnerstraße"), fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 11); // TODO: this should be around 300m according to Google ... need to check
     }
 
@@ -237,9 +235,7 @@ public class MapMatchingTest {
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour2-with-loop.gpx"), Gpx.class);
         MatchResult mr = mapMatching.match(gpx.trk.get(0).getEntries());
         assertEquals(
-                Arrays.asList("Gustav-Adolf-Straße", "Gustav-Adolf-Straße", "Gustav-Adolf-Straße",
-                        "Leibnizstraße", "Hinrichsenstraße", "Hinrichsenstraße",
-                        "Tschaikowskistraße", "Tschaikowskistraße"),
+                Arrays.asList("Gustav-Adolf-Straße", "Leibnizstraße", "Hinrichsenstraße", "Tschaikowskistraße"),
                 fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 5);
     }
@@ -255,10 +251,9 @@ public class MapMatchingTest {
         mapMatching.setMeasurementErrorSigma(50);
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour-with-loop.gpx"), Gpx.class);
         MatchResult mr = mapMatching.match(gpx.trk.get(0).getEntries());
-        assertEquals(Arrays.asList("Jahnallee, B 87, B 181", "Jahnallee, B 87, B 181",
-                "Jahnallee, B 87, B 181", "Jahnallee, B 87, B 181", "Funkenburgstraße",
+        assertEquals(Arrays.asList("Jahnallee, B 87, B 181", "Funkenburgstraße",
                 "Gustav-Adolf-Straße", "Tschaikowskistraße", "Jahnallee, B 87, B 181",
-                "Lessingstraße", "Lessingstraße"), fetchStreets(mr.getEdgeMatches()));
+                "Lessingstraße"), fetchStreets(mr.getEdgeMatches()));
     }
 
     /**
@@ -279,18 +274,12 @@ public class MapMatchingTest {
         // with large measurement error, we expect no U-turn
         mapMatching.setMeasurementErrorSigma(50);
         MatchResult mr = mapMatching.match(gpx.trk.get(0).getEntries());
-
-        assertEquals(Arrays.asList("Gustav-Adolf-Straße", "Gustav-Adolf-Straße", "Funkenburgstraße",
-                "Funkenburgstraße"), fetchStreets(mr.getEdgeMatches()));
+        assertEquals(Arrays.asList("Gustav-Adolf-Straße", "Funkenburgstraße"), fetchStreets(mr.getEdgeMatches()));
 
         // with small measurement error, we expect the U-turn
         mapMatching.setMeasurementErrorSigma(10);
         mr = mapMatching.match(gpx.trk.get(0).getEntries());
-
-        assertEquals(
-                Arrays.asList("Gustav-Adolf-Straße", "Gustav-Adolf-Straße", "Funkenburgstraße",
-                        "Funkenburgstraße", "Funkenburgstraße", "Funkenburgstraße"),
-                fetchStreets(mr.getEdgeMatches()));
+        assertEquals(Arrays.asList("Gustav-Adolf-Straße", "Funkenburgstraße"), fetchStreets(mr.getEdgeMatches()));
     }
 
     static List<String> fetchStreets(List<EdgeMatch> emList) {
@@ -300,6 +289,7 @@ public class MapMatchingTest {
         for (EdgeMatch em : emList) {
             String str = em.getEdgeState().getName();// + ":" + em.getEdgeState().getBaseNode() +
             // "->" + em.getEdgeState().getAdjNode();
+            if (list.size() == 0 || !list.get(list.size()-1).equals(str))
             list.add(str);
             if (prevNode >= 0) {
                 if (em.getEdgeState().getBaseNode() != prevNode) {
