@@ -148,132 +148,134 @@ And there are others that take on a numeric value, like:
 
 As mentioned above, the custom weighting function has three parameters that you can adjust: speed, priority and
 distance_influence. You can set up rules that determine these parameters from the edge's properties. A set of such rules
-is called a 'custom model' and it is written in a dedicated YAML format. We will now see how the cost function parameters
-can be influenced by the different fields of such a custom model.
+is called a 'custom model' and it is written in a dedicated YAML or JSON format. We will now see how the cost function 
+parameters can be influenced by the different fields of such a custom model.
   
 #### Customizing `speed`
 
-For every road segment a default speed is inherited from the base vehicle, but you have multiple options to adjust it.
-The first thing you can do is rescaling the default speeds using the `speed_factor` section. For example this is how you
-can reduce the speed of every road segment that has the value MOTORWAY for the category 'road_class' to fifty percent of 
+For every road segment a default speed is inherited from the base vehicle and you have multiple options to adjust it.
+The first thing you can do is rescaling the default speeds using `multiply with`. For example this is how you
+can reduce the speed of every road segment that has the value `MOTORWAY` for the category 'road_class' to fifty percent of 
 the default speed that is normally used by the base vehicle for this road class:
 ```yaml
-speed_factor:
-  road_class == MOTORWAY: 0.5
+speed:
+  - if: road_class == MOTORWAY
+    multiply with: 0.5
 ```
 
-You can also change the speed factor for multiple road classes like this
+You can also change the speed in case of different road classes like this
 ```yaml
-speed_factor:
-  road_class == MOTORWAY: 0.5
-  road_class == PRIMARY || road_class == TERTIARY: 0.7
+speed:
+  - if: road_class == MOTORWAY
+    multiply with: 0.5
+  - if: road_class == PRIMARY || road_class == TERTIARY
+    multiply with: 0.7
 ```
 
-The OR-operator `||` means if one of the expressions is true then the value `0.7` is used.
-Or you can use multiple categories to influence the speed factor:
-
-```yaml
-speed_factor:
-  road_class == MOTORWAY: 0.5
-  road_environment == TUNNEL: 0.8
-```
-
-There are other categories like `get_off_bike` that are of boolean type. You set the speed factor like this:
+The OR-operator `||` means if the left **or** right expressions is true then the value `0.7` is used.
+You can also use multiple categories in the expressions:
 
 ```yaml
-speed_factor:
-  get_off_bike: 0.6
+speed:
+  - if: "road_class == MOTORWAY",     multiply with: 0.5
+  - if: "road_environment == TUNNEL", multiply with: 0.8
 ```
 
-which means that for edges with `get_off_bike==true` the speed factor will be `0.6` and otherwise it will be `0.9`.
-You can skip any of these values to retain the default.
+Here also quotes around every expression and a comma is used to write one statement per YAML line. 
+Which looks more like JSON which is also possible for server-side profiles and the only way to write custom models at 
+query time:
+
+```json
+{ "speed": [
+    { "if": "road_class == MOTORWAY", "multiply with": 0.5 },
+    { "if": "road_environment == TUNNEL", "multiply with": 0.8 }
+  ]
+}
+```
+
+There are other categories like `get_off_bike` that are of boolean type. You use them via:
+
+```yaml
+speed:
+  - if: get_off_bike
+    multiply with: 0.6
+```
+
+which means that for edges with `get_off_bike==true` the speed factor will be `0.6`.
 
 For encoded values with numeric values, like `max_width` you should not use "equality" or "inequality" but the
 comparison operators "bigger" `>`, "bigger or equals" `>=`, "smaller" `<` or "smaller or equals" `<=`, e.g.:
 ```yaml
-speed_factor:
-  max_width < 2.5: 0.8
+speed:
+  - if: "max_width < 2.5", multiply with: 0.8
 ``` 
-which means that for all edges with `max_width` smaller than `2.5m` the speed factor is `0.8`.
+which means that for all edges with `max_width` smaller than `2.5m` the speed is multiplied by `0.8`.
 
-Another way to change the speed is using the `max_speed` section, for example:
+Another way to change the speed is using `limit to`:
 ```yaml
-max_speed:
-  surface != GRAVEL: 60
+speed:
+  - if: "surface != GRAVEL", limit to: 60
 ```
 
 This implies that on all road segments with no `GRAVEL` value for `surface` the speed will be at most `60km/h`,
-regardless of the default speed of this road segment or the adjustments made by the `speed_factor` section. Just like
-with `speed_factor` you can use multiple category values and different categories in the expressions of the `max_speed`
-entry. If multiple rules match for a given edge the most restrictive rule will determine the speed, i.e. the minimum
-`max_speed` will be applied.
+regardless of the default speed of this road segment or the previous `multiply with` statements. Just like
+with `multiply with` you can use multiple category values and different categories in the expressions for `limit to`. 
+If multiple statements match for a given edge the most restrictive statement will determine the speed.
 
-Values for `max_speed` must be in the range `[0,max_vehicle_speed]` where `max_vehicle_speed` is the maximum speed that
-is set for the base vehicle, and you cannot change.
+Values for `limit to` must be in the range `[0, max_vehicle_speed]` where `max_vehicle_speed` is the maximum speed that
+is set for the base vehicle, and you cannot change it.
 
-#### `first_match`
+An unconditional statement can be used as the last statement to limit the speed to a certain value under all conditions:
+```yaml
+speed:
+  - if: "true", limit to: 90
+```
 
-If a road segment matches multiple expressions the speed factor values will be multiplied. In this example:
+This means that the speed is at most `90km/h` for any road segments regardless of its properties.
+
+#### `else`
+
+Every `if` statement can have an `else` statement if the condition is `false`. 
+
+#### `else if`
+
+If a road segment matches multiple expressions the speed will be multiplied. In this example:
 
 ```yaml
 speed_factor:
-  road_class == MOTORWAY: 0.5
-  road_environment == TUNNEL: 0.8
+- if: road_class == MOTORWAY
+  multiply with: 0.5
+- if: road_environment == TUNNEL
+  multiply with: 0.8
 ```
 
-the speed factor of a road segment that has `road_class == MOTORWAY` will be `0.5`, the speed factor of a road segment that
-additionally has
-`road_environment == TUNNEL` will be `0.4` and the speed factor of a road segment that has `road_class == SECONDARY` and
-`road_environment == TUNNEL` will be `0.8`. You can avoid the multiplication by using the `first_match`-directive:
+the speed of a road segment that has `road_class == MOTORWAY` will be multiplied by `0.5`, for a road segment
+that additionally has `road_environment == TUNNEL` it will be multiplied by `0.4` and for a road segment that has
+`road_class == SECONDARY` and `road_environment == TUNNEL` it will be multiplied by `0.8`. You can avoid the 
+multiplication of 0.5 and 0.8 by using `else if`:
 
 ```yaml
 speed_factor:
-  first_match:
-    road_class == MOTORWAY: 0.5
-    road_environment == TUNNEL: 0.8
+- if: road_class == MOTORWAY
+  multiply with: 0.5
+- else if: road_environment == TUNNEL
+  multiply with: 0.8
 ```
 
-Now even if a road segment fulfills both conditions only the first will be used and no multiplication happens. If you
-know a programming language then usually if-clauses are used and expressions under the `first_match`-directive are
-if-then-else-if-clauses. It can be used to reduce complexity, e.g. this:
-
-```yaml
-speed_factor:
-  surface == SAND: 0.3
-  road_class == MOTORWAY: 0.9
-  road_class != MOTORWAY && road_environment == TUNNEL: 0.5
-  road_class != MOTORWAY && road_environment != TUNNEL: 0.7
-```
-
-can be converted to:
-
-```yaml
-speed_factor:
-  surface == SAND: 0.3
-  first_match:
-    road_class == MOTORWAY: 0.9
-    road_environment == TUNNEL: 0.5
-    DEFAULT: 0.7
-```
-
-Which means that the condition `surface == SAND` is always checked. And the expression `road_environment == TUNNEL`
-is only checked if `road_class == MOTORWAY` is **not** `true`. The last expression (with a value of `0.7`) is the
-unconditional `DEFAULT`-directive and is usually used in the last expression of the `first_match`-directive. Multiple
-`first_match`-directives are possible via appending `_1` or `_2` like `first_match_1`.
+Now even if a road segment fulfills both conditions only the first will be used (and evaluated) and no multiplication 
+happens.
 
 #### `areas`
 
 You can also modify the speed for all road segments in a certain area. To do this first add some areas to the `areas`
-section of the custom model and then use this name to set a `speed_factor` or `max_speed` for this area. In the following
-example we set the `speed_factor` of an area called `custom1` to `0.7`. For `max_speed` it works the same way. All area
-names need to be prefixed with `in_area_`.
+section of the custom model and then use this name in an expression. In the following example we multiply the speed
+for an area called `custom1` with `0.7` and limit it to 50km/h. All area names need to be prefixed with
+`in_area_`.
 
 ```yaml
-speed_factor:
-  in_area_custom1: 0.7
-
-max_speed:
-  in_area_custom1: 50
+speed:
+- if: "in_area_custom1", multiply with: 0.7
+- if: "in_area_custom1", limit to: 50
 
 areas:
   custom1:
@@ -291,14 +293,8 @@ areas:
 ```
 
 The areas are given in GeoJson format. Note that JSON can directly copied into YAML without further modifications.
-Using the `areas` feature you can also block entire areas, but you should rather use the `priority` section for this (see below).
-
-The last custom model field you can to customize the speed is the `max_speed_fallback`. By default this is set to the
-maximum speed of the base vehicle. It allows setting a global maximum for the speeds, so for example:
-```yaml
-max_speed_fallback: 50
-```
-means that the speed is at most `50km/h` for any road segments regardless of its properties.
+Using the `areas` feature you can also block entire areas, but you should rather use the `priority` section for this 
+(see below).
 
 #### Customizing `priority`
 
@@ -309,16 +305,18 @@ But do not forget that GraphHopper not only calculates the optimal route, but al
 drive (or walk) this route. Changing the speeds also means changing the resulting travelling times, but `priority`
 allows you to alter the route calculation *without* changing the travel time of a given route.
 
-By default the priority is `1` for every edge,
-so without doing anything it does not affect the weight. However, changing the priority for certain kinds of roads yields
-a relative weight difference depending on the edges' properties.
+By default the priority is `1` for every edge, so without doing anything it does not affect the weight. However, 
+changing the priority for certain kinds of roads yields a relative weight difference depending on the edges' properties.
 
-You change the `priority` very much like you change the `speed_factor`, so
+You change the `priority` very much like you change the `speed`, so
 ```yaml
 priority:
-  road_class == MOTORWAY: 0.5
-  road_class == SECONDARY: 0.9
-  road_environment == TUNNEL: 0.1
+- if: road_class == MOTORWAY
+  multiply with: 0.5
+- else if: road_class == SECONDARY
+  multiply with: 0.9
+- if: road_environment == TUNNEL
+  multiply with: 0.1
 ```
 
 means that road segments with `road_class==MOTORWAY` and `road_environment==TUNNEL` get priority `0.5*0.1=0.05` and those
@@ -329,23 +327,28 @@ mean that this kind of road segments shall be preferred. To prefer certain roads
 others:
 ```yaml
 priority: 
-  road_class != CYCLEWAY: 0.8
+- if: road_class != CYCLEWAY
+  multiply with: 0.8
 ```
-means decreasing the priority for all road_classes *except* cycleways. Just like we saw for `speed_factor` and
-`max_speed` you can also adjust the priority for road segments in a certain area. It works the same way:
+means decreasing the priority for all road_classes *except* cycleways. Just like we saw for `speed` you can also adjust
+the priority for road segments in a certain area. It works the same way:
 
 ```yaml
 priority:
-  in_area_custom1: 0.7
+- if: in_area_custom1
+  multiply with: 0.7
 ```
 
 To block an entire area completely set the priority value to `0`. Some other useful encoded values to restrict access
 to certain roads depending on your vehicle dimensions are the following:
 ```yaml
 priority:
-  max_width < 2.5: 0
-  max_length < 10: 0
-  max_weight < 3.5: 0
+- if: max_width < 2.5
+  multiply with: 0
+- if: max_length < 10
+  multiply with: 0
+- if: max_weight < 3.5
+  multiply with: 0
 ```
 which means that the priority for all road segments that allow a maximum vehicle width of `2.5m`, a maximum vehicle
 length of `10m` or a maximum vehicle weight of `3.5tons` is zero, i.e. these "tight" road segments are blocked.
@@ -405,19 +408,14 @@ profiles:
 ``` 
 
 You do not necessarily need to define a proper custom model here and instead you can also set `custom_model_file: empty`
-(which means an empty custom model containing no rules will be used on the server-side). You then use the `/route-custom`
+(which means an empty custom model containing no statements will be used on the server-side). You then use the `/route-custom`
 (*not* `/route`) endpoint and send your custom model (using the format explained above, but as JSON) with the request
 body. The model you send will be merged with the profile you select using the `profile` parameter (which has to be
 a custom profile). For the Hybrid mode (not only "pure" Dijkstra or A*) the merge process has to ensure that all weights
 resulting from the merged custom model are equal or larger than those of the base profile that was used during the
 preparation process. This is necessary to maintain the optimality of the underlying routing algorithm.
-Therefore we use the following rules to merge the two models:
+Therefore we merge the two models via:
 
- * all newly submitted expressions are appended to the existing custom profile.
- * for these per-request modifications the limitation for `speed_factor` and `priority` apply that they need to be in
-   the range of `[0, 1]` otherwise an error will be thrown
- * if an existing expression is included the values are multiplied or replaced:
-   * for speed_factor: an existing factor is multiplied with the factor specified in the request
-   * for max_speed: an existing speed value is replaced if it is higher than the speed value specified in the request.
-     If it is smaller an exception is thrown.
-   * for comparisons like `max_weight < 3.5: 0` merge will be only accepted if the factor in the query is 0.
+ * all expressions in the custom model of the query are appended to the existing custom model.
+ * for the custom model of the query all values of `multiply with` need to be within the range of `[0, 1]` otherwise an
+   error will be thrown
