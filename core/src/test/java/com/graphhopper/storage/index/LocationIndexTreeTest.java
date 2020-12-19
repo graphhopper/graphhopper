@@ -19,6 +19,8 @@ package com.graphhopper.storage.index;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.coll.GHIntHashSet;
+import com.graphhopper.geohash.KeyAlgo;
+import com.graphhopper.geohash.SpatialKeyAlgo;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Directory;
@@ -40,6 +42,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class LocationIndexTreeTest extends AbstractLocationIndexTester {
     protected final EncodingManager encodingManager = EncodingManager.create("car");
+    final PointList points = new PointList(10, false);
 
     @Override
     public LocationIndexTree createIndex(Graph g, int resolution) {
@@ -451,4 +454,60 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
             assertEquals(i, snap.getClosestNode());
         }
     }
+
+    @Test
+    public void testBresenhamBug() {
+        LocationIndexTree.calcPoints(0.5, -0.5, -0.6, 1.6, -1, -1, 0.75, 1.3, (lat, lon) -> points.add(lat, lon));
+        assertEquals(Helper.createPointList(0.575, -0.87, -0.175, 0.43, -0.925, 1.73), points);
+    }
+
+    @Test
+    public void testBresenhamHorizontal() {
+        LocationIndexTree.calcPoints(.5, -.5, .5, 1, -1, -1, 0.6, 0.4, (lat, lon) -> points.add(lat, lon));
+        assertEquals(Helper.createPointList(.26, -.56, .26, -0.16, .26, .24, .26, .64, .26, 1.04), points);
+    }
+
+    @Test
+    public void testBresenhamVertical() {
+        LocationIndexTree.calcPoints(-.5, .5, 1, 0.5, 0, 0, 0.4, 0.6, (lat, lon) -> points.add(lat, lon));
+        assertEquals(Helper.createPointList(-0.36, .06, 0.04, 0.06, 0.44, 0.06, 0.84, 0.06), points);
+    }
+
+    @Test
+    public void testRealBresenham() {
+        int parts = 4;
+        int bits = (int) (Math.log(parts * parts) / Math.log(2));
+        double minLon = -1, maxLon = 1.6;
+        double minLat = -1, maxLat = 0.5;
+        final KeyAlgo keyAlgo = new SpatialKeyAlgo(bits).setBounds(minLon, maxLon, minLat, maxLat);
+        double deltaLat = (maxLat - minLat) / parts;
+        double deltaLon = (maxLon - minLon) / parts;
+        final ArrayList<Long> keys = new ArrayList<>();
+        keys.clear();
+        LocationIndexTree.calcPoints(.3, -.3, -0.2, 0.2, minLat, minLon, deltaLat, deltaLon, (lat1, lon1) -> keys.add(keyAlgo.encode(lat1, lon1))
+        );
+        assertEquals(Arrays.asList(11L, 9L), keys);
+
+        keys.clear();
+        LocationIndexTree.calcPoints(.3, -.1, -0.2, 0.4, minLat, minLon, deltaLat, deltaLon, (lat, lon) -> keys.add(keyAlgo.encode(lat, lon))
+        );
+
+        // 11, 9, 12
+        assertEquals(Arrays.asList(11L, 12L), keys);
+
+        keys.clear();
+        LocationIndexTree.calcPoints(.5, -.5, -0.1, 0.9, minLat, minLon, deltaLat, deltaLon, (lat, lon) -> keys.add(keyAlgo.encode(lat, lon))
+        );
+        // precise: 10, 11, 14, 12
+        assertEquals(Arrays.asList(10L, 11L, 12L), keys);
+    }
+
+    @Test
+    public void testBresenhamToLeft() {
+        LocationIndexTree.calcPoints(
+                47.57383, 9.61984,
+                47.57382, 9.61890, 47, 9, 0.00647, 0.00964, points::add);
+        assertEquals(points.toString(), 1, points.getSize());
+    }
+
 }

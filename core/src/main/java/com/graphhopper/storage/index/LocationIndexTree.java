@@ -764,7 +764,7 @@ public class LocationIndexTree implements LocationIndex {
                       final double lat1, final double lon1,
                       final double lat2, final double lon2) {
             if (!distCalc.isCrossBoundary(lon1, lon2)) {
-                BresenhamLine.calcPoints(lat1, lon1, lat2, lon2, graph.getBounds().minLat, graph.getBounds().minLon, deltaLat, deltaLon,
+                calcPoints(lat1, lon1, lat2, lon2, graph.getBounds().minLat, graph.getBounds().minLon, deltaLat, deltaLon,
                         (lat, lon) -> {
                             long key = keyAlgo.encode(lat, lon);
                             long keyPart = createReverseKey(key);
@@ -886,6 +886,24 @@ public class LocationIndexTree implements LocationIndex {
             }
             return intPointer;
         }
+    }
+
+    /**
+     * Calls the Bresenham algorithm so that it takes its input as points within tiles,
+     * and also calculates its output as one representative point per tile.
+     */
+    static void calcPoints(final double lat1, final double lon1,
+                                  final double lat2, final double lon2,
+                                  final double offsetLat, final double offsetLon, final double deltaLat, final double deltaLon, final BresenhamLine.PointConsumer pointConsumer) {
+        // round to make results of bresenham closer to correct solution
+        int y1 = (int) ((lat1 - offsetLat) / deltaLat);
+        int x1 = (int) ((lon1 - offsetLon) / deltaLon);
+        int y2 = (int) ((lat2 - offsetLat) / deltaLat);
+        int x2 = (int) ((lon2 - offsetLon) / deltaLon);
+        BresenhamLine.bresenham(y1, x1, y2, x2, (lat, lon) -> {
+            // +.1 to move more near the center of the tile
+            pointConsumer.set((lat + .1) * deltaLat + offsetLat, (lon + .1) * deltaLon + offsetLon);
+        });
     }
 
     /**

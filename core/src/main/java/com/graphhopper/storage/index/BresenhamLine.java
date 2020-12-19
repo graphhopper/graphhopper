@@ -30,9 +30,6 @@ package com.graphhopper.storage.index;
  * @author Peter Karich
  */
 public class BresenhamLine {
-    public static void calcPoints(int y1, int x1, int y2, int x2, PointConsumer consumer) {
-        bresenham(y1, x1, y2, x2, consumer);
-    }
 
     public static void bresenham(int y1, int x1, int y2, int x2, PointConsumer consumer) {
         boolean latIncreasing = y1 < y2;
@@ -57,23 +54,6 @@ public class BresenhamLine {
                 y1 += sLat;
             }
         }
-    }
-
-    /**
-     * Calls the Bresenham algorithm but make it working for double values
-     */
-    public static void calcPoints(final double lat1, final double lon1,
-                                  final double lat2, final double lon2,
-                                  final double offsetLat, final double offsetLon, final double deltaLat, final double deltaLon, final PointConsumer pointConsumer) {
-        // round to make results of bresenham closer to correct solution
-        int y1 = (int) ((lat1 - offsetLat) / deltaLat);
-        int x1 = (int) ((lon1 - offsetLon) / deltaLon);
-        int y2 = (int) ((lat2 - offsetLat) / deltaLat);
-        int x2 = (int) ((lon2 - offsetLon) / deltaLon);
-        bresenham(y1, x1, y2, x2, (lat, lon) -> {
-            // +.1 to move more near the center of the tile
-            pointConsumer.set((lat + .1) * deltaLat + offsetLat, (lon + .1) * deltaLon + offsetLon);
-        });
     }
 
     /**
