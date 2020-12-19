@@ -225,36 +225,32 @@ public class MapMatching {
         Coordinate queryPoint = new Coordinate(queryLon, queryLat);
         double rLon = (measurementErrorSigma * 360.0 / DistanceCalcEarth.DIST_EARTH.calcCircumference(queryLat));
         double rLat = measurementErrorSigma / DistanceCalcEarth.METERS_PER_DEGREE;
-        IntArrayList edges = new IntArrayList();
+        List<Snap> snaps = new ArrayList<>();
         locationIndex.query(new BBox(queryLon - rLon, queryLon + rLon, queryLat - rLat, queryLat + rLat),
                 new LocationIndex.Visitor() {
                     @Override
                     public void onEdge(int edgeId) {
-                        edges.add(edgeId);
+                        EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeId * 2).detach(false);
+                        if (!edgeFilter.accept(edge))
+                            return;
+                        PointList fullPL = edge.fetchWayGeometry(FetchMode.ALL);
+                        LineString edgeGeometry = fullPL.toLineString(false);
+                        edgeGeometry.setUserData(edge);
+                        LocationIndexedLine locationIndexedLine = new LocationIndexedLine(edgeGeometry);
+                        LinearLocation linearLocation = locationIndexedLine.project(queryPoint);
+                        Coordinate projection = locationIndexedLine.extractPoint(linearLocation);
+                        double dist = DistanceCalcEarth.DIST_EARTH.calcDist(queryLat, queryLon, projection.y, projection.x);
+                        if (dist > measurementErrorSigma)
+                            return;
+                        Snap snap = new Snap(queryLat, queryLon);
+                        snap.setClosestEdge(edge);
+                        snap.setSnappedPosition(Snap.Position.EDGE);
+                        snap.setWayIndex(linearLocation.getSegmentIndex() > fullPL.size() - 2 ? linearLocation.getSegmentIndex() - 1 : linearLocation.getSegmentIndex());
+                        snap.calcSnappedPoint(DistanceCalcEarth.DIST_EARTH);
+                        snap.setQueryDistance(dist);
+                        snaps.add(snap);
                     }
                 });
-        List<Snap> snaps = new ArrayList<>();
-        for (IntCursor cursor : edges) {
-            EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorStateForKey(cursor.value * 2).detach(false);
-            if (!edgeFilter.accept(edgeIteratorState))
-                continue;
-            PointList fullPL = edgeIteratorState.fetchWayGeometry(FetchMode.ALL);
-            LineString edgeGeometry = fullPL.toLineString(false);
-            edgeGeometry.setUserData(edgeIteratorState);
-            LocationIndexedLine locationIndexedLine = new LocationIndexedLine(edgeGeometry);
-            LinearLocation linearLocation = locationIndexedLine.project(queryPoint);
-            Coordinate projection = locationIndexedLine.extractPoint(linearLocation);
-            double dist = DistanceCalcEarth.DIST_EARTH.calcDist(queryLat, queryLon, projection.y, projection.x);
-            if (dist > measurementErrorSigma)
-                continue;
-            Snap snap = new Snap(queryLat, queryLon);
-            snap.setClosestEdge(edgeIteratorState);
-            snap.setSnappedPosition(Snap.Position.EDGE);
-            snap.setWayIndex(linearLocation.getSegmentIndex() > fullPL.size() - 2 ? linearLocation.getSegmentIndex() - 1 : linearLocation.getSegmentIndex());
-            snap.calcSnappedPoint(DistanceCalcEarth.DIST_EARTH);
-            snap.setQueryDistance(dist);
-            snaps.add(snap);
-        }
         return snaps;
     }
 
