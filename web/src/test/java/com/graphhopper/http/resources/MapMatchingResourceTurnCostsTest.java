@@ -49,7 +49,7 @@ import static org.junit.Assert.*;
  * @author easbar
  */
 @ExtendWith(DropwizardExtensionsSupport.class)
-public class MapMatchingResourceProfileTest {
+public class MapMatchingResourceTurnCostsTest {
 
     private static final String DIR = "../target/mapmatchingtest";
     public static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());

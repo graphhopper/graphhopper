@@ -36,6 +36,7 @@ import org.locationtech.jts.io.WKTReader;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
@@ -53,10 +54,12 @@ public class MapMatchingResourceTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "car").
+                putObject("graph.flag_encoders", "car,bike").
                 putObject("datareader.file", "../map-matching/files/leipzig_germany.osm.pbf").
                 putObject("graph.location", DIR).
-                setProfiles(Collections.singletonList(new Profile("profile").setVehicle("car").setWeighting("fastest")));
+                setProfiles(Arrays.asList(
+                        new Profile("fast_car").setVehicle("car").setWeighting("fastest"),
+                        new Profile("fast_bike").setVehicle("bike").setWeighting("fastest")));
         return config;
     }
 
@@ -67,7 +70,7 @@ public class MapMatchingResourceTest {
 
     @Test
     public void testGPX() {
-        final Response response = app.client().target("http://localhost:8080/match")
+        final Response response = app.client().target("http://localhost:8080/match?profile=fast_car")
                 .request()
                 .buildPost(Entity.xml(getClass().getResourceAsStream("/tour2-with-loop.gpx")))
                 .invoke();
@@ -85,8 +88,27 @@ public class MapMatchingResourceTest {
     }
 
     @Test
+    public void testBike() throws ParseException {
+        WKTReader wktReader = new WKTReader();
+        final Response response = app.client().target("http://localhost:8080/match?profile=fast_bike")
+                .request()
+                .buildPost(Entity.xml(getClass().getResourceAsStream("tour2-with-loop.gpx")))
+                .invoke();
+        assertEquals("no success", 200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode path = json.get("paths").get(0);
+
+        LineString expectedGeometry = (LineString) wktReader.read("LINESTRING (12.3607 51.34365, 12.36418 51.34443, 12.36379 51.34538, 12.36082 51.34471, 12.36188 51.34278)");
+        LineString actualGeometry = WebHelper.decodePolyline(path.get("points").asText(), 10, false).toLineString(false);
+        assertEquals(DiscreteHausdorffDistance.distance(expectedGeometry, actualGeometry), 0.0, 1E-4);
+
+        // ensure that is actually also is bike! (slower than car)
+        assertEquals(162, path.get("time").asLong() / 1000f, 1);
+    }
+
+    @Test
     public void testGPX10() {
-        final Response response = app.client().target("http://localhost:8080/match")
+        final Response response = app.client().target("http://localhost:8080/match?profile=fast_car")
                 .request()
                 .buildPost(Entity.xml(getClass().getResourceAsStream("gpxv1_0.gpx")))
                 .invoke();
@@ -95,7 +117,7 @@ public class MapMatchingResourceTest {
 
     @Test
     public void testEmptyGPX() {
-        final Response response = app.client().target("http://localhost:8080/match")
+        final Response response = app.client().target("http://localhost:8080/match?profile=fast_car")
                 .request()
                 .buildPost(Entity.xml(getClass().getResourceAsStream("test-only-wpt.gpx")))
                 .invoke();
