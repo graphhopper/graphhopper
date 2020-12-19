@@ -86,7 +86,7 @@ public class MvtResourceTest {
         JtsLayer layer = layerValues.values().iterator().next();
         MultiLineString multiLineString = (MultiLineString) layer.getGeometries().iterator().next();
         assertEquals(42, multiLineString.getCoordinates().length);
-        Map map = (Map) multiLineString.getUserData();
+        Map map = attributes(multiLineString);
         assertEquals("Camì de les Pardines", map.get("name"));
     }
 
@@ -98,21 +98,17 @@ public class MvtResourceTest {
         JtsMvt result = MvtReader.loadMvt(is, new GeometryFactory(), new TagKeyValueMapConverter());
         final Map<String, JtsLayer> layerValues = result.getLayersByName();
         JtsLayer layer = layerValues.values().iterator().next();
-        List layerGeoList = (List) layer.getGeometries();
-        Geometry geometry = (Geometry) layerGeoList.get(0);
-        assertEquals(18, geometry.getCoordinates().length);
-        assertEquals(21, layerGeoList.size());
+        assertEquals(21, layer.getGeometries().size());
 
-        Map map = (Map) ((Geometry) layerGeoList.get(0)).getUserData();
-        assertTrue(Double.isInfinite((Double) map.get("max_speed")));
-        assertEquals("residential", map.get("road_class"));
+        Geometry geometry = layer.getGeometries().stream().
+                filter(g -> attributes(g).get("name").equals("Avinguda de Tarragona, CG-1"))
+                .findFirst().get();
+        assertEquals("road", attributes(geometry).get("road_environment"));
+        assertEquals(50.0, attributes(geometry).get("max_speed"));
+        assertEquals("primary", attributes(geometry).get("road_class"));
+    }
 
-        map = (Map) ((Geometry) layerGeoList.get(1)).getUserData();
-        assertEquals(50, (Double) map.get("max_speed"), .1);
-        assertEquals("secondary", map.get("road_class"));
-        assertEquals("road", map.get("road_environment"));
-
-        map = (Map) ((Geometry) layerGeoList.get(12)).getUserData();
-        assertEquals("bridge", map.get("road_environment"));
+    private Map<String, Object> attributes(Geometry g) {
+        return (Map<String, Object>) g.getUserData();
     }
 }
