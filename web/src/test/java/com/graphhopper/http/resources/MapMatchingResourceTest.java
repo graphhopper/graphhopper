@@ -71,7 +71,6 @@ public class MapMatchingResourceTest {
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode path = json.get("paths").get(0);
 
-        assertEquals(5, path.get("instructions").size());
         assertEquals(5, WebHelper.decodePolyline(path.get("points").asText(), 10, false).size());
         assertEquals(106.15, path.get("time").asLong() / 1000f, 0.1);
         assertEquals(106.15, json.get("map_matching").get("time").asLong() / 1000f, 0.1);

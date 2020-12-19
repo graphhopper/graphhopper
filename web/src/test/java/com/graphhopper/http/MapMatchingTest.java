@@ -124,13 +124,6 @@ public class MapMatchingTest {
                 fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 1.5);
 
-        ResponsePath matchGHRsp =
-                new PathMerger(mr.getGraph(), mr.getWeighting()).doWork(PointList.EMPTY, Collections.singletonList(mr.getMergedPath()), graphHopper.getEncodingManager(), translationMap.get("en"));
-        InstructionList il = matchGHRsp.getInstructions();
-
-        assertEquals(il.toString(), 2, il.size());
-        assertEquals("Platnerstraße", il.get(0).getName());
-
         ResponsePath route1 = graphHopper.route(new GHRequest(
                 new GHPoint(51.33099, 12.380267),
                 new GHPoint(51.330531, 12.380396))
@@ -142,15 +135,6 @@ public class MapMatchingTest {
         assertEquals(Arrays.asList("Windmühlenstraße", "Windmühlenstraße", "Bayrischer Platz",
                 "Bayrischer Platz", "Bayrischer Platz"), fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), .1);
-
-        matchGHRsp =
-                new PathMerger(mr.getGraph(), mr.getWeighting()).doWork(PointList.EMPTY, Collections.singletonList(mr.getMergedPath()),
-                        graphHopper.getEncodingManager(), translationMap.get("en"));
-        il = matchGHRsp.getInstructions();
-
-        assertEquals(il.toString(), 3, il.size());
-        assertEquals("Windmühlenstraße", il.get(0).getName());
-        assertEquals("Bayrischer Platz", il.get(1).getName());
 
         ResponsePath route = graphHopper.route(new GHRequest(
                 new GHPoint(51.377781, 12.338333),
