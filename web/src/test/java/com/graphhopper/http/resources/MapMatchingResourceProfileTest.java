@@ -32,6 +32,10 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.locationtech.jts.algorithm.distance.DiscreteHausdorffDistance;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
@@ -124,7 +128,9 @@ public class MapMatchingResourceProfileTest {
         assertEquals(200, response.getStatus());
         JsonNode path = json.get("paths").get(0);
 
-        assertEquals(5, WebHelper.decodePolyline(path.get("points").asText(), 10, false).size());
+        LineString expectedGeometry = readWktLineString("LINESTRING (12.3607 51.34365, 12.36418 51.34443, 12.36379 51.34538, 12.36082 51.34471, 12.36188 51.34278)");
+        LineString actualGeometry = WebHelper.decodePolyline(path.get("points").asText(), 10, false).toLineString(false);
+        assertEquals(DiscreteHausdorffDistance.distance(expectedGeometry, actualGeometry), 0.0, 1E-4);
         assertEquals(106.15, path.get("time").asLong() / 1000f, 0.1);
         assertEquals(106.15, json.get("map_matching").get("time").asLong() / 1000f, 0.1);
         assertEquals(811.56, path.get("distance").asDouble(), 1);
@@ -141,12 +147,24 @@ public class MapMatchingResourceProfileTest {
         assertEquals(200, response.getStatus());
         JsonNode path = json.get("paths").get(0);
 
-        assertEquals(5, path.get("instructions").size());
-        assertEquals(5, WebHelper.decodePolyline(path.get("points").asText(), 10, false).size());
+        LineString expectedGeometry = readWktLineString("LINESTRING (12.3607 51.34365, 12.36418 51.34443, 12.36379 51.34538, 12.36082 51.34471, 12.36188 51.34278)");
+        LineString actualGeometry = WebHelper.decodePolyline(path.get("points").asText(), 10, false).toLineString(false);
+        assertEquals(DiscreteHausdorffDistance.distance(expectedGeometry, actualGeometry), 0.0, 1E-4);
         assertEquals(162.31, path.get("time").asLong() / 1000f, 0.1);
         assertEquals(162.31, json.get("map_matching").get("time").asLong() / 1000f, 0.1);
         assertEquals(811.56, path.get("distance").asDouble(), 1);
         assertEquals(811.56, json.get("map_matching").get("distance").asDouble(), 1);
+    }
+
+    private LineString readWktLineString(String wkt) {
+        WKTReader wktReader = new WKTReader();
+        LineString expectedGeometry = null;
+        try {
+            expectedGeometry = (LineString) wktReader.read(wkt);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return expectedGeometry;
     }
 
 }

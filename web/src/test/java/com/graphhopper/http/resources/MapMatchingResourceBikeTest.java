@@ -28,7 +28,10 @@ import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.locationtech.jts.algorithm.distance.DiscreteHausdorffDistance;
 import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
@@ -62,7 +65,8 @@ public class MapMatchingResourceBikeTest {
     }
 
     @Test
-    public void testGPX() {
+    public void testGPX() throws ParseException {
+        WKTReader wktReader = new WKTReader();
         final Response response = app.client().target("http://localhost:8080/match?vehicle=bike")
                 .request()
                 .buildPost(Entity.xml(getClass().getResourceAsStream("tour2-with-loop.gpx")))
@@ -71,8 +75,10 @@ public class MapMatchingResourceBikeTest {
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode path = json.get("paths").get(0);
 
-        LineString geometry = WebHelper.decodePolyline(path.get("points").asText(), 10, false).toLineString(false);
-        System.out.println(geometry.toText());
+        LineString expectedGeometry = (LineString) wktReader.read("LINESTRING (12.3607 51.34365, 12.36418 51.34443, 12.36379 51.34538, 12.36082 51.34471, 12.36188 51.34278)");
+        LineString actualGeometry = WebHelper.decodePolyline(path.get("points").asText(), 10, false).toLineString(false);
+        assertEquals(DiscreteHausdorffDistance.distance(expectedGeometry, actualGeometry), 0.0, 1E-4);
+
         // ensure that is actually also is bike! (slower than car)
         assertEquals(162, path.get("time").asLong() / 1000f, 1);
     }
