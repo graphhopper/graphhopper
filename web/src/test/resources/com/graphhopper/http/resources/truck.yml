@@ -1,30 +1,6 @@
 # For a custom request you need to specify a profile (with weighting=custom) but on import we don't need this
 # profile: car
 
-# The formula is defined in CustomWeighting, where the "multiply with" operation can be used to decrease speed.
-# The minimum value is 0 and the maximum is 1. If two conditions are satisfied the values are
-# multiplied e.g. if road_class==MOTORWAY and road_environment==TUNNEL, then the resulting speed is
-# average_speed*0.85*0.9
-speed:
-  - if: road_environment == TUNNEL
-    multiply with: 0.85
-  # trucks should be a bit slower on certain road classes compared to the 'base' car
-  - if: road_class == MOTORWAY
-    multiply with: 0.85
-  - if: road_class == PRIMARY
-    multiply with: 0.9
-  # You can lower the average speed for certain conditions via the "limit to" operation:
-  - if: road_class == MOTORWAY
-    limit to: 95
-  - if: road_class == RESIDENTIAL
-    limit to: 30
-  - if: road_environment == BRIDGE
-    limit to: 85
-
-# Trucks are slower so limit all speed to this value. In km/h
-# If none of the conditions in the map above apply use the fallback, if specified:
-max_speed_fallback: 100
-
 # This term changes the influence of the distance. I.e. longer roads get a higher cost.
 # The distance_influence is independent of the edge properties and does not influence the ETA. The default is 70 (seconds/1km).
 # Let's assume a route that takes 1000sec and is 10km long, then a value of 30 means that I would like to drive maximum 11km
@@ -65,6 +41,28 @@ priority:
     multiply with: 0
   - if: max_width < 2.5
     multiply with: 0
+
+# The formula is defined in CustomWeighting, where the "multiply with" operation can be used to decrease speed.
+# The minimum value is 0 and the maximum is 1. If two conditions are satisfied the values are
+# multiplied e.g. if road_class==MOTORWAY and road_environment==TUNNEL, then the resulting speed is
+# average_speed*0.85*0.9
+speed:
+  - if: road_environment == TUNNEL
+    multiply with: 0.85
+  # trucks should be a bit slower on certain road classes compared to the 'base' car
+  - if: road_class == MOTORWAY
+    multiply with: 0.85
+  - if: road_class == PRIMARY
+    multiply with: 0.9
+  # You can lower the average speed for certain conditions via the "limit to" operation:
+  - if: road_class == MOTORWAY
+    limit to: 95
+  - if: road_class == RESIDENTIAL
+    limit to: 30
+  - if: road_environment == BRIDGE
+    limit to: 85
+  - else:
+    limit to: 100
 
 areas:
   custom1:

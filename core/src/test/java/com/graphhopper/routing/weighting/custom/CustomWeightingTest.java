@@ -24,7 +24,8 @@ import static com.graphhopper.json.Statement.*;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.routing.ev.RoadClass.*;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CustomWeightingTest {
 
@@ -233,10 +234,12 @@ class CustomWeightingTest {
     @Test
     public void testMaxSpeedFallBack() {
         assertEquals(140, carFE.getMaxSpeed(), 0.1);
-        String message = assertThrows(IllegalArgumentException.class, () -> createWeighting(new CustomModel().setMaxSpeedFallback(150.)))
-                .getMessage();
-        assertTrue(message.contains("max_speed_fallback cannot be bigger than max_speed 140"));
-        assertEquals(50 + 30, createWeighting(new CustomModel().setMaxSpeedFallback(72.).setDistanceInfluence(30)).getMinWeight(1000));
+        String message = assertThrows(IllegalArgumentException.class, () -> createWeighting(new CustomModel().
+                addToSpeed(If("true", Op.LIMIT, 150)))).
+                getMessage();
+        assertEquals("Can never apply 'limit to': 150.0 because maximum vehicle speed is 140.0", message);
+        assertEquals(50 + 30, createWeighting(new CustomModel().
+                addToSpeed(If("true", Op.LIMIT, 72)).setDistanceInfluence(30)).getMinWeight(1000));
     }
 
     private Weighting createWeighting(CustomModel vehicleModel) {

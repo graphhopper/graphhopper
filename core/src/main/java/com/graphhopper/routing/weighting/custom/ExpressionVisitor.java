@@ -124,7 +124,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
                 if (!Helper.isEmpty(statement.getExpression()))
                     throw new IllegalArgumentException("");
 
-                expressions.append("else {" + statement.getOperation().buildClause(statement.getValue()) + "; }\n");
+                expressions.append("else {" + statement.getOperation().build(statement.getValue()) + "; }\n");
             } else if (statement.getKeyword() == Statement.Keyword.ELSEIF || statement.getKeyword() == Statement.Keyword.IF) {
                 ExpressionVisitor.ParseResult parseResult = parseExpression(statement.getExpression(), nameInConditionValidator);
                 if (!parseResult.ok)
@@ -132,7 +132,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
                 createObjects.addAll(parseResult.guessedVariables);
                 if (statement.getKeyword() == Statement.Keyword.ELSEIF)
                     expressions.append("else ");
-                expressions.append("if (" + parseResult.converted + ") {" + statement.getOperation().buildClause(statement.getValue()) + "; }\n");
+                expressions.append("if (" + parseResult.converted + ") {" + statement.getOperation().build(statement.getValue()) + "; }\n");
             } else {
                 throw new IllegalArgumentException("The clause must be either 'if', 'else if' or 'else'");
             }

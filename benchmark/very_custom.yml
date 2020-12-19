@@ -4,6 +4,8 @@ speed:
    multiply with: 0.85
  - else if: road_class == PRIMARY
    multiply with: 0.9
+ - if: true
+   limit to: 110
 
 priority:
   - if: max_height < 3.8
@@ -20,5 +22,3 @@ priority:
     multiply with: 0.5
   - if: hazmat == NO
     multiply with: 0
-
-max_speed_fallback: 110

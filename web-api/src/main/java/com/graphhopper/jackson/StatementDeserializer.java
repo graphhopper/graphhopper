@@ -31,9 +31,12 @@ public class StatementDeserializer extends JsonDeserializer<Statement> {
             return Statement.If(treeNode.get("if").asText(), jsonOp, value);
         else if (treeNode.has("else if"))
             return Statement.ElseIf(treeNode.get("else if").asText(), jsonOp, value);
-        else if (treeNode.has("else"))
+        else if (treeNode.has("else")) {
+            if (!treeNode.get("else").isNull())
+                throw new IllegalArgumentException("else cannot have expression but was " + treeNode.get("else"));
             return Statement.Else(jsonOp, value);
+        }
 
-        throw new IllegalArgumentException("Cannot find if, else if or else");
+        throw new IllegalArgumentException("Cannot find if, else if or else for " + treeNode.toString());
     }
 }

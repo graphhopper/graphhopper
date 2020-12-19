@@ -73,7 +73,7 @@ public class Statement {
             return name;
         }
 
-        public String buildClause(double value) {
+        public String build(double value) {
             switch (this) {
                 case MULTIPLY:
                     return "value *= " + value;

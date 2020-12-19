@@ -5,9 +5,8 @@
 speed:
   - if: road_class == PRIMARY
     limit to: 28
-
-# if no other condition matches
-max_speed_fallback: 25
+  - else:
+    limit to: 25
 
 priority:
   # exclude steps

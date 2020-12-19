@@ -31,8 +31,6 @@ public class CustomModel {
     public static final String KEY = "custom_model";
 
     static double DEFAULT_D_I = 70;
-    // optional:
-    private Double maxSpeedFallback;
     private Double headingPenalty = Parameters.Routing.DEFAULT_HEADING_PENALTY;
     // default value derived from the cost for time e.g. 25€/hour and for distance 0.5€/km, for trucks this is usually larger
     private double distanceInfluence = DEFAULT_D_I;
@@ -44,7 +42,6 @@ public class CustomModel {
     }
 
     public CustomModel(CustomModel toCopy) {
-        this.maxSpeedFallback = toCopy.maxSpeedFallback;
         this.headingPenalty = toCopy.headingPenalty;
         this.distanceInfluence = toCopy.distanceInfluence;
 
@@ -78,17 +75,18 @@ public class CustomModel {
         return speedStatements;
     }
 
-    public CustomModel setMaxSpeedFallback(Double maxSpeedFallback) {
-        this.maxSpeedFallback = maxSpeedFallback;
+    public CustomModel addToSpeed(Statement st) {
+        getSpeed().add(st);
         return this;
-    }
-
-    public Double getMaxSpeedFallback() {
-        return maxSpeedFallback;
     }
 
     public List<Statement> getPriority() {
         return priorityStatements;
+    }
+
+    public CustomModel addToPriority(Statement st) {
+        getPriority().add(st);
+        return this;
     }
 
     public CustomModel setAreas(Map<String, JsonFeature> areas) {
@@ -125,7 +123,7 @@ public class CustomModel {
     private String createContentString() {
         // used to check against stored custom models, see #2026
         return "distanceInfluence=" + distanceInfluence + "|speedFactor=" + speedStatements +
-                "|maxSpeedFallback=" + maxSpeedFallback + "|priorityMap=" + priorityStatements + "|areas=" + areas;
+                "|priorityMap=" + priorityStatements + "|areas=" + areas;
     }
 
     /**
@@ -134,11 +132,6 @@ public class CustomModel {
     public static CustomModel merge(CustomModel baseModel, CustomModel queryModel) {
         // avoid changing the specified CustomModel via deep copy otherwise the server-side CustomModel would be modified (same problem if queryModel would be used as target)
         CustomModel mergedCM = new CustomModel(baseModel);
-        if (queryModel.maxSpeedFallback != null) {
-            if (mergedCM.maxSpeedFallback != null && mergedCM.maxSpeedFallback > queryModel.maxSpeedFallback)
-                throw new IllegalArgumentException("CustomModel in query can only use max_speed_fallback bigger or equal to " + mergedCM.maxSpeedFallback);
-            mergedCM.maxSpeedFallback = queryModel.maxSpeedFallback;
-        }
         if (Math.abs(queryModel.distanceInfluence - CustomModel.DEFAULT_D_I) > 0.01) {
             if (mergedCM.distanceInfluence > queryModel.distanceInfluence)
                 throw new IllegalArgumentException("CustomModel in query can only use distance_influence bigger or equal to " + mergedCM.distanceInfluence);
