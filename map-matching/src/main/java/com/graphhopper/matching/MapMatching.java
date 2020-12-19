@@ -244,8 +244,32 @@ public class MapMatching {
                             return;
                         Snap snap = new Snap(queryLat, queryLon);
                         snap.setClosestEdge(edge);
-                        snap.setSnappedPosition(Snap.Position.EDGE);
-                        snap.setWayIndex(linearLocation.getSegmentIndex() > fullPL.size() - 2 ? linearLocation.getSegmentIndex() - 1 : linearLocation.getSegmentIndex());
+                        if (linearLocation.getSegmentFraction() <= 0.1) {
+                            if (linearLocation.getSegmentIndex() == 0) {
+                                snap.setClosestNode(edge.getBaseNode());
+                                snap.setSnappedPosition(Snap.Position.TOWER);
+                                snap.setWayIndex(0);
+                            } else if (linearLocation.getSegmentIndex() >= edgeGeometry.getNumPoints()-1) {
+                                snap.setClosestNode(edge.getAdjNode());
+                                snap.setSnappedPosition(Snap.Position.TOWER);
+                                snap.setWayIndex(fullPL.size() - 1);
+                            } else {
+                                snap.setSnappedPosition(Snap.Position.PILLAR);
+                                snap.setWayIndex(linearLocation.getSegmentIndex());
+                            }
+                        } else if (linearLocation.getSegmentFraction() >= 0.9) {
+                            if (linearLocation.getSegmentIndex() >= edgeGeometry.getNumPoints()-2) {
+                                snap.setClosestNode(edge.getAdjNode());
+                                snap.setSnappedPosition(Snap.Position.TOWER);
+                                snap.setWayIndex(fullPL.size() - 1);
+                            } else {
+                                snap.setSnappedPosition(Snap.Position.PILLAR);
+                                snap.setWayIndex(linearLocation.getSegmentIndex() + 1);
+                            }
+                        } else {
+                            snap.setSnappedPosition(Snap.Position.EDGE);
+                            snap.setWayIndex(linearLocation.getSegmentIndex());
+                        }
                         snap.calcSnappedPoint(DistanceCalcEarth.DIST_EARTH);
                         snap.setQueryDistance(dist);
                         snaps.add(snap);
