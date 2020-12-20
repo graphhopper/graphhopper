@@ -896,14 +896,14 @@ public class LocationIndexTree implements LocationIndex {
     static void calcPoints(final double lat1, final double lon1,
                                   final double lat2, final double lon2,
                                   final double offsetLat, final double offsetLon, final double deltaLat, final double deltaLon, final BresenhamLine.PointConsumer pointConsumer) {
-        // round to make results of bresenham closer to correct solution
+        // which tile am I in?
         int y1 = (int) ((lat1 - offsetLat) / deltaLat);
         int x1 = (int) ((lon1 - offsetLon) / deltaLon);
         int y2 = (int) ((lat2 - offsetLat) / deltaLat);
         int x2 = (int) ((lon2 - offsetLon) / deltaLon);
-        BresenhamLine.bresenham(y1, x1, y2, x2, (lat, lon) -> {
+        BresenhamLine.bresenham(y1, x1, y2, x2, (y, x) -> {
             // +.1 to move more near the center of the tile
-            pointConsumer.set((lat + .1) * deltaLat + offsetLat, (lon + .1) * deltaLon + offsetLon);
+            pointConsumer.set((y + .1) * deltaLat + offsetLat, (x + .1) * deltaLon + offsetLon);
         });
     }
 
