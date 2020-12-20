@@ -18,6 +18,7 @@
 
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
@@ -34,6 +35,7 @@ import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.ArrayUtil;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.Before;
@@ -41,6 +43,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -61,6 +65,7 @@ import static org.junit.Assert.fail;
  */
 @RunWith(Parameterized.class)
 public class RandomizedRoutingTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RandomizedRoutingTest.class);
     private final Algo algo;
     private final boolean prepareCH;
     private final boolean prepareLM;
@@ -206,7 +211,7 @@ public class RandomizedRoutingTest {
         for (int i = 0; i < numQueries; i++) {
             int source = getRandom(rnd);
             int target = getRandom(rnd);
-//            System.out.println("source: " + source + ", target: " + target);
+//            LOGGER.info("source: " + source + ", target: " + target);
             Path refPath = new DijkstraBidirectionRef(graph, weighting, traversalMode)
                     .calcPath(source, target);
             Path path = createAlgo()
@@ -215,7 +220,7 @@ public class RandomizedRoutingTest {
         }
         if (strictViolations.size() > 3) {
             for (String strictViolation : strictViolations) {
-                System.out.println("strict violation: " + strictViolation);
+                LOGGER.info("strict violation: " + strictViolation);
             }
             fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries + ", seed: " + seed);
         }
@@ -256,7 +261,7 @@ public class RandomizedRoutingTest {
         // we do not do a strict check because there can be ambiguity, for example when there are zero weight loops.
         // however, when there are too many deviations we fail
         if (strictViolations.size() > 3) {
-            System.out.println(strictViolations);
+            LOGGER.warn(strictViolations.toString());
             fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries + ", seed: " + seed);
         }
     }
@@ -266,9 +271,9 @@ public class RandomizedRoutingTest {
         double refWeight = refPath.getWeight();
         double weight = path.getWeight();
         if (Math.abs(refWeight - weight) > 1.e-2) {
-            System.out.println("expected: " + refPath.calcNodes());
-            System.out.println("given:    " + path.calcNodes());
-            System.out.println("seed: " + seed);
+            LOGGER.warn("expected: " + refPath.calcNodes());
+            LOGGER.warn("given:    " + path.calcNodes());
+            LOGGER.warn("seed: " + seed);
             fail("wrong weight: " + source + "->" + target + "\nexpected: " + refWeight + "\ngiven:    " + weight + "\nseed: " + seed);
         }
         if (Math.abs(path.getDistance() - refPath.getDistance()) > 1.e-1) {
@@ -282,15 +287,67 @@ public class RandomizedRoutingTest {
         if (!refNodes.equals(pathNodes)) {
             // sometimes paths are only different because of a zero weight loop. we do not consider these as strict
             // violations, see: #1864
-            if (!ArrayUtil.withoutConsecutiveDuplicates(refNodes).equals(ArrayUtil.withoutConsecutiveDuplicates(pathNodes))) {
+            boolean isStrictViolation = !ArrayUtil.withoutConsecutiveDuplicates(refNodes).equals(ArrayUtil.withoutConsecutiveDuplicates(pathNodes));
+            // sometimes there are paths including an edge a-c that has the same distance as the two edges a-b-c. in this
+            // case both options are valid best paths. we only check for this most simple and frequent case here...
+            if (pathsEqualExceptOneEdge(refNodes, pathNodes))
+                isStrictViolation = false;
+            if (isStrictViolation)
                 strictViolations.add("wrong nodes " + source + "->" + target + "\nexpected: " + refNodes + "\ngiven:    " + pathNodes);
-            }
         }
         return strictViolations;
     }
 
     private int getRandom(Random rnd) {
         return rnd.nextInt(graph.getNodes());
+    }
+
+    /**
+     * Sometimes the graph can contain edges like this:
+     * A--C
+     * \-B|
+     * where A-C is the same distance as A-B-C. In this case the shortest path is not well defined in terms of nodes.
+     * This method check if two node-paths are equal with the exception of such an edge.
+     */
+    private boolean pathsEqualExceptOneEdge(IntIndexedContainer p1, IntIndexedContainer p2) {
+        if (p1.equals(p2))
+            throw new IllegalArgumentException("paths are equal");
+        if (Math.abs(p1.size() - p2.size()) != 1)
+            return false;
+        IntIndexedContainer shorterPath = p1.size() < p2.size() ? p1 : p2;
+        IntIndexedContainer longerPath = p1.size() < p2.size() ? p2 : p1;
+        if (shorterPath.size() < 2)
+            return false;
+        IntArrayList indicesWithDifferentNodes = new IntArrayList();
+        for (int i = 1; i < shorterPath.size(); i++) {
+            if (shorterPath.get(i - indicesWithDifferentNodes.size()) != longerPath.get(i)) {
+                indicesWithDifferentNodes.add(i);
+            }
+        }
+        if (indicesWithDifferentNodes.size() != 1)
+            return false;
+        int b = indicesWithDifferentNodes.get(0);
+        int a = b - 1;
+        int c = b + 1;
+        assert shorterPath.get(a) == longerPath.get(a);
+        assert shorterPath.get(b) != longerPath.get(b);
+        if (shorterPath.get(b) != longerPath.get(c))
+            return false;
+        double distABC = getDist(longerPath.get(a), longerPath.get(b)) + getDist(longerPath.get(b), longerPath.get(c));
+
+        double distAC = getDist(shorterPath.get(a), longerPath.get(c));
+        if (Math.abs(distABC - distAC) > 0.1)
+            return false;
+        LOGGER.info("Distance " + shorterPath.get(a) + "-" + longerPath.get(c) + " is the same as distance " +
+                longerPath.get(a) + "-" + longerPath.get(b) + "-" + longerPath.get(c) + " -> there are multiple possibilities " +
+                "for shortest paths");
+        return true;
+    }
+
+    private double getDist(int p, int q) {
+        EdgeIteratorState edge = GHUtility.getEdge(graph, p, q);
+        if (edge == null) return Double.POSITIVE_INFINITY;
+        return edge.getDistance();
     }
 
 }

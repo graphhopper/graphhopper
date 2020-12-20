@@ -1623,7 +1623,6 @@ public class GraphHopperTest {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     public void testAStarCHBug(boolean turnCosts) {
-        // todo: this test fails when AStar is used for edge-based CH, see #2061
         final String profile = "car";
         final String vehicle = "car";
         final String weighting = "fastest";

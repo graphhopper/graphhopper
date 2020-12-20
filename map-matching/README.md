@@ -13,7 +13,7 @@ See the demo in action (black is GPS track, green is matched result):
 
 Start via:
 ```bash
-java -jar matching-web/target/graphhopper-web-3.0-SNAPSHOT.jar server config.yml
+java -jar web-bundle/target/graphhopper-web-3.0-SNAPSHOT.jar server config.yml
 ```
 
 Access the simple UI via `http://localhost:8989/maps/map-matching/` (including the trailing slash).
@@ -27,7 +27,7 @@ curl -XPOST -H "Content-Type: application/gpx+xml" -d @web/src/test/resources/te
 
 Determine the bounding box of one or more GPX files:
 ```bash
-java -jar matching-web/target/graphhopper-web-3.0-SNAPSHOT.jar getbounds web/src/test/resources/*.gpx
+java -jar web-bundle/target/graphhopper-web-3.0-SNAPSHOT.jar getbounds web/src/test/resources/*.gpx
 ```
 
 #### Java usage
@@ -65,6 +65,3 @@ of map matching candidates. Thereby, the distances between GPS positions and map
 candidates as well as the routing distances between consecutive map matching candidates are taken
 into account. The GraphHopper routing engine is used to find candidates and to compute routing
 distances.
-
-Before GraphHopper 0.8, [this faster but more heuristic approach](https://karussell.wordpress.com/2014/07/28/digitalizing-gpx-points-or-how-to-track-vehicles-with-graphhopper/)
-was used.

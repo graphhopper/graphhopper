@@ -11,7 +11,7 @@ We have a prospering community and welcome everyone. Let us know your problems, 
 
 ## Questions
 
-All questions go to our [forum](https://discuss.graphhopper.com/) where we also have subsections specially for developers, mobile usage, and [our map matching component](https://github.com/graphhopper/map-matching). Another place to ask questions
+All questions go to our [forum](https://discuss.graphhopper.com/) where we also have subsections specially for developers, mobile usage, and [our map matching component](./map-matching). Another place to ask questions
 is on [Stackoverflow](http://stackoverflow.com/questions/tagged/graphhopper). Do **not** use our issue section for questions.
 
 ## Contribute
@@ -23,7 +23,7 @@ like finding and fixing bugs and improving our documentation or translations!
 
 To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read through our documentation and install the GraphHopper Web Service locally.
 
- * stable 2.x: [documentation](https://github.com/graphhopper/graphhopper/blob/2.x/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-2.2.jar), [announcement](https://www.graphhopper.com/blog/2020/09/30/graphhopper-routing-engine-2-0-released/)
+ * stable 2.x: [documentation](https://github.com/graphhopper/graphhopper/blob/2.x/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-2.3.jar), [announcement](https://www.graphhopper.com/blog/2020/09/30/graphhopper-routing-engine-2-0-released/)
  * unstable master: [documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)
 
 <details><summary>Click to see older releases</summary>
@@ -45,7 +45,7 @@ To install the [GraphHopper Maps](https://graphhopper.com/maps/) and the web ser
 
 ```bash
 # download and install a JVM that supports at least Java 8 (https://adoptopenjdk.net)
-wget https://graphhopper.com/public/releases/graphhopper-web-2.0.jar https://raw.githubusercontent.com/graphhopper/graphhopper/stable/config-example.yml http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
+wget https://graphhopper.com/public/releases/graphhopper-web-2.3.jar https://raw.githubusercontent.com/graphhopper/graphhopper/stable/config-example.yml http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
 java -Ddw.graphhopper.datareader.file=berlin-latest.osm.pbf -jar *.jar server config-example.yml
 ```
 
@@ -210,7 +210,7 @@ Here is a list of the more detailed features:
  * The core uses only a few dependencies (hppc, jts and slf4j)
  * Scales from small indoor-sized to world-wide-sized graphs
  * Finds nearest point on street e.g. to get elevation or 'snap to road' or being used as spatial index (see [#1485](https://github.com/graphhopper/graphhopper/pull/1485))
- * Does [map matching](https://github.com/graphhopper/map-matching)
+ * Does [map matching](./map-matching)
  * Calculates isochrones and [shortest path trees](https://github.com/graphhopper/graphhopper/pull/1577)
  * Shows the whole road network in the browser for debugging purposes ("vector tile support") [#1572](https://github.com/graphhopper/graphhopper/pull/1572)
  * Shows details along a route like road_class or max_speed ("path details") [#1142](https://github.com/graphhopper/graphhopper/pull/1142) or for the whole road network via vector tiles
