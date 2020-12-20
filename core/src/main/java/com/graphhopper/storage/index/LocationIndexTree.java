@@ -518,9 +518,14 @@ public class LocationIndexTree implements LocationIndex {
     }
 
     /**
-     * This method collects the node indices from the quad tree data structure in a certain order
-     * which makes sure not too many nodes are collected as well as no nodes will be missing. See
-     * discussion at issue #221.
+     * This method collects edge ids from the neighborhood of a point and puts them into foundEntries.
+     *
+     * If it is called with iteration = 0, it just looks in the tile the query point is in.
+     * If it can (approximately?) guarantee that no closer edges are anywhere else, it returns true.
+     * If it is called with iteration = 0,1,2,.., it will look in additional tiles further and further
+     * from the start tile.
+     *
+     * See discussion at issue #221.
      * <p>
      *
      * @return true if no further call of this method is required. False otherwise, ie. a next
