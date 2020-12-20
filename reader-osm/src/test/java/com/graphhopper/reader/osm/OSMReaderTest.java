@@ -965,7 +965,7 @@ public class OSMReaderTest {
                 .setProfile("profile")
                 .setPathDetails(Collections.singletonList(Toll.KEY)));
         Throwable ex = response.getErrors().get(0);
-        assertTrue(ex.getMessage(), ex.getMessage().contains("You requested the details [toll]"));
+        assertTrue(ex.getMessage(), ex.getMessage().contains("Missing encoded values for path detail: toll"));
     }
 
     class GraphHopperFacade extends GraphHopperOSM {
