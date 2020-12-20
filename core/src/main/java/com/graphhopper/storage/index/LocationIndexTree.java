@@ -592,9 +592,7 @@ public class LocationIndexTree implements LocationIndex {
             storedNetworkEntryIds.removeAll(allCollectedEntryIds);
             allCollectedEntryIds.addAll(storedNetworkEntryIds);
 
-            // clone storedIds to avoid interference with forEach
-            final GHBitSet checkBitset = new GHTBitSet(new GHIntHashSet(storedNetworkEntryIds));
-            // find nodes from the network entries which are close to 'point'
+            final GHBitSet checkBitset = new GHTBitSet(new GHIntHashSet());
             final EdgeExplorer explorer = graph.createEdgeExplorer();
             storedNetworkEntryIds.forEach((IntPredicate) edgeId -> {
                 new XFirstSearchCheck(queryLat, queryLon, checkBitset, edgeFilter) {
