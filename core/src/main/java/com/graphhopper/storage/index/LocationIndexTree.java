@@ -420,8 +420,7 @@ public class LocationIndexTree implements LocationIndex {
             dMinLon = distCalc.calcDist(query.lat, query.lon, query.lat, maxLon);
         }
 
-        double rMin = Math.min(dMinLat, dMinLon);
-        return rMin;
+        return Math.min(dMinLat, dMinLon);
     }
 
     /**
@@ -557,16 +556,19 @@ public class LocationIndexTree implements LocationIndex {
         return false;
     }
 
-    final double calcMinDistance(double queryLat, double queryLon, GHIntHashSet pointset) {
+    final double calcMinDistance(double queryLat, double queryLon, GHIntHashSet edges) {
         double min = Double.MAX_VALUE;
-        Iterator<IntCursor> itr = pointset.iterator();
-        while (itr.hasNext()) {
-            int node = itr.next().value;
-            double lat = nodeAccess.getLat(node);
-            double lon = nodeAccess.getLon(node);
-            double dist = distCalc.calcDist(queryLat, queryLon, lat, lon);
-            if (dist < min) {
-                min = dist;
+        for (IntCursor edge : edges) {
+            EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorStateForKey(edge.value * 2);
+            int nodeA = edgeIteratorState.getBaseNode();
+            double distA = distCalc.calcDist(queryLat, queryLon, nodeAccess.getLat(nodeA), nodeAccess.getLon(nodeA));
+            if (distA < min) {
+                min = distA;
+            }
+            int nodeB = edgeIteratorState.getAdjNode();
+            double distB = distCalc.calcDist(queryLat, queryLon, nodeAccess.getLat(nodeB), nodeAccess.getLon(nodeB));
+            if (distB < min) {
+                min = distB;
             }
         }
         return min;
