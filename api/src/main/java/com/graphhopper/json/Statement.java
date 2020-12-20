@@ -61,7 +61,7 @@ public class Statement {
     }
 
     public enum Op {
-        MULTIPLY("multiply with"), LIMIT("limit to");
+        MULTIPLY("multiply by"), LIMIT("limit to");
 
         String name;
 

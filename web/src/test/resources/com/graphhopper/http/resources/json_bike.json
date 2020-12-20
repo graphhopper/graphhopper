@@ -3,6 +3,6 @@
     { "if": "road_class==PRIMARY", "limit to": 28 }
   ],
   "priority": [
-    { "if": "max_width < 1.2", "multiply with": 0 }
+    { "if": "max_width < 1.2", "multiply by": 0 }
   ]
 }

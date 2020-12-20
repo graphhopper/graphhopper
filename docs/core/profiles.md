@@ -154,22 +154,22 @@ parameters can be influenced by the different fields of such a custom model.
 #### Customizing `speed`
 
 For every road segment a default speed is inherited from the base vehicle and you have multiple options to adjust it.
-The first thing you can do is rescaling the default speeds using `multiply with`. For example this is how you
+The first thing you can do is rescaling the default speeds using `multiply by`. For example this is how you
 can reduce the speed of every road segment that has the value `MOTORWAY` for the category 'road_class' to fifty percent of 
 the default speed that is normally used by the base vehicle for this road class:
 ```yaml
 speed:
   - if: road_class == MOTORWAY
-    multiply with: 0.5
+    multiply by: 0.5
 ```
 
 You can also change the speed in case of different road classes like this
 ```yaml
 speed:
   - if: road_class == MOTORWAY
-    multiply with: 0.5
+    multiply by: 0.5
   - if: road_class == PRIMARY || road_class == TERTIARY
-    multiply with: 0.7
+    multiply by: 0.7
 ```
 
 The OR-operator `||` means if the left **or** right expressions is true then the value `0.7` is used.
@@ -177,8 +177,8 @@ You can also use multiple categories in the expressions:
 
 ```yaml
 speed:
-  - if: "road_class == MOTORWAY",     multiply with: 0.5
-  - if: "road_environment == TUNNEL", multiply with: 0.8
+  - if: "road_class == MOTORWAY",     multiply by: 0.5
+  - if: "road_environment == TUNNEL", multiply by: 0.8
 ```
 
 Here also quotes around every expression and a comma is used to write one statement per YAML line. 
@@ -187,8 +187,8 @@ query time:
 
 ```json
 { "speed": [
-    { "if": "road_class == MOTORWAY", "multiply with": 0.5 },
-    { "if": "road_environment == TUNNEL", "multiply with": 0.8 }
+    { "if": "road_class == MOTORWAY", "multiply by": 0.5 },
+    { "if": "road_environment == TUNNEL", "multiply by": 0.8 }
   ]
 }
 ```
@@ -198,7 +198,7 @@ There are other categories like `get_off_bike` that are of boolean type. You use
 ```yaml
 speed:
   - if: get_off_bike
-    multiply with: 0.6
+    multiply by: 0.6
 ```
 
 which means that for edges with `get_off_bike==true` the speed factor will be `0.6`.
@@ -207,7 +207,7 @@ For encoded values with numeric values, like `max_width` you should not use "equ
 comparison operators "bigger" `>`, "bigger or equals" `>=`, "smaller" `<` or "smaller or equals" `<=`, e.g.:
 ```yaml
 speed:
-  - if: "max_width < 2.5", multiply with: 0.8
+  - if: "max_width < 2.5", multiply by: 0.8
 ``` 
 which means that for all edges with `max_width` smaller than `2.5m` the speed is multiplied by `0.8`.
 
@@ -218,8 +218,8 @@ speed:
 ```
 
 This implies that on all road segments with no `GRAVEL` value for `surface` the speed will be at most `60km/h`,
-regardless of the default speed of this road segment or the previous `multiply with` statements. Just like
-with `multiply with` you can use multiple category values and different categories in the expressions for `limit to`. 
+regardless of the default speed of this road segment or the previous `multiply by` statements. Just like
+with `multiply by` you can use multiple category values and different categories in the expressions for `limit to`. 
 If multiple statements match for a given edge the most restrictive statement will determine the speed.
 
 Values for `limit to` must be in the range `[0, max_vehicle_speed]` where `max_vehicle_speed` is the maximum speed that
@@ -244,9 +244,9 @@ If a road segment matches multiple expressions the speed will be multiplied. In 
 ```yaml
 speed_factor:
 - if: road_class == MOTORWAY
-  multiply with: 0.5
+  multiply by: 0.5
 - if: road_environment == TUNNEL
-  multiply with: 0.8
+  multiply by: 0.8
 ```
 
 the speed of a road segment that has `road_class == MOTORWAY` will be multiplied by `0.5`, for a road segment
@@ -257,9 +257,9 @@ multiplication of 0.5 and 0.8 by using `else if`:
 ```yaml
 speed_factor:
 - if: road_class == MOTORWAY
-  multiply with: 0.5
+  multiply by: 0.5
 - else if: road_environment == TUNNEL
-  multiply with: 0.8
+  multiply by: 0.8
 ```
 
 Now even if a road segment fulfills both conditions only the first will be used (and evaluated) and no multiplication 
@@ -274,7 +274,7 @@ for an area called `custom1` with `0.7` and limit it to 50km/h. All area names n
 
 ```yaml
 speed:
-- if: "in_area_custom1", multiply with: 0.7
+- if: "in_area_custom1", multiply by: 0.7
 - if: "in_area_custom1", limit to: 50
 
 areas:
@@ -312,11 +312,11 @@ You change the `priority` very much like you change the `speed`, so
 ```yaml
 priority:
 - if: road_class == MOTORWAY
-  multiply with: 0.5
+  multiply by: 0.5
 - else if: road_class == SECONDARY
-  multiply with: 0.9
+  multiply by: 0.9
 - if: road_environment == TUNNEL
-  multiply with: 0.1
+  multiply by: 0.1
 ```
 
 means that road segments with `road_class==MOTORWAY` and `road_environment==TUNNEL` get priority `0.5*0.1=0.05` and those
@@ -328,7 +328,7 @@ others:
 ```yaml
 priority: 
 - if: road_class != CYCLEWAY
-  multiply with: 0.8
+  multiply by: 0.8
 ```
 means decreasing the priority for all road_classes *except* cycleways. Just like we saw for `speed` you can also adjust
 the priority for road segments in a certain area. It works the same way:
@@ -336,7 +336,7 @@ the priority for road segments in a certain area. It works the same way:
 ```yaml
 priority:
 - if: in_area_custom1
-  multiply with: 0.7
+  multiply by: 0.7
 ```
 
 To block an entire area completely set the priority value to `0`. Some other useful encoded values to restrict access
@@ -344,11 +344,11 @@ to certain roads depending on your vehicle dimensions are the following:
 ```yaml
 priority:
 - if: max_width < 2.5
-  multiply with: 0
+  multiply by: 0
 - if: max_length < 10
-  multiply with: 0
+  multiply by: 0
 - if: max_weight < 3.5
-  multiply with: 0
+  multiply by: 0
 ```
 which means that the priority for all road segments that allow a maximum vehicle width of `2.5m`, a maximum vehicle
 length of `10m` or a maximum vehicle weight of `3.5tons` is zero, i.e. these "tight" road segments are blocked.
@@ -417,5 +417,5 @@ preparation process. This is necessary to maintain the optimality of the underly
 Therefore we merge the two models via:
 
  * all expressions in the custom model of the query are appended to the existing custom model.
- * for the custom model of the query all values of `multiply with` need to be within the range of `[0, 1]` otherwise an
+ * for the custom model of the query all values of `multiply by` need to be within the range of `[0, 1]` otherwise an
    error will be thrown

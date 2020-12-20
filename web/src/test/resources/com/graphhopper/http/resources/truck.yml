@@ -13,47 +13,47 @@ distance_influence: 90
 # If two conditions are met the values will be multiplied except when first_match is used.
 priority:
   - if: road_class == RESIDENTIAL
-    multiply with: 0.4
+    multiply by: 0.4
   - else if: road_class != MOTORWAY
-    multiply with: 0.9
+    multiply by: 0.9
     # and if you do not want that routes go over tracks just exclude them:
     # else if: road_class==TRACK
-    # multiply with: 0
+    # multiply by: 0
   # let's assume we transport gas: so NEVER go on restricted roads with hazmat==NO
   - if: hazmat == NO
-    multiply with: 0
+    multiply by: 0
   # avoid destination-only roads
   # TODO include private and delivery only access for base car profile so that we can avoid it here, but not exclude it
   - if: road_access == DESTINATION
-    multiply with: 0.1
+    multiply by: 0.1
   # avoid turns if possible and links are one simple indication for that
   - if: road_class_link
-    multiply with: 0.5
+    multiply by: 0.5
   # avoid toll roads
   - if: toll != NO
-    multiply with: 0.5
+    multiply by: 0.5
   # avoid a certain area
   - if: in_area_custom1
-    multiply with: 0.5
+    multiply by: 0.5
   - if: max_weight < 4.5
-    multiply with: 0
+    multiply by: 0
   - if: max_height < 3.8
-    multiply with: 0
+    multiply by: 0
   - if: max_width < 2.5
-    multiply with: 0
+    multiply by: 0
 
-# The formula is defined in CustomWeighting, where the "multiply with" operation can be used to decrease speed.
+# The formula is defined in CustomWeighting, where the "multiply by" operation can be used to decrease speed.
 # The minimum value is 0 and the maximum is 1. If two conditions are satisfied the values are
 # multiplied e.g. if road_class==MOTORWAY and road_environment==TUNNEL, then the resulting speed is
 # average_speed*0.85*0.9
 speed:
   - if: road_environment == TUNNEL
-    multiply with: 0.85
+    multiply by: 0.85
   # trucks should be a bit slower on certain road classes compared to the 'base' car
   - if: road_class == MOTORWAY
-    multiply with: 0.85
+    multiply by: 0.85
   - if: road_class == PRIMARY
-    multiply with: 0.9
+    multiply by: 0.9
   # You can lower the average speed for certain conditions via the "limit to" operation:
   - if: road_class == MOTORWAY
     limit to: 95
