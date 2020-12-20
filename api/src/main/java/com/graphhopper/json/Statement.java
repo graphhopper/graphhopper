@@ -23,7 +23,7 @@ public class Statement {
     private final Op operation;
     private final double value;
 
-    public Statement(Keyword keyword, String expression, Op operation, double value) {
+    private Statement(Keyword keyword, String expression, Op operation, double value) {
         this.keyword = keyword;
         this.expression = expression;
         this.value = value;

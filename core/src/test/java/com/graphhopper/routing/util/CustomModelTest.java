@@ -34,7 +34,7 @@ public class CustomModelTest {
     @Test
     public void testTooBigFactor() {
         CustomModel truck = new CustomModel();
-        truck.getPriority().add(If("max_width < 3", MULTIPLY, 10));
+        truck.addToPriority(If("max_width < 3", MULTIPLY, 10));
         // it is ok server-side CustomModel
         assertEquals(1, CustomModel.merge(truck, new CustomModel()).getPriority().size());
         // but not for query CustomModel
@@ -44,11 +44,11 @@ public class CustomModelTest {
     @Test
     public void testMergeComparisonKeys() {
         CustomModel truck = new CustomModel();
-        truck.getPriority().add(If("max_width < 3", MULTIPLY, 0));
+        truck.addToPriority(If("max_width < 3", MULTIPLY, 0));
         CustomModel car = new CustomModel();
-        car.getPriority().add(If("max_width<2", MULTIPLY, 0));
+        car.addToPriority(If("max_width<2", MULTIPLY, 0));
         CustomModel bike = new CustomModel();
-        bike.getPriority().add(If("max_weight<0.02", MULTIPLY, 0));
+        bike.addToPriority(If("max_weight<0.02", MULTIPLY, 0));
 
         assertEquals(2, CustomModel.merge(bike, car).getPriority().size());
         assertEquals(1, bike.getPriority().size());
@@ -58,10 +58,10 @@ public class CustomModelTest {
     @Test
     public void testMergeElse() {
         CustomModel truck = new CustomModel();
-        truck.getPriority().add(If("max_width < 3", MULTIPLY, 0));
+        truck.addToPriority(If("max_width < 3", MULTIPLY, 0));
 
         CustomModel car = new CustomModel();
-        car.getPriority().add(If("max_width < 2", MULTIPLY, 0));
+        car.addToPriority(If("max_width < 2", MULTIPLY, 0));
 
         CustomModel merged = CustomModel.merge(truck, car);
         assertEquals(2, merged.getPriority().size());
@@ -72,8 +72,8 @@ public class CustomModelTest {
     public void testMergeEmptyModel() {
         CustomModel emptyCar = new CustomModel();
         CustomModel car = new CustomModel();
-        car.getPriority().add(If("road_class==primary", MULTIPLY, 0.5));
-        car.getPriority().add(ElseIf("road_class==tertiary", MULTIPLY, 0.8));
+        car.addToPriority(If("road_class==primary", MULTIPLY, 0.5));
+        car.addToPriority(ElseIf("road_class==tertiary", MULTIPLY, 0.8));
 
         Iterator<Statement> iter = CustomModel.merge(emptyCar, car).getPriority().iterator();
         assertEquals(0.5, iter.next().getValue());

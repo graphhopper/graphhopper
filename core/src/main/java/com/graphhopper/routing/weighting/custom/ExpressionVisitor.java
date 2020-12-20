@@ -122,7 +122,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
         for (Statement statement : list) {
             if (statement.getKeyword() == Statement.Keyword.ELSE) {
                 if (!Helper.isEmpty(statement.getExpression()))
-                    throw new IllegalArgumentException("");
+                    throw new IllegalArgumentException("expression must be empty but was " + statement.getExpression());
 
                 expressions.append("else {" + statement.getOperation().build(statement.getValue()) + "; }\n");
             } else if (statement.getKeyword() == Statement.Keyword.ELSEIF || statement.getKeyword() == Statement.Keyword.IF) {
