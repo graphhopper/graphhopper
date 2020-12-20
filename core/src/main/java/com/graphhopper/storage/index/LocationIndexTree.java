@@ -343,18 +343,26 @@ public class LocationIndexTree implements LocationIndex {
     /**
      * This method fills the set with stored node IDs from the given spatial key part (a latitude-longitude prefix).
      */
-    final void fillIDs(long keyPart, int intPointer, GHIntHashSet set, int depth) {
+    final void fillIDs(long keyPart, int intPointer, GHIntHashSet set, int depth, EdgeFilter edgeFilter) {
         long pointer = (long) intPointer << 2;
         if (depth == entries.length) {
             int nextIntPointer = dataAccess.getInt(pointer);
             if (nextIntPointer < 0) {
                 // single data entries (less disc space)
-                set.add(-(nextIntPointer + 1));
+                int edgeId = -(nextIntPointer + 1);
+                EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorStateForKey(edgeId * 2);
+                if (edgeFilter.accept(edgeIteratorState)) {
+                    set.add(edgeId);
+                }
             } else {
                 long max = (long) nextIntPointer * 4;
                 // leaf entry => nextIntPointer is maxPointer
                 for (long leafIndex = pointer + 4; leafIndex < max; leafIndex += 4) {
-                    set.add(dataAccess.getInt(leafIndex));
+                    int edgeId = dataAccess.getInt(leafIndex);
+                    EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorStateForKey(edgeId * 2);
+                    if (edgeFilter.accept(edgeIteratorState)) {
+                        set.add(edgeId);
+                    }
                 }
             }
             return;
@@ -363,7 +371,7 @@ public class LocationIndexTree implements LocationIndex {
         int nextIntPointer = dataAccess.getInt(pointer + offset);
         if (nextIntPointer > 0) {
             // tree entry => negative value points to subentries
-            fillIDs(keyPart >>> shifts[depth], nextIntPointer, set, depth + 1);
+            fillIDs(keyPart >>> shifts[depth], nextIntPointer, set, depth + 1, edgeFilter);
         }
     }
 
@@ -516,25 +524,25 @@ public class LocationIndexTree implements LocationIndex {
      * iteration is necessary and no early finish possible.
      */
     final boolean findNetworkEntries(double queryLat, double queryLon,
-                                     GHIntHashSet foundEntries, int iteration) {
+                                     GHIntHashSet foundEntries, int iteration, EdgeFilter edgeFilter) {
         // find entries in border of searchbox
         for (int yreg = -iteration; yreg <= iteration; yreg++) {
             double subqueryLat = queryLat + yreg * deltaLat;
             double subqueryLonA = queryLon - iteration * deltaLon;
             double subqueryLonB = queryLon + iteration * deltaLon;
-            findNetworkEntriesSingleRegion(foundEntries, subqueryLat, subqueryLonA);
+            findNetworkEntriesSingleRegion(foundEntries, subqueryLat, subqueryLonA, edgeFilter);
 
             // minor optimization for iteration == 0
             if (iteration > 0)
-                findNetworkEntriesSingleRegion(foundEntries, subqueryLat, subqueryLonB);
+                findNetworkEntriesSingleRegion(foundEntries, subqueryLat, subqueryLonB, edgeFilter);
         }
 
         for (int xreg = -iteration + 1; xreg <= iteration - 1; xreg++) {
             double subqueryLon = queryLon + xreg * deltaLon;
             double subqueryLatA = queryLat - iteration * deltaLat;
             double subqueryLatB = queryLat + iteration * deltaLat;
-            findNetworkEntriesSingleRegion(foundEntries, subqueryLatA, subqueryLon);
-            findNetworkEntriesSingleRegion(foundEntries, subqueryLatB, subqueryLon);
+            findNetworkEntriesSingleRegion(foundEntries, subqueryLatA, subqueryLon, edgeFilter);
+            findNetworkEntriesSingleRegion(foundEntries, subqueryLatB, subqueryLon, edgeFilter);
         }
 
         if (iteration % 2 != 0) {
@@ -574,9 +582,9 @@ public class LocationIndexTree implements LocationIndex {
         return min;
     }
 
-    final void findNetworkEntriesSingleRegion(GHIntHashSet storedNetworkEntryIds, double queryLat, double queryLon) {
+    final void findNetworkEntriesSingleRegion(GHIntHashSet storedNetworkEntryIds, double queryLat, double queryLon, EdgeFilter edgeFilter) {
         long keyPart = createReverseKey(queryLat, queryLon);
-        fillIDs(keyPart, START_POINTER, storedNetworkEntryIds, 0);
+        fillIDs(keyPart, START_POINTER, storedNetworkEntryIds, 0, edgeFilter);
     }
 
     @Override
@@ -584,50 +592,43 @@ public class LocationIndexTree implements LocationIndex {
         if (isClosed())
             throw new IllegalStateException("You need to create a new LocationIndex instance as it is already closed");
 
-        GHIntHashSet allCollectedEntryIds = new GHIntHashSet();
-        final Snap closestMatch = new Snap(queryLat, queryLon);
+        GHIntHashSet storedNetworkEntryIds = new GHIntHashSet();
         for (int iteration = 0; iteration < maxRegionSearch; iteration++) {
-            GHIntHashSet storedNetworkEntryIds = new GHIntHashSet();
-            boolean earlyFinish = findNetworkEntries(queryLat, queryLon, storedNetworkEntryIds, iteration);
-            storedNetworkEntryIds.removeAll(allCollectedEntryIds);
-            allCollectedEntryIds.addAll(storedNetworkEntryIds);
-
-            final GHBitSet checkBitset = new GHTBitSet(new GHIntHashSet());
-            final EdgeExplorer explorer = graph.createEdgeExplorer();
-            storedNetworkEntryIds.forEach((IntPredicate) edgeId -> {
-                new XFirstSearchCheck(queryLat, queryLon, checkBitset, edgeFilter) {
-                    @Override
-                    protected double getQueryDistance() {
-                        return closestMatch.getQueryDistance();
-                    }
-
-                    @Override
-                    protected boolean check(int node, double normedDist, int wayIndex, EdgeIteratorState edge, Snap.Position pos) {
-                        if (normedDist < closestMatch.getQueryDistance()) {
-                            closestMatch.setQueryDistance(normedDist);
-                            closestMatch.setClosestNode(node);
-                            closestMatch.setClosestEdge(edge.detach(false));
-                            closestMatch.setWayIndex(wayIndex);
-                            closestMatch.setSnappedPosition(pos);
-                            return true;
-                        }
-                        return false;
-                    }
-                }.start(explorer, graph.getEdgeIteratorStateForKey(edgeId * 2).getBaseNode());
-                return true;
-            });
-
-            // do early finish only if something was found (#318)
-            if (earlyFinish && closestMatch.isValid())
+            boolean earlyFinish = findNetworkEntries(queryLat, queryLon, storedNetworkEntryIds, iteration, edgeFilter);
+            if (earlyFinish)
                 break;
         }
 
-        // denormalize distance and calculate snapping point only if closed match was found
+        final GHBitSet checkBitset = new GHTBitSet(new GHIntHashSet());
+        final EdgeExplorer explorer = graph.createEdgeExplorer();
+        final Snap closestMatch = new Snap(queryLat, queryLon);
+        storedNetworkEntryIds.forEach((IntPredicate) edgeId -> {
+            new XFirstSearchCheck(queryLat, queryLon, checkBitset, edgeFilter) {
+                @Override
+                protected double getQueryDistance() {
+                    return closestMatch.getQueryDistance();
+                }
+
+                @Override
+                protected boolean check(int node, double normedDist, int wayIndex, EdgeIteratorState edge, Snap.Position pos) {
+                    if (normedDist < closestMatch.getQueryDistance()) {
+                        closestMatch.setQueryDistance(normedDist);
+                        closestMatch.setClosestNode(node);
+                        closestMatch.setClosestEdge(edge.detach(false));
+                        closestMatch.setWayIndex(wayIndex);
+                        closestMatch.setSnappedPosition(pos);
+                        return true;
+                    }
+                    return false;
+                }
+            }.start(explorer, graph.getEdgeIteratorStateForKey(edgeId * 2).getBaseNode());
+            return true;
+        });
+
         if (closestMatch.isValid()) {
             closestMatch.setQueryDistance(distCalc.calcDenormalizedDist(closestMatch.getQueryDistance()));
             closestMatch.calcSnappedPoint(distCalc);
         }
-
         return closestMatch;
     }
 
