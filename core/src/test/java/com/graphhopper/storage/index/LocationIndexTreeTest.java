@@ -457,19 +457,43 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
 
     @Test
     public void testBresenhamBug() {
-        LocationIndexTree.calcPoints(0.5, -0.5, -0.6, 1.6, -1, -1, 0.75, 1.3, (lat, lon) -> points.add(lat, lon));
+        // which tile am I in?
+        int y1 = (int) ((0.5 - (double) -1) / 0.75);
+        int x1 = (int) ((-0.5 - (double) -1) / 1.3);
+        int y2 = (int) ((-0.6 - (double) -1) / 0.75);
+        int x2 = (int) ((1.6 - (double) -1) / 1.3);
+        BresenhamLine.bresenham(y1, x1, y2, x2, (y, x) -> {
+            // +.1 to move more near the center of the tile
+            ((BresenhamLine.PointConsumer) (lat, lon) -> points.add(lat, lon)).set((y + .1) * 0.75 + (double) -1, (x + .1) * 1.3 + (double) -1);
+        });
         assertEquals(Helper.createPointList(0.575, -0.87, -0.175, 0.43, -0.925, 1.73), points);
     }
 
     @Test
     public void testBresenhamHorizontal() {
-        LocationIndexTree.calcPoints(.5, -.5, .5, 1, -1, -1, 0.6, 0.4, (lat, lon) -> points.add(lat, lon));
+        // which tile am I in?
+        int y1 = (int) ((.5 - (double) -1) / 0.6);
+        int x1 = (int) ((-.5 - (double) -1) / 0.4);
+        int y2 = (int) ((.5 - (double) -1) / 0.6);
+        int x2 = (int) (((double) 1 - (double) -1) / 0.4);
+        BresenhamLine.bresenham(y1, x1, y2, x2, (y, x) -> {
+            // +.1 to move more near the center of the tile
+            ((BresenhamLine.PointConsumer) (lat, lon) -> points.add(lat, lon)).set((y + .1) * 0.6 + (double) -1, (x + .1) * 0.4 + (double) -1);
+        });
         assertEquals(Helper.createPointList(.26, -.56, .26, -0.16, .26, .24, .26, .64, .26, 1.04), points);
     }
 
     @Test
     public void testBresenhamVertical() {
-        LocationIndexTree.calcPoints(-.5, .5, 1, 0.5, 0, 0, 0.4, 0.6, (lat, lon) -> points.add(lat, lon));
+        // which tile am I in?
+        int y1 = (int) ((-.5 - (double) 0) / 0.4);
+        int x1 = (int) ((.5 - (double) 0) / 0.6);
+        int y2 = (int) (((double) 1 - (double) 0) / 0.4);
+        int x2 = (int) ((0.5 - (double) 0) / 0.6);
+        BresenhamLine.bresenham(y1, x1, y2, x2, (y, x) -> {
+            // +.1 to move more near the center of the tile
+            ((BresenhamLine.PointConsumer) (lat, lon) -> points.add(lat, lon)).set((y + .1) * 0.4 + (double) 0, (x + .1) * 0.6 + (double) 0);
+        });
         assertEquals(Helper.createPointList(-0.36, .06, 0.04, 0.06, 0.44, 0.06, 0.84, 0.06), points);
     }
 
@@ -484,29 +508,56 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         double deltaLon = (maxLon - minLon) / parts;
         final ArrayList<Long> keys = new ArrayList<>();
         keys.clear();
-        LocationIndexTree.calcPoints(.3, -.3, -0.2, 0.2, minLat, minLon, deltaLat, deltaLon, (lat1, lon1) -> keys.add(keyAlgo.encode(lat1, lon1))
-        );
+        // which tile am I in?
+        int y12 = (int) ((.3 - minLat) / deltaLat);
+        int x12 = (int) ((-.3 - minLon) / deltaLon);
+        int y22 = (int) ((-0.2 - minLat) / deltaLat);
+        int x22 = (int) ((0.2 - minLon) / deltaLon);
+        BresenhamLine.bresenham(y12, x12, y22, x22, (y4, x4) -> {
+            // +.1 to move more near the center of the tile
+            ((BresenhamLine.PointConsumer) (lat1, lon1) -> keys.add(keyAlgo.encode(lat1, lon1))).set((y4 + .1) * deltaLat + minLat, (x4 + .1) * deltaLon + minLon);
+        });
         assertEquals(Arrays.asList(11L, 9L), keys);
 
         keys.clear();
-        LocationIndexTree.calcPoints(.3, -.1, -0.2, 0.4, minLat, minLon, deltaLat, deltaLon, (lat, lon) -> keys.add(keyAlgo.encode(lat, lon))
-        );
+        // which tile am I in?
+        int y11 = (int) ((.3 - minLat) / deltaLat);
+        int x11 = (int) ((-.1 - minLon) / deltaLon);
+        int y21 = (int) ((-0.2 - minLat) / deltaLat);
+        int x21 = (int) ((0.4 - minLon) / deltaLon);
+        BresenhamLine.bresenham(y11, x11, y21, x21, (y3, x3) -> {
+            // +.1 to move more near the center of the tile
+            ((BresenhamLine.PointConsumer) (lat, lon) -> keys.add(keyAlgo.encode(lat, lon))).set((y3 + .1) * deltaLat + minLat, (x3 + .1) * deltaLon + minLon);
+        });
 
         // 11, 9, 12
         assertEquals(Arrays.asList(11L, 12L), keys);
 
         keys.clear();
-        LocationIndexTree.calcPoints(.5, -.5, -0.1, 0.9, minLat, minLon, deltaLat, deltaLon, (lat, lon) -> keys.add(keyAlgo.encode(lat, lon))
-        );
+        // which tile am I in?
+        int y1 = (int) ((.5 - minLat) / deltaLat);
+        int x1 = (int) ((-.5 - minLon) / deltaLon);
+        int y2 = (int) ((-0.1 - minLat) / deltaLat);
+        int x2 = (int) ((0.9 - minLon) / deltaLon);
+        BresenhamLine.bresenham(y1, x1, y2, x2, (y, x) -> {
+            // +.1 to move more near the center of the tile
+            ((BresenhamLine.PointConsumer) (lat, lon) -> keys.add(keyAlgo.encode(lat, lon))).set((y + .1) * deltaLat + minLat, (x + .1) * deltaLon + minLon);
+        });
         // precise: 10, 11, 14, 12
         assertEquals(Arrays.asList(10L, 11L, 12L), keys);
     }
 
     @Test
     public void testBresenhamToLeft() {
-        LocationIndexTree.calcPoints(
-                47.57383, 9.61984,
-                47.57382, 9.61890, 47, 9, 0.00647, 0.00964, points::add);
+        // which tile am I in?
+        int y1 = (int) ((47.57383 - (double) 47) / 0.00647);
+        int x1 = (int) ((9.61984 - (double) 9) / 0.00964);
+        int y2 = (int) ((47.57382 - (double) 47) / 0.00647);
+        int x2 = (int) ((9.61890 - (double) 9) / 0.00964);
+        BresenhamLine.bresenham(y1, x1, y2, x2, (y, x) -> {
+            // +.1 to move more near the center of the tile
+            ((BresenhamLine.PointConsumer) points::add).set((y + .1) * 0.00647 + (double) 47, (x + .1) * 0.00964 + (double) 9);
+        });
         assertEquals(points.toString(), 1, points.getSize());
     }
 

@@ -110,8 +110,11 @@ public class LocationIndexTree implements LocationIndex {
 
     /**
      * Searches also neighbouring tiles until the maximum distance from the query point is reached
-     * (minResolutionInMeter*regionAround). Set to 1 for to force avoiding a fall back, good if you
-     * have strict performance and lookup-quality requirements. Default is 4.
+     * (minResolutionInMeter*regionAround). Set to 1 to only search one tile. Good if you
+     * have strict performance requirements and want the search to terminate early, and you can tolerate
+     * that edges that may be in neighboring tiles are not found. Default is 4, which means approximately
+     * that a square of three tiles upwards, downwards, leftwards and rightwards from the tile the query tile
+     * is in is searched.
      */
     public LocationIndexTree setMaxRegionSearch(int numTiles) {
         if (numTiles < 1)
@@ -523,8 +526,7 @@ public class LocationIndexTree implements LocationIndex {
      * @return true if no further call of this method is required. False otherwise, ie. a next
      * iteration is necessary and no early finish possible.
      */
-    final boolean findNetworkEntries(double queryLat, double queryLon,
-                                     GHIntHashSet foundEntries, int iteration, EdgeFilter edgeFilter) {
+    final boolean findEdgeIdsInNeighborhood(double queryLat, double queryLon, GHIntHashSet foundEntries, int iteration, EdgeFilter edgeFilter) {
         // find entries in border of searchbox
         for (int yreg = -iteration; yreg <= iteration; yreg++) {
             double subqueryLat = queryLat + yreg * deltaLat;
@@ -594,7 +596,7 @@ public class LocationIndexTree implements LocationIndex {
 
         GHIntHashSet storedNetworkEntryIds = new GHIntHashSet();
         for (int iteration = 0; iteration < maxRegionSearch; iteration++) {
-            boolean earlyFinish = findNetworkEntries(queryLat, queryLon, storedNetworkEntryIds, iteration, edgeFilter);
+            boolean earlyFinish = findEdgeIdsInNeighborhood(queryLat, queryLon, storedNetworkEntryIds, iteration, edgeFilter);
             if (earlyFinish)
                 break;
         }
@@ -747,13 +749,13 @@ public class LocationIndexTree implements LocationIndex {
                     for (int i = 0; i < len; i++) {
                         lat2 = points.getLatitude(i);
                         lon2 = points.getLongitude(i);
-                        addValue(edge, lat1, lon1, lat2, lon2);
+                        addEdgeToAllTilesOnLine(edge, lat1, lon1, lat2, lon2);
                         lat1 = lat2;
                         lon1 = lon2;
                     }
                     lat2 = nodeAccess.getLatitude(nodeB);
                     lon2 = nodeAccess.getLongitude(nodeB);
-                    addValue(edge, lat1, lon1, lat2, lon2);
+                    addEdgeToAllTilesOnLine(edge, lat1, lon1, lat2, lon2);
                 }
             } catch (Exception ex) {
                 logger.error("Problem! base:" + allIter.getBaseNode() + ", adj:" + allIter.getAdjNode()
@@ -761,21 +763,29 @@ public class LocationIndexTree implements LocationIndex {
             }
         }
 
-        void addValue(final int nodeA,
-                      final double lat1, final double lon1,
-                      final double lat2, final double lon2) {
+        void addEdgeToAllTilesOnLine(final int edgeId, final double lat1, final double lon1, final double lat2, final double lon2) {
             if (!distCalc.isCrossBoundary(lon1, lon2)) {
-                calcPoints(lat1, lon1, lat2, lon2, graph.getBounds().minLat, graph.getBounds().minLon, deltaLat, deltaLon,
-                        (lat, lon) -> {
-                            long key = keyAlgo.encode(lat, lon);
-                            long keyPart = createReverseKey(key);
-                            // no need to feed both nodes as we search neighbors in fillIDs
-                            addValue(root, nodeA, 0, keyPart, key);
-                        });
+                // which tile am I in?
+                int y1 = (int) ((lat1 - graph.getBounds().minLat) / deltaLat);
+                int x1 = (int) ((lon1 - graph.getBounds().minLon) / deltaLon);
+                int y2 = (int) ((lat2 - graph.getBounds().minLat) / deltaLat);
+                int x2 = (int) ((lon2 - graph.getBounds().minLon) / deltaLon);
+                // Find all the tiles on the line from (y1, x1) to (y2, y2) in tile coordinates (y,x)
+                BresenhamLine.bresenham(y1, x1, y2, x2, (y, x) -> {
+                    // Now convert tile coordinates to representative lat/lon coordinates for that tile
+                    // by going toward the tile center by .1
+                    double rLat = (y + .1) * deltaLat + graph.getBounds().minLat;
+                    double rLon = (x + .1) * deltaLon + graph.getBounds().minLon;
+                    // Now find the tile key for that representative point
+                    // TODO: Do all that in one step, we know how to move up/down in tile keys!
+                    long key = keyAlgo.encode(rLat, rLon);
+                    long keyPart = createReverseKey(key);
+                    addEdgeToOneTile(root, edgeId, 0, keyPart, key);
+                });
             }
         }
 
-        void addValue(InMemEntry entry, int value, int depth, long keyPart, long key) {
+        void addEdgeToOneTile(InMemEntry entry, int value, int depth, long keyPart, long key) {
             if (entry.isLeaf()) {
                 InMemLeafEntry leafEntry = (InMemLeafEntry) entry;
                 leafEntry.addNode(value);
@@ -793,53 +803,7 @@ public class LocationIndexTree implements LocationIndex {
                     }
                     treeEntry.setSubEntry(index, subentry);
                 }
-
-                addValue(subentry, value, depth, keyPart, key);
-            }
-        }
-
-        Collection<InMemEntry> getEntriesOf(int selectDepth) {
-            List<InMemEntry> list = new ArrayList<>();
-            fillLayer(list, selectDepth, 0, root.getSubEntriesForDebug());
-            return list;
-        }
-
-        void fillLayer(Collection<InMemEntry> list, int selectDepth, int depth, Collection<InMemEntry> entries) {
-            for (InMemEntry entry : entries) {
-                if (selectDepth == depth) {
-                    list.add(entry);
-                } else if (entry instanceof InMemTreeEntry) {
-                    fillLayer(list, selectDepth, depth + 1, ((InMemTreeEntry) entry).getSubEntriesForDebug());
-                }
-            }
-        }
-
-        String print() {
-            StringBuilder sb = new StringBuilder();
-            print(root, sb, 0, 0);
-            return sb.toString();
-        }
-
-        void print(InMemEntry e, StringBuilder sb, long key, int depth) {
-            if (e.isLeaf()) {
-                InMemLeafEntry leaf = (InMemLeafEntry) e;
-                int bits = keyAlgo.getBits();
-                // print reverse keys
-                sb.append(BitUtil.BIG.toBitString(BitUtil.BIG.reverse(key, bits), bits)).append("  ");
-                IntArrayList entries = leaf.getResults();
-                for (int i = 0; i < entries.size(); i++) {
-                    sb.append(leaf.get(i)).append(',');
-                }
-                sb.append('\n');
-            } else {
-                InMemTreeEntry tree = (InMemTreeEntry) e;
-                key = key << shifts[depth];
-                for (int counter = 0; counter < tree.subEntries.length; counter++) {
-                    InMemEntry sube = tree.subEntries[counter];
-                    if (sube != null) {
-                        print(sube, sb, key | counter, depth + 1);
-                    }
-                }
+                addEdgeToOneTile(subentry, value, depth, keyPart, key);
             }
         }
 
@@ -887,24 +851,6 @@ public class LocationIndexTree implements LocationIndex {
             }
             return intPointer;
         }
-    }
-
-    /**
-     * Calls the Bresenham algorithm so that it takes its input as points within tiles,
-     * and also calculates its output as one representative point per tile.
-     */
-    static void calcPoints(final double lat1, final double lon1,
-                                  final double lat2, final double lon2,
-                                  final double offsetLat, final double offsetLon, final double deltaLat, final double deltaLon, final BresenhamLine.PointConsumer pointConsumer) {
-        // which tile am I in?
-        int y1 = (int) ((lat1 - offsetLat) / deltaLat);
-        int x1 = (int) ((lon1 - offsetLon) / deltaLon);
-        int y2 = (int) ((lat2 - offsetLat) / deltaLat);
-        int x2 = (int) ((lon2 - offsetLon) / deltaLon);
-        BresenhamLine.bresenham(y1, x1, y2, x2, (y, x) -> {
-            // +.1 to move more near the center of the tile
-            pointConsumer.set((y + .1) * deltaLat + offsetLat, (x + .1) * deltaLon + offsetLon);
-        });
     }
 
     /**
