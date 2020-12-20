@@ -28,7 +28,6 @@ import com.graphhopper.matching.MatchResult;
 import com.graphhopper.matching.Observation;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
@@ -95,7 +94,6 @@ public class MeasurementCommand extends ConfiguredCommand<GraphHopperServerConfi
 
         GraphHopperStorage graph = graphHopper.getGraphHopperStorage();
         bbox = graph.getBounds();
-        LocationIndexTree locationIndex = (LocationIndexTree) graphHopper.getLocationIndex();
         MapMatching mapMatching = new MapMatching(graphHopper, new PMap().putObject("profile", profile.getName()));
 
         StopWatch sw = new StopWatch().start();
@@ -157,7 +155,7 @@ public class MeasurementCommand extends ConfiguredCommand<GraphHopperServerConfi
                         if (!r.hasErrors()) {
                             double sampleProportion = rand.nextDouble();
                             GHPoint prev = null;
-                            List<Observation> mock = new ArrayList<>();
+                            List<Observation> observations = new ArrayList<>();
                             PointList points = r.getBest().getPoints();
                             // loop through points and add (approximately) sampleProportion of them:
                             for (GHPoint p : points) {
@@ -166,13 +164,13 @@ public class MeasurementCommand extends ConfiguredCommand<GraphHopperServerConfi
                                     // exactly on the route):
                                     GHPoint randomised = distCalc.projectCoordinate(p.lat, p.lon,
                                             20 * rand.nextDouble(), 360 * rand.nextDouble());
-                                    mock.add(new Observation(randomised));
+                                    observations.add(new Observation(randomised));
                                 }
                                 prev = p;
                             }
                             // now match, provided there are enough points
-                            if (mock.size() > 2) {
-                                MatchResult match = mapMatching.match(mock);
+                            if (observations.size() > 2) {
+                                MatchResult match = mapMatching.match(observations);
                                 // return something non-trivial, to avoid JVM optimizing away
                                 return match.getEdgeMatches().size();
                             }
