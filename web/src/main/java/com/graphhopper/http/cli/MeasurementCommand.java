@@ -22,6 +22,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.Profile;
+import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.matching.Observation;
@@ -31,7 +32,7 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
-import io.dropwizard.cli.Command;
+import io.dropwizard.cli.ConfiguredCommand;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
@@ -48,13 +49,14 @@ import java.util.Map.Entry;
  * @author Peter Karich
  * @author kodonnell
  */
-public class MeasurementCommand extends Command {
+public class MeasurementCommand extends ConfiguredCommand<GraphHopperServerConfiguration> {
     private static final Logger logger = LoggerFactory.getLogger(MeasurementCommand.class);
     private final Map<String, String> properties = new TreeMap<>();
     private BBox bbox;
     private final DistanceCalcEarth distCalc = new DistanceCalcEarth();
     private long seed;
     private int count;
+    private Profile profile;
 
     public MeasurementCommand() {
         super("measurement", "runs performance tests on the imported graph");
@@ -62,6 +64,7 @@ public class MeasurementCommand extends Command {
 
     @Override
     public void configure(Subparser subparser) {
+        super.configure(subparser);
         subparser.addArgument("outfile")
                 .type(File.class)
                 .required(true)
@@ -79,11 +82,10 @@ public class MeasurementCommand extends Command {
     }
 
     @Override
-    public void run(Bootstrap bootstrap, Namespace args) {
-        // read and initialize arguments:
-        GraphHopperConfig graphHopperConfiguration = new GraphHopperConfig();
-        graphHopperConfiguration.setProfiles(Collections.singletonList(new Profile("fast_car").setVehicle("car").setWeighting("fastest")));
-        graphHopperConfiguration.putObject("graph.location", "graph-cache");
+    protected void run(Bootstrap<GraphHopperServerConfiguration> bootstrap, Namespace args, GraphHopperServerConfiguration graphHopperServerConfiguration) throws Exception {
+        GraphHopperConfig graphHopperConfiguration = graphHopperServerConfiguration.getGraphHopperConfiguration();
+
+        profile = graphHopperConfiguration.getProfiles().get(0);
         seed = args.getLong("seed");
         count = args.getInt("count");
 
@@ -91,13 +93,11 @@ public class MeasurementCommand extends Command {
         graphHopper.init(graphHopperConfiguration).forDesktop();
         graphHopper.importOrLoad();
 
-        // and map-matching stuff
         GraphHopperStorage graph = graphHopper.getGraphHopperStorage();
         bbox = graph.getBounds();
         LocationIndexTree locationIndex = (LocationIndexTree) graphHopper.getLocationIndex();
-        MapMatching mapMatching = new MapMatching(graphHopper, new PMap().putObject("profile", "fast_car"));
+        MapMatching mapMatching = new MapMatching(graphHopper, new PMap().putObject("profile", profile.getName()));
 
-        // start tests:
         StopWatch sw = new StopWatch().start();
         try {
             printTimeOfMapMatchQuery(graphHopper, mapMatching);
@@ -150,7 +150,7 @@ public class MeasurementCommand extends Command {
                         double lat1 = bbox.minLat + rand.nextDouble() * latDelta;
                         double lon1 = bbox.minLon + rand.nextDouble() * lonDelta;
                         GHRequest request = new GHRequest(lat0, lon0, lat1, lon1);
-                        request.setProfile("fast_car");
+                        request.setProfile(profile.getName());
                         GHResponse r = hopper.route(request);
 
                         // if found, use it for map matching:
