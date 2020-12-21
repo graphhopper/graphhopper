@@ -521,17 +521,13 @@ public class LocationIndexTree implements LocationIndex {
      * This method collects edge ids from the neighborhood of a point and puts them into foundEntries.
      *
      * If it is called with iteration = 0, it just looks in the tile the query point is in.
-     * If it can (approximately?) guarantee that no closer edges are anywhere else, it returns true.
      * If it is called with iteration = 0,1,2,.., it will look in additional tiles further and further
      * from the start tile.
      *
      * See discussion at issue #221.
      * <p>
-     *
-     * @return true if no further call of this method is required. False otherwise, ie. a next
-     * iteration is necessary and no early finish possible.
      */
-    final boolean findEdgeIdsInNeighborhood(double queryLat, double queryLon, GHIntHashSet foundEntries, int iteration, EdgeFilter edgeFilter) {
+    final void findEdgeIdsInNeighborhood(double queryLat, double queryLon, GHIntHashSet foundEntries, int iteration, EdgeFilter edgeFilter) {
         // find entries in border of searchbox
         for (int yreg = -iteration; yreg <= iteration; yreg++) {
             double subqueryLat = queryLat + yreg * deltaLat;
@@ -551,24 +547,6 @@ public class LocationIndexTree implements LocationIndex {
             findNetworkEntriesSingleRegion(foundEntries, subqueryLatA, subqueryLon, edgeFilter);
             findNetworkEntriesSingleRegion(foundEntries, subqueryLatB, subqueryLon, edgeFilter);
         }
-
-        if (iteration % 2 != 0) {
-            // Check if something was found already...
-            if (!foundEntries.isEmpty()) {
-                double rMin = calculateRMin(queryLat, queryLon, iteration);
-                double minDistance = calcMinDistance(queryLat, queryLon, foundEntries);
-
-                if (minDistance < rMin)
-                    // early finish => foundEntries contains a nearest node for sure
-                    return true;
-                // else: continue as an undetected nearer node may sit in a neighbouring tile.
-                // Now calculate how far we have to look outside to find any hidden nearest nodes
-                // and repeat whole process with wider search area until this distance is covered.
-            }
-        }
-
-        // no early finish possible
-        return false;
     }
 
     final double calcMinDistance(double queryLat, double queryLon, GHIntHashSet edges) {
@@ -601,9 +579,16 @@ public class LocationIndexTree implements LocationIndex {
 
         GHIntHashSet storedNetworkEntryIds = new GHIntHashSet();
         for (int iteration = 0; iteration < maxRegionSearch; iteration++) {
-            boolean earlyFinish = findEdgeIdsInNeighborhood(queryLat, queryLon, storedNetworkEntryIds, iteration, edgeFilter);
-            if (earlyFinish)
-                break;
+            findEdgeIdsInNeighborhood(queryLat, queryLon, storedNetworkEntryIds, iteration, edgeFilter);
+            if (iteration % 2 != 0) {
+                // Check if something was found already...
+                if (!storedNetworkEntryIds.isEmpty()) {
+                    double rMin = calculateRMin(queryLat, queryLon, iteration);
+                    double minDistance = calcMinDistance(queryLat, queryLon, storedNetworkEntryIds);
+                    if (minDistance < rMin)
+                        break; // We can (approximately?) guarantee that no closer edges are anywhere else
+                }
+            }
         }
 
         final GHBitSet checkBitset = new GHTBitSet(new GHIntHashSet());
