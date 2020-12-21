@@ -82,12 +82,17 @@ public class MatchCommand extends Command {
                 .type(String.class)
                 .required(false)
                 .setDefault("");
+        subparser.addArgument("--graph_elevation_provider")
+                .type(String.class)
+                .required(false)
+                .setDefault("");
     }
 
     @Override
     public void run(Bootstrap bootstrap, Namespace args) {
         GraphHopperConfig graphHopperConfiguration = new GraphHopperConfig();
         String ghFolder = "graph-cache";
+        graphHopperConfiguration.putObject("graph.elevation.provider", args.getString("graph_elevation_provider"));
         graphHopperConfiguration.putObject("graph.location", ghFolder);
 
         String vehicle = args.getString("vehicle");
