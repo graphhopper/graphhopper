@@ -401,6 +401,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         EdgeFilter carFilter = DefaultEdgeFilter.allEdges(carEncoder);
         Snap snap = index.findClosest(0.03, 0.03, carFilter);
         assertTrue(snap.isValid());
+        System.out.println(snap);
         assertEquals(33, snap.getClosestNode());
 
         EdgeFilter bikeFilter = DefaultEdgeFilter.allEdges(bikeEncoder);
