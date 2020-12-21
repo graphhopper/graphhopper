@@ -707,6 +707,8 @@ public class GraphHopperOSMTest {
         instance.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
         instance.importOrLoad();
 
+        ((LocationIndexTree) instance.getLocationIndex()).setMaxRegionSearch(300);
+
         assertEquals(2, instance.getGraphHopperStorage().getNodes());
         assertEquals(2, instance.getGraphHopperStorage().getAllEdges().length());
 

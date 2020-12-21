@@ -19,6 +19,7 @@ package com.graphhopper.geohash;
 
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 
@@ -183,7 +184,9 @@ public class SpatialKeyAlgoTest {
 
     @Test
     public void testNoFurtherIterationIfBitsIs1() {
-        SpatialKeyAlgo algo = new SpatialKeyAlgo(4).setBounds(0, 5, 0, 5);
+        SpatialKeyAlgo spatialKeyAlgo = new SpatialKeyAlgo(4);
+        spatialKeyAlgo.bounds(new BBox(0, 5, 0, 5));
+        SpatialKeyAlgo algo = spatialKeyAlgo;
         // 1001
         GHPoint coord = new GHPoint();
         algo.decode(9, coord);
@@ -210,16 +213,17 @@ public class SpatialKeyAlgoTest {
 
     @Test
     public void testDifferentInitialBounds() {
-        SpatialKeyAlgo algo = new SpatialKeyAlgo(8).setBounds(0, 5, 0, 5);
-        assertEquals(1, algo.encode(0, 0.5));
-        assertEquals(5, algo.encode(0, 1));
+        SpatialKeyAlgo spatialKeyAlgo = new SpatialKeyAlgo(8);
+        spatialKeyAlgo.bounds(new BBox(0, 5, 0, 5));
+        assertEquals(1, spatialKeyAlgo.encode(0, 0.5));
+        assertEquals(5, spatialKeyAlgo.encode(0, 1));
 
         GHPoint coord = new GHPoint();
-        algo.decode(5, coord);
-        assertEquals(5, algo.encode(coord));
+        spatialKeyAlgo.decode(5, coord);
+        assertEquals(5, spatialKeyAlgo.encode(coord));
 
-        algo.decode(1, coord);
-        assertEquals(1, algo.encode(coord));
+        spatialKeyAlgo.decode(1, coord);
+        assertEquals(1, spatialKeyAlgo.encode(coord));
     }
 
     @Test
@@ -228,7 +232,9 @@ public class SpatialKeyAlgoTest {
         double minLat = -1, maxLat = 0.5;
         int parts = 4;
         int bits = (int) (Math.log(parts * parts) / Math.log(2));
-        final KeyAlgo keyAlgo = new SpatialKeyAlgo(bits).setBounds(minLon, maxLon, minLat, maxLat);
+        SpatialKeyAlgo spatialKeyAlgo = new SpatialKeyAlgo(bits);
+        spatialKeyAlgo.bounds(new BBox(minLon, maxLon, minLat, maxLat));
+        final SpatialKeyAlgo keyAlgo = spatialKeyAlgo;
         // lat border 0.125
         assertEquals(11, keyAlgo.encode(0.125, -0.2));
         assertEquals(9, keyAlgo.encode(0.124, -0.2));
@@ -236,4 +242,32 @@ public class SpatialKeyAlgoTest {
         assertEquals(11, keyAlgo.encode(0.2, -0.35));
         assertEquals(10, keyAlgo.encode(0.2, -0.351));
     }
+
+    @Test
+    public void testFourBits() {
+        SpatialKeyAlgo spatialKeyAlgo = new SpatialKeyAlgo(4);
+        System.out.println(spatialKeyAlgo.z(0,0));
+        System.out.println(spatialKeyAlgo.z(1,0));
+        System.out.println(spatialKeyAlgo.z(2,0));
+        System.out.println(spatialKeyAlgo.z(3,0));
+        System.out.println(spatialKeyAlgo.z(0,1));
+        System.out.println(spatialKeyAlgo.z(0,2));
+        System.out.println(spatialKeyAlgo.z(0,3));
+        System.out.println();
+        System.out.println(spatialKeyAlgo.x(spatialKeyAlgo.z(0,0)));
+        System.out.println(spatialKeyAlgo.y(spatialKeyAlgo.z(0,0)));
+        System.out.println(spatialKeyAlgo.x(spatialKeyAlgo.z(1,0)));
+        System.out.println(spatialKeyAlgo.y(spatialKeyAlgo.z(1,0)));
+        System.out.println(spatialKeyAlgo.x(spatialKeyAlgo.z(0,1)));
+        System.out.println(spatialKeyAlgo.y(spatialKeyAlgo.z(0,1)));
+        System.out.println(spatialKeyAlgo.x(spatialKeyAlgo.z(1,1)));
+        System.out.println(spatialKeyAlgo.y(spatialKeyAlgo.z(1,1)));
+        System.out.println(spatialKeyAlgo.x(spatialKeyAlgo.z(2,2)));
+        System.out.println(spatialKeyAlgo.y(spatialKeyAlgo.z(2,2)));
+
+        System.out.println(spatialKeyAlgo.y(spatialKeyAlgo.z(3,3)));
+
+        assertEquals(spatialKeyAlgo.z(2, 0), spatialKeyAlgo.right(spatialKeyAlgo.right(spatialKeyAlgo.z(0,0))));
+    }
+
 }

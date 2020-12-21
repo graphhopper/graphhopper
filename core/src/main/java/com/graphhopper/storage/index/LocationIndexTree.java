@@ -376,15 +376,6 @@ public class LocationIndexTree implements LocationIndex {
         }
     }
 
-    // this method returns the spatial key in reverse order for easier right-shifting
-    final long createReverseKey(double lat, double lon) {
-        return BitUtil.BIG.reverse(keyAlgo.encode(lat, lon), keyAlgo.getBits());
-    }
-
-    final long createReverseKey(long key) {
-        return BitUtil.BIG.reverse(key, keyAlgo.getBits());
-    }
-
     /**
      * calculate the distance to the nearest tile border for a given lat/lon coordinate in the
      * context of a spatial key tile.
@@ -527,23 +518,31 @@ public class LocationIndexTree implements LocationIndex {
      */
     final void findEdgeIdsInNeighborhood(double queryLat, double queryLon, GHIntHashSet foundEntries, int iteration, EdgeFilter edgeFilter) {
         // find entries in border of searchbox
+        long queryKey = keyAlgo.encode(queryLat, queryLon);
+        int queryX = keyAlgo.x(queryKey);
+        int queryY = keyAlgo.y(queryKey);
         for (int yreg = -iteration; yreg <= iteration; yreg++) {
-            double subqueryLat = queryLat + yreg * deltaLat;
-            double subqueryLonA = queryLon - iteration * deltaLon;
-            double subqueryLonB = queryLon + iteration * deltaLon;
-            findNetworkEntriesSingleRegion(foundEntries, subqueryLat, subqueryLonA, edgeFilter);
+            int subqueryY = queryY + yreg;
+            int subqueryXA = queryX - iteration;
+            int subqueryXB = queryX + iteration;
+            long keyPart1 = BitUtil.BIG.reverse(keyAlgo.z(subqueryXA, subqueryY), keyAlgo.getBits());
+            fillIDs(keyPart1, START_POINTER, foundEntries, 0, edgeFilter);
 
             // minor optimization for iteration == 0
-            if (iteration > 0)
-                findNetworkEntriesSingleRegion(foundEntries, subqueryLat, subqueryLonB, edgeFilter);
+            if (iteration > 0) {
+                long keyPart = BitUtil.BIG.reverse(keyAlgo.z(subqueryXB, subqueryY), keyAlgo.getBits());
+                fillIDs(keyPart, START_POINTER, foundEntries, 0, edgeFilter);
+            }
         }
 
         for (int xreg = -iteration + 1; xreg <= iteration - 1; xreg++) {
-            double subqueryLon = queryLon + xreg * deltaLon;
-            double subqueryLatA = queryLat - iteration * deltaLat;
-            double subqueryLatB = queryLat + iteration * deltaLat;
-            findNetworkEntriesSingleRegion(foundEntries, subqueryLatA, subqueryLon, edgeFilter);
-            findNetworkEntriesSingleRegion(foundEntries, subqueryLatB, subqueryLon, edgeFilter);
+            int subqueryX = queryX + xreg;
+            int subqueryYA = queryY - iteration;
+            int subqueryYB = queryY + iteration;
+            long keyPart1 = BitUtil.BIG.reverse(keyAlgo.z(subqueryX, subqueryYA), keyAlgo.getBits());
+            fillIDs(keyPart1, START_POINTER, foundEntries, 0, edgeFilter);
+            long keyPart = BitUtil.BIG.reverse(keyAlgo.z(subqueryX, subqueryYB), keyAlgo.getBits());
+            fillIDs(keyPart, START_POINTER, foundEntries, 0, edgeFilter);
         }
     }
 
@@ -565,11 +564,6 @@ public class LocationIndexTree implements LocationIndex {
         return min;
     }
 
-    final void findNetworkEntriesSingleRegion(GHIntHashSet storedNetworkEntryIds, double queryLat, double queryLon, EdgeFilter edgeFilter) {
-        long keyPart = createReverseKey(queryLat, queryLon);
-        fillIDs(keyPart, START_POINTER, storedNetworkEntryIds, 0, edgeFilter);
-    }
-
     @Override
     public Snap findClosest(final double queryLat, final double queryLon, final EdgeFilter edgeFilter) {
         if (isClosed())
@@ -583,8 +577,9 @@ public class LocationIndexTree implements LocationIndex {
                 if (!storedNetworkEntryIds.isEmpty()) {
                     double rMin = calculateRMin(queryLat, queryLon, iteration);
                     double minDistance = calcMinDistance(queryLat, queryLon, storedNetworkEntryIds);
-                    if (minDistance < rMin)
+                    if (minDistance < rMin) {
                         break; // We can (approximately?) guarantee that no closer edges are anywhere else
+                    }
                 }
             }
         }
@@ -617,11 +612,9 @@ public class LocationIndexTree implements LocationIndex {
     }
 
     static class InMemLeafEntry extends SortedIntSet implements InMemEntry {
-        // private long key;
 
-        public InMemLeafEntry(int count, long key) {
+        public InMemLeafEntry(int count) {
             super(count);
-            // this.key = key;
         }
 
         public boolean addNode(int nodeId) {
@@ -742,27 +735,22 @@ public class LocationIndexTree implements LocationIndex {
 
         void addEdgeToAllTilesOnLine(final int edgeId, final double lat1, final double lon1, final double lat2, final double lon2) {
             if (!distCalc.isCrossBoundary(lon1, lon2)) {
-                // which tile am I in?
-                int y1 = (int) ((lat1 - graph.getBounds().minLat) / deltaLat);
-                int x1 = (int) ((lon1 - graph.getBounds().minLon) / deltaLon);
-                int y2 = (int) ((lat2 - graph.getBounds().minLat) / deltaLat);
-                int x2 = (int) ((lon2 - graph.getBounds().minLon) / deltaLon);
-                // Find all the tiles on the line from (y1, x1) to (y2, y2) in tile coordinates (y,x)
+                long tile1 = keyAlgo.encode(new GHPoint(lat1, lon1));
+                int y1 = keyAlgo.y(tile1);
+                int x1 = keyAlgo.x(tile1);
+                long tile2 = keyAlgo.encode(new GHPoint(lat2, lon2));
+                int y2 = keyAlgo.y(tile2);
+                int x2 = keyAlgo.x(tile2);
+                // Find all the tiles on the line from (y1, x1) to (y2, y2) in tile coordinates (y, x)
                 BresenhamLine.bresenham(y1, x1, y2, x2, (y, x) -> {
-                    // Now convert tile coordinates to representative lat/lon coordinates for that tile
-                    // by going toward the tile center by .1
-                    double rLat = (y + .1) * deltaLat + graph.getBounds().minLat;
-                    double rLon = (x + .1) * deltaLon + graph.getBounds().minLon;
-                    // Now find the tile key for that representative point
-                    // TODO: Do all that in one step, we know how to move up/down in tile keys!
-                    long key = keyAlgo.encode(rLat, rLon);
-                    long keyPart = createReverseKey(key);
-                    addEdgeToOneTile(root, edgeId, 0, keyPart, key);
+                    long key = keyAlgo.z(x, y);
+                    long reverseKey = BitUtil.BIG.reverse(key, keyAlgo.getBits());
+                    addEdgeToOneTile(root, edgeId, 0, reverseKey);
                 });
             }
         }
 
-        void addEdgeToOneTile(InMemEntry entry, int value, int depth, long keyPart, long key) {
+        void addEdgeToOneTile(InMemEntry entry, int value, int depth, long keyPart) {
             if (entry.isLeaf()) {
                 InMemLeafEntry leafEntry = (InMemLeafEntry) entry;
                 leafEntry.addNode(value);
@@ -774,13 +762,13 @@ public class LocationIndexTree implements LocationIndex {
                 depth++;
                 if (subentry == null) {
                     if (depth == entries.length) {
-                        subentry = new InMemLeafEntry(initSizeLeafEntries, key);
+                        subentry = new InMemLeafEntry(initSizeLeafEntries);
                     } else {
                         subentry = new InMemTreeEntry(entries[depth]);
                     }
                     treeEntry.setSubEntry(index, subentry);
                 }
-                addEdgeToOneTile(subentry, value, depth, keyPart, key);
+                addEdgeToOneTile(subentry, value, depth, keyPart);
             }
         }
 

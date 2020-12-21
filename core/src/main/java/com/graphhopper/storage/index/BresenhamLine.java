@@ -60,6 +60,6 @@ public class BresenhamLine {
      * @author Peter Karich
      */
     public interface PointConsumer {
-        void set(double lat, double lon);
+        void set(int y, int x);
     }
 }
