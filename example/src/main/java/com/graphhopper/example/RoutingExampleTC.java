@@ -38,7 +38,7 @@ public class RoutingExampleTC {
         GHRequest req = new GHRequest(42.50822, 1.533966, 42.506899, 1.525372).
                 setCurbsides(Arrays.asList(CURBSIDE_ANY, CURBSIDE_RIGHT)).
                 setProfile("car");
-        route(hopper, req, 1730, 112_000);
+        route(hopper, req, 1729, 112_000);
     }
 
     public static void routeWithTurnCostsAndOtherUTurnCosts(GraphHopper hopper) {
