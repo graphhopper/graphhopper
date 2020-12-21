@@ -17,15 +17,10 @@
  */
 package com.graphhopper.storage.index;
 
-import com.graphhopper.geohash.KeyAlgo;
-import com.graphhopper.geohash.SpatialKeyAlgo;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 
