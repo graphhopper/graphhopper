@@ -336,7 +336,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         //query: 0.05 | -0.3
         DistanceCalc distCalc = new DistancePlaneProjection();
 
-        double rmin = index.calculateRMin(0.05, -0.3);
+        double rmin = index.calculateRMin(0.05, -0.3, 0);
         double check = distCalc.calcDist(0.05, Math.abs(graph.getNodeAccess().getLon(2)) - index.getDeltaLon(), -0.3, -0.3);
 
         assertTrue((rmin - check) < 0.0001);

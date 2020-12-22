@@ -34,6 +34,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+import static com.graphhopper.util.DistanceCalcEarth.C;
+import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
+import static com.graphhopper.util.DistancePlaneProjection.DIST_PLANE;
+
 /**
  * This class implements a Quadtree to get the closest node or edge from GPS coordinates.
  * The following properties are different to an ordinary implementation:
@@ -61,12 +65,10 @@ public class LocationIndexTree implements LocationIndex {
     protected final Graph graph;
     final DataAccess dataAccess;
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final int MAGIC_INT;
+    private final int MAGIC_INT = Integer.MAX_VALUE / 22317;
     private final NodeAccess nodeAccess;
-    protected DistanceCalc distCalc = DistancePlaneProjection.DIST_PLANE;
     SpatialKeyAlgo keyAlgo;
     private int maxRegionSearch = 4;
-    private DistanceCalc preciseDistCalc = DistanceCalcEarth.DIST_EARTH;
     private int[] entries;
     private byte[] shifts;
     // convert spatial key to index for subentry of current depth
@@ -74,9 +76,8 @@ public class LocationIndexTree implements LocationIndex {
     private int minResolutionInMeter = 300;
     private double deltaLat;
     private double deltaLon;
-    private int initSizeLeafEntries = 4;
     private boolean initialized = false;
-    private static final Comparator<Snap> SNAP_COMPARATOR = Comparator.comparingDouble(Snap::getQueryDistance);
+
     /**
      * If normed distance is smaller than this value the node or edge is 'identical' and the
      * algorithm can stop search.
@@ -87,10 +88,9 @@ public class LocationIndexTree implements LocationIndex {
      * @param g the graph for which this index should do the lookup based on latitude,longitude.
      */
     public LocationIndexTree(Graph g, Directory dir) {
-        MAGIC_INT = Integer.MAX_VALUE / 22317;
         this.graph = g;
         this.nodeAccess = g.getNodeAccess();
-        dataAccess = dir.find("location_index", DAType.getPreferredInt(dir.getDefaultType()));
+        this.dataAccess = dir.find("location_index", DAType.getPreferredInt(dir.getDefaultType()));
     }
 
     public int getMinResolutionInMeter() {
@@ -128,7 +128,7 @@ public class LocationIndexTree implements LocationIndex {
 
     void prepareAlgo() {
         // 0.1 meter should count as 'equal'
-        equalNormedDelta = distCalc.calcNormalizedDist(0.1);
+        equalNormedDelta = DIST_PLANE.calcNormalizedDist(0.1);
 
         // now calculate the necessary maxDepth d for our current bounds
         // if we assume a minimum resolution like 0.5km for a leaf-tile
@@ -142,8 +142,8 @@ public class LocationIndexTree implements LocationIndex {
 
         double lat = Math.min(Math.abs(bounds.maxLat), Math.abs(bounds.minLat));
         double maxDistInMeter = Math.max(
-                (bounds.maxLat - bounds.minLat) / 360 * DistanceCalcEarth.C,
-                (bounds.maxLon - bounds.minLon) / 360 * preciseDistCalc.calcCircumference(lat));
+                (bounds.maxLat - bounds.minLat) / 360 * C,
+                (bounds.maxLon - bounds.minLon) / 360 * DIST_EARTH.calcCircumference(lat));
         double tmp = maxDistInMeter / minResolutionInMeter;
         tmp = tmp * tmp;
         IntArrayList tmpEntries = new IntArrayList();
@@ -228,15 +228,6 @@ public class LocationIndexTree implements LocationIndex {
             throw new IllegalStateException("Negative precision is not allowed!");
 
         setMinResolutionInMeter(minResolutionInMeter);
-        return this;
-    }
-
-    @Override
-    public LocationIndex setApproximation(boolean approx) {
-        if (approx)
-            distCalc = DistancePlaneProjection.DIST_PLANE;
-        else
-            distCalc = DistanceCalcEarth.DIST_EARTH;
         return this;
     }
 
@@ -377,14 +368,6 @@ public class LocationIndexTree implements LocationIndex {
     }
 
     /**
-     * calculate the distance to the nearest tile border for a given lat/lon coordinate in the
-     * context of a spatial key tile.
-     */
-    final double calculateRMin(double lat, double lon) {
-        return calculateRMin(lat, lon, 0);
-    }
-
-    /**
      * Calculates the distance to the nearest tile border, where the tile border is the rectangular
      * region with dimension 2*paddingTiles + 1 and where the center tile contains the given lat/lon
      * coordinate
@@ -409,15 +392,15 @@ public class LocationIndexTree implements LocationIndex {
         // convert degree deltas into a radius in meter
         double dMinLat, dMinLon;
         if (dSouthernLat < dNorthernLat) {
-            dMinLat = distCalc.calcDist(query.lat, query.lon, minLat, query.lon);
+            dMinLat = DIST_PLANE.calcDist(query.lat, query.lon, minLat, query.lon);
         } else {
-            dMinLat = distCalc.calcDist(query.lat, query.lon, maxLat, query.lon);
+            dMinLat = DIST_PLANE.calcDist(query.lat, query.lon, maxLat, query.lon);
         }
 
         if (dWesternLon < dEasternLon) {
-            dMinLon = distCalc.calcDist(query.lat, query.lon, query.lat, minLon);
+            dMinLon = DIST_PLANE.calcDist(query.lat, query.lon, query.lat, minLon);
         } else {
-            dMinLon = distCalc.calcDist(query.lat, query.lon, query.lat, maxLon);
+            dMinLon = DIST_PLANE.calcDist(query.lat, query.lon, query.lat, maxLon);
         }
 
         return Math.min(dMinLat, dMinLon);
@@ -551,12 +534,12 @@ public class LocationIndexTree implements LocationIndex {
         for (IntCursor edge : edges) {
             EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorStateForKey(edge.value * 2);
             int nodeA = edgeIteratorState.getBaseNode();
-            double distA = distCalc.calcDist(queryLat, queryLon, nodeAccess.getLat(nodeA), nodeAccess.getLon(nodeA));
+            double distA = ((DistanceCalc) DIST_PLANE).calcDist(queryLat, queryLon, nodeAccess.getLat(nodeA), nodeAccess.getLon(nodeA));
             if (distA < min) {
                 min = distA;
             }
             int nodeB = edgeIteratorState.getAdjNode();
-            double distB = distCalc.calcDist(queryLat, queryLon, nodeAccess.getLat(nodeB), nodeAccess.getLon(nodeB));
+            double distB = ((DistanceCalc) DIST_PLANE).calcDist(queryLat, queryLon, nodeAccess.getLat(nodeB), nodeAccess.getLon(nodeB));
             if (distB < min) {
                 min = distB;
             }
@@ -600,8 +583,8 @@ public class LocationIndexTree implements LocationIndex {
         });
 
         if (closestMatch.isValid()) {
-            closestMatch.setQueryDistance(distCalc.calcDenormalizedDist(closestMatch.getQueryDistance()));
-            closestMatch.calcSnappedPoint(distCalc);
+            closestMatch.setQueryDistance(DIST_PLANE.calcDenormalizedDist(closestMatch.getQueryDistance()));
+            closestMatch.calcSnappedPoint(DIST_PLANE);
         }
         return closestMatch;
     }
@@ -734,7 +717,7 @@ public class LocationIndexTree implements LocationIndex {
         }
 
         void addEdgeToAllTilesOnLine(final int edgeId, final double lat1, final double lon1, final double lat2, final double lon2) {
-            if (!distCalc.isCrossBoundary(lon1, lon2)) {
+            if (!DIST_PLANE.isCrossBoundary(lon1, lon2)) {
                 long tile1 = keyAlgo.encode(new GHPoint(lat1, lon1));
                 int y1 = keyAlgo.y(tile1);
                 int x1 = keyAlgo.x(tile1);
@@ -762,7 +745,7 @@ public class LocationIndexTree implements LocationIndex {
                 depth++;
                 if (subentry == null) {
                     if (depth == entries.length) {
-                        subentry = new InMemLeafEntry(initSizeLeafEntries);
+                        subentry = new InMemLeafEntry(4);
                     } else {
                         subentry = new InMemTreeEntry(entries[depth]);
                     }
@@ -826,7 +809,7 @@ public class LocationIndexTree implements LocationIndex {
         int baseNode = currEdge.getBaseNode();
         double currLat = nodeAccess.getLatitude(baseNode);
         double currLon = nodeAccess.getLongitude(baseNode);
-        double currNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, currLat, currLon);
+        double currNormedDist = DIST_PLANE.calcNormalizedDist(queryLat, queryLon, currLat, currLon);
 
         int tmpClosestNode = baseNode;
         edgeCheck.check(tmpClosestNode, currNormedDist, 0, Snap.Position.TOWER);
@@ -836,7 +819,7 @@ public class LocationIndexTree implements LocationIndex {
         int adjNode = currEdge.getAdjNode();
         double adjLat = nodeAccess.getLatitude(adjNode);
         double adjLon = nodeAccess.getLongitude(adjNode);
-        double adjDist = distCalc.calcNormalizedDist(adjLat, adjLon, queryLat, queryLon);
+        double adjDist = DIST_PLANE.calcNormalizedDist(adjLat, adjLon, queryLat, queryLon);
         // if there are wayPoints this is only an approximation
         if (adjDist < currNormedDist)
             tmpClosestNode = adjNode;
@@ -850,14 +833,14 @@ public class LocationIndexTree implements LocationIndex {
             double wayLat = pointList.getLatitude(pointIndex);
             double wayLon = pointList.getLongitude(pointIndex);
             Snap.Position pos = Snap.Position.EDGE;
-            if (distCalc.isCrossBoundary(tmpLon, wayLon)) {
+            if (DIST_PLANE.isCrossBoundary(tmpLon, wayLon)) {
                 tmpLat = wayLat;
                 tmpLon = wayLon;
                 continue;
             }
 
-            if (distCalc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, wayLat, wayLon)) {
-                tmpNormedDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
+            if (DIST_PLANE.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, wayLat, wayLon)) {
+                tmpNormedDist = DIST_PLANE.calcNormalizedEdgeDistance(queryLat, queryLon,
                         tmpLat, tmpLon, wayLat, wayLon);
                 edgeCheck.check(tmpClosestNode, tmpNormedDist, pointIndex, pos);
             } else {
@@ -865,7 +848,7 @@ public class LocationIndexTree implements LocationIndex {
                     tmpNormedDist = adjDist;
                     pos = Snap.Position.TOWER;
                 } else {
-                    tmpNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, wayLat, wayLon);
+                    tmpNormedDist = DIST_PLANE.calcNormalizedDist(queryLat, queryLon, wayLat, wayLon);
                     pos = Snap.Position.PILLAR;
                 }
                 edgeCheck.check(tmpClosestNode, tmpNormedDist, pointIndex + 1, pos);

@@ -61,11 +61,6 @@ public interface LocationIndex extends Storable<LocationIndex> {
      */
     Snap findClosest(double lat, double lon, EdgeFilter edgeFilter);
 
-    /**
-     * @param approxDist false if initialization and querying should be faster but less precise.
-     */
-    LocationIndex setApproximation(boolean approxDist);
-
     void setSegmentSize(int bytes);
 
     /**

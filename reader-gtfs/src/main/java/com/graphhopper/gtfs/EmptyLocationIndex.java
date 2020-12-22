@@ -44,11 +44,6 @@ class EmptyLocationIndex implements LocationIndex {
     }
 
     @Override
-    public LocationIndex setApproximation(boolean approxDist) {
-        return this;
-    }
-
-    @Override
     public void setSegmentSize(int bytes) {
     }
 
