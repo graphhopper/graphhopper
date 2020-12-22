@@ -13,7 +13,6 @@ import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIteratorState;
@@ -486,7 +485,7 @@ public class DirectedBidirectionalDijkstraTest {
         na.setNode(4, 0, 1);
         na.setNode(5, 0, 0);
 
-        LocationIndex locationIndex = new LocationIndexTree(graph, dir);
+        LocationIndexTree locationIndex = new LocationIndexTree(graph, dir);
         locationIndex.prepareIndex();
         Snap snap = locationIndex.findClosest(1.1, 0.5, EdgeFilter.ALL_EDGES);
         QueryGraph queryGraph = QueryGraph.create(graph, snap);

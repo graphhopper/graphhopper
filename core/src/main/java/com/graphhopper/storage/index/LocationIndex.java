@@ -35,16 +35,6 @@ import com.graphhopper.util.shapes.BBox;
  * @author Peter Karich
  */
 public interface LocationIndex extends Storable<LocationIndex> {
-    /**
-     * Integer value to specify the resolution of this location index. The higher the better the
-     * resolution.
-     */
-    LocationIndex setResolution(int resolution);
-
-    /**
-     * Creates this index - to be called once before findID.
-     */
-    LocationIndex prepareIndex();
 
     /**
      * This method returns the closest Snap for the specified location (lat, lon) and only if
@@ -61,8 +51,6 @@ public interface LocationIndex extends Storable<LocationIndex> {
      */
     Snap findClosest(double lat, double lon, EdgeFilter edgeFilter);
 
-    void setSegmentSize(int bytes);
-
     /**
      * This method explores the LocationIndex with the specified Visitor. It visits only the stored nodes (and only once)
      * and limited by the queryBBox. Note that for every edge only one node has to be stored and to get all nodes
@@ -72,7 +60,7 @@ public interface LocationIndex extends Storable<LocationIndex> {
     void query(BBox queryBBox, Visitor function);
 
     /**
-     * This interface allows to visit nodes stored in the LocationIndex.
+     * This interface allows to visit edges stored in the LocationIndex.
      */
     abstract class Visitor {
         public boolean isTileInfo() {

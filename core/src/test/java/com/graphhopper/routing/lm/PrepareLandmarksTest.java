@@ -99,7 +99,7 @@ public class PrepareLandmarksTest {
             }
         }
         Directory dir = new RAMDirectory();
-        LocationIndex index = new LocationIndexTree(graph, dir);
+        LocationIndexTree index = new LocationIndexTree(graph, dir);
         index.prepareIndex();
 
         int lm = 5, activeLM = 2;

@@ -222,7 +222,6 @@ public class LocationIndexTree implements LocationIndex {
         return memIndex;
     }
 
-    @Override
     public LocationIndex setResolution(int minResolutionInMeter) {
         if (minResolutionInMeter <= 0)
             throw new IllegalStateException("Negative precision is not allowed!");
@@ -267,7 +266,6 @@ public class LocationIndexTree implements LocationIndex {
         dataAccess.flush();
     }
 
-    @Override
     public LocationIndex prepareIndex() {
         return prepareIndex(EdgeFilter.ALL_EDGES);
     }
@@ -322,7 +320,6 @@ public class LocationIndexTree implements LocationIndex {
         return dataAccess.getCapacity();
     }
 
-    @Override
     public void setSegmentSize(int bytes) {
         dataAccess.setSegmentSize(bytes);
     }
