@@ -29,7 +29,10 @@ import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.function.IntConsumer;
 
 import static com.graphhopper.util.DistanceCalcEarth.C;
@@ -330,26 +333,20 @@ public class LocationIndexTree implements LocationIndex {
     /**
      * This method fills the set with stored edge IDs from the given spatial key
      */
-    final void fillIDs(long keyPart, int intPointer, int depth, EdgeFilter edgeFilter, IntConsumer consumer) {
+    final void fillIDs(long keyPart, int intPointer, int depth, IntConsumer consumer) {
         long pointer = (long) intPointer << 2;
         if (depth == entries.length) {
             int nextIntPointer = dataAccess.getInt(pointer);
             if (nextIntPointer < 0) {
                 // single data entries (less disc space)
                 int edgeId = -(nextIntPointer + 1);
-                EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorStateForKey(edgeId * 2);
-                if (edgeFilter.accept(edgeIteratorState)) {
-                    consumer.accept(edgeId);
-                }
+                consumer.accept(edgeId);
             } else {
                 long max = (long) nextIntPointer * 4;
                 // leaf entry => nextIntPointer is maxPointer
                 for (long leafIndex = pointer + 4; leafIndex < max; leafIndex += 4) {
                     int edgeId = dataAccess.getInt(leafIndex);
-                    EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorStateForKey(edgeId * 2);
-                    if (edgeFilter.accept(edgeIteratorState)) {
-                        consumer.accept(edgeId);
-                    }
+                    consumer.accept(edgeId);
                 }
             }
             return;
@@ -358,7 +355,7 @@ public class LocationIndexTree implements LocationIndex {
         int nextIntPointer = dataAccess.getInt(pointer + offset);
         if (nextIntPointer > 0) {
             // tree entry => negative value points to subentries
-            fillIDs(keyPart >>> shifts[depth], nextIntPointer, depth + 1, edgeFilter, consumer);
+            fillIDs(keyPart >>> shifts[depth], nextIntPointer, depth + 1, consumer);
         }
     }
 
@@ -494,7 +491,7 @@ public class LocationIndexTree implements LocationIndex {
      * See discussion at issue #221.
      * <p>
      */
-    final void findEdgeIdsInNeighborhood(double queryLat, double queryLon, int iteration, EdgeFilter edgeFilter, IntConsumer foundEntries) {
+    final void findEdgeIdsInNeighborhood(double queryLat, double queryLon, int iteration, IntConsumer foundEntries) {
         // find entries in border of searchbox
         long queryKey = keyAlgo.encodeLatLon(queryLat, queryLon);
         int queryX = keyAlgo.x(queryKey);
@@ -504,12 +501,12 @@ public class LocationIndexTree implements LocationIndex {
             int subqueryXA = queryX - iteration;
             int subqueryXB = queryX + iteration;
             long keyPart1 = BitUtil.BIG.reverse(keyAlgo.encode(subqueryXA, subqueryY), keyAlgo.getBits());
-            fillIDs(keyPart1, START_POINTER, 0, edgeFilter, foundEntries);
+            fillIDs(keyPart1, START_POINTER, 0, foundEntries);
 
             // minor optimization for iteration == 0
             if (iteration > 0) {
                 long keyPart = BitUtil.BIG.reverse(keyAlgo.encode(subqueryXB, subqueryY), keyAlgo.getBits());
-                fillIDs(keyPart, START_POINTER, 0, edgeFilter, foundEntries);
+                fillIDs(keyPart, START_POINTER, 0, foundEntries);
             }
         }
 
@@ -518,9 +515,9 @@ public class LocationIndexTree implements LocationIndex {
             int subqueryYA = queryY - iteration;
             int subqueryYB = queryY + iteration;
             long keyPart1 = BitUtil.BIG.reverse(keyAlgo.encode(subqueryX, subqueryYA), keyAlgo.getBits());
-            fillIDs(keyPart1, START_POINTER, 0, edgeFilter, foundEntries);
+            fillIDs(keyPart1, START_POINTER, 0, foundEntries);
             long keyPart = BitUtil.BIG.reverse(keyAlgo.encode(subqueryX, subqueryYB), keyAlgo.getBits());
-            fillIDs(keyPart, START_POINTER, 0, edgeFilter, foundEntries);
+            fillIDs(keyPart, START_POINTER, 0, foundEntries);
         }
     }
 
@@ -531,17 +528,19 @@ public class LocationIndexTree implements LocationIndex {
 
         final Snap closestMatch = new Snap(queryLat, queryLon);
         for (int iteration = 0; iteration < maxRegionSearch; iteration++) {
-            findEdgeIdsInNeighborhood(queryLat, queryLon, iteration, edgeFilter, edgeId -> {
+            findEdgeIdsInNeighborhood(queryLat, queryLon, iteration, edgeId -> {
                 EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorStateForKey(edgeId * 2);
-                traverseEdge(queryLat, queryLon, edgeIteratorState, (node, normedDist, wayIndex, pos) -> {
-                    if (normedDist < closestMatch.getQueryDistance()) {
-                        closestMatch.setQueryDistance(normedDist);
-                        closestMatch.setClosestNode(node);
-                        closestMatch.setClosestEdge(edgeIteratorState.detach(false));
-                        closestMatch.setWayIndex(wayIndex);
-                        closestMatch.setSnappedPosition(pos);
-                    }
-                });
+                if (edgeFilter.accept(edgeIteratorState)) { // TODO: or reverse?
+                    traverseEdge(queryLat, queryLon, edgeIteratorState, (node, normedDist, wayIndex, pos) -> {
+                        if (normedDist < closestMatch.getQueryDistance()) {
+                            closestMatch.setQueryDistance(normedDist);
+                            closestMatch.setClosestNode(node);
+                            closestMatch.setClosestEdge(edgeIteratorState.detach(false));
+                            closestMatch.setWayIndex(wayIndex);
+                            closestMatch.setSnappedPosition(pos);
+                        }
+                    });
+                }
             });
             if (iteration % 2 != 0 && closestMatch.isValid()) {
                 // Check if we can stop...
