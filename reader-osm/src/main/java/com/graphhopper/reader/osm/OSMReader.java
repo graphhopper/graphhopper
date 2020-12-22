@@ -85,7 +85,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     private long skippedLocations;
     private final EncodingManager encodingManager;
     private int workerThreads = 2;
-    // Using the correct Map<Long, Integer> is hard. We need a memory efficient and fast solution for big data sets!
+    // Choosing the best Map<Long, Integer> is hard. We need a memory efficient and fast solution for big data sets!
     //
     // very slow: new SparseLongLongArray
     // only append and update possible (no unordered storage like with this doubleParse): new OSMIDMap
@@ -544,10 +544,10 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     void prepareHighwayNode(long osmId) {
         int tmpGHNodeId = getNodeMap().get(osmId);
         if (tmpGHNodeId == EMPTY_NODE) {
-            // osmId is used exactly once
+            // this is the first time we see this osmId
             getNodeMap().put(osmId, PILLAR_NODE);
         } else if (tmpGHNodeId > EMPTY_NODE) {
-            // mark node as tower node as it occurred at least twice times
+            // mark node as tower node as it now occurred for at least the second time
             getNodeMap().put(osmId, TOWER_NODE);
         } else {
             // tmpIndex is already negative (already tower node)
@@ -570,14 +570,14 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
      * This method creates from an OSM way (via the osm ids) one or more edges in the graph.
      */
     Collection<EdgeIteratorState> addOSMWay(final LongIndexedContainer osmNodeIds, final IntsRef flags, final long wayOsmId) {
-        PointList pointList = new PointList(osmNodeIds.size(), nodeAccess.is3D());
-        List<EdgeIteratorState> newEdges = new ArrayList<>(5);
+        final PointList pointList = new PointList(osmNodeIds.size(), nodeAccess.is3D());
+        final List<EdgeIteratorState> newEdges = new ArrayList<>(5);
         int firstNode = -1;
-        int lastIndex = osmNodeIds.size() - 1;
+        final int lastIndex = osmNodeIds.size() - 1;
         int lastInBoundsPillarNode = -1;
         try {
             for (int i = 0; i < osmNodeIds.size(); i++) {
-                long osmNodeId = osmNodeIds.get(i);
+                final long osmNodeId = osmNodeIds.get(i);
                 int tmpNode = getNodeMap().get(osmNodeId);
                 if (tmpNode == EMPTY_NODE)
                     continue;
