@@ -17,12 +17,8 @@
  */
 package com.graphhopper.storage.index;
 
-import com.carrotsearch.hppc.IntHashSet;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Storable;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.BBox;
 
 /**
@@ -46,15 +42,14 @@ public interface LocationIndex extends Storable<LocationIndex> {
      *                   node into the graph is accessible from a selected vehicle. E.g. if you have a FOOT-query do:
      *                   <pre>DefaultEdgeFilter.allEdges(footFlagEncoder);</pre>
      * @return An object containing the closest node and edge for the specified location. The node id
-     * has at least one edge which is accepted from the specified edgeFilter. If nothing is found
+     * has at least one edge which is accepted by the specified edgeFilter. If nothing is found
      * the method Snap.isValid will return false.
      */
     Snap findClosest(double lat, double lon, EdgeFilter edgeFilter);
 
     /**
-     * This method explores the LocationIndex with the specified Visitor. It visits only the stored nodes (and only once)
-     * and limited by the queryBBox. Note that for every edge only one node has to be stored and to get all nodes
-     * (or edges) you should better use EdgeVisitor. Also (a few) more nodes slightly outside of queryBBox could be
+     * This method explores the LocationIndex with the specified Visitor. It visits only the stored edges (and only once)
+     * and limited by the queryBBox. Also (a few) more edges slightly outside of queryBBox could be
      * returned that you can avoid via doing an explicit BBox check of the coordinates.
      */
     void query(BBox queryBBox, Visitor function);
