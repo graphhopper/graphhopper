@@ -107,16 +107,16 @@ public class RoundTripRoutingTest {
                 qGraph, new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, fastestWeighting, tMode));
         List<Path> paths = RoundTripRouting.calcPaths(Arrays.asList(snap5, snap4, snap5), pathCalculator).paths;
         assertEquals(2, paths.size());
-        assertEquals(IntArrayList.from(5, 6, 3, 4), paths.get(0).calcNodes());
-        assertEquals(IntArrayList.from(4, 8, 7, 6, 5), paths.get(1).calcNodes());
+        assertEquals(IntArrayList.from(5, 6, 3), paths.get(0).calcNodes());
+        assertEquals(IntArrayList.from(3, 2, 9, 1, 5), paths.get(1).calcNodes());
 
         qGraph = QueryGraph.create(g, Arrays.asList(snap4, snap6));
         pathCalculator = new FlexiblePathCalculator(
                 qGraph, new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, fastestWeighting, tMode));
         paths = RoundTripRouting.calcPaths(Arrays.asList(snap6, snap4, snap6), pathCalculator).paths;
         assertEquals(2, paths.size());
-        assertEquals(IntArrayList.from(6, 3, 4), paths.get(0).calcNodes());
-        assertEquals(IntArrayList.from(4, 8, 7, 6), paths.get(1).calcNodes());
+        assertEquals(IntArrayList.from(6, 3), paths.get(0).calcNodes());
+        assertEquals(IntArrayList.from(3, 4, 8, 7, 6), paths.get(1).calcNodes());
     }
 
     private Graph createTestGraph() {
