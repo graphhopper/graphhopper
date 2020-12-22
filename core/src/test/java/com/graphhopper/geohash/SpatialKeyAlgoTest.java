@@ -264,4 +264,17 @@ public class SpatialKeyAlgoTest {
         assertEquals(spatialKeyAlgo.encode(2, 0), spatialKeyAlgo.right(spatialKeyAlgo.right(spatialKeyAlgo.encode(0, 0))));
     }
 
+    @Test
+    public void testTwentyBits() {
+        SpatialKeyAlgo spatialKeyAlgo = new SpatialKeyAlgo(20);
+        assertEquals(0b11111111111111111111L, spatialKeyAlgo.encode(1023, 1023));
+
+        for (int x=0; x<1024; x++) {
+            for (int y=0; y<1024; y++) {
+                assertEquals(x, spatialKeyAlgo.x(spatialKeyAlgo.encode(x, y)));
+                assertEquals(y, spatialKeyAlgo.y(spatialKeyAlgo.encode(x, y)));
+            }
+        }
+    }
+
 }
