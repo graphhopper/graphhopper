@@ -186,10 +186,9 @@ public class SpatialKeyAlgoTest {
     public void testNoFurtherIterationIfBitsIs1() {
         SpatialKeyAlgo spatialKeyAlgo = new SpatialKeyAlgo(4);
         spatialKeyAlgo.bounds(new BBox(0, 5, 0, 5));
-        SpatialKeyAlgo algo = spatialKeyAlgo;
         // 1001
         GHPoint coord = new GHPoint();
-        algo.decode(9, coord);
+        spatialKeyAlgo.decode(9, coord);
         assertEquals(3.125, coord.lat, 1e-4);
         assertEquals(1.875, coord.lon, 1e-4);
     }
@@ -234,13 +233,12 @@ public class SpatialKeyAlgoTest {
         int bits = (int) (Math.log(parts * parts) / Math.log(2));
         SpatialKeyAlgo spatialKeyAlgo = new SpatialKeyAlgo(bits);
         spatialKeyAlgo.bounds(new BBox(minLon, maxLon, minLat, maxLat));
-        final SpatialKeyAlgo keyAlgo = spatialKeyAlgo;
         // lat border 0.125
-        assertEquals(11, keyAlgo.encodeLatLon(0.125, -0.2));
-        assertEquals(9, keyAlgo.encodeLatLon(0.124, -0.2));
+        assertEquals(11, spatialKeyAlgo.encodeLatLon(0.125, -0.2));
+        assertEquals(9, spatialKeyAlgo.encodeLatLon(0.124, -0.2));
         // lon border -0.35
-        assertEquals(11, keyAlgo.encodeLatLon(0.2, -0.35));
-        assertEquals(10, keyAlgo.encodeLatLon(0.2, -0.351));
+        assertEquals(11, spatialKeyAlgo.encodeLatLon(0.2, -0.35));
+        assertEquals(10, spatialKeyAlgo.encodeLatLon(0.2, -0.351));
     }
 
     @Test
