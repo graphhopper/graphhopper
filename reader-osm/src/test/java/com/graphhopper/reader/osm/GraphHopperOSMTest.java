@@ -430,7 +430,7 @@ public class GraphHopperOSMTest {
                 setDataReaderFile(testOsm8);
         instance.importOrLoad();
 
-        // This test is arguably a bit unfair: It has a very small network, and it expects the LocationIndex
+        // This test is arguably a bit unfair: It expects the LocationIndex
         // to find a foot edge that is many tiles away.
         // Previously, it worked, but only because of the way the LocationIndex would traverse the Graph
         // (it would also go into CAR edges to find WALK edges).
