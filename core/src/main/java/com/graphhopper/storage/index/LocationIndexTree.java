@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.IntConsumer;
 
 import static com.graphhopper.util.DistanceCalcEarth.C;
 import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
@@ -332,7 +333,7 @@ public class LocationIndexTree implements LocationIndex {
     /**
      * This method fills the set with stored edge IDs from the given spatial key
      */
-    final void fillIDs(long keyPart, int intPointer, GHIntHashSet set, int depth, EdgeFilter edgeFilter) {
+    final void fillIDs(long keyPart, int intPointer, int depth, EdgeFilter edgeFilter, IntConsumer consumer) {
         long pointer = (long) intPointer << 2;
         if (depth == entries.length) {
             int nextIntPointer = dataAccess.getInt(pointer);
@@ -341,7 +342,7 @@ public class LocationIndexTree implements LocationIndex {
                 int edgeId = -(nextIntPointer + 1);
                 EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorStateForKey(edgeId * 2);
                 if (edgeFilter.accept(edgeIteratorState)) {
-                    set.add(edgeId);
+                    consumer.accept(edgeId);
                 }
             } else {
                 long max = (long) nextIntPointer * 4;
@@ -350,7 +351,7 @@ public class LocationIndexTree implements LocationIndex {
                     int edgeId = dataAccess.getInt(leafIndex);
                     EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorStateForKey(edgeId * 2);
                     if (edgeFilter.accept(edgeIteratorState)) {
-                        set.add(edgeId);
+                        consumer.accept(edgeId);
                     }
                 }
             }
@@ -360,7 +361,7 @@ public class LocationIndexTree implements LocationIndex {
         int nextIntPointer = dataAccess.getInt(pointer + offset);
         if (nextIntPointer > 0) {
             // tree entry => negative value points to subentries
-            fillIDs(keyPart >>> shifts[depth], nextIntPointer, set, depth + 1, edgeFilter);
+            fillIDs(keyPart >>> shifts[depth], nextIntPointer, depth + 1, edgeFilter, consumer);
         }
     }
 
@@ -496,7 +497,7 @@ public class LocationIndexTree implements LocationIndex {
      * See discussion at issue #221.
      * <p>
      */
-    final void findEdgeIdsInNeighborhood(double queryLat, double queryLon, GHIntHashSet foundEntries, int iteration, EdgeFilter edgeFilter) {
+    final void findEdgeIdsInNeighborhood(double queryLat, double queryLon, int iteration, EdgeFilter edgeFilter, IntConsumer foundEntries) {
         // find entries in border of searchbox
         long queryKey = keyAlgo.encodeLatLon(queryLat, queryLon);
         int queryX = keyAlgo.x(queryKey);
@@ -506,12 +507,12 @@ public class LocationIndexTree implements LocationIndex {
             int subqueryXA = queryX - iteration;
             int subqueryXB = queryX + iteration;
             long keyPart1 = BitUtil.BIG.reverse(keyAlgo.encode(subqueryXA, subqueryY), keyAlgo.getBits());
-            fillIDs(keyPart1, START_POINTER, foundEntries, 0, edgeFilter);
+            fillIDs(keyPart1, START_POINTER, 0, edgeFilter, foundEntries);
 
             // minor optimization for iteration == 0
             if (iteration > 0) {
                 long keyPart = BitUtil.BIG.reverse(keyAlgo.encode(subqueryXB, subqueryY), keyAlgo.getBits());
-                fillIDs(keyPart, START_POINTER, foundEntries, 0, edgeFilter);
+                fillIDs(keyPart, START_POINTER, 0, edgeFilter, foundEntries);
             }
         }
 
@@ -520,28 +521,10 @@ public class LocationIndexTree implements LocationIndex {
             int subqueryYA = queryY - iteration;
             int subqueryYB = queryY + iteration;
             long keyPart1 = BitUtil.BIG.reverse(keyAlgo.encode(subqueryX, subqueryYA), keyAlgo.getBits());
-            fillIDs(keyPart1, START_POINTER, foundEntries, 0, edgeFilter);
+            fillIDs(keyPart1, START_POINTER, 0, edgeFilter, foundEntries);
             long keyPart = BitUtil.BIG.reverse(keyAlgo.encode(subqueryX, subqueryYB), keyAlgo.getBits());
-            fillIDs(keyPart, START_POINTER, foundEntries, 0, edgeFilter);
+            fillIDs(keyPart, START_POINTER, 0, edgeFilter, foundEntries);
         }
-    }
-
-    final double calcMinDistance(double queryLat, double queryLon, GHIntHashSet edges) {
-        double min = Double.MAX_VALUE;
-        for (IntCursor edge : edges) {
-            EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorStateForKey(edge.value * 2);
-            int nodeA = edgeIteratorState.getBaseNode();
-            double distA = ((DistanceCalc) DIST_PLANE).calcDist(queryLat, queryLon, nodeAccess.getLat(nodeA), nodeAccess.getLon(nodeA));
-            if (distA < min) {
-                min = distA;
-            }
-            int nodeB = edgeIteratorState.getAdjNode();
-            double distB = ((DistanceCalc) DIST_PLANE).calcDist(queryLat, queryLon, nodeAccess.getLat(nodeB), nodeAccess.getLon(nodeB));
-            if (distB < min) {
-                min = distB;
-            }
-        }
-        return min;
     }
 
     @Override
@@ -549,35 +532,29 @@ public class LocationIndexTree implements LocationIndex {
         if (isClosed())
             throw new IllegalStateException("You need to create a new LocationIndex instance as it is already closed");
 
-        GHIntHashSet storedNetworkEntryIds = new GHIntHashSet();
+        final Snap closestMatch = new Snap(queryLat, queryLon);
         for (int iteration = 0; iteration < maxRegionSearch; iteration++) {
-            findEdgeIdsInNeighborhood(queryLat, queryLon, storedNetworkEntryIds, iteration, edgeFilter);
-            if (iteration % 2 != 0) {
-                // Check if something was found already...
-                if (!storedNetworkEntryIds.isEmpty()) {
-                    double rMin = calculateRMin(queryLat, queryLon, iteration);
-                    double minDistance = calcMinDistance(queryLat, queryLon, storedNetworkEntryIds);
-                    if (minDistance < rMin) {
-                        break; // We can (approximately?) guarantee that no closer edges are anywhere else
+            findEdgeIdsInNeighborhood(queryLat, queryLon, iteration, edgeFilter, edgeId -> {
+                EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorStateForKey(edgeId * 2);
+                traverseEdge(queryLat, queryLon, edgeIteratorState, (node, normedDist, wayIndex, pos) -> {
+                    if (normedDist < closestMatch.getQueryDistance()) {
+                        closestMatch.setQueryDistance(normedDist);
+                        closestMatch.setClosestNode(node);
+                        closestMatch.setClosestEdge(edgeIteratorState.detach(false));
+                        closestMatch.setWayIndex(wayIndex);
+                        closestMatch.setSnappedPosition(pos);
                     }
+                });
+            });
+            if (iteration % 2 != 0 && closestMatch.isValid()) {
+                // Check if we can stop...
+                double rMin = calculateRMin(queryLat, queryLon, iteration);
+                double minDistance = DIST_PLANE.calcDenormalizedDist(closestMatch.getQueryDistance());
+                if (minDistance < rMin) {
+                    break; // We can (approximately?) guarantee that no closer edges are anywhere else
                 }
             }
         }
-
-        final Snap closestMatch = new Snap(queryLat, queryLon);
-        storedNetworkEntryIds.forEach((IntPredicate) edgeId -> {
-            EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorStateForKey(edgeId * 2);
-            traverseEdge(queryLat, queryLon, edgeIteratorState, (node, normedDist, wayIndex, pos) -> {
-                if (normedDist < closestMatch.getQueryDistance()) {
-                    closestMatch.setQueryDistance(normedDist);
-                    closestMatch.setClosestNode(node);
-                    closestMatch.setClosestEdge(edgeIteratorState.detach(false));
-                    closestMatch.setWayIndex(wayIndex);
-                    closestMatch.setSnappedPosition(pos);
-                }
-            });
-            return true;
-        });
 
         if (closestMatch.isValid()) {
             closestMatch.setQueryDistance(DIST_PLANE.calcDenormalizedDist(closestMatch.getQueryDistance()));

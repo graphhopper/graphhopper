@@ -18,7 +18,6 @@
 package com.graphhopper.storage.index;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Directory;
@@ -30,7 +29,9 @@ import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -345,13 +346,6 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         double check2 = distCalc.calcDist(0.05, Math.abs(graph.getNodeAccess().getLat(0)), -0.3, -0.3);
 
         assertTrue((rmin2 - check2) < 0.0001);
-
-        GHIntHashSet points = new GHIntHashSet();
-        assertEquals(Double.MAX_VALUE, index.calcMinDistance(0.05, -0.3, points), 1e-1);
-
-        points.add(0);
-        points.add(1);
-        assertEquals(54757.03, index.calcMinDistance(0.05, -0.3, points), 1e-1);
 
         /*GraphVisualizer gv = new GraphVisualizer(graph, index.getDeltaLat(), index.getDeltaLon(), index.getCenter(0, 0).lat, index.getCenter(0, 0).lon);
          try {
