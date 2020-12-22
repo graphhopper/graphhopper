@@ -41,7 +41,6 @@ import static org.junit.Assert.assertTrue;
  */
 public class LocationIndexTreeTest extends AbstractLocationIndexTester {
     protected final EncodingManager encodingManager = EncodingManager.create("car");
-    final PointList points = new PointList(10, false);
 
     @Override
     public LocationIndexTree createIndex(Graph g, int resolution) {
@@ -143,7 +142,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
 
         // 10111110111110101010
         String str44 = "00000000000000000000000000000000000000000000";
-        assertEquals(str44 + "01010101111101111101", BitUtil.BIG.toBitString(BitUtil.BIG.reverse(index.keyAlgo.encodeLatLon(1.7, 0.099), index.keyAlgo.getBits())));
+        assertEquals(str44 + "01010101111101111101", BitUtil.BIG.toBitString(BitUtil.reverse(index.keyAlgo.encodeLatLon(1.7, 0.099), index.keyAlgo.getBits())));
     }
 
     @Test

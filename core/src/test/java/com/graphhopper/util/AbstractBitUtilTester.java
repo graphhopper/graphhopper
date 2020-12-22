@@ -99,10 +99,10 @@ public abstract class AbstractBitUtilTester {
     @Test
     public void testReverse() {
         String str48 = "000000000000000000000000000000000000000000000000";
-        long ret = bitUtil.reverse(bitUtil.fromBitString2Long(str48 + "0111000000000101"), 16);
+        long ret = BitUtil.reverse(bitUtil.fromBitString2Long(str48 + "0111000000000101"), 16);
         assertEquals(str48 + "1010000000001110", bitUtil.toBitString(ret, 64));
 
-        ret = bitUtil.reverse(bitUtil.fromBitString2Long(str48 + "0111000000000101"), 8);
+        ret = BitUtil.reverse(bitUtil.fromBitString2Long(str48 + "0111000000000101"), 8);
         assertEquals(str48 + "0000000010100000", bitUtil.toBitString(ret, 64));
 
 //        ret = BitUtil.BIG.reversePart(bitUtil.fromBitString2Long("0111000000000101"), 8);

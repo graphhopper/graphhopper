@@ -500,12 +500,12 @@ public class LocationIndexTree implements LocationIndex {
             int subqueryY = queryY + yreg;
             int subqueryXA = queryX - iteration;
             int subqueryXB = queryX + iteration;
-            long keyPart1 = BitUtil.BIG.reverse(keyAlgo.encode(subqueryXA, subqueryY), keyAlgo.getBits());
+            long keyPart1 = BitUtil.reverse(keyAlgo.encode(subqueryXA, subqueryY), keyAlgo.getBits());
             fillIDs(keyPart1, START_POINTER, 0, foundEntries);
 
             // minor optimization for iteration == 0
             if (iteration > 0) {
-                long keyPart = BitUtil.BIG.reverse(keyAlgo.encode(subqueryXB, subqueryY), keyAlgo.getBits());
+                long keyPart = BitUtil.reverse(keyAlgo.encode(subqueryXB, subqueryY), keyAlgo.getBits());
                 fillIDs(keyPart, START_POINTER, 0, foundEntries);
             }
         }
@@ -514,9 +514,9 @@ public class LocationIndexTree implements LocationIndex {
             int subqueryX = queryX + xreg;
             int subqueryYA = queryY - iteration;
             int subqueryYB = queryY + iteration;
-            long keyPart1 = BitUtil.BIG.reverse(keyAlgo.encode(subqueryX, subqueryYA), keyAlgo.getBits());
+            long keyPart1 = BitUtil.reverse(keyAlgo.encode(subqueryX, subqueryYA), keyAlgo.getBits());
             fillIDs(keyPart1, START_POINTER, 0, foundEntries);
-            long keyPart = BitUtil.BIG.reverse(keyAlgo.encode(subqueryX, subqueryYB), keyAlgo.getBits());
+            long keyPart = BitUtil.reverse(keyAlgo.encode(subqueryX, subqueryYB), keyAlgo.getBits());
             fillIDs(keyPart, START_POINTER, 0, foundEntries);
         }
     }
@@ -673,7 +673,7 @@ public class LocationIndexTree implements LocationIndex {
                 // Find all the tiles on the line from (y1, x1) to (y2, y2) in tile coordinates (y, x)
                 BresenhamLine.bresenham(y1, x1, y2, x2, (y, x) -> {
                     long key = keyAlgo.encode(x, y);
-                    long reverseKey = BitUtil.BIG.reverse(key, keyAlgo.getBits());
+                    long reverseKey = BitUtil.reverse(key, keyAlgo.getBits());
                     addEdgeToOneTile(root, edgeId, 0, reverseKey);
                 });
             }
