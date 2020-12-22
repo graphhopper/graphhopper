@@ -351,11 +351,11 @@ public class LocationIndexTree implements LocationIndex {
             }
             return;
         }
-        int offset = (int) (bitmasks[depth] & keyPart) << 2;
+        int offset = (int) (keyPart >>> (64 - shifts[depth])) << 2;
         int nextIntPointer = dataAccess.getInt(pointer + offset);
         if (nextIntPointer > 0) {
             // tree entry => negative value points to subentries
-            fillIDs(keyPart >>> shifts[depth], nextIntPointer, depth + 1, consumer);
+            fillIDs(keyPart << shifts[depth], nextIntPointer, depth + 1, consumer);
         }
     }
 
@@ -461,12 +461,8 @@ public class LocationIndexTree implements LocationIndex {
             int nextIntPointer = dataAccess.getInt(pointer + cellIndex * 4);
             if (nextIntPointer <= 0)
                 continue;
-            // interpret cellIndex as reverse spatial key for this level
-            long spatialKey = BitUtil.reverse(cellIndex, shifts[depth]);
-            int latCount = keyAlgo.y(spatialKey);
-            int lonCount = keyAlgo.x(spatialKey);
-            double tmpMinLon = minLon + deltaLonPerDepth * lonCount,
-                    tmpMinLat = minLat + deltaLatPerDepth * latCount;
+            double tmpMinLon = minLon + deltaLonPerDepth * keyAlgo.x(cellIndex);
+            double tmpMinLat = minLat + deltaLatPerDepth * keyAlgo.y(cellIndex);
 
             BBox bbox = (queryBBox != null || function.isTileInfo()) ? new BBox(tmpMinLon, tmpMinLon + deltaLonPerDepth, tmpMinLat, tmpMinLat + deltaLatPerDepth) : null;
             if (function.isTileInfo())
@@ -499,12 +495,12 @@ public class LocationIndexTree implements LocationIndex {
             int subqueryY = queryY + yreg;
             int subqueryXA = queryX - iteration;
             int subqueryXB = queryX + iteration;
-            long keyPart1 = BitUtil.reverse(keyAlgo.encode(subqueryXA, subqueryY), keyAlgo.getBits());
+            long keyPart1 = keyAlgo.encode(subqueryXA, subqueryY) << (64 - keyAlgo.getBits());
             fillIDs(keyPart1, START_POINTER, 0, foundEntries);
 
             // minor optimization for iteration == 0
             if (iteration > 0) {
-                long keyPart = BitUtil.reverse(keyAlgo.encode(subqueryXB, subqueryY), keyAlgo.getBits());
+                long keyPart = keyAlgo.encode(subqueryXB, subqueryY) << (64 - keyAlgo.getBits());
                 fillIDs(keyPart, START_POINTER, 0, foundEntries);
             }
         }
@@ -513,9 +509,9 @@ public class LocationIndexTree implements LocationIndex {
             int subqueryX = queryX + xreg;
             int subqueryYA = queryY - iteration;
             int subqueryYB = queryY + iteration;
-            long keyPart1 = BitUtil.reverse(keyAlgo.encode(subqueryX, subqueryYA), keyAlgo.getBits());
+            long keyPart1 = keyAlgo.encode(subqueryX, subqueryYA) << (64 - keyAlgo.getBits());
             fillIDs(keyPart1, START_POINTER, 0, foundEntries);
-            long keyPart = BitUtil.reverse(keyAlgo.encode(subqueryX, subqueryYB), keyAlgo.getBits());
+            long keyPart = keyAlgo.encode(subqueryX, subqueryYB) << (64 - keyAlgo.getBits());
             fillIDs(keyPart, START_POINTER, 0, foundEntries);
         }
     }
@@ -672,7 +668,7 @@ public class LocationIndexTree implements LocationIndex {
                 // Find all the tiles on the line from (y1, x1) to (y2, y2) in tile coordinates (y, x)
                 BresenhamLine.bresenham(y1, x1, y2, x2, (y, x) -> {
                     long key = keyAlgo.encode(x, y);
-                    long reverseKey = BitUtil.reverse(key, keyAlgo.getBits());
+                    long reverseKey = key << (64 - keyAlgo.getBits());
                     addEdgeToOneTile(root, edgeId, 0, reverseKey);
                 });
             }
@@ -683,8 +679,8 @@ public class LocationIndexTree implements LocationIndex {
                 InMemLeafEntry leafEntry = (InMemLeafEntry) entry;
                 leafEntry.add(value);
             } else {
-                int index = (int) (bitmasks[depth] & keyPart);
-                keyPart = keyPart >>> shifts[depth];
+                int index = (int) (keyPart >>> (64 - shifts[depth]));
+                keyPart = keyPart << shifts[depth];
                 InMemTreeEntry treeEntry = ((InMemTreeEntry) entry);
                 InMemEntry subentry = treeEntry.getSubEntry(index);
                 depth++;
