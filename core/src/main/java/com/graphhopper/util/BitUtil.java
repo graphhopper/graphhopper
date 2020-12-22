@@ -231,17 +231,7 @@ public abstract class BitUtil {
      * @param maxBits the maximum number of recognized bits for reversal
      */
     public final long reverse(long value, int maxBits) {
-        long res = 0;
-        for (; maxBits > 0; value >>>= 1) {
-            res <<= 1;
-            res |= value & 1;
-            maxBits--;
-            if (value == 0) {
-                res <<= maxBits;
-                break;
-            }
-        }
-        return res;
+        return Long.reverse(value) >>> (64-maxBits);
     }
 
     public final int getIntLow(long longValue) {
