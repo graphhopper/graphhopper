@@ -134,11 +134,11 @@ public class LocationIndexTree implements LocationIndex {
         // if we assume a minimum resolution like 0.5km for a leaf-tile
         // n^(depth/2) = toMeter(dLon) / minResolution
         BBox bounds = graph.getBounds();
-        if (graph.getNodes() == 0)
-            throw new IllegalStateException("Cannot create location index of empty graph!");
 
+        // I want to be able to create a location index for the empty graph without error, but for that
+        // I need valid bounds so that the initialization logic works.
         if (!bounds.isValid())
-            throw new IllegalStateException("Cannot create location index when graph has invalid bounds: " + bounds);
+            bounds = new BBox(-10.0,10.0,-10.0,10.0);
 
         double lat = Math.min(Math.abs(bounds.maxLat), Math.abs(bounds.minLat));
         double maxDistInMeter = Math.max(
