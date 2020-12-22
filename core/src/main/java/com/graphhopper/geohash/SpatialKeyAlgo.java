@@ -110,7 +110,7 @@ public class SpatialKeyAlgo {
     }
 
     public long encode(GHPoint coord) {
-        return encode(coord.lat, coord.lon);
+        return encodeLatLon(coord.lat, coord.lon);
     }
 
     /**
@@ -119,7 +119,7 @@ public class SpatialKeyAlgo {
      *
      * @return the spatial key
      */
-    public final long encode(double lat, double lon) {
+    public final long encodeLatLon(double lat, double lon) {
         // PERFORMANCE: int operations would be faster than double (for further comparison etc)
         // but we would need 'long' because 'int factorForPrecision' is not enough (problem: coord!=decode(encode(coord)) see testBijection)
         // and 'long'-ops are more expensive than double (at least on 32bit systems)
@@ -347,10 +347,6 @@ public class SpatialKeyAlgo {
             a |= (coord[(int) ((c >> (i * 8)) & EIGHTBITMASK)] << (4 * i));
         }
         return (int) a;
-    }
-
-    public long z(int x, int y) {
-        return encode(x, y);
     }
 
     // https://en.wikipedia.org/wiki/Z-order_curve

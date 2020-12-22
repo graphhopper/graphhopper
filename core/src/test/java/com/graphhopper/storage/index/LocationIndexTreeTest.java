@@ -142,7 +142,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
 
         // 10111110111110101010
         String str44 = "00000000000000000000000000000000000000000000";
-        assertEquals(str44 + "01010101111101111101", BitUtil.BIG.toBitString(BitUtil.BIG.reverse(index.keyAlgo.encode(1.7, 0.099), index.keyAlgo.getBits())));
+        assertEquals(str44 + "01010101111101111101", BitUtil.BIG.toBitString(BitUtil.BIG.reverse(index.keyAlgo.encodeLatLon(1.7, 0.099), index.keyAlgo.getBits())));
     }
 
     @Test

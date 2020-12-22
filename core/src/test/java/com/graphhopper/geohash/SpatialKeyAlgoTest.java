@@ -33,7 +33,7 @@ public class SpatialKeyAlgoTest {
     @Test
     public void testEncode() {
         SpatialKeyAlgo algo = new SpatialKeyAlgo(32);
-        long val = algo.encode(-24.235345f, 47.234234f);
+        long val = algo.encodeLatLon(-24.235345f, 47.234234f);
         assertEquals("01100110101000111100000110010100", BitUtil.BIG.toLastBitString(val, 32));
     }
 
@@ -44,7 +44,7 @@ public class SpatialKeyAlgoTest {
         SpatialKeyAlgo algo = new SpatialKeyAlgo(bits);
         float lat = 24.235345f;
         float lon = 47.234234f;
-        long val = algo.encode(lat, lon);
+        long val = algo.encodeLatLon(lat, lon);
         assertEquals("00000000" + "110011000000100101101011", BitUtil.BIG.toLastBitString(val, 32));
 
         GHPoint fl = new GHPoint();
@@ -64,7 +64,7 @@ public class SpatialKeyAlgoTest {
         SpatialKeyAlgo algo = new SpatialKeyAlgo(bits);
         float lat = 24.235345f;
         float lon = 47.234234f;
-        long val = algo.encode(lat, lon);
+        long val = algo.encodeLatLon(lat, lon);
         assertEquals("11001100000010010110101100111110", BitUtil.BIG.toLastBitString(val, bits));
 
         GHPoint fl = new GHPoint();
@@ -83,7 +83,7 @@ public class SpatialKeyAlgoTest {
         SpatialKeyAlgo algo = new SpatialKeyAlgo(bits);
         float lat = 24.235345f;
         float lon = 47.234234f;
-        long val = algo.encode(lat, lon);
+        long val = algo.encodeLatLon(lat, lon);
         assertEquals("11001100000010010110101100111110" + "11100111" + "01000110", BitUtil.BIG.toLastBitString(val, bits));
 
         GHPoint fl = new GHPoint();
@@ -104,7 +104,7 @@ public class SpatialKeyAlgoTest {
 
             GHPoint coord = new GHPoint();
             algo.decode(keyX, coord);
-            long keyY = algo.encode(coord.lat, coord.lon);
+            long keyY = algo.encodeLatLon(coord.lat, coord.lon);
 
             GHPoint coord2 = new GHPoint();
             algo.decode(keyY, coord2);
@@ -141,7 +141,7 @@ public class SpatialKeyAlgoTest {
         GHPoint coord11 = new GHPoint();
         long key = algo.encode(1, 1);
         algo.decode(key, coord11);
-        long resKey = algo.encode(coord11.lat, coord11.lon);
+        long resKey = algo.encodeLatLon(coord11.lat, coord11.lon);
         GHPoint coord2 = new GHPoint();
         algo.decode(resKey, coord2);
         assertEquals(key, resKey);
@@ -198,14 +198,14 @@ public class SpatialKeyAlgoTest {
     public void testOddBits() {
         GHPoint coord = new GHPoint();
         SpatialKeyAlgo algo = new SpatialKeyAlgo(8);
-        long key = algo.encode(5, 30);
+        long key = algo.encodeLatLon(5.0, 30.0);
         assertEquals("11000001", BitUtil.BIG.toLastBitString(key, 8));
         algo.decode(key, coord);
         assertEquals(5.63, coord.lat, 1e-2);
         assertEquals(33.75, coord.lon, 1e-2);
 
         algo = new SpatialKeyAlgo(7);
-        key = algo.encode(11.11, 40.66);
+        key = algo.encodeLatLon(11.11, 40.66);
         assertEquals("01100000", BitUtil.BIG.toLastBitString(key, 8));
         assertEquals(5.63, coord.lat, 1e-2);
         assertEquals(33.75, coord.lon, 1e-2);
@@ -215,8 +215,8 @@ public class SpatialKeyAlgoTest {
     public void testDifferentInitialBounds() {
         SpatialKeyAlgo spatialKeyAlgo = new SpatialKeyAlgo(8);
         spatialKeyAlgo.bounds(new BBox(0, 5, 0, 5));
-        assertEquals(1, spatialKeyAlgo.encode(0, 0.5));
-        assertEquals(5, spatialKeyAlgo.encode(0, 1));
+        assertEquals(1, spatialKeyAlgo.encodeLatLon(0.0, 0.5));
+        assertEquals(5, spatialKeyAlgo.encodeLatLon(0.0, 1.0));
 
         GHPoint coord = new GHPoint();
         spatialKeyAlgo.decode(5, coord);
@@ -236,38 +236,34 @@ public class SpatialKeyAlgoTest {
         spatialKeyAlgo.bounds(new BBox(minLon, maxLon, minLat, maxLat));
         final SpatialKeyAlgo keyAlgo = spatialKeyAlgo;
         // lat border 0.125
-        assertEquals(11, keyAlgo.encode(0.125, -0.2));
-        assertEquals(9, keyAlgo.encode(0.124, -0.2));
+        assertEquals(11, keyAlgo.encodeLatLon(0.125, -0.2));
+        assertEquals(9, keyAlgo.encodeLatLon(0.124, -0.2));
         // lon border -0.35
-        assertEquals(11, keyAlgo.encode(0.2, -0.35));
-        assertEquals(10, keyAlgo.encode(0.2, -0.351));
+        assertEquals(11, keyAlgo.encodeLatLon(0.2, -0.35));
+        assertEquals(10, keyAlgo.encodeLatLon(0.2, -0.351));
     }
 
     @Test
     public void testFourBits() {
+        // This is from the picture in the comments of SpatialKeyAlgo
         SpatialKeyAlgo spatialKeyAlgo = new SpatialKeyAlgo(4);
-        System.out.println(spatialKeyAlgo.z(0,0));
-        System.out.println(spatialKeyAlgo.z(1,0));
-        System.out.println(spatialKeyAlgo.z(2,0));
-        System.out.println(spatialKeyAlgo.z(3,0));
-        System.out.println(spatialKeyAlgo.z(0,1));
-        System.out.println(spatialKeyAlgo.z(0,2));
-        System.out.println(spatialKeyAlgo.z(0,3));
-        System.out.println();
-        System.out.println(spatialKeyAlgo.x(spatialKeyAlgo.z(0,0)));
-        System.out.println(spatialKeyAlgo.y(spatialKeyAlgo.z(0,0)));
-        System.out.println(spatialKeyAlgo.x(spatialKeyAlgo.z(1,0)));
-        System.out.println(spatialKeyAlgo.y(spatialKeyAlgo.z(1,0)));
-        System.out.println(spatialKeyAlgo.x(spatialKeyAlgo.z(0,1)));
-        System.out.println(spatialKeyAlgo.y(spatialKeyAlgo.z(0,1)));
-        System.out.println(spatialKeyAlgo.x(spatialKeyAlgo.z(1,1)));
-        System.out.println(spatialKeyAlgo.y(spatialKeyAlgo.z(1,1)));
-        System.out.println(spatialKeyAlgo.x(spatialKeyAlgo.z(2,2)));
-        System.out.println(spatialKeyAlgo.y(spatialKeyAlgo.z(2,2)));
+        assertEquals(0b0000, spatialKeyAlgo.encode(0, 0));
+        assertEquals(0b0001, spatialKeyAlgo.encode(1, 0));
+        assertEquals(0b0100, spatialKeyAlgo.encode(2, 0));
+        assertEquals(0b0101, spatialKeyAlgo.encode(3, 0));
+        assertEquals(0b0010, spatialKeyAlgo.encode(0, 1));
+        assertEquals(0b1000, spatialKeyAlgo.encode(0, 2));
+        assertEquals(0b1010, spatialKeyAlgo.encode(0, 3));
+        assertEquals(0b1100, spatialKeyAlgo.encode(2, 2));
 
-        System.out.println(spatialKeyAlgo.y(spatialKeyAlgo.z(3,3)));
+        for (int x=0; x<4; x++) {
+            for (int y=0; y<4; y++) {
+                assertEquals(x, spatialKeyAlgo.x(spatialKeyAlgo.encode(x, y)));
+                assertEquals(y, spatialKeyAlgo.y(spatialKeyAlgo.encode(x, y)));
+            }
+        }
 
-        assertEquals(spatialKeyAlgo.z(2, 0), spatialKeyAlgo.right(spatialKeyAlgo.right(spatialKeyAlgo.z(0,0))));
+        assertEquals(spatialKeyAlgo.encode(2, 0), spatialKeyAlgo.right(spatialKeyAlgo.right(spatialKeyAlgo.encode(0, 0))));
     }
 
 }

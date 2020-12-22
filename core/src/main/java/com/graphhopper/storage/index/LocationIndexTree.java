@@ -518,19 +518,19 @@ public class LocationIndexTree implements LocationIndex {
      */
     final void findEdgeIdsInNeighborhood(double queryLat, double queryLon, GHIntHashSet foundEntries, int iteration, EdgeFilter edgeFilter) {
         // find entries in border of searchbox
-        long queryKey = keyAlgo.encode(queryLat, queryLon);
+        long queryKey = keyAlgo.encodeLatLon(queryLat, queryLon);
         int queryX = keyAlgo.x(queryKey);
         int queryY = keyAlgo.y(queryKey);
         for (int yreg = -iteration; yreg <= iteration; yreg++) {
             int subqueryY = queryY + yreg;
             int subqueryXA = queryX - iteration;
             int subqueryXB = queryX + iteration;
-            long keyPart1 = BitUtil.BIG.reverse(keyAlgo.z(subqueryXA, subqueryY), keyAlgo.getBits());
+            long keyPart1 = BitUtil.BIG.reverse(keyAlgo.encode(subqueryXA, subqueryY), keyAlgo.getBits());
             fillIDs(keyPart1, START_POINTER, foundEntries, 0, edgeFilter);
 
             // minor optimization for iteration == 0
             if (iteration > 0) {
-                long keyPart = BitUtil.BIG.reverse(keyAlgo.z(subqueryXB, subqueryY), keyAlgo.getBits());
+                long keyPart = BitUtil.BIG.reverse(keyAlgo.encode(subqueryXB, subqueryY), keyAlgo.getBits());
                 fillIDs(keyPart, START_POINTER, foundEntries, 0, edgeFilter);
             }
         }
@@ -539,9 +539,9 @@ public class LocationIndexTree implements LocationIndex {
             int subqueryX = queryX + xreg;
             int subqueryYA = queryY - iteration;
             int subqueryYB = queryY + iteration;
-            long keyPart1 = BitUtil.BIG.reverse(keyAlgo.z(subqueryX, subqueryYA), keyAlgo.getBits());
+            long keyPart1 = BitUtil.BIG.reverse(keyAlgo.encode(subqueryX, subqueryYA), keyAlgo.getBits());
             fillIDs(keyPart1, START_POINTER, foundEntries, 0, edgeFilter);
-            long keyPart = BitUtil.BIG.reverse(keyAlgo.z(subqueryX, subqueryYB), keyAlgo.getBits());
+            long keyPart = BitUtil.BIG.reverse(keyAlgo.encode(subqueryX, subqueryYB), keyAlgo.getBits());
             fillIDs(keyPart, START_POINTER, foundEntries, 0, edgeFilter);
         }
     }
@@ -743,7 +743,7 @@ public class LocationIndexTree implements LocationIndex {
                 int x2 = keyAlgo.x(tile2);
                 // Find all the tiles on the line from (y1, x1) to (y2, y2) in tile coordinates (y, x)
                 BresenhamLine.bresenham(y1, x1, y2, x2, (y, x) -> {
-                    long key = keyAlgo.z(x, y);
+                    long key = keyAlgo.encode(x, y);
                     long reverseKey = BitUtil.BIG.reverse(key, keyAlgo.getBits());
                     addEdgeToOneTile(root, edgeId, 0, reverseKey);
                 });
