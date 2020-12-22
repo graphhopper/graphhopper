@@ -573,10 +573,30 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         final PointList pointList = new PointList(osmNodeIds.size(), nodeAccess.is3D());
         final List<EdgeIteratorState> newEdges = new ArrayList<>(5);
         int firstNode = -1;
-        final int lastIndex = osmNodeIds.size() - 1;
         int lastInBoundsPillarNode = -1;
         try {
-            for (int i = 0; i < osmNodeIds.size(); i++) {
+            // #2221: ways might include nodes at the beginning or end that do not exist -> skip them
+            int firstExisting = -1;
+            int lastExisting = -1;
+            for (int i = 0; i < osmNodeIds.size(); ++i) {
+                final long tmpNode = getNodeMap().get(osmNodeIds.get(i));
+                if (tmpNode > -TOWER_NODE || tmpNode < TOWER_NODE) {
+                    firstExisting = i;
+                    break;
+                }
+            }
+            for (int i = osmNodeIds.size() - 1; i >= 0; --i) {
+                final long tmpNode = getNodeMap().get(osmNodeIds.get(i));
+                if (tmpNode > -TOWER_NODE || tmpNode < TOWER_NODE) {
+                    lastExisting = i;
+                    break;
+                }
+            }
+            if (firstExisting < 0) {
+                assert lastExisting < 0;
+                return newEdges;
+            }
+            for (int i = firstExisting; i <= lastExisting; i++) {
                 final long osmNodeId = osmNodeIds.get(i);
                 int tmpNode = getNodeMap().get(osmNodeId);
                 if (tmpNode == EMPTY_NODE)
@@ -611,7 +631,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
                     throw new AssertionError("Mapped index not in correct bounds " + tmpNode + ", " + osmNodeId);
 
                 if (tmpNode > -TOWER_NODE) {
-                    boolean convertToTowerNode = i == 0 || i == lastIndex;
+                    boolean convertToTowerNode = i == firstExisting || i == lastExisting;
                     if (!convertToTowerNode) {
                         lastInBoundsPillarNode = tmpNode;
                     }
