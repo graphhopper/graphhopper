@@ -19,9 +19,6 @@ package com.graphhopper.storage.index;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntHashSet;
-import com.carrotsearch.hppc.cursors.IntCursor;
-import com.carrotsearch.hppc.predicates.IntPredicate;
-import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.geohash.SpatialKeyAlgo;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -568,14 +565,10 @@ public class LocationIndexTree implements LocationIndex {
         boolean isLeaf();
     }
 
-    static class InMemLeafEntry extends SortedIntSet implements InMemEntry {
+    static class InMemLeafEntry extends IntArrayList implements InMemEntry {
 
         public InMemLeafEntry(int count) {
             super(count);
-        }
-
-        public boolean addNode(int nodeId) {
-            return addOnce(nodeId);
         }
 
         @Override
@@ -590,26 +583,6 @@ public class LocationIndexTree implements LocationIndex {
 
         IntArrayList getResults() {
             return this;
-        }
-    }
-
-    // Space efficient sorted integer set. Suited for only a few entries.
-    static class SortedIntSet extends IntArrayList {
-        SortedIntSet(int capacity) {
-            super(capacity);
-        }
-
-        /**
-         * Allow adding a value only once
-         */
-        public boolean addOnce(int value) {
-            int foundIndex = Arrays.binarySearch(buffer, 0, size(), value);
-            if (foundIndex >= 0) {
-                return false;
-            }
-            foundIndex = -foundIndex - 1;
-            insert(foundIndex, value);
-            return true;
         }
     }
 
@@ -710,7 +683,7 @@ public class LocationIndexTree implements LocationIndex {
         void addEdgeToOneTile(InMemEntry entry, int value, int depth, long keyPart) {
             if (entry.isLeaf()) {
                 InMemLeafEntry leafEntry = (InMemLeafEntry) entry;
-                leafEntry.addNode(value);
+                leafEntry.add(value);
             } else {
                 int index = (int) (bitmasks[depth] & keyPart);
                 keyPart = keyPart >>> shifts[depth];
