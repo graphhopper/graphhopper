@@ -342,7 +342,7 @@ public class LocationIndexTree implements LocationIndex {
     }
 
     /**
-     * This method fills the set with stored node IDs from the given spatial key part (a latitude-longitude prefix).
+     * This method fills the set with stored edge IDs from the given spatial key
      */
     final void fillIDs(long keyPart, int intPointer, GHIntHashSet set, int depth, EdgeFilter edgeFilter) {
         long pointer = (long) intPointer << 2;
