@@ -670,7 +670,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
 
         // sample points along long edges
         if (this.longEdgeSamplingDistance < Double.MAX_VALUE && pointList.is3D())
-            pointList = EdgeSampling.sample(wayOsmId, pointList, longEdgeSamplingDistance, distCalc, eleProvider);
+            pointList = EdgeSampling.sample(pointList, longEdgeSamplingDistance, distCalc, eleProvider);
 
         if (doSimplify && pointList.size() > 2)
             simplifyAlgo.simplify(pointList);
