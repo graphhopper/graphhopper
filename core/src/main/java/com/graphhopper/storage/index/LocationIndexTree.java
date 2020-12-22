@@ -461,11 +461,10 @@ public class LocationIndexTree implements LocationIndex {
             int nextIntPointer = dataAccess.getInt(pointer + cellIndex * 4);
             if (nextIntPointer <= 0)
                 continue;
-            // this bit magic does two things for the 4 and 16 tiles case:
-            // 1. it assumes the cellIndex is a reversed spatial key and so it reverses it
-            // 2. it picks every second bit (e.g. for just latitudes) and interprets the result as an integer
-            int latCount = max == 4 ? (cellIndex & 1) : (cellIndex & 1) * 2 + ((cellIndex & 4) == 0 ? 0 : 1);
-            int lonCount = max == 4 ? (cellIndex >> 1) : (cellIndex & 2) + ((cellIndex & 8) == 0 ? 0 : 1);
+            // interpret cellIndex as reverse spatial key for this level
+            long spatialKey = BitUtil.reverse(cellIndex, shifts[depth]);
+            int latCount = keyAlgo.y(spatialKey);
+            int lonCount = keyAlgo.x(spatialKey);
             double tmpMinLon = minLon + deltaLonPerDepth * lonCount,
                     tmpMinLat = minLat + deltaLatPerDepth * latCount;
 
