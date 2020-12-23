@@ -83,7 +83,7 @@ public class LocationIndexTree implements LocationIndex {
      * If normed distance is smaller than this value the node or edge is 'identical' and the
      * algorithm can stop search.
      */
-    private double equalNormedDelta;
+    private final double equalNormedDelta = DIST_PLANE.calcNormalizedDist(0.1); // 0.1 meters
 
     /**
      * @param g the graph for which this index should do the lookup based on latitude,longitude.
@@ -128,9 +128,6 @@ public class LocationIndexTree implements LocationIndex {
     }
 
     void prepareAlgo() {
-        // 0.1 meter should count as 'equal'
-        equalNormedDelta = DIST_PLANE.calcNormalizedDist(0.1);
-
         // now calculate the necessary maxDepth d for our current bounds
         // if we assume a minimum resolution like 0.5km for a leaf-tile
         // n^(depth/2) = toMeter(dLon) / minResolution
@@ -319,15 +316,6 @@ public class LocationIndexTree implements LocationIndex {
     @Override
     public long getCapacity() {
         return dataAccess.getCapacity();
-    }
-
-    public void setSegmentSize(int bytes) {
-        dataAccess.setSegmentSize(bytes);
-    }
-
-    // just for test
-    IntArrayList getEntries() {
-        return IntArrayList.from(entries);
     }
 
     /**
@@ -522,10 +510,11 @@ public class LocationIndexTree implements LocationIndex {
             throw new IllegalStateException("You need to create a new LocationIndex instance as it is already closed");
 
         final Snap closestMatch = new Snap(queryLat, queryLon);
+        IntHashSet seenEdges = new IntHashSet();
         for (int iteration = 0; iteration < maxRegionSearch; iteration++) {
             findEdgeIdsInNeighborhood(queryLat, queryLon, iteration, edgeId -> {
                 EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorStateForKey(edgeId * 2);
-                if (edgeFilter.accept(edgeIteratorState)) { // TODO: or reverse?
+                if (seenEdges.add(edgeId) && edgeFilter.accept(edgeIteratorState)) { // TODO: or reverse?
                     traverseEdge(queryLat, queryLon, edgeIteratorState, (node, normedDist, wayIndex, pos) -> {
                         if (normedDist < closestMatch.getQueryDistance()) {
                             closestMatch.setQueryDistance(normedDist);
