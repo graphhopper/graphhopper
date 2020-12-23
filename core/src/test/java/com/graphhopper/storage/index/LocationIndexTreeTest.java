@@ -136,16 +136,6 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
     }
 
     @Test
-    public void testReverseSpatialKey() {
-        LocationIndexTree index = createIndex(createTestGraph(encodingManager), 200);
-        assertEquals(IntArrayList.from(new int[]{16, 16, 16, 16, 4, 4}), index.getEntries());
-
-        // 10111110111110101010
-        String str44 = "00000000000000000000000000000000000000000000";
-        assertEquals(str44 + "01010101111101111101", BitUtil.BIG.toBitString(BitUtil.reverse(index.keyAlgo.encodeLatLon(1.7, 0.099), index.keyAlgo.getBits())));
-    }
-
-    @Test
     public void testMoreReal() {
         FlagEncoder encoder = new CarFlagEncoder();
         Graph graph = createGHStorage(EncodingManager.create(encoder));
