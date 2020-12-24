@@ -178,7 +178,7 @@ public class LocationIndexTreeTest {
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 2).setDistance(1000));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 3).setDistance(1000)).setWayGeometry(Helper.createPointList(51.21, 9.43));
         LocationIndex index = createIndex(graph, -1);
-        assertEquals(2, findClosestNode(index, 51.2, 9.4));
+        assertEquals(1, findClosestEdge(index, 51.2, 9.4));
     }
 
     //    -1    0   1 1.5
@@ -214,9 +214,9 @@ public class LocationIndexTreeTest {
     public void testWayGeometry() {
         Graph g = createTestGraphWithWayGeometry();
         LocationIndex index = createIndex(g, -1);
-        assertEquals(1, findClosestNode(index, 0, 0));
-        assertEquals(1, findClosestNode(index, 0, 0.1));
-        assertEquals(1, findClosestNode(index, 0.1, 0.1));
+        assertEquals(3, findClosestEdge(index, 0, 0));
+        assertEquals(3, findClosestEdge(index, 0, 0.1));
+        assertEquals(3, findClosestEdge(index, 0.1, 0.1));
         assertEquals(1, findClosestNode(index, -0.5, -0.5));
     }
 
@@ -234,7 +234,7 @@ public class LocationIndexTreeTest {
         GHUtility.setSpeed(60, true, true, encoder, g.edge(20, 30).setDistance(1));
 
         LocationIndex index = createIndex(g, 2000);
-        assertEquals(20, findClosestNode(index, 51.25, 9.43));
+        assertEquals(0, findClosestEdge(index, 51.25, 9.43));
     }
 
     @Test
@@ -474,7 +474,13 @@ public class LocationIndexTreeTest {
     }
 
     private int findClosestNode(LocationIndex index, double lat, double lon) {
-        return index.findClosest(lat, lon, EdgeFilter.ALL_EDGES).getClosestNode();
+        Snap closest = index.findClosest(lat, lon, EdgeFilter.ALL_EDGES);
+        assert closest.getSnappedPosition() == Snap.Position.TOWER;
+        return closest.getClosestNode();
+    }
+
+    private int findClosestEdge(LocationIndex index, double lat, double lon) {
+        return index.findClosest(lat, lon, EdgeFilter.ALL_EDGES).getClosestEdge().getEdge();
     }
 
     @Before
@@ -496,11 +502,10 @@ public class LocationIndexTreeTest {
         initSimpleGraph(g, em);
 
         idx = createIndex(g, -1);
-        assertEquals(4, findClosestNode(idx, 5, 2));
-        assertEquals(3, findClosestNode(idx, 1.5, 2));
-        assertEquals(0, findClosestNode(idx, -1, -1));
-
-        assertEquals(4, findClosestNode(idx, 4, 0));
+        assertEquals(3, findClosestEdge(idx, 5, 2));
+        assertEquals(3, findClosestEdge(idx, 1.5, 2));
+        assertEquals(1, findClosestEdge(idx, -1, -1));
+        assertEquals(4, findClosestEdge(idx, 4, 0));
         Helper.close((Closeable) g);
     }
 
@@ -511,14 +516,14 @@ public class LocationIndexTreeTest {
         initSimpleGraph(g, em);
 
         idx = createIndex(g, -1);
-        assertEquals(4, findClosestNode(idx, 5, 2));
-        assertEquals(3, findClosestNode(idx, 1.5, 2));
-        assertEquals(0, findClosestNode(idx, -1, -1));
+        assertEquals(3, findClosestEdge(idx, 5, 2));
+        assertEquals(3, findClosestEdge(idx, 1.5, 2));
+        assertEquals(1, findClosestEdge(idx, -1, -1));
         assertEquals(6, findClosestNode(idx, 4.5, -0.5));
-        assertEquals(4, findClosestNode(idx, 4, 1));
-        assertEquals(4, findClosestNode(idx, 4, 0));
+        assertEquals(3, findClosestEdge(idx, 4, 1));
+        assertEquals(4, findClosestEdge(idx, 4, 0));
         assertEquals(6, findClosestNode(idx, 4, -2));
-        assertEquals(5, findClosestNode(idx, 3, 3));
+        assertEquals(5, findClosestEdge(idx, 3, 3));
         Helper.close((Closeable) g);
     }
 
@@ -527,13 +532,13 @@ public class LocationIndexTreeTest {
         Graph g = createSampleGraph(EncodingManager.create("car"));
         idx = createIndex(g, -1);
 
-        assertEquals(1, findClosestNode(idx, 1.637, 2.23));
-        assertEquals(10, findClosestNode(idx, 3.649, 1.375));
+        assertEquals(3, findClosestEdge(idx, 1.637, 2.23));
+        assertEquals(10, findClosestEdge(idx, 3.649, 1.375));
         assertEquals(9, findClosestNode(idx, 3.3, 2.2));
         assertEquals(6, findClosestNode(idx, 3.0, 1.5));
 
-        assertEquals(10, findClosestNode(idx, 3.8, 0));
-        assertEquals(10, findClosestNode(idx, 3.8466, 0.021));
+        assertEquals(15, findClosestEdge(idx, 3.8, 0));
+        assertEquals(15, findClosestEdge(idx, 3.8466, 0.021));
         Helper.close((Closeable) g);
     }
 
@@ -542,11 +547,10 @@ public class LocationIndexTreeTest {
         Graph g = createSampleGraph(EncodingManager.create("car"));
         idx = createIndex(g, -1);
 
-        // 10 or 6
-        assertEquals(10, findClosestNode(idx, 3.649, 1.375));
-        assertEquals(10, findClosestNode(idx, 3.8465748, 0.021762699));
-        assertEquals(4, findClosestNode(idx, 2.485, 1.373));
-        assertEquals(0, findClosestNode(idx, 0.64628404, 0.53006625));
+        assertEquals(10, findClosestEdge(idx, 3.649, 1.375));
+        assertEquals(15, findClosestEdge(idx, 3.8465748, 0.021762699));
+        assertEquals(4, findClosestEdge(idx, 2.485, 1.373));
+        assertEquals(0, findClosestEdge(idx, 0.64628404, 0.53006625));
         Helper.close((Closeable) g);
     }
 
@@ -650,7 +654,7 @@ public class LocationIndexTreeTest {
         Graph g = LocationIndexTreeTest.this.createGHStorage(encodingManager);
         initSimpleGraph(g, encodingManager);
         idx = createIndex(g, -1);
-        assertEquals(1, findClosestNode(idx, 1, -1));
+        assertEquals(0, findClosestEdge(idx, 1, -1));
 
         // now make all edges from node 1 accessible for CAR only
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(1);
