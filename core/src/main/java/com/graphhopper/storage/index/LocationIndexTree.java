@@ -525,7 +525,7 @@ public class LocationIndexTree implements LocationIndex {
                     });
                 }
             });
-            if (iteration % 2 != 0 && closestMatch.isValid()) {
+            if (closestMatch.isValid()) {
                 // Check if we can stop...
                 double rMin = calculateRMin(queryLat, queryLon, iteration);
                 double minDistance = DIST_PLANE.calcDenormalizedDist(closestMatch.getQueryDistance());
