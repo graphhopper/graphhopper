@@ -469,13 +469,12 @@ public class LocationIndexTree implements LocationIndex {
      *
      * If it is called with iteration = 0, it just looks in the tile the query point is in.
      * If it is called with iteration = 0,1,2,.., it will look in additional tiles further and further
-     * from the start tile.
+     * from the start tile. (In a square that grows by one pixel in all four directions per iteration).
      *
      * See discussion at issue #221.
      * <p>
      */
     final void findEdgeIdsInNeighborhood(double queryLat, double queryLon, int iteration, IntConsumer foundEntries) {
-        // find entries in border of searchbox
         long queryKey = keyAlgo.encodeLatLon(queryLat, queryLon);
         int queryX = keyAlgo.x(queryKey);
         int queryY = keyAlgo.y(queryKey);
@@ -486,7 +485,7 @@ public class LocationIndexTree implements LocationIndex {
             long keyPart1 = keyAlgo.encode(subqueryXA, subqueryY) << (64 - keyAlgo.getBits());
             fillIDs(keyPart1, START_POINTER, 0, foundEntries);
 
-            // minor optimization for iteration == 0
+            // When iteration == 0, I just check one tile (the center)
             if (iteration > 0) {
                 long keyPart = keyAlgo.encode(subqueryXB, subqueryY) << (64 - keyAlgo.getBits());
                 fillIDs(keyPart, START_POINTER, 0, foundEntries);
