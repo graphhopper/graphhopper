@@ -20,6 +20,7 @@ package com.graphhopper.matching;
 import com.bmw.hmm.SequenceState;
 import com.bmw.hmm.Transition;
 import com.bmw.hmm.ViterbiAlgorithm;
+import com.carrotsearch.hppc.IntHashSet;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
@@ -42,15 +43,13 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.LineString;
-import org.locationtech.jts.linearref.LinearLocation;
-import org.locationtech.jts.linearref.LocationIndexedLine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.graphhopper.util.DistancePlaneProjection.DIST_PLANE;
 
 /**
  * This class matches real world GPX entries to the digital road network stored
@@ -175,11 +174,6 @@ public class MapMatching {
         // are a node. This modifies the Snap objects and puts the new node numbers into them.
         queryGraph = QueryGraph.create(graph, snapsPerObservation.stream().flatMap(Collection::stream).collect(Collectors.toList()));
 
-        // Due to how LocationIndex/QueryGraph is implemented, we can get duplicates when a point is snapped
-        // directly to a tower node instead of creating a split / virtual node. No problem, but we still filter
-        // out the duplicates for performance reasons.
-        snapsPerObservation = snapsPerObservation.stream().map(this::deduplicate).collect(Collectors.toList());
-
         // Creates candidates from the Snaps of all observations (a candidate is basically a
         // Snap + direction).
         List<ObservationWithCandidateStates> timeSteps = createTimeSteps(filteredObservations, snapsPerObservation);
@@ -223,66 +217,37 @@ public class MapMatching {
 
     public List<Snap> findCandidateSnaps(final double queryLat, final double queryLon) {
         EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(weighting.getFlagEncoder());
-        Coordinate queryPoint = new Coordinate(queryLon, queryLat);
         double rLon = (measurementErrorSigma * 360.0 / DistanceCalcEarth.DIST_EARTH.calcCircumference(queryLat));
         double rLat = measurementErrorSigma / DistanceCalcEarth.METERS_PER_DEGREE;
         List<Snap> snaps = new ArrayList<>();
+        IntHashSet seenEdges = new IntHashSet();
+        IntHashSet seenNodes = new IntHashSet();
         locationIndex.query(new BBox(queryLon - rLon, queryLon + rLon, queryLat - rLat, queryLat + rLat),
                 new LocationIndex.Visitor() {
                     @Override
                     public void onEdge(int edgeId) {
                         EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeId * 2).detach(false);
-                        if (!edgeFilter.accept(edge))
-                            return;
-                        PointList fullPL = edge.fetchWayGeometry(FetchMode.ALL);
-                        LineString edgeGeometry = fullPL.toLineString(false);
-                        edgeGeometry.setUserData(edge);
-                        LocationIndexedLine locationIndexedLine = new LocationIndexedLine(edgeGeometry);
-                        LinearLocation linearLocation = locationIndexedLine.project(queryPoint);
-                        Coordinate projection = locationIndexedLine.extractPoint(linearLocation);
-                        double dist = DistanceCalcEarth.DIST_EARTH.calcDist(queryLat, queryLon, projection.y, projection.x);
-                        if (dist > measurementErrorSigma)
-                            return;
-                        Snap snap = new Snap(queryLat, queryLon);
-                        snap.setClosestEdge(edge);
-                        if (linearLocation.getSegmentFraction() <= 0.1) {
-                            if (linearLocation.getSegmentIndex() == 0) {
-                                snap.setClosestNode(edge.getBaseNode());
-                                snap.setSnappedPosition(Snap.Position.TOWER);
-                                snap.setWayIndex(0);
-                            } else if (linearLocation.getSegmentIndex() >= edgeGeometry.getNumPoints()-1) {
-                                snap.setClosestNode(edge.getAdjNode());
-                                snap.setSnappedPosition(Snap.Position.TOWER);
-                                snap.setWayIndex(fullPL.size() - 1);
-                            } else {
-                                snap.setSnappedPosition(Snap.Position.PILLAR);
-                                snap.setWayIndex(linearLocation.getSegmentIndex());
+                        if (seenEdges.add(edgeId) && edgeFilter.accept(edge)) {
+                            Snap snap = new Snap(queryLat, queryLon);
+                            snap.setClosestEdge(edge);
+                            locationIndex.traverseEdge(queryLat, queryLon, edge, (node, normedDist, wayIndex, pos) -> {
+                                if ((pos != Snap.Position.TOWER || seenNodes.add(node)) && normedDist < snap.getQueryDistance()) {
+                                    snap.setQueryDistance(normedDist);
+                                    snap.setClosestNode(node);
+                                    snap.setWayIndex(wayIndex);
+                                    snap.setSnappedPosition(pos);
+                                }
+                            });
+                            double dist = DIST_PLANE.calcDenormalizedDist(snap.getQueryDistance());
+                            if (dist <= measurementErrorSigma) {
+                                snap.setQueryDistance(dist);
+                                snap.calcSnappedPoint(DistanceCalcEarth.DIST_EARTH);
+                                snaps.add(snap);
                             }
-                        } else if (linearLocation.getSegmentFraction() >= 0.9) {
-                            if (linearLocation.getSegmentIndex() >= edgeGeometry.getNumPoints()-2) {
-                                snap.setClosestNode(edge.getAdjNode());
-                                snap.setSnappedPosition(Snap.Position.TOWER);
-                                snap.setWayIndex(fullPL.size() - 1);
-                            } else {
-                                snap.setSnappedPosition(Snap.Position.PILLAR);
-                                snap.setWayIndex(linearLocation.getSegmentIndex() + 1);
-                            }
-                        } else {
-                            snap.setSnappedPosition(Snap.Position.EDGE);
-                            snap.setWayIndex(linearLocation.getSegmentIndex());
                         }
-                        snap.calcSnappedPoint(DistanceCalcEarth.DIST_EARTH);
-                        snap.setQueryDistance(dist);
-                        snaps.add(snap);
                     }
                 });
         return snaps;
-    }
-
-    private Collection<Snap> deduplicate(Collection<Snap> splits) {
-        // Only keep one split per node number. Let's say the last one.
-        Map<Integer, Snap> splitsByNodeNumber = splits.stream().collect(Collectors.toMap(Snap::getClosestNode, s -> s, (s1, s2) -> s2));
-        return splitsByNodeNumber.values();
     }
 
     /**

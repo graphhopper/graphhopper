@@ -731,11 +731,11 @@ public class LocationIndexTree implements LocationIndex {
         }
     }
 
-    interface EdgeCheck {
+    public interface EdgeCheck {
         void check(int node, double normedDist, int wayIndex, Snap.Position pos);
     }
 
-    protected void traverseEdge(double queryLat, double queryLon, EdgeIteratorState currEdge, EdgeCheck edgeCheck) {
+    public void traverseEdge(double queryLat, double queryLon, EdgeIteratorState currEdge, EdgeCheck edgeCheck) {
         int baseNode = currEdge.getBaseNode();
         double currLat = nodeAccess.getLatitude(baseNode);
         double currLon = nodeAccess.getLongitude(baseNode);
