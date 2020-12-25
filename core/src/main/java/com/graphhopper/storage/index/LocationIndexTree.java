@@ -665,7 +665,15 @@ public class LocationIndexTree implements LocationIndex {
         void addEdgeToOneTile(InMemEntry entry, int value, int depth, long keyPart) {
             if (entry.isLeaf()) {
                 InMemLeafEntry leafEntry = (InMemLeafEntry) entry;
-                leafEntry.add(value);
+                // Avoid adding the same edge id multiple times.
+                // Since each edge id is handled only once, this can only happen when
+                // this method is called several times in a row with the same edge id,
+                // so it is enough to check the last entry.
+                // (It happens when one edge has several segments. Every segment is traversed
+                // on its own, without de-duplicating the tiles that are touched.)
+                if (leafEntry.isEmpty() || leafEntry.get(leafEntry.size()-1) != value) {
+                    leafEntry.add(value);
+                }
             } else {
                 int index = (int) (keyPart >>> (64 - shifts[depth]));
                 keyPart = keyPart << shifts[depth];
