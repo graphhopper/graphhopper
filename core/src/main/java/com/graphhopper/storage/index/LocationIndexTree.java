@@ -48,11 +48,9 @@ import static com.graphhopper.util.DistancePlaneProjection.DIST_PLANE;
  * resolutions, especially if a leaf node could be split into a tree-node and resolution changes.</li>
  * <li>To further reduce size this Quadtree avoids storing the bounding box of every cell and calculates this per request instead.</li>
  * <li>To simplify this querying and avoid a slow down for the most frequent queries ala "lat,lon" it encodes the point
- * into a reverse spatial key {@see SpatialKeyAlgo} and can the use the resulting raw bits as cell index to recurse
- * into the subtrees. E.g. if there are 3 layers with 16, 4 and 4 cells each, then the reverse spatial key has
- * three parts: 4 bits for the cellIndex into the 16 cells, 2 bits for the next layer and 2 bits for the last layer.
- * It is the reverse spatial key and not the forward spatial key as we need the start of the index for the current
- * layer at index 0</li>
+ * into a spatial key {@see SpatialKeyAlgo} and can the use the resulting raw bits as cell index to recurse
+ * into the subtrees. E.g. if there are 3 layers with 16, 4 and 4 cells each, then the spatial key has
+ * three parts: 4 bits for the cellIndex into the 16 cells, 2 bits for the next layer and 2 bits for the last layer.</li>
  * <li>An array structure (DataAccess) is internally used and stores the offset to the next cell.
  * E.g. in case of 4 cells, the offset is 0,1,2 or 3. Except when the leaf-depth is reached, then the value
  * is the number of node IDs stored in the cell or, if negative, just a single node ID.</li>
@@ -656,8 +654,7 @@ public class LocationIndexTree implements LocationIndex {
                 // Find all the tiles on the line from (y1, x1) to (y2, y2) in tile coordinates (y, x)
                 BresenhamLine.bresenham(y1, x1, y2, x2, (y, x) -> {
                     long key = keyAlgo.encode(x, y);
-                    long reverseKey = key << (64 - keyAlgo.getBits());
-                    addEdgeToOneTile(root, edgeId, 0, reverseKey);
+                    addEdgeToOneTile(root, edgeId, 0, key << (64 - keyAlgo.getBits()));
                 });
             }
         }
