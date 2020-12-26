@@ -243,7 +243,7 @@ This means that the speed is at most `90km/h` for any road segments regardless o
 
 #### `else`
 
-Every `if` statement can have an `else` statement if the condition is `false`. 
+Every `if` statement can have an `else` statement which is evaluated only when the `if`-condition is `false`.
 
 #### `else if`
 

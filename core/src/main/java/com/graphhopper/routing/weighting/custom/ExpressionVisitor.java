@@ -91,27 +91,28 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
         if (rv instanceof Java.BinaryOperation) {
             Java.BinaryOperation binOp = (Java.BinaryOperation) rv;
             int startRH = binOp.rhs.getLocation().getColumnNumber() - 1;
-            if (binOp.lhs instanceof Java.AmbiguousName && ((Java.AmbiguousName) binOp.lhs).identifiers.length == 1
-                    && (binOp.operator.equals("==") || binOp.operator.equals("!="))) {
-                String lhVar = ((Java.AmbiguousName) binOp.lhs).identifiers[0];
+            if (binOp.lhs instanceof Java.AmbiguousName && ((Java.AmbiguousName) binOp.lhs).identifiers.length == 1) {
+                String lhVarAsString = ((Java.AmbiguousName) binOp.lhs).identifiers[0];
+                boolean eqOps = binOp.operator.equals("==") || binOp.operator.equals("!=");
                 if (binOp.rhs instanceof Java.StringLiteral) {
                     // replace String with its index for faster comparison (?) and skipping the Map<String, Integer> lookup at runtime
-                    Java.StringLiteral str = (Java.StringLiteral) binOp.rhs;
-                    if (lookup.hasEncodedValue(lhVar)) {
-                        StringEncodedValue ev = lookup.getStringEncodedValue(lhVar);
-                        int integ = ev.indexOf(str.value.substring(1, str.value.length() - 1));
+                    if (lookup.hasEncodedValue(lhVarAsString)) {
+                        if (!eqOps)
+                            throw new IllegalArgumentException("Operator " + binOp.operator + " not allowed for String");
+                        StringEncodedValue ev = lookup.getStringEncodedValue(lhVarAsString);
+                        String str = ((Java.StringLiteral) binOp.rhs).value;
+                        int integ = ev.indexOf(str.substring(1, str.length() - 1));
                         if (integ == 0) integ = -1; // 0 means not found and this should always trigger inequality
-                        replacements.put(startRH, new Replacement(startRH, str.value.length(), "" + integ));
+                        replacements.put(startRH, new Replacement(startRH, str.length(), "" + integ));
                     }
-                } else if (binOp.rhs instanceof Java.AmbiguousName) {
-                    Java.AmbiguousName rhs = (Java.AmbiguousName) binOp.rhs;
+                } else if (binOp.rhs instanceof Java.AmbiguousName && ((Java.AmbiguousName) binOp.rhs).identifiers.length == 1) {
                     // Make enum explicit as NO or OTHER can occur in other enums so convert "toll == NO" to "toll == Toll.NO"
-                    if (rhs.identifiers.length == 1) {
-                        String rhValue = rhs.identifiers[0];
-                        if (nameValidator.isValid(lhVar) && rhValue.toUpperCase(Locale.ROOT).equals(rhValue)) {
-                            String value = toEncodedValueClassName(binOp.lhs.toString());
-                            replacements.put(startRH, new Replacement(startRH, rhValue.length(), value + "." + rhValue));
-                        }
+                    String rhValue = ((Java.AmbiguousName) binOp.rhs).identifiers[0];
+                    if (nameValidator.isValid(lhVarAsString) && rhValue.toUpperCase(Locale.ROOT).equals(rhValue)) {
+                        if (!eqOps)
+                            throw new IllegalArgumentException("Operator " + binOp.operator + " not allowed for enum");
+                        String value = toEncodedValueClassName(binOp.lhs.toString());
+                        replacements.put(startRH, new Replacement(startRH, rhValue.length(), value + "." + rhValue));
                     }
                 }
             }

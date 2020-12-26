@@ -44,8 +44,8 @@ class ExpressionBuilder {
     private static final Set<String> allowedNames = new HashSet<>(Arrays.asList("edge", "Math"));
     private static final boolean JANINO_DEBUG = Boolean.getBoolean(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE);
 
-    // TODO without a cache we get X% slower routing and Y% slower routingLM8. CH requests and preparation is unaffected
-    // as cached weighting from preparation is used.
+    // Without a cache the class creation takes 10-40ms which makes routingLM8 requests 20% slower on average.
+    // CH requests and preparation is unaffected as cached weighting from preparation is used.
     // Use accessOrder==true to remove oldest accessed entry, not oldest inserted.
     private static final int CACHE_SIZE = Integer.getInteger("graphhopper.custom_weighting.cache_size", 1000);
     private static final Map<String, Class<?>> CACHE = Collections.synchronizedMap(
@@ -279,7 +279,7 @@ class ExpressionBuilder {
      * 2. while this check it also guesses the variable names and stores it in createObjects
      * 3. creates if-then-elseif expressions from the checks and returns them as BlockStatements
      *
-     * @return the created if-then (and elseif) expressions
+     * @return the created if-then, else and elseif statements
      */
     private static List<Java.BlockStatement> verifyExpressions(StringBuilder expressions, String info, Set<String> createObjects,
                                                                List<Statement> list, EncodedValueLookup lookup,
@@ -380,7 +380,7 @@ class ExpressionBuilder {
         double globalMin_maxSpeed = maxSpeed;
         double blockMax_maxSpeed = 0;
         for (Statement statement : customModel.getSpeed()) {
-            // Lowering the max_speed estimate should not be hard for MULTIPLY too, but for now do this only for 'limit to'
+            // Lowering the max_speed estimate for 'limit to' only (TODO later also for MULTIPLY)
             if (statement.getOperation() == Statement.Op.LIMIT) {
                 if (statement.getValue() > maxSpeed)
                     throw new IllegalArgumentException("Can never apply 'limit to': " + statement.getValue()
