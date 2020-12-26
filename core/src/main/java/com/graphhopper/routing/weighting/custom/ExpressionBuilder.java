@@ -74,16 +74,16 @@ class ExpressionBuilder {
         String key = customModel.toString() + ",global:" + globalMaxSpeed;
         if (key.length() > 400_000) throw new IllegalArgumentException("Custom Model too big: " + key.length());
 
-//        Class<?> clazz = customModel.__isInternal() ? INTERNAL_CACHE.get(key) : null;
-//        if (CACHE_SIZE > 0 && clazz == null)
-//            clazz = CACHE.get(key);
-//        if (clazz == null) {
-           Class clazz = createClazz(customModel, lookup, globalMaxSpeed);
-//            if (customModel.__isInternal())
-//                INTERNAL_CACHE.put(key, clazz);
-//            else if (CACHE_SIZE > 0)
-//                CACHE.put(key, clazz);
-//        }
+        Class<?> clazz = customModel.__isInternal() ? INTERNAL_CACHE.get(key) : null;
+        if (CACHE_SIZE > 0 && clazz == null)
+            clazz = CACHE.get(key);
+        if (clazz == null) {
+            clazz = createClazz(customModel, lookup, globalMaxSpeed);
+            if (customModel.__isInternal())
+                INTERNAL_CACHE.put(key, clazz);
+            else if (CACHE_SIZE > 0)
+                CACHE.put(key, clazz);
+        }
 
         try {
             // The class does not need to be thread-safe as we create an instance per request
