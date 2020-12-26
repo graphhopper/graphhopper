@@ -31,9 +31,10 @@ public class CustomModel {
     public static final String KEY = "custom_model";
 
     static double DEFAULT_D_I = 70;
-    private Double headingPenalty = Parameters.Routing.DEFAULT_HEADING_PENALTY;
+    private double headingPenalty = Parameters.Routing.DEFAULT_HEADING_PENALTY;
     // default value derived from the cost for time e.g. 25€/hour and for distance 0.5€/km, for trucks this is usually larger
     private double distanceInfluence = DEFAULT_D_I;
+    private boolean internal;
     private List<Statement> speedStatements = new ArrayList<>();
     private List<Statement> priorityStatements = new ArrayList<>();
     private Map<String, JsonFeature> areas = new HashMap<>();
@@ -44,11 +45,20 @@ public class CustomModel {
     public CustomModel(CustomModel toCopy) {
         this.headingPenalty = toCopy.headingPenalty;
         this.distanceInfluence = toCopy.distanceInfluence;
+        // do not copy _internal
 
         speedStatements = deepCopy(toCopy.getSpeed());
         priorityStatements = deepCopy(toCopy.getPriority());
 
         areas.putAll(toCopy.getAreas());
+    }
+
+    public void __internal() {
+        this.internal = true;
+    }
+
+    public boolean __isInternal() {
+        return internal;
     }
 
     private <T> T deepCopy(T originalObject) {

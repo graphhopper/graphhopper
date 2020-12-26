@@ -45,25 +45,21 @@ class ExpressionBuilder {
     private static final boolean JANINO_DEBUG = Boolean.getBoolean(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE);
 
     // TODO without a cache we get X% slower routing and Y% slower routingLM8. CH requests and preparation is unaffected
-    // as cached weighting from preparation is used. This cache ensures that the first Weighting classes, typically the
-    // ones specified in the profiles, are never removed regardless of how frequent other Weightings are created and accessed.
-    // We only need to synchronize the get and put methods alone. E.g. we do not care for the race condition where
-    // two identical classes are requested and one of them is overwritten. We could use CachingJavaSourceClassLoader from
-    // Janino but 1. we would need to use a single compiler across threads and 2. the statements (for priority and speed)
-    // are still unnecessarily created.
-    private static final int CACHE_SIZE = Integer.getInteger("graphhopper.custom_weighting.cache_size", 10);
-    // TODO perf compare with ConcurrentHashMap, but I guess, if there is a difference at all, it is not big for small maps
-    private static final Map<String, Class> CACHE = Collections.synchronizedMap(new HashMap<>(CACHE_SIZE));
-
-    // Introduce a dynamic cache to remember different Weighting classes, but throw away less frequently used classes.
+    // as cached weighting from preparation is used.
     // Use accessOrder==true to remove oldest accessed entry, not oldest inserted.
-    private static final int DYN_CACHE_SIZE = Integer.getInteger("graphhopper.custom_weighting.dynamic_cache_size", 1000);
-    private static final Map<String, Class> DYN_CACHE = Collections.synchronizedMap(
-            new LinkedHashMap<String, Class>(DYN_CACHE_SIZE, 0.75f, true) {
+    private static final int CACHE_SIZE = Integer.getInteger("graphhopper.custom_weighting.cache_size", 1000);
+    private static final Map<String, Class<?>> CACHE = Collections.synchronizedMap(
+            new LinkedHashMap<String, Class<?>>(CACHE_SIZE, 0.75f, true) {
                 protected boolean removeEldestEntry(Map.Entry eldest) {
-                    return size() > DYN_CACHE_SIZE;
+                    return size() > CACHE_SIZE;
                 }
             });
+
+    // This internal cache ensures that the "internal" Weighting classes specified in the profiles, are never removed regardless
+    // of how frequent other Weightings are created and accessed. We only need to synchronize the get and put methods alone.
+    // E.g. we do not care for the race condition where two identical classes are requested and one of them is overwritten.
+    // TODO perf compare with ConcurrentHashMap, but I guess, if there is a difference at all, it is not big for small maps
+    private static final Map<String, Class<?>> INTERNAL_CACHE = Collections.synchronizedMap(new HashMap<>());
 
     private ExpressionBuilder() {
         // utility class
@@ -78,17 +74,16 @@ class ExpressionBuilder {
         String key = customModel.toString() + ",global:" + globalMaxSpeed;
         if (key.length() > 400_000) throw new IllegalArgumentException("Custom Model too big: " + key.length());
 
-        // test again
-//        Class clazz = CACHE.get(key);
-//        if (DYN_CACHE_SIZE > 0 && clazz == null)
-//            clazz = DYN_CACHE.get(key);
-//        if (clazz == null) {
-        Class clazz = createClazz(customModel, lookup, globalMaxSpeed);
-//            if (CACHE.size() < CACHE_SIZE)
-//                CACHE.put(key, clazz);
-//            else if (DYN_CACHE_SIZE > 0)
-//                DYN_CACHE.put(key, clazz);
-//        }
+        Class<?> clazz = customModel.__isInternal() ? INTERNAL_CACHE.get(key) : null;
+        if (CACHE_SIZE > 0 && clazz == null)
+            clazz = CACHE.get(key);
+        if (clazz == null) {
+            clazz = createClazz(customModel, lookup, globalMaxSpeed);
+            if (customModel.__isInternal())
+                INTERNAL_CACHE.put(key, clazz);
+            else if (CACHE_SIZE > 0)
+                CACHE.put(key, clazz);
+        }
 
         try {
             // The class does not need to be thread-safe as we create an instance per request
@@ -100,7 +95,7 @@ class ExpressionBuilder {
         }
     }
 
-    private static Class createClazz(CustomModel customModel, EncodedValueLookup lookup, double globalMaxSpeed) {
+    private static Class<?> createClazz(CustomModel customModel, EncodedValueLookup lookup, double globalMaxSpeed) {
         HashSet<String> priorityVariables = new LinkedHashSet<>();
         try {
             List<Java.BlockStatement> priorityStatements = createGetPriorityStatements(priorityVariables, customModel, lookup);
