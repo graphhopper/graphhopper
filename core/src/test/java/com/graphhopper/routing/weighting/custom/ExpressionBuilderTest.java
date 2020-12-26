@@ -170,5 +170,10 @@ class ExpressionBuilderTest {
 
         customModel.addToSpeed(Else(LIMIT, 20));
         assertEquals(100, ExpressionBuilder.findMaxSpeed(customModel, 120));
+
+        customModel = new CustomModel();
+        customModel.addToSpeed(If("road_environment == BRIDGE", LIMIT, 85));
+        customModel.addToSpeed(Else(LIMIT, 100));
+        assertEquals(100, ExpressionBuilder.findMaxSpeed(customModel, 120));
     }
 }

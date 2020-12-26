@@ -390,15 +390,25 @@ class ExpressionBuilder {
                     throw new IllegalArgumentException("Can never apply 'limit to': " + statement.getValue()
                             + " because maximum vehicle speed is " + maxSpeed);
 
-                if (statement.getKeyword() == Statement.Keyword.ELSE) {
-                    globalMin_maxSpeed = Math.min(blockMax_maxSpeed, maxSpeed);
-                } else if (statement.getKeyword() == Statement.Keyword.IF) {
-                    if ("true".equals(statement.getExpression())) {
-                        blockMax_maxSpeed = globalMin_maxSpeed = Math.min(statement.getValue(), maxSpeed);
-                    } else {
-                        blockMax_maxSpeed = statement.getValue();
-                    }
+                switch (statement.getKeyword()) {
+                    case IF:
+                        if ("true".equals(statement.getExpression())) {
+                            blockMax_maxSpeed = globalMin_maxSpeed = Math.min(statement.getValue(), maxSpeed);
+                        } else {
+                            blockMax_maxSpeed = statement.getValue();
+                        }
+                        break;
+                    case ELSEIF:
+                        blockMax_maxSpeed = Math.max(blockMax_maxSpeed, statement.getValue());
+                        break;
+                    case ELSE:
+                        blockMax_maxSpeed = Math.max(blockMax_maxSpeed, statement.getValue());
+                        globalMin_maxSpeed = Math.min(globalMin_maxSpeed, blockMax_maxSpeed);
+                        break;
+                    default:
+                        throw new IllegalArgumentException("unknown keyword " + statement.getKeyword());
                 }
+
                 if (globalMin_maxSpeed <= 0)
                     throw new IllegalArgumentException("speed is always limited to 0. This must not be but results from " + statement);
             }
