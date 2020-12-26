@@ -18,7 +18,9 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.Statement;
+import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.RouteNetwork;
+import com.graphhopper.routing.ev.StringEncodedValue;
 import com.graphhopper.util.Helper;
 import org.codehaus.janino.Scanner;
 import org.codehaus.janino.*;
@@ -31,14 +33,16 @@ import static com.graphhopper.routing.weighting.custom.ExpressionBuilder.IN_AREA
 class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
 
     private final ParseResult result;
-    private final TreeMap<Integer, String> injects = new TreeMap<>();
+    private final EncodedValueLookup lookup;
+    private final TreeMap<Integer, Replacement> replacements = new TreeMap<>();
     private final NameValidator nameValidator;
     private final Set<String> allowedMethods = new HashSet<>(Arrays.asList("ordinal", "getDistance", "getName",
             "contains", "sqrt", "abs"));
 
-    public ExpressionVisitor(ParseResult result, NameValidator nameValidator) {
+    public ExpressionVisitor(ParseResult result, NameValidator nameValidator, EncodedValueLookup lookup) {
         this.result = result;
         this.nameValidator = nameValidator;
+        this.lookup = lookup;
     }
 
     // allow only methods and other identifiers (constants and encoded values)
@@ -58,8 +62,9 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
             if (n.identifiers.length == 1) {
                 String arg = n.identifiers[0];
                 if (arg.startsWith(IN_AREA_PREFIX)) {
-                    injects.put(n.getLocation().getColumnNumber() - 1, CustomWeightingHelper.class.getSimpleName() + ".in(this.");
-                    injects.put(n.getLocation().getColumnNumber() - 1 + arg.length(), ", edge)");
+                    int start = rv.getLocation().getColumnNumber() - 1;
+                    replacements.put(start, new Replacement(start, arg.length(),
+                            CustomWeightingHelper.class.getSimpleName() + ".in(this." + arg + ", edge)"));
                     result.guessedVariables.add(arg);
                     return true;
                 } else {
@@ -85,15 +90,29 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
         }
         if (rv instanceof Java.BinaryOperation) {
             Java.BinaryOperation binOp = (Java.BinaryOperation) rv;
-            if (binOp.lhs instanceof Java.AmbiguousName && binOp.rhs instanceof Java.AmbiguousName
+            int startRH = binOp.rhs.getLocation().getColumnNumber() - 1;
+            if (binOp.lhs instanceof Java.AmbiguousName && ((Java.AmbiguousName) binOp.lhs).identifiers.length == 1
                     && (binOp.operator.equals("==") || binOp.operator.equals("!="))) {
-                Java.AmbiguousName lhs = (Java.AmbiguousName) binOp.lhs;
-                Java.AmbiguousName rhs = (Java.AmbiguousName) binOp.rhs;
-                // Make enum explicit as NO or OTHER can occur in other enums so convert "toll == NO" to "toll == Toll.NO"
-                if (rhs.identifiers.length == 1 && lhs.identifiers.length == 1 && nameValidator.isValid(lhs.identifiers[0])
-                        && rhs.identifiers[0].toUpperCase(Locale.ROOT).equals(rhs.identifiers[0])) {
-                    String value = toEncodedValueClassName(binOp.lhs.toString());
-                    injects.put(binOp.rhs.getLocation().getColumnNumber() - 1, value + ".");
+                String lhVar = ((Java.AmbiguousName) binOp.lhs).identifiers[0];
+                if (binOp.rhs instanceof Java.StringLiteral) {
+                    // replace String with its index for faster comparison (?) and skipping the Map<String, Integer> lookup at runtime
+                    Java.StringLiteral str = (Java.StringLiteral) binOp.rhs;
+                    if (lookup.hasEncodedValue(lhVar)) {
+                        StringEncodedValue ev = lookup.getStringEncodedValue(lhVar);
+                        int integ = ev.indexOf(str.value.substring(1, str.value.length() - 1));
+                        if (integ == 0) integ = -1; // 0 means not found and this should always trigger inequality
+                        replacements.put(startRH, new Replacement(startRH, str.value.length(), "" + integ));
+                    }
+                } else if (binOp.rhs instanceof Java.AmbiguousName) {
+                    Java.AmbiguousName rhs = (Java.AmbiguousName) binOp.rhs;
+                    // Make enum explicit as NO or OTHER can occur in other enums so convert "toll == NO" to "toll == Toll.NO"
+                    if (rhs.identifiers.length == 1) {
+                        String rhValue = rhs.identifiers[0];
+                        if (nameValidator.isValid(lhVar) && rhValue.toUpperCase(Locale.ROOT).equals(rhValue)) {
+                            String value = toEncodedValueClassName(binOp.lhs.toString());
+                            replacements.put(startRH, new Replacement(startRH, rhValue.length(), value + "." + rhValue));
+                        }
+                    }
                 }
             }
             return binOp.lhs.accept(this) && binOp.rhs.accept(this);
@@ -117,7 +136,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
     }
 
     static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator, String exceptionInfo,
-                                 Set<String> createObjects, List<Statement> list, String lastStmt) {
+                                 Set<String> createObjects, List<Statement> list, EncodedValueLookup lookup, String lastStmt) {
 
         for (Statement statement : list) {
             if (statement.getKeyword() == Statement.Keyword.ELSE) {
@@ -126,7 +145,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
 
                 expressions.append("else {" + statement.getOperation().build(statement.getValue()) + "; }\n");
             } else if (statement.getKeyword() == Statement.Keyword.ELSEIF || statement.getKeyword() == Statement.Keyword.IF) {
-                ExpressionVisitor.ParseResult parseResult = parseExpression(statement.getExpression(), nameInConditionValidator);
+                ExpressionVisitor.ParseResult parseResult = parseExpression(statement.getExpression(), nameInConditionValidator, lookup);
                 if (!parseResult.ok)
                     throw new IllegalArgumentException(exceptionInfo + " invalid simple condition: " + statement.getExpression());
                 createObjects.addAll(parseResult.guessedVariables);
@@ -147,7 +166,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
      * converted expression that includes class names for constants to avoid conflicts e.g. when doing "toll == Toll.NO"
      * instead of "toll == NO".
      */
-    static ParseResult parseExpression(String expression, NameValidator validator) {
+    static ParseResult parseExpression(String expression, NameValidator validator, EncodedValueLookup lookup) {
         ParseResult result = new ParseResult();
         if (expression.length() > 100)
             return result;
@@ -157,14 +176,14 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
             // after parsing the expression the input should end (otherwise it is not "simple")
             if (parser.peek().type == TokenType.END_OF_INPUT) {
                 result.guessedVariables = new LinkedHashSet<>();
-                ExpressionVisitor visitor = new ExpressionVisitor(result, validator);
+                ExpressionVisitor visitor = new ExpressionVisitor(result, validator, lookup);
                 result.ok = atom.accept(visitor);
                 if (result.ok) {
                     result.converted = new StringBuilder(expression.length());
                     int start = 0;
-                    for (Map.Entry<Integer, String> inject : visitor.injects.entrySet()) {
-                        result.converted.append(expression, start, inject.getKey()).append(inject.getValue());
-                        start = inject.getKey();
+                    for (Replacement replace : visitor.replacements.values()) {
+                        result.converted.append(expression, start, replace.start).append(replace.newString);
+                        start = replace.start + replace.oldLength;
                     }
                     result.converted.append(expression.substring(start));
                 }
@@ -191,5 +210,17 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
 
     interface NameValidator {
         boolean isValid(String name);
+    }
+
+    class Replacement {
+        int start;
+        int oldLength;
+        String newString;
+
+        public Replacement(int start, int oldLength, String newString) {
+            this.start = start;
+            this.oldLength = oldLength;
+            this.newString = newString;
+        }
     }
 }

@@ -193,7 +193,7 @@ query time:
 }
 ```
 
-There are other categories like `get_off_bike` that are of boolean type. You use them via:
+There are other categories like `get_off_bike` that are of `boolean` type. You use them via:
 
 ```yaml
 speed:
@@ -210,6 +210,14 @@ speed:
   - if: "max_width < 2.5", multiply by: 0.8
 ``` 
 which means that for all edges with `max_width` smaller than `2.5m` the speed is multiplied by `0.8`.
+
+Then there are categories of `string` type. You use them via:
+
+```yaml
+speed:
+- if: country == "DEU"
+  multiply by: 0
+```
 
 Another way to change the speed is using `limit to`:
 ```yaml

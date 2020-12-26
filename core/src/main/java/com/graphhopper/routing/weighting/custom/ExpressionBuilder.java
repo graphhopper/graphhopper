@@ -19,9 +19,7 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.Statement;
 import com.graphhopper.json.geo.JsonFeature;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.EdgeIteratorState;
@@ -187,9 +185,12 @@ class ExpressionBuilder {
     }
 
     /**
-     * @return the interface as string of the provided EncodedValue, e.g. IntEncodedValue (only interface) or BooleanEncodedValue (first interface)
+     * @return the interface as string of the provided EncodedValue, e.g. IntEncodedValue (only interface) or
+     * BooleanEncodedValue (first interface). For StringEncodedValue we return IntEncodedValue to return the index
+     * instead of the String for faster comparison.
      */
     private static String getInterface(EncodedValue enc) {
+        if (enc instanceof StringEncodedValue) return IntEncodedValue.class.getSimpleName();
         if (enc.getClass().getInterfaces().length == 0) return enc.getClass().getSimpleName();
         return enc.getClass().getInterfaces()[0].getSimpleName();
     }
@@ -197,6 +198,7 @@ class ExpressionBuilder {
     private static String getReturnType(EncodedValue encodedValue) {
         String name = encodedValue.getClass().getSimpleName();
         if (name.contains("Enum")) return "Enum";
+        if (name.contains("String")) return "int"; // we use indexOf
         if (name.contains("Decimal")) return "double";
         if (name.contains("Int")) return "int";
         if (name.contains("Boolean")) return "boolean";
@@ -289,7 +291,7 @@ class ExpressionBuilder {
         // allow variables, all encoded values, constants
         ExpressionVisitor.NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
                 || name.toUpperCase(Locale.ROOT).equals(name) || isValidVariableName(name);
-        ExpressionVisitor.parseExpressions(expressions, nameInConditionValidator, info, createObjects, list, lastStmt);
+        ExpressionVisitor.parseExpressions(expressions, nameInConditionValidator, info, createObjects, list, lookup, lastStmt);
         return new Parser(new org.codehaus.janino.Scanner(info, new StringReader(expressions.toString()))).
                 parseBlockStatements();
     }

@@ -21,6 +21,7 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.ev.StringEncodedValue;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.EncodingManager;
@@ -45,11 +46,13 @@ class ExpressionBuilderTest {
     EncodingManager encodingManager;
     EnumEncodedValue<RoadClass> roadClassEnc;
     DecimalEncodedValue avgSpeedEnc;
+    StringEncodedValue countryEnc;
 
     @BeforeEach
     void setup() {
         encoder = new CarFlagEncoder();
-        encodingManager = EncodingManager.create(encoder);
+        countryEnc = new StringEncodedValue("country", 10);
+        encodingManager = new EncodingManager.Builder().add(encoder).add(countryEnc).build();
         graph = new GraphBuilder(encodingManager).create();
         avgSpeedEnc = encoder.getAverageSpeedEnc();
         roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
@@ -125,6 +128,23 @@ class ExpressionBuilderTest {
                 encoder.getMaxSpeed(), avgSpeedEnc);
         assertEquals(64, speedAndAccessProvider.getSpeed(primary, false), 0.01);
         assertEquals(50, speedAndAccessProvider.getSpeed(secondary, false), 0.01);
+    }
+
+    @Test
+    public void testString() {
+        EdgeIteratorState deu = graph.edge(0, 1).setDistance(10).
+                set(countryEnc, "DEU").set(avgSpeedEnc, 80).set(encoder.getAccessEnc(), true, true);
+        EdgeIteratorState blup = graph.edge(1, 2).setDistance(10).
+                set(countryEnc, "blup").set(avgSpeedEnc, 70).set(encoder.getAccessEnc(), true, true);
+
+        CustomModel customModel = new CustomModel();
+        customModel.addToPriority(If("country == \"DEU\"", MULTIPLY, 0.9));
+        customModel.addToPriority(ElseIf("country == \"blup\"", MULTIPLY, 0.7));
+        customModel.addToPriority(Else(MULTIPLY, 0.5));
+        SpeedAndAccessProvider speedAndAccessProvider = ExpressionBuilder.create(customModel, encodingManager,
+                encoder.getMaxSpeed(), avgSpeedEnc);
+        assertEquals(0.9, speedAndAccessProvider.getPriority(deu, false), 0.01);
+        assertEquals(0.7, speedAndAccessProvider.getPriority(blup, false), 0.01);
     }
 
     @Test
