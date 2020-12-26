@@ -796,7 +796,7 @@ public class EncodingManager implements EncodedValueLookup {
 
     private static final String SPECIAL_SEPARATOR = "$";
 
-    public static boolean isSharedEncodedValues(EncodedValue ev) {
+    private static boolean isSharedEncodedValues(EncodedValue ev) {
         return isValidEncodedValue(ev.getName()) && !ev.getName().contains(SPECIAL_SEPARATOR);
     }
 

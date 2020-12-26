@@ -138,12 +138,11 @@ public final class CustomWeighting extends AbstractWeighting {
             return Double.POSITIVE_INFINITY;
 
         double speed = edgeToSpeedMapping.get(edgeState, reverse);
+        assert speed / SPEED_CONV <= maxSpeed : "speed <= maxSpeed, " + speed / SPEED_CONV + " <= " + maxSpeed;
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
         if (speed < 0)
             throw new IllegalArgumentException("Speed cannot be negative");
-        // TODO should we add this check?
-        // assert speed < maxSpeed;
 
         double seconds = distance / speed * SPEED_CONV;
         // add penalty at start/stop/via points

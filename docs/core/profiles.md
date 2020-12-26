@@ -250,7 +250,7 @@ Every `if` statement can have an `else` statement if the condition is `false`.
 If a road segment matches multiple expressions the speed will be multiplied. In this example:
 
 ```yaml
-speed_factor:
+speed:
 - if: road_class == MOTORWAY
   multiply by: 0.5
 - if: road_environment == TUNNEL
@@ -263,7 +263,7 @@ that additionally has `road_environment == TUNNEL` it will be multiplied by `0.4
 multiplication of 0.5 and 0.8 by using `else if`:
 
 ```yaml
-speed_factor:
+speed:
 - if: road_class == MOTORWAY
   multiply by: 0.5
 - else if: road_environment == TUNNEL

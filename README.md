@@ -207,7 +207,7 @@ Here is a list of the more detailed features:
  * [Alternative routes](https://discuss.graphhopper.com/t/alternative-routes/424)
  * [Turn costs and restrictions](../stable/docs/core/turn-restrictions.md)
  * Country specific routing via SpatialRules
- * The core uses only a few dependencies (hppc, jts and slf4j)
+ * The core uses only a few dependencies (hppc, jts, janino and slf4j)
  * Scales from small indoor-sized to world-wide-sized graphs
  * Finds nearest point on street e.g. to get elevation or 'snap to road' or being used as spatial index (see [#1485](https://github.com/graphhopper/graphhopper/pull/1485))
  * Does [map matching](./map-matching)
