@@ -49,20 +49,25 @@ public class PixelGridTraversal {
     }
 
     public void traverse(Coordinate a, Coordinate b, Consumer<Coordinate> consumer) {
-        int stepX = a.x < b.x ? 1 : -1;
-        int stepY = a.y < b.y ? 1 : -1;
-        double tDeltaX = deltaX / Math.abs(b.x - a.x);
-        double tDeltaY = deltaY / Math.abs(b.y - a.y);
-        int x = (int) ((a.x - bounds.minLon) / deltaX);
-        int y = (int) ((a.y - bounds.minLat) / deltaY);
-        int x2 = (int) ((b.x - bounds.minLon) / deltaX);
-        int y2 = (int) ((b.y - bounds.minLat) / deltaY);
-        double tMaxX = tDeltaX * ((x + 1) * deltaX - a.x) / deltaX;
-        double tMaxY = tDeltaY * ((y + 1) * deltaY - a.y) / deltaY;
+        double ax = a.x - bounds.minLon;
+        double ay = a.y - bounds.minLat;
+        double bx = b.x - bounds.minLon;
+        double by = b.y - bounds.minLat;
+
+        int stepX = ax < bx ? 1 : -1;
+        int stepY = ay < by ? 1 : -1;
+        double tDeltaX = deltaX / Math.abs(bx - ax);
+        double tDeltaY = deltaY / Math.abs(by - ay);
+
+        int x = (int) (ax / deltaX);
+        int y = (int) (ay / deltaY);
+        int x2 = (int) (bx / deltaX);
+        int y2 = (int) (by / deltaY);
+        double tMaxX =  ((x + (stepX < 0 ? 0 : 1)) * deltaX - ax) / (bx - ax);
+        double tMaxY =  ((y + (stepY < 0 ? 0 : 1)) * deltaY - ay) / (by - ay);
+
         consumer.accept(new Coordinate(x, y));
-        while (true) {
-            if (y == y2 && x == x2)
-                break;
+        while (y != y2 || x != x2) {
             if ((tMaxX < tMaxY || y == y2) && x != x2) {
                 tMaxX += tDeltaX;
                 x += stepX;

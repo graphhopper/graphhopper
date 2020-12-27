@@ -36,7 +36,8 @@ public class PixelGridTraversalTest {
             "5.5, 2.5, 0.5, 0.5",
             "3.5, 1.5, 0.5, 3.5",
             "2.5, 2.5, 3.5, 0.5",
-            "0.5, 0.5, 2.5, 3.5"
+            "0.5, 0.5, 2.5, 3.5",
+            "2.5, 2.9, 3.1, 0.9"
     })
     public void testAgainstNaiveGridCellIntersection(double x1, double y1, double x2, double y2) {
         BBox bounds = new BBox(0.0, 10.0, 0.0, 10.0);
