@@ -18,7 +18,8 @@
 package com.graphhopper.storage.index;
 
 import com.graphhopper.util.shapes.BBox;
-import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.locationtech.jts.algorithm.RectangleLineIntersector;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
@@ -26,11 +27,23 @@ import org.locationtech.jts.geom.Envelope;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class PixelGridTraversalTest {
 
-    private void verify(BBox bounds, int parts, Coordinate a, Coordinate b) {
+    @ParameterizedTest
+    @CsvSource({
+            "5.5, 2.5, 0.5, 0.5",
+            "3.5, 1.5, 0.5, 3.5",
+            "2.5, 2.5, 3.5, 0.5",
+            "0.5, 0.5, 2.5, 3.5"
+    })
+    public void testAgainstNaiveGridCellIntersection(double x1, double y1, double x2, double y2) {
+        BBox bounds = new BBox(0.0, 10.0, 0.0, 10.0);
+        int parts = 10;
+        Coordinate a = new Coordinate(x1, y1);
+        Coordinate b = new Coordinate(x2, y2);
+
         Set<Coordinate> actual = new HashSet<>();
         PixelGridTraversal pixelGridTraversal = new PixelGridTraversal(parts, bounds);
         pixelGridTraversal.traverse(a, b, actual::add);
@@ -47,42 +60,6 @@ public class PixelGridTraversalTest {
             }
         }
         assertEquals(expected, actual);
-    }
-
-    @Test
-    public void testBresenhamLineLeftDown() {
-        BBox bounds = new BBox(0.0, 10.0, 0.0, 10.0);
-        int parts = 10;
-        Coordinate a = new Coordinate(5.5, 2.5);
-        Coordinate b = new Coordinate(0.5, 0.5);
-        verify(bounds, parts, a, b);
-    }
-
-    @Test
-    public void testBresenhamLineRightDown() {
-        BBox bounds = new BBox(0.0, 10.0, 0.0, 10.0);
-        int parts = 10;
-        Coordinate a = new Coordinate(3.5, 1.5);
-        Coordinate b = new Coordinate(0.5, 3.5);
-        verify(bounds, parts, a, b);
-    }
-
-    @Test
-    public void testBresenhamLineLeftUp() {
-        BBox bounds = new BBox(0.0, 10.0, 0.0, 10.0);
-        int parts = 10;
-        Coordinate a = new Coordinate(2.5, 2.5);
-        Coordinate b = new Coordinate(3.5, 0.5);
-        verify(bounds, parts, a, b);
-    }
-
-    @Test
-    public void testBresenhamLineRightUp() {
-        BBox bounds = new BBox(0.0, 10.0, 0.0, 10.0);
-        int parts = 10;
-        Coordinate a = new Coordinate(0.5, 0.5);
-        Coordinate b = new Coordinate(2.5, 3.5);
-        verify(bounds, parts, a, b);
     }
 
 }
