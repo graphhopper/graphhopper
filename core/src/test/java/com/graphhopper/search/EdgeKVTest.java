@@ -217,15 +217,19 @@ public class EdgeKVTest {
         EdgeKV index = new EdgeKV(new RAMDirectory(location, true).create()).create(1000);
         long pointerA = index.add(createMap("c", "test bytes".getBytes(Helper.UTF_CS), "long", 444L));
         assertEquals(3, index.getKeys().size());
-        long pointerB = index.add(createMap("a", "value", "b", "some other bytes".getBytes(Helper.UTF_CS)));
+        long pointerB = index.add(createMap("a", "value",
+                "d", 1.5,
+                "f", 1.66f,
+                "i", 1,
+                "b", "some other bytes".getBytes(Helper.UTF_CS)));
         // empty string is always the first key
-        assertEquals("[, c, long, a, b]", index.getKeys().toString());
+        assertEquals("[, c, long, a, d, f, i, b]", index.getKeys().toString());
         index.flush();
         index.close();
 
         index = new EdgeKV(new RAMDirectory(location, true));
         assertTrue(index.loadExisting());
-        assertEquals("[, c, long, a, b]", index.getKeys().toString());
+        assertEquals("[, c, long, a, d, f, i, b]", index.getKeys().toString());
         assertEquals("test bytes", new String((byte[]) index.get(pointerA, "c"), Helper.UTF_CS));
         assertEquals(444L, (long) index.get(pointerA, "long"));
         assertNull(index.get(pointerA, "b"));
@@ -233,10 +237,16 @@ public class EdgeKVTest {
         assertNull(index.get(pointerB, ""));
         assertEquals("value", index.get(pointerB, "a"));
         assertEquals("some other bytes", new String((byte[]) index.get(pointerB, "b"), Helper.UTF_CS));
+        assertEquals(1.5d, (Double) index.get(pointerB, "d"), 0.1);
+        assertEquals(1.66f, (Float) index.get(pointerB, "f"), 0.1);
+        assertEquals(1, (int) index.get(pointerB, "i"));
         Map<String, Object> map = index.getAll(pointerB);
-        assertEquals(2, map.size());
+        assertEquals(5, map.size());
         assertEquals(String.class, map.get("a").getClass());
         assertEquals(byte[].class, map.get("b").getClass());
+        assertEquals(Double.class, map.get("d").getClass());
+        assertEquals(Float.class, map.get("f").getClass());
+        assertEquals(Integer.class, map.get("i").getClass());
         map = index.getAll(pointerA);
         assertEquals(2, map.size());
         assertEquals(byte[].class, map.get("c").getClass());

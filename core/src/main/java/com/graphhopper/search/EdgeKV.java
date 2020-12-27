@@ -214,9 +214,18 @@ public class EdgeKV implements Storable<EdgeKV> {
                 // only cache value if storing via duplicate marker is valuable (the delta costs 4 bytes minus 1 due to omitted valueBytes.length storage)
                 if (valueBytes.length > 3)
                     smallCache.put(value, currentPointer);
+            } else if (clazz.equals(Integer.class)) {
+                // TODO NOW no need to store length!
+                valueBytes = bitUtil.fromInt((int) value);
             } else if (clazz.equals(Long.class)) {
                 // TODO NOW no need to store length!
                 valueBytes = bitUtil.fromLong((long) value);
+            } else if (clazz.equals(Float.class)) {
+                // TODO NOW no need to store length!
+                valueBytes = bitUtil.fromFloat((float) value);
+            } else if (clazz.equals(Double.class)) {
+                // TODO NOW no need to store length!
+                valueBytes = bitUtil.fromDouble((double) value);
             } else if (clazz.equals(byte[].class)) {
                 valueBytes = (byte[]) value;
             } else {
@@ -276,28 +285,40 @@ public class EdgeKV implements Storable<EdgeKV> {
         byte[] valueBytes = new byte[valueLength];
         vals.getBytes(tmpPointer, valueBytes, valueBytes.length);
         if (clazz.equals(String.class)) return new String(valueBytes, Helper.UTF_CS);
+        else if (clazz.equals(Integer.class)) return bitUtil.toInt(valueBytes, 0);
         else if (clazz.equals(Long.class)) return bitUtil.toLong(valueBytes, 0);
+        else if (clazz.equals(Float.class)) return bitUtil.toFloat(valueBytes, 0);
+        else if (clazz.equals(Double.class)) return bitUtil.toDouble(valueBytes, 0);
         else if (clazz.equals(byte[].class)) return valueBytes;
         else throw new IllegalArgumentException("unknown class " + clazz);
     }
 
     private Object createEmptyObj(Class<?> clazz) {
         if (clazz.equals(String.class)) return "";
-        else if (clazz.equals(Long.class)) return 0;
+        else if (clazz.equals(Integer.class)) return 0;
+        else if (clazz.equals(Long.class)) return 0L;
+        else if (clazz.equals(Float.class)) return 0f;
+        else if (clazz.equals(Double.class)) return 0d;
         else if (clazz.equals(byte[].class)) return EMPTY_BYTES;
         else throw new IllegalArgumentException("unknown class " + clazz);
     }
 
     private String classToShortName(Class<?> clazz) {
-        if (clazz.equals(String.class)) return "St";
+        if (clazz.equals(String.class)) return "st";
+        else if (clazz.equals(Integer.class)) return "in";
         else if (clazz.equals(Long.class)) return "lo";
+        else if (clazz.equals(Float.class)) return "fl";
+        else if (clazz.equals(Double.class)) return "do";
         else if (clazz.equals(byte[].class)) return "b[";
         else throw new IllegalArgumentException("Cannot find short name. Unknown class " + clazz);
     }
 
     private Class<?> shortNameToClass(String name) {
-        if (name.equals("St")) return String.class;
+        if (name.equals("st")) return String.class;
+        else if (name.equals("in")) return Integer.class;
         else if (name.equals("lo")) return Long.class;
+        else if (name.equals("fl")) return Float.class;
+        else if (name.equals("do")) return Double.class;
         else if (name.equals("b[")) return byte[].class;
         else throw new IllegalArgumentException("Cannot find class. Unknown short name " + name);
     }
