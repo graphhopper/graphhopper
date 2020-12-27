@@ -26,6 +26,7 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
+import org.locationtech.jts.geom.Coordinate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,6 +83,7 @@ public class LocationIndexTree implements LocationIndex {
      * algorithm can stop search.
      */
     private final double equalNormedDelta = DIST_PLANE.calcNormalizedDist(0.1); // 0.1 meters
+    private PixelGridTraversal pixelGridTraversal;
 
     /**
      * @param g the graph for which this index should do the lookup based on latitude,longitude.
@@ -172,6 +174,7 @@ public class LocationIndexTree implements LocationIndex {
         parts = Math.round(Math.sqrt(parts));
         deltaLat = (bounds.maxLat - bounds.minLat) / parts;
         deltaLon = (bounds.maxLon - bounds.minLon) / parts;
+        pixelGridTraversal = new PixelGridTraversal((int) parts, bounds);
     }
 
     private LocationIndexTree initEntries(int[] entries) {
@@ -645,15 +648,9 @@ public class LocationIndexTree implements LocationIndex {
 
         void addEdgeToAllTilesOnLine(final int edgeId, final double lat1, final double lon1, final double lat2, final double lon2) {
             if (!DIST_PLANE.isCrossBoundary(lon1, lon2)) {
-                long tile1 = keyAlgo.encode(new GHPoint(lat1, lon1));
-                int y1 = keyAlgo.y(tile1);
-                int x1 = keyAlgo.x(tile1);
-                long tile2 = keyAlgo.encode(new GHPoint(lat2, lon2));
-                int y2 = keyAlgo.y(tile2);
-                int x2 = keyAlgo.x(tile2);
                 // Find all the tiles on the line from (y1, x1) to (y2, y2) in tile coordinates (y, x)
-                BresenhamLine.bresenham(y1, x1, y2, x2, (y, x) -> {
-                    long key = keyAlgo.encode(x, y);
+                pixelGridTraversal.traverse(new Coordinate(lon1, lat1), new Coordinate(lon2, lat2), p -> {
+                    long key = keyAlgo.encode((int) p.x, (int) p.y);
                     addEdgeToOneTile(root, edgeId, 0, key << (64 - keyAlgo.getBits()));
                 });
             }
