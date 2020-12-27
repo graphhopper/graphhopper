@@ -22,7 +22,7 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.search.EdgeKV;
+import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
@@ -54,7 +54,7 @@ class BaseGraph implements Graph {
     final BBox bounds;
     final NodeAccess nodeAccess;
     private final static String STRING_IDX_NAME_KEY = "name";
-    final EdgeKV edgeKV;
+    final EdgeKVStorage edgeKVStorage;
     // can be null if turn costs are not supported
     final TurnCostStorage turnCostStorage;
     final BitUtil bitUtil;
@@ -97,7 +97,7 @@ class BaseGraph implements Graph {
         this.intsForFlags = encodingManager.getIntsForFlags();
         this.bitUtil = BitUtil.get(dir.getByteOrder());
         this.wayGeometry = dir.find("geometry");
-        this.edgeKV = new EdgeKV(dir);
+        this.edgeKVStorage = new EdgeKVStorage(dir);
         this.nodes = dir.find("nodes", DAType.getPreferredInt(dir.getDefaultType()));
         this.edges = dir.find("edges", DAType.getPreferredInt(dir.getDefaultType()));
         this.listener = listener;
@@ -345,7 +345,7 @@ class BaseGraph implements Graph {
         nodes.setSegmentSize(bytes);
         edges.setSegmentSize(bytes);
         wayGeometry.setSegmentSize(bytes);
-        edgeKV.setSegmentSize(bytes);
+        edgeKVStorage.setSegmentSize(bytes);
         if (supportsTurnCosts()) {
             turnCostStorage.setSegmentSize(bytes);
         }
@@ -374,7 +374,7 @@ class BaseGraph implements Graph {
 
         initSize = Math.min(initSize, 2000);
         wayGeometry.create(initSize);
-        edgeKV.create(initSize);
+        edgeKVStorage.create(initSize);
         if (supportsTurnCosts()) {
             turnCostStorage.create(initSize);
         }
@@ -388,7 +388,7 @@ class BaseGraph implements Graph {
     String toDetailsString() {
         return "edges:" + nf(edgeCount) + "(" + edges.getCapacity() / Helper.MB + "MB), "
                 + "nodes:" + nf(getNodes()) + "(" + nodes.getCapacity() / Helper.MB + "MB), "
-                + "name:(" + edgeKV.getCapacity() / Helper.MB + "MB), "
+                + "name:(" + edgeKVStorage.getCapacity() / Helper.MB + "MB), "
                 + "geo:" + nf(maxGeoRef) + "(" + wayGeometry.getCapacity() / Helper.MB + "MB), "
                 + "bounds:" + bounds;
     }
@@ -434,8 +434,8 @@ class BaseGraph implements Graph {
         wayGeometry.flush();
         wayGeometry.close();
 
-        edgeKV.flush();
-        edgeKV.close();
+        edgeKVStorage.flush();
+        edgeKVStorage.close();
     }
 
     public void flush() {
@@ -444,8 +444,8 @@ class BaseGraph implements Graph {
             wayGeometry.flush();
         }
 
-        if (!edgeKV.isClosed())
-            edgeKV.flush();
+        if (!edgeKVStorage.isClosed())
+            edgeKVStorage.flush();
 
         setNodesHeader();
         setEdgesHeader();
@@ -459,8 +459,8 @@ class BaseGraph implements Graph {
     public void close() {
         if (!wayGeometry.isClosed())
             wayGeometry.close();
-        if (!edgeKV.isClosed())
-            edgeKV.close();
+        if (!edgeKVStorage.isClosed())
+            edgeKVStorage.close();
         edges.close();
         nodes.close();
         if (supportsTurnCosts()) {
@@ -469,7 +469,7 @@ class BaseGraph implements Graph {
     }
 
     long getCapacity() {
-        return edges.getCapacity() + nodes.getCapacity() + edgeKV.getCapacity()
+        return edges.getCapacity() + nodes.getCapacity() + edgeKVStorage.getCapacity()
                 + wayGeometry.getCapacity() + (supportsTurnCosts() ? turnCostStorage.getCapacity() : 0);
     }
 
@@ -491,7 +491,7 @@ class BaseGraph implements Graph {
         if (!wayGeometry.loadExisting())
             throw new IllegalStateException("Cannot load geometry. corrupt file or directory? " + dir);
 
-        if (!edgeKV.loadExisting())
+        if (!edgeKVStorage.loadExisting())
             throw new IllegalStateException("Cannot load name index. corrupt file or directory? " + dir);
 
         if (supportsTurnCosts() && !turnCostStorage.loadExisting())
@@ -671,7 +671,7 @@ class BaseGraph implements Graph {
         clonedG.loadEdgesHeader();
 
         // name
-        edgeKV.copyTo(clonedG.edgeKV);
+        edgeKVStorage.copyTo(clonedG.edgeKVStorage);
 
         // geometry
         setWayGeometryHeader();
@@ -878,7 +878,7 @@ class BaseGraph implements Graph {
     }
 
     private void setName(long edgePointer, String name) {
-        int stringIndexRef = (int) edgeKV.add(Collections.singletonMap(STRING_IDX_NAME_KEY, name));
+        int stringIndexRef = (int) edgeKVStorage.add(Collections.singletonMap(STRING_IDX_NAME_KEY, name));
         if (stringIndexRef < 0)
             throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
 
@@ -1312,7 +1312,7 @@ class BaseGraph implements Graph {
         @Override
         public String getName() {
             int stringIndexRef = baseGraph.edges.getInt(edgePointer + baseGraph.E_NAME);
-            String name = (String) baseGraph.edgeKV.get(stringIndexRef, STRING_IDX_NAME_KEY);
+            String name = (String) baseGraph.edgeKVStorage.get(stringIndexRef, STRING_IDX_NAME_KEY);
             // preserve backward compatibility (returns null if not explicitly set)
             return name == null ? "" : name;
         }

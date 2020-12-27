@@ -11,11 +11,11 @@ import org.junit.jupiter.api.BeforeEach;
 import java.io.File;
 import java.util.*;
 
-import static com.graphhopper.search.EdgeKV.MAX_UNIQUE_KEYS;
+import static com.graphhopper.search.EdgeKVStorage.MAX_UNIQUE_KEYS;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.*;
 
-public class EdgeKVTest {
+public class EdgeKVStorageTest {
     String location = "./target/stringindex-store";
 
     @BeforeEach
@@ -24,8 +24,8 @@ public class EdgeKVTest {
         Helper.removeDir(new File(location));
     }
 
-    private EdgeKV create() {
-        return new EdgeKV(new RAMDirectory()).create(1000);
+    private EdgeKVStorage create() {
+        return new EdgeKVStorage(new RAMDirectory()).create(1000);
     }
 
     Map<String, Object> createMap(Object... strings) {
@@ -40,7 +40,7 @@ public class EdgeKVTest {
 
     @Test
     public void putSame() {
-        EdgeKV index = create();
+        EdgeKVStorage index = create();
         long aPointer = index.add(createMap("a", "same name", "b", "same name"));
 
         assertNull(index.get(aPointer, ""));
@@ -55,7 +55,7 @@ public class EdgeKVTest {
 
     @Test
     public void putAB() {
-        EdgeKV index = create();
+        EdgeKVStorage index = create();
         long aPointer = index.add(createMap("a", "a name", "b", "b name"));
 
         assertNull(index.get(aPointer, ""));
@@ -65,7 +65,7 @@ public class EdgeKVTest {
 
     @Test
     public void putEmpty() {
-        EdgeKV index = create();
+        EdgeKVStorage index = create();
         assertEquals(1, index.add(createMap("", "")));
         assertEquals(5, index.add(createMap("", null)));
         // cannot store null value if it is the first value of the key:
@@ -79,7 +79,7 @@ public class EdgeKVTest {
 
     @Test
     public void putMany() {
-        EdgeKV index = create();
+        EdgeKVStorage index = create();
         long aPointer = 0, tmpPointer = 0;
 
         for (int i = 0; i < 10000; i++) {
@@ -98,7 +98,7 @@ public class EdgeKVTest {
 
     @Test
     public void putManyKeys() {
-        EdgeKV index = create();
+        EdgeKVStorage index = create();
         // one key is already stored => empty key
         for (int i = 1; i < MAX_UNIQUE_KEYS; i++) {
             index.add(createMap("a" + i, "a name"));
@@ -112,7 +112,7 @@ public class EdgeKVTest {
 
     @Test
     public void putDuplicate() {
-        EdgeKV index = create();
+        EdgeKVStorage index = create();
         long aPointer = index.add(createMap("a", "longer name", "b", "longer name"));
         long bPointer = index.add(createMap("c", "longer other name"));
         // value storage: 1 byte for count, 2 bytes for keyIndex and 4 bytes for delta of dup_marker and 3 bytes (keyIndex + length for "longer name")
@@ -137,7 +137,7 @@ public class EdgeKVTest {
 
     @Test
     public void testNoErrorOnLargeName() {
-        EdgeKV index = create();
+        EdgeKVStorage index = create();
         // 127 => bytes.length == 254
         String str = "";
         for (int i = 0; i < 127; i++) {
@@ -149,7 +149,7 @@ public class EdgeKVTest {
 
     @Test
     public void testTooLongNameNoError() {
-        EdgeKV index = create();
+        EdgeKVStorage index = create();
         index.throwExceptionIfTooLong = true;
         try {
             index.add(createMap("", "Бухарестская улица (http://ru.wikipedia.org/wiki/%D0%91%D1%83%D1%85%D0%B0%D1%80%D0%B5%D1%81%D1%82%D1%81%D0%BA%D0%B0%D1%8F_%D1%83%D0%BB%D0%B8%D1%86%D0%B0_(%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3))"));
@@ -174,12 +174,12 @@ public class EdgeKVTest {
 
     @Test
     public void testFlush() {
-        EdgeKV index = new EdgeKV(new RAMDirectory(location, true).create()).create(1000);
+        EdgeKVStorage index = new EdgeKVStorage(new RAMDirectory(location, true).create()).create(1000);
         long pointer = index.add(createMap("", "test"));
         index.flush();
         index.close();
 
-        index = new EdgeKV(new RAMDirectory(location, true));
+        index = new EdgeKVStorage(new RAMDirectory(location, true));
         assertTrue(index.loadExisting());
         assertEquals("test", index.get(pointer, ""));
         // make sure bytePointer is correctly set after loadExisting
@@ -190,7 +190,7 @@ public class EdgeKVTest {
 
     @Test
     public void testLoadStringKeys() {
-        EdgeKV index = new EdgeKV(new RAMDirectory(location, true).create()).create(1000);
+        EdgeKVStorage index = new EdgeKVStorage(new RAMDirectory(location, true).create()).create(1000);
         long pointerA = index.add(createMap("c", "test value"));
         assertEquals(2, index.getKeys().size());
         long pointerB = index.add(createMap("a", "value", "b", "another value"));
@@ -199,7 +199,7 @@ public class EdgeKVTest {
         index.flush();
         index.close();
 
-        index = new EdgeKV(new RAMDirectory(location, true));
+        index = new EdgeKVStorage(new RAMDirectory(location, true));
         assertTrue(index.loadExisting());
         assertEquals("[, c, a, b]", index.getKeys().toString());
         assertEquals("test value", index.get(pointerA, "c"));
@@ -214,7 +214,7 @@ public class EdgeKVTest {
 
     @Test
     public void testLoadKeys() {
-        EdgeKV index = new EdgeKV(new RAMDirectory(location, true).create()).create(1000);
+        EdgeKVStorage index = new EdgeKVStorage(new RAMDirectory(location, true).create()).create(1000);
         long pointerA = index.add(createMap("c", "test bytes".getBytes(Helper.UTF_CS), "long", 444L));
         assertEquals(3, index.getKeys().size());
         long pointerB = index.add(createMap("a", "value",
@@ -227,7 +227,7 @@ public class EdgeKVTest {
         index.flush();
         index.close();
 
-        index = new EdgeKV(new RAMDirectory(location, true));
+        index = new EdgeKVStorage(new RAMDirectory(location, true));
         assertTrue(index.loadExisting());
         assertEquals("[, c, long, a, d, f, i, b]", index.getKeys().toString());
         assertEquals("test bytes", new String((byte[]) index.get(pointerA, "c"), Helper.UTF_CS));
@@ -257,7 +257,7 @@ public class EdgeKVTest {
 
     @Test
     public void testEmptyKey() {
-        EdgeKV index = create();
+        EdgeKVStorage index = create();
         long pointerA = index.add(createMap("", "test value"));
         long pointerB = index.add(createMap("a", "value", "b", "another value"));
 
@@ -271,7 +271,7 @@ public class EdgeKVTest {
     @Test
     @Repeat(times = 100)
     public void testRandom() {
-        EdgeKV index = create();
+        EdgeKVStorage index = create();
         long seed = new Random().nextLong();
         System.out.println("StringIndexText.testRandom seed:" + seed);
         Random random = new Random(seed);

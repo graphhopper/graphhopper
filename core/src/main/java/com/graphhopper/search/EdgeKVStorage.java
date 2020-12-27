@@ -32,9 +32,8 @@ import java.util.*;
  *
  * @author Peter Karich
  */
-public class EdgeKV implements Storable<EdgeKV> {
+public class EdgeKVStorage implements Storable<EdgeKVStorage> {
 
-    private static final byte[] EMPTY_BYTES = new byte[0];
     private static final long EMPTY_POINTER = 0, START_POINTER = 1;
     // Store the key index in 2 bytes. Use negative values for marking the value as duplicate.
     static final int MAX_UNIQUE_KEYS = (1 << 15);
@@ -59,14 +58,14 @@ public class EdgeKV implements Storable<EdgeKV> {
     private long lastEntryPointer = -1;
     private Map<String, Object> lastEntryMap;
 
-    public EdgeKV(Directory dir) {
+    public EdgeKVStorage(Directory dir) {
         this(dir, 1000);
     }
 
     /**
      * Specify a larger cacheSize to reduce disk usage. Note that this increases the memory usage of this object.
      */
-    public EdgeKV(Directory dir, final int cacheSize) {
+    public EdgeKVStorage(Directory dir, final int cacheSize) {
         keys = dir.find("string_index_keys");
         keys.setSegmentSize(10 * 1024);
         vals = dir.find("string_index_vals");
@@ -79,7 +78,7 @@ public class EdgeKV implements Storable<EdgeKV> {
     }
 
     @Override
-    public EdgeKV create(long initBytes) {
+    public EdgeKVStorage create(long initBytes) {
         keys.create(initBytes);
         vals.create(initBytes);
         // add special empty case to have a reliable duplicate detection via negative keyIndex
@@ -455,8 +454,8 @@ public class EdgeKV implements Storable<EdgeKV> {
         return vals.getCapacity() + keys.getCapacity();
     }
 
-    public void copyTo(EdgeKV edgeKV) {
-        keys.copyTo(edgeKV.keys);
-        vals.copyTo(edgeKV.vals);
+    public void copyTo(EdgeKVStorage edgeKVStorage) {
+        keys.copyTo(edgeKVStorage.keys);
+        vals.copyTo(edgeKVStorage.vals);
     }
 }
