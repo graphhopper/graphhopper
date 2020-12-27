@@ -59,10 +59,12 @@ public class PixelGridTraversal {
         double tDeltaX = deltaX / Math.abs(bx - ax);
         double tDeltaY = deltaY / Math.abs(by - ay);
 
-        int x = (int) (ax / deltaX);
-        int y = (int) (ay / deltaY);
-        int x2 = (int) (bx / deltaX);
-        int y2 = (int) (by / deltaY);
+        // Bounding this with parts - 1 only concerns the case where we are exactly on the bounding box.
+        // (The next cell would already start there..)
+        int x = Math.min((int) (ax / deltaX), parts - 1);
+        int y = Math.min((int) (ay / deltaY), parts - 1);
+        int x2 = Math.min((int) (bx / deltaX), parts - 1);
+        int y2 = Math.min((int) (by / deltaY), parts - 1);
         double tMaxX =  ((x + (stepX < 0 ? 0 : 1)) * deltaX - ax) / (bx - ax);
         double tMaxY =  ((y + (stepY < 0 ? 0 : 1)) * deltaY - ay) / (by - ay);
 
