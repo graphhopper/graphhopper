@@ -26,9 +26,15 @@ import com.graphhopper.util.Helper;
 import java.util.*;
 
 /**
+ * The EdgeKV stores multiple key-value pairs (value can be String or byte[]) into a continuous memory area and gives
+ * you a pointer (long) back to be stored as an edge property. The returned pointer (long) can be stored in the edges
+ * DataAccess of BaseGraph.
+ *
  * @author Peter Karich
  */
-public class StringIndex implements Storable<StringIndex> {
+public class EdgeKV implements Storable<EdgeKV> {
+
+    private static final byte[] EMPTY_BYTES = new byte[0];
     private static final long EMPTY_POINTER = 0, START_POINTER = 1;
     // Store the key index in 2 bytes. Use negative values for marking the value as duplicate.
     static final int MAX_UNIQUE_KEYS = (1 << 15);
@@ -44,39 +50,41 @@ public class StringIndex implements Storable<StringIndex> {
     // We then store only the delta (signed int) instead the absolute unsigned long value to reduce memory usage when duplicate entries.
     private final DataAccess vals;
     // array.indexOf could be faster than hashmap.get if not too many keys or even sort keys and use binarySearch
-    private final Map<String, Integer> keysInMem = new LinkedHashMap<>();
-    private final List<String> keyList = new ArrayList<>();
-    private final Map<String, Long> smallCache;
+    private final Map<String, Integer> keyToIndex = new LinkedHashMap<>();
+    private final List<Class<?>> indexToClass = new ArrayList<>();
+    private final List<String> indexToKey = new ArrayList<>();
+    private final Map<Object, Long> smallCache;
     private long bytePointer = START_POINTER;
     private long lastEntryPointer = -1;
-    private Map<String, String> lastEntryMap;
+    private Map<String, Object> lastEntryMap;
 
-    public StringIndex(Directory dir) {
+    public EdgeKV(Directory dir) {
         this(dir, 1000);
     }
 
     /**
      * Specify a larger cacheSize to reduce disk usage. Note that this increases the memory usage of this object.
      */
-    public StringIndex(Directory dir, final int cacheSize) {
+    public EdgeKV(Directory dir, final int cacheSize) {
         keys = dir.find("string_index_keys");
         keys.setSegmentSize(10 * 1024);
         vals = dir.find("string_index_vals");
-        smallCache = new LinkedHashMap<String, Long>(cacheSize, 0.75f, true) {
+        smallCache = new LinkedHashMap<Object, Long>(cacheSize, 0.75f, true) {
             @Override
-            protected boolean removeEldestEntry(Map.Entry<String, Long> entry) {
+            protected boolean removeEldestEntry(Map.Entry<Object, Long> entry) {
                 return size() > cacheSize;
             }
         };
     }
 
     @Override
-    public StringIndex create(long initBytes) {
+    public EdgeKV create(long initBytes) {
         keys.create(initBytes);
         vals.create(initBytes);
         // add special empty case to have a reliable duplicate detection via negative keyIndex
-        keysInMem.put("", 0);
-        keyList.add("");
+        keyToIndex.put("", 0);
+        indexToKey.add("");
+        indexToClass.add(String.class);
         return this;
     }
 
@@ -93,13 +101,22 @@ public class StringIndex implements Storable<StringIndex> {
             for (int i = 0; i < count; i++) {
                 int keyLength = keys.getShort(keyBytePointer);
                 keyBytePointer += 2;
-
                 byte[] keyBytes = new byte[keyLength];
                 keys.getBytes(keyBytePointer, keyBytes, keyLength);
                 String valueStr = new String(keyBytes, Helper.UTF_CS);
-                keysInMem.put(valueStr, keysInMem.size());
-                keyList.add(valueStr);
                 keyBytePointer += keyLength;
+
+                keyToIndex.put(valueStr, keyToIndex.size());
+                indexToKey.add(valueStr);
+
+                keyLength = keys.getShort(keyBytePointer);
+                keyBytePointer += 2;
+                keyBytes = new byte[keyLength];
+                keys.getBytes(keyBytePointer, keyBytes, keyLength);
+                String className = new String(keyBytes, Helper.UTF_CS);
+                keyBytePointer += keyLength;
+
+                indexToClass.add(shortNameToClass(className));
             }
             return true;
         }
@@ -108,7 +125,7 @@ public class StringIndex implements Storable<StringIndex> {
     }
 
     Set<String> getKeys() {
-        return keysInMem.keySet();
+        return keyToIndex.keySet();
     }
 
     /**
@@ -116,13 +133,13 @@ public class StringIndex implements Storable<StringIndex> {
      *
      * @return entryPointer to later fetch the entryMap via get
      */
-    public long add(Map<String, String> entryMap) {
+    public long add(Map<String, Object> entryMap) {
         if (entryMap.isEmpty())
             return EMPTY_POINTER;
         else if (entryMap.size() > 200)
             throw new IllegalArgumentException("Cannot store more than 200 entries per entry");
 
-        // This is a very important compressing mechanism due to the nature of OSM. Make this faster via precalculated hastcodes?
+        // This is a very important "compression" mechanism due to the nature of OSM.
         if (entryMap.equals(lastEntryMap))
             return lastEntryPointer;
 
@@ -134,24 +151,48 @@ public class StringIndex implements Storable<StringIndex> {
         vals.ensureCapacity(currentPointer + 1);
         vals.setByte(currentPointer, (byte) entryMap.size());
         currentPointer += 1;
-        for (Map.Entry<String, String> entry : entryMap.entrySet()) {
-            String key = entry.getKey(), value = entry.getValue();
-            Integer keyIndex = keysInMem.get(key);
+        for (Map.Entry<String, Object> entry : entryMap.entrySet()) {
+            String key = entry.getKey();
+            if (key == null)
+                throw new IllegalArgumentException("key must not be null");
+            Object value = entry.getValue();
+            Integer keyIndex = keyToIndex.get(key);
+            Class<?> clazz;
             if (keyIndex == null) {
-                keyIndex = keysInMem.size();
+                keyIndex = keyToIndex.size();
                 if (keyIndex >= MAX_UNIQUE_KEYS)
                     throw new IllegalArgumentException("Cannot store more than " + MAX_UNIQUE_KEYS + " unique keys");
-                keysInMem.put(key, keyIndex);
-                keyList.add(key);
+                keyToIndex.put(key, keyIndex);
+                indexToKey.add(key);
+                if (value == null)
+                    throw new IllegalArgumentException("value cannot be null on the first occurrence");
+                indexToClass.add(clazz = value.getClass());
+            } else {
+                clazz = indexToClass.get(keyIndex);
             }
 
-            if (value == null || value.isEmpty()) {
+            if (value == null) {
                 vals.ensureCapacity(currentPointer + 3);
                 vals.setShort(currentPointer, keyIndex.shortValue());
                 // ensure that also in case of MMap value is set to 0
                 vals.setByte(currentPointer + 2, (byte) 0);
                 currentPointer += 3;
-            } else {
+                continue;
+            }
+
+            if (clazz.equals(String.class) && ((String) value).isEmpty() ||
+                    clazz.equals(byte[].class) && ((byte[]) value).length == 0) {
+                vals.ensureCapacity(currentPointer + 3);
+                vals.setShort(currentPointer, keyIndex.shortValue());
+                // ensure that also in case of MMap value is set to 0
+                vals.setByte(currentPointer + 2, (byte) 0);
+                currentPointer += 3;
+                continue;
+            }
+
+            final byte[] valueBytes;
+            if (clazz.equals(String.class)) {
+                String valueStr = (String) value;
                 Long existingRef = smallCache.get(value);
                 if (existingRef != null) {
                     long delta = lastEntryPointer - existingRef;
@@ -160,7 +201,7 @@ public class StringIndex implements Storable<StringIndex> {
                         vals.setShort(currentPointer, (short) -keyIndex);
                         currentPointer += 2;
                         // do not store valueBytes.length as we know it already: it is 4!
-                        byte[] valueBytes = new byte[4];
+                        valueBytes = new byte[4];
                         BitUtil.LITTLE.fromInt(valueBytes, (int) delta);
                         vals.setBytes(currentPointer, valueBytes, valueBytes.length);
                         currentPointer += valueBytes.length;
@@ -170,25 +211,30 @@ public class StringIndex implements Storable<StringIndex> {
                     }
                 }
 
-                byte[] valueBytes = getBytesForString("Value for key" + key, value);
+                valueBytes = getBytesForString("Value for key " + key, valueStr);
                 // only cache value if storing via duplicate marker is valuable (the delta costs 4 bytes minus 1 due to omitted valueBytes.length storage)
                 if (valueBytes.length > 3)
                     smallCache.put(value, currentPointer);
 
-                vals.ensureCapacity(currentPointer + 2 + 1 + valueBytes.length);
-                vals.setShort(currentPointer, keyIndex.shortValue());
-                currentPointer += 2;
-                vals.setByte(currentPointer, (byte) valueBytes.length);
-                currentPointer++;
-                vals.setBytes(currentPointer, valueBytes, valueBytes.length);
-                currentPointer += valueBytes.length;
+            } else if (clazz.equals(byte[].class)) {
+                valueBytes = (byte[]) value;
+            } else {
+                throw new IllegalArgumentException("value class not supported " + clazz.getSimpleName());
             }
+
+            vals.ensureCapacity(currentPointer + 2 + 1 + valueBytes.length);
+            vals.setShort(currentPointer, keyIndex.shortValue());
+            currentPointer += 2;
+            vals.setByte(currentPointer, (byte) valueBytes.length);
+            currentPointer++;
+            vals.setBytes(currentPointer, valueBytes, valueBytes.length);
+            currentPointer += valueBytes.length;
         }
         bytePointer = currentPointer;
         return lastEntryPointer;
     }
 
-    public Map<String, String> getAll(final long entryPointer) {
+    public Map<String, Object> getAll(final long entryPointer) {
         if (entryPointer < 0)
             throw new IllegalStateException("Pointer to access StringIndex cannot be negative:" + entryPointer);
 
@@ -199,7 +245,7 @@ public class StringIndex implements Storable<StringIndex> {
         if (keyCount == 0)
             return Collections.emptyMap();
 
-        Map<String, String> map = new HashMap<>(keyCount);
+        Map<String, Object> map = new HashMap<>(keyCount);
         long tmpPointer = entryPointer + 1;
         for (int i = 0; i < keyCount; i++) {
             int currentKeyIndex = vals.getShort(tmpPointer);
@@ -222,40 +268,57 @@ public class StringIndex implements Storable<StringIndex> {
             }
         }
 
-        // value for specified key does not existing for the specified pointer
         return map;
     }
 
-    private int putIntoMap(Map<String, String> map, long tmpPointer, int currentKeyIndex) {
+    private Object getEmpty(Class<?> clazz) {
+        if (clazz.equals(String.class)) return "";
+        else if (clazz.equals(byte[].class)) return EMPTY_BYTES;
+        else throw new IllegalArgumentException("unknown class " + clazz);
+    }
+
+    private String classToShortName(Class<?> clazz) {
+        if (clazz.equals(String.class)) return "S";
+        else if (clazz.equals(byte[].class)) return "b[";
+        else throw new IllegalArgumentException("Cannot find short name. Unknown class " + clazz);
+    }
+
+    private Class<?> shortNameToClass(String name) {
+        if (name.equals("S")) return String.class;
+        else if (name.equals("b[")) return byte[].class;
+        else throw new IllegalArgumentException("Cannot find class. Unknown short name " + name);
+    }
+
+    private int putIntoMap(Map<String, Object> map, long tmpPointer, int currentKeyIndex) {
         int valueLength = vals.getByte(tmpPointer) & 0xFF;
         tmpPointer++;
-        String valueStr;
-        if (valueLength == 0) {
-            valueStr = "";
-        } else {
+        Class<?> clazz = indexToClass.get(currentKeyIndex);
+        Object value = valueLength == 0 ? getEmpty(clazz) : null;
+        if (value == null) {
             byte[] valueBytes = new byte[valueLength];
-            vals.getBytes(tmpPointer, valueBytes, valueBytes.length);
-            valueStr = new String(valueBytes, Helper.UTF_CS);
+            vals.getBytes(tmpPointer, valueBytes, valueLength);
+            if (clazz.equals(String.class)) value = new String(valueBytes, Helper.UTF_CS);
+            else if (clazz.equals(byte[].class)) value = valueBytes;
         }
 
-        map.put(keyList.get(currentKeyIndex), valueStr);
+        map.put(indexToKey.get(currentKeyIndex), value);
         return valueLength;
     }
 
-    public String get(final long entryPointer, String key) {
+    public Object get(final long entryPointer, String key) {
         if (entryPointer < 0)
             throw new IllegalStateException("Pointer to access StringIndex cannot be negative:" + entryPointer);
 
+        Integer keyIndex = keyToIndex.get(key);
+        if (keyIndex == null)
+            return null;
+
+        Class<?> clazz = indexToClass.get(keyIndex);
         if (entryPointer == EMPTY_POINTER)
-            return "";
+            return getEmpty(clazz);
 
         int keyCount = vals.getByte(entryPointer) & 0xFF;
         if (keyCount == 0)
-            return null;
-
-        Integer keyIndex = keysInMem.get(key);
-        // specified key is not known to the StringIndex
-        if (keyIndex == null)
             return null;
 
         long tmpPointer = entryPointer + 1;
@@ -274,12 +337,14 @@ public class StringIndex implements Storable<StringIndex> {
 
                 int valueLength = vals.getByte(tmpPointer) & 0xFF;
                 if (valueLength == 0)
-                    return "";
+                    return getEmpty(clazz);
 
                 tmpPointer++;
                 byte[] valueBytes = new byte[valueLength];
                 vals.getBytes(tmpPointer, valueBytes, valueBytes.length);
-                return new String(valueBytes, Helper.UTF_CS);
+                if (clazz.equals(String.class)) return new String(valueBytes, Helper.UTF_CS);
+                else if (clazz.equals(byte[].class)) return valueBytes;
+                else throw new IllegalArgumentException("unknown class " + clazz);
             }
             int valueLength = vals.getByte(tmpPointer) & 0xFF;
             tmpPointer += 1 + valueLength;
@@ -304,9 +369,10 @@ public class StringIndex implements Storable<StringIndex> {
     @Override
     public void flush() {
         keys.ensureCapacity(2);
-        keys.setShort(0, (short) keysInMem.size());
+        keys.setShort(0, (short) keyToIndex.size());
         long keyBytePointer = 2;
-        for (String key : keysInMem.keySet()) {
+        for (Map.Entry<String, Integer> entry : keyToIndex.entrySet()) {
+            String key = entry.getKey();
             byte[] keyBytes = getBytesForString("key", key);
             keys.ensureCapacity(keyBytePointer + 2 + keyBytes.length);
             keys.setShort(keyBytePointer, (short) keyBytes.length);
@@ -314,6 +380,15 @@ public class StringIndex implements Storable<StringIndex> {
 
             keys.setBytes(keyBytePointer, keyBytes, keyBytes.length);
             keyBytePointer += keyBytes.length;
+
+            Class<?> clazz = indexToClass.get(entry.getValue());
+            byte[] clazzBytes = getBytesForString("class name", classToShortName(clazz));
+            keys.ensureCapacity(keyBytePointer + 2 + clazzBytes.length);
+            keys.setShort(keyBytePointer, (short) clazzBytes.length);
+            keyBytePointer += 2;
+
+            keys.setBytes(keyBytePointer, clazzBytes, clazzBytes.length);
+            keyBytePointer += clazzBytes.length;
         }
         keys.flush();
 
@@ -343,8 +418,8 @@ public class StringIndex implements Storable<StringIndex> {
         return vals.getCapacity() + keys.getCapacity();
     }
 
-    public void copyTo(StringIndex stringIndex) {
-        keys.copyTo(stringIndex.keys);
-        vals.copyTo(stringIndex.vals);
+    public void copyTo(EdgeKV edgeKV) {
+        keys.copyTo(edgeKV.keys);
+        vals.copyTo(edgeKV.vals);
     }
 }

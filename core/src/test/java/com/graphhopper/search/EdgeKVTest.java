@@ -9,20 +9,20 @@ import org.junit.Test;
 import java.io.File;
 import java.util.*;
 
-import static com.graphhopper.search.StringIndex.MAX_UNIQUE_KEYS;
+import static com.graphhopper.search.EdgeKV.MAX_UNIQUE_KEYS;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.*;
 
-public class StringIndexTest {
+public class EdgeKVTest {
 
-    private StringIndex create() {
-        return new StringIndex(new RAMDirectory()).create(1000);
+    private EdgeKV create() {
+        return new EdgeKV(new RAMDirectory()).create(1000);
     }
 
-    Map<String, String> createMap(String... strings) {
+    Map<String, Object> createMap(String... strings) {
         if (strings.length % 2 != 0)
             throw new IllegalArgumentException("Cannot create map from strings " + Arrays.toString(strings));
-        Map<String, String> map = new LinkedHashMap<>();
+        Map<String, Object> map = new LinkedHashMap<>();
         for (int i = 0; i < strings.length; i += 2) {
             map.put(strings[i], strings[i + 1]);
         }
@@ -31,7 +31,7 @@ public class StringIndexTest {
 
     @Test
     public void putSame() {
-        StringIndex index = create();
+        EdgeKV index = create();
         long aPointer = index.add(createMap("a", "same name", "b", "same name"));
 
         assertNull(index.get(aPointer, ""));
@@ -46,7 +46,7 @@ public class StringIndexTest {
 
     @Test
     public void putAB() {
-        StringIndex index = create();
+        EdgeKV index = create();
         long aPointer = index.add(createMap("a", "a name", "b", "b name"));
 
         assertNull(index.get(aPointer, ""));
@@ -56,18 +56,21 @@ public class StringIndexTest {
 
     @Test
     public void putEmpty() {
-        StringIndex index = create();
+        EdgeKV index = create();
         assertEquals(1, index.add(createMap("", "")));
         assertEquals(5, index.add(createMap("", null)));
-        assertEquals(9, index.add(createMap(null, null)));
+        // cannot store null value if it is the first value of the key:
+        assertThrows(IllegalArgumentException.class, () -> index.add(createMap("blup", null)));
+        assertThrows(IllegalArgumentException.class, () -> index.add(createMap(null, null)));
+
         assertEquals("", index.get(0, ""));
 
-        assertEquals(13, index.add(createMap("else", "else")));
+        assertEquals(9, index.add(createMap("else", "else")));
     }
 
     @Test
     public void putMany() {
-        StringIndex index = create();
+        EdgeKV index = create();
         long aPointer = 0, tmpPointer = 0;
 
         for (int i = 0; i < 10000; i++) {
@@ -86,7 +89,7 @@ public class StringIndexTest {
 
     @Test
     public void putManyKeys() {
-        StringIndex index = create();
+        EdgeKV index = create();
         // one key is already stored => empty key
         for (int i = 1; i < MAX_UNIQUE_KEYS; i++) {
             index.add(createMap("a" + i, "a name"));
@@ -100,7 +103,7 @@ public class StringIndexTest {
 
     @Test
     public void putDuplicate() {
-        StringIndex index = create();
+        EdgeKV index = create();
         long aPointer = index.add(createMap("a", "longer name", "b", "longer name"));
         long bPointer = index.add(createMap("c", "longer other name"));
         // value storage: 1 byte for count, 2 bytes for keyIndex and 4 bytes for delta of dup_marker and 3 bytes (keyIndex + length for "longer name")
@@ -125,19 +128,19 @@ public class StringIndexTest {
 
     @Test
     public void testNoErrorOnLargeName() {
-        StringIndex index = create();
+        EdgeKV index = create();
         // 127 => bytes.length == 254
         String str = "";
         for (int i = 0; i < 127; i++) {
             str += "ß";
         }
         long result = index.add(createMap("", str));
-        assertEquals(127, index.get(result, "").length());
+        assertEquals(127, ((String) index.get(result, "")).length());
     }
 
     @Test
     public void testTooLongNameNoError() {
-        StringIndex index = create();
+        EdgeKV index = create();
         index.throwExceptionIfTooLong = true;
         try {
             index.add(createMap("", "Бухарестская улица (http://ru.wikipedia.org/wiki/%D0%91%D1%83%D1%85%D0%B0%D1%80%D0%B5%D1%81%D1%82%D1%81%D0%BA%D0%B0%D1%8F_%D1%83%D0%BB%D0%B8%D1%86%D0%B0_(%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3))"));
@@ -157,7 +160,7 @@ public class StringIndexTest {
 
         index.throwExceptionIfTooLong = false;
         long pointer = index.add(createMap("", "Бухарестская улица (http://ru.wikipedia.org/wiki/%D0%91%D1%83%D1%85%D0%B0%D1%80%D0%B5%D1%81%D1%82%D1%81%D0%BA%D0%B0%D1%8F_%D1%83%D0%BB%D0%B8%D1%86%D0%B0_(%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3))"));
-        assertTrue(index.get(pointer, "").startsWith("Бухарестская улица (h"));
+        assertTrue(((String) index.get(pointer, "")).startsWith("Бухарестская улица (h"));
     }
 
     @Test
@@ -165,12 +168,12 @@ public class StringIndexTest {
         String location = "./target/stringindex-store";
         Helper.removeDir(new File(location));
 
-        StringIndex index = new StringIndex(new RAMDirectory(location, true).create()).create(1000);
+        EdgeKV index = new EdgeKV(new RAMDirectory(location, true).create()).create(1000);
         long pointer = index.add(createMap("", "test"));
         index.flush();
         index.close();
 
-        index = new StringIndex(new RAMDirectory(location, true));
+        index = new EdgeKV(new RAMDirectory(location, true));
         assertTrue(index.loadExisting());
         assertEquals("test", index.get(pointer, ""));
         // make sure bytePointer is correctly set after loadExisting
@@ -186,7 +189,7 @@ public class StringIndexTest {
         String location = "./target/stringindex-store";
         Helper.removeDir(new File(location));
 
-        StringIndex index = new StringIndex(new RAMDirectory(location, true).create()).create(1000);
+        EdgeKV index = new EdgeKV(new RAMDirectory(location, true).create()).create(1000);
         long pointerA = index.add(createMap("c", "test value"));
         assertEquals(2, index.getKeys().size());
         long pointerB = index.add(createMap("a", "value", "b", "another value"));
@@ -195,7 +198,7 @@ public class StringIndexTest {
         index.flush();
         index.close();
 
-        index = new StringIndex(new RAMDirectory(location, true));
+        index = new EdgeKV(new RAMDirectory(location, true));
         assertTrue(index.loadExisting());
         assertEquals("[, c, a, b]", index.getKeys().toString());
         assertEquals("test value", index.get(pointerA, "c"));
@@ -212,7 +215,7 @@ public class StringIndexTest {
 
     @Test
     public void testEmptyKey() {
-        StringIndex index = create();
+        EdgeKV index = create();
         long pointerA = index.add(createMap("", "test value"));
         long pointerB = index.add(createMap("a", "value", "b", "another value"));
 
@@ -226,7 +229,7 @@ public class StringIndexTest {
     @Test
     @Repeat(times = 100)
     public void testRandom() {
-        StringIndex index = create();
+        EdgeKV index = create();
         long seed = new Random().nextLong();
         System.out.println("StringIndexText.testRandom seed:" + seed);
         Random random = new Random(seed);
@@ -236,7 +239,7 @@ public class StringIndexTest {
         int size = 20000;
         LongArrayList pointers = new LongArrayList(size);
         for (int i = 0; i < size; i++) {
-            Map<String, String> map = createRandomMap(random, keys, values);
+            Map<String, Object> map = createRandomMap(random, keys, values);
             long pointer = index.add(map);
             try {
                 assertEquals("" + i, map.size(), index.getAll(pointer).size());
@@ -247,7 +250,7 @@ public class StringIndexTest {
         }
 
         for (int i = 0; i < size; i++) {
-            Map<String, String> map = index.getAll(pointers.get(i));
+            Map<String, Object> map = index.getAll(pointers.get(i));
             assertTrue(i + " " + map, map.size() > 0);
         }
     }
@@ -260,9 +263,9 @@ public class StringIndexTest {
         return list;
     }
 
-    private Map<String, String> createRandomMap(Random random, List<String> keys, List<String> values) {
+    private Map<String, Object> createRandomMap(Random random, List<String> keys, List<String> values) {
         int count = random.nextInt(10) + 2;
-        Map<String, String> map = new HashMap<>();
+        Map<String, Object> map = new HashMap<>();
         for (int i = 0; i < count; i++) {
             map.put(keys.get(random.nextInt(keys.size())), values.get(random.nextInt(values.size())));
         }

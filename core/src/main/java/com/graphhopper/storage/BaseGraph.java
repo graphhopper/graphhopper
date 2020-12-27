@@ -17,16 +17,12 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.IntEncodedValue;
-import com.graphhopper.routing.ev.StringEncodedValue;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.search.StringIndex;
+import com.graphhopper.search.EdgeKV;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
@@ -58,7 +54,7 @@ class BaseGraph implements Graph {
     final BBox bounds;
     final NodeAccess nodeAccess;
     private final static String STRING_IDX_NAME_KEY = "name";
-    final StringIndex stringIndex;
+    final EdgeKV edgeKV;
     // can be null if turn costs are not supported
     final TurnCostStorage turnCostStorage;
     final BitUtil bitUtil;
@@ -101,7 +97,7 @@ class BaseGraph implements Graph {
         this.intsForFlags = encodingManager.getIntsForFlags();
         this.bitUtil = BitUtil.get(dir.getByteOrder());
         this.wayGeometry = dir.find("geometry");
-        this.stringIndex = new StringIndex(dir);
+        this.edgeKV = new EdgeKV(dir);
         this.nodes = dir.find("nodes", DAType.getPreferredInt(dir.getDefaultType()));
         this.edges = dir.find("edges", DAType.getPreferredInt(dir.getDefaultType()));
         this.listener = listener;
@@ -349,7 +345,7 @@ class BaseGraph implements Graph {
         nodes.setSegmentSize(bytes);
         edges.setSegmentSize(bytes);
         wayGeometry.setSegmentSize(bytes);
-        stringIndex.setSegmentSize(bytes);
+        edgeKV.setSegmentSize(bytes);
         if (supportsTurnCosts()) {
             turnCostStorage.setSegmentSize(bytes);
         }
@@ -378,7 +374,7 @@ class BaseGraph implements Graph {
 
         initSize = Math.min(initSize, 2000);
         wayGeometry.create(initSize);
-        stringIndex.create(initSize);
+        edgeKV.create(initSize);
         if (supportsTurnCosts()) {
             turnCostStorage.create(initSize);
         }
@@ -392,7 +388,7 @@ class BaseGraph implements Graph {
     String toDetailsString() {
         return "edges:" + nf(edgeCount) + "(" + edges.getCapacity() / Helper.MB + "MB), "
                 + "nodes:" + nf(getNodes()) + "(" + nodes.getCapacity() / Helper.MB + "MB), "
-                + "name:(" + stringIndex.getCapacity() / Helper.MB + "MB), "
+                + "name:(" + edgeKV.getCapacity() / Helper.MB + "MB), "
                 + "geo:" + nf(maxGeoRef) + "(" + wayGeometry.getCapacity() / Helper.MB + "MB), "
                 + "bounds:" + bounds;
     }
@@ -438,8 +434,8 @@ class BaseGraph implements Graph {
         wayGeometry.flush();
         wayGeometry.close();
 
-        stringIndex.flush();
-        stringIndex.close();
+        edgeKV.flush();
+        edgeKV.close();
     }
 
     public void flush() {
@@ -448,8 +444,8 @@ class BaseGraph implements Graph {
             wayGeometry.flush();
         }
 
-        if (!stringIndex.isClosed())
-            stringIndex.flush();
+        if (!edgeKV.isClosed())
+            edgeKV.flush();
 
         setNodesHeader();
         setEdgesHeader();
@@ -463,8 +459,8 @@ class BaseGraph implements Graph {
     public void close() {
         if (!wayGeometry.isClosed())
             wayGeometry.close();
-        if (!stringIndex.isClosed())
-            stringIndex.close();
+        if (!edgeKV.isClosed())
+            edgeKV.close();
         edges.close();
         nodes.close();
         if (supportsTurnCosts()) {
@@ -473,7 +469,7 @@ class BaseGraph implements Graph {
     }
 
     long getCapacity() {
-        return edges.getCapacity() + nodes.getCapacity() + stringIndex.getCapacity()
+        return edges.getCapacity() + nodes.getCapacity() + edgeKV.getCapacity()
                 + wayGeometry.getCapacity() + (supportsTurnCosts() ? turnCostStorage.getCapacity() : 0);
     }
 
@@ -495,7 +491,7 @@ class BaseGraph implements Graph {
         if (!wayGeometry.loadExisting())
             throw new IllegalStateException("Cannot load geometry. corrupt file or directory? " + dir);
 
-        if (!stringIndex.loadExisting())
+        if (!edgeKV.loadExisting())
             throw new IllegalStateException("Cannot load name index. corrupt file or directory? " + dir);
 
         if (supportsTurnCosts() && !turnCostStorage.loadExisting())
@@ -675,7 +671,7 @@ class BaseGraph implements Graph {
         clonedG.loadEdgesHeader();
 
         // name
-        stringIndex.copyTo(clonedG.stringIndex);
+        edgeKV.copyTo(clonedG.edgeKV);
 
         // geometry
         setWayGeometryHeader();
@@ -882,7 +878,7 @@ class BaseGraph implements Graph {
     }
 
     private void setName(long edgePointer, String name) {
-        int stringIndexRef = (int) stringIndex.add(Collections.singletonMap(STRING_IDX_NAME_KEY, name));
+        int stringIndexRef = (int) edgeKV.add(Collections.singletonMap(STRING_IDX_NAME_KEY, name));
         if (stringIndexRef < 0)
             throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
 
@@ -1242,31 +1238,31 @@ class BaseGraph implements Graph {
             baseGraph.writeFlags(edgePointer, getFlags());
             return this;
         }
-        
+
         @Override
         public String get(StringEncodedValue property) {
             return property.getString(reverse, getFlags());
         }
-        
+
         @Override
         public EdgeIteratorState set(StringEncodedValue property, String value) {
             property.setString(reverse, getFlags(), value);
             baseGraph.writeFlags(edgePointer, getFlags());
             return this;
         }
-        
+
         @Override
         public String getReverse(StringEncodedValue property) {
             return property.getString(!reverse, getFlags());
         }
-        
+
         @Override
         public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
             property.setString(!reverse, getFlags(), value);
             baseGraph.writeFlags(edgePointer, getFlags());
             return this;
         }
-        
+
         @Override
         public EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd) {
             if (!property.isStoreTwoDirections())
@@ -1316,7 +1312,7 @@ class BaseGraph implements Graph {
         @Override
         public String getName() {
             int stringIndexRef = baseGraph.edges.getInt(edgePointer + baseGraph.E_NAME);
-            String name = baseGraph.stringIndex.get(stringIndexRef, STRING_IDX_NAME_KEY);
+            String name = (String) baseGraph.edgeKV.get(stringIndexRef, STRING_IDX_NAME_KEY);
             // preserve backward compatibility (returns null if not explicitly set)
             return name == null ? "" : name;
         }
