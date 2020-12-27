@@ -5,6 +5,8 @@ import com.graphhopper.Repeat;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.Helper;
 import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.io.File;
 import java.util.*;
@@ -14,17 +16,24 @@ import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.*;
 
 public class EdgeKVTest {
+    String location = "./target/stringindex-store";
+
+    @BeforeEach
+    @AfterEach
+    public void cleanup() {
+        Helper.removeDir(new File(location));
+    }
 
     private EdgeKV create() {
         return new EdgeKV(new RAMDirectory()).create(1000);
     }
 
-    Map<String, Object> createMap(String... strings) {
+    Map<String, Object> createMap(Object... strings) {
         if (strings.length % 2 != 0)
             throw new IllegalArgumentException("Cannot create map from strings " + Arrays.toString(strings));
         Map<String, Object> map = new LinkedHashMap<>();
         for (int i = 0; i < strings.length; i += 2) {
-            map.put(strings[i], strings[i + 1]);
+            map.put((String) strings[i], strings[i + 1]);
         }
         return map;
     }
@@ -165,9 +174,6 @@ public class EdgeKVTest {
 
     @Test
     public void testFlush() {
-        String location = "./target/stringindex-store";
-        Helper.removeDir(new File(location));
-
         EdgeKV index = new EdgeKV(new RAMDirectory(location, true).create()).create(1000);
         long pointer = index.add(createMap("", "test"));
         index.flush();
@@ -180,15 +186,10 @@ public class EdgeKVTest {
         long newPointer = index.add(createMap("", "testing"));
         assertEquals(newPointer + ">" + pointer, pointer + 1 + 3 + "test".getBytes().length, newPointer);
         index.close();
-
-        Helper.removeDir(new File(location));
     }
 
     @Test
-    public void testLoadKeys() {
-        String location = "./target/stringindex-store";
-        Helper.removeDir(new File(location));
-
+    public void testLoadStringKeys() {
         EdgeKV index = new EdgeKV(new RAMDirectory(location, true).create()).create(1000);
         long pointerA = index.add(createMap("c", "test value"));
         assertEquals(2, index.getKeys().size());
@@ -209,8 +210,39 @@ public class EdgeKVTest {
         assertEquals("another value", index.get(pointerB, "b"));
         assertEquals("{a=value, b=another value}", index.getAll(pointerB).toString());
         index.close();
+    }
 
-        Helper.removeDir(new File(location));
+    @Test
+    public void testLoadKeys() {
+        EdgeKV index = new EdgeKV(new RAMDirectory(location, true).create()).create(1000);
+        long pointerA = index.add(createMap("c", "test bytes".getBytes(Helper.UTF_CS), "long", 444L));
+        assertEquals(3, index.getKeys().size());
+        long pointerB = index.add(createMap("a", "value", "b", "some other bytes".getBytes(Helper.UTF_CS)));
+        // empty string is always the first key
+        assertEquals("[, c, long, a, b]", index.getKeys().toString());
+        index.flush();
+        index.close();
+
+        index = new EdgeKV(new RAMDirectory(location, true));
+        assertTrue(index.loadExisting());
+        assertEquals("[, c, long, a, b]", index.getKeys().toString());
+        assertEquals("test bytes", new String((byte[]) index.get(pointerA, "c"), Helper.UTF_CS));
+        assertEquals(444L, (long) index.get(pointerA, "long"));
+        assertNull(index.get(pointerA, "b"));
+
+        assertNull(index.get(pointerB, ""));
+        assertEquals("value", index.get(pointerB, "a"));
+        assertEquals("some other bytes", new String((byte[]) index.get(pointerB, "b"), Helper.UTF_CS));
+        Map<String, Object> map = index.getAll(pointerB);
+        assertEquals(2, map.size());
+        assertEquals(String.class, map.get("a").getClass());
+        assertEquals(byte[].class, map.get("b").getClass());
+        map = index.getAll(pointerA);
+        assertEquals(2, map.size());
+        assertEquals(byte[].class, map.get("c").getClass());
+        assertEquals(Long.class, map.get("long").getClass());
+
+        index.close();
     }
 
     @Test

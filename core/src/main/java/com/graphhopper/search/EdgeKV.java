@@ -54,6 +54,7 @@ public class EdgeKV implements Storable<EdgeKV> {
     private final List<Class<?>> indexToClass = new ArrayList<>();
     private final List<String> indexToKey = new ArrayList<>();
     private final Map<Object, Long> smallCache;
+    private final BitUtil bitUtil = BitUtil.LITTLE;
     private long bytePointer = START_POINTER;
     private long lastEntryPointer = -1;
     private Map<String, Object> lastEntryMap;
@@ -93,7 +94,7 @@ public class EdgeKV implements Storable<EdgeKV> {
         if (vals.loadExisting()) {
             if (!keys.loadExisting())
                 throw new IllegalStateException("Loaded values but cannot load keys");
-            bytePointer = BitUtil.LITTLE.combineIntsToLong(vals.getHeader(0), vals.getHeader(4));
+            bytePointer = bitUtil.combineIntsToLong(vals.getHeader(0), vals.getHeader(4));
 
             // load keys into memory
             int count = keys.getShort(0);
@@ -109,14 +110,11 @@ public class EdgeKV implements Storable<EdgeKV> {
                 keyToIndex.put(valueStr, keyToIndex.size());
                 indexToKey.add(valueStr);
 
-                keyLength = keys.getShort(keyBytePointer);
-                keyBytePointer += 2;
-                keyBytes = new byte[keyLength];
-                keys.getBytes(keyBytePointer, keyBytes, keyLength);
-                String className = new String(keyBytes, Helper.UTF_CS);
-                keyBytePointer += keyLength;
-
-                indexToClass.add(shortNameToClass(className));
+                int shortClassNameLength = 2;
+                byte[] classBytes = new byte[shortClassNameLength];
+                keys.getBytes(keyBytePointer, classBytes, shortClassNameLength);
+                keyBytePointer += shortClassNameLength;
+                indexToClass.add(shortNameToClass(new String(classBytes, Helper.UTF_CS)));
             }
             return true;
         }
@@ -180,6 +178,7 @@ public class EdgeKV implements Storable<EdgeKV> {
                 continue;
             }
 
+            // object type
             if (clazz.equals(String.class) && ((String) value).isEmpty() ||
                     clazz.equals(byte[].class) && ((byte[]) value).length == 0) {
                 vals.ensureCapacity(currentPointer + 3);
@@ -202,7 +201,7 @@ public class EdgeKV implements Storable<EdgeKV> {
                         currentPointer += 2;
                         // do not store valueBytes.length as we know it already: it is 4!
                         valueBytes = new byte[4];
-                        BitUtil.LITTLE.fromInt(valueBytes, (int) delta);
+                        bitUtil.fromInt(valueBytes, (int) delta);
                         vals.setBytes(currentPointer, valueBytes, valueBytes.length);
                         currentPointer += valueBytes.length;
                         continue;
@@ -215,7 +214,9 @@ public class EdgeKV implements Storable<EdgeKV> {
                 // only cache value if storing via duplicate marker is valuable (the delta costs 4 bytes minus 1 due to omitted valueBytes.length storage)
                 if (valueBytes.length > 3)
                     smallCache.put(value, currentPointer);
-
+            } else if (clazz.equals(Long.class)) {
+                // TODO NOW no need to store length!
+                valueBytes = bitUtil.fromLong((long) value);
             } else if (clazz.equals(byte[].class)) {
                 valueBytes = (byte[]) value;
             } else {
@@ -257,7 +258,7 @@ public class EdgeKV implements Storable<EdgeKV> {
                 vals.getBytes(tmpPointer, valueBytes, valueBytes.length);
                 tmpPointer += 4;
 
-                long dupPointer = entryPointer - BitUtil.LITTLE.toInt(valueBytes);
+                long dupPointer = entryPointer - bitUtil.toInt(valueBytes);
                 dupPointer += 2;
                 if (dupPointer > bytePointer)
                     throw new IllegalStateException("dup marker should exist but points into not yet allocated area " + dupPointer + " > " + bytePointer);
@@ -271,20 +272,32 @@ public class EdgeKV implements Storable<EdgeKV> {
         return map;
     }
 
-    private Object getEmpty(Class<?> clazz) {
+    private Object createObj(Class<?> clazz, long tmpPointer, int valueLength) {
+        byte[] valueBytes = new byte[valueLength];
+        vals.getBytes(tmpPointer, valueBytes, valueBytes.length);
+        if (clazz.equals(String.class)) return new String(valueBytes, Helper.UTF_CS);
+        else if (clazz.equals(Long.class)) return bitUtil.toLong(valueBytes, 0);
+        else if (clazz.equals(byte[].class)) return valueBytes;
+        else throw new IllegalArgumentException("unknown class " + clazz);
+    }
+
+    private Object createEmptyObj(Class<?> clazz) {
         if (clazz.equals(String.class)) return "";
+        else if (clazz.equals(Long.class)) return 0;
         else if (clazz.equals(byte[].class)) return EMPTY_BYTES;
         else throw new IllegalArgumentException("unknown class " + clazz);
     }
 
     private String classToShortName(Class<?> clazz) {
-        if (clazz.equals(String.class)) return "S";
+        if (clazz.equals(String.class)) return "St";
+        else if (clazz.equals(Long.class)) return "lo";
         else if (clazz.equals(byte[].class)) return "b[";
         else throw new IllegalArgumentException("Cannot find short name. Unknown class " + clazz);
     }
 
     private Class<?> shortNameToClass(String name) {
-        if (name.equals("S")) return String.class;
+        if (name.equals("St")) return String.class;
+        else if (name.equals("lo")) return Long.class;
         else if (name.equals("b[")) return byte[].class;
         else throw new IllegalArgumentException("Cannot find class. Unknown short name " + name);
     }
@@ -293,14 +306,7 @@ public class EdgeKV implements Storable<EdgeKV> {
         int valueLength = vals.getByte(tmpPointer) & 0xFF;
         tmpPointer++;
         Class<?> clazz = indexToClass.get(currentKeyIndex);
-        Object value = valueLength == 0 ? getEmpty(clazz) : null;
-        if (value == null) {
-            byte[] valueBytes = new byte[valueLength];
-            vals.getBytes(tmpPointer, valueBytes, valueLength);
-            if (clazz.equals(String.class)) value = new String(valueBytes, Helper.UTF_CS);
-            else if (clazz.equals(byte[].class)) value = valueBytes;
-        }
-
+        Object value = valueLength == 0 ? createEmptyObj(clazz) : createObj(clazz, tmpPointer, valueLength);
         map.put(indexToKey.get(currentKeyIndex), value);
         return valueLength;
     }
@@ -315,7 +321,7 @@ public class EdgeKV implements Storable<EdgeKV> {
 
         Class<?> clazz = indexToClass.get(keyIndex);
         if (entryPointer == EMPTY_POINTER)
-            return getEmpty(clazz);
+            return createEmptyObj(clazz);
 
         int keyCount = vals.getByte(entryPointer) & 0xFF;
         if (keyCount == 0)
@@ -329,7 +335,7 @@ public class EdgeKV implements Storable<EdgeKV> {
                 if (currentKeyIndex < 0) {
                     byte[] valueBytes = new byte[4];
                     vals.getBytes(tmpPointer, valueBytes, valueBytes.length);
-                    tmpPointer = entryPointer - BitUtil.LITTLE.toInt(valueBytes);
+                    tmpPointer = entryPointer - bitUtil.toInt(valueBytes);
                     tmpPointer += 2;
                     if (tmpPointer > bytePointer)
                         throw new IllegalStateException("dup marker " + bytePointer + " should exist but points into not yet allocated area " + tmpPointer);
@@ -337,14 +343,10 @@ public class EdgeKV implements Storable<EdgeKV> {
 
                 int valueLength = vals.getByte(tmpPointer) & 0xFF;
                 if (valueLength == 0)
-                    return getEmpty(clazz);
+                    return createEmptyObj(clazz);
 
                 tmpPointer++;
-                byte[] valueBytes = new byte[valueLength];
-                vals.getBytes(tmpPointer, valueBytes, valueBytes.length);
-                if (clazz.equals(String.class)) return new String(valueBytes, Helper.UTF_CS);
-                else if (clazz.equals(byte[].class)) return valueBytes;
-                else throw new IllegalArgumentException("unknown class " + clazz);
+                return createObj(clazz, tmpPointer, valueLength);
             }
             int valueLength = vals.getByte(tmpPointer) & 0xFF;
             tmpPointer += 1 + valueLength;
@@ -383,17 +385,16 @@ public class EdgeKV implements Storable<EdgeKV> {
 
             Class<?> clazz = indexToClass.get(entry.getValue());
             byte[] clazzBytes = getBytesForString("class name", classToShortName(clazz));
-            keys.ensureCapacity(keyBytePointer + 2 + clazzBytes.length);
-            keys.setShort(keyBytePointer, (short) clazzBytes.length);
+            if (clazzBytes.length != 2)
+                throw new IllegalArgumentException("class name must be 2");
+            keys.ensureCapacity(keyBytePointer + 2);
+            keys.setBytes(keyBytePointer, clazzBytes, 2);
             keyBytePointer += 2;
-
-            keys.setBytes(keyBytePointer, clazzBytes, clazzBytes.length);
-            keyBytePointer += clazzBytes.length;
         }
         keys.flush();
 
-        vals.setHeader(0, BitUtil.LITTLE.getIntLow(bytePointer));
-        vals.setHeader(4, BitUtil.LITTLE.getIntHigh(bytePointer));
+        vals.setHeader(0, bitUtil.getIntLow(bytePointer));
+        vals.setHeader(4, bitUtil.getIntHigh(bytePointer));
         vals.flush();
     }
 
