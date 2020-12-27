@@ -256,8 +256,9 @@ public class SpatialKeyAlgoTest {
 
         for (int x=0; x<4; x++) {
             for (int y=0; y<4; y++) {
-                assertEquals(x, spatialKeyAlgo.x(spatialKeyAlgo.encode(x, y)));
-                assertEquals(y, spatialKeyAlgo.y(spatialKeyAlgo.encode(x, y)));
+                int[] xy = spatialKeyAlgo.decode(spatialKeyAlgo.encode(x, y));
+                assertEquals(x, xy[0]);
+                assertEquals(y, xy[1]);
             }
         }
 
@@ -271,8 +272,9 @@ public class SpatialKeyAlgoTest {
 
         for (int x=0; x<1024; x++) {
             for (int y=0; y<1024; y++) {
-                assertEquals(x, spatialKeyAlgo.x(spatialKeyAlgo.encode(x, y)));
-                assertEquals(y, spatialKeyAlgo.y(spatialKeyAlgo.encode(x, y)));
+                int[] xy = spatialKeyAlgo.decode(spatialKeyAlgo.encode(x, y));
+                assertEquals(x, xy[0]);
+                assertEquals(y, xy[1]);
             }
         }
     }

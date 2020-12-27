@@ -450,8 +450,9 @@ public class LocationIndexTree implements LocationIndex {
             int nextIntPointer = dataAccess.getInt(pointer + cellIndex * 4);
             if (nextIntPointer <= 0)
                 continue;
-            double tmpMinLon = minLon + deltaLonPerDepth * keyAlgo.x(cellIndex);
-            double tmpMinLat = minLat + deltaLatPerDepth * keyAlgo.y(cellIndex);
+            int[] pixelXY = keyAlgo.decode(cellIndex);
+            double tmpMinLon = minLon + deltaLonPerDepth * pixelXY[0];
+            double tmpMinLat = minLat + deltaLatPerDepth * pixelXY[1];
 
             BBox bbox = (queryBBox != null || function.isTileInfo()) ? new BBox(tmpMinLon, tmpMinLon + deltaLonPerDepth, tmpMinLat, tmpMinLat + deltaLatPerDepth) : null;
             if (function.isTileInfo())
@@ -477,12 +478,11 @@ public class LocationIndexTree implements LocationIndex {
      */
     final void findEdgeIdsInNeighborhood(double queryLat, double queryLon, int iteration, IntConsumer foundEntries) {
         long queryKey = keyAlgo.encodeLatLon(queryLat, queryLon);
-        int queryX = keyAlgo.x(queryKey);
-        int queryY = keyAlgo.y(queryKey);
+        int[] pixelXY = keyAlgo.decode(queryKey);
         for (int yreg = -iteration; yreg <= iteration; yreg++) {
-            int subqueryY = queryY + yreg;
-            int subqueryXA = queryX - iteration;
-            int subqueryXB = queryX + iteration;
+            int subqueryY = pixelXY[1] + yreg;
+            int subqueryXA = pixelXY[0] - iteration;
+            int subqueryXB = pixelXY[0] + iteration;
             long keyPart1 = keyAlgo.encode(subqueryXA, subqueryY) << (64 - keyAlgo.getBits());
             fillIDs(keyPart1, START_POINTER, 0, foundEntries);
 
@@ -494,9 +494,9 @@ public class LocationIndexTree implements LocationIndex {
         }
 
         for (int xreg = -iteration + 1; xreg <= iteration - 1; xreg++) {
-            int subqueryX = queryX + xreg;
-            int subqueryYA = queryY - iteration;
-            int subqueryYB = queryY + iteration;
+            int subqueryX = pixelXY[0] + xreg;
+            int subqueryYA = pixelXY[1] - iteration;
+            int subqueryYB = pixelXY[1] + iteration;
             long keyPart1 = keyAlgo.encode(subqueryX, subqueryYA) << (64 - keyAlgo.getBits());
             fillIDs(keyPart1, START_POINTER, 0, foundEntries);
             long keyPart = keyAlgo.encode(subqueryX, subqueryYB) << (64 - keyAlgo.getBits());

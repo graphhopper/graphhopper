@@ -207,44 +207,6 @@ public class SpatialKeyAlgo {
         latLon.lon = lon;
     }
 
-    public int y(long spatialKey) {
-        long bits = initialBits;
-        double midLat = (int) Math.pow(2, (allBits-1)/2);
-        int result = 0;
-        while (true) {
-            if ((spatialKey & bits) != 0) {
-                result += midLat;
-            }
-            midLat /= 2;
-            bits >>>= 1;
-            if (bits > 1) {
-                bits >>>= 1;
-            } else {
-                break;
-            }
-        }
-        return result;
-    }
-
-    public int x(long spatialKey) {
-        long bits = initialBits;
-        int midLon = (int) Math.pow(2, (allBits-1)/2);
-        int result = 0;
-        while (true) {
-            bits >>>= 1;
-            if ((spatialKey & bits) != 0) {
-                result += midLon;
-            }
-            midLon /= 2;
-            if (bits > 1) {
-                bits >>>= 1;
-            } else {
-                break;
-            }
-        }
-        return result;
-    }
-
     // https://github.com/eren-ck/MortonLib/blob/master/src/main/java/com/erenck/mortonlib/Morton2D.java
 
     private final int MortonTable256[]
