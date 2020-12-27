@@ -139,7 +139,7 @@ public class StorableProperties implements Storable<StorableProperties> {
         put("edges.version", Constants.VERSION_EDGE);
         put("geometry.version", Constants.VERSION_GEOMETRY);
         put("location_index.version", Constants.VERSION_LOCATION_IDX);
-        put("string_index.version", Constants.VERSION_STRING_IDX);
+        put("string_index.version", Constants.VERSION_EDGEKV_IDX);
         put("shortcuts.version", Constants.VERSION_SHORTCUT);
     }
 
@@ -164,7 +164,7 @@ public class StorableProperties implements Storable<StorableProperties> {
         if (!check("location_index", Constants.VERSION_LOCATION_IDX, silent))
             return false;
 
-        if (!check("string_index", Constants.VERSION_STRING_IDX, silent))
+        if (!check("string_index", Constants.VERSION_EDGEKV_IDX, silent))
             return false;
 
         if (!check("shortcuts", Constants.VERSION_SHORTCUT, silent))

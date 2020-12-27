@@ -66,9 +66,9 @@ public class EdgeKVStorage implements Storable<EdgeKVStorage> {
      * Specify a larger cacheSize to reduce disk usage. Note that this increases the memory usage of this object.
      */
     public EdgeKVStorage(Directory dir, final int cacheSize) {
-        keys = dir.find("string_index_keys");
+        keys = dir.find("edgekv_keys");
         keys.setSegmentSize(10 * 1024);
-        vals = dir.find("string_index_vals");
+        vals = dir.find("edgekv_vals");
         smallCache = new LinkedHashMap<Object, Long>(cacheSize, 0.75f, true) {
             @Override
             protected boolean removeEldestEntry(Map.Entry<Object, Long> entry) {
