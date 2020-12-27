@@ -72,7 +72,7 @@ public class EdgeKVTest {
         assertThrows(IllegalArgumentException.class, () -> index.add(createMap("blup", null)));
         assertThrows(IllegalArgumentException.class, () -> index.add(createMap(null, null)));
 
-        assertEquals("", index.get(0, ""));
+        assertNull(index.get(0, ""));
 
         assertEquals(9, index.add(createMap("else", "else")));
     }

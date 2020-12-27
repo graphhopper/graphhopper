@@ -215,16 +215,12 @@ public class EdgeKV implements Storable<EdgeKV> {
                 if (valueBytes.length > 3)
                     smallCache.put(value, currentPointer);
             } else if (clazz.equals(Integer.class)) {
-                // TODO NOW no need to store length!
                 valueBytes = bitUtil.fromInt((int) value);
             } else if (clazz.equals(Long.class)) {
-                // TODO NOW no need to store length!
                 valueBytes = bitUtil.fromLong((long) value);
             } else if (clazz.equals(Float.class)) {
-                // TODO NOW no need to store length!
                 valueBytes = bitUtil.fromFloat((float) value);
             } else if (clazz.equals(Double.class)) {
-                // TODO NOW no need to store length!
                 valueBytes = bitUtil.fromDouble((double) value);
             } else if (clazz.equals(byte[].class)) {
                 valueBytes = (byte[]) value;
@@ -235,8 +231,10 @@ public class EdgeKV implements Storable<EdgeKV> {
             vals.ensureCapacity(currentPointer + 2 + 1 + valueBytes.length);
             vals.setShort(currentPointer, keyIndex.shortValue());
             currentPointer += 2;
-            vals.setByte(currentPointer, (byte) valueBytes.length);
-            currentPointer++;
+            if (hasDynLength(clazz)) {
+                vals.setByte(currentPointer, (byte) valueBytes.length);
+                currentPointer++;
+            }
             vals.setBytes(currentPointer, valueBytes, valueBytes.length);
             currentPointer += valueBytes.length;
         }
@@ -257,10 +255,12 @@ public class EdgeKV implements Storable<EdgeKV> {
 
         Map<String, Object> map = new HashMap<>(keyCount);
         long tmpPointer = entryPointer + 1;
+        LengthResult result = new LengthResult();
         for (int i = 0; i < keyCount; i++) {
             int currentKeyIndex = vals.getShort(tmpPointer);
             tmpPointer += 2;
 
+            Object obj;
             if (currentKeyIndex < 0) {
                 currentKeyIndex = -currentKeyIndex;
                 byte[] valueBytes = new byte[4];
@@ -271,78 +271,94 @@ public class EdgeKV implements Storable<EdgeKV> {
                 dupPointer += 2;
                 if (dupPointer > bytePointer)
                     throw new IllegalStateException("dup marker should exist but points into not yet allocated area " + dupPointer + " > " + bytePointer);
-                putIntoMap(map, dupPointer, currentKeyIndex);
+                obj = putIntoMap(null, dupPointer, currentKeyIndex);
             } else {
-                int valueLength = putIntoMap(map, tmpPointer, currentKeyIndex);
-                tmpPointer += 1 + valueLength;
+                obj = putIntoMap(result, tmpPointer, currentKeyIndex);
+                tmpPointer += result.len;
             }
+            String key = indexToKey.get(currentKeyIndex);
+            map.put(key, obj);
         }
 
         return map;
     }
 
-    private Object createObj(Class<?> clazz, long tmpPointer, int valueLength) {
-        byte[] valueBytes = new byte[valueLength];
-        vals.getBytes(tmpPointer, valueBytes, valueBytes.length);
-        if (clazz.equals(String.class)) return new String(valueBytes, Helper.UTF_CS);
-        else if (clazz.equals(Integer.class)) return bitUtil.toInt(valueBytes, 0);
-        else if (clazz.equals(Long.class)) return bitUtil.toLong(valueBytes, 0);
-        else if (clazz.equals(Float.class)) return bitUtil.toFloat(valueBytes, 0);
-        else if (clazz.equals(Double.class)) return bitUtil.toDouble(valueBytes, 0);
-        else if (clazz.equals(byte[].class)) return valueBytes;
-        else throw new IllegalArgumentException("unknown class " + clazz);
+    private boolean hasDynLength(Class<?> clazz) {
+        return clazz.equals(String.class) || clazz.equals(byte[].class);
     }
 
-    private Object createEmptyObj(Class<?> clazz) {
-        if (clazz.equals(String.class)) return "";
-        else if (clazz.equals(Integer.class)) return 0;
-        else if (clazz.equals(Long.class)) return 0L;
-        else if (clazz.equals(Float.class)) return 0f;
-        else if (clazz.equals(Double.class)) return 0d;
-        else if (clazz.equals(byte[].class)) return EMPTY_BYTES;
+    private int getFixLength(Class<?> clazz) {
+        if (clazz.equals(Integer.class) || clazz.equals(Float.class)) return 4;
+        else if (clazz.equals(Long.class) || clazz.equals(Double.class)) return 8;
         else throw new IllegalArgumentException("unknown class " + clazz);
     }
 
     private String classToShortName(Class<?> clazz) {
-        if (clazz.equals(String.class)) return "st";
+        if (clazz.equals(String.class)) return "St";
         else if (clazz.equals(Integer.class)) return "in";
         else if (clazz.equals(Long.class)) return "lo";
         else if (clazz.equals(Float.class)) return "fl";
         else if (clazz.equals(Double.class)) return "do";
-        else if (clazz.equals(byte[].class)) return "b[";
+        else if (clazz.equals(byte[].class)) return "[B";
         else throw new IllegalArgumentException("Cannot find short name. Unknown class " + clazz);
     }
 
     private Class<?> shortNameToClass(String name) {
-        if (name.equals("st")) return String.class;
+        if (name.equals("St")) return String.class;
         else if (name.equals("in")) return Integer.class;
         else if (name.equals("lo")) return Long.class;
         else if (name.equals("fl")) return Float.class;
         else if (name.equals("do")) return Double.class;
-        else if (name.equals("b[")) return byte[].class;
+        else if (name.equals("[B")) return byte[].class;
         else throw new IllegalArgumentException("Cannot find class. Unknown short name " + name);
     }
 
-    private int putIntoMap(Map<String, Object> map, long tmpPointer, int currentKeyIndex) {
-        int valueLength = vals.getByte(tmpPointer) & 0xFF;
-        tmpPointer++;
-        Class<?> clazz = indexToClass.get(currentKeyIndex);
-        Object value = valueLength == 0 ? createEmptyObj(clazz) : createObj(clazz, tmpPointer, valueLength);
-        map.put(indexToKey.get(currentKeyIndex), value);
-        return valueLength;
+    private static class LengthResult {
+        int len;
+    }
+
+    private Object putIntoMap(LengthResult result, long tmpPointer, int keyIndex) {
+        Class<?> clazz = indexToClass.get(keyIndex);
+        if (hasDynLength(clazz)) {
+            int valueLength = vals.getByte(tmpPointer) & 0xFF;
+            tmpPointer++;
+            byte[] valueBytes = new byte[valueLength];
+            vals.getBytes(tmpPointer, valueBytes, valueBytes.length);
+            if (result != null) result.len = 1 + valueLength; // For String and byte[] we store the length and the value
+            if (clazz.equals(String.class)) return new String(valueBytes, Helper.UTF_CS);
+            else if (clazz.equals(byte[].class)) return valueBytes;
+            throw new IllegalArgumentException();
+        } else {
+            byte[] valueBytes = new byte[getFixLength(clazz)];
+            vals.getBytes(tmpPointer, valueBytes, valueBytes.length);
+            if (clazz.equals(Integer.class)) {
+                if (result != null) result.len = 4;
+                return bitUtil.toInt(valueBytes, 0);
+            } else if (clazz.equals(Long.class)) {
+                if (result != null) result.len = 8;
+                return bitUtil.toLong(valueBytes, 0);
+            } else if (clazz.equals(Float.class)) {
+                if (result != null) result.len = 4;
+                return bitUtil.toFloat(valueBytes, 0);
+            } else if (clazz.equals(Double.class)) {
+                if (result != null) result.len = 8;
+                return bitUtil.toDouble(valueBytes, 0);
+            } else {
+                throw new IllegalArgumentException("unknown class " + clazz);
+            }
+        }
     }
 
     public Object get(final long entryPointer, String key) {
         if (entryPointer < 0)
             throw new IllegalStateException("Pointer to access StringIndex cannot be negative:" + entryPointer);
 
+        if (entryPointer == EMPTY_POINTER)
+            return null;
+
         Integer keyIndex = keyToIndex.get(key);
         if (keyIndex == null)
             return null;
-
-        Class<?> clazz = indexToClass.get(keyIndex);
-        if (entryPointer == EMPTY_POINTER)
-            return createEmptyObj(clazz);
 
         int keyCount = vals.getByte(entryPointer) & 0xFF;
         if (keyCount == 0)
@@ -350,10 +366,12 @@ public class EdgeKV implements Storable<EdgeKV> {
 
         long tmpPointer = entryPointer + 1;
         for (int i = 0; i < keyCount; i++) {
-            int currentKeyIndex = vals.getShort(tmpPointer);
+            int currentKeyIndexRaw = vals.getShort(tmpPointer);
+            int keyIndexPositive = Math.abs(currentKeyIndexRaw);
+            assert keyIndexPositive < indexToKey.size() : "invalid key index " + keyIndexPositive;
             tmpPointer += 2;
-            if (Math.abs(currentKeyIndex) == keyIndex) {
-                if (currentKeyIndex < 0) {
+            if (keyIndexPositive == keyIndex) {
+                if (currentKeyIndexRaw < 0) {
                     byte[] valueBytes = new byte[4];
                     vals.getBytes(tmpPointer, valueBytes, valueBytes.length);
                     tmpPointer = entryPointer - bitUtil.toInt(valueBytes);
@@ -362,15 +380,12 @@ public class EdgeKV implements Storable<EdgeKV> {
                         throw new IllegalStateException("dup marker " + bytePointer + " should exist but points into not yet allocated area " + tmpPointer);
                 }
 
-                int valueLength = vals.getByte(tmpPointer) & 0xFF;
-                if (valueLength == 0)
-                    return createEmptyObj(clazz);
-
-                tmpPointer++;
-                return createObj(clazz, tmpPointer, valueLength);
+                return putIntoMap(null, tmpPointer, keyIndex);
             }
-            int valueLength = vals.getByte(tmpPointer) & 0xFF;
-            tmpPointer += 1 + valueLength;
+            // skip to next entry of same edge
+            Class<?> clazz = indexToClass.get(keyIndexPositive);
+            int valueLength = hasDynLength(clazz) ? 1 + vals.getByte(tmpPointer) & 0xFF : getFixLength(clazz);
+            tmpPointer += valueLength;
         }
 
         // value for specified key does not existing for the specified pointer
