@@ -21,6 +21,8 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
 
+import java.util.Map;
+
 /**
  * This interface represents an edge and is one possible state of an EdgeIterator.
  * Example:
@@ -191,16 +193,20 @@ public interface EdgeIteratorState {
     <T extends Enum<?>> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value);
 
     <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd);
-    
+
     String get(StringEncodedValue property);
-    
+
     EdgeIteratorState set(StringEncodedValue property, String value);
-    
+
     String getReverse(StringEncodedValue property);
-    
+
     EdgeIteratorState setReverse(StringEncodedValue property, String value);
-    
+
     EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd);
+
+    EdgeIteratorState setProperties(Map<String, Object> properties);
+
+    Map<String, Object> getProperties();
 
     String getName();
 

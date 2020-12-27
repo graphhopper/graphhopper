@@ -910,29 +910,39 @@ public class GHUtility {
         public <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
-        
+
         @Override
         public String get(StringEncodedValue property) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
-        
+
         @Override
         public EdgeIteratorState set(StringEncodedValue property, String value) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
-        
+
         @Override
         public String getReverse(StringEncodedValue property) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
-        
+
         @Override
         public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
-        
+
         @Override
         public EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public EdgeIteratorState setProperties(Map<String, Object> properties) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public Map<String, Object> getProperties() {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 

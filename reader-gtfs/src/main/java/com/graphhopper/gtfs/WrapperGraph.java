@@ -21,11 +21,7 @@ package com.graphhopper.gtfs;
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.google.common.collect.ArrayListMultimap;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.IntEncodedValue;
-import com.graphhopper.routing.ev.StringEncodedValue;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -40,6 +36,7 @@ import com.graphhopper.util.shapes.BBox;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
@@ -60,7 +57,7 @@ public class WrapperGraph implements Graph {
             }
             extraEdgesBySource.put(extraEdge.getBaseNode(), extraEdge);
             extraEdgesByDestination.put(extraEdge.getAdjNode(), new VirtualEdgeIteratorState(extraEdge.getOriginalEdgeKey(), extraEdge.getEdgeKey(), extraEdge.getAdjNode(),
-                    extraEdge.getBaseNode(), extraEdge.getDistance(), extraEdge.getFlags(), extraEdge.getName(), extraEdge.fetchWayGeometry(FetchMode.ALL), true));
+                    extraEdge.getBaseNode(), extraEdge.getDistance(), extraEdge.getFlags(), extraEdge.getName(), extraEdge.fetchWayGeometry(FetchMode.ALL), true, extraEdge.getProperties()));
         }
     }
 
@@ -288,29 +285,39 @@ public class WrapperGraph implements Graph {
             public <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
                 throw new UnsupportedOperationException();
             }
-            
+
             @Override
             public String get(StringEncodedValue property) {
                 throw new UnsupportedOperationException();
             }
-            
+
             @Override
             public EdgeIteratorState set(StringEncodedValue property, String value) {
                 throw new UnsupportedOperationException();
             }
-            
+
             @Override
             public String getReverse(StringEncodedValue property) {
                 throw new UnsupportedOperationException();
             }
-            
+
             @Override
             public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
                 throw new UnsupportedOperationException();
             }
-            
+
             @Override
             public EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EdgeIteratorState setProperties(Map<String, Object> properties) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public Map<String, Object> getProperties() {
                 throw new UnsupportedOperationException();
             }
 
@@ -552,33 +559,44 @@ public class WrapperGraph implements Graph {
                         current.set(property, fwd, bwd);
                         return this;
                     }
-                    
+
                     @Override
                     public String get(StringEncodedValue property) {
                         return current.get(property);
                     }
-                    
+
                     @Override
                     public EdgeIteratorState set(StringEncodedValue property, String value) {
                         current.set(property, value);
                         return this;
                     }
-                    
+
                     @Override
                     public String getReverse(StringEncodedValue property) {
                         return current.getReverse(property);
                     }
-                    
+
                     @Override
                     public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
                         current.setReverse(property, value);
                         return this;
                     }
-                    
+
                     @Override
                     public EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd) {
                         current.set(property, fwd, bwd);
                         return this;
+                    }
+
+                    @Override
+                    public EdgeIteratorState setProperties(Map<String, Object> properties) {
+                        current.setProperties(properties);
+                        return this;
+                    }
+
+                    @Override
+                    public Map<String, Object> getProperties() {
+                        return current.getProperties();
                     }
 
                     @Override

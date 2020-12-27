@@ -203,9 +203,9 @@ public class RealtimeFeed {
             public EdgeIteratorState edge(int a, int b) {
                 int edge = firstEdge++;
                 final VirtualEdgeIteratorState newEdge = new VirtualEdgeIteratorState(-1,
-                        GHUtility.createEdgeKey(edge, false), a, b, 0.0, encodingManager.createEdgeFlags(), "", new PointList(), false);
+                        GHUtility.createEdgeKey(edge, false), a, b, 0.0, encodingManager.createEdgeFlags(), "", new PointList(), false, null);
                 final VirtualEdgeIteratorState reverseNewEdge = new VirtualEdgeIteratorState(-1,
-                        GHUtility.createEdgeKey(edge, true), b, a, 0.0, encodingManager.createEdgeFlags(), "", new PointList(), true);
+                        GHUtility.createEdgeKey(edge, true), b, a, 0.0, encodingManager.createEdgeFlags(), "", new PointList(), true, null);
                 newEdge.setReverseEdge(reverseNewEdge);
                 reverseNewEdge.setReverseEdge(newEdge);
                 additionalEdges.push(newEdge);
@@ -426,7 +426,7 @@ public class RealtimeFeed {
             }
         } catch (RuntimeException e) {
             feedMessages.forEach((name, feed) -> {
-                try (OutputStream s = new FileOutputStream(name+".gtfsdump")) {
+                try (OutputStream s = new FileOutputStream(name + ".gtfsdump")) {
                     feed.writeTo(s);
                 } catch (IOException e1) {
                     throw new RuntimeException();

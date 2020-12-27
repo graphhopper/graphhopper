@@ -28,6 +28,7 @@ import com.graphhopper.util.shapes.BBox;
 
 import java.util.Collections;
 import java.util.Locale;
+import java.util.Map;
 
 import static com.graphhopper.util.Helper.nf;
 
@@ -1321,6 +1322,21 @@ class BaseGraph implements Graph {
         public EdgeIteratorState setName(String name) {
             baseGraph.setName(edgePointer, name);
             return this;
+        }
+
+        @Override
+        public EdgeIteratorState setProperties(Map<String, Object> map) {
+            int stringIndexRef = (int) baseGraph.edgeKVStorage.add(map);
+            if (stringIndexRef < 0)
+                throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
+
+            baseGraph.edges.setInt(edgePointer + baseGraph.E_NAME, stringIndexRef);
+            return this;
+        }
+
+        @Override
+        public Map<String, Object> getProperties() {
+            return baseGraph.edgeKVStorage.getAll(edgePointer);
         }
 
         @Override

@@ -17,16 +17,14 @@
  */
 package com.graphhopper.routing.querygraph;
 
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.IntEncodedValue;
-import com.graphhopper.routing.ev.StringEncodedValue;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PointList;
+
+import java.util.Map;
 
 /**
  * Creates an edge state decoupled from a graph where nodes, pointList, etc are kept in memory.
@@ -47,9 +45,10 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     private boolean unfavored;
     private EdgeIteratorState reverseEdge;
     private final boolean reverse;
+    private Map<String, Object> properties;
 
     public VirtualEdgeIteratorState(int originalEdgeKey, int edgeKey, int baseNode, int adjNode, double distance,
-                                    IntsRef edgeFlags, String name, PointList pointList, boolean reverse) {
+                                    IntsRef edgeFlags, String name, PointList pointList, boolean reverse, Map<String, Object> properties) {
         this.originalEdgeKey = originalEdgeKey;
         this.edgeKey = edgeKey;
         this.baseNode = baseNode;
@@ -59,6 +58,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
         this.name = name;
         this.pointList = pointList;
         this.reverse = reverse;
+        this.properties = properties;
     }
 
     /**
@@ -272,29 +272,29 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
         property.setEnum(!reverse, edgeFlags, bwd);
         return this;
     }
-    
+
     @Override
     public String get(StringEncodedValue property) {
         return property.getString(reverse, edgeFlags);
     }
-    
+
     @Override
     public EdgeIteratorState set(StringEncodedValue property, String value) {
         property.setString(reverse, edgeFlags, value);
         return this;
     }
-    
+
     @Override
     public String getReverse(StringEncodedValue property) {
         return property.getString(!reverse, edgeFlags);
     }
-    
+
     @Override
     public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
         property.setString(!reverse, edgeFlags, value);
         return this;
     }
-    
+
     @Override
     public EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd) {
         if (!property.isStoreTwoDirections())
@@ -302,6 +302,17 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
         property.setString(reverse, edgeFlags, fwd);
         property.setString(!reverse, edgeFlags, bwd);
         return this;
+    }
+
+    @Override
+    public EdgeIteratorState setProperties(Map<String, Object> properties) {
+        this.properties = properties;
+        return this;
+    }
+
+    @Override
+    public Map<String, Object> getProperties() {
+        return properties;
     }
 
     @Override

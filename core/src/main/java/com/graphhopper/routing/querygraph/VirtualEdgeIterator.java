@@ -17,11 +17,7 @@
  */
 package com.graphhopper.routing.querygraph;
 
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.IntEncodedValue;
-import com.graphhopper.routing.ev.StringEncodedValue;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIterator;
@@ -30,6 +26,7 @@ import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PointList;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Peter Karich
@@ -228,30 +225,40 @@ class VirtualEdgeIterator implements EdgeIterator {
         getCurrentEdge().set(property, fwd, bwd);
         return this;
     }
-    
+
     @Override
     public String get(StringEncodedValue property) {
         return getCurrentEdge().get(property);
     }
-    
+
     @Override
     public EdgeIteratorState set(StringEncodedValue property, String value) {
         return getCurrentEdge().set(property, value);
     }
-    
+
     @Override
     public String getReverse(StringEncodedValue property) {
         return getCurrentEdge().getReverse(property);
     }
-    
+
     @Override
     public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
         return getCurrentEdge().setReverse(property, value);
     }
-    
+
     @Override
     public EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd) {
         return getCurrentEdge().set(property, fwd, bwd);
+    }
+
+    @Override
+    public EdgeIteratorState setProperties(Map<String, Object> properties) {
+        return getCurrentEdge().setProperties(properties);
+    }
+
+    @Override
+    public Map<String, Object> getProperties() {
+        return getCurrentEdge().getProperties();
     }
 
     @Override

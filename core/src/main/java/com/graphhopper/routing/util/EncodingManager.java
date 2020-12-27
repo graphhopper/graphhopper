@@ -51,6 +51,7 @@ public class EncodingManager implements EncodedValueLookup {
     private final List<TagParser> edgeTagParsers = new ArrayList<>();
     private final Map<String, TurnCostParser> turnCostParsers = new LinkedHashMap<>();
     private boolean enableInstructions = true;
+    private boolean storeOSMWayIDs = false;
     private String preferredLanguage = "";
     private EncodedValue.InitializerConfig turnCostConfig;
     private EncodedValue.InitializerConfig relationConfig;
@@ -702,26 +703,31 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
-        // storing the road name does not yet depend on the flagEncoder so manage it directly
+        Map<String, Object> map = new HashMap<>(5);
+
         if (enableInstructions) {
             // String wayInfo = carFlagEncoder.getWayInfo(way);
             // http://wiki.openstreetmap.org/wiki/Key:name
             String name = "";
             if (!preferredLanguage.isEmpty())
                 name = fixWayName(way.getTag("name:" + preferredLanguage));
+
             if (name.isEmpty())
                 name = fixWayName(way.getTag("name"));
+            else
+                map.put("name_" + preferredLanguage, name);
+
+            map.put("name", name);
             // http://wiki.openstreetmap.org/wiki/Key:ref
             String refName = fixWayName(way.getTag("ref"));
-            if (!refName.isEmpty()) {
-                if (name.isEmpty())
-                    name = refName;
-                else
-                    name += ", " + refName;
-            }
-
-            edge.setName(name);
+            if (!refName.isEmpty())
+                map.put("ref", refName);
         }
+
+        if (storeOSMWayIDs)
+            map.put("osm_way_id", way.getId());
+
+        edge.setProperties(map);
 
         if (Double.isInfinite(edge.getDistance()))
             throw new IllegalStateException("Infinite distance should not happen due to #435. way ID=" + way.getId());
