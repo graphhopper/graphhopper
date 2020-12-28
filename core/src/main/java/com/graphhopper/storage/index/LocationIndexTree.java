@@ -317,7 +317,7 @@ public class LocationIndexTree implements LocationIndex {
      * This method fills the set with stored edge IDs from the given spatial key
      */
     final void fillIDs(long keyPart, int intPointer, int depth, IntConsumer consumer) {
-        long pointer = (long) intPointer << 2;
+        long pointer = (long) intPointer * 4;
         if (depth == entries.length) {
             int nextIntPointer = dataAccess.getInt(pointer);
             if (nextIntPointer < 0) {
@@ -334,7 +334,7 @@ public class LocationIndexTree implements LocationIndex {
             }
             return;
         }
-        int offset = (int) (keyPart >>> (64 - shifts[depth])) << 2;
+        int offset = (int) (keyPart >>> (64 - shifts[depth])) * 4;
         int nextIntPointer = dataAccess.getInt(pointer + offset);
         if (nextIntPointer > 0) {
             // tree entry => negative value points to subentries
@@ -407,7 +407,7 @@ public class LocationIndexTree implements LocationIndex {
                      double minLat, double minLon,
                      double deltaLatPerDepth, double deltaLonPerDepth,
                      Visitor function, int depth) {
-        long pointer = (long) intPointer << 2;
+        long pointer = (long) intPointer * 4;
         if (depth == entries.length) {
             int nextIntPointer = dataAccess.getInt(pointer);
             if (nextIntPointer < 0) {
