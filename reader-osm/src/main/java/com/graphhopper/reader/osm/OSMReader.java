@@ -720,11 +720,32 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         EdgeIteratorState iter = graph.edge(fromIndex, toIndex).setDistance(towerNodeDistance).setFlags(flags);
 
         // If the entire way is just the first and last point, do not waste space storing an empty way geometry
-        if (pointList.size() > 2)
+        if (pointList.size() > 2) {
+            // the geometry consists only of pillar nodes, but we check that the first and last points of the pointList
+            // are equal to the tower node coordinates
+            checkCoordinates(fromIndex, pointList.get(0));
+            checkCoordinates(toIndex, pointList.get(pointList.size() - 1));
             iter.setWayGeometry(pointList.shallowCopy(1, pointList.size() - 1, false));
+        }
 
+        checkDistance(iter);
         storeOsmWayID(iter.getEdge(), wayOsmId);
         return iter;
+    }
+
+    private void checkCoordinates(int nodeIndex, GHPoint point) {
+        final double tolerance = 1.e-6;
+        if (Math.abs(nodeAccess.getLat(nodeIndex) - point.getLat()) > tolerance || Math.abs(nodeAccess.getLon(nodeIndex) - point.getLon()) > tolerance)
+            throw new IllegalStateException("Suspicious coordinates for node " + nodeIndex + ": (" + nodeAccess.getLat(nodeIndex) + "," + nodeAccess.getLon(nodeIndex) + ") vs. (" + point + ")");
+    }
+
+    private void checkDistance(EdgeIteratorState edge) {
+        final double tolerance = 1;
+        final double edgeDistance = edge.getDistance();
+        final double geometryDistance = distCalc.calcDistance(edge.fetchWayGeometry(FetchMode.ALL));
+        if (Math.abs(edgeDistance - geometryDistance) > tolerance)
+            throw new IllegalStateException("Suspicious distance for edge: " + edge + " " + edgeDistance + " vs. " + geometryDistance
+                    + ", difference: " + (edgeDistance - geometryDistance));
     }
 
     /**
