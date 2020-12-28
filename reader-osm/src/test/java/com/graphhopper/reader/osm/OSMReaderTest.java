@@ -330,13 +330,15 @@ public class OSMReaderTest {
     public void test_edgeDistanceWhenFirstNodeIsMissing() {
         GraphHopper hopper = new GraphHopperFacade("test-osm10.xml").importOrLoad();
         GraphHopperStorage graph = hopper.getGraphHopperStorage();
-        // todonow: update assertions once this test is fixed
-//        assertEquals(3, graph.getNodes());
-//        assertEquals(3, graph.getEdges());
+        assertEquals(3, graph.getNodes());
+        assertEquals(3, graph.getEdges());
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
             assertEquals(DistanceCalcEarth.DIST_EARTH.calcDistance(iter.fetchWayGeometry(FetchMode.ALL)), iter.getDistance(), 1.e-3);
         }
+        assertEquals(35.609, graph.getEdgeIteratorState(0, Integer.MIN_VALUE).getDistance(), 1.e-3);
+        assertEquals(75.262, graph.getEdgeIteratorState(1, Integer.MIN_VALUE).getDistance(), 1.e-3);
+        assertEquals(143.354, graph.getEdgeIteratorState(2, Integer.MIN_VALUE).getDistance(), 1.e-3);
     }
 
     @Test
