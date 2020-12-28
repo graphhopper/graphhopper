@@ -34,7 +34,7 @@ public class EdgeSampling {
 
     private EdgeSampling() {}
 
-    public static PointList sample(long wayOsmId, PointList input, double maxDistance, DistanceCalc distCalc, ElevationProvider elevation) {
+    public static PointList sample(PointList input, double maxDistance, DistanceCalc distCalc, ElevationProvider elevation) {
         PointList output = new PointList(input.getSize() * 2, input.is3D());
         if (input.isEmpty()) return output;
         int nodes = input.getSize();

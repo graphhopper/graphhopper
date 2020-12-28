@@ -690,7 +690,10 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
 
         // sample points along long edges
         if (this.longEdgeSamplingDistance < Double.MAX_VALUE && pointList.is3D())
-            pointList = EdgeSampling.sample(wayOsmId, pointList, longEdgeSamplingDistance, distCalc, eleProvider);
+            pointList = EdgeSampling.sample(pointList, longEdgeSamplingDistance, distCalc, eleProvider);
+
+        if (doSimplify && pointList.size() > 2)
+            simplifyAlgo.simplify(pointList);
 
         double towerNodeDistance = distCalc.calcDistance(pointList);
 
@@ -715,9 +718,6 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         }
 
         EdgeIteratorState iter = graph.edge(fromIndex, toIndex).setDistance(towerNodeDistance).setFlags(flags);
-
-        if (doSimplify && pointList.size() > 2)
-            simplifyAlgo.simplify(pointList);
 
         // If the entire way is just the first and last point, do not waste space storing an empty way geometry
         if (pointList.size() > 2)
