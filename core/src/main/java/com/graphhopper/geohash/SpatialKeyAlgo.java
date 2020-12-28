@@ -106,15 +106,17 @@ public class SpatialKeyAlgo {
     }
 
     public int y(double lat) {
-        // Bounding this with parts - 1 only concerns the case where we are exactly on the bounding box.
+        // Bounding this with parts - 1 or 0 only concerns the case where we are exactly on the bounding box.
         // (The next cell would already start there..)
-        return Math.min((int) ((lat - bbox.minLat) / deltaY), parts - 1);
+        // (Or other situations, mostly in tests, where we actually run out of the bounding box.)
+        return Math.max(0, Math.min((int) ((lat - bbox.minLat) / deltaY), parts - 1));
     }
 
     public int x(double lon) {
-        // Bounding this with parts - 1 only concerns the case where we are exactly on the bounding box.
+        // Bounding this with parts - 1 or 0 only concerns the case where we are exactly on the bounding box.
         // (The next cell would already start there..)
-        return Math.min((int) ((lon - bbox.minLon) / deltaX), parts - 1);
+        // (Or other situations, mostly in tests, where we actually run out of the bounding box.)
+        return Math.max(0, Math.min((int) ((lon - bbox.minLon) / deltaX), parts - 1));
     }
 
     // https://github.com/eren-ck/MortonLib/blob/master/src/main/java/com/erenck/mortonlib/Morton2D.java
