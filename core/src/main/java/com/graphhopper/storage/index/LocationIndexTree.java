@@ -130,7 +130,7 @@ public class LocationIndexTree implements LocationIndex {
         // now calculate the necessary maxDepth d for our current bounds
         // if we assume a minimum resolution like 0.5km for a leaf-tile
         // n^(depth/2) = toMeter(dLon) / minResolution
-        BBox bounds = graph.getBounds();
+        BBox bounds = graph.getBounds().clone();
 
         // I want to be able to create a location index for the empty graph without error, but for that
         // I need valid bounds so that the initialization logic works.
