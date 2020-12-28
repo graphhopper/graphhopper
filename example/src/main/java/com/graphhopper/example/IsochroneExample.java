@@ -45,7 +45,7 @@ public class IsochroneExample {
      * See {@link RoutingExample#createGraphHopperInstance} for more comments on creating the GraphHopper instance.
      */
     static GraphHopper createGraphHopperInstance(String ghLoc) {
-        GraphHopper hopper = new GraphHopperOSM().forServer();
+        GraphHopper hopper = new GraphHopperOSM();
         hopper.setDataReaderFile(ghLoc);
         hopper.setGraphHopperLocation("target/isochrone-graph-cache");
         hopper.setEncodingManager(EncodingManager.create("car"));

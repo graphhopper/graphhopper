@@ -28,7 +28,7 @@ public class RoutingExample {
     }
 
     static GraphHopper createGraphHopperInstance(String ghLoc) {
-        GraphHopper hopper = new GraphHopperOSM().forServer();
+        GraphHopper hopper = new GraphHopperOSM();
         hopper.setDataReaderFile(ghLoc);
         // specify where to store graphhopper files
         hopper.setGraphHopperLocation("target/routing-graph-cache");
@@ -115,7 +115,7 @@ public class RoutingExample {
     }
 
     public static void customizableRouting(String ghLoc) {
-        GraphHopper hopper = new GraphHopperOSM().forServer();
+        GraphHopper hopper = new GraphHopperOSM();
         hopper.setDataReaderFile(ghLoc);
         hopper.setGraphHopperLocation("target/routing-custom-graph-cache");
         hopper.setEncodingManager(EncodingManager.create("car"));
