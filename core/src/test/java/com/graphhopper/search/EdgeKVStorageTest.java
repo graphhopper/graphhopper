@@ -270,48 +270,51 @@ public class EdgeKVStorageTest {
 
     @RepeatedTest(10)
     public void testRandom() {
-        EdgeKVStorage index = new EdgeKVStorage(new RAMDirectory(location, true).create()).create(1000);
-        long seed = new Random().nextLong();
-        System.out.println("EdgeKVStorageTest.testRandom seed:" + seed);
-        Random random = new Random(seed);
-        List<String> keys = createRandomStringList(random, 100);
-        List<Integer> values = createRandomList(random, 500);
+        final long seed = new Random().nextLong();
+        try {
+            EdgeKVStorage index = new EdgeKVStorage(new RAMDirectory(location, true).create()).create(1000);
+            Random random = new Random(seed);
+            List<String> keys = createRandomStringList(random, 100);
+            List<Integer> values = createRandomList(random, 500);
 
-        int size = 10000;
-        LongArrayList pointers = new LongArrayList(size);
-        for (int i = 0; i < size; i++) {
-            Map<String, Object> map = createRandomMap(random, keys, values);
-            long pointer = index.add(map);
-            try {
-                assertEquals("" + i, map.size(), index.getAll(pointer).size());
-            } catch (Exception ex) {
-                throw new RuntimeException(i + " " + map + ", " + pointer, ex);
+            int size = 10000;
+            LongArrayList pointers = new LongArrayList(size);
+            for (int i = 0; i < size; i++) {
+                Map<String, Object> map = createRandomMap(random, keys, values);
+                long pointer = index.add(map);
+                try {
+                    assertEquals("" + i, map.size(), index.getAll(pointer).size());
+                } catch (Exception ex) {
+                    throw new RuntimeException(i + " " + map + ", " + pointer, ex);
+                }
+                pointers.add(pointer);
             }
-            pointers.add(pointer);
-        }
 
-        for (int i = 0; i < size; i++) {
-            Map<String, Object> map = index.getAll(pointers.get(i));
-            assertTrue(i + " " + map, map.size() > 0);
-            for (Map.Entry<String, Object> entry : map.entrySet()) {
-                Object value = index.get(pointers.get(i), entry.getKey());
-                assertEquals(i + " " + map, entry.getValue(), value);
+            for (int i = 0; i < size; i++) {
+                Map<String, Object> map = index.getAll(pointers.get(i));
+                assertTrue(i + " " + map, map.size() > 0);
+                for (Map.Entry<String, Object> entry : map.entrySet()) {
+                    Object value = index.get(pointers.get(i), entry.getKey());
+                    assertEquals(i + " " + map, entry.getValue(), value);
+                }
             }
-        }
-        index.flush();
-        index.close();
+            index.flush();
+            index.close();
 
-        index = new EdgeKVStorage(new RAMDirectory(location, true).create());
-        assertTrue(index.loadExisting());
-        for (int i = 0; i < size; i++) {
-            Map<String, Object> map = index.getAll(pointers.get(i));
-            assertTrue(i + " " + map, map.size() > 0);
-            for (Map.Entry<String, Object> entry : map.entrySet()) {
-                Object value = index.get(pointers.get(i), entry.getKey());
-                assertEquals(i + " " + map, entry.getValue(), value);
+            index = new EdgeKVStorage(new RAMDirectory(location, true).create());
+            assertTrue(index.loadExisting());
+            for (int i = 0; i < size; i++) {
+                Map<String, Object> map = index.getAll(pointers.get(i));
+                assertTrue(i + " " + map, map.size() > 0);
+                for (Map.Entry<String, Object> entry : map.entrySet()) {
+                    Object value = index.get(pointers.get(i), entry.getKey());
+                    assertEquals(i + " " + map, entry.getValue(), value);
+                }
             }
+            index.close();
+        } catch (Throwable t) {
+            throw new RuntimeException("EdgeKVStorageTest.testRandom seed:" + seed, t);
         }
-        index.close();
     }
 
     private List<String> createRandomStringList(Random random, int size) {
