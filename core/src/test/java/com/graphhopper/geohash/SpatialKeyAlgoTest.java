@@ -18,13 +18,10 @@
 package com.graphhopper.geohash;
 
 import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author Peter Karich
@@ -32,7 +29,7 @@ import static org.junit.Assert.assertTrue;
 public class SpatialKeyAlgoTest {
     @Test
     public void testEncode() {
-        SpatialKeyAlgo algo = new SpatialKeyAlgo(32);
+        SpatialKeyAlgo algo = new SpatialKeyAlgo(32, new BBox(-180, 180, -90, 90));
         long val = algo.encodeLatLon(-24.235345f, 47.234234f);
         assertEquals("01100110101000111100000110010100", BitUtil.BIG.toLastBitString(val, 32));
     }
@@ -43,8 +40,7 @@ public class SpatialKeyAlgoTest {
         double minLat = -1, maxLat = 0.5;
         int parts = 4;
         int bits = (int) (Math.log(parts * parts) / Math.log(2));
-        SpatialKeyAlgo spatialKeyAlgo = new SpatialKeyAlgo(bits);
-        spatialKeyAlgo.bounds(new BBox(minLon, maxLon, minLat, maxLat));
+        SpatialKeyAlgo spatialKeyAlgo = new SpatialKeyAlgo(bits, new BBox(minLon, maxLon, minLat, maxLat));
         // lat border 0.125
         assertEquals(11, spatialKeyAlgo.encodeLatLon(0.125, -0.2));
         assertEquals(9, spatialKeyAlgo.encodeLatLon(0.124, -0.2));
@@ -56,7 +52,7 @@ public class SpatialKeyAlgoTest {
     @Test
     public void testFourBits() {
         // This is from the picture in the comments of SpatialKeyAlgo
-        SpatialKeyAlgo spatialKeyAlgo = new SpatialKeyAlgo(4);
+        SpatialKeyAlgo spatialKeyAlgo = new SpatialKeyAlgo(4, new BBox(-180, 180, -90, 90));
         assertEquals(0b0000, spatialKeyAlgo.encode(0, 0));
         assertEquals(0b0001, spatialKeyAlgo.encode(1, 0));
         assertEquals(0b0100, spatialKeyAlgo.encode(2, 0));
@@ -79,7 +75,7 @@ public class SpatialKeyAlgoTest {
 
     @Test
     public void testTwentyBits() {
-        SpatialKeyAlgo spatialKeyAlgo = new SpatialKeyAlgo(20);
+        SpatialKeyAlgo spatialKeyAlgo = new SpatialKeyAlgo(20, new BBox(-180, 180, -90, 90));
         assertEquals(0b11111111111111111111L, spatialKeyAlgo.encode(1023, 1023));
 
         for (int x=0; x<1024; x++) {

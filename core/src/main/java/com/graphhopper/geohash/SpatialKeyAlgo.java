@@ -18,7 +18,6 @@
 package com.graphhopper.geohash;
 
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
 
 /**
  * This class implements the idea of a geohash but in 'binary form' - to avoid confusion this is
@@ -73,14 +72,15 @@ import com.graphhopper.util.shapes.GHPoint;
 //  lon0 == 0 | lon0 == 1
 public class SpatialKeyAlgo {
     private final int parts;
-    private BBox bbox;
-    private int allBits;
-    private long initialBits;
+    private final int allBits;
+    private final BBox bbox;
+    private final double deltaY;
+    private final double deltaX;
 
     /**
      * @param allBits how many bits should be used for the spatial key when encoding/decoding
      */
-    public SpatialKeyAlgo(int allBits) {
+    public SpatialKeyAlgo(int allBits, BBox bounds) {
         if (allBits > 64)
             throw new IllegalStateException("allBits is too big and does not fit into 8 bytes");
 
@@ -89,8 +89,9 @@ public class SpatialKeyAlgo {
 
         this.allBits = allBits;
         parts = (int) Math.pow(2, allBits / 2);
-        initialBits = 1L << (allBits - 1);
-        bounds(new BBox(-180, 180, -90, 90));
+        bbox = bounds;
+        deltaY = (bbox.maxLat - bbox.minLat) / parts;
+        deltaX = (bbox.maxLon - bbox.minLon) / parts;
     }
 
     /**
@@ -100,61 +101,20 @@ public class SpatialKeyAlgo {
         return allBits;
     }
 
-    public SpatialKeyAlgo bounds(BBox box) {
-        bbox = box.clone();
-        return this;
+    public final long encodeLatLon(double lat, double lon) {
+        return encode(x(lon), y(lat));
     }
 
-    /**
-     * Take latitude and longitude as input.
-     * <p>
-     *
-     * @return the spatial key
-     */
-    public final long encodeLatLon(double lat, double lon) {
-        // PERFORMANCE: int operations would be faster than double (for further comparison etc)
-        // but we would need 'long' because 'int factorForPrecision' is not enough (problem: coord!=decode(encode(coord)) see testBijection)
-        // and 'long'-ops are more expensive than double (at least on 32bit systems)
-        long hash = 0;
-        double minLatTmp = bbox.minLat;
-        double maxLatTmp = bbox.maxLat;
-        double minLonTmp = bbox.minLon;
-        double maxLonTmp = bbox.maxLon;
-        int i = 0;
-        while (true) {
-            if (minLatTmp < maxLatTmp) {
-                double midLat = (minLatTmp + maxLatTmp) / 2;
-                if (lat < midLat) {
-                    maxLatTmp = midLat;
-                } else {
-                    hash |= 1;
-                    minLatTmp = midLat;
-                }
-            }
-            i++;
+    public int y(double lat) {
+        // Bounding this with parts - 1 only concerns the case where we are exactly on the bounding box.
+        // (The next cell would already start there..)
+        return Math.min((int) ((lat - bbox.minLat) / deltaY), parts - 1);
+    }
 
-            if (i < allBits)
-                hash <<= 1;
-            else
-                // if allBits is an odd number
-                break;
-
-            if (minLonTmp < maxLonTmp) {
-                double midLon = (minLonTmp + maxLonTmp) / 2;
-                if (lon < midLon) {
-                    maxLonTmp = midLon;
-                } else {
-                    hash |= 1;
-                    minLonTmp = midLon;
-                }
-            }
-            i++;
-            if (i < allBits)
-                hash <<= 1;
-            else
-                break;
-        }
-        return hash;
+    public int x(double lon) {
+        // Bounding this with parts - 1 only concerns the case where we are exactly on the bounding box.
+        // (The next cell would already start there..)
+        return Math.min((int) ((lon - bbox.minLon) / deltaX), parts - 1);
     }
 
     // https://github.com/eren-ck/MortonLib/blob/master/src/main/java/com/erenck/mortonlib/Morton2D.java

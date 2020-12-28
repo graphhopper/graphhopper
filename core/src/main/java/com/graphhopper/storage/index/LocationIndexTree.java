@@ -25,7 +25,6 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
 import org.locationtech.jts.geom.Coordinate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -170,7 +169,7 @@ public class LocationIndexTree implements LocationIndex {
         if (shiftSum > 64)
             throw new IllegalStateException("sum of all shifts does not fit into a long variable");
 
-        keyAlgo = new SpatialKeyAlgo(shiftSum).bounds(bounds);
+        keyAlgo = new SpatialKeyAlgo(shiftSum, bounds);
         parts = Math.round(Math.sqrt(parts));
         deltaLat = (bounds.maxLat - bounds.minLat) / parts;
         deltaLon = (bounds.maxLon - bounds.minLon) / parts;
@@ -354,14 +353,14 @@ public class LocationIndexTree implements LocationIndex {
      * coordinate
      */
     final double calculateRMin(double lat, double lon, int paddingTiles) {
-        long key = keyAlgo.encodeLatLon(lat, lon);
-        int[] xy = keyAlgo.decode(key);
+        int x = keyAlgo.x(lon);
+        int y = keyAlgo.y(lat);
 
         // deltaLat and deltaLon comes from the LocationIndex:
-        double minLat = graph.getBounds().minLat + (xy[1] - paddingTiles) * deltaLat;
-        double maxLat = graph.getBounds().minLat + (xy[1] + paddingTiles + 1) * deltaLat;
-        double minLon = graph.getBounds().minLon + (xy[0] - paddingTiles) * deltaLon;
-        double maxLon = graph.getBounds().minLon + (xy[0] + paddingTiles + 1) * deltaLon;
+        double minLat = graph.getBounds().minLat + (y - paddingTiles) * deltaLat;
+        double maxLat = graph.getBounds().minLat + (y + paddingTiles + 1) * deltaLat;
+        double minLon = graph.getBounds().minLon + (x - paddingTiles) * deltaLon;
+        double maxLon = graph.getBounds().minLon + (x + paddingTiles + 1) * deltaLon;
 
         double dSouthernLat = lat - minLat;
         double dNorthernLat = maxLat - lat;
@@ -383,17 +382,6 @@ public class LocationIndexTree implements LocationIndex {
         }
 
         return Math.min(dMinLat, dMinLon);
-    }
-
-    /**
-     * Provide info about tilesize for testing / visualization
-     */
-    public double getDeltaLat() {
-        return deltaLat;
-    }
-
-    public double getDeltaLon() {
-        return deltaLon;
     }
 
     public void query(BBox queryShape, final Visitor function) {
@@ -475,12 +463,12 @@ public class LocationIndexTree implements LocationIndex {
      * <p>
      */
     final void findEdgeIdsInNeighborhood(double queryLat, double queryLon, int iteration, IntConsumer foundEntries) {
-        long queryKey = keyAlgo.encodeLatLon(queryLat, queryLon);
-        int[] pixelXY = keyAlgo.decode(queryKey);
+        int x = keyAlgo.x(queryLon);
+        int y = keyAlgo.y(queryLat);
         for (int yreg = -iteration; yreg <= iteration; yreg++) {
-            int subqueryY = pixelXY[1] + yreg;
-            int subqueryXA = pixelXY[0] - iteration;
-            int subqueryXB = pixelXY[0] + iteration;
+            int subqueryY = y + yreg;
+            int subqueryXA = x - iteration;
+            int subqueryXB = x + iteration;
             long keyPart1 = keyAlgo.encode(subqueryXA, subqueryY) << (64 - keyAlgo.getBits());
             fillIDs(keyPart1, START_POINTER, 0, foundEntries);
 
@@ -492,9 +480,9 @@ public class LocationIndexTree implements LocationIndex {
         }
 
         for (int xreg = -iteration + 1; xreg <= iteration - 1; xreg++) {
-            int subqueryX = pixelXY[0] + xreg;
-            int subqueryYA = pixelXY[1] - iteration;
-            int subqueryYB = pixelXY[1] + iteration;
+            int subqueryX = x + xreg;
+            int subqueryYA = y - iteration;
+            int subqueryYB = y + iteration;
             long keyPart1 = keyAlgo.encode(subqueryX, subqueryYA) << (64 - keyAlgo.getBits());
             fillIDs(keyPart1, START_POINTER, 0, foundEntries);
             long keyPart = keyAlgo.encode(subqueryX, subqueryYB) << (64 - keyAlgo.getBits());
