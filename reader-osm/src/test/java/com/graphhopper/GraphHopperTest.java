@@ -25,14 +25,19 @@ import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.SkadiProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
-import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.Dijkstra;
+import com.graphhopper.routing.Path;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
 import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
@@ -120,6 +125,54 @@ public class GraphHopperTest {
 
         assertEquals(43.7276852, res.getWaypoints().getLat(0), 1e-7);
         assertEquals(43.7495432, res.getWaypoints().getLat(1), 1e-7);
+    }
+
+    @Test
+    public void edge_splitting_bug() {
+        // todonow: remove or cleanup this test
+        GraphHopperOSM hopper = new GraphHopperOSM();
+        hopper.setEncodingManager(EncodingManager.create("car"));
+        hopper.setGraphHopperLocation(GH_LOCATION);
+        hopper.setOSMFile("../core/files/lauf-200115.osm.pbf");
+        hopper.setProfiles(new Profile("profile").setVehicle("car").setWeighting("fastest"));
+        hopper.importOrLoad();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+        LocationIndex locationIndex = hopper.getLocationIndex();
+        FlagEncoder encoder = hopper.getEncodingManager().fetchEdgeEncoders().get(0);
+        final FastestWeighting weighting = new FastestWeighting(encoder);
+        final BooleanEncodedValue accessEnc = weighting.getFlagEncoder().getAccessEnc();
+        EdgeFilter edgeFilter = new EdgeFilter() {
+            @Override
+            public boolean accept(EdgeIteratorState edgeState) {
+                return edgeState.get(accessEnc) && !Double.isInfinite(weighting.calcEdgeWeight(edgeState, false))
+                        || edgeState.getReverse(accessEnc) && !Double.isInfinite(weighting.calcEdgeWeight(edgeState, true));
+            }
+        };
+        GHPoint p = new GHPoint(49.529355099741494, 11.296203940756207);
+        GHPoint q = new GHPoint(49.523147, 11.293001);
+        GHPoint r = new GHPoint(49.53027363148555, 11.293370881574472);
+
+        // works
+        List<GHPoint> points = Arrays.asList(p, q/*, r*/);
+        // does not work, update: now it yields the same result
+//        List<GHPoint> points = Arrays.asList(p, q, r);
+
+        List<Snap> queryResults = new ArrayList<>(points.size());
+        for (GHPoint point : points) {
+            queryResults.add(locationIndex.findClosest(point.lat, point.lon, edgeFilter));
+        }
+        QueryGraph queryGraph = QueryGraph.create(graph, queryResults);
+        Dijkstra dijkstra = new Dijkstra(queryGraph, queryGraph.wrapWeighting(weighting), TraversalMode.NODE_BASED);
+        Path path = dijkstra.calcPath(queryResults.get(0).getClosestNode(), queryResults.get(1).getClosestNode());
+        System.out.println(path.calcEdges());
+        for (EdgeIteratorState edge : path.calcEdges()) {
+            double d1 = edge.getDistance();
+            double d2 = new DistancePlaneProjection().calcDistance(edge.fetchWayGeometry(FetchMode.ALL));
+            System.out.println((d1 - d2) + " " + d1 + " vs. " + d2);
+        }
+        assertEquals(148.569, path.getWeight(), 0.1);
+        assertEquals(148569, path.getTime(), 100);
+        assertEquals(888.96, path.getDistance(), 0.1);
     }
 
     @Test
