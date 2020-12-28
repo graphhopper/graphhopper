@@ -354,34 +354,32 @@ public class LocationIndexTree implements LocationIndex {
      * coordinate
      */
     final double calculateRMin(double lat, double lon, int paddingTiles) {
-        GHPoint query = new GHPoint(lat, lon);
-        long key = keyAlgo.encode(query);
-        GHPoint center = new GHPoint();
-        keyAlgo.decode(key, center);
+        long key = keyAlgo.encodeLatLon(lat, lon);
+        int[] xy = keyAlgo.decode(key);
 
         // deltaLat and deltaLon comes from the LocationIndex:
-        double minLat = center.lat - (0.5 + paddingTiles) * deltaLat;
-        double maxLat = center.lat + (0.5 + paddingTiles) * deltaLat;
-        double minLon = center.lon - (0.5 + paddingTiles) * deltaLon;
-        double maxLon = center.lon + (0.5 + paddingTiles) * deltaLon;
+        double minLat = graph.getBounds().minLat + (xy[1] - paddingTiles) * deltaLat;
+        double maxLat = graph.getBounds().minLat + (xy[1] + paddingTiles + 1) * deltaLat;
+        double minLon = graph.getBounds().minLon + (xy[0] - paddingTiles) * deltaLon;
+        double maxLon = graph.getBounds().minLon + (xy[0] + paddingTiles + 1) * deltaLon;
 
-        double dSouthernLat = query.lat - minLat;
-        double dNorthernLat = maxLat - query.lat;
-        double dWesternLon = query.lon - minLon;
-        double dEasternLon = maxLon - query.lon;
+        double dSouthernLat = lat - minLat;
+        double dNorthernLat = maxLat - lat;
+        double dWesternLon = lon - minLon;
+        double dEasternLon = maxLon - lon;
 
         // convert degree deltas into a radius in meter
         double dMinLat, dMinLon;
         if (dSouthernLat < dNorthernLat) {
-            dMinLat = DIST_PLANE.calcDist(query.lat, query.lon, minLat, query.lon);
+            dMinLat = DIST_PLANE.calcDist(lat, lon, minLat, lon);
         } else {
-            dMinLat = DIST_PLANE.calcDist(query.lat, query.lon, maxLat, query.lon);
+            dMinLat = DIST_PLANE.calcDist(lat, lon, maxLat, lon);
         }
 
         if (dWesternLon < dEasternLon) {
-            dMinLon = DIST_PLANE.calcDist(query.lat, query.lon, query.lat, minLon);
+            dMinLon = DIST_PLANE.calcDist(lat, lon, lat, minLon);
         } else {
-            dMinLon = DIST_PLANE.calcDist(query.lat, query.lon, query.lat, maxLon);
+            dMinLon = DIST_PLANE.calcDist(lat, lon, lat, maxLon);
         }
 
         return Math.min(dMinLat, dMinLon);

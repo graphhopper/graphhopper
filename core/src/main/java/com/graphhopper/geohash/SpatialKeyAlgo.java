@@ -72,6 +72,7 @@ import com.graphhopper.util.shapes.GHPoint;
 //            |
 //  lon0 == 0 | lon0 == 1
 public class SpatialKeyAlgo {
+    private final int parts;
     private BBox bbox;
     private int allBits;
     private long initialBits;
@@ -80,19 +81,14 @@ public class SpatialKeyAlgo {
      * @param allBits how many bits should be used for the spatial key when encoding/decoding
      */
     public SpatialKeyAlgo(int allBits) {
-        myinit(allBits);
-    }
-
-    private void myinit(int allBits) {
         if (allBits > 64)
             throw new IllegalStateException("allBits is too big and does not fit into 8 bytes");
 
         if (allBits <= 0)
             throw new IllegalStateException("allBits must be positive");
 
-//        if ((allBits & 0x1) == 1)
-//            throw new IllegalStateException("allBits needs to be even to use the same amount for lat and lon");
         this.allBits = allBits;
+        parts = (int) Math.pow(2, allBits / 2);
         initialBits = 1L << (allBits - 1);
         bounds(new BBox(-180, 180, -90, 90));
     }
@@ -107,10 +103,6 @@ public class SpatialKeyAlgo {
     public SpatialKeyAlgo bounds(BBox box) {
         bbox = box.clone();
         return this;
-    }
-
-    public long encode(GHPoint coord) {
-        return encodeLatLon(coord.lat, coord.lon);
     }
 
     /**
@@ -163,48 +155,6 @@ public class SpatialKeyAlgo {
                 break;
         }
         return hash;
-    }
-
-    /**
-     * This method returns latitude and longitude via latLon - calculated from specified spatialKey
-     * <p>
-     *
-     * @param spatialKey is the input
-     */
-    public final void decode(long spatialKey, GHPoint latLon) {
-        // Performance: calculating 'midLon' and 'midLat' on the fly is not slower than using 
-        // precalculated values from arrays and for 'bits' a precalculated array is even slightly slower!
-
-        // Use the value in the middle => start from "min" use "max" as initial step-size
-        double midLat = (bbox.maxLat - bbox.minLat) / 2;
-        double midLon = (bbox.maxLon - bbox.minLon) / 2;
-        double lat = bbox.minLat;
-        double lon = bbox.minLon;
-        long bits = initialBits;
-        while (true) {
-            if ((spatialKey & bits) != 0) {
-                lat += midLat;
-            }
-
-            midLat /= 2;
-            bits >>>= 1;
-            if ((spatialKey & bits) != 0) {
-                lon += midLon;
-            }
-
-            midLon /= 2;
-            if (bits > 1) {
-                bits >>>= 1;
-            } else {
-                break;
-            }
-        }
-
-        // stable rounding - see testBijection
-        lat += midLat;
-        lon += midLon;
-        latLon.lat = lat;
-        latLon.lon = lon;
     }
 
     // https://github.com/eren-ck/MortonLib/blob/master/src/main/java/com/erenck/mortonlib/Morton2D.java
