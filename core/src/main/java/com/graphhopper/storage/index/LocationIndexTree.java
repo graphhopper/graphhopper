@@ -117,11 +117,6 @@ public class LocationIndexTree implements LocationIndex {
     public LocationIndexTree setMaxRegionSearch(int numTiles) {
         if (numTiles < 1)
             throw new IllegalArgumentException("Region of location index must be at least 1 but was " + numTiles);
-
-        // see #232
-        if (numTiles % 2 == 1)
-            numTiles++;
-
         this.maxRegionSearch = numTiles;
         return this;
     }
