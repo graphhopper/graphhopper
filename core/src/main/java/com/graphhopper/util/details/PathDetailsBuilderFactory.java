@@ -43,6 +43,9 @@ public class PathDetailsBuilderFactory {
         if (requestedPathDetails.contains(STREET_NAME))
             builders.add(new StreetNameDetails());
 
+        if (requestedPathDetails.contains(STREET_NAME + "_ref"))
+            builders.add(new EdgePropertiesDetails(STREET_NAME + "_ref"));
+
         if (requestedPathDetails.contains("osm_way_id"))
             builders.add(new EdgePropertiesDetails("osm_way_id"));
 

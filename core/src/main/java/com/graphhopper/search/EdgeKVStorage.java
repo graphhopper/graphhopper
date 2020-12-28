@@ -49,7 +49,7 @@ public class EdgeKVStorage implements Storable<EdgeKVStorage> {
     // We then store only the delta (signed int) instead the absolute unsigned long value to reduce memory usage when duplicate entries.
     private final DataAccess vals;
     // array.indexOf could be faster than hashmap.get if not too many keys or even sort keys and use binarySearch
-    private final Map<String, Integer> keyToIndex = new LinkedHashMap<>();
+    private final Map<String, Integer> keyToIndex = new HashMap<>();
     private final List<Class<?>> indexToClass = new ArrayList<>();
     private final List<String> indexToKey = new ArrayList<>();
     private final Map<Object, Long> smallCache;
@@ -121,8 +121,8 @@ public class EdgeKVStorage implements Storable<EdgeKVStorage> {
         return false;
     }
 
-    Set<String> getKeys() {
-        return keyToIndex.keySet();
+    Collection<String> getKeys() {
+        return indexToKey;
     }
 
     /**
@@ -130,7 +130,7 @@ public class EdgeKVStorage implements Storable<EdgeKVStorage> {
      *
      * @return entryPointer to later fetch the entryMap via get
      */
-    public long add(Map<String, Object> entryMap) {
+    public long add(final Map<String, Object> entryMap) {
         if (entryMap.isEmpty())
             return EMPTY_POINTER;
         else if (entryMap.size() > 200)
@@ -177,20 +177,18 @@ public class EdgeKVStorage implements Storable<EdgeKVStorage> {
                 continue;
             }
 
-            // object type
-            if (clazz.equals(String.class) && ((String) value).isEmpty() ||
-                    clazz.equals(byte[].class) && ((byte[]) value).length == 0) {
-                vals.ensureCapacity(currentPointer + 3);
-                vals.setShort(currentPointer, keyIndex.shortValue());
-                // ensure that also in case of MMap value is set to 0
-                vals.setByte(currentPointer + 2, (byte) 0);
-                currentPointer += 3;
-                continue;
-            }
+            boolean hasDynLength = hasDynLength(clazz);
+            if (hasDynLength) {
+                if (clazz.equals(String.class) && ((String) value).isEmpty() ||
+                        clazz.equals(byte[].class) && ((byte[]) value).length == 0) {
+                    vals.ensureCapacity(currentPointer + 3);
+                    vals.setShort(currentPointer, keyIndex.shortValue());
+                    // ensure that also in case of MMap value is set to 0
+                    vals.setByte(currentPointer + 2, (byte) 0);
+                    currentPointer += 3;
+                    continue;
+                }
 
-            final byte[] valueBytes;
-            if (clazz.equals(String.class)) {
-                String valueStr = (String) value;
                 Long existingRef = smallCache.get(value);
                 if (existingRef != null) {
                     long delta = lastEntryPointer - existingRef;
@@ -199,7 +197,7 @@ public class EdgeKVStorage implements Storable<EdgeKVStorage> {
                         vals.setShort(currentPointer, (short) -keyIndex);
                         currentPointer += 2;
                         // do not store valueBytes.length as we know it already: it is 4!
-                        valueBytes = new byte[4];
+                        byte[] valueBytes = new byte[4];
                         bitUtil.fromInt(valueBytes, (int) delta);
                         vals.setBytes(currentPointer, valueBytes, valueBytes.length);
                         currentPointer += valueBytes.length;
@@ -208,35 +206,23 @@ public class EdgeKVStorage implements Storable<EdgeKVStorage> {
                         smallCache.remove(value);
                     }
                 }
-
-                valueBytes = getBytesForString("Value for key " + key, valueStr);
-                // only cache value if storing via duplicate marker is valuable (the delta costs 4 bytes minus 1 due to omitted valueBytes.length storage)
-                if (valueBytes.length > 3)
-                    smallCache.put(value, currentPointer);
-            } else if (clazz.equals(Integer.class)) {
-                valueBytes = bitUtil.fromInt((int) value);
-            } else if (clazz.equals(Long.class)) {
-                valueBytes = bitUtil.fromLong((long) value);
-            } else if (clazz.equals(Float.class)) {
-                valueBytes = bitUtil.fromFloat((float) value);
-            } else if (clazz.equals(Double.class)) {
-                valueBytes = bitUtil.fromDouble((double) value);
-            } else if (clazz.equals(byte[].class)) {
-                valueBytes = (byte[]) value;
-            } else {
-                throw new IllegalArgumentException("value class not supported " + clazz.getSimpleName());
             }
 
+            final byte[] valueBytes = getBytesForValue(clazz, value);
+            // only cache value if storing via duplicate marker is valuable (the delta costs 4 bytes minus 1 due to omitted valueBytes.length storage)
+            if (hasDynLength && valueBytes.length > 3)
+                smallCache.put(value, currentPointer);
             vals.ensureCapacity(currentPointer + 2 + 1 + valueBytes.length);
             vals.setShort(currentPointer, keyIndex.shortValue());
             currentPointer += 2;
-            if (hasDynLength(clazz)) {
+            if (hasDynLength) {
                 vals.setByte(currentPointer, (byte) valueBytes.length);
                 currentPointer++;
             }
             vals.setBytes(currentPointer, valueBytes, valueBytes.length);
             currentPointer += valueBytes.length;
         }
+        // System.out.println(lastEntryPointer + " " + entryMap);
         bytePointer = currentPointer;
         return lastEntryPointer;
     }
@@ -290,6 +276,23 @@ public class EdgeKVStorage implements Storable<EdgeKVStorage> {
         if (clazz.equals(Integer.class) || clazz.equals(Float.class)) return 4;
         else if (clazz.equals(Long.class) || clazz.equals(Double.class)) return 8;
         else throw new IllegalArgumentException("unknown class " + clazz);
+    }
+
+    private byte[] getBytesForValue(Class<?> clazz, Object value) {
+        if (clazz.equals(String.class)) {
+            return getBytesForString("Value", (String) value);
+        } else if (clazz.equals(Integer.class)) {
+            return bitUtil.fromInt((int) value);
+        } else if (clazz.equals(Long.class)) {
+            return bitUtil.fromLong((long) value);
+        } else if (clazz.equals(Float.class)) {
+            return bitUtil.fromFloat((float) value);
+        } else if (clazz.equals(Double.class)) {
+            return bitUtil.fromDouble((double) value);
+        } else if (clazz.equals(byte[].class)) {
+            return (byte[]) value;
+        }
+        throw new IllegalArgumentException("value class not supported " + clazz.getSimpleName());
     }
 
     private String classToShortName(Class<?> clazz) {
@@ -367,7 +370,8 @@ public class EdgeKVStorage implements Storable<EdgeKVStorage> {
         for (int i = 0; i < keyCount; i++) {
             int currentKeyIndexRaw = vals.getShort(tmpPointer);
             int keyIndexPositive = Math.abs(currentKeyIndexRaw);
-            assert keyIndexPositive < indexToKey.size() : "invalid key index " + keyIndexPositive;
+            assert keyIndexPositive < indexToKey.size() : "invalid key index " + keyIndexPositive + ">=" + indexToKey.size()
+                    + ", entryPointer=" + entryPointer + ", max=" + bytePointer;
             tmpPointer += 2;
             if (keyIndexPositive == keyIndex) {
                 if (currentKeyIndexRaw < 0) {
@@ -381,10 +385,15 @@ public class EdgeKVStorage implements Storable<EdgeKVStorage> {
 
                 return putIntoMap(null, tmpPointer, keyIndex);
             }
-            // skip to next entry of same edge
-            Class<?> clazz = indexToClass.get(keyIndexPositive);
-            int valueLength = hasDynLength(clazz) ? 1 + vals.getByte(tmpPointer) & 0xFF : getFixLength(clazz);
-            tmpPointer += valueLength;
+
+            // skip to next entry of same edge either via skipping the pointer (raw<0) or the real value
+            if (currentKeyIndexRaw < 0) {
+                tmpPointer += 4;
+            } else {
+                Class<?> clazz = indexToClass.get(keyIndexPositive);
+                int valueLength = hasDynLength(clazz) ? 1 + vals.getByte(tmpPointer) & 0xFF : getFixLength(clazz);
+                tmpPointer += valueLength;
+            }
         }
 
         // value for specified key does not existing for the specified pointer
@@ -408,8 +417,8 @@ public class EdgeKVStorage implements Storable<EdgeKVStorage> {
         keys.ensureCapacity(2);
         keys.setShort(0, (short) keyToIndex.size());
         long keyBytePointer = 2;
-        for (Map.Entry<String, Integer> entry : keyToIndex.entrySet()) {
-            String key = entry.getKey();
+        for (int i = 0; i < indexToKey.size(); i++) {
+            String key = indexToKey.get(i);
             byte[] keyBytes = getBytesForString("key", key);
             keys.ensureCapacity(keyBytePointer + 2 + keyBytes.length);
             keys.setShort(keyBytePointer, (short) keyBytes.length);
@@ -418,7 +427,7 @@ public class EdgeKVStorage implements Storable<EdgeKVStorage> {
             keys.setBytes(keyBytePointer, keyBytes, keyBytes.length);
             keyBytePointer += keyBytes.length;
 
-            Class<?> clazz = indexToClass.get(entry.getValue());
+            Class<?> clazz = indexToClass.get(i);
             byte[] clazzBytes = getBytesForString("class name", classToShortName(clazz));
             if (clazzBytes.length != 2)
                 throw new IllegalArgumentException("class name must be 2");

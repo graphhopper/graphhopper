@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public class EdgePropertiesDetails extends AbstractPathDetailsBuilder {
 
-    private Object prop = null;
+    private Object prop = new Object();
 
     public EdgePropertiesDetails(String name) {
         super(name);
@@ -34,9 +34,10 @@ public class EdgePropertiesDetails extends AbstractPathDetailsBuilder {
 
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        Map<String, Object> p = edge.getProperties();
-        if (prop == null || !prop.equals(p.get(getName()))) {
-            prop = p.get(getName());
+        Map<String, Object> props = edge.getProperties();
+        Object tmpProp = props.get(getName());
+        if (prop == null && tmpProp != null || prop != null && !prop.equals(tmpProp)) {
+            prop = tmpProp;
             return true;
         }
         return false;

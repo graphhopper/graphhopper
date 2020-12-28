@@ -80,13 +80,13 @@ public class GraphExplorerTest {
         GtfsStorage gtfsStorage = mock(GtfsStorage.class);
         RealtimeFeed realtimeFeed = mock(RealtimeFeed.class);
         List<VirtualEdgeIteratorState> extraEdges = new ArrayList<>();
-        VirtualEdgeIteratorState e = new VirtualEdgeIteratorState(0, GHUtility.createEdgeKey(0, false), 0, 1, 0.0, encodingManager.createEdgeFlags(), "", new PointList(), false, null);
+        VirtualEdgeIteratorState e = new VirtualEdgeIteratorState(0, GHUtility.createEdgeKey(0, false), 0, 1, 0.0, encodingManager.createEdgeFlags(), null, new PointList(), false);
         e.set(foot.getAccessEnc(), true);
         extraEdges.add(e);
-        VirtualEdgeIteratorState f = new VirtualEdgeIteratorState(1, GHUtility.createEdgeKey(1, false), 1, 2, 0.0, encodingManager.createEdgeFlags(), "", new PointList(), false, null);
+        VirtualEdgeIteratorState f = new VirtualEdgeIteratorState(1, GHUtility.createEdgeKey(1, false), 1, 2, 0.0, encodingManager.createEdgeFlags(), null, new PointList(), false);
         f.set(foot.getAccessEnc(), true);
         extraEdges.add(f);
-        VirtualEdgeIteratorState g = new VirtualEdgeIteratorState(2, GHUtility.createEdgeKey(2, false), 1, 3, 0.0, encodingManager.createEdgeFlags(), "", new PointList(), false, null);
+        VirtualEdgeIteratorState g = new VirtualEdgeIteratorState(2, GHUtility.createEdgeKey(2, false), 1, 3, 0.0, encodingManager.createEdgeFlags(), null, new PointList(), false);
         g.set(foot.getAccessEnc(), true);
         extraEdges.add(g);
 
@@ -112,16 +112,16 @@ public class GraphExplorerTest {
         GtfsStorage gtfsStorage = mock(GtfsStorage.class);
         RealtimeFeed realtimeFeed = mock(RealtimeFeed.class);
         List<VirtualEdgeIteratorState> extraEdges = new ArrayList<>();
-        VirtualEdgeIteratorState e = new VirtualEdgeIteratorState(-1, GHUtility.createEdgeKey(edgeId++, false), 0, 1, 0.0, encodingManager.createEdgeFlags(), "", new PointList(), false, null);
+        VirtualEdgeIteratorState e = new VirtualEdgeIteratorState(-1, GHUtility.createEdgeKey(edgeId++, false), 0, 1, 0.0, encodingManager.createEdgeFlags(), null, new PointList(), false);
         e.set(foot.getAccessEnc(), true);
         extraEdges.add(e);
-        VirtualEdgeIteratorState f = new VirtualEdgeIteratorState(-1, GHUtility.createEdgeKey(edgeId++, false), 1, 2, 0.0, encodingManager.createEdgeFlags(), "", new PointList(), false, null);
+        VirtualEdgeIteratorState f = new VirtualEdgeIteratorState(-1, GHUtility.createEdgeKey(edgeId++, false), 1, 2, 0.0, encodingManager.createEdgeFlags(), null, new PointList(), false);
         f.set(foot.getAccessEnc(), true);
         extraEdges.add(f);
-        VirtualEdgeIteratorState g = new VirtualEdgeIteratorState(-1, GHUtility.createEdgeKey(edgeId++, false), 1, 3, 0.0, encodingManager.createEdgeFlags(), "", new PointList(), false, null);
+        VirtualEdgeIteratorState g = new VirtualEdgeIteratorState(-1, GHUtility.createEdgeKey(edgeId++, false), 1, 3, 0.0, encodingManager.createEdgeFlags(), null, new PointList(), false);
         g.set(foot.getAccessEnc(), true);
         extraEdges.add(g);
-        VirtualEdgeIteratorState h = new VirtualEdgeIteratorState(-1, GHUtility.createEdgeKey(edgeId++, false), 4, 7, 0.0, encodingManager.createEdgeFlags(), "", new PointList(), false, null);
+        VirtualEdgeIteratorState h = new VirtualEdgeIteratorState(-1, GHUtility.createEdgeKey(edgeId++, false), 4, 7, 0.0, encodingManager.createEdgeFlags(), null, new PointList(), false);
         h.set(foot.getAccessEnc(), true);
         extraEdges.add(h);
 
@@ -163,16 +163,16 @@ public class GraphExplorerTest {
         GtfsStorage gtfsStorage = mock(GtfsStorage.class);
         RealtimeFeed realtimeFeed = mock(RealtimeFeed.class);
         List<VirtualEdgeIteratorState> extraEdges = new ArrayList<>();
-        VirtualEdgeIteratorState e = new VirtualEdgeIteratorState(-1, GHUtility.createEdgeKey(edgeId++, false), 0, 1, 0.0, encodingManager.createEdgeFlags(), "", new PointList(), false, null);
+        VirtualEdgeIteratorState e = new VirtualEdgeIteratorState(-1, GHUtility.createEdgeKey(edgeId++, false), 0, 1, 0.0, encodingManager.createEdgeFlags(), null, new PointList(), false);
         e.set(foot.getAccessEnc(), true);
         extraEdges.add(e);
-        VirtualEdgeIteratorState f = new VirtualEdgeIteratorState(-1, GHUtility.createEdgeKey(edgeId++, false), 1, 2, 0.0, encodingManager.createEdgeFlags(), "", new PointList(), false, null);
+        VirtualEdgeIteratorState f = new VirtualEdgeIteratorState(-1, GHUtility.createEdgeKey(edgeId++, false), 1, 2, 0.0, encodingManager.createEdgeFlags(), null, new PointList(), false);
         f.set(foot.getAccessEnc(), true);
         extraEdges.add(f);
-        VirtualEdgeIteratorState g = new VirtualEdgeIteratorState(-1, GHUtility.createEdgeKey(edgeId++, false), 1, 3, 0.0, encodingManager.createEdgeFlags(), "", new PointList(), false, null);
+        VirtualEdgeIteratorState g = new VirtualEdgeIteratorState(-1, GHUtility.createEdgeKey(edgeId++, false), 1, 3, 0.0, encodingManager.createEdgeFlags(), null, new PointList(), false);
         g.set(foot.getAccessEnc(), true);
         extraEdges.add(g);
-        VirtualEdgeIteratorState h = new VirtualEdgeIteratorState(-1, GHUtility.createEdgeKey(edgeId++, false), 4, 7, 0.0, encodingManager.createEdgeFlags(), "", new PointList(), false, null);
+        VirtualEdgeIteratorState h = new VirtualEdgeIteratorState(-1, GHUtility.createEdgeKey(edgeId++, false), 4, 7, 0.0, encodingManager.createEdgeFlags(), null, new PointList(), false);
         h.set(foot.getAccessEnc(), true);
         extraEdges.add(h);
 

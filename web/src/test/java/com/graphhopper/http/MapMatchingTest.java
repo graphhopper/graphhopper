@@ -271,9 +271,8 @@ public class MapMatchingTest {
         mapMatching.setMeasurementErrorSigma(50);
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour-with-loop.gpx"), Gpx.class);
         MatchResult mr = mapMatching.match(gpx.trk.get(0).getEntries());
-        assertEquals(Arrays.asList("Jahnallee, B 87, B 181", "Jahnallee, B 87, B 181",
-                "Jahnallee, B 87, B 181", "Jahnallee, B 87, B 181", "Funkenburgstraße",
-                "Gustav-Adolf-Straße", "Tschaikowskistraße", "Jahnallee, B 87, B 181",
+        assertEquals(Arrays.asList("Jahnallee", "Jahnallee", "Jahnallee", "Jahnallee", "Funkenburgstraße",
+                "Gustav-Adolf-Straße", "Tschaikowskistraße", "Jahnallee",
                 "Lessingstraße", "Lessingstraße"), fetchStreets(mr.getEdgeMatches()));
     }
 

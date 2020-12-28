@@ -43,22 +43,21 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     private String name;
     // true if edge should be avoided as start/stop
     private boolean unfavored;
+    private final EdgeIteratorState origEdge;
     private EdgeIteratorState reverseEdge;
     private final boolean reverse;
-    private Map<String, Object> properties;
 
     public VirtualEdgeIteratorState(int originalEdgeKey, int edgeKey, int baseNode, int adjNode, double distance,
-                                    IntsRef edgeFlags, String name, PointList pointList, boolean reverse, Map<String, Object> properties) {
+                                    IntsRef edgeFlags, EdgeIteratorState origEdge, PointList pointList, boolean reverse) {
         this.originalEdgeKey = originalEdgeKey;
         this.edgeKey = edgeKey;
         this.baseNode = baseNode;
         this.adjNode = adjNode;
         this.distance = distance;
         this.edgeFlags = edgeFlags;
-        this.name = name;
+        this.origEdge = origEdge;
         this.pointList = pointList;
         this.reverse = reverse;
-        this.properties = properties;
     }
 
     /**
@@ -306,18 +305,19 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
 
     @Override
     public EdgeIteratorState setProperties(Map<String, Object> properties) {
-        this.properties = properties;
-        return this;
+        throw new IllegalArgumentException("Cannot write virtual edge");
     }
 
     @Override
     public Map<String, Object> getProperties() {
-        return properties;
+        return origEdge.getProperties();
     }
 
     @Override
     public String getName() {
-        return name;
+        if (name != null)
+            return name;
+        return origEdge.getName();
     }
 
     @Override

@@ -57,7 +57,7 @@ public class WrapperGraph implements Graph {
             }
             extraEdgesBySource.put(extraEdge.getBaseNode(), extraEdge);
             extraEdgesByDestination.put(extraEdge.getAdjNode(), new VirtualEdgeIteratorState(extraEdge.getOriginalEdgeKey(), extraEdge.getEdgeKey(), extraEdge.getAdjNode(),
-                    extraEdge.getBaseNode(), extraEdge.getDistance(), extraEdge.getFlags(), extraEdge.getName(), extraEdge.fetchWayGeometry(FetchMode.ALL), true, extraEdge.getProperties()));
+                    extraEdge.getBaseNode(), extraEdge.getDistance(), extraEdge.getFlags(), extraEdge, extraEdge.fetchWayGeometry(FetchMode.ALL), true));
         }
     }
 

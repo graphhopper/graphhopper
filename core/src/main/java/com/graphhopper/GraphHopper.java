@@ -560,6 +560,7 @@ public class GraphHopper implements GraphHopperAPI {
                 emBuilder.addAll(flagEncoderFactory, flagEncodersStr);
             emBuilder.setEnableInstructions(ghConfig.getBool("datareader.instructions", true));
             emBuilder.setPreferredLanguage(ghConfig.getString("datareader.preferred_language", ""));
+            emBuilder.setStoreOSMWayIDs(ghConfig.getBool("datareader.store_osm_way_ids", false));
             emBuilder.setDateRangeParser(DateRangeParser.createInstance(ghConfig.getString("datareader.date_range_parser_day", "")));
             return emBuilder.build();
         }
@@ -978,7 +979,7 @@ public class GraphHopper implements GraphHopperAPI {
             sw = new StopWatch().start();
             new EdgeElevationInterpolator(ghStorage, roadEnvEnc, RoadEnvironment.FERRY).execute();
             ghStorage.getProperties().put(INTERPOLATION_KEY, true);
-            logger.info("Bridge interpolation " + (int) bridge + "s, " + "tunnel interpolation " + (int) tunnel + "s, ferry interpolation " + (int) sw.stop().getSeconds()+"s");
+            logger.info("Bridge interpolation " + (int) bridge + "s, " + "tunnel interpolation " + (int) tunnel + "s, ferry interpolation " + (int) sw.stop().getSeconds() + "s");
         }
     }
 
@@ -1188,7 +1189,7 @@ public class GraphHopper implements GraphHopperAPI {
         fullyLoaded = true;
     }
 
-    public boolean getFullyLoaded(){
+    public boolean getFullyLoaded() {
         return fullyLoaded;
     }
 

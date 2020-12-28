@@ -27,7 +27,10 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 class QueryOverlayBuilder {
     private final int firstVirtualNodeId;
@@ -221,12 +224,11 @@ class QueryOverlayBuilder {
         int virtEdgeId = firstVirtualEdgeId + queryOverlay.getNumVirtualEdges() / 2;
 
         boolean reverse = closestEdge.get(EdgeIteratorState.REVERSE_STATE);
-        Map<String, Object> props = closestEdge.getProperties();
         // edges between base and snapped point
         VirtualEdgeIteratorState baseEdge = new VirtualEdgeIteratorState(origEdgeKey, GHUtility.createEdgeKey(virtEdgeId, false),
-                prevNodeId, nodeId, baseDistance, closestEdge.getFlags(), closestEdge.getName(), basePoints, reverse, props);
+                prevNodeId, nodeId, baseDistance, closestEdge.getFlags(), closestEdge, basePoints, reverse);
         VirtualEdgeIteratorState baseReverseEdge = new VirtualEdgeIteratorState(origRevEdgeKey, GHUtility.createEdgeKey(virtEdgeId, true),
-                nodeId, prevNodeId, baseDistance, IntsRef.deepCopyOf(closestEdge.getFlags()), closestEdge.getName(), baseReversePoints, !reverse, props);
+                nodeId, prevNodeId, baseDistance, IntsRef.deepCopyOf(closestEdge.getFlags()), closestEdge, baseReversePoints, !reverse);
 
         baseEdge.setReverseEdge(baseReverseEdge);
         baseReverseEdge.setReverseEdge(baseEdge);

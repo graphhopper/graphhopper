@@ -140,7 +140,7 @@ public class NavigateResponseConverterTest {
         assertEquals(2, voiceInstructions.size());
         JsonNode voiceInstruction = voiceInstructions.get(0);
         assertEquals(200, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
-        assertEquals("In 200 meters At roundabout, take exit 2 onto CS-340, then At roundabout, take exit 2 onto CG-3", voiceInstruction.get("announcement").asText());
+        assertEquals("In 200 meters At roundabout, take exit 2, then At roundabout, take exit 2", voiceInstruction.get("announcement").asText());
 
         // Step 14 is over 3km long
         step = steps.get(14);
@@ -174,7 +174,7 @@ public class NavigateResponseConverterTest {
         assertEquals(2, voiceInstructions.size());
         JsonNode voiceInstruction = voiceInstructions.get(0);
         assertEquals(200, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
-        assertEquals("In 600 feet At roundabout, take exit 2 onto CS-340, then At roundabout, take exit 2 onto CG-3", voiceInstruction.get("announcement").asText());
+        assertEquals("In 600 feet At roundabout, take exit 2, then At roundabout, take exit 2", voiceInstruction.get("announcement").asText());
 
         // Step 14 is over 3km long
         step = steps.get(14);

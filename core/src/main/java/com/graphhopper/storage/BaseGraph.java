@@ -54,7 +54,6 @@ class BaseGraph implements Graph {
     final DataAccess nodes;
     final BBox bounds;
     final NodeAccess nodeAccess;
-    private final static String STRING_IDX_NAME_KEY = "name";
     final EdgeKVStorage edgeKVStorage;
     // can be null if turn costs are not supported
     final TurnCostStorage turnCostStorage;
@@ -73,7 +72,7 @@ class BaseGraph implements Graph {
     // node memory layout:
     protected int N_EDGE_REF, N_LAT, N_LON, N_ELE, N_TC;
     // edge memory layout:
-    int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_FLAGS, E_DIST, E_GEO, E_NAME;
+    int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_FLAGS, E_DIST, E_GEO, E_KV;
     /**
      * Specifies how many entries (integers) are used per edge.
      */
@@ -247,7 +246,7 @@ class BaseGraph implements Graph {
 
         E_DIST = nextEdgeEntryIndex(4);
         E_GEO = nextEdgeEntryIndex(4);
-        E_NAME = nextEdgeEntryIndex(4);
+        E_KV = nextEdgeEntryIndex(4);
 
         N_EDGE_REF = nextNodeEntryIndex(4);
         N_LAT = nextNodeEntryIndex(4);
@@ -878,14 +877,6 @@ class BaseGraph implements Graph {
         throw new IllegalArgumentException("Mode isn't handled " + mode);
     }
 
-    private void setName(long edgePointer, String name) {
-        int stringIndexRef = (int) edgeKVStorage.add(Collections.singletonMap(STRING_IDX_NAME_KEY, name));
-        if (stringIndexRef < 0)
-            throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
-
-        edges.setInt(edgePointer + E_NAME, stringIndexRef);
-    }
-
     private void ensureGeometry(long bytePos, int byteLength) {
         wayGeometry.ensureCapacity(bytePos + byteLength);
     }
@@ -1312,31 +1303,34 @@ class BaseGraph implements Graph {
 
         @Override
         public String getName() {
-            int stringIndexRef = baseGraph.edges.getInt(edgePointer + baseGraph.E_NAME);
-            String name = (String) baseGraph.edgeKVStorage.get(stringIndexRef, STRING_IDX_NAME_KEY);
+            int edgeKVRef = baseGraph.edges.getInt(edgePointer + baseGraph.E_KV);
+            String name = (String) baseGraph.edgeKVStorage.get(edgeKVRef, Parameters.Details.STREET_NAME);
             // preserve backward compatibility (returns null if not explicitly set)
             return name == null ? "" : name;
         }
 
         @Override
         public EdgeIteratorState setName(String name) {
-            baseGraph.setName(edgePointer, name);
+            int edgeKVRef = (int) baseGraph.edgeKVStorage.add(Collections.singletonMap(Parameters.Details.STREET_NAME, name));
+            if (edgeKVRef < 0)
+                throw new IllegalStateException("Too many street names are stored, currently limited to int pointer");
+            baseGraph.edges.setInt(edgePointer + baseGraph.E_KV, edgeKVRef);
             return this;
         }
 
         @Override
         public EdgeIteratorState setProperties(Map<String, Object> map) {
-            int stringIndexRef = (int) baseGraph.edgeKVStorage.add(map);
-            if (stringIndexRef < 0)
-                throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
-
-            baseGraph.edges.setInt(edgePointer + baseGraph.E_NAME, stringIndexRef);
+            int edgeKVRef = (int) baseGraph.edgeKVStorage.add(map);
+            if (edgeKVRef < 0)
+                throw new IllegalStateException("Too many edge properties are stored, currently limited to int pointer");
+            baseGraph.edges.setInt(edgePointer + baseGraph.E_KV, edgeKVRef);
             return this;
         }
 
         @Override
         public Map<String, Object> getProperties() {
-            return baseGraph.edgeKVStorage.getAll(edgePointer);
+            int edgeKVRef = baseGraph.edges.getInt(edgePointer + baseGraph.E_KV);
+            return baseGraph.edgeKVStorage.getAll(edgeKVRef);
         }
 
         @Override

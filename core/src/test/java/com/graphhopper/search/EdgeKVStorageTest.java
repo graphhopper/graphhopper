@@ -1,12 +1,12 @@
 package com.graphhopper.search;
 
 import com.carrotsearch.hppc.LongArrayList;
-import com.graphhopper.Repeat;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.Helper;
-import org.junit.Test;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.*;
@@ -16,7 +16,7 @@ import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.*;
 
 public class EdgeKVStorageTest {
-    String location = "./target/stringindex-store";
+    private String location = "./target/stringindex-store";
 
     @BeforeEach
     @AfterEach
@@ -268,17 +268,16 @@ public class EdgeKVStorageTest {
         assertNull(index.get(pointerB, ""));
     }
 
-    @Test
-    @Repeat(times = 100)
+    @RepeatedTest(10)
     public void testRandom() {
-        EdgeKVStorage index = create();
+        EdgeKVStorage index = new EdgeKVStorage(new RAMDirectory(location, true).create()).create(1000);
         long seed = new Random().nextLong();
-        System.out.println("StringIndexText.testRandom seed:" + seed);
+        System.out.println("EdgeKVStorageTest.testRandom seed:" + seed);
         Random random = new Random(seed);
-        List<String> keys = createRandomList(random, "_key", 1000);
-        List<String> values = createRandomList(random, "_value", 5000);
+        List<String> keys = createRandomStringList(random, 100);
+        List<Integer> values = createRandomList(random, 500);
 
-        int size = 20000;
+        int size = 10000;
         LongArrayList pointers = new LongArrayList(size);
         for (int i = 0; i < size; i++) {
             Map<String, Object> map = createRandomMap(random, keys, values);
@@ -294,22 +293,50 @@ public class EdgeKVStorageTest {
         for (int i = 0; i < size; i++) {
             Map<String, Object> map = index.getAll(pointers.get(i));
             assertTrue(i + " " + map, map.size() > 0);
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                Object value = index.get(pointers.get(i), entry.getKey());
+                assertEquals(i + " " + map, entry.getValue(), value);
+            }
         }
+        index.flush();
+        index.close();
+
+        index = new EdgeKVStorage(new RAMDirectory(location, true).create());
+        assertTrue(index.loadExisting());
+        for (int i = 0; i < size; i++) {
+            Map<String, Object> map = index.getAll(pointers.get(i));
+            assertTrue(i + " " + map, map.size() > 0);
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                Object value = index.get(pointers.get(i), entry.getKey());
+                assertEquals(i + " " + map, entry.getValue(), value);
+            }
+        }
+        index.close();
     }
 
-    private List<String> createRandomList(Random random, String postfix, int size) {
+    private List<String> createRandomStringList(Random random, int size) {
         List<String> list = new ArrayList<>();
         for (int i = 0; i < size; i++) {
-            list.add(random.nextInt(size * 5) + postfix);
+            list.add(random.nextInt(size * 5) + (random.nextBoolean() ? "_i" : "_s"));
         }
         return list;
     }
 
-    private Map<String, Object> createRandomMap(Random random, List<String> keys, List<String> values) {
+    private List<Integer> createRandomList(Random random, int size) {
+        List<Integer> list = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            list.add(random.nextInt(size * 5));
+        }
+        return list;
+    }
+
+    private Map<String, Object> createRandomMap(Random random, List<String> keys, List<Integer> values) {
         int count = random.nextInt(10) + 2;
         Map<String, Object> map = new HashMap<>();
         for (int i = 0; i < count; i++) {
-            map.put(keys.get(random.nextInt(keys.size())), values.get(random.nextInt(values.size())));
+            String key = keys.get(random.nextInt(keys.size()));
+            Object o = values.get(random.nextInt(values.size()));
+            map.put(key, key.endsWith("_s") ? o + "_s" : o);
         }
         return map;
     }

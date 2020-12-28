@@ -28,6 +28,7 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
+import com.graphhopper.util.Parameters;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -168,7 +169,10 @@ public class EncodingManager implements EncodedValueLookup {
          */
         public Builder setPreferredLanguage(String language) {
             check();
-            em.setPreferredLanguage(language);
+            if (language == null)
+                throw new IllegalArgumentException("preferred language cannot be null");
+
+            em.preferredLanguage = language;
             return this;
         }
 
@@ -178,7 +182,13 @@ public class EncodingManager implements EncodedValueLookup {
          */
         public Builder setEnableInstructions(boolean enable) {
             check();
-            em.setEnableInstructions(enable);
+            em.enableInstructions = enable;
+            return this;
+        }
+
+        public Builder setStoreOSMWayIDs(boolean b) {
+            check();
+            em.storeOSMWayIDs = b;
             return this;
         }
 
@@ -440,19 +450,8 @@ public class EncodingManager implements EncodedValueLookup {
         return (int) Math.ceil((double) edgeConfig.getRequiredBits() / 32.0);
     }
 
-    private void setEnableInstructions(boolean enableInstructions) {
-        this.enableInstructions = enableInstructions;
-    }
-
     public boolean isEnableInstructions() {
         return enableInstructions;
-    }
-
-    private void setPreferredLanguage(String preferredLanguage) {
-        if (preferredLanguage == null)
-            throw new IllegalArgumentException("preferred language cannot be null");
-
-        this.preferredLanguage = preferredLanguage;
     }
 
     private void addEncoder(AbstractFlagEncoder encoder) {
@@ -715,13 +714,13 @@ public class EncodingManager implements EncodedValueLookup {
             if (name.isEmpty())
                 name = fixWayName(way.getTag("name"));
             else
-                map.put("name_" + preferredLanguage, name);
+                map.put(Parameters.Details.STREET_NAME + "_" + preferredLanguage, name);
 
-            map.put("name", name);
+            map.put(Parameters.Details.STREET_NAME, name);
             // http://wiki.openstreetmap.org/wiki/Key:ref
             String refName = fixWayName(way.getTag("ref"));
             if (!refName.isEmpty())
-                map.put("ref", refName);
+                map.put(Parameters.Details.STREET_NAME + "_ref", refName);
         }
 
         if (storeOSMWayIDs)
