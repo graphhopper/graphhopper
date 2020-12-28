@@ -316,29 +316,29 @@ public class LocationIndexTree implements LocationIndex {
     /**
      * This method fills the set with stored edge IDs from the given spatial key
      */
-    final void fillIDs(long keyPart, int intPointer, int depth, IntConsumer consumer) {
-        long pointer = (long) intPointer * 4;
-        if (depth == entries.length) {
-            int nextIntPointer = dataAccess.getInt(pointer);
-            if (nextIntPointer < 0) {
-                // single data entries (less disc space)
-                int edgeId = -(nextIntPointer + 1);
-                consumer.accept(edgeId);
-            } else {
-                long max = (long) nextIntPointer * 4;
-                // leaf entry => nextIntPointer is maxPointer
-                for (long leafIndex = pointer + 4; leafIndex < max; leafIndex += 4) {
-                    int edgeId = dataAccess.getInt(leafIndex);
-                    consumer.accept(edgeId);
-                }
+    final void fillIDs(long keyPart, IntConsumer consumer) {
+        int intPointer = START_POINTER;
+        for (int depth = 0; depth < entries.length; depth++) {
+            int offset = (int) (keyPart >>> (64 - shifts[depth]));
+            int nextIntPointer = dataAccess.getInt((long) (intPointer + offset) * 4);
+            if (nextIntPointer <= 0) {
+                // empty cell
+                return;
             }
-            return;
+            keyPart = keyPart << shifts[depth];
+            intPointer = nextIntPointer;
         }
-        int offset = (int) (keyPart >>> (64 - shifts[depth])) * 4;
-        int nextIntPointer = dataAccess.getInt(pointer + offset);
-        if (nextIntPointer > 0) {
-            // tree entry => negative value points to subentries
-            fillIDs(keyPart << shifts[depth], nextIntPointer, depth + 1, consumer);
+        int data = dataAccess.getInt((long) intPointer * 4);
+        if (data < 0) {
+            // single data entries (less disc space)
+            int edgeId = -(data + 1);
+            consumer.accept(edgeId);
+        } else {
+            // "data" is index of last data item
+            for (int leafIndex = intPointer + 1; leafIndex < data; leafIndex++) {
+                int edgeId = dataAccess.getInt((long) leafIndex * 4);
+                consumer.accept(edgeId);
+            }
         }
     }
 
@@ -465,12 +465,12 @@ public class LocationIndexTree implements LocationIndex {
             int subqueryXA = x - iteration;
             int subqueryXB = x + iteration;
             long keyPart1 = keyAlgo.encode(subqueryXA, subqueryY) << (64 - keyAlgo.getBits());
-            fillIDs(keyPart1, START_POINTER, 0, foundEntries);
+            fillIDs(keyPart1, foundEntries);
 
             // When iteration == 0, I just check one tile (the center)
             if (iteration > 0) {
                 long keyPart = keyAlgo.encode(subqueryXB, subqueryY) << (64 - keyAlgo.getBits());
-                fillIDs(keyPart, START_POINTER, 0, foundEntries);
+                fillIDs(keyPart, foundEntries);
             }
         }
 
@@ -479,9 +479,9 @@ public class LocationIndexTree implements LocationIndex {
             int subqueryYA = y - iteration;
             int subqueryYB = y + iteration;
             long keyPart1 = keyAlgo.encode(subqueryX, subqueryYA) << (64 - keyAlgo.getBits());
-            fillIDs(keyPart1, START_POINTER, 0, foundEntries);
+            fillIDs(keyPart1, foundEntries);
             long keyPart = keyAlgo.encode(subqueryX, subqueryYB) << (64 - keyAlgo.getBits());
-            fillIDs(keyPart, START_POINTER, 0, foundEntries);
+            fillIDs(keyPart, foundEntries);
         }
     }
 
