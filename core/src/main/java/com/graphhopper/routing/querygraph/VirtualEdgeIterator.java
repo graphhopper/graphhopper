@@ -252,13 +252,18 @@ class VirtualEdgeIterator implements EdgeIterator {
     }
 
     @Override
-    public EdgeIteratorState setProperties(Map<String, Object> properties) {
-        return getCurrentEdge().setProperties(properties);
+    public EdgeIteratorState setKeyValues(Map<String, Object> keyValues) {
+        return getCurrentEdge().setKeyValues(keyValues);
     }
 
     @Override
-    public Map<String, Object> getProperties() {
-        return getCurrentEdge().getProperties();
+    public Map<String, Object> getKeyValues() {
+        return getCurrentEdge().getKeyValues();
+    }
+
+    @Override
+    public Object getValue(String key) {
+        return getCurrentEdge().getValue(key);
     }
 
     @Override

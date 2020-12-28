@@ -304,13 +304,18 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     }
 
     @Override
-    public EdgeIteratorState setProperties(Map<String, Object> properties) {
-        throw new IllegalArgumentException("Cannot write virtual edge");
+    public EdgeIteratorState setKeyValues(Map<String, Object> keyValues) {
+        throw new IllegalArgumentException("Cannot write key-value pairs to virtual edge");
     }
 
     @Override
-    public Map<String, Object> getProperties() {
-        return origEdge.getProperties();
+    public Map<String, Object> getKeyValues() {
+        return origEdge.getKeyValues();
+    }
+
+    @Override
+    public Object getValue(String key) {
+        return origEdge.getValue(key);
     }
 
     @Override

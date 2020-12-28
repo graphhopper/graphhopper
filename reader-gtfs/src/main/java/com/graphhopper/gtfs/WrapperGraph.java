@@ -312,12 +312,17 @@ public class WrapperGraph implements Graph {
             }
 
             @Override
-            public EdgeIteratorState setProperties(Map<String, Object> properties) {
+            public EdgeIteratorState setKeyValues(Map<String, Object> keyValues) {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public Map<String, Object> getProperties() {
+            public Map<String, Object> getKeyValues() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public Object getValue(String key) {
                 throw new UnsupportedOperationException();
             }
 
@@ -589,14 +594,19 @@ public class WrapperGraph implements Graph {
                     }
 
                     @Override
-                    public EdgeIteratorState setProperties(Map<String, Object> properties) {
-                        current.setProperties(properties);
+                    public EdgeIteratorState setKeyValues(Map<String, Object> keyValues) {
+                        current.setKeyValues(keyValues);
                         return this;
                     }
 
                     @Override
-                    public Map<String, Object> getProperties() {
-                        return current.getProperties();
+                    public Map<String, Object> getKeyValues() {
+                        return current.getKeyValues();
+                    }
+
+                    @Override
+                    public Object getValue(String key) {
+                        return current.getValue(key);
                     }
 
                     @Override

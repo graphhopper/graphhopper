@@ -965,15 +965,21 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
-        public EdgeIteratorState setProperties(Map<String, Object> properties) {
-            checkShortcut(false, "setProperties");
-            return edgeIterable.setProperties(properties);
+        public EdgeIteratorState setKeyValues(Map<String, Object> keyValues) {
+            checkShortcut(false, "setKeyValues");
+            return edgeIterable.setKeyValues(keyValues);
         }
 
         @Override
-        public Map<String, Object> getProperties() {
-            checkShortcut(false, "getProperties");
-            return edgeIterable.getProperties();
+        public Map<String, Object> getKeyValues() {
+            checkShortcut(false, "getKeyValues");
+            return edgeIterable.getKeyValues();
+        }
+
+        @Override
+        public Object getValue(String key) {
+            checkShortcut(false, "getValue");
+            return edgeIterable.getValue(key);
         }
 
         @Override

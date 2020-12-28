@@ -726,7 +726,7 @@ public class EncodingManager implements EncodedValueLookup {
         if (storeOSMWayIDs)
             map.put("osm_way_id", way.getId());
 
-        edge.setProperties(map);
+        edge.setKeyValues(map);
 
         if (Double.isInfinite(edge.getDistance()))
             throw new IllegalStateException("Infinite distance should not happen due to #435. way ID=" + way.getId());

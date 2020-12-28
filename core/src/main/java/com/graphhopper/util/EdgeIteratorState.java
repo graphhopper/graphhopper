@@ -204,12 +204,39 @@ public interface EdgeIteratorState {
 
     EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd);
 
-    EdgeIteratorState setProperties(Map<String, Object> properties);
+    /**
+     * The advantages of the EncodedValues are the compact space they use and the fast retrieval. Still sometimes you
+     * need to store unaltered int, long, float or double values or values with variable size like String or byte arrays.
+     * <p>
+     * The specified keyValues Map is serialized into an efficient representation of bytes and therefor any retrieval
+     * deserializes the entire data. The representation can be more efficient when shorter values and less unique keys
+     * are used. If fast retrieval is critical you should use EncodedValues instead e.g. for usage within a Weighting.
+     */
+    EdgeIteratorState setKeyValues(Map<String, Object> keyValues);
 
-    Map<String, Object> getProperties();
+    /**
+     * See {@link #setKeyValues(Map)} for more details.
+     */
+    Map<String, Object> getKeyValues();
 
+    /**
+     * See {@link #setKeyValues(Map)} for more details.
+     * <p>
+     * If fast retrieval is critical you should use EncodedValues instead e.g. for usage within a Weighting.
+     */
+    Object getValue(String key);
+
+    /**
+     * Fetches the stored street_name of this edge and is equivalent to:
+     * <p>
+     * (String) getValue(Parameters.Details.STREET_NAME)
+     */
     String getName();
 
+    /**
+     * Stores the street_name if this edge. If also other key-value pairs are stored you have to use
+     * {@link #setKeyValues(Map)} instead otherwise the previous key-value pairs get lost.
+     */
     EdgeIteratorState setName(String name);
 
     /**

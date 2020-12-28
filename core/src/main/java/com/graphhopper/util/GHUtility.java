@@ -937,12 +937,17 @@ public class GHUtility {
         }
 
         @Override
-        public EdgeIteratorState setProperties(Map<String, Object> properties) {
+        public EdgeIteratorState setKeyValues(Map<String, Object> keyValues) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public Map<String, Object> getProperties() {
+        public Map<String, Object> getKeyValues() {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public Object getValue(String key) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 

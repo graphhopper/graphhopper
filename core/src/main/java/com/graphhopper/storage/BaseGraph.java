@@ -1319,8 +1319,8 @@ class BaseGraph implements Graph {
         }
 
         @Override
-        public EdgeIteratorState setProperties(Map<String, Object> map) {
-            int edgeKVRef = (int) baseGraph.edgeKVStorage.add(map);
+        public EdgeIteratorState setKeyValues(Map<String, Object> keyValues) {
+            int edgeKVRef = (int) baseGraph.edgeKVStorage.add(keyValues);
             if (edgeKVRef < 0)
                 throw new IllegalStateException("Too many edge properties are stored, currently limited to int pointer");
             baseGraph.edges.setInt(edgePointer + baseGraph.E_KV, edgeKVRef);
@@ -1328,9 +1328,15 @@ class BaseGraph implements Graph {
         }
 
         @Override
-        public Map<String, Object> getProperties() {
+        public Map<String, Object> getKeyValues() {
             int edgeKVRef = baseGraph.edges.getInt(edgePointer + baseGraph.E_KV);
             return baseGraph.edgeKVStorage.getAll(edgeKVRef);
+        }
+
+        @Override
+        public Object getValue(String key) {
+            int edgeKVRef = baseGraph.edges.getInt(edgePointer + baseGraph.E_KV);
+            return baseGraph.edgeKVStorage.get(edgeKVRef, key);
         }
 
         @Override

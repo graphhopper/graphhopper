@@ -34,7 +34,7 @@ public class EdgePropertiesDetails extends AbstractPathDetailsBuilder {
 
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        Map<String, Object> props = edge.getProperties();
+        Map<String, Object> props = edge.getKeyValues();
         Object tmpProp = props.get(getName());
         if (prop == null && tmpProp != null || prop != null && !prop.equals(tmpProp)) {
             prop = tmpProp;
