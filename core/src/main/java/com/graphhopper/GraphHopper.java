@@ -186,33 +186,6 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
-     * Configures the underlying storage and response to be used on a well equipped server. Result
-     * also optimized for usage in the web module i.e. try reduce network IO.
-     */
-    public GraphHopper forServer() {
-        routerConfig.setSimplifyResponse(true);
-        return setInMemory();
-    }
-
-    /**
-     * Configures the underlying storage to be used on a Desktop computer or within another Java
-     * application with enough RAM but no network latency.
-     */
-    public GraphHopper forDesktop() {
-        routerConfig.setSimplifyResponse(false);
-        return setInMemory();
-    }
-
-    /**
-     * Configures the underlying storage to be used on a less powerful machine like Android or
-     * Raspberry Pi with only few MB of RAM.
-     */
-    public GraphHopper forMobile() {
-        routerConfig.setSimplifyResponse(false);
-        return setMemoryMapped();
-    }
-
-    /**
      * Precise location resolution index means also more space (disc/RAM) could be consumed and
      * probably slower query times, which would be e.g. not suitable for Android. The resolution
      * specifies the tile width (in meter).
@@ -230,15 +203,6 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
-     * This method call results in an in-memory graph.
-     */
-    public GraphHopper setInMemory() {
-        ensureNotLoaded();
-        dataAccessType = DAType.RAM_STORE;
-        return this;
-    }
-
-    /**
      * Only valid option for in-memory graph and if you e.g. want to disable store on flush for unit
      * tests. Specify storeOnFlush to true if you want that existing data will be loaded FROM disc
      * and all in-memory data will be flushed TO disc after flush is called e.g. while OSM import.
@@ -251,15 +215,6 @@ public class GraphHopper implements GraphHopperAPI {
             dataAccessType = DAType.RAM_STORE;
         else
             dataAccessType = DAType.RAM;
-        return this;
-    }
-
-    /**
-     * Enable memory mapped configuration if not enough memory is available on the target platform.
-     */
-    public GraphHopper setMemoryMapped() {
-        ensureNotLoaded();
-        dataAccessType = DAType.MMAP;
         return this;
     }
 
