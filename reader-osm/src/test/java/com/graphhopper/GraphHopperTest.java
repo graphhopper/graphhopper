@@ -114,8 +114,8 @@ public class GraphHopperTest {
         assertEquals(expectedVisitedNodes, rsp.getHints().getLong("visited_nodes.sum", 0));
 
         ResponsePath res = rsp.getBest();
-        assertEquals(3587.9, res.getDistance(), .1);
-        assertEquals(277173, res.getTime(), 10);
+        assertEquals(3586.9, res.getDistance(), .1);
+        assertEquals(277112, res.getTime(), 10);
         assertEquals(91, res.getPoints().getSize());
 
         assertEquals(43.7276852, res.getWaypoints().getLat(0), 1e-7);
@@ -137,10 +137,10 @@ public class GraphHopperTest {
                 setAlgorithm(ASTAR).setProfile(profile));
 
         // identify the number of counts to compare with CH foot route
-        assertEquals(699, rsp.getHints().getLong("visited_nodes.sum", 0));
+        assertEquals(700, rsp.getHints().getLong("visited_nodes.sum", 0));
 
         ResponsePath res = rsp.getBest();
-        assertEquals(3437.6, res.getDistance(), .1);
+        assertEquals(3437.1, res.getDistance(), .1);
         assertEquals(85, res.getPoints().getSize());
 
         assertEquals(43.7276852, res.getWaypoints().getLat(0), 1e-7);
@@ -280,7 +280,7 @@ public class GraphHopperTest {
             long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
             assertNotEquals(sum, 0);
             assertTrue("Too many nodes visited " + sum, sum < 120);
-            assertEquals(3437.6, bestPath.getDistance(), .1);
+            assertEquals(3437.1, bestPath.getDistance(), .1);
             assertEquals(85, bestPath.getPoints().getSize());
         }
 
@@ -296,7 +296,7 @@ public class GraphHopperTest {
             long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
             assertNotEquals(sum, 0);
             assertTrue("Too many nodes visited " + sum, sum < 120);
-            assertEquals(3437.6, bestPath.getDistance(), .1);
+            assertEquals(3437.1, bestPath.getDistance(), .1);
             assertEquals(85, bestPath.getPoints().getSize());
         }
 
@@ -311,7 +311,7 @@ public class GraphHopperTest {
         long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
         assertNotEquals(sum, 0);
         assertTrue("Too few nodes visited " + sum, sum > 120);
-        assertEquals(3437.6, bestPath.getDistance(), .1);
+        assertEquals(3437.1, bestPath.getDistance(), .1);
         assertEquals(85, bestPath.getPoints().getSize());
 
         hopper.close();
@@ -361,7 +361,7 @@ public class GraphHopperTest {
         assertEquals(2, rsp.getAll().size());
 
         assertEquals(1310, rsp.getAll().get(0).getTime() / 1000);
-        assertEquals(1432, rsp.getAll().get(1).getTime() / 1000);
+        assertEquals(1431, rsp.getAll().get(1).getTime() / 1000);
 
         req.putHint("alternative_route.max_paths", 3);
         req.putHint("alternative_route.min_plateau_factor", 0.1);
@@ -370,7 +370,7 @@ public class GraphHopperTest {
         assertEquals(3, rsp.getAll().size());
 
         assertEquals(1310, rsp.getAll().get(0).getTime() / 1000);
-        assertEquals(1432, rsp.getAll().get(1).getTime() / 1000);
+        assertEquals(1431, rsp.getAll().get(1).getTime() / 1000);
         assertEquals(1492, rsp.getAll().get(2).getTime() / 1000);
     }
 
@@ -393,11 +393,11 @@ public class GraphHopperTest {
 
         assertEquals(3, rsp.getAll().size());
         // via ramsenthal
-        assertEquals(2864, rsp.getAll().get(0).getTime() / 1000);
+        assertEquals(2863, rsp.getAll().get(0).getTime() / 1000);
         // via unterwaiz
         assertEquals(3318, rsp.getAll().get(1).getTime() / 1000);
         // via eselslohe -> theta; BTW: here smaller time as 2nd alternative due to priority influences time order
-        assertEquals(3094, rsp.getAll().get(2).getTime() / 1000);
+        assertEquals(3093, rsp.getAll().get(2).getTime() / 1000);
     }
 
     @Test
@@ -524,7 +524,7 @@ public class GraphHopperTest {
         req.putHint(Routing.BLOCK_AREA, "50.017578,11.547527;" + someArea);
         rsp = hopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(14602, rsp.getBest().getDistance(), 1);
+        assertEquals(14601, rsp.getBest().getDistance(), 1);
 
         // block by edge IDs -> i.e. use small circular area
         req.putHint(Routing.BLOCK_AREA, "49.979929,11.520066,200");
@@ -596,7 +596,7 @@ public class GraphHopperTest {
                 setAlgorithm(ASTAR).setProfile(profile));
 
         ResponsePath res = rsp.getBest();
-        assertEquals(6875.2, res.getDistance(), .1);
+        assertEquals(6874.2, res.getDistance(), .1);
         assertEquals(170, res.getPoints().getSize());
 
         InstructionList il = res.getInstructions();
@@ -887,7 +887,7 @@ public class GraphHopperTest {
                 setAlgorithm(ASTAR).setProfile(profile));
 
         ResponsePath res = rsp.getBest();
-        assertEquals(1625.4, res.getDistance(), .1);
+        assertEquals(1614.3, res.getDistance(), .1);
         assertEquals(55, res.getPoints().getSize());
         assertTrue(res.getPoints().is3D());
 
@@ -1015,7 +1015,7 @@ public class GraphHopperTest {
                 setAlgorithm(ASTAR).setProfile(profile));
 
         ResponsePath arsp = rsp.getBest();
-        assertEquals(1570.4, arsp.getDistance(), .1);
+        assertEquals(1569.7, arsp.getDistance(), .1);
         assertEquals(60, arsp.getPoints().getSize());
         assertTrue(arsp.getPoints().is3D());
 
@@ -1086,7 +1086,7 @@ public class GraphHopperTest {
                 setProfile(profile2));
         assertFalse(rsp.hasErrors());
         ResponsePath res = rsp.getBest();
-        assertEquals(6932.2, res.getDistance(), .1);
+        assertEquals(6931.8, res.getDistance(), .1);
         assertEquals(103, res.getPoints().getSize());
 
         InstructionList il = res.getInstructions();
@@ -1218,7 +1218,7 @@ public class GraphHopperTest {
         ResponsePath res = rsp.getBest();
         assertFalse("car routing for " + str + " should not have errors:" + rsp.getErrors(), rsp.hasErrors());
         assertEquals(207, res.getTime() / 1000f, 1);
-        assertEquals(2838, res.getDistance(), 1);
+        assertEquals(2837, res.getDistance(), 1);
 
         rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setProfile("profile1"));
@@ -1271,7 +1271,7 @@ public class GraphHopperTest {
         long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
         assertNotEquals(sum, 0);
         assertTrue("Too many nodes visited " + sum, sum < 120);
-        assertEquals(3437.6, bestPath.getDistance(), .1);
+        assertEquals(3437.0, bestPath.getDistance(), .1);
         assertEquals(85, bestPath.getPoints().getSize());
 
         hopper.close();
@@ -1451,17 +1451,17 @@ public class GraphHopperTest {
 
         // flex
         testCrossQueryAssert(profile1, hopper, 528.3, 152, true);
-        testCrossQueryAssert(profile2, hopper, 636.0, 150, true);
-        testCrossQueryAssert(profile3, hopper, 815.4, 146, true);
+        testCrossQueryAssert(profile2, hopper, 635.8, 150, true);
+        testCrossQueryAssert(profile3, hopper, 815.2, 146, true);
 
         // LM (should be the same as flex, but with less visited nodes!)
         testCrossQueryAssert(profile1, hopper, 528.3, 74, false);
-        testCrossQueryAssert(profile2, hopper, 636.0, 84, false);
+        testCrossQueryAssert(profile2, hopper, 635.8, 84, false);
         // this is actually interesting: the number of visited nodes *increases* once again (while it strictly decreases
         // with rising distance factor for flex): cross-querying 'works', but performs *worse*, because the landmarks
         // were not customized for the weighting in use. Creating a separate LM preparation for profile3 yields 74
         // instead of 124 visited nodes (not shown here)
-        testCrossQueryAssert(profile3, hopper, 815.4, 128, false);
+        testCrossQueryAssert(profile3, hopper, 815.2, 128, false);
     }
 
     private void testCrossQueryAssert(String profile, GraphHopper hopper, double expectedWeight, int expectedVisitedNodes, boolean disableLM) {
@@ -1679,9 +1679,9 @@ public class GraphHopperTest {
         assertEquals(1995.38, pathLM.getDistance(), 0.1);
         assertEquals(1995.38, path.getDistance(), 0.1);
 
-        assertEquals(149496, pathCH.getTime());
-        assertEquals(149496, pathLM.getTime());
-        assertEquals(149496, path.getTime());
+        assertEquals(149494, pathCH.getTime());
+        assertEquals(149494, pathLM.getTime());
+        assertEquals(149494, path.getTime());
     }
 
     @Test

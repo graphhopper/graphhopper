@@ -39,7 +39,6 @@ public class EdgeSamplingTest {
         in.add(1.4, 0, 0);
 
         PointList out = EdgeSampling.sample(
-                1,
                 in,
                 DistanceCalcEarth.METERS_PER_DEGREE,
                 new DistanceCalcEarth(),
@@ -56,7 +55,6 @@ public class EdgeSamplingTest {
         in.add(0.8, 0, 0);
 
         PointList out = EdgeSampling.sample(
-                1,
                 in,
                 DistanceCalcEarth.METERS_PER_DEGREE / 2,
                 new DistanceCalcEarth(),
@@ -73,7 +71,6 @@ public class EdgeSamplingTest {
         in.add(0.8, 0, 0);
 
         PointList out = EdgeSampling.sample(
-                1,
                 in,
                 DistanceCalcEarth.METERS_PER_DEGREE / 3,
                 new DistanceCalcEarth(),
@@ -90,7 +87,6 @@ public class EdgeSamplingTest {
         in.add(0.75, 0, 0);
 
         PointList out = EdgeSampling.sample(
-                1,
                 in,
                 DistanceCalcEarth.METERS_PER_DEGREE / 4,
                 new DistanceCalcEarth(),
@@ -107,7 +103,6 @@ public class EdgeSamplingTest {
         in.add(0.0, 178.5, 0);
 
         PointList out = EdgeSampling.sample(
-                1,
                 in,
                 DistanceCalcEarth.METERS_PER_DEGREE,
                 new DistanceCalcEarth(),
@@ -124,7 +119,6 @@ public class EdgeSamplingTest {
         in.add(88.5, 90, 0);
 
         PointList out = EdgeSampling.sample(
-                1,
                 in,
                 DistanceCalcEarth.METERS_PER_DEGREE,
                 new DistanceCalcEarth(),
