@@ -11,13 +11,3 @@
         <tag k="highway" v="motorway"/>
     </way>
 </osm>
-
-
-        <!-- todonow: remove -->
-        <!-- before fix: -->
-        <!-- pass1: all three nd refs get tag "1" because they only occur once -->
-        <!-- pass2: we add nodes 20 and 30 to the pillar storage and assign 'pillar ids' 3 and 4. node 10 does not get such a -->
-        <!--        pillar id! -->
-        <!--        then we parse the way. note that here we rely on nodes being parsed before ways! -->
-        <!--        when we hit node 10 it has no pilar node id and the test fails because OSMReader assumes the first and last
-                    nodes should be tower nodes even when some of them do not exist. -->
