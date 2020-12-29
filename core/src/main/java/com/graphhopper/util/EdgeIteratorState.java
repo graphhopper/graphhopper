@@ -205,12 +205,14 @@ public interface EdgeIteratorState {
     EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd);
 
     /**
-     * The advantages of the EncodedValues are the compact space they use and the fast retrieval. Still sometimes you
-     * need to store unaltered int, long, float or double values or values with variable size like String or byte arrays.
+     * The advantages of the EncodedValues are the small size per edge they use and the fast retrieval. Still sometimes
+     * you need to store unaltered int, long, float or double values or values with variable size like String or byte
+     * arrays.
      * <p>
      * The specified keyValues Map is serialized into an efficient representation of bytes and therefor any retrieval
-     * deserializes the entire data. The representation can be more efficient when shorter values and less unique keys
-     * are used. If fast retrieval is critical you should use EncodedValues instead e.g. for usage within a Weighting.
+     * via getKeyValues deserializes the entire data. The representation is more efficient when shorter values and
+     * less unique keys are used. If fast retrieval is critical for you, e.g. for usage within a Weighting, should use
+     * EncodedValues instead.
      */
     EdgeIteratorState setKeyValues(Map<String, Object> keyValues);
 
