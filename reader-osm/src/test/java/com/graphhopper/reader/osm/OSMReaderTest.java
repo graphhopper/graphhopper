@@ -307,7 +307,7 @@ public class OSMReaderTest {
     }
 
     @Test
-    public void testDoNotRejectEdgeIfFirstNodeIsMissing() {
+    public void testDoNotRejectEdgeIfFirstNodeIsMissing_issue2221() {
         GraphHopper hopper = new GraphHopperFacade("test-osm9.xml").importOrLoad();
         GraphHopperStorage graph = hopper.getGraphHopperStorage();
         assertEquals(2, graph.getNodes());
@@ -327,7 +327,7 @@ public class OSMReaderTest {
     }
 
     @Test
-    public void test_edgeDistanceWhenFirstNodeIsMissing() {
+    public void test_edgeDistanceWhenFirstNodeIsMissing_issue2221() {
         GraphHopper hopper = new GraphHopperFacade("test-osm10.xml").importOrLoad();
         GraphHopperStorage graph = hopper.getGraphHopperStorage();
         assertEquals(3, graph.getNodes());

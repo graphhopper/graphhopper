@@ -2070,8 +2070,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopperOSM().
                 setOSMFile(BAYREUTH).
                 setProfiles(new Profile(profile).setVehicle("car").setWeighting("fastest")).
-                setGraphHopperLocation(GH_LOCATION).
-                forServer();
+                setGraphHopperLocation(GH_LOCATION);
         EncodingManager em = new EncodingManager.Builder()
                 .setEnableInstructions(true)
                 .add(new OSMMaxSpeedParser())
