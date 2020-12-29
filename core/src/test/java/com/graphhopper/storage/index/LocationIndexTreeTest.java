@@ -23,6 +23,8 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
 import java.io.Closeable;
@@ -623,5 +625,120 @@ public class LocationIndexTreeTest {
         FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
         assertEquals(2, idx.findClosest(1, -1, DefaultEdgeFilter.allEdges(footEncoder)).getClosestNode());
         Helper.close((Closeable) g);
+    }
+
+    @Disabled
+//    @RepeatedTest(10)
+    @Test
+    public void randomGraph() {
+        long seed = 19801994156622L;//System.nanoTime();
+//        System.out.println(seed);
+        Random rand = new Random(seed);
+        FlagEncoder encoder = new CarFlagEncoder();
+        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), EncodingManager.create(encoder), false).create(100);
+        GHUtility.buildRandomGraph(graph, rand, 1000, 3, true, true,
+                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, 0.7, 0.8, 0.8);
+        addRandomPillarNodes(graph, 0.8, rand);
+
+        LocationIndexTree index = new LocationIndexTree(graph, graph.getDirectory());
+        index.prepareIndex();
+
+        final BBox bbox = graph.getBounds();
+        final double latDelta = bbox.maxLat - bbox.minLat;
+        final double lonDelta = bbox.maxLon - bbox.minLon;
+        for (int i = 0; i < 1_000; i++) {
+            double lat = rand.nextDouble() * latDelta + bbox.minLat;
+            double lon = rand.nextDouble() * lonDelta + bbox.minLon;
+
+            Snap expected = findClosest(graph, lat, lon);
+            Snap actual = index.findClosest(lat, lon, EdgeFilter.ALL_EDGES);
+            assertEquals(i + ": " + expected + " vs " + actual, expected.getClosestNode(), actual.getClosestNode());
+            assertEquals(i + ": " + expected + " vs " + actual, expected.getQueryDistance(), actual.getQueryDistance(), .001);
+//            assertEquals(expected.getClosestEdge().getEdge(), actual.getClosestEdge().getEdge());
+//            assertEquals(expected.getWayIndex(), actual.getWayIndex());
+        }
+    }
+
+    private void addRandomPillarNodes(GraphHopperStorage graph, double countPer100Meter, Random rand) {
+        NodeAccess nodeAccess = graph.getNodeAccess();
+        AllEdgesIterator iter = graph.getAllEdges();
+        while (iter.next()) {
+            GHPoint from = new GHPoint(nodeAccess.getLatitude(iter.getBaseNode()), nodeAccess.getLongitude(iter.getBaseNode()));
+            GHPoint to = new GHPoint(nodeAccess.getLatitude(iter.getAdjNode()), nodeAccess.getLongitude(iter.getAdjNode()));
+            double dist = DistanceCalcEarth.DIST_EARTH.calcDist(from.lat, from.lon, to.lat, to.lon);
+            long count = Math.max(0, Math.round(countPer100Meter * dist / 100) - 1);
+
+            PointList pointList = new PointList();
+            pointList.add(from);
+            double deltaLat = (to.lat - from.lat) / (count + 1);
+            double deltaLon = (to.lon - from.lon) / (count + 1);
+            double pillarLat = from.lat, pillarLon = from.lon;
+            // add pillar nodes near the "supposed" mathematically correct location
+            for (int i = 1; i <= count; i++) {
+                pillarLat += deltaLat;
+                pillarLon += deltaLon;
+                pointList.add(new GHPoint(pillarLat + deltaLat * rand.nextGaussian(), pillarLon + deltaLat * rand.nextGaussian()));
+            }
+            pointList.add(to);
+            double towerNodeDistance = DistanceCalcEarth.DIST_EARTH.calcDistance(pointList);
+            iter.setDistance(towerNodeDistance);
+            iter.setWayGeometry(pointList.shallowCopy(1, pointList.size() - 1, false));
+        }
+    }
+
+    public static Snap findClosest(GraphHopperStorage graph, double queryLat, double queryLon) {
+        NodeAccess nodeAccess = graph.getNodeAccess();
+//        DistanceCalc calc = DistanceCalcEarth.DIST_EARTH;
+        DistanceCalc calc = DistancePlaneProjection.DIST_PLANE;
+
+        Snap res = new Snap(queryLat, queryLon);
+        AllEdgesIterator iter = graph.getAllEdges();
+        while (iter.next()) {
+            PointList pointList = iter.fetchWayGeometry(FetchMode.PILLAR_AND_ADJ);
+            int len = pointList.getSize();
+
+            double fromLat = nodeAccess.getLatitude(iter.getBaseNode());
+            double fromLon = nodeAccess.getLongitude(iter.getBaseNode());
+            double fromDist = calc.calcDist(fromLat, fromLon, queryLat, queryLon);
+            if (fromDist < 0)
+                throw new IllegalArgumentException();
+
+            if (res.getQueryDistance() > fromDist) {
+                res.setQueryDistance(fromDist);
+                res.setClosestEdge(iter.detach(false));
+                res.setClosestNode(iter.getBaseNode());
+                res.setWayIndex(0);
+                res.setSnappedPosition(Snap.Position.TOWER);
+            }
+
+            double toDist = calc.calcDist(nodeAccess.getLatitude(iter.getAdjNode()), nodeAccess.getLongitude(iter.getAdjNode()), queryLat, queryLon);
+            double tmpLat = fromLat;
+            double tmpLon = fromLon;
+            for (int pointIndex = 0; pointIndex < len; pointIndex++) {
+                double wayLat = pointList.getLatitude(pointIndex);
+                double wayLon = pointList.getLongitude(pointIndex);
+                Snap.Position pos = Snap.Position.EDGE;
+                double dist;
+                if (calc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, wayLat, wayLon)) {
+                    dist = calc.calcDenormalizedDist(calc.calcNormalizedEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, wayLat, wayLon));
+                } else {
+                    dist = calc.calcDist(queryLat, queryLon, wayLat, wayLon);
+                    pos = pointIndex + 1 == len ? Snap.Position.TOWER : Snap.Position.PILLAR;
+                }
+
+                if (res.getQueryDistance() > dist) {
+                    res.setQueryDistance(dist);
+                    res.setClosestEdge(iter.detach(false));
+                    res.setClosestNode(fromDist < toDist ? iter.getBaseNode() : iter.getAdjNode());
+                    res.setWayIndex(pointIndex);
+                    res.setSnappedPosition(pos);
+                }
+
+                tmpLat = wayLat;
+                tmpLon = wayLon;
+            }
+        }
+        res.calcSnappedPoint(calc);
+        return res;
     }
 }
