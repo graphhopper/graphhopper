@@ -295,7 +295,7 @@ public class OSMReaderTest {
     }
 
     @Test
-    public void testWayReferencesNotExistingAdjNode() {
+    public void testWayReferencesNotExistingAdjNode_issue19() {
         GraphHopper hopper = new GraphHopperFacade(file4).importOrLoad();
         Graph graph = hopper.getGraphHopperStorage();
 
@@ -304,6 +304,41 @@ public class OSMReaderTest {
         int n30 = AbstractGraphStorageTester.getIdOf(graph, 51.2);
 
         assertEquals(GHUtility.asSet(n30), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n10)));
+    }
+
+    @Test
+    public void testDoNotRejectEdgeIfFirstNodeIsMissing_issue2221() {
+        GraphHopper hopper = new GraphHopperFacade("test-osm9.xml").importOrLoad();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+        assertEquals(2, graph.getNodes());
+        assertEquals(1, graph.getEdges());
+        AllEdgesIterator iter = graph.getAllEdges();
+        iter.next();
+        assertEquals(0, iter.getBaseNode());
+        assertEquals(1, iter.getAdjNode());
+        assertEquals(51.21, graph.getNodeAccess().getLat(0), 1.e-3);
+        assertEquals(9.41, graph.getNodeAccess().getLon(0), 1.e-3);
+        assertEquals(51.22, graph.getNodeAccess().getLat(1), 1.e-3);
+        assertEquals(9.42, graph.getNodeAccess().getLon(1), 1.e-3);
+        assertEquals(DistanceCalcEarth.DIST_EARTH.calcDistance(iter.fetchWayGeometry(FetchMode.ALL)), iter.getDistance(), 1.e-3);
+        assertEquals(1312.1, iter.getDistance(), 1.e-1);
+        assertEquals(1312.1, DistanceCalcEarth.DIST_EARTH.calcDistance(iter.fetchWayGeometry(FetchMode.ALL)), 1.e-1);
+        assertFalse(iter.next());
+    }
+
+    @Test
+    public void test_edgeDistanceWhenFirstNodeIsMissing_issue2221() {
+        GraphHopper hopper = new GraphHopperFacade("test-osm10.xml").importOrLoad();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+        assertEquals(3, graph.getNodes());
+        assertEquals(3, graph.getEdges());
+        AllEdgesIterator iter = graph.getAllEdges();
+        while (iter.next()) {
+            assertEquals(DistanceCalcEarth.DIST_EARTH.calcDistance(iter.fetchWayGeometry(FetchMode.ALL)), iter.getDistance(), 1.e-3);
+        }
+        assertEquals(35.609, graph.getEdgeIteratorState(0, Integer.MIN_VALUE).getDistance(), 1.e-3);
+        assertEquals(75.262, graph.getEdgeIteratorState(1, Integer.MIN_VALUE).getDistance(), 1.e-3);
+        assertEquals(143.354, graph.getEdgeIteratorState(2, Integer.MIN_VALUE).getDistance(), 1.e-3);
     }
 
     @Test

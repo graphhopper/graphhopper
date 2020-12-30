@@ -178,9 +178,7 @@ public class Measurement {
             }
         };
 
-        hopper.init(createConfigFromArgs(args)).
-                // use server to allow path simplification
-                        forServer();
+        hopper.init(createConfigFromArgs(args));
         if (cleanGraph) {
             hopper.clean();
         }
