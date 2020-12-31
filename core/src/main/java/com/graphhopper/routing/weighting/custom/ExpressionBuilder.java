@@ -33,6 +33,7 @@ import org.codehaus.janino.Scanner;
 import org.codehaus.janino.*;
 import org.codehaus.janino.util.DeepCopier;
 import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.*;
@@ -74,15 +75,22 @@ class ExpressionBuilder {
         String key = customModel.toString() + ",global:" + globalMaxSpeed;
         if (key.length() > 400_000) throw new IllegalArgumentException("Custom Model too big: " + key.length());
 
-        Class<?> clazz = customModel.__isInternal() ? INTERNAL_CACHE.get(key) : null;
+        Class<?> clazz = customModel.__shouldBeCached() ? INTERNAL_CACHE.get(key) : null;
         if (CACHE_SIZE > 0 && clazz == null)
             clazz = CACHE.get(key);
         if (clazz == null) {
             clazz = createClazz(customModel, lookup, globalMaxSpeed);
-            if (customModel.__isInternal())
+            if (customModel.__shouldBeCached()) {
                 INTERNAL_CACHE.put(key, clazz);
-            else if (CACHE_SIZE > 0)
+                if (INTERNAL_CACHE.size() > 100) {
+                    CACHE.putAll(INTERNAL_CACHE);
+                    INTERNAL_CACHE.clear();
+                    LoggerFactory.getLogger(ExpressionBuilder.class).warn("Internal cache must stay small but was "
+                            + INTERNAL_CACHE.size() + ". Cleared it. Misuse of CustomModel::__internal_cache?");
+                }
+            } else if (CACHE_SIZE > 0) {
                 CACHE.put(key, clazz);
+            }
         }
 
         try {

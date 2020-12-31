@@ -34,7 +34,7 @@ public class CustomModel {
     private double headingPenalty = Parameters.Routing.DEFAULT_HEADING_PENALTY;
     // default value derived from the cost for time e.g. 25€/hour and for distance 0.5€/km, for trucks this is usually larger
     private double distanceInfluence = DEFAULT_D_I;
-    private boolean internal;
+    private boolean cached;
     private List<Statement> speedStatements = new ArrayList<>();
     private List<Statement> priorityStatements = new ArrayList<>();
     private Map<String, JsonFeature> areas = new HashMap<>();
@@ -53,12 +53,13 @@ public class CustomModel {
         areas.putAll(toCopy.getAreas());
     }
 
-    public void __internal() {
-        this.internal = true;
+    public CustomModel __internal_cache() {
+        this.cached = true;
+        return this;
     }
 
-    public boolean __isInternal() {
-        return internal;
+    public boolean __shouldBeCached() {
+        return cached;
     }
 
     private <T> T deepCopy(T originalObject) {
@@ -140,7 +141,8 @@ public class CustomModel {
      * A new CustomModel is created from the baseModel merged with the specified queryModel.
      */
     public static CustomModel merge(CustomModel baseModel, CustomModel queryModel) {
-        // avoid changing the specified CustomModel via deep copy otherwise the server-side CustomModel would be modified (same problem if queryModel would be used as target)
+        // avoid changing the specified CustomModel via deep copy otherwise the server-side CustomModel would be
+        // modified (same problem if queryModel would be used as target)
         CustomModel mergedCM = new CustomModel(baseModel);
         if (Math.abs(queryModel.distanceInfluence - CustomModel.DEFAULT_D_I) > 0.01) {
             if (mergedCM.distanceInfluence > queryModel.distanceInfluence)
