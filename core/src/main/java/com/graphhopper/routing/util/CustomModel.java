@@ -53,6 +53,11 @@ public class CustomModel {
         areas.putAll(toCopy.getAreas());
     }
 
+    /**
+     * This method is for internal usage only! Parsing a CustomModel is expensive and so we cache the result, which is
+     * especially important for fast landmark queries (hybrid mode). Now this method ensures that all server-side custom
+     * models are cached in a special internal cache which does not remove seldom accessed entries.
+     */
     public CustomModel __internal_cache() {
         this.cached = true;
         return this;
