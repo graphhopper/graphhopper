@@ -68,8 +68,8 @@ public class CustomModelParser {
         // utility class
     }
 
-    public static CustomWeighting create(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup, TurnCostProvider turnCostProvider,
-                                         CustomModel customModel) {
+    public static CustomWeighting createWeighting(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup, TurnCostProvider turnCostProvider,
+                                                  CustomModel customModel) {
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");
         CustomWeighting.Parameters parameters = create(customModel, lookup, baseFlagEncoder.getMaxSpeed(), baseFlagEncoder.getAverageSpeedEnc());
