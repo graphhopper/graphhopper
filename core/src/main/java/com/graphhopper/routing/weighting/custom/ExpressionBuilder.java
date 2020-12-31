@@ -69,8 +69,8 @@ class ExpressionBuilder {
      * This method compiles a new subclass of CustomWeightingHelper composed from the provided CustomModel caches this
      * and returns an instance.
      */
-    static SpeedAndAccessProvider create(CustomModel customModel, EncodedValueLookup lookup, double globalMaxSpeed,
-                                         DecimalEncodedValue avgSpeedEnc) {
+    static CustomWeighting.Parameters create(CustomModel customModel, EncodedValueLookup lookup, double globalMaxSpeed,
+                                             DecimalEncodedValue avgSpeedEnc) {
         String key = customModel.toString() + ",global:" + globalMaxSpeed;
         if (key.length() > 400_000) throw new IllegalArgumentException("Custom Model too big: " + key.length());
 
@@ -89,7 +89,8 @@ class ExpressionBuilder {
             // The class does not need to be thread-safe as we create an instance per request
             CustomWeightingHelper prio = (CustomWeightingHelper) clazz.getDeclaredConstructor().newInstance();
             prio.init(lookup, avgSpeedEnc, customModel.getAreas());
-            return prio;
+            return new CustomWeighting.Parameters(prio::getSpeed, prio::getPriority, findMaxSpeed(customModel, globalMaxSpeed),
+                    customModel.getDistanceInfluence(), customModel.getHeadingPenalty());
         } catch (ReflectiveOperationException ex) {
             throw new IllegalArgumentException("Cannot compile expression " + ex.getMessage(), ex);
         }
@@ -376,7 +377,7 @@ class ExpressionBuilder {
         }
     }
 
-    public static double findMaxSpeed(CustomModel customModel, final double maxSpeed) {
+    static double findMaxSpeed(CustomModel customModel, final double maxSpeed) {
         double globalMin_maxSpeed = maxSpeed;
         double blockMax_maxSpeed = 0;
         for (Statement statement : customModel.getSpeed()) {

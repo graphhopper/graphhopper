@@ -89,10 +89,7 @@ public final class CustomWeighting extends AbstractWeighting {
                                          CustomModel customModel) {
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");
-        SpeedAndAccessProvider speedAndAccessProvider = ExpressionBuilder.create(customModel, lookup, baseFlagEncoder.getMaxSpeed(), baseFlagEncoder.getAverageSpeedEnc());
-        Parameters parameters = new Parameters(speedAndAccessProvider::getSpeed, speedAndAccessProvider::getPriority,
-                ExpressionBuilder.findMaxSpeed(customModel, baseFlagEncoder.getMaxSpeed()),
-                customModel.getDistanceInfluence(), customModel.getHeadingPenalty());
+        Parameters parameters = ExpressionBuilder.create(customModel, lookup, baseFlagEncoder.getMaxSpeed(), baseFlagEncoder.getAverageSpeedEnc());
         return new CustomWeighting(baseFlagEncoder, turnCostProvider, parameters);
     }
 
@@ -164,14 +161,14 @@ public final class CustomWeighting extends AbstractWeighting {
         double get(EdgeIteratorState edge, boolean reverse);
     }
 
-    private static class Parameters {
+    static class Parameters {
         private final EdgeToDoubleMapping edgeToSpeedMapping;
         private final EdgeToDoubleMapping edgeToPriorityMapping;
         private final double maxSpeed;
         private final double distanceInfluence;
         private final double headingPenaltySeconds;
 
-        private Parameters(EdgeToDoubleMapping edgeToSpeedMapping, EdgeToDoubleMapping edgeToPriorityMapping,
+        Parameters(EdgeToDoubleMapping edgeToSpeedMapping, EdgeToDoubleMapping edgeToPriorityMapping,
                            double maxSpeed, double distanceInfluence, double headingPenaltySeconds) {
             this.edgeToSpeedMapping = edgeToSpeedMapping;
             this.edgeToPriorityMapping = edgeToPriorityMapping;

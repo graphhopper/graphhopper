@@ -32,7 +32,7 @@ import java.util.Map;
  * This class is for internal usage only. It is subclassed by Janino, then special expressions are injected into init,
  * getSpeed and getPriority. At the end an instance is created and used in CustomWeighting.
  */
-public class CustomWeightingHelper implements SpeedAndAccessProvider {
+public class CustomWeightingHelper {
     protected DecimalEncodedValue avg_speed_enc;
 
     protected CustomWeightingHelper() {
@@ -42,12 +42,10 @@ public class CustomWeightingHelper implements SpeedAndAccessProvider {
         this.avg_speed_enc = avgSpeedEnc;
     }
 
-    @Override
     public double getPriority(EdgeIteratorState edge, boolean reverse) {
         return 1;
     }
 
-    @Override
     public double getSpeed(EdgeIteratorState edge, boolean reverse) {
         return getRawSpeed(edge, reverse);
     }

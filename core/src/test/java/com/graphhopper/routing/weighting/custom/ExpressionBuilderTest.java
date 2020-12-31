@@ -62,15 +62,15 @@ class ExpressionBuilderTest {
     void setPriorityForRoadClass() {
         CustomModel customModel = new CustomModel();
         customModel.addToPriority(If("road_class == PRIMARY", MULTIPLY, 0.5));
-        SpeedAndAccessProvider speedAndAccessProvider = ExpressionBuilder.create(customModel, encodingManager,
-                encoder.getMaxSpeed(), avgSpeedEnc);
+        CustomWeighting.EdgeToDoubleMapping priorityMapping = ExpressionBuilder.create(customModel, encodingManager,
+                encoder.getMaxSpeed(), avgSpeedEnc).getEdgeToPriorityMapping();
 
         GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
         EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(100).set(roadClassEnc, RoadClass.PRIMARY);
         EdgeIteratorState edge2 = graph.edge(1, 2).setDistance(100).set(roadClassEnc, RoadClass.SECONDARY);
 
-        assertEquals(0.5, speedAndAccessProvider.getPriority(edge1, false), 1.e-6);
-        assertEquals(1.0, speedAndAccessProvider.getPriority(edge2, false), 1.e-6);
+        assertEquals(0.5, priorityMapping.get(edge1, false), 1.e-6);
+        assertEquals(1.0, priorityMapping.get(edge2, false), 1.e-6);
     }
 
     @Test
@@ -88,21 +88,21 @@ class ExpressionBuilderTest {
         customModel.addToPriority(Else(MULTIPLY, 0.9));
         customModel.addToPriority(If("road_environment != FERRY", MULTIPLY, 0.8));
 
-        SpeedAndAccessProvider speedAndAccessProvider = ExpressionBuilder.create(customModel, encodingManager,
-                encoder.getMaxSpeed(), avgSpeedEnc);
+        CustomWeighting.EdgeToDoubleMapping priorityMapping = ExpressionBuilder.create(customModel, encodingManager,
+                encoder.getMaxSpeed(), avgSpeedEnc).getEdgeToPriorityMapping();
 
-        assertEquals(0.5 * 0.8, speedAndAccessProvider.getPriority(primary, false), 0.01);
-        assertEquals(0.7 * 0.8, speedAndAccessProvider.getPriority(secondary, false), 0.01);
-        assertEquals(0.9 * 0.8, speedAndAccessProvider.getPriority(tertiary, false), 0.01);
+        assertEquals(0.5 * 0.8, priorityMapping.get(primary, false), 0.01);
+        assertEquals(0.7 * 0.8, priorityMapping.get(secondary, false), 0.01);
+        assertEquals(0.9 * 0.8, priorityMapping.get(tertiary, false), 0.01);
 
         // force integer value
         customModel = new CustomModel();
         customModel.addToPriority(If("road_class == PRIMARY", MULTIPLY, 1));
         customModel.addToPriority(If("road_class == SECONDARY", MULTIPLY, 0.9));
-        speedAndAccessProvider = ExpressionBuilder.create(customModel, encodingManager,
-                encoder.getMaxSpeed(), avgSpeedEnc);
-        assertEquals(1, speedAndAccessProvider.getPriority(primary, false), 0.01);
-        assertEquals(0.9, speedAndAccessProvider.getPriority(secondary, false), 0.01);
+        priorityMapping = ExpressionBuilder.create(customModel, encodingManager,
+                encoder.getMaxSpeed(), avgSpeedEnc).getEdgeToPriorityMapping();
+        assertEquals(1, priorityMapping.get(primary, false), 0.01);
+        assertEquals(0.9, priorityMapping.get(secondary, false), 0.01);
     }
 
     @Test
@@ -115,19 +115,19 @@ class ExpressionBuilderTest {
         CustomModel customModel = new CustomModel();
         customModel.addToPriority(If("road_class == PRIMARY", MULTIPLY, 0.9));
         customModel.addToSpeed(If("road_class == PRIMARY", MULTIPLY, 0.8));
-        SpeedAndAccessProvider speedAndAccessProvider = ExpressionBuilder.create(customModel, encodingManager,
+        CustomWeighting.Parameters parameters = ExpressionBuilder.create(customModel, encodingManager,
                 encoder.getMaxSpeed(), avgSpeedEnc);
-        assertEquals(0.9, speedAndAccessProvider.getPriority(primary, false), 0.01);
-        assertEquals(64, speedAndAccessProvider.getSpeed(primary, false), 0.01);
+        assertEquals(0.9, parameters.getEdgeToPriorityMapping().get(primary, false), 0.01);
+        assertEquals(64, parameters.getEdgeToSpeedMapping().get(primary, false), 0.01);
 
-        assertEquals(1, speedAndAccessProvider.getPriority(secondary, false), 0.01);
-        assertEquals(70, speedAndAccessProvider.getSpeed(secondary, false), 0.01);
+        assertEquals(1, parameters.getEdgeToPriorityMapping().get(secondary, false), 0.01);
+        assertEquals(70, parameters.getEdgeToSpeedMapping().get(secondary, false), 0.01);
 
         customModel.addToSpeed(If("road_class != PRIMARY", LIMIT, 50));
-        speedAndAccessProvider = ExpressionBuilder.create(customModel, encodingManager,
-                encoder.getMaxSpeed(), avgSpeedEnc);
-        assertEquals(64, speedAndAccessProvider.getSpeed(primary, false), 0.01);
-        assertEquals(50, speedAndAccessProvider.getSpeed(secondary, false), 0.01);
+        CustomWeighting.EdgeToDoubleMapping speedMapping = ExpressionBuilder.create(customModel, encodingManager,
+                encoder.getMaxSpeed(), avgSpeedEnc).getEdgeToSpeedMapping();
+        assertEquals(64, speedMapping.get(primary, false), 0.01);
+        assertEquals(50, speedMapping.get(secondary, false), 0.01);
     }
 
     @Test
@@ -141,10 +141,10 @@ class ExpressionBuilderTest {
         customModel.addToPriority(If("country == \"DEU\"", MULTIPLY, 0.9));
         customModel.addToPriority(ElseIf("country == \"blup\"", MULTIPLY, 0.7));
         customModel.addToPriority(Else(MULTIPLY, 0.5));
-        SpeedAndAccessProvider speedAndAccessProvider = ExpressionBuilder.create(customModel, encodingManager,
-                encoder.getMaxSpeed(), avgSpeedEnc);
-        assertEquals(0.9, speedAndAccessProvider.getPriority(deu, false), 0.01);
-        assertEquals(0.7, speedAndAccessProvider.getPriority(blup, false), 0.01);
+        CustomWeighting.EdgeToDoubleMapping priorityMapping = ExpressionBuilder.create(customModel, encodingManager,
+                encoder.getMaxSpeed(), avgSpeedEnc).getEdgeToPriorityMapping();
+        assertEquals(0.9, priorityMapping.get(deu, false), 0.01);
+        assertEquals(0.7, priorityMapping.get(blup, false), 0.01);
     }
 
     @Test
