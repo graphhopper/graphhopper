@@ -243,6 +243,6 @@ class CustomWeightingTest {
     }
 
     private Weighting createWeighting(CustomModel vehicleModel) {
-        return CustomWeighting.create(carFE, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
+        return CustomModelParser.create(carFE, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
     }
 }

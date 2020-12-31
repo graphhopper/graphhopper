@@ -22,6 +22,8 @@ import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.shapes.BBox;
@@ -39,7 +41,7 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-class CustomModelParser {
+public class CustomModelParser {
     private static final AtomicLong longVal = new AtomicLong(1);
     static final String IN_AREA_PREFIX = "in_area_";
     private static final Set<String> allowedNames = new HashSet<>(Arrays.asList("edge", "Math"));
@@ -64,6 +66,14 @@ class CustomModelParser {
 
     private CustomModelParser() {
         // utility class
+    }
+
+    public static CustomWeighting create(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup, TurnCostProvider turnCostProvider,
+                                         CustomModel customModel) {
+        if (customModel == null)
+            throw new IllegalStateException("CustomModel cannot be null");
+        CustomWeighting.Parameters parameters = create(customModel, lookup, baseFlagEncoder.getMaxSpeed(), baseFlagEncoder.getAverageSpeedEnc());
+        return new CustomWeighting(baseFlagEncoder, turnCostProvider, parameters);
     }
 
     /**

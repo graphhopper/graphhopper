@@ -18,7 +18,6 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.AbstractWeighting;
@@ -84,14 +83,6 @@ public final class CustomWeighting extends AbstractWeighting {
     private final double headingPenaltySeconds;
     private final EdgeToDoubleMapping edgeToSpeedMapping;
     private final EdgeToDoubleMapping edgeToPriorityMapping;
-
-    public static CustomWeighting create(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup, TurnCostProvider turnCostProvider,
-                                         CustomModel customModel) {
-        if (customModel == null)
-            throw new IllegalStateException("CustomModel cannot be null");
-        Parameters parameters = CustomModelParser.create(customModel, lookup, baseFlagEncoder.getMaxSpeed(), baseFlagEncoder.getAverageSpeedEnc());
-        return new CustomWeighting(baseFlagEncoder, turnCostProvider, parameters);
-    }
 
     public CustomWeighting(FlagEncoder baseFlagEncoder, TurnCostProvider turnCostProvider, Parameters parameters) {
         super(baseFlagEncoder, turnCostProvider);
@@ -169,7 +160,7 @@ public final class CustomWeighting extends AbstractWeighting {
         private final double headingPenaltySeconds;
 
         Parameters(EdgeToDoubleMapping edgeToSpeedMapping, EdgeToDoubleMapping edgeToPriorityMapping,
-                           double maxSpeed, double distanceInfluence, double headingPenaltySeconds) {
+                   double maxSpeed, double distanceInfluence, double headingPenaltySeconds) {
             this.edgeToSpeedMapping = edgeToSpeedMapping;
             this.edgeToPriorityMapping = edgeToPriorityMapping;
             this.maxSpeed = maxSpeed;
