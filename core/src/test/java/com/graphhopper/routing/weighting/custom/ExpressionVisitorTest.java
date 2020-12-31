@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.Locale;
 
-import static com.graphhopper.routing.weighting.custom.ExpressionBuilder.isValidVariableName;
+import static com.graphhopper.routing.weighting.custom.CustomModelParser.isValidVariableName;
 import static com.graphhopper.routing.weighting.custom.ExpressionVisitor.parseExpression;
 import static org.junit.jupiter.api.Assertions.*;
 

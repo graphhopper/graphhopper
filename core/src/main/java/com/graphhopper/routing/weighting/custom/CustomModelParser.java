@@ -39,7 +39,7 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-class ExpressionBuilder {
+class CustomModelParser {
     private static final AtomicLong longVal = new AtomicLong(1);
     static final String IN_AREA_PREFIX = "in_area_";
     private static final Set<String> allowedNames = new HashSet<>(Arrays.asList("edge", "Math"));
@@ -62,7 +62,7 @@ class ExpressionBuilder {
     // TODO perf compare with ConcurrentHashMap, but I guess, if there is a difference at all, it is not big for small maps
     private static final Map<String, Class<?>> INTERNAL_CACHE = Collections.synchronizedMap(new HashMap<>());
 
-    private ExpressionBuilder() {
+    private CustomModelParser() {
         // utility class
     }
 
@@ -85,7 +85,7 @@ class ExpressionBuilder {
                 if (INTERNAL_CACHE.size() > 100) {
                     CACHE.putAll(INTERNAL_CACHE);
                     INTERNAL_CACHE.clear();
-                    LoggerFactory.getLogger(ExpressionBuilder.class).warn("Internal cache must stay small but was "
+                    LoggerFactory.getLogger(CustomModelParser.class).warn("Internal cache must stay small but was "
                             + INTERNAL_CACHE.size() + ". Cleared it. Misuse of CustomModel::__internal_cache?");
                 }
             } else if (CACHE_SIZE > 0) {

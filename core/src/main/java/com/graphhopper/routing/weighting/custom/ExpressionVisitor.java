@@ -28,7 +28,7 @@ import org.codehaus.janino.*;
 import java.io.StringReader;
 import java.util.*;
 
-import static com.graphhopper.routing.weighting.custom.ExpressionBuilder.IN_AREA_PREFIX;
+import static com.graphhopper.routing.weighting.custom.CustomModelParser.IN_AREA_PREFIX;
 
 class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
 
