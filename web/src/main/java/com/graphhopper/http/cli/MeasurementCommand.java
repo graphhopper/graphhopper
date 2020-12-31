@@ -91,7 +91,7 @@ public class MeasurementCommand extends ConfiguredCommand<GraphHopperServerConfi
         count = args.getInt("count");
 
         GraphHopper graphHopper = new GraphHopperOSM();
-        graphHopper.init(graphHopperConfiguration).forDesktop();
+        graphHopper.init(graphHopperConfiguration).getRouterConfig().setSimplifyResponse(false);
         graphHopper.importOrLoad();
 
         GraphHopperStorage graph = graphHopper.getGraphHopperStorage();
