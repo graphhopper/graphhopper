@@ -58,11 +58,11 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
         toInEdge = ANY_EDGE;
     }
 
-    protected void initCollections(int size) {
-        pqOpenSetFrom = new PriorityQueue<>(size);
+    protected void initCollections(int size, int prioQueueSize) {
+        pqOpenSetFrom = new PriorityQueue<>(prioQueueSize);
         bestWeightMapFrom = new GHIntObjectHashMap<>(size);
 
-        pqOpenSetTo = new PriorityQueue<>(size);
+        pqOpenSetTo = new PriorityQueue<>(prioQueueSize);
         bestWeightMapTo = new GHIntObjectHashMap<>(size);
     }
 

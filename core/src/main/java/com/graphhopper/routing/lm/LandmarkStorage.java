@@ -786,6 +786,11 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             setUpdateBestPath(false);
         }
 
+        @Override
+        protected void initCollections(int size, int prioQueueSize) {
+            super.initCollections(graph.getNodes(), prioQueueSize);
+        }
+
         public void setFilter(IntHashSet set, boolean bwd, boolean fwd) {
             EdgeFilter ef = new BlockedEdgesFilter(flagEncoder.getAccessEnc(), bwd, fwd, set);
             inEdgeFilter = ef;

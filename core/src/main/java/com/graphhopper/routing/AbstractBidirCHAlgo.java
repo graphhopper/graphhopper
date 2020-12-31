@@ -54,12 +54,12 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
         levelEdgeFilter = new CHLevelEdgeFilter(graph);
         pathExtractorSupplier = () -> new NodeBasedCHBidirPathExtractor(graph);
         int size = Math.min(Math.max(200, graph.getNodes() / 10), 150_000);
-        initCollections(size);
+        initCollections(size, size);
     }
 
     @Override
-    protected void initCollections(int size) {
-        super.initCollections(Math.min(size, 2000));
+    protected void initCollections(int size, int prioQueueSize) {
+        super.initCollections(Math.min(size, 2000), Math.min(prioQueueSize, 2000));
     }
 
     /**
