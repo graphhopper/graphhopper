@@ -23,7 +23,10 @@ import com.bmw.hmm.ViterbiAlgorithm;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.*;
+import com.graphhopper.routing.AStarBidirection;
+import com.graphhopper.routing.BidirRoutingAlgorithm;
+import com.graphhopper.routing.DijkstraBidirectionRef;
+import com.graphhopper.routing.Path;
 import com.graphhopper.routing.lm.LMApproximator;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.lm.PrepareLandmarks;
@@ -342,8 +345,8 @@ public class MapMatching {
         if (landmarks != null) {
             AStarBidirection algo = new AStarBidirection(queryGraph, weighting, TraversalMode.EDGE_BASED) {
                 @Override
-                protected void initCollections(int size) {
-                    super.initCollections(50);
+                protected void initCollections(int size, int prioQueueSize) {
+                    super.initCollections(50, 50);
                 }
             };
             LandmarkStorage lms = landmarks.getLandmarkStorage();
@@ -354,8 +357,8 @@ public class MapMatching {
         } else {
             router = new DijkstraBidirectionRef(queryGraph, weighting, TraversalMode.EDGE_BASED) {
                 @Override
-                protected void initCollections(int size) {
-                    super.initCollections(50);
+                protected void initCollections(int size, int prioQueueSize) {
+                    super.initCollections(50, 50);
                 }
             };
             router.setMaxVisitedNodes(maxVisitedNodes);
