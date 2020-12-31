@@ -16,9 +16,10 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.Statement;
+import com.graphhopper.routing.weighting.custom.CustomModel;
 import org.junit.jupiter.api.Test;
 
 import java.util.Iterator;

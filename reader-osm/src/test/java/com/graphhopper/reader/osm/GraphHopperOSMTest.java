@@ -30,6 +30,7 @@ import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomModel;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.GraphBuilder;

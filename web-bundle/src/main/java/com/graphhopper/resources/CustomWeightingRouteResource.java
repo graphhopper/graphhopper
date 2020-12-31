@@ -23,7 +23,7 @@ import com.graphhopper.MultiException;
 import com.graphhopper.config.Profile;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.jackson.CustomRequest;
-import com.graphhopper.routing.util.CustomModel;
+import com.graphhopper.routing.weighting.custom.CustomModel;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;

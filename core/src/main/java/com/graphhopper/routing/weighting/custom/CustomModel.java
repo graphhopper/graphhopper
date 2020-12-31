@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.Statement;
 import com.graphhopper.json.geo.JsonFeature;
@@ -58,12 +58,12 @@ public class CustomModel {
      * especially important for fast landmark queries (hybrid mode). Now this method ensures that all server-side custom
      * models are cached in a special internal cache which does not remove seldom accessed entries.
      */
-    public CustomModel __internal_cache() {
+    CustomModel useInternalCache() {
         this.cached = true;
         return this;
     }
 
-    public boolean __shouldBeCached() {
+    boolean shouldUseInternalCache() {
         return cached;
     }
 

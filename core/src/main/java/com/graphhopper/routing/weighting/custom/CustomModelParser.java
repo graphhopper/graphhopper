@@ -20,7 +20,6 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.json.Statement;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.TurnCostProvider;
@@ -85,12 +84,12 @@ public class CustomModelParser {
         String key = customModel.toString() + ",global:" + globalMaxSpeed;
         if (key.length() > 400_000) throw new IllegalArgumentException("Custom Model too big: " + key.length());
 
-        Class<?> clazz = customModel.__shouldBeCached() ? INTERNAL_CACHE.get(key) : null;
+        Class<?> clazz = customModel.shouldUseInternalCache() ? INTERNAL_CACHE.get(key) : null;
         if (CACHE_SIZE > 0 && clazz == null)
             clazz = CACHE.get(key);
         if (clazz == null) {
             clazz = createClazz(customModel, lookup, globalMaxSpeed);
-            if (customModel.__shouldBeCached()) {
+            if (customModel.shouldUseInternalCache()) {
                 INTERNAL_CACHE.put(key, clazz);
                 if (INTERNAL_CACHE.size() > 100) {
                     CACHE.putAll(INTERNAL_CACHE);

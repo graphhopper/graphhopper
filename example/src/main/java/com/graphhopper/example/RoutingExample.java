@@ -8,7 +8,7 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.osm.GraphHopperOSM;
-import com.graphhopper.routing.util.CustomModel;
+import com.graphhopper.routing.weighting.custom.CustomModel;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.*;

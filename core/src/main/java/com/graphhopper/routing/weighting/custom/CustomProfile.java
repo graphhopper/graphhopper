@@ -18,7 +18,6 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.util.CustomModel;
 
 public class CustomProfile extends Profile {
 
@@ -35,7 +34,7 @@ public class CustomProfile extends Profile {
     }
 
     public CustomProfile setCustomModel(CustomModel customModel) {
-        customModel.__internal_cache();
+        customModel.useInternalCache();
         getHints().putObject(CustomModel.KEY, customModel);
         getHints().putObject("custom_model_file", "empty");
         return this;
