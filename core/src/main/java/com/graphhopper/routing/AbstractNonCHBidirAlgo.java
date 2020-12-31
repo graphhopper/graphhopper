@@ -63,7 +63,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         outEdgeFilter = DefaultEdgeFilter.outEdges(flagEncoder.getAccessEnc());
         inEdgeFilter = DefaultEdgeFilter.inEdges(flagEncoder.getAccessEnc());
         int size = Math.min(Math.max(200, graph.getNodes() / 10), 150_000);
-        initCollections(size);
+        initCollections(size, size / 2);
     }
 
     /**

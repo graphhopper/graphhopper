@@ -788,7 +788,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         @Override
         protected void initCollections(int size, int prioQueueSize) {
-            super.initCollections(graph.getNodes(), prioQueueSize);
+            super.initCollections(graph.getNodes(), Math.min(Math.max(200, graph.getNodes() / 10), 150_000));
         }
 
         public void setFilter(IntHashSet set, boolean bwd, boolean fwd) {
