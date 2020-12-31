@@ -119,7 +119,7 @@ class ExpressionBuilder {
                     parseAbstractCompilationUnit();
             cu = injectStatements(priorityStatements, speedStatements, cu);
             SimpleCompiler sc = createCompiler(counter, cu);
-            return sc.getClassLoader().loadClass("com.graphhopper.JaninoCustomWeightingHelperSubclass" + counter);
+            return sc.getClassLoader().loadClass("com.graphhopper.routing.weighting.custom.JaninoCustomWeightingHelperSubclass" + counter);
         } catch (Exception ex) {
             String location = "";
             if (ex instanceof CompileException)
@@ -258,7 +258,7 @@ class ExpressionBuilder {
         }
 
         return ""
-                + "package com.graphhopper;"
+                + "package com.graphhopper.routing.weighting.custom;"
                 + "import " + CustomWeightingHelper.class.getName() + ";\n"
                 + "import " + EncodedValueLookup.class.getName() + ";\n"
                 + "import " + EdgeIteratorState.class.getName() + ";\n"
@@ -366,7 +366,7 @@ class ExpressionBuilder {
                 StringWriter sw = new StringWriter();
                 Unparser.unparse(cu, sw);
                 // System.out.println(sw.toString());
-                File dir = new File("./src/main/java/com/graphhopper");
+                File dir = new File("./src/main/java/com/graphhopper/routing/weighting/custom");
                 File temporaryFile = new File(dir, "JaninoCustomWeightingHelperSubclass" + counter + ".java");
                 Reader reader = Readers.teeReader(
                         new StringReader(sw.toString()), // in
