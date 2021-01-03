@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import java.io.Closeable;
 import java.util.*;
 
+import static com.graphhopper.util.DistancePlaneProjection.DIST_PLANE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -651,8 +652,8 @@ public class LocationIndexTreeTest {
             Snap actual = index.findClosest(lat, lon, EdgeFilter.ALL_EDGES);
             assertEquals(i + ": " + expected + " vs " + actual, expected.getClosestNode(), actual.getClosestNode());
             assertEquals(i + ": " + expected + " vs " + actual, expected.getQueryDistance(), actual.getQueryDistance(), .001);
-//            assertEquals(expected.getClosestEdge().getEdge(), actual.getClosestEdge().getEdge());
-//            assertEquals(expected.getWayIndex(), actual.getWayIndex());
+            assertEquals(expected.getClosestEdge().getEdge(), actual.getClosestEdge().getEdge());
+            assertEquals(expected.getWayIndex(), actual.getWayIndex());
         }
     }
 
@@ -684,58 +685,22 @@ public class LocationIndexTreeTest {
     }
 
     public static Snap findClosest(GraphHopperStorage graph, double queryLat, double queryLon) {
-        NodeAccess nodeAccess = graph.getNodeAccess();
-//        DistanceCalc calc = DistanceCalcEarth.DIST_EARTH;
-        DistanceCalc calc = DistancePlaneProjection.DIST_PLANE;
-
         Snap res = new Snap(queryLat, queryLon);
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
-            PointList pointList = iter.fetchWayGeometry(FetchMode.PILLAR_AND_ADJ);
-            int len = pointList.getSize();
-
-            double fromLat = nodeAccess.getLatitude(iter.getBaseNode());
-            double fromLon = nodeAccess.getLongitude(iter.getBaseNode());
-            double fromDist = calc.calcDist(fromLat, fromLon, queryLat, queryLon);
-            if (fromDist < 0)
-                throw new IllegalArgumentException();
-
-            if (res.getQueryDistance() > fromDist) {
-                res.setQueryDistance(fromDist);
-                res.setClosestEdge(iter.detach(false));
-                res.setClosestNode(iter.getBaseNode());
-                res.setWayIndex(0);
-                res.setSnappedPosition(Snap.Position.TOWER);
-            }
-
-            double toDist = calc.calcDist(nodeAccess.getLatitude(iter.getAdjNode()), nodeAccess.getLongitude(iter.getAdjNode()), queryLat, queryLon);
-            double tmpLat = fromLat;
-            double tmpLon = fromLon;
-            for (int pointIndex = 0; pointIndex < len; pointIndex++) {
-                double wayLat = pointList.getLatitude(pointIndex);
-                double wayLon = pointList.getLongitude(pointIndex);
-                Snap.Position pos = Snap.Position.EDGE;
-                double dist;
-                if (calc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, wayLat, wayLon)) {
-                    dist = calc.calcDenormalizedDist(calc.calcNormalizedEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, wayLat, wayLon));
-                } else {
-                    dist = calc.calcDist(queryLat, queryLon, wayLat, wayLon);
-                    pos = pointIndex + 1 == len ? Snap.Position.TOWER : Snap.Position.PILLAR;
-                }
-
-                if (res.getQueryDistance() > dist) {
-                    res.setQueryDistance(dist);
+            LocationIndexTree.traverseEdge(graph.getNodeAccess(), queryLat, queryLon, iter, (node, normedDist, wayIndex, pos) -> {
+                if (normedDist < res.getQueryDistance()) {
+                    res.setQueryDistance(normedDist);
+                    res.setClosestNode(node);
                     res.setClosestEdge(iter.detach(false));
-                    res.setClosestNode(fromDist < toDist ? iter.getBaseNode() : iter.getAdjNode());
-                    res.setWayIndex(pointIndex);
+                    res.setWayIndex(wayIndex);
                     res.setSnappedPosition(pos);
                 }
-
-                tmpLat = wayLat;
-                tmpLon = wayLon;
-            }
+            });
         }
-        res.calcSnappedPoint(calc);
+        res.setQueryDistance(DIST_PLANE.calcDenormalizedDist(res.getQueryDistance()));
+        res.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
         return res;
     }
+
 }

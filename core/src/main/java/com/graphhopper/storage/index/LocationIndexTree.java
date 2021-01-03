@@ -718,6 +718,10 @@ public class LocationIndexTree implements LocationIndex {
     }
 
     public void traverseEdge(double queryLat, double queryLon, EdgeIteratorState currEdge, EdgeCheck edgeCheck) {
+        traverseEdge(nodeAccess, queryLat, queryLon, currEdge, edgeCheck);
+    }
+
+    public static void traverseEdge(NodeAccess nodeAccess, double queryLat, double queryLon, EdgeIteratorState currEdge, EdgeCheck edgeCheck) {
         int baseNode = currEdge.getBaseNode();
         double currLat = nodeAccess.getLatitude(baseNode);
         double currLon = nodeAccess.getLongitude(baseNode);
