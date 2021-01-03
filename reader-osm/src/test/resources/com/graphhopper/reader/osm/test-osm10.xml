@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6">
+    <!--
+    (missing) 404  1-2-3
+                     | |
+                     4-5
+    -->
+    <node id="1" version="1" lat="52.5181" lon="13.4419"/>
+    <node id="2" version="1" lat="52.5180" lon="13.4424"/>
+    <node id="3" version="1" lat="52.5179" lon="13.4435"/>
+    <node id="4" version="1" lat="52.5177" lon="13.4423"/>
+    <node id="5" version="1" lat="52.5176" lon="13.4434"/>
+    <way id="1" version="1">
+        <!-- this node does not exist. the corresponding edge is created nevertheless, but because of the
+             missing node some edge distances were wrong before #2020 -->
+        <nd ref="404"/>
+        <nd ref="1"/>
+        <nd ref="2"/>
+        <nd ref="3"/>
+        <tag k="highway" v="residential"/>
+        <tag k="name" v="Weidenweg"/>
+    </way>
+    <way id="2" version="1">
+        <nd ref="2"/>
+        <nd ref="4"/>
+        <nd ref="5"/>
+        <nd ref="3"/>
+        <tag k="highway" v="residential"/>
+    </way>
+</osm>

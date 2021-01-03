@@ -17,13 +17,13 @@
  */
 package com.graphhopper.coll;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashSet;
 import java.util.Random;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -32,11 +32,17 @@ public class GHLongIntBTreeTest {
     @Test
     public void testThrowException_IfPutting_NoNumber() {
         GHLongIntBTree instance = new GHLongIntBTree(2);
-        try {
-            instance.put(-1, 1);
-            assertTrue(false);
-        } catch (Exception ex) {
-        }
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> instance.put(-1, 1));
+        assertTrue(ex.getMessage().contains("Illegal key -1"));
+    }
+
+    @Test
+    public void testEmptyValueIfMissing() {
+        GHLongIntBTree instance = new GHLongIntBTree(2);
+        long key = 9485854858458484L;
+        instance.put(key, 21);
+        assertEquals(21, instance.get(key));
+        assertEquals(-1, instance.get(404));
     }
 
     @Test
@@ -135,8 +141,9 @@ public class GHLongIntBTreeTest {
     public void testRandom() {
         for (int j = 3; j < 12; j += 4) {
             GHLongIntBTree instance = new GHLongIntBTree(j);
-            int size = 500;
-            Random rand = new Random(123);
+            final int size = 500;
+            final long seed = System.nanoTime();
+            Random rand = new Random(seed);
             Set<Integer> addedValues = new LinkedHashSet<>(size);
             for (int i = 0; i < size; i++) {
                 int val = rand.nextInt(size);
@@ -148,20 +155,20 @@ public class GHLongIntBTreeTest {
 //                    System.out.println("\n\n");
                 } catch (Exception ex) {
                     ex.printStackTrace();
-                    assertFalse(j + "| Problem with " + i + " " + ex, true);
+                    fail(j + "| Problem with " + i + ", seed: " + seed + " " + ex);
                 }
 
-                assertEquals(j + "| Size not equal to set! In " + i + " added " + val, addedValues.size(), instance.getSize());
+                assertEquals(addedValues.size(), instance.getSize(), j + "| Size not equal to set! In " + i + " added " + val);
             }
             int i = 0;
             for (int val : addedValues) {
-                assertEquals(j + "| Problem with " + i, val, instance.get(val));
+                assertEquals(val, instance.get(val), j + "| Problem with " + i);
                 i++;
             }
             instance.optimize();
             i = 0;
             for (int val : addedValues) {
-                assertEquals(j + "| Problem with " + i, val, instance.get(val));
+                assertEquals(val, instance.get(val), j + "| Problem with " + i);
                 i++;
             }
         }
