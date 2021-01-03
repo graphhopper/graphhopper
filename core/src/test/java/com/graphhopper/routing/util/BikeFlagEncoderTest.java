@@ -45,7 +45,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         encoder.setSpeed(false, intsRef, 10);
         encoder.getAccessEnc().setBool(false, intsRef, true);
         encoder.getAccessEnc().setBool(true, intsRef, true);
-        assertEquals(10, encoder.getSpeed(intsRef), 1e-1);
+        assertEquals(10, avgSpeedEnc.getDecimal(false, intsRef), 1e-1);
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
         assertEquals(18, encoder.getSpeed(way));
@@ -455,17 +455,17 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
 
         // unchanged
         IntsRef flags = assertPriority(UNCHANGED.getValue(), osmWay);
-        assertEquals(12, encoder.getSpeed(flags), 1e-1);
+        assertEquals(12, avgSpeedEnc.getDecimal(false, flags), 1e-1);
 
         // relation code is
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.setTag("route", "bicycle");
         flags = assertPriority(PREFER.getValue(), osmWay, osmRel);
-        assertEquals(12, encoder.getSpeed(flags), 1e-1);
+        assertEquals(12, avgSpeedEnc.getDecimal(false, flags), 1e-1);
 
         osmRel.setTag("network", "lcn");
         flags = assertPriority(PREFER.getValue(), osmWay, osmRel);
-        assertEquals(12, encoder.getSpeed(flags), 1e-1);
+        assertEquals(12, avgSpeedEnc.getDecimal(false, flags), 1e-1);
 
         // relation code is VERY_NICE
         osmRel.setTag("network", "rcn");
@@ -538,7 +538,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         way.setTag("highway", "secondary");
         way.setTag("maxspeed", "10");
         IntsRef edgeFlags = encodingManager.handleWayTags(way, accessMap, encodingManager.createRelationFlags());
-        assertEquals(10, encoder.getSpeed(edgeFlags), 1e-1);
+        assertEquals(10, avgSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
         assertPriority(PREFER.getValue(), way);
 
         way = new ReaderWay(1);
@@ -546,7 +546,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         way.setTag("maxspeed", "90");
         edgeFlags = encodingManager.createEdgeFlags();
         encoder.setSpeed(false, edgeFlags, encoder.applyMaxSpeed(way, 20));
-        assertEquals(20, encoder.getSpeed(edgeFlags), 1e-1);
+        assertEquals(20, avgSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
         assertPriority(UNCHANGED.getValue(), way);
 
         way = new ReaderWay(1);
@@ -554,7 +554,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         way.setTag("maxspeed", "90");
         edgeFlags = encodingManager.createEdgeFlags();
         encoder.setSpeed(false, edgeFlags, encoder.applyMaxSpeed(way, 20));
-        assertEquals(20, encoder.getSpeed(edgeFlags), 1e-1);
+        assertEquals(20, avgSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
         assertPriority(UNCHANGED.getValue(), way);
 
         way = new ReaderWay(1);
@@ -562,9 +562,9 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         way.setTag("maxspeed", "15");
         edgeFlags = encodingManager.createEdgeFlags();
         encoder.setSpeed(false, edgeFlags, encoder.applyMaxSpeed(way, 15));
-        assertEquals(15, encoder.getSpeed(edgeFlags), 1.0);
+        assertEquals(15, avgSpeedEnc.getDecimal(false, edgeFlags), 1.0);
         edgeFlags = encodingManager.handleWayTags(way, accessMap, encodingManager.createRelationFlags());
-        assertEquals(15, encoder.getSpeed(edgeFlags), 1.0);
+        assertEquals(15, avgSpeedEnc.getDecimal(false, edgeFlags), 1.0);
         assertPriority(PREFER.getValue(), way);
     }
 

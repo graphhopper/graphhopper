@@ -38,7 +38,7 @@ import static org.junit.Assert.*;
 public class FootFlagEncoderTest {
     private final EncodingManager encodingManager = EncodingManager.create("car,bike,foot");
     private final FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
-    private final DecimalEncodedValue footAvSpeedEnc = footEncoder.getAverageSpeedEnc();
+    private final DecimalEncodedValue footAvgSpeedEnc = footEncoder.getAverageSpeedEnc();
     private final BooleanEncodedValue footAccessEnc = footEncoder.getAccessEnc();
     private final DecimalEncodedValue carAvSpeedEnc = encodingManager.getEncoder("car").getAverageSpeedEnc();
     private final BooleanEncodedValue carAccessEnc = encodingManager.getEncoder("car").getAccessEnc();
@@ -48,8 +48,8 @@ public class FootFlagEncoderTest {
         IntsRef fl = encodingManager.createEdgeFlags();
         footAccessEnc.setBool(false, fl, true);
         footAccessEnc.setBool(true, fl, true);
-        footAvSpeedEnc.setDecimal(false, fl, 10);
-        assertEquals(10, footEncoder.getSpeed(fl), 1e-1);
+        footAvgSpeedEnc.setDecimal(false, fl, 10);
+        assertEquals(10, footAvgSpeedEnc.getDecimal(false, fl), 1e-1);
     }
 
     @Test
@@ -57,21 +57,21 @@ public class FootFlagEncoderTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
         IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.getAccess(way));
-        assertEquals(FootFlagEncoder.MEAN_SPEED, footEncoder.getSpeed(flags), 1e-1);
+        assertEquals(FootFlagEncoder.MEAN_SPEED, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
 
         way.setTag("highway", "steps");
         flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.getAccess(way));
-        assertTrue(FootFlagEncoder.MEAN_SPEED > footEncoder.getSpeed(flags));
+        assertTrue(FootFlagEncoder.MEAN_SPEED > footAvgSpeedEnc.getDecimal(false, flags));
     }
 
     @Test
     public void testCombined() {
         Graph g = new GraphBuilder(encodingManager).create();
         EdgeIteratorState edge = g.edge(0, 1);
-        edge.set(footAvSpeedEnc, 10.0).set(footAccessEnc, true, true);
+        edge.set(footAvgSpeedEnc, 10.0).set(footAccessEnc, true, true);
         edge.set(carAvSpeedEnc, 100.0).set(carAccessEnc, true, false);
 
-        assertEquals(10, edge.get(footAvSpeedEnc), 1e-1);
+        assertEquals(10, edge.get(footAvgSpeedEnc), 1e-1);
         assertTrue(edge.get(footAccessEnc));
         assertTrue(edge.getReverse(footAccessEnc));
 
@@ -80,7 +80,7 @@ public class FootFlagEncoderTest {
         assertFalse(edge.getReverse(carAccessEnc));
 
         IntsRef raw = encodingManager.createEdgeFlags();
-        footAvSpeedEnc.setDecimal(false, raw, 10);
+        footAvgSpeedEnc.setDecimal(false, raw, 10);
         footAccessEnc.setBool(false, raw, true);
         footAccessEnc.setBool(true, raw, true);
         assertEquals(0, carAvSpeedEnc.getDecimal(false, raw), 1e-1);
@@ -89,9 +89,9 @@ public class FootFlagEncoderTest {
     @Test
     public void testGraph() {
         Graph g = new GraphBuilder(encodingManager).create();
-        g.edge(0, 1).setDistance(10).set(footAvSpeedEnc, 10.0).set(footAccessEnc, true, true);
-        g.edge(0, 2).setDistance(10).set(footAvSpeedEnc, 5.0).set(footAccessEnc, true, true);
-        g.edge(1, 3).setDistance(10).set(footAvSpeedEnc, 10.0).set(footAccessEnc, true, true);
+        g.edge(0, 1).setDistance(10).set(footAvgSpeedEnc, 10.0).set(footAccessEnc, true, true);
+        g.edge(0, 2).setDistance(10).set(footAvgSpeedEnc, 5.0).set(footAccessEnc, true, true);
+        g.edge(1, 3).setDistance(10).set(footAvgSpeedEnc, 10.0).set(footAccessEnc, true, true);
         EdgeExplorer out = g.createEdgeExplorer(DefaultEdgeFilter.outEdges(footEncoder));
         assertEquals(GHUtility.asSet(1, 2), GHUtility.getNeighbors(out.setBaseNode(0)));
         assertEquals(GHUtility.asSet(0, 3), GHUtility.getNeighbors(out.setBaseNode(1)));
@@ -250,9 +250,9 @@ public class FootFlagEncoderTest {
         way.setTag("route", "ferry");
         // a bit longer than an hour
         way.setTag("duration:seconds", "4000");
+        assertEquals(30, footEncoder.ferrySpeedCalc.getSpeed(way), .1);
         IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.getAccess(way));
-        assertTrue(footEncoder.getSpeed(flags) > footEncoder.getMaxSpeed());
-        assertEquals(20, footEncoder.getSpeed(flags), .1);
+        assertEquals(15, footAvgSpeedEnc.getDecimal(false, flags), .1);
     }
 
     @Test
@@ -264,12 +264,12 @@ public class FootFlagEncoderTest {
 
         way.setTag("sidewalk", "yes");
         flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.getAccess(way));
-        assertEquals(5, footEncoder.getSpeed(flags), 1e-1);
+        assertEquals(5, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
 
         way.clearTags();
         way.setTag("highway", "track");
         flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.getAccess(way));
-        assertEquals(5, footEncoder.getSpeed(flags), 1e-1);
+        assertEquals(5, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
     }
 
     @Test
@@ -329,12 +329,12 @@ public class FootFlagEncoderTest {
         way.setTag("highway", "track");
         way.setTag("sac_scale", "hiking");
         IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.getAccess(way));
-        assertEquals(FootFlagEncoder.MEAN_SPEED, footEncoder.getSpeed(flags), 1e-1);
+        assertEquals(FootFlagEncoder.MEAN_SPEED, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
 
         way.setTag("highway", "track");
         way.setTag("sac_scale", "mountain_hiking");
         flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.getAccess(way));
-        assertEquals(FootFlagEncoder.SLOW_SPEED, footEncoder.getSpeed(flags), 1e-1);
+        assertEquals(FootFlagEncoder.SLOW_SPEED, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
     }
 
     @Test

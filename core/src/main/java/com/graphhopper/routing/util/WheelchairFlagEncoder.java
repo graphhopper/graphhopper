@@ -202,7 +202,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         if (!access.isFerry()) {
             setSpeed(edgeFlags, true, true, MEAN_SPEED);
         } else {
-            double ferrySpeed = getFerrySpeed(way);
+            double ferrySpeed = ferrySpeedCalc.getSpeed(way);
             setSpeed(edgeFlags, true, true, ferrySpeed);
         }
 

@@ -203,7 +203,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
         } else {
             accessEnc.setBool(false, edgeFlags, true);
             accessEnc.setBool(true, edgeFlags, true);
-            double ferrySpeed = getFerrySpeed(way);
+            double ferrySpeed = ferrySpeedCalc.getSpeed(way);
             setSpeed(false, edgeFlags, ferrySpeed);
             setSpeed(true, edgeFlags, ferrySpeed);
         }

@@ -130,8 +130,8 @@ public class MotorcycleFlagEncoderTest {
         way.setTag("highway", "service");
         assertTrue(encoder.getAccess(way).isWay());
         IntsRef edgeFlags = encoder.handleWayTags(em.createEdgeFlags(), way, EncodingManager.Access.WAY);
-        assertEquals(20, encoder.getSpeed(edgeFlags), .1);
-        assertEquals(20, encoder.getSpeed(true, edgeFlags), .1);
+        assertEquals(20, encoder.avgSpeedEnc.getDecimal(false, edgeFlags), .1);
+        assertEquals(20, encoder.avgSpeedEnc.getDecimal(true, edgeFlags), .1);
     }
 
     @Test
@@ -146,8 +146,8 @@ public class MotorcycleFlagEncoderTest {
         assertEquals(10, encoder.getAverageSpeedEnc().getDecimal(true, edgeFlags), .1);
 
         encoder.setSpeed(false, edgeFlags, 0);
-        assertEquals(0, encoder.getSpeed(edgeFlags), .1);
-        assertEquals(10, encoder.getSpeed(true, edgeFlags), .1);
+        assertEquals(0, encoder.avgSpeedEnc.getDecimal(false, edgeFlags), .1);
+        assertEquals(10, encoder.avgSpeedEnc.getDecimal(true, edgeFlags), .1);
         assertFalse(accessEnc.getBool(false, edgeFlags));
         assertTrue(accessEnc.getBool(true, edgeFlags));
     }
