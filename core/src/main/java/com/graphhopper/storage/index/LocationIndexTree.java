@@ -64,7 +64,7 @@ public class LocationIndexTree implements LocationIndex {
     protected final Graph graph;
     final DataAccess dataAccess;
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final int MAGIC_INT = Integer.MAX_VALUE / 22317;
+    private final int MAGIC_INT = Integer.MAX_VALUE / 22318;
     private final NodeAccess nodeAccess;
     SpatialKeyAlgo keyAlgo;
     private int maxRegionSearch = 4;
