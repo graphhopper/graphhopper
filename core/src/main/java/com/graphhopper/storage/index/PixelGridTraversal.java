@@ -23,16 +23,11 @@ import org.locationtech.jts.geom.Coordinate;
 import java.util.function.Consumer;
 
 /**
- * We need the supercover line. The best algorithm is a 'voxel grid traversal algorithm' and
+ * We need all grid cells intersected by a line. The best algorithm is a 'voxel grid traversal algorithm' and
  * described in "A Fast Voxel Traversal Algorithm for Ray Tracing" by John Amanatides and Andrew Woo
  * (1987): http://www.cse.yorku.ca/~amana/research/grid.pdf
- * <p>
- * Other methods we used are Bresenham (only integer start and end values) and Xiaolin Wu (anti
- * aliasing). See some discussion here: http://stackoverflow.com/a/3234074/194609 and here
- * http://stackoverflow.com/q/24679963/194609
- * <p>
  *
- * @author Peter Karich
+ * @author Michael Zilske
  */
 public class PixelGridTraversal {
 
