@@ -718,6 +718,10 @@ public class LocationIndexTree implements LocationIndex {
     }
 
     public void traverseEdge(double queryLat, double queryLon, EdgeIteratorState currEdge, EdgeCheck edgeCheck) {
+        traverseEdge(nodeAccess, queryLat, queryLon, currEdge, edgeCheck);
+    }
+
+    public static void traverseEdge(NodeAccess nodeAccess, double queryLat, double queryLon, EdgeIteratorState currEdge, EdgeCheck edgeCheck) {
         int baseNode = currEdge.getBaseNode();
         double currLat = nodeAccess.getLatitude(baseNode);
         double currLon = nodeAccess.getLongitude(baseNode);
@@ -725,8 +729,6 @@ public class LocationIndexTree implements LocationIndex {
 
         int tmpClosestNode = baseNode;
         edgeCheck.check(tmpClosestNode, currNormedDist, 0, Snap.Position.TOWER);
-        if (currNormedDist <= equalNormedDelta)
-            return;
 
         int adjNode = currEdge.getAdjNode();
         double adjLat = nodeAccess.getLatitude(adjNode);
@@ -765,9 +767,6 @@ public class LocationIndexTree implements LocationIndex {
                 }
                 edgeCheck.check(tmpClosestNode, tmpNormedDist, pointIndex + 1, pos);
             }
-
-            if (tmpNormedDist <= equalNormedDelta)
-                return;
 
             tmpLat = wayLat;
             tmpLon = wayLon;
