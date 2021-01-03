@@ -627,12 +627,9 @@ public class LocationIndexTreeTest {
         Helper.close((Closeable) g);
     }
 
-    @Disabled
-//    @RepeatedTest(10)
-    @Test
+    @RepeatedTest(10)
     public void randomGraph() {
-        long seed = 19801994156622L;//System.nanoTime();
-//        System.out.println(seed);
+        long seed = System.nanoTime();
         Random rand = new Random(seed);
         FlagEncoder encoder = new CarFlagEncoder();
         GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), EncodingManager.create(encoder), false).create(100);

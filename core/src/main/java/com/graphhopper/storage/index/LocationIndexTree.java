@@ -725,8 +725,6 @@ public class LocationIndexTree implements LocationIndex {
 
         int tmpClosestNode = baseNode;
         edgeCheck.check(tmpClosestNode, currNormedDist, 0, Snap.Position.TOWER);
-        if (currNormedDist <= equalNormedDelta)
-            return;
 
         int adjNode = currEdge.getAdjNode();
         double adjLat = nodeAccess.getLatitude(adjNode);
@@ -765,9 +763,6 @@ public class LocationIndexTree implements LocationIndex {
                 }
                 edgeCheck.check(tmpClosestNode, tmpNormedDist, pointIndex + 1, pos);
             }
-
-            if (tmpNormedDist <= equalNormedDelta)
-                return;
 
             tmpLat = wayLat;
             tmpLon = wayLon;
