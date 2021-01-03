@@ -20,44 +20,32 @@ package com.graphhopper.geohash;
 import com.graphhopper.util.shapes.BBox;
 
 /**
- * This class implements the idea of a geohash but in 'binary form' - to avoid confusion this is
- * called 'spatial key'. The idea of mixing the latitude and longitude is also taken to allow
- * removing the insignificant (right side) bits to make a geo-query or the coordinate less precise.
- * E.g. for a 3 bit precision the spatial key would need 6 bits and look like:
- * <p>
- * lat0 lon0 | lat1 lon1 | lat2 lon2
- * <p>
- * This works similar to how BIG endianness works for bytes to int packing. Detailed information is
- * available in this blog post:
+ * This class implements the idea of a geohash but without a string representation - to avoid confusion, this is
+ * called 'spatial key'.
+ *
+ * Detailed information is available in this blog post:
+ *
  * http://karussell.wordpress.com/2012/05/23/spatial-keys-memory-efficient-geohashes/
  * <p>
- * The bits are usable as key for hash tables like our SpatialKeyHashtable or for a spatial tree
- * like QuadTreeSimple. Also the binary form makes it relative simple for implementations using this
- * encoding scheme to expand to arbitrary dimension (e.g. shifting n-times if n would be the
- * dimension).
+ * The hash can be used as a key for hash tables. When you organize the grid as a quad tree,
+ * it resembles the path down the tree to reach the cell that it encodes. That's how it is used in
+ * LocationIndexTree.
  * <p>
  * A 32 bit representation has a precision of approx 600 meters = 40000/2^16
  * <p>
- * There are different possibilities how to handle different precision and order of bits. Either:
- * <p>
- * lat0 lon0 | lat1 lon1 | lat2 lon2
- * <p>
- * 0 0 | lat0 lon0 | lat1 lon1
- * <p>
- * as it is done now. Advantage: A single shift is only necessary to make it less precise. Or:
- * <p>
- * lat2 lon2 | lat1 lon1 | lat0 lon0
- * <p>
- * 0 0 | lat1 lon1 | lat0 lon0
- * <p>
- * Advantage: the bit mask to get lat0 lon0 is simple: 000..0011 and independent of the precision!
- * But when stored e.g. as int one would need to (left) shift several times if precision is only
- * 3bits.
- * <p>
+ *
+ * Implementation:
+ * - From the query point and the grid parameters, calculate (integer) coordinates (x,y) of the cell
+ *   the query point is in, using simple arithmetics.
+ * - Use a lookup table to interleave the bits of (x,y) to get the cell number, which is the spatial key.
+ *   See the drawing below. This is called a Z-order curve (because of the path you get when you follow
+ *   increasing cell numbers through the grid), or Morton code.
  *
  * @author Peter Karich
+ * @author Michael Zilske
  */
-// A 2 bit precision spatial key could look like
+
+// A 2 bit (per axis) spatial key could look like
 // 
 //  |----|----|----|----|
 //  |1010|1011|1110|1111|
@@ -81,8 +69,8 @@ public class SpatialKeyAlgo {
      * @param allBits how many bits should be used for the spatial key when encoding/decoding
      */
     public SpatialKeyAlgo(int allBits, BBox bounds) {
-        if (allBits > 64)
-            throw new IllegalStateException("allBits is too big and does not fit into 8 bytes");
+        if (allBits > 48)
+            throw new IllegalStateException("allBits is too big for this implementation");
 
         if (allBits <= 0)
             throw new IllegalStateException("allBits must be positive");
@@ -203,34 +191,34 @@ public class SpatialKeyAlgo {
                 | MortonTable256[x & EIGHTBITMASK]);
     }
 
-    public int[] decode(long c) {
+    public int[] decode(long z) {
         int[] result = new int[2];
         // Morton codes up to 48 bits
-        if (c < Math.pow(2, 48)) {
-            result[0] = decodeHelper(c, MortonTable256DecodeX);
-            result[1] = decodeHelper(c, MortonTable256DecodeY);
+        if (z < Math.pow(2, 48)) {
+            result[0] = decodeHelper(z, MortonTable256DecodeX);
+            result[1] = decodeHelper(z, MortonTable256DecodeY);
         }
         return result;
     }
 
-    private static int decodeHelper(long c, int coord[]) {
+    private static int decodeHelper(long z, int coord[]) {
         long a = 0;
         long EIGHTBITMASK = 0x000000ff;
         long loops = (long) Math.floor(64.0f / 9.0f);
         for (long i = 0; i < loops; ++i) {
-            a |= (coord[(int) ((c >> (i * 8)) & EIGHTBITMASK)] << (4 * i));
+            a |= (coord[(int) ((z >> (i * 8)) & EIGHTBITMASK)] << (4 * i));
         }
         return (int) a;
     }
 
     // https://en.wikipedia.org/wiki/Z-order_curve
 
-    public long top(long z) {
+    public long up(long z) {
         return (((z | 0b0101010101010101010101010101010101010101010101010101010101010101L) + 1) &
                 0b1010101010101010101010101010101010101010101010101010101010101010L) | (z & 0b0101010101010101010101010101010101010101010101010101010101010101L);
     }
 
-    public long bottom(long z) {
+    public long down(long z) {
         return (((z & 0b1010101010101010101010101010101010101010101010101010101010101010L) - 1) &
                 0b1010101010101010101010101010101010101010101010101010101010101010L) | (z & 0b0101010101010101010101010101010101010101010101010101010101010101L);
     }
@@ -245,8 +233,4 @@ public class SpatialKeyAlgo {
                 0b0101010101010101010101010101010101010101010101010101010101010101L) | (z & 0b1010101010101010101010101010101010101010101010101010101010101010L);
     }
 
-    @Override
-    public String toString() {
-        return "bits:" + allBits + ", bounds:" + bbox;
-    }
 }
