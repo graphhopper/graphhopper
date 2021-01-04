@@ -148,25 +148,6 @@ public abstract class BitUtil {
 
     public abstract void fromLong(byte[] bytes, long value, int offset);
 
-    /**
-     * The only purpose of this method is to test 'reverse'. toBitString is the reverse and both are
-     * independent of the endianness.
-     */
-    public final long fromBitString2Long(String str) {
-        if (str.length() > 64)
-            throw new UnsupportedOperationException("Strings needs to fit into a 'long' but length was " + str.length());
-
-        long res = 0;
-        int strLen = str.length();
-        for (int charIndex = 0; charIndex < strLen; charIndex++) {
-            res <<= 1;
-            if (str.charAt(charIndex) != '0')
-                res |= 1;
-        }
-        res <<= (64 - strLen);
-        return res;
-    }
-
     public abstract byte[] fromBitString(String str);
 
     public final String toBitString(IntsRef intsRef) {
@@ -223,27 +204,6 @@ public abstract class BitUtil {
      */
     public abstract String toBitString(byte[] bytes);
 
-    /**
-     * Reverses the bits in the specified long value and it removes the remaining higher bits. See
-     * also http://graphics.stanford.edu/~seander/bithacks.html#BitReverseObvious
-     * <p>
-     *
-     * @param maxBits the maximum number of recognized bits for reversal
-     */
-    public final long reverse(long value, int maxBits) {
-        long res = 0;
-        for (; maxBits > 0; value >>>= 1) {
-            res <<= 1;
-            res |= value & 1;
-            maxBits--;
-            if (value == 0) {
-                res <<= maxBits;
-                break;
-            }
-        }
-        return res;
-    }
-
     public final int getIntLow(long longValue) {
         return (int) (longValue & 0xFFFFFFFFL);
     }
@@ -256,21 +216,4 @@ public abstract class BitUtil {
         return ((long) intHigh << 32) | (intLow & 0xFFFFFFFFL);
     }
 
-    public final long reverseLeft(long value, int maxBits) {
-        long res = 0;
-        int delta = 64 - maxBits;
-        long maxBit = 1L << delta;
-        for (; maxBits > 0; res <<= 1) {
-            if ((value & maxBit) != 0)
-                res |= 1;
-
-            maxBit <<= 1;
-            maxBits--;
-            if (maxBit == 0) {
-                res <<= delta;
-                break;
-            }
-        }
-        return res;
-    }
 }

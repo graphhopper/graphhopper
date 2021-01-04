@@ -32,6 +32,7 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.locationtech.jts.geom.*;
@@ -128,9 +129,10 @@ public class PtIsochroneResource {
             // I think then we should have all possible encroaching points. (Proof needed.)
             locationIndex.query(BBox.fromEnvelope(exploredPoints.getEnvelopeInternal()), new LocationIndex.Visitor() {
                 @Override
-                public void onNode(int nodeId) {
-                    Coordinate nodeCoordinate = new Coordinate(nodeAccess.getLongitude(nodeId), nodeAccess.getLatitude(nodeId));
-                    z1.merge(nodeCoordinate, Double.MAX_VALUE, Math::min);
+                public void onEdge(int edgeId) {
+                    EdgeIteratorState edge = queryGraph.getEdgeIteratorStateForKey(edgeId * 2);
+                    z1.merge(new Coordinate(nodeAccess.getLongitude(edge.getBaseNode()), nodeAccess.getLatitude(edge.getBaseNode())), Double.MAX_VALUE, Math::min);
+                    z1.merge(new Coordinate(nodeAccess.getLongitude(edge.getAdjNode()), nodeAccess.getLatitude(edge.getAdjNode())), Double.MAX_VALUE, Math::min);
                 }
             });
             exploredPoints = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));

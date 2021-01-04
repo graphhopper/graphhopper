@@ -718,7 +718,7 @@ public class QueryGraphTest {
         GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(10)).
                 setWayGeometry(Helper.createPointList(0.1, 0.1, 0.2, 0.2));
 
-        LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory());
+        LocationIndexTree locationIndex = new LocationIndexTree(g, new RAMDirectory());
         locationIndex.prepareIndex();
         Snap snap = locationIndex.findClosest(0.15, 0.15, DefaultEdgeFilter.allEdges(encoder));
         assertTrue(snap.isValid());
@@ -760,7 +760,7 @@ public class QueryGraphTest {
         GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(10)).
                 setWayGeometry(Helper.createPointList(0.1, 0.1, 0.2, 0.2));
 
-        LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory());
+        LocationIndexTree locationIndex = new LocationIndexTree(g, new RAMDirectory());
         locationIndex.prepareIndex();
         Snap snap = locationIndex.findClosest(0.2, 0.21, DefaultEdgeFilter.allEdges(encoder));
         assertTrue(snap.isValid());

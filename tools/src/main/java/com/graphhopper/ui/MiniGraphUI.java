@@ -257,7 +257,7 @@ public class MiniGraphUI {
                     }
 
                     @Override
-                    public void onNode(int node) {
+                    public void onEdge(int edgeId) {
                         // mg.plotNode(g2, node, Color.BLUE);
                     }
                 });

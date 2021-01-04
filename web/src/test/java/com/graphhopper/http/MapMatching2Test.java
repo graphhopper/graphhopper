@@ -81,9 +81,6 @@ public class MapMatching2Test {
             validateEdgeMatch(em);
         }
 
-        // create street names
-        assertEquals(Arrays.asList("", "", "", "", "", ""),
-                fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 2.5);
         assertEquals(28790, mr.getMatchMillis(), 50);
     }
@@ -105,11 +102,7 @@ public class MapMatching2Test {
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-70.gpx"), Gpx.class);
         MatchResult mr = mapMatching.match(gpx.trk.get(0).getEntries());
 
-        assertEquals(Arrays.asList("Милана Видака", "Милана Видака", "Милана Видака",
-                "Бранка Радичевића", "Бранка Радичевића", "Здравка Челара"),
-                fetchStreets(mr.getEdgeMatches()));
-        // TODO: length/time
-
+        assertEquals(Arrays.asList("Милана Видака", "Бранка Радичевића", "Здравка Челара"), fetchStreets(mr.getEdgeMatches()));
         for (EdgeMatch edgeMatch : mr.getEdgeMatches()) {
             validateEdgeMatch(edgeMatch);
         }

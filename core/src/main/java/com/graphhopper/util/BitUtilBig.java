@@ -115,14 +115,6 @@ public class BitUtilBig extends BitUtil {
         return sb.toString();
     }
 
-    /**
-     * Touches only the specified bits - it does not zero out the higher bits (like reverse does).
-     */
-    final long reversePart(long v, int maxBits) {
-        long rest = v & (~((1L << maxBits) - 1));
-        return rest | reverse(v, maxBits);
-    }
-
     @Override
     public String toString() {
         return "big";
