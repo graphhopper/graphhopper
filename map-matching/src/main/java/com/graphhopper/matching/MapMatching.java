@@ -109,12 +109,7 @@ public class MapMatching {
         }
 
         boolean disableLM = hints.getBool(Parameters.Landmark.DISABLE, false);
-        if (graphHopper.getLMPreparationHandler().isEnabled() && disableLM && !graphHopper.getRouterConfig().isLMDisablingAllowed())
-            throw new IllegalArgumentException("Disabling LM is not allowed");
-
         boolean disableCH = hints.getBool(Parameters.CH.DISABLE, false);
-        if (graphHopper.getCHPreparationHandler().isEnabled() && disableCH && !graphHopper.getRouterConfig().isCHDisablingAllowed())
-            throw new IllegalArgumentException("Disabling CH is not allowed");
 
         // see map-matching/#177: both ch.disable and lm.disable can be used to force Dijkstra which is the better
         // (=faster) choice when the observations are close to each other

@@ -83,8 +83,6 @@ public class RoutingExampleTC {
         // enable CH for our profile. since turn costs are enabled this will take more time and memory to prepare than
         // without turn costs.
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile.getName()));
-        // we allow disabling CH here so we can showcase changing u_turn_costs per request
-        hopper.getRouterConfig().setCHDisablingAllowed(true);
         hopper.importOrLoad();
         return hopper;
     }

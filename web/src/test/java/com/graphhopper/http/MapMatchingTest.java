@@ -76,7 +76,6 @@ public class MapMatchingTest {
         graphHopper.setEncodingManager(EncodingManager.create(encoder));
         graphHopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
         graphHopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
-        graphHopper.getRouterConfig().setLMDisablingAllowed(true);
         graphHopper.importOrLoad();
     }
 

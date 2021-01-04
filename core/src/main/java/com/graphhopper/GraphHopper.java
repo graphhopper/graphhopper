@@ -490,8 +490,6 @@ public class GraphHopper implements GraphHopperAPI {
         routerConfig.setMaxVisitedNodes(ghConfig.getInt(Routing.INIT_MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes()));
         routerConfig.setMaxRoundTripRetries(ghConfig.getInt(RoundTrip.INIT_MAX_RETRIES, routerConfig.getMaxRoundTripRetries()));
         routerConfig.setNonChMaxWaypointDistance(ghConfig.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, routerConfig.getNonChMaxWaypointDistance()));
-        routerConfig.setCHDisablingAllowed(ghConfig.getBool(CH.INIT_DISABLING_ALLOWED, routerConfig.isCHDisablingAllowed()));
-        routerConfig.setLMDisablingAllowed(ghConfig.getBool(Landmark.INIT_DISABLING_ALLOWED, routerConfig.isLMDisablingAllowed()));
         int activeLandmarkCount = ghConfig.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.min(8, lmPreparationHandler.getLandmarks()));
         if (activeLandmarkCount > lmPreparationHandler.getLandmarks())
             throw new IllegalArgumentException("Default value for active landmarks " + activeLandmarkCount

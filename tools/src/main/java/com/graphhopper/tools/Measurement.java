@@ -183,8 +183,6 @@ public class Measurement {
             hopper.clean();
         }
 
-        hopper.getRouterConfig().setCHDisablingAllowed(true);
-        hopper.getRouterConfig().setLMDisablingAllowed(true);
         hopper.importOrLoad();
 
         GraphHopperStorage g = hopper.getGraphHopperStorage();
