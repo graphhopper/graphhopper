@@ -186,11 +186,6 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
     }
 
     @Override
-    public void setNode(int nodeId, double lat, double lon) {
-        set(nodeId, lat, lon, Double.NaN);
-    }
-
-    @Override
     public void setNode(int nodeId, double lat, double lon, double ele) {
         set(nodeId, lat, lon, ele);
     }

@@ -122,11 +122,6 @@ public final class ShallowImmutablePointList extends PointList {
     }
 
     @Override
-    public void setNode(int nodeId, double lat, double lon) {
-        throw new UnsupportedOperationException(IMMUTABLE_ERR);
-    }
-
-    @Override
     public void setNode(int nodeId, double lat, double lon, double ele) {
         throw new UnsupportedOperationException(IMMUTABLE_ERR);
     }

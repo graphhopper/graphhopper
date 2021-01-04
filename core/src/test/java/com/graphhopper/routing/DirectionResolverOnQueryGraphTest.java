@@ -24,12 +24,12 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -52,14 +52,14 @@ public class DirectionResolverOnQueryGraphTest {
     private QueryGraph queryGraph;
     private NodeAccess na;
     private FlagEncoder encoder;
-    private Graph g;
-    private LocationIndex locationIndex;
+    private Graph graph;
+    private LocationIndexTree locationIndex;
 
     @Before
     public void setup() {
         encoder = new CarFlagEncoder();
-        g = new GraphBuilder(EncodingManager.create(encoder)).create();
-        na = g.getNodeAccess();
+        graph = new GraphBuilder(EncodingManager.create(encoder)).create();
+        na = graph.getNodeAccess();
     }
 
     @Test
@@ -260,11 +260,11 @@ public class DirectionResolverOnQueryGraphTest {
     }
 
     private EdgeIteratorState addEdge(int from, int to, boolean bothDirections) {
-        return g.edge(from, to, 1, bothDirections);
+        return GHUtility.setSpeed(60, true, bothDirections, encoder, graph.edge(from, to).setDistance(1));
     }
 
     private void init() {
-        locationIndex = new LocationIndexTree(g, new RAMDirectory());
+        locationIndex = new LocationIndexTree(graph, new RAMDirectory());
         locationIndex.prepareIndex();
     }
 
@@ -277,7 +277,7 @@ public class DirectionResolverOnQueryGraphTest {
         for (ExpectedResult r : expectedResults) {
             snaps.add(snapCoordinate(r.lat, r.lon));
         }
-        queryGraph = QueryGraph.create(g, snaps);
+        queryGraph = QueryGraph.create(graph, snaps);
         DirectionResolver resolver = new DirectionResolver(queryGraph, encoder.getAccessEnc());
         for (int i = 0; i < expectedResults.length; i++) {
             assertEquals("unexpected resolved direction",
@@ -300,7 +300,7 @@ public class DirectionResolverOnQueryGraphTest {
 
     private void assertUnrestricted(double lat, double lon) {
         Snap snap = snapCoordinate(lat, lon);
-        queryGraph = QueryGraph.create(g, snap);
+        queryGraph = QueryGraph.create(graph, snap);
         DirectionResolver resolver = new DirectionResolver(queryGraph, encoder.getAccessEnc());
         assertEquals(unrestricted(), resolver.resolveDirections(snap.getClosestNode(), snap.getQueryPoint()));
     }

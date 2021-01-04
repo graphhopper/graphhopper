@@ -21,7 +21,7 @@ import java.util.List;
 
 public interface EncodedValueLookup {
 
-    List<EncodedValue> getAllShared();
+    List<EncodedValue> getEncodedValues();
 
     <T extends EncodedValue> T getEncodedValue(String key, Class<T> encodedValueType);
 
@@ -31,7 +31,9 @@ public interface EncodedValueLookup {
 
     DecimalEncodedValue getDecimalEncodedValue(String key);
 
-    <T extends Enum> EnumEncodedValue<T> getEnumEncodedValue(String key, Class<T> enumType);
+    <T extends Enum<?>> EnumEncodedValue<T> getEnumEncodedValue(String key, Class<T> enumType);
+    
+    StringEncodedValue getStringEncodedValue(String key);
 
     boolean hasEncodedValue(String key);
 }

@@ -475,9 +475,9 @@ public class EncodingManager implements EncodedValueLookup {
     private void addEncodedValue(EncodedValue ev, boolean withNamespace) {
         if (hasEncodedValue(ev.getName()))
             throw new IllegalStateException("EncodedValue " + ev.getName() + " already exists " + encodedValueMap.get(ev.getName()) + " vs " + ev);
-        if (!withNamespace && !isSharedEV(ev))
+        if (!withNamespace && !isSharedEncodedValues(ev))
             throw new IllegalArgumentException("EncodedValue " + ev.getName() + " must not contain namespace character '" + SPECIAL_SEPARATOR + "'");
-        if (withNamespace && isSharedEV(ev))
+        if (withNamespace && isSharedEncodedValues(ev))
             throw new IllegalArgumentException("EncodedValue " + ev.getName() + " must contain namespace character '" + SPECIAL_SEPARATOR + "'");
         ev.init(edgeConfig);
         encodedValueMap.put(ev.getName(), ev);
@@ -651,7 +651,7 @@ public class EncodingManager implements EncodedValueLookup {
     public String toEncodedValuesAsString() {
         StringBuilder str = new StringBuilder();
         for (EncodedValue ev : encodedValueMap.values()) {
-            if (!isSharedEV(ev))
+            if (!isSharedEncodedValues(ev))
                 continue;
 
             if (str.length() > 0)
@@ -671,14 +671,6 @@ public class EncodingManager implements EncodedValueLookup {
     public IntsRef createRelationFlags() {
         // for backward compatibility use 2 ints
         return new IntsRef(2);
-    }
-
-    public IntsRef flagsDefault(boolean forward, boolean backward) {
-        IntsRef intsRef = createEdgeFlags();
-        for (AbstractFlagEncoder encoder : edgeEncoders) {
-            encoder.flagsDefault(intsRef, forward, backward);
-        }
-        return intsRef;
     }
 
     @Override
@@ -739,7 +731,7 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public List<FlagEncoder> fetchEdgeEncoders() {
-        return new ArrayList<FlagEncoder>(edgeEncoders);
+        return new ArrayList<>(edgeEncoders);
     }
 
     public boolean needsTurnCostsSupport() {
@@ -761,12 +753,8 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     @Override
-    public List<EncodedValue> getAllShared() {
-        List<EncodedValue> list = new ArrayList<>(encodedValueMap.size());
-        for (EncodedValue ev : encodedValueMap.values()) {
-            if (isSharedEV(ev)) list.add(ev);
-        }
-        return list;
+    public List<EncodedValue> getEncodedValues() {
+        return Collections.unmodifiableList(new ArrayList<>(encodedValueMap.values()));
     }
 
     @Override
@@ -784,10 +772,15 @@ public class EncodingManager implements EncodedValueLookup {
         return getEncodedValue(key, DecimalEncodedValue.class);
     }
 
-    @Override
     @SuppressWarnings("unchecked")
-    public <T extends Enum> EnumEncodedValue<T> getEnumEncodedValue(String key, Class<T> type) {
-        return (EnumEncodedValue<T>) getEncodedValue(key, EnumEncodedValue.class);
+    @Override
+    public <T extends Enum<?>> EnumEncodedValue<T> getEnumEncodedValue(String key, Class<T> type) {
+        return getEncodedValue(key, EnumEncodedValue.class);
+    }
+
+    @Override
+    public StringEncodedValue getStringEncodedValue(String key) {
+        return getEncodedValue(key, StringEncodedValue.class);
     }
 
     @Override
@@ -798,16 +791,15 @@ public class EncodingManager implements EncodedValueLookup {
         return (T) ev;
     }
 
-    private static final String SPECIAL_SEPARATOR = ".";
+    private static final String SPECIAL_SEPARATOR = "$";
 
-    private boolean isSharedEV(EncodedValue ev) {
-        return !ev.getName().contains(SPECIAL_SEPARATOR);
+    public static boolean isSharedEncodedValues(EncodedValue ev) {
+        return isValidEncodedValue(ev.getName()) && !ev.getName().contains(SPECIAL_SEPARATOR);
     }
 
     /**
      * All EncodedValue names that are created from a FlagEncoder should use this method to mark them as
-     * "none-shared" across the other FlagEncoders. E.g. average_speed for the CarFlagEncoder will
-     * be named car.average_speed
+     * "none-shared" across the other FlagEncoders.
      */
     public static String getKey(FlagEncoder encoder, String str) {
         return getKey(encoder.toString(), str);
@@ -815,5 +807,58 @@ public class EncodingManager implements EncodedValueLookup {
 
     public static String getKey(String prefix, String str) {
         return prefix + SPECIAL_SEPARATOR + str;
+    }
+
+    // copied from janino
+    private static final Set<String> KEYWORDS = new HashSet<>(Arrays.asList(
+            "first_match",
+            "abstract", "assert",
+            "boolean", "break", "byte",
+            "case", "catch", "char", "class", "const", "continue",
+            "default", "do", "double",
+            "else", "enum", "extends",
+            "false", "final", "finally", "float", "for",
+            "goto",
+            "if", "implements", "import", "instanceof", "int", "interface",
+            "long",
+            "native", "new", "non-sealed", "null",
+            "package", "permits", "private", "protected", "public",
+            "record", "return",
+            "sealed", "short", "static", "strictfp", "super", "switch", "synchronized",
+            "this", "throw", "throws", "transient", "true", "try",
+            "var", "void", "volatile",
+            "while",
+            "yield",
+            "_"
+    ));
+
+    public static boolean isValidEncodedValue(String name) {
+        // first character must be a lower case letter
+        if (name.isEmpty() || !isLowerLetter(name.charAt(0)) || KEYWORDS.contains(name)) return false;
+
+        int dollarCount = 0, underscoreCount = 0;
+        for (int i = 1; i < name.length(); i++) {
+            char c = name.charAt(i);
+            if (c == '$') {
+                if (dollarCount > 0) return false;
+                dollarCount++;
+            } else if (c == '_') {
+                if (underscoreCount > 0) return false;
+                underscoreCount++;
+            } else if (!isLowerLetter(c) && !isNumber(c)) {
+                return false;
+            } else {
+                underscoreCount = 0;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isNumber(char c) {
+        return c >= '0' && c <= '9';
+    }
+
+    private static boolean isLowerLetter(char c) {
+        return c >= 'a' && c <= 'z';
     }
 }

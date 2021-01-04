@@ -21,14 +21,14 @@ import com.graphhopper.util.Helper;
 
 /**
  * This enum defines the track type of an edge which describes how well-maintained a certain track is.
- * If not tagged the value will be MISSING (the default and easiest grad) and all edges that do not fit get OTHER as
- * value (the worst grade).
+ * If there is no value tagged or if the value does not fit the given values, the TrackType will be MISSING.
+ * grade1 is a very well-maintained road, grade5 is a poorly maintained road.
  *
  * @see <a href="https://wiki.openstreetmap.org/wiki/Tracktype">Tracktype Wiki</a>
  */
 public enum TrackType {
     MISSING("missing"), GRADE1("grade1"), GRADE2("grade2"),
-    GRADE3("grade3"), GRADE4("grade4"), GRADE5("grade5"), OTHER("other");
+    GRADE3("grade3"), GRADE4("grade4"), GRADE5("grade5");
 
     public static final String KEY = "track_type";
 
@@ -49,7 +49,7 @@ public enum TrackType {
         try {
             return TrackType.valueOf(Helper.toUpperCase(name));
         } catch (IllegalArgumentException ex) {
-            return OTHER;
+            return MISSING;
         }
     }
 }

@@ -26,7 +26,8 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.*;
+import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.EdgeIteratorState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +55,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected final Set<String> potentialBarriers = new HashSet<>(5);
     protected final int speedBits;
     protected final double speedFactor;
-    protected double speedDefault;
     private final int maxTurnCosts;
     private long encoderBit;
     protected BooleanEncodedValue accessEnc;
@@ -67,13 +67,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     private boolean blockFords = true;
     private boolean registered;
     protected EncodedValueLookup encodedValueLookup;
-
-    // Speeds from CarFlagEncoder
-    protected static final double UNKNOWN_DURATION_FERRY_SPEED = 5;
-    protected static final double SHORT_TRIP_FERRY_SPEED = 20;
-    protected static final double LONG_TRIP_FERRY_SPEED = 30;
-
     private ConditionalTagInspector conditionalTagInspector;
+    protected FerrySpeedCalculator ferrySpeedCalc;
 
     /**
      * @param speedBits    specify the number of bits used for speed
@@ -93,10 +88,13 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
 
         ferries.add("shuttle_train");
         ferries.add("ferry");
+
         restrictions.addAll(OSMRoadAccessParser.toOSMRestrictions(getTransportationMode()));
     }
 
     protected void init(DateRangeParser dateRangeParser) {
+        ferrySpeedCalc = new FerrySpeedCalculator(speedFactor, maxPossibleSpeed, 30, 20, 5);
+
         setConditionalTagInspector(new ConditionalOSMTagInspector(Collections.singletonList(dateRangeParser),
                 restrictions, restrictedValues, intendedValues, false));
     }
@@ -207,18 +205,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         return 0;
     }
 
-    /**
-     * Sets default flags with specified access.
-     */
-    protected void flagsDefault(IntsRef edgeFlags, boolean forward, boolean backward) {
-        if (forward)
-            avgSpeedEnc.setDecimal(false, edgeFlags, speedDefault);
-        if (backward && avgSpeedEnc.isStoreTwoDirections())
-            avgSpeedEnc.setDecimal(true, edgeFlags, speedDefault);
-        accessEnc.setBool(false, edgeFlags, forward);
-        accessEnc.setBool(true, edgeFlags, backward);
-    }
-
     @Override
     public double getMaxSpeed() {
         return maxPossibleSpeed;
@@ -239,7 +225,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
 
         return maxSpeed;
     }
-    
+
     /**
      * @return <i>true</i> if the given speed is not {@link Double#NaN}
      */
@@ -271,65 +257,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      * calculate precise speed values based on elevation data stored in the specified edge.
      */
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
-    }
-
-    /**
-     * Special handling for ferry ways.
-     */
-    protected double getFerrySpeed(ReaderWay way) {
-        long duration = 0;
-
-        try {
-            // During the reader process we have converted the duration value into a artificial tag called "duration:seconds".
-            duration = Long.parseLong(way.getTag("duration:seconds"));
-        } catch (Exception ex) {
-        }
-        // seconds to hours
-        double durationInHours = duration / 60d / 60d;
-        // Check if our graphhopper specific artificially created estimated_distance way tag is present
-        Number estimatedLength = way.getTag("estimated_distance", null);
-        if (durationInHours > 0)
-            try {
-                if (estimatedLength != null) {
-                    double estimatedLengthInKm = estimatedLength.doubleValue() / 1000;
-                    // If duration AND distance is available we can calculate the speed more precisely
-                    // and set both speed to the same value. Factor 1.4 slower because of waiting time!
-                    double calculatedTripSpeed = estimatedLengthInKm / durationInHours / 1.4;
-                    // Plausibility check especially for the case of wrongly used PxM format with the intention to
-                    // specify the duration in minutes, but actually using months
-                    if (calculatedTripSpeed > 0.01d) {
-                        if (calculatedTripSpeed > getMaxSpeed()) {
-                            return getMaxSpeed();
-                        }
-                        // If the speed is lower than the speed we can store, we have to set it to the minSpeed, but > 0
-                        if (Math.round(calculatedTripSpeed) < speedFactor / 2) {
-                            return speedFactor / 2;
-                        }
-
-                        return Math.round(calculatedTripSpeed);
-                    } else {
-                        long lastId = way.getNodes().isEmpty() ? -1 : way.getNodes().get(way.getNodes().size() - 1);
-                        long firstId = way.getNodes().isEmpty() ? -1 : way.getNodes().get(0);
-                        if (firstId != lastId)
-                            logger.warn("Unrealistic long duration ignored in way with way ID=" + way.getId() + " : Duration tag value="
-                                    + way.getTag("duration") + " (=" + Math.round(duration / 60d) + " minutes)");
-                        durationInHours = 0;
-                    }
-                }
-            } catch (Exception ex) {
-            }
-
-        if (durationInHours == 0) {
-            if (estimatedLength != null && estimatedLength.doubleValue() <= 300)
-                return speedFactor / 2;
-            // unknown speed -> put penalty on ferry transport
-            return UNKNOWN_DURATION_FERRY_SPEED;
-        } else if (durationInHours > 1) {
-            // lengthy ferries should be faster than short trip ferry
-            return LONG_TRIP_FERRY_SPEED;
-        } else {
-            return SHORT_TRIP_FERRY_SPEED;
-        }
     }
 
     public final DecimalEncodedValue getAverageSpeedEnc() {
@@ -366,18 +293,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         avgSpeedEnc.setDecimal(reverse, edgeFlags, speed);
     }
 
-    double getSpeed(IntsRef edgeFlags) {
-        return getSpeed(false, edgeFlags);
-    }
-
-    double getSpeed(boolean reverse, IntsRef edgeFlags) {
-        double speedVal = avgSpeedEnc.getDecimal(reverse, edgeFlags);
-        if (speedVal < 0)
-            throw new IllegalStateException("Speed was negative!? " + speedVal);
-
-        return speedVal;
-    }
-
     /**
      * @param way   needed to retrieve tags
      * @param speed speed guessed e.g. from the road type or other tags
@@ -398,8 +313,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     @Override
-    public List<EncodedValue> getAllShared() {
-        return encodedValueLookup.getAllShared();
+    public List<EncodedValue> getEncodedValues() {
+        return encodedValueLookup.getEncodedValues();
     }
 
     @Override
@@ -423,8 +338,13 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     @Override
-    public <T extends Enum> EnumEncodedValue<T> getEnumEncodedValue(String key, Class<T> enumType) {
+    public <T extends Enum<?>> EnumEncodedValue<T> getEnumEncodedValue(String key, Class<T> enumType) {
         return encodedValueLookup.getEnumEncodedValue(key, enumType);
+    }
+
+    @Override
+    public StringEncodedValue getStringEncodedValue(String key) {
+        return encodedValueLookup.getStringEncodedValue(key);
     }
 
     public void setEncodedValueLookup(EncodedValueLookup encodedValueLookup) {

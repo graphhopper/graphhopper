@@ -89,23 +89,4 @@ public abstract class AbstractBitUtilTester {
         assertEquals("011", bitUtil.toLastBitString(3L, 3));
     }
 
-    @Test
-    public void testBitString2Long() {
-        String str = "01000000000110000011100000011110";
-        assertEquals(str + "00000000000000000000000000000000", bitUtil.toBitString(bitUtil.fromBitString2Long(str)));
-        assertEquals("1000000000000000000000000000000000000000000000000000000000000000", bitUtil.toBitString(1L << 63));
-    }
-
-    @Test
-    public void testReverse() {
-        String str48 = "000000000000000000000000000000000000000000000000";
-        long ret = bitUtil.reverse(bitUtil.fromBitString2Long(str48 + "0111000000000101"), 16);
-        assertEquals(str48 + "1010000000001110", bitUtil.toBitString(ret, 64));
-
-        ret = bitUtil.reverse(bitUtil.fromBitString2Long(str48 + "0111000000000101"), 8);
-        assertEquals(str48 + "0000000010100000", bitUtil.toBitString(ret, 64));
-
-//        ret = BitUtil.BIG.reversePart(bitUtil.fromBitString2Long("0111000000000101"), 8);
-//        assertEquals("0111000010100000", bitUtil.toBitString(ret, 16));
-    }
 }

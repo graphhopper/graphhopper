@@ -102,7 +102,6 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         allowedHighwayTags.add("road");
 
         maxPossibleSpeed = FERRY_SPEED;
-        speedDefault = MEAN_SPEED;
         speedTwoDirections = true;
     }
 
@@ -203,7 +202,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         if (!access.isFerry()) {
             setSpeed(edgeFlags, true, true, MEAN_SPEED);
         } else {
-            double ferrySpeed = getFerrySpeed(way);
+            double ferrySpeed = ferrySpeedCalc.getSpeed(way);
             setSpeed(edgeFlags, true, true, ferrySpeed);
         }
 

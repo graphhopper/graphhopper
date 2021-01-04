@@ -654,13 +654,11 @@ public class RoutingAlgorithmWithOSMTest {
             // always enable landmarks
             hopper.getLMPreparationHandler().
                     setLMProfiles(new LMProfile(vehicle + "_profile"));
-            hopper.getRouterConfig().setLMDisablingAllowed(true);
 
             if (withCH) {
                 assert !Helper.isEmpty(weightStr);
                 hopper.getCHPreparationHandler().
                         setCHProfiles(new CHProfile(vehicle + "_profile"));
-                hopper.getRouterConfig().setCHDisablingAllowed(true);
             }
 
             if (is3D)
@@ -774,7 +772,7 @@ public class RoutingAlgorithmWithOSMTest {
         final GraphHopperStorage graph = new GraphBuilder(eManager).create();
 
         String bigFile = "10000EWD.txt.gz";
-        new PrincetonReader(graph).setStream(new GZIPInputStream(PrincetonReader.class.getResourceAsStream(bigFile))).read();
+        new PrincetonReader(graph, eManager.getEncoder("car")).setStream(new GZIPInputStream(PrincetonReader.class.getResourceAsStream(bigFile))).read();
         GraphHopper hopper = new GraphHopper() {
             {
                 setEncodingManager(eManager);

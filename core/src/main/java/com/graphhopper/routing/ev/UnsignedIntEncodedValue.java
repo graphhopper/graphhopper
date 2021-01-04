@@ -17,11 +17,12 @@
  */
 package com.graphhopper.routing.ev;
 
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 
 import java.util.Arrays;
-import java.util.Locale;
+import java.util.Collection;
 import java.util.Objects;
 
 /**
@@ -53,8 +54,8 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
      *                           direction.
      */
     public UnsignedIntEncodedValue(String name, int bits, boolean storeTwoDirections) {
-        if (!name.toLowerCase(Locale.ROOT).equals(name))
-            throw new IllegalArgumentException("EncodedValue name must be lower case but was " + name);
+        if (!EncodingManager.isValidEncodedValue(name))
+            throw new IllegalArgumentException("EncodedValue name wasn't valid: " + name + ". Use lower case letters, underscore and numbers only.");
         if (bits <= 0)
             throw new IllegalArgumentException(name + ": bits cannot be zero or negative");
         if (bits > 31)
@@ -206,13 +207,44 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
      * Produces a static hashcode for an Enum arrays that is platform independent and still compatible to the default
      * of openjdk.
      */
-    static int staticHashCode(Enum... vals) {
+    static int staticHashCode(Enum<?>... vals) {
         if (vals == null)
             return 0;
         int len = vals.length;
         int val = 1;
         for (int idx = 0; idx < len; ++idx) {
             val = 31 * val + vals[idx].ordinal();
+        }
+
+        return val;
+    }
+
+    /**
+     * Produces a static hashcode for an String arrays that is platform independent and still compatible to the default
+     * of openjdk.
+     */
+    static int staticHashCode(String... vals) {
+        if (vals == null)
+            return 0;
+        int len = vals.length;
+        int val = 1;
+        for (int idx = 0; idx < len; ++idx) {
+            val = 31 * val + Helper.staticHashCode(vals[idx]);
+        }
+
+        return val;
+    }
+    
+    /**
+     * Produces a static hashcode for a collection of Strings that is platform independent and still compatible to the default
+     * of openjdk.
+     */
+    static int staticHashCode(Collection<String> vals) {
+        if (vals == null)
+            return 0;
+        int val = 1;
+        for (String str : vals) {
+            val = 31 * val + Helper.staticHashCode(str);
         }
 
         return val;

@@ -17,10 +17,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -77,27 +77,27 @@ public class ShortestPathTreeTest {
         // 4-5-- |
         // |/ \--7
         // 6----/
-        GHUtility.setProperties(((Graph) graph).edge(0, 1).setDistance(70), carEncoder, 10, true, false);
-        GHUtility.setProperties(((Graph) graph).edge(0, 4).setDistance(50), carEncoder, 20, true, false);
+        GHUtility.setSpeed(10, true, false, carEncoder, ((Graph) graph).edge(0, 1).setDistance(70));
+        GHUtility.setSpeed(20, true, false, carEncoder, ((Graph) graph).edge(0, 4).setDistance(50));
 
-        GHUtility.setProperties(((Graph) graph).edge(1, 4).setDistance(70), carEncoder, 10, true, true);
-        GHUtility.setProperties(((Graph) graph).edge(1, 5).setDistance(70), carEncoder, 10, true, true);
-        GHUtility.setProperties(((Graph) graph).edge(1, 2).setDistance(200), carEncoder, 10, true, true);
+        GHUtility.setSpeed(10, true, true, carEncoder, ((Graph) graph).edge(1, 4).setDistance(70));
+        GHUtility.setSpeed(10, true, true, carEncoder, ((Graph) graph).edge(1, 5).setDistance(70));
+        GHUtility.setSpeed(10, true, true, carEncoder, ((Graph) graph).edge(1, 2).setDistance(200));
 
-        GHUtility.setProperties(((Graph) graph).edge(5, 2).setDistance(50), carEncoder, 10, true, false);
-        GHUtility.setProperties(((Graph) graph).edge(2, 3).setDistance(50), carEncoder, 10, true, false);
+        GHUtility.setSpeed(10, true, false, carEncoder, ((Graph) graph).edge(5, 2).setDistance(50));
+        GHUtility.setSpeed(10, true, false, carEncoder, ((Graph) graph).edge(2, 3).setDistance(50));
 
-        GHUtility.setProperties(((Graph) graph).edge(5, 3).setDistance(110), carEncoder, 20, true, false);
-        GHUtility.setProperties(((Graph) graph).edge(3, 7).setDistance(70), carEncoder, 10, true, false);
+        GHUtility.setSpeed(20, true, false, carEncoder, ((Graph) graph).edge(5, 3).setDistance(110));
+        GHUtility.setSpeed(10, true, false, carEncoder, ((Graph) graph).edge(3, 7).setDistance(70));
 
-        GHUtility.setProperties(((Graph) graph).edge(4, 6).setDistance(50), carEncoder, 20, true, false);
-        GHUtility.setProperties(((Graph) graph).edge(5, 4).setDistance(70), carEncoder, 10, true, false);
+        GHUtility.setSpeed(20, true, false, carEncoder, ((Graph) graph).edge(4, 6).setDistance(50));
+        GHUtility.setSpeed(10, true, false, carEncoder, ((Graph) graph).edge(5, 4).setDistance(70));
 
-        GHUtility.setProperties(((Graph) graph).edge(5, 6).setDistance(70), carEncoder, 10, true, false);
-        GHUtility.setProperties(((Graph) graph).edge(7, 5).setDistance(50), carEncoder, 20, true, false);
+        GHUtility.setSpeed(10, true, false, carEncoder, ((Graph) graph).edge(5, 6).setDistance(70));
+        GHUtility.setSpeed(20, true, false, carEncoder, ((Graph) graph).edge(7, 5).setDistance(50));
 
-        GHUtility.setProperties(((Graph) graph).edge(6, 7).setDistance(50), carEncoder, 20, true, true);
-        GHUtility.setProperties(((Graph) graph).edge(3, 8).setDistance(25), carEncoder, 20, true, true);
+        GHUtility.setSpeed(20, true, true, carEncoder, ((Graph) graph).edge(6, 7).setDistance(50));
+        GHUtility.setSpeed(20, true, true, carEncoder, ((Graph) graph).edge(3, 8).setDistance(25));
     }
 
     private int countDirectedEdges(GraphHopperStorage graph) {
@@ -119,7 +119,23 @@ public class ShortestPathTreeTest {
     }
 
     @Test
-    public void testSearch25Seconds() {
+    public void testSPTAndIsochrone25Seconds() {
+        List<ShortestPathTree.IsoLabel> result = new ArrayList<>();
+        ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(carEncoder, new PMap()), false, TraversalMode.NODE_BASED);
+        instance.setTimeLimit(25_000);
+        instance.search(0, result::add);
+        assertEquals(3, result.size());
+        assertAll(
+                () -> assertEquals(0, result.get(0).time), () -> assertEquals(0, result.get(0).node),
+                () -> assertEquals(9000, result.get(1).time), () -> assertEquals(4, result.get(1).node),
+                () -> assertEquals(18000, result.get(2).time), () -> assertEquals(6, result.get(2).node)
+        );
+        Collection<ShortestPathTree.IsoLabel> isochroneEdges = instance.getIsochroneEdges();
+        assertArrayEquals(new int[]{1, 7}, isochroneEdges.stream().mapToInt(l -> l.node).sorted().toArray());
+    }
+
+    @Test
+    public void testSPT26Seconds() {
         List<ShortestPathTree.IsoLabel> result = new ArrayList<>();
         ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(carEncoder, new PMap()), false, TraversalMode.NODE_BASED);
         instance.setTimeLimit(26_000);
@@ -141,14 +157,15 @@ public class ShortestPathTreeTest {
         instance.search(0, result::add);
         assertEquals(9, result.size());
         assertAll(
-                () -> assertEquals(0, result.get(0).time),
-                () -> assertEquals(9000, result.get(1).time),
-                () -> assertEquals(18000, result.get(2).time),
-                () -> assertEquals(25200, result.get(3).time),
-                () -> assertEquals(27000, result.get(4).time),
-                () -> assertEquals(36000, result.get(5).time),
-                () -> assertEquals(54000, result.get(6).time),
-                () -> assertEquals(55800, result.get(7).time)
+                () -> assertEquals(0, result.get(0).time), () -> assertEquals(0, result.get(0).node),
+                () -> assertEquals(9000, result.get(1).time), () -> assertEquals(4, result.get(1).node),
+                () -> assertEquals(18000, result.get(2).time), () -> assertEquals(6, result.get(2).node),
+                () -> assertEquals(25200, result.get(3).time), () -> assertEquals(1, result.get(3).node),
+                () -> assertEquals(27000, result.get(4).time), () -> assertEquals(7, result.get(4).node),
+                () -> assertEquals(36000, result.get(5).time), () -> assertEquals(5, result.get(5).node),
+                () -> assertEquals(54000, result.get(6).time), () -> assertEquals(2, result.get(6).node),
+                () -> assertEquals(55800, result.get(7).time), () -> assertEquals(3, result.get(7).node),
+                () -> assertEquals(60300, result.get(8).time), () -> assertEquals(8, result.get(8).node)
         );
     }
 

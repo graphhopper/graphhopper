@@ -42,7 +42,7 @@ after_success:
   - if [ "$SKIP_EXT_TESTS" != "true" ]; then
         mvn checkstyle:check forbiddenapis:check;
     fi
-  # if tagged deploy then release to maven central or deploy snapshot artifacts to sonatype 
+  # if tagged deploy then release to maven central or deploy snapshot artifacts to sonatype
   - if [ "$TRAVIS_JDK_VERSION" == "openjdk8" ] && [ "$TRAVIS_TAG" != "" ]; then
         echo "release to maven central";
         mvn versions:set -DnewVersion=$TRAVIS_TAG -DgenerateBackupPoms=false;

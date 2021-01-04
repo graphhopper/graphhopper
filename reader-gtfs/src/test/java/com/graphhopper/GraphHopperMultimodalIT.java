@@ -87,7 +87,7 @@ public class GraphHopperMultimodalIT {
         assertThat(firstTransitSolution.getLegs().get(0).getArrivalTime().toInstant())
                 .isEqualTo(firstTransitSolution.getLegs().get(1).getDepartureTime().toInstant());
         assertThat(firstTransitSolution.getLegs().get(2).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
-                .isEqualTo(LocalTime.parse("06:52:02.729"));
+                .isEqualTo(LocalTime.parse("06:52:02.633"));
     }
 
     @Test
@@ -109,13 +109,13 @@ public class GraphHopperMultimodalIT {
         assertThat(firstTransitSolution.getLegs().get(0).getArrivalTime().toInstant())
                 .isEqualTo(firstTransitSolution.getLegs().get(1).getDepartureTime().toInstant());
         assertThat(firstTransitSolution.getLegs().get(2).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
-                .isEqualTo(LocalTime.parse("06:52:02.729"));
+                .isEqualTo(LocalTime.parse("06:52:02.633"));
 
         assertThat(firstTransitSolution.getLegs().get(0).distance + firstTransitSolution.getLegs().get(2).distance)
-                .isEqualTo(497.0809678713282); // Total walking distance
+                .isEqualTo(496.9469678713282); // Total walking distance
         List<PathDetail> distances = firstTransitSolution.getPathDetails().get("distance");
         assertThat(distances.stream().mapToDouble(d -> (double) d.getValue()).sum())
-                .isEqualTo(497.0809678713282); // Also total walking distance -- PathDetails only cover access/egress for now
+                .isEqualTo(496.9469678713282); // Also total walking distance -- PathDetails only cover access/egress for now
         assertThat(distances.get(0).getFirst()).isEqualTo(0); // PathDetails start and end with PointList
         assertThat(distances.get(distances.size()-1).getLast()).isEqualTo(firstTransitSolution.getPoints().size()-1);
 
@@ -125,7 +125,7 @@ public class GraphHopperMultimodalIT {
         // In principle, this would dominate the transit solution, since it's faster, but
         // by default, walking gets a slight penalty.
         assertThat(walkSolution.getLegs().get(0).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
-                .isEqualTo(LocalTime.parse("06:51:10.370"));
+                .isEqualTo(LocalTime.parse("06:51:10.335"));
         assertThat(walkSolution.getLegs().size()).isEqualTo(1);
         assertThat(walkSolution.getNumChanges()).isEqualTo(-1);
 
@@ -165,7 +165,7 @@ public class GraphHopperMultimodalIT {
         assertThat(walkSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
                 .isEqualTo(LocalTime.parse("06:40"));
         assertThat(walkSolution.getLegs().get(0).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
-                .isEqualTo(LocalTime.parse("06:41:07.031"));
+                .isEqualTo(LocalTime.parse("06:41:07.028"));
         assertThat(walkSolution.getLegs().size()).isEqualTo(1);
         assertThat(walkSolution.getNumChanges()).isEqualTo(-1);
     }
@@ -186,7 +186,7 @@ public class GraphHopperMultimodalIT {
         assertThat(walkSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
                 .isEqualTo(LocalTime.parse("06:40"));
         assertThat(walkSolution.getLegs().get(0).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
-                .isEqualTo(LocalTime.parse("06:41:07.031"));
+                .isEqualTo(LocalTime.parse("06:41:07.028"));
         assertThat(walkSolution.getLegs().size()).isEqualTo(1);
         assertThat(walkSolution.getNumChanges()).isEqualTo(-1);
     }

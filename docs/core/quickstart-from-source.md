@@ -28,8 +28,6 @@ In the last step the data is created to get routes within the Berlin area:
   4. It will create data for a special routing algorithm to dramatically improve query speed. It skips step 3. and 4. if these files are already present.
   5. It starts the web service to service the UI and also the many endpoints like /route
 
-See also the instructions for [Android](../android/index.md)
-
 For you favourite area do e.g.:
 
 ```bash
@@ -142,14 +140,9 @@ npm run lint
 # see the package.json where more scripts are defined
 ```
 
-### Android Usage
- 
-For details on Android-usage have a look into this [Android site](../android/index.md)
-
 ### Swing and Desktop Usage
 
-You can use Graphhopper on the Desktop with the help of mapsforge too. No example code is given yet 
-but with the Android example combined with the Desktop example of the mapsforge project it should not be hard.
+You can use Graphhopper on the Desktop with the help of mapsforge too. No example code is given yet.
 
 For smallish graph (e.g. size of Berlin) use a RAMDataAccess driven GraphStorage (loads all into memory).
 For larger ones use the ContractionHierarchies preparation class and MMapDataAccess to avoid OutOfMemoryErrors if you have only few RAM. 

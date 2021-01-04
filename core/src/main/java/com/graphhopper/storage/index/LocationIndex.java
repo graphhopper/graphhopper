@@ -17,12 +17,8 @@
  */
 package com.graphhopper.storage.index;
 
-import com.carrotsearch.hppc.IntHashSet;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Storable;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.BBox;
 
 /**
@@ -35,16 +31,6 @@ import com.graphhopper.util.shapes.BBox;
  * @author Peter Karich
  */
 public interface LocationIndex extends Storable<LocationIndex> {
-    /**
-     * Integer value to specify the resolution of this location index. The higher the better the
-     * resolution.
-     */
-    LocationIndex setResolution(int resolution);
-
-    /**
-     * Creates this index - to be called once before findID.
-     */
-    LocationIndex prepareIndex();
 
     /**
      * This method returns the closest Snap for the specified location (lat, lon) and only if
@@ -56,26 +42,20 @@ public interface LocationIndex extends Storable<LocationIndex> {
      *                   node into the graph is accessible from a selected vehicle. E.g. if you have a FOOT-query do:
      *                   <pre>DefaultEdgeFilter.allEdges(footFlagEncoder);</pre>
      * @return An object containing the closest node and edge for the specified location. The node id
-     * has at least one edge which is accepted from the specified edgeFilter. If nothing is found
+     * has at least one edge which is accepted by the specified edgeFilter. If nothing is found
      * the method Snap.isValid will return false.
      */
     Snap findClosest(double lat, double lon, EdgeFilter edgeFilter);
 
     /**
-     * @param approxDist false if initialization and querying should be faster but less precise.
-     */
-    LocationIndex setApproximation(boolean approxDist);
-
-    void setSegmentSize(int bytes);
-
-    /**
-     * This method explores the nodes in this LocationIndex with the specified Visitor. It guarantees to visit all
-     * unique nodes included in the queryBBox but it could visit more.
+     * This method explores the LocationIndex with the specified Visitor. It visits only the stored edges (and only once)
+     * and limited by the queryBBox. Also (a few) more edges slightly outside of queryBBox could be
+     * returned that you can avoid via doing an explicit BBox check of the coordinates.
      */
     void query(BBox queryBBox, Visitor function);
 
     /**
-     * This interface allows to visit every node stored in the leafs of a LocationIndex.
+     * This interface allows to visit edges stored in the LocationIndex.
      */
     abstract class Visitor {
         public boolean isTileInfo() {
@@ -83,40 +63,12 @@ public interface LocationIndex extends Storable<LocationIndex> {
         }
 
         /**
-         * This method is called if isTileInfo is enabled.
+         * This method is called if isTileInfo returns true.
          */
         public void onTile(BBox bbox, int depth) {
         }
 
-        public abstract void onNode(int nodeId);
+        public abstract void onEdge(int edgeId);
     }
 
-    /**
-     * This abstract class allows to visit every edge from the stored nodes in the leafs of the tree for a requested
-     * area. It guarantees to visit all unique edges included in the queryBBox but it could be more.
-     */
-    abstract class EdgeVisitor extends Visitor {
-
-        private final IntHashSet edgeIds = new IntHashSet();
-        private final IntHashSet nodeIds = new IntHashSet();
-        private final EdgeExplorer edgeExplorer;
-
-        public EdgeVisitor(EdgeExplorer edgeExplorer) {
-            this.edgeExplorer = edgeExplorer;
-        }
-
-        public final void onNode(int nodeId) {
-            if (!nodeIds.add(nodeId))
-                return;
-
-            EdgeIterator iter = edgeExplorer.setBaseNode(nodeId);
-            while (iter.next()) {
-                if (!edgeIds.add(iter.getEdge()))
-                    continue;
-                onEdge(iter, nodeId, iter.getAdjNode());
-            }
-        }
-
-        public abstract void onEdge(EdgeIteratorState edge, int nodeA, int nodeB);
-    }
 }

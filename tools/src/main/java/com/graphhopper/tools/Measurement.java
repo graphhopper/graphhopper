@@ -35,9 +35,9 @@ import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleFactory;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder.SpatialRuleFactory;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
@@ -178,15 +178,11 @@ public class Measurement {
             }
         };
 
-        hopper.init(createConfigFromArgs(args)).
-                // use server to allow path simplification
-                        forServer();
+        hopper.init(createConfigFromArgs(args));
         if (cleanGraph) {
             hopper.clean();
         }
 
-        hopper.getRouterConfig().setCHDisablingAllowed(true);
-        hopper.getRouterConfig().setLMDisablingAllowed(true);
         hopper.importOrLoad();
 
         GraphHopperStorage g = hopper.getGraphHopperStorage();
@@ -581,7 +577,7 @@ public class Measurement {
             }
         };
 
-        final SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(jsonFeatureCollections, "ISO_A3", rulePerCountryFactory);
+        final SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(jsonFeatureCollections, "ISO3166-1:alpha3", rulePerCountryFactory);
 
         // generate random points in central Europe
         final List<GHPoint> randomPoints = new ArrayList<>(count);

@@ -24,6 +24,7 @@ import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -126,15 +127,11 @@ public class GraphHopperGtfs extends GraphHopperOSM {
         if (tmpIndex.loadExisting()) {
             return tmpIndex;
         } else {
-            if (getGraphHopperStorage().getNodes() > 0) {
-                LocationIndexTree locationIndexTree = new LocationIndexTree(getGraphHopperStorage(), new RAMDirectory());
-                if (!locationIndexTree.loadExisting()) {
-                    locationIndexTree.prepareIndex();
-                }
-                return locationIndexTree;
-            } else {
-                return new EmptyLocationIndex();
+            LocationIndexTree locationIndexTree = new LocationIndexTree(getGraphHopperStorage(), new RAMDirectory());
+            if (!locationIndexTree.loadExisting()) {
+                locationIndexTree.prepareIndex();
             }
+            return locationIndexTree;
         }
     }
 
@@ -191,7 +188,9 @@ public class GraphHopperGtfs extends GraphHopperOSM {
             }
             streetNetworkIndex.close();
             LocationIndexTree locationIndex = new LocationIndexTree(getGraphHopperStorage(), getGraphHopperStorage().getDirectory());
-            locationIndex.prepareIndex();
+            PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(getEncodingManager());
+            EnumEncodedValue<GtfsStorage.EdgeType> typeEnc = ptEncodedValues.getTypeEnc();
+            locationIndex.prepareIndex(edgeState -> edgeState.get(typeEnc) == GtfsStorage.EdgeType.HIGHWAY);
             setLocationIndex(locationIndex);
         }
     }

@@ -20,11 +20,13 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,10 +39,11 @@ public class EdgeBasedWitnessPathSearcherTest {
     private GraphHopperStorage graph;
     private CHGraph chGraph;
     private Weighting weighting;
+    private FlagEncoder encoder;
 
     @Before
     public void setup() {
-        CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 10);
+        encoder = new CarFlagEncoder(5, 5, 10);
         EncodingManager encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager)
                 .setCHConfigStrings("p|car|shortest|edge")
@@ -52,10 +55,10 @@ public class EdgeBasedWitnessPathSearcherTest {
     @Test
     public void test_shortcut_needed_basic() {
         // 0 -> 1 -> 2 -> 3 -> 4
-        graph.edge(0, 1, 1, false);
-        graph.edge(1, 2, 1, false);
-        graph.edge(2, 3, 1, false);
-        graph.edge(3, 4, 1, false);
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 4).setDistance(1));
         graph.freeze();
         setMaxLevelOnAllNodes();
         EdgeBasedWitnessPathSearcher finder = createFinder();
@@ -70,10 +73,10 @@ public class EdgeBasedWitnessPathSearcherTest {
     @Test
     public void test_shortcut_needed_bidirectional() {
         // 0 -> 1 -> 2 -> 3 -> 4
-        graph.edge(0, 1, 1, true);
-        graph.edge(1, 2, 1, true);
-        graph.edge(2, 3, 1, true);
-        graph.edge(3, 4, 1, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(1));
         graph.freeze();
         setMaxLevelOnAllNodes();
         EdgeBasedWitnessPathSearcher finder = createFinder();
@@ -90,12 +93,12 @@ public class EdgeBasedWitnessPathSearcherTest {
         // 0 -> 1 -> 2 -> 3 -> 4
         //       \       /
         //        \> 5 >/
-        graph.edge(0, 1, 1, false);
-        graph.edge(1, 2, 1, false);
-        graph.edge(2, 3, 2, false);
-        graph.edge(3, 4, 1, false);
-        graph.edge(1, 5, 1, false);
-        graph.edge(5, 3, 1, false);
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(2));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 5).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 3).setDistance(1));
         graph.freeze();
         setMaxLevelOnAllNodes();
         EdgeBasedWitnessPathSearcher finder = createFinder();
@@ -109,12 +112,12 @@ public class EdgeBasedWitnessPathSearcherTest {
         // 0 -> 1 -> 2 -> 3 -> 4
         //       \       /
         //        \> 5 >/
-        graph.edge(0, 1, 1, true);
-        graph.edge(1, 2, 1, true);
-        graph.edge(2, 3, 2, true);
-        graph.edge(3, 4, 1, true);
-        graph.edge(1, 5, 1, true);
-        graph.edge(5, 3, 1, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(2));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 5).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 3).setDistance(1));
         graph.freeze();
         setMaxLevelOnAllNodes();
         EdgeBasedWitnessPathSearcher finder = createFinder();

@@ -94,7 +94,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
         double maxSpeed = getHighwaySpeed("cycleway");
         if (accessEnc.getBool(false, intsRef)) {
             // use weighted mean so that longer incline influences speed more than shorter
-            double speed = getSpeed(false, intsRef);
+            double speed = avgSpeedEnc.getDecimal(false, intsRef);
             double fwdFaster = 1 + 2 * keepIn(fwdDecline, 0, 0.2);
             fwdFaster = fwdFaster * fwdFaster;
             double fwdSlower = 1 - 5 * keepIn(fwdIncline, 0, 0.2);
@@ -104,7 +104,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
         }
 
         if (accessEnc.getBool(true, intsRef)) {
-            double speedReverse = getSpeed(true, intsRef);
+            double speedReverse = avgSpeedEnc.getDecimal(true, intsRef);
             double bwFaster = 1 + 2 * keepIn(fwdIncline, 0, 0.2);
             bwFaster = bwFaster * bwFaster;
             double bwSlower = 1 - 5 * keepIn(fwdDecline, 0, 0.2);

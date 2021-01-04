@@ -19,13 +19,15 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -39,8 +41,9 @@ class PriorityCalculatorTest {
     PriorityCalculatorTest() {
         // in this test we use the same edge for every test and check the calculated priority for different custom models
         // and depending on additional properties of the edge we set in the tests
-        em = EncodingManager.create("car");
-        edge = new GraphBuilder(em).create().edge(0, 1, 1000, true);
+        FlagEncoder encoder = new CarFlagEncoder();
+        em = EncodingManager.create(encoder);
+        edge = GHUtility.setSpeed(60, true, true, encoder, new GraphBuilder(em).create().edge(0, 1).setDistance(1000));
     }
 
     @Test
@@ -104,8 +107,7 @@ class PriorityCalculatorTest {
         EnumEncodedValue<RoadClass> roadClass = em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         DecimalEncodedValue maxSpeedEnc = em.getDecimalEncodedValue(MaxSpeed.KEY);
         edge.set(roadClass, RoadClass.PRIMARY);
-        edge.set(maxSpeedEnc, 110);
-        edge.setReverse(maxSpeedEnc, 50);
+        edge.set(maxSpeedEnc, 110, 50);
 
         Map<String, Object> maxSpeedMap = new LinkedHashMap<>();
         maxSpeedMap.put("<100", 0.5);

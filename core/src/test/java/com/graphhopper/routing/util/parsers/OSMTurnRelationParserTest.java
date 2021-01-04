@@ -32,7 +32,7 @@ public class OSMTurnRelationParserTest {
 
         OSMTurnRelationParser parser = new OSMTurnRelationParser(encoder.toString(), 1, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR));
         GraphHopperStorage ghStorage = new GraphBuilder(new EncodingManager.Builder().add(encoder).addTurnCostParser(parser).build()).create();
-        EdgeBasedRoutingAlgorithmTest.initGraph(ghStorage);
+        EdgeBasedRoutingAlgorithmTest.initGraph(ghStorage, encoder);
         TurnCostParser.ExternalInternalMap map = new TurnCostParser.ExternalInternalMap() {
 
             @Override

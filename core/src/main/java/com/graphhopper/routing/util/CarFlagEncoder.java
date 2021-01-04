@@ -139,7 +139,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         // limit speed on bad surfaces to 30 km/h
         badSurfaceSpeed = 30;
         maxPossibleSpeed = 140;
-        speedDefault = defaultSpeedMap.get("secondary");
     }
 
     public CarFlagEncoder setSpeedTwoDirections(boolean value) {
@@ -261,7 +260,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             }
 
         } else {
-            double ferrySpeed = getFerrySpeed(way);
+            double ferrySpeed = ferrySpeedCalc.getSpeed(way);
             accessEnc.setBool(false, edgeFlags, true);
             accessEnc.setBool(true, edgeFlags, true);
             setSpeed(false, edgeFlags, ferrySpeed);

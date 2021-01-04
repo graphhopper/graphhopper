@@ -70,14 +70,14 @@ public class GraphHopperManaged implements Managed {
         if (configuration.has("gtfs.file")) {
             graphHopper = new GraphHopperGtfs(configuration);
         } else {
-            graphHopper = new GraphHopperOSM(landmarkSplittingFeatureCollection).forServer();
+            graphHopper = new GraphHopperOSM(landmarkSplittingFeatureCollection);
         }
         if (!configuration.getString("spatial_rules.location", "").isEmpty()) {
             throw new RuntimeException("spatial_rules.location has been deprecated. Please use spatial_rules.borders_directory instead.");
         }
         String spatialRuleBordersDirLocation = configuration.getString("spatial_rules.borders_directory", "");
         if (!spatialRuleBordersDirLocation.isEmpty()) {
-            final BBox maxBounds = BBox.parseBBoxString(configuration.getString("spatial_rules.max_bbox", "-180, 180, -90, 90"));
+            final Envelope maxBounds = BBox.toEnvelope(BBox.parseBBoxString(configuration.getString("spatial_rules.max_bbox", "-180, 180, -90, 90")));
             final Path bordersDirectory = Paths.get(spatialRuleBordersDirLocation);
             List<JsonFeatureCollection> jsonFeatureCollections = new ArrayList<>();
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(bordersDirectory, "*.{geojson,json}")) {
@@ -90,8 +90,7 @@ public class GraphHopperManaged implements Managed {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            SpatialRuleLookupHelper.buildAndInjectCountrySpatialRules(graphHopper,
-                    new Envelope(maxBounds.minLon, maxBounds.maxLon, maxBounds.minLat, maxBounds.maxLat), jsonFeatureCollections);
+            SpatialRuleLookupHelper.buildAndInjectCountrySpatialRules(graphHopper, maxBounds, jsonFeatureCollections);
         }
 
         ObjectMapper yamlOM = Jackson.initObjectMapper(new ObjectMapper(new YAMLFactory()));

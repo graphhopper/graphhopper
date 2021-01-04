@@ -19,9 +19,11 @@ package com.graphhopper;
 
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 import org.junit.Test;
@@ -35,15 +37,15 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class GraphHopperAPITest {
-    void initGraph(GraphHopperStorage graph) {
+    void initGraph(GraphHopperStorage graph, FlagEncoder encoder) {
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 42, 10);
         na.setNode(1, 42.1, 10.1);
         na.setNode(2, 42.1, 10.2);
         na.setNode(3, 42, 10.4);
 
-        graph.edge(0, 1, 10, true);
-        graph.edge(2, 3, 10, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(10));
     }
 
     @Test
@@ -51,15 +53,17 @@ public class GraphHopperAPITest {
         final String profile = "profile";
         final String vehicle = "car";
         final String weighting = "fastest";
-        GraphHopperStorage graph = new GraphBuilder(EncodingManager.create(vehicle)).create();
-        initGraph(graph);
+        EncodingManager em = EncodingManager.create(vehicle);
+        FlagEncoder encoder = em.getEncoder(vehicle);
+        GraphHopperStorage graph = new GraphBuilder(em).create();
+        initGraph(graph, encoder);
         // do further changes:
         NodeAccess na = graph.getNodeAccess();
         na.setNode(4, 41.9, 10.2);
 
-        graph.edge(1, 2, 10, false);
-        graph.edge(0, 4, 40, true);
-        graph.edge(4, 3, 40, true);
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 4).setDistance(40));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 3).setDistance(40));
 
         GraphHopper instance = createGraphHopper(vehicle).
                 setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
@@ -85,8 +89,9 @@ public class GraphHopperAPITest {
         final String profile = "profile";
         final String vehicle = "car";
         final String weighting = "fastest";
-        GraphHopperStorage graph = new GraphBuilder(EncodingManager.create(vehicle)).create();
-        initGraph(graph);
+        EncodingManager em = EncodingManager.create(vehicle);
+        GraphHopperStorage graph = new GraphBuilder(em).create();
+        initGraph(graph, em.getEncoder(vehicle));
 
         GraphHopper instance = createGraphHopper(vehicle).
                 setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
@@ -110,6 +115,7 @@ public class GraphHopperAPITest {
         String loc = "./target/issue1645";
         Helper.removeDir(new File(loc));
         EncodingManager encodingManager = EncodingManager.create(vehicle);
+        FlagEncoder encoder = encodingManager.getEncoder(vehicle);
         GraphHopperStorage graph = GraphBuilder.start(encodingManager).setRAM(loc, true).set3D(true).create();
 
         // we need elevation
@@ -119,8 +125,8 @@ public class GraphHopperAPITest {
         na.setNode(2, 42.1, 10.2, 1);
         na.setNode(3, 42, 10.4, 1);
 
-        graph.edge(0, 1, 10, true);
-        graph.edge(2, 3, 10, true);
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(10));
 
         final AtomicInteger counter = new AtomicInteger(0);
         GraphHopper instance = createGraphHopper(vehicle)

@@ -59,16 +59,7 @@ public class PillarInfo implements PointAccess {
     }
 
     @Override
-    public void setNode(int nodeId, double lat, double lon) {
-        _setNode(nodeId, lat, lon, Double.NaN);
-    }
-
-    @Override
     public void setNode(int nodeId, double lat, double lon, double ele) {
-        _setNode(nodeId, lat, lon, ele);
-    }
-
-    private void _setNode(int nodeId, double lat, double lon, double ele) {
         ensureNode(nodeId);
         long tmp = (long) nodeId * rowSizeInBytes;
         da.setInt(tmp + LAT, Helper.degreeToInt(lat));

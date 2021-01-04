@@ -18,10 +18,10 @@
 
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.BidirPathExtractor;
+import com.graphhopper.routing.DefaultBidirPathExtractor;
 import com.graphhopper.storage.RoutingCHGraph;
 
-public class NodeBasedCHBidirPathExtractor extends BidirPathExtractor {
+public class NodeBasedCHBidirPathExtractor extends DefaultBidirPathExtractor {
     private final ShortcutUnpacker shortcutUnpacker;
     private final RoutingCHGraph routingGraph;
 

@@ -131,11 +131,6 @@ public class RealtimeFeed {
                 }
 
                 @Override
-                public void setNode(int nodeId, double lat, double lon) {
-
-                }
-
-                @Override
                 public void setNode(int nodeId, double lat, double lon, double ele) {
 
                 }
@@ -210,11 +205,6 @@ public class RealtimeFeed {
                 reverseNewEdge.setReverseEdge(newEdge);
                 additionalEdges.push(newEdge);
                 return newEdge;
-            }
-
-            @Override
-            public EdgeIteratorState edge(int a, int b, double distance, boolean bothDirections) {
-                return null;
             }
 
             @Override

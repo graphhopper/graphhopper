@@ -178,15 +178,16 @@ public class GraphHopperOSMTest {
         LocationIndexTree index = (LocationIndexTree) gh.getLocationIndex();
         final EdgeExplorer edgeExplorer = gh.getGraphHopperStorage().createEdgeExplorer();
         final BBox bbox = new BBox(7.422, 7.429, 43.729, 43.734);
-        index.query(bbox, new LocationIndexTree.EdgeVisitor(edgeExplorer) {
+        index.query(bbox, new LocationIndexTree.Visitor() {
             @Override
             public void onTile(BBox bbox, int width) {
             }
 
             @Override
-            public void onEdge(EdgeIteratorState edge, int nodeA, int nodeB) {
+            public void onEdge(int edgeId) {
+                EdgeIteratorState edge = gh.getGraphHopperStorage().getEdgeIteratorStateForKey(edgeId * 2);
                 for (int i = 0; i < 2; i++) {
-                    int nodeId = i == 0 ? nodeA : nodeB;
+                    int nodeId = i == 0 ? edge.getBaseNode() : edge.getAdjNode();
                     double lat = na.getLatitude(nodeId);
                     double lon = na.getLongitude(nodeId);
                     if (bbox.contains(lat, lon))
@@ -428,6 +429,13 @@ public class GraphHopperOSMTest {
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm8);
         instance.importOrLoad();
+
+        // This test is arguably a bit unfair: It expects the LocationIndex
+        // to find a foot edge that is many tiles away.
+        // Previously, it worked, but only because of the way the LocationIndex would traverse the Graph
+        // (it would also go into CAR edges to find WALK edges).
+        // Now it doesn't work like that anymore, so I set this parameter so the test doesn't fail.
+        ((LocationIndexTree) instance.getLocationIndex()).setMaxRegionSearch(300);
 
         assertEquals(5, instance.getGraphHopperStorage().getNodes());
         assertEquals(8, instance.getGraphHopperStorage().getEdges());
@@ -699,6 +707,8 @@ public class GraphHopperOSMTest {
         instance.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
         instance.importOrLoad();
 
+        ((LocationIndexTree) instance.getLocationIndex()).setMaxRegionSearch(300);
+
         assertEquals(2, instance.getGraphHopperStorage().getNodes());
         assertEquals(2, instance.getGraphHopperStorage().getAllEdges().length());
 
@@ -899,26 +909,25 @@ public class GraphHopperOSMTest {
         na.setNode(7, 0.000, 0.001);
         na.setNode(8, 0.001, 0.001);
 
-        g.edge(0, 1, 100, true);
-        g.edge(1, 2, 100, true);
-        g.edge(2, 3, 100, true);
-        g.edge(3, 4, 100, true);
-        g.edge(4, 5, 100, true);
-        g.edge(5, 6, 100, true);
-        g.edge(6, 7, 100, true);
-        g.edge(7, 0, 100, true);
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 1).setDistance(100));
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(1, 2).setDistance(100));
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(2, 3).setDistance(100));
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(3, 4).setDistance(100));
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(4, 5).setDistance(100));
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(5, 6).setDistance(100));
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(6, 7).setDistance(100));
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(7, 0).setDistance(100));
 
-        g.edge(1, 8, 110, true);
-        g.edge(3, 8, 110, true);
-        g.edge(5, 8, 110, true);
-        g.edge(7, 8, 110, true);
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(1, 8).setDistance(110));
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(3, 8).setDistance(110));
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(5, 8).setDistance(110));
+        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(7, 8).setDistance(110));
 
         GraphHopper tmp = new GraphHopperOSM().
                 setEncodingManager(encodingManager).
                 setProfiles(new Profile("profile").setVehicle("car").setWeighting("fastest"));
         tmp.setGraphHopperStorage(g);
         tmp.postProcessing();
-
         return tmp;
     }
 

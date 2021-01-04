@@ -349,13 +349,6 @@ public class Router {
             throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
 
         boolean disableCH = getDisableCH(request.getHints());
-        if (chEnabled && !routerConfig.isCHDisablingAllowed() && disableCH)
-            throw new IllegalArgumentException("Disabling CH not allowed on the server-side");
-
-        boolean disableLM = getDisableLM(request.getHints());
-        if (lmEnabled && !routerConfig.isLMDisablingAllowed() && disableLM)
-            throw new IllegalArgumentException("Disabling LM not allowed on the server-side");
-
         if (chEnabled && !disableCH) {
             if (!request.getHeadings().isEmpty())
                 throw new IllegalArgumentException("The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483");

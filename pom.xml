@@ -74,6 +74,8 @@
         <module>isochrone</module>
         <module>reader-gtfs</module>
         <module>tools</module>
+        <module>hmm-lib</module>
+        <module>map-matching</module>
         <module>web-bundle</module>
         <module>api</module>
         <module>web-api</module>
@@ -89,7 +91,7 @@
                 <groupId>io.dropwizard</groupId>
                 <artifactId>dropwizard-dependencies</artifactId>
                 <!-- make sure the dropwizard version is compatible to the below dropwizard-configurable-assets-bundle version -->
-                <version>2.0.8</version>
+                <version>2.0.16</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -185,7 +187,7 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>2.22.2</version>
                     <configuration>
-                        <argLine>-Xmx130m -Xms130m -Duser.language=en</argLine>
+                        <argLine>-Xmx180m -Xms180m -Duser.language=en</argLine>
                     </configuration>
                 </plugin>
 

@@ -75,7 +75,7 @@ final class BooleanToValueEntry implements EdgeToValueEntry {
     @Override
     public double getValue(EdgeIteratorState iter, boolean reverse) {
         if (Double.isNaN(value)) return elseValue; // special case if only catch-all key is present
-        return iter.get(bev) ? value : elseValue;
+        return (reverse ? iter.getReverse(bev) : iter.get(bev)) ? value : elseValue;
     }
 
     @Override

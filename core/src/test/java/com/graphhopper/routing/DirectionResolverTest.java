@@ -28,6 +28,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,14 +44,14 @@ import static org.junit.Assert.assertEquals;
  */
 public class DirectionResolverTest {
     private FlagEncoder encoder;
-    private GraphHopperStorage g;
+    private GraphHopperStorage graph;
     private NodeAccess na;
 
     @Before
     public void setup() {
         encoder = new CarFlagEncoder();
-        g = new GraphBuilder(EncodingManager.create(encoder)).create();
-        na = g.getNodeAccess();
+        graph = new GraphBuilder(EncodingManager.create(encoder)).create();
+        na = graph.getNodeAccess();
     }
 
     @Test
@@ -69,9 +70,7 @@ public class DirectionResolverTest {
         addNode(0, 0, 0);
         addNode(1, 0.1, 0.1);
         // with edges without access flags (blocked edges)
-        g.edge(0, 1)
-                .set(encoder.getAccessEnc(), false)
-                .setReverse(encoder.getAccessEnc(), false);
+        graph.edge(0, 1).set(encoder.getAccessEnc(), false, false);
 
         checkResult(0, impossible());
         checkResult(1, impossible());
@@ -383,20 +382,20 @@ public class DirectionResolverTest {
     }
 
     private EdgeIteratorState addEdge(int from, int to, boolean bothDirections) {
-        return g.edge(from, to, 1, bothDirections);
+        return GHUtility.setSpeed(60, true, bothDirections, encoder, graph.edge(from, to).setDistance(1));
     }
 
     private void checkResult(int node, DirectionResolverResult expectedResult) {
-        checkResult(node, g.getNodeAccess().getLat(node), g.getNodeAccess().getLon(node), expectedResult);
+        checkResult(node, graph.getNodeAccess().getLat(node), graph.getNodeAccess().getLon(node), expectedResult);
     }
 
     private void checkResult(int node, double lat, double lon, DirectionResolverResult expectedResult) {
-        DirectionResolver resolver = new DirectionResolver(g, encoder.getAccessEnc());
+        DirectionResolver resolver = new DirectionResolver(graph, encoder.getAccessEnc());
         assertEquals(expectedResult, resolver.resolveDirections(node, new GHPoint(lat, lon)));
     }
 
     private int edge(int from, int to) {
-        EdgeExplorer explorer = g.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder.getAccessEnc()));
+        EdgeExplorer explorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder.getAccessEnc()));
         EdgeIterator iter = explorer.setBaseNode(from);
         while (iter.next()) {
             if (iter.getAdjNode() == to) {

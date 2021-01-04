@@ -17,21 +17,24 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
-import com.graphhopper.util.shapes.BBox;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
+import static com.graphhopper.util.GHUtility.createRandomSnaps;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
 public class RandomCHRoutingTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RandomCHRoutingTest.class);
     private final TraversalMode traversalMode;
     private final int maxTurnCosts;
     private final int uTurnCosts;
@@ -80,12 +83,13 @@ public class RandomCHRoutingTest {
         // bugs (e.g. use intellij 'run until stop/failure').
         int numNodes = 50;
         long seed = System.nanoTime();
-        System.out.println("seed: " + seed);
+        LOGGER.info("seed: " + seed);
         Random rnd = new Random(seed);
         // we may not use an offset when query graph is involved, otherwise traveling via virtual edges will not be
         // the same as taking the direct edge!
         double pOffset = 0;
-        GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.5, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, pOffset);
+        GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.5, true, true,
+                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, 0.7, 0.9, pOffset);
         if (traversalMode.isEdgeBased()) {
             GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, graph.getTurnCostStorage());
         }
@@ -129,7 +133,8 @@ public class RandomCHRoutingTest {
         Assume.assumeTrue(traversalMode.isEdgeBased());
         long seed = 60643479675316L;
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, rnd, 50, 2.5, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, 0.0);
+        GHUtility.buildRandomGraph(graph, rnd, 50, 2.5, true, true,
+                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, 0.7, 0.9, 0.0);
         GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, graph.getTurnCostStorage());
         runRandomTest(rnd, 20);
     }
@@ -147,7 +152,7 @@ public class RandomCHRoutingTest {
         for (int j = 0; j < numQueryGraph; j++) {
             // add virtual nodes and edges, because they can change the routing behavior and/or produce bugs, e.g.
             // when via-points are used
-            List<Snap> snaps = createSnaps(rnd, numVirtualNodes);
+            List<Snap> snaps = createRandomSnaps(graph.getBounds(), locationIndex, rnd, numVirtualNodes, false, EdgeFilter.ALL_EDGES);
             QueryGraph queryGraph = QueryGraph.create(graph, snaps);
 
             int numQueries = 100;
@@ -176,8 +181,8 @@ public class RandomCHRoutingTest {
 
                 double weight = path.getWeight();
                 if (Math.abs(refWeight - weight) > 1.e-2) {
-                    System.out.println("expected: " + refPath.calcNodes());
-                    System.out.println("given:    " + path.calcNodes());
+                    LOGGER.warn("expected: " + refPath.calcNodes());
+                    LOGGER.warn("given:    " + path.calcNodes());
                     fail("wrong weight: " + from + "->" + to + ", dijkstra: " + refWeight + " vs. ch: " + path.getWeight());
                 }
                 if (Math.abs(path.getDistance() - refPath.getDistance()) > 1.e-1) {
@@ -195,35 +200,6 @@ public class RandomCHRoutingTest {
                         Helper.join("\n", strictViolations));
             }
         }
-    }
-
-    private List<Snap> createSnaps(Random rnd, int numVirtualNodes) {
-        BBox bbox = graph.getBounds();
-        int count = 0;
-        List<Snap> snaps = new ArrayList<>(numVirtualNodes);
-        while (snaps.size() < numVirtualNodes) {
-            if (count > numVirtualNodes * 100) {
-                throw new IllegalArgumentException("Could not create enough virtual edges");
-            }
-            Snap snap = findSnap(rnd, bbox);
-            if (snap.getSnappedPosition().equals(Snap.Position.EDGE)) {
-                snaps.add(snap);
-            }
-            count++;
-        }
-        return snaps;
-    }
-
-    private Snap findSnap(Random rnd, BBox bbox) {
-        return locationIndex.findClosest(
-                randomDoubleInRange(rnd, bbox.minLat, bbox.maxLat),
-                randomDoubleInRange(rnd, bbox.minLon, bbox.maxLon),
-                EdgeFilter.ALL_EDGES
-        );
-    }
-
-    private double randomDoubleInRange(Random rnd, double min, double max) {
-        return min + rnd.nextDouble() * (max - min);
     }
 
     /**
@@ -256,7 +232,7 @@ public class RandomCHRoutingTest {
             maxDist = Math.max(maxDist, distance);
             // using bidirectional edges will increase mean degree of graph above given value
             boolean bothDirections = random.nextDouble() < pBothDir;
-            EdgeIteratorState edge = graph.edge(from, to, distance, bothDirections);
+            EdgeIteratorState edge = GHUtility.setSpeed(60, true, bothDirections, encoder, graph.edge(from, to).setDistance(distance));
             double fwdSpeed = 10 + random.nextDouble() * 120;
             double bwdSpeed = 10 + random.nextDouble() * 120;
             DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();

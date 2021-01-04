@@ -84,11 +84,6 @@ public class ExtendedNodeAccess implements NodeAccess {
     }
 
     @Override
-    public void setNode(int nodeId, double lat, double lon) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
     public void setNode(int nodeId, double lat, double lon, double ele) {
         throw new UnsupportedOperationException("Not supported yet.");
     }

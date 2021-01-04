@@ -25,8 +25,6 @@ public class RouterConfig {
     private int maxVisitedNodes = Integer.MAX_VALUE;
     private int maxRoundTripRetries = 3;
     private int nonChMaxWaypointDistance = Integer.MAX_VALUE;
-    private boolean chDisablingAllowed = false;
-    private boolean lmDisablingAllowed = true;
     private boolean calcPoints = true;
     private boolean simplifyResponse = true;
     private double elevationWayPointMaxDistance = Double.MAX_VALUE;
@@ -58,22 +56,6 @@ public class RouterConfig {
 
     public void setNonChMaxWaypointDistance(int nonChMaxWaypointDistance) {
         this.nonChMaxWaypointDistance = nonChMaxWaypointDistance;
-    }
-
-    public boolean isCHDisablingAllowed() {
-        return chDisablingAllowed;
-    }
-
-    public void setCHDisablingAllowed(boolean chDisablingAllowed) {
-        this.chDisablingAllowed = chDisablingAllowed;
-    }
-
-    public boolean isLMDisablingAllowed() {
-        return lmDisablingAllowed;
-    }
-
-    public void setLMDisablingAllowed(boolean lmDisablingAllowed) {
-        this.lmDisablingAllowed = lmDisablingAllowed;
     }
 
     public boolean isCalcPoints() {

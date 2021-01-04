@@ -37,19 +37,20 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
-import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-import static com.graphhopper.routing.RandomizedRoutingTest.getRandomPoints;
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+import static com.graphhopper.util.GHUtility.createRandomSnaps;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
@@ -65,6 +66,7 @@ import static org.junit.Assert.fail;
  */
 @RunWith(Parameterized.class)
 public class DirectedRoutingTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DirectedRoutingTest.class);
     private final Algo algo;
     private final int uTurnCosts;
     private final boolean prepareCH;
@@ -118,7 +120,9 @@ public class DirectedRoutingTest {
     public void init() {
         dir = new RAMDirectory();
         maxTurnCosts = 10;
-        // todo: make this work for MotorCycleFlagEncoder, #1972
+        // todo: this test only works with speedTwoDirections=false (as long as loops are enabled), otherwise it will
+        // fail sometimes for edge-based algorithms, #1631, but maybe we can should disable different fwd/bwd speeds
+        // only for loops instead?
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).build();
@@ -181,7 +185,8 @@ public class DirectedRoutingTest {
         final long seed = System.nanoTime();
         final int numQueries = 50;
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, 0.8);
+        GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true,
+                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, 0.7, 0.8, 0.8);
         GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, turnCostStorage);
 //        GHUtility.printGraphForUnitTest(graph, encoder);
         preProcessGraph();
@@ -191,7 +196,7 @@ public class DirectedRoutingTest {
             int target = getRandom(rnd);
             int sourceOutEdge = getSourceOutEdge(rnd, source, graph);
             int targetInEdge = getTargetInEdge(rnd, target, graph);
-//            System.out.println("source: " + source + ", target: " + target + ", sourceOutEdge: " + sourceOutEdge + ", targetInEdge: " + targetInEdge);
+//            LOGGER.info("source: " + source + ", target: " + target + ", sourceOutEdge: " + sourceOutEdge + ", targetInEdge: " + targetInEdge);
             Path refPath = new DijkstraBidirectionRef(graph, ((Graph) graph).wrapWeighting(weighting), TraversalMode.EDGE_BASED)
                     .calcPath(source, target, sourceOutEdge, targetInEdge);
             Path path = createAlgo()
@@ -203,7 +208,7 @@ public class DirectedRoutingTest {
         // is wrong and we fail
         if (strictViolations.size() > Math.max(1, 0.05 * numQueries)) {
             for (String strictViolation : strictViolations) {
-                System.out.println("strict violation: " + strictViolation);
+                LOGGER.info("strict violation: " + strictViolation);
             }
             fail("Too many strict violations, with seed: " + seed + " - " + strictViolations.size() + " / " + numQueries);
         }
@@ -222,7 +227,8 @@ public class DirectedRoutingTest {
         // the same as taking the direct edge!
         double pOffset = 0;
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, rnd, 50, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, pOffset);
+        GHUtility.buildRandomGraph(graph, rnd, 50, 2.2, true, true,
+                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, 0.7, 0.8, pOffset);
         GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, turnCostStorage);
         // GHUtility.printGraphForUnitTest(graph, encoder);
         preProcessGraph();
@@ -230,8 +236,7 @@ public class DirectedRoutingTest {
         index.prepareIndex();
         List<String> strictViolations = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
-            List<GHPoint> points = getRandomPoints(graph.getBounds(), 2, index, rnd);
-            List<Snap> snaps = snapPoints(index, points);
+            List<Snap> snaps = createRandomSnaps(graph.getBounds(), index, rnd, 2, true, EdgeFilter.ALL_EDGES);
             QueryGraph queryGraph = QueryGraph.create(graph, snaps);
 
             int source = snaps.get(0).getClosestNode();
@@ -258,21 +263,13 @@ public class DirectedRoutingTest {
         }
     }
 
-    private List<Snap> snapPoints(LocationIndexTree index, List<GHPoint> ghPoints) {
-        List<Snap> result = new ArrayList<>(ghPoints.size());
-        for (GHPoint ghPoint : ghPoints) {
-            result.add(index.findClosest(ghPoint.getLat(), ghPoint.getLon(), DefaultEdgeFilter.ALL_EDGES));
-        }
-        return result;
-    }
-
     private List<String> comparePaths(Path refPath, Path path, int source, int target, boolean checkNodes, long seed) {
         List<String> strictViolations = new ArrayList<>();
         double refWeight = refPath.getWeight();
         double weight = path.getWeight();
         if (Math.abs(refWeight - weight) > 1.e-2) {
-            System.out.println("expected: " + refPath.calcNodes());
-            System.out.println("given:    " + path.calcNodes());
+            LOGGER.warn("expected: " + refPath.calcNodes());
+            LOGGER.warn("given:    " + path.calcNodes());
             fail("wrong weight: " + source + "->" + target + ", expected: " + refWeight + ", given: " + weight + ", seed: " + seed);
         }
         if (Math.abs(path.getDistance() - refPath.getDistance()) > 1.e-1) {

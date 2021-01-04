@@ -23,6 +23,7 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.IntEncodedValue;
+import com.graphhopper.routing.ev.StringEncodedValue;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.BaseGraph.AllEdgeIterator;
@@ -606,11 +607,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
     }
 
-    // todonow: EdgeAccess was a really bad interface: it was used to 'sneak in' some different behavior (edge access)
-    // into edge iterators so it could be used for CH. but this was very twisted and we want a different edge iteration
-    // for CH anyway. then again having some kind of 'access' class to abstract away the data access probably makes sense
-    // so maybe try this again now that edgeAccess is gone.
-
     private int getEdgeRef(int nodeId) {
         return nodesCH.getInt((long) nodeId * nodeCHEntryBytes + N_CH_REF);
     }
@@ -846,6 +842,12 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
+        public EdgeIteratorState set(BooleanEncodedValue property, boolean fwd, boolean bwd) {
+            checkShortcut(false, "set(BooleanEncodedValue, boolean, boolean)");
+            return edgeIterable.set(property, fwd, bwd);
+        }
+
+        @Override
         public int get(IntEncodedValue property) {
             checkShortcut(false, "get(IntEncodedValue)");
             return edgeIterable.get(property);
@@ -867,6 +869,12 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public EdgeIteratorState setReverse(IntEncodedValue property, int value) {
             checkShortcut(false, "setReverse(IntEncodedValue, int)");
             return edgeIterable.setReverse(property, value);
+        }
+
+        @Override
+        public EdgeIteratorState set(IntEncodedValue property, int fwd, int bwd) {
+            checkShortcut(false, "set(IntEncodedValue, int, int)");
+            return edgeIterable.set(property, fwd, bwd);
         }
 
         @Override
@@ -894,27 +902,69 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
-        public <T extends Enum> T get(EnumEncodedValue<T> property) {
+        public EdgeIteratorState set(DecimalEncodedValue property, double fwd, double bwd) {
+            checkShortcut(false, "set(DecimalEncodedValue, double, double)");
+            return edgeIterable.set(property, fwd, bwd);
+        }
+
+        @Override
+        public <T extends Enum<?>> T get(EnumEncodedValue<T> property) {
             checkShortcut(false, "get(EnumEncodedValue<T>)");
             return edgeIterable.get(property);
         }
 
         @Override
-        public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T value) {
+        public <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T value) {
             checkShortcut(false, "set(EnumEncodedValue<T>, T)");
             return edgeIterable.set(property, value);
         }
 
         @Override
-        public <T extends Enum> T getReverse(EnumEncodedValue<T> property) {
+        public <T extends Enum<?>> T getReverse(EnumEncodedValue<T> property) {
             checkShortcut(false, "getReverse(EnumEncodedValue<T>)");
             return edgeIterable.getReverse(property);
         }
 
         @Override
-        public <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
+        public <T extends Enum<?>> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
             checkShortcut(false, "setReverse(EnumEncodedValue<T>, T)");
             return edgeIterable.setReverse(property, value);
+        }
+
+        @Override
+        public <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
+            checkShortcut(false, "set(EnumEncodedValue<T>, T, T)");
+            return edgeIterable.set(property, fwd, bwd);
+        }
+        
+        @Override
+        public String get(StringEncodedValue property) {
+            checkShortcut(false, "get(StringEncodedValue)");
+            return edgeIterable.get(property);
+        }
+        
+        @Override
+        public EdgeIteratorState set(StringEncodedValue property, String value) {
+            checkShortcut(false, "set(StringEncodedValue, String)");
+            return edgeIterable.set(property, value);
+        }
+        
+        @Override
+        public String getReverse(StringEncodedValue property) {
+            checkShortcut(false, "getReverse(StringEncodedValue)");
+            return edgeIterable.getReverse(property);
+        }
+        
+        @Override
+        public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
+            checkShortcut(false, "setReverse(StringEncodedValue, String)");
+            return edgeIterable.setReverse(property, value);
+        }
+        
+        @Override
+        public EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd) {
+            checkShortcut(false, "set(StringEncodedValue, String, String)");
+            return edgeIterable.set(property, fwd, bwd);
         }
 
         @Override
