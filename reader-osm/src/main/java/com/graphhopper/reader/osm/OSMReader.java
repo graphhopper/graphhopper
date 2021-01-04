@@ -449,11 +449,11 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         if (id < TOWER_NODE) {
             // tower node
             id = -id - 3;
-            return nodeAccess.getLatitude(id);
+            return nodeAccess.getLat(id);
         } else if (id > -TOWER_NODE) {
             // pillar node
             id = id - 3;
-            return pillarInfo.getLatitude(id);
+            return pillarInfo.getLat(id);
         } else
             // e.g. if id is not handled from preprocessing (e.g. was ignored via isInBounds)
             return Double.NaN;
@@ -465,7 +465,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         if (id < TOWER_NODE) {
             // tower node
             id = -id - 3;
-            return nodeAccess.getLongitude(id);
+            return nodeAccess.getLon(id);
         } else if (id > -TOWER_NODE) {
             // pillar node
             id = id - 3;
@@ -753,9 +753,9 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
      */
     private int handlePillarNode(int tmpNode, long osmId, PointList pointList, boolean convertToTowerNode) {
         tmpNode = tmpNode - 3;
-        double lat = pillarInfo.getLatitude(tmpNode);
-        double lon = pillarInfo.getLongitude(tmpNode);
-        double ele = pillarInfo.getElevation(tmpNode);
+        double lat = pillarInfo.getLat(tmpNode);
+        double lon = pillarInfo.getLon(tmpNode);
+        double ele = pillarInfo.getEle(tmpNode);
         if (lat == Double.MAX_VALUE || lon == Double.MAX_VALUE)
             throw new RuntimeException("Conversion pillarNode to towerNode already happened!? "
                     + "osmId:" + osmId + " pillarIndex:" + tmpNode);

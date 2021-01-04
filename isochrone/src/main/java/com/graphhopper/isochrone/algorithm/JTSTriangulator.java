@@ -51,8 +51,8 @@ public class JTSTriangulator implements Triangulator {
         Collection<Coordinate> sites = new ArrayList<>();
         shortestPathTree.search(snap.getClosestNode(), label -> {
             double exploreValue = fz.applyAsDouble(label);
-            double lat = na.getLatitude(label.node);
-            double lon = na.getLongitude(label.node);
+            double lat = na.getLat(label.node);
+            double lon = na.getLon(label.node);
             Coordinate site = new Coordinate(lon, lat);
             site.z = exploreValue;
             sites.add(site);

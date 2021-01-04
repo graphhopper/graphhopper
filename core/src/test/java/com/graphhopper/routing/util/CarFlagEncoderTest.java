@@ -19,6 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValue;
@@ -470,7 +471,7 @@ public class CarFlagEncoderTest {
         // accept
         assertTrue(encoder.getAccess(way).isFerry());
         // calculate speed from estimated_distance and duration
-        assertEquals(61, encoder.getFerrySpeed(way), 1e-1);
+        assertEquals(61, encoder.ferrySpeedCalc.getSpeed(way), 1e-1);
 
         //Test for very short and slow 0.5km/h still realisitic ferry
         way = new ReaderWay(1);
@@ -482,7 +483,7 @@ public class CarFlagEncoderTest {
         // accept
         assertTrue(encoder.getAccess(way).isFerry());
         // We can't store 0.5km/h, but we expect the lowest possible speed (5km/h)
-        assertEquals(2.5, encoder.getFerrySpeed(way), 1e-1);
+        assertEquals(2.5, encoder.ferrySpeedCalc.getSpeed(way), 1e-1);
 
         IntsRef edgeFlags = em.createEdgeFlags();
         avSpeedEnc.setDecimal(false, edgeFlags, 2.5);
@@ -498,7 +499,7 @@ public class CarFlagEncoderTest {
         // accept
         assertTrue(encoder.getAccess(way).isFerry());
         // We have ignored the unrealisitc long duration and take the unknown speed
-        assertEquals(2.5, encoder.getFerrySpeed(way), 1e-1);
+        assertEquals(2.5, encoder.ferrySpeedCalc.getSpeed(way), 1e-1);
 
         way.clearTags();
         way.setTag("route", "ferry");
@@ -644,10 +645,11 @@ public class CarFlagEncoderTest {
         way.setTag("estimated_distance", 257);
 
         CarFlagEncoder lowFactorCar = new CarFlagEncoder(10, 1, 0);
+        EncodingManager.create(lowFactorCar);
         List<EncodedValue> list = new ArrayList<>();
         lowFactorCar.setEncodedValueLookup(em);
         lowFactorCar.createEncodedValues(list, "car", 0);
-        assertEquals(2.5, encoder.getFerrySpeed(way), .1);
-        assertEquals(.5, lowFactorCar.getFerrySpeed(way), .1);
+        assertEquals(2.5, encoder.ferrySpeedCalc.getSpeed(way), .1);
+        assertEquals(.5, lowFactorCar.ferrySpeedCalc.getSpeed(way), .1);
     }
 }

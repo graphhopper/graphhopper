@@ -17,11 +17,7 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.IntEncodedValue;
-import com.graphhopper.routing.ev.StringEncodedValue;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -799,14 +795,14 @@ class BaseGraph implements Graph {
         int tmpOffset = 4;
         boolean is3D = nodeAccess.is3D();
         for (int i = 0; i < len; i++) {
-            double lat = pillarNodes.getLatitude(i);
+            double lat = pillarNodes.getLat(i);
             bitUtil.fromInt(bytes, Helper.degreeToInt(lat), tmpOffset);
             tmpOffset += 4;
-            bitUtil.fromInt(bytes, Helper.degreeToInt(pillarNodes.getLongitude(i)), tmpOffset);
+            bitUtil.fromInt(bytes, Helper.degreeToInt(pillarNodes.getLon(i)), tmpOffset);
             tmpOffset += 4;
 
             if (is3D) {
-                bitUtil.fromInt(bytes, Helper.eleToInt(pillarNodes.getElevation(i)), tmpOffset);
+                bitUtil.fromInt(bytes, Helper.eleToInt(pillarNodes.getEle(i)), tmpOffset);
                 tmpOffset += 4;
             }
         }

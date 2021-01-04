@@ -124,8 +124,8 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         assertTrue(g.getBounds().isValid());
 
         assertEquals(new BBox(10, 20, 10, 12, 0, 1), g.getBounds());
-        assertEquals(10, na.getLatitude(0), 1e-2);
-        assertEquals(10, na.getLongitude(0), 1e-2);
+        assertEquals(10, na.getLat(0), 1e-2);
+        assertEquals(10, na.getLon(0), 1e-2);
         EdgeExplorer explorer = g.createEdgeExplorer(carOutFilter);
         assertEquals(2, GHUtility.count(explorer.setBaseNode(0)));
         assertEquals(GHUtility.asSet(2, 1), GHUtility.getNeighbors(explorer.setBaseNode(0)));
@@ -141,13 +141,13 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         assertEquals(Helper.createPointList3D(10, 10, 0, 11, 20, 1), iter.fetchWayGeometry(TOWER_ONLY));
         assertEquals(Helper.createPointList3D(11, 20, 1, 10, 10, 0), iter.detach(true).fetchWayGeometry(TOWER_ONLY));
 
-        assertEquals(11, na.getLatitude(1), 1e-2);
-        assertEquals(20, na.getLongitude(1), 1e-2);
+        assertEquals(11, na.getLat(1), 1e-2);
+        assertEquals(20, na.getLon(1), 1e-2);
         assertEquals(2, GHUtility.count(explorer.setBaseNode(1)));
         assertEquals(GHUtility.asSet(2, 0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
 
-        assertEquals(12, na.getLatitude(2), 1e-2);
-        assertEquals(12, na.getLongitude(2), 1e-2);
+        assertEquals(12, na.getLat(2), 1e-2);
+        assertEquals(12, na.getLon(2), 1e-2);
         assertEquals(1, GHUtility.count(explorer.setBaseNode(2)));
 
         assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(2)));

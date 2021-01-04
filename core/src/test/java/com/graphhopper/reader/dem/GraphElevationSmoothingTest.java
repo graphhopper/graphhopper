@@ -36,7 +36,7 @@ public class GraphElevationSmoothingTest {
         pl1.add(0.001, 0.001, 50);
         GraphElevationSmoothing.smoothElevation(pl1);
         assertEquals(3, pl1.size());
-        assertEquals(50, pl1.getElevation(1), .1);
+        assertEquals(50, pl1.getEle(1), .1);
 
         PointList pl2 = new PointList(3, true);
         pl2.add(0.001, 0.001, 50);
@@ -46,9 +46,9 @@ public class GraphElevationSmoothingTest {
         pl2.add(0.002, 0.002, 20);
         GraphElevationSmoothing.smoothElevation(pl2);
         assertEquals(5, pl2.size());
-        assertEquals(120, pl2.getElevation(1), .1);
+        assertEquals(120, pl2.getEle(1), .1);
         // This is not 120 anymore, as the point at index 1 was smoothed from 160=>120
-        assertEquals(112, pl2.getElevation(2), .1);
+        assertEquals(112, pl2.getEle(2), .1);
 
         assertEquals(50, pl2.getEle(0), .1);
     }

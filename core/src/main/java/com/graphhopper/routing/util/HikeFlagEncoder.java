@@ -105,14 +105,14 @@ public class HikeFlagEncoder extends FootFlagEncoder {
             return;
 
         // Decrease the speed for ele increase (incline), and slightly decrease the speed for ele decrease (decline)
-        double prevEle = pl.getElevation(0);
+        double prevEle = pl.getEle(0);
         double fullDistance = edge.getDistance();
 
         // for short edges an incline makes no sense and for 0 distances could lead to NaN values for speed, see #432
         if (fullDistance < 2)
             return;
 
-        double eleDelta = Math.abs(pl.getElevation(pl.size() - 1) - prevEle);
+        double eleDelta = Math.abs(pl.getEle(pl.size() - 1) - prevEle);
         double slope = eleDelta / fullDistance;
 
         IntsRef edgeFlags = edge.getFlags();

@@ -76,10 +76,10 @@ public class GraphHopperAPITest {
         assertEquals(80, responsePath.getDistance(), 1e-6);
 
         PointList points = responsePath.getPoints();
-        assertEquals(42, points.getLatitude(0), 1e-5);
-        assertEquals(10.4, points.getLongitude(0), 1e-5);
-        assertEquals(41.9, points.getLatitude(1), 1e-5);
-        assertEquals(10.2, points.getLongitude(1), 1e-5);
+        assertEquals(42, points.getLat(0), 1e-5);
+        assertEquals(10.4, points.getLon(0), 1e-5);
+        assertEquals(41.9, points.getLat(1), 1e-5);
+        assertEquals(10.2, points.getLon(1), 1e-5);
         assertEquals(3, points.getSize());
         instance.close();
     }

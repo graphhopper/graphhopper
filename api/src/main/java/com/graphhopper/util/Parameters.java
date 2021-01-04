@@ -151,10 +151,6 @@ public class Parameters {
          * This property name in HintsMap configures at runtime if CH routing should be ignored.
          */
         public static final String DISABLE = "ch.disable";
-        /**
-         * This property name configures at start if the DISABLE parameter can have an effect.
-         */
-        public static final String INIT_DISABLING_ALLOWED = ROUTING_INIT_PREFIX + "ch.disabling_allowed";
     }
 
     /**
@@ -178,10 +174,6 @@ public class Parameters {
          * Specifies how many landmarks should be created
          */
         public static final String COUNT = PREPARE + "landmarks";
-        /**
-         * This property name configures at start if the DISABLE parameter can have an effect.
-         */
-        public static final String INIT_DISABLING_ALLOWED = ROUTING_INIT_PREFIX + "lm.disabling_allowed";
     }
 
     /**

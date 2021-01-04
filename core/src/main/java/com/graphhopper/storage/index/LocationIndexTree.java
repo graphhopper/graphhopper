@@ -604,21 +604,21 @@ public class LocationIndexTree implements LocationIndex {
                     int edge = allIter.getEdge();
                     int nodeA = allIter.getBaseNode();
                     int nodeB = allIter.getAdjNode();
-                    double lat1 = nodeAccess.getLatitude(nodeA);
-                    double lon1 = nodeAccess.getLongitude(nodeA);
+                    double lat1 = nodeAccess.getLat(nodeA);
+                    double lon1 = nodeAccess.getLon(nodeA);
                     double lat2;
                     double lon2;
                     PointList points = allIter.fetchWayGeometry(FetchMode.PILLAR_ONLY);
                     int len = points.getSize();
                     for (int i = 0; i < len; i++) {
-                        lat2 = points.getLatitude(i);
-                        lon2 = points.getLongitude(i);
+                        lat2 = points.getLat(i);
+                        lon2 = points.getLon(i);
                         addEdgeToAllTilesOnLine(edge, lat1, lon1, lat2, lon2);
                         lat1 = lat2;
                         lon1 = lon2;
                     }
-                    lat2 = nodeAccess.getLatitude(nodeB);
-                    lon2 = nodeAccess.getLongitude(nodeB);
+                    lat2 = nodeAccess.getLat(nodeB);
+                    lon2 = nodeAccess.getLon(nodeB);
                     addEdgeToAllTilesOnLine(edge, lat1, lon1, lat2, lon2);
                 }
             } catch (Exception ex) {
@@ -719,8 +719,8 @@ public class LocationIndexTree implements LocationIndex {
 
     public void traverseEdge(double queryLat, double queryLon, EdgeIteratorState currEdge, EdgeCheck edgeCheck) {
         int baseNode = currEdge.getBaseNode();
-        double currLat = nodeAccess.getLatitude(baseNode);
-        double currLon = nodeAccess.getLongitude(baseNode);
+        double currLat = nodeAccess.getLat(baseNode);
+        double currLon = nodeAccess.getLon(baseNode);
         double currNormedDist = DIST_PLANE.calcNormalizedDist(queryLat, queryLon, currLat, currLon);
 
         int tmpClosestNode = baseNode;
@@ -729,8 +729,8 @@ public class LocationIndexTree implements LocationIndex {
             return;
 
         int adjNode = currEdge.getAdjNode();
-        double adjLat = nodeAccess.getLatitude(adjNode);
-        double adjLon = nodeAccess.getLongitude(adjNode);
+        double adjLat = nodeAccess.getLat(adjNode);
+        double adjLon = nodeAccess.getLon(adjNode);
         double adjDist = DIST_PLANE.calcNormalizedDist(adjLat, adjLon, queryLat, queryLon);
         // if there are wayPoints this is only an approximation
         if (adjDist < currNormedDist)
@@ -742,8 +742,8 @@ public class LocationIndexTree implements LocationIndex {
         PointList pointList = currEdge.fetchWayGeometry(FetchMode.PILLAR_AND_ADJ);
         int len = pointList.getSize();
         for (int pointIndex = 0; pointIndex < len; pointIndex++) {
-            double wayLat = pointList.getLatitude(pointIndex);
-            double wayLon = pointList.getLongitude(pointIndex);
+            double wayLat = pointList.getLat(pointIndex);
+            double wayLon = pointList.getLon(pointIndex);
             Snap.Position pos = Snap.Position.EDGE;
             if (DIST_PLANE.isCrossBoundary(tmpLon, wayLon)) {
                 tmpLat = wayLat;

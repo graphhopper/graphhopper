@@ -95,7 +95,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
     @Test
     public void testGetSpeed() {
         IntsRef intsRef = GHUtility.setSpeed(10, 0, encoder, encodingManager.createEdgeFlags());
-        assertEquals(10, encoder.getSpeed(intsRef), 1e-1);
+        assertEquals(10, avgSpeedEnc.getDecimal(false, intsRef), 1e-1);
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade3");
@@ -137,40 +137,40 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
         IntsRef flags = assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay, osmRel);
-        assertEquals(2, encoder.getSpeed(flags), 1e-1);
+        assertEquals(2, avgSpeedEnc.getDecimal(false, flags), 1e-1);
         // relation code is OUTSTANDING NICE but as unpaved, the speed is still PUSHING_SECTION_SPEED/2
         osmRel.setTag("network", "icn");
         flags = assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay, osmRel);
-        assertEquals(2, encoder.getSpeed(flags), 1e-1);
+        assertEquals(2, avgSpeedEnc.getDecimal(false, flags), 1e-1);
 
         // Now we assume bicycle=yes, anyhow still unpaved
         osmWay.setTag("bicycle", "yes");
         flags = assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay, osmRel);
-        assertEquals(2, encoder.getSpeed(flags), 1e-1);
+        assertEquals(2, avgSpeedEnc.getDecimal(false, flags), 1e-1);
 
         // Now we assume bicycle=yes, and paved
         osmWay.setTag("tracktype", "grade1");
         flags = assertPriority(PREFER.getValue(), osmWay, osmRel);
-        assertEquals(20, encoder.getSpeed(flags), 1e-1);
+        assertEquals(20, avgSpeedEnc.getDecimal(false, flags), 1e-1);
 
         // Now we assume bicycle=yes, and unpaved as part of a cycle relation
         osmWay.setTag("tracktype", "grade2");
         osmWay.setTag("bicycle", "yes");
         flags = assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay, osmRel);
-        assertEquals(10, encoder.getSpeed(flags), 1e-1);
+        assertEquals(10, avgSpeedEnc.getDecimal(false, flags), 1e-1);
 
         // Now we assume bicycle=yes, and unpaved not part of a cycle relation
         osmWay.clearTags();
         osmWay.setTag("highway", "track");
         osmWay.setTag("tracktype", "grade3");
         flags = assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay);
-        assertEquals(PUSHING_SECTION_SPEED, encoder.getSpeed(flags), 1e-1);
+        assertEquals(PUSHING_SECTION_SPEED, avgSpeedEnc.getDecimal(false, flags), 1e-1);
 
         // Now we assume bicycle=yes, and tracktype = null
         osmWay.clearTags();
         osmWay.setTag("highway", "track");
         flags = assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay);
-        assertEquals(2, encoder.getSpeed(flags), 1e-1);
+        assertEquals(2, avgSpeedEnc.getDecimal(false, flags), 1e-1);
     }
 
     @Test
@@ -180,37 +180,37 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         osmWay.setTag("maxspeed", "50");
         IntsRef intsRef = encodingManager.createEdgeFlags();
         encoder.setSpeed(false, intsRef, encoder.applyMaxSpeed(osmWay, 20));
-        assertEquals(20, encoder.getSpeed(intsRef), 1e-1);
+        assertEquals(20, avgSpeedEnc.getDecimal(false, intsRef), 1e-1);
         assertPriority(PREFER.getValue(), osmWay);
 
         osmWay.setTag("maxspeed", "60");
         encoder.setSpeed(false, intsRef, encoder.applyMaxSpeed(osmWay, 20));
-        assertEquals(20, encoder.getSpeed(intsRef), 1e-1);
+        assertEquals(20, avgSpeedEnc.getDecimal(false, intsRef), 1e-1);
         assertPriority(PREFER.getValue(), osmWay);
 
         osmWay.setTag("maxspeed", "80");
         encoder.setSpeed(false, intsRef, encoder.applyMaxSpeed(osmWay, 20));
-        assertEquals(20, encoder.getSpeed(intsRef), 1e-1);
+        assertEquals(20, avgSpeedEnc.getDecimal(false, intsRef), 1e-1);
         assertPriority(PREFER.getValue(), osmWay);
 
         osmWay.setTag("maxspeed", "90");
         encoder.setSpeed(false, intsRef, encoder.applyMaxSpeed(osmWay, 20));
-        assertEquals(20, encoder.getSpeed(intsRef), 1e-1);
+        assertEquals(20, avgSpeedEnc.getDecimal(false, intsRef), 1e-1);
         assertPriority(UNCHANGED.getValue(), osmWay);
 
         osmWay.setTag("maxspeed", "120");
         encoder.setSpeed(false, intsRef, encoder.applyMaxSpeed(osmWay, 20));
-        assertEquals(20, encoder.getSpeed(intsRef), 1e-1);
+        assertEquals(20, avgSpeedEnc.getDecimal(false, intsRef), 1e-1);
         assertPriority(UNCHANGED.getValue(), osmWay);
 
         osmWay.setTag("highway", "motorway");
         encoder.setSpeed(false, intsRef, encoder.applyMaxSpeed(osmWay, 20));
-        assertEquals(20, encoder.getSpeed(intsRef), 1e-1);
+        assertEquals(20, avgSpeedEnc.getDecimal(false, intsRef), 1e-1);
         assertPriority(REACH_DEST.getValue(), osmWay);
 
         osmWay.setTag("tunnel", "yes");
         encoder.setSpeed(false, intsRef, encoder.applyMaxSpeed(osmWay, 20));
-        assertEquals(20, encoder.getSpeed(intsRef), 1e-1);
+        assertEquals(20, avgSpeedEnc.getDecimal(false, intsRef), 1e-1);
         assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay);
 
         osmWay.clearTags();
@@ -218,7 +218,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         osmWay.setTag("tunnel", "yes");
         osmWay.setTag("maxspeed", "80");
         encoder.setSpeed(false, intsRef, encoder.applyMaxSpeed(osmWay, 20));
-        assertEquals(20, encoder.getSpeed(intsRef), 1e-1);
+        assertEquals(20, avgSpeedEnc.getDecimal(false, intsRef), 1e-1);
         assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay);
 
         osmWay.clearTags();
@@ -226,7 +226,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         osmWay.setTag("tunnel", "yes");
         osmWay.setTag("maxspeed", "120");
         encoder.setSpeed(false, intsRef, encoder.applyMaxSpeed(osmWay, 20));
-        assertEquals(20, encoder.getSpeed(intsRef), 1e-1);
+        assertEquals(20, avgSpeedEnc.getDecimal(false, intsRef), 1e-1);
         assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay);
 
         osmWay.clearTags();
@@ -234,14 +234,14 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         osmWay.setTag("tunnel", "yes");
         osmWay.setTag("maxspeed", "120");
         encoder.setSpeed(false, intsRef, encoder.applyMaxSpeed(osmWay, 20));
-        assertEquals(20, encoder.getSpeed(intsRef), 1e-1);
+        assertEquals(20, avgSpeedEnc.getDecimal(false, intsRef), 1e-1);
         assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay);
 
         osmWay.clearTags();
         osmWay.setTag("highway", "notdefined");
         osmWay.setTag("maxspeed", "50");
         encoder.setSpeed(false, intsRef, encoder.applyMaxSpeed(osmWay, 20));
-        assertEquals(20, encoder.getSpeed(intsRef), 1e-1);
+        assertEquals(20, avgSpeedEnc.getDecimal(false, intsRef), 1e-1);
         assertPriority(UNCHANGED.getValue(), osmWay);
     }
 

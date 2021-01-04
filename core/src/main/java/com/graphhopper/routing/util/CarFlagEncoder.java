@@ -260,7 +260,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             }
 
         } else {
-            double ferrySpeed = getFerrySpeed(way);
+            double ferrySpeed = ferrySpeedCalc.getSpeed(way);
             accessEnc.setBool(false, edgeFlags, true);
             accessEnc.setBool(true, edgeFlags, true);
             setSpeed(false, edgeFlags, ferrySpeed);

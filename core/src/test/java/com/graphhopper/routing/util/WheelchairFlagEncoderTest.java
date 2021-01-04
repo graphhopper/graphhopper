@@ -276,17 +276,6 @@ public class WheelchairFlagEncoderTest {
     }
 
     @Test
-    public void testFerrySpeed() {
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("route", "ferry");
-        // a bit longer than an hour
-        way.setTag("duration:seconds", "4000");
-        IntsRef flags = wheelchairEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, wheelchairEncoder.getAccess(way));
-        assertTrue(wheelchairEncoder.getSpeed(flags) > wheelchairEncoder.getMaxSpeed());
-        assertEquals(20, wheelchairEncoder.getSpeed(flags), .1);
-    }
-
-    @Test
     public void testMixSpeedAndSafe() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway");

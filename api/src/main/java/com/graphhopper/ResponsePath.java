@@ -214,7 +214,7 @@ public class ResponsePath {
         check("calcRouteBBox");
         Envelope bounds = new Envelope();
         for (int i = 0; i < pointList.getSize(); i++) {
-            bounds.expandToInclude(pointList.getLongitude(i), pointList.getLatitude(i));
+            bounds.expandToInclude(pointList.getLon(i), pointList.getLat(i));
         }
         return bounds;
     }

@@ -305,7 +305,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             wayTypeSpeed = applyMaxSpeed(way, wayTypeSpeed);
             handleSpeed(edgeFlags, way, wayTypeSpeed);
         } else {
-            double ferrySpeed = getFerrySpeed(way);
+            double ferrySpeed = ferrySpeedCalc.getSpeed(way);
             handleSpeed(edgeFlags, way, ferrySpeed);
             accessEnc.setBool(false, edgeFlags, true);
             accessEnc.setBool(true, edgeFlags, true);
