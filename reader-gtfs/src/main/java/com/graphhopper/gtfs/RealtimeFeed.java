@@ -131,11 +131,6 @@ public class RealtimeFeed {
                 }
 
                 @Override
-                public void setNode(int nodeId, double lat, double lon) {
-
-                }
-
-                @Override
                 public void setNode(int nodeId, double lat, double lon, double ele) {
 
                 }

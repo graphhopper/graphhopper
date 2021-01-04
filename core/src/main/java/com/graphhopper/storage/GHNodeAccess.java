@@ -40,11 +40,6 @@ class GHNodeAccess implements NodeAccess {
     }
 
     @Override
-    public final void setNode(int nodeId, double lat, double lon) {
-        setNode(nodeId, lat, lon, Double.NaN);
-    }
-
-    @Override
     public final void setNode(int nodeId, double lat, double lon, double ele) {
         baseGraph.ensureNodeIndex(nodeId);
         long tmp = (long) nodeId * baseGraph.nodeEntryBytes;

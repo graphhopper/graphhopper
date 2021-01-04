@@ -985,11 +985,6 @@ public class GHUtility {
         }
 
         @Override
-        public void setNode(int nodeId, double lat, double lon) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
         public void setNode(int nodeId, double lat, double lon, double ele) {
             throw new UnsupportedOperationException("Not supported.");
         }
