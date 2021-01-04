@@ -495,7 +495,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
 
         double lat = node.getLat();
         double lon = node.getLon();
-        double ele = getElevation(node);
+        double ele = eleProvider.getEle(lat, lon);
         if (nodeType == TOWER_NODE) {
             addTowerNode(node.getId(), lat, lon, ele);
         } else if (nodeType == PILLAR_NODE) {
@@ -516,10 +516,6 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
                 return true;
         }
         return false;
-    }
-
-    protected double getElevation(ReaderNode node) {
-        return eleProvider.getEle(node.getLat(), node.getLon());
     }
 
     void prepareWaysWithRelationInfo(ReaderRelation osmRelation) {
@@ -796,10 +792,10 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         int graphIndex = getNodeMap().get(nodeId);
         if (graphIndex < TOWER_NODE) {
             graphIndex = -graphIndex - 3;
-            newNode = new ReaderNode(createNewNodeId(), nodeAccess, graphIndex);
+            newNode = new ReaderNode(createNewNodeId(), nodeAccess.getLat(graphIndex), nodeAccess.getLon(graphIndex));
         } else {
             graphIndex = graphIndex - 3;
-            newNode = new ReaderNode(createNewNodeId(), pillarInfo, graphIndex);
+            newNode = new ReaderNode(createNewNodeId(), pillarInfo.getLat(graphIndex), pillarInfo.getLon(graphIndex));
         }
 
         final long id = newNode.getId();
