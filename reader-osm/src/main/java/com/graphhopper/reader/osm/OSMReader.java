@@ -82,7 +82,6 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     protected long zeroCounter = 0;
     protected PillarInfo pillarInfo;
     private long locations;
-    private long skippedLocations;
     private final EncodingManager encodingManager;
     private int workerThreads = 2;
     // Choosing the best Map<Long, Integer> is hard. We need a memory efficient and fast solution for big data sets!
@@ -284,7 +283,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
                         throw new IllegalStateException("Unknown type " + item.getType());
                 }
                 if (++counter % 200_000_000 == 0) {
-                    LOGGER.info(nf(counter) + ", locs:" + nf(locations) + " (" + skippedLocations + ") " + Helper.getMemInfo());
+                    LOGGER.info(nf(counter) + ", locs:" + nf(locations) + Helper.getMemInfo());
                 }
             }
 
@@ -477,20 +476,16 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     }
 
     protected void processNode(ReaderNode node) {
-        if (isInBounds(node)) {
-            addNode(node);
+        addNode(node);
 
-            // analyze node tags for barriers
-            if (node.hasTags()) {
-                long nodeFlags = encodingManager.handleNodeTags(node);
-                if (nodeFlags != 0)
-                    getNodeFlagsMap().put(node.getId(), nodeFlags);
-            }
-
-            locations++;
-        } else {
-            skippedLocations++;
+        // analyze node tags for barriers
+        if (node.hasTags()) {
+            long nodeFlags = encodingManager.handleNodeTags(node);
+            if (nodeFlags != 0)
+                getNodeFlagsMap().put(node.getId(), nodeFlags);
         }
+
+        locations++;
     }
 
     boolean addNode(ReaderNode node) {
@@ -896,13 +891,6 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
             }
         }
         return null;
-    }
-
-    /**
-     * Filter method, override in subclass
-     */
-    boolean isInBounds(ReaderNode node) {
-        return true;
     }
 
     /**

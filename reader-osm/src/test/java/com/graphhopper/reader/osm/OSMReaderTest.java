@@ -157,53 +157,6 @@ public class OSMReaderTest {
     }
 
     @Test
-    public void testWithBounds() {
-        GraphHopper hopper = new GraphHopperFacade(file1) {
-            @Override
-            protected DataReader createReader(GraphHopperStorage tmpGraph) {
-                return new OSMReader(tmpGraph) {
-                    @Override
-                    public boolean isInBounds(ReaderNode node) {
-                        return node.getLat() > 49 && node.getLon() > 8;
-                    }
-                };
-            }
-        };
-
-        hopper.importOrLoad();
-
-        Graph graph = hopper.getGraphHopperStorage();
-        assertEquals(4, graph.getNodes());
-        int n10 = AbstractGraphStorageTester.getIdOf(graph, 51.2492152);
-        int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
-        int n30 = AbstractGraphStorageTester.getIdOf(graph, 51.2);
-        int n40 = AbstractGraphStorageTester.getIdOf(graph, 51.25);
-
-        assertEquals(GHUtility.asSet(n20), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n10)));
-        assertEquals(3, GHUtility.count(carOutExplorer.setBaseNode(n20)));
-        assertEquals(GHUtility.asSet(n20), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n30)));
-
-        EdgeIterator iter = carOutExplorer.setBaseNode(n20);
-        assertTrue(iter.next());
-        assertEquals(n40, iter.getAdjNode());
-        AbstractGraphStorageTester.assertPList(Helper.createPointList(), iter.fetchWayGeometry(FetchMode.PILLAR_ONLY));
-        assertTrue(iter.next());
-        assertEquals(n30, iter.getAdjNode());
-        assertEquals(93146.888, iter.getDistance(), 1);
-        assertTrue(iter.next());
-        AbstractGraphStorageTester.assertPList(Helper.createPointList(), iter.fetchWayGeometry(FetchMode.PILLAR_ONLY));
-        assertEquals(n10, iter.getAdjNode());
-        assertEquals(88643, iter.getDistance(), 1);
-
-        // get third added location => 2
-        iter = carOutExplorer.setBaseNode(n30);
-        assertTrue(iter.next());
-        assertEquals(n20, iter.getAdjNode());
-        assertEquals(93146.888, iter.getDistance(), 1);
-        assertFalse(iter.next());
-    }
-
-    @Test
     public void testOneWay() {
         GraphHopper hopper = new GraphHopperFacade(file2)
                 .setMinNetworkSize(0)
