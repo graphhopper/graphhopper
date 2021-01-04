@@ -35,8 +35,8 @@ public class Instructions {
             return null;
         }
         PointList points = instructions.get(0).getPoints();
-        double prevLat = points.getLatitude(0);
-        double prevLon = points.getLongitude(0);
+        double prevLat = points.getLat(0);
+        double prevLon = points.getLon(0);
         DistanceCalc distCalc = DistanceCalcEarth.DIST_EARTH;
         double foundMinDistance = distCalc.calcNormalizedDist(lat, lon, prevLat, prevLon);
         int foundInstruction = 0;
@@ -46,8 +46,8 @@ public class Instructions {
             for (int instructionIndex = 0; instructionIndex < instructions.size(); instructionIndex++) {
                 points = instructions.get(instructionIndex).getPoints();
                 for (int pointIndex = 0; pointIndex < points.size(); pointIndex++) {
-                    double currLat = points.getLatitude(pointIndex);
-                    double currLon = points.getLongitude(pointIndex);
+                    double currLat = points.getLat(pointIndex);
+                    double currLon = points.getLon(pointIndex);
 
                     if (!(instructionIndex == 0 && pointIndex == 0)) {
                         // calculate the distance from the point to the edge

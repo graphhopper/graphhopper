@@ -88,13 +88,13 @@ public class GHUtilityTest {
         assertEquals(g.getNodes(), newG.getNodes());
         assertEquals(g.getEdges(), newG.getEdges());
         NodeAccess na = newG.getNodeAccess();
-        assertEquals(0, na.getLatitude(0), 1e-4); // 0
-        assertEquals(2.5, na.getLatitude(1), 1e-4); // 1
-        assertEquals(4.5, na.getLatitude(2), 1e-4); // 2
-        assertEquals(4.6, na.getLatitude(3), 1e-4); // 8                
-        assertEquals(3.0, na.getLatitude(4), 1e-4); // 3
-        assertEquals(5.0, na.getLatitude(5), 1e-4); // 7
-        assertEquals(4.2, na.getLatitude(6), 1e-4); // 5
+        assertEquals(0, na.getLat(0), 1e-4); // 0
+        assertEquals(2.5, na.getLat(1), 1e-4); // 1
+        assertEquals(4.5, na.getLat(2), 1e-4); // 2
+        assertEquals(4.6, na.getLat(3), 1e-4); // 8
+        assertEquals(3.0, na.getLat(4), 1e-4); // 3
+        assertEquals(5.0, na.getLat(5), 1e-4); // 7
+        assertEquals(4.2, na.getLat(6), 1e-4); // 5
         assertEquals(getLengthOfAllEdges(g), getLengthOfAllEdges(newG), 1e-4);
 
         // 0 => 1
@@ -148,10 +148,10 @@ public class GHUtilityTest {
         assertEquals(Helper.createPointList(-1, 3, 12, 10), edgeState.fetchWayGeometry(FetchMode.PILLAR_ONLY));
 
         NodeAccess na = lg.getNodeAccess();
-        assertEquals(0, na.getLatitude(0), 1e-6);
-        assertEquals(1, na.getLongitude(0), 1e-6);
-        assertEquals(2.5, na.getLatitude(1), 1e-6);
-        assertEquals(4.5, na.getLongitude(1), 1e-6);
+        assertEquals(0, na.getLat(0), 1e-6);
+        assertEquals(1, na.getLon(0), 1e-6);
+        assertEquals(2.5, na.getLat(1), 1e-6);
+        assertEquals(4.5, na.getLon(1), 1e-6);
         assertEquals(9, lg.getNodes());
         EdgeIterator iter = lg.createEdgeExplorer().setBaseNode(8);
         iter.next();

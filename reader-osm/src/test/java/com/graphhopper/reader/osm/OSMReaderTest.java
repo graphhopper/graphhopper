@@ -136,12 +136,12 @@ public class OSMReaderTest {
         assertEquals(93146.888, iter.getDistance(), 1);
 
         NodeAccess na = graph.getNodeAccess();
-        assertEquals(9.4, na.getLongitude(findID(hopper.getLocationIndex(), 51.2, 9.4)), 1e-3);
-        assertEquals(10, na.getLongitude(findID(hopper.getLocationIndex(), 49, 10)), 1e-3);
-        assertEquals(51.249, na.getLatitude(findID(hopper.getLocationIndex(), 51.2492152, 9.4317166)), 1e-3);
+        assertEquals(9.4, na.getLon(findID(hopper.getLocationIndex(), 51.2, 9.4)), 1e-3);
+        assertEquals(10, na.getLon(findID(hopper.getLocationIndex(), 49, 10)), 1e-3);
+        assertEquals(51.249, na.getLat(findID(hopper.getLocationIndex(), 51.2492152, 9.4317166)), 1e-3);
 
         // node 40 is on the way between 30 and 50 => 9.0
-        assertEquals(9, na.getLongitude(findID(hopper.getLocationIndex(), 51.25, 9.43)), 1e-3);
+        assertEquals(9, na.getLon(findID(hopper.getLocationIndex(), 51.25, 9.43)), 1e-3);
     }
 
     protected int findID(LocationIndex index, double lat, double lon) {
@@ -152,8 +152,8 @@ public class OSMReaderTest {
     public void testSort() {
         GraphHopper hopper = new GraphHopperFacade(file1).setSortGraph(true).importOrLoad();
         NodeAccess na = hopper.getGraphHopperStorage().getNodeAccess();
-        assertEquals(10, na.getLongitude(findID(hopper.getLocationIndex(), 49, 10)), 1e-3);
-        assertEquals(51.249, na.getLatitude(findID(hopper.getLocationIndex(), 51.2492152, 9.4317166)), 1e-3);
+        assertEquals(10, na.getLon(findID(hopper.getLocationIndex(), 49, 10)), 1e-3);
+        assertEquals(51.249, na.getLat(findID(hopper.getLocationIndex(), 51.2492152, 9.4317166)), 1e-3);
     }
 
     @Test
@@ -361,8 +361,8 @@ public class OSMReaderTest {
         int new20 = 4;
         assertNotEquals(n20, new20);
         NodeAccess na = graph.getNodeAccess();
-        assertEquals(na.getLatitude(n20), na.getLatitude(new20), 1e-5);
-        assertEquals(na.getLongitude(n20), na.getLongitude(new20), 1e-5);
+        assertEquals(na.getLat(n20), na.getLat(new20), 1e-5);
+        assertEquals(na.getLon(n20), na.getLon(new20), 1e-5);
 
         assertEquals(n20, findID(hopper.getLocationIndex(), 52, 9.4));
 

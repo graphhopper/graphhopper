@@ -395,7 +395,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         if (!landmarkSuggestions.isEmpty()) {
             NodeAccess na = graph.getNodeAccess();
-            double lat = na.getLatitude(startNode), lon = na.getLongitude(startNode);
+            double lat = na.getLat(startNode), lon = na.getLon(startNode);
             LandmarkSuggestion selectedSuggestion = null;
             for (LandmarkSuggestion lmsugg : landmarkSuggestions) {
                 if (lmsugg.getBox().contains(lat, lon)) {
@@ -486,11 +486,11 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         IntHashSet inaccessible = new IntHashSet();
         while (allEdgesIterator.next()) {
             int adjNode = allEdgesIterator.getAdjNode();
-            SpatialRuleSet set = ruleLookup.lookupRules(nodeAccess.getLatitude(adjNode), nodeAccess.getLongitude(adjNode));
+            SpatialRuleSet set = ruleLookup.lookupRules(nodeAccess.getLat(adjNode), nodeAccess.getLon(adjNode));
             SpatialRule ruleAdj = set.getRules().isEmpty() ? null : set.getRules().get(0);
 
             int baseNode = allEdgesIterator.getBaseNode();
-            set = ruleLookup.lookupRules(nodeAccess.getLatitude(baseNode), nodeAccess.getLongitude(baseNode));
+            set = ruleLookup.lookupRules(nodeAccess.getLat(baseNode), nodeAccess.getLon(baseNode));
             SpatialRule ruleBase = set.getRules().isEmpty() ? null : set.getRules().get(0);
             if (ruleAdj != ruleBase) {
                 inaccessible.add(allEdgesIterator.getEdge());
@@ -868,7 +868,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             });
 
             if ((double) maxedout.get() / map.size() > 0.1) {
-                LOGGER.warn("landmark " + lmIdx + " (" + nodeAccess.getLatitude(lmNodeId) + "," + nodeAccess.getLongitude(lmNodeId) + "): " +
+                LOGGER.warn("landmark " + lmIdx + " (" + nodeAccess.getLat(lmNodeId) + "," + nodeAccess.getLon(lmNodeId) + "): " +
                         "too many weights were maxed out (" + maxedout.get() + "/" + map.size() + "). Use a bigger factor than " + lms.factor
                         + ". For example use maximum_lm_weight: " + finalMaxWeight.getValue() * 1.2 + " in your LM profile definition");
             }
@@ -886,7 +886,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     };
 
     static GHPoint createPoint(Graph graph, int nodeId) {
-        return new GHPoint(graph.getNodeAccess().getLatitude(nodeId), graph.getNodeAccess().getLongitude(nodeId));
+        return new GHPoint(graph.getNodeAccess().getLat(nodeId), graph.getNodeAccess().getLon(nodeId));
     }
 
     final static class RequireBothDirectionsEdgeFilter implements EdgeFilter {

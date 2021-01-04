@@ -67,8 +67,8 @@ public class GpxFromInstructions {
 
     private static void createWayPointBlock(StringBuilder output, Instruction instruction, DecimalFormat decimalFormat, Translation tr) {
         output.append("\n<wpt ");
-        output.append("lat=\"").append(decimalFormat.format(instruction.getPoints().getLatitude(0)));
-        output.append("\" lon=\"").append(decimalFormat.format(instruction.getPoints().getLongitude(0))).append("\">");
+        output.append("lat=\"").append(decimalFormat.format(instruction.getPoints().getLat(0)));
+        output.append("\" lon=\"").append(decimalFormat.format(instruction.getPoints().getLon(0))).append("\">");
         String name;
         if (instruction.getName().isEmpty())
             name = instruction.getTurnDescription(tr);
@@ -148,8 +148,8 @@ public class GpxFromInstructions {
     }
 
     private static void createRteptBlock(StringBuilder output, Instruction instruction, Instruction nextI, DecimalFormat decimalFormat, Translation tr) {
-        output.append("\n<rtept lat=\"").append(decimalFormat.format(instruction.getPoints().getLatitude(0))).
-                append("\" lon=\"").append(decimalFormat.format(instruction.getPoints().getLongitude(0))).append("\">");
+        output.append("\n<rtept lat=\"").append(decimalFormat.format(instruction.getPoints().getLat(0))).
+                append("\" lon=\"").append(decimalFormat.format(instruction.getPoints().getLon(0))).append("\">");
 
         if (!instruction.getName().isEmpty())
             output.append("<desc>").append(simpleXMLEscape(instruction.getTurnDescription(tr))).append("</desc>");
@@ -199,17 +199,17 @@ public class GpxFromInstructions {
         double nextLon;
 
         if (instruction.getPoints().getSize() >= 2) {
-            nextLat = instruction.getPoints().getLatitude(1);
-            nextLon = instruction.getPoints().getLongitude(1);
+            nextLat = instruction.getPoints().getLat(1);
+            nextLon = instruction.getPoints().getLon(1);
         } else if (nextI != null && instruction.getPoints().getSize() == 1) {
-            nextLat = nextI.getPoints().getLatitude(0);
-            nextLon = nextI.getPoints().getLongitude(0);
+            nextLat = nextI.getPoints().getLat(0);
+            nextLon = nextI.getPoints().getLon(0);
         } else {
             return Double.NaN;
         }
 
-        double lat = instruction.getPoints().getLatitude(0);
-        double lon = instruction.getPoints().getLongitude(0);
+        double lat = instruction.getPoints().getLat(0);
+        double lon = instruction.getPoints().getLon(0);
         return AC.calcAzimuth(lat, lon, nextLat, nextLon);
     }
 }

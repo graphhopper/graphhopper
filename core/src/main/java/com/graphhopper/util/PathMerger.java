@@ -218,9 +218,9 @@ public class PathMerger {
     private void calcAscendDescend(final ResponsePath responsePath, final PointList pointList) {
         double ascendMeters = 0;
         double descendMeters = 0;
-        double lastEle = pointList.getElevation(0);
+        double lastEle = pointList.getEle(0);
         for (int i = 1; i < pointList.size(); ++i) {
-            double ele = pointList.getElevation(i);
+            double ele = pointList.getEle(i);
             double diff = Math.abs(ele - lastEle);
 
             if (ele > lastEle)

@@ -106,10 +106,10 @@ public class MVTResource {
                         || zInfo > 10 && (rc == RoadClass.PRIMARY || rc == RoadClass.TRUNK)
                         || zInfo > 11 && (rc == RoadClass.SECONDARY)
                         || zInfo > 12) {
-                    double lat = na.getLatitude(edge.getBaseNode());
-                    double lon = na.getLongitude(edge.getBaseNode());
-                    double toLat = na.getLatitude(edge.getAdjNode());
-                    double toLon = na.getLongitude(edge.getAdjNode());
+                    double lat = na.getLat(edge.getBaseNode());
+                    double lon = na.getLon(edge.getBaseNode());
+                    double toLat = na.getLat(edge.getAdjNode());
+                    double toLon = na.getLon(edge.getAdjNode());
                     lineString = geometryFactory.createLineString(new Coordinate[]{new Coordinate(lon, lat), new Coordinate(toLon, toLat)});
                 } else {
                     // skip edge for certain zoom

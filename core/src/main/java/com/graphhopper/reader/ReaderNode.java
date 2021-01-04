@@ -32,10 +32,10 @@ public class ReaderNode extends ReaderElement {
     public ReaderNode(long id, PointAccess pointAccess, int accessId) {
         super(id, NODE);
 
-        this.lat = pointAccess.getLatitude(accessId);
-        this.lon = pointAccess.getLongitude(accessId);
+        this.lat = pointAccess.getLat(accessId);
+        this.lon = pointAccess.getLon(accessId);
         if (pointAccess.is3D())
-            setTag("ele", pointAccess.getElevation(accessId));
+            setTag("ele", pointAccess.getEle(accessId));
     }
 
     public ReaderNode(long id, double lat, double lon) {

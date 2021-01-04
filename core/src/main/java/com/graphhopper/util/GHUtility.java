@@ -57,11 +57,11 @@ public class GHUtility {
         try {
             EdgeExplorer explorer = g.createEdgeExplorer();
             for (; nodeIndex < nodes; nodeIndex++) {
-                double lat = na.getLatitude(nodeIndex);
+                double lat = na.getLat(nodeIndex);
                 if (lat > 90 || lat < -90)
                     problems.add("latitude is not within its bounds " + lat);
 
-                double lon = na.getLongitude(nodeIndex);
+                double lon = na.getLon(nodeIndex);
                 if (lon > 180 || lon < -180)
                     problems.add("longitude is not within its bounds " + lon);
 
@@ -314,7 +314,7 @@ public class GHUtility {
         CHEdgeExplorer ex = g.createEdgeExplorer(filter);
         CHEdgeIterator iter = ex.setBaseNode(nodeId);
         NodeAccess na = g.getBaseGraph().getNodeAccess();
-        String str = nodeId + ":" + na.getLatitude(nodeId) + "," + na.getLongitude(nodeId) + "\n";
+        String str = nodeId + ":" + na.getLat(nodeId) + "," + na.getLon(nodeId) + "\n";
         while (iter.next()) {
             str += "  ->" + iter.getAdjNode() + "(" + iter.getSkippedEdge1() + "," + iter.getSkippedEdge2() + ") "
                     + iter.getEdge() + " \t" + BitUtil.BIG.toBitString(iter.getFlags().ints[0], 8) + "\n";
@@ -325,7 +325,7 @@ public class GHUtility {
     public static String getNodeInfo(Graph g, int nodeId, EdgeFilter filter) {
         EdgeIterator iter = g.createEdgeExplorer(filter).setBaseNode(nodeId);
         NodeAccess na = g.getNodeAccess();
-        String str = nodeId + ":" + na.getLatitude(nodeId) + "," + na.getLongitude(nodeId) + "\n";
+        String str = nodeId + ":" + na.getLat(nodeId) + "," + na.getLon(nodeId) + "\n";
         while (iter.next()) {
             str += "  ->" + iter.getAdjNode() + " (" + iter.getDistance() + ") pillars:"
                     + iter.fetchWayGeometry(FetchMode.PILLAR_ONLY).getSize() + ", edgeId:" + iter.getEdge()
@@ -419,9 +419,9 @@ public class GHUtility {
         for (int old = 0; old < nodes; old++) {
             int newIndex = oldToNewNodeList.get(old);
             if (sna.is3D())
-                sna.setNode(newIndex, na.getLatitude(old), na.getLongitude(old), na.getElevation(old));
+                sna.setNode(newIndex, na.getLat(old), na.getLon(old), na.getEle(old));
             else
-                sna.setNode(newIndex, na.getLatitude(old), na.getLongitude(old));
+                sna.setNode(newIndex, na.getLat(old), na.getLon(old));
         }
         return toSortedGraph;
     }
@@ -446,9 +446,9 @@ public class GHUtility {
         int nodes = fromGraph.getNodes();
         for (int node = 0; node < nodes; node++) {
             if (tna.is3D())
-                tna.setNode(node, fna.getLatitude(node), fna.getLongitude(node), fna.getElevation(node));
+                tna.setNode(node, fna.getLat(node), fna.getLon(node), fna.getEle(node));
             else
-                tna.setNode(node, fna.getLatitude(node), fna.getLongitude(node));
+                tna.setNode(node, fna.getLat(node), fna.getLon(node));
         }
         return toGraph;
     }
@@ -989,28 +989,12 @@ public class GHUtility {
             throw new UnsupportedOperationException("Not supported.");
         }
 
-        @Override
-        public double getLatitude(int nodeId) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
         public double getLat(int nodeId) {
             throw new UnsupportedOperationException("Not supported.");
         }
 
         @Override
-        public double getLongitude(int nodeId) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
         public double getLon(int nodeId) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public double getElevation(int nodeId) {
             throw new UnsupportedOperationException("Not supported.");
         }
 
@@ -1023,7 +1007,7 @@ public class GHUtility {
     public static BBox createBBox(EdgeIteratorState edgeState) {
         PointList towerNodes = edgeState.fetchWayGeometry(FetchMode.TOWER_ONLY);
         int secondIndex = towerNodes.getSize() == 1 ? 0 : 1;
-        return BBox.fromPoints(towerNodes.getLatitude(0), towerNodes.getLongitude(0),
-                towerNodes.getLatitude(secondIndex), towerNodes.getLongitude(secondIndex));
+        return BBox.fromPoints(towerNodes.getLat(0), towerNodes.getLon(0),
+                towerNodes.getLat(secondIndex), towerNodes.getLon(secondIndex));
     }
 }

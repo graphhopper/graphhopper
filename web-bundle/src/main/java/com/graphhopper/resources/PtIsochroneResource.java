@@ -113,7 +113,7 @@ public class PtIsochroneResource {
         NodeAccess nodeAccess = queryGraph.getNodeAccess();
 
         MultiCriteriaLabelSetting.SPTVisitor sptVisitor = nodeLabel -> {
-            Coordinate nodeCoordinate = new Coordinate(nodeAccess.getLongitude(nodeLabel.adjNode), nodeAccess.getLatitude(nodeLabel.adjNode));
+            Coordinate nodeCoordinate = new Coordinate(nodeAccess.getLon(nodeLabel.adjNode), nodeAccess.getLat(nodeLabel.adjNode));
             z1.merge(nodeCoordinate, this.z.apply(nodeLabel), Math::min);
         };
 
@@ -131,8 +131,8 @@ public class PtIsochroneResource {
                 @Override
                 public void onEdge(int edgeId) {
                     EdgeIteratorState edge = queryGraph.getEdgeIteratorStateForKey(edgeId * 2);
-                    z1.merge(new Coordinate(nodeAccess.getLongitude(edge.getBaseNode()), nodeAccess.getLatitude(edge.getBaseNode())), Double.MAX_VALUE, Math::min);
-                    z1.merge(new Coordinate(nodeAccess.getLongitude(edge.getAdjNode()), nodeAccess.getLatitude(edge.getAdjNode())), Double.MAX_VALUE, Math::min);
+                    z1.merge(new Coordinate(nodeAccess.getLon(edge.getBaseNode()), nodeAccess.getLat(edge.getBaseNode())), Double.MAX_VALUE, Math::min);
+                    z1.merge(new Coordinate(nodeAccess.getLon(edge.getAdjNode()), nodeAccess.getLat(edge.getAdjNode())), Double.MAX_VALUE, Math::min);
                 }
             });
             exploredPoints = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));

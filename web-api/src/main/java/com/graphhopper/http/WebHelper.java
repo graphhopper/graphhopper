@@ -114,14 +114,14 @@ public class WebHelper {
         int prevLon = 0;
         int prevEle = 0;
         for (int i = 0; i < size; i++) {
-            int num = (int) Math.floor(poly.getLatitude(i) * precision);
+            int num = (int) Math.floor(poly.getLat(i) * precision);
             encodeNumber(sb, num - prevLat);
             prevLat = num;
-            num = (int) Math.floor(poly.getLongitude(i) * precision);
+            num = (int) Math.floor(poly.getLon(i) * precision);
             encodeNumber(sb, num - prevLon);
             prevLon = num;
             if (includeElevation) {
-                num = (int) Math.floor(poly.getElevation(i) * 100);
+                num = (int) Math.floor(poly.getEle(i) * 100);
                 encodeNumber(sb, num - prevEle);
                 prevEle = num;
             }

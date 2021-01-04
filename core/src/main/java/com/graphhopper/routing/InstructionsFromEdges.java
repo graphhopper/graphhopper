@@ -124,12 +124,12 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         int baseNode = edge.getBaseNode();
 
         if (prevNode == -1) {
-            prevLat = this.nodeAccess.getLatitude(baseNode);
-            prevLon = this.nodeAccess.getLongitude(baseNode);
+            prevLat = this.nodeAccess.getLat(baseNode);
+            prevLon = this.nodeAccess.getLon(baseNode);
         }
 
-        double adjLat = nodeAccess.getLatitude(adjNode);
-        double adjLon = nodeAccess.getLongitude(adjNode);
+        double adjLat = nodeAccess.getLat(adjNode);
+        double adjLon = nodeAccess.getLon(adjNode);
         double latitude, longitude;
 
         PointList wayGeo = edge.fetchWayGeometry(FetchMode.ALL);
@@ -139,10 +139,10 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             latitude = adjLat;
             longitude = adjLon;
         } else {
-            latitude = wayGeo.getLatitude(1);
-            longitude = wayGeo.getLongitude(1);
-            assert Double.compare(prevLat, nodeAccess.getLatitude(baseNode)) == 0;
-            assert Double.compare(prevLon, nodeAccess.getLongitude(baseNode)) == 0;
+            latitude = wayGeo.getLat(1);
+            longitude = wayGeo.getLon(1);
+            assert Double.compare(prevLat, nodeAccess.getLat(baseNode)) == 0;
+            assert Double.compare(prevLon, nodeAccess.getLon(baseNode)) == 0;
         }
 
         String name = edge.getName();
@@ -295,8 +295,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             doublePrevLon = prevLon;
         } else {
             int beforeLast = wayGeo.getSize() - 2;
-            doublePrevLat = wayGeo.getLatitude(beforeLast);
-            doublePrevLon = wayGeo.getLongitude(beforeLast);
+            doublePrevLat = wayGeo.getLat(beforeLast);
+            doublePrevLon = wayGeo.getLon(beforeLast);
         }
 
         prevInRoundabout = isRoundabout;

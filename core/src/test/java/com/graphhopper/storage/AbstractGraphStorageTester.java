@@ -61,8 +61,8 @@ public abstract class AbstractGraphStorageTester {
     public static void assertPList(PointList expected, PointList list) {
         assertEquals("size of point lists is not equal", expected.getSize(), list.getSize());
         for (int i = 0; i < expected.getSize(); i++) {
-            assertEquals(expected.getLatitude(i), list.getLatitude(i), 1e-4);
-            assertEquals(expected.getLongitude(i), list.getLongitude(i), 1e-4);
+            assertEquals(expected.getLat(i), list.getLat(i), 1e-4);
+            assertEquals(expected.getLon(i), list.getLon(i), 1e-4);
         }
     }
 
@@ -70,7 +70,7 @@ public abstract class AbstractGraphStorageTester {
         int s = g.getNodes();
         NodeAccess na = g.getNodeAccess();
         for (int i = 0; i < s; i++) {
-            if (Math.abs(na.getLatitude(i) - latitude) < 1e-4) {
+            if (Math.abs(na.getLat(i) - latitude) < 1e-4) {
                 return i;
             }
         }
@@ -81,7 +81,7 @@ public abstract class AbstractGraphStorageTester {
         int s = g.getNodes();
         NodeAccess na = g.getNodeAccess();
         for (int i = 0; i < s; i++) {
-            if (Math.abs(na.getLatitude(i) - latitude) < 1e-4 && Math.abs(na.getLongitude(i) - longitude) < 1e-4) {
+            if (Math.abs(na.getLat(i) - latitude) < 1e-4 && Math.abs(na.getLon(i) - longitude) < 1e-4) {
                 return i;
             }
         }
@@ -349,17 +349,17 @@ public abstract class AbstractGraphStorageTester {
 
     private void checkExampleGraph(Graph graph) {
         NodeAccess na = graph.getNodeAccess();
-        assertEquals(12f, na.getLatitude(0), 1e-6);
-        assertEquals(23f, na.getLongitude(0), 1e-6);
+        assertEquals(12f, na.getLat(0), 1e-6);
+        assertEquals(23f, na.getLon(0), 1e-6);
 
-        assertEquals(38.33f, na.getLatitude(1), 1e-6);
-        assertEquals(135.3f, na.getLongitude(1), 1e-6);
+        assertEquals(38.33f, na.getLat(1), 1e-6);
+        assertEquals(135.3f, na.getLon(1), 1e-6);
 
-        assertEquals(6, na.getLatitude(2), 1e-6);
-        assertEquals(139, na.getLongitude(2), 1e-6);
+        assertEquals(6, na.getLat(2), 1e-6);
+        assertEquals(139, na.getLon(2), 1e-6);
 
-        assertEquals(78, na.getLatitude(3), 1e-6);
-        assertEquals(89, na.getLongitude(3), 1e-6);
+        assertEquals(78, na.getLat(3), 1e-6);
+        assertEquals(89, na.getLon(3), 1e-6);
 
         assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(carOutExplorer.setBaseNode((1))));
         assertEquals(GHUtility.asSet(5, 4, 3, 2, 1), GHUtility.getNeighbors(carOutExplorer.setBaseNode(0)));
@@ -446,7 +446,7 @@ public abstract class AbstractGraphStorageTester {
     public boolean containsLatitude(Graph g, EdgeIterator iter, double latitude) {
         NodeAccess na = g.getNodeAccess();
         while (iter.next()) {
-            if (Math.abs(na.getLatitude(iter.getAdjNode()) - latitude) < 1e-4)
+            if (Math.abs(na.getLat(iter.getAdjNode()) - latitude) < 1e-4)
                 return true;
         }
         return false;
@@ -827,14 +827,14 @@ public abstract class AbstractGraphStorageTester {
         iter.next();
         EdgeIteratorState edgeState02 = iter.detach(false);
         assertEquals(2, iter.getAdjNode());
-        assertEquals(1, edgeState02.fetchWayGeometry(FetchMode.PILLAR_ONLY).getLatitude(0), 1e-1);
+        assertEquals(1, edgeState02.fetchWayGeometry(FetchMode.PILLAR_ONLY).getLat(0), 1e-1);
         assertEquals(2, edgeState02.getAdjNode());
         assertTrue(edgeState02.get(carAccessEnc));
 
         EdgeIteratorState edgeState20 = iter.detach(true);
         assertEquals(0, edgeState20.getAdjNode());
         assertEquals(2, edgeState20.getBaseNode());
-        assertEquals(3, edgeState20.fetchWayGeometry(FetchMode.PILLAR_ONLY).getLatitude(0), 1e-1);
+        assertEquals(3, edgeState20.fetchWayGeometry(FetchMode.PILLAR_ONLY).getLat(0), 1e-1);
         assertFalse(edgeState20.get(carAccessEnc));
         assertEquals(GHUtility.getEdge(graph, 0, 2).getFlags(), edgeState02.getFlags());
         assertEquals(GHUtility.getEdge(graph, 2, 0).getFlags(), edgeState20.getFlags());
@@ -845,8 +845,8 @@ public abstract class AbstractGraphStorageTester {
         assertEquals(2, edgeState20.getBaseNode());
 
         assertEquals(0, iter.fetchWayGeometry(FetchMode.PILLAR_ONLY).size());
-        assertEquals(1, edgeState02.fetchWayGeometry(FetchMode.PILLAR_ONLY).getLatitude(0), 1e-1);
-        assertEquals(3, edgeState20.fetchWayGeometry(FetchMode.PILLAR_ONLY).getLatitude(0), 1e-1);
+        assertEquals(1, edgeState02.fetchWayGeometry(FetchMode.PILLAR_ONLY).getLat(0), 1e-1);
+        assertEquals(3, edgeState20.fetchWayGeometry(FetchMode.PILLAR_ONLY).getLat(0), 1e-1);
 
         // #162 a directed self referencing edge should be able to reverse its state too
         GHUtility.setSpeed(10, true, false, carEncoder, GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 3).setDistance(2)));

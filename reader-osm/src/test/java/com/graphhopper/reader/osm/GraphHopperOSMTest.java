@@ -188,8 +188,8 @@ public class GraphHopperOSMTest {
                 EdgeIteratorState edge = gh.getGraphHopperStorage().getEdgeIteratorStateForKey(edgeId * 2);
                 for (int i = 0; i < 2; i++) {
                     int nodeId = i == 0 ? edge.getBaseNode() : edge.getAdjNode();
-                    double lat = na.getLatitude(nodeId);
-                    double lon = na.getLongitude(nodeId);
+                    double lat = na.getLat(nodeId);
+                    double lon = na.getLon(nodeId);
                     if (bbox.contains(lat, lon))
                         indexNodeList.add(nodeId);
                 }
@@ -198,7 +198,7 @@ public class GraphHopperOSMTest {
 
         assertEquals(57, indexNodeList.size());
         for (int nodeId : indexNodeList) {
-            if (!bbox.contains(na.getLatitude(nodeId), na.getLongitude(nodeId)))
+            if (!bbox.contains(na.getLat(nodeId), na.getLon(nodeId)))
                 fail("bbox " + bbox + " should contain " + nodeId);
         }
 
@@ -211,8 +211,8 @@ public class GraphHopperOSMTest {
 
             @Override
             protected boolean goFurther(int nodeId) {
-                double lat = na.getLatitude(nodeId);
-                double lon = na.getLongitude(nodeId);
+                double lat = na.getLat(nodeId);
+                double lon = na.getLon(nodeId);
                 if (bbox.contains(lat, lon))
                     bfsNodeList.add(nodeId);
 
@@ -446,10 +446,10 @@ public class GraphHopperOSMTest {
         ResponsePath rsp = grsp.getBest();
         assertEquals(3, rsp.getPoints().getSize());
         // => found A and D
-        assertEquals(50, rsp.getPoints().getLongitude(0), 1e-3);
-        assertEquals(11.1, rsp.getPoints().getLatitude(0), 1e-3);
-        assertEquals(51, rsp.getPoints().getLongitude(2), 1e-3);
-        assertEquals(11.3, rsp.getPoints().getLatitude(2), 1e-3);
+        assertEquals(50, rsp.getPoints().getLon(0), 1e-3);
+        assertEquals(11.1, rsp.getPoints().getLat(0), 1e-3);
+        assertEquals(51, rsp.getPoints().getLon(2), 1e-3);
+        assertEquals(11.3, rsp.getPoints().getLat(2), 1e-3);
 
         // A to D not allowed for foot. But the location index will choose a node close to D accessible to FOOT
         grsp = instance.route(new GHRequest(11.1, 50, 11.3, 51).setProfile(profile2));
@@ -457,8 +457,8 @@ public class GraphHopperOSMTest {
         rsp = grsp.getBest();
         assertEquals(2, rsp.getPoints().getSize());
         // => found a point on edge A-B        
-        assertEquals(11.680, rsp.getPoints().getLatitude(1), 1e-3);
-        assertEquals(50.644, rsp.getPoints().getLongitude(1), 1e-3);
+        assertEquals(11.680, rsp.getPoints().getLat(1), 1e-3);
+        assertEquals(50.644, rsp.getPoints().getLon(1), 1e-3);
 
         // A to E only for foot
         grsp = instance.route(new GHRequest(11.1, 50, 10, 51).setProfile(profile2));

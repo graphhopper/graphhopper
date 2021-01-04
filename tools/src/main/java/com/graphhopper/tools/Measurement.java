@@ -634,7 +634,7 @@ public class Measurement {
                         // -> discard
                         continue;
                     nodes.add(node);
-                    points.add(new GHPoint(na.getLatitude(node), na.getLongitude(node)));
+                    points.add(new GHPoint(na.getLat(node), na.getLon(node)));
                     if (querySettings.withPointHints) {
                         EdgeIterator iter = edgeExplorer.setBaseNode(node);
                         pointHints.add(iter.next() ? iter.getName() : "");

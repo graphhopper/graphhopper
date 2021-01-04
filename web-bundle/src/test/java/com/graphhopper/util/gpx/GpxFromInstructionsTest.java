@@ -96,16 +96,16 @@ public class GpxFromInstructionsTest {
         assertEquals(1604120, p.getTime());
 
         assertEquals(Instruction.CONTINUE_ON_STREET, wayList.get(0).getSign());
-        assertEquals(15, wayList.get(0).getPoints().getLatitude(0), 1e-3);
-        assertEquals(10, wayList.get(0).getPoints().getLongitude(0), 1e-3);
+        assertEquals(15, wayList.get(0).getPoints().getLat(0), 1e-3);
+        assertEquals(10, wayList.get(0).getPoints().getLon(0), 1e-3);
 
         assertEquals(Instruction.TURN_LEFT, wayList.get(1).getSign());
-        assertEquals(15.1, wayList.get(1).getPoints().getLatitude(0), 1e-3);
-        assertEquals(10, wayList.get(1).getPoints().getLongitude(0), 1e-3);
+        assertEquals(15.1, wayList.get(1).getPoints().getLat(0), 1e-3);
+        assertEquals(10, wayList.get(1).getPoints().getLon(0), 1e-3);
 
         assertEquals(Instruction.TURN_RIGHT, wayList.get(2).getSign());
-        assertEquals(15.1, wayList.get(2).getPoints().getLatitude(0), 1e-3);
-        assertEquals(9.9, wayList.get(2).getPoints().getLongitude(0), 1e-3);
+        assertEquals(15.1, wayList.get(2).getPoints().getLat(0), 1e-3);
+        assertEquals(9.9, wayList.get(2).getPoints().getLon(0), 1e-3);
 
         String gpxStr = GpxFromInstructions.createGPX(wayList, "test", (long) 0, false, true, true, true, Constants.VERSION, trMap.getWithFallBack(Locale.US));
         verifyGPX(gpxStr);

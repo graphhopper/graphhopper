@@ -52,21 +52,15 @@ public interface PointAccess {
     /**
      * @return the latitude at the specified node index
      */
-    double getLatitude(int nodeId);
-
     double getLat(int nodeId);
 
     /**
      * @return the longitude at the specified node index
      */
-    double getLongitude(int nodeId);
-
     double getLon(int nodeId);
 
     /**
      * Returns the elevation of the specified nodeId.
      */
-    double getElevation(int nodeId);
-
     double getEle(int nodeId);
 }
