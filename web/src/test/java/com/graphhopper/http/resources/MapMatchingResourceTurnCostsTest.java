@@ -25,7 +25,6 @@ import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;
@@ -60,8 +59,6 @@ public class MapMatchingResourceTurnCostsTest {
                 putObject("graph.flag_encoders", "car|turn_costs=true,bike").
                 putObject("datareader.file", "../map-matching/files/leipzig_germany.osm.pbf").
                 putObject("graph.location", DIR).
-                putObject(Parameters.CH.INIT_DISABLING_ALLOWED, true).
-                putObject(Parameters.Landmark.INIT_DISABLING_ALLOWED, true).
                 setProfiles(Arrays.asList(
                         new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(true),
                         new Profile("car_no_tc").setVehicle("car").setWeighting("fastest"),

@@ -62,7 +62,6 @@ public class RouteResourceClientHCTest {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "car,bike").
-                putObject("routing.ch.disabling_allowed", true).
                 putObject("prepare.min_network_size", 0).
                 putObject("graph.elevation.provider", "srtm").
                 putObject("graph.elevation.cachedir", "../core/files/").
