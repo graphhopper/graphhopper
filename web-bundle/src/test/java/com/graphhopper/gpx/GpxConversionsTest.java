@@ -18,8 +18,6 @@
 
 package com.graphhopper.gpx;
 
-import com.graphhopper.gpx.GPXEntry;
-import com.graphhopper.gpx.GpxFromInstructions;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
@@ -49,7 +47,7 @@ import java.util.Locale;
 
 import static org.junit.Assert.*;
 
-public class GpxFromInstructionsTest {
+public class GpxConversionsTest {
 
     private EncodingManager carManager;
     private FlagEncoder carEncoder;
@@ -109,7 +107,7 @@ public class GpxFromInstructionsTest {
         assertEquals(15.1, wayList.get(2).getPoints().getLat(0), 1e-3);
         assertEquals(9.9, wayList.get(2).getPoints().getLon(0), 1e-3);
 
-        String gpxStr = GpxFromInstructions.createGPX(wayList, "test", (long) 0, false, true, true, true, Constants.VERSION, trMap.getWithFallBack(Locale.US));
+        String gpxStr = GpxConversions.createGPX(wayList, "test", (long) 0, false, true, true, true, Constants.VERSION, trMap.getWithFallBack(Locale.US));
         verifyGPX(gpxStr);
 //        System.out.println(gpxStr);
 
@@ -143,7 +141,7 @@ public class GpxFromInstructionsTest {
         instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", pl).setDistance(25).setTime(3000));
         instructions.add(new FinishInstruction(49.941029, 11.584514, 0));
 
-        List<GPXEntry> result = GpxFromInstructions.createGPXList(instructions);
+        List<GpxConversions.GPXEntry> result = GpxConversions.createGPXList(instructions);
         assertEquals(5, result.size());
 
         assertEquals(0, result.get(0).getTime().longValue());
@@ -152,7 +150,7 @@ public class GpxFromInstructionsTest {
         assertEquals(19000, result.get(3).getTime().longValue());
         assertEquals(22000, result.get(4).getTime().longValue());
 
-        verifyGPX(GpxFromInstructions.createGPX(instructions, "GraphHopper", new Date().getTime(), false, true, true, true, Constants.VERSION, trMap.getWithFallBack(Locale.US)));
+        verifyGPX(GpxConversions.createGPX(instructions, "GraphHopper", new Date().getTime(), false, true, true, true, Constants.VERSION, trMap.getWithFallBack(Locale.US)));
     }
 
     @Test
@@ -170,7 +168,7 @@ public class GpxFromInstructionsTest {
         instructions.add(instr);
         instructions.add(new FinishInstruction(52.555619423589, 13.43886994061328, 0));
 
-        String gpxStr = GpxFromInstructions.createGPX(instructions, "test", 0, true, true, false, false, Constants.VERSION, trMap.getWithFallBack(Locale.US));
+        String gpxStr = GpxConversions.createGPX(instructions, "test", 0, true, true, false, false, Constants.VERSION, trMap.getWithFallBack(Locale.US));
 
         assertTrue(gpxStr, gpxStr.contains("<gh:exit_number>3</gh:exit_number>"));
         verifyGPX(gpxStr);
@@ -187,7 +185,7 @@ public class GpxFromInstructionsTest {
         instructions.add(instruction);
         instructions.add(new FinishInstruction(0.000852, 0.000852, 0));
 
-        String gpxStr = GpxFromInstructions.createGPX(instructions, "test", 0, true, true, true, true, Constants.VERSION, trMap.getWithFallBack(Locale.US));
+        String gpxStr = GpxConversions.createGPX(instructions, "test", 0, true, true, true, true, Constants.VERSION, trMap.getWithFallBack(Locale.US));
 
         assertFalse(gpxStr, gpxStr.contains("E-"));
         assertTrue(gpxStr, gpxStr.contains("0.000001"));
@@ -197,9 +195,9 @@ public class GpxFromInstructionsTest {
 
     @Test
     public void testXMLEscape_issue572() {
-        assertEquals("_", GpxFromInstructions.simpleXMLEscape("<"));
-        assertEquals("_blup_", GpxFromInstructions.simpleXMLEscape("<blup>"));
-        assertEquals("a&amp;b", GpxFromInstructions.simpleXMLEscape("a&b"));
+        assertEquals("_", GpxConversions.simpleXMLEscape("<"));
+        assertEquals("_blup_", GpxConversions.simpleXMLEscape("<blup>"));
+        assertEquals("a&amp;b", GpxConversions.simpleXMLEscape("a&b"));
     }
 
     private void verifyGPX(String gpx) {
@@ -239,38 +237,38 @@ public class GpxFromInstructionsTest {
         Instruction currI = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", pl);
         Instruction nextI = new Instruction(Instruction.CONTINUE_ON_STREET, "next", nextPl);
 
-        assertEquals(270, GpxFromInstructions.calcAzimuth(currI, nextI), .1);
-        assertEquals("W", GpxFromInstructions.calcDirection(currI, nextI));
+        assertEquals(270, GpxConversions.calcAzimuth(currI, nextI), .1);
+        assertEquals("W", GpxConversions.calcDirection(currI, nextI));
 
         PointList p2 = new PointList();
         p2.add(49.942, 11.580);
         p2.add(49.944, 11.582);
         Instruction i2 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", p2);
 
-        assertEquals(32.76, GpxFromInstructions.calcAzimuth(i2, null), .1);
-        assertEquals("NE", GpxFromInstructions.calcDirection(i2, null));
+        assertEquals(32.76, GpxConversions.calcAzimuth(i2, null), .1);
+        assertEquals("NE", GpxConversions.calcDirection(i2, null));
 
         PointList p3 = new PointList();
         p3.add(49.942, 11.580);
         p3.add(49.944, 11.580);
         Instruction i3 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", p3);
 
-        assertEquals(0, GpxFromInstructions.calcAzimuth(i3, null), .1);
-        assertEquals("N", GpxFromInstructions.calcDirection(i3, null));
+        assertEquals(0, GpxConversions.calcAzimuth(i3, null), .1);
+        assertEquals("N", GpxConversions.calcDirection(i3, null));
 
         PointList p4 = new PointList();
         p4.add(49.940, 11.580);
         p4.add(49.920, 11.586);
         Instruction i4 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", p4);
 
-        assertEquals("S", GpxFromInstructions.calcDirection(i4, null));
+        assertEquals("S", GpxConversions.calcDirection(i4, null));
 
         PointList p5 = new PointList();
         p5.add(49.940, 11.580);
         Instruction i5 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", p5);
 
-        assertTrue(Double.isNaN(GpxFromInstructions.calcAzimuth(i5, null)));
-        assertEquals("", GpxFromInstructions.calcDirection(i5, null));
+        assertTrue(Double.isNaN(GpxConversions.calcAzimuth(i5, null)));
+        assertEquals("", GpxConversions.calcDirection(i5, null));
     }
 
 }

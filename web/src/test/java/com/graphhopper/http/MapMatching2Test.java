@@ -21,11 +21,12 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.matching.EdgeMatch;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.matching.State;
-import com.graphhopper.gpx.Gpx;
+import com.graphhopper.jackson.Gpx;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -70,7 +71,7 @@ public class MapMatching2Test {
         MapMatching mapMatching = new MapMatching(hopper, new PMap().putObject("profile", "my_profile"));
 
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-13.gpx"), Gpx.class);
-        MatchResult mr = mapMatching.match(gpx.trk.get(0).getEntries());
+        MatchResult mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
 
         // make sure no virtual edges are returned
         int edgeCount = hopper.getGraphHopperStorage().getAllEdges().length();
@@ -98,7 +99,7 @@ public class MapMatching2Test {
         MapMatching mapMatching = new MapMatching(hopper, new PMap().putObject("profile", "my_profile"));
 
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-70.gpx"), Gpx.class);
-        MatchResult mr = mapMatching.match(gpx.trk.get(0).getEntries());
+        MatchResult mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
 
         assertEquals(Arrays.asList("Милана Видака", "Бранка Радичевића", "Здравка Челара"), fetchStreets(mr.getEdgeMatches()));
         for (EdgeMatch edgeMatch : mr.getEdgeMatches()) {
@@ -121,7 +122,7 @@ public class MapMatching2Test {
 
         // query with two identical points
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-127.gpx"), Gpx.class);
-        MatchResult mr = mapMatching.match(gpx.trk.get(0).getEntries());
+        MatchResult mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
 
         // make sure no virtual edges are returned
         int edgeCount = hopper.getGraphHopperStorage().getAllEdges().length();

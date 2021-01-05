@@ -18,7 +18,10 @@
 
 package com.graphhopper.gpx;
 
+import com.graphhopper.jackson.Gpx;
+import com.graphhopper.matching.Observation;
 import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
 
 import java.text.DateFormat;
@@ -27,8 +30,9 @@ import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
-public class GpxFromInstructions {
+public class GpxConversions {
 
     private static final AngleCalc AC = AngleCalc.ANGLE_CALC;
 
@@ -206,5 +210,62 @@ public class GpxFromInstructions {
         double lat = instruction.getPoints().getLat(0);
         double lon = instruction.getPoints().getLon(0);
         return AC.calcAzimuth(lat, lon, nextLat, nextLon);
+    }
+
+    public static List<Observation> getEntries(Gpx.Trk trk) {
+        ArrayList<Observation> gpxEntries = new ArrayList<>();
+        for (Gpx.Trkseg t : trk.trkseg) {
+            for (Gpx.Trkpt trkpt : t.trkpt) {
+                gpxEntries.add(new Observation(new GHPoint3D(trkpt.lat, trkpt.lon, trkpt.ele)));
+            }
+        }
+        return gpxEntries;
+    }
+
+    /**
+     * @author Peter Karich
+     */
+    public static class GPXEntry {
+        private GHPoint point;
+        private Long time;
+
+        public GPXEntry(GHPoint p) {
+            this.point = p;
+        }
+
+        public GPXEntry(GHPoint p, long time) {
+            this.point = p;
+            this.time = time;
+        }
+
+        public Long getTime() {
+            return time;
+        }
+
+        public GHPoint getPoint() {
+            return point;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            GPXEntry gpxEntry = (GPXEntry) o;
+            return Objects.equals(point, gpxEntry.point) &&
+                    Objects.equals(time, gpxEntry.time);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(point, time);
+        }
+
+        @Override
+        public String toString() {
+            return "GPXEntry{" +
+                    "point=" + point +
+                    ", time=" + time +
+                    '}';
+        }
     }
 }

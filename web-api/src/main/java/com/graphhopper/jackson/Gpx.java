@@ -16,16 +16,49 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.gpx;
+package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Gpx {
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Trk {
+
+        @JacksonXmlElementWrapper(useWrapping = false)
+        public List<Trkseg> trkseg = new ArrayList<>();
+        public String name;
+
+        public Optional<Date> getStartTime() {
+            return trkseg.stream().flatMap(trkseg -> trkseg.trkpt.stream()).findFirst().flatMap(trkpt -> Optional.ofNullable(trkpt.time));
+        }
+
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Trkseg {
+
+        @JacksonXmlElementWrapper(useWrapping = false)
+        public List<Trkpt> trkpt = new ArrayList<>();
+
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Trkpt {
+
+        public double ele;
+        public Date time;
+        public double lat;
+        public double lon;
+
+    }
 
     @JacksonXmlElementWrapper(useWrapping = false)
     public List<Trk> trk = new ArrayList<>();

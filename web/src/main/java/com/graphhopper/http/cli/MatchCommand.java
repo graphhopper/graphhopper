@@ -26,11 +26,11 @@ import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.matching.Observation;
-import com.graphhopper.gpx.Gpx;
+import com.graphhopper.jackson.Gpx;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.*;
-import com.graphhopper.gpx.GpxFromInstructions;
+import com.graphhopper.gpx.GpxConversions;
 import io.dropwizard.cli.ConfiguredCommand;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Argument;
@@ -121,7 +121,7 @@ public class MatchCommand extends ConfiguredCommand<GraphHopperServerConfigurati
                 if (gpx.trk.size() > 1) {
                     throw new IllegalArgumentException("GPX documents with multiple tracks not supported yet.");
                 }
-                List<Observation> measurements = gpx.trk.get(0).getEntries();
+                List<Observation> measurements = GpxConversions.getEntries(gpx.trk.get(0));
                 importSW.stop();
                 matchSW.start();
                 MatchResult mr = mapMatching.match(measurements);
@@ -144,7 +144,7 @@ public class MatchCommand extends ConfiguredCommand<GraphHopperServerConfigurati
                     long time = gpx.trk.get(0).getStartTime()
                             .map(Date::getTime)
                             .orElse(System.currentTimeMillis());
-                    writer.append(GpxFromInstructions.createGPX(responsePath.getInstructions(), gpx.trk.get(0).name != null ? gpx.trk.get(0).name : "", time, hopper.hasElevation(), withRoute, true, false, Constants.VERSION, tr));
+                    writer.append(GpxConversions.createGPX(responsePath.getInstructions(), gpx.trk.get(0).name != null ? gpx.trk.get(0).name : "", time, hopper.hasElevation(), withRoute, true, false, Constants.VERSION, tr));
                 }
             } catch (Exception ex) {
                 importSW.stop();

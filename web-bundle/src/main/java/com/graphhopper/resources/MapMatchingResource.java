@@ -26,10 +26,10 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.matching.*;
-import com.graphhopper.gpx.Gpx;
+import com.graphhopper.jackson.Gpx;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.util.*;
-import com.graphhopper.gpx.GpxFromInstructions;
+import com.graphhopper.gpx.GpxConversions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,7 +114,7 @@ public class MapMatchingResource {
         MapMatching matching = new MapMatching(graphHopper, hints);
         matching.setMeasurementErrorSigma(gpsAccuracy);
 
-        List<Observation> measurements = gpx.trk.get(0).getEntries();
+        List<Observation> measurements = GpxConversions.getEntries(gpx.trk.get(0));
         MatchResult matchResult = matching.match(measurements);
 
         // TODO: Request logging and timing should perhaps be done somewhere outside
@@ -148,7 +148,7 @@ public class MapMatchingResource {
                 long time = gpx.trk.get(0).getStartTime()
                         .map(Date::getTime)
                         .orElse(System.currentTimeMillis());
-                return Response.ok(GpxFromInstructions.createGPX(rsp.getBest().getInstructions(), gpx.trk.get(0).name != null ? gpx.trk.get(0).name : "", time, enableElevation, withRoute, withTrack, false, Constants.VERSION, tr), "application/gpx+xml").
+                return Response.ok(GpxConversions.createGPX(rsp.getBest().getInstructions(), gpx.trk.get(0).name != null ? gpx.trk.get(0).name : "", time, enableElevation, withRoute, withTrack, false, Constants.VERSION, tr), "application/gpx+xml").
                         header("X-GH-Took", "" + Math.round(took * 1000)).
                         build();
             } else {
