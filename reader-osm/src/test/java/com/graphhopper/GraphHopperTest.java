@@ -25,6 +25,7 @@ import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.SkadiProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.reader.osm.XmlToPbfConverter;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
@@ -70,7 +71,7 @@ public class GraphHopperTest {
     private static final String BAYREUTH = DIR + "/north-bayreuth.osm.gz";
     private static final String BERLIN = DIR + "/berlin-siegessaeule.osm.gz";
     private static final String KREMS = DIR + "/krems.osm.gz";
-    private static final String LAUF = DIR + "/Laufamholzstrasse.osm.xml";
+    private static final String LAUF = xml2pbf(DIR + "/Laufamholzstrasse.osm.xml");
     private static final String MONACO = DIR + "/monaco.osm.gz";
     private static final String MOSCOW = DIR + "/moscow.osm.gz";
     private static final String ESSEN = DIR + "/edge_based_subnetwork.osm.xml.gz";
@@ -2079,4 +2080,7 @@ public class GraphHopperTest {
         return hopper;
     }
 
+    private static String xml2pbf(String osmFile) {
+        return XmlToPbfConverter.xmlToPbf(osmFile, "target");
+    }
 }
