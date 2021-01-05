@@ -19,7 +19,7 @@ package com.graphhopper.http;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.matching.Observation;
-import com.graphhopper.matching.gpx.Gpx;
+import com.graphhopper.gpx.Gpx;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 

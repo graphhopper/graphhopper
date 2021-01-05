@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.matching.gpx;
+package com.graphhopper.gpx;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
@@ -25,9 +25,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Gpx {
+public class Trkseg {
 
     @JacksonXmlElementWrapper(useWrapping = false)
-    public List<Trk> trk = new ArrayList<>();
+    public List<Trkpt> trkpt = new ArrayList<>();
 
 }

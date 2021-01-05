@@ -15,39 +15,19 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.matching.gpx;
+
+package com.graphhopper.gpx;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.graphhopper.matching.Observation;
-import com.graphhopper.util.shapes.GHPoint3D;
 
-import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Trk {
+public class Gpx {
 
     @JacksonXmlElementWrapper(useWrapping = false)
-    public List<Trkseg> trkseg = new ArrayList<>();
-    public String name;
-
-    public List<Observation> getEntries() {
-        ArrayList<Observation> gpxEntries = new ArrayList<>();
-        for (Trkseg t : trkseg) {
-            for (Trkpt trkpt : t.trkpt) {
-                gpxEntries.add(new Observation(new GHPoint3D(trkpt.lat, trkpt.lon, trkpt.ele)));
-            }
-        }
-        return gpxEntries;
-    }
-
-    public Optional<Date> getStartTime() {
-        return trkseg.stream().flatMap(trkseg -> trkseg.trkpt.stream()).findFirst().flatMap(trkpt -> Optional.ofNullable(trkpt.time));
-    }
+    public List<Trk> trk = new ArrayList<>();
 
 }

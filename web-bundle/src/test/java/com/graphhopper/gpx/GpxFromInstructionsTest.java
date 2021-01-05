@@ -16,8 +16,10 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.util.gpx;
+package com.graphhopper.gpx;
 
+import com.graphhopper.gpx.GPXEntry;
+import com.graphhopper.gpx.GpxFromInstructions;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
