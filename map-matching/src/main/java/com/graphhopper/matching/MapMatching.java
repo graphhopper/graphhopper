@@ -221,10 +221,9 @@ public class MapMatching {
                 new LocationIndex.Visitor() {
                     @Override
                     public void onEdge(int edgeId) {
-                        EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeId * 2).detach(false);
+                        EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeId * 2);
                         if (seenEdges.add(edgeId) && edgeFilter.accept(edge)) {
                             Snap snap = new Snap(queryLat, queryLon);
-                            snap.setClosestEdge(edge);
                             locationIndex.traverseEdge(queryLat, queryLon, edge, (node, normedDist, wayIndex, pos) -> {
                                 if ((pos != Snap.Position.TOWER || seenNodes.add(node)) && normedDist < snap.getQueryDistance()) {
                                     snap.setQueryDistance(normedDist);
@@ -235,6 +234,7 @@ public class MapMatching {
                             });
                             double dist = DIST_PLANE.calcDenormalizedDist(snap.getQueryDistance());
                             if (dist <= measurementErrorSigma) {
+                                snap.setClosestEdge(edge);
                                 snap.setQueryDistance(dist);
                                 snap.calcSnappedPoint(DistanceCalcEarth.DIST_EARTH);
                                 snaps.add(snap);

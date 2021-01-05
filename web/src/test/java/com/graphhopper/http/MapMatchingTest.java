@@ -58,10 +58,8 @@ import static org.junit.Assert.*;
 public class MapMatchingTest {
 
     private static final String GH_LOCATION = "../target/mapmatchingtest-ch";
-    private final TranslationMap translationMap = new TranslationMap().doImport();
     private final XmlMapper xmlMapper = new XmlMapper();
 
-    private final String parameterName;
     private static GraphHopper graphHopper;
     private final PMap hints;
 
@@ -94,7 +92,6 @@ public class MapMatchingTest {
     }
 
     public MapMatchingTest(String parameterName, PMap hints) {
-        this.parameterName = parameterName;
         this.hints = hints.putObject("profile", "my_profile");
     }
 
