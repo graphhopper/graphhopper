@@ -20,7 +20,7 @@ package com.graphhopper.resources;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
-import com.graphhopper.MultiException;
+import com.graphhopper.jackson.MultiException;
 import com.graphhopper.http.GHPointParam;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.routing.ProfileResolver;

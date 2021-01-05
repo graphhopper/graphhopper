@@ -29,7 +29,7 @@ import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.LandmarkStorage;
-import com.graphhopper.routing.util.CustomModel;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupHelper;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;

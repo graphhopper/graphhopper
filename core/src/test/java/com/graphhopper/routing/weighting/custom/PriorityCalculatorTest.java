@@ -20,7 +20,7 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.CustomModel;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphBuilder;

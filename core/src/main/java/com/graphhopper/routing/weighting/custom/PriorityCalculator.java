@@ -18,7 +18,7 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.CustomModel;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.prep.PreparedGeometryFactory;

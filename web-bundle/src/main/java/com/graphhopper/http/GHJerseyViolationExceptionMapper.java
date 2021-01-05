@@ -18,7 +18,6 @@
 
 package com.graphhopper.http;
 
-import com.graphhopper.http.api.JsonErrorEntity;
 import com.graphhopper.util.Helper;
 import io.dropwizard.jersey.validation.ConstraintMessage;
 import io.dropwizard.jersey.validation.JerseyViolationException;

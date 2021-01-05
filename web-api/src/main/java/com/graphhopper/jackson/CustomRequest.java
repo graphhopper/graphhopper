@@ -15,26 +15,21 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package com.graphhopper.jackson;
 
-package com.graphhopper;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import com.graphhopper.GHRequest;
+import com.graphhopper.util.CustomModel;
 
-import java.util.Collections;
-import java.util.List;
+public class CustomRequest extends GHRequest {
+    private CustomModel model;
 
-public class MultiException extends RuntimeException {
-
-    private final List<Throwable> errors;
-
-    public MultiException(List<Throwable> errors) {
-        this.errors = errors;
+    @JsonUnwrapped
+    public void setModel(CustomModel model) {
+        this.model = model;
     }
 
-    public MultiException(Throwable e) {
-        this(Collections.singletonList(e));
+    public CustomModel getModel() {
+        return model;
     }
-
-    public List<Throwable> getErrors() {
-        return errors;
-    }
-
 }

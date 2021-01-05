@@ -18,6 +18,7 @@
 
 package com.graphhopper.routing.util;
 
+import com.graphhopper.util.CustomModel;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;

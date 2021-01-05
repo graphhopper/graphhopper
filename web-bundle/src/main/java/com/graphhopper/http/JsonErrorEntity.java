@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.http.api;
+package com.graphhopper.http;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.node.ArrayNode;

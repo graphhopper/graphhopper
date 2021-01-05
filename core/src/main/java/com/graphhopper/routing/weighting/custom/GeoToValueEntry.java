@@ -18,7 +18,7 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.util.JsonFeature;
-import com.graphhopper.routing.util.CustomModel;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.GHUtility;
