@@ -25,7 +25,7 @@ import com.graphhopper.gtfs.PtRouter;
 import com.graphhopper.gtfs.Request;
 import com.graphhopper.http.DurationParam;
 import com.graphhopper.http.GHLocationParam;
-import com.graphhopper.http.WebHelper;
+import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import io.dropwizard.jersey.params.AbstractParam;
@@ -77,7 +77,7 @@ public class PtRouteResource {
         Optional.ofNullable(limitStreetTime.get()).ifPresent(request::setLimitStreetTime);
 
         GHResponse route = ptRouter.route(request);
-        return WebHelper.jsonObject(route, true, true, false, false, stopWatch.stop().getMillis());
+        return ResponsePathSerializer.jsonObject(route, true, true, false, false, stopWatch.stop().getMillis());
     }
 
 }

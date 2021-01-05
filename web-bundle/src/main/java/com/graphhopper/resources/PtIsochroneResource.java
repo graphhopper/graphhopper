@@ -19,9 +19,9 @@
 package com.graphhopper.resources;
 
 import com.graphhopper.gtfs.*;
-import com.graphhopper.http.WebHelper;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.isochrone.algorithm.ReadableTriangulation;
+import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
@@ -191,7 +191,7 @@ public class PtIsochroneResource {
                 properties.put("z", targetZ);
                 feature.setProperties(properties);
                 response.polygons.add(feature);
-                response.info.copyrights.addAll(WebHelper.COPYRIGHTS);
+                response.info.copyrights.addAll(ResponsePathSerializer.COPYRIGHTS);
                 return response;
             } else {
                 return wrap(isoline);
@@ -209,7 +209,7 @@ public class PtIsochroneResource {
 
         Response response = new Response();
         response.polygons.add(feature);
-        response.info.copyrights.addAll(WebHelper.COPYRIGHTS);
+        response.info.copyrights.addAll(ResponsePathSerializer.COPYRIGHTS);
         return response;
     }
 

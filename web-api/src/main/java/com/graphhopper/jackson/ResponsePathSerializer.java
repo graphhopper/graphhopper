@@ -15,7 +15,8 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.http;
+
+package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -25,15 +26,13 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
 /**
- * Code which handles polyline encoding and other web stuff.
+ * Code which constructs the JSON response of the routing API, including polyline encoding.
  * <p>
  * The necessary information for polyline encoding is in this answer:
  * http://stackoverflow.com/a/24510799/194609 with a link to official Java sources as well as to a
@@ -42,70 +41,14 @@ import java.util.Locale;
  *
  * @author Peter Karich
  */
-public class WebHelper {
-    public static String encodeURL(String str) {
-        try {
-            return URLEncoder.encode(str, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
-    }
+public class ResponsePathSerializer {
 
-    public static PointList decodePolyline(String encoded, int initCap, boolean is3D) {
-        PointList poly = new PointList(initCap, is3D);
-        int index = 0;
-        int len = encoded.length();
-        int lat = 0, lng = 0, ele = 0;
-        while (index < len) {
-            // latitude
-            int b, shift = 0, result = 0;
-            do {
-                b = encoded.charAt(index++) - 63;
-                result |= (b & 0x1f) << shift;
-                shift += 5;
-            } while (b >= 0x20);
-            int deltaLatitude = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
-            lat += deltaLatitude;
-
-            // longitude
-            shift = 0;
-            result = 0;
-            do {
-                b = encoded.charAt(index++) - 63;
-                result |= (b & 0x1f) << shift;
-                shift += 5;
-            } while (b >= 0x20);
-            int deltaLongitude = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
-            lng += deltaLongitude;
-
-            if (is3D) {
-                // elevation
-                shift = 0;
-                result = 0;
-                do {
-                    b = encoded.charAt(index++) - 63;
-                    result |= (b & 0x1f) << shift;
-                    shift += 5;
-                } while (b >= 0x20);
-                int deltaElevation = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
-                ele += deltaElevation;
-                poly.add((double) lat / 1e5, (double) lng / 1e5, (double) ele / 100);
-            } else
-                poly.add((double) lat / 1e5, (double) lng / 1e5);
-        }
-        return poly;
-    }
-
-    public static String encodePolyline(PointList poly) {
-        if (poly.isEmpty())
-            return "";
-
-        return encodePolyline(poly, poly.is3D());
-    }
-
-    public static String encodePolyline(PointList poly, boolean includeElevation) {
-        return encodePolyline(poly, includeElevation, 1e5);
-    }
+    /**
+     * This includes the required attribution for OpenStreetMap.
+     * Do not hesitate to  mention us and link us in your about page
+     * https://support.graphhopper.com/support/search/solutions?term=attribution
+     */
+    public static final List<String> COPYRIGHTS = Arrays.asList("GraphHopper", "OpenStreetMap contributors");
 
     public static String encodePolyline(PointList poly, boolean includeElevation, double precision) {
         StringBuilder sb = new StringBuilder(Math.max(20, poly.size() * 3));
@@ -143,24 +86,12 @@ public class WebHelper {
         sb.append((char) (num));
     }
 
-    /**
-     * This includes the required attribution for OpenStreetMap.
-     * Do not hesitate to you mention us and link us in your about page
-     * https://support.graphhopper.com/support/search/solutions?term=attribution
-     */
-    public static final List<String> COPYRIGHTS = Arrays.asList("GraphHopper", "OpenStreetMap contributors");
-
-    public static ObjectNode jsonResponsePutInfo(ObjectNode json, float took) {
-        final ObjectNode info = json.putObject("info");
-        info.putPOJO("copyrights", COPYRIGHTS);
-        info.put("took", Math.round(took));
-        return json;
-    }
-
     public static ObjectNode jsonObject(GHResponse ghRsp, boolean enableInstructions, boolean calcPoints, boolean enableElevation, boolean pointsEncoded, float took) {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
         json.putPOJO("hints", ghRsp.getHints().toMap());
-        jsonResponsePutInfo(json, took);
+        final ObjectNode info = json.putObject("info");
+        info.putPOJO("copyrights", COPYRIGHTS);
+        info.put("took", Math.round(took));
         ArrayNode jsonPathList = json.putArray("paths");
         for (ResponsePath p : ghRsp.getAll()) {
             ObjectNode jsonPath = jsonPathList.addObject();
@@ -176,7 +107,7 @@ public class WebHelper {
                 if (p.getPoints().getSize() >= 2) {
                     jsonPath.putPOJO("bbox", p.calcBBox2D());
                 }
-                jsonPath.putPOJO("points", pointsEncoded ? encodePolyline(p.getPoints(), enableElevation) : p.getPoints().toLineString(enableElevation));
+                jsonPath.putPOJO("points", pointsEncoded ? encodePolyline(p.getPoints(), enableElevation, 1e5) : p.getPoints().toLineString(enableElevation));
                 if (enableInstructions) {
                     jsonPath.putPOJO("instructions", p.getInstructions());
                 }
@@ -185,12 +116,11 @@ public class WebHelper {
                 jsonPath.put("ascend", p.getAscend());
                 jsonPath.put("descend", p.getDescend());
             }
-            jsonPath.putPOJO("snapped_waypoints", pointsEncoded ? encodePolyline(p.getWaypoints(), enableElevation) : p.getWaypoints().toLineString(enableElevation));
+            jsonPath.putPOJO("snapped_waypoints", pointsEncoded ? encodePolyline(p.getWaypoints(), enableElevation, 1e5) : p.getWaypoints().toLineString(enableElevation));
             if (p.getFare() != null) {
                 jsonPath.put("fare", NumberFormat.getCurrencyInstance(Locale.ROOT).format(p.getFare()));
             }
         }
         return json;
     }
-
 }

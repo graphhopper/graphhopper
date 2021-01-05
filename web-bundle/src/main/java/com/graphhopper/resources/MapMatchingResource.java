@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
-import com.graphhopper.http.WebHelper;
+import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.matching.*;
 import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.routing.ProfileResolver;
@@ -152,7 +152,7 @@ public class MapMatchingResource {
                         header("X-GH-Took", "" + Math.round(took * 1000)).
                         build();
             } else {
-                ObjectNode map = WebHelper.jsonObject(rsp, instructions, calcPoints, enableElevation, pointsEncoded, took);
+                ObjectNode map = ResponsePathSerializer.jsonObject(rsp, instructions, calcPoints, enableElevation, pointsEncoded, took);
 
                 Map<String, Object> matchStatistics = new HashMap<>();
                 matchStatistics.put("distance", matchResult.getMatchLength());
@@ -214,10 +214,10 @@ public class MapMatchingResource {
             PointList pointList = edgeMatch.getEdgeState().fetchWayGeometry(emIndex == 0 ? FetchMode.ALL : FetchMode.PILLAR_AND_ADJ);
             final ObjectNode geometry = link.putObject("geometry");
             if (pointList.size() < 2) {
-                geometry.putPOJO("coordinates", pointsEncoded ? WebHelper.encodePolyline(pointList, elevation) : pointList.toLineString(elevation));
+                geometry.putPOJO("coordinates", pointsEncoded ? ResponsePathSerializer.encodePolyline(pointList, elevation, 1e5) : pointList.toLineString(elevation));
                 geometry.put("type", "Point");
             } else {
-                geometry.putPOJO("coordinates", pointsEncoded ? WebHelper.encodePolyline(pointList, elevation) : pointList.toLineString(elevation));
+                geometry.putPOJO("coordinates", pointsEncoded ? ResponsePathSerializer.encodePolyline(pointList, elevation, 1e5) : pointList.toLineString(elevation));
                 geometry.put("type", "LineString");
             }
             link.put("id", edgeMatch.getEdgeState().getEdge());

@@ -22,7 +22,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.MultiException;
 import com.graphhopper.http.GHPointParam;
-import com.graphhopper.http.WebHelper;
+import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.util.*;
 import com.graphhopper.util.gpx.GpxFromInstructions;
@@ -149,7 +149,7 @@ public class RouteResource {
                             header("X-GH-Took", "" + Math.round(took)).
                             build()
                     :
-                    Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
+                    Response.ok(ResponsePathSerializer.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
                             header("X-GH-Took", "" + Math.round(took)).
                             type(MediaType.APPLICATION_JSON).
                             build();
@@ -192,7 +192,7 @@ public class RouteResource {
                     + ", time0: " + Math.round(ghResponse.getBest().getTime() / 60000f) + "min"
                     + ", points0: " + ghResponse.getBest().getPoints().getSize()
                     + ", debugInfo: " + ghResponse.getDebugInfo());
-            return Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
+            return Response.ok(ResponsePathSerializer.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
                     header("X-GH-Took", "" + Math.round(took)).
                     type(MediaType.APPLICATION_JSON).
                     build();
