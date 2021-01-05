@@ -22,7 +22,7 @@ import com.graphhopper.gtfs.*;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.isochrone.algorithm.ReadableTriangulation;
 import com.graphhopper.jackson.ResponsePathSerializer;
-import com.graphhopper.json.geo.JsonFeature;
+import com.graphhopper.util.JsonFeature;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;

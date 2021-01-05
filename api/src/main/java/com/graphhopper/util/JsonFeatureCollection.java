@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.json.geo;
+package com.graphhopper.util;
 
 import java.util.ArrayList;
 import java.util.List;

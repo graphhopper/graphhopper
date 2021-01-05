@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.json.geo.JsonFeature;
+import com.graphhopper.util.JsonFeature;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.CustomModel;

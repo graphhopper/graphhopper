@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.util;
+package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

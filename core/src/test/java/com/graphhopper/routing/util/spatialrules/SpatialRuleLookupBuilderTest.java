@@ -18,7 +18,7 @@
 package com.graphhopper.routing.util.spatialrules;
 
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.json.geo.JsonFeatureCollection;
+import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.CarFlagEncoder;

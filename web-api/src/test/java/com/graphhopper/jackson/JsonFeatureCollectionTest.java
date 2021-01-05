@@ -15,10 +15,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.json.geo;
+package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.jackson.Jackson;
+import com.graphhopper.util.JsonFeature;
+import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.util.PointList;
 import org.junit.Assert;
 import org.junit.Test;

@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.json.geo.JsonFeature;
+import com.graphhopper.util.JsonFeature;
 import com.graphhopper.util.Parameters;
 
 import java.util.*;

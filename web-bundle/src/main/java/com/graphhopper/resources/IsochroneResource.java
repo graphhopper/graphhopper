@@ -9,7 +9,7 @@ import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.isochrone.algorithm.Triangulator;
 import com.graphhopper.jackson.ResponsePathSerializer;
-import com.graphhopper.json.geo.JsonFeature;
+import com.graphhopper.util.JsonFeature;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
