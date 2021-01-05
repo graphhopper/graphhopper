@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <osm version="0.6" generator="Manual" copyright="" attribution="" license="">
     <bounds minlat="-1." minlon="-1.0" maxlat="1.0" maxlon="1.0"/>
-    <node id="1" lat="0" lon="0.001"/>
-    <node id="2" lat="0.0" lon="0.0"/>
-    <node id="3" lat="0.0" lon="-0.001"/>
-    <node id="4" lat="0.001" lon="-0.001"/>
-    <node id="5" lat="0.001" lon="0"/>
-    <node id="6" lat="-0.001" lon="0"/>
+    <node id="1" lat="0" lon="0.001" version="1"/>
+    <node id="2" lat="0.0" lon="0.0" version="1"/>
+    <node id="3" lat="0.0" lon="-0.001" version="1"/>
+    <node id="4" lat="0.001" lon="-0.001" version="1"/>
+    <node id="5" lat="0.001" lon="0" version="1"/>
+    <node id="6" lat="-0.001" lon="0" version="1"/>
 
     <!-- dummy node to create more pillars -->
-    <node id="7" lat="0.9" lon="-0.9"/>
+    <node id="7" lat="0.9" lon="-0.9" version="1"/>
 
-    <way id="1">
+    <way id="1" version="1">
         <nd ref="1"/>
         <nd ref="2"/>
         <tag k="name" v="str1"/>
         <tag k="highway" v="secondary"/>
     </way>
 
-    <way id="2">
+    <way id="2" version="1">
         <nd ref="2"/>
         <nd ref="3"/>
         <tag k="name" v="str2"/>
         <tag k="highway" v="secondary"/>
     </way>
 
-    <way id="3">
+    <way id="3" version="1">
         <nd ref="3"/>
         <nd ref="4"/>
         <nd ref="5"/>
@@ -33,7 +33,7 @@
         <tag k="highway" v="secondary"/>
     </way>
 
-    <way id="4">
+    <way id="4" version="1">
         <nd ref="5"/>
         <nd ref="2"/>
         <tag k="name" v="str4"/>
@@ -41,7 +41,7 @@
         <tag k="oneway" v="yes"/>
     </way>
 
-    <way id="5">
+    <way id="5" version="1">
         <nd ref="2"/>
         <nd ref="6"/>
         <tag k="name" v="str5"/>
@@ -50,7 +50,7 @@
     </way>
 
     <!-- dummy way to create more pillars -->
-    <way id="6">
+    <way id="6" version="1">
         <nd ref="4"/>
         <nd ref="7"/>
         <tag k="highway" v="secondary"/>
@@ -59,7 +59,7 @@
     </way>
 
 
-    <relation id="1">
+    <relation id="1" version="1">
         <member type="way" ref="1" role="from"/>
         <member type="way" ref="5" role="to"/>
         <member type="node" ref="2" role="via"/>
