@@ -22,20 +22,18 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.ResponsePath;
-import com.graphhopper.config.Profile;
+import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.matching.Observation;
-import com.graphhopper.matching.gpx.Gpx;
+import com.graphhopper.jackson.Gpx;
 import com.graphhopper.reader.osm.GraphHopperOSM;
-import com.graphhopper.routing.ev.DefaultEncodedValueFactory;
-import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.*;
-import com.graphhopper.util.gpx.GpxFromInstructions;
-import io.dropwizard.cli.Command;
+import com.graphhopper.gpx.GpxConversions;
+import io.dropwizard.cli.ConfiguredCommand;
 import io.dropwizard.setup.Bootstrap;
+import net.sourceforge.argparse4j.inf.Argument;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
 
@@ -46,9 +44,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import static com.graphhopper.util.Parameters.Routing.MAX_VISITED_NODES;
-
-public class MatchCommand extends Command {
+public class MatchCommand extends ConfiguredCommand<GraphHopperServerConfiguration> {
 
     public MatchCommand() {
         super("match", "map-match one or more gpx files");
@@ -61,15 +57,18 @@ public class MatchCommand extends Command {
                 .required(true)
                 .nargs("+")
                 .help("GPX file");
+        subparser.addArgument("--file")
+                .required(true)
+                .help("application configuration file");
+        subparser.addArgument("--profile")
+                .type(String.class)
+                .required(true)
+                .help("profile to use for map-matching (must be configured in configuration file)");
         subparser.addArgument("--instructions")
                 .type(String.class)
                 .required(false)
                 .setDefault("")
                 .help("Locale for instructions");
-        subparser.addArgument("--max_visited_nodes")
-                .type(Integer.class)
-                .required(false)
-                .setDefault(1000);
         subparser.addArgument("--gps_accuracy")
                 .type(Integer.class)
                 .required(false)
@@ -78,32 +77,27 @@ public class MatchCommand extends Command {
                 .type(Double.class)
                 .required(false)
                 .setDefault(2.0);
-        subparser.addArgument("--vehicle")
-                .type(String.class)
-                .required(false)
-                .setDefault("");
     }
 
     @Override
-    public void run(Bootstrap bootstrap, Namespace args) {
-        GraphHopperConfig graphHopperConfiguration = new GraphHopperConfig();
-        String ghFolder = "graph-cache";
-        graphHopperConfiguration.putObject("graph.location", ghFolder);
+    protected Argument addFileArgument(Subparser subparser) {
+        // Never called, but overridden for clarity:
+        // In this command, we want the configuration file parameter to be a named argument,
+        // not a positional argument, because the positional arguments are the gpx files,
+        // and we configure it up there ^^.
+        // Must be called "file" because superclass gets it by name.
+        throw new RuntimeException();
+    }
 
-        String vehicle = args.getString("vehicle");
-        if (Helper.isEmpty(vehicle))
-            vehicle = EncodingManager.create(new DefaultEncodedValueFactory(), new DefaultFlagEncoderFactory(), ghFolder).fetchEdgeEncoders().get(0).toString();
-        // Penalizing inner-link U-turns only works with fastest weighting, since
-        // shortest weighting does not apply penalties to unfavored virtual edges.
-        String weightingStr = "fastest";
-        Profile profile = new Profile(vehicle + "_profile").setVehicle(vehicle).setWeighting(weightingStr).setTurnCosts(false);
-        graphHopperConfiguration.setProfiles(Collections.singletonList(profile));
+    @Override
+    protected void run(Bootstrap<GraphHopperServerConfiguration> bootstrap, Namespace args, GraphHopperServerConfiguration configuration) {
+        GraphHopperConfig graphHopperConfiguration = configuration.getGraphHopperConfiguration();
+
         GraphHopper hopper = new GraphHopperOSM().init(graphHopperConfiguration);
-        System.out.println("loading graph from cache");
-        hopper.load(graphHopperConfiguration.getString("graph.location", ghFolder));
+        hopper.importOrLoad();
 
-        PMap hints = new PMap().putObject(MAX_VISITED_NODES, args.get("max_visited_nodes"));
-        hints.putObject("profile", profile.getName());
+        PMap hints = new PMap();
+        hints.putObject("profile", args.get("profile"));
         MapMatching mapMatching = new MapMatching(hopper, hints);
         mapMatching.setTransitionProbabilityBeta(args.getDouble("transition_probability_beta"));
         mapMatching.setMeasurementErrorSigma(args.getInt("gps_accuracy"));
@@ -127,7 +121,7 @@ public class MatchCommand extends Command {
                 if (gpx.trk.size() > 1) {
                     throw new IllegalArgumentException("GPX documents with multiple tracks not supported yet.");
                 }
-                List<Observation> measurements = gpx.trk.get(0).getEntries();
+                List<Observation> measurements = GpxConversions.getEntries(gpx.trk.get(0));
                 importSW.stop();
                 matchSW.start();
                 MatchResult mr = mapMatching.match(measurements);
@@ -150,7 +144,7 @@ public class MatchCommand extends Command {
                     long time = gpx.trk.get(0).getStartTime()
                             .map(Date::getTime)
                             .orElse(System.currentTimeMillis());
-                    writer.append(GpxFromInstructions.createGPX(responsePath.getInstructions(), gpx.trk.get(0).name != null ? gpx.trk.get(0).name : "", time, hopper.hasElevation(), withRoute, true, false, Constants.VERSION, tr));
+                    writer.append(GpxConversions.createGPX(responsePath.getInstructions(), gpx.trk.get(0).name != null ? gpx.trk.get(0).name : "", time, hopper.hasElevation(), withRoute, true, false, Constants.VERSION, tr));
                 }
             } catch (Exception ex) {
                 importSW.stop();

@@ -30,7 +30,6 @@ import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.routing.weighting.custom.CustomModel;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.GraphBuilder;
@@ -179,17 +178,18 @@ public class GraphHopperOSMTest {
         LocationIndexTree index = (LocationIndexTree) gh.getLocationIndex();
         final EdgeExplorer edgeExplorer = gh.getGraphHopperStorage().createEdgeExplorer();
         final BBox bbox = new BBox(7.422, 7.429, 43.729, 43.734);
-        index.query(bbox, new LocationIndexTree.EdgeVisitor(edgeExplorer) {
+        index.query(bbox, new LocationIndexTree.Visitor() {
             @Override
             public void onTile(BBox bbox, int width) {
             }
 
             @Override
-            public void onEdge(EdgeIteratorState edge, int nodeA, int nodeB) {
+            public void onEdge(int edgeId) {
+                EdgeIteratorState edge = gh.getGraphHopperStorage().getEdgeIteratorStateForKey(edgeId * 2);
                 for (int i = 0; i < 2; i++) {
-                    int nodeId = i == 0 ? nodeA : nodeB;
-                    double lat = na.getLatitude(nodeId);
-                    double lon = na.getLongitude(nodeId);
+                    int nodeId = i == 0 ? edge.getBaseNode() : edge.getAdjNode();
+                    double lat = na.getLat(nodeId);
+                    double lon = na.getLon(nodeId);
                     if (bbox.contains(lat, lon))
                         indexNodeList.add(nodeId);
                 }
@@ -198,7 +198,7 @@ public class GraphHopperOSMTest {
 
         assertEquals(57, indexNodeList.size());
         for (int nodeId : indexNodeList) {
-            if (!bbox.contains(na.getLatitude(nodeId), na.getLongitude(nodeId)))
+            if (!bbox.contains(na.getLat(nodeId), na.getLon(nodeId)))
                 fail("bbox " + bbox + " should contain " + nodeId);
         }
 
@@ -211,8 +211,8 @@ public class GraphHopperOSMTest {
 
             @Override
             protected boolean goFurther(int nodeId) {
-                double lat = na.getLatitude(nodeId);
-                double lon = na.getLongitude(nodeId);
+                double lat = na.getLat(nodeId);
+                double lon = na.getLon(nodeId);
                 if (bbox.contains(lat, lon))
                     bfsNodeList.add(nodeId);
 
@@ -430,6 +430,13 @@ public class GraphHopperOSMTest {
                 setDataReaderFile(testOsm8);
         instance.importOrLoad();
 
+        // This test is arguably a bit unfair: It expects the LocationIndex
+        // to find a foot edge that is many tiles away.
+        // Previously, it worked, but only because of the way the LocationIndex would traverse the Graph
+        // (it would also go into CAR edges to find WALK edges).
+        // Now it doesn't work like that anymore, so I set this parameter so the test doesn't fail.
+        ((LocationIndexTree) instance.getLocationIndex()).setMaxRegionSearch(300);
+
         assertEquals(5, instance.getGraphHopperStorage().getNodes());
         assertEquals(8, instance.getGraphHopperStorage().getEdges());
 
@@ -439,10 +446,10 @@ public class GraphHopperOSMTest {
         ResponsePath rsp = grsp.getBest();
         assertEquals(3, rsp.getPoints().getSize());
         // => found A and D
-        assertEquals(50, rsp.getPoints().getLongitude(0), 1e-3);
-        assertEquals(11.1, rsp.getPoints().getLatitude(0), 1e-3);
-        assertEquals(51, rsp.getPoints().getLongitude(2), 1e-3);
-        assertEquals(11.3, rsp.getPoints().getLatitude(2), 1e-3);
+        assertEquals(50, rsp.getPoints().getLon(0), 1e-3);
+        assertEquals(11.1, rsp.getPoints().getLat(0), 1e-3);
+        assertEquals(51, rsp.getPoints().getLon(2), 1e-3);
+        assertEquals(11.3, rsp.getPoints().getLat(2), 1e-3);
 
         // A to D not allowed for foot. But the location index will choose a node close to D accessible to FOOT
         grsp = instance.route(new GHRequest(11.1, 50, 11.3, 51).setProfile(profile2));
@@ -450,8 +457,8 @@ public class GraphHopperOSMTest {
         rsp = grsp.getBest();
         assertEquals(2, rsp.getPoints().getSize());
         // => found a point on edge A-B        
-        assertEquals(11.680, rsp.getPoints().getLatitude(1), 1e-3);
-        assertEquals(50.644, rsp.getPoints().getLongitude(1), 1e-3);
+        assertEquals(11.680, rsp.getPoints().getLat(1), 1e-3);
+        assertEquals(50.644, rsp.getPoints().getLon(1), 1e-3);
 
         // A to E only for foot
         grsp = instance.route(new GHRequest(11.1, 50, 10, 51).setProfile(profile2));
@@ -699,6 +706,8 @@ public class GraphHopperOSMTest {
                 setDataReaderFile(testOsm3);
         instance.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
         instance.importOrLoad();
+
+        ((LocationIndexTree) instance.getLocationIndex()).setMaxRegionSearch(300);
 
         assertEquals(2, instance.getGraphHopperStorage().getNodes());
         assertEquals(2, instance.getGraphHopperStorage().getAllEdges().length());

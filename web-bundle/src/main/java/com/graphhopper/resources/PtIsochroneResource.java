@@ -19,10 +19,10 @@
 package com.graphhopper.resources;
 
 import com.graphhopper.gtfs.*;
-import com.graphhopper.http.WebHelper;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.isochrone.algorithm.ReadableTriangulation;
-import com.graphhopper.json.geo.JsonFeature;
+import com.graphhopper.jackson.ResponsePathSerializer;
+import com.graphhopper.util.JsonFeature;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -32,6 +32,7 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.locationtech.jts.geom.*;
@@ -112,7 +113,7 @@ public class PtIsochroneResource {
         NodeAccess nodeAccess = queryGraph.getNodeAccess();
 
         MultiCriteriaLabelSetting.SPTVisitor sptVisitor = nodeLabel -> {
-            Coordinate nodeCoordinate = new Coordinate(nodeAccess.getLongitude(nodeLabel.adjNode), nodeAccess.getLatitude(nodeLabel.adjNode));
+            Coordinate nodeCoordinate = new Coordinate(nodeAccess.getLon(nodeLabel.adjNode), nodeAccess.getLat(nodeLabel.adjNode));
             z1.merge(nodeCoordinate, this.z.apply(nodeLabel), Math::min);
         };
 
@@ -128,9 +129,10 @@ public class PtIsochroneResource {
             // I think then we should have all possible encroaching points. (Proof needed.)
             locationIndex.query(BBox.fromEnvelope(exploredPoints.getEnvelopeInternal()), new LocationIndex.Visitor() {
                 @Override
-                public void onNode(int nodeId) {
-                    Coordinate nodeCoordinate = new Coordinate(nodeAccess.getLongitude(nodeId), nodeAccess.getLatitude(nodeId));
-                    z1.merge(nodeCoordinate, Double.MAX_VALUE, Math::min);
+                public void onEdge(int edgeId) {
+                    EdgeIteratorState edge = queryGraph.getEdgeIteratorStateForKey(edgeId * 2);
+                    z1.merge(new Coordinate(nodeAccess.getLon(edge.getBaseNode()), nodeAccess.getLat(edge.getBaseNode())), Double.MAX_VALUE, Math::min);
+                    z1.merge(new Coordinate(nodeAccess.getLon(edge.getAdjNode()), nodeAccess.getLat(edge.getAdjNode())), Double.MAX_VALUE, Math::min);
                 }
             });
             exploredPoints = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
@@ -189,7 +191,7 @@ public class PtIsochroneResource {
                 properties.put("z", targetZ);
                 feature.setProperties(properties);
                 response.polygons.add(feature);
-                response.info.copyrights.addAll(WebHelper.COPYRIGHTS);
+                response.info.copyrights.addAll(ResponsePathSerializer.COPYRIGHTS);
                 return response;
             } else {
                 return wrap(isoline);
@@ -207,7 +209,7 @@ public class PtIsochroneResource {
 
         Response response = new Response();
         response.polygons.add(feature);
-        response.info.copyrights.addAll(WebHelper.COPYRIGHTS);
+        response.info.copyrights.addAll(ResponsePathSerializer.COPYRIGHTS);
         return response;
     }
 

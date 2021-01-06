@@ -172,8 +172,8 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
     }
 
     private static BBox createBBox(NodeAccess na, EdgeIteratorState edgeState) {
-        return BBox.fromPoints(na.getLatitude(edgeState.getBaseNode()), na.getLongitude(edgeState.getBaseNode()),
-                na.getLatitude(edgeState.getAdjNode()), na.getLongitude(edgeState.getAdjNode()));
+        return BBox.fromPoints(na.getLat(edgeState.getBaseNode()), na.getLon(edgeState.getBaseNode()),
+                na.getLat(edgeState.getAdjNode()), na.getLon(edgeState.getAdjNode()));
     }
 
     private boolean isJaroWinklerSimilar(String str1, String str2) {

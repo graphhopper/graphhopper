@@ -20,27 +20,36 @@ package com.graphhopper.matching;
 import com.bmw.hmm.SequenceState;
 import com.bmw.hmm.Transition;
 import com.bmw.hmm.ViterbiAlgorithm;
+import com.carrotsearch.hppc.IntHashSet;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.*;
+import com.graphhopper.routing.AStarBidirection;
+import com.graphhopper.routing.BidirRoutingAlgorithm;
+import com.graphhopper.routing.DijkstraBidirectionRef;
+import com.graphhopper.routing.Path;
 import com.graphhopper.routing.lm.LMApproximator;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.graphhopper.util.DistancePlaneProjection.DIST_PLANE;
 
 /**
  * This class matches real world GPX entries to the digital road network stored
@@ -100,12 +109,7 @@ public class MapMatching {
         }
 
         boolean disableLM = hints.getBool(Parameters.Landmark.DISABLE, false);
-        if (graphHopper.getLMPreparationHandler().isEnabled() && disableLM && !graphHopper.getRouterConfig().isLMDisablingAllowed())
-            throw new IllegalArgumentException("Disabling LM is not allowed");
-
         boolean disableCH = hints.getBool(Parameters.CH.DISABLE, false);
-        if (graphHopper.getCHPreparationHandler().isEnabled() && disableCH && !graphHopper.getRouterConfig().isCHDisablingAllowed())
-            throw new IllegalArgumentException("Disabling CH is not allowed");
 
         // see map-matching/#177: both ch.disable and lm.disable can be used to force Dijkstra which is the better
         // (=faster) choice when the observations are close to each other
@@ -157,23 +161,17 @@ public class MapMatching {
         List<Observation> filteredObservations = filterObservations(observations);
 
         // Snap observations to links. Generates multiple candidate snaps per observation.
-        // In the next step, we will turn them into splits, but we already call them splits now
-        // because they are modified in place.
-        List<Collection<Snap>> splitsPerObservation = filteredObservations.stream().map(o -> locationIndex.findNClosest(o.getPoint().lat, o.getPoint().lon, DefaultEdgeFilter.allEdges(weighting.getFlagEncoder()), measurementErrorSigma))
+        List<Collection<Snap>> snapsPerObservation = filteredObservations.stream()
+                .map(o -> findCandidateSnaps(o.getPoint().lat, o.getPoint().lon))
                 .collect(Collectors.toList());
 
         // Create the query graph, containing split edges so that all the places where an observation might have happened
         // are a node. This modifies the Snap objects and puts the new node numbers into them.
-        queryGraph = QueryGraph.create(graph, splitsPerObservation.stream().flatMap(Collection::stream).collect(Collectors.toList()));
-
-        // Due to how LocationIndex/QueryGraph is implemented, we can get duplicates when a point is snapped
-        // directly to a tower node instead of creating a split / virtual node. No problem, but we still filter
-        // out the duplicates for performance reasons.
-        splitsPerObservation = splitsPerObservation.stream().map(this::deduplicate).collect(Collectors.toList());
+        queryGraph = QueryGraph.create(graph, snapsPerObservation.stream().flatMap(Collection::stream).collect(Collectors.toList()));
 
         // Creates candidates from the Snaps of all observations (a candidate is basically a
         // Snap + direction).
-        List<ObservationWithCandidateStates> timeSteps = createTimeSteps(filteredObservations, splitsPerObservation);
+        List<ObservationWithCandidateStates> timeSteps = createTimeSteps(filteredObservations, snapsPerObservation);
 
         // Compute the most likely sequence of map matching candidates:
         List<SequenceState<State, Observation, Path>> seq = computeViterbiSequence(timeSteps);
@@ -212,10 +210,39 @@ public class MapMatching {
         return filtered;
     }
 
-    private Collection<Snap> deduplicate(Collection<Snap> splits) {
-        // Only keep one split per node number. Let's say the last one.
-        Map<Integer, Snap> splitsByNodeNumber = splits.stream().collect(Collectors.toMap(Snap::getClosestNode, s -> s, (s1, s2) -> s2));
-        return splitsByNodeNumber.values();
+    public List<Snap> findCandidateSnaps(final double queryLat, final double queryLon) {
+        EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(weighting.getFlagEncoder());
+        double rLon = (measurementErrorSigma * 360.0 / DistanceCalcEarth.DIST_EARTH.calcCircumference(queryLat));
+        double rLat = measurementErrorSigma / DistanceCalcEarth.METERS_PER_DEGREE;
+        List<Snap> snaps = new ArrayList<>();
+        IntHashSet seenEdges = new IntHashSet();
+        IntHashSet seenNodes = new IntHashSet();
+        locationIndex.query(new BBox(queryLon - rLon, queryLon + rLon, queryLat - rLat, queryLat + rLat),
+                new LocationIndex.Visitor() {
+                    @Override
+                    public void onEdge(int edgeId) {
+                        EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeId * 2);
+                        if (seenEdges.add(edgeId) && edgeFilter.accept(edge)) {
+                            Snap snap = new Snap(queryLat, queryLon);
+                            locationIndex.traverseEdge(queryLat, queryLon, edge, (node, normedDist, wayIndex, pos) -> {
+                                if ((pos != Snap.Position.TOWER || seenNodes.add(node)) && normedDist < snap.getQueryDistance()) {
+                                    snap.setQueryDistance(normedDist);
+                                    snap.setClosestNode(node);
+                                    snap.setWayIndex(wayIndex);
+                                    snap.setSnappedPosition(pos);
+                                }
+                            });
+                            double dist = DIST_PLANE.calcDenormalizedDist(snap.getQueryDistance());
+                            if (dist <= measurementErrorSigma) {
+                                snap.setClosestEdge(edge);
+                                snap.setQueryDistance(dist);
+                                snap.calcSnappedPoint(DistanceCalcEarth.DIST_EARTH);
+                                snaps.add(snap);
+                            }
+                        }
+                    }
+                });
+        return snaps;
     }
 
     /**

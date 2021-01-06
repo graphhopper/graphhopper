@@ -237,8 +237,8 @@ public class SPTResource {
     }
 
     private IsoLabelWithCoordinates isoLabelWithCoordinates(NodeAccess na, ShortestPathTree.IsoLabel label) {
-        double lat = na.getLatitude(label.node);
-        double lon = na.getLongitude(label.node);
+        double lat = na.getLat(label.node);
+        double lon = na.getLon(label.node);
         IsoLabelWithCoordinates isoLabelWC = new IsoLabelWithCoordinates();
         isoLabelWC.nodeId = label.node;
         isoLabelWC.coordinate = new GHPoint(lat, lon);
@@ -248,8 +248,8 @@ public class SPTResource {
         if (label.parent != null) {
             ShortestPathTree.IsoLabel prevLabel = label.parent;
             int prevNodeId = prevLabel.node;
-            double prevLat = na.getLatitude(prevNodeId);
-            double prevLon = na.getLongitude(prevNodeId);
+            double prevLat = na.getLat(prevNodeId);
+            double prevLon = na.getLon(prevNodeId);
             isoLabelWC.prevNodeId = prevNodeId;
             isoLabelWC.prevEdgeId = prevLabel.edge;
             isoLabelWC.prevCoordinate = new GHPoint(prevLat, prevLon);

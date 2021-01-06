@@ -237,7 +237,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             }
         } else {
             priorityFromRelation = PriorityCode.AVOID_IF_POSSIBLE.getValue();
-            double ferrySpeed = getFerrySpeed(way);
+            double ferrySpeed = ferrySpeedCalc.getSpeed(way);
             setSpeed(edgeFlags, true, true, ferrySpeed);
         }
 
@@ -300,19 +300,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             return true;
 
         return PriorityWeighting.class.isAssignableFrom(feature);
-    }
-
-    /*
-     * This method is a current hack, to allow ferries to be actually faster than our current storable maxSpeed.
-     */
-    @Override
-    double getSpeed(boolean reverse, IntsRef edgeFlags) {
-        double speed = super.getSpeed(reverse, edgeFlags);
-        if (speed == getMaxSpeed()) {
-            // We cannot be sure if it was a long or a short trip
-            return SHORT_TRIP_FERRY_SPEED;
-        }
-        return speed;
     }
 
     @Override

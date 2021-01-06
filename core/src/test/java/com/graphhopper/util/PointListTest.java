@@ -41,15 +41,15 @@ public class PointListTest {
         PointList instance = new PointList();
         instance.add(1, 1);
         instance.reverse();
-        assertEquals(1, instance.getLongitude(0), 1e-7);
+        assertEquals(1, instance.getLon(0), 1e-7);
 
         instance = new PointList();
         instance.add(1, 1);
         instance.add(2, 2);
         PointList clonedList = instance.clone(false);
         instance.reverse();
-        assertEquals(2, instance.getLongitude(0), 1e-7);
-        assertEquals(1, instance.getLongitude(1), 1e-7);
+        assertEquals(2, instance.getLon(0), 1e-7);
+        assertEquals(1, instance.getLon(1), 1e-7);
 
         assertEquals(clonedList, instance.clone(true));
     }
@@ -79,7 +79,7 @@ public class PointListTest {
         assertEquals(24, instance.getCapacity());
 
         for (int i = 0; i < toAdd.size(); i++) {
-            assertEquals(toAdd.getLatitude(i), instance.getLatitude(7 + i), 1e-1);
+            assertEquals(toAdd.getLat(i), instance.getLat(7 + i), 1e-1);
         }
     }
 
@@ -131,7 +131,7 @@ public class PointListTest {
         PointList copy = list.copy(9, 10);
         assertEquals(1, copy.getSize());
         assertEquals(1, copy.getCapacity());
-        assertEquals(9, copy.getLongitude(0), .1);
+        assertEquals(9, copy.getLon(0), .1);
     }
 
     @Test

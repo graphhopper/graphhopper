@@ -23,8 +23,8 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.routing.weighting.custom.CustomModel;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -54,7 +54,6 @@ public class CustomWeightingRouteResourceLMTest {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "car,foot").
-                putObject("routing.lm.disabling_allowed", true).
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.encoded_values", "surface").

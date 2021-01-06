@@ -76,12 +76,6 @@ public class Snap {
         queryDistance = dist;
     }
 
-    /**
-     * References to a tower node or the index of wayGeometry of the closest edge. If wayGeometry
-     * has length L then the wayIndex 0 refers to the *base* node, 1 to L (inclusive) refer to the
-     * wayGeometry indices (minus one) and L+1 to the *adjacent* node. Currently only initialized if
-     * returned from Location2NodesNtree.
-     */
     public int getWayIndex() {
         return wayIndex;
     }
@@ -102,15 +96,12 @@ public class Snap {
     }
 
     /**
-     * @return true if a close node was found
+     * @return true if a closest node was found
      */
     public boolean isValid() {
         return closestNode >= 0;
     }
 
-    /**
-     * @return the closest matching edge. Will be null if nothing found or call isValid before
-     */
     public EdgeIteratorState getClosestEdge() {
         return closestEdge;
     }
@@ -134,7 +125,7 @@ public class Snap {
     }
 
     /**
-     * Calculates the closet point on the edge from the query point.
+     * Calculates the closest point on the edge from the query point.
      */
     public void calcSnappedPoint(DistanceCalc distCalc) {
         if (closestEdge == null)
@@ -143,19 +134,19 @@ public class Snap {
             throw new IllegalStateException("Calculate snapped point only once");
 
         PointList fullPL = getClosestEdge().fetchWayGeometry(FetchMode.ALL);
-        double tmpLat = fullPL.getLatitude(wayIndex);
-        double tmpLon = fullPL.getLongitude(wayIndex);
-        double tmpEle = fullPL.getElevation(wayIndex);
+        double tmpLat = fullPL.getLat(wayIndex);
+        double tmpLon = fullPL.getLon(wayIndex);
+        double tmpEle = fullPL.getEle(wayIndex);
         if (snappedPosition != Position.EDGE) {
             snappedPoint = new GHPoint3D(tmpLat, tmpLon, tmpEle);
             return;
         }
 
         double queryLat = getQueryPoint().lat, queryLon = getQueryPoint().lon;
-        double adjLat = fullPL.getLatitude(wayIndex + 1), adjLon = fullPL.getLongitude(wayIndex + 1);
+        double adjLat = fullPL.getLat(wayIndex + 1), adjLon = fullPL.getLon(wayIndex + 1);
         if (distCalc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon)) {
             GHPoint tmpPoint = distCalc.calcCrossingPointToEdge(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon);
-            double adjEle = fullPL.getElevation(wayIndex + 1);
+            double adjEle = fullPL.getEle(wayIndex + 1);
             snappedPoint = new GHPoint3D(tmpPoint.lat, tmpPoint.lon, (tmpEle + adjEle) / 2);
         } else
             // outside of edge boundaries
@@ -183,7 +174,7 @@ public class Snap {
      *
      * @see DistanceCalc#validEdgeDistance
      */
-    public static enum Position {
+    public enum Position {
         EDGE, TOWER, PILLAR
     }
 }

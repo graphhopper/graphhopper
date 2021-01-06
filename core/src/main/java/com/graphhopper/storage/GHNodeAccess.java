@@ -40,11 +40,6 @@ class GHNodeAccess implements NodeAccess {
     }
 
     @Override
-    public final void setNode(int nodeId, double lat, double lon) {
-        setNode(nodeId, lat, lon, Double.NaN);
-    }
-
-    @Override
     public final void setNode(int nodeId, double lat, double lon, double ele) {
         baseGraph.ensureNodeIndex(nodeId);
         long tmp = (long) nodeId * baseGraph.nodeEntryBytes;
@@ -62,39 +57,23 @@ class GHNodeAccess implements NodeAccess {
     }
 
     @Override
-    public final double getLatitude(int nodeId) {
+    public final double getLat(int nodeId) {
         return Helper.intToDegree(baseGraph.nodes.getInt((long) nodeId * baseGraph.nodeEntryBytes + baseGraph.N_LAT));
     }
 
     @Override
-    public final double getLongitude(int nodeId) {
+    public final double getLon(int nodeId) {
         return Helper.intToDegree(baseGraph.nodes.getInt((long) nodeId * baseGraph.nodeEntryBytes + baseGraph.N_LON));
     }
 
     @Override
-    public final double getElevation(int nodeId) {
+    public final double getEle(int nodeId) {
         if (!elevation)
             throw new IllegalStateException("Cannot access elevation - 3D is not enabled");
 
         return Helper.intToEle(baseGraph.nodes.getInt((long) nodeId * baseGraph.nodeEntryBytes + baseGraph.N_ELE));
     }
 
-    @Override
-    public final double getEle(int nodeId) {
-        return getElevation(nodeId);
-    }
-
-    @Override
-    public final double getLat(int nodeId) {
-        return getLatitude(nodeId);
-    }
-
-    @Override
-    public final double getLon(int nodeId) {
-        return getLongitude(nodeId);
-    }
-
-    @Override
     public final void setTurnCostIndex(int index, int turnCostIndex) {
         if (baseGraph.supportsTurnCosts()) {
             baseGraph.ensureNodeIndex(index);

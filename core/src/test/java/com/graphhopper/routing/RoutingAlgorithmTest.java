@@ -759,10 +759,10 @@ public class RoutingAlgorithmTest {
             throw new IllegalStateException("edge not found? " + node1 + "-" + node2);
 
         NodeAccess na = graph.getNodeAccess();
-        double lat = na.getLatitude(edge.getBaseNode());
-        double lon = na.getLongitude(edge.getBaseNode());
-        double latAdj = na.getLatitude(edge.getAdjNode());
-        double lonAdj = na.getLongitude(edge.getAdjNode());
+        double lat = na.getLat(edge.getBaseNode());
+        double lon = na.getLon(edge.getBaseNode());
+        double latAdj = na.getLat(edge.getAdjNode());
+        double lonAdj = na.getLon(edge.getAdjNode());
         // calculate query point near the base node but not directly on it!
         Snap res = new Snap(lat + (latAdj - lat) * .1, lon + (lonAdj - lon) * .1);
         res.setClosestNode(edge.getBaseNode());

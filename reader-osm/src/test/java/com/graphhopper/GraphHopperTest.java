@@ -102,7 +102,6 @@ public class GraphHopperTest {
                 setStoreOnFlush(true);
         hopper.getCHPreparationHandler()
                 .setCHProfiles(new CHProfile("profile"));
-        hopper.getRouterConfig().setCHDisablingAllowed(true);
         hopper.setMinNetworkSize(0);
         hopper.importOrLoad();
         GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566)
@@ -114,8 +113,8 @@ public class GraphHopperTest {
         assertEquals(expectedVisitedNodes, rsp.getHints().getLong("visited_nodes.sum", 0));
 
         ResponsePath res = rsp.getBest();
-        assertEquals(3587.9, res.getDistance(), .1);
-        assertEquals(277173, res.getTime(), 10);
+        assertEquals(3586.9, res.getDistance(), .1);
+        assertEquals(277112, res.getTime(), 10);
         assertEquals(91, res.getPoints().getSize());
 
         assertEquals(43.7276852, res.getWaypoints().getLat(0), 1e-7);
@@ -137,10 +136,10 @@ public class GraphHopperTest {
                 setAlgorithm(ASTAR).setProfile(profile));
 
         // identify the number of counts to compare with CH foot route
-        assertEquals(699, rsp.getHints().getLong("visited_nodes.sum", 0));
+        assertEquals(700, rsp.getHints().getLong("visited_nodes.sum", 0));
 
         ResponsePath res = rsp.getBest();
-        assertEquals(3437.6, res.getDistance(), .1);
+        assertEquals(3437.1, res.getDistance(), .1);
         assertEquals(85, res.getPoints().getSize());
 
         assertEquals(43.7276852, res.getWaypoints().getLat(0), 1e-7);
@@ -242,12 +241,10 @@ public class GraphHopperTest {
         if (ch) {
             hopper.getCHPreparationHandler()
                     .setCHProfiles(new CHProfile(profile));
-            hopper.getRouterConfig().setCHDisablingAllowed(true);
         }
         if (lm) {
             hopper.getLMPreparationHandler()
                     .setLMProfiles(new LMProfile(profile));
-            hopper.getRouterConfig().setLMDisablingAllowed(true);
         }
         hopper.importAndClose();
         hopper = createGraphHopper(vehicle).
@@ -257,12 +254,10 @@ public class GraphHopperTest {
         if (ch) {
             hopper.getCHPreparationHandler()
                     .setCHProfiles(new CHProfile(profile));
-            hopper.getRouterConfig().setCHDisablingAllowed(true);
         }
         if (lm) {
             hopper.getLMPreparationHandler()
                     .setLMProfiles(new LMProfile(profile));
-            hopper.getRouterConfig().setLMDisablingAllowed(true);
         }
         hopper.importOrLoad();
 
@@ -280,7 +275,7 @@ public class GraphHopperTest {
             long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
             assertNotEquals(sum, 0);
             assertTrue("Too many nodes visited " + sum, sum < 120);
-            assertEquals(3437.6, bestPath.getDistance(), .1);
+            assertEquals(3437.1, bestPath.getDistance(), .1);
             assertEquals(85, bestPath.getPoints().getSize());
         }
 
@@ -296,7 +291,7 @@ public class GraphHopperTest {
             long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
             assertNotEquals(sum, 0);
             assertTrue("Too many nodes visited " + sum, sum < 120);
-            assertEquals(3437.6, bestPath.getDistance(), .1);
+            assertEquals(3437.1, bestPath.getDistance(), .1);
             assertEquals(85, bestPath.getPoints().getSize());
         }
 
@@ -311,7 +306,7 @@ public class GraphHopperTest {
         long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
         assertNotEquals(sum, 0);
         assertTrue("Too few nodes visited " + sum, sum > 120);
-        assertEquals(3437.6, bestPath.getDistance(), .1);
+        assertEquals(3437.1, bestPath.getDistance(), .1);
         assertEquals(85, bestPath.getPoints().getSize());
 
         hopper.close();
@@ -361,7 +356,7 @@ public class GraphHopperTest {
         assertEquals(2, rsp.getAll().size());
 
         assertEquals(1310, rsp.getAll().get(0).getTime() / 1000);
-        assertEquals(1432, rsp.getAll().get(1).getTime() / 1000);
+        assertEquals(1431, rsp.getAll().get(1).getTime() / 1000);
 
         req.putHint("alternative_route.max_paths", 3);
         req.putHint("alternative_route.min_plateau_factor", 0.1);
@@ -370,7 +365,7 @@ public class GraphHopperTest {
         assertEquals(3, rsp.getAll().size());
 
         assertEquals(1310, rsp.getAll().get(0).getTime() / 1000);
-        assertEquals(1432, rsp.getAll().get(1).getTime() / 1000);
+        assertEquals(1431, rsp.getAll().get(1).getTime() / 1000);
         assertEquals(1492, rsp.getAll().get(2).getTime() / 1000);
     }
 
@@ -393,11 +388,11 @@ public class GraphHopperTest {
 
         assertEquals(3, rsp.getAll().size());
         // via ramsenthal
-        assertEquals(2864, rsp.getAll().get(0).getTime() / 1000);
+        assertEquals(2863, rsp.getAll().get(0).getTime() / 1000);
         // via unterwaiz
         assertEquals(3318, rsp.getAll().get(1).getTime() / 1000);
         // via eselslohe -> theta; BTW: here smaller time as 2nd alternative due to priority influences time order
-        assertEquals(3094, rsp.getAll().get(2).getTime() / 1000);
+        assertEquals(3093, rsp.getAll().get(2).getTime() / 1000);
     }
 
     @Test
@@ -524,7 +519,7 @@ public class GraphHopperTest {
         req.putHint(Routing.BLOCK_AREA, "50.017578,11.547527;" + someArea);
         rsp = hopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(14602, rsp.getBest().getDistance(), 1);
+        assertEquals(14601, rsp.getBest().getDistance(), 1);
 
         // block by edge IDs -> i.e. use small circular area
         req.putHint(Routing.BLOCK_AREA, "49.979929,11.520066,200");
@@ -559,13 +554,13 @@ public class GraphHopperTest {
         req = new GHRequest(49.984465, 11.507009, 49.986107, 11.507202).
                 setProfile(profile);
         rsp = hopper.route(req);
-        assertEquals(11.506, rsp.getBest().getWaypoints().getLongitude(0), 0.001);
+        assertEquals(11.506, rsp.getBest().getWaypoints().getLon(0), 0.001);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(155, rsp.getBest().getDistance(), 10);
 
         req.putHint(Routing.BLOCK_AREA, "49.984434,11.505212,49.985394,11.506333");
         rsp = hopper.route(req);
-        assertEquals(11.508, rsp.getBest().getWaypoints().getLongitude(0), 0.001);
+        assertEquals(11.508, rsp.getBest().getWaypoints().getLon(0), 0.001);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(1185, rsp.getBest().getDistance(), 10);
 
@@ -596,7 +591,7 @@ public class GraphHopperTest {
                 setAlgorithm(ASTAR).setProfile(profile));
 
         ResponsePath res = rsp.getBest();
-        assertEquals(6875.2, res.getDistance(), .1);
+        assertEquals(6874.2, res.getDistance(), .1);
         assertEquals(170, res.getPoints().getSize());
 
         InstructionList il = res.getInstructions();
@@ -887,7 +882,7 @@ public class GraphHopperTest {
                 setAlgorithm(ASTAR).setProfile(profile));
 
         ResponsePath res = rsp.getBest();
-        assertEquals(1625.4, res.getDistance(), .1);
+        assertEquals(1614.3, res.getDistance(), .1);
         assertEquals(55, res.getPoints().getSize());
         assertTrue(res.getPoints().is3D());
 
@@ -917,9 +912,9 @@ public class GraphHopperTest {
         assertEquals(new GHPoint3D(43.73068455771767, 7.421283689825812, 62.0), res.getPoints().get(0));
         assertEquals(new GHPoint3D(43.727679637988224, 7.419198521975086, 11.0), res.getPoints().get(res.getPoints().size() - 1));
 
-        assertEquals(62, res.getPoints().get(0).getElevation(), 1e-2);
-        assertEquals(66, res.getPoints().get(1).getElevation(), 1e-2);
-        assertEquals(52, res.getPoints().get(10).getElevation(), 1e-2);
+        assertEquals(62, res.getPoints().get(0).getEle(), 1e-2);
+        assertEquals(66, res.getPoints().get(1).getEle(), 1e-2);
+        assertEquals(52, res.getPoints().get(10).getEle(), 1e-2);
     }
 
     @Test
@@ -1015,7 +1010,7 @@ public class GraphHopperTest {
                 setAlgorithm(ASTAR).setProfile(profile));
 
         ResponsePath arsp = rsp.getBest();
-        assertEquals(1570.4, arsp.getDistance(), .1);
+        assertEquals(1569.7, arsp.getDistance(), .1);
         assertEquals(60, arsp.getPoints().getSize());
         assertTrue(arsp.getPoints().is3D());
 
@@ -1032,9 +1027,9 @@ public class GraphHopperTest {
         assertEquals(new GHPoint3D(43.73068455771767, 7.421283689825812, 55.82900047302246), arsp.getPoints().get(0));
         assertEquals(new GHPoint3D(43.727679637988224, 7.419198521975086, 12.274499893188477), arsp.getPoints().get(arsp.getPoints().size() - 1));
 
-        assertEquals(55.83, arsp.getPoints().get(0).getElevation(), 1e-2);
-        assertEquals(57.78, arsp.getPoints().get(1).getElevation(), 1e-2);
-        assertEquals(52.43, arsp.getPoints().get(10).getElevation(), 1e-2);
+        assertEquals(55.83, arsp.getPoints().get(0).getEle(), 1e-2);
+        assertEquals(57.78, arsp.getPoints().get(1).getEle(), 1e-2);
+        assertEquals(52.43, arsp.getPoints().get(10).getEle(), 1e-2);
     }
 
     @Ignore
@@ -1062,7 +1057,7 @@ public class GraphHopperTest {
         assertTrue(res.getPoints().is3D());
         assertEquals(69, res.getAscend(), 1e-1);
         assertEquals(121, res.getDescend(), 1e-1);
-        assertEquals(64.5, res.getPoints().get(0).getElevation(), 1e-2);
+        assertEquals(64.5, res.getPoints().get(0).getEle(), 1e-2);
     }
 
     @Test
@@ -1086,7 +1081,7 @@ public class GraphHopperTest {
                 setProfile(profile2));
         assertFalse(rsp.hasErrors());
         ResponsePath res = rsp.getBest();
-        assertEquals(6932.2, res.getDistance(), .1);
+        assertEquals(6931.8, res.getDistance(), .1);
         assertEquals(103, res.getPoints().getSize());
 
         InstructionList il = res.getInstructions();
@@ -1218,7 +1213,7 @@ public class GraphHopperTest {
         ResponsePath res = rsp.getBest();
         assertFalse("car routing for " + str + " should not have errors:" + rsp.getErrors(), rsp.hasErrors());
         assertEquals(207, res.getTime() / 1000f, 1);
-        assertEquals(2838, res.getDistance(), 1);
+        assertEquals(2837, res.getDistance(), 1);
 
         rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setProfile("profile1"));
@@ -1271,7 +1266,7 @@ public class GraphHopperTest {
         long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
         assertNotEquals(sum, 0);
         assertTrue("Too many nodes visited " + sum, sum < 120);
-        assertEquals(3437.6, bestPath.getDistance(), .1);
+        assertEquals(3437.0, bestPath.getDistance(), .1);
         assertEquals(85, bestPath.getPoints().getSize());
 
         hopper.close();
@@ -1372,11 +1367,9 @@ public class GraphHopperTest {
 
         hopper.getCHPreparationHandler().
                 setCHProfiles(new CHProfile(profile));
-        hopper.getRouterConfig().setCHDisablingAllowed(true);
 
         hopper.getLMPreparationHandler().
                 setLMProfiles(new LMProfile(profile).setMaximumLMWeight(2000));
-        hopper.getRouterConfig().setLMDisablingAllowed(true);
 
         hopper.importOrLoad();
 
@@ -1445,23 +1438,22 @@ public class GraphHopperTest {
                         new LMProfile(profile2).setPreparationProfile(profile1),
                         new LMProfile(profile3).setPreparationProfile(profile1)
                 );
-        hopper.getRouterConfig().setLMDisablingAllowed(true);
         hopper.setMinNetworkSize(0);
         hopper.importOrLoad();
 
         // flex
         testCrossQueryAssert(profile1, hopper, 528.3, 152, true);
-        testCrossQueryAssert(profile2, hopper, 636.0, 150, true);
-        testCrossQueryAssert(profile3, hopper, 815.4, 146, true);
+        testCrossQueryAssert(profile2, hopper, 635.8, 150, true);
+        testCrossQueryAssert(profile3, hopper, 815.2, 146, true);
 
         // LM (should be the same as flex, but with less visited nodes!)
         testCrossQueryAssert(profile1, hopper, 528.3, 74, false);
-        testCrossQueryAssert(profile2, hopper, 636.0, 84, false);
+        testCrossQueryAssert(profile2, hopper, 635.8, 84, false);
         // this is actually interesting: the number of visited nodes *increases* once again (while it strictly decreases
         // with rising distance factor for flex): cross-querying 'works', but performs *worse*, because the landmarks
         // were not customized for the weighting in use. Creating a separate LM preparation for profile3 yields 74
         // instead of 124 visited nodes (not shown here)
-        testCrossQueryAssert(profile3, hopper, 815.4, 128, false);
+        testCrossQueryAssert(profile3, hopper, 815.2, 128, false);
     }
 
     private void testCrossQueryAssert(String profile, GraphHopper hopper, double expectedWeight, int expectedVisitedNodes, boolean disableLM) {
@@ -1509,11 +1501,9 @@ public class GraphHopperTest {
 
         hopper.getCHPreparationHandler().
                 setCHProfiles(new CHProfile(profile1));
-        hopper.getRouterConfig().setCHDisablingAllowed(true);
 
         hopper.getLMPreparationHandler().
                 setLMProfiles(new LMProfile(profile1).setMaximumLMWeight(2000));
-        hopper.getRouterConfig().setLMDisablingAllowed(true);
 
         hopper.importOrLoad();
         // request a profile that was not prepared
@@ -1556,7 +1546,6 @@ public class GraphHopperTest {
                 setStoreOnFlush(true);
         hopper.getLMPreparationHandler().
                 setLMProfiles(new LMProfile(profile).setMaximumLMWeight(2000));
-        hopper.getRouterConfig().setLMDisablingAllowed(true);
         hopper.importOrLoad();
 
         // we can switch LM on/off
@@ -1585,8 +1574,6 @@ public class GraphHopperTest {
                 ));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile(profile));
-        hopper.getRouterConfig().setCHDisablingAllowed(true);
-        hopper.getRouterConfig().setLMDisablingAllowed(true);
         hopper.importOrLoad();
 
         long seed = System.nanoTime();
@@ -1632,8 +1619,6 @@ public class GraphHopperTest {
                         new Profile(profile).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(turnCosts)
                 ));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
-        hopper.getRouterConfig().setCHDisablingAllowed(true);
-        hopper.getRouterConfig().setLMDisablingAllowed(true);
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(55.821744463888116, 37.60380604129401, 55.82608197039734, 37.62055856655137);
@@ -1661,8 +1646,6 @@ public class GraphHopperTest {
                 ));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile(profile));
-        hopper.getRouterConfig().setCHDisablingAllowed(true);
-        hopper.getRouterConfig().setLMDisablingAllowed(true);
 
         hopper.importOrLoad();
 
@@ -1679,9 +1662,9 @@ public class GraphHopperTest {
         assertEquals(1995.38, pathLM.getDistance(), 0.1);
         assertEquals(1995.38, path.getDistance(), 0.1);
 
-        assertEquals(149496, pathCH.getTime());
-        assertEquals(149496, pathLM.getTime());
-        assertEquals(149496, path.getTime());
+        assertEquals(149494, pathCH.getTime());
+        assertEquals(149494, pathLM.getTime());
+        assertEquals(149494, path.getTime());
     }
 
     @Test
@@ -1723,7 +1706,6 @@ public class GraphHopperTest {
                 new CHProfile(profile1),
                 new CHProfile(profile2)
         );
-        hopper.getRouterConfig().setCHDisablingAllowed(true);
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
@@ -1746,7 +1728,6 @@ public class GraphHopperTest {
                 setStoreOnFlush(true);
         hopper.getCHPreparationHandler()
                 .setCHProfiles(new CHProfile(profile));
-        hopper.getRouterConfig().setCHDisablingAllowed(true);
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
@@ -1778,7 +1759,6 @@ public class GraphHopperTest {
         hopper.getCHPreparationHandler()
                 // we only do the CH preparation for the profile without turn costs
                 .setCHProfiles(new CHProfile(profile2));
-        hopper.getRouterConfig().setCHDisablingAllowed(true);
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
@@ -2017,8 +1997,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopperOSM().
                 setOSMFile(BAYREUTH).
                 setProfiles(new Profile(profile).setVehicle("car").setWeighting("fastest")).
-                setGraphHopperLocation(GH_LOCATION).
-                forServer();
+                setGraphHopperLocation(GH_LOCATION);
         EncodingManager em = new EncodingManager.Builder()
                 .setEnableInstructions(true)
                 .add(new OSMMaxSpeedParser())

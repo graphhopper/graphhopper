@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
-import com.graphhopper.http.WebHelper;
+import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.util.*;
 
 import java.util.List;
@@ -73,7 +73,7 @@ public class NavigateResponseConverter {
     private static void putRouteInformation(ObjectNode pathJson, ResponsePath path, int routeNr, TranslationMap translationMap, Locale locale, DistanceConfig distanceConfig) {
         InstructionList instructions = path.getInstructions();
 
-        pathJson.put("geometry", WebHelper.encodePolyline(path.getPoints(), false, 1e6));
+        pathJson.put("geometry", ResponsePathSerializer.encodePolyline(path.getPoints(), false, 1e6));
         ArrayNode legsJson = pathJson.putArray("legs");
 
         ObjectNode legJson = legsJson.addObject();
@@ -150,7 +150,7 @@ public class NavigateResponseConverter {
         instructionJson.put("driving_side", "right");
 
         // Does not include elevation
-        instructionJson.put("geometry", WebHelper.encodePolyline(pointList, false, 1e6));
+        instructionJson.put("geometry", ResponsePathSerializer.encodePolyline(pointList, false, 1e6));
 
         // TODO: how about other modes?
         instructionJson.put("mode", "driving");

@@ -202,7 +202,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         if (!access.isFerry()) {
             setSpeed(edgeFlags, true, true, MEAN_SPEED);
         } else {
-            double ferrySpeed = getFerrySpeed(way);
+            double ferrySpeed = ferrySpeedCalc.getSpeed(way);
             setSpeed(edgeFlags, true, true, ferrySpeed);
         }
 
@@ -218,7 +218,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
         PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
 
-        double prevEle = pl.getElevation(0);
+        double prevEle = pl.getEle(0);
         double fullDist2D = edge.getDistance();
 
         if (Double.isInfinite(fullDist2D)) {
@@ -229,7 +229,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
             return;
         }
 
-        double eleDelta = pl.getElevation(pl.size() - 1) - prevEle;
+        double eleDelta = pl.getEle(pl.size() - 1) - prevEle;
         double elePercent = eleDelta / fullDist2D * 100;
         int smallInclinePercent = 3;
         if (elePercent > smallInclinePercent && elePercent < maxInclinePercent) {

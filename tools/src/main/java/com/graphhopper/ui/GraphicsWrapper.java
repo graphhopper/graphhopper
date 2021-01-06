@@ -133,8 +133,8 @@ public class GraphicsWrapper {
     }
 
     public void plotNode(Graphics2D g2, NodeAccess na, int loc, Color c, int size, String text) {
-        double lat = na.getLatitude(loc);
-        double lon = na.getLongitude(loc);
+        double lat = na.getLat(loc);
+        double lon = na.getLon(loc);
         if (lat < bounds.minLat || lat > bounds.maxLat || lon < bounds.minLon || lon > bounds.maxLon) {
             return;
         }

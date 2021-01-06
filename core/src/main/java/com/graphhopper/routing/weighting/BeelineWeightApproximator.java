@@ -41,8 +41,8 @@ public class BeelineWeightApproximator implements WeightApproximator {
 
     @Override
     public void setTo(int toNode) {
-        toLat = nodeAccess.getLatitude(toNode);
-        toLon = nodeAccess.getLongitude(toNode);
+        toLat = nodeAccess.getLat(toNode);
+        toLon = nodeAccess.getLon(toNode);
     }
 
     public WeightApproximator setEpsilon(double epsilon) {
@@ -62,8 +62,8 @@ public class BeelineWeightApproximator implements WeightApproximator {
 
     @Override
     public double approximate(int fromNode) {
-        double fromLat = nodeAccess.getLatitude(fromNode);
-        double fromLon = nodeAccess.getLongitude(fromNode);
+        double fromLat = nodeAccess.getLat(fromNode);
+        double fromLon = nodeAccess.getLon(fromNode);
         double dist2goal = distanceCalc.calcDist(toLat, toLon, fromLat, fromLon);
         double weight2goal = weighting.getMinWeight(dist2goal);
         return weight2goal * epsilon;

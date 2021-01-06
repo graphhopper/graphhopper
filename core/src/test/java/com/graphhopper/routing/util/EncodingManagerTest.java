@@ -200,9 +200,9 @@ public class EncodingManagerTest {
         EncodingManager.AcceptWay map = new EncodingManager.AcceptWay();
         manager2.acceptWay(osmWay, map);
         IntsRef flags = manager2.handleWayTags(osmWay, map, manager2.createRelationFlags());
-        double singleSpeed = singleBikeEnc.getSpeed(flags);
+        double singleSpeed = singleBikeEnc.avgSpeedEnc.getDecimal(false, flags);
         assertEquals(4, singleSpeed, 1e-3);
-        assertEquals(singleSpeed, singleBikeEnc.getSpeed(true, flags), 1e-3);
+        assertEquals(singleSpeed, singleBikeEnc.avgSpeedEnc.getDecimal(true, flags), 1e-3);
 
         EncodingManager manager = EncodingManager.create(new DefaultFlagEncoderFactory(), "bike2,bike,foot");
         FootFlagEncoder foot = (FootFlagEncoder) manager.getEncoder("foot");
@@ -211,11 +211,11 @@ public class EncodingManagerTest {
         map = new EncodingManager.AcceptWay();
         manager.acceptWay(osmWay, map);
         flags = manager.handleWayTags(osmWay, map, manager.createRelationFlags());
-        assertEquals(singleSpeed, bike.getSpeed(flags), 1e-2);
-        assertEquals(singleSpeed, bike.getSpeed(true, flags), 1e-2);
+        assertEquals(singleSpeed, bike.avgSpeedEnc.getDecimal(false, flags), 1e-2);
+        assertEquals(singleSpeed, bike.avgSpeedEnc.getDecimal(true, flags), 1e-2);
 
-        assertEquals(5, foot.getSpeed(flags), 1e-2);
-        assertEquals(5, foot.getSpeed(true, flags), 1e-2);
+        assertEquals(5, foot.avgSpeedEnc.getDecimal(false, flags), 1e-2);
+        assertEquals(5, foot.avgSpeedEnc.getDecimal(true, flags), 1e-2);
     }
 
     @Test

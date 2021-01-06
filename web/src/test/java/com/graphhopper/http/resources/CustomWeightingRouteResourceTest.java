@@ -7,8 +7,8 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.routing.weighting.custom.CustomModel;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -40,7 +40,6 @@ public class CustomWeightingRouteResourceTest {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "bike,car").
-                putObject("routing.ch.disabling_allowed", true).
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).

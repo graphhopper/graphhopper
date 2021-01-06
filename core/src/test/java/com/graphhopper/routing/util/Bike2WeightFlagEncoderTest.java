@@ -56,9 +56,9 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
 
         IntsRef flags = edge.getFlags();
         // decrease speed
-        assertEquals(2, encoder.getSpeed(false, flags), 1e-1);
+        assertEquals(2, avgSpeedEnc.getDecimal(false, flags), 1e-1);
         // increase speed but use maximum speed (calculated was 24)
-        assertEquals(18, encoder.getSpeed(true, flags), 1e-1);
+        assertEquals(18, avgSpeedEnc.getDecimal(true, flags), 1e-1);
     }
 
     @Test
@@ -76,13 +76,13 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
     @Test
     public void testSetSpeed0_issue367() {
         IntsRef edgeFlags = GHUtility.setSpeed(10, 10, encoder, encodingManager.createEdgeFlags());
-        assertEquals(10, encoder.getSpeed(false, edgeFlags), .1);
-        assertEquals(10, encoder.getSpeed(true, edgeFlags), .1);
+        assertEquals(10, avgSpeedEnc.getDecimal(false, edgeFlags), .1);
+        assertEquals(10, avgSpeedEnc.getDecimal(true, edgeFlags), .1);
 
         encoder.setSpeed(false, edgeFlags, 0);
 
-        assertEquals(0, encoder.getSpeed(false, edgeFlags), .1);
-        assertEquals(10, encoder.getSpeed(true, edgeFlags), .1);
+        assertEquals(0, avgSpeedEnc.getDecimal(false, edgeFlags), .1);
+        assertEquals(10, avgSpeedEnc.getDecimal(true, edgeFlags), .1);
         assertFalse(encoder.getAccessEnc().getBool(false, edgeFlags));
         assertTrue(encoder.getAccessEnc().getBool(true, edgeFlags));
     }

@@ -62,24 +62,24 @@ public final class ShallowImmutablePointList extends PointList {
     }
 
     @Override
-    public double getLatitude(int index) {
+    public double getLat(int index) {
         if (index > getSize())
             throw new ArrayIndexOutOfBoundsException(ERR_MSG + " index:" + index + ", size:" + getSize());
-        return wrappedPointList.getLatitude(fromOffset + index);
+        return wrappedPointList.getLat(fromOffset + index);
     }
 
     @Override
-    public double getLongitude(int index) {
+    public double getLon(int index) {
         if (index > getSize())
             throw new ArrayIndexOutOfBoundsException(ERR_MSG + " index:" + index + ", size:" + getSize());
-        return wrappedPointList.getLongitude(fromOffset + index);
+        return wrappedPointList.getLon(fromOffset + index);
     }
 
     @Override
-    public double getElevation(int index) {
+    public double getEle(int index) {
         if (index > getSize())
             throw new ArrayIndexOutOfBoundsException(ERR_MSG + " index:" + index + ", size:" + getSize());
-        return wrappedPointList.getElevation(fromOffset + index);
+        return wrappedPointList.getEle(fromOffset + index);
     }
 
     @Override
@@ -118,11 +118,6 @@ public final class ShallowImmutablePointList extends PointList {
 
     @Override
     public void ensureNode(int nodeId) {
-        throw new UnsupportedOperationException(IMMUTABLE_ERR);
-    }
-
-    @Override
-    public void setNode(int nodeId, double lat, double lon) {
         throw new UnsupportedOperationException(IMMUTABLE_ERR);
     }
 

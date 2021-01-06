@@ -93,9 +93,10 @@ public class MVTResource {
         final MvtLayerProps layerProps = new MvtLayerProps();
         final VectorTile.Tile.Layer.Builder layerBuilder = MvtLayerBuild.newLayerBuilder("roads", layerParams);
 
-        locationIndex.query(bbox, new LocationIndexTree.EdgeVisitor(edgeExplorer) {
+        locationIndex.query(bbox, new LocationIndexTree.Visitor() {
             @Override
-            public void onEdge(EdgeIteratorState edge, int nodeA, int nodeB) {
+            public void onEdge(int edgeId) {
+                EdgeIteratorState edge = graphHopper.getGraphHopperStorage().getEdgeIteratorStateForKey(edgeId * 2);
                 LineString lineString;
                 RoadClass rc = edge.get(roadClassEnc);
                 if (zInfo >= 14) {
@@ -105,10 +106,10 @@ public class MVTResource {
                         || zInfo > 10 && (rc == RoadClass.PRIMARY || rc == RoadClass.TRUNK)
                         || zInfo > 11 && (rc == RoadClass.SECONDARY)
                         || zInfo > 12) {
-                    double lat = na.getLatitude(nodeA);
-                    double lon = na.getLongitude(nodeA);
-                    double toLat = na.getLatitude(nodeB);
-                    double toLon = na.getLongitude(nodeB);
+                    double lat = na.getLat(edge.getBaseNode());
+                    double lon = na.getLon(edge.getBaseNode());
+                    double toLat = na.getLat(edge.getAdjNode());
+                    double toLon = na.getLon(edge.getAdjNode());
                     lineString = geometryFactory.createLineString(new Coordinate[]{new Coordinate(lon, lat), new Coordinate(toLon, toLat)});
                 } else {
                     // skip edge for certain zoom
@@ -140,11 +141,14 @@ public class MVTResource {
                 TileGeomResult tileGeom = JtsAdapter.createTileGeom(lineString, tileEnvelope, geometryFactory, layerParams, acceptAllGeomFilter);
                 List<VectorTile.Tile.Feature> features = JtsAdapter.toFeatures(tileGeom.mvtGeoms, layerProps, converter);
                 layerBuilder.addAllFeatures(features);
-            }
 
+
+
+            }
             @Override
             public void onTile(BBox bbox, int depth) {
             }
+
         });
 
         MvtLayerBuild.writeProps(layerBuilder, layerProps);

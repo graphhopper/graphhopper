@@ -18,8 +18,8 @@
 package com.graphhopper.routing.util.spatialrules;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.json.geo.JsonFeature;
-import com.graphhopper.json.geo.JsonFeatureCollection;
+import com.graphhopper.util.JsonFeature;
+import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.util.parsers.SpatialRuleParser;
 import com.graphhopper.routing.util.parsers.TagParser;

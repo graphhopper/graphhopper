@@ -43,7 +43,7 @@ public abstract class AbstractBikeFlagEncoderTester {
     protected EncodingManager encodingManager;
     protected BooleanEncodedValue roundaboutEnc;
     protected DecimalEncodedValue priorityEnc;
-    protected DecimalEncodedValue avSpeedEnc;
+    protected DecimalEncodedValue avgSpeedEnc;
     protected EncodingManager.AcceptWay accessMap;
 
     @Before
@@ -51,7 +51,7 @@ public abstract class AbstractBikeFlagEncoderTester {
         encodingManager = EncodingManager.create(encoder = createBikeEncoder());
         roundaboutEnc = encodingManager.getBooleanEncodedValue(Roundabout.KEY);
         priorityEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(encoder, "priority"));
-        avSpeedEnc = encoder.getAverageSpeedEnc();
+        avgSpeedEnc = encoder.getAverageSpeedEnc();
         accessMap = new EncodingManager.AcceptWay().put(encoder.toString(), WAY);
     }
 
@@ -71,7 +71,7 @@ public abstract class AbstractBikeFlagEncoderTester {
 
     protected double getSpeedFromFlags(ReaderWay way) {
         IntsRef flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, WAY);
-        return avSpeedEnc.getDecimal(false, flags);
+        return avgSpeedEnc.getDecimal(false, flags);
     }
 
     @Test
@@ -338,8 +338,8 @@ public abstract class AbstractBikeFlagEncoderTester {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "tertiary");
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
-        avSpeedEnc.setDecimal(false, edgeFlags, encoder.applyMaxSpeed(osmWay, 49));
-        assertEquals(30, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
+        avgSpeedEnc.setDecimal(false, edgeFlags, encoder.applyMaxSpeed(osmWay, 49));
+        assertEquals(30, avgSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
         assertPriority(PREFER.getValue(), osmWay);
     }
 

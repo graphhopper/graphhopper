@@ -56,24 +56,24 @@ public class ExtendedNodeAccess implements NodeAccess {
     }
 
     @Override
-    public double getLatitude(int nodeId) {
+    public double getLat(int nodeId) {
         if (isAdditionalNode(nodeId))
-            return additionalNodes.getLatitude(nodeId - firstAdditionalNodeId);
-        return nodeAccess.getLatitude(nodeId);
+            return additionalNodes.getLat(nodeId - firstAdditionalNodeId);
+        return nodeAccess.getLat(nodeId);
     }
 
     @Override
-    public double getLongitude(int nodeId) {
+    public double getLon(int nodeId) {
         if (isAdditionalNode(nodeId))
-            return additionalNodes.getLongitude(nodeId - firstAdditionalNodeId);
-        return nodeAccess.getLongitude(nodeId);
+            return additionalNodes.getLon(nodeId - firstAdditionalNodeId);
+        return nodeAccess.getLon(nodeId);
     }
 
     @Override
-    public double getElevation(int nodeId) {
+    public double getEle(int nodeId) {
         if (isAdditionalNode(nodeId))
-            return additionalNodes.getElevation(nodeId - firstAdditionalNodeId);
-        return nodeAccess.getElevation(nodeId);
+            return additionalNodes.getEle(nodeId - firstAdditionalNodeId);
+        return nodeAccess.getEle(nodeId);
     }
 
     @Override
@@ -84,11 +84,6 @@ public class ExtendedNodeAccess implements NodeAccess {
     }
 
     @Override
-    public void setNode(int nodeId, double lat, double lon) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
     public void setNode(int nodeId, double lat, double lon, double ele) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
@@ -96,21 +91,6 @@ public class ExtendedNodeAccess implements NodeAccess {
     @Override
     public void setTurnCostIndex(int nodeId, int additionalValue) {
         throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public double getLat(int nodeId) {
-        return getLatitude(nodeId);
-    }
-
-    @Override
-    public double getLon(int nodeId) {
-        return getLongitude(nodeId);
-    }
-
-    @Override
-    public double getEle(int nodeId) {
-        return getElevation(nodeId);
     }
 
     private boolean isAdditionalNode(int nodeId) {

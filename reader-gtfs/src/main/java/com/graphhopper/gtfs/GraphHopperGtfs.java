@@ -27,7 +27,6 @@ import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.Directory;
@@ -128,15 +127,11 @@ public class GraphHopperGtfs extends GraphHopperOSM {
         if (tmpIndex.loadExisting()) {
             return tmpIndex;
         } else {
-            if (getGraphHopperStorage().getNodes() > 0) {
-                LocationIndexTree locationIndexTree = new LocationIndexTree(getGraphHopperStorage(), new RAMDirectory());
-                if (!locationIndexTree.loadExisting()) {
-                    locationIndexTree.prepareIndex();
-                }
-                return locationIndexTree;
-            } else {
-                return new EmptyLocationIndex();
+            LocationIndexTree locationIndexTree = new LocationIndexTree(getGraphHopperStorage(), new RAMDirectory());
+            if (!locationIndexTree.loadExisting()) {
+                locationIndexTree.prepareIndex();
             }
+            return locationIndexTree;
         }
     }
 

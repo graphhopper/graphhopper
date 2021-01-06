@@ -131,18 +131,8 @@ public class RealtimeFeed {
                 }
 
                 @Override
-                public void setNode(int nodeId, double lat, double lon) {
-
-                }
-
-                @Override
                 public void setNode(int nodeId, double lat, double lon, double ele) {
 
-                }
-
-                @Override
-                public double getLatitude(int nodeId) {
-                    return 0;
                 }
 
                 @Override
@@ -151,17 +141,7 @@ public class RealtimeFeed {
                 }
 
                 @Override
-                public double getLongitude(int nodeId) {
-                    return 0;
-                }
-
-                @Override
                 public double getLon(int nodeId) {
-                    return 0;
-                }
-
-                @Override
-                public double getElevation(int nodeId) {
                     return 0;
                 }
 

@@ -18,7 +18,7 @@
 package com.graphhopper.reader.osm;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.json.geo.JsonFeatureCollection;
+import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;

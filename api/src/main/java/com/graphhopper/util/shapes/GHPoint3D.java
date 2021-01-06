@@ -30,10 +30,6 @@ public class GHPoint3D extends GHPoint {
         this.ele = elevation;
     }
 
-    public double getElevation() {
-        return ele;
-    }
-
     public double getEle() {
         return ele;
     }

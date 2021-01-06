@@ -87,7 +87,7 @@ class QueryOverlayBuilder {
                 // check for special case #162 where adj == base and force direction via latitude comparison
                 PointList pl = closestEdge.fetchWayGeometry(FetchMode.PILLAR_ONLY);
                 if (pl.size() > 1)
-                    doReverse = pl.getLatitude(0) > pl.getLatitude(pl.size() - 1);
+                    doReverse = pl.getLat(0) > pl.getLat(pl.size() - 1);
             }
 
             if (doReverse) {
@@ -138,8 +138,8 @@ class QueryOverlayBuilder {
 
                     private double distanceOfSnappedPointToPillarNode(Snap o) {
                         GHPoint snappedPoint = o.getSnappedPoint();
-                        double fromLat = fullPL.getLatitude(o.getWayIndex());
-                        double fromLon = fullPL.getLongitude(o.getWayIndex());
+                        double fromLat = fullPL.getLat(o.getWayIndex());
+                        double fromLon = fullPL.getLon(o.getWayIndex());
                         return DistancePlaneProjection.DIST_PLANE.calcNormalizedDist(fromLat, fromLon, snappedPoint.lat, snappedPoint.lon);
                     }
                 });

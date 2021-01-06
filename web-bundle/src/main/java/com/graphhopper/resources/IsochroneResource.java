@@ -5,11 +5,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.Profile;
 import com.graphhopper.http.GHPointParam;
-import com.graphhopper.http.WebHelper;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.isochrone.algorithm.Triangulator;
-import com.graphhopper.json.geo.JsonFeature;
+import com.graphhopper.jackson.ResponsePathSerializer;
+import com.graphhopper.util.JsonFeature;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
@@ -160,7 +160,7 @@ public class IsochroneResource {
             HashMap<String, Object> properties = new HashMap<>();
             properties.put("bucket", features.size());
             if (respType == geojson) {
-                properties.put("copyrights", WebHelper.COPYRIGHTS);
+                properties.put("copyrights", ResponsePathSerializer.COPYRIGHTS);
             }
             feature.setProperties(properties);
             feature.setGeometry(isochrone);
@@ -176,7 +176,10 @@ public class IsochroneResource {
             finalJson = json;
         } else {
             json.putPOJO("polygons", features);
-            finalJson = WebHelper.jsonResponsePutInfo(json, sw.getMillis());
+            final ObjectNode info = json.putObject("info");
+            info.putPOJO("copyrights", ResponsePathSerializer.COPYRIGHTS);
+            info.put("took", Math.round((float) sw.getMillis()));
+            finalJson = json;
         }
 
         logger.info("took: " + sw.getSeconds() + ", visited nodes:" + shortestPathTree.getVisitedNodes());

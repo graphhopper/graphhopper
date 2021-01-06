@@ -24,12 +24,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
-import com.graphhopper.http.WebHelper;
+import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.matching.*;
-import com.graphhopper.matching.gpx.Gpx;
+import com.graphhopper.jackson.Gpx;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.util.*;
-import com.graphhopper.util.gpx.GpxFromInstructions;
+import com.graphhopper.gpx.GpxConversions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,7 +114,7 @@ public class MapMatchingResource {
         MapMatching matching = new MapMatching(graphHopper, hints);
         matching.setMeasurementErrorSigma(gpsAccuracy);
 
-        List<Observation> measurements = gpx.trk.get(0).getEntries();
+        List<Observation> measurements = GpxConversions.getEntries(gpx.trk.get(0));
         MatchResult matchResult = matching.match(measurements);
 
         // TODO: Request logging and timing should perhaps be done somewhere outside
@@ -148,11 +148,11 @@ public class MapMatchingResource {
                 long time = gpx.trk.get(0).getStartTime()
                         .map(Date::getTime)
                         .orElse(System.currentTimeMillis());
-                return Response.ok(GpxFromInstructions.createGPX(rsp.getBest().getInstructions(), gpx.trk.get(0).name != null ? gpx.trk.get(0).name : "", time, enableElevation, withRoute, withTrack, false, Constants.VERSION, tr), "application/gpx+xml").
+                return Response.ok(GpxConversions.createGPX(rsp.getBest().getInstructions(), gpx.trk.get(0).name != null ? gpx.trk.get(0).name : "", time, enableElevation, withRoute, withTrack, false, Constants.VERSION, tr), "application/gpx+xml").
                         header("X-GH-Took", "" + Math.round(took * 1000)).
                         build();
             } else {
-                ObjectNode map = WebHelper.jsonObject(rsp, instructions, calcPoints, enableElevation, pointsEncoded, took);
+                ObjectNode map = ResponsePathSerializer.jsonObject(rsp, instructions, calcPoints, enableElevation, pointsEncoded, took);
 
                 Map<String, Object> matchStatistics = new HashMap<>();
                 matchStatistics.put("distance", matchResult.getMatchLength());
@@ -214,10 +214,10 @@ public class MapMatchingResource {
             PointList pointList = edgeMatch.getEdgeState().fetchWayGeometry(emIndex == 0 ? FetchMode.ALL : FetchMode.PILLAR_AND_ADJ);
             final ObjectNode geometry = link.putObject("geometry");
             if (pointList.size() < 2) {
-                geometry.putPOJO("coordinates", pointsEncoded ? WebHelper.encodePolyline(pointList, elevation) : pointList.toLineString(elevation));
+                geometry.putPOJO("coordinates", pointsEncoded ? ResponsePathSerializer.encodePolyline(pointList, elevation, 1e5) : pointList.toLineString(elevation));
                 geometry.put("type", "Point");
             } else {
-                geometry.putPOJO("coordinates", pointsEncoded ? WebHelper.encodePolyline(pointList, elevation) : pointList.toLineString(elevation));
+                geometry.putPOJO("coordinates", pointsEncoded ? ResponsePathSerializer.encodePolyline(pointList, elevation, 1e5) : pointList.toLineString(elevation));
                 geometry.put("type", "LineString");
             }
             link.put("id", edgeMatch.getEdgeState().getEdge());

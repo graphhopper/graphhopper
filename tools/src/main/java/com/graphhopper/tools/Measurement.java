@@ -29,7 +29,6 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.PrepareLandmarks;
@@ -38,7 +37,6 @@ import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleFactory;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
-import com.graphhopper.routing.weighting.custom.CustomModel;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
@@ -179,15 +177,11 @@ public class Measurement {
             }
         };
 
-        hopper.init(createConfigFromArgs(args)).
-                // use server to allow path simplification
-                        forServer();
+        hopper.init(createConfigFromArgs(args));
         if (cleanGraph) {
             hopper.clean();
         }
 
-        hopper.getRouterConfig().setCHDisablingAllowed(true);
-        hopper.getRouterConfig().setLMDisablingAllowed(true);
         hopper.importOrLoad();
 
         GraphHopperStorage g = hopper.getGraphHopperStorage();
@@ -639,7 +633,7 @@ public class Measurement {
                         // -> discard
                         continue;
                     nodes.add(node);
-                    points.add(new GHPoint(na.getLatitude(node), na.getLongitude(node)));
+                    points.add(new GHPoint(na.getLat(node), na.getLon(node)));
                     if (querySettings.withPointHints) {
                         EdgeIterator iter = edgeExplorer.setBaseNode(node);
                         pointHints.add(iter.next() ? iter.getName() : "");

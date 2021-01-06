@@ -38,13 +38,13 @@ public class FinishInstruction extends Instruction {
     }
 
     public FinishInstruction(String name, PointAccess pointAccess, int node) {
-        this(name, pointAccess.getLatitude(node), pointAccess.getLongitude(node),
-                pointAccess.is3D() ? pointAccess.getElevation(node) : Double.NaN);
+        this(name, pointAccess.getLat(node), pointAccess.getLon(node),
+                pointAccess.is3D() ? pointAccess.getEle(node) : Double.NaN);
     }
 
     public FinishInstruction(PointAccess pointAccess, int node) {
-        this(pointAccess.getLatitude(node), pointAccess.getLongitude(node),
-                pointAccess.is3D() ? pointAccess.getElevation(node) : Double.NaN);
+        this(pointAccess.getLat(node), pointAccess.getLon(node),
+                pointAccess.is3D() ? pointAccess.getEle(node) : Double.NaN);
     }
 
     @Override

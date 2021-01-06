@@ -46,10 +46,10 @@ public class DouglasPeuckerTest {
     public void testParse() {
         PointList pointList = new PointList();
         pointList.parse2DJSON("[[11.571499218899739,49.945605917549265],[11.571664621792689,49.94570668665409]]");
-        assertEquals(49.945605917549265, pointList.getLatitude(0), 1e-6);
-        assertEquals(11.571499218899739, pointList.getLongitude(0), 1e-6);
-        assertEquals(49.94570668665409, pointList.getLatitude(1), 1e-6);
-        assertEquals(11.571664621792689, pointList.getLongitude(1), 1e-6);
+        assertEquals(49.945605917549265, pointList.getLat(0), 1e-6);
+        assertEquals(11.571499218899739, pointList.getLon(0), 1e-6);
+        assertEquals(49.94570668665409, pointList.getLat(1), 1e-6);
+        assertEquals(11.571664621792689, pointList.getLon(1), 1e-6);
     }
 
     @Test

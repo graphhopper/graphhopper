@@ -80,7 +80,6 @@ public class RouteResourceTest {
         config.getGraphHopperConfiguration().
                 putObject("profiles_mapbox", mapboxResolver).
                 putObject("graph.flag_encoders", "car").
-                putObject("routing.ch.disabling_allowed", true).
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
@@ -511,7 +510,7 @@ public class RouteResourceTest {
         assertEquals(200, response.getStatus());
         String str = response.readEntity(String.class);
         // For backward compatibility we currently export route and track.
-        assertTrue(str.contains("<gh:distance>1841.8</gh:distance>"));
+        assertTrue(str.contains("<gh:distance>1841.5</gh:distance>"), str);
         assertFalse(str.contains("<wpt lat=\"42.51003\" lon=\"1.548188\"> <name>Finish!</name></wpt>"));
         assertTrue(str.contains("<trkpt lat=\"42.554839\" lon=\"1.536374\"><time>"));
     }

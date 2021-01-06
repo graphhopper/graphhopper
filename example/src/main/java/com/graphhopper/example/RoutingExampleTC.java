@@ -38,7 +38,7 @@ public class RoutingExampleTC {
         GHRequest req = new GHRequest(42.50822, 1.533966, 42.506899, 1.525372).
                 setCurbsides(Arrays.asList(CURBSIDE_ANY, CURBSIDE_RIGHT)).
                 setProfile("car");
-        route(hopper, req, 1730, 112_000);
+        route(hopper, req, 1729, 112_000);
     }
 
     public static void routeWithTurnCostsAndOtherUTurnCosts(GraphHopper hopper) {
@@ -66,7 +66,7 @@ public class RoutingExampleTC {
 
     // see RoutingExample for more details
     static GraphHopper createGraphHopperInstance(String ghLoc) {
-        GraphHopper hopper = new GraphHopperOSM().forServer();
+        GraphHopper hopper = new GraphHopperOSM();
         hopper.setDataReaderFile(ghLoc);
         hopper.setGraphHopperLocation("target/routing-tc-graph-cache");
         // by enabling turn costs for the FlagEncoder, turn restriction constraints like 'no_left_turn' will be taken
@@ -83,8 +83,6 @@ public class RoutingExampleTC {
         // enable CH for our profile. since turn costs are enabled this will take more time and memory to prepare than
         // without turn costs.
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile.getName()));
-        // we allow disabling CH here so we can showcase changing u_turn_costs per request
-        hopper.getRouterConfig().setCHDisablingAllowed(true);
         hopper.importOrLoad();
         return hopper;
     }

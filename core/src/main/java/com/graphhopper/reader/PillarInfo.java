@@ -59,16 +59,7 @@ public class PillarInfo implements PointAccess {
     }
 
     @Override
-    public void setNode(int nodeId, double lat, double lon) {
-        _setNode(nodeId, lat, lon, Double.NaN);
-    }
-
-    @Override
     public void setNode(int nodeId, double lat, double lon, double ele) {
-        _setNode(nodeId, lat, lon, ele);
-    }
-
-    private void _setNode(int nodeId, double lat, double lon, double ele) {
         ensureNode(nodeId);
         long tmp = (long) nodeId * rowSizeInBytes;
         da.setInt(tmp + LAT, Helper.degreeToInt(lat));
@@ -79,39 +70,24 @@ public class PillarInfo implements PointAccess {
     }
 
     @Override
-    public double getLatitude(int id) {
+    public double getLat(int id) {
         int intVal = da.getInt((long) id * rowSizeInBytes + LAT);
         return Helper.intToDegree(intVal);
     }
 
     @Override
-    public double getLat(int id) {
-        return getLatitude(id);
-    }
-
-    @Override
-    public double getLongitude(int id) {
+    public double getLon(int id) {
         int intVal = da.getInt((long) id * rowSizeInBytes + LON);
         return Helper.intToDegree(intVal);
     }
 
     @Override
-    public double getLon(int id) {
-        return getLongitude(id);
-    }
-
-    @Override
-    public double getElevation(int id) {
+    public double getEle(int id) {
         if (!is3D())
             return Double.NaN;
 
         int intVal = da.getInt((long) id * rowSizeInBytes + ELE);
         return Helper.intToEle(intVal);
-    }
-
-    @Override
-    public double getEle(int id) {
-        return getElevation(id);
     }
 
     public void clear() {

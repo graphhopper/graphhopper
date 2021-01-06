@@ -24,7 +24,6 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperTest;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.DataReader;
-import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
@@ -40,16 +39,16 @@ import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.*;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests the OSMReader with the normal helper initialized.
@@ -73,12 +72,12 @@ public class OSMReaderTest {
     private EdgeExplorer carOutExplorer;
     private EdgeExplorer carAllExplorer;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         new File(dir).mkdirs();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         Helper.removeDir(new File(dir));
     }
@@ -136,12 +135,12 @@ public class OSMReaderTest {
         assertEquals(93146.888, iter.getDistance(), 1);
 
         NodeAccess na = graph.getNodeAccess();
-        assertEquals(9.4, na.getLongitude(findID(hopper.getLocationIndex(), 51.2, 9.4)), 1e-3);
-        assertEquals(10, na.getLongitude(findID(hopper.getLocationIndex(), 49, 10)), 1e-3);
-        assertEquals(51.249, na.getLatitude(findID(hopper.getLocationIndex(), 51.2492152, 9.4317166)), 1e-3);
+        assertEquals(9.4, na.getLon(findID(hopper.getLocationIndex(), 51.2, 9.4)), 1e-3);
+        assertEquals(10, na.getLon(findID(hopper.getLocationIndex(), 49, 10)), 1e-3);
+        assertEquals(51.249, na.getLat(findID(hopper.getLocationIndex(), 51.2492152, 9.4317166)), 1e-3);
 
         // node 40 is on the way between 30 and 50 => 9.0
-        assertEquals(9, na.getLongitude(findID(hopper.getLocationIndex(), 51.25, 9.43)), 1e-3);
+        assertEquals(9, na.getLon(findID(hopper.getLocationIndex(), 51.25, 9.43)), 1e-3);
     }
 
     protected int findID(LocationIndex index, double lat, double lon) {
@@ -152,55 +151,8 @@ public class OSMReaderTest {
     public void testSort() {
         GraphHopper hopper = new GraphHopperFacade(file1).setSortGraph(true).importOrLoad();
         NodeAccess na = hopper.getGraphHopperStorage().getNodeAccess();
-        assertEquals(10, na.getLongitude(findID(hopper.getLocationIndex(), 49, 10)), 1e-3);
-        assertEquals(51.249, na.getLatitude(findID(hopper.getLocationIndex(), 51.2492152, 9.4317166)), 1e-3);
-    }
-
-    @Test
-    public void testWithBounds() {
-        GraphHopper hopper = new GraphHopperFacade(file1) {
-            @Override
-            protected DataReader createReader(GraphHopperStorage tmpGraph) {
-                return new OSMReader(tmpGraph) {
-                    @Override
-                    public boolean isInBounds(ReaderNode node) {
-                        return node.getLat() > 49 && node.getLon() > 8;
-                    }
-                };
-            }
-        };
-
-        hopper.importOrLoad();
-
-        Graph graph = hopper.getGraphHopperStorage();
-        assertEquals(4, graph.getNodes());
-        int n10 = AbstractGraphStorageTester.getIdOf(graph, 51.2492152);
-        int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
-        int n30 = AbstractGraphStorageTester.getIdOf(graph, 51.2);
-        int n40 = AbstractGraphStorageTester.getIdOf(graph, 51.25);
-
-        assertEquals(GHUtility.asSet(n20), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n10)));
-        assertEquals(3, GHUtility.count(carOutExplorer.setBaseNode(n20)));
-        assertEquals(GHUtility.asSet(n20), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n30)));
-
-        EdgeIterator iter = carOutExplorer.setBaseNode(n20);
-        assertTrue(iter.next());
-        assertEquals(n40, iter.getAdjNode());
-        AbstractGraphStorageTester.assertPList(Helper.createPointList(), iter.fetchWayGeometry(FetchMode.PILLAR_ONLY));
-        assertTrue(iter.next());
-        assertEquals(n30, iter.getAdjNode());
-        assertEquals(93146.888, iter.getDistance(), 1);
-        assertTrue(iter.next());
-        AbstractGraphStorageTester.assertPList(Helper.createPointList(), iter.fetchWayGeometry(FetchMode.PILLAR_ONLY));
-        assertEquals(n10, iter.getAdjNode());
-        assertEquals(88643, iter.getDistance(), 1);
-
-        // get third added location => 2
-        iter = carOutExplorer.setBaseNode(n30);
-        assertTrue(iter.next());
-        assertEquals(n20, iter.getAdjNode());
-        assertEquals(93146.888, iter.getDistance(), 1);
-        assertFalse(iter.next());
+        assertEquals(10, na.getLon(findID(hopper.getLocationIndex(), 49, 10)), 1e-3);
+        assertEquals(51.249, na.getLat(findID(hopper.getLocationIndex(), 51.2492152, 9.4317166)), 1e-3);
     }
 
     @Test
@@ -295,7 +247,7 @@ public class OSMReaderTest {
     }
 
     @Test
-    public void testWayReferencesNotExistingAdjNode() {
+    public void testWayReferencesNotExistingAdjNode_issue19() {
         GraphHopper hopper = new GraphHopperFacade(file4).importOrLoad();
         Graph graph = hopper.getGraphHopperStorage();
 
@@ -304,6 +256,41 @@ public class OSMReaderTest {
         int n30 = AbstractGraphStorageTester.getIdOf(graph, 51.2);
 
         assertEquals(GHUtility.asSet(n30), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n10)));
+    }
+
+    @Test
+    public void testDoNotRejectEdgeIfFirstNodeIsMissing_issue2221() {
+        GraphHopper hopper = new GraphHopperFacade("test-osm9.xml").importOrLoad();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+        assertEquals(2, graph.getNodes());
+        assertEquals(1, graph.getEdges());
+        AllEdgesIterator iter = graph.getAllEdges();
+        iter.next();
+        assertEquals(0, iter.getBaseNode());
+        assertEquals(1, iter.getAdjNode());
+        assertEquals(51.21, graph.getNodeAccess().getLat(0), 1.e-3);
+        assertEquals(9.41, graph.getNodeAccess().getLon(0), 1.e-3);
+        assertEquals(51.22, graph.getNodeAccess().getLat(1), 1.e-3);
+        assertEquals(9.42, graph.getNodeAccess().getLon(1), 1.e-3);
+        assertEquals(DistanceCalcEarth.DIST_EARTH.calcDistance(iter.fetchWayGeometry(FetchMode.ALL)), iter.getDistance(), 1.e-3);
+        assertEquals(1312.1, iter.getDistance(), 1.e-1);
+        assertEquals(1312.1, DistanceCalcEarth.DIST_EARTH.calcDistance(iter.fetchWayGeometry(FetchMode.ALL)), 1.e-1);
+        assertFalse(iter.next());
+    }
+
+    @Test
+    public void test_edgeDistanceWhenFirstNodeIsMissing_issue2221() {
+        GraphHopper hopper = new GraphHopperFacade("test-osm10.xml").importOrLoad();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+        assertEquals(3, graph.getNodes());
+        assertEquals(3, graph.getEdges());
+        AllEdgesIterator iter = graph.getAllEdges();
+        while (iter.next()) {
+            assertEquals(DistanceCalcEarth.DIST_EARTH.calcDistance(iter.fetchWayGeometry(FetchMode.ALL)), iter.getDistance(), 1.e-3);
+        }
+        assertEquals(35.609, graph.getEdgeIteratorState(0, Integer.MIN_VALUE).getDistance(), 1.e-3);
+        assertEquals(75.262, graph.getEdgeIteratorState(1, Integer.MIN_VALUE).getDistance(), 1.e-3);
+        assertEquals(143.354, graph.getEdgeIteratorState(2, Integer.MIN_VALUE).getDistance(), 1.e-3);
     }
 
     @Test
@@ -373,8 +360,8 @@ public class OSMReaderTest {
         int new20 = 4;
         assertNotEquals(n20, new20);
         NodeAccess na = graph.getNodeAccess();
-        assertEquals(na.getLatitude(n20), na.getLatitude(new20), 1e-5);
-        assertEquals(na.getLongitude(n20), na.getLongitude(new20), 1e-5);
+        assertEquals(na.getLat(n20), na.getLat(new20), 1e-5);
+        assertEquals(na.getLon(n20), na.getLon(new20), 1e-5);
 
         assertEquals(n20, findID(hopper.getLocationIndex(), 52, 9.4));
 
@@ -412,10 +399,10 @@ public class OSMReaderTest {
         AllEdgesIterator iter = graph.getAllEdges();
         assertEquals(4, iter.length());
         while (iter.next()) {
-            assertTrue("found a loop", iter.getAdjNode() != iter.getBaseNode());
+            assertTrue(iter.getAdjNode() != iter.getBaseNode(), "found a loop");
         }
         int nodeB = AbstractGraphStorageTester.getIdOf(graph, 12);
-        assertTrue("could not find OSM node B", nodeB > -1);
+        assertTrue(nodeB > -1, "could not find OSM node B");
         assertEquals(4, GHUtility.count(graph.createEdgeExplorer().setBaseNode(nodeB)));
     }
 
@@ -434,10 +421,10 @@ public class OSMReaderTest {
         AllEdgesIterator iter = graph.getAllEdges();
         assertEquals(2, iter.length());
         while (iter.next()) {
-            assertTrue("found a loop", iter.getAdjNode() != iter.getBaseNode());
+            assertTrue(iter.getAdjNode() != iter.getBaseNode(), "found a loop");
         }
         int nodeB = AbstractGraphStorageTester.getIdOf(graph, 12);
-        assertTrue("could not find OSM node B", nodeB > -1);
+        assertTrue(nodeB > -1, "could not find OSM node B");
         assertEquals(2, GHUtility.count(graph.createEdgeExplorer().setBaseNode(nodeB)));
     }
 
@@ -656,28 +643,6 @@ public class OSMReaderTest {
         assertEquals(1.0, p.lon, 1e-3);
         Double d = way.getTag("estimated_distance", null);
         assertEquals(11119.5, d, 1e-1);
-    }
-
-    @Test
-    public void testReadEleFromCustomOSM() {
-        GraphHopper hopper = new GraphHopperFacade("custom-osm-ele.xml") {
-            @Override
-            protected DataReader createReader(GraphHopperStorage tmpGraph) {
-                return initDataReader(new OSMReader(tmpGraph) {
-                    @Override
-                    protected double getElevation(ReaderNode node) {
-                        return node.getEle();
-                    }
-                });
-            }
-        }.setElevation(true).importOrLoad();
-
-        Graph graph = hopper.getGraphHopperStorage();
-        int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
-        int n50 = AbstractGraphStorageTester.getIdOf(graph, 49);
-
-        EdgeIteratorState edge = GHUtility.getEdge(graph, n20, n50);
-        assertEquals(Helper.createPointList3D(52, 9, -10, 51.25, 9.43, 100, 49, 10, -30), edge.fetchWayGeometry(FetchMode.ALL));
     }
 
     @Test
@@ -931,7 +896,7 @@ public class OSMReaderTest {
                 setProfile("profile2");
 
         GHResponse ghRsp = hopper.route(req);
-        assertFalse(ghRsp.getErrors().toString(), ghRsp.hasErrors());
+        assertFalse(ghRsp.hasErrors(), ghRsp.getErrors().toString());
     }
 
     @Test
@@ -965,7 +930,7 @@ public class OSMReaderTest {
                 .setProfile("profile")
                 .setPathDetails(Collections.singletonList(Toll.KEY)));
         Throwable ex = response.getErrors().get(0);
-        assertTrue(ex.getMessage(), ex.getMessage().contains("You requested the details [toll]"));
+        assertTrue(ex.getMessage().contains("You requested the details [toll]"), ex.getMessage());
     }
 
     class GraphHopperFacade extends GraphHopperOSM {

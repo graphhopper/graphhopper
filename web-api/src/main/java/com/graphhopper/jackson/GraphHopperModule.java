@@ -20,7 +20,6 @@ package com.graphhopper.jackson;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
-import com.graphhopper.MultiException;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.json.Statement;
 import com.graphhopper.util.InstructionList;

@@ -135,19 +135,8 @@ graphhopper:
   # connection between two points within the given visited nodes. The default is Integer.MAX_VALUE. Useful for flexibility mode
   # routing.max_visited_nodes: 1000000
 
-
-  # If enabled, allows a user to run flexibility requests even if speed mode is enabled. Every request then has to include a hint ch.disable=true.
-  # Attention, non-CH route calculations take way more time and resources, compared to CH routing.
-  # A possible attacker might exploit this to slow down your service. Only enable it if you need it and with routing.maxVisitedNodes
-  # routing.ch.disabling_allowed: true
-
-
-  # If enabled, allows a user to run flexible mode requests even if the hybrid mode is enabled. Every such request then has to include a hint routing.lm.disable=true.
-  # routing.lm.disabling_allowed: true
-
   # Control how many active landmarks are picked per default, this can improve query performance
   # routing.lm.active_landmarks: 4
-
 
   # You can limit the max distance between two consecutive waypoints of flexible routing requests to be less or equal
   # the given distance in meter. Default is set to 1000km.

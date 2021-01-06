@@ -82,10 +82,9 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     protected long zeroCounter = 0;
     protected PillarInfo pillarInfo;
     private long locations;
-    private long skippedLocations;
     private final EncodingManager encodingManager;
     private int workerThreads = 2;
-    // Using the correct Map<Long, Integer> is hard. We need a memory efficient and fast solution for big data sets!
+    // Choosing the best Map<Long, Integer> is hard. We need a memory efficient and fast solution for big data sets!
     //
     // very slow: new SparseLongLongArray
     // only append and update possible (no unordered storage like with this doubleParse): new OSMIDMap
@@ -284,7 +283,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
                         throw new IllegalStateException("Unknown type " + item.getType());
                 }
                 if (++counter % 200_000_000 == 0) {
-                    LOGGER.info(nf(counter) + ", locs:" + nf(locations) + " (" + skippedLocations + ") " + Helper.getMemInfo());
+                    LOGGER.info(nf(counter) + ", locs:" + nf(locations) + Helper.getMemInfo());
                 }
             }
 
@@ -450,11 +449,11 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         if (id < TOWER_NODE) {
             // tower node
             id = -id - 3;
-            return nodeAccess.getLatitude(id);
+            return nodeAccess.getLat(id);
         } else if (id > -TOWER_NODE) {
             // pillar node
             id = id - 3;
-            return pillarInfo.getLatitude(id);
+            return pillarInfo.getLat(id);
         } else
             // e.g. if id is not handled from preprocessing (e.g. was ignored via isInBounds)
             return Double.NaN;
@@ -466,7 +465,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         if (id < TOWER_NODE) {
             // tower node
             id = -id - 3;
-            return nodeAccess.getLongitude(id);
+            return nodeAccess.getLon(id);
         } else if (id > -TOWER_NODE) {
             // pillar node
             id = id - 3;
@@ -477,20 +476,16 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     }
 
     protected void processNode(ReaderNode node) {
-        if (isInBounds(node)) {
-            addNode(node);
+        addNode(node);
 
-            // analyze node tags for barriers
-            if (node.hasTags()) {
-                long nodeFlags = encodingManager.handleNodeTags(node);
-                if (nodeFlags != 0)
-                    getNodeFlagsMap().put(node.getId(), nodeFlags);
-            }
-
-            locations++;
-        } else {
-            skippedLocations++;
+        // analyze node tags for barriers
+        if (node.hasTags()) {
+            long nodeFlags = encodingManager.handleNodeTags(node);
+            if (nodeFlags != 0)
+                getNodeFlagsMap().put(node.getId(), nodeFlags);
         }
+
+        locations++;
     }
 
     boolean addNode(ReaderNode node) {
@@ -500,7 +495,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
 
         double lat = node.getLat();
         double lon = node.getLon();
-        double ele = getElevation(node);
+        double ele = eleProvider.getEle(lat, lon);
         if (nodeType == TOWER_NODE) {
             addTowerNode(node.getId(), lat, lon, ele);
         } else if (nodeType == PILLAR_NODE) {
@@ -523,10 +518,6 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         return false;
     }
 
-    protected double getElevation(ReaderNode node) {
-        return eleProvider.getEle(node.getLat(), node.getLon());
-    }
-
     void prepareWaysWithRelationInfo(ReaderRelation osmRelation) {
         for (ReaderRelation.Member member : osmRelation.getMembers()) {
             if (member.getType() != ReaderRelation.Member.WAY)
@@ -544,10 +535,10 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     void prepareHighwayNode(long osmId) {
         int tmpGHNodeId = getNodeMap().get(osmId);
         if (tmpGHNodeId == EMPTY_NODE) {
-            // osmId is used exactly once
+            // this is the first time we see this osmId
             getNodeMap().put(osmId, PILLAR_NODE);
         } else if (tmpGHNodeId > EMPTY_NODE) {
-            // mark node as tower node as it occurred at least twice times
+            // mark node as tower node as it now occurred for at least the second time
             getNodeMap().put(osmId, TOWER_NODE);
         } else {
             // tmpIndex is already negative (already tower node)
@@ -570,14 +561,34 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
      * This method creates from an OSM way (via the osm ids) one or more edges in the graph.
      */
     Collection<EdgeIteratorState> addOSMWay(final LongIndexedContainer osmNodeIds, final IntsRef flags, final long wayOsmId) {
-        PointList pointList = new PointList(osmNodeIds.size(), nodeAccess.is3D());
-        List<EdgeIteratorState> newEdges = new ArrayList<>(5);
+        final PointList pointList = new PointList(osmNodeIds.size(), nodeAccess.is3D());
+        final List<EdgeIteratorState> newEdges = new ArrayList<>(5);
         int firstNode = -1;
-        int lastIndex = osmNodeIds.size() - 1;
         int lastInBoundsPillarNode = -1;
         try {
-            for (int i = 0; i < osmNodeIds.size(); i++) {
-                long osmNodeId = osmNodeIds.get(i);
+            // #2221: ways might include nodes at the beginning or end that do not exist -> skip them
+            int firstExisting = -1;
+            int lastExisting = -1;
+            for (int i = 0; i < osmNodeIds.size(); ++i) {
+                final long tmpNode = getNodeMap().get(osmNodeIds.get(i));
+                if (tmpNode > -TOWER_NODE || tmpNode < TOWER_NODE) {
+                    firstExisting = i;
+                    break;
+                }
+            }
+            for (int i = osmNodeIds.size() - 1; i >= 0; --i) {
+                final long tmpNode = getNodeMap().get(osmNodeIds.get(i));
+                if (tmpNode > -TOWER_NODE || tmpNode < TOWER_NODE) {
+                    lastExisting = i;
+                    break;
+                }
+            }
+            if (firstExisting < 0) {
+                assert lastExisting < 0;
+                return newEdges;
+            }
+            for (int i = firstExisting; i <= lastExisting; i++) {
+                final long osmNodeId = osmNodeIds.get(i);
                 int tmpNode = getNodeMap().get(osmNodeId);
                 if (tmpNode == EMPTY_NODE)
                     continue;
@@ -611,7 +622,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
                     throw new AssertionError("Mapped index not in correct bounds " + tmpNode + ", " + osmNodeId);
 
                 if (tmpNode > -TOWER_NODE) {
-                    boolean convertToTowerNode = i == 0 || i == lastIndex;
+                    boolean convertToTowerNode = i == firstExisting || i == lastExisting;
                     if (!convertToTowerNode) {
                         lastInBoundsPillarNode = tmpNode;
                     }
@@ -670,7 +681,10 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
 
         // sample points along long edges
         if (this.longEdgeSamplingDistance < Double.MAX_VALUE && pointList.is3D())
-            pointList = EdgeSampling.sample(wayOsmId, pointList, longEdgeSamplingDistance, distCalc, eleProvider);
+            pointList = EdgeSampling.sample(pointList, longEdgeSamplingDistance, distCalc, eleProvider);
+
+        if (doSimplify && pointList.size() > 2)
+            simplifyAlgo.simplify(pointList);
 
         double towerNodeDistance = distCalc.calcDistance(pointList);
 
@@ -696,15 +710,33 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
 
         EdgeIteratorState iter = graph.edge(fromIndex, toIndex).setDistance(towerNodeDistance).setFlags(flags);
 
-        if (doSimplify && pointList.size() > 2)
-            simplifyAlgo.simplify(pointList);
-
         // If the entire way is just the first and last point, do not waste space storing an empty way geometry
-        if (pointList.size() > 2)
+        if (pointList.size() > 2) {
+            // the geometry consists only of pillar nodes, but we check that the first and last points of the pointList
+            // are equal to the tower node coordinates
+            checkCoordinates(fromIndex, pointList.get(0));
+            checkCoordinates(toIndex, pointList.get(pointList.size() - 1));
             iter.setWayGeometry(pointList.shallowCopy(1, pointList.size() - 1, false));
+        }
 
+        checkDistance(iter);
         storeOsmWayID(iter.getEdge(), wayOsmId);
         return iter;
+    }
+
+    private void checkCoordinates(int nodeIndex, GHPoint point) {
+        final double tolerance = 1.e-6;
+        if (Math.abs(nodeAccess.getLat(nodeIndex) - point.getLat()) > tolerance || Math.abs(nodeAccess.getLon(nodeIndex) - point.getLon()) > tolerance)
+            throw new IllegalStateException("Suspicious coordinates for node " + nodeIndex + ": (" + nodeAccess.getLat(nodeIndex) + "," + nodeAccess.getLon(nodeIndex) + ") vs. (" + point + ")");
+    }
+
+    private void checkDistance(EdgeIteratorState edge) {
+        final double tolerance = 1;
+        final double edgeDistance = edge.getDistance();
+        final double geometryDistance = distCalc.calcDistance(edge.fetchWayGeometry(FetchMode.ALL));
+        if (Math.abs(edgeDistance - geometryDistance) > tolerance)
+            throw new IllegalStateException("Suspicious distance for edge: " + edge + " " + edgeDistance + " vs. " + geometryDistance
+                    + ", difference: " + (edgeDistance - geometryDistance));
     }
 
     /**
@@ -721,9 +753,9 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
      */
     private int handlePillarNode(int tmpNode, long osmId, PointList pointList, boolean convertToTowerNode) {
         tmpNode = tmpNode - 3;
-        double lat = pillarInfo.getLatitude(tmpNode);
-        double lon = pillarInfo.getLongitude(tmpNode);
-        double ele = pillarInfo.getElevation(tmpNode);
+        double lat = pillarInfo.getLat(tmpNode);
+        double lon = pillarInfo.getLon(tmpNode);
+        double ele = pillarInfo.getEle(tmpNode);
         if (lat == Double.MAX_VALUE || lon == Double.MAX_VALUE)
             throw new RuntimeException("Conversion pillarNode to towerNode already happened!? "
                     + "osmId:" + osmId + " pillarIndex:" + tmpNode);
@@ -760,10 +792,10 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         int graphIndex = getNodeMap().get(nodeId);
         if (graphIndex < TOWER_NODE) {
             graphIndex = -graphIndex - 3;
-            newNode = new ReaderNode(createNewNodeId(), nodeAccess, graphIndex);
+            newNode = new ReaderNode(createNewNodeId(), nodeAccess.getLat(graphIndex), nodeAccess.getLon(graphIndex));
         } else {
             graphIndex = graphIndex - 3;
-            newNode = new ReaderNode(createNewNodeId(), pillarInfo, graphIndex);
+            newNode = new ReaderNode(createNewNodeId(), pillarInfo.getLat(graphIndex), pillarInfo.getLon(graphIndex));
         }
 
         final long id = newNode.getId();
@@ -855,13 +887,6 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
             }
         }
         return null;
-    }
-
-    /**
-     * Filter method, override in subclass
-     */
-    boolean isInBounds(ReaderNode node) {
-        return true;
     }
 
     /**

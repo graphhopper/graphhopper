@@ -24,7 +24,6 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeExplorer;
@@ -54,7 +53,7 @@ public class DirectionResolverOnQueryGraphTest {
     private NodeAccess na;
     private FlagEncoder encoder;
     private Graph graph;
-    private LocationIndex locationIndex;
+    private LocationIndexTree locationIndex;
 
     @Before
     public void setup() {

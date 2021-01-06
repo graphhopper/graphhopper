@@ -19,7 +19,6 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.weighting.custom.CustomModel;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.*;
@@ -27,6 +26,7 @@ import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 

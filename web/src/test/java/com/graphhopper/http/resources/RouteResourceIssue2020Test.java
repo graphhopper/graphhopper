@@ -31,7 +31,6 @@ public class RouteResourceIssue2020Test {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "car").
-                putObject("routing.ch.disabling_allowed", true).
                 putObject("prepare.lm.split_area_location", "../core/files/split.geo.json").
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").

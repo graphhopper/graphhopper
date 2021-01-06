@@ -17,12 +17,12 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.JsonFeature;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
 
