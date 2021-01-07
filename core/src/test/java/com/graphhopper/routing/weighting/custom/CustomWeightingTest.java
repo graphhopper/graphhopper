@@ -24,8 +24,7 @@ import static com.graphhopper.json.Statement.*;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.routing.ev.RoadClass.*;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class CustomWeightingTest {
 
@@ -240,6 +239,16 @@ class CustomWeightingTest {
         assertEquals("Can never apply 'limit to': 150.0 because maximum vehicle speed is 140.0", message);
         assertEquals(50 + 30, createWeighting(new CustomModel().
                 addToSpeed(If("true", Op.LIMIT, 72)).setDistanceInfluence(30)).getMinWeight(1000));
+    }
+
+    @Test
+    public void tooLarge() {
+        CustomModel customModel = new CustomModel();
+        for (int i = 0; i < 1050; i++) {
+            customModel.addToPriority(If("road_class == MOTORWAY || road_class == SECONDARY || road_class == PRIMARY", MULTIPLY, 0.1));
+        }
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> createWeighting(customModel));
+        assertTrue(ex.getMessage().startsWith("Custom Model too big"), ex.getMessage());
     }
 
     private Weighting createWeighting(CustomModel vehicleModel) {

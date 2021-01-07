@@ -83,7 +83,7 @@ public class CustomModelParser {
     static CustomWeighting.Parameters create(CustomModel customModel, EncodedValueLookup lookup, double globalMaxSpeed,
                                              DecimalEncodedValue avgSpeedEnc) {
         String key = customModel.toString() + ",global:" + globalMaxSpeed;
-        if (key.length() > 400_000) throw new IllegalArgumentException("Custom Model too big: " + key.length());
+        if (key.length() > 100_000) throw new IllegalArgumentException("Custom Model too big: " + key.length());
 
         Class<?> clazz = customModel.shouldUseInternalCache() ? INTERNAL_CACHE.get(key) : null;
         if (CACHE_SIZE > 0 && clazz == null)

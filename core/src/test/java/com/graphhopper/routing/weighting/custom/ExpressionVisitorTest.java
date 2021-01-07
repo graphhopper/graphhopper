@@ -45,9 +45,7 @@ public class ExpressionVisitorTest {
                 "edge . getClass()",
                 "(edge = edge) == edge",
                 ") edge (",
-                "in(area_blup(), edge)",
-                "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd" +
-                        "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd")) {
+                "in(area_blup(), edge)")) {
             ExpressionVisitor.ParseResult res = parseExpression(toParse, allNamesInvalid, lookup);
             assertFalse(res.ok, "should not be simple condition: " + toParse);
             assertTrue(res.guessedVariables == null || res.guessedVariables.isEmpty());

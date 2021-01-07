@@ -169,8 +169,6 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
      */
     static ParseResult parseExpression(String expression, NameValidator validator, EncodedValueLookup lookup) {
         ParseResult result = new ParseResult();
-        if (expression.length() > 100)
-            return result;
         try {
             Parser parser = new Parser(new Scanner("ignore", new StringReader(expression)));
             Java.Atom atom = parser.parseConditionalExpression();
@@ -189,11 +187,9 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
                     result.converted.append(expression.substring(start));
                 }
             }
-
-            return result;
         } catch (Exception ex) {
-            return result;
         }
+        return result;
     }
 
     static String toEncodedValueClassName(String arg) {

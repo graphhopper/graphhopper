@@ -18,10 +18,7 @@
 
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.RoadClass;
-import com.graphhopper.routing.ev.StringEncodedValue;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
@@ -52,7 +49,7 @@ class CustomModelParserTest {
     void setup() {
         encoder = new CarFlagEncoder();
         countryEnc = new StringEncodedValue("country", 10);
-        encodingManager = new EncodingManager.Builder().add(encoder).add(countryEnc).build();
+        encodingManager = new EncodingManager.Builder().add(encoder).add(countryEnc).add(new EnumEncodedValue<>(Surface.KEY, Surface.class)).build();
         graph = new GraphBuilder(encodingManager).create();
         avgSpeedEnc = encoder.getAverageSpeedEnc();
         roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
