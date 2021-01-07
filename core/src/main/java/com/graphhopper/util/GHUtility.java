@@ -267,9 +267,8 @@ public class GHUtility {
         int tries = 0;
         List<Snap> snaps = new ArrayList<>(numPoints);
         while (snaps.size() < numPoints) {
-            if (tries > maxTries) {
-                throw new IllegalArgumentException("Could not create enough virtual edges");
-            }
+            if (tries > maxTries)
+                throw new IllegalArgumentException("Could not create " + numPoints + " random points. tries: " + tries + ", maxTries: " + maxTries);
             Snap snap = getRandomSnap(locationIndex, rnd, bbox, filter);
             boolean accepted = snap.isValid();
             if (!acceptTower)

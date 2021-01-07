@@ -29,7 +29,6 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.PrepareLandmarks;
@@ -198,20 +197,20 @@ public class Measurement {
             maxNode = g.getNodes();
 
             final boolean runSlow = args.getBool("measurement.run_slow_routing", true);
-            GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
-            printMiscUnitPerfTests(g, encoder, count * 100, allowedEdges);
-            printLocationIndexQuery(g, hopper.getLocationIndex(), count);
+            printGraphDetails(g, vehicleStr);
+            measureGraphTraversal(g, encoder, count * 100);
+            measureLocationIndex(g, hopper.getLocationIndex(), count);
 
             if (runSlow) {
                 boolean isCH = false;
                 boolean isLM = false;
-                printTimeOfRouteQuery(hopper, new QuerySettings("routing", count / 20, isCH, isLM).
+                measureRouting(hopper, new QuerySettings("routing", count / 20, isCH, isLM).
                         withInstructions());
                 if (encoder.supportsTurnCosts())
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routing_edge", count / 20, isCH, isLM).
+                    measureRouting(hopper, new QuerySettings("routing_edge", count / 20, isCH, isLM).
                             withInstructions().edgeBased());
                 if (!blockAreaStr.isEmpty())
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routing_block_area", count / 20, isCH, isLM).
+                    measureRouting(hopper, new QuerySettings("routing_block_area", count / 20, isCH, isLM).
                             withInstructions().blockArea(blockAreaStr));
             }
 
@@ -221,17 +220,17 @@ public class Measurement {
                 boolean isLM = true;
                 Helper.parseList(args.getString("measurement.lm.active_counts", "[4,8,12,16]")).stream()
                         .mapToInt(Integer::parseInt).forEach(activeLMCount -> {
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount, count / 4, isCH, isLM).
+                    measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount, count / 4, isCH, isLM).
                             withInstructions().activeLandmarks(activeLMCount));
                     if (args.getBool("measurement.lm.edge_based", encoder.supportsTurnCosts())) {
-                        printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", count / 4, isCH, isLM).
+                        measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", count / 4, isCH, isLM).
                                 withInstructions().activeLandmarks(activeLMCount).edgeBased());
                     }
                 });
 
                 final int activeLMCount = 8;
                 if (!blockAreaStr.isEmpty())
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_block_area", count / 4, isCH, isLM).
+                    measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount + "_block_area", count / 4, isCH, isLM).
                             withInstructions().activeLandmarks(activeLMCount).blockArea(blockAreaStr));
             }
 
@@ -242,45 +241,44 @@ public class Measurement {
                 if (!hopper.getCHPreparationHandler().getNodeBasedCHConfigs().isEmpty()) {
                     CHConfig chConfig = hopper.getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
                     CHGraph lg = g.getCHGraph(chConfig.getName());
-                    fillAllowedEdges(lg.getAllEdges(), allowedEdges);
-                    printMiscUnitPerfTestsCH(lg, encoder, count * 100, allowedEdges);
+                    measureGraphTraversalCH(lg, encoder, count * 100);
                     gcAndWait();
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH", count, isCH, isLM).
+                    measureRouting(hopper, new QuerySettings("routingCH", count, isCH, isLM).
                             withInstructions().sod());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_alt", count / 10, isCH, isLM).
+                    measureRouting(hopper, new QuerySettings("routingCH_alt", count / 10, isCH, isLM).
                             withInstructions().sod().alternative());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_with_hints", count, isCH, isLM).
+                    measureRouting(hopper, new QuerySettings("routingCH_with_hints", count, isCH, isLM).
                             withInstructions().sod().withPointHints());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_no_sod", count, isCH, isLM).
+                    measureRouting(hopper, new QuerySettings("routingCH_no_sod", count, isCH, isLM).
                             withInstructions());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_no_instr", count, isCH, isLM).
+                    measureRouting(hopper, new QuerySettings("routingCH_no_instr", count, isCH, isLM).
                             sod());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_full", count, isCH, isLM).
+                    measureRouting(hopper, new QuerySettings("routingCH_full", count, isCH, isLM).
                             withInstructions().withPointHints().sod().simplify().pathDetails());
                     // for some strange (jvm optimizations) reason adding these measurements reduced the measured time for routingCH_full... see #2056
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_via_100", count / 100, isCH, isLM).
+                    measureRouting(hopper, new QuerySettings("routingCH_via_100", count / 100, isCH, isLM).
                             withPoints(100).sod());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_via_100_full", count / 100, isCH, isLM).
+                    measureRouting(hopper, new QuerySettings("routingCH_via_100_full", count / 100, isCH, isLM).
                             withPoints(100).sod().withInstructions().simplify().pathDetails());
                 }
                 if (!hopper.getCHPreparationHandler().getEdgeBasedCHConfigs().isEmpty()) {
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge", count, isCH, isLM).
+                    measureRouting(hopper, new QuerySettings("routingCH_edge", count, isCH, isLM).
                             edgeBased().withInstructions());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_alt", count / 10, isCH, isLM).
+                    measureRouting(hopper, new QuerySettings("routingCH_edge_alt", count / 10, isCH, isLM).
                             edgeBased().withInstructions().alternative());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_no_instr", count, isCH, isLM).
+                    measureRouting(hopper, new QuerySettings("routingCH_edge_no_instr", count, isCH, isLM).
                             edgeBased());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_full", count, isCH, isLM).
+                    measureRouting(hopper, new QuerySettings("routingCH_edge_full", count, isCH, isLM).
                             edgeBased().withInstructions().withPointHints().simplify().pathDetails());
                     // for some strange (jvm optimizations) reason adding these measurements reduced the measured time for routingCH_edge_full... see #2056
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_via_100", count / 100, isCH, isLM).
+                    measureRouting(hopper, new QuerySettings("routingCH_edge_via_100", count / 100, isCH, isLM).
                             withPoints(100).edgeBased().sod());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_via_100_full", count / 100, isCH, isLM).
+                    measureRouting(hopper, new QuerySettings("routingCH_edge_via_100_full", count / 100, isCH, isLM).
                             withPoints(100).edgeBased().sod().withInstructions().simplify().pathDetails());
                 }
             }
             if (!isEmpty(countryBordersDirectory)) {
-                printSpatialRuleLookupTest(countryBordersDirectory, count * 100);
+                measureSpatialRuleLookup(countryBordersDirectory, count * 100);
             }
 
         } catch (Exception ex) {
@@ -423,29 +421,18 @@ public class Measurement {
         }
     }
 
-    void fillAllowedEdges(AllEdgesIterator iter, GHBitSet bs) {
-        bs.clear();
-        while (iter.next()) {
-            bs.add(iter.getEdge());
-        }
-    }
-
-    private GHBitSet printGraphDetails(GraphHopperStorage g, String vehicleStr) {
+    private void printGraphDetails(GraphHopperStorage g, String vehicleStr) {
         // graph size (edge, node and storage size)
         put("graph.nodes", g.getNodes());
         put("graph.edges", g.getAllEdges().length());
         put("graph.size_in_MB", g.getCapacity() / MB);
         put("graph.encoder", vehicleStr);
 
-        AllEdgesIterator iter = g.getAllEdges();
-        final int maxEdgesId = g.getAllEdges().length();
-        final GHBitSet allowedEdges = new GHBitSetImpl(maxEdgesId);
-        fillAllowedEdges(iter, allowedEdges);
-        put("graph.valid_edges", allowedEdges.getCardinality());
-        return allowedEdges;
+        final GHBitSet validEdges = getValidEdges(g);
+        put("graph.valid_edges", validEdges.getCardinality());
     }
 
-    private void printLocationIndexQuery(Graph g, final LocationIndex idx, int count) {
+    private void measureLocationIndex(Graph g, final LocationIndex idx, int count) {
         count *= 2;
         final BBox bbox = g.getBounds();
         final double latDelta = bbox.maxLat - bbox.minLat;
@@ -454,14 +441,13 @@ public class Measurement {
         MiniPerfTest miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
             double lat = rand.nextDouble() * latDelta + bbox.minLat;
             double lon = rand.nextDouble() * lonDelta + bbox.minLon;
-            int val = idx.findClosest(lat, lon, EdgeFilter.ALL_EDGES).getClosestNode();
-            return val;
+            return idx.findClosest(lat, lon, EdgeFilter.ALL_EDGES).getClosestNode();
         });
 
         print("location_index", miniPerf);
     }
 
-    private void printMiscUnitPerfTests(final Graph graph, final FlagEncoder encoder, int count, final GHBitSet allowedEdges) {
+    private void measureGraphTraversal(final Graph graph, final FlagEncoder encoder, int count) {
         final Random rand = new Random(seed);
 
         EdgeFilter outFilter = DefaultEdgeFilter.outEdges(encoder);
@@ -480,6 +466,7 @@ public class Measurement {
         print("unit_tests.all_edge_state_next", miniPerf);
 
         final int maxEdgesId = graph.getAllEdges().length();
+        GHBitSet allowedEdges = getValidEdges(graph);
         miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
             while (true) {
                 int edgeId = rand.nextInt(maxEdgesId);
@@ -490,7 +477,7 @@ public class Measurement {
         print("unit_tests.get_edge_state", miniPerf);
     }
 
-    private void printMiscUnitPerfTestsCH(final CHGraph lg, final FlagEncoder encoder, int count, final GHBitSet allowedEdges) {
+    private void measureGraphTraversalCH(final CHGraph lg, final FlagEncoder encoder, int count) {
         final Random rand = new Random(seed);
         final CHEdgeExplorer chExplorer = lg.createEdgeExplorer();
         MiniPerfTest miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
@@ -520,6 +507,7 @@ public class Measurement {
         print("unit_testsCH.all_edge_state_next", miniPerf);
 
         final int maxEdgesId = lg.getAllEdges().length();
+        GHBitSet allowedEdges = getValidEdges(lg);
         miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
             while (true) {
                 int edgeId = rand.nextInt(maxEdgesId);
@@ -552,7 +540,24 @@ public class Measurement {
         print("unit_testsCH.out_edge_get_weight", miniPerf);
     }
 
-    private void printSpatialRuleLookupTest(String countryBordersDirectory, int count) {
+    private GHBitSet getValidEdges(Graph g) {
+        final GHBitSet result = new GHBitSetImpl(g.getAllEdges().length());
+        AllEdgesIterator iter = g.getAllEdges();
+        while (iter.next())
+            result.add(iter.getEdge());
+        return result;
+    }
+
+    private GHBitSet getValidEdges(CHGraph g) {
+        final GHBitSet result = new GHBitSetImpl(g.getAllEdges().length());
+        AllEdgesIterator iter = g.getAllEdges();
+        while (iter.next())
+            result.add(iter.getEdge());
+        return result;
+    }
+
+
+    private void measureSpatialRuleLookup(String countryBordersDirectory, int count) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JtsModule());
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
@@ -595,7 +600,7 @@ public class Measurement {
         print("spatialrulelookup", lookupPerfTest);
     }
 
-    private void printTimeOfRouteQuery(final GraphHopper hopper, final QuerySettings querySettings) {
+    private void measureRouting(final GraphHopper hopper, final QuerySettings querySettings) {
         final Graph g = hopper.getGraphHopperStorage();
         final AtomicLong maxDistance = new AtomicLong(0);
         final AtomicLong minDistance = new AtomicLong(Long.MAX_VALUE);
