@@ -37,7 +37,10 @@ import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks.PrepareJob;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoderFactory;
 import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
@@ -931,7 +934,7 @@ public class GraphHopper implements GraphHopperAPI {
             sw = new StopWatch().start();
             new EdgeElevationInterpolator(ghStorage, roadEnvEnc, RoadEnvironment.FERRY).execute();
             ghStorage.getProperties().put(INTERPOLATION_KEY, true);
-            logger.info("Bridge interpolation " + (int) bridge + "s, " + "tunnel interpolation " + (int) tunnel + "s, ferry interpolation " + (int) sw.stop().getSeconds()+"s");
+            logger.info("Bridge interpolation " + (int) bridge + "s, " + "tunnel interpolation " + (int) tunnel + "s, ferry interpolation " + (int) sw.stop().getSeconds() + "s");
         }
     }
 
@@ -1141,7 +1144,7 @@ public class GraphHopper implements GraphHopperAPI {
         fullyLoaded = true;
     }
 
-    public boolean getFullyLoaded(){
+    public boolean getFullyLoaded() {
         return fullyLoaded;
     }
 

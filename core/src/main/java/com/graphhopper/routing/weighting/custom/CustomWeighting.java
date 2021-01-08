@@ -19,10 +19,10 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.util.CustomModel;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
@@ -122,7 +122,8 @@ public final class CustomWeighting extends AbstractWeighting {
         double distanceCosts = distance * distanceInfluence;
         if (Double.isInfinite(distanceCosts))
             return Double.POSITIVE_INFINITY;
-        return seconds / priorityCalculator.calcPriority(edgeState, reverse) + distanceCosts;
+        double priority = priorityCalculator.calcPriority(edgeState, reverse);
+        return seconds / priority + distanceCosts;
     }
 
     double calcSeconds(double distance, EdgeIteratorState edgeState, boolean reverse) {
