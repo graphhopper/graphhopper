@@ -81,8 +81,8 @@ $(document).ready(function (e) {
         mapLayer.adjustMapSize();
     });
     $("#flex-example").click(function() {
-         $("#flex-input-text").val("speed:\n- if: road_class: == MOTORWAY\n  multiply by: 0.8\n"
-          + "priority:\n- if: road_environment == TUNNEL\n  multiply by: 0.0\n- if: road_class == RESIDENTIAL\n  multiply by: 0.7\n- if: max_weight > 3\n  multiply by: 0.0");
+         $("#flex-input-text").val("speed:\n- if: road_class == MOTORWAY\n  multiply by: 0.8\n"
+          + "priority:\n- if: road_environment == TUNNEL\n  multiply by: 0.0\n- if: road_class == RESIDENTIAL\n  multiply by: 0.7\n- if: max_weight < 3\n  multiply by: 0.0");
          return false;
     });
 

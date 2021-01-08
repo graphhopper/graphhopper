@@ -412,7 +412,8 @@ priority:
   multiply by: 0
 ```
 which means that the priority for all road segments that allow a maximum vehicle width of `2.5m`, a maximum vehicle
-length of `10m` or a maximum vehicle weight of `3.5tons` is zero, i.e. these "tight" road segments are blocked.
+length of `10m` or a maximum vehicle weight of `3.5tons`, or less, is zero, i.e. these "tight" road segments are
+blocked.
 
 #### Customizing `distance_influence`
 
