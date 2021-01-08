@@ -546,7 +546,7 @@ So say your routing request (POST /route-custom) looks like this:
         "multiply by": 0.8
       },
       {
-        "else": "",
+        "else": null,
         "multiply by": 0.9
       }
     ],
@@ -575,7 +575,7 @@ and `my_custom_car.yml` looks like this:
 
 ```yaml
 speed:
-  - if: road_surface == GRAVEL
+  - if: surface == GRAVEL
     limit to: 100
 ```
 
@@ -583,7 +583,7 @@ then the resulting custom model used for your request will look like this:
 
 ```yaml
 speed:
-  - if: road_surface == GRAVEL
+  - if: surface == GRAVEL
     limit to: 100
   # this was appended due to the custom model given by the request
   - if: road_class == MOTORWAY
