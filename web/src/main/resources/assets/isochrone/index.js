@@ -22,7 +22,6 @@ var menu = new Vue({
         layer: 'vector',
         showGraph: false,
         isochroneRadius: 600,
-        useDeck: false,
         showSpt: false,
         isochronePoint: undefined
     },
@@ -171,46 +170,28 @@ function fetchAndDrawIsoline(point) {
 
 function drawIsoLayer(geojson, coordinates) {
     removeIsoLayers();
-    if (menu.useDeck) {
-        var deckLayer = new deck.MapboxLayer({
-            id: 'isochrone-deck-layer',
-            // for some reason the deck.GeoJsonLayer does not work with our MultiLineString geojson we use for SPT => use LineLayer instead
-            type: coordinates ? deck.LineLayer : deck.GeoJsonLayer,
-            data: coordinates ? coordinates : geojson,
-            getSourcePosition: coordinates ? d => d[0] : undefined,
-            getTargetPosition: coordinates ? d => d[1] : undefined,
-            getFillColor: [0, 0, 225, 100],
-            getLineColor: [0, 0, 225],
-            getColor: d => [0, 0, 225]
+    var source = map.getSource('isochrone');
+    if (!source) {
+        map.addSource('isochrone', {
+            'type': 'geojson',
+            'data': geojson
         });
-        map.addLayer(deckLayer, getFirstSymbolLayer(map));
     } else {
-        var source = map.getSource('isochrone');
-        if (!source) {
-            map.addSource('isochrone', {
-                'type': 'geojson',
-                'data': geojson
-            });
-        } else {
-            source.setData(geojson);
-        }
-        map.addLayer({
-            'id': 'isochrone-layer',
-            'type': 'line',
-            'source': 'isochrone',
-            'paint': {
-                'line-color': '#0000e1'
-            }
-        }, getFirstSymbolLayer(map));
+        source.setData(geojson);
     }
+    map.addLayer({
+        'id': 'isochrone-layer',
+        'type': 'line',
+        'source': 'isochrone',
+        'paint': {
+            'line-color': '#0000e1'
+        }
+    }, getFirstSymbolLayer(map));
 }
 
 function removeIsoLayers() {
     if (map.getLayer('isochrone-layer')) {
         map.removeLayer('isochrone-layer');
-    }
-    if (map.getLayer('isochrone-deck-layer')) {
-        map.removeLayer('isochrone-deck-layer');
     }
 }
 
