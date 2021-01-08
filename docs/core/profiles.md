@@ -462,6 +462,33 @@ You can even use JSON language like this:
 }
 ```
 
+To use the `else` statement in JSON you need to use the `null` value where in YAML you could leave the value blank:
+
+```yaml
+speed:
+  - if: road_class == MOTORWAY
+    multiply by: 0.6
+  - else:
+    multiply by: 0.8
+```
+
+becomes
+
+```json
+{
+  "speed": [
+    {
+      "if": "road_class == MOTORWAY",
+      "multiply by": 0.6
+    },
+    {
+      "else": null,
+      "multiply by": 0.8
+    }
+  ]
+}
+```
+
 ## Speed and Hybrid Mode
 
 GraphHopper can drastically improve the execution time of the route calculations by preprocessing the routing profiles
