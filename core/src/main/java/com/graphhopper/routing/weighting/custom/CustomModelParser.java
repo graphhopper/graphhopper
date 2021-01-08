@@ -72,7 +72,7 @@ public class CustomModelParser {
                                                   CustomModel customModel) {
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");
-        CustomWeighting.Parameters parameters = create(customModel, lookup, baseFlagEncoder.getMaxSpeed(), baseFlagEncoder.getAverageSpeedEnc());
+        CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup, baseFlagEncoder.getMaxSpeed(), baseFlagEncoder.getAverageSpeedEnc());
         return new CustomWeighting(baseFlagEncoder, turnCostProvider, parameters);
     }
 
@@ -80,8 +80,8 @@ public class CustomModelParser {
      * This method compiles a new subclass of CustomWeightingHelper composed from the provided CustomModel caches this
      * and returns an instance.
      */
-    static CustomWeighting.Parameters create(CustomModel customModel, EncodedValueLookup lookup, double globalMaxSpeed,
-                                             DecimalEncodedValue avgSpeedEnc) {
+    static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, EncodedValueLookup lookup, double globalMaxSpeed,
+                                                                DecimalEncodedValue avgSpeedEnc) {
         String key = customModel.toString() + ",global:" + globalMaxSpeed;
         if (key.length() > 100_000) throw new IllegalArgumentException("Custom Model too big: " + key.length());
 

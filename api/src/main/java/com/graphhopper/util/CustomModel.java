@@ -147,9 +147,12 @@ public class CustomModel {
         // avoid changing the specified CustomModel via deep copy otherwise the server-side CustomModel would be
         // modified (same problem if queryModel would be used as target)
         CustomModel mergedCM = new CustomModel(baseModel);
+        // we only overwrite the distance influence if a non-default value was used
         if (Math.abs(queryModel.distanceInfluence - CustomModel.DEFAULT_D_I) > 0.01) {
-            if (mergedCM.distanceInfluence > queryModel.distanceInfluence)
-                throw new IllegalArgumentException("CustomModel in query can only use distance_influence bigger or equal to " + mergedCM.distanceInfluence);
+            if (queryModel.distanceInfluence < mergedCM.distanceInfluence)
+                throw new IllegalArgumentException("CustomModel in query can only use " +
+                        "distance_influence bigger or equal to " + mergedCM.distanceInfluence +
+                        ", given: " + queryModel.distanceInfluence);
             mergedCM.distanceInfluence = queryModel.distanceInfluence;
         }
 

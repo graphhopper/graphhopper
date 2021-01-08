@@ -90,15 +90,15 @@ public class Statement {
         return keyword.getName() + ": " + expression + ", " + operation.getName() + ": " + value;
     }
 
-    public static Statement If(String expression, Op op, double thenValue) {
-        return new Statement(Keyword.IF, expression, op, thenValue);
+    public static Statement If(String expression, Op op, double value) {
+        return new Statement(Keyword.IF, expression, op, value);
     }
 
-    public static Statement ElseIf(String expression, Op op, double thenValue) {
-        return new Statement(Keyword.ELSEIF, expression, op, thenValue);
+    public static Statement ElseIf(String expression, Op op, double value) {
+        return new Statement(Keyword.ELSEIF, expression, op, value);
     }
 
-    public static Statement Else(Op op, double elseValue) {
-        return new Statement(Keyword.ELSE, null, op, elseValue);
+    public static Statement Else(Op op, double value) {
+        return new Statement(Keyword.ELSE, null, op, value);
     }
 }
