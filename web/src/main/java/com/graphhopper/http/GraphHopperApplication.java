@@ -19,7 +19,6 @@ package com.graphhopper.http;
 
 import com.graphhopper.http.cli.ImportCommand;
 import com.graphhopper.http.cli.MatchCommand;
-import com.graphhopper.http.cli.MeasurementCommand;
 import com.graphhopper.http.resources.RootResource;
 import com.graphhopper.navigation.NavigateResource;
 import io.dropwizard.Application;
@@ -44,7 +43,6 @@ public final class GraphHopperApplication extends Application<GraphHopperServerC
         bootstrap.addBundle(new RealtimeBundle());
         bootstrap.addCommand(new ImportCommand());
         bootstrap.addCommand(new MatchCommand());
-        bootstrap.addCommand(new MeasurementCommand());
 
         Map<String, String> resourceToURIMappings = new HashMap<>();
         resourceToURIMappings.put("/assets/", "/maps/");
