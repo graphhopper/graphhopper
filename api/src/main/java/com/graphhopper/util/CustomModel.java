@@ -32,7 +32,7 @@ public class CustomModel {
     private double headingPenalty = Parameters.Routing.DEFAULT_HEADING_PENALTY;
     // default value derived from the cost for time e.g. 25€/hour and for distance 0.5€/km, for trucks this is usually larger
     private double distanceInfluence = DEFAULT_D_I;
-    private boolean cached;
+    private boolean internal;
     private List<Statement> speedStatements = new ArrayList<>();
     private List<Statement> priorityStatements = new ArrayList<>();
     private Map<String, JsonFeature> areas = new HashMap<>();
@@ -43,7 +43,7 @@ public class CustomModel {
     public CustomModel(CustomModel toCopy) {
         this.headingPenalty = toCopy.headingPenalty;
         this.distanceInfluence = toCopy.distanceInfluence;
-        // do not copy _internal
+        // do not copy "internal"
 
         speedStatements = deepCopy(toCopy.getSpeed());
         priorityStatements = deepCopy(toCopy.getPriority());
@@ -56,13 +56,13 @@ public class CustomModel {
      * especially important for fast landmark queries (hybrid mode). Now this method ensures that all server-side custom
      * models are cached in a special internal cache which does not remove seldom accessed entries.
      */
-    public CustomModel useInternalCache() {
-        this.cached = true;
+    public CustomModel internal() {
+        this.internal = true;
         return this;
     }
 
-    public boolean shouldUseInternalCache() {
-        return cached;
+    public boolean isInternal() {
+        return internal;
     }
 
     private <T> T deepCopy(T originalObject) {
@@ -144,6 +144,9 @@ public class CustomModel {
      * A new CustomModel is created from the baseModel merged with the specified queryModel.
      */
     public static CustomModel merge(CustomModel baseModel, CustomModel queryModel) {
+        if (queryModel.isInternal())
+            throw new IllegalArgumentException("CustomModel in query cannot be internal");
+
         // avoid changing the specified CustomModel via deep copy otherwise the server-side CustomModel would be
         // modified (same problem if queryModel would be used as target)
         CustomModel mergedCM = new CustomModel(baseModel);

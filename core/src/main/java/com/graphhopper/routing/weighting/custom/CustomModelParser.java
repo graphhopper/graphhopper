@@ -85,12 +85,12 @@ public class CustomModelParser {
         String key = customModel.toString() + ",global:" + globalMaxSpeed;
         if (key.length() > 100_000) throw new IllegalArgumentException("Custom Model too big: " + key.length());
 
-        Class<?> clazz = customModel.shouldUseInternalCache() ? INTERNAL_CACHE.get(key) : null;
+        Class<?> clazz = customModel.isInternal() ? INTERNAL_CACHE.get(key) : null;
         if (CACHE_SIZE > 0 && clazz == null)
             clazz = CACHE.get(key);
         if (clazz == null) {
             clazz = createClazz(customModel, lookup, globalMaxSpeed);
-            if (customModel.shouldUseInternalCache()) {
+            if (customModel.isInternal()) {
                 INTERNAL_CACHE.put(key, clazz);
                 if (INTERNAL_CACHE.size() > 100) {
                     CACHE.putAll(INTERNAL_CACHE);
