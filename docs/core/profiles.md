@@ -1,14 +1,34 @@
 # Profiles
 
+GraphHopper lets you customize how different kinds of roads shall be prioritized during its route calculations. For
+example when travelling long distances with a car you typically want to use the highway to minimize your travelling
+time. However, if you are going by bike you certainly do not want to use the highway and rather take some shorter route,
+use designated bike lanes and so on. GraphHopper provides built-in vehicle types that cover some standard vehicles. They
+can be used with a few different weightings like the 'fastest' weighting that chooses the fastest route (minimum
+travelling time), or the 'shortest' weighting that chooses the shortest route (minimum travelling distance). The
+selection of a vehicle and weighting is called 'profile', and we refer to these built-in choices as 'standard profiles'
+here. For more flexibility there is a special kind of weighting, called 'custom' weighting that allows for fine-grained
+control over which roads GraphHopper will prioritize. Such custom profiles still use one of the built-in vehicles, but
+you can modify, e.g. the travelling speed for certain road types. Both types of profiles, the standard ones and custom
+profiles, are explained in the following.
+
 ## Standard Profiles
 
-When calculating routes with GraphHopper you can customize how different kinds of roads shall be prioritized. For example
-when travelling long distances with a car you typically want to use the highway to minimize your travelling time.
-However, if you are going by bike you certainly do not want to use the highway and rather take some shorter route,
-use designated bike lanes and so on.
- 
-GraphHopper includes the following pre-configured 'vehicles', that you can choose from depending on the type of vehicle
-you want to calculate routes for: 
+Standard profiles require little configuration and all you need to choose is a unique name, a 'vehicle', and a
+'weighting' type. All profiles are specified in the 'profiles' section of `config.yml` and there has to be at least one
+profile. Here is an example:
+
+```yaml
+profiles:
+  - name: car
+    vehicle: car
+    weighting: fastest
+  - name: some_other_profile
+    vehicle: bike
+    weighting: shortest
+```
+
+The vehicle field must correspond to one of GraphHopper's built-in vehicle types:
 
 - foot
 - hike
@@ -22,86 +42,58 @@ you want to calculate routes for:
 - motorcycle
 
 By choosing a vehicle GraphHopper determines the accessibility and an average travel speed for the different road types.
-If you are interested in the low-level Java API note that these pre-configured vehicles correspond to implementations of
-the `FlagEncoder` interface. 
- 
-Besides the vehicle it is also possible to use different weightings (=cost functions) for the route calculation. 
-GraphHopper includes the following weightings:
+If you are interested in the low-level Java API note that the vehicles correspond to implementations of
+the `FlagEncoder` interface.
 
-- fastest
-- shortest
+The weighting determines the 'cost function' for the route calculation and must match one of the following built-in
+weightings:
+
+- fastest (minimum travel time)
+- shortest (minimum travel distance)
 - short_fastest (yields a compromise between short and fast routes)
 - curvature (prefers routes with lots of curves for enjoyable motorcycle rides)
-- custom (see the next section)
+- custom (enables custom profiles, see the next section)
 
-The different travelling modes are called 'profiles'. When starting the GraphHopper server at least one such profile
-needs to be configured upfront, which is done in the 'profiles' section of `config.yml`. Here is an example:
-
-```yaml
-profiles:
-  - name: car
-    vehicle: car
-    weighting: fastest
-  - name: some_other_profile
-    vehicle: bike
-    weighting: shortest
-```
-
-Every profile has to include a unique name that is used to select the profile when executing routing queries. The vehicle
-and weighting fields are also required and need to match one of the values listed above. To choose one of the profiles you
-need to use the `profile` parameter for your request, like `/route?point=49.5,11.1&profile=car` or 
-`/route?point=49.5,11.1&profile=some_other_profile` in this example.
-
-## Speed and Hybrid Mode
-
-GraphHopper can drastically improve the execution time of the route calculations by preprocessing the routing profiles
-during import. To enable this you need to list the profiles you want GraphHopper to do the preprocessing for like this:
-
-```yaml
-# profiles you want to use with speed mode need to go here
-profiles_ch:
-  - profile: car
-  - profile: some_other_profile
-
-# profiles you want to use with hybrid mode need to go here
-profiles_lm:
-  - profile: car
-  - profile: some_other_profile 
-```
-
-Note that 'CH' is short for 'Contraction Hierarchies', the underlying technique used to realize speed mode and
-'LM' is short for 'Landmarks', which is the algorithm used for the hybrid mode.
-
-For hybrid mode there is a special feature that allows 're-using' the prepared data for different profiles. You can
-do this like this:
-```yaml
-profiles_lm:
-  - profile: car
-  - profile: some_other_profile
-    preparation_profile: car
-```
-
-which means that for `some_other_profile` the preparation of the `car` profile will be used. However, this will only
-give correct routing results if `some_other_profile` yields larger or equal weights for all edges than the `car` profile.
-Better do not use this feature unless you know what you are doing.  
+The profile name is used to select the profile when executing routing queries. To do this use the `profile` request
+parameter, for example `/route?point=49.5,11.1&profile=car` or `/route?point=49.5,11.1&profile=some_other_profile`.
 
 ## Custom Profiles
 
 *Disclaimer*: Custom profiles should still be considered a beta feature. Using them should be working, but details about
-the weight formula and the meaning of the different parameters is still subject to change. Also this feature will strongly
-benefit from community feedback, so do not hesitate with sharing your experience, custom models or problems you are 
-running into!
- 
-You can take the customization of the routing profiles much further than just selecting one of the default vehicles and
-weightings, by using 'custom' profiles that let you adjust the cost function on a much more fine-grained level.
-Using a custom profile you can make adjustments to a 'base' vehicle. By choosing the base vehicle you inherit the road
-accessibilty rules and default speeds of this vehicle, but the custom weighting gives you the freedom to overwrite 
-certain parts of the cost function depending on the different road properties. 
+the weight formula and the meaning of the different parameters is still subject to change. Also this feature will
+strongly benefit from community feedback, so do not hesitate to share your experience, your favorite custom model or
+some of the problems you ran into when you tried custom profiles.
+
+You can adjust the cost function of GraphHopper's route calculations in much more detail by using so called 'custom'
+profiles. Every custom profile builds on top of a 'base' vehicle from which the profile inherits the road accessibility
+rules and default speeds for the different road types. However, you can specify a set of rules to change these default
+values. For example you can change the speed only for a certain type of road (and much more).
+
+Custom profiles are specified like this:
+
+```yaml
+profiles:
+  - name: my_custom_profile
+    vehicle: car
+    weighting: custom
+    custom_model_file: path/to/my_custom_profile.yaml
+
+```
+
+The name and vehicle fields are the same as for standard profiles and the vehicle field is used as the 'base' vehicle
+for the custom profile. The weighting is always set to `custom` for custom profiles. The details about the custom
+profile go into a separate YAML (or JSON) file and `custom_model_file` holds the path to this file.
+
+Using custom profiles for your routing requests works just the same way as for standard profiles. Simply add
+`profile=my_custom_profile` as request parameter to your routing request.
+
+We will now explain how the custom weighting works and how to create the custom_model_file.
 
 ### Custom Weighting
-The weight or 'cost' of travelling along an 'edge' (a road segment of the routing network) depends on the length
-of the road segment (the distance), the travelling speed, the 'priority' and the 'distance_influence' factor (see below).
-To be more precise, the cost function has the following form:
+
+The weight or 'cost' of travelling along an 'edge' (a road segment of the routing network) depends on the length of the
+road segment (the distance), the travelling speed, the 'priority' and the 'distance_influence' factor (see below). To be
+more precise, the cost function has the following form:
 
 ```
 edge_weight = edge_distance / (speed * priority) + edge_distance * distance_influence
@@ -136,7 +128,7 @@ boolean value (they are either true or false for a given edge), like:
 - get_off_bike
 - road_class_link
 
-And there are others that take on a numeric value, like: 
+And there are others that take on a numeric value, like:
 
 - max_weight
 - max_width
@@ -144,56 +136,71 @@ And there are others that take on a numeric value, like:
 *Important note: Whenever you want to use any of these categories for a custom profile you need to add them to
 `graph.encoded_values` in `config.yml`.*
 
-### Setting up a Custom Model
+### Creating the `custom_model_file`: Setting up a custom model
 
-As mentioned above, the custom weighting function has three parameters that you can adjust: speed, priority and
-distance_influence. You can set up rules that determine these parameters from the edge's properties. A set of such rules
-is called a 'custom model' and it is written in a dedicated YAML or JSON format. We will now see how the cost function 
-parameters can be influenced by the different fields of such a custom model.
-  
-#### Customizing `speed`
+As we saw in one of the previous sections, the custom weighting function has three parameters that you can adjust:
+speed, priority and distance_influence. You can set up rules that determine these parameters from the edge's properties.
+A set of such rules is called a 'custom model' and it is written in a dedicated YAML or JSON file,
+the `custom_model_file`. We will explain how to set up these rules. Customizing speed and priority is very similar, so
+we will explain most of the details you need to know for speed, but they can be applied very much the same way for
+priority as well.
 
-For every road segment a default speed is inherited from the base vehicle and you have multiple options to adjust it.
-The first thing you can do is rescaling the default speeds using `multiply by`. For example this is how you
-can reduce the speed of every road segment that has the value `MOTORWAY` for the category 'road_class' to fifty percent of 
-the default speed that is normally used by the base vehicle for this road class:
+#### The custom model language by the example of customizing `speed`
+
+For every road segment a default speed is inherited from the profile's (base) vehicle. Adjusting the speed is done by a
+series of conditional operations that are written in the `speed` section of the `custom_model_file` and modify the
+default speed. Currently the custom model language only comprises two operators:
+
+- `multiply by` multiplies the speed value with a given number
+- `limit to` limits the speed value to a given number
+
+The operations are applied to the default speed from top to bottom, i.e. operations that are lower in the list are
+applied to the resulting value of previous operations. Each operation is only executed if the corresponding condition
+applies for the edge the speed is calculated for.
+
+##### `if` statements and the `multiply by` operation
+
+Let's start with a simple example using `multiply by`:
+
 ```yaml
+# this is the `custom_model_file`.
 speed:
   - if: road_class == MOTORWAY
     multiply by: 0.5
 ```
 
-You can also change the speed in case of different road classes like this
+This custom model reduces the speed of every road segment that has the value `MOTORWAY` for the category 'road_class' to
+fifty percent of the default speed (the default speed is multiplied by `0.5`). Again, the default speed is the speed
+that GraphHopper would normally use for the profile's vehicle. Note the `if` clause which means that the
+operation (`multiply_by`) is only applied *if* the condition `road_class == MOTORWAY`
+is fulfilled for the edge under consideration. The `==` indicates equality, i.e. the condition reads "the road_class
+equals MOTORWAY". If you're a bit familiar with programming note that the condition (the value of the `if` key) is just
+a boolean condition in Java language (other programming languages like C or JavaScript are very similar in this regard).
+A more complex condition could look like this: `road_class == PRIMARY || road_class == TERTIARY` which uses the **or**
+(`||`) operator and literally means "road_class equals PRIMARY or road_class equals TERTIARY".
+
+As already stated there can be multiple such 'if statements' in the speed section and they are evaluated from top to
+bottom:
+
 ```yaml
 speed:
   - if: road_class == MOTORWAY
     multiply by: 0.5
-  - if: road_class == PRIMARY || road_class == TERTIARY
+  - if: road_class == PRIMARY || road_environment == TUNNEL
     multiply by: 0.7
 ```
 
-The OR-operator `||` means if the left **or** right expressions is true then the value `0.7` is used.
-You can also use multiple categories in the expressions:
+In this example the default speed of edges with `road_class == MOTORWAY` will be multiplied by `0.5`, the default speed
+of edges with `road_class == PRIMARY` will be multiplied by `0.7` and for edges with both `road_class == MOTORWAY` and
+`road_environment == TUNNEL` the default speed will be multiplied first by `0.5` and then by `0.7` (the default speed
+will be multiplied with `0.35` overall). For edges with `road_class == PRIMARY` and `road_environment == TUNNEL` we only
+multiply by `0.7`, even though both parts of the second condition apply. It only matters whether the edge matches the
+condition or not.
 
-```yaml
-speed:
-  - if: "road_class == MOTORWAY",     multiply by: 0.5
-  - if: "road_environment == TUNNEL", multiply by: 0.8
-```
+`road_class` and `road_environment` are categories of 'enum' type, i.e. their value can only be one of a fixed set of
+values, like `MOTORWAY` for `road_class`. The possible values were listed in one of the previous sections.
 
-Here also quotes around every expression and a comma is used to write one statement per YAML line. 
-Which looks more like JSON which is also possible for server-side profiles and the only way to write custom models at 
-query time:
-
-```json
-{ "speed": [
-    { "if": "road_class == MOTORWAY", "multiply by": 0.5 },
-    { "if": "road_environment == TUNNEL", "multiply by": 0.8 }
-  ]
-}
-```
-
-There are other categories like `get_off_bike` that are of `boolean` type. You use them via:
+Other categories like `get_off_bike` are of `boolean` type. They can be used as conditions directly, for example:
 
 ```yaml
 speed:
@@ -203,87 +210,125 @@ speed:
 
 which means that for edges with `get_off_bike==true` the speed factor will be `0.6`.
 
-For encoded values with numeric values, like `max_width` you should not use "equality" or "inequality" but the
-comparison operators "bigger" `>`, "bigger or equals" `>=`, "smaller" `<` or "smaller or equals" `<=`, e.g.:
+For categories/encoded values with numeric values, like `max_width` you should not use the `==` (equality) or `!=` (
+inequality)
+operators, but the numerical comparison operators "bigger" `>`, "bigger or equals" `>=`, "smaller" `<`, or "smaller or
+equals" `<=`, e.g.:
+
 ```yaml
 speed:
-  - if: "max_width < 2.5", multiply by: 0.8
+  - if: max_width < 2.5
+    multiply by: 0.8
 ``` 
+
 which means that for all edges with `max_width` smaller than `2.5m` the speed is multiplied by `0.8`.
 
-Then there are categories of `string` type. You use them via:
+Categories of `string` type are used like this (note the quotes ""):
 
 ```yaml
 speed:
-- if: country == "DEU"
-  multiply by: 0
+  - if: country == "DEU"
+    multiply by: 0
 ```
 
-Another way to change the speed is using `limit to`:
+##### The `limit to` operation
+
+As already mentioned, besides the `multiply by` operator there is also the `limit to` operator. As the name suggests
+`limit to` limits the current value to the given value. Take this example:
+
 ```yaml
 speed:
-  - if: "surface != GRAVEL", limit to: 60
+  - if: road_class == MOTORWAY
+    multiply_by: 0.8
+  - if: surface == GRAVEL
+    limit to: 60
 ```
 
-This implies that on all road segments with no `GRAVEL` value for `surface` the speed will be at most `60km/h`,
-regardless of the default speed of this road segment or the previous `multiply by` statements. Just like
-with `multiply by` you can use multiple category values and different categories in the expressions for `limit to`. 
-If multiple statements match for a given edge the most restrictive statement will determine the speed.
+This implies that on all road segments with the `GRAVEL` value for `surface` the speed will be at most `60km/h`,
+regardless of the default speed and the previous rules. So for a road segment with `road_class == MOTORWAY`,
+`surface == GRAVEL` and default speed `100` the first statement reduces the speed from `100` to `80` and the second
+statement further reduces the speed from `80` to `60`. If the `road_class` was `PRIMARY` and the default speed was `50`
+the first rule would not apply and the second rule would do nothing, because limiting `50` to `60` is still `50`.
 
-Values for `limit to` must be in the range `[0, max_vehicle_speed]` where `max_vehicle_speed` is the maximum speed that
-is set for the base vehicle, and you cannot change it.
+Note that all values used for `limit to` must be in the range `[0, max_vehicle_speed]` where `max_vehicle_speed` is the
+maximum speed that is set for the base vehicle and cannot be changed.
 
-An unconditional statement can be used as the last statement to limit the speed to a certain value under all conditions:
+A common use-case for the `limit to` operation is the following pattern:
+
 ```yaml
 speed:
-  - if: "true", limit to: 90
+  - if: true
+    limit to: 90
 ```
 
-This means that the speed is at most `90km/h` for any road segments regardless of its properties.
+which means that the speed is limited to `90km/h` for all road segments regardless of its properties. The condition
+`true` is always fulfilled.
 
-#### `else`
+##### `else` and `else if` statements
 
-Every `if` statement can have an `else` statement which is evaluated only when the `if`-condition is `false`.
-
-#### `else if`
-
-If a road segment matches multiple expressions the speed will be multiplied. In this example:
+The `else` statement allows you to define that some operations should be applied if an edge does **not** match a
+condition. So this example:
 
 ```yaml
 speed:
-- if: road_class == MOTORWAY
-  multiply by: 0.5
-- if: road_environment == TUNNEL
-  multiply by: 0.8
+  - if: road_class == MOTORWAY
+    multiply by: 0.5
+  - else:
+    limit to: 50
 ```
 
-the speed of a road segment that has `road_class == MOTORWAY` will be multiplied by `0.5`, for a road segment
-that additionally has `road_environment == TUNNEL` it will be multiplied by `0.4` and for a road segment that has
-`road_class == SECONDARY` and `road_environment == TUNNEL` it will be multiplied by `0.8`. You can avoid the 
-multiplication of 0.5 and 0.8 by using `else if`:
+means that for all edges with `road_class == MOTORWAY` we multiply the default speed by `0.5` and for all others we
+limit the default speed to `50` (but never both). In case you want to distinguish more than two cases (edges that match
+or match not a condition) you can use `else if` statements which are only evaluated in case the previous `if`
+or `else if` statement did **not** match:
 
 ```yaml
 speed:
-- if: road_class == MOTORWAY
-  multiply by: 0.5
-- else if: road_environment == TUNNEL
-  multiply by: 0.8
+  - if: road_class == MOTORWAY
+    multiply by: 0.5
+  - else if: road_environment == TUNNEL
+    limit to: 70
+  - else:
+    multiply by: 0.9
 ```
 
-Now even if a road segment fulfills both conditions only the first will be used (and evaluated) and no multiplication 
-happens.
+So if the first condition matches (`road_class == MOTORWAY`) the default speed is multiplied by `0.5` but the other two
+statements are ignored. Only if the first statement does not match (e.g. `road_class == PRIMARY`) the second statement
+is even considered and only if it matches (`road_environment == TUNNEL`) the default speed is limited to 70. The last
+operation (`multiply by: 0.9`) is only applied if the two previous conditions did not match.
 
-#### `areas`
+`else` and `else if` statements always require a preceding `if` or `else if` statement. However, there can be multiple
+'blocks' of subsequent `if/else if/else` statements in the list of rules for `speed`.
 
-You can also modify the speed for all road segments in a certain area. To do this first add some areas to the `areas`
-section of the custom model and then use this name in an expression. In the following example we multiply the speed
-for an area called `custom1` with `0.7` and limit it to 50km/h. All area names need to be prefixed with
-`in_area_`.
+`else if` is useful for example in case you have multiple `multiply by` operations, but you do not want that the speed
+gets reduced by all of them. For the following model
 
 ```yaml
 speed:
-- if: "in_area_custom1", multiply by: 0.7
-- if: "in_area_custom1", limit to: 50
+  - if: road_class == MOTORWAY
+    multiply by: 0.5
+  - else if: road_environment == TUNNEL
+    multiply by: 0.8
+```
+
+only the first factor (`0.5`) will be applied even for road segments that fulfill both conditions.
+
+##### `areas`
+
+You can not only modify the speed of road segments based on properties as we saw in the previous examples, but you can
+also modify the speed of road segments based on their location. To do this you need to first create and add some areas
+to the `areas` section of in the custom model file. You can then use the name of these areas in the condition we used in
+the `if/else/else if` statements we saw in the previous sections.
+
+In the following example we multiply the speed of all edges in an an area called `custom1` with `0.7` and also limit it
+to `50km/h`. Note that each area's name needs to be prefixed with `in_area_`:
+
+```yaml
+speed:
+  - if: in_area_custom1
+    multiply by: 0.7
+  - if: in_area_custom1
+    limit to: 50
 
 areas:
   custom1:
@@ -291,64 +336,72 @@ areas:
     geometry:
       type: "Polygon"
       coordinates: [
-        [10.75, 46.65],
-        [9.54, 45.65],
-        [10.75, 44.65],
+        [ 10.75, 46.65 ],
+        [ 9.54, 45.65 ],
+        [ 10.75, 44.65 ],
         [8.75, 44.65],
         [8.75, 45.65],
         [8.75, 46.65]
       ]
 ```
 
-The areas are given in GeoJson format. Note that JSON can directly copied into YAML without further modifications.
-Using the `areas` feature you can also block entire areas, but you should rather use the `priority` section for this 
-(see below).
+The areas are given in GeoJson format. Note that JSON can be directly copied into YAML without further modifications.
+Using the `areas` feature you can also block entire areas i.e. by multiplying the speed with `0`, but for this you
+should rather use the `priority` section that we will explain next.
 
 #### Customizing `priority`
 
 Looking at the custom cost function formula above might make you wonder what the difference between `speed`
 and `priority` is, because it enters the formula in the same way. When calculating the edge weights
-(which determine the optimal route) changing the speed in fact has the same effect as changing the priority.
-But do not forget that GraphHopper not only calculates the optimal route, but also the time (and distance) it takes to
-drive (or walk) this route. Changing the speeds also means changing the resulting travelling times, but `priority`
+(which determine the optimal route) changing the speed in fact has the same effect as changing the priority. However, do
+not forget that GraphHopper not only calculates the optimal route, but also the time (and distance) it takes to drive (
+or walk) this route. Changing the speeds also means changing the resulting travel times, but `priority`
 allows you to alter the route calculation *without* changing the travel time of a given route.
 
-By default the priority is `1` for every edge, so without doing anything it does not affect the weight. However, 
-changing the priority for certain kinds of roads yields a relative weight difference depending on the edges' properties.
+By default, the priority is `1` for every edge, so without doing anything it does not affect the weight. However,
+changing the priority of a road can yield a relative weight difference in comparison to other roads.
 
-You change the `priority` very much like you change the `speed`, so
+Customizing the `priority` works very much like changing the `speed`, so in case you did not read the section about
+`speed` now should be the time to do this. The only real difference is that there is no `limit to` operator for
+`priority`. As a quick reminder here is an example for priority:
+
 ```yaml
 priority:
-- if: road_class == MOTORWAY
-  multiply by: 0.5
-- else if: road_class == SECONDARY
-  multiply by: 0.9
-- if: road_environment == TUNNEL
-  multiply by: 0.1
+  - if: road_class == MOTORWAY
+    multiply by: 0.5
+  - else if: road_class == SECONDARY
+    multiply by: 0.9
+  - if: road_environment == TUNNEL
+    multiply by: 0.1
 ```
 
-means that road segments with `road_class==MOTORWAY` and `road_environment==TUNNEL` get priority `0.5*0.1=0.05` and those
-with `road_class==SECONDARY` and no TUNNEL, get priority `0.9` and so on.
+means that road segments with `road_class==MOTORWAY` and `road_environment==TUNNEL` get priority `0.5*0.1=0.05` and
+those with `road_class==SECONDARY` and no TUNNEL, get priority `0.9` and so on.
 
 Edges with lower priority values will be less likely part of the optimal route calculated by GraphHopper, higher values
-mean that this kind of road segments shall be preferred. To prefer certain roads you need to `decrease` the priority of
-others:
-```yaml
-priority: 
-- if: road_class != CYCLEWAY
-  multiply by: 0.8
-```
-means decreasing the priority for all road_classes *except* cycleways. Just like we saw for `speed` you can also adjust
-the priority for road segments in a certain area. It works the same way:
+mean that these road segments shall be preferred. If you do not want to state which road segments shall be avoided, but
+rather which ones shall be preferred, you need to **decrease** the priority of others:
 
 ```yaml
 priority:
-- if: in_area_custom1
-  multiply by: 0.7
+  - if: road_class != CYCLEWAY
+    multiply by: 0.8
 ```
 
-To block an entire area completely set the priority value to `0`. Some other useful encoded values to restrict access
-to certain roads depending on your vehicle dimensions are the following:
+means decreasing the priority for all road_classes *except* cycleways.
+
+Just like we saw for `speed` you can also adjust the priority for road segments in a certain area. It works exactly the
+same way:
+
+```yaml
+priority:
+  - if: in_area_custom1
+    multiply by: 0.7
+```
+
+To block an entire area completely set the priority value to `0`. Some other useful encoded values to restrict access to
+certain roads depending on your vehicle dimensions are the following:
+
 ```yaml
 priority:
 - if: max_width < 2.5
@@ -365,8 +418,8 @@ length of `10m` or a maximum vehicle weight of `3.5tons` is zero, i.e. these "ti
 
 `distance_influence` allows you to control the trade-off between a fast route (minimum time) and a short route
 (minimum distance). Setting it to `0` means that GraphHopper will return the fastest possible route, *unless* you set
-the priority of any edges to something different than `1.0`. Using the priority factors will always to some part favor
-some routes because they are shorter as well. Higher values of `distance_influence` will prioritize routes that are fast
+the priority of any edges to something other than `1.0`. Using the priority factors will always to some part favor some
+routes because they are shorter as well. Higher values of `distance_influence` will prioritize routes that are fast
 (but maybe not fastest), but at the same time are short in distance.
 
 You use it like this:
@@ -382,48 +435,171 @@ kilometer must save you `30s` of travelling time. Or to put it another way if a 
 `10km` long, `distance_influence=30` means that you are willing to take an alternative route that is `11km` long only if
 it takes no longer than `570s` (saves `30s`).
 
-## Setting up a Custom Profile
+#### Using JSON instead of YAML notation
 
-Custom profiles work very much the same way as the 'standard' profiles described at the beginning of this document. The
-custom model needs to be written in a separate YAML (or JSON) file and the `weighting` has to be set to `custom`. Use the
-`custom_model_file` field to point to the custom model file like this:
+You can use a slightly shorter syntax than the one we used in the previous examples, e.g.:
 
 ```yaml
-profiles:
-  - name: my_custom_profile
-    vehicle: car
-    weighting: custom
-    custom_model_file: path/to/my_custom_profile.yaml
-  
+speed:
+  - if: "road_class == MOTORWAY",     multiply by: 0.5
+  - if: "road_environment == TUNNEL", multiply by: 0.8
 ```
 
-Selecting a custom profile also works like selecting a standard profile. In our example just add `profile=my_custom_profile`
-to your routing request. To set up hybrid- or speed-mode, simply use the `profiles_ch/lm` sections and add the name of
-your custom profile (just like you do for standard profiles).
+You can even use JSON language like this:
 
-## Changing the Custom Profile for a single routing request
+```json
+{
+  "speed": [
+    {
+      "if": "road_class == MOTORWAY",
+      "multiply by": 0.5
+    },
+    {
+      "if": "road_environment == TUNNEL",
+      "multiply by": 0.8
+    }
+  ]
+}
+```
 
-With flex- and hybrid mode it is even possible to define the custom model on a per-request basis and doing this you can
-even adjust a custom model configured on the server side for a single request. To do this you first set up a 'base'
-custom profile in your server configuration, like:
+## Speed and Hybrid Mode
+
+GraphHopper can drastically improve the execution time of the route calculations by preprocessing the routing profiles
+during import. To enable this you need to list the profiles you want GraphHopper to do the preprocessing for like this:
+
+```yaml
+# profiles you want to use with speed mode need to go here
+profiles_ch:
+  - profile: car
+  - profile: some_other_profile
+
+# profiles you want to use with hybrid mode need to go here
+profiles_lm:
+  - profile: car
+  - profile: some_other_profile 
+```
+
+The values given under `profile` are just the profile names you specified in the profile definitions. Note that 'CH' is
+short for 'Contraction Hierarchies', the underlying technique used to realize speed mode and
+'LM' is short for 'Landmarks', which is the algorithm used for the hybrid mode.
+
+For hybrid mode there is a special feature that allows 're-using' the prepared data for different profiles. You can do
+this like this:
+
+```yaml
+profiles_lm:
+  - profile: car
+  - profile: some_other_profile
+    preparation_profile: car
+```
+
+which means that for `some_other_profile` the preparation of the `car` profile will be used. However, this will only
+give correct routing results if `some_other_profile` yields larger or equal weights for all edges than the `car`profile.
+Better do not use this feature unless you know what you are doing.
+
+## Using different custom models on a per-request basis
+
+So far we talked only about standard and custom profiles that are configured on the server side in `config.yml`.
+However, with flex- and hybrid mode it is even possible to define the custom model on a per-request basis. This enables
+you to perform route calculations using custom models that you did not anticipate when setting up the server.
+
+To use this feature you need to query the `/route-custom` (*not* `/route`) endpoint and send the custom model along with
+your request in JSON format. The syntax for the custom model is the same as for server-side custom models (but using
+JSON not YAML notation, see above). The routing request has the same format as for `/route`, but with an
+additional `model` field that contains the custom model. You still need to set the `profile` parameter for your request
+and the given profile must be a custom profile.
+
+Now you might be wondering which custom model is used, because there is one set for the route request, but there is also
+the one given for the profile that we specify via the `profile` parameter. The answer is "both" as the two custom models
+are merged into one. The two custom models are merged according to the following rules:
+
+* all expressions in the custom model of the query are appended to the existing custom model.
+* for the custom model of the query all values of `multiply by` need to be within the range of `[0, 1]` otherwise an
+  error will be thrown
+* the `distance_influence` of the query custom model overwrites the one from the server-side custom model *unless*
+  it is not specified. However, the given value must not be smaller than the existing one.
+
+If you're curious about the second rule note that for the Hybrid mode (using Landmarks not just Dijkstra or A*)
+the merge process has to ensure that all weights resulting from the merged custom model are equal or larger than those
+of the base profile that was used during the preparation process. This is necessary to maintain the optimality of the
+underlying routing algorithm.
+
+So say your routing request (POST /route-custom) looks like this:
+
+```json
+{
+  "points": [
+    [
+      11.58199,
+      50.0141
+    ],
+    [
+      11.5865,
+      50.0095
+    ]
+  ],
+  "profile": "my_custom_car",
+  "model": {
+    "speed": [
+      {
+        "if": "road_class == MOTORWAY",
+        "multiply by": 0.8
+      },
+      {
+        "else": "",
+        "multiply by": 0.9
+      }
+    ],
+    "priority": [
+      {
+        "if": "road_environment == TUNNEL",
+        "multiply by": 0.95
+      }
+    ],
+    "distance_influence": 0.7
+  }
+}
+```
+
+where in `config.yml` we have:
 
 ```yaml
 profiles:
-  - name: my_flexible_car_profile
+  - name: my_custom_car
     vehicle: car
     weighting: custom
-    custom_model_file: my_custom_model.yml
-``` 
+    custom_model_file: path/to/my_custom_car.yml
+```
 
-You do not necessarily need to define a proper custom model here and instead you can also set `custom_model_file: empty`
-(which means an empty custom model containing no statements will be used on the server-side). You then use the `/route-custom`
-(*not* `/route`) endpoint and send your custom model (using the format explained above, but as JSON) with the request
-body. The model you send will be merged with the profile you select using the `profile` parameter (which has to be
-a custom profile). For the Hybrid mode (not only "pure" Dijkstra or A*) the merge process has to ensure that all weights
-resulting from the merged custom model are equal or larger than those of the base profile that was used during the
-preparation process. This is necessary to maintain the optimality of the underlying routing algorithm.
-Therefore we merge the two models via:
+and `my_custom_car.yml` looks like this:
 
- * all expressions in the custom model of the query are appended to the existing custom model.
- * for the custom model of the query all values of `multiply by` need to be within the range of `[0, 1]` otherwise an
-   error will be thrown
+```yaml
+speed:
+  - if: road_surface == GRAVEL
+    limit to: 100
+```
+
+then the resulting custom model used for your request will look like this:
+
+```yaml
+speed:
+  - if: road_surface == GRAVEL
+    limit to: 100
+  # this was appended due to the custom model given by the request
+  - if: road_class == MOTORWAY
+    multiply by: 0.8
+  - else:
+    multiply by: 0.9
+
+priority:
+  - if: road_environment == TUNNEL
+    multiply by: 0.95
+
+distance_influence: 0.7
+```
+
+You do not necessarily need to define a proper custom model on the server side, but you can also use the special
+value `custom_model_file: empty` which means an empty custom model containing no statements will be used on the
+server-side. This way you can leave it entirely up to the user/client how the custom model shall look like.
+
+
