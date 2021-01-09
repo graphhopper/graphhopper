@@ -68,7 +68,8 @@
         <dependency>
             <groupId>org.webjars.npm</groupId>
             <artifactId>mapbox-gl</artifactId>
-            <version>1.10.1</version>
+            <!-- this was the last mapbox release with an open license, the license was changed for 2.0+ -->
+            <version>1.13.0</version>
         </dependency>
         <dependency>
             <groupId>org.webjars</groupId>
