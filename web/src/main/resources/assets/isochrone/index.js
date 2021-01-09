@@ -158,7 +158,7 @@ function fetchAndDrawSPT(point) {
     var counter = 0;
     var coordinates = [];
     var radius = menu.isochroneRadius;
-    Papa.parse("/spt?profile=car&point=" + point.lat + "," + point.lng + "&columns=prev_longitude,prev_latitude,longitude,latitude,distance,time&time_limit=" + radius, {
+    Papa.parse("http://" + window.location.host + "/spt?profile=car&point=" + point.lat + "," + point.lng + "&columns=prev_longitude,prev_latitude,longitude,latitude,distance,time&time_limit=" + radius, {
         download: true,
         worker: true,
         step: function (results) {
