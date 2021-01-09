@@ -72,43 +72,78 @@ var rasterStyle = {
 };
 var vectorStyle = 'https://api.maptiler.com/maps/basic/style.json?key=' + mapTilerKey;
 
-var map = new mapboxgl.Map({
-    container: 'map',
-    style: vectorStyle,
-    center: [13.4110450, 52.5214697],
-    zoom: 9
-});
-map.on('style.load', function addGHMvt() {
-    // add GraphHopper vector tiles of road network. this is also called when we change the style
-    map.addSource('gh-mvt', {
-        type: 'vector',
-        tiles: ['/mvt/{z}/{x}/{y}.mvt?details=road_class']
+fetch('/info')
+    .then(response => response.json())
+    .then(json => _drawMap(json.bbox))
+    .catch(e => console.error('Could not receive bbox from GH server', e));
+
+// the mapbox map object used in various places here
+var map;
+
+function _drawMap(bbox) {
+    map = new mapboxgl.Map({
+        container: 'map',
+        style: vectorStyle,
     });
-    map.addLayer({
-        'id': 'gh',
-        'type': 'line',
-        'source': 'gh-mvt',
-        'source-layer': 'roads',
-        'paint': {
-            'line-color': [
-                'match',
-                ['get', 'road_class'],
-                'motorway', 'red',
-                'primary', 'orange',
-                'trunk', 'orange',
-                'secondary', 'yellow',
-                /*other*/ 'grey'
-            ]
-        },
-        'layout': {
-            'visibility': 'none'
-        }
-        // we make sure the map labels stay on top
-    }, getFirstSymbolLayer(map));
-});
-map.on('click', function (e) {
-    _updateIsochrone(e.lngLat);
-});
+    map.fitBounds([
+        [bbox[0], bbox[1]],
+        [bbox[2], bbox[3]]
+    ], {
+        animate: false,
+        padding: 50
+    });
+    map.on('style.load', function addGHMvt() {
+        // add GraphHopper vector tiles of road network. this is also called when we change the style
+        map.addSource('gh-mvt', {
+            type: 'vector',
+            tiles: ['/mvt/{z}/{x}/{y}.mvt?details=road_class']
+        });
+        var boundsPolygon = [[bbox[0], bbox[1]], [bbox[2], bbox[1]], [bbox[2], bbox[3]], [bbox[0], bbox[3]], [bbox[0], bbox[1]]];
+        map.addLayer({
+            'id': 'gh-bounds',
+            'type': 'line',
+            'source': {
+                'type': 'geojson',
+                'data': {
+                    'type': 'Feature',
+                    'geometry': {
+                        'type': 'Polygon',
+                        'coordinates': [boundsPolygon]
+                    }
+                }
+            },
+            'layout': {},
+            'paint': {
+                'line-color': 'grey',
+                'line-width': 1.5
+            }
+        }, getFirstSymbolLayer(map));
+        map.addLayer({
+            'id': 'gh',
+            'type': 'line',
+            'source': 'gh-mvt',
+            'source-layer': 'roads',
+            'paint': {
+                'line-color': [
+                    'match',
+                    ['get', 'road_class'],
+                    'motorway', 'red',
+                    'primary', 'orange',
+                    'trunk', 'orange',
+                    'secondary', 'yellow',
+                    /*other*/ 'grey'
+                ]
+            },
+            'layout': {
+                'visibility': 'none'
+            }
+            // we make sure the map labels stay on top
+        }, getFirstSymbolLayer(map));
+    });
+    map.on('click', function (e) {
+        _updateIsochrone(e.lngLat);
+    });
+}
 
 function _updateIsochrone(lngLat) {
     menu.isochronePoint = lngLat.lat.toFixed(6) + "," + lngLat.lng.toFixed(6);
