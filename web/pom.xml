@@ -76,9 +76,9 @@
             <version>2.6.12</version>
         </dependency>
         <dependency>
-            <groupId>org.webjars</groupId>
-            <artifactId>papa-parse</artifactId>
-            <version>4.1.0-1</version>
+            <groupId>org.webjars.npm</groupId>
+            <artifactId>papaparse</artifactId>
+            <version>5.2.0</version>
         </dependency>
 
         <dependency>
