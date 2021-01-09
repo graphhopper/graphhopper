@@ -19,7 +19,7 @@
 var menu = new Vue({
     el: '#menu',
     data: {
-        layer: 'vector',
+        layer: 'raster',
         showGraph: false,
         isochroneRadius: 600,
         showSpt: false,
@@ -49,7 +49,7 @@ var menu = new Vue({
         }
     }
 });
-var mapTilerKey = 'yrAYvi6TTYgg9U5mBtiY';
+var mapTilerKey = 'ADD_YOUR_KEY_HERE';
 var rasterStyle = {
     'version': 8,
     'sources': {
