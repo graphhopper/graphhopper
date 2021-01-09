@@ -83,7 +83,7 @@ var map;
 function _drawMap(bbox) {
     map = new mapboxgl.Map({
         container: 'map',
-        style: vectorStyle,
+        style: rasterStyle,
     });
     map.fitBounds([
         [bbox[0], bbox[1]],
