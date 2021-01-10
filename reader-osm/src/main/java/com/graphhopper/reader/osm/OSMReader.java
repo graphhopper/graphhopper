@@ -734,7 +734,9 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         final double tolerance = 1;
         final double edgeDistance = edge.getDistance();
         final double geometryDistance = distCalc.calcDistance(edge.fetchWayGeometry(FetchMode.ALL));
-        if (Math.abs(edgeDistance - geometryDistance) > tolerance)
+        if (edgeDistance > 2_000_000)
+            LOGGER.warn("Very long edge detected: " + edge + " dist: " + edgeDistance);
+        else if (Math.abs(edgeDistance - geometryDistance) > tolerance)
             throw new IllegalStateException("Suspicious distance for edge: " + edge + " " + edgeDistance + " vs. " + geometryDistance
                     + ", difference: " + (edgeDistance - geometryDistance));
     }
