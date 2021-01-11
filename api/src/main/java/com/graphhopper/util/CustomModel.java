@@ -28,10 +28,10 @@ public class CustomModel {
 
     public static final String KEY = "custom_model";
 
-    static double DEFAULT_D_I = 70;
+    static double DEFAULT_DISTANCE_INFLUENCE = 70;
     private double headingPenalty = Parameters.Routing.DEFAULT_HEADING_PENALTY;
     // default value derived from the cost for time e.g. 25€/hour and for distance 0.5€/km, for trucks this is usually larger
-    private double distanceInfluence = DEFAULT_D_I;
+    private double distanceInfluence = DEFAULT_DISTANCE_INFLUENCE;
     private boolean internal;
     private List<Statement> speedStatements = new ArrayList<>();
     private List<Statement> priorityStatements = new ArrayList<>();
@@ -151,7 +151,7 @@ public class CustomModel {
         // modified (same problem if queryModel would be used as target)
         CustomModel mergedCM = new CustomModel(baseModel);
         // we only overwrite the distance influence if a non-default value was used
-        if (Math.abs(queryModel.distanceInfluence - CustomModel.DEFAULT_D_I) > 0.01) {
+        if (Math.abs(queryModel.distanceInfluence - CustomModel.DEFAULT_DISTANCE_INFLUENCE) > 0.01) {
             if (queryModel.distanceInfluence < mergedCM.distanceInfluence)
                 throw new IllegalArgumentException("CustomModel in query can only use " +
                         "distance_influence bigger or equal to " + mergedCM.distanceInfluence +
