@@ -532,12 +532,12 @@ public class GraphHopper implements GraphHopperAPI {
                 : ghConfig.getBool("graph.elevation.calc_mean", false);
 
         String cacheDirStr = ghConfig.getString("graph.elevation.cache_dir", "");
-        if (cacheDirStr.isEmpty())
-            cacheDirStr = ghConfig.getString("graph.elevation.cachedir", "");
+        if (cacheDirStr.isEmpty() && ghConfig.has("graph.elevation.cachedir"))
+            throw new IllegalArgumentException("use graph.elevation.cache_dir not cachedir in configuration");
 
         String baseURL = ghConfig.getString("graph.elevation.base_url", "");
-        if (baseURL.isEmpty())
-            ghConfig.getString("graph.elevation.baseurl", "");
+        if (baseURL.isEmpty() && ghConfig.has("graph.elevation.baseurl"))
+            throw new IllegalArgumentException("use graph.elevation.base_url not baseurl in configuration");
 
         boolean removeTempElevationFiles = ghConfig.getBool("graph.elevation.cgiar.clear", true);
         removeTempElevationFiles = ghConfig.getBool("graph.elevation.clear", removeTempElevationFiles);
