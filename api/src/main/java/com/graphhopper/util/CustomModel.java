@@ -28,10 +28,10 @@ public class CustomModel {
 
     public static final String KEY = "custom_model";
 
+    // e.g. 70 means that the time costs are 25€/hour and for the distance 0.5€/km (for trucks this is usually larger)
     static double DEFAULT_DISTANCE_INFLUENCE = 70;
+    private Double distanceInfluence;
     private double headingPenalty = Parameters.Routing.DEFAULT_HEADING_PENALTY;
-    // default value derived from the cost for time e.g. 25€/hour and for distance 0.5€/km, for trucks this is usually larger
-    private double distanceInfluence = DEFAULT_DISTANCE_INFLUENCE;
     private boolean internal;
     private List<Statement> speedStatements = new ArrayList<>();
     private List<Statement> priorityStatements = new ArrayList<>();
@@ -118,7 +118,7 @@ public class CustomModel {
     }
 
     public double getDistanceInfluence() {
-        return distanceInfluence;
+        return distanceInfluence == null ? DEFAULT_DISTANCE_INFLUENCE : distanceInfluence;
     }
 
     public void setHeadingPenalty(double headingPenalty) {
@@ -151,10 +151,10 @@ public class CustomModel {
         // modified (same problem if queryModel would be used as target)
         CustomModel mergedCM = new CustomModel(baseModel);
         // we only overwrite the distance influence if a non-default value was used
-        if (Math.abs(queryModel.distanceInfluence - CustomModel.DEFAULT_DISTANCE_INFLUENCE) > 0.01) {
-            if (queryModel.distanceInfluence < mergedCM.distanceInfluence)
+        if (queryModel.distanceInfluence != null) {
+            if (queryModel.distanceInfluence < mergedCM.getDistanceInfluence())
                 throw new IllegalArgumentException("CustomModel in query can only use " +
-                        "distance_influence bigger or equal to " + mergedCM.distanceInfluence +
+                        "distance_influence bigger or equal to " + mergedCM.getDistanceInfluence() +
                         ", given: " + queryModel.distanceInfluence);
             mergedCM.distanceInfluence = queryModel.distanceInfluence;
         }
