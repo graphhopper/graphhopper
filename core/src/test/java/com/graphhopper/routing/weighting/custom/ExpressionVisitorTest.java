@@ -1,16 +1,19 @@
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.StringEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
-import java.util.Locale;
+import java.util.HashSet;
 
+import static com.graphhopper.json.Statement.If;
 import static com.graphhopper.routing.weighting.custom.CustomModelParser.isValidVariableName;
 import static com.graphhopper.routing.weighting.custom.ExpressionVisitor.parseExpression;
 import static org.junit.jupiter.api.Assertions.*;
@@ -57,7 +60,7 @@ public class ExpressionVisitorTest {
     @Test
     public void testConvertExpression() {
         ExpressionVisitor.NameValidator validVariable = s -> isValidVariableName(s)
-                || s.toUpperCase(Locale.ROOT).equals(s) || s.equals("road_class") || s.equals("toll");
+                || Helper.toUpperCase(s).equals(s) || s.equals("road_class") || s.equals("toll");
 
         ExpressionVisitor.ParseResult result = parseExpression("toll == NO", validVariable, lookup);
         assertTrue(result.ok);
@@ -96,7 +99,7 @@ public class ExpressionVisitorTest {
     @Test
     public void isValidAndSimpleCondition() {
         ExpressionVisitor.NameValidator validVariable = s -> isValidVariableName(s)
-                || s.toUpperCase(Locale.ROOT).equals(s) || s.equals("road_class") || s.equals("toll");
+                || Helper.toUpperCase(s).equals(s) || s.equals("road_class") || s.equals("toll");
         ExpressionVisitor.ParseResult result = parseExpression("edge == edge", validVariable, lookup);
         assertTrue(result.ok);
         assertEquals("[edge]", result.guessedVariables.toString());
@@ -123,5 +126,34 @@ public class ExpressionVisitorTest {
 
         assertTrue(parseExpression("road_class.ordinal()*2 == PRIMARY.ordinal()*2", validVariable, lookup).ok);
         assertTrue(parseExpression("Math.sqrt(road_class.ordinal()) > 1", validVariable, lookup).ok);
+    }
+
+    @Test
+    public void errorMessage() {
+        ExpressionVisitor.NameValidator validVariable = s -> lookup.hasEncodedValue(s);
+
+        // existing encoded value but not added
+        IllegalArgumentException ret = assertThrows(IllegalArgumentException.class,
+                () -> ExpressionVisitor.parseExpressions(new StringBuilder(),
+                        validVariable, "[HERE]", new HashSet<>(),
+                        Arrays.asList(If("max_weight > 10", Statement.Op.MULTIPLY, 0)),
+                        lookup, ""));
+        assertTrue(ret.getMessage().startsWith("[HERE] invalid expression \"max_weight > 10\": encoded value 'max_weight' not available"), ret.getMessage());
+
+        // invalid variable or constant (NameValidator returns false)
+        ret = assertThrows(IllegalArgumentException.class,
+                () -> ExpressionVisitor.parseExpressions(new StringBuilder(),
+                        validVariable, "[HERE]", new HashSet<>(),
+                        Arrays.asList(If("country == GERMANY", Statement.Op.MULTIPLY, 0)),
+                        lookup, ""));
+        assertTrue(ret.getMessage().startsWith("[HERE] invalid expression \"country == GERMANY\": identifier GERMANY invalid"), ret.getMessage());
+
+        // not whitelisted method
+        ret = assertThrows(IllegalArgumentException.class,
+                () -> ExpressionVisitor.parseExpressions(new StringBuilder(),
+                        validVariable, "[HERE]", new HashSet<>(),
+                        Arrays.asList(If("edge.fetchWayGeometry().size() > 2", Statement.Op.MULTIPLY, 0)),
+                        lookup, ""));
+        assertTrue(ret.getMessage().startsWith("[HERE] invalid expression \"edge.fetchWayGeometry().size() > 2\": size is illegal method"), ret.getMessage());
     }
 }

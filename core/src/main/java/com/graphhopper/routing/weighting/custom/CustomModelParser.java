@@ -22,10 +22,7 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.TurnCostProvider;
-import com.graphhopper.util.CustomModel;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.JsonFeature;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
 import org.codehaus.commons.compiler.CompileException;
@@ -277,7 +274,7 @@ public class CustomModelParser {
                 + classSourceCode
                 + "   @Override\n"
                 + "   public void init(EncodedValueLookup lookup, "
-                + DecimalEncodedValue.class.getName() + " avgSpeedEnc, Map<String, com.graphhopper.json.geo.JsonFeature> areas) {\n"
+                + DecimalEncodedValue.class.getName() + " avgSpeedEnc, Map<String, " + JsonFeature.class.getName() + "> areas) {\n"
                 + initSourceCode
                 + "   }\n\n"
                 // we need these placeholder methods so that the hooks in DeepCopier are invoked

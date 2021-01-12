@@ -18,6 +18,7 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.Statement;
+import com.graphhopper.routing.ev.DefaultEncodedValueFactory;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.RouteNetwork;
 import com.graphhopper.routing.ev.StringEncodedValue;
@@ -38,6 +39,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
     private final NameValidator nameValidator;
     private final Set<String> allowedMethods = new HashSet<>(Arrays.asList("ordinal", "getDistance", "getName",
             "contains", "sqrt", "abs"));
+    private String invalidMessage;
 
     public ExpressionVisitor(ParseResult result, NameValidator nameValidator, EncodedValueLookup lookup) {
         this.result = result;
@@ -69,9 +71,16 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
                     return true;
                 } else {
                     // e.g. like road_class
-                    return isValidIdentifier(arg);
+                    if (isValidIdentifier(arg)) return true;
+                    try {
+                        new DefaultEncodedValueFactory().create(arg);
+                        invalidMessage = "encoded value '" + arg + "' not available";
+                        return false;
+                    } catch (Exception ex) {
+                    }
                 }
             }
+            invalidMessage = "identifier " + n + " invalid";
             return false;
         }
         if (rv instanceof Java.Literal)
@@ -80,12 +89,13 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
             Java.MethodInvocation mi = (Java.MethodInvocation) rv;
             if (allowedMethods.contains(mi.methodName)) {
                 // skip methods like this.in() for now
-                if (mi.target == null)
-                    return false;
-                // edge.getDistance, Math.sqrt => check target name (edge or Math)
-                Java.AmbiguousName n = (Java.AmbiguousName) mi.target.toRvalue();
-                return n.identifiers.length == 2 && isValidIdentifier(n.identifiers[0]);
+                if (mi.target != null) {
+                    // edge.getDistance, Math.sqrt => check target name (edge or Math)
+                    Java.AmbiguousName n = (Java.AmbiguousName) mi.target.toRvalue();
+                    if (n.identifiers.length == 2 && isValidIdentifier(n.identifiers[0])) return true;
+                }
             }
+            invalidMessage = mi.methodName + " is illegal method";
             return false;
         }
         if (rv instanceof Java.BinaryOperation) {
@@ -107,12 +117,12 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
                     }
                 } else if (binOp.rhs instanceof Java.AmbiguousName && ((Java.AmbiguousName) binOp.rhs).identifiers.length == 1) {
                     // Make enum explicit as NO or OTHER can occur in other enums so convert "toll == NO" to "toll == Toll.NO"
-                    String rhValue = ((Java.AmbiguousName) binOp.rhs).identifiers[0];
-                    if (nameValidator.isValid(lhVarAsString) && rhValue.toUpperCase(Locale.ROOT).equals(rhValue)) {
+                    String rhValueAsString = ((Java.AmbiguousName) binOp.rhs).identifiers[0];
+                    if (nameValidator.isValid(lhVarAsString) && Helper.toUpperCase(rhValueAsString).equals(rhValueAsString)) {
                         if (!eqOps)
                             throw new IllegalArgumentException("Operator " + binOp.operator + " not allowed for enum");
                         String value = toEncodedValueClassName(binOp.lhs.toString());
-                        replacements.put(startRH, new Replacement(startRH, rhValue.length(), value + "." + rhValue));
+                        replacements.put(startRH, new Replacement(startRH, rhValueAsString.length(), value + "." + rhValueAsString));
                     }
                 }
             }
@@ -148,7 +158,8 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
             } else if (statement.getKeyword() == Statement.Keyword.ELSEIF || statement.getKeyword() == Statement.Keyword.IF) {
                 ExpressionVisitor.ParseResult parseResult = parseExpression(statement.getExpression(), nameInConditionValidator, lookup);
                 if (!parseResult.ok)
-                    throw new IllegalArgumentException(exceptionInfo + " invalid simple condition: " + statement.getExpression());
+                    throw new IllegalArgumentException(exceptionInfo + " invalid expression \"" + statement.getExpression() + "\"" +
+                            (parseResult.invalidMessage == null ? "" : ": " + parseResult.invalidMessage));
                 createObjects.addAll(parseResult.guessedVariables);
                 if (statement.getKeyword() == Statement.Keyword.ELSEIF)
                     expressions.append("else ");
@@ -177,6 +188,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
                 result.guessedVariables = new LinkedHashSet<>();
                 ExpressionVisitor visitor = new ExpressionVisitor(result, validator, lookup);
                 result.ok = atom.accept(visitor);
+                result.invalidMessage = visitor.invalidMessage;
                 if (result.ok) {
                     result.converted = new StringBuilder(expression.length());
                     int start = 0;
@@ -202,6 +214,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
     static class ParseResult {
         StringBuilder converted;
         boolean ok;
+        String invalidMessage;
         Set<String> guessedVariables;
     }
 
