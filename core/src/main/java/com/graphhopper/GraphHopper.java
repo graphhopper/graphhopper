@@ -35,6 +35,7 @@ import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.lm.LandmarkStorage;
+import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks.PrepareJob;
 import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
@@ -43,6 +44,9 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoderFactory;
 import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
+import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
@@ -101,6 +105,8 @@ public class GraphHopper implements GraphHopperAPI {
     private int maxRegionSearch = 4;
     // for prepare
     private int minNetworkSize = 200;
+    // for LM
+    private final JsonFeatureCollection landmarkSplittingFeatureCollection;
 
     // preparation handlers
     private final LMPreparationHandler lmPreparationHandler = new LMPreparationHandler();
@@ -117,6 +123,11 @@ public class GraphHopper implements GraphHopperAPI {
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
     public GraphHopper() {
+        this(null);
+    }
+
+    public GraphHopper(JsonFeatureCollection landmarkSplittingFeatureCollection) {
+        this.landmarkSplittingFeatureCollection = landmarkSplittingFeatureCollection;
     }
 
     /**
@@ -1032,21 +1043,39 @@ public class GraphHopper implements GraphHopperAPI {
      * For landmarks it is required to always call this method: either it creates the landmark data or it loads it.
      */
     protected void loadOrPrepareLM(boolean closeEarly) {
-        boolean tmpPrepare = lmPreparationHandler.isEnabled() && !lmPreparationHandler.getPreparations().isEmpty();
-        if (tmpPrepare) {
-            for (LMProfile profile : lmPreparationHandler.getLMProfiles()) {
-                if (!getProfileVersion(profile.getProfile()).isEmpty()
-                        && !getProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
-                    throw new IllegalArgumentException("LM preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
-            }
-            ensureWriteAccess();
-            ghStorage.freeze();
-            if (lmPreparationHandler.loadOrDoWork(ghStorage.getProperties(), closeEarly)) {
-                ghStorage.getProperties().put(Landmark.PREPARE + "done", true);
-                for (LMProfile profile : lmPreparationHandler.getLMProfiles()) {
-                    // potentially overwrite existing keys from CH
-                    setProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
+        if (!lmPreparationHandler.isEnabled() || lmPreparationHandler.getPreparations().isEmpty()) {
+            return;
+        }
+
+        if (landmarkSplittingFeatureCollection != null && !landmarkSplittingFeatureCollection.getFeatures().isEmpty()) {
+            SpatialRuleLookup ruleLookup = SpatialRuleLookupBuilder.buildIndex(
+                    Collections.singletonList(landmarkSplittingFeatureCollection), "area",
+                    (id, polygons) -> new AbstractSpatialRule(polygons) {
+                        @Override
+                        public String getId() {
+                            return id;
+                        }
+                    });
+            for (PrepareLandmarks prep : getLMPreparationHandler().getPreparations()) {
+                // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
+                if (ruleLookup != null && !ruleLookup.getRules().isEmpty()) {
+                    prep.setSpatialRuleLookup(ruleLookup);
                 }
+            }
+        }
+
+        for (LMProfile profile : lmPreparationHandler.getLMProfiles()) {
+            if (!getProfileVersion(profile.getProfile()).isEmpty()
+                    && !getProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
+                throw new IllegalArgumentException("LM preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
+        }
+        ensureWriteAccess();
+        ghStorage.freeze();
+        if (lmPreparationHandler.loadOrDoWork(ghStorage.getProperties(), closeEarly)) {
+            ghStorage.getProperties().put(Landmark.PREPARE + "done", true);
+            for (LMProfile profile : lmPreparationHandler.getLMProfiles()) {
+                // potentially overwrite existing keys from CH
+                setProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
             }
         }
     }

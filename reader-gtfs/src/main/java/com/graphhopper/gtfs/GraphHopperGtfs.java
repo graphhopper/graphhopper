@@ -20,8 +20,8 @@ package com.graphhopper.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Transfer;
+import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
@@ -48,7 +48,7 @@ import java.util.*;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 
-public class GraphHopperGtfs extends GraphHopperOSM {
+public class GraphHopperGtfs extends GraphHopper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GraphHopperGtfs.class);
 

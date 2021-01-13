@@ -684,8 +684,8 @@ public class OSMReaderTest {
         BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24);
         EncodingManager manager = new EncodingManager.Builder().add(bike).add(truck).add(car).build();
 
-        GraphHopper hopper = new GraphHopperOSM().
-                setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
+        GraphHopper hopper = new GraphHopper().
+                setDataReaderFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
                 setGraphHopperLocation(dir).setEncodingManager(manager).
                 setProfiles(
                         new Profile("bike").setVehicle("bike").setWeighting("fastest"),
@@ -880,7 +880,7 @@ public class OSMReaderTest {
 
     @Test
     public void testRoutingRequestFails_issue665() {
-        GraphHopper hopper = new GraphHopperOSM()
+        GraphHopper hopper = new GraphHopper()
                 .setDataReaderFile(getClass().getResource(file7).getFile())
                 .setEncodingManager(EncodingManager.create("car,motorcycle"))
                 .setProfiles(
@@ -898,12 +898,12 @@ public class OSMReaderTest {
 
     @Test
     public void testRoadClassInfo() {
-        GraphHopper gh = new GraphHopperOSM() {
+        GraphHopper gh = new GraphHopper() {
             @Override
             protected File _getDataReaderFile() {
                 return new File(getClass().getResource(file2).getFile());
             }
-        }.setOSMFile("dummy").
+        }.setDataReaderFile("dummy").
                 setEncodingManager(EncodingManager.create("car,bike")).
                 setProfiles(new Profile("profile").setVehicle("car").setWeighting("fastest")).
                 setMinNetworkSize(0).
@@ -924,14 +924,14 @@ public class OSMReaderTest {
         assertTrue(ex.getMessage().contains("You requested the details [toll]"), ex.getMessage());
     }
 
-    class GraphHopperFacade extends GraphHopperOSM {
+    class GraphHopperFacade extends GraphHopper {
         public GraphHopperFacade(String osmFile) {
             this(osmFile, false, "");
         }
 
         public GraphHopperFacade(String osmFile, boolean turnCosts, String prefLang) {
             setStoreOnFlush(false);
-            setOSMFile(osmFile);
+            setDataReaderFile(osmFile);
             setGraphHopperLocation(dir);
 
             BikeFlagEncoder bikeEncoder;
@@ -966,7 +966,7 @@ public class OSMReaderTest {
 
         @Override
         protected File _getDataReaderFile() {
-            return new File(getClass().getResource(getOSMFile()).getFile());
+            return new File(getClass().getResource(getDataReaderFile()).getFile());
         }
     }
 }

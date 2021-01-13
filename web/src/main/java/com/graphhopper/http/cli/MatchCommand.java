@@ -27,7 +27,6 @@ import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.matching.Observation;
 import com.graphhopper.jackson.Gpx;
-import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.*;
 import com.graphhopper.gpx.GpxConversions;
@@ -93,7 +92,7 @@ public class MatchCommand extends ConfiguredCommand<GraphHopperServerConfigurati
     protected void run(Bootstrap<GraphHopperServerConfiguration> bootstrap, Namespace args, GraphHopperServerConfiguration configuration) {
         GraphHopperConfig graphHopperConfiguration = configuration.getGraphHopperConfiguration();
 
-        GraphHopper hopper = new GraphHopperOSM().init(graphHopperConfiguration);
+        GraphHopper hopper = new GraphHopper().init(graphHopperConfiguration);
         hopper.importOrLoad();
 
         PMap hints = new PMap();

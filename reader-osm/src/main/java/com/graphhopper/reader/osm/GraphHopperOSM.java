@@ -19,33 +19,21 @@ package com.graphhopper.reader.osm;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.util.JsonFeatureCollection;
-import com.graphhopper.routing.lm.PrepareLandmarks;
-import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleFactory;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
-import org.locationtech.jts.geom.Polygon;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
- * This class is the simplified entry to all functionality if you import from OpenStreetMap data.
+ * This class only exists for backward compatibility, use {@link GraphHopper} instead.
  *
  * @author Peter Karich
  */
 public class GraphHopperOSM extends GraphHopper {
 
-    private final JsonFeatureCollection landmarkSplittingFeatureCollection;
 
     public GraphHopperOSM() {
         this(null);
     }
 
     public GraphHopperOSM(JsonFeatureCollection landmarkSplittingFeatureCollection) {
-        super();
-        this.landmarkSplittingFeatureCollection = landmarkSplittingFeatureCollection;
+        super(landmarkSplittingFeatureCollection);
     }
 
     public String getOSMFile() {
@@ -61,34 +49,4 @@ public class GraphHopperOSM extends GraphHopper {
         return this;
     }
 
-    @Override
-    protected void loadOrPrepareLM(boolean closeEarly) {
-        if (!getLMPreparationHandler().isEnabled() || getLMPreparationHandler().getPreparations().isEmpty())
-            return;
-
-        if (landmarkSplittingFeatureCollection != null && !landmarkSplittingFeatureCollection.getFeatures().isEmpty()) {
-            SpatialRuleLookup ruleLookup = SpatialRuleLookupBuilder.buildIndex(
-                    Collections.singletonList(landmarkSplittingFeatureCollection), "area",
-                    new SpatialRuleFactory() {
-                        @Override
-                        public SpatialRule createSpatialRule(final String id,
-                                        List<Polygon> polygons) {
-                            return new AbstractSpatialRule(polygons) {
-                                @Override
-                                public String getId() {
-                                    return id;
-                                }
-                            };
-                        }
-                    });
-            for (PrepareLandmarks prep : getLMPreparationHandler().getPreparations()) {
-                // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
-                if (ruleLookup != null && !ruleLookup.getRules().isEmpty()) {
-                    prep.setSpatialRuleLookup(ruleLookup);
-                }
-            }
-        }
-
-        super.loadOrPrepareLM(closeEarly);
-    }
 }

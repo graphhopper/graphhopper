@@ -25,7 +25,6 @@ import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
@@ -110,7 +109,7 @@ public class MiniGraphUI {
         ghConfig.setLMProfiles(Arrays.asList(
                 new LMProfile("profile")
         ));
-        GraphHopper hopper = new GraphHopperOSM().init(ghConfig).importOrLoad();
+        GraphHopper hopper = new GraphHopper().init(ghConfig).importOrLoad();
         boolean debug = args.getBool("minigraphui.debug", false);
         boolean useCH = args.getBool("minigraphui.useCH", false);
         new MiniGraphUI(hopper, debug, useCH).visualize();

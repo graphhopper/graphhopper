@@ -29,7 +29,6 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
@@ -128,7 +127,7 @@ public class Measurement {
             throw new IllegalArgumentException("Using measurement time as reference time only works with json files");
         }
 
-        GraphHopper hopper = new GraphHopperOSM() {
+        GraphHopper hopper = new GraphHopper() {
             @Override
             protected void prepareCH(boolean closeEarly) {
                 StopWatch sw = new StopWatch().start();

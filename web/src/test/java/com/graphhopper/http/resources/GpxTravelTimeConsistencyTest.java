@@ -22,7 +22,6 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.Profile;
-import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.Helper;
 import com.graphhopper.gpx.GpxConversions;
@@ -46,8 +45,8 @@ public class GpxTravelTimeConsistencyTest {
     @BeforeAll
     public static void beforeClass() {
         Helper.removeDir(new File(graphFileFoot));
-        hopper = new GraphHopperOSM().
-                setOSMFile(osmFile).
+        hopper = new GraphHopper().
+                setDataReaderFile(osmFile).
                 setProfiles(new Profile("profile").setVehicle("foot").setWeighting("fastest")).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(graphFileFoot).
