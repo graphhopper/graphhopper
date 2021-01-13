@@ -111,13 +111,22 @@ public class GraphHopperMultimodalIT {
         assertThat(firstTransitSolution.getLegs().get(2).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
                 .isEqualTo(LocalTime.parse("06:52:02.633"));
 
+        double EXPECTED_TOTAL_WALKING_DISTANCE = 496.9469678713282;
         assertThat(firstTransitSolution.getLegs().get(0).distance + firstTransitSolution.getLegs().get(2).distance)
-                .isEqualTo(496.9469678713282); // Total walking distance
+                .isEqualTo(EXPECTED_TOTAL_WALKING_DISTANCE);
         List<PathDetail> distances = firstTransitSolution.getPathDetails().get("distance");
         assertThat(distances.stream().mapToDouble(d -> (double) d.getValue()).sum())
-                .isEqualTo(496.9469678713282); // Also total walking distance -- PathDetails only cover access/egress for now
+                .isEqualTo(EXPECTED_TOTAL_WALKING_DISTANCE); // Also total walking distance -- PathDetails only cover access/egress for now
         assertThat(distances.get(0).getFirst()).isEqualTo(0); // PathDetails start and end with PointList
-        assertThat(distances.get(distances.size()-1).getLast()).isEqualTo(firstTransitSolution.getPoints().size()-1);
+        assertThat(distances.get(distances.size()-1).getLast()).isEqualTo(10);
+
+        List<PathDetail> accessDistances = ((Trip.WalkLeg) firstTransitSolution.getLegs().get(0)).details.get("distance");
+        assertThat(accessDistances.get(0).getFirst()).isEqualTo(0);
+        assertThat(accessDistances.get(accessDistances.size()-1).getLast()).isEqualTo(2);
+
+        List<PathDetail> egressDistances = ((Trip.WalkLeg) firstTransitSolution.getLegs().get(2)).details.get("distance");
+        assertThat(egressDistances.get(0).getFirst()).isEqualTo(0);
+        assertThat(egressDistances.get(egressDistances.size()-1).getLast()).isEqualTo(5);
 
         ResponsePath walkSolution = response.getAll().stream().filter(p -> p.getLegs().size() == 1).findFirst().get();
         assertThat(walkSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
