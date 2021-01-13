@@ -67,57 +67,11 @@ public class GraphHopperGtfs extends GraphHopperOSM {
     }
 
     @Override
-    protected DataReader importData() throws IOException {
+    protected void readData() {
         if (ghConfig.has("datareader.file")) {
-            return super.importData();
+            super.readData();
         } else {
             getGraphHopperStorage().create(1000);
-            return new DataReader() {
-                @Override
-                public DataReader setFile(File file) {
-                    return this;
-                }
-
-                @Override
-                public DataReader setElevationProvider(ElevationProvider ep) {
-                    return this;
-                }
-
-                @Override
-                public DataReader setWorkerThreads(int workerThreads) {
-                    return this;
-                }
-
-                @Override
-                public DataReader setWayPointMaxDistance(double wayPointMaxDistance) {
-                    return this;
-                }
-
-                @Override
-                public DataReader setWayPointElevationMaxDistance(double elevationWayPointMaxDistance) {
-                    return this;
-                }
-
-                @Override
-                public DataReader setSmoothElevation(boolean smoothElevation) {
-                    return this;
-                }
-
-                @Override
-                public DataReader setLongEdgeSamplingDistance(double longEdgeSamplingDistance) {
-                    return this;
-                }
-
-                @Override
-                public void readGraph() {
-
-                }
-
-                @Override
-                public Date getDataDate() {
-                    return null;
-                }
-            };
         }
     }
 

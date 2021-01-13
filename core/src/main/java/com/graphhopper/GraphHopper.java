@@ -626,19 +626,7 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
-    private void readData() {
-        try {
-            DataReader reader = importData();
-            DateFormat f = createFormatter();
-            ghStorage.getProperties().put("datareader.import.date", f.format(new Date()));
-            if (reader.getDataDate() != null)
-                ghStorage.getProperties().put("datareader.data.date", f.format(reader.getDataDate()));
-        } catch (IOException ex) {
-            throw new RuntimeException("Cannot read file " + getDataReaderFile(), ex);
-        }
-    }
-
-    protected DataReader importData() throws IOException {
+    protected void readData() {
         ensureWriteAccess();
         if (ghStorage == null)
             throw new IllegalStateException("Load graph before importing OSM data");
@@ -649,8 +637,15 @@ public class GraphHopper implements GraphHopperAPI {
 
         DataReader reader = createReader(ghStorage);
         logger.info("using " + ghStorage.toString() + ", memory:" + getMemInfo());
-        reader.readGraph();
-        return reader;
+        try {
+            reader.readGraph();
+        } catch (IOException ex) {
+            throw new RuntimeException("Cannot read file " + getDataReaderFile(), ex);
+        }
+        DateFormat f = createFormatter();
+        ghStorage.getProperties().put("datareader.import.date", f.format(new Date()));
+        if (reader.getDataDate() != null)
+            ghStorage.getProperties().put("datareader.data.date", f.format(reader.getDataDate()));
     }
 
     protected DataReader createReader(GraphHopperStorage ghStorage) {
@@ -663,13 +658,20 @@ public class GraphHopper implements GraphHopperAPI {
             throw new IllegalArgumentException("No file for DataReader specified");
 
         logger.info("start creating graph from " + dataReaderFile);
-        return reader.setFile(new File(dataReaderFile)).
+        return reader.setFile(_getDataReaderFile()).
                 setElevationProvider(eleProvider).
                 setWorkerThreads(dataReaderWorkerThreads).
                 setWayPointMaxDistance(dataReaderWayPointMaxDistance).
                 setWayPointElevationMaxDistance(routerConfig.getElevationWayPointMaxDistance()).
                 setSmoothElevation(smoothElevation).
                 setLongEdgeSamplingDistance(longEdgeSamplingDistance);
+    }
+
+    /**
+     * Currently we use this for a few tests where the dataReaderFile is loaded from the classpath
+     */
+    protected File _getDataReaderFile() {
+        return new File(dataReaderFile);
     }
 
     /**

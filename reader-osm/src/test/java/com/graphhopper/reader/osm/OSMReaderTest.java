@@ -23,7 +23,6 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperTest;
 import com.graphhopper.config.Profile;
-import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
@@ -44,8 +43,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -902,18 +899,12 @@ public class OSMReaderTest {
     @Test
     public void testRoadClassInfo() {
         GraphHopper gh = new GraphHopperOSM() {
-
             @Override
-            protected DataReader importData() {
-                try {
-                    DataReader reader = new OSMReader(getGraphHopperStorage()).setFile(new File(getClass().getResource(file2).toURI()));
-                    reader.readGraph();
-                    return reader;
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
+            protected File _getDataReaderFile() {
+                return new File(getClass().getResource(file2).getFile());
             }
-        }.setEncodingManager(EncodingManager.create("car,bike")).
+        }.setOSMFile("dummy").
+                setEncodingManager(EncodingManager.create("car,bike")).
                 setProfiles(new Profile("profile").setVehicle("car").setWeighting("fastest")).
                 setMinNetworkSize(0).
                 setGraphHopperLocation(dir).
@@ -964,26 +955,18 @@ public class OSMReaderTest {
         }
 
         @Override
-        protected DataReader createReader(GraphHopperStorage tmpGraph) {
-            return initDataReader(new OSMReader(tmpGraph));
-        }
-
-        @Override
-        protected DataReader importData() throws IOException {
+        protected void readData() {
             GraphHopperStorage tmpGraph = newGraph(dir, getEncodingManager(), hasElevation(),
                     getEncodingManager().needsTurnCostsSupport());
             setGraphHopperStorage(tmpGraph);
-
-            DataReader osmReader = createReader(tmpGraph);
-            try {
-                osmReader.setFile(new File(getClass().getResource(getOSMFile()).toURI()));
-            } catch (URISyntaxException e) {
-                throw new RuntimeException(e);
-            }
-            osmReader.readGraph();
+            super.readData();
             carOutExplorer = getGraphHopperStorage().createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder));
             carAllExplorer = getGraphHopperStorage().createEdgeExplorer(DefaultEdgeFilter.allEdges(carEncoder));
-            return osmReader;
+        }
+
+        @Override
+        protected File _getDataReaderFile() {
+            return new File(getClass().getResource(getOSMFile()).getFile());
         }
     }
 }

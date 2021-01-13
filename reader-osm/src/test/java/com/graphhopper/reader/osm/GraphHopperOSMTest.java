@@ -306,14 +306,14 @@ public class GraphHopperOSMTest {
         final CountDownLatch latch2 = new CountDownLatch(1);
         final GraphHopper instance1 = new GraphHopperOSM() {
             @Override
-            protected DataReader importData() throws IOException {
+            protected void readData() {
                 try {
                     latch2.countDown();
                     latch1.await(3, TimeUnit.SECONDS);
                 } catch (InterruptedException ex) {
                     throw new RuntimeException(ex);
                 }
-                return super.importData();
+                super.readData();
             }
         }.setStoreOnFlush(true).
                 setEncodingManager(EncodingManager.create("car")).
@@ -629,11 +629,11 @@ public class GraphHopperOSMTest {
     }
 
     @Test
-    public void testFailsForMissingParameters() throws IOException {
+    public void testFailsForMissingParameters() {
         class GHTmp extends GraphHopperOSM {
             @Override
-            public DataReader importData() throws IOException {
-                return super.importData();
+            public void readData() {
+                super.readData();
             }
         }
 
@@ -641,7 +641,7 @@ public class GraphHopperOSMTest {
         GHTmp tmp = new GHTmp();
         try {
             tmp.setDataReaderFile(testOsm);
-            tmp.importData();
+            tmp.readData();
             fail();
         } catch (IllegalStateException ex) {
             assertEquals("Load graph before importing OSM data", ex.getMessage());
