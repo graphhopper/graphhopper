@@ -64,7 +64,7 @@ import static com.graphhopper.util.Helper.nf;
  *
  * @author Peter Karich
  */
-public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap {
+public class OSMReader implements TurnCostParser.ExternalInternalMap {
     protected static final int EMPTY_NODE = -1;
     // pillar node is >= 3
     protected static final int PILLAR_NODE = 1;
@@ -127,7 +127,6 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         tcs = graph.getTurnCostStorage();
     }
 
-    @Override
     public void readGraph() throws IOException {
         if (encodingManager == null)
             throw new IllegalStateException("Encoding manager was not set.");
@@ -918,38 +917,32 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         osmWayIdToRouteWeightMap.put(osmId, relFlagsAsLong);
     }
 
-    @Override
     public OSMReader setWayPointMaxDistance(double maxDist) {
         doSimplify = maxDist > 0;
         simplifyAlgo.setMaxDistance(maxDist);
         return this;
     }
 
-    @Override
-    public DataReader setWayPointElevationMaxDistance(double elevationWayPointMaxDistance) {
+    public OSMReader setWayPointElevationMaxDistance(double elevationWayPointMaxDistance) {
         simplifyAlgo.setElevationMaxDistance(elevationWayPointMaxDistance);
         return this;
     }
 
-    @Override
-    public DataReader setSmoothElevation(boolean smoothElevation) {
+    public OSMReader setSmoothElevation(boolean smoothElevation) {
         this.smoothElevation = smoothElevation;
         return this;
     }
 
-    @Override
-    public DataReader setLongEdgeSamplingDistance(double longEdgeSamplingDistance) {
+    public OSMReader setLongEdgeSamplingDistance(double longEdgeSamplingDistance) {
         this.longEdgeSamplingDistance = longEdgeSamplingDistance;
         return this;
     }
 
-    @Override
     public OSMReader setWorkerThreads(int numOfWorkers) {
         this.workerThreads = numOfWorkers;
         return this;
     }
 
-    @Override
     public OSMReader setElevationProvider(ElevationProvider eleProvider) {
         if (eleProvider == null)
             throw new IllegalStateException("Use the NOOP elevation provider instead of null or don't call setElevationProvider");
@@ -961,8 +954,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         return this;
     }
 
-    @Override
-    public DataReader setFile(File osmFile) {
+    public OSMReader setFile(File osmFile) {
         this.osmFile = osmFile;
         return this;
     }
@@ -975,7 +967,9 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
                 + " " + Helper.getMemInfo());
     }
 
-    @Override
+    /**
+     * @return the timestamp given in the OSM file header or null if not found
+     */
     public Date getDataDate() {
         return osmDataDate;
     }

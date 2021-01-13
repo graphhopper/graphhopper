@@ -19,14 +19,12 @@ package com.graphhopper.reader.osm;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.util.JsonFeatureCollection;
-import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleFactory;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
 import org.locationtech.jts.geom.Polygon;
 
 import java.util.Collections;
@@ -48,11 +46,6 @@ public class GraphHopperOSM extends GraphHopper {
     public GraphHopperOSM(JsonFeatureCollection landmarkSplittingFeatureCollection) {
         super();
         this.landmarkSplittingFeatureCollection = landmarkSplittingFeatureCollection;
-    }
-
-    @Override
-    protected DataReader createReader(GraphHopperStorage ghStorage) {
-        return initDataReader(new OSMReader(ghStorage));
     }
 
     public String getOSMFile() {

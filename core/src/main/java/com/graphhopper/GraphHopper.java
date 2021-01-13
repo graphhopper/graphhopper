@@ -20,8 +20,8 @@ package com.graphhopper;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
+import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.DefaultWeightingFactory;
 import com.graphhopper.routing.Router;
@@ -604,17 +604,19 @@ public class GraphHopper implements GraphHopperAPI {
     /**
      * Creates the graph from OSM data.
      */
-    private GraphHopper process(String graphHopperLocation, boolean closeEarly) {
+    private void process(String graphHopperLocation, boolean closeEarly) {
         setGraphHopperLocation(graphHopperLocation);
         GHLock lock = null;
         try {
+            if (ghStorage == null)
+                throw new IllegalStateException("GraphHopperStorage must be initialized before starting the import");
             if (ghStorage.getDirectory().getDefaultType().isStoring()) {
                 lockFactory.setLockDir(new File(graphHopperLocation));
                 lock = lockFactory.create(fileLockName, true);
                 if (!lock.tryLock())
                     throw new RuntimeException("To avoid multiple writers we need to obtain a write lock but it failed. In " + graphHopperLocation, lock.getObtainFailedReason());
             }
-
+            ensureWriteAccess();
             readData();
             cleanUp();
             postProcessing(closeEarly);
@@ -623,19 +625,21 @@ public class GraphHopper implements GraphHopperAPI {
             if (lock != null)
                 lock.release();
         }
-        return this;
     }
 
     protected void readData() {
-        ensureWriteAccess();
-        if (ghStorage == null)
-            throw new IllegalStateException("Load graph before importing OSM data");
-
         if (dataReaderFile == null)
             throw new IllegalStateException("Couldn't load from existing folder: " + ghLocation
                     + " but also cannot use file for DataReader as it wasn't specified!");
 
-        DataReader reader = createReader(ghStorage);
+        logger.info("start creating graph from " + dataReaderFile);
+        OSMReader reader = new OSMReader(ghStorage).setFile(_getDataReaderFile()).
+                setElevationProvider(eleProvider).
+                setWorkerThreads(dataReaderWorkerThreads).
+                setWayPointMaxDistance(dataReaderWayPointMaxDistance).
+                setWayPointElevationMaxDistance(routerConfig.getElevationWayPointMaxDistance()).
+                setSmoothElevation(smoothElevation).
+                setLongEdgeSamplingDistance(longEdgeSamplingDistance);
         logger.info("using " + ghStorage.toString() + ", memory:" + getMemInfo());
         try {
             reader.readGraph();
@@ -646,25 +650,6 @@ public class GraphHopper implements GraphHopperAPI {
         ghStorage.getProperties().put("datareader.import.date", f.format(new Date()));
         if (reader.getDataDate() != null)
             ghStorage.getProperties().put("datareader.data.date", f.format(reader.getDataDate()));
-    }
-
-    protected DataReader createReader(GraphHopperStorage ghStorage) {
-        throw new UnsupportedOperationException("Cannot create DataReader. Solutions: avoid import via calling load directly, "
-                + "provide a DataReader or use e.g. GraphHopperOSM or a different subclass");
-    }
-
-    protected DataReader initDataReader(DataReader reader) {
-        if (dataReaderFile == null)
-            throw new IllegalArgumentException("No file for DataReader specified");
-
-        logger.info("start creating graph from " + dataReaderFile);
-        return reader.setFile(_getDataReaderFile()).
-                setElevationProvider(eleProvider).
-                setWorkerThreads(dataReaderWorkerThreads).
-                setWayPointMaxDistance(dataReaderWayPointMaxDistance).
-                setWayPointElevationMaxDistance(routerConfig.getElevationWayPointMaxDistance()).
-                setSmoothElevation(smoothElevation).
-                setLongEdgeSamplingDistance(longEdgeSamplingDistance);
     }
 
     /**

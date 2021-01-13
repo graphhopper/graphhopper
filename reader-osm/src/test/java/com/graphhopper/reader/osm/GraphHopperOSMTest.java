@@ -23,7 +23,6 @@ import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.PrepareLandmarks;
@@ -630,21 +629,14 @@ public class GraphHopperOSMTest {
 
     @Test
     public void testFailsForMissingParameters() {
-        class GHTmp extends GraphHopperOSM {
-            @Override
-            public void readData() {
-                super.readData();
-            }
-        }
-
         // missing load of graph
-        GHTmp tmp = new GHTmp();
+        instance = new GraphHopper();
         try {
-            tmp.setDataReaderFile(testOsm);
-            tmp.readData();
+            instance.setDataReaderFile(testOsm);
+            instance.importOrLoad();
             fail();
         } catch (IllegalStateException ex) {
-            assertEquals("Load graph before importing OSM data", ex.getMessage());
+            assertEquals("GraphHopperLocation is not specified. Call setGraphHopperLocation or init before", ex.getMessage());
         }
 
         // missing graph location
