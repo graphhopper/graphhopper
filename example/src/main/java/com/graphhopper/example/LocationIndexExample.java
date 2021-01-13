@@ -21,7 +21,7 @@ public class LocationIndexExample {
 
     public static void graphhopperLocationIndex(String relDir) {
         GraphHopper hopper = new GraphHopper().setEncodingManager(EncodingManager.create(new CarFlagEncoder()));
-        hopper.setDataReaderFile(relDir + "core/files/andorra.osm.pbf");
+        hopper.setOSMFile(relDir + "core/files/andorra.osm.pbf");
         hopper.setGraphHopperLocation("./target/locationindex-graph-cache");
         hopper.importOrLoad();
 

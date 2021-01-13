@@ -66,7 +66,7 @@ public class RoutingExampleTC {
     // see RoutingExample for more details
     static GraphHopper createGraphHopperInstance(String ghLoc) {
         GraphHopper hopper = new GraphHopper();
-        hopper.setDataReaderFile(ghLoc);
+        hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/routing-tc-graph-cache");
         // by enabling turn costs for the FlagEncoder, turn restriction constraints like 'no_left_turn' will be taken
         // from OSM

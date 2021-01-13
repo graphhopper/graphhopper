@@ -122,7 +122,7 @@ public class GraphHopperManaged implements Managed {
     public void start() {
         graphHopper.importOrLoad();
         logger.info("loaded graph at:{}, data_reader_file:{}, encoded values:{}, {}",
-                graphHopper.getGraphHopperLocation(), graphHopper.getDataReaderFile(),
+                graphHopper.getGraphHopperLocation(), graphHopper.getOSMFile(),
                 graphHopper.getEncodingManager().toEncodedValuesAsString(),
                 graphHopper.getGraphHopperStorage().toDetailsString());
     }

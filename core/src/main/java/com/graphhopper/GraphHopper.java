@@ -113,7 +113,7 @@ public class GraphHopper implements GraphHopperAPI {
     private final CHPreparationHandler chPreparationHandler = new CHPreparationHandler();
 
     // for data reader
-    private String dataReaderFile;
+    private String osmFile;
     private double dataReaderWayPointMaxDistance = 1;
     private int dataReaderWorkerThreads = 2;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
@@ -332,20 +332,20 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
-    public String getDataReaderFile() {
-        return dataReaderFile;
+    public String getOSMFile() {
+        return osmFile;
     }
 
     /**
-     * This file can be any file type supported by the DataReader. E.g. for the OSMReader it is the
-     * OSM xml (.osm), a compressed xml (.osm.zip or .osm.gz) or a protobuf file (.pbf)
+     * This file can be an osm xml (.osm), a compressed xml (.osm.zip or .osm.gz) or a protobuf file
+     * (.pbf).
      */
-    public GraphHopper setDataReaderFile(String dataReaderFileStr) {
+    public GraphHopper setOSMFile(String osmFile) {
         ensureNotLoaded();
-        if (isEmpty(dataReaderFileStr))
-            throw new IllegalArgumentException("Data reader file cannot be empty.");
+        if (isEmpty(osmFile))
+            throw new IllegalArgumentException("OSM file cannot be empty.");
 
-        dataReaderFile = dataReaderFileStr;
+        this.osmFile = osmFile;
         return this;
     }
 
@@ -441,14 +441,14 @@ public class GraphHopper implements GraphHopperAPI {
 
         String tmpOsmFile = ghConfig.getString("datareader.file", "");
         if (!isEmpty(tmpOsmFile))
-            dataReaderFile = tmpOsmFile;
+            osmFile = tmpOsmFile;
 
         String graphHopperFolder = ghConfig.getString("graph.location", "");
         if (isEmpty(graphHopperFolder) && isEmpty(ghLocation)) {
-            if (isEmpty(dataReaderFile))
+            if (isEmpty(osmFile))
                 throw new IllegalArgumentException("If no graph.location is provided you need to specify an OSM file.");
 
-            graphHopperFolder = pruneFileEnd(dataReaderFile) + "-gh";
+            graphHopperFolder = pruneFileEnd(osmFile) + "-gh";
         }
 
         // graph
@@ -639,12 +639,12 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     protected void readData() {
-        if (dataReaderFile == null)
+        if (osmFile == null)
             throw new IllegalStateException("Couldn't load from existing folder: " + ghLocation
                     + " but also cannot use file for DataReader as it wasn't specified!");
 
-        logger.info("start creating graph from " + dataReaderFile);
-        OSMReader reader = new OSMReader(ghStorage).setFile(_getDataReaderFile()).
+        logger.info("start creating graph from " + osmFile);
+        OSMReader reader = new OSMReader(ghStorage).setFile(_getOSMFile()).
                 setElevationProvider(eleProvider).
                 setWorkerThreads(dataReaderWorkerThreads).
                 setWayPointMaxDistance(dataReaderWayPointMaxDistance).
@@ -655,7 +655,7 @@ public class GraphHopper implements GraphHopperAPI {
         try {
             reader.readGraph();
         } catch (IOException ex) {
-            throw new RuntimeException("Cannot read file " + getDataReaderFile(), ex);
+            throw new RuntimeException("Cannot read file " + getOSMFile(), ex);
         }
         DateFormat f = createFormatter();
         ghStorage.getProperties().put("datareader.import.date", f.format(new Date()));
@@ -666,8 +666,8 @@ public class GraphHopper implements GraphHopperAPI {
     /**
      * Currently we use this for a few tests where the dataReaderFile is loaded from the classpath
      */
-    protected File _getDataReaderFile() {
-        return new File(dataReaderFile);
+    protected File _getOSMFile() {
+        return new File(osmFile);
     }
 
     /**
