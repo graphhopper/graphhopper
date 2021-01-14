@@ -21,7 +21,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.util.JsonFeatureCollection;
 
 /**
- * This class only exists for backward compatibility, use {@link GraphHopper} instead.
+ * This class only exists for backward compatibility. Use {@link GraphHopper} instead.
  *
  * @author Peter Karich
  */
