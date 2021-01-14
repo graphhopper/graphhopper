@@ -187,7 +187,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
                     if (++tmpRelationCounter % 100_000 == 0) {
                         LOGGER.info(nf(tmpRelationCounter) + " (preprocess), osmWayMap:" + nf(getRelFlagsMapSize())
-                                + " " + Helper.getMemInfo());
+                                + ", " + Helper.getMemInfo());
                     }
                 } else if (item.isType(ReaderElement.FILEHEADER)) {
                     final OSMFileHeader fileHeader = (OSMFileHeader) item;
@@ -282,7 +282,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
                         throw new IllegalStateException("Unknown type " + item.getType());
                 }
                 if (++counter % 200_000_000 == 0) {
-                    LOGGER.info(nf(counter) + ", locs:" + nf(locations) + Helper.getMemInfo());
+                    LOGGER.info(nf(counter) + ", locs:" + nf(locations) + ", " + Helper.getMemInfo());
                 }
             }
 
