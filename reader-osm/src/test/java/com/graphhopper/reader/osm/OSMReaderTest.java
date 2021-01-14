@@ -272,7 +272,7 @@ public class OSMReaderTest {
         assertEquals(9.41, graph.getNodeAccess().getLon(0), 1.e-3);
         assertEquals(51.22, graph.getNodeAccess().getLat(1), 1.e-3);
         assertEquals(9.42, graph.getNodeAccess().getLon(1), 1.e-3);
-        assertEquals(DistanceCalcEarth.DIST_EARTH.calcDistance(iter.fetchWayGeometry(FetchMode.ALL)), iter.getDistance(), 1.e-3);
+        assertEquals(DistanceCalcEarth.DIST_EARTH.calcDistance(iter.fetchWayGeometry(FetchMode.ALL)), iter.getDistance(), 1.e-2);
         assertEquals(1312.1, iter.getDistance(), 1.e-1);
         assertEquals(1312.1, DistanceCalcEarth.DIST_EARTH.calcDistance(iter.fetchWayGeometry(FetchMode.ALL)), 1.e-1);
         assertFalse(iter.next());
@@ -286,11 +286,11 @@ public class OSMReaderTest {
         assertEquals(3, graph.getEdges());
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
-            assertEquals(DistanceCalcEarth.DIST_EARTH.calcDistance(iter.fetchWayGeometry(FetchMode.ALL)), iter.getDistance(), 1.e-3);
+            assertEquals(DistanceCalcEarth.DIST_EARTH.calcDistance(iter.fetchWayGeometry(FetchMode.ALL)), iter.getDistance(), 0.01);
         }
-        assertEquals(35.609, graph.getEdgeIteratorState(0, Integer.MIN_VALUE).getDistance(), 1.e-3);
-        assertEquals(75.262, graph.getEdgeIteratorState(1, Integer.MIN_VALUE).getDistance(), 1.e-3);
-        assertEquals(143.354, graph.getEdgeIteratorState(2, Integer.MIN_VALUE).getDistance(), 1.e-3);
+        assertEquals(35.60, graph.getEdgeIteratorState(0, Integer.MIN_VALUE).getDistance(), 0.01);
+        assertEquals(75.26, graph.getEdgeIteratorState(1, Integer.MIN_VALUE).getDistance(), 0.01);
+        assertEquals(143.35, graph.getEdgeIteratorState(2, Integer.MIN_VALUE).getDistance(), 0.01);
     }
 
     @Test

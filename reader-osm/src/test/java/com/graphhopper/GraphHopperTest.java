@@ -1662,9 +1662,9 @@ public class GraphHopperTest {
         assertEquals(1995.38, pathLM.getDistance(), 0.1);
         assertEquals(1995.38, path.getDistance(), 0.1);
 
-        assertEquals(149494, pathCH.getTime());
-        assertEquals(149494, pathLM.getTime());
-        assertEquals(149494, path.getTime());
+        assertEquals(149495, pathCH.getTime());
+        assertEquals(149495, pathLM.getTime());
+        assertEquals(149495, path.getTime());
     }
 
     @Test

@@ -818,7 +818,7 @@ public class QueryGraphTest {
             virtualEdgeDistanceSum += iter.getDistance();
         }
         double directDist = g.getEdgeIteratorState(0, 1).getDistance();
-        assertEquals(directDist, virtualEdgeDistanceSum, 1.e-3);
+        assertEquals(directDist, virtualEdgeDistanceSum, .01);
     }
 
     @Test

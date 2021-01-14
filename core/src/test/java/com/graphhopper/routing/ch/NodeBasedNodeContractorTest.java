@@ -222,7 +222,7 @@ public class NodeBasedNodeContractorTest {
         // 0 ------------> 4
         //  \             /
         //   1 --> 2 --> 3
-        double[] distances = {4.019, 1.006, 1.004, 1.006, 1.004};
+        double[] distances = {4.02, 1.01, 1, 1.01, 1};
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 4).setDistance(distances[0]));
         EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 1).setDistance(distances[1]));
         EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(distances[2]));

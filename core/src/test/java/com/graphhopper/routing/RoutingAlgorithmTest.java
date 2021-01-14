@@ -784,9 +784,9 @@ public class RoutingAlgorithmTest {
         // for two weights per edge it happened that Path (and also the Weighting) read the wrong side
         // of the speed and read 0 => infinity weight => overflow of millis => negative millis!
         Path p = calcPath(graph, fastestWeighting, 0, 10);
-        assertEquals(85124371, p.getTime());
+        assertEquals(85124372, p.getTime());
         assertEquals(425622, p.getDistance(), 1);
-        assertEquals(85124.4, p.getWeight(), 1);
+        assertEquals(85124, p.getWeight(), 1);
     }
 
     @Test
@@ -887,7 +887,7 @@ public class RoutingAlgorithmTest {
         initEleGraph(graph, carEncoder, 60);
         p = calcPath(graph, fakeWeighting, 3, 0, 10, 9);
         assertEquals(nodes(12, 0, 1, 2, 11, 7, 10, 13), p.calcNodes());
-        assertEquals(37009621, p.getTime());
+        assertEquals(37009619, p.getTime());
         assertEquals(616827, p.getDistance(), 1);
         assertEquals(493462, p.getWeight(), 1);
     }
