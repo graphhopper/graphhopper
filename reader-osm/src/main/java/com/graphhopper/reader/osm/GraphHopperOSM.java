@@ -36,4 +36,13 @@ public class GraphHopperOSM extends GraphHopper {
         super(landmarkSplittingFeatureCollection);
     }
 
+    public String getOSMFile() {
+        return getDataReaderFile();
+    }
+
+    public GraphHopperOSM setOSMFile(String osmFileStr) {
+        super.setDataReaderFile(osmFileStr);
+        return this;
+    }
+
 }

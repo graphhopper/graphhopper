@@ -49,7 +49,7 @@ public class RoutingAdditivityTest {
         Helper.removeDir(new File(GH_LOCATION));
         CarFlagEncoder encoder = new CarFlagEncoder();
         graphHopper = new GraphHopper();
-        graphHopper.setOSMFile("../map-matching/files/leipzig_germany.osm.pbf");
+        graphHopper.setDataReaderFile("../map-matching/files/leipzig_germany.osm.pbf");
         graphHopper.setGraphHopperLocation(GH_LOCATION);
         graphHopper.setEncodingManager(EncodingManager.create(encoder));
         graphHopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));

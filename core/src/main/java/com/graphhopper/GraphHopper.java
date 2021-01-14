@@ -332,7 +332,7 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
-    public String getOSMFile() {
+    public String getDataReaderFile() {
         return osmFile;
     }
 
@@ -340,7 +340,7 @@ public class GraphHopper implements GraphHopperAPI {
      * This file can be an osm xml (.osm), a compressed xml (.osm.zip or .osm.gz) or a protobuf file
      * (.pbf).
      */
-    public GraphHopper setOSMFile(String osmFile) {
+    public GraphHopper setDataReaderFile(String osmFile) {
         ensureNotLoaded();
         if (isEmpty(osmFile))
             throw new IllegalArgumentException("OSM file cannot be empty.");
@@ -655,7 +655,7 @@ public class GraphHopper implements GraphHopperAPI {
         try {
             reader.readGraph();
         } catch (IOException ex) {
-            throw new RuntimeException("Cannot read file " + getOSMFile(), ex);
+            throw new RuntimeException("Cannot read file " + getDataReaderFile(), ex);
         }
         DateFormat f = createFormatter();
         ghStorage.getProperties().put("datareader.import.date", f.format(new Date()));

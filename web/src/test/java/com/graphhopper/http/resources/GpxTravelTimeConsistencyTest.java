@@ -46,7 +46,7 @@ public class GpxTravelTimeConsistencyTest {
     public static void beforeClass() {
         Helper.removeDir(new File(graphFileFoot));
         hopper = new GraphHopper().
-                setOSMFile(osmFile).
+                setDataReaderFile(osmFile).
                 setProfiles(new Profile("profile").setVehicle("foot").setWeighting("fastest")).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(graphFileFoot).

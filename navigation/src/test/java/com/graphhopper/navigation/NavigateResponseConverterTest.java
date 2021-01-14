@@ -39,7 +39,7 @@ public class NavigateResponseConverterTest {
         Helper.removeDir(new File(graphFolder));
 
         hopper = new GraphHopper().
-                setOSMFile(osmFile).
+                setDataReaderFile(osmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(graphFolder).
                 setEncodingManager(EncodingManager.create(vehicle)).
