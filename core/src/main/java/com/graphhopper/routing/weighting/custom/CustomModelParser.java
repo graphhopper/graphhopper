@@ -22,7 +22,10 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.TurnCostProvider;
-import com.graphhopper.util.*;
+import com.graphhopper.util.CustomModel;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.JsonFeature;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
 import org.codehaus.commons.compiler.CompileException;
@@ -128,10 +131,10 @@ public class CustomModelParser {
             SimpleCompiler sc = createCompiler(counter, cu);
             return sc.getClassLoader().loadClass("com.graphhopper.routing.weighting.custom.JaninoCustomWeightingHelperSubclass" + counter);
         } catch (Exception ex) {
-            String location = "";
+            String errString = "Cannot compile expression";
             if (ex instanceof CompileException)
-                location = " in " + ((CompileException) ex).getLocation().getFileName();
-            throw new IllegalArgumentException("Cannot compile expression " + location + ", " + ex.getMessage(), ex);
+                errString += ", in " + ((CompileException) ex).getLocation().getFileName();
+            throw new IllegalArgumentException(errString + " " + ex.getMessage(), ex);
         }
     }
 
@@ -144,7 +147,7 @@ public class CustomModelParser {
                                                                       CustomModel customModel, EncodedValueLookup lookup,
                                                                       double globalMaxSpeed) throws Exception {
         List<Java.BlockStatement> speedStatements = new ArrayList<>();
-        speedStatements.addAll(verifyExpressions(new StringBuilder(), "speed_user_statements", speedVariables,
+        speedStatements.addAll(verifyExpressions(new StringBuilder(), "in 'speed' entry, ", speedVariables,
                 customModel.getSpeed(), lookup, "return Math.min(value, " + globalMaxSpeed + ");\n"));
         String speedMethodStartBlock = "double value = super.getRawSpeed(edge, reverse);\n";
         // a bit inefficient to possibly define variables twice, but for now we have two separate methods
@@ -164,7 +167,7 @@ public class CustomModelParser {
     private static List<Java.BlockStatement> createGetPriorityStatements(Set<String> priorityVariables,
                                                                          CustomModel customModel, EncodedValueLookup lookup) throws Exception {
         List<Java.BlockStatement> priorityStatements = new ArrayList<>();
-        priorityStatements.addAll(verifyExpressions(new StringBuilder("double value = 1;\n"), "priority_user_statements",
+        priorityStatements.addAll(verifyExpressions(new StringBuilder("double value = 1;\n"), "in 'priority' entry, ",
                 priorityVariables, customModel.getPriority(), lookup, "return value;"));
         String priorityMethodStartBlock = "";
         for (String arg : priorityVariables) {
