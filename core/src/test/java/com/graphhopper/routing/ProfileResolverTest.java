@@ -99,7 +99,7 @@ public class ProfileResolverTest {
         ProfileResolver profileResolver = new ProfileResolver(
                 EncodingManager.create("foot"),
                 Collections.singletonList(new Profile("profile").setVehicle("foot").setWeighting("fastest")),
-                Collections.<CHProfile>emptyList(), Collections.<LMProfile>emptyList());
+                Collections.emptyList(), Collections.emptyList());
 
         assertProfileNotFound(profileResolver, new PMap().putObject(Parameters.Routing.EDGE_BASED, true));
         assertEquals("profile", profileResolver.resolveProfile(new PMap()).getName());
