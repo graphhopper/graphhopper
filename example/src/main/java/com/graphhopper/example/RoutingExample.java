@@ -8,14 +8,17 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.osm.GraphHopperOSM;
-import com.graphhopper.routing.ev.RoadClass;
-import com.graphhopper.util.CustomModel;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Locale;
+
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.LIMIT;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
 
 public class RoutingExample {
     public static void main(String[] args) {
@@ -25,6 +28,9 @@ public class RoutingExample {
         speedModeVersusFlexibleMode(hopper);
         headingAndAlternativeRoute(hopper);
         customizableRouting(relDir + "core/files/andorra.osm.pbf");
+
+        // release resources to properly shutdown or start a new instance
+        hopper.close();
     }
 
     static GraphHopper createGraphHopperInstance(String ghLoc) {
@@ -91,7 +97,7 @@ public class RoutingExample {
                 addPoint(new GHPoint(42.508774, 1.535414)).addPoint(new GHPoint(42.506595, 1.528795)).
                 setHeadings(Arrays.asList(180d, 90d)).
                 // use flexible mode (i.e. disable contraction hierarchies) to make heading and pass_through working
-                putHint(Parameters.CH.DISABLE, true);
+                        putHint(Parameters.CH.DISABLE, true);
         // if you have via points you can avoid U-turns there with
         // req.getHints().putObject(Parameters.Routing.PASS_THROUGH, true);
         GHResponse res = hopper.route(req);
@@ -139,10 +145,10 @@ public class RoutingExample {
         // and also the blog posts https://www.graphhopper.com/?s=customizable+routing
         CustomModel model = new CustomModel();
         req.putHint(CustomModel.KEY, model);
-        Map<String, Double> map = new LinkedHashMap<>();
-        model.setMaxSpeedFallback(100d);
-        model.getPriority().put(RoadClass.KEY, map);
-        map.put(RoadClass.PRIMARY.toString(), 0.5);
+        model.addToPriority(If("road_class == PRIMARY", MULTIPLY, 0.5));
+
+        // unconditional limit to 100km/h
+        model.addToPriority(If("true", LIMIT, 100));
 
         res = hopper.route(req);
         if (res.hasErrors())

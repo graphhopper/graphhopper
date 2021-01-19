@@ -63,10 +63,6 @@ public class Helper {
         return string.toUpperCase(Locale.ROOT);
     }
 
-    static String packageToPath(Package pkg) {
-        return pkg.getName().replaceAll("\\.", File.separator);
-    }
-
     public static int countBitValue(int maxTurnCosts) {
         if (maxTurnCosts < 0)
             throw new IllegalArgumentException("maxTurnCosts cannot be negative " + maxTurnCosts);

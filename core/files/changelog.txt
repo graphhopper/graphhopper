@@ -1,4 +1,5 @@
 3.0
+    CustomWeighting language breaks old format but is more powerful and easier to read; it also allows factors >1 for server-side CustomModels
 	renamed GHUtilities.setProperties to setSpeed
     the name of an encoded value can only contain lower letters, underscore or numbers. It has to start with a lower letter
     default for GraphHopperMatrixWeb (client for Matrix API) is now the sync POST request without the artificial polling delay in most cases

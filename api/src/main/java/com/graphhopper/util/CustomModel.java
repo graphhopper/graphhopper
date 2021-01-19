@@ -17,6 +17,8 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.json.Statement;
+
 import java.util.*;
 
 /**
@@ -26,30 +28,41 @@ public class CustomModel {
 
     public static final String KEY = "custom_model";
 
-    static double DEFAULT_D_I = 70;
-    // optional:
-    private Double maxSpeedFallback;
-    private Double headingPenalty = Parameters.Routing.DEFAULT_HEADING_PENALTY;
-    // default value derived from the cost for time e.g. 25€/hour and for distance 0.5€/km, for trucks this is usually larger
-    private double distanceInfluence = DEFAULT_D_I;
-    private Map<String, Object> speedFactorMap = new LinkedHashMap<>();
-    private Map<String, Object> maxSpeedMap = new LinkedHashMap<>();
-    private Map<String, Object> priorityMap = new LinkedHashMap<>();
+    // e.g. 70 means that the time costs are 25€/hour and for the distance 0.5€/km (for trucks this is usually larger)
+    static double DEFAULT_DISTANCE_INFLUENCE = 70;
+    private Double distanceInfluence;
+    private double headingPenalty = Parameters.Routing.DEFAULT_HEADING_PENALTY;
+    private boolean internal;
+    private List<Statement> speedStatements = new ArrayList<>();
+    private List<Statement> priorityStatements = new ArrayList<>();
     private Map<String, JsonFeature> areas = new HashMap<>();
 
     public CustomModel() {
     }
 
     public CustomModel(CustomModel toCopy) {
-        this.maxSpeedFallback = toCopy.maxSpeedFallback;
         this.headingPenalty = toCopy.headingPenalty;
         this.distanceInfluence = toCopy.distanceInfluence;
+        // do not copy "internal"
 
-        speedFactorMap = deepCopy(toCopy.getSpeedFactor());
-        maxSpeedMap = deepCopy(toCopy.getMaxSpeed());
-        priorityMap = deepCopy(toCopy.getPriority());
+        speedStatements = deepCopy(toCopy.getSpeed());
+        priorityStatements = deepCopy(toCopy.getPriority());
 
         areas.putAll(toCopy.getAreas());
+    }
+
+    /**
+     * This method is for internal usage only! Parsing a CustomModel is expensive and so we cache the result, which is
+     * especially important for fast landmark queries (hybrid mode). Now this method ensures that all server-side custom
+     * models are cached in a special internal cache which does not remove seldom accessed entries.
+     */
+    public CustomModel internal() {
+        this.internal = true;
+        return this;
+    }
+
+    public boolean isInternal() {
+        return internal;
     }
 
     private <T> T deepCopy(T originalObject) {
@@ -72,25 +85,22 @@ public class CustomModel {
         }
     }
 
-    public Map<String, Object> getSpeedFactor() {
-        return speedFactorMap;
+    public List<Statement> getSpeed() {
+        return speedStatements;
     }
 
-    public Map<String, Object> getMaxSpeed() {
-        return maxSpeedMap;
-    }
-
-    public CustomModel setMaxSpeedFallback(Double maxSpeedFallback) {
-        this.maxSpeedFallback = maxSpeedFallback;
+    public CustomModel addToSpeed(Statement st) {
+        getSpeed().add(st);
         return this;
     }
 
-    public Double getMaxSpeedFallback() {
-        return maxSpeedFallback;
+    public List<Statement> getPriority() {
+        return priorityStatements;
     }
 
-    public Map<String, Object> getPriority() {
-        return priorityMap;
+    public CustomModel addToPriority(Statement st) {
+        getPriority().add(st);
+        return this;
     }
 
     public CustomModel setAreas(Map<String, JsonFeature> areas) {
@@ -108,7 +118,7 @@ public class CustomModel {
     }
 
     public double getDistanceInfluence() {
-        return distanceInfluence;
+        return distanceInfluence == null ? DEFAULT_DISTANCE_INFLUENCE : distanceInfluence;
     }
 
     public void setHeadingPenalty(double headingPenalty) {
@@ -126,43 +136,38 @@ public class CustomModel {
 
     private String createContentString() {
         // used to check against stored custom models, see #2026
-        return "distanceInfluence=" + distanceInfluence + "|speedFactor=" + speedFactorMap + "|maxSpeed=" + maxSpeedMap +
-                "|maxSpeedFallback=" + maxSpeedFallback + "|priorityMap=" + priorityMap + "|areas=" + areas;
+        return "distanceInfluence=" + distanceInfluence + "|headingPenalty=" + headingPenalty
+                + "|speedStatements=" + speedStatements + "|priorityStatements=" + priorityStatements + "|areas=" + areas;
     }
 
     /**
      * A new CustomModel is created from the baseModel merged with the specified queryModel.
      */
     public static CustomModel merge(CustomModel baseModel, CustomModel queryModel) {
-        // avoid changing the specified CustomModel via deep copy otherwise the server-side CustomModel would be modified (same problem if queryModel would be used as target)
+        if (queryModel.isInternal())
+            throw new IllegalArgumentException("CustomModel in query cannot be internal");
+
+        // avoid changing the specified CustomModel via deep copy otherwise the server-side CustomModel would be
+        // modified (same problem if queryModel would be used as target)
         CustomModel mergedCM = new CustomModel(baseModel);
-        if (queryModel.maxSpeedFallback != null) {
-            if (mergedCM.maxSpeedFallback != null && mergedCM.maxSpeedFallback > queryModel.maxSpeedFallback)
-                throw new IllegalArgumentException("CustomModel in query can only use max_speed_fallback bigger or equal to " + mergedCM.maxSpeedFallback);
-            mergedCM.maxSpeedFallback = queryModel.maxSpeedFallback;
-        }
-        if (Math.abs(queryModel.distanceInfluence - CustomModel.DEFAULT_D_I) > 0.01) {
-            if (mergedCM.distanceInfluence > queryModel.distanceInfluence)
-                throw new IllegalArgumentException("CustomModel in query can only use distance_influence bigger or equal to " + mergedCM.distanceInfluence);
+        // we only overwrite the distance influence if a non-default value was used
+        if (queryModel.distanceInfluence != null) {
+            if (queryModel.distanceInfluence < mergedCM.getDistanceInfluence())
+                throw new IllegalArgumentException("CustomModel in query can only use " +
+                        "distance_influence bigger or equal to " + mergedCM.getDistanceInfluence() +
+                        ", given: " + queryModel.distanceInfluence);
             mergedCM.distanceInfluence = queryModel.distanceInfluence;
         }
 
-        // example
-        // max_speed: { road_class: { secondary : 0.4 } }
-        // or
-        // priority:  { max_weight: { "<3.501": 0.7 } }
-        for (Map.Entry<String, Object> queryEntry : queryModel.getMaxSpeed().entrySet()) {
-            Object value = mergedCM.maxSpeedMap.get(queryEntry.getKey());
-            applyChange(mergedCM.maxSpeedMap, value, queryEntry);
-        }
-        for (Map.Entry<String, Object> queryEntry : queryModel.getSpeedFactor().entrySet()) {
-            Object value = mergedCM.speedFactorMap.get(queryEntry.getKey());
-            applyChange(mergedCM.speedFactorMap, value, queryEntry);
-        }
-        for (Map.Entry<String, Object> queryEntry : queryModel.getPriority().entrySet()) {
-            Object value = mergedCM.priorityMap.get(queryEntry.getKey());
-            applyChange(mergedCM.priorityMap, value, queryEntry);
-        }
+        checkFirst(queryModel.getSpeed());
+        checkFirst(queryModel.getPriority());
+
+        check(queryModel.getPriority());
+        check(queryModel.getSpeed());
+
+        mergedCM.speedStatements.addAll(queryModel.getSpeed());
+        mergedCM.priorityStatements.addAll(queryModel.getPriority());
+
         for (Map.Entry<String, JsonFeature> entry : queryModel.getAreas().entrySet()) {
             if (mergedCM.areas.containsKey(entry.getKey()))
                 throw new IllegalArgumentException("area " + entry.getKey() + " already exists");
@@ -172,92 +177,15 @@ public class CustomModel {
         return mergedCM;
     }
 
-    private static void applyChange(Map<String, Object> mergedSuperMap,
-                                    Object mergedObj, Map.Entry<String, Object> querySuperEntry) {
-        if (mergedObj == null) {
-            // no need for a merge
-            mergedSuperMap.put(querySuperEntry.getKey(), querySuperEntry.getValue());
-            return;
-        }
-        if (!(mergedObj instanceof Map))
-            throw new IllegalArgumentException(querySuperEntry.getKey() + ": entry is not a map: " + mergedObj);
-        Object queryObj = querySuperEntry.getValue();
-        if (!(queryObj instanceof Map))
-            throw new IllegalArgumentException(querySuperEntry.getKey() + ": query entry is not a map: " + queryObj);
-
-        Map<Object, Object> mergedMap = (Map) mergedObj;
-        Map<Object, Object> queryMap = (Map) queryObj;
-        for (Map.Entry queryEntry : queryMap.entrySet()) {
-            if (queryEntry.getKey() == null || queryEntry.getKey().toString().isEmpty())
-                throw new IllegalArgumentException(querySuperEntry.getKey() + ": key cannot be null or empty");
-            String key = queryEntry.getKey().toString();
-            if (isComparison(key))
-                continue;
-
-            Object mergedValue = mergedMap.get(key);
-            if (mergedValue == null) {
-                mergedMap.put(key, queryEntry.getValue());
-            } else if (multiply(queryEntry.getValue(), mergedValue) != null) {
-                // existing value needs to be multiplied
-                mergedMap.put(key, multiply(queryEntry.getValue(), mergedValue));
-            } else {
-                throw new IllegalArgumentException(querySuperEntry.getKey() + ": cannot merge value " + queryEntry.getValue() + " for key " + key + ", merged value: " + mergedValue);
-            }
-        }
-
-        // now special handling for comparison keys start e.g. <2 or >3.0, see testMergeComparisonKeys
-        // this could be simplified if CustomModel would be already an abstract syntax tree :)
-        List<String> queryComparisonKeys = getComparisonKeys(queryMap);
-        if (queryComparisonKeys.isEmpty())
-            return;
-        if (queryComparisonKeys.size() > 1)
-            throw new IllegalArgumentException(querySuperEntry.getKey() + ": entry in " + querySuperEntry.getValue() + " must not contain more than one key comparison but contained " + queryComparisonKeys);
-        char opChar = queryComparisonKeys.get(0).charAt(0);
-        List<String> mergedComparisonKeys = getComparisonKeys(mergedMap);
-        if (mergedComparisonKeys.isEmpty()) {
-            mergedMap.put(queryComparisonKeys.get(0), queryMap.get(queryComparisonKeys.get(0)));
-        } else if (mergedComparisonKeys.get(0).charAt(0) == opChar) {
-            if (multiply(queryMap.get(queryComparisonKeys.get(0)), mergedMap.get(mergedComparisonKeys.get(0))) != 0)
-                throw new IllegalArgumentException(querySuperEntry.getKey() + ": currently only blocking comparisons are allowed, but query was " + queryMap.get(queryComparisonKeys.get(0)) + " and server side: " + mergedMap.get(mergedComparisonKeys.get(0)));
-
-            try {
-                double comparisonMergedValue = Double.parseDouble(mergedComparisonKeys.get(0).substring(1));
-                double comparisonQueryValue = Double.parseDouble(queryComparisonKeys.get(0).substring(1));
-                if (opChar == '<') {
-                    if (comparisonMergedValue > comparisonQueryValue)
-                        throw new IllegalArgumentException(querySuperEntry.getKey() + ": only use a comparison key with a bigger value than " + comparisonMergedValue + " but was " + comparisonQueryValue);
-                } else if (opChar == '>') {
-                    if (comparisonMergedValue < comparisonQueryValue)
-                        throw new IllegalArgumentException(querySuperEntry.getKey() + ": only use a comparison key with a smaller value than " + comparisonMergedValue + " but was " + comparisonQueryValue);
-                } else {
-                    throw new IllegalArgumentException(querySuperEntry.getKey() + ": only use a comparison key with < or > as operator but was " + opChar);
-                }
-                mergedMap.remove(mergedComparisonKeys.get(0));
-                mergedMap.put(queryComparisonKeys.get(0), queryMap.get(queryComparisonKeys.get(0)));
-            } catch (NumberFormatException ex) {
-                throw new IllegalArgumentException(querySuperEntry.getKey() + ": number in one of the 'comparison' keys for " + querySuperEntry.getKey() + " wasn't parsable: " + queryComparisonKeys + " (" + mergedComparisonKeys + ")");
-            }
-        } else {
-            throw new IllegalArgumentException(querySuperEntry.getKey() + ": comparison keys must match but did not: " + queryComparisonKeys.get(0) + " vs " + mergedComparisonKeys.get(0));
-        }
+    private static void checkFirst(List<Statement> priority) {
+        if (!priority.isEmpty() && priority.get(0).getKeyword() != Statement.Keyword.IF)
+            throw new IllegalArgumentException("First statement needs to be an if statement but was " + priority.get(0).getKeyword().getName());
     }
 
-    static Double multiply(Object queryValue, Object mergedValue) {
-        if (queryValue instanceof Number && mergedValue instanceof Number)
-            return ((Number) queryValue).doubleValue() * ((Number) mergedValue).doubleValue();
-        return null;
-    }
-
-    static boolean isComparison(String key) {
-        return key.startsWith("<") || key.startsWith(">");
-    }
-
-    private static List<String> getComparisonKeys(Map<Object, Object> map) {
-        List<String> list = new ArrayList<>();
-        for (Map.Entry queryEntry : map.entrySet()) {
-            String key = queryEntry.getKey().toString();
-            if (isComparison(key)) list.add(key);
+    private static void check(List<Statement> list) {
+        for (Statement statement : list) {
+            if (statement.getOperation() == Statement.Op.MULTIPLY && statement.getValue() > 1)
+                throw new IllegalArgumentException("factor cannot be larger than 1 but was " + statement.getValue());
         }
-        return list;
     }
 }

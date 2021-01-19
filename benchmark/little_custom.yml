@@ -1,8 +1,9 @@
 # this is a little customized model used to benchmark routing with a customized weighting that is similar to the
 # standard car profile
 priority:
-  road_access:
-    private: 0.1
-    destination: 0.1
+  - if: road_access == PRIVATE
+    multiply by: 0.1
+  - else if: road_access == DESTINATION
+    multiply by: 0.1
 
 distance_influence: 0
