@@ -27,6 +27,9 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static com.graphhopper.http.util.TestUtils.clientTarget;
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.LIMIT;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
@@ -52,7 +55,12 @@ public class CustomWeightingRouteResourceTest {
                         new CustomProfile("cargo_bike").setVehicle("bike").
                                 putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/cargo_bike.yml"),
                         new CustomProfile("json_bike").setVehicle("bike").
-                                putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/json_bike.json"))).
+                                putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/json_bike.json"),
+                        new CustomProfile("custom_bike").
+                            setCustomModel(new CustomModel().
+                                    addToSpeed(If("road_class == PRIMARY", LIMIT, 28)).
+                                    addToPriority(If("max_width < 1.2", MULTIPLY, 0))).
+                            setVehicle("bike"))).
                 setCHProfiles(Collections.singletonList(new CHProfile("truck")));
         return config;
     }
@@ -134,6 +142,21 @@ public class CustomWeightingRouteResourceTest {
         String jsonQuery = "{" +
                 " \"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
                 " \"profile\": \"json_bike\"" +
+                "}";
+        final Response response = clientTarget(app, "/route-custom").request().post(Entity.json(jsonQuery));
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode infoJson = json.get("info");
+        assertFalse(infoJson.has("errors"));
+        JsonNode path = json.get("paths").get(0);
+        assertEquals(path.get("distance").asDouble(), 660, 10);
+    }
+
+    @Test
+    public void customBikeShouldBeLikeJsonBike() {
+        String jsonQuery = "{" +
+                " \"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
+                " \"profile\": \"custom_bike\"" +
                 "}";
         final Response response = clientTarget(app, "/route-custom").request().post(Entity.json(jsonQuery));
         assertEquals(200, response.getStatus());
