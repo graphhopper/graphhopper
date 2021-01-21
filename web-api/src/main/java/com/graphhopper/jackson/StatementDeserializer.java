@@ -8,8 +8,9 @@ import com.graphhopper.json.Statement;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
-public class StatementDeserializer extends JsonDeserializer<Statement> {
+class StatementDeserializer extends JsonDeserializer<Statement> {
     @Override
     public Statement deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         JsonNode treeNode = p.readValueAsTree();
@@ -23,7 +24,7 @@ public class StatementDeserializer extends JsonDeserializer<Statement> {
             }
         }
         if (jsonOp == null)
-            throw new IllegalArgumentException("Cannot find operation. Must be one of " + Arrays.toString(Statement.Op.values()));
+            throw new IllegalArgumentException("Cannot find an operation in " + treeNode + ". Must be one of: " + Arrays.stream(Statement.Op.values()).map(Statement.Op::getName).collect(Collectors.joining(",")));
         if (Double.isNaN(value))
             throw new IllegalArgumentException("Value of operation " + jsonOp.getName() + " is not a number");
 
