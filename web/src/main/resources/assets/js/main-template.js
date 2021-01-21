@@ -81,7 +81,8 @@ $(document).ready(function (e) {
         mapLayer.adjustMapSize();
     });
     $("#flex-example").click(function() {
-         $("#flex-input-text").val("speed_factor:\n  road_class:\n    motorway: 0.8\npriority:\n  road_environment:\n    tunnel: 0.0\n  road_class:\n    residential: 0.7\n  max_weight:\n    \">3\": 0.0");
+         $("#flex-input-text").val("speed:\n- if: road_class == MOTORWAY\n  multiply by: 0.8\n"
+          + "priority:\n- if: road_environment == TUNNEL\n  multiply by: 0.0\n- if: road_class == RESIDENTIAL\n  multiply by: 0.7\n- if: max_weight < 3\n  multiply by: 0.0");
          return false;
     });
 
@@ -276,8 +277,8 @@ $(document).ready(function (e) {
                         endIndex = endIndex < 0 ? cleanedText.length : endIndex;
                         var wordUnderCursor = cleanedText.substring(startIndex, endIndex);
                         if(this.selectionStart == 0 || this.value.substr(this.selectionStart - 1, 1) === "\n") {
-                           document.getElementById("ev_value").innerHTML = "<b>root:</b> speed_factor, priority, max_speed, max_speed_fallback, distance_influence, areas";
-                        } else if(wordUnderCursor === "priority" || wordUnderCursor === "speed_factor" || wordUnderCursor === "max_speed") {
+                           document.getElementById("ev_value").innerHTML = "<b>root:</b> priority, speed, distance_influence, areas";
+                        } else if(wordUnderCursor === "priority" || wordUnderCursor === "speed") {
                            document.getElementById("ev_value").innerHTML = "<b>" + wordUnderCursor + ":</b> " + Object.keys(json.encoded_values).join(", ");
                         } else if(json.encoded_values[wordUnderCursor]) {
                            document.getElementById("ev_value").innerHTML = "<b>" + wordUnderCursor + ":</b> " + json.encoded_values[wordUnderCursor].join(", ");

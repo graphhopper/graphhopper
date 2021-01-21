@@ -7,8 +7,8 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.util.CustomModel;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -91,9 +91,11 @@ public class CustomWeightingRouteResourceTest {
 
         // 'blocking' the area either leads to a route that still crosses it (but on a faster road) or to a road
         // going all the way around it depending on the priority, see #2021
-        yamlQuery += "priority:\n" +
+        yamlQuery += "" +
+                "priority:\n" +
                 // a faster road (see #2021)? or maybe do both?
-                "  area_custom1: " + priority + "\n" +
+                "  - if: in_area_custom1\n" +
+                "    multiply by: " + priority + "\n" +
                 "areas:\n" +
                 "  custom1:\n" +
                 "    type: \"Feature\"\n" +
