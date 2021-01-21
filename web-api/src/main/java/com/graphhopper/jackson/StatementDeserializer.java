@@ -16,11 +16,17 @@ class StatementDeserializer extends JsonDeserializer<Statement> {
         JsonNode treeNode = p.readValueAsTree();
         Statement.Op jsonOp = null;
         double value = Double.NaN;
+        if (treeNode.size() != 2)
+            throw new IllegalArgumentException("Statement expects two entries but was " + treeNode.size() + " for " + treeNode);
+
         for (Statement.Op op : Statement.Op.values()) {
-            if (treeNode.has(op.getName()) && treeNode.get(op.getName()).isNumber()) {
+            if (treeNode.has(op.getName())) {
+                if (!treeNode.get(op.getName()).isNumber())
+                    throw new IllegalArgumentException("Operations " + op.getName() + " expects a number but was " + treeNode.get(op.getName()));
+                if (jsonOp != null)
+                    throw new IllegalArgumentException("Multiple operations are not allowed. Statement: " + treeNode);
                 jsonOp = op;
                 value = treeNode.get(op.getName()).asDouble();
-                break;
             }
         }
         if (jsonOp == null)

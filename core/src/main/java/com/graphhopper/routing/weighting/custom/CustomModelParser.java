@@ -217,7 +217,7 @@ public class CustomModelParser {
         if (name.contains("Decimal")) return "double";
         if (name.contains("Int")) return "int";
         if (name.contains("Boolean")) return "boolean";
-        throw new IllegalArgumentException("Unsupported EncodedValue " + name);
+        throw new IllegalArgumentException("Unsupported EncodedValue: " + encodedValue.getClass());
     }
 
     /**
