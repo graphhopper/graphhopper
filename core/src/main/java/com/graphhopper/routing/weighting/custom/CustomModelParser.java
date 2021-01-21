@@ -239,9 +239,9 @@ public class CustomModelParser {
         for (String arg : set) {
             if (lookup.hasEncodedValue(arg)) {
                 EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
-                classSourceCode.append("protected " + enc.getClass().getSimpleName() + " " + arg + "_enc;\n");
+                classSourceCode.append("protected " + getInterface(enc) + " " + arg + "_enc;\n");
                 initSourceCode.append("if (lookup.hasEncodedValue(\"" + arg + "\")) ");
-                initSourceCode.append("this." + arg + "_enc = (" + enc.getClass().getSimpleName()
+                initSourceCode.append("this." + arg + "_enc = (" + getInterface(enc)
                         + ") lookup.getEncodedValue(\"" + arg + "\", EncodedValue.class);\n");
             } else if (arg.startsWith(IN_AREA_PREFIX)) {
                 if (!includedAreaImports) {
