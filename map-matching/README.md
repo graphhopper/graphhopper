@@ -13,7 +13,7 @@ See the demo in action (black is GPS track, green is matched result):
 
 Start via:
 ```bash
-java -jar web-bundle/target/graphhopper-web-3.0-SNAPSHOT.jar server config.yml
+java -jar web/target/graphhopper-web-3.0-SNAPSHOT.jar server config.yml
 ```
 
 Access the simple UI via `http://localhost:8989/maps/map-matching/` (including the trailing slash).
