@@ -23,13 +23,6 @@ You can post GPX files and get back snapped results as GPX or as JSON. An exampl
 curl -XPOST -H "Content-Type: application/gpx+xml" -d @web/src/test/resources/test1.gpx "localhost:8989/match?vehicle=car&type=json"
 ```
 
-#### Tools
-
-Determine the bounding box of one or more GPX files:
-```bash
-java -jar web-bundle/target/graphhopper-web-3.0-SNAPSHOT.jar getbounds web/src/test/resources/*.gpx
-```
-
 #### Java usage
 
 Have a look at `MapMatchingResource.java` to see how the web service is implemented on top
