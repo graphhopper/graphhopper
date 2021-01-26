@@ -527,10 +527,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
                     || way.hasTag("oneway:bicycle", "-1")
                     || way.hasTag("vehicle:forward", "no")
                     || way.hasTag("bicycle:forward", "no");
-            if (isBackward)
-                accessEnc.setBool(true, edgeFlags, true);
-            else
-                accessEnc.setBool(false, edgeFlags, true);
+            accessEnc.setBool(isBackward, edgeFlags, true);
 
         } else {
             accessEnc.setBool(false, edgeFlags, true);

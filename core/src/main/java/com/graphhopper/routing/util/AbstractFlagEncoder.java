@@ -26,7 +26,6 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIteratorState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +42,6 @@ import java.util.*;
  * @see EncodingManager
  */
 public abstract class AbstractFlagEncoder implements FlagEncoder {
-    private final static Logger logger = LoggerFactory.getLogger(AbstractFlagEncoder.class);
     protected final Set<String> intendedValues = new HashSet<>(5);
     // order is important
     protected final List<String> restrictions = new ArrayList<>(5);
@@ -271,26 +269,13 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         return accessEnc;
     }
 
-    /**
-     * Most use cases do not require this method. Will still keep it accessible so that one can disable it
-     * until the averageSpeedEncodedValue is moved out of the FlagEncoder.
-     *
-     * @Deprecated
-     */
     protected void setSpeed(boolean reverse, IntsRef edgeFlags, double speed) {
-        if (!isValidSpeed(speed))
-            throw new IllegalArgumentException("Speed cannot be negative or NaN: " + speed + ", flags:" + BitUtil.LITTLE.toBitString(edgeFlags));
-
         if (speed < speedFactor / 2) {
             avgSpeedEnc.setDecimal(reverse, edgeFlags, 0);
             accessEnc.setBool(reverse, edgeFlags, false);
-            return;
+        } else {
+            avgSpeedEnc.setDecimal(reverse, edgeFlags, speed > getMaxSpeed() ? getMaxSpeed() : speed);
         }
-
-        if (speed > getMaxSpeed())
-            speed = getMaxSpeed();
-
-        avgSpeedEnc.setDecimal(reverse, edgeFlags, speed);
     }
 
     /**
