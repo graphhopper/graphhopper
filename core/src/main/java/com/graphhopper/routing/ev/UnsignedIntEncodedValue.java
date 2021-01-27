@@ -112,14 +112,11 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
             int flags = ref.ints[bwdDataIndex + ref.offset];
             // clear value bits
             flags &= ~bwdMask;
-            value <<= bwdShift;
-            // set value
-            ref.ints[bwdDataIndex + ref.offset] = flags | value;
+            ref.ints[bwdDataIndex + ref.offset] = flags | (value << bwdShift);
         } else {
             int flags = ref.ints[fwdDataIndex + ref.offset];
             flags &= ~fwdMask;
-            value <<= fwdShift;
-            ref.ints[fwdDataIndex + ref.offset] = flags | value;
+            ref.ints[fwdDataIndex + ref.offset] = flags | (value << fwdShift);
         }
     }
 
@@ -127,7 +124,7 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
     public final int getInt(boolean reverse, IntsRef ref) {
         int flags;
         // if we do not store both directions ignore reverse == true for convenient reading
-        if (reverse && storeTwoDirections) {
+        if (storeTwoDirections && reverse) {
             flags = ref.ints[bwdDataIndex + ref.offset];
             return (flags & bwdMask) >>> bwdShift;
         } else {
@@ -234,7 +231,7 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
 
         return val;
     }
-    
+
     /**
      * Produces a static hashcode for a collection of Strings that is platform independent and still compatible to the default
      * of openjdk.
