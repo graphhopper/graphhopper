@@ -34,32 +34,11 @@ public final class SimpleBooleanEncodedValue extends UnsignedIntEncodedValue imp
 
     @Override
     public final void setBool(boolean reverse, IntsRef ref, boolean value) {
-        if (storeTwoDirections && reverse) {
-            int flags = ref.ints[bwdDataIndex + ref.offset];
-            flags &= ~bwdMask;
-            // set value
-            if (value)
-                flags = flags | (1 << bwdShift);
-            ref.ints[bwdDataIndex + ref.offset] = flags;
-
-        } else {
-            int flags = ref.ints[fwdDataIndex + ref.offset];
-            flags &= ~fwdMask;
-            if (value)
-                flags = flags | (1 << fwdShift);
-            ref.ints[fwdDataIndex + ref.offset] = flags;
-        }
+        setInt(reverse, ref, value ? 1 : 0);
     }
 
     @Override
     public final boolean getBool(boolean reverse, IntsRef ref) {
-        int flags;
-        if (storeTwoDirections && reverse) {
-            flags = ref.ints[bwdDataIndex + ref.offset];
-            return (flags & bwdMask) >>> bwdShift == 1;
-        }
-
-        flags = ref.ints[fwdDataIndex + ref.offset];
-        return (flags & fwdMask) >>> fwdShift == 1;
+        return getInt(reverse, ref) == 1;
     }
 }
