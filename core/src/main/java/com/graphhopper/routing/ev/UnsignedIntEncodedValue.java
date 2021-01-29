@@ -36,15 +36,15 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
     /**
      * There are multiple int values possible per edge. Here we specify the index into this integer array.
      */
-    protected int fwdDataIndex;
-    protected int bwdDataIndex;
+    private int fwdDataIndex;
+    private int bwdDataIndex;
+    private final boolean storeTwoDirections;
     final int bits;
     int maxValue;
     int fwdShift = -1;
     int bwdShift = -1;
     int fwdMask;
     int bwdMask;
-    boolean storeTwoDirections;
 
     /**
      * This constructor reserves the specified number of bits in the underlying data structure or twice the amount if
@@ -211,22 +211,6 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
         int val = 1;
         for (int idx = 0; idx < len; ++idx) {
             val = 31 * val + vals[idx].ordinal();
-        }
-
-        return val;
-    }
-
-    /**
-     * Produces a static hashcode for an String arrays that is platform independent and still compatible to the default
-     * of openjdk.
-     */
-    static int staticHashCode(String... vals) {
-        if (vals == null)
-            return 0;
-        int len = vals.length;
-        int val = 1;
-        for (int idx = 0; idx < len; ++idx) {
-            val = 31 * val + Helper.staticHashCode(vals[idx]);
         }
 
         return val;

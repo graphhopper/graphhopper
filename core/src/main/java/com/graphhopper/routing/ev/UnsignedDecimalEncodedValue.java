@@ -24,7 +24,7 @@ import com.graphhopper.storage.IntsRef;
  * of bits.
  */
 public final class UnsignedDecimalEncodedValue extends UnsignedIntEncodedValue implements DecimalEncodedValue {
-    protected final double factor;
+    private final double factor;
     private final double defaultValue;
     private final boolean useMaximumAsInfinity;
 
