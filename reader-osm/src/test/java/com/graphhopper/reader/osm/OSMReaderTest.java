@@ -685,7 +685,7 @@ public class OSMReaderTest {
         EncodingManager manager = new EncodingManager.Builder().add(bike).add(truck).add(car).build();
 
         GraphHopper hopper = new GraphHopper().
-                setDataReaderFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
+                setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
                 setGraphHopperLocation(dir).setEncodingManager(manager).
                 setProfiles(
                         new Profile("bike").setVehicle("bike").setWeighting("fastest"),
@@ -881,7 +881,7 @@ public class OSMReaderTest {
     @Test
     public void testRoutingRequestFails_issue665() {
         GraphHopper hopper = new GraphHopper()
-                .setDataReaderFile(getClass().getResource(file7).getFile())
+                .setOSMFile(getClass().getResource(file7).getFile())
                 .setEncodingManager(EncodingManager.create("car,motorcycle"))
                 .setProfiles(
                         new Profile("profile1").setVehicle("car").setWeighting("fastest"),
@@ -903,7 +903,7 @@ public class OSMReaderTest {
             protected File _getOSMFile() {
                 return new File(getClass().getResource(file2).getFile());
             }
-        }.setDataReaderFile("dummy").
+        }.setOSMFile("dummy").
                 setEncodingManager(EncodingManager.create("car,bike")).
                 setProfiles(new Profile("profile").setVehicle("car").setWeighting("fastest")).
                 setMinNetworkSize(0).
@@ -931,7 +931,7 @@ public class OSMReaderTest {
 
         public GraphHopperFacade(String osmFile, boolean turnCosts, String prefLang) {
             setStoreOnFlush(false);
-            setDataReaderFile(osmFile);
+            setOSMFile(osmFile);
             setGraphHopperLocation(dir);
 
             BikeFlagEncoder bikeEncoder;
@@ -966,7 +966,7 @@ public class OSMReaderTest {
 
         @Override
         protected File _getOSMFile() {
-            return new File(getClass().getResource(getDataReaderFile()).getFile());
+            return new File(getClass().getResource(getOSMFile()).getFile());
         }
     }
 }

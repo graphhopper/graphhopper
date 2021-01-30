@@ -22,13 +22,10 @@ import com.graphhopper.util.JsonFeatureCollection;
 
 /**
  * This class only exists for backward compatibility.
- *
- * @author Peter Karich
  * @deprecated Use {@link GraphHopper} instead.
  */
 @Deprecated
 public class GraphHopperOSM extends GraphHopper {
-
 
     public GraphHopperOSM() {
         this(null);
@@ -36,15 +33,6 @@ public class GraphHopperOSM extends GraphHopper {
 
     public GraphHopperOSM(JsonFeatureCollection landmarkSplittingFeatureCollection) {
         super(landmarkSplittingFeatureCollection);
-    }
-
-    public String getOSMFile() {
-        return getDataReaderFile();
-    }
-
-    public GraphHopperOSM setOSMFile(String osmFileStr) {
-        super.setDataReaderFile(osmFileStr);
-        return this;
     }
 
 }

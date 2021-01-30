@@ -639,7 +639,7 @@ public class RoutingAlgorithmWithOSMTest {
             }
             GraphHopper hopper = new GraphHopper().
                     setStoreOnFlush(true).
-                    setDataReaderFile(osmFile).
+                    setOSMFile(osmFile).
                     setProfiles(profiles).
                     setGraphHopperLocation(graphFile).
                     setEncodingManager(em);
@@ -706,7 +706,7 @@ public class RoutingAlgorithmWithOSMTest {
                 setStoreOnFlush(true).
                 setEncodingManager(encodingManager).
                 setWayPointMaxDistance(0).
-                setDataReaderFile(DIR + "/monaco.osm.gz").
+                setOSMFile(DIR + "/monaco.osm.gz").
                 setGraphHopperLocation(graphFile).
                 setMinNetworkSize(0).
                 setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest")).

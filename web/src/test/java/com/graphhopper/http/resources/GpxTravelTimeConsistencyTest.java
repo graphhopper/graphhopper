@@ -22,9 +22,9 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.Profile;
+import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.Helper;
-import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -46,7 +46,7 @@ public class GpxTravelTimeConsistencyTest {
     public static void beforeClass() {
         Helper.removeDir(new File(graphFileFoot));
         hopper = new GraphHopper().
-                setDataReaderFile(osmFile).
+                setOSMFile(osmFile).
                 setProfiles(new Profile("profile").setVehicle("foot").setWeighting("fastest")).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(graphFileFoot).

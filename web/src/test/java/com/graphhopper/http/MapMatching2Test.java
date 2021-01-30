@@ -22,11 +22,11 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gpx.GpxConversions;
+import com.graphhopper.jackson.Gpx;
 import com.graphhopper.matching.EdgeMatch;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.matching.State;
-import com.graphhopper.jackson.Gpx;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.index.Snap;
@@ -60,7 +60,7 @@ public class MapMatching2Test {
     public void testIssue13() throws IOException {
         CarFlagEncoder encoder = new CarFlagEncoder();
         GraphHopper hopper = new GraphHopper();
-        hopper.setDataReaderFile("../map-matching/files/map-issue13.osm.gz");
+        hopper.setOSMFile("../map-matching/files/map-issue13.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
         hopper.setEncodingManager(EncodingManager.create(encoder));
         hopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
@@ -88,7 +88,7 @@ public class MapMatching2Test {
     public void testIssue70() throws IOException {
         CarFlagEncoder encoder = new CarFlagEncoder();
         GraphHopper hopper = new GraphHopper();
-        hopper.setDataReaderFile("../map-matching/files/issue-70.osm.gz");
+        hopper.setOSMFile("../map-matching/files/issue-70.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
         hopper.setEncodingManager(EncodingManager.create(encoder));
         hopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
@@ -110,7 +110,7 @@ public class MapMatching2Test {
     public void testIssue127() throws IOException {
         CarFlagEncoder encoder = new CarFlagEncoder();
         GraphHopper hopper = new GraphHopper();
-        hopper.setDataReaderFile("../map-matching/files/map-issue13.osm.gz");
+        hopper.setOSMFile("../map-matching/files/map-issue13.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
         hopper.setEncodingManager(EncodingManager.create(encoder));
         hopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
