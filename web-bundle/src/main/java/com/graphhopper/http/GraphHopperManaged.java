@@ -100,9 +100,21 @@ public class GraphHopperManaged implements Managed {
                 newProfiles.add(profile);
                 continue;
             }
+            Object cm = profile.getHints().getObject("custom_model", null);
+            if (cm != null) {
+                try {
+                    // custom_model can be an object tree (read from config) or an object (e.g. from tests)
+                    CustomModel customModel = jsonOM.readValue(jsonOM.writeValueAsBytes(cm), CustomModel.class);
+                    newProfiles.add(new CustomProfile(profile).setCustomModel(customModel));
+                    continue;
+                } catch (Exception ex) {
+                    throw new RuntimeException("Cannot load custom_model from " + cm + " for profile " + profile.getName(), ex);
+                }
+            }
             String customModelLocation = profile.getHints().getString("custom_model_file", "");
             if (customModelLocation.isEmpty())
-                throw new IllegalArgumentException("Missing 'custom_model_file' field in profile '" + profile.getName() + "' if you want an empty custom model set it to 'empty'");
+                throw new IllegalArgumentException("Missing 'custom_model' or 'custom_model_file' field in profile '"
+                        + profile.getName() + "'. To use default specify custom_model_file: empty");
             if ("empty".equals(customModelLocation))
                 newProfiles.add(new CustomProfile(profile).setCustomModel(new CustomModel()));
             else
@@ -110,7 +122,7 @@ public class GraphHopperManaged implements Managed {
                     CustomModel customModel = (customModelLocation.endsWith(".json") ? jsonOM : yamlOM).readValue(new File(customModelLocation), CustomModel.class);
                     newProfiles.add(new CustomProfile(profile).setCustomModel(customModel));
                 } catch (Exception ex) {
-                    throw new RuntimeException("Cannot load custom_model from " + customModelLocation + " for profile " + profile.getName(), ex);
+                    throw new RuntimeException("Cannot load custom_model from location " + customModelLocation + " for profile " + profile.getName(), ex);
                 }
         }
         configuration.setProfiles(newProfiles);

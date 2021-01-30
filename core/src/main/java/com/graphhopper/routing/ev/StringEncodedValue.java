@@ -1,18 +1,18 @@
 package com.graphhopper.routing.ev;
 
+import com.carrotsearch.hppc.ObjectIntHashMap;
+import com.carrotsearch.hppc.ObjectIntMap;
+import com.graphhopper.storage.IntsRef;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import com.carrotsearch.hppc.ObjectIntHashMap;
-import com.carrotsearch.hppc.ObjectIntMap;
-import com.graphhopper.storage.IntsRef;
-
 /**
  * This class holds a List of up to {@link #maxValues} encountered Strings and stores
  * <i>index+1</i> to indicate a string is set or <i>0</i> if no value is assigned
- * 
+ *
  * @author Peter Karich
  * @author Thomas Butz
  */
@@ -37,11 +37,10 @@ public final class StringEncodedValue extends UnsignedIntEncodedValue {
         super(name, bits, storeTwoDirections);
 
         this.maxValues = (1 << bits) - 1;
-        if (values.size() > maxValues) {
-            throw new IllegalArgumentException(
-                            "Number of values is higher than the maximum value count: "
-                                            + values.size() + " > " + maxValues);
-        }
+        if (values.size() > maxValues)
+            throw new IllegalArgumentException("Number of values is higher than the maximum value count: "
+                    + values.size() + " > " + maxValues);
+
         this.values = new ArrayList<>(values);
         this.indexMap = new ObjectIntHashMap<>(values.size());
         int index = 1;
@@ -57,10 +56,9 @@ public final class StringEncodedValue extends UnsignedIntEncodedValue {
         }
         int index = indexMap.get(value);
         if (index == 0) {
-            if (values.size() == maxValues) {
-                throw new IllegalStateException("Maximum number of values reached for " + getName()
-                                + ": " + maxValues);
-            }
+            if (values.size() == maxValues)
+                throw new IllegalStateException("Maximum number of values reached for " + getName() + ": " + maxValues);
+
             values.add(value);
             index = values.size();
             indexMap.put(value, index);
@@ -77,8 +75,7 @@ public final class StringEncodedValue extends UnsignedIntEncodedValue {
     }
 
     /**
-     * @param value
-     *            the value to be rounded
+     * @param value the value to be rounded
      * @return the value rounded to the highest integer with the same number of leading zeros
      */
     private static int roundUp(int value) {
@@ -86,8 +83,7 @@ public final class StringEncodedValue extends UnsignedIntEncodedValue {
     }
 
     /**
-     * @param value
-     *            the String to retrieve the index
+     * @param value the String to retrieve the index
      * @return the non-zero index of the String or <i>0</i> if it couldn't be found
      */
     public int indexOf(String value) {

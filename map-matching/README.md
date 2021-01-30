@@ -13,7 +13,7 @@ See the demo in action (black is GPS track, green is matched result):
 
 Start via:
 ```bash
-java -jar web-bundle/target/graphhopper-web-3.0-SNAPSHOT.jar server config.yml
+java -jar web/target/graphhopper-web-3.0-SNAPSHOT.jar server config.yml
 ```
 
 Access the simple UI via `http://localhost:8989/maps/map-matching/` (including the trailing slash).
@@ -21,13 +21,6 @@ Access the simple UI via `http://localhost:8989/maps/map-matching/` (including t
 You can post GPX files and get back snapped results as GPX or as JSON. An example curl request is:
 ```bash
 curl -XPOST -H "Content-Type: application/gpx+xml" -d @web/src/test/resources/test1.gpx "localhost:8989/match?vehicle=car&type=json"
-```
-
-#### Tools
-
-Determine the bounding box of one or more GPX files:
-```bash
-java -jar web-bundle/target/graphhopper-web-3.0-SNAPSHOT.jar getbounds web/src/test/resources/*.gpx
 ```
 
 #### Java usage

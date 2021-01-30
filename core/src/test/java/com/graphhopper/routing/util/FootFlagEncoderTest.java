@@ -374,6 +374,16 @@ public class FootFlagEncoderTest {
     }
 
     @Test
+    public void testChainBarrier() {
+        // by default allow access through the gate for bike & foot!
+        ReaderNode node = new ReaderNode(1, -1, -1);
+        node.setTag("barrier", "chain");
+        assertTrue(footEncoder.handleNodeTags(node) == 0);
+        node.setTag("foot", "no");
+        assertTrue(footEncoder.handleNodeTags(node) > 0);
+    }
+
+    @Test
     public void testFord() {
         // by default do not block access due to fords!
         ReaderNode node = new ReaderNode(1, -1, -1);

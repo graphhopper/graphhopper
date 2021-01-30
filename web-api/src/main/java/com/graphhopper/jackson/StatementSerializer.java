@@ -15,24 +15,21 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util.shapes;
+package com.graphhopper.jackson;
 
-import org.junit.jupiter.api.Test;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.graphhopper.json.Statement;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.IOException;
 
-/**
- * @author Peter Karich
- */
-public class GHPointTest {
-    @Test
-    public void testIsValid() {
-        GHPoint instance = new GHPoint();
-        assertFalse(instance.isValid());
-        instance.lat = 1;
-        assertFalse(instance.isValid());
-        instance.lon = 1;
-        assertTrue(instance.isValid());
+class StatementSerializer extends JsonSerializer<Statement> {
+    @Override
+    public void serialize(Statement statement, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+        jsonGenerator.writeStartObject();
+        jsonGenerator.writeStringField(statement.getKeyword().getName(), statement.getExpression());
+        jsonGenerator.writeNumberField(statement.getOperation().getName(), statement.getValue());
+        jsonGenerator.writeEndObject();
     }
 }

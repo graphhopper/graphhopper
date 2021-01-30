@@ -81,6 +81,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     private double factor = -1;
     private final static double DOUBLE_MLTPL = 1e6;
     private final GraphHopperStorage graph;
+    private final NodeAccess na;
     private final FlagEncoder encoder;
     private final Weighting weighting;
     private final LMConfig lmConfig;
@@ -99,6 +100,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
     public LandmarkStorage(GraphHopperStorage graph, Directory dir, final LMConfig lmConfig, int landmarks) {
         this.graph = graph;
+        this.na = graph.getNodeAccess();
         this.minimumNodes = Math.min(graph.getNodes() / 2, 500_000);
         this.lmConfig = lmConfig;
         this.weighting = lmConfig.getWeighting();
@@ -293,10 +295,11 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                 if (subnetworks[nextStartNode] == UNSET_SUBNETWORK
                         && GHUtility.count(tmpExplorer.setBaseNode(nextStartNode)) > 0) {
 
-                    GHPoint p = createPoint(graph, nextStartNode);
-                    if (logDetails)
-                        LOGGER.info("start node: " + nextStartNode + " (" + p + ") subnetwork size: " + subnetworkIds.size()
+                    if (logDetails) {
+                        GHPoint p = createPoint(graph, nextStartNode);
+                        LOGGER.info("start node: " + nextStartNode + " (" + p + ") subnetwork " + index + ", subnetwork size: " + subnetworkIds.size()
                                 + ", " + Helper.getMemInfo() + ((ruleLookup == null) ? "" : " area:" + ruleLookup.lookupRules(p.lat, p.lon).getRules()));
+                    }
 
                     if (createLandmarksForSubnetwork(nextStartNode, subnetworks, blockedEdges))
                         break;
@@ -356,7 +359,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             for (; index >= 0; index--) {
                 int nextStartNode = subnetworkIds.get(index);
                 if (GHUtility.count(requireBothDirExplorer.setBaseNode(nextStartNode)) > 0) {
-                    LandmarkExplorer explorer = findLandmarks(tmpLandmarkNodeIds, nextStartNode, blockedEdges);
+                    LandmarkExplorer explorer = findLandmarks(tmpLandmarkNodeIds, nextStartNode, blockedEdges, "estimate " + index);
                     if (explorer.getFromCount() < minimumNodes)
                         continue;
 
@@ -394,7 +397,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         boolean pickedPrecalculatedLandmarks = false;
 
         if (!landmarkSuggestions.isEmpty()) {
-            NodeAccess na = graph.getNodeAccess();
             double lat = na.getLat(startNode), lon = na.getLon(startNode);
             LandmarkSuggestion selectedSuggestion = null;
             for (LandmarkSuggestion lmsugg : landmarkSuggestions) {
@@ -419,7 +421,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         if (pickedPrecalculatedLandmarks) {
             LOGGER.info("Picked " + tmpLandmarkNodeIds.length + " landmark suggestions, skip finding landmarks");
         } else {
-            LandmarkExplorer explorer = findLandmarks(tmpLandmarkNodeIds, startNode, blockedEdges);
+            LandmarkExplorer explorer = findLandmarks(tmpLandmarkNodeIds, startNode, blockedEdges, "create");
             if (explorer.getFromCount() < minimumNodes) {
                 // too small subnetworks are initialized with special id==0
                 explorer.setSubnetworks(subnetworks, UNCLEAR_SUBNETWORK);
@@ -482,15 +484,14 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
      */
     protected IntHashSet findBorderEdgeIds(SpatialRuleLookup ruleLookup) {
         AllEdgesIterator allEdgesIterator = graph.getAllEdges();
-        NodeAccess nodeAccess = graph.getNodeAccess();
         IntHashSet inaccessible = new IntHashSet();
         while (allEdgesIterator.next()) {
             int adjNode = allEdgesIterator.getAdjNode();
-            SpatialRuleSet set = ruleLookup.lookupRules(nodeAccess.getLat(adjNode), nodeAccess.getLon(adjNode));
+            SpatialRuleSet set = ruleLookup.lookupRules(na.getLat(adjNode), na.getLon(adjNode));
             SpatialRule ruleAdj = set.getRules().isEmpty() ? null : set.getRules().get(0);
 
             int baseNode = allEdgesIterator.getBaseNode();
-            set = ruleLookup.lookupRules(nodeAccess.getLat(baseNode), nodeAccess.getLon(baseNode));
+            set = ruleLookup.lookupRules(na.getLat(baseNode), na.getLon(baseNode));
             SpatialRule ruleBase = set.getRules().isEmpty() ? null : set.getRules().get(0);
             if (ruleAdj != ruleBase) {
                 inaccessible.add(allEdgesIterator.getEdge());
@@ -648,7 +649,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
      * @return the calculated landmarks as GeoJSON string.
      */
     String getLandmarksAsGeoJSON() {
-        NodeAccess na = graph.getNodeAccess();
         String str = "";
         for (int subnetwork = 1; subnetwork < landmarkIDs.size(); subnetwork++) {
             int[] lmArray = landmarkIDs.get(subnetwork);
@@ -734,7 +734,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         return graph.getNodes();
     }
 
-    private LandmarkExplorer findLandmarks(int[] landmarkNodeIdsToReturn, int startNode, IntHashSet blockedEdges) {
+    private LandmarkExplorer findLandmarks(int[] landmarkNodeIdsToReturn, int startNode, IntHashSet blockedEdges, String info) {
         int logOffset = Math.max(1, landmarkNodeIdsToReturn.length / 2);
         // 1a) pick landmarks via special weighting for a better geographical spreading
         Weighting initWeighting = lmSelectionWeighting;
@@ -756,7 +756,8 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                 explorer.runAlgo();
                 landmarkNodeIdsToReturn[lmIdx + 1] = explorer.getLastEntry().adjNode;
                 if (logDetails && lmIdx % logOffset == 0)
-                    LOGGER.info("Finding landmarks [" + lmConfig + "] in network [" + explorer.getVisitedNodes() + "]. "
+                    LOGGER.info("Finding landmarks [" + lmConfig + "] in network [" + explorer.getVisitedNodes() + "] for " + info + ". "
+                            + "Start node:" + startNode + " (" + createPoint(graph, startNode) + ")"
                             + "Progress " + (int) (100.0 * lmIdx / landmarkNodeIdsToReturn.length) + "%, " + Helper.getMemInfo());
             }
         }

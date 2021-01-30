@@ -19,7 +19,6 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValue;
@@ -571,6 +570,18 @@ public class CarFlagEncoderTest {
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "cattle_grid");
         assertTrue(tmpEncoder.handleNodeTags(node) == 0);
+    }
+
+    @Test
+    public void testChainBarrier() {
+        // by default allow access through the gate for bike & foot!
+        ReaderNode node = new ReaderNode(1, -1, -1);
+        node.setTag("barrier", "chain");
+        assertTrue(encoder.handleNodeTags(node) > 0);
+        node.setTag("motor_vehicle", "no");
+        assertTrue(encoder.handleNodeTags(node) > 0);
+        node.setTag("motor_vehicle", "yes");
+        assertTrue(encoder.handleNodeTags(node) == 0);
     }
 
     @Test

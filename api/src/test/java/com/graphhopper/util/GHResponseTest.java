@@ -19,19 +19,19 @@ package com.graphhopper.util;
 
 import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class GHResponseTest {
     @Test
-    public void testToString() throws Exception {
-        Assert.assertEquals("no paths", new GHResponse().toString());
+    public void testToString() {
+        assertEquals("no paths", new GHResponse().toString());
     }
 
     @Test
-    public void testHasNoErrorIfEmpty() throws Exception {
+    public void testHasNoErrorIfEmpty() {
         assertFalse(new GHResponse().hasErrors());
         GHResponse rsp = new GHResponse();
         rsp.add(new ResponsePath());
