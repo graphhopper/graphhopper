@@ -20,10 +20,8 @@ package com.graphhopper.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Transfer;
+import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.reader.DataReader;
-import com.graphhopper.reader.dem.ElevationProvider;
-import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
@@ -42,7 +40,6 @@ import com.graphhopper.util.PointList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
@@ -50,7 +47,7 @@ import java.util.*;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 
-public class GraphHopperGtfs extends GraphHopperOSM {
+public class GraphHopperGtfs extends GraphHopper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GraphHopperGtfs.class);
 
@@ -67,57 +64,11 @@ public class GraphHopperGtfs extends GraphHopperOSM {
     }
 
     @Override
-    protected DataReader importData() throws IOException {
+    protected void importOSM() {
         if (ghConfig.has("datareader.file")) {
-            return super.importData();
+            super.importOSM();
         } else {
             getGraphHopperStorage().create(1000);
-            return new DataReader() {
-                @Override
-                public DataReader setFile(File file) {
-                    return this;
-                }
-
-                @Override
-                public DataReader setElevationProvider(ElevationProvider ep) {
-                    return this;
-                }
-
-                @Override
-                public DataReader setWorkerThreads(int workerThreads) {
-                    return this;
-                }
-
-                @Override
-                public DataReader setWayPointMaxDistance(double wayPointMaxDistance) {
-                    return this;
-                }
-
-                @Override
-                public DataReader setWayPointElevationMaxDistance(double elevationWayPointMaxDistance) {
-                    return this;
-                }
-
-                @Override
-                public DataReader setSmoothElevation(boolean smoothElevation) {
-                    return this;
-                }
-
-                @Override
-                public DataReader setLongEdgeSamplingDistance(double longEdgeSamplingDistance) {
-                    return this;
-                }
-
-                @Override
-                public void readGraph() {
-
-                }
-
-                @Override
-                public Date getDataDate() {
-                    return null;
-                }
-            };
         }
     }
 

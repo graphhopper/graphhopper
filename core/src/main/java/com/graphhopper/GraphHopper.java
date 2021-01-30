@@ -20,8 +20,8 @@ package com.graphhopper;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
+import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.DefaultWeightingFactory;
 import com.graphhopper.routing.Router;
@@ -35,6 +35,7 @@ import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.lm.LandmarkStorage;
+import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks.PrepareJob;
 import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
@@ -43,6 +44,9 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoderFactory;
 import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
+import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
@@ -101,13 +105,15 @@ public class GraphHopper implements GraphHopperAPI {
     private int maxRegionSearch = 4;
     // for prepare
     private int minNetworkSize = 200;
+    // for LM
+    private final JsonFeatureCollection landmarkSplittingFeatureCollection;
 
     // preparation handlers
     private final LMPreparationHandler lmPreparationHandler = new LMPreparationHandler();
     private final CHPreparationHandler chPreparationHandler = new CHPreparationHandler();
 
     // for data reader
-    private String dataReaderFile;
+    private String osmFile;
     private double dataReaderWayPointMaxDistance = 1;
     private int dataReaderWorkerThreads = 2;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
@@ -117,6 +123,11 @@ public class GraphHopper implements GraphHopperAPI {
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
     public GraphHopper() {
+        this(null);
+    }
+
+    public GraphHopper(JsonFeatureCollection landmarkSplittingFeatureCollection) {
+        this.landmarkSplittingFeatureCollection = landmarkSplittingFeatureCollection;
     }
 
     /**
@@ -322,19 +333,19 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     public String getDataReaderFile() {
-        return dataReaderFile;
+        return osmFile;
     }
 
     /**
-     * This file can be any file type supported by the DataReader. E.g. for the OSMReader it is the
-     * OSM xml (.osm), a compressed xml (.osm.zip or .osm.gz) or a protobuf file (.pbf)
+     * This file can be an osm xml (.osm), a compressed xml (.osm.zip or .osm.gz) or a protobuf file
+     * (.pbf).
      */
-    public GraphHopper setDataReaderFile(String dataReaderFileStr) {
+    public GraphHopper setDataReaderFile(String osmFile) {
         ensureNotLoaded();
-        if (isEmpty(dataReaderFileStr))
-            throw new IllegalArgumentException("Data reader file cannot be empty.");
+        if (isEmpty(osmFile))
+            throw new IllegalArgumentException("OSM file cannot be empty.");
 
-        dataReaderFile = dataReaderFileStr;
+        this.osmFile = osmFile;
         return this;
     }
 
@@ -430,14 +441,14 @@ public class GraphHopper implements GraphHopperAPI {
 
         String tmpOsmFile = ghConfig.getString("datareader.file", "");
         if (!isEmpty(tmpOsmFile))
-            dataReaderFile = tmpOsmFile;
+            osmFile = tmpOsmFile;
 
         String graphHopperFolder = ghConfig.getString("graph.location", "");
         if (isEmpty(graphHopperFolder) && isEmpty(ghLocation)) {
-            if (isEmpty(dataReaderFile))
+            if (isEmpty(osmFile))
                 throw new IllegalArgumentException("If no graph.location is provided you need to specify an OSM file.");
 
-            graphHopperFolder = pruneFileEnd(dataReaderFile) + "-gh";
+            graphHopperFolder = pruneFileEnd(osmFile) + "-gh";
         }
 
         // graph
@@ -604,18 +615,20 @@ public class GraphHopper implements GraphHopperAPI {
     /**
      * Creates the graph from OSM data.
      */
-    private GraphHopper process(String graphHopperLocation, boolean closeEarly) {
+    private void process(String graphHopperLocation, boolean closeEarly) {
         setGraphHopperLocation(graphHopperLocation);
         GHLock lock = null;
         try {
+            if (ghStorage == null)
+                throw new IllegalStateException("GraphHopperStorage must be initialized before starting the import");
             if (ghStorage.getDirectory().getDefaultType().isStoring()) {
                 lockFactory.setLockDir(new File(graphHopperLocation));
                 lock = lockFactory.create(fileLockName, true);
                 if (!lock.tryLock())
                     throw new RuntimeException("To avoid multiple writers we need to obtain a write lock but it failed. In " + graphHopperLocation, lock.getObtainFailedReason());
             }
-
-            readData();
+            ensureWriteAccess();
+            importOSM();
             cleanUp();
             postProcessing(closeEarly);
             flush();
@@ -623,53 +636,38 @@ public class GraphHopper implements GraphHopperAPI {
             if (lock != null)
                 lock.release();
         }
-        return this;
     }
 
-    private void readData() {
-        try {
-            DataReader reader = importData();
-            DateFormat f = createFormatter();
-            ghStorage.getProperties().put("datareader.import.date", f.format(new Date()));
-            if (reader.getDataDate() != null)
-                ghStorage.getProperties().put("datareader.data.date", f.format(reader.getDataDate()));
-        } catch (IOException ex) {
-            throw new RuntimeException("Cannot read file " + getDataReaderFile(), ex);
-        }
-    }
-
-    protected DataReader importData() throws IOException {
-        ensureWriteAccess();
-        if (ghStorage == null)
-            throw new IllegalStateException("Load graph before importing OSM data");
-
-        if (dataReaderFile == null)
+    protected void importOSM() {
+        if (osmFile == null)
             throw new IllegalStateException("Couldn't load from existing folder: " + ghLocation
                     + " but also cannot use file for DataReader as it wasn't specified!");
 
-        DataReader reader = createReader(ghStorage);
-        logger.info("using " + ghStorage.toString() + ", memory:" + getMemInfo());
-        reader.readGraph();
-        return reader;
-    }
-
-    protected DataReader createReader(GraphHopperStorage ghStorage) {
-        throw new UnsupportedOperationException("Cannot create DataReader. Solutions: avoid import via calling load directly, "
-                + "provide a DataReader or use e.g. GraphHopperOSM or a different subclass");
-    }
-
-    protected DataReader initDataReader(DataReader reader) {
-        if (dataReaderFile == null)
-            throw new IllegalArgumentException("No file for DataReader specified");
-
-        logger.info("start creating graph from " + dataReaderFile);
-        return reader.setFile(new File(dataReaderFile)).
+        logger.info("start creating graph from " + osmFile);
+        OSMReader reader = new OSMReader(ghStorage).setFile(_getOSMFile()).
                 setElevationProvider(eleProvider).
                 setWorkerThreads(dataReaderWorkerThreads).
                 setWayPointMaxDistance(dataReaderWayPointMaxDistance).
                 setWayPointElevationMaxDistance(routerConfig.getElevationWayPointMaxDistance()).
                 setSmoothElevation(smoothElevation).
                 setLongEdgeSamplingDistance(longEdgeSamplingDistance);
+        logger.info("using " + ghStorage.toString() + ", memory:" + getMemInfo());
+        try {
+            reader.readGraph();
+        } catch (IOException ex) {
+            throw new RuntimeException("Cannot read file " + getDataReaderFile(), ex);
+        }
+        DateFormat f = createFormatter();
+        ghStorage.getProperties().put("datareader.import.date", f.format(new Date()));
+        if (reader.getDataDate() != null)
+            ghStorage.getProperties().put("datareader.data.date", f.format(reader.getDataDate()));
+    }
+
+    /**
+     * Currently we use this for a few tests where the dataReaderFile is loaded from the classpath
+     */
+    protected File _getOSMFile() {
+        return new File(osmFile);
     }
 
     /**
@@ -1045,21 +1043,39 @@ public class GraphHopper implements GraphHopperAPI {
      * For landmarks it is required to always call this method: either it creates the landmark data or it loads it.
      */
     protected void loadOrPrepareLM(boolean closeEarly) {
-        boolean tmpPrepare = lmPreparationHandler.isEnabled() && !lmPreparationHandler.getPreparations().isEmpty();
-        if (tmpPrepare) {
-            for (LMProfile profile : lmPreparationHandler.getLMProfiles()) {
-                if (!getProfileVersion(profile.getProfile()).isEmpty()
-                        && !getProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
-                    throw new IllegalArgumentException("LM preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
-            }
-            ensureWriteAccess();
-            ghStorage.freeze();
-            if (lmPreparationHandler.loadOrDoWork(ghStorage.getProperties(), closeEarly)) {
-                ghStorage.getProperties().put(Landmark.PREPARE + "done", true);
-                for (LMProfile profile : lmPreparationHandler.getLMProfiles()) {
-                    // potentially overwrite existing keys from CH
-                    setProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
+        if (!lmPreparationHandler.isEnabled() || lmPreparationHandler.getPreparations().isEmpty()) {
+            return;
+        }
+
+        if (landmarkSplittingFeatureCollection != null && !landmarkSplittingFeatureCollection.getFeatures().isEmpty()) {
+            SpatialRuleLookup ruleLookup = SpatialRuleLookupBuilder.buildIndex(
+                    Collections.singletonList(landmarkSplittingFeatureCollection), "area",
+                    (id, polygons) -> new AbstractSpatialRule(polygons) {
+                        @Override
+                        public String getId() {
+                            return id;
+                        }
+                    });
+            for (PrepareLandmarks prep : getLMPreparationHandler().getPreparations()) {
+                // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
+                if (ruleLookup != null && !ruleLookup.getRules().isEmpty()) {
+                    prep.setSpatialRuleLookup(ruleLookup);
                 }
+            }
+        }
+
+        for (LMProfile profile : lmPreparationHandler.getLMProfiles()) {
+            if (!getProfileVersion(profile.getProfile()).isEmpty()
+                    && !getProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
+                throw new IllegalArgumentException("LM preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
+        }
+        ensureWriteAccess();
+        ghStorage.freeze();
+        if (lmPreparationHandler.loadOrDoWork(ghStorage.getProperties(), closeEarly)) {
+            ghStorage.getProperties().put(Landmark.PREPARE + "done", true);
+            for (LMProfile profile : lmPreparationHandler.getLMProfiles()) {
+                // potentially overwrite existing keys from CH
+                setProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
             }
         }
     }

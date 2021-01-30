@@ -57,10 +57,10 @@ public class CustomWeightingRouteResourceTest {
                         new CustomProfile("json_bike").setVehicle("bike").
                                 putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/json_bike.json"),
                         new CustomProfile("custom_bike").
-                            setCustomModel(new CustomModel().
-                                    addToSpeed(If("road_class == PRIMARY", LIMIT, 28)).
-                                    addToPriority(If("max_width < 1.2", MULTIPLY, 0))).
-                            setVehicle("bike"))).
+                                setCustomModel(new CustomModel().
+                                        addToSpeed(If("road_class == PRIMARY", LIMIT, 28)).
+                                        addToPriority(If("max_width < 1.2", MULTIPLY, 0))).
+                                setVehicle("bike"))).
                 setCHProfiles(Collections.singletonList(new CHProfile("truck")));
         return config;
     }

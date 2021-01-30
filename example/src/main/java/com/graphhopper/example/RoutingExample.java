@@ -7,7 +7,6 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.*;
@@ -34,7 +33,7 @@ public class RoutingExample {
     }
 
     static GraphHopper createGraphHopperInstance(String ghLoc) {
-        GraphHopper hopper = new GraphHopperOSM();
+        GraphHopper hopper = new GraphHopper();
         hopper.setDataReaderFile(ghLoc);
         // specify where to store graphhopper files
         hopper.setGraphHopperLocation("target/routing-graph-cache");
@@ -119,7 +118,7 @@ public class RoutingExample {
     }
 
     public static void customizableRouting(String ghLoc) {
-        GraphHopper hopper = new GraphHopperOSM();
+        GraphHopper hopper = new GraphHopper();
         hopper.setDataReaderFile(ghLoc);
         hopper.setGraphHopperLocation("target/routing-custom-graph-cache");
         hopper.setEncodingManager(EncodingManager.create("car"));
