@@ -21,10 +21,12 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.util.JsonFeatureCollection;
 
 /**
- * This class only exists for backward compatibility. Use {@link GraphHopper} instead.
+ * This class only exists for backward compatibility.
  *
  * @author Peter Karich
+ * @deprecated Use {@link GraphHopper} instead.
  */
+@Deprecated
 public class GraphHopperOSM extends GraphHopper {
 
 
