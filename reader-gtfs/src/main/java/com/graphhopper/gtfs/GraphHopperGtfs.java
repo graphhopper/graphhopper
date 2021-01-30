@@ -40,7 +40,6 @@ import com.graphhopper.util.PointList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
@@ -65,9 +64,9 @@ public class GraphHopperGtfs extends GraphHopper {
     }
 
     @Override
-    protected void readData() {
+    protected void importOSM() {
         if (ghConfig.has("datareader.file")) {
-            super.readData();
+            super.importOSM();
         } else {
             getGraphHopperStorage().create(1000);
         }

@@ -628,7 +628,7 @@ public class GraphHopper implements GraphHopperAPI {
                     throw new RuntimeException("To avoid multiple writers we need to obtain a write lock but it failed. In " + graphHopperLocation, lock.getObtainFailedReason());
             }
             ensureWriteAccess();
-            readData();
+            importOSM();
             cleanUp();
             postProcessing(closeEarly);
             flush();
@@ -638,7 +638,7 @@ public class GraphHopper implements GraphHopperAPI {
         }
     }
 
-    protected void readData() {
+    protected void importOSM() {
         if (osmFile == null)
             throw new IllegalStateException("Couldn't load from existing folder: " + ghLocation
                     + " but also cannot use file for DataReader as it wasn't specified!");

@@ -955,11 +955,11 @@ public class OSMReaderTest {
         }
 
         @Override
-        protected void readData() {
+        protected void importOSM() {
             GraphHopperStorage tmpGraph = newGraph(dir, getEncodingManager(), hasElevation(),
                     getEncodingManager().needsTurnCostsSupport());
             setGraphHopperStorage(tmpGraph);
-            super.readData();
+            super.importOSM();
             carOutExplorer = getGraphHopperStorage().createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder));
             carAllExplorer = getGraphHopperStorage().createEdgeExplorer(DefaultEdgeFilter.allEdges(carEncoder));
         }

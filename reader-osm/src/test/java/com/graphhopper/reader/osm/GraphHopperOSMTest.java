@@ -304,14 +304,14 @@ public class GraphHopperOSMTest {
         final CountDownLatch latch2 = new CountDownLatch(1);
         final GraphHopper instance1 = new GraphHopper() {
             @Override
-            protected void readData() {
+            protected void importOSM() {
                 try {
                     latch2.countDown();
                     latch1.await(3, TimeUnit.SECONDS);
                 } catch (InterruptedException ex) {
                     throw new RuntimeException(ex);
                 }
-                super.readData();
+                super.importOSM();
             }
         }.setStoreOnFlush(true).
                 setEncodingManager(EncodingManager.create("car")).
