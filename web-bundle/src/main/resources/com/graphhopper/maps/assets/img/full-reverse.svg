@@ -1,29 +1,30 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
-        xmlns:dc="http://purl.org/dc/elements/1.1/"
-        xmlns:cc="http://creativecommons.org/ns#"
-        xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-        xmlns="http://www.w3.org/2000/svg"
-        xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-        xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-        viewBox="0 0 13 13"
-        height="13"
-        width="13"
-        id="svg2"
-        version="1.1"
-        inkscape:version="0.91 r13725"
-        sodipodi:docname="full-reverse.svg"
-        inkscape:export-filename="/home/robin/workspace/graphhopper/web/src/main/resources/assets/img/full-reverse.png"
-        inkscape:export-xdpi="152.31"
-        inkscape:export-ydpi="152.31">
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   viewBox="0 0 13 13"
+   height="13"
+   width="13"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="full-reverse.svg"
+   inkscape:export-filename="/home/robin/workspace/graphhopper/web/src/main/resources/assets/img/full-reverse.png"
+   inkscape:export-xdpi="152.31"
+   inkscape:export-ydpi="152.31">
   <metadata
-          id="metadata14">
+     id="metadata14">
     <rdf:RDF>
       <cc:Work
-              rdf:about="">
+         rdf:about="">
         <dc:format>image/svg+xml</dc:format>
         <dc:type
-                rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
         <dc:title>rail-15.svg</dc:title>
       </cc:Work>
     </rdf:RDF>

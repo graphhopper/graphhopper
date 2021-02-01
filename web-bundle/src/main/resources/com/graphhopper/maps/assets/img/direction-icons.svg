@@ -2,30 +2,31 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-        xmlns:dc="http://purl.org/dc/elements/1.1/"
-        xmlns:cc="http://creativecommons.org/ns#"
-        xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-        xmlns="http://www.w3.org/2000/svg"
-        xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-        xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-        width="210mm"
-        height="297mm"
-        id="svg2"
-        version="1.1"
-        inkscape:version="0.91 r13725"
-        inkscape:export-filename="/home/peterk/Dokumente/quell/graphstuff/graphhopper/web/src/main/webapp/img/right.png"
-        inkscape:export-xdpi="134.39999"
-        inkscape:export-ydpi="134.39999"
-        sodipodi:docname="direction-icons.svg">
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="210mm"
+   height="297mm"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   inkscape:export-filename="/home/peterk/Dokumente/quell/graphstuff/graphhopper/web/src/main/webapp/img/right.png"
+   inkscape:export-xdpi="134.39999"
+   inkscape:export-ydpi="134.39999"
+   sodipodi:docname="direction-icons.svg">
   <defs
-          id="defs4">
+     id="defs4">
     <marker
-            inkscape:stockid="Arrow2Send"
-            orient="auto"
-            refY="0.0"
-            refX="0.0"
-            id="Arrow2Send"
-            style="overflow:visible;">
+       inkscape:stockid="Arrow2Send"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow2Send"
+       style="overflow:visible;">
       <path
          id="path3792"
          style="fill-rule:evenodd;stroke-width:0.62500000;stroke-linejoin:round;"
