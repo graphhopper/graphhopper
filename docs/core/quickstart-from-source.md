@@ -96,15 +96,6 @@ as those versions are not in maven central:
 
 ### JavaScript
 
-When developing the UI for GraphHopper you need to enable serving files
-directly from local disc via your config.yml:
-
-```yml
-assets:
-  overrides:
-    /maps: web/src/main/resources/assets/
-```
-
 To setup the JavaScript development environment install the [node package
 manager](https://github.com/nvm-sh/nvm):
 
@@ -122,7 +113,7 @@ production:
 ```bash
 cd web
 
-# For development just use watchify and all changes will be available on refresh:
+# For development just use watchify and all changes (except those in index.html) will be available on refresh:
 npm run watch
 
 # bundle creates the main file

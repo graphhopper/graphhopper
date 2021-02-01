@@ -172,15 +172,6 @@ graphhopper:
   # Having less rules, might result in a smaller graph. The line below contains the world-wide bounding box, uncomment and adapt to your need.
   # spatial_rules.max_bbox: -180,180,-90,90
 
-
-# Uncomment the following to point /maps to the source directory in the filesystem instead of
-# the Java resource path. Helpful for development of the web client.
-# Assumes that the web module is the working directory.
-#
-# assets:
-#  overrides:
-#    /maps: web/target/classes/assets/
-
 # Dropwizard server configuration
 server:
   application_connectors:
