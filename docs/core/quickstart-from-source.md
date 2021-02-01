@@ -102,7 +102,7 @@ directly from local disc via your config.yml:
 ```yml
 assets:
   overrides:
-    /maps: web/src/main/resources/assets/
+    /maps: web-bundle/src/main/resources/com/graphhopper/maps/assets/
 ```
 
 To setup the JavaScript development environment install the [node package
@@ -111,7 +111,7 @@ manager](https://github.com/nvm-sh/nvm):
 ```bash
 wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash && \. $HOME/.nvm/nvm.sh && nvm install
 # create main.js via npm
-cd web && npm install && npm run bundleProduction && cd ..
+cd web-bundle && npm install && npm run bundleProduction && cd ..
 ```
 
 For windows use [nvm-windows](https://github.com/coreybutler/nvm-windows).
@@ -120,7 +120,7 @@ There are more npm commands to e.g. change the main.js on the fly or create an u
 production:
 
 ```bash
-cd web
+cd web-bundle
 
 # For development just use watchify and all changes will be available on refresh:
 npm run watch

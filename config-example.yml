@@ -179,7 +179,7 @@ graphhopper:
 #
 # assets:
 #  overrides:
-#    /maps: web/target/classes/assets/
+#    /maps: web-bundle/target/classes/com/graphhopper/maps/assets/
 
 # Dropwizard server configuration
 server:

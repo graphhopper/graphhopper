@@ -45,9 +45,11 @@ public final class GraphHopperApplication extends Application<GraphHopperServerC
         bootstrap.addCommand(new MatchCommand());
 
         Map<String, String> resourceToURIMappings = new HashMap<>();
-        resourceToURIMappings.put("/assets/", "/maps/");
+        resourceToURIMappings.put("/com/graphhopper/maps/assets", "/maps/");
         resourceToURIMappings.put("/META-INF/resources/webjars", "/webjars"); // https://www.webjars.org/documentation#dropwizard
         bootstrap.addBundle(new ConfiguredAssetsBundle(resourceToURIMappings, "index.html"));
+        // todonow: shall we remove configured assets bundle (and use dropwizard-assets instead)?
+//        bootstrap.addBundle(new AssetsBundle("/com/graphhopper/maps/assets/", "/maps/", "index.html"));
     }
 
     @Override
