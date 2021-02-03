@@ -5,7 +5,7 @@
 // Misuse of API keys that you don't own is prohibited and you'll be blocked.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Easily replace this options.js with an additional file that you prodive as options_prod.js activate via:
+// Easily replace this options.js with an additional file that you provide as options_prod.js activate via:
 // BROWSERIFYSWAP_ENV='production' npm run watch
 // see also package.json and https://github.com/thlorenz/browserify-swap
 exports.options = {
