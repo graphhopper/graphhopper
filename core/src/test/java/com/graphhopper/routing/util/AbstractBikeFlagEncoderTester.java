@@ -255,13 +255,13 @@ public abstract class AbstractBikeFlagEncoderTester {
         way = new ReaderWay(1);
         way.setTag("railway", "platform");
         IntsRef flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
-        assertNotEquals(0, flags.ints[0]);
+        assertTrue(encoder.getAccessEnc().getBool(false, flags));
 
         way = new ReaderWay(1);
         way.setTag("highway", "track");
         way.setTag("railway", "platform");
         flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
-        assertNotEquals(0, flags.ints[0]);
+        assertTrue(encoder.getAccessEnc().getBool(false, flags));
 
         way = new ReaderWay(1);
         way.setTag("highway", "track");
@@ -269,7 +269,7 @@ public abstract class AbstractBikeFlagEncoderTester {
         way.setTag("bicycle", "no");
 
         flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
-        assertEquals(0, flags.ints[0]);
+        assertTrue(flags.isEmpty());
     }
 
     @Test
