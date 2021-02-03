@@ -113,7 +113,12 @@ production:
 ```bash
 cd web
 
-# For development just use watchify and all changes (except those in index.html) will be available on refresh:
+# For development just use watchify, which updates the main.js file whenever you change one of the .js files:
+# To see your changes in the browser without restarting the server you can either run the GH server in debug mode from
+# IntelliJ and use `Run->Debugging Actions->Reload Changed Classes` (and refresh your browser window). Or you serve
+# GH maps from the web/src/main/resources/assets folder directly using e.g. `live-server` (npm install -g live-server).
+# For the latter case make sure GH maps points to your running GH instance (set the routing host in js/config/options.js
+# to e.g. http://localhost:8989/).
 npm run watch
 
 # bundle creates the main file
