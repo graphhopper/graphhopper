@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.util.Helper;
 
 /**
@@ -48,10 +49,18 @@ public enum TransportationMode {
     }
 
     public String getAccessName() {
+        // TODO NOW encoder$access vs.:
         return name + "_access";
     }
 
     public String getTurnCostName() {
-        return name + "_turn_cost";
+        // TODO NOW encoder$turn_costs (TurnCost.key) vs.:
+        if (this == HGV) return "hgv_turn_cost";
+        return "turn_cost";
+    }
+
+    public String getMaxSpeedName() {
+        if (this == HGV) return "hgv_" + MaxSpeed.KEY;
+        return MaxSpeed.KEY;
     }
 }
