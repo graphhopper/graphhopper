@@ -513,6 +513,26 @@ public class GHUtility {
             }
 
             @Override
+            public EdgeIteratorState set(BooleanEncodedValue property, boolean value) {
+                property.setBool(false, flags, value);
+                return this;
+            }
+
+            @Override
+            public EdgeIteratorState setReverse(BooleanEncodedValue property, boolean value) {
+                property.setBool(true, flags, value);
+                return this;
+            }
+
+            @Override
+            public EdgeIteratorState set(BooleanEncodedValue property, boolean fwd, boolean bwd) {
+                if (!property.isStoreTwoDirections()) throw new IllegalArgumentException();
+                property.setBool(false, flags, fwd);
+                property.setBool(true, flags, fwd);
+                return this;
+            }
+
+            @Override
             public double get(DecimalEncodedValue property) {
                 return property.getDecimal(false, flags);
             }
@@ -523,6 +543,26 @@ public class GHUtility {
             }
 
             @Override
+            public EdgeIteratorState set(DecimalEncodedValue property, double value) {
+                property.setDecimal(false, flags, value);
+                return this;
+            }
+
+            @Override
+            public EdgeIteratorState setReverse(DecimalEncodedValue property, double value) {
+                property.setDecimal(true, flags, value);
+                return this;
+            }
+
+            @Override
+            public EdgeIteratorState set(DecimalEncodedValue property, double fwd, double bwd) {
+                if (!property.isStoreTwoDirections()) throw new IllegalArgumentException();
+                property.setDecimal(false, flags, fwd);
+                property.setDecimal(true, flags, fwd);
+                return this;
+            }
+
+            @Override
             public <T extends Enum<?>> T get(EnumEncodedValue<T> property) {
                 return property.getEnum(false, flags);
             }
@@ -530,6 +570,26 @@ public class GHUtility {
             @Override
             public <T extends Enum<?>> T getReverse(EnumEncodedValue<T> property) {
                 return property.getEnum(true, flags);
+            }
+
+            @Override
+            public <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T value) {
+                property.setEnum(false, flags, value);
+                return this;
+            }
+
+            @Override
+            public <T extends Enum<?>> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
+                property.setEnum(true, flags, value);
+                return this;
+            }
+
+            @Override
+            public <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
+                if (!property.isStoreTwoDirections()) throw new IllegalArgumentException();
+                property.setEnum(false, flags, fwd);
+                property.setEnum(true, flags, fwd);
+                return this;
             }
 
             @Override

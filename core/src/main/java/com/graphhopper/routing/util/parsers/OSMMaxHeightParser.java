@@ -41,8 +41,8 @@ public class OSMMaxHeightParser implements TagParser {
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(heightEncoder);
+    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> edgeEncodedValues) {
+        edgeEncodedValues.add(heightEncoder);
     }
 
     @Override

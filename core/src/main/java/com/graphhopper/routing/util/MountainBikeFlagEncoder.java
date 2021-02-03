@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.Barrier;
 import com.graphhopper.util.PMap;
 
 import java.util.TreeMap;
@@ -128,7 +129,7 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
         preferHighwayTags.add("residential");
         preferHighwayTags.add("unclassified");
 
-        potentialBarriers.add("kissing_gate");
+        potentialBarriers.add(Barrier.KISSING_GATE);
         setSpecificClassBicycle("mtb");
     }
 

@@ -28,8 +28,8 @@ public class OSMHazmatTunnelParser implements TagParser {
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(hazTunnelEnc);
+    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> edgeEncodedValues) {
+        edgeEncodedValues.add(hazTunnelEnc);
     }
 
     @Override

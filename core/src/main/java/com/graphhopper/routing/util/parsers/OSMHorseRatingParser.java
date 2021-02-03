@@ -40,8 +40,8 @@ public class OSMHorseRatingParser implements TagParser {
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> link) {
-        link.add(horseScale);
+    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> edgeEncodedValues) {
+        edgeEncodedValues.add(horseScale);
     }
 
     @Override

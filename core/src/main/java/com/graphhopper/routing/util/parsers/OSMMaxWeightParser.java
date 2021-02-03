@@ -41,8 +41,8 @@ public class OSMMaxWeightParser implements TagParser {
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(weightEncoder);
+    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> edgeEncodedValues) {
+        edgeEncodedValues.add(weightEncoder);
     }
 
     @Override

@@ -39,8 +39,8 @@ public class OSMRoundaboutParser implements TagParser {
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> list) {
-        list.add(roundaboutEnc);
+    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> edgeEncodedValues) {
+        edgeEncodedValues.add(roundaboutEnc);
     }
 
     @Override

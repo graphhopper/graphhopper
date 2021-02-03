@@ -41,8 +41,8 @@ public class OSMMaxAxleLoadParser implements TagParser {
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(maxAxleLoadEncoder);
+    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> edgeEncodedValues) {
+        edgeEncodedValues.add(maxAxleLoadEncoder);
     }
 
     @Override

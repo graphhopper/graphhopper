@@ -25,6 +25,7 @@ import com.graphhopper.util.PMap;
 
 import java.util.*;
 
+import static com.graphhopper.routing.ev.Barrier.*;
 import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.routing.util.PriorityCode.*;
@@ -92,9 +93,10 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         sidewalkValues.add("right");
 
         blockBarriersByDefault(false);
-        absoluteBarriers.add("fence");
-        potentialBarriers.add("gate");
-        potentialBarriers.add("cattle_grid");
+        absoluteBarriers.add(FENCE);
+        potentialBarriers.add(GATE);
+        potentialBarriers.add(CATTLE_GRID);
+        potentialBarriers.add(CHAIN);
 
         safeHighwayTags.add("footway");
         safeHighwayTags.add("path");
@@ -148,9 +150,9 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix, int index) {
+    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix) {
         // first two bits are reserved for route handling in superclass
-        super.createEncodedValues(registerNewEncodedValue, prefix, index);
+        super.createEncodedValues(registerNewEncodedValue, prefix);
         // larger value required - ferries are faster than pedestrians
         registerNewEncodedValue.add(avgSpeedEnc = new UnsignedDecimalEncodedValue(getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
         registerNewEncodedValue.add(priorityWayEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 3, PriorityCode.getFactor(1), speedTwoDirections));

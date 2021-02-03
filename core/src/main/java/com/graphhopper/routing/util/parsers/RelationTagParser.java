@@ -31,7 +31,7 @@ import java.util.List;
  */
 public interface RelationTagParser extends TagParser {
 
-    void createRelationEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue);
+    void createRelationEncodedValues(List<EncodedValue> relationEncodedValues);
 
     /**
      * Analyze the tags of a relation and create the routing flags for the second read step.

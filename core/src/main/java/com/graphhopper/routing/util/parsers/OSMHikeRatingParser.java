@@ -40,8 +40,8 @@ public class OSMHikeRatingParser implements TagParser {
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> link) {
-        link.add(sacScaleEnc);
+    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> edgeEncodedValues) {
+        edgeEncodedValues.add(sacScaleEnc);
     }
 
     @Override

@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
 
+import static com.graphhopper.routing.ev.Barrier.*;
 import static com.graphhopper.routing.util.PriorityCode.REACH_DEST;
 import static com.graphhopper.routing.util.PriorityCode.VERY_NICE;
 
@@ -61,12 +62,12 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         super(speedBits, speedFactor);
 
         restrictions.add("wheelchair");
-        absoluteBarriers.add("handrail");
-        absoluteBarriers.add("wall");
-        absoluteBarriers.add("turnstile");
-        potentialBarriers.add("kerb");
-        potentialBarriers.add("cattle_grid");
-        potentialBarriers.add("motorcycle_barrier");
+        absoluteBarriers.add(HANDRAIL);
+        absoluteBarriers.add(WALL);
+        absoluteBarriers.add(TURNSTILE);
+        potentialBarriers.add(KERB);
+        potentialBarriers.add(CATTLE_GRID);
+        potentialBarriers.add(MOTORCYCLE_BARRIER);
 
         safeHighwayTags.add("footway");
         safeHighwayTags.add("pedestrian");
@@ -215,7 +216,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
      * speed.
      */
     @Override
-    public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
+    public EdgeIteratorState applyWayTags(ReaderWay way, EdgeIteratorState edge) {
         PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
 
         double prevEle = pl.getEle(0);
@@ -225,9 +226,8 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
             throw new IllegalStateException("Infinite distance should not happen due to #435. way ID=" + way.getId());
         }
 
-        if (fullDist2D < 1) {
-            return;
-        }
+        if (fullDist2D < 1)
+            return edge;
 
         double eleDelta = pl.getEle(pl.size() - 1) - prevEle;
         double elePercent = eleDelta / fullDist2D * 100;
@@ -237,24 +237,14 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         } else if (elePercent < -smallInclinePercent && elePercent > -maxInclinePercent) {
             setFwdBwdSpeed(edge, MEAN_SPEED, SLOW_SPEED);
         } else if (elePercent > maxInclinePercent || elePercent < -maxInclinePercent) {
-            edge.set(accessEnc, false);
-            edge.setReverse(accessEnc, false);
+            edge.set(accessEnc, false, false);
         }
+        return edge;
     }
 
-    /**
-     * Sets the given speed values to the given edge depending on the forward and backward accessibility of the edge.
-     *
-     * @param edge     the edge to set speed for
-     * @param fwdSpeed speed value in forward direction
-     * @param bwdSpeed speed value in backward direction
-     */
     private void setFwdBwdSpeed(EdgeIteratorState edge, int fwdSpeed, int bwdSpeed) {
-        if (edge.get(accessEnc))
-            edge.set(avgSpeedEnc, fwdSpeed);
-
-        if (edge.getReverse(accessEnc))
-            edge.setReverse(avgSpeedEnc, bwdSpeed);
+        if (edge.get(accessEnc)) edge.set(avgSpeedEnc, fwdSpeed);
+        if (edge.getReverse(accessEnc)) edge.setReverse(avgSpeedEnc, bwdSpeed);
     }
 
     /**

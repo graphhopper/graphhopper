@@ -82,7 +82,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         assertEquals(10, encoder.getSpeed(way));
         assertPriority(PREFER.getValue(), way);
         way.setTag("segregated", "no");
-        assertEquals(10 , encoder.getSpeed(way));
+        assertEquals(10, encoder.getSpeed(way));
         assertPriority(PREFER.getValue(), way);
         way.setTag("segregated", "yes");
         assertEquals(18, encoder.getSpeed(way));
@@ -430,7 +430,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
         assertTrue(encoder.getAccessEnc().getBool(false, flags));
         assertTrue(encoder.getAccessEnc().getBool(true, flags));
-        
+
         way.clearTags();
         way.setTag("highway", "tertiary");
         way.setTag("oneway", "yes");
@@ -576,19 +576,19 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "kissing_gate");
         // barrier!
-        assertFalse(encoder.handleNodeTags(node) == 0);
+        assertTrue(doNodeTagsBlock(node, encoder));
 
         // kissing_gate with bicycle tag
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "kissing_gate");
         node.setTag("bicycle", "yes");
         // barrier!
-        assertFalse(encoder.handleNodeTags(node) == 0);
+        assertTrue(doNodeTagsBlock(node, encoder));
 
         // Test if cattle_grid is non blocking
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "cattle_grid");
-        assertTrue(encoder.handleNodeTags(node) == 0);
+        assertFalse(doNodeTagsBlock(node, encoder));
     }
 
     @Test

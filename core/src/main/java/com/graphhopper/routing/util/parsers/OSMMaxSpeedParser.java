@@ -48,8 +48,8 @@ public class OSMMaxSpeedParser implements TagParser {
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> list) {
-        list.add(carMaxSpeedEnc);
+    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> edgeEncodedValues) {
+        edgeEncodedValues.add(carMaxSpeedEnc);
     }
 
     @Override

@@ -53,16 +53,16 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
     }
 
     @Override
-    public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
+    public EdgeIteratorState applyWayTags(ReaderWay way, EdgeIteratorState edge) {
+        edge = super.applyWayTags(way, edge);
         PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
         if (!pl.is3D())
             throw new IllegalStateException(toString() + " requires elevation data to improve speed calculation based on it. Please enable it in config via e.g. graph.elevation.provider: srtm");
 
-        IntsRef intsRef = edge.getFlags();
         if (way.hasTag("tunnel", "yes") || way.hasTag("bridge", "yes") || way.hasTag("highway", "steps"))
             // do not change speed
             // note: although tunnel can have a difference in elevation it is very unlikely that the elevation data is correct for a tunnel
-            return;
+            return edge;
 
         // Decrease the speed for ele increase (incline), and decrease the speed for ele decrease (decline). The speed-decrease
         // has to be bigger (compared to the speed-increase) for the same elevation difference to simulate losing energy and avoiding hills.
@@ -74,7 +74,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
 
         // for short edges an incline makes no sense and for 0 distances could lead to NaN values for speed, see #432
         if (fullDist2D < 2)
-            return;
+            return edge;
 
         double eleDelta = pl.getEle(pl.size() - 1) - prevEle;
         if (eleDelta > 0.1) {
@@ -92,6 +92,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
         double fwdDecline = decDist2DSum > 1 ? decEleSum / decDist2DSum : 0;
         double restDist2D = fullDist2D - incDist2DSum - decDist2DSum;
         double maxSpeed = getHighwaySpeed("cycleway");
+        IntsRef intsRef = edge.getFlags();
         if (accessEnc.getBool(false, intsRef)) {
             // use weighted mean so that longer incline influences speed more than shorter
             double speed = avgSpeedEnc.getDecimal(false, intsRef);
@@ -113,6 +114,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
             setSpeed(true, intsRef, keepIn(speedReverse, PUSHING_SECTION_SPEED / 2.0, maxSpeed));
         }
         edge.setFlags(intsRef);
+        return edge;
     }
 
     @Override

@@ -22,6 +22,8 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,7 +32,6 @@ import java.text.DateFormat;
 import java.util.Date;
 
 import static com.graphhopper.routing.util.EncodingManager.Access.WAY;
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.routing.util.PriorityCode.*;
 import static org.junit.Assert.*;
 
@@ -253,7 +254,6 @@ public abstract class AbstractBikeFlagEncoderTester {
 
         way = new ReaderWay(1);
         way.setTag("railway", "platform");
-        IntsRef relFlags = encodingManager.createRelationFlags();
         IntsRef flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
         assertNotEquals(0, flags.ints[0]);
 
@@ -378,38 +378,45 @@ public abstract class AbstractBikeFlagEncoderTester {
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         // no barrier!
-        assertTrue(encoder.handleNodeTags(node) == 0);
+        assertFalse(doNodeTagsBlock(node, encoder));
 
         node.setTag("bicycle", "yes");
         // no barrier!
-        assertTrue(encoder.handleNodeTags(node) == 0);
+        assertFalse(doNodeTagsBlock(node, encoder));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "no");
         // barrier!
-        assertTrue(encoder.handleNodeTags(node) > 0);
+        assertTrue(doNodeTagsBlock(node, encoder));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "yes");
         node.setTag("bicycle", "no");
         // barrier!
-        assertTrue(encoder.handleNodeTags(node) > 0);
+        assertTrue(doNodeTagsBlock(node, encoder));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "no");
         node.setTag("foot", "yes");
         // barrier!
-        assertTrue(encoder.handleNodeTags(node) > 0);
+        assertTrue(doNodeTagsBlock(node, encoder));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "no");
         node.setTag("bicycle", "yes");
         // no barrier!
-        assertTrue(encoder.handleNodeTags(node) == 0);
+        assertFalse(doNodeTagsBlock(node, encoder));
+    }
+
+    boolean doNodeTagsBlock(ReaderNode node, AbstractFlagEncoder encoder) {
+        EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(1000,
+                encodingManager.copyNodeToEdge(encodingManager.handleNodeTags(node), encodingManager.createEdgeFlags()));
+        edge.set(encoder.getAccessEnc(), true, true); // in handleWayTags we enable access so for barrier handling we later expect accessibility
+        return !encoder.applyWayTags(new ReaderWay(1), edge).get(encoder.getAccessEnc());
     }
 
     @Test
@@ -417,11 +424,11 @@ public abstract class AbstractBikeFlagEncoderTester {
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("ford", "yes");
         // barrier!
-        assertTrue(encoder.handleNodeTags(node) > 0);
+        assertTrue(doNodeTagsBlock(node, encoder));
 
         node.setTag("bicycle", "yes");
         // no barrier!
-        assertTrue(encoder.handleNodeTags(node) == 0);
+        assertFalse(doNodeTagsBlock(node, encoder));
     }
 
     @Test

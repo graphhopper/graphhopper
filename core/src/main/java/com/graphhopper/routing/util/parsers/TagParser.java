@@ -25,12 +25,12 @@ import com.graphhopper.storage.IntsRef;
 import java.util.List;
 
 /**
- * This interface defines how parts of the information from 'way' is converted into IntsRef. A TagParser usually
+ * This interface defines how parts of the information from 'way' or edge is converted into IntsRef. A TagParser usually
  * has one corresponding EncodedValue but more are possible too.
  */
 public interface TagParser {
 
-    void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue);
+    void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> edgeEncodedValues);
 
     IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags);
 }

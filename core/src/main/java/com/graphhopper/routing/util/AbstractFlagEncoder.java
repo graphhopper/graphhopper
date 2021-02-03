@@ -18,7 +18,6 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ConditionalTagInspector;
-import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
@@ -28,8 +27,6 @@ import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIteratorState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -43,7 +40,6 @@ import java.util.*;
  * @see EncodingManager
  */
 public abstract class AbstractFlagEncoder implements FlagEncoder {
-    private final static Logger logger = LoggerFactory.getLogger(AbstractFlagEncoder.class);
     protected final Set<String> intendedValues = new HashSet<>(5);
     // order is important
     protected final List<String> restrictions = new ArrayList<>(5);
@@ -51,12 +47,15 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected final Set<String> ferries = new HashSet<>(5);
     protected final Set<String> oneways = new HashSet<>(5);
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
-    protected final Set<String> absoluteBarriers = new HashSet<>(5);
-    protected final Set<String> potentialBarriers = new HashSet<>(5);
+    protected final Set<Barrier> absoluteBarriers = new HashSet<>(5);
+    protected final Set<Barrier> potentialBarriers = new HashSet<>(5);
     protected final int speedBits;
     protected final double speedFactor;
     private final int maxTurnCosts;
-    private long encoderBit;
+    private EnumEncodedValue<Barrier> barrierEnc;
+    private BooleanEncodedValue lockedEnc;
+    private EnumEncodedValue<RoadAccess> transportationModeAccessEnc;
+    private EnumEncodedValue<RoadEnvironment> roadEnvironment;
     protected BooleanEncodedValue accessEnc;
     protected BooleanEncodedValue roundaboutEnc;
     protected DecimalEncodedValue avgSpeedEnc;
@@ -142,11 +141,15 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     /**
      * Defines bits used for edge flags used for access, speed etc.
      */
-    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix, int index) {
+    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix) {
         // define the first 2 bits in flags for access
         registerNewEncodedValue.add(accessEnc = new SimpleBooleanEncodedValue(EncodingManager.getKey(prefix, "access"), true));
         roundaboutEnc = getBooleanEncodedValue(Roundabout.KEY);
-        encoderBit = 1L << index;
+
+        roadEnvironment = getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
+        transportationModeAccessEnc = getEnumEncodedValue(getTransportationMode().getAccessName(), RoadAccess.class);
+        lockedEnc = getBooleanEncodedValue("barrier_locked");
+        barrierEnc = getEnumEncodedValue(Barrier.KEY, Barrier.class);
     }
 
     /**
@@ -166,44 +169,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      * @return the encoded value to indicate if this encoder allows travel or not.
      */
     public abstract EncodingManager.Access getAccess(ReaderWay way);
-
-    /**
-     * Parse tags on nodes. Node tags can add to speed (like traffic_signals) where the value is
-     * strict negative or blocks access (like a barrier), then the value is strictly positive. This
-     * method is called in the second parsing step.
-     *
-     * @return encoded values or 0 if not blocking or no value stored
-     */
-    public long handleNodeTags(ReaderNode node) {
-        // absolute barriers always block
-        if (node.hasTag("barrier", absoluteBarriers))
-            return encoderBit;
-
-        // movable barriers block if they are not marked as passable
-        if (node.hasTag("barrier", potentialBarriers)) {
-            boolean locked = false;
-            if (node.hasTag("locked", "yes"))
-                locked = true;
-
-            for (String res : restrictions) {
-                if (!locked && node.hasTag(res, intendedValues))
-                    return 0;
-
-                if (node.hasTag(res, restrictedValues))
-                    return encoderBit;
-            }
-
-            if (blockByDefault)
-                return encoderBit;
-        }
-
-        if ((node.hasTag("highway", "ford") || node.hasTag("ford", "yes"))
-                && (blockFords && !node.hasTag(restrictions, intendedValues) || node.hasTag(restrictions, restrictedValues))) {
-            return encoderBit;
-        }
-
-        return 0;
-    }
 
     @Override
     public double getMaxSpeed() {
@@ -249,14 +214,42 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         if (getClass() != obj.getClass())
             return false;
         AbstractFlagEncoder afe = (AbstractFlagEncoder) obj;
-        return toString().equals(afe.toString()) && encoderBit == afe.encoderBit && accessEnc.equals(afe.accessEnc);
+        return toString().equals(afe.toString()) && accessEnc.equals(afe.accessEnc);
     }
 
     /**
      * Second parsing step. Invoked after splitting the edges. Currently used to offer a hook to
      * calculate precise speed values based on elevation data stored in the specified edge.
      */
-    public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
+    public EdgeIteratorState applyWayTags(ReaderWay way, EdgeIteratorState edge) {
+        // absolute barriers always block
+        Barrier barrier = edge.get(barrierEnc);
+        if (absoluteBarriers.contains(barrier)) {
+            edge.set(accessEnc, false, false);
+            return edge;
+        }
+
+        String restrictionValue = edge.get(transportationModeAccessEnc).toString();
+        // movable barriers block if they are not marked as passable
+        if (potentialBarriers.contains(barrier)) {
+            if (!edge.get(lockedEnc) && intendedValues.contains(restrictionValue))
+                return edge;
+
+            if (restrictedValues.contains(restrictionValue)) {
+                edge.set(accessEnc, false, false);
+                return edge;
+            }
+
+            if (blockByDefault) {
+                edge.set(accessEnc, false, false);
+                return edge;
+            }
+        }
+
+        if (edge.get(roadEnvironment) == RoadEnvironment.FORD
+                && (blockFords && !intendedValues.contains(restrictionValue) || restrictedValues.contains(restrictionValue)))
+            edge.set(accessEnc, false, false);
+        return edge;
     }
 
     public final DecimalEncodedValue getAverageSpeedEnc() {

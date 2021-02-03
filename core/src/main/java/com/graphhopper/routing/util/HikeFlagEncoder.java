@@ -92,17 +92,16 @@ public class HikeFlagEncoder extends FootFlagEncoder {
             weightToPrioMap.put(44d, AVOID_IF_POSSIBLE.getValue());
     }
 
-
     @Override
-    public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
+    public EdgeIteratorState applyWayTags(ReaderWay way, EdgeIteratorState edge) {
         PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
         if (!pl.is3D())
-            return;
+            return edge;
 
         if (way.hasTag("tunnel", "yes") || way.hasTag("bridge", "yes") || way.hasTag("highway", "steps"))
             // do not change speed
             // note: although tunnel can have a difference in elevation it is unlikely that the elevation data is correct for a tunnel
-            return;
+            return edge;
 
         // Decrease the speed for ele increase (incline), and slightly decrease the speed for ele decrease (decline)
         double prevEle = pl.getEle(0);
@@ -110,7 +109,7 @@ public class HikeFlagEncoder extends FootFlagEncoder {
 
         // for short edges an incline makes no sense and for 0 distances could lead to NaN values for speed, see #432
         if (fullDistance < 2)
-            return;
+            return edge;
 
         double eleDelta = Math.abs(pl.getEle(pl.size() - 1) - prevEle);
         double slope = eleDelta / fullDistance;
@@ -126,6 +125,7 @@ public class HikeFlagEncoder extends FootFlagEncoder {
             double newSpeed = Math.sqrt(1 + slope * slope) / (slope + 1 / 5.4);
             edge.set(avgSpeedEnc, Helper.keepIn(newSpeed, 1, 5));
         }
+        return edge;
     }
 
     @Override

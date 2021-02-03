@@ -25,6 +25,7 @@ import com.graphhopper.util.Helper;
 
 import java.util.*;
 
+import static com.graphhopper.routing.ev.Barrier.*;
 import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.routing.util.PriorityCode.*;
@@ -77,14 +78,14 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         oppositeLanes.add("opposite_track");
 
         blockBarriersByDefault(false);
-        potentialBarriers.add("gate");
-        // potentialBarriers.add("lift_gate");
-        potentialBarriers.add("swing_gate");
-        potentialBarriers.add("cattle_grid");
+        potentialBarriers.add(GATE);
+        potentialBarriers.add(SWING_GATE);
+        potentialBarriers.add(CATTLE_GRID);
+        potentialBarriers.add(CHAIN);
 
-        absoluteBarriers.add("fence");
-        absoluteBarriers.add("stile");
-        absoluteBarriers.add("turnstile");
+        absoluteBarriers.add(FENCE);
+        absoluteBarriers.add(STILE);
+        absoluteBarriers.add(TURNSTILE);
 
         unpavedSurfaceTags.add("unpaved");
         unpavedSurfaceTags.add("gravel");
@@ -191,9 +192,9 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix, int index) {
+    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix) {
         // first two bits are reserved for route handling in superclass
-        super.createEncodedValues(registerNewEncodedValue, prefix, index);
+        super.createEncodedValues(registerNewEncodedValue, prefix);
         registerNewEncodedValue.add(avgSpeedEnc = new UnsignedDecimalEncodedValue(getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
         registerNewEncodedValue.add(priorityEnc = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 3, PriorityCode.getFactor(1), false));
 

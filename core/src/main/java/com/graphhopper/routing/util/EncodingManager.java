@@ -31,6 +31,7 @@ import com.graphhopper.util.PMap;
 
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.graphhopper.util.Helper.toLowerCase;
 
@@ -45,9 +46,12 @@ import static com.graphhopper.util.Helper.toLowerCase;
  */
 public class EncodingManager implements EncodedValueLookup {
     private static final Pattern WAY_NAME_PATTERN = Pattern.compile("; *");
+    private final Set<TransportationMode> transportationModes = new HashSet<>();
     private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<>();
+    private final Map<String, EncodedValue> nodeEncodedValueMap = new LinkedHashMap<>();
     private final Map<String, EncodedValue> encodedValueMap = new LinkedHashMap<>();
     private final List<RelationTagParser> relationTagParsers = new ArrayList<>();
+    private final List<NodeTagParser> nodeTagParsers = new ArrayList<>();
     private final List<TagParser> edgeTagParsers = new ArrayList<>();
     private final Map<String, TurnCostParser> turnCostParsers = new LinkedHashMap<>();
     private boolean enableInstructions = true;
@@ -55,6 +59,7 @@ public class EncodingManager implements EncodedValueLookup {
     private EncodedValue.InitializerConfig turnCostConfig;
     private EncodedValue.InitializerConfig relationConfig;
     private EncodedValue.InitializerConfig edgeConfig;
+    private EncodedValue.InitializerConfig nodeConfig;
 
     /**
      * Instantiate manager with the given list of encoders. The manager knows several default
@@ -133,6 +138,7 @@ public class EncodingManager implements EncodedValueLookup {
         this.turnCostConfig = new EncodedValue.InitializerConfig();
         this.relationConfig = new EncodedValue.InitializerConfig();
         this.edgeConfig = new EncodedValue.InitializerConfig();
+        this.nodeConfig = new EncodedValue.InitializerConfig();
     }
 
     public void releaseParsers() {
@@ -149,9 +155,16 @@ public class EncodingManager implements EncodedValueLookup {
         private List<TagParser> tagParsers = new ArrayList<>();
         private List<TurnCostParser> turnCostParsers = new ArrayList<>();
         private List<RelationTagParser> relationTagParsers = new ArrayList<>();
+        private List<NodeTagParser> nodeTagParsers = new ArrayList<>();
 
         public Builder() {
             em = new EncodingManager();
+        }
+
+        public Builder addTransportationMode(TransportationMode tm) {
+            check();
+            em.transportationModes.add(tm);
+            return this;
         }
 
         /**
@@ -216,6 +229,12 @@ public class EncodingManager implements EncodedValueLookup {
             return this;
         }
 
+        public Builder addNodeTagParser(NodeTagParser tagParser) {
+            check();
+            nodeTagParsers.add(tagParser);
+            return this;
+        }
+
         public Builder add(FlagEncoder encoder) {
             check();
             flagEncoderList.add((AbstractFlagEncoder) encoder);
@@ -264,9 +283,22 @@ public class EncodingManager implements EncodedValueLookup {
                 em.edgeTagParsers.add(tagParser);
         }
 
+        private void _addNodeTagParsers(NodeTagParser nodeTagParser) {
+            List<EncodedValue> edgeEncodedValues = new ArrayList<>();
+            List<EncodedValue> nodeEncodedValues = new ArrayList<>();
+            nodeTagParser.createNodeEncodedValues(em, nodeEncodedValues, edgeEncodedValues);
+            for (EncodedValue ev : nodeEncodedValues) {
+                em.addNodeEncodedValue(ev);
+            }
+            for (EncodedValue ev : edgeEncodedValues) {
+                em.addEncodedValue(ev, false);
+            }
+            em.nodeTagParsers.add(nodeTagParser);
+        }
+
         private void _addRelationTagParser(RelationTagParser tagParser) {
             List<EncodedValue> list = new ArrayList<>();
-            tagParser.createRelationEncodedValues(em, list);
+            tagParser.createRelationEncodedValues(list);
             for (EncodedValue ev : list) {
                 ev.init(em.relationConfig);
             }
@@ -328,6 +360,18 @@ public class EncodingManager implements EncodedValueLookup {
             boolean insert = true;
             for (SpatialRuleParser srp : insertLater) {
                 _addEdgeTagParser(srp, false, insert);
+            }
+
+            // TODO NOW currently it seems a single NodeTagParser is sufficient (?)
+            for (NodeTagParser nodeTagParser : nodeTagParsers) {
+                _addNodeTagParsers(nodeTagParser);
+            }
+            if (!em.hasEncodedValue(Barrier.KEY)) {
+                if (em.transportationModes.isEmpty())
+                    em.transportationModes.addAll(flagEncoderList.stream().map(FlagEncoder::getTransportationMode).collect(Collectors.toList()));
+                if (em.transportationModes.isEmpty())
+                    em.transportationModes.add(TransportationMode.CAR);
+                _addNodeTagParsers(new OSMNodeTagParser(em.transportationModes));
             }
 
             if (dateRangeParser == null)
@@ -460,16 +504,21 @@ public class EncodingManager implements EncodedValueLookup {
                 throw new IllegalArgumentException("Cannot register edge encoder. Name already exists: " + fe.toString());
         }
 
-        int encoderCount = edgeEncoders.size();
-
         encoder.setEncodedValueLookup(this);
         List<EncodedValue> list = new ArrayList<>();
-        encoder.createEncodedValues(list, encoder.toString(), encoderCount);
+        encoder.createEncodedValues(list, encoder.toString());
         for (EncodedValue ev : list) {
             addEncodedValue(ev, true);
         }
 
         edgeEncoders.add(encoder);
+    }
+
+    private void addNodeEncodedValue(EncodedValue ev) {
+        if (nodeEncodedValueMap.containsKey(ev.getName()))
+            throw new IllegalStateException("EncodedValue " + ev.getName() + " already exists " + encodedValueMap.get(ev.getName()) + " vs " + ev);
+        ev.init(nodeConfig);
+        nodeEncodedValueMap.put(ev.getName(), ev);
     }
 
     private void addEncodedValue(EncodedValue ev, boolean withNamespace) {
@@ -663,6 +712,10 @@ public class EncodingManager implements EncodedValueLookup {
         return str.toString();
     }
 
+    public IntsRef createNodeFlags() {
+        return new IntsRef(2);
+    }
+
     // TODO hide IntsRef even more in a later version: https://gist.github.com/karussell/f4c2b2b1191be978d7ee9ec8dd2cd48f
     public IntsRef createEdgeFlags() {
         return new IntsRef(getIntsForFlags());
@@ -692,13 +745,12 @@ public class EncodingManager implements EncodedValueLookup {
     /**
      * Analyze tags on osm node. Store node tags (barriers etc) for later usage while parsing way.
      */
-    public long handleNodeTags(ReaderNode node) {
-        long flags = 0;
-        for (AbstractFlagEncoder encoder : edgeEncoders) {
-            flags |= encoder.handleNodeTags(node);
+    public IntsRef handleNodeTags(ReaderNode node) {
+        IntsRef nodeFlags = createNodeFlags();
+        for (NodeTagParser parser : nodeTagParsers) {
+            parser.handleNodeTags(nodeFlags, node);
         }
-
-        return flags;
+        return nodeFlags;
     }
 
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
@@ -742,14 +794,11 @@ public class EncodingManager implements EncodedValueLookup {
         return false;
     }
 
-    public List<BooleanEncodedValue> getAccessEncFromNodeFlags(long importNodeFlags) {
-        List<BooleanEncodedValue> list = new ArrayList<>(edgeEncoders.size());
-        for (int i = 0; i < edgeEncoders.size(); i++) {
-            FlagEncoder encoder = edgeEncoders.get(i);
-            if (((1L << i) & importNodeFlags) != 0)
-                list.add(encoder.getAccessEnc());
+    public IntsRef copyNodeToEdge(IntsRef nodeFlags, IntsRef edgeFlags) {
+        for (int i = 0; i < nodeTagParsers.size(); i++) {
+            nodeTagParsers.get(i).copyNodeToEdge(nodeFlags, edgeFlags);
         }
-        return list;
+        return edgeFlags;
     }
 
     @Override

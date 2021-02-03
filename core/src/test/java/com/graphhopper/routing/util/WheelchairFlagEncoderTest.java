@@ -361,19 +361,19 @@ public class WheelchairFlagEncoderTest {
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         // no barrier!
-        assertTrue(wheelchairEncoder.handleNodeTags(node) == 0);
+        assertFalse(doNodeTagsBlock(node, wheelchairEncoder));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "yes");
         // no barrier!
-        assertTrue(wheelchairEncoder.handleNodeTags(node) == 0);
+        assertFalse(doNodeTagsBlock(node, wheelchairEncoder));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "no");
         // barrier!
-        assertTrue(wheelchairEncoder.handleNodeTags(node) > 0);
+        assertTrue(doNodeTagsBlock(node, wheelchairEncoder));
 
         node.setTag("bicycle", "yes");
         // no barrier!?
@@ -384,11 +384,11 @@ public class WheelchairFlagEncoderTest {
         node.setTag("access", "no");
         node.setTag("foot", "yes");
         // no barrier!
-        assertTrue(wheelchairEncoder.handleNodeTags(node) == 0);
+        assertFalse(doNodeTagsBlock(node, wheelchairEncoder));
 
         node.setTag("locked", "yes");
         // barrier!
-        assertTrue(wheelchairEncoder.handleNodeTags(node) > 0);
+        assertTrue(doNodeTagsBlock(node, wheelchairEncoder));
     }
 
     @Test
@@ -399,43 +399,46 @@ public class WheelchairFlagEncoderTest {
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         // potential barriers are no barrier by default
-        assertTrue(tmpWheelchairEncoder.handleNodeTags(node) == 0);
+        assertFalse(doNodeTagsBlock(node, tmpWheelchairEncoder));
         node.setTag("access", "no");
-        assertTrue(tmpWheelchairEncoder.handleNodeTags(node) > 0);
+        assertTrue(doNodeTagsBlock(node, tmpWheelchairEncoder));
 
         // absolute barriers always block
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "fence");
-        assertTrue(tmpWheelchairEncoder.handleNodeTags(node) > 0);
+        assertTrue(doNodeTagsBlock(node, tmpWheelchairEncoder));
         node.setTag("barrier", "wall");
-        assertTrue(tmpWheelchairEncoder.handleNodeTags(node) > 0);
-        node.setTag("barrier", "handrail");
-        assertTrue(tmpWheelchairEncoder.handleNodeTags(node) > 0);
-        node.setTag("barrier", "turnstile");
-        assertTrue(tmpWheelchairEncoder.handleNodeTags(node) > 0);
+        assertTrue(doNodeTagsBlock(node, tmpWheelchairEncoder));
         node.setTag("barrier", "fence");
         node.setTag("access", "yes");
-        assertTrue(tmpWheelchairEncoder.handleNodeTags(node) > 0);
+        assertTrue(doNodeTagsBlock(node, tmpWheelchairEncoder));
 
         // Now let's block potential barriers per default (if no other access tag exists)
         tmpWheelchairEncoder = new WheelchairFlagEncoder(new PMap("block_barriers=true"));
         EncodingManager.create(tmpWheelchairEncoder);
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
-        assertTrue(tmpWheelchairEncoder.handleNodeTags(node) > 0);
+        assertTrue(doNodeTagsBlock(node, tmpWheelchairEncoder));
         node.setTag("access", "yes");
-        assertTrue(tmpWheelchairEncoder.handleNodeTags(node) == 0);
+        assertFalse(doNodeTagsBlock(node, tmpWheelchairEncoder));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "kerb");
-        assertTrue(tmpWheelchairEncoder.handleNodeTags(node) > 0);
+        assertTrue(doNodeTagsBlock(node, tmpWheelchairEncoder));
         node.setTag("wheelchair", "yes");
-        assertTrue(tmpWheelchairEncoder.handleNodeTags(node) == 0);
+        assertFalse(doNodeTagsBlock(node, tmpWheelchairEncoder));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "fence");
-        assertTrue(tmpWheelchairEncoder.handleNodeTags(node) > 0);
+        assertTrue(doNodeTagsBlock(node, tmpWheelchairEncoder));
     }
+
+    boolean doNodeTagsBlock(ReaderNode node, AbstractFlagEncoder encoder) {
+        EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(1000, encodingManager.copyNodeToEdge(encodingManager.handleNodeTags(node), encodingManager.createEdgeFlags()));
+        edge.set(encoder.getAccessEnc(), true, true); // in handleWayTags we enable access so for barrier handling we later expect accessibility
+        return !encoder.applyWayTags(new ReaderWay(1), edge).get(encoder.getAccessEnc());
+    }
+
 
     @Test
     public void testSurfaces() {

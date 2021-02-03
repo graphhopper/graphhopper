@@ -24,10 +24,10 @@ import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.parsers.TurnCostParser;
 import com.graphhopper.storage.*;
+import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
@@ -74,7 +74,6 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     private final GraphStorage ghStorage;
     private final Graph graph;
     private final NodeAccess nodeAccess;
-    private final LongIndexedContainer barrierNodeIds = new LongArrayList();
     private final DistanceCalc distCalc = DistanceCalcEarth.DIST_EARTH;
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
     private boolean smoothElevation = false;
@@ -109,6 +108,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     private Date osmDataDate;
     private final IntsRef tempRelFlags;
     private final TurnCostStorage tcs;
+    private final BitUtil bitUtil = BitUtil.LITTLE;
 
     public OSMReader(GraphHopperStorage ghStorage) {
         this.ghStorage = ghStorage;
@@ -357,39 +357,40 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         int lastBarrier = -1;
         for (int i = 0; i < size; i++) {
             long nodeId = osmNodeIds.get(i);
-            long nodeFlags = getNodeFlagsMap().get(nodeId);
+            long longFlags = getNodeFlagsMap().get(nodeId);
+            IntsRef nodeFlags = encodingManager.createNodeFlags();
+            nodeFlags.ints[0] = bitUtil.getIntLow(longFlags);
+            nodeFlags.ints[1] = bitUtil.getIntHigh(longFlags);
             // barrier was spotted and the way is passable for that mode of travel
-            if (nodeFlags > 0) {
-                if (isOnePassable(encodingManager.getAccessEncFromNodeFlags(nodeFlags), edgeFlags)) {
-                    // remove barrier to avoid duplicates
-                    getNodeFlagsMap().put(nodeId, 0);
+            if (!nodeFlags.isEmpty()) {
+                // remove barrier to avoid duplicates
+                getNodeFlagsMap().put(nodeId, 0);
 
-                    // create shadow node copy for zero length edge
-                    long newNodeId = addBarrierNode(nodeId);
-                    if (i > 0) {
-                        // start at beginning of array if there was no previous barrier
-                        if (lastBarrier < 0)
-                            lastBarrier = 0;
+                // create shadow node copy for zero length edge
+                long newNodeId = addBarrierNode(nodeId);
+                if (i > 0) {
+                    // start at beginning of array if there was no previous barrier
+                    if (lastBarrier < 0)
+                        lastBarrier = 0;
 
-                        // add way up to barrier shadow node                        
-                        int length = i - lastBarrier + 1;
-                        LongArrayList partNodeIds = new LongArrayList();
-                        partNodeIds.add(osmNodeIds.buffer, lastBarrier, length);
-                        partNodeIds.set(length - 1, newNodeId);
-                        createdEdges.addAll(addOSMWay(partNodeIds, edgeFlags, wayOsmId));
+                    // add way up to barrier shadow node
+                    int length = i - lastBarrier + 1;
+                    LongArrayList partNodeIds = new LongArrayList();
+                    partNodeIds.add(osmNodeIds.buffer, lastBarrier, length);
+                    partNodeIds.set(length - 1, newNodeId);
+                    createdEdges.addAll(addOSMWay(partNodeIds, edgeFlags, wayOsmId));
 
-                        // create zero length edge for barrier
-                        createdEdges.addAll(addBarrierEdge(newNodeId, nodeId, edgeFlags, nodeFlags, wayOsmId));
-                    } else {
-                        // run edge from real first node to shadow node
-                        createdEdges.addAll(addBarrierEdge(nodeId, newNodeId, edgeFlags, nodeFlags, wayOsmId));
+                    // create zero length edge for barrier
+                    createdEdges.addAll(addBarrierEdge(newNodeId, nodeId, edgeFlags, nodeFlags, wayOsmId));
+                } else {
+                    // run edge from real first node to shadow node
+                    createdEdges.addAll(addBarrierEdge(nodeId, newNodeId, edgeFlags, nodeFlags, wayOsmId));
 
-                        // exchange first node for created barrier node
-                        osmNodeIds.set(0, newNodeId);
-                    }
-                    // remember barrier for processing the way behind it
-                    lastBarrier = i;
+                    // exchange first node for created barrier node
+                    osmNodeIds.set(0, newNodeId);
                 }
+                // remember barrier for processing the way behind it
+                lastBarrier = i;
             }
         }
 
@@ -480,9 +481,9 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
 
         // analyze node tags for barriers
         if (node.hasTags()) {
-            long nodeFlags = encodingManager.handleNodeTags(node);
-            if (nodeFlags != 0)
-                getNodeFlagsMap().put(node.getId(), nodeFlags);
+            IntsRef nodeFlags = encodingManager.handleNodeTags(node);
+            if (!nodeFlags.isEmpty())
+                getNodeFlagsMap().put(node.getId(), bitUtil.combineIntsToLong(nodeFlags.ints[0], nodeFlags.ints[1]));
         }
 
         locations++;
@@ -504,18 +505,6 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
             nextPillarId++;
         }
         return true;
-    }
-
-    /**
-     * The nodeFlags store the encoders to check for accessibility in edgeFlags. E.g. if nodeFlags==3, then the
-     * accessibility of the first two encoders will be check in edgeFlags
-     */
-    private static boolean isOnePassable(List<BooleanEncodedValue> checkEncoders, IntsRef edgeFlags) {
-        for (BooleanEncodedValue accessEnc : checkEncoders) {
-            if (accessEnc.getBool(false, edgeFlags) || accessEnc.getBool(true, edgeFlags))
-                return true;
-        }
-        return false;
     }
 
     void prepareWaysWithRelationInfo(ReaderRelation osmRelation) {
@@ -811,15 +800,11 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     /**
      * Add a zero length edge with reduced routing options to the graph.
      */
-    Collection<EdgeIteratorState> addBarrierEdge(long fromId, long toId, IntsRef inEdgeFlags, long nodeFlags, long wayOsmId) {
-        IntsRef edgeFlags = IntsRef.deepCopyOf(inEdgeFlags);
-        // clear blocked directions from flags
-        for (BooleanEncodedValue accessEnc : encodingManager.getAccessEncFromNodeFlags(nodeFlags)) {
-            accessEnc.setBool(false, edgeFlags, false);
-            accessEnc.setBool(true, edgeFlags, false);
-        }
+    Collection<EdgeIteratorState> addBarrierEdge(long fromId, long toId, IntsRef inEdgeFlags, IntsRef nodeFlags, long wayOsmId) {
+        IntsRef edgeFlags = encodingManager.copyNodeToEdge(IntsRef.deepCopyOf(inEdgeFlags), nodeFlags);
+
         // add edge
-        barrierNodeIds.clear();
+        LongIndexedContainer barrierNodeIds = new LongArrayList(2);
         barrierNodeIds.add(fromId);
         barrierNodeIds.add(toId);
         return addOSMWay(barrierNodeIds, edgeFlags, wayOsmId);

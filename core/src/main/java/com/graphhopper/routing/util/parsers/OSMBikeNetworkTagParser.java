@@ -33,8 +33,8 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
     private EnumEncodedValue<RouteNetwork> transformerRouteRelEnc;
 
     @Override
-    public void createRelationEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(transformerRouteRelEnc = new EnumEncodedValue<>(getKey("bike", "route_relation"), RouteNetwork.class));
+    public void createRelationEncodedValues(List<EncodedValue> relationEncodedValues) {
+        relationEncodedValues.add(transformerRouteRelEnc = new EnumEncodedValue<>(getKey("bike", "route_relation"), RouteNetwork.class));
     }
 
     @Override
@@ -60,8 +60,8 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(bikeRouteEnc = new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class));
+    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> edgeEncodedValues) {
+        edgeEncodedValues.add(bikeRouteEnc = new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class));
     }
 
     @Override

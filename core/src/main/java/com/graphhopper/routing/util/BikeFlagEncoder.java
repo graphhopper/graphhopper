@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.routing.ev.Barrier;
 import com.graphhopper.util.PMap;
 
 /**
@@ -62,7 +63,7 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
         preferHighwayTags.add("residential");
         preferHighwayTags.add("unclassified");
 
-        absoluteBarriers.add("kissing_gate");
+        absoluteBarriers.add(Barrier.KISSING_GATE);
         setSpecificClassBicycle("touring");
     }
 

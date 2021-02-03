@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.Barrier;
 import com.graphhopper.util.PMap;
 
 import java.util.TreeMap;
@@ -118,7 +119,7 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
         routeMap.put(REGIONAL, VERY_NICE.getValue());
         routeMap.put(LOCAL, UNCHANGED.getValue());
 
-        absoluteBarriers.add("kissing_gate");
+        absoluteBarriers.add(Barrier.KISSING_GATE);
 
         setAvoidSpeedLimit(81);
         setSpecificClassBicycle("roadcycling");

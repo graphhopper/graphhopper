@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.Barrier;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.UnsignedDecimalEncodedValue;
 import com.graphhopper.storage.IntsRef;
@@ -25,6 +26,8 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
+
+import static com.graphhopper.routing.ev.Barrier.*;
 
 /**
  * Defines bit layout for cars. (speed, access, ferries, ...)
@@ -78,21 +81,22 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         intendedValues.add("designated");
         intendedValues.add("permissive");
 
-        potentialBarriers.add("gate");
-        potentialBarriers.add("lift_gate");
-        potentialBarriers.add("kissing_gate");
-        potentialBarriers.add("swing_gate");
-        potentialBarriers.add("cattle_grid");
+        potentialBarriers.add(GATE);
+        potentialBarriers.add(LIFT_GATE);
+        potentialBarriers.add(KISSING_GATE);
+        potentialBarriers.add(SWING_GATE);
+        potentialBarriers.add(CATTLE_GRID);
+        potentialBarriers.add(CHAIN);
 
-        absoluteBarriers.add("fence");
-        absoluteBarriers.add("bollard");
-        absoluteBarriers.add("stile");
-        absoluteBarriers.add("turnstile");
-        absoluteBarriers.add("cycle_barrier");
-        absoluteBarriers.add("motorcycle_barrier");
-        absoluteBarriers.add("block");
-        absoluteBarriers.add("bus_trap");
-        absoluteBarriers.add("sump_buster");
+        absoluteBarriers.add(FENCE);
+        absoluteBarriers.add(BOLLARD);
+        absoluteBarriers.add(STILE);
+        absoluteBarriers.add(TURNSTILE);
+        absoluteBarriers.add(CYCLE_BARRIER);
+        absoluteBarriers.add(MOTORCYCLE_BARRIER);
+        absoluteBarriers.add(BLOCK);
+        absoluteBarriers.add(BUS_TRAP);
+        absoluteBarriers.add(SUMP_BUSTER);
 
         badSurfaceSpeedMap.add("cobblestone");
         badSurfaceSpeedMap.add("grass_paver");
@@ -160,9 +164,9 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
      * Define the place of the speedBits in the edge flags for car.
      */
     @Override
-    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix, int index) {
+    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix) {
         // first two bits are reserved for route handling in superclass
-        super.createEncodedValues(registerNewEncodedValue, prefix, index);
+        super.createEncodedValues(registerNewEncodedValue, prefix);
         registerNewEncodedValue.add(avgSpeedEnc = new UnsignedDecimalEncodedValue(EncodingManager.getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
     }
 

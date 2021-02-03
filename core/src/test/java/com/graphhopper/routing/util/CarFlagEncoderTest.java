@@ -19,13 +19,13 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.Roundabout;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -152,12 +152,18 @@ public class CarFlagEncoderTest {
         // Node and way are initially blocking
         assertTrue(encoder.isBlockFords());
         assertTrue(encoder.getAccess(way).canSkip());
-        assertTrue(encoder.handleNodeTags(node) > 0);
+        assertTrue(doNodeTagsBlock(node, encoder));
 
         CarFlagEncoder tmpEncoder = new CarFlagEncoder(new PMap("block_fords=false"));
         EncodingManager.create(tmpEncoder);
         assertTrue(tmpEncoder.getAccess(way).isWay());
-        assertFalse(tmpEncoder.handleNodeTags(node) > 0);
+        doNodeTagsBlock(node, tmpEncoder);
+    }
+
+    boolean doNodeTagsBlock(ReaderNode node, AbstractFlagEncoder encoder) {
+        EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(1000, em.copyNodeToEdge(em.handleNodeTags(node), em.createEdgeFlags()));
+        edge.set(encoder.getAccessEnc(), true, true); // in handleWayTags we enable access so for barrier handling we later expect accessibility
+        return !encoder.applyWayTags(new ReaderWay(1), edge).get(encoder.getAccessEnc());
     }
 
     @Test
@@ -532,13 +538,13 @@ public class CarFlagEncoderTest {
         node.setTag("barrier", "lift_gate");
         node.setTag("access", "yes");
         // no barrier!
-        assertTrue(encoder.handleNodeTags(node) == 0);
+        assertFalse(doNodeTagsBlock(node, encoder));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "lift_gate");
         node.setTag("bicycle", "yes");
         // barrier!
-        assertTrue(encoder.handleNodeTags(node) > 0);
+        assertTrue(doNodeTagsBlock(node, encoder));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "lift_gate");
@@ -552,17 +558,17 @@ public class CarFlagEncoderTest {
         node.setTag("access", "no");
         node.setTag("motorcar", "yes");
         // no barrier!
-        assertTrue(encoder.handleNodeTags(node) == 0);
+        assertFalse(doNodeTagsBlock(node, encoder));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "bollard");
         // barrier!
-        assertTrue(encoder.handleNodeTags(node) > 0);
+        assertTrue(doNodeTagsBlock(node, encoder));
 
         // ignore other access tags for absolute barriers!
         node.setTag("motorcar", "yes");
         // still barrier!
-        assertTrue(encoder.handleNodeTags(node) > 0);
+        assertTrue(doNodeTagsBlock(node, encoder));
 
         CarFlagEncoder tmpEncoder = new CarFlagEncoder(new PMap("block_barriers=false"));
         EncodingManager.create(tmpEncoder);
@@ -570,7 +576,7 @@ public class CarFlagEncoderTest {
         // Test if cattle_grid is not blocking
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "cattle_grid");
-        assertTrue(tmpEncoder.handleNodeTags(node) == 0);
+        assertFalse(doNodeTagsBlock(node, tmpEncoder));
     }
 
     @Test
@@ -648,7 +654,7 @@ public class CarFlagEncoderTest {
         EncodingManager.create(lowFactorCar);
         List<EncodedValue> list = new ArrayList<>();
         lowFactorCar.setEncodedValueLookup(em);
-        lowFactorCar.createEncodedValues(list, "car", 0);
+        lowFactorCar.createEncodedValues(list, "car");
         assertEquals(2.5, encoder.ferrySpeedCalc.getSpeed(way), .1);
         assertEquals(.5, lowFactorCar.ferrySpeedCalc.getSpeed(way), .1);
     }
