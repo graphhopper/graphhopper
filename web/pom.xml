@@ -24,6 +24,10 @@
             <artifactId>dropwizard-core</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.dropwizard</groupId>
+            <artifactId>dropwizard-assets</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-web-bundle</artifactId>
             <version>${project.parent.version}</version>
@@ -32,10 +36,6 @@
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-nav</artifactId>
             <version>${project.parent.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.dropwizard-bundles</groupId>
-            <artifactId>dropwizard-configurable-assets-bundle</artifactId>
         </dependency>
 
         <!-- Pt and/or map-matching and/or isochrone web client dependencies-->
