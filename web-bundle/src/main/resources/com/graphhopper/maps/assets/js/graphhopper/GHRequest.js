@@ -256,8 +256,7 @@ GHRequest.prototype.doRequest = function (url, callback) {
         timeout: 30000,
         url: url,
         beforeSend: function(request) {
-            request.setRequestHeader("gh-client", "web-ui")
-            request.setRequestHeader("gh-client-version", "1.0")
+            request.setRequestHeader("gh-client", "web-ui 3.0")
         },
         success: function (json) {
             if (json.paths) {

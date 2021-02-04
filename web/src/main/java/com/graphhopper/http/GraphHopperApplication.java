@@ -42,6 +42,8 @@ public final class GraphHopperApplication extends Application<GraphHopperServerC
         bootstrap.addCommand(new ImportCommand());
         bootstrap.addCommand(new MatchCommand());
         bootstrap.addBundle(new AssetsBundle("/com/graphhopper/maps/assets/", "/maps/", "index.html"));
+        // see this link even though its outdated?! // https://www.webjars.org/documentation#dropwizard
+        bootstrap.addBundle(new AssetsBundle("/META-INF/resources/webjars", "/webjars/", null, "webjars"));
     }
 
     @Override

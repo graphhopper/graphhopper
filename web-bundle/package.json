@@ -6,10 +6,10 @@
   "license": "Apache-2.0",
   "main": "main.js",
   "scripts": {
-    "watch": "watchify src/main/resources/com/graphhopper/maps/assets/js/main-template.js -o target/classes/com/graphhopper/maps/assets/js/main.js --debug --verbose",
-    "bundle": "browserify src/main/resources/com/graphhopper/maps/assets/js/main-template.js -o target/classes/com/graphhopper/maps/assets/js/main.js",
-    "bundleDebug": "browserify src/main/resources/com/graphhopper/maps/assets/js/main-template.js --debug -o target/classes/com/graphhopper/maps/assets/js/main.js",
-    "bundleProduction": "browserify -g uglifyify src/main/resources/com/graphhopper/maps/assets/js/main-template.js -o target/classes/com/graphhopper/maps/assets/js/main.js",
+    "watch": "watchify src/main/resources/com/graphhopper/maps/assets/js/main-template.js -o src/main/resources/com/graphhopper/maps/assets/js/main.js --debug --verbose",
+    "bundle": "browserify src/main/resources/com/graphhopper/maps/assets/js/main-template.js -o src/main/resources/com/graphhopper/maps/assets/js/main.js",
+    "bundleDebug": "browserify src/main/resources/com/graphhopper/maps/assets/js/main-template.js --debug -o src/main/resources/com/graphhopper/maps/assets/js/main.js",
+    "bundleProduction": "browserify -g uglifyify src/main/resources/com/graphhopper/maps/assets/js/main-template.js -o src/main/resources/com/graphhopper/maps/assets/js/main.js",
     "test": "JASMINE_CONFIG_PATH=src/test/resources/com/graphhopper/maps/assets/spec/jasmine.json jasmine",
     "lint": "jshint src/main/resources/com/graphhopper/maps/assets/js/"
   },
