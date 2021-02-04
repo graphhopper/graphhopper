@@ -26,7 +26,7 @@ Notes:
 
 By default, GraphHopper uses [Omniscale](http://omniscale.com/) and/or [Thunderforest](http://thunderforest.com/) as layer service.
 Either you get a plan there, then set the API key in the options.js file or you
-have to remove Omniscale from the [JavaScript file](https://github.com/graphhopper/graphhopper/blob/master/web/src/main/resources/com/graphhopper/maps/assets/js/map.js).
+have to remove Omniscale from the [JavaScript file](https://github.com/graphhopper/graphhopper/blob/master/web/src/main/resources/com/graphhopper/maps/js/map.js).
 
 GraphHopper uses the [GraphHopper Directions API](https://docs.graphhopper.com/#tag/Geocoding-API) for geocoding. To be able to use the autocomplete feature of the point inputs you have to:
 

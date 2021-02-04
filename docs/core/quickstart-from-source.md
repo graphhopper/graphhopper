@@ -109,7 +109,7 @@ npm run watch
 To see your changes in the browser without restarting the server you can either run the GH server in debug mode from
 IntelliJ (use `Run->Debugging Actions->Reload Changed Classes` and refresh your browser window). 
 
-Or you start a separate server. For this you need to change the routing.host property in src/main/resources/com/graphhopper/maps/assets/js/config/options.js:
+Or you start a separate server. For this you need to change the routing.host property in src/main/resources/com/graphhopper/maps/js/config/options.js:
 ```js
 ...
   routing: {host: 'http://localhost:8989', api_key: ''},
@@ -120,7 +120,7 @@ And then in a second shell do:
 
 ```
 npm install -g live-server
-live-server --open=src/main/resources/com/graphhopper/maps/assets/
+live-server --open=src/main/resources/com/graphhopper/maps/
 ```
 
 Other npm commands e.g. to produce a bundled main.js for production:

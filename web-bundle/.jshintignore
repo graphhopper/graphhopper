@@ -1,2 +1,2 @@
-src/main/resources/com/graphhopper/maps/assets/js/lib/*.js
-src/main/resources/com/graphhopper/maps/assets/js/main.js
+src/main/resources/com/graphhopper/maps/js/lib/*.js
+src/main/resources/com/graphhopper/maps/js/main.js
