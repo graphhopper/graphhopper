@@ -144,11 +144,11 @@ public class EncodingManager implements EncodedValueLookup {
     public static class Builder {
         private EncodingManager em;
         private DateRangeParser dateRangeParser;
-        private List<AbstractFlagEncoder> flagEncoderList = new ArrayList<>();
-        private List<EncodedValue> encodedValueList = new ArrayList<>();
-        private List<TagParser> tagParsers = new ArrayList<>();
-        private List<TurnCostParser> turnCostParsers = new ArrayList<>();
-        private List<RelationTagParser> relationTagParsers = new ArrayList<>();
+        private final List<AbstractFlagEncoder> flagEncoderList = new ArrayList<>();
+        private final List<EncodedValue> encodedValueList = new ArrayList<>();
+        private final List<TagParser> tagParsers = new ArrayList<>();
+        private final List<TurnCostParser> turnCostParsers = new ArrayList<>();
+        private final List<RelationTagParser> relationTagParsers = new ArrayList<>();
 
         public Builder() {
             em = new EncodingManager();
@@ -606,8 +606,7 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     /**
-     * Processes way properties of different kind to determine speed and direction. Properties are
-     * directly encoded in 8 bytes.
+     * Processes way properties of different kind to determine speed and direction.
      *
      * @param relationFlags The preprocessed relation flags is used to influence the way properties.
      */
