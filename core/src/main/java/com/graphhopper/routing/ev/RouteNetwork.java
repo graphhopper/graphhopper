@@ -25,8 +25,7 @@ import com.graphhopper.util.Helper;
  */
 public enum RouteNetwork {
 
-    MISSING("missing"), INTERNATIONAL("international"), NATIONAL("national"), REGIONAL("regional"),
-    LOCAL("local"), OTHER("other");
+    MISSING, INTERNATIONAL, NATIONAL, REGIONAL, LOCAL, OTHER;
 
     public static String key(String prefix) {
         return prefix + "_network";
@@ -34,8 +33,8 @@ public enum RouteNetwork {
 
     private final String name;
 
-    RouteNetwork(String name) {
-        this.name = name;
+    RouteNetwork() {
+        this.name = Helper.toLowerCase(name());
     }
 
     @Override

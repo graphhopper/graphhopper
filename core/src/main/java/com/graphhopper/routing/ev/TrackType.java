@@ -27,15 +27,14 @@ import com.graphhopper.util.Helper;
  * @see <a href="https://wiki.openstreetmap.org/wiki/Tracktype">Tracktype Wiki</a>
  */
 public enum TrackType {
-    MISSING("missing"), GRADE1("grade1"), GRADE2("grade2"),
-    GRADE3("grade3"), GRADE4("grade4"), GRADE5("grade5");
+    MISSING, GRADE1, GRADE2, GRADE3, GRADE4, GRADE5;
 
     public static final String KEY = "track_type";
 
     private final String name;
 
-    TrackType(String name) {
-        this.name = name;
+    TrackType() {
+        this.name = Helper.toLowerCase(name());
     }
 
     @Override

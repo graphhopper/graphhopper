@@ -17,17 +17,19 @@
  */
 package com.graphhopper.routing.ev;
 
+import com.graphhopper.util.Helper;
+
 /**
  * This enum defines a country value that can be stored per edge.
  */
 public enum Country {
-    DEFAULT("default"), DEU("deu"), AUT("aut");
+    DEFAULT, DEU, AUT;
     public static final String KEY = "country";
 
     private final String name;
 
-    Country(String name) {
-        this.name = name;
+    Country() {
+        this.name = Helper.toLowerCase(name());
     }
 
     public static EnumEncodedValue<Country> create() {

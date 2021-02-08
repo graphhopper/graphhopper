@@ -1,18 +1,20 @@
 package com.graphhopper.routing.ev;
 
+import com.graphhopper.util.Helper;
+
 /**
  * Defines general restrictions for the transport of hazardous materials.<br>
  * If not tagged it will be {@link #YES}
  */
 public enum Hazmat {
-    YES("yes"), NO("no");
+    YES, NO;
 
     public static final String KEY = "hazmat";
 
     private final String name;
 
-    Hazmat(String name) {
-        this.name = name;
+    Hazmat() {
+        this.name = Helper.toLowerCase(name());
     }
 
     @Override

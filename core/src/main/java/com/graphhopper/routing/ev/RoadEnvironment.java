@@ -24,15 +24,14 @@ import com.graphhopper.util.Helper;
  * that do not fit get "other" as value.
  */
 public enum RoadEnvironment {
-    OTHER("other"), ROAD("road"), FERRY("ferry"),
-    TUNNEL("tunnel"), BRIDGE("bridge"), FORD("ford"), SHUTTLE_TRAIN("shuttle_train");
+    OTHER, ROAD, FERRY, TUNNEL, BRIDGE, FORD, SHUTTLE_TRAIN;
 
     public static final String KEY = "road_environment";
 
     private final String name;
 
-    RoadEnvironment(String name) {
-        this.name = name;
+    RoadEnvironment() {
+        this.name = Helper.toLowerCase(name());
     }
 
     @Override

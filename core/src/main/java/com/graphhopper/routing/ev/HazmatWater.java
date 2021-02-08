@@ -1,18 +1,20 @@
 package com.graphhopper.routing.ev;
 
+import com.graphhopper.util.Helper;
+
 /**
  * Defines general restrictions for the transport of goods through water protection areas.<br>
  * If not tagged it will be {@link #YES}
  */
 public enum HazmatWater {
-    YES("yes"), PERMISSIVE("permissive"), NO("no");
+    YES, PERMISSIVE, NO;
 
     public static final String KEY = "hazmat_water";
 
     private final String name;
 
-    HazmatWater(String name) {
-        this.name = name;
+    HazmatWater() {
+        this.name = Helper.toLowerCase(name());
     }
 
     @Override

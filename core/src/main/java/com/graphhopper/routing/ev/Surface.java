@@ -26,18 +26,15 @@ import com.graphhopper.util.Helper;
  */
 public enum Surface {
     // Order is important to make it roughly comparable
-    MISSING("missing"),
-    PAVED("paved"), ASPHALT("asphalt"), CONCRETE("concrete"), PAVING_STONES("paving_stones"), COBBLESTONE("cobblestone"),
-    UNPAVED("unpaved"), COMPACTED("compacted"), FINE_GRAVEL("fine_gravel"), GRAVEL("gravel"),
-    GROUND("ground"), DIRT("dirt"), GRASS("grass"), SAND("sand"),
-    OTHER("other");
+    MISSING, PAVED, ASPHALT, CONCRETE, PAVING_STONES, COBBLESTONE, UNPAVED, COMPACTED, FINE_GRAVEL, GRAVEL, GROUND,
+    DIRT, GRASS, SAND, OTHER;
 
     public static final String KEY = "surface";
 
     private final String name;
 
-    Surface(String name) {
-        this.name = name;
+    Surface() {
+        this.name = Helper.toLowerCase(name());
     }
 
     @Override

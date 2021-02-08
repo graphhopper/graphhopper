@@ -23,14 +23,14 @@ import com.graphhopper.util.Helper;
  * This enum defines the toll value like NO (default), ALL (all vehicles) and HGV (toll for heavy goods vehicles)
  */
 public enum Toll {
-    NO("no"), ALL("all"), HGV("hgv");
+    NO, ALL, HGV;
 
     public static final String KEY = "toll";
 
     private final String name;
 
-    Toll(String name) {
-        this.name = name;
+    Toll() {
+        this.name = Helper.toLowerCase(name());
     }
 
     public static Toll find(String name) {
