@@ -29,16 +29,16 @@ import java.util.List;
 import static com.graphhopper.routing.ev.RoadAccess.YES;
 
 public class OSMRoadAccessParser implements TagParser {
-    protected final EnumEncodedValue<RoadAccess> roadAccessEnc;
+
+    private final TransportationMode mode;
+    // TODO NOW this should be better a StringEncodedValue as we need a different enum for bike vs. wheelchair vs. car vs. motorcycle
+    private final EnumEncodedValue<RoadAccess> roadAccessEnc;
     private final List<String> restrictions;
 
-    public OSMRoadAccessParser() {
-        this(new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class), toOSMRestrictions(TransportationMode.CAR));
-    }
-
-    public OSMRoadAccessParser(EnumEncodedValue<RoadAccess> roadAccessEnc, List<String> restrictions) {
-        this.roadAccessEnc = roadAccessEnc;
-        this.restrictions = restrictions;
+    public OSMRoadAccessParser(TransportationMode mode) {
+        this.mode = mode;
+        this.restrictions = toOSMRestrictions(mode);
+        this.roadAccessEnc = new EnumEncodedValue<>(mode.getAccessName(), RoadAccess.class);
     }
 
     @Override
@@ -50,8 +50,9 @@ public class OSMRoadAccessParser implements TagParser {
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
         RoadAccess accessValue = YES;
         RoadAccess tmpAccessValue;
+        // TODO NOW difference to way.getFirstPriorityTag(info.restrictions) ?
         for (String restriction : restrictions) {
-            tmpAccessValue = RoadAccess.find(readerWay.getTag(restriction, "yes"));
+            tmpAccessValue = RoadAccess.find(readerWay.getTag(restriction));
             if (tmpAccessValue != null && tmpAccessValue.ordinal() > accessValue.ordinal()) {
                 accessValue = tmpAccessValue;
             }
@@ -59,8 +60,8 @@ public class OSMRoadAccessParser implements TagParser {
 
         SpatialRuleSet spatialRuleSet = readerWay.getTag("spatial_rule_set", null);
         if (spatialRuleSet != null && spatialRuleSet != SpatialRuleSet.EMPTY) {
-            RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
-            accessValue = spatialRuleSet.getAccess(roadClass, TransportationMode.CAR, YES);
+            RoadClass roadClass = RoadClass.find(readerWay.getTag("highway"));
+            accessValue = spatialRuleSet.getAccess(roadClass, mode, YES);
         }
 
         roadAccessEnc.setEnum(false, edgeFlags, accessValue);

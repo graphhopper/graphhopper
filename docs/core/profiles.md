@@ -113,7 +113,7 @@ For example there are the following categories (some of their possible values ar
 
 - road_class: (OTHER, MOTORWAY, TRUNK, PRIMARY, SECONDARY, TRACK, STEPS, CYCLEWAY, FOOTWAY, ...)
 - road_environment: (ROAD, FERRY, BRIDGE, TUNNEL, ...)
-- road_access: (DESTINATION, DELIVERY, PRIVATE, NO, ...)
+- car_access: (DESTINATION, DELIVERY, PRIVATE, NO, ...)
 - surface: (PAVED, DIRT, SAND, GRAVEL, ...)
 - toll: (NO, ALL, HGV)
 

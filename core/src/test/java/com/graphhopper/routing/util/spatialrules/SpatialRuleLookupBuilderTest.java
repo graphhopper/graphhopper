@@ -158,7 +158,7 @@ public class SpatialRuleLookupBuilderTest {
 
         EncodingManager em = new EncodingManager.Builder().add(new SpatialRuleParser(index, Country.create())).add(new CarFlagEncoder(new PMap())).build();
         IntEncodedValue countrySpatialIdEnc = em.getIntEncodedValue(Country.KEY);
-        EnumEncodedValue<RoadAccess> tmpRoadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
+        EnumEncodedValue<RoadAccess> tmpRoadAccessEnc = em.getEnumEncodedValue(TransportationMode.CAR.getAccessName(), RoadAccess.class);
         DecimalEncodedValue tmpCarMaxSpeedEnc = em.getDecimalEncodedValue(MaxSpeed.KEY);
 
         Graph graph = new GraphBuilder(em).create();

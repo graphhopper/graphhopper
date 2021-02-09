@@ -18,7 +18,10 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.util.PMap;
+
+import java.util.Collections;
 
 import static com.graphhopper.util.Helper.toLowerCase;
 
@@ -38,8 +41,6 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMRoadClassLinkParser();
         else if (name.equals(RoadEnvironment.KEY))
             return new OSMRoadEnvironmentParser();
-        else if (name.equals(RoadAccess.KEY))
-            return new OSMRoadAccessParser();
         else if (name.equals(MaxSpeed.KEY))
             return new OSMMaxSpeedParser();
         else if (name.equals(MaxWeight.KEY))
@@ -74,6 +75,9 @@ public class DefaultTagParserFactory implements TagParserFactory {
             throw new IllegalArgumentException("The property spatial_rules.borders_directory is required in the configuration " +
                     "when using 'country' in encoded_values");
 
+        for (TransportationMode tm : TransportationMode.values()) {
+            if (tm.getAccessName().equals(name)) return new OSMRoadAccessParser(tm);
+        }
         throw new IllegalArgumentException("entry in encoder list not supported " + name);
     }
 }

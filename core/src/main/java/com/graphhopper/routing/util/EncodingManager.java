@@ -31,6 +31,7 @@ import com.graphhopper.util.PMap;
 
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.graphhopper.util.Helper.toLowerCase;
 
@@ -50,6 +51,7 @@ public class EncodingManager implements EncodedValueLookup {
     private final List<RelationTagParser> relationTagParsers = new ArrayList<>();
     private final List<TagParser> edgeTagParsers = new ArrayList<>();
     private final Map<String, TurnCostParser> turnCostParsers = new LinkedHashMap<>();
+    private final List<TransportationMode> transportationModes = new ArrayList<>();
     private boolean enableInstructions = true;
     private String preferredLanguage = "";
     private EncodedValue.InitializerConfig turnCostConfig;
@@ -228,6 +230,12 @@ public class EncodingManager implements EncodedValueLookup {
             return this;
         }
 
+        public Builder add(TransportationMode tm) {
+            check();
+            em.transportationModes.add(tm);
+            return this;
+        }
+
         public Builder setDateRangeParser(DateRangeParser dateRangeParser) {
             check();
             this.dateRangeParser = dateRangeParser;
@@ -291,6 +299,9 @@ public class EncodingManager implements EncodedValueLookup {
         public EncodingManager build() {
             check();
 
+            if (em.transportationModes.isEmpty())
+                em.transportationModes.addAll(flagEncoderList.stream().map(FlagEncoder::getTransportationMode).collect(Collectors.toList()));
+
             for (RelationTagParser tagParser : relationTagParsers) {
                 _addRelationTagParser(tagParser);
             }
@@ -318,9 +329,10 @@ public class EncodingManager implements EncodedValueLookup {
                 _addEdgeTagParser(new OSMRoadEnvironmentParser(), false, false);
             if (!em.hasEncodedValue(MaxSpeed.KEY))
                 _addEdgeTagParser(new OSMMaxSpeedParser(), false, false);
-            if (!em.hasEncodedValue(RoadAccess.KEY)) {
-                // TODO introduce road_access for different vehicles? But how to create it in DefaultTagParserFactory?
-                _addEdgeTagParser(new OSMRoadAccessParser(), false, false);
+
+            for (TransportationMode tm : em.transportationModes) {
+                if (!em.hasEncodedValue(tm.getAccessName()))
+                    _addEdgeTagParser(new OSMRoadAccessParser(tm), false, false);
             }
 
             // ensure that SpatialRuleParsers come after required EncodedValues like max_speed or road_access

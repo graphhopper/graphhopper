@@ -119,7 +119,7 @@ public class PrepareRoutingSubnetworksTest {
         FlagEncoder carEncoder = new CarFlagEncoder();
         BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
         EncodingManager em = EncodingManager.create(carEncoder, bikeEncoder);
-        GraphHopperStorage g = createSubnetworkTestStorage(em, encoder);
+        GraphHopperStorage g = createSubnetworkTestStorage(em, carEncoder);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Arrays.asList(
                 new PrepareRoutingSubnetworks.PrepareJob(carEncoder.toString(), carEncoder.getAccessEnc(), null),
                 new PrepareRoutingSubnetworks.PrepareJob(bikeEncoder.toString(), bikeEncoder.getAccessEnc(), null)

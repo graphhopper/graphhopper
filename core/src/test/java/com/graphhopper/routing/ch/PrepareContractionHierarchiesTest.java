@@ -480,7 +480,7 @@ public class PrepareContractionHierarchiesTest {
 
         List<CHConfig> configs = Arrays.asList(carProfile, bikeProfile);
         GraphHopperStorage ghStorage = new GraphBuilder(tmpEncodingManager).setCHConfigs(configs).create();
-        initShortcutsGraph(ghStorage, carEncoder);
+        initShortcutsGraph(ghStorage, tmpCarEncoder);
         AllEdgesIterator iter = ghStorage.getAllEdges();
         while (iter.next()) {
             GHUtility.setSpeed(18, true, true, tmpBikeEncoder, iter);
@@ -501,7 +501,7 @@ public class PrepareContractionHierarchiesTest {
         CHConfig bikeConfig = CHConfig.nodeBased("c2", new FastestWeighting(tmpBikeEncoder));
 
         GraphHopperStorage ghStorage = new GraphBuilder(tmpEncodingManager).setCHConfigs(carConfig, bikeConfig).create();
-        initShortcutsGraph(ghStorage, carEncoder);
+        initShortcutsGraph(ghStorage, tmpCarEncoder);
         AllEdgesIterator iter = ghStorage.getAllEdges();
         while (iter.next()) {
             GHUtility.setSpeed(18, true, true, tmpBikeEncoder, iter);

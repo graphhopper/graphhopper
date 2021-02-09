@@ -1,4 +1,5 @@
 3.0
+	road_access is now car_access and other encoded values exist like bike_access or foot_access, see TransportationMode
     CustomWeighting language breaks old format but is more powerful and easier to read; it also allows factors >1 for server-side CustomModels
 	renamed GHUtilities.setProperties to setSpeed
     the name of an encoded value can only contain lower letters, underscore or numbers. It has to start with a lower letter

@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.ev;
 
+import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.util.Helper;
 
 public class DefaultEncodedValueFactory implements EncodedValueFactory {
@@ -25,53 +26,53 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
         if (Helper.isEmpty(string))
             throw new IllegalArgumentException("No string provided to load EncodedValue");
 
-        final EncodedValue enc;
         String name = string.split("\\|")[0];
         if (name.isEmpty())
             throw new IllegalArgumentException("To load EncodedValue a name is required. " + string);
 
         // creating the Country EV is done while SpatialRuleIndex is created and not here
         if (Roundabout.KEY.equals(name)) {
-            enc = Roundabout.create();
+            return Roundabout.create();
         } else if (GetOffBike.KEY.equals(name)) {
-            enc = GetOffBike.create();
+            return GetOffBike.create();
         } else if (RoadClass.KEY.equals(name)) {
-            enc = new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class);
+            return new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class);
         } else if (RoadClassLink.KEY.equals(name)) {
-            enc = new SimpleBooleanEncodedValue(RoadClassLink.KEY);
+            return new SimpleBooleanEncodedValue(RoadClassLink.KEY);
         } else if (RoadEnvironment.KEY.equals(name)) {
-            enc = new EnumEncodedValue<>(RoadEnvironment.KEY, RoadEnvironment.class);
-        } else if (RoadAccess.KEY.equals(name)) {
-            enc = new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class);
+            return new EnumEncodedValue<>(RoadEnvironment.KEY, RoadEnvironment.class);
         } else if (MaxSpeed.KEY.equals(name)) {
-            enc = MaxSpeed.create();
+            return MaxSpeed.create();
         } else if (MaxWeight.KEY.equals(name)) {
-            enc = MaxWeight.create();
+            return MaxWeight.create();
         } else if (MaxHeight.KEY.equals(name)) {
-            enc = MaxHeight.create();
+            return MaxHeight.create();
         } else if (MaxWidth.KEY.equals(name)) {
-            enc = MaxWidth.create();
+            return MaxWidth.create();
         } else if (MaxAxleLoad.KEY.equals(name)) {
-            enc = MaxAxleLoad.create();
+            return MaxAxleLoad.create();
         } else if (MaxLength.KEY.equals(name)) {
-            enc = MaxLength.create();
+            return MaxLength.create();
         } else if (Surface.KEY.equals(name)) {
-            enc = new EnumEncodedValue<>(Surface.KEY, Surface.class);
+            return new EnumEncodedValue<>(Surface.KEY, Surface.class);
         } else if (Toll.KEY.equals(name)) {
-            enc = new EnumEncodedValue<>(Toll.KEY, Toll.class);
+            return new EnumEncodedValue<>(Toll.KEY, Toll.class);
         } else if (TrackType.KEY.equals(name)) {
-            enc = new EnumEncodedValue<>(TrackType.KEY, TrackType.class);
+            return new EnumEncodedValue<>(TrackType.KEY, TrackType.class);
         } else if (BikeNetwork.KEY.equals(name) || FootNetwork.KEY.equals(name)) {
-            enc = new EnumEncodedValue<>(name, RouteNetwork.class);
+            return new EnumEncodedValue<>(name, RouteNetwork.class);
         } else if (Hazmat.KEY.equals(name)) {
-            enc = new EnumEncodedValue<>(Hazmat.KEY, Hazmat.class);
+            return new EnumEncodedValue<>(Hazmat.KEY, Hazmat.class);
         } else if (HazmatTunnel.KEY.equals(name)) {
-            enc = new EnumEncodedValue<>(HazmatTunnel.KEY, HazmatTunnel.class);
+            return new EnumEncodedValue<>(HazmatTunnel.KEY, HazmatTunnel.class);
         } else if (HazmatWater.KEY.equals(name)) {
-            enc = new EnumEncodedValue<>(HazmatWater.KEY, HazmatWater.class);
-        } else {
-            throw new IllegalArgumentException("DefaultEncodedValueFactory cannot find EncodedValue " + name);
+            return new EnumEncodedValue<>(HazmatWater.KEY, HazmatWater.class);
         }
-        return enc;
+
+        for (TransportationMode tm : TransportationMode.values()) {
+            if (tm.getAccessName().equals(name)) return new EnumEncodedValue<>(tm.getAccessName(), RoadAccess.class);
+        }
+
+        throw new IllegalArgumentException("DefaultEncodedValueFactory cannot find EncodedValue " + name);
     }
 }

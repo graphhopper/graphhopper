@@ -18,10 +18,7 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.Statement;
-import com.graphhopper.routing.ev.DefaultEncodedValueFactory;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.RouteNetwork;
-import com.graphhopper.routing.ev.StringEncodedValue;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.util.Helper;
 import org.codehaus.janino.Scanner;
 import org.codehaus.janino.*;
@@ -207,6 +204,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
     static String toEncodedValueClassName(String arg) {
         if (arg.isEmpty()) throw new IllegalArgumentException("Cannot be empty");
         if (arg.endsWith(RouteNetwork.key(""))) return RouteNetwork.class.getSimpleName();
+        if (arg.endsWith(RoadAccess.key(""))) return RoadAccess.class.getSimpleName();
         String clazz = Helper.underScoreToCamelCase(arg);
         return Character.toUpperCase(clazz.charAt(0)) + clazz.substring(1);
     }

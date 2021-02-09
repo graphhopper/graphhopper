@@ -25,9 +25,11 @@ import com.graphhopper.util.Helper;
  * value OTHER. The NO value does not permit any access.
  */
 public enum RoadAccess {
-    YES, DESTINATION, CUSTOMERS, DELIVERY, FORESTRY, AGRICULTURAL, PRIVATE, OTHER, NO;
+    MISSING, YES, DESTINATION, CUSTOMERS, DELIVERY, FORESTRY, AGRICULTURAL, PRIVATE, OTHER, NO;
 
-    public static final String KEY = "road_access";
+    public static String key(String name) {
+        return name + "_access";
+    }
 
     private final String name;
 
@@ -41,13 +43,12 @@ public enum RoadAccess {
     }
 
     public static RoadAccess find(String name) {
-        if (name == null)
-            return YES;
+        if (Helper.isEmpty(name))
+            return MISSING;
         try {
-            // public and permissive will be converted into "yes"
             return RoadAccess.valueOf(Helper.toUpperCase(name));
         } catch (IllegalArgumentException ex) {
-            return YES;
+            return OTHER;
         }
     }
 }

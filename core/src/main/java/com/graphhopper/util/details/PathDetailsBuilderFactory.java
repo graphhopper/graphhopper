@@ -18,6 +18,7 @@
 package com.graphhopper.util.details;
 
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.weighting.Weighting;
 
 import java.util.ArrayList;
@@ -74,7 +75,17 @@ public class PathDetailsBuilderFactory {
                 builders.add(new BooleanDetails(key, evl.getBooleanEncodedValue(key)));
         }
 
-        for (String key : Arrays.asList(RoadClass.KEY, RoadEnvironment.KEY, Surface.KEY, RoadAccess.KEY,
+        for (TransportationMode tm : TransportationMode.values()) {
+            String key = tm.getAccessName();
+            if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
+                builders.add(new EnumDetails<>(key, evl.getEnumEncodedValue(key, Enum.class)));
+        }
+
+        // backward compatibility
+        if (requestedPathDetails.contains("road_access") && evl.hasEncodedValue(TransportationMode.CAR.getAccessName()))
+            builders.add(new EnumDetails<>(TransportationMode.CAR.getAccessName(), evl.getEnumEncodedValue(TransportationMode.CAR.getAccessName(), Enum.class)));
+
+        for (String key : Arrays.asList(RoadClass.KEY, RoadEnvironment.KEY, Surface.KEY,
                 BikeNetwork.KEY, FootNetwork.KEY, Toll.KEY, TrackType.KEY, Hazmat.KEY, HazmatTunnel.KEY,
                 HazmatWater.KEY, Country.KEY)) {
             if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
