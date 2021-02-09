@@ -36,15 +36,15 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
     /**
      * There are multiple int values possible per edge. Here we specify the index into this integer array.
      */
-    protected int fwdDataIndex;
-    protected int bwdDataIndex;
+    private int fwdDataIndex;
+    private int bwdDataIndex;
+    private final boolean storeTwoDirections;
     final int bits;
     int maxValue;
     int fwdShift = -1;
     int bwdShift = -1;
     int fwdMask;
     int bwdMask;
-    boolean storeTwoDirections;
 
     /**
      * This constructor reserves the specified number of bits in the underlying data structure or twice the amount if
@@ -112,14 +112,11 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
             int flags = ref.ints[bwdDataIndex + ref.offset];
             // clear value bits
             flags &= ~bwdMask;
-            value <<= bwdShift;
-            // set value
-            ref.ints[bwdDataIndex + ref.offset] = flags | value;
+            ref.ints[bwdDataIndex + ref.offset] = flags | (value << bwdShift);
         } else {
             int flags = ref.ints[fwdDataIndex + ref.offset];
             flags &= ~fwdMask;
-            value <<= fwdShift;
-            ref.ints[fwdDataIndex + ref.offset] = flags | value;
+            ref.ints[fwdDataIndex + ref.offset] = flags | (value << fwdShift);
         }
     }
 
@@ -127,7 +124,7 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
     public final int getInt(boolean reverse, IntsRef ref) {
         int flags;
         // if we do not store both directions ignore reverse == true for convenient reading
-        if (reverse && storeTwoDirections) {
+        if (storeTwoDirections && reverse) {
             flags = ref.ints[bwdDataIndex + ref.offset];
             return (flags & bwdMask) >>> bwdShift;
         } else {
@@ -219,22 +216,6 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
         return val;
     }
 
-    /**
-     * Produces a static hashcode for an String arrays that is platform independent and still compatible to the default
-     * of openjdk.
-     */
-    static int staticHashCode(String... vals) {
-        if (vals == null)
-            return 0;
-        int len = vals.length;
-        int val = 1;
-        for (int idx = 0; idx < len; ++idx) {
-            val = 31 * val + Helper.staticHashCode(vals[idx]);
-        }
-
-        return val;
-    }
-    
     /**
      * Produces a static hashcode for a collection of Strings that is platform independent and still compatible to the default
      * of openjdk.

@@ -77,11 +77,11 @@ class InstructionsHelper {
         double tmpLon;
         PointList tmpWayGeo = edgeIteratorState.fetchWayGeometry(FetchMode.ALL);
         if (tmpWayGeo.getSize() <= 2) {
-            tmpLat = nodeAccess.getLatitude(edgeIteratorState.getAdjNode());
-            tmpLon = nodeAccess.getLongitude(edgeIteratorState.getAdjNode());
+            tmpLat = nodeAccess.getLat(edgeIteratorState.getAdjNode());
+            tmpLon = nodeAccess.getLon(edgeIteratorState.getAdjNode());
         } else {
-            tmpLat = tmpWayGeo.getLatitude(1);
-            tmpLon = tmpWayGeo.getLongitude(1);
+            tmpLat = tmpWayGeo.getLat(1);
+            tmpLon = tmpWayGeo.getLon(1);
         }
         return new GHPoint(tmpLat, tmpLon);
     }

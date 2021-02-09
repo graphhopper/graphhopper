@@ -19,12 +19,12 @@ package com.graphhopper.resources;
 
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.MultiException;
 import com.graphhopper.config.Profile;
-import com.graphhopper.http.WebHelper;
 import com.graphhopper.jackson.CustomRequest;
-import com.graphhopper.routing.util.CustomModel;
+import com.graphhopper.jackson.MultiException;
+import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
@@ -112,7 +112,7 @@ public class CustomWeightingRouteResource {
                     + ", time0: " + Math.round(ghResponse.getBest().getTime() / 60000f) + "min"
                     + ", points0: " + ghResponse.getBest().getPoints().getSize()
                     + ", debugInfo: " + ghResponse.getDebugInfo());
-            return Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
+            return Response.ok(ResponsePathSerializer.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
                     header("X-GH-Took", "" + Math.round(took)).
                     build();
         }

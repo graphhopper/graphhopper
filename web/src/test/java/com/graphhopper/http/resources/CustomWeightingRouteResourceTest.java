@@ -7,8 +7,8 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -27,6 +27,9 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static com.graphhopper.http.util.TestUtils.clientTarget;
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.LIMIT;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
@@ -40,7 +43,6 @@ public class CustomWeightingRouteResourceTest {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "bike,car").
-                putObject("routing.ch.disabling_allowed", true).
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
@@ -53,7 +55,12 @@ public class CustomWeightingRouteResourceTest {
                         new CustomProfile("cargo_bike").setVehicle("bike").
                                 putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/cargo_bike.yml"),
                         new CustomProfile("json_bike").setVehicle("bike").
-                                putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/json_bike.json"))).
+                                putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/json_bike.json"),
+                        new CustomProfile("custom_bike").
+                                setCustomModel(new CustomModel().
+                                        addToSpeed(If("road_class == PRIMARY", LIMIT, 28)).
+                                        addToPriority(If("max_width < 1.2", MULTIPLY, 0))).
+                                setVehicle("bike"))).
                 setCHProfiles(Collections.singletonList(new CHProfile("truck")));
         return config;
     }
@@ -92,9 +99,11 @@ public class CustomWeightingRouteResourceTest {
 
         // 'blocking' the area either leads to a route that still crosses it (but on a faster road) or to a road
         // going all the way around it depending on the priority, see #2021
-        yamlQuery += "priority:\n" +
+        yamlQuery += "" +
+                "priority:\n" +
                 // a faster road (see #2021)? or maybe do both?
-                "  area_custom1: " + priority + "\n" +
+                "  - if: in_area_custom1\n" +
+                "    multiply by: " + priority + "\n" +
                 "areas:\n" +
                 "  custom1:\n" +
                 "    type: \"Feature\"\n" +
@@ -133,6 +142,21 @@ public class CustomWeightingRouteResourceTest {
         String jsonQuery = "{" +
                 " \"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
                 " \"profile\": \"json_bike\"" +
+                "}";
+        final Response response = clientTarget(app, "/route-custom").request().post(Entity.json(jsonQuery));
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode infoJson = json.get("info");
+        assertFalse(infoJson.has("errors"));
+        JsonNode path = json.get("paths").get(0);
+        assertEquals(path.get("distance").asDouble(), 660, 10);
+    }
+
+    @Test
+    public void customBikeShouldBeLikeJsonBike() {
+        String jsonQuery = "{" +
+                " \"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
+                " \"profile\": \"custom_bike\"" +
                 "}";
         final Response response = clientTarget(app, "/route-custom").request().post(Entity.json(jsonQuery));
         assertEquals(200, response.getStatus());

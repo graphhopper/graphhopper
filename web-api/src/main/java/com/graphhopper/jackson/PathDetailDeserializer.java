@@ -41,12 +41,10 @@ public class PathDetailDeserializer extends JsonDeserializer<PathDetail> {
         PathDetail pd;
         if (val.isBoolean())
             pd = new PathDetail(val.asBoolean());
-        else if (val.isLong())
-            pd = new PathDetail(val.asLong());
-        else if (val.isInt())
-            pd = new PathDetail(val.asInt());
         else if (val.isDouble())
             pd = new PathDetail(val.asDouble());
+        else if (val.canConvertToLong())
+            pd = new PathDetail(val.asLong());
         else if (val.isTextual())
             pd = new PathDetail(val.asText());
         else

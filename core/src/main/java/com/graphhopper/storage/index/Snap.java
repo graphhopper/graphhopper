@@ -134,19 +134,19 @@ public class Snap {
             throw new IllegalStateException("Calculate snapped point only once");
 
         PointList fullPL = getClosestEdge().fetchWayGeometry(FetchMode.ALL);
-        double tmpLat = fullPL.getLatitude(wayIndex);
-        double tmpLon = fullPL.getLongitude(wayIndex);
-        double tmpEle = fullPL.getElevation(wayIndex);
+        double tmpLat = fullPL.getLat(wayIndex);
+        double tmpLon = fullPL.getLon(wayIndex);
+        double tmpEle = fullPL.getEle(wayIndex);
         if (snappedPosition != Position.EDGE) {
             snappedPoint = new GHPoint3D(tmpLat, tmpLon, tmpEle);
             return;
         }
 
         double queryLat = getQueryPoint().lat, queryLon = getQueryPoint().lon;
-        double adjLat = fullPL.getLatitude(wayIndex + 1), adjLon = fullPL.getLongitude(wayIndex + 1);
+        double adjLat = fullPL.getLat(wayIndex + 1), adjLon = fullPL.getLon(wayIndex + 1);
         if (distCalc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon)) {
             GHPoint tmpPoint = distCalc.calcCrossingPointToEdge(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon);
-            double adjEle = fullPL.getElevation(wayIndex + 1);
+            double adjEle = fullPL.getEle(wayIndex + 1);
             snappedPoint = new GHPoint3D(tmpPoint.lat, tmpPoint.lon, (tmpEle + adjEle) / 2);
         } else
             // outside of edge boundaries

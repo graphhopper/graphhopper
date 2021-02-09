@@ -23,8 +23,8 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -54,7 +54,6 @@ public class CustomWeightingRouteResourceLMTest {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "car,foot").
-                putObject("routing.lm.disabling_allowed", true).
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.encoded_values", "surface").
@@ -95,9 +94,8 @@ public class CustomWeightingRouteResourceLMTest {
         String yamlQuery = "points: [[1.529106,42.506567], [1.54006,42.511178]]\n" +
                 "profile: car_custom\n" +
                 "priority:\n" +
-                "  road_class:\n" +
-                "    secondary: 1\n" +
-                "    '*': 0.5\n";
+                "  - if: road_class != SECONDARY\n" +
+                "    multiply by: 0.5\n";
         JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 1317, 5);
@@ -106,7 +104,12 @@ public class CustomWeightingRouteResourceLMTest {
         yamlQuery = "points: [[1.5274,42.506211], [1.54006,42.511178]]\n" +
                 "profile: car_custom\n" +
                 "priority:\n" +
-                "  road_class: { residential: 0.8, primary: 1, '*': 0.66 }";
+                "  - if: road_class == RESIDENTIAL\n" +
+                "    multiply by: 0.8\n" +
+                "  - else if: road_class == PRIMARY\n" +
+                "    multiply by: 1\n" +
+                "  - else:\n" +
+                "    multiply by: 0.66\n";
         yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
         path = yamlNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 1707, 5);
@@ -117,8 +120,8 @@ public class CustomWeightingRouteResourceLMTest {
         String yamlQuery = "points: [[1.533365, 42.506211], [1.523924, 42.520605]]\n" +
                 "profile: car_custom\n" +
                 "priority:\n" +
-                "  road_environment:\n" +
-                "    tunnel: 0.1\n";
+                "  - if: road_environment == TUNNEL\n" +
+                "    multiply by: 0.1\n";
         JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 2437, 5);
@@ -145,8 +148,8 @@ public class CustomWeightingRouteResourceLMTest {
         String yamlQuery = "points: [[1.540875,42.510672], [1.54212,42.511131]]\n" +
                 "profile: foot_custom\n" +
                 "priority:\n" +
-                "  road_class:\n" +
-                "    steps: 0\n";
+                "  - if: road_class == STEPS\n" +
+                "    multiply by: 0\n";
         JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 328, 5);

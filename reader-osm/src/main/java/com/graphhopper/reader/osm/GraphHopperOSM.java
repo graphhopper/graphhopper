@@ -18,84 +18,21 @@
 package com.graphhopper.reader.osm;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.json.geo.JsonFeatureCollection;
-import com.graphhopper.reader.DataReader;
-import com.graphhopper.routing.lm.PrepareLandmarks;
-import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleFactory;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
-import org.locationtech.jts.geom.Polygon;
-
-import java.util.Collections;
-import java.util.List;
+import com.graphhopper.util.JsonFeatureCollection;
 
 /**
- * This class is the simplified entry to all functionality if you import from OpenStreetMap data.
- *
- * @author Peter Karich
+ * This class only exists for backward compatibility.
+ * @deprecated Use {@link GraphHopper} instead.
  */
+@Deprecated
 public class GraphHopperOSM extends GraphHopper {
-
-    private final JsonFeatureCollection landmarkSplittingFeatureCollection;
 
     public GraphHopperOSM() {
         this(null);
     }
 
     public GraphHopperOSM(JsonFeatureCollection landmarkSplittingFeatureCollection) {
-        super();
-        this.landmarkSplittingFeatureCollection = landmarkSplittingFeatureCollection;
+        super(landmarkSplittingFeatureCollection);
     }
 
-    @Override
-    protected DataReader createReader(GraphHopperStorage ghStorage) {
-        return initDataReader(new OSMReader(ghStorage));
-    }
-
-    public String getOSMFile() {
-        return getDataReaderFile();
-    }
-
-    /**
-     * This file can be an osm xml (.osm), a compressed xml (.osm.zip or .osm.gz) or a protobuf file
-     * (.pbf).
-     */
-    public GraphHopperOSM setOSMFile(String osmFileStr) {
-        super.setDataReaderFile(osmFileStr);
-        return this;
-    }
-
-    @Override
-    protected void loadOrPrepareLM(boolean closeEarly) {
-        if (!getLMPreparationHandler().isEnabled() || getLMPreparationHandler().getPreparations().isEmpty())
-            return;
-
-        if (landmarkSplittingFeatureCollection != null && !landmarkSplittingFeatureCollection.getFeatures().isEmpty()) {
-            SpatialRuleLookup ruleLookup = SpatialRuleLookupBuilder.buildIndex(
-                    Collections.singletonList(landmarkSplittingFeatureCollection), "area",
-                    new SpatialRuleFactory() {
-                        @Override
-                        public SpatialRule createSpatialRule(final String id,
-                                        List<Polygon> polygons) {
-                            return new AbstractSpatialRule(polygons) {
-                                @Override
-                                public String getId() {
-                                    return id;
-                                }
-                            };
-                        }
-                    });
-            for (PrepareLandmarks prep : getLMPreparationHandler().getPreparations()) {
-                // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
-                if (ruleLookup != null && !ruleLookup.getRules().isEmpty()) {
-                    prep.setSpatialRuleLookup(ruleLookup);
-                }
-            }
-        }
-
-        super.loadOrPrepareLM(closeEarly);
-    }
 }

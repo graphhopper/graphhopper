@@ -80,11 +80,11 @@ public class TunnelElevationInterpolatorTest extends EdgeElevationInterpolatorTe
         assertEquals(GHIntHashSet.from(0, 1, 2), innerNodeIds);
 
         edgeElevationInterpolator.execute();
-        assertEquals(0, na.getElevation(0), PRECISION);
-        assertEquals(0, na.getElevation(1), PRECISION);
-        assertEquals(10, na.getElevation(2), PRECISION);
-        assertEquals(20, na.getElevation(3), PRECISION);
-        assertEquals(0, na.getElevation(4), PRECISION);
+        assertEquals(0, na.getEle(0), PRECISION);
+        assertEquals(0, na.getEle(1), PRECISION);
+        assertEquals(10, na.getEle(2), PRECISION);
+        assertEquals(20, na.getEle(3), PRECISION);
+        assertEquals(0, na.getEle(4), PRECISION);
     }
 
     @Test
@@ -122,11 +122,11 @@ public class TunnelElevationInterpolatorTest extends EdgeElevationInterpolatorTe
         assertEquals(GHIntHashSet.from(0, 1), innerNodeIds);
 
         edgeElevationInterpolator.execute();
-        assertEquals(10, na.getElevation(0), PRECISION);
-        assertEquals(10, na.getElevation(1), PRECISION);
-        assertEquals(10, na.getElevation(2), PRECISION);
-        assertEquals(20, na.getElevation(3), PRECISION);
-        assertEquals(20, na.getElevation(4), PRECISION);
+        assertEquals(10, na.getEle(0), PRECISION);
+        assertEquals(10, na.getEle(1), PRECISION);
+        assertEquals(10, na.getEle(2), PRECISION);
+        assertEquals(20, na.getEle(3), PRECISION);
+        assertEquals(20, na.getEle(4), PRECISION);
     }
 
     @Test
@@ -164,11 +164,11 @@ public class TunnelElevationInterpolatorTest extends EdgeElevationInterpolatorTe
         assertEquals(GHIntHashSet.from(2), innerNodeIds);
 
         edgeElevationInterpolator.execute();
-        assertEquals(0, na.getElevation(0), PRECISION);
-        assertEquals(10, na.getElevation(1), PRECISION);
-        assertEquals(20, na.getElevation(2), PRECISION);
-        assertEquals(30, na.getElevation(3), PRECISION);
-        assertEquals(40, na.getElevation(4), PRECISION);
+        assertEquals(0, na.getEle(0), PRECISION);
+        assertEquals(10, na.getEle(1), PRECISION);
+        assertEquals(20, na.getEle(2), PRECISION);
+        assertEquals(30, na.getEle(3), PRECISION);
+        assertEquals(40, na.getEle(4), PRECISION);
     }
 
     @Test
@@ -221,14 +221,14 @@ public class TunnelElevationInterpolatorTest extends EdgeElevationInterpolatorTe
         assertEquals(GHIntHashSet.from(2, 5), innerNodeIds);
 
         edgeElevationInterpolator.execute();
-        assertEquals(0, na.getElevation(0), PRECISION);
-        assertEquals(10, na.getElevation(1), PRECISION);
-        assertEquals(20, na.getElevation(2), PRECISION);
-        assertEquals(30, na.getElevation(3), PRECISION);
-        assertEquals(40, na.getElevation(4), PRECISION);
-        assertEquals(20, na.getElevation(5), PRECISION);
-        assertEquals(30, na.getElevation(6), PRECISION);
-        assertEquals(40, na.getElevation(7), PRECISION);
+        assertEquals(0, na.getEle(0), PRECISION);
+        assertEquals(10, na.getEle(1), PRECISION);
+        assertEquals(20, na.getEle(2), PRECISION);
+        assertEquals(30, na.getEle(3), PRECISION);
+        assertEquals(40, na.getEle(4), PRECISION);
+        assertEquals(20, na.getEle(5), PRECISION);
+        assertEquals(30, na.getEle(6), PRECISION);
+        assertEquals(40, na.getEle(7), PRECISION);
     }
 
     @Test
@@ -291,15 +291,15 @@ public class TunnelElevationInterpolatorTest extends EdgeElevationInterpolatorTe
         assertEquals(GHIntHashSet.from(2, 7), innerNodeIds);
 
         edgeElevationInterpolator.execute();
-        assertEquals(0, na.getElevation(0), PRECISION);
-        assertEquals(10, na.getElevation(1), PRECISION);
-        assertEquals(20, na.getElevation(2), PRECISION);
-        assertEquals(30, na.getElevation(3), PRECISION);
-        assertEquals(40, na.getElevation(4), PRECISION);
-        assertEquals(40, na.getElevation(5), PRECISION);
-        assertEquals(30, na.getElevation(6), PRECISION);
-        assertEquals(20, na.getElevation(7), PRECISION);
-        assertEquals(10, na.getElevation(8), PRECISION);
-        assertEquals(0, na.getElevation(9), PRECISION);
+        assertEquals(0, na.getEle(0), PRECISION);
+        assertEquals(10, na.getEle(1), PRECISION);
+        assertEquals(20, na.getEle(2), PRECISION);
+        assertEquals(30, na.getEle(3), PRECISION);
+        assertEquals(40, na.getEle(4), PRECISION);
+        assertEquals(40, na.getEle(5), PRECISION);
+        assertEquals(30, na.getEle(6), PRECISION);
+        assertEquals(20, na.getEle(7), PRECISION);
+        assertEquals(10, na.getEle(8), PRECISION);
+        assertEquals(0, na.getEle(9), PRECISION);
     }
 }

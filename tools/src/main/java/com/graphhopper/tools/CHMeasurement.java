@@ -24,7 +24,6 @@ import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
@@ -86,7 +85,7 @@ public class CHMeasurement {
         final int perfIterations = ghConfig.getInt("perf_iterations", 1000);
         final boolean quick = ghConfig.getBool("quick", false);
 
-        final GraphHopper graphHopper = new GraphHopperOSM();
+        final GraphHopper graphHopper = new GraphHopper();
         String profile = "car_profile";
         if (withTurnCosts) {
             ghConfig.putObject("graph.flag_encoders", "car|turn_costs=true");

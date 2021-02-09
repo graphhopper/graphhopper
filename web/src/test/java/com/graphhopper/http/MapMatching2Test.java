@@ -21,12 +21,12 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.gpx.GpxConversions;
+import com.graphhopper.jackson.Gpx;
 import com.graphhopper.matching.EdgeMatch;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.matching.State;
-import com.graphhopper.matching.gpx.Gpx;
-import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.index.Snap;
@@ -59,8 +59,8 @@ public class MapMatching2Test {
     @Test
     public void testIssue13() throws IOException {
         CarFlagEncoder encoder = new CarFlagEncoder();
-        GraphHopper hopper = new GraphHopperOSM();
-        hopper.setDataReaderFile("../map-matching/files/map-issue13.osm.gz");
+        GraphHopper hopper = new GraphHopper();
+        hopper.setOSMFile("../map-matching/files/map-issue13.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
         hopper.setEncodingManager(EncodingManager.create(encoder));
         hopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
@@ -70,7 +70,7 @@ public class MapMatching2Test {
         MapMatching mapMatching = new MapMatching(hopper, new PMap().putObject("profile", "my_profile"));
 
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-13.gpx"), Gpx.class);
-        MatchResult mr = mapMatching.match(gpx.trk.get(0).getEntries());
+        MatchResult mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
 
         // make sure no virtual edges are returned
         int edgeCount = hopper.getGraphHopperStorage().getAllEdges().length();
@@ -87,8 +87,8 @@ public class MapMatching2Test {
     @Test
     public void testIssue70() throws IOException {
         CarFlagEncoder encoder = new CarFlagEncoder();
-        GraphHopper hopper = new GraphHopperOSM();
-        hopper.setDataReaderFile("../map-matching/files/issue-70.osm.gz");
+        GraphHopper hopper = new GraphHopper();
+        hopper.setOSMFile("../map-matching/files/issue-70.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
         hopper.setEncodingManager(EncodingManager.create(encoder));
         hopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
@@ -98,7 +98,7 @@ public class MapMatching2Test {
         MapMatching mapMatching = new MapMatching(hopper, new PMap().putObject("profile", "my_profile"));
 
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-70.gpx"), Gpx.class);
-        MatchResult mr = mapMatching.match(gpx.trk.get(0).getEntries());
+        MatchResult mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
 
         assertEquals(Arrays.asList("Милана Видака", "Бранка Радичевића", "Здравка Челара"), fetchStreets(mr.getEdgeMatches()));
         for (EdgeMatch edgeMatch : mr.getEdgeMatches()) {
@@ -109,8 +109,8 @@ public class MapMatching2Test {
     @Test
     public void testIssue127() throws IOException {
         CarFlagEncoder encoder = new CarFlagEncoder();
-        GraphHopper hopper = new GraphHopperOSM();
-        hopper.setDataReaderFile("../map-matching/files/map-issue13.osm.gz");
+        GraphHopper hopper = new GraphHopper();
+        hopper.setOSMFile("../map-matching/files/map-issue13.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
         hopper.setEncodingManager(EncodingManager.create(encoder));
         hopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
@@ -121,7 +121,7 @@ public class MapMatching2Test {
 
         // query with two identical points
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-127.gpx"), Gpx.class);
-        MatchResult mr = mapMatching.match(gpx.trk.get(0).getEntries());
+        MatchResult mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
 
         // make sure no virtual edges are returned
         int edgeCount = hopper.getGraphHopperStorage().getAllEdges().length();

@@ -24,7 +24,6 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.ResponsePath;
-import com.graphhopper.http.WebHelper;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.*;
@@ -181,12 +180,57 @@ public class ResponsePathDeserializer extends JsonDeserializer<ResponsePath> {
     private static PointList deserializePointList(ObjectMapper objectMapper, JsonNode jsonNode, boolean hasElevation) {
         PointList snappedPoints;
         if (jsonNode.isTextual()) {
-            snappedPoints = WebHelper.decodePolyline(jsonNode.asText(), Math.max(10, jsonNode.asText().length() / 4), hasElevation);
+            snappedPoints = decodePolyline(jsonNode.asText(), Math.max(10, jsonNode.asText().length() / 4), hasElevation);
         } else {
             LineString lineString = objectMapper.convertValue(jsonNode, LineString.class);
             snappedPoints = PointList.fromLineString(lineString);
         }
         return snappedPoints;
+    }
+
+    public static PointList decodePolyline(String encoded, int initCap, boolean is3D) {
+        PointList poly = new PointList(initCap, is3D);
+        int index = 0;
+        int len = encoded.length();
+        int lat = 0, lng = 0, ele = 0;
+        while (index < len) {
+            // latitude
+            int b, shift = 0, result = 0;
+            do {
+                b = encoded.charAt(index++) - 63;
+                result |= (b & 0x1f) << shift;
+                shift += 5;
+            } while (b >= 0x20);
+            int deltaLatitude = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+            lat += deltaLatitude;
+
+            // longitude
+            shift = 0;
+            result = 0;
+            do {
+                b = encoded.charAt(index++) - 63;
+                result |= (b & 0x1f) << shift;
+                shift += 5;
+            } while (b >= 0x20);
+            int deltaLongitude = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+            lng += deltaLongitude;
+
+            if (is3D) {
+                // elevation
+                shift = 0;
+                result = 0;
+                do {
+                    b = encoded.charAt(index++) - 63;
+                    result |= (b & 0x1f) << shift;
+                    shift += 5;
+                } while (b >= 0x20);
+                int deltaElevation = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+                ele += deltaElevation;
+                poly.add((double) lat / 1e5, (double) lng / 1e5, (double) ele / 100);
+            } else
+                poly.add((double) lat / 1e5, (double) lng / 1e5);
+        }
+        return poly;
     }
 
     public static List<Throwable> readErrors(ObjectMapper objectMapper, JsonNode json) {

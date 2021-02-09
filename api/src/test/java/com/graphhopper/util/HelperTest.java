@@ -17,12 +17,12 @@
  */
 package com.graphhopper.util;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Locale;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Peter Karich
@@ -30,7 +30,7 @@ import static org.junit.Assert.assertTrue;
 public class HelperTest {
 
     @Test
-    public void testCountBitValue() throws Exception {
+    public void testCountBitValue() {
         assertEquals(1, Helper.countBitValue(1));
         assertEquals(2, Helper.countBitValue(2));
         assertEquals(2, Helper.countBitValue(3));

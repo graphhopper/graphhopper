@@ -18,7 +18,7 @@
 
 package com.graphhopper.http;
 
-import com.graphhopper.MultiException;
+import com.graphhopper.jackson.MultiException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 

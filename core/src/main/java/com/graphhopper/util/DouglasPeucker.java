@@ -122,24 +122,24 @@ public class DouglasPeucker {
         int indexWithMaxDist = -1;
         double maxDist = -1;
         double elevationFactor = maxDistance / elevationMaxDistance;
-        double firstLat = points.getLatitude(fromIndex);
-        double firstLon = points.getLongitude(fromIndex);
-        double firstEle = points.getElevation(fromIndex);
-        double lastLat = points.getLatitude(lastIndex);
-        double lastLon = points.getLongitude(lastIndex);
-        double lastEle = points.getElevation(lastIndex);
+        double firstLat = points.getLat(fromIndex);
+        double firstLon = points.getLon(fromIndex);
+        double firstEle = points.getEle(fromIndex);
+        double lastLat = points.getLat(lastIndex);
+        double lastLon = points.getLon(lastIndex);
+        double lastEle = points.getEle(lastIndex);
         for (int i = fromIndex + 1; i < lastIndex; i++) {
-            double lat = points.getLatitude(i);
+            double lat = points.getLat(i);
             if (Double.isNaN(lat)) {
                 continue;
             }
-            double lon = points.getLongitude(i);
-            double ele = points.getElevation(i);
+            double lon = points.getLon(i);
+            double ele = points.getEle(i);
             double dist = (points.is3D() && elevationMaxDistance < Double.MAX_VALUE && !Double.isNaN(firstEle) && !Double.isNaN(lastEle) && !Double.isNaN(ele))
                     ? calc.calcNormalizedEdgeDistance3D(
-                            lat, lon, ele * elevationFactor,
-                            firstLat, firstLon, firstEle * elevationFactor,
-                            lastLat, lastLon, lastEle * elevationFactor)
+                    lat, lon, ele * elevationFactor,
+                    firstLat, firstLon, firstEle * elevationFactor,
+                    lastLat, lastLon, lastEle * elevationFactor)
                     : calc.calcNormalizedEdgeDistance(lat, lon, firstLat, firstLon, lastLat, lastLon);
             if (maxDist < dist) {
                 indexWithMaxDist = i;
@@ -170,8 +170,8 @@ public class DouglasPeucker {
     static void removeNaN(PointList pointList) {
         int curr = 0;
         for (int i = 0; i < pointList.size(); i++) {
-            if (!Double.isNaN(pointList.getLatitude(i))) {
-                pointList.set(curr, pointList.getLatitude(i), pointList.getLongitude(i), pointList.getElevation(i));
+            if (!Double.isNaN(pointList.getLat(i))) {
+                pointList.set(curr, pointList.getLat(i), pointList.getLon(i), pointList.getEle(i));
                 curr++;
             }
         }

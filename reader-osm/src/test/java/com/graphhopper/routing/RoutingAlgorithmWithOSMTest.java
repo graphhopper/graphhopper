@@ -23,7 +23,6 @@ import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.PrincetonReader;
 import com.graphhopper.reader.dem.SRTMProvider;
-import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -638,9 +637,9 @@ public class RoutingAlgorithmWithOSMTest {
                 profiles.add(new Profile(vehicleName + "_profile")
                         .setVehicle(vehicleName).setWeighting(weightStr).setTurnCosts(encoder.supportsTurnCosts()));
             }
-            GraphHopper hopper = new GraphHopperOSM().
+            GraphHopper hopper = new GraphHopper().
                     setStoreOnFlush(true).
-                    setDataReaderFile(osmFile).
+                    setOSMFile(osmFile).
                     setProfiles(profiles).
                     setGraphHopperLocation(graphFile).
                     setEncodingManager(em);
@@ -703,11 +702,11 @@ public class RoutingAlgorithmWithOSMTest {
         String graphFile = "target/monaco-gh";
         Helper.removeDir(new File(graphFile));
         final EncodingManager encodingManager = EncodingManager.create("car");
-        final GraphHopper hopper = new GraphHopperOSM().
+        final GraphHopper hopper = new GraphHopper().
                 setStoreOnFlush(true).
                 setEncodingManager(encodingManager).
                 setWayPointMaxDistance(0).
-                setDataReaderFile(DIR + "/monaco.osm.gz").
+                setOSMFile(DIR + "/monaco.osm.gz").
                 setGraphHopperLocation(graphFile).
                 setMinNetworkSize(0).
                 setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest")).

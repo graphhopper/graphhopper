@@ -18,8 +18,9 @@
 package com.graphhopper.http;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.matching.Observation;
-import com.graphhopper.matching.gpx.Gpx;
+import com.graphhopper.jackson.Gpx;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 
@@ -41,7 +42,7 @@ public class TrkTest {
     @Test
     public void test1() throws IOException {
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/test1.gpx"), Gpx.class);
-        List<Observation> gpxEntries = gpx.trk.get(0).getEntries();
+        List<Observation> gpxEntries = GpxConversions.getEntries(gpx.trk.get(0));
         assertEquals(264, gpxEntries.size());
         assertEquals(new Observation(new GHPoint(51.377719, 12.338217)), gpxEntries.get(0));
         assertEquals(new Observation(new GHPoint(51.371482, 12.363795)), gpxEntries.get(50));
@@ -50,14 +51,14 @@ public class TrkTest {
     @Test
     public void test2() throws IOException {
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/test2.gpx"), Gpx.class);
-        List<Observation> gpxEntries = gpx.trk.get(0).getEntries();
+        List<Observation> gpxEntries = GpxConversions.getEntries(gpx.trk.get(0));
         assertEquals(2, gpxEntries.size());
     }
 
     @Test
     public void test2NoMillis() throws IOException {
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/test2_no_millis.gpx"), Gpx.class);
-        List<Observation> gpxEntries = gpx.trk.get(0).getEntries();
+        List<Observation> gpxEntries = GpxConversions.getEntries(gpx.trk.get(0));
         assertEquals(3, gpxEntries.size());
         assertEquals(51.377719, gpxEntries.get(0).getPoint().lat, 0.0);
         assertEquals(12.338217, gpxEntries.get(0).getPoint().lon, 0.0);
@@ -72,13 +73,13 @@ public class TrkTest {
     @Test
     public void testNoTrkseg() throws IOException {
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/no_trkseg.gpx"), Gpx.class);
-        assertThat(gpx.trk.get(0).getEntries(), empty());
+        assertThat(GpxConversions.getEntries(gpx.trk.get(0)), empty());
     }
 
     @Test
     public void testNoTrkpt() throws IOException {
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/no_trkpt.gpx"), Gpx.class);
-        assertThat(gpx.trk.get(0).getEntries(), empty());
+        assertThat(GpxConversions.getEntries(gpx.trk.get(0)), empty());
     }
 
 }

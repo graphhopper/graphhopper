@@ -25,7 +25,6 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.ResponsePath;
-import com.graphhopper.http.WebHelper;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.jackson.ResponsePathDeserializer;
 import com.graphhopper.util.Helper;
@@ -36,6 +35,8 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -329,7 +330,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
         for (String checkEmptyHint : ghRequest.getPointHints()) {
             if (!checkEmptyHint.isEmpty()) {
                 for (String hint : ghRequest.getPointHints()) {
-                    url += "&" + Parameters.Routing.POINT_HINT + "=" + WebHelper.encodeURL(hint);
+                    url += "&" + Parameters.Routing.POINT_HINT + "=" + encodeURL(hint);
                 }
                 break;
             }
@@ -339,18 +340,18 @@ public class GraphHopperWeb implements GraphHopperAPI {
         for (String checkEitherSide : ghRequest.getCurbsides()) {
             if (!checkEitherSide.isEmpty()) {
                 for (String curbside : ghRequest.getCurbsides()) {
-                    url += "&" + Parameters.Routing.CURBSIDE + "=" + WebHelper.encodeURL(curbside);
+                    url += "&" + Parameters.Routing.CURBSIDE + "=" + encodeURL(curbside);
                 }
                 break;
             }
         }
 
         for (String snapPrevention : ghRequest.getSnapPreventions()) {
-            url += "&" + Parameters.Routing.SNAP_PREVENTION + "=" + WebHelper.encodeURL(snapPrevention);
+            url += "&" + Parameters.Routing.SNAP_PREVENTION + "=" + encodeURL(snapPrevention);
         }
 
         if (!key.isEmpty()) {
-            url += "&key=" + WebHelper.encodeURL(key);
+            url += "&key=" + encodeURL(key);
         }
 
         for (Map.Entry<String, Object> entry : ghRequest.getHints().toMap().entrySet()) {
@@ -363,7 +364,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
             }
 
             if (urlValue != null && !urlValue.isEmpty()) {
-                url += "&" + WebHelper.encodeURL(urlKey) + "=" + WebHelper.encodeURL(urlValue);
+                url += "&" + encodeURL(urlKey) + "=" + encodeURL(urlValue);
             }
         }
 
@@ -402,5 +403,13 @@ public class GraphHopperWeb implements GraphHopperAPI {
             outList.add(entry);
         }
         return outList;
+    }
+
+    private static String encodeURL(String str) {
+        try {
+            return URLEncoder.encode(str, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

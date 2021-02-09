@@ -1,7 +1,6 @@
 package com.graphhopper.example;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -21,8 +20,8 @@ public class LocationIndexExample {
     }
 
     public static void graphhopperLocationIndex(String relDir) {
-        GraphHopper hopper = new GraphHopperOSM().setEncodingManager(EncodingManager.create(new CarFlagEncoder()));
-        hopper.setDataReaderFile(relDir + "core/files/andorra.osm.pbf");
+        GraphHopper hopper = new GraphHopper().setEncodingManager(EncodingManager.create(new CarFlagEncoder()));
+        hopper.setOSMFile(relDir + "core/files/andorra.osm.pbf");
         hopper.setGraphHopperLocation("./target/locationindex-graph-cache");
         hopper.importOrLoad();
 

@@ -22,7 +22,6 @@ import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.Polygon;
 import com.graphhopper.util.shapes.*;
 import org.locationtech.jts.algorithm.RectangleLineIntersector;
 
@@ -49,8 +48,8 @@ public class GraphEdgeIdFinder {
     }
 
     /**
-     * @return an estimated area in m^2 using the mean value of latitudes for longitude distance
      * @param bBox
+     * @return an estimated area in m^2 using the mean value of latitudes for longitude distance
      */
     static double calculateArea(BBox bBox) {
         double meanLat = (bBox.maxLat + bBox.minLat) / 2;

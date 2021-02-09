@@ -24,7 +24,7 @@ import com.graphhopper.storage.IntsRef;
  * of bits.
  */
 public final class UnsignedDecimalEncodedValue extends UnsignedIntEncodedValue implements DecimalEncodedValue {
-    protected final double factor;
+    private final double factor;
     private final double defaultValue;
     private final boolean useMaximumAsInfinity;
 
@@ -66,11 +66,11 @@ public final class UnsignedDecimalEncodedValue extends UnsignedIntEncodedValue i
         }
         if (value == defaultValue)
             value = 0;
-        if (value > maxValue * factor)
+        else if (value > maxValue * factor)
             throw new IllegalArgumentException(getName() + " value " + value + " too large for encoding. maxValue:" + maxValue * factor);
-        if (value < 0)
+        else if (value < 0)
             throw new IllegalArgumentException("Negative value for " + getName() + " not allowed! " + value);
-        if (Double.isNaN(value))
+        else if (Double.isNaN(value))
             throw new IllegalArgumentException("NaN value for " + getName() + " not allowed!");
 
         super.setInt(reverse, ints, toInt(value));
@@ -81,9 +81,7 @@ public final class UnsignedDecimalEncodedValue extends UnsignedIntEncodedValue i
         int value = getInt(reverse, ref);
         if (useMaximumAsInfinity && value == maxValue)
             return Double.POSITIVE_INFINITY;
-        if (value == 0)
-            return defaultValue;
-        return value * factor;
+        return value == 0 ? defaultValue : value * factor;
     }
 
     @Override

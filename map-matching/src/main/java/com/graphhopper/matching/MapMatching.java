@@ -43,6 +43,7 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
+import org.locationtech.jts.geom.Envelope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -211,20 +212,31 @@ public class MapMatching {
     }
 
     public List<Snap> findCandidateSnaps(final double queryLat, final double queryLon) {
-        EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(weighting.getFlagEncoder());
         double rLon = (measurementErrorSigma * 360.0 / DistanceCalcEarth.DIST_EARTH.calcCircumference(queryLat));
         double rLat = measurementErrorSigma / DistanceCalcEarth.METERS_PER_DEGREE;
+        Envelope envelope = new Envelope(queryLon, queryLon, queryLat, queryLat);
+        for (int i=0; i<50; i++) {
+            envelope.expandBy(rLon, rLat);
+            List<Snap> snaps = findCandidateSnapsInBBox(queryLat, queryLon, BBox.fromEnvelope(envelope));
+            if (!snaps.isEmpty()) {
+                return snaps;
+            }
+        }
+        return Collections.emptyList();
+    }
+
+    private List<Snap> findCandidateSnapsInBBox(double queryLat, double queryLon, BBox queryShape) {
+        EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(weighting.getFlagEncoder());
         List<Snap> snaps = new ArrayList<>();
         IntHashSet seenEdges = new IntHashSet();
         IntHashSet seenNodes = new IntHashSet();
-        locationIndex.query(new BBox(queryLon - rLon, queryLon + rLon, queryLat - rLat, queryLat + rLat),
+        locationIndex.query(queryShape,
                 new LocationIndex.Visitor() {
                     @Override
                     public void onEdge(int edgeId) {
-                        EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeId * 2).detach(false);
+                        EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeId * 2);
                         if (seenEdges.add(edgeId) && edgeFilter.accept(edge)) {
                             Snap snap = new Snap(queryLat, queryLon);
-                            snap.setClosestEdge(edge);
                             locationIndex.traverseEdge(queryLat, queryLon, edge, (node, normedDist, wayIndex, pos) -> {
                                 if ((pos != Snap.Position.TOWER || seenNodes.add(node)) && normedDist < snap.getQueryDistance()) {
                                     snap.setQueryDistance(normedDist);
@@ -234,10 +246,13 @@ public class MapMatching {
                                 }
                             });
                             double dist = DIST_PLANE.calcDenormalizedDist(snap.getQueryDistance());
-                            if (dist <= measurementErrorSigma) {
-                                snap.setQueryDistance(dist);
+                            snap.setClosestEdge(edge);
+                            snap.setQueryDistance(dist);
+                            if (snap.isValid()) {
                                 snap.calcSnappedPoint(DistanceCalcEarth.DIST_EARTH);
-                                snaps.add(snap);
+                                if (queryShape.contains(snap.getSnappedPoint().lat, snap.getSnappedPoint().lon)) {
+                                    snaps.add(snap);
+                                }
                             }
                         }
                     }

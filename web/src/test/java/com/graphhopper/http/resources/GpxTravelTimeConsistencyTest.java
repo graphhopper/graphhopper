@@ -22,11 +22,9 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.Profile;
-import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.gpx.GPXEntry;
-import com.graphhopper.util.gpx.GpxFromInstructions;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -47,7 +45,7 @@ public class GpxTravelTimeConsistencyTest {
     @BeforeAll
     public static void beforeClass() {
         Helper.removeDir(new File(graphFileFoot));
-        hopper = new GraphHopperOSM().
+        hopper = new GraphHopper().
                 setOSMFile(osmFile).
                 setProfiles(new Profile("profile").setVehicle("foot").setWeighting("fastest")).
                 setStoreOnFlush(true).
@@ -63,8 +61,8 @@ public class GpxTravelTimeConsistencyTest {
         GHRequest request = new GHRequest(routeStart, routeEnd);
         request.setProfile("profile");
         ResponsePath path = hopper.route(request).getBest();
-        List<GPXEntry> gpxList = GpxFromInstructions.createGPXList(path.getInstructions());
-        for (GPXEntry entry : gpxList) {
+        List<GpxConversions.GPXEntry> gpxList = GpxConversions.createGPXList(path.getInstructions());
+        for (GpxConversions.GPXEntry entry : gpxList) {
             if (entry.getTime() != null) {
                 GHRequest requestForWaypoint = new GHRequest(routeStart, entry.getPoint());
                 requestForWaypoint.setProfile("profile");

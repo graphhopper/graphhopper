@@ -3,7 +3,6 @@ package com.graphhopper.example;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.Profile;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
-import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -45,8 +44,8 @@ public class IsochroneExample {
      * See {@link RoutingExample#createGraphHopperInstance} for more comments on creating the GraphHopper instance.
      */
     static GraphHopper createGraphHopperInstance(String ghLoc) {
-        GraphHopper hopper = new GraphHopperOSM();
-        hopper.setDataReaderFile(ghLoc);
+        GraphHopper hopper = new GraphHopper();
+        hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/isochrone-graph-cache");
         hopper.setEncodingManager(EncodingManager.create("car"));
         hopper.setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(false));

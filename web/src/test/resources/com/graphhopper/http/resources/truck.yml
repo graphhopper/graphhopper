@@ -1,30 +1,6 @@
 # For a custom request you need to specify a profile (with weighting=custom) but on import we don't need this
 # profile: car
 
-# The formula is defined in CustomWeighting, where the speed_factor can be used to decrease speed.
-# The minimum value is 0 and the maximum is 1. If two conditions are satisfied the values are
-# multiplied e.g. if road_class==motorway and road_environment==tunnel, then the resulting speed is
-# average_speed*0.85*0.9.
-speed_factor:
-  road_environment:
-    tunnel: 0.85
-  # trucks should be a bit slower on certain road classes compared to the 'base' car
-  # a more compact JSON-way to list the properties, fully YAML-compatible:
-  road_class: { motorway: 0.85, primary: 0.9 }
-
-# You can lower the average speed for certain conditions via this max_speed entry. The speed_factor is applied before
-# this operation. See the following example that sets the maximum speed to 95km/h for motorways.
-max_speed:
-  road_class:
-    motorway: 95
-    residential: 30
-  road_environment:
-    bridge: 85
-
-# Trucks are slower so limit all speed to this value. In km/h
-# If none of the conditions in the map above apply use the fallback, if specified:
-max_speed_fallback: 100
-
 # This term changes the influence of the distance. I.e. longer roads get a higher cost.
 # The distance_influence is independent of the edge properties and does not influence the ETA. The default is 70 (seconds/1km).
 # Let's assume a route that takes 1000sec and is 10km long, then a value of 30 means that I would like to drive maximum 11km
@@ -33,32 +9,62 @@ distance_influence: 90
 
 # Now we want to set a preference without changing the taken time. The default priority is 1 and does not change something.
 # The minimum value is 0 (block access). A value lower than 1 will avoid it. Values higher than 1 are not allowed.
-# To prefer a certain case you lower the priority of all other entries via the catch-all key "*",
-# see the road_class entry where motorways are preferred. If two conditions are met the values will be multiplied.
+# To prefer a certain case you lower the priority of all other entries. See the road_class entry where motorways are preferred.
+# If two conditions are met the values will be multiplied except when first_match is used.
 priority:
-  road_class:
-    motorway: 1.0
-    residential: 0.4
-    "*": 0.9
-    # and if you do not want that tracks go over tracks just exclude them via
-    # track: 0
-  # let's assume we transport gas: so NEVER go on restricted roads with hazmat==no
-  hazmat: { no: 0 }
+  - if: road_class == RESIDENTIAL
+    multiply by: 0.4
+  - else if: road_class != MOTORWAY
+    multiply by: 0.9
+    # and if you do not want that routes go over tracks just exclude them:
+    # else if: road_class==TRACK
+    # multiply by: 0
+  # let's assume we transport gas: so NEVER go on restricted roads with hazmat==NO
+  - if: hazmat == NO
+    multiply by: 0
   # avoid destination-only roads
   # TODO include private and delivery only access for base car profile so that we can avoid it here, but not exclude it
-  road_access: { destination: 0.1 }
+  - if: road_access == DESTINATION
+    multiply by: 0.1
   # avoid turns if possible and links are one simple indication for that
-  road_class_link:
-    true: 0.5
+  - if: road_class_link
+    multiply by: 0.5
   # avoid toll roads
-  toll: { no: 1, "*": 0.5 }
+  - if: toll != NO
+    multiply by: 0.5
   # avoid a certain area
-  area_custom1: 0.5
-  max_weight: { "<4.5": 0 }
-  max_height: { "<3.8": 0 }
-  max_width: { "<2.5": 0 }
+  - if: in_area_custom1
+    multiply by: 0.5
+  - if: max_weight < 4.5
+    multiply by: 0
+  - if: max_height < 3.8
+    multiply by: 0
+  - if: max_width < 2.5
+    multiply by: 0
+
+# The formula is defined in CustomWeighting, where the "multiply by" operation can be used to decrease speed.
+# The minimum value is 0 and the maximum is 1. If two conditions are satisfied the values are
+# multiplied e.g. if road_class==MOTORWAY and road_environment==TUNNEL, then the resulting speed is
+# average_speed*0.85*0.9
+speed:
+  - if: road_environment == TUNNEL
+    multiply by: 0.85
+  # trucks should be a bit slower on certain road classes compared to the 'base' car
+  - if: road_class == MOTORWAY
+    multiply by: 0.85
+  - if: road_class == PRIMARY
+    multiply by: 0.9
+  # You can lower the average speed for certain conditions via the "limit to" operation:
+  - if: road_class == MOTORWAY
+    limit to: 95
+  - if: road_class == RESIDENTIAL
+    limit to: 30
+  - if: road_environment == BRIDGE
+    limit to: 85
+  - else:
+    limit to: 100
 
 areas:
   custom1:
     type: "Feature"
-    geometry: { type: "Polygon", coordinates: [[[13.722, 51.053], [13.722, 51.055], [13.731, 51.055], [13.731, 51.053], [13.722, 51.053]]] }
+    geometry: { type: "Polygon", coordinates: [ [ [ 13.722, 51.053 ], [ 13.722, 51.055 ], [ 13.731, 51.055 ], [ 13.731, 51.053 ], [ 13.722, 51.053 ] ] ] }

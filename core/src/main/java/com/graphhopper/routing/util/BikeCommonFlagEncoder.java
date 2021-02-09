@@ -81,6 +81,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         // potentialBarriers.add("lift_gate");
         potentialBarriers.add("swing_gate");
         potentialBarriers.add("cattle_grid");
+        potentialBarriers.add("chain");
 
         absoluteBarriers.add("fence");
         absoluteBarriers.add("stile");
@@ -527,10 +528,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
                     || way.hasTag("oneway:bicycle", "-1")
                     || way.hasTag("vehicle:forward", "no")
                     || way.hasTag("bicycle:forward", "no");
-            if (isBackward)
-                accessEnc.setBool(true, edgeFlags, true);
-            else
-                accessEnc.setBool(false, edgeFlags, true);
+            accessEnc.setBool(isBackward, edgeFlags, true);
 
         } else {
             accessEnc.setBool(false, edgeFlags, true);

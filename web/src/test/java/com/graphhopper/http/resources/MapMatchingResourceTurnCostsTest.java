@@ -23,9 +23,8 @@ import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
-import com.graphhopper.http.WebHelper;
+import com.graphhopper.jackson.ResponsePathDeserializer;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;
@@ -60,8 +59,6 @@ public class MapMatchingResourceTurnCostsTest {
                 putObject("graph.flag_encoders", "car|turn_costs=true,bike").
                 putObject("datareader.file", "../map-matching/files/leipzig_germany.osm.pbf").
                 putObject("graph.location", DIR).
-                putObject(Parameters.CH.INIT_DISABLING_ALLOWED, true).
-                putObject(Parameters.Landmark.INIT_DISABLING_ALLOWED, true).
                 setProfiles(Arrays.asList(
                         new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(true),
                         new Profile("car_no_tc").setVehicle("car").setWeighting("fastest"),
@@ -129,7 +126,7 @@ public class MapMatchingResourceTurnCostsTest {
         JsonNode path = json.get("paths").get(0);
 
         LineString expectedGeometry = readWktLineString("LINESTRING (12.3607 51.34365, 12.36418 51.34443, 12.36379 51.34538, 12.36082 51.34471, 12.36188 51.34278)");
-        LineString actualGeometry = WebHelper.decodePolyline(path.get("points").asText(), 10, false).toLineString(false);
+        LineString actualGeometry = ResponsePathDeserializer.decodePolyline(path.get("points").asText(), 10, false).toLineString(false);
         assertEquals(DiscreteHausdorffDistance.distance(expectedGeometry, actualGeometry), 0.0, 1E-4);
         assertEquals(106.15, path.get("time").asLong() / 1000f, 0.1);
         assertEquals(106.15, json.get("map_matching").get("time").asLong() / 1000f, 0.1);
@@ -148,7 +145,7 @@ public class MapMatchingResourceTurnCostsTest {
         JsonNode path = json.get("paths").get(0);
 
         LineString expectedGeometry = readWktLineString("LINESTRING (12.3607 51.34365, 12.36418 51.34443, 12.36379 51.34538, 12.36082 51.34471, 12.36188 51.34278)");
-        LineString actualGeometry = WebHelper.decodePolyline(path.get("points").asText(), 10, false).toLineString(false);
+        LineString actualGeometry = ResponsePathDeserializer.decodePolyline(path.get("points").asText(), 10, false).toLineString(false);
         assertEquals(DiscreteHausdorffDistance.distance(expectedGeometry, actualGeometry), 0.0, 1E-4);
         assertEquals(162.31, path.get("time").asLong() / 1000f, 0.1);
         assertEquals(162.31, json.get("map_matching").get("time").asLong() / 1000f, 0.1);

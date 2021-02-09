@@ -23,16 +23,17 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.gpx.GpxConversions;
+import com.graphhopper.jackson.Gpx;
 import com.graphhopper.matching.EdgeMatch;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.matching.Observation;
-import com.graphhopper.matching.gpx.Gpx;
-import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.util.*;
-import com.graphhopper.util.gpx.GpxFromInstructions;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -42,7 +43,10 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -58,10 +62,8 @@ import static org.junit.Assert.*;
 public class MapMatchingTest {
 
     private static final String GH_LOCATION = "../target/mapmatchingtest-ch";
-    private final TranslationMap translationMap = new TranslationMap().doImport();
     private final XmlMapper xmlMapper = new XmlMapper();
 
-    private final String parameterName;
     private static GraphHopper graphHopper;
     private final PMap hints;
 
@@ -70,8 +72,8 @@ public class MapMatchingTest {
     public static void setup() {
         Helper.removeDir(new File(GH_LOCATION));
         CarFlagEncoder encoder = new CarFlagEncoder();
-        graphHopper = new GraphHopperOSM();
-        graphHopper.setDataReaderFile("../map-matching/files/leipzig_germany.osm.pbf");
+        graphHopper = new GraphHopper();
+        graphHopper.setOSMFile("../map-matching/files/leipzig_germany.osm.pbf");
         graphHopper.setGraphHopperLocation(GH_LOCATION);
         graphHopper.setEncodingManager(EncodingManager.create(encoder));
         graphHopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
@@ -94,7 +96,6 @@ public class MapMatchingTest {
     }
 
     public MapMatchingTest(String parameterName, PMap hints) {
-        this.parameterName = parameterName;
         this.hints = hints.putObject("profile", "my_profile");
     }
 
@@ -215,7 +216,7 @@ public class MapMatchingTest {
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour3-with-long-edge.gpx"), Gpx.class);
         MapMatching mapMatching = new MapMatching(graphHopper, hints);
         mapMatching.setMeasurementErrorSigma(20);
-        MatchResult mr = mapMatching.match(gpx.trk.get(0).getEntries());
+        MatchResult mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
         assertEquals(Arrays.asList("Weinligstraße", "Fechnerstraße"), fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 11); // TODO: this should be around 300m according to Google ... need to check
     }
@@ -232,7 +233,7 @@ public class MapMatchingTest {
         mapMatching.setMeasurementErrorSigma(40);
 
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour2-with-loop.gpx"), Gpx.class);
-        MatchResult mr = mapMatching.match(gpx.trk.get(0).getEntries());
+        MatchResult mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
         assertEquals(
                 Arrays.asList("Gustav-Adolf-Straße", "Leibnizstraße", "Hinrichsenstraße", "Tschaikowskistraße"),
                 fetchStreets(mr.getEdgeMatches()));
@@ -249,7 +250,7 @@ public class MapMatchingTest {
         // TODO smaller sigma like 40m leads to U-turn at Tschaikowskistraße
         mapMatching.setMeasurementErrorSigma(50);
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour-with-loop.gpx"), Gpx.class);
-        MatchResult mr = mapMatching.match(gpx.trk.get(0).getEntries());
+        MatchResult mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
         assertEquals(Arrays.asList("Jahnallee, B 87, B 181", "Funkenburgstraße",
                 "Gustav-Adolf-Straße", "Tschaikowskistraße", "Jahnallee, B 87, B 181",
                 "Lessingstraße"), fetchStreets(mr.getEdgeMatches()));
@@ -272,12 +273,12 @@ public class MapMatchingTest {
 
         // with large measurement error, we expect no U-turn
         mapMatching.setMeasurementErrorSigma(50);
-        MatchResult mr = mapMatching.match(gpx.trk.get(0).getEntries());
+        MatchResult mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
         assertEquals(Arrays.asList("Gustav-Adolf-Straße", "Funkenburgstraße"), fetchStreets(mr.getEdgeMatches()));
 
         // with small measurement error, we expect the U-turn
         mapMatching.setMeasurementErrorSigma(10);
-        mr = mapMatching.match(gpx.trk.get(0).getEntries());
+        mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
         assertEquals(Arrays.asList("Gustav-Adolf-Straße", "Funkenburgstraße"), fetchStreets(mr.getEdgeMatches()));
     }
 
@@ -310,7 +311,7 @@ public class MapMatchingTest {
      * with random noise and random sampling.
      */
     private List<Observation> createRandomGPXEntriesAlongRoute(ResponsePath route) {
-        return GpxFromInstructions.createGPXList(route.getInstructions()).stream()
+        return GpxConversions.createGPXList(route.getInstructions()).stream()
                 .map(gpx -> new Observation(gpx.getPoint())).collect(Collectors.toList());
     }
 

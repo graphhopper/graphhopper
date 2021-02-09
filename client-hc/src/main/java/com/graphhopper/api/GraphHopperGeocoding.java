@@ -20,11 +20,12 @@ package com.graphhopper.api;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.api.model.GHGeocodingRequest;
 import com.graphhopper.api.model.GHGeocodingResponse;
-import com.graphhopper.http.WebHelper;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.ResponseBody;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -119,21 +120,29 @@ public class GraphHopperGeocoding {
             if (request.getQuery() == null)
                 throw new IllegalArgumentException("For forward geocoding you have to a string for the query");
             url += "reverse=false";
-            url += "&q=" + WebHelper.encodeURL(request.getQuery());
+            url += "&q=" + encodeURL(request.getQuery());
         }
 
         if (request.getPoint().isValid())
             url += "&point=" + request.getPoint().getLat() + "," + request.getPoint().getLon();
 
         url += "&limit=" + request.getLimit();
-        url += "&locale=" + WebHelper.encodeURL(request.getLocale());
-        url += "&provider=" + WebHelper.encodeURL(request.getProvider());
+        url += "&locale=" + encodeURL(request.getLocale());
+        url += "&provider=" + encodeURL(request.getProvider());
 
         if (!key.isEmpty()) {
-            url += "&key=" + WebHelper.encodeURL(key);
+            url += "&key=" + encodeURL(key);
         }
 
         return url;
+    }
+
+    private static String encodeURL(String str) {
+        try {
+            return URLEncoder.encode(str, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

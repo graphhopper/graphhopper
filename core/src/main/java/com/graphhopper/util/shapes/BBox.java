@@ -147,12 +147,12 @@ public class BBox implements Shape, Cloneable {
         if (len == 0)
             throw new IllegalArgumentException("PointList must not be empty");
 
-        Coordinate coords = new Coordinate(pointList.getLongitude(0), pointList.getLatitude(0));
+        Coordinate coords = new Coordinate(pointList.getLon(0), pointList.getLat(0));
         if (len == 1)
             return intersector.intersects(coords, coords);
 
         for (int pointIndex = 1; pointIndex < len; pointIndex++) {
-            Coordinate nextCoords = new Coordinate(pointList.getLongitude(pointIndex), pointList.getLatitude(pointIndex));
+            Coordinate nextCoords = new Coordinate(pointList.getLon(pointIndex), pointList.getLat(pointIndex));
             if (intersector.intersects(coords, nextCoords))
                 return true;
             coords = nextCoords;

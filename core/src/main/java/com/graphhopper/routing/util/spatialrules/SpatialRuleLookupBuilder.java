@@ -1,7 +1,7 @@
 package com.graphhopper.routing.util.spatialrules;
 
-import com.graphhopper.json.geo.JsonFeature;
-import com.graphhopper.json.geo.JsonFeatureCollection;
+import com.graphhopper.util.JsonFeature;
+import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.util.Helper;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;

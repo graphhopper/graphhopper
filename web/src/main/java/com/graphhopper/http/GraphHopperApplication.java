@@ -19,18 +19,15 @@ package com.graphhopper.http;
 
 import com.graphhopper.http.cli.ImportCommand;
 import com.graphhopper.http.cli.MatchCommand;
-import com.graphhopper.http.cli.MeasurementCommand;
 import com.graphhopper.http.resources.RootResource;
 import com.graphhopper.navigation.NavigateResource;
 import io.dropwizard.Application;
-import io.dropwizard.bundles.assets.ConfiguredAssetsBundle;
+import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 
 import javax.servlet.DispatcherType;
 import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
 
 public final class GraphHopperApplication extends Application<GraphHopperServerConfiguration> {
 
@@ -44,12 +41,9 @@ public final class GraphHopperApplication extends Application<GraphHopperServerC
         bootstrap.addBundle(new RealtimeBundle());
         bootstrap.addCommand(new ImportCommand());
         bootstrap.addCommand(new MatchCommand());
-        bootstrap.addCommand(new MeasurementCommand());
-
-        Map<String, String> resourceToURIMappings = new HashMap<>();
-        resourceToURIMappings.put("/assets/", "/maps/");
-        resourceToURIMappings.put("/META-INF/resources/webjars", "/webjars"); // https://www.webjars.org/documentation#dropwizard
-        bootstrap.addBundle(new ConfiguredAssetsBundle(resourceToURIMappings, "index.html"));
+        bootstrap.addBundle(new AssetsBundle("/com/graphhopper/maps/", "/maps/", "index.html"));
+        // see this link even though its outdated?! // https://www.webjars.org/documentation#dropwizard
+        bootstrap.addBundle(new AssetsBundle("/META-INF/resources/webjars", "/webjars/", null, "webjars"));
     }
 
     @Override

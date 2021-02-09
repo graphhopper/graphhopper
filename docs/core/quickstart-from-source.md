@@ -94,37 +94,38 @@ as those versions are not in maven central:
     </repositories>
 ```
 
-### JavaScript
-
-When developing the UI for GraphHopper you need to enable serving files
-directly from local disc via your config.yml:
-
-```yml
-assets:
-  overrides:
-    /maps: web/src/main/resources/assets/
-```
+### Web UI (JavaScript)
 
 To setup the JavaScript development environment install the [node package
-manager](https://github.com/nvm-sh/nvm):
+manager](https://github.com/nvm-sh/nvm#install--update-script). For windows use [nvm-windows](https://github.com/coreybutler/nvm-windows).
+
+To develop the web UI you need to rebuild the bundled main.js on every change. npm does this for you automatically:
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash && \. $HOME/.nvm/nvm.sh && nvm install
-# create main.js via npm
-cd web && npm install && npm run bundleProduction && cd ..
+cd web-bundle
+npm run watch
 ```
 
-For windows use [nvm-windows](https://github.com/coreybutler/nvm-windows).
+To see your changes in the browser without restarting the server you can either run the GH server in debug mode from
+IntelliJ (use `Run->Debugging Actions->Reload Changed Classes` and refresh your browser window). 
 
-There are more npm commands to e.g. change the main.js on the fly or create an uglified main.js for
-production:
+Or you start a separate server. For this you need to change the routing.host property in src/main/resources/com/graphhopper/maps/js/config/options.js:
+```js
+...
+  routing: {host: 'http://localhost:8989', api_key: ''},
+...
+```
+
+And then in a second shell do:
+
+```
+npm install -g live-server
+live-server --open=src/main/resources/com/graphhopper/maps/
+```
+
+Other npm commands e.g. to produce a bundled main.js for production:
 
 ```bash
-cd web
-
-# For development just use watchify and all changes will be available on refresh:
-npm run watch
-
 # bundle creates the main file
 npm run bundle
 

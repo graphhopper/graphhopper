@@ -25,7 +25,6 @@ import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
@@ -110,7 +109,7 @@ public class MiniGraphUI {
         ghConfig.setLMProfiles(Arrays.asList(
                 new LMProfile("profile")
         ));
-        GraphHopper hopper = new GraphHopperOSM().init(ghConfig).importOrLoad();
+        GraphHopper hopper = new GraphHopper().init(ghConfig).importOrLoad();
         boolean debug = args.getBool("minigraphui.debug", false);
         boolean useCH = args.getBool("minigraphui.useCH", false);
         new MiniGraphUI(hopper, debug, useCH).visualize();
@@ -185,11 +184,11 @@ public class MiniGraphUI {
                         continue;
 
                     int nodeIndex = edge.getBaseNode();
-                    double lat = na.getLatitude(nodeIndex);
-                    double lon = na.getLongitude(nodeIndex);
+                    double lat = na.getLat(nodeIndex);
+                    double lon = na.getLon(nodeIndex);
                     int nodeId = edge.getAdjNode();
-                    double lat2 = na.getLatitude(nodeId);
-                    double lon2 = na.getLongitude(nodeId);
+                    double lat2 = na.getLat(nodeId);
+                    double lon2 = na.getLon(nodeId);
 
                     // mg.plotText(g2, lat, lon, "" + nodeIndex);
                     if (!b.contains(lat, lon) && !b.contains(lat2, lon2))
@@ -233,9 +232,9 @@ public class MiniGraphUI {
                     PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
                     for (int i = 1; i < pl.size(); i++) {
                         if (fwd && !bwd) {
-                            mg.plotDirectedEdge(g2, pl.getLatitude(i - 1), pl.getLongitude(i - 1), pl.getLatitude(i), pl.getLongitude(i), width);
+                            mg.plotDirectedEdge(g2, pl.getLat(i - 1), pl.getLon(i - 1), pl.getLat(i), pl.getLon(i), width);
                         } else {
-                            mg.plotEdge(g2, pl.getLatitude(i - 1), pl.getLongitude(i - 1), pl.getLatitude(i), pl.getLongitude(i), width);
+                            mg.plotEdge(g2, pl.getLat(i - 1), pl.getLon(i - 1), pl.getLat(i), pl.getLon(i), width);
                         }
                     }
                 }
@@ -413,8 +412,8 @@ public class MiniGraphUI {
     }
 
     void plotNodeName(Graphics2D g2, int node) {
-        double lat = na.getLatitude(node);
-        double lon = na.getLongitude(node);
+        double lat = na.getLat(node);
+        double lon = na.getLon(node);
         mg.plotText(g2, lat, lon, "" + node);
     }
 
@@ -435,8 +434,8 @@ public class MiniGraphUI {
         }
         PointList list = tmpPath.calcPoints();
         for (int i = 0; i < list.getSize(); i++) {
-            double lat = list.getLatitude(i);
-            double lon = list.getLongitude(i);
+            double lat = list.getLat(i);
+            double lon = list.getLon(i);
             if (!Double.isNaN(prevLat)) {
                 mg.plotEdge(g2, prevLat, prevLon, lat, lon, w);
             } else {
@@ -563,7 +562,7 @@ public class MiniGraphUI {
 //                                int ret = quadTree.remove(coord.lat, coord.lon);
 //                                if (ret < 1) {
 ////                                    logger.info("cannot remove " + coord + " " + ret);
-////                                    ret = quadTree.remove(coord.getLatitude(), coord.getLongitude());
+////                                    ret = quadTree.remove(coord.getLat(), coord.getLon());
 //                                } else
 //                                    counter += ret;
 //                            }
