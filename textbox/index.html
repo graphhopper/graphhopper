@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"/>
+    <link rel="stylesheet" href="./node_modules/codemirror/lib/codemirror.css"/>
+    <script src="./node_modules/codemirror/lib/codemirror.js"></script>
+    <script src="./node_modules/codemirror/mode/yaml/yaml.js"></script>
+</head>
+<body>
+<textarea
+        id="textbox"
+        rows="50"
+        cols="100"
+        style="width: 500px; height: 400px"
+>
+    </textarea>
+<ol id="errors"></ol>
+
+<script type="module">
+    import {validate} from "./validate.js";
+
+    const textbox = document.querySelector("#textbox");
+    const cm = CodeMirror.fromTextArea(textbox, {
+        lineNumbers: true,
+        mode: "yaml",
+    });
+    cm.on("cursorActivity", (e) => {
+        const errors = validate(cm.getValue()).errors;
+        const errorList = document.querySelector("#errors");
+        while (errorList.firstChild)
+            errorList.removeChild(errorList.firstChild);
+        for (let error of errors) {
+            const listElement = document.createElement("li");
+            listElement.textContent = error;
+            errorList.appendChild(listElement);
+        }
+    });
+</script>
+</body>
+</html>
