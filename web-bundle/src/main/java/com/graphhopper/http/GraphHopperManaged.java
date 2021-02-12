@@ -74,7 +74,9 @@ public class GraphHopperManaged implements Managed {
             throw new RuntimeException("spatial_rules.location has been deprecated. Please use custom_area_files instead.");
         }
         if (!configuration.getString("spatial_rules.borders_directory", "").isEmpty()) {
-            throw new RuntimeException("spatial_rules.borders_directory has been deprecated. Please use custom_area_files instead.");
+            throw new RuntimeException(
+                            "spatial_rules.borders_directory has been deprecated. Please use custom_area_files instead. "
+                                            + "See https://github.com/graphhopper/graphhopper/pull/2201");
         }
         
         List<CustomArea> customAreas = new ArrayList<>();
