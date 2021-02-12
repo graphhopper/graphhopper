@@ -343,10 +343,10 @@ public class Helper {
     }
 
     /**
-     * Creates a SimpleDateFormat with the UK locale.
+     * Creates a SimpleDateFormat with ENGLISH locale.
      */
     public static DateFormat createFormatter(String str) {
-        DateFormat df = new SimpleDateFormat(str, Locale.UK);
+        DateFormat df = new SimpleDateFormat(str, Locale.ENGLISH);
         df.setTimeZone(UTC);
         return df;
     }

@@ -20,7 +20,9 @@ package com.graphhopper.reader.osm.conditional;
 import com.graphhopper.util.Helper;
 
 import java.text.DateFormat;
+import java.text.DateFormatSymbols;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
@@ -37,11 +39,11 @@ import static com.graphhopper.util.Helper.createFormatter;
  * @author Robin Boldt
  */
 public class DateRangeParser implements ConditionalValueParser {
-    private static final DateFormat YEAR_MONTH_DAY_DF = createFormatter("yyyy MMM dd");
-    private static final DateFormat MONTH_DAY_DF = createFormatter("MMM dd");
+    private static final DateFormat YEAR_MONTH_DAY_DF = create3CharMonthFormatter("yyyy MMM dd");
+    private static final DateFormat MONTH_DAY_DF = create3CharMonthFormatter("MMM dd");
     private static final DateFormat MONTH_DAY2_DF = createFormatter("dd.MM");
-    private static final DateFormat YEAR_MONTH_DF = createFormatter("yyyy MMM");
-    private static final DateFormat MONTH_DF = createFormatter("MMM");
+    private static final DateFormat YEAR_MONTH_DF = create3CharMonthFormatter("yyyy MMM");
+    private static final DateFormat MONTH_DF = create3CharMonthFormatter("MMM");
     private static final List<String> DAY_NAMES = Arrays.asList("Su", "Mo", "Tu", "We", "Th", "Fr", "Sa");
 
     private Calendar date;
@@ -144,5 +146,13 @@ public class DateRangeParser implements ConditionalValueParser {
             throw new IllegalArgumentException(e);
         }
         return new DateRangeParser(calendar);
+    }
+
+    private static SimpleDateFormat create3CharMonthFormatter(String pattern) {
+        DateFormatSymbols formatSymbols = new DateFormatSymbols(Locale.ENGLISH);
+        formatSymbols.setShortMonths(new String[]{"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"});
+        SimpleDateFormat df = new SimpleDateFormat(pattern, formatSymbols);
+        df.setTimeZone(Helper.UTC);
+        return df;
     }
 }
