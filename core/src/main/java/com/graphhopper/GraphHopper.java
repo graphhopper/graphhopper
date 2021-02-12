@@ -1055,11 +1055,12 @@ public class GraphHopper implements GraphHopperAPI {
 
         if (landmarkSplittingFeatureCollection != null && !landmarkSplittingFeatureCollection.getFeatures().isEmpty()) {
             List<CustomArea> landmarkAreas = CustomAreaHelper.loadAreas(landmarkSplittingFeatureCollection, "area");
-            CustomAreaLookup landmarkAreaLookup = landmarkAreas.isEmpty() ? CustomAreaLookup.EMPTY : new CustomAreaLookupJTS(landmarkAreas);
-
-            for (PrepareLandmarks prep : getLMPreparationHandler().getPreparations()) {
-                // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
-                if (landmarkAreaLookup != CustomAreaLookup.EMPTY) {
+            if (!landmarkAreas.isEmpty()) {
+                CustomAreaLookup landmarkAreaLookup = new CustomAreaLookupJTS(landmarkAreas);
+                for (PrepareLandmarks prep : getLMPreparationHandler().getPreparations()) {
+                    // the ruleLookup splits certain areas from each other but avoids making this a
+                    // permanent change so that other algorithms still can route through these
+                    // regions.
                     prep.setCustomAreaLookup(landmarkAreaLookup);
                 }
             }
