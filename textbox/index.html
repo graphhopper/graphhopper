@@ -30,6 +30,8 @@
 
     const Ajv = window.ajv7.default
     const ajv = new Ajv({allErrors: true});
+
+    const conditionRangeMarks = [];
     fetch('custom_model_schema.json')
         .then((s) => s.json())
         .then((schema) => {
@@ -40,15 +42,16 @@
                 mode: "yaml",
             });
             cm.on("cursorActivity", (e) => {
+                conditionRangeMarks.forEach((m) => m.clear());
                 const validateResult = validate(cm.getValue());
                 // highlight text area where conditions were entered
                 const conditionRanges = validateResult.conditionRanges;
                 conditionRanges.forEach((cr) => {
                     const from = cm.posFromIndex(cr[0]);
                     const to = cm.posFromIndex(cr[1]);
-                    cm.markText(from, to, {
+                    conditionRangeMarks.push(cm.markText(from, to, {
                         className: 'gh-condition'
-                    });
+                    }));
                 });
 
                 const errors = validateResult.errors;
