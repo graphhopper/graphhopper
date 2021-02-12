@@ -5,6 +5,10 @@
     <link rel="stylesheet" href="./node_modules/codemirror/lib/codemirror.css"/>
     <script src="./node_modules/codemirror/lib/codemirror.js"></script>
     <script src="./node_modules/codemirror/mode/yaml/yaml.js"></script>
+    <!-- todo: include via npm -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ajv/7.1.0/ajv7.min.js"
+            integrity="sha512-DkKbsp/6j5EoCy0115sD8kzmVQwngxax5doaQO0IuO55n+sytVhLokgZvnIi1+cDUiN1nARtsQ6h7iq9tgOY8g=="
+            crossorigin="anonymous"></script>
 </head>
 <body>
 <textarea
@@ -14,27 +18,56 @@
         style="width: 500px; height: 400px"
 >
     </textarea>
+<h1>custom errors</h1>
 <ol id="errors"></ol>
+<h1>json schema validation</h1>
+<ol id="json-schema-errors"></ol>
 
 <script type="module">
+    import * as YAML from './node_modules/yaml/browser/dist/index.js';
     import {validate} from "./validate.js";
 
-    const textbox = document.querySelector("#textbox");
-    const cm = CodeMirror.fromTextArea(textbox, {
-        lineNumbers: true,
-        mode: "yaml",
-    });
-    cm.on("cursorActivity", (e) => {
-        const errors = validate(cm.getValue()).errors;
-        const errorList = document.querySelector("#errors");
-        while (errorList.firstChild)
-            errorList.removeChild(errorList.firstChild);
-        for (let error of errors) {
+    const Ajv = window.ajv7.default
+    const ajv = new Ajv({allErrors: true});
+    fetch('custom_model_schema.json')
+        .then((s) => s.json())
+        .then((schema) => {
+            const ajvValidate = ajv.compile(schema);
+            const textbox = document.querySelector("#textbox");
+            const cm = CodeMirror.fromTextArea(textbox, {
+                lineNumbers: true,
+                mode: "yaml",
+            });
+            cm.on("cursorActivity", (e) => {
+                const errors = validate(cm.getValue()).errors;
+                const errorList = document.querySelector("#errors");
+                displayList(errorList, errors);
+
+                const jsonSchemaErrorList = document.querySelector("#json-schema-errors");
+                const doc = YAML.parseDocument(cm.getValue()).toJS();
+                const valid = ajvValidate(doc);
+                if (valid)
+                    displayList(jsonSchemaErrorList, [])
+                else {
+                    // todo: we could use the 'dataPath' to further customize/improve our error messages
+                    // also we could use json-source-maps to retrieve line number information (maybe): https://github.com/ajv-validator/ajv/issues/763#issuecomment-590566870
+                    // but we would still have to do custom checks for things we cannot cover by json schema so not really sure
+                    // this is better...
+                    let displayErrors = ajvValidate.errors.map(e => `${e.dataPath}: ${e.message}`);
+                    displayList(jsonSchemaErrorList, displayErrors);
+                }
+            });
+        });
+
+    function displayList(list, items) {
+        while (list.firstChild)
+            list.removeChild(list.firstChild);
+        for (let error of items) {
             const listElement = document.createElement("li");
             listElement.textContent = error;
-            errorList.appendChild(listElement);
+            list.appendChild(listElement);
         }
-    });
+    }
 </script>
 </body>
 </html>
