@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8"/>
     <link rel="stylesheet" href="./node_modules/codemirror/lib/codemirror.css"/>
+    <link rel="stylesheet" href="./style.css"/>
     <script src="./node_modules/codemirror/lib/codemirror.js"></script>
     <script src="./node_modules/codemirror/mode/yaml/yaml.js"></script>
     <!-- todo: include via npm -->
@@ -39,7 +40,18 @@
                 mode: "yaml",
             });
             cm.on("cursorActivity", (e) => {
-                const errors = validate(cm.getValue()).errors;
+                const validateResult = validate(cm.getValue());
+                // highlight text area where conditions were entered
+                const conditionRanges = validateResult.conditionRanges;
+                conditionRanges.forEach((cr) => {
+                    const from = cm.posFromIndex(cr[0]);
+                    const to = cm.posFromIndex(cr[1]);
+                    cm.markText(from, to, {
+                        className: 'gh-condition'
+                    });
+                });
+
+                const errors = validateResult.errors;
                 const errorList = document.querySelector("#errors");
                 displayList(errorList, errors);
 
