@@ -107,7 +107,7 @@ the `distance_influence`, which we will discuss in a moment. First we need to ha
 
 GraphHopper assigns values of different categories ('encoded values') to each road segment. For example for OSM data 
 they are derived from the OSM way tags. All possible categories are defined in
-[`DefaultEncodedValueFactory.java`](../../core/src/main/java/com/graphhopper/routing/profiles/DefaultEncodedValueFactory.java)
+[`DefaultEncodedValueFactory.java`](../../core/src/main/java/com/graphhopper/routing/ev/DefaultEncodedValueFactory.java)
 but only categories specified with `graph.encoded_values` field in the `config.yml` are available in the graph storage.
 For example there are the following categories (some of their possible values are given in brackets).
 
@@ -118,7 +118,7 @@ For example there are the following categories (some of their possible values ar
 - toll: (NO, ALL, HGV)
 
 To find out about all the possible values of a category you can take a look at the corresponding Java files like 
-[`RoadClass.java`](../../core/src/main/java/com/graphhopper/routing/profiles/RoadClass.java), query the
+[`RoadClass.java`](../../core/src/main/java/com/graphhopper/routing/ev/RoadClass.java), query the
 `/info` endpoint of the server or use the auto-complete feature of the text box that opens when clicking the 'flex' icon
 in the web UI.
 
@@ -320,7 +320,7 @@ also modify the speed of road segments based on their location. To do this you n
 to the `areas` section of in the custom model file. You can then use the name of these areas in the condition we used in
 the `if/else/else if` statements we saw in the previous sections.
 
-In the following example we multiply the speed of all edges in an an area called `custom1` with `0.7` and also limit it
+In the following example we multiply the speed of all edges in an area called `custom1` with `0.7` and also limit it
 to `50km/h`. Note that each area's name needs to be prefixed with `in_area_`:
 
 ```yaml
