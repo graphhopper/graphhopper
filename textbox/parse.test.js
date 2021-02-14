@@ -90,16 +90,17 @@ describe("parse", () => {
     });
 
     test("parse, invalid", () => {
-        // todo: need to transform tokens to char indices
-        test_parse('xyz', `unexpected token 'xyz'`, [0, 1], ['a', 'b']);
-        test_parse('a==a1(b!=b1', `unexpected token '('`, [3, 4], ['||', '&&']);
-        test_parse('(a==a1)(b!=b2)', `unexpected token '('`, [5, 6], ['||', '&&']);
-        test_parse('((a==&&a1)(b!=b1)', `invalid a: '&&'`, [4, 5], ['a1', 'a2', 'a3']);
-        test_parse('((a!=a1||)))', `unexpected token ')'`, [6, 7], ['a', 'b']);
-        test_parse('a(||', `invalid operator '('`, [1, 2], ['==', '!=']);
-        test_parse('a== a1(b!=b2||', `unexpected token '('`, [3, 4], ['||', '&&']);
-        test_parse('||', `unexpected token '||'`, [0, 1], ['a', 'b']);
-        test_parse('a==a1||', `unexpected token '||'`, [3, 4], []);
+        test_parse('xyz', `unexpected token 'xyz'`, [0, 3], ['a', 'b']);
+        test_parse('a==a1( b!=b1', `unexpected token '('`, [5, 6], ['||', '&&']);
+        test_parse('(a==a1)(b!=b2)', `unexpected token '('`, [7, 8], ['||', '&&']);
+        test_parse('((a==&&a1)(b!=b1)', `invalid a: '&&'`, [5, 7], ['a1', 'a2', 'a3']);
+        test_parse('((a!=a1||)))', `unexpected token ')'`, [9, 10], ['a', 'b']);
+        test_parse('\na\t(||', `invalid operator '('`, [3, 4], ['==', '!=']);
+        test_parse('a== a1(b!=b2||', `unexpected token '('`, [6, 7], ['||', '&&']);
+        test_parse('||', `unexpected token '||'`, [0, 2], ['a', 'b']);
+        test_parse('a==a1||', `unexpected token '||'`, [5, 7], []);
+        test_parse('a==a1&&(', `empty comparison`, [8, 8], []);
+        test_parse(' (', `empty comparison`, [2, 2], []);
     });
 
     function test_parse_valid(expression) {

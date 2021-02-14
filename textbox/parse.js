@@ -1,4 +1,4 @@
-import {tokenize} from './tokenize';
+import { tokenize } from './tokenize.js';
 
 const comparisonOperators = ['==', '!='];
 const logicOperators = ['||', '&&'];
@@ -8,37 +8,54 @@ let _tokens;
 let _idx;
 
 /**
- * Tokenizes and then parses the given expression
+ * Tokenizes and then parses the given expression. Returns an object containing:
+ * - error, completions: see parseTokens
+ * - range: the character range in which the (first) error occurred as list [startInclusive, endExclusive].
+ *          if there are no invalid tokens, but rather something is missing the range will be
+ *          [expression.length, expression.length]
  */
 function parse(expression, categories) {
     const tokens = tokenize(expression);
     const result = parseTokens(tokens.tokens, categories);
-    // todo: translate token ranges to character ranges!
+
+    // translate token ranges to character ranges
+    if (result.error !== null) {
+        const tokenRanges = tokens.ranges;
+        const errorStartToken = result.range[0];
+        const errorEndToken = result.range[1];
+        const start = errorStartToken === tokenRanges.length
+            ? expression.length
+            : tokenRanges[errorStartToken][0];
+        const end = errorEndToken === tokenRanges.length
+            ? expression.length
+            : tokenRanges[errorEndToken - 1][tokenRanges[errorEndToken - 1].length - 1];
+        result.range = [start, end];
+    }
     return result;
 }
 
 /**
- * Parses a given list of tokens according to the following grammar. 
- * 
+ * Parses a given list of tokens according to the following grammar.
+ *
  * expression -> comparison (logicOperator comparison)*
  * comparison -> category comparator value | '(' expression ')'
  * logicOperator -> '&&' | '||'
  * comparator -> '==' | '!='
- * 
- * Note that we do not care about operator precedence between && and || because our aim is not 
+ *
+ * Note that we do not care about operator precedence between && and || because our aim is not
  * actually evaluating the expression, but rather checking the validity.
- * 
+ *
  * This function returns an object containing:
- * - error: an error string (or null) in case the tokens do not represent a valid expression. 
+ * - error: an error string (or null) in case the tokens do not represent a valid expression.
  *          the parsing stops when the first error is encountered.
  * - range: the tokens range in which the (first) error occurred as list [startInclusive, endExclusive].
  *          if there are no invalid tokens, but rather something is missing the range will be
- *          [tokens.length, tokens.length] 
+ *          [tokens.length, tokens.length]
  * - completions: a list of suggested tokens that could be used to replace the faulty ones
- * 
+ *
  * An alternative to the implementation here could be using a parser library like pegjs or nearly.
- * 
- * todo: 
+ *
+ * todo:
  *  - negation
  *  - boolean encoded values
  *  - numeric encoded values with <,>,<=,>= operators
@@ -54,7 +71,7 @@ function parseTokens(tokens, categories) {
         if (v.length < 1)
             return error(`no values given for category a`);
     }
-    
+
     _categories = categories;
     _tokens = tokens;
     _idx = 0;
@@ -160,4 +177,4 @@ function valid() {
     return { error: null, range: [], completions: [] };
 }
 
-export {parse, parseTokens};
+export { parse, parseTokens };
