@@ -23,10 +23,13 @@
 <ol id="errors"></ol>
 <h1>json schema validation</h1>
 <ol id="json-schema-errors"></ol>
+<h1>condition</h1>
+<ol id="condition-errors"></ol>
 
 <script type="module">
     import * as YAML from './node_modules/yaml/browser/dist/index.js';
     import {validate} from "./validate.js";
+    import {parse} from "./parse.js";
 
     const Ajv = window.ajv7.default
     const ajv = new Ajv({allErrors: true});
@@ -44,19 +47,37 @@
             cm.on("cursorActivity", (e) => {
                 conditionRangeMarks.forEach((m) => m.clear());
                 const validateResult = validate(cm.getValue());
+
+                const errors = validateResult.errors;
+                const errorList = document.querySelector("#errors");
+                displayList(errorList, errors);
+
+                const categories = {
+                    'road_class': ['PRIMARY', 'MOTORWAY', 'TERTIARY'],
+                    'road_environment': ['TUNNEL', 'BRIDGE']
+                };
+                const conditionErrors = validateResult.conditions
+                    .map(c => `${parse(c, categories).error}, suggestion: ${parse(c, categories).completions}`);
+                const conditionList = document.querySelector("#condition-errors");
+                displayList(conditionList, conditionErrors);
+
                 // highlight text area where conditions were entered
                 const conditionRanges = validateResult.conditionRanges;
-                conditionRanges.forEach((cr) => {
+                conditionRanges.forEach((cr, i) => {
                     const from = cm.posFromIndex(cr[0]);
                     const to = cm.posFromIndex(cr[1]);
                     conditionRangeMarks.push(cm.markText(from, to, {
                         className: 'gh-condition'
                     }));
+                    const parseRes = parse(validateResult.conditions[i], categories);
+                    if (parseRes.error !== null) {
+                        conditionRangeMarks.push(cm.markText(
+                            cm.posFromIndex(cr[0] + parseRes.range[0]),
+                            cm.posFromIndex(cr[0] + parseRes.range[1]), {
+                            className: 'gh-condition-error'
+                        }));
+                    }
                 });
-
-                const errors = validateResult.errors;
-                const errorList = document.querySelector("#errors");
-                displayList(errorList, errors);
 
                 const jsonSchemaErrorList = document.querySelector("#json-schema-errors");
                 const doc = YAML.parseDocument(cm.getValue()).toJS();

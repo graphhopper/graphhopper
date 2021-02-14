@@ -1,3 +1,7 @@
 .gh-condition {
     background-color: aqua;
 }
+
+.gh-condition-error {
+    background-color: tomato;
+}
