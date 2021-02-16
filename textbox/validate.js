@@ -78,7 +78,8 @@ function validateRootValues(rootItems) {
                 else if (!isNumber(value))
                     errors.push(`${key}: must be a number. given: '${value.value}'`);
             } else if (key === 'areas') {
-                // todo: currently we are not validating areas!
+                // todo: currently we are not validating areas! this could be a use-case for json schema validation
+                // because we could use a ready-made geojson schema. or maybe just not validate it at all...
             } else {
                 console.error(`Unexpected root key ${key}`);
             }
