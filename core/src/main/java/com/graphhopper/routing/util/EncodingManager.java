@@ -24,13 +24,11 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.area.CustomAreaLookup;
-import com.graphhopper.routing.util.area.LookupResult;
 import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
-import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -622,15 +620,7 @@ public class EncodingManager implements EncodedValueLookup {
      */
     public IntsRef handleWayTags(ReaderWay way, AcceptWay acceptWay, IntsRef relationFlags) {
         IntsRef edgeFlags = createEdgeFlags();
-        if (customAreaLookup != CustomAreaLookup.EMPTY) {
-            GHPoint estimatedCenter = way.getTag("estimated_center", null);
-            if (estimatedCenter != null) {
-                LookupResult result = customAreaLookup.lookup(estimatedCenter.lat,
-                                estimatedCenter.lon);
-                way.setTag("custom_areas", result.getAreas());
-                way.setTag("spatial_rule_set", result.getRuleSet());
-            }
-        }
+        CustomAreaParser.injectCustomAreas(customAreaLookup, way);
         for (TagParser parser : edgeTagParsers) {
             parser.handleWayTags(edgeFlags, way, acceptWay.isFerry(), relationFlags);
         }
