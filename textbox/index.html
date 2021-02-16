@@ -18,7 +18,7 @@
     </textarea>
 <h1>custom errors</h1>
 <ol id="errors"></ol>
-<h1>condition</h1>
+<h1>condition errors</h1>
 <ol id="condition-errors"></ol>
 
 <script type="module">
@@ -27,6 +27,7 @@
     import {parse} from "./parse.js";
 
     const conditionRangeMarks = [];
+    const yamlErrorMarks = [];
     const textbox = document.querySelector("#textbox");
     const cm = CodeMirror.fromTextArea(textbox, {
         lineNumbers: true,
@@ -54,11 +55,12 @@
             showHints();
         }
         conditionRangeMarks.forEach((m) => m.clear());
+        yamlErrorMarks.forEach((m) => m.clear());
         const validateResult = validate(cm.getValue());
 
         const errors = validateResult.errors;
         const errorList = document.querySelector("#errors");
-        displayList(errorList, errors);
+        displayList(errorList, errors.map(e => `${e.path}: ${e.message}`));
 
         const conditionErrors = validateResult.conditionRanges
             .map(cr => {
@@ -93,6 +95,18 @@
                     }));
             }
         });
+        // highlight errors in yaml
+        // todo: add tooltip with error message
+        validateResult.errors.forEach((err, i) => {
+            const range = err.range;
+            if (range !== null) {
+                yamlErrorMarks.push(cm.markText(
+                    cm.posFromIndex(range[0]), cm.posFromIndex(range[1]), {
+                        className: 'gh-yaml-error'
+                    }
+                ));
+            }
+        })
 
     });
 

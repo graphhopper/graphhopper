@@ -5,3 +5,8 @@
 .gh-condition-error {
     background-color: tomato;
 }
+
+.gh-yaml-error {
+    text-decoration: underline;
+    text-decoration-color: tomato;
+}
