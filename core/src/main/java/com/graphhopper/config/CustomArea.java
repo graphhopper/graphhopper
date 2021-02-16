@@ -17,6 +17,8 @@
  */
 package com.graphhopper.config;
 
+import static com.graphhopper.routing.util.EncodingManager.getKey;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -32,6 +34,8 @@ import com.graphhopper.routing.util.spatialrules.SpatialRule;
  * @author Thomas Butz
  */
 public class CustomArea {
+    private static final String CUSTOM_EV_PREFIX = "custom_area";
+
     private final String id;
     private final List<Polygon> borders;
     private final String encodedValue;
@@ -41,7 +45,7 @@ public class CustomArea {
         this.id = id;
         this.borders = Collections.unmodifiableList(new ArrayList<>(borders));
         if (encodedValueSuffix != null && !encodedValueSuffix.isEmpty()) {
-            this.encodedValue = com.graphhopper.routing.ev.CustomArea.key(encodedValueSuffix);
+            this.encodedValue = key(encodedValueSuffix);
         } else {
             this.encodedValue = "";
         }
@@ -50,6 +54,10 @@ public class CustomArea {
     
     public CustomArea(String id, List<Polygon> borders) {
         this(id, borders, "", -1);
+    }
+    
+    public static String key(String str) {
+        return getKey(CUSTOM_EV_PREFIX, str);
     }
     
     public String getId() {

@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util.details;
 
+import com.graphhopper.config.CustomArea;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.weighting.Weighting;
 

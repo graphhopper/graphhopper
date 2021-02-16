@@ -136,7 +136,7 @@ public class CustomAreaLookupRulesTest {
         CustomAreaLookup lookup = new CustomAreaLookupJTS(Collections.singletonList(germanyArea), Collections.singletonList(germanyRule));
 
         EncodingManager em = new EncodingManager.Builder().setCustomAreaLookup(lookup).add(new CarFlagEncoder(new PMap())).build();
-        StringEncodedValue countryIdEnc = em.getStringEncodedValue(com.graphhopper.routing.ev.CustomArea.key("country"));
+        StringEncodedValue countryIdEnc = em.getStringEncodedValue(CustomArea.key("country"));
         EnumEncodedValue<RoadAccess> tmpRoadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
         DecimalEncodedValue tmpCarMaxSpeedEnc = em.getDecimalEncodedValue(MaxSpeed.KEY);
 

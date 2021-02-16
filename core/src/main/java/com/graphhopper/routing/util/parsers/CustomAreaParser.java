@@ -17,7 +17,7 @@ import com.graphhopper.util.shapes.GHPoint;
 
 public class CustomAreaParser implements TagParser {
     
-    private static final String CUSTOM_AREA_EV_PREFIX = com.graphhopper.routing.ev.CustomArea.key("");
+    private static final String CUSTOM_AREA_EV_PREFIX = CustomArea.key("");
     private final Map<String,StringEncodedValue> evMap = new HashMap<>();
     
     public static void injectCustomAreas(CustomAreaLookup customAreaLookup, ReaderWay way) {
