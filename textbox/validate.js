@@ -16,17 +16,14 @@ const statementKeysString = `['if', 'else if', 'else', 'multiply by', 'limit to'
 
 // todo: made this global for quick experiment
 let conditionRanges = [];
-let conditions = [];
 
 export function validate(yaml) {
     conditionRanges = [];
-    conditions = [];
     const doc = YAML.parseDocument(yaml);
     const errors = validateYamlDoc(doc);
     return {
         errors,
         conditionRanges,
-        conditions
     }
 }
 
@@ -154,7 +151,6 @@ function validateStatement(statementKey, statementIndex, statementEntries) {
                     errors.push(`${statementKey}[${statementIndex}]: the value of '${key}' must be a string or boolean. given type: ${displayType(entry.value)}`);
                 } else {
                     conditionRanges.push(entry.value.range);
-                    conditions.push(entry.value.value);
                 }
             }
         }

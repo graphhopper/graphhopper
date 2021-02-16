@@ -66,13 +66,14 @@
                     "toll": ["NO", "ALL", "HGV"]
                 };
                 const cursor = cm.indexFromPos(cm.getCursor());
-                const conditionErrors = validateResult.conditions
-                    .map((c, i) => {
-                        const offset = validateResult.conditionRanges[i][0];
+                const conditionErrors = validateResult.conditionRanges
+                    .map(cr => {
+                        const c = cm.getValue().substring(cr[0], cr[1]);
+                        const offset = cr[0];
                         let suggestions = [];
                         // todo: do not run this if cursor is outside of condition!
                         // but note that we allow the cursor being at the end (inclusive!) of the range, is this ok?!
-                        if (cursor >= offset && cursor <= validateResult.conditionRanges[i][1]) {
+                        if (cursor >= offset && cursor <= cr[1]) {
                             const completeRes = complete(c, cursor - offset, categories);
                             if (completeRes.suggestions.length > 0) {
                                 const options = {
@@ -81,10 +82,10 @@
                                             from: cm.posFromIndex(completeRes.range[0] + offset),
                                             to: cm.posFromIndex(completeRes.range[1] + offset),
                                             list: completeRes.suggestions,
-                                            // without this we cannot backspace e.g. surface, but is this better?
-                                            completeSingle: false
                                         };
                                     },
+                                    // without this we cannot backspace e.g. surface, but is this better?
+                                    completeSingle: false
                                 };
                                 cm.showHint(options);
                             }
@@ -107,7 +108,8 @@
                     conditionRangeMarks.push(cm.markText(from, to, {
                         className: 'gh-condition'
                     }));
-                    const parseRes = parse(validateResult.conditions[i], categories);
+                    const condition = cm.getValue().substring(cr[0], cr[1]);
+                    const parseRes = parse(condition, categories);
                     if (parseRes.error !== null) {
                         conditionRangeMarks.push(cm.markText(
                             cm.posFromIndex(cr[0] + parseRes.range[0]),
