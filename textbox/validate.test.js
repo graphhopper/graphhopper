@@ -171,9 +171,10 @@ describe("validate", () => {
             `speed[0]: 'else' clause must be preceded by 'if' or 'else if', range: [8, 30]`
         ]);
         test_validate(`priority: [{else if: condition, multiply by: 0.3}, {else: , limit to: 30}]`, [
-            `priority[0]: 'else if' clause must be preceded by 'if', range: [11, 49]`
+            `priority[0]: 'else if' clause must be preceded by 'if' or 'else if', range: [11, 49]`
         ]);
-        // todo: else if can also be preceded by else if in case there is an if somewhere before
+        // multiple else ifs are possible
+        test_validate(`priority: [{if: abc, limit to: 60}, {else if: def, multiply by: 0.2}, {else if: condition, limit to: 100}]`, []);
     });
 });
 

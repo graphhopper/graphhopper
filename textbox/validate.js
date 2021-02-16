@@ -31,8 +31,7 @@ let conditionRanges = [];
  * the clause value must be a string and the operator value must be a number
  * except when the the clause is 'else' in which case the value must be null
  *
- * 'else if' clauses must be preceded by an 'if' clause
- * 'else' clauses must be preceded by an 'if' or 'else if' clause
+ * 'else if' and 'else' clauses must be preceded by an 'if' or 'else if' clause
  *
  * This method returns an object containing:
  *
@@ -132,7 +131,6 @@ function validateStatements(key, items) {
     // statements seem to be ok, but are they in the right order?
     const clausesList = [];
     for (let i = 0; i < items.length; ++i) {
-        // console.log(items[i].items);
         for (let j = 0; j < items[i].items.length; ++j) {
             const key = items[i].items[j].key.value;
             if (clauses.indexOf(key) >= 0)
@@ -141,12 +139,8 @@ function validateStatements(key, items) {
     }
     let prev = '';
     for (let i = 0; i < clausesList.length; ++i) {
-        if (clausesList[i] === 'else' && (prev !== 'else if' && prev !== 'if')) {
-            errors.push(error(`${key}[${i}]`, `'else' clause must be preceded by 'if' or 'else if'`, items[i].range));
-        }
-        if (clausesList[i] === 'else if' && prev !== 'if') {
-            errors.push(error(`${key}[${i}]`, `'else if' clause must be preceded by 'if'`, items[i].range));
-        }
+        if ((clausesList[i] === 'else if' || clausesList[i] === 'else') && (prev !== 'else if' && prev !== 'if'))
+            errors.push(error(`${key}[${i}]`, `'${clausesList[i]}' clause must be preceded by 'if' or 'else if'`, items[i].range));
         prev = clausesList[i];
     }
     return errors;
