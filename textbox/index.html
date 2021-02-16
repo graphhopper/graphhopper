@@ -4,7 +4,9 @@
     <meta charset="UTF-8"/>
     <link rel="stylesheet" href="./node_modules/codemirror/lib/codemirror.css"/>
     <link rel="stylesheet" href="./style.css"/>
+    <link rel="stylesheet" href="./node_modules/codemirror/addon/hint/show-hint.css"/>
     <script src="./node_modules/codemirror/lib/codemirror.js"></script>
+    <script src="./node_modules/codemirror/addon/hint/show-hint.js"></script>
     <script src="./node_modules/codemirror/mode/yaml/yaml.js"></script>
     <!-- todo: include via npm -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ajv/7.1.0/ajv7.min.js"
@@ -30,6 +32,7 @@
     import * as YAML from './node_modules/yaml/browser/dist/index.js';
     import {validate} from "./validate.js";
     import {parse} from "./parse.js";
+    import {tokenAtPos} from "./tokenize.js";
 
     const Ajv = window.ajv7.default
     const ajv = new Ajv({allErrors: true});
@@ -56,12 +59,43 @@
                     'road_class': ['PRIMARY', 'MOTORWAY', 'TERTIARY'],
                     'road_environment': ['TUNNEL', 'BRIDGE']
                 };
+                const cursor = cm.indexFromPos(cm.getCursor());
                 const conditionErrors = validateResult.conditions
-                    .map(c => `${parse(c, categories).error}, suggestion: ${parse(c, categories).completions}`);
+                    .map((c, i) => {
+                        let dummy;
+                        const cc = cursor - validateResult.conditionRanges[i][0];
+                        let replace_range;
+                        if (cc < c.length) {
+                            const tokenPos = tokenAtPos(c, cc);
+                            dummy = c.substring(0, tokenPos.range[0]) + ' x ' + c.substring(tokenPos.range[1])
+                            replace_range = [tokenPos.range[0]+validateResult.conditionRanges[i][0], tokenPos.range[1]+validateResult.conditionRanges[i][0]];
+                        } else {
+                            dummy = c + ' x ';
+                            replace_range = [cursor, cursor]
+                        }
+                        let p_dummy = parse(dummy, categories);
+
+                        if (p_dummy.completions.length > 0) {
+                            const options = {
+                                hint: function () {
+                                    return {
+                                        from: cm.posFromIndex(replace_range[0]),
+                                        to: cm.posFromIndex(replace_range[1]),
+                                        list: p_dummy.completions
+                                    };
+                                },
+                            };
+                            cm.showHint(options);
+                        }
+
+                        const p = parse(c, categories);
+                        const location = c.slice(p.range[0], p.range[1]);
+                        return `${p.error} at ${location}, suggestion: ${parse(c, categories).completions}, autocomplete: ${p_dummy.completions}`;
+                    });
                 const conditionList = document.querySelector("#condition-errors");
                 displayList(conditionList, conditionErrors);
 
-                // highlight text area where conditions were entered
+                // highlight text area where conditions were entered and errors in condition
                 const conditionRanges = validateResult.conditionRanges;
                 conditionRanges.forEach((cr, i) => {
                     const from = cm.posFromIndex(cr[0]);
@@ -74,8 +108,8 @@
                         conditionRangeMarks.push(cm.markText(
                             cm.posFromIndex(cr[0] + parseRes.range[0]),
                             cm.posFromIndex(cr[0] + parseRes.range[1]), {
-                            className: 'gh-condition-error'
-                        }));
+                                className: 'gh-condition-error'
+                            }));
                     }
                 });
 
