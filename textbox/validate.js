@@ -205,6 +205,7 @@ function isYamlList(yamlParserType) {
 
 function isYamlString(yamlParserType) {
     return yamlParserType === 'PLAIN' || yamlParserType === 'QUOTE_SINGLE' || yamlParserType === 'QUOTE_DOUBLE';
+    // todo: support BLOCK_LITERAL etc.?
 }
 
 function isYamlPlain(yamlParserType) {
