@@ -3,6 +3,39 @@ const singleCharSymbols = ['(', ')'];
 const doubleCharSymbols = ['||', '&&', '==', '!='];
 
 /**
+ * Finds the token at the given position. Returns an object containing:
+ * - token: the token as string or null if there is only whitespace at the given position
+ * - range: the position/range of the token (or the whitespace) in the expression as array [startInclusive, endExclusive] 
+ */
+function tokenAtPos(expression, pos) {
+    if (pos < 0 || pos >= expression.length)
+        throw `pos ${pos} out of range: [0, ${expression.length}[`;
+    const tokens = tokenize(expression);
+    for (let i = 0; i < tokens.ranges.length; ++i) {
+        const range = tokens.ranges[i];
+        if (range[0] <= pos && pos < range[1]) {
+            return {
+                token: tokens.tokens[i],
+                range: range
+            }
+        } else if (range[0] > pos) {
+            return {
+                token: null,
+                range: i === 0
+                    ? [0, range[0]]
+                    : [tokens.ranges[i - 1][1], range[0]]
+            }
+        }
+    }
+    return {
+        token: null,
+        range: tokens.ranges.length === 0
+            ? [0, expression.length]
+            : [tokens.ranges[tokens.ranges.length - 1][1], expression.length]
+    };
+}
+
+/**
  * Tokenizes the given string/expression and returns the tokens along with their positions
  * given as arrays [start, end].
  * 
@@ -68,4 +101,4 @@ function isDoubleCharSymbol(str, pos) {
     return doubleCharSymbols.indexOf(str.slice(pos, pos + 2)) >= 0;
 }
 
-export {tokenize};
+export { tokenize, tokenAtPos };
