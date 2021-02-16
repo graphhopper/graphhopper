@@ -43,22 +43,29 @@ describe("complete", () => {
     });
 
     test("complete at whitespace within expression", () => {
-        test_complete('a == a1', 1, [], null);
-        test_complete('a == a1', 4, [], null);
-        // later: at whitespace within expression we still might to be able to 'add' something
-        // test_complete('a == x1a && b == b1', 4, ['a1a', 'a1b', 'a2a', 'a2b'], [4, 5]);
-        // previous error
-        // test_complete('a == x1a && b == b1', 8, [], [null]);
+        test_complete('a == a1 && b == b1', 1, ['a'], [0,1]);
+        test_complete('a == a1 && b == b1', 4, [], null);
+        test_complete('a == a1 && b == b1', 5, ['a1a', 'a1b', 'a2a', 'a2b'], [5, 7]);
+        test_complete('a == a1 && b == b1', 7, ['a1a', 'a1b'], [5, 7]);
+        test_complete('a == x1a && b == b1', 5, ['a1a', 'a1b', 'a2a', 'a2b'], [5, 8]);
+        // no completions when there is a previous error
+        test_complete('a == x1a && b == b1', 8, [], null);
     });
 
     test("complete at token within expression", () => {
-        test_complete('a == a1a', 0, ['a', 'b'], [0, 1]);
-        test_complete('a == a1a', 2, ['==', '!='], [2, 4]);
-        test_complete('a == a1b', 5, ['a1a', 'a1b', 'a2a', 'a2b'], [5, 8]);
-        test_complete('a == a2a', 6, ['a1a', 'a1b', 'a2a', 'a2b'], [5, 8]);
-        test_complete('a == a2b', 7, ['a1a', 'a1b', 'a2a', 'a2b'], [5, 8]);
+        test_complete('a == a1a && b != b1', 0, ['a', 'b'], [0, 1]);
+        test_complete('a == a1a && b != b2', 2, ['==', '!='], [2, 4]);
+        test_complete('a == a1b && b == b1', 5, ['a1a', 'a1b', 'a2a', 'a2b'], [5, 8]);
+        test_complete('a == a2a && b == b2', 6, ['a1a', 'a1b', 'a2a', 'a2b'], [5, 8]);
         test_complete('a == x2b && b == b1 || a == a1a', 5, ['a1a', 'a1b', 'a2a', 'a2b'], [5, 8]);
-        // previous error
+        // here we filter out some of the options due to the current cursor position
+        test_complete('a == a2b && b == b1', 7, ['a2a', 'a2b'], [5, 8]);
+        test_complete('a == a2b && b == b1', 8, ['a2b'], [5,8]);
+        test_complete('a == a && b == b1', 5, ['a1a', 'a1b', 'a2a', 'a2b'], [5, 6]);
+        test_complete('a == a && b == b1', 6, ['a1a', 'a1b', 'a2a', 'a2b'], [5, 6]);
+        test_complete('a == a2 && b == b1', 6, ['a1a', 'a1b', 'a2a', 'a2b'], [5, 7]);
+        test_complete('a == a2 && b == b1', 7, ['a2a', 'a2b'], [5, 7]);
+        // no completions when there is a previous error
         test_complete('a == x2b && b == b1 || a == a1a', 12, [], null);
         test_complete('a == x2b && b == b1 || a == a1a', 17, [], null);
     });

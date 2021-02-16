@@ -10,12 +10,14 @@ import {tokenAtPos} from "./tokenize.js";
 function complete(expression, pos, categories) {
     const lastNonWhitespace = getLastNonWhitespacePos(expression);
     if (pos > lastNonWhitespace) {
-        // this is a little trick: we run parse on a manipulated expression where we inserted a dummy character to
-        // see which completions are offered to us (assuming we typed in something)
+        // pad the expression with whitespace until pos, remove everything after pos
         let parseExpression = expression;
         while (parseExpression.length < pos)
             parseExpression += ' ';
-        parseExpression = parseExpression.slice(0, pos) + '…';
+        parseExpression = parseExpression.slice(0, pos);
+        // we use a little trick: we run parse() on a manipulated expression where we inserted a dummy character to
+        // see which completions are offered to us (assuming we typed in something)
+        parseExpression += '…';
         const parseResult = parse(parseExpression, categories);
         const tokenPos = tokenAtPos(parseExpression, pos);
 
@@ -35,18 +37,27 @@ function complete(expression, pos, categories) {
             range: suggestions.length === 0 ? null : [tokenPos.range[0], pos]
         }
     } else {
-        const tokenPos = tokenAtPos(expression, pos);
-        if (tokenPos.token === null) {
+        let tokenPos = tokenAtPos(expression, pos);
+        // we replace the token at pos with a dummy character
+        const parseExpression = expression.substring(0, tokenPos.range[0]) + '…' + expression.substring(tokenPos.range[1]);
+        // pos might be a whitespace position but right at the end of the *previous* token. we have to deal with some
+        // special cases (and this is actually similar to the situation where we are at the end of the expression).
+        // this is quite messy, but relying on the tests for now...
+        const modifiedTokenPos = tokenAtPos(parseExpression, tokenPos.range[0]);
+        const parseResult = parse(parseExpression, categories);
+        if (parseResult.range[0] !== modifiedTokenPos.range[0])
             return empty();
-        } else {
-            const parseExpression = expression.substring(0, tokenPos.range[0]) + '…' + expression.substring(tokenPos.range[1]);
-            const parseResult = parse(parseExpression, categories);
-            if (parseResult.range[0] !== tokenPos.range[0])
-                return empty();
-            return {
-                suggestions: parseResult.completions,
-                range: tokenPos.range
-            }
+        const suggestions = parseResult.completions.filter(c => {
+            let partialToken = tokenPos.token === null
+                ? modifiedTokenPos.token.substring(0, modifiedTokenPos.token.length - 1)
+                : tokenPos.token.substring(0, pos - tokenPos.range[0]);
+            return c.startsWith(partialToken);
+        });
+        return {
+            suggestions: suggestions,
+            range: suggestions.length === 0
+                ? null
+                : [modifiedTokenPos.range[0], tokenPos.token === null ? pos : tokenPos.range[1]]
         }
     }
 }
