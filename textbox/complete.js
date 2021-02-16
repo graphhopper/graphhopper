@@ -1,6 +1,12 @@
-import {parse} from './parse';
-import {tokenAtPos} from "./tokenize";
+import {parse} from './parse.js';
+import {tokenAtPos} from "./tokenize.js";
 
+/**
+ * Returns auto-complete suggestions for a given string/expression, categories and a character position. The returned
+ * object contains two fields:
+ *  - suggestions: a list of suggestions/strings
+ *  - range: the character range that is supposed to be replaced by the suggestion
+ */
 function complete(expression, pos, categories) {
     const lastNonWhitespace = getLastNonWhitespacePos(expression);
     if (pos > lastNonWhitespace) {
@@ -21,6 +27,7 @@ function complete(expression, pos, categories) {
         const suggestions = parseResult.completions.filter(c => {
             // we need to remove our dummy character for the filtering
             const partialToken = tokenPos.token.substring(0, tokenPos.token.length - 1);
+            // todo: be careful with boolean encoded values later! c might not be a string here...
             return c.startsWith(partialToken);
         });
         return {

@@ -31,8 +31,8 @@
 <script type="module">
     import * as YAML from './node_modules/yaml/browser/dist/index.js';
     import {validate} from "./validate.js";
+    import {complete} from "./complete.js";
     import {parse} from "./parse.js";
-    import {tokenAtPos} from "./tokenize.js";
 
     const Ajv = window.ajv7.default
     const ajv = new Ajv({allErrors: true});
@@ -56,42 +56,46 @@
                 displayList(errorList, errors);
 
                 const categories = {
-                    'road_class': ['PRIMARY', 'MOTORWAY', 'TERTIARY'],
-                    'road_environment': ['TUNNEL', 'BRIDGE']
+                    "max_speed": ["<number>"],
+                    "road_class": ["OTHER", "MOTORWAY", "TRUNK", "PRIMARY", "SECONDARY", "TERTIARY", "RESIDENTIAL", "UNCLASSIFIED", "SERVICE", "ROAD", "TRACK", "BRIDLEWAY", "STEPS", "CYCLEWAY", "PATH", "LIVING_STREET", "FOOTWAY", "PEDESTRIAN", "PLATFORM", "CORRIDOR"],
+                    // todo: need actual boolean encoded values, but currently only supporting string values!
+                    "road_class_link": ["true", "false"],
+                    "road_environment": ["OTHER", "ROAD", "FERRY", "TUNNEL", "BRIDGE", "FORD", "SHUTTLE_TRAIN"],
+                    "road_access": ["YES", "DESTINATION", "CUSTOMERS", "DELIVERY", "FORESTRY", "AGRICULTURAL", "PRIVATE", "OTHER", "NO"],
+                    "surface": ["MISSING", "PAVED", "ASPHALT", "CONCRETE", "PAVING_STONES", "COBBLESTONE", "UNPAVED", "COMPACTED", "FINE_GRAVEL", "GRAVEL", "GROUND", "DIRT", "GRASS", "SAND", "OTHER"],
+                    "toll": ["NO", "ALL", "HGV"]
                 };
                 const cursor = cm.indexFromPos(cm.getCursor());
                 const conditionErrors = validateResult.conditions
                     .map((c, i) => {
-                        let dummy;
-                        const cc = cursor - validateResult.conditionRanges[i][0];
-                        let replace_range;
-                        if (cc < c.length) {
-                            const tokenPos = tokenAtPos(c, cc);
-                            dummy = c.substring(0, tokenPos.range[0]) + ' x ' + c.substring(tokenPos.range[1])
-                            replace_range = [tokenPos.range[0]+validateResult.conditionRanges[i][0], tokenPos.range[1]+validateResult.conditionRanges[i][0]];
-                        } else {
-                            dummy = c + ' x ';
-                            replace_range = [cursor, cursor]
+                        const offset = validateResult.conditionRanges[i][0];
+                        let suggestions = [];
+                        // todo: do not run this if cursor is outside of condition!
+                        // but note that we allow the cursor being at the end (inclusive!) of the range, is this ok?!
+                        if (cursor >= offset && cursor <= validateResult.conditionRanges[i][1]) {
+                            const completeRes = complete(c, cursor - offset, categories);
+                            if (completeRes.suggestions.length > 0) {
+                                const options = {
+                                    hint: function () {
+                                        return {
+                                            from: cm.posFromIndex(completeRes.range[0] + offset),
+                                            to: cm.posFromIndex(completeRes.range[1] + offset),
+                                            list: completeRes.suggestions,
+                                            // without this we cannot backspace e.g. surface, but is this better?
+                                            completeSingle: false
+                                        };
+                                    },
+                                };
+                                cm.showHint(options);
+                            }
+                            suggestions = completeRes.suggestions;
                         }
-                        let p_dummy = parse(dummy, categories);
-
-                        if (p_dummy.completions.length > 0) {
-                            const options = {
-                                hint: function () {
-                                    return {
-                                        from: cm.posFromIndex(replace_range[0]),
-                                        to: cm.posFromIndex(replace_range[1]),
-                                        list: p_dummy.completions
-                                    };
-                                },
-                            };
-                            cm.showHint(options);
-                        }
-
                         const p = parse(c, categories);
                         const location = c.slice(p.range[0], p.range[1]);
-                        return `${p.error} at ${location}, suggestion: ${parse(c, categories).completions}, autocomplete: ${p_dummy.completions}`;
-                    });
+                        if (p.error === null) return '';
+                        else return `${p.error} at ${location}, suggestion: ${parse(c, categories).completions}, autocomplete: ${suggestions}`;
+                    })
+                    .filter(c => c.length > 0);
                 const conditionList = document.querySelector("#condition-errors");
                 displayList(conditionList, conditionErrors);
 
