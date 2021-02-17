@@ -87,14 +87,13 @@ function validateRootValues(rootItems) {
         const key = rootItems[i].key.value;
         const value = rootItems[i].value;
         if (value === null) {
-            // todo: range
-            errors.push(error(`${key}`, `must not be null`, null));
+            errors.push(error(`${key}`, `must not be null`, rootItems[i].key.range));
         } else {
             if (key === 'speed' || key === 'priority') {
                 if (!isYamlList(value.type)) {
                     errors.push(error(`${key}`, `must be a list. given type: ${displayType(value)}`, value.range));
                 } else {
-                    errors.push.apply(errors, validateStatements(key, value.items));
+                    errors.push.apply(errors, validateStatements(key, value));
                 }
             } else if (key === 'distance_influence') {
                 if (!isYamlPlain(value.type))
@@ -112,13 +111,14 @@ function validateRootValues(rootItems) {
     return errors;
 }
 
-function validateStatements(key, items) {
+function validateStatements(key, itemsObj) {
     const errors = [];
+    const items = itemsObj.items;
     for (let i = 0; i < items.length; ++i) {
         const item = items[i];
         if (item === null) {
-            // todo: range
-            errors.push(error(`${key}[${i}]`, `every statement must be an object with a clause ${clausesString} and an operator ${operatorsString}. given type: null`, null));
+            const range = itemsObj.cstNode.items[i].range;
+            errors.push(error(`${key}[${i}]`, `every statement must be an object with a clause ${clausesString} and an operator ${operatorsString}. given type: null`, [range.start, range.end]));
         } else if (!isYamlObject(item.type))
             errors.push(error(`${key}[${i}]`, `every statement must be an object with a clause ${clausesString} and an operator ${operatorsString}. given type: ${displayType(item)}`, item.range));
         else
@@ -168,8 +168,7 @@ function validateStatement(statementKey, statementIndex, statementItem) {
                 }
             } else {
                 if (entry.value === null) {
-                    // todo: no range
-                    errors.push(error(`${statementKey}[${statementIndex}]`, `the value of '${key}' must be a string or boolean. given type: null`, null));
+                    errors.push(error(`${statementKey}[${statementIndex}]`, `the value of '${key}' must be a string or boolean. given type: null`, entry.key.range));
                 } else if (!isString(entry.value) && !isBoolean(entry.value)) {
                     errors.push(error(`${statementKey}[${statementIndex}]`, `the value of '${key}' must be a string or boolean. given type: ${displayType(entry.value)}`, entry.value.range));
                 } else {
@@ -180,8 +179,7 @@ function validateStatement(statementKey, statementIndex, statementItem) {
         if (isOperator) {
             hasOperator = true;
             if (entry.value === null) {
-                // todo: range
-                errors.push(error(`${statementKey}[${statementIndex}]`, `the value of '${key}' must be a number. given type: null`, null));
+                errors.push(error(`${statementKey}[${statementIndex}]`, `the value of '${key}' must be a number. given type: null`, entry.key.range));
             } else if (!isNumber(entry.value)) {
                 errors.push(error(`${statementKey}[${statementIndex}]`, `the value of '${key}' must be a number. given type: ${displayType(entry.value)}`, entry.value.range));
             }
@@ -206,8 +204,7 @@ function validateObjectKeys(objectKey, legalKeys, legalKeysString, obj, maxKeys)
     for (let i = 0; i < entries.length; ++i) {
         const key = entries[i].key;
         if (key === undefined || key === null) {
-            // todo: range
-            errors.push(error(`${objectKey}`, `possible keys: ${legalKeysString}. given: ${key}`, null));
+            errors.push(error(`${objectKey}`, `possible keys: ${legalKeysString}. given: ${key}`, obj.range));
         } else if (!isString(key) || key.value.length === 0 || legalKeys.indexOf(key.value) < 0) {
             errors.push(error(`${objectKey}`, `possible keys: ${legalKeysString}. given: '${key}'`, key.range));
         } else if (keys.has(key.value)) {
