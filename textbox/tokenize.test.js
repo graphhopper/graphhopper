@@ -6,6 +6,7 @@ describe("tokenize", () => {
         expect(tokenize(' (a==a1 )&&').tokens).toStrictEqual(['(', 'a', '==', 'a1', ')', '&&']);
         expect(tokenize(' ( a&&== a1)) ').tokens).toStrictEqual(['(', 'a', '&&', '==', 'a1', ')', ')']);
         expect(tokenize('(a==a1)||(b==b1)').tokens).toStrictEqual(['(', 'a', '==', 'a1', ')', '||', '(', 'b', '==', 'b1', ')']);
+        expect(tokenize('(a<=a1)||(b>b1)').tokens).toStrictEqual(['(', 'a', '<=', 'a1', ')', '||', '(', 'b', '>', 'b1', ')']);
     });
 
     test("extract tokens and ranges", () => {
@@ -14,6 +15,8 @@ describe("tokenize", () => {
         test_tokenize('a b\tc', ['a', 'b', 'c'], [[0, 1], [2, 3], [4, 5]]);
         test_tokenize('\na b\tc', ['a', 'b', 'c'], [[1, 2], [3, 4], [5, 6]]);
         test_tokenize('==a', ['==', 'a'], [[0, 2], [2, 3]]);
+        test_tokenize('<a', ['<', 'a'], [[0, 1], [1, 2]]);
+        test_tokenize('<=>=b', ['<=', '>=', 'b'], [[0, 2], [2, 4], [4, 5]]);
         test_tokenize('==(a', ['==', '(', 'a'], [[0, 2], [2, 3], [3, 4]]);
         test_tokenize(' a!=)b', ['a', '!=', ')', 'b'], [[1, 2], [2, 4], [4, 5], [5, 6]])
         test_tokenize('ab   xy \n \t zz', ['ab', 'xy', 'zz'], [[0, 2], [5, 7], [12, 14]]);
@@ -43,6 +46,8 @@ describe("tokenize", () => {
         test_tokenAtPos('a||c', 0, 'a', [0, 1]);
         test_tokenAtPos('a&&c', 1, '&&', [1, 3]);
         test_tokenAtPos('a!=c', 3, 'c', [3, 4]);
+        test_tokenAtPos('a>=c', 2, '>=', [1, 3]);
+        test_tokenAtPos('a<c', 1, '<', [1, 2]);
         test_tokenAtPos('  abc== d &&(e != xy(z)', 0, null, [0, 2]);
         test_tokenAtPos('  abc== d &&(e != xy(z)', 6, '==', [5, 7]);
         test_tokenAtPos('  abc== d &&(e != xy(z)', 12, '(', [12, 13]);

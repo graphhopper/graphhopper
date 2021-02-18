@@ -1,6 +1,6 @@
 /** Symbols used for the tokenization */
-const singleCharSymbols = ['(', ')'];
-const doubleCharSymbols = ['||', '&&', '==', '!='];
+const singleCharSymbols = ['(', ')', '<', '>'];
+const doubleCharSymbols = ['||', '&&', '==', '!=', '<=', '>='];
 
 /**
  * Finds the token at the given position. Returns an object containing:

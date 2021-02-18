@@ -1,6 +1,7 @@
 import { tokenize } from './tokenize.js';
 
 const comparisonOperators = ['==', '!='];
+const numericComparisonOperators = ['<', '<=', '>', '>=', '==', '!='];
 const logicOperators = ['||', '&&'];
 
 let _categories;
@@ -8,7 +9,7 @@ let _tokens;
 let _idx;
 
 /**
- * Tokenizes and then parses the given expression. Returns an object containing:
+ * Tokenizes and then parses the given expression using the given categories. Returns an object containing:
  * - error, completions: see parseTokens
  * - range: the character range in which the (first) error occurred as list [startInclusive, endExclusive].
  *          if there are no invalid tokens, but rather something is missing the range will be
@@ -38,12 +39,19 @@ function parse(expression, categories) {
  * Parses a given list of tokens according to the following grammar.
  *
  * expression -> comparison (logicOperator comparison)*
- * comparison -> category comparator value | '(' expression ')'
+ * comparison -> enumCategory comparator value | numericCategory numericComparator number | booleanCategory comparator boolean | booleanCategory | value'(' expression ')'
  * logicOperator -> '&&' | '||'
  * comparator -> '==' | '!='
+ * numericComparator -> '>' | '<' | '>=' | '<=' | '==' | '!='
+ * value -> string
+ * number -> number
+ * boolean -> 'true' | 'false'
  *
  * Note that we do not care about operator precedence between && and || because our aim is not
  * actually evaluating the expression, but rather checking the validity.
+ * 
+ * The categories parameter is an object that maps category names to objects that contain the category type
+ * `enum`, `boolean` or `numeric` and a list of possible (string) values (for `enum` only).
  *
  * This function returns an object containing:
  * - error: an error string (or null) in case the tokens do not represent a valid expression.
@@ -55,20 +63,17 @@ function parse(expression, categories) {
  *
  * An alternative to the implementation here could be using a parser library like pegjs or nearly.
  *
- * todo:
- *  - negation
- *  - boolean encoded values
- *  - numeric encoded values with <,>,<=,>= operators
- *  - parentheses around operands like (road_class) == (MOTORWAY)? -> probably not
- *  - boolean literal values 'true', 'false'
- *
  */
 function parseTokens(tokens, categories) {
     if (Object.keys(categories).length < 1)
         return error(`no categories given`);
     for (let [k, v] of Object.entries(categories)) {
-        if (v.length < 1)
-            return error(`no values given for category a`);
+        if (v.type === 'enum') {
+            if (v.values.length < 1)
+                return error(`no values given for enum category ${k}`);
+        }
+        else if (v.type !== 'boolean' && v.type !== 'numeric')
+            return error(`unknown category type: ${v.type} for category ${k}`)
     }
 
     _categories = categories;
@@ -99,37 +104,76 @@ function parseExpression() {
 }
 
 function parseComparison() {
-    if (isCategory()) {
-        // rule: comparison -> category comparator value
-        if (_idx + 1 >= _tokens.length)
-            return error(`invalid comparison. missing operator.`, [_idx, _idx + 1], []);
-        const category = _tokens[_idx];
-        const comparator = _tokens[_idx + 1];
-        if (!tokensIsComparator(comparator))
-            return error(`invalid operator '${comparator}'`, [_idx + 1, _idx + 2], comparisonOperators);
-        if (_idx + 2 >= _tokens.length)
-            return error(`invalid comparison. missing value.`, [_idx, _idx + 2], []);
-        const value = _tokens[_idx + 2];
-        if (!isCategoryValue(category, value))
-            return error(`invalid ${category}: '${value}'`, [_idx + 2, _idx + 3], _categories[category]);
-        _idx += 3;
-        return valid();
+    if (isEnumCategory()) {
+        return parseEnumComparison();
+    } else if (isNumericCategory()) {
+        return parseNumericComparison();
+    } else if (isBooleanCategory()) {
+        return parseBooleanComparison();
     } else if (isOpening()) {
-        // rule: comparison -> '(' expression ')'
-        const from = _idx;
-        if (finished())
-            return error(`unmatched opening '('`, [from, _idx], []);
-        nextToken();
-        const result = parseExpression();
-        if (result.error !== null) return result;
-        if (!isClosing()) return error(`unmatched opening '('`, [from, _idx], []);
-        nextToken();
-        return valid();
+        return parseComparisonInParentheses();
     } else if (finished()) {
         return error(`empty comparison`, [_idx, _idx], []);
     } else {
         return error(`unexpected token '${_tokens[_idx]}'`, [_idx, _idx + 1], Object.keys(_categories));
     }
+}
+
+function parseEnumComparison() {
+    // rule: comparison -> enumCategory comparator value
+    return parseTripleComparison(
+        comparisonOperators,
+        (category, operator, value) => isCategoryValue(category, value),
+        (category, operator, value) => _categories[category].values
+    );
+}
+
+function parseNumericComparison() {
+    // rule: comparison -> numericCategory numericComparator value
+    return parseTripleComparison(
+        numericComparisonOperators,
+        (category, operator, value) => isNumber(value),
+        (category, operator, value) => []
+    );
+}
+
+function parseBooleanComparison() {
+    // rule: comparison -> booleanCategory comparator boolean
+    return parseTripleComparison(
+        comparisonOperators,
+        (category, operator, value) => isBoolean(value),
+        (category, operator, value) =>['true', 'false']
+    );
+}
+
+function parseTripleComparison(allowedComparators, isValid, getAllowedValues) {
+    if (_idx + 1 >= _tokens.length)
+        return error(`invalid comparison. missing operator.`, [_idx, _idx + 1], []);
+    const category = _tokens[_idx];
+    const comparator = _tokens[_idx + 1];
+    if (allowedComparators.indexOf(comparator) < 0)
+        return error(`invalid operator '${comparator}'`, [_idx + 1, _idx + 2], allowedComparators);
+    if (_idx + 2 >= _tokens.length)
+        return error(`invalid comparison. missing value.`, [_idx, _idx + 2], []);
+    const value = _tokens[_idx + 2];
+    if (!isValid(category, comparator, value)) {
+        return error(`invalid ${category}: '${value}'`, [_idx + 2, _idx + 3], getAllowedValues(category, comparator, value));
+    }
+    _idx += 3;
+    return valid();
+}
+
+function parseComparisonInParentheses() {
+    // rule: comparison -> '(' expression ')'
+    const from = _idx;
+    if (finished())
+        return error(`unmatched opening '('`, [from, _idx], []);
+    nextToken();
+    const result = parseExpression();
+    if (result.error !== null) return result;
+    if (!isClosing()) return error(`unmatched opening '('`, [from, _idx], []);
+    nextToken();
+    return valid();
 }
 
 function finished() {
@@ -144,12 +188,20 @@ function isLogicOperator() {
     return tokensIsLogicOperator(_tokens[_idx]);
 }
 
-function tokensIsComparator(tokens) {
-    return comparisonOperators.indexOf(tokens) >= 0;
-}
-
 function tokensIsLogicOperator(tokens) {
     return logicOperators.indexOf(tokens) >= 0;
+}
+
+function isEnumCategory() {
+    return isCategory() && _categories[_tokens[_idx]].type === 'enum';
+}
+
+function isNumericCategory() {
+    return isCategory() && _categories[_tokens[_idx]].type === 'numeric';
+}
+
+function isBooleanCategory() {
+    return isCategory() && _categories[_tokens[_idx]].type === 'boolean';
 }
 
 function isCategory() {
@@ -157,7 +209,7 @@ function isCategory() {
 }
 
 function isCategoryValue(category, value) {
-    return _categories[category].indexOf(value) >= 0;
+    return _categories[category].values.indexOf(value) >= 0;
 }
 
 function isOpening() {
@@ -166,6 +218,14 @@ function isOpening() {
 
 function isClosing() {
     return _tokens[_idx] === ')';
+}
+
+function isNumber(value) {
+    return !isNaN(Number(value))
+}
+
+function isBoolean(value) {
+    return value === 'true' || value === 'false';
 }
 
 function error(error, range, completions) {
