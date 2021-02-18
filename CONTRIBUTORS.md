@@ -32,7 +32,8 @@ Here is an overview:
  * elibar, fix for alternative route calculation
  * fbonzon, several UI improvements like #615
  * florent-morel, improvements regarding fords, #320
- * fredao, translations 
+ * fredao, translations
+ * GProbo, fixes like #2241
  * HarelM, improvements regarding elevation
  * HelgeKrueger, modularization of javascript, #590
  * henningvs, doc improvements

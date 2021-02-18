@@ -20,21 +20,31 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.JsonFeature;
+import com.graphhopper.util.PMap;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.GeometryFactory;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.graphhopper.json.Statement.*;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.routing.ev.RoadClass.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class CustomModelParserTest {
 
@@ -172,5 +182,57 @@ class CustomModelParserTest {
         customModel.addToSpeed(If("road_environment == BRIDGE", LIMIT, 85));
         customModel.addToSpeed(Else(LIMIT, 100));
         assertEquals(100, CustomModelParser.findMaxSpeed(customModel, 120));
+    }
+
+    @Test
+    public void multipleAreas(){
+        CustomModel customModel = new CustomModel();
+        Map<String, JsonFeature> areas = new HashMap<>();
+        Coordinate[] area_1_coordinates = new Coordinate[]{
+                new Coordinate(48.019324184801185, 11.28021240234375),
+                new Coordinate(48.019324184801185, 11.53564453125),
+                new Coordinate(48.11843396091691, 11.53564453125),
+                new Coordinate(48.11843396091691, 11.28021240234375),
+                new Coordinate(48.019324184801185, 11.28021240234375),
+        };
+        Coordinate[] area_2_coordinates = new Coordinate[]{
+                new Coordinate(48.15509285476017, 11.53289794921875),
+                new Coordinate(48.15509285476017, 11.8212890625),
+                new Coordinate(48.281365151571755, 11.8212890625),
+                new Coordinate(48.281365151571755, 11.53289794921875),
+                new Coordinate(48.15509285476017, 11.53289794921875),
+        };
+        areas.put("area_1", new JsonFeature("area_1",
+                "Feature",
+                new Envelope(),
+                new GeometryFactory().createPolygon(area_1_coordinates),
+                new HashMap<>()));
+        areas.put("area_2", new JsonFeature("area_2",
+                "Feature",
+                new Envelope(),
+                new GeometryFactory().createPolygon(area_2_coordinates),
+                new HashMap<>()));
+        customModel.setAreas(areas);
+
+        customModel.addToSpeed(If("in_area_area_1", LIMIT, 100));
+        customModel.addToSpeed(If("in_area_area_2", LIMIT, 25));
+        customModel.addToSpeed(Else(LIMIT, 15));
+
+        // No exception is thrown during createWeightingParameters
+        assertAll(() ->
+                CustomModelParser.createWeightingParameters(customModel, encodingManager,
+                        encoder.getMaxSpeed(), avgSpeedEnc));
+
+        CustomModel customModel2 = new CustomModel();
+        customModel2.setAreas(areas);
+
+        customModel2.addToSpeed(If("in_area_area_1", LIMIT, 100));
+        customModel2.addToSpeed(If("in_area_area_2", LIMIT, 25));
+        customModel2.addToSpeed(If("in_area_area_3", LIMIT, 150));
+        customModel2.addToSpeed(Else(LIMIT, 15));
+
+        assertThrows(IllegalArgumentException.class, () ->
+                CustomModelParser.createWeightingParameters(customModel2, encodingManager,
+                        encoder.getMaxSpeed(), avgSpeedEnc));
     }
 }
