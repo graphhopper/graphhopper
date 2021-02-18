@@ -61,7 +61,6 @@ function parse(expression, categories) {
  *  - numeric encoded values with <,>,<=,>= operators
  *  - parentheses around operands like (road_class) == (MOTORWAY)? -> probably not
  *  - boolean literal values 'true', 'false'
- *  - allow querying for completions at certain tokens (not just return errors)
  *
  */
 function parseTokens(tokens, categories) {

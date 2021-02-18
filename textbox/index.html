@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8"/>
     <link rel="stylesheet" href="./node_modules/codemirror/lib/codemirror.css"/>
-    <link rel="stylesheet" href="./style.css"/>
     <link rel="stylesheet" href="./node_modules/codemirror/addon/hint/show-hint.css"/>
+    <link rel="stylesheet" href="./node_modules/codemirror/addon/lint/lint.css"/>
     <script src="./node_modules/codemirror/lib/codemirror.js"></script>
     <script src="./node_modules/codemirror/mode/yaml/yaml.js"></script>
     <script src="./node_modules/codemirror/addon/hint/show-hint.js"></script>
+    <script src="./node_modules/codemirror/addon/lint/lint.js"></script>
 </head>
 <body>
 <textarea
@@ -17,26 +18,50 @@
         style="width: 500px; height: 400px"
 >
     </textarea>
-<h1>custom errors</h1>
-<ol id="errors"></ol>
-<h1>condition errors</h1>
-<ol id="condition-errors"></ol>
-
 <script type="module">
     import {validate} from "./validate.js";
     import {complete} from "./complete.js";
     import {parse} from "./parse.js";
 
-    const conditionRangeMarks = [];
-    const yamlErrorMarks = [];
     const textbox = document.querySelector("#textbox");
     const cm = CodeMirror.fromTextArea(textbox, {
         lineNumbers: true,
         mode: "yaml",
         extraKeys: {
             'Ctrl-Space': showHints
-        }
+        },
+        lint: {
+            getAnnotations: getYamlErrors
+        },
+        gutters: ["CodeMirror-linenumbers", "CodeMirror-lint-markers"]
     });
+
+    function getYamlErrors(text, options, editor) {
+        const validateResult = validate(text);
+        const errors = validateResult.errors.map((err, i) => {
+            return {
+                message: err.path + ': ' + err.message,
+                severity: 'error',
+                from: cm.posFromIndex(err.range[0]),
+                to: cm.posFromIndex(err.range[1])
+            }
+        });
+
+        const conditionRanges = validateResult.conditionRanges;
+        conditionRanges.forEach((cr, i) => {
+            const condition = cm.getValue().substring(cr[0], cr[1]);
+            const parseRes = parse(condition, categories);
+            if (parseRes.error !== null) {
+                errors.push({
+                    message: parseRes.error,
+                    severity: 'error',
+                    from: cm.posFromIndex(cr[0] + parseRes.range[0]),
+                    to: cm.posFromIndex(cr[0] + parseRes.range[1])
+                });
+            }
+        });
+        return errors;
+    }
 
     const categories = {
         "max_speed": ["<number>"].sort(),
@@ -55,60 +80,6 @@
         if (cm.state.completionActive) {
             showHints();
         }
-        conditionRangeMarks.forEach((m) => m.clear());
-        yamlErrorMarks.forEach((m) => m.clear());
-        const validateResult = validate(cm.getValue());
-
-        const errors = validateResult.errors;
-        const errorList = document.querySelector("#errors");
-        displayList(errorList, errors.map(e => `${e.path}: ${e.message}`));
-
-        const conditionErrors = validateResult.conditionRanges
-            .map(cr => {
-                const condition = cm.getValue().substring(cr[0], cr[1]);
-                const p = parse(condition, categories);
-                const location = condition.slice(p.range[0], p.range[1]);
-                if (p.error === null)
-                    return '';
-                else
-                    return `${p.error} at ${location}, suggestion: ${parse(condition, categories).completions}`;
-            })
-            .filter(c => c.length > 0);
-
-        const conditionList = document.querySelector("#condition-errors");
-        displayList(conditionList, conditionErrors);
-
-        // highlight text area where conditions were entered and errors in condition
-        const conditionRanges = validateResult.conditionRanges;
-        conditionRanges.forEach((cr, i) => {
-            const from = cm.posFromIndex(cr[0]);
-            const to = cm.posFromIndex(cr[1]);
-            conditionRangeMarks.push(cm.markText(from, to, {
-                className: 'gh-condition'
-            }));
-            const condition = cm.getValue().substring(cr[0], cr[1]);
-            const parseRes = parse(condition, categories);
-            if (parseRes.error !== null) {
-                conditionRangeMarks.push(cm.markText(
-                    cm.posFromIndex(cr[0] + parseRes.range[0]),
-                    cm.posFromIndex(cr[0] + parseRes.range[1]), {
-                        className: 'gh-condition-error'
-                    }));
-            }
-        });
-        // highlight errors in yaml
-        // todo: add tooltip with error message
-        validateResult.errors.forEach((err, i) => {
-            const range = err.range;
-            if (range !== null) {
-                yamlErrorMarks.push(cm.markText(
-                    cm.posFromIndex(range[0]), cm.posFromIndex(range[1]), {
-                        className: 'gh-yaml-error'
-                    }
-                ));
-            }
-        })
-
     });
 
     function showHints() {
@@ -148,16 +119,6 @@
             },
         };
         cm.showHint(options);
-    }
-
-    function displayList(list, items) {
-        while (list.firstChild)
-            list.removeChild(list.firstChild);
-        for (let error of items) {
-            const listElement = document.createElement("li");
-            listElement.textContent = error;
-            list.appendChild(listElement);
-        }
     }
 </script>
 </body>
