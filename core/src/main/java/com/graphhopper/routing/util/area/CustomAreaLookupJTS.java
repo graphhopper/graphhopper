@@ -18,7 +18,6 @@
 package com.graphhopper.routing.util.area;
 
 import java.util.*;
-import static java.util.stream.Collectors.*;
 
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.index.strtree.STRtree;
@@ -39,7 +38,6 @@ public class CustomAreaLookupJTS implements CustomAreaLookup {
     
     private final List<CustomArea> areas;
     private final List<SpatialRule> rules;
-    private final Map<String, Integer> encodedValues;
     private final Envelope maxBounds;
     private final STRtree index;
     
@@ -76,20 +74,6 @@ public class CustomAreaLookupJTS implements CustomAreaLookup {
                 maxBounds.expandToInclude(borderEnvelope);
             }
         }
-        
-        Map<String, Integer> evs = new TreeMap<>();
-        for (CustomArea area : areas) {
-            String ev = area.getEncodedValue();
-            if (ev == null || ev.isEmpty()) {
-                continue;
-            }
-            if (evs.containsKey(ev) && evs.get(ev) != area.getEncodedValueLimit()) {
-                throw new IllegalStateException("Different limits configured for the encoded value " + ev);
-            }
-            evs.put(ev, area.getEncodedValueLimit());
-        }
-        
-        this.encodedValues = Collections.unmodifiableMap(evs);
 
         index.build();
     }
@@ -140,11 +124,6 @@ public class CustomAreaLookupJTS implements CustomAreaLookup {
     @Override
     public List<SpatialRule> getRules() {
         return rules;
-    }
-    
-    @Override
-    public Map<String, Integer> getEncodedValueMap() {
-        return encodedValues;
     }
 
     @Override

@@ -6,7 +6,6 @@ public class CustomAreaFile {
     private String location;
     private String idField;
     private String encodedValue = "";
-    private int encodedValueLimit = -1;
     private String maxBbox = "-180,180,-90,90";
     
     
@@ -45,15 +44,6 @@ public class CustomAreaFile {
 
     public void setEncodedValue(String encodedValue) {
         this.encodedValue = encodedValue;
-    }
-
-    public int getEncodedValueLimit() {
-        return encodedValueLimit;
-    }
-
-
-    public void setEncodedValueLimit(int encodedValueLimit) {
-        this.encodedValueLimit = encodedValueLimit;
     }
 
 

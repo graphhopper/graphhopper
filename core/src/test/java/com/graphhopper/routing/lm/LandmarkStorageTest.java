@@ -42,7 +42,6 @@ import org.locationtech.jts.geom.Polygon;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.Assert.*;
 
@@ -218,11 +217,6 @@ public class LandmarkStorageTest {
             @Override
             public List<SpatialRule> getRules() {
                 return Collections.emptyList();
-            }
-
-            @Override
-            public Map<String, Integer> getEncodedValueMap() {
-                return Collections.emptyMap();
             }
         };
         

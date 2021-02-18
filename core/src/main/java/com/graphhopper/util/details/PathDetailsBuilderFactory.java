@@ -60,13 +60,11 @@ public class PathDetailsBuilderFactory {
             builders.add(new DistanceDetails());
 
         for (String checkSuffix : requestedPathDetails) {
-            if (checkSuffix.endsWith(getKey("", "priority")) && evl.hasEncodedValue(checkSuffix))
+            if (checkSuffix.endsWith(getKey("", "priority")) && evl.hasEncodedValue(checkSuffix)) {
                 builders.add(new DecimalDetails(checkSuffix, evl.getDecimalEncodedValue(checkSuffix)));
-        }
-        
-        for (String checkPrefix : requestedPathDetails) {
-            if (checkPrefix.startsWith(CustomArea.key("")) && evl.hasEncodedValue(checkPrefix))
-                builders.add(new StringDetails(checkPrefix, evl.getStringEncodedValue(checkPrefix)));
+            } else if (checkSuffix.endsWith(CustomArea.CUSTOM_EV_SUFFIX) && evl.hasEncodedValue(checkSuffix)) {
+                builders.add(new StringDetails(checkSuffix, evl.getStringEncodedValue(checkSuffix)));
+            }
         }
 
         for (String key : Arrays.asList(MaxSpeed.KEY, MaxWidth.KEY, MaxHeight.KEY, MaxWeight.KEY,

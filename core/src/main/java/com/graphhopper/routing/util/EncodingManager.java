@@ -31,7 +31,6 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 import static com.graphhopper.util.Helper.toLowerCase;
@@ -149,7 +148,6 @@ public class EncodingManager implements EncodedValueLookup {
         private DateRangeParser dateRangeParser;
         private final List<AbstractFlagEncoder> flagEncoderList = new ArrayList<>();
         private final List<EncodedValue> encodedValueList = new ArrayList<>();
-        private final List<EncodedValue> customEncodedValueList = new ArrayList<>();
         private final List<TagParser> tagParsers = new ArrayList<>();
         private final List<TurnCostParser> turnCostParsers = new ArrayList<>();
         private final List<RelationTagParser> relationTagParsers = new ArrayList<>();
@@ -210,7 +208,7 @@ public class EncodingManager implements EncodedValueLookup {
         
         public Builder setCustomAreaLookup(CustomAreaLookup customAreaLookup) {
             check();
-            em.setCustomAreaLookup(customEncodedValueList, customAreaLookup);
+            em.setCustomAreaLookup(customAreaLookup);
             return this;
         }
 
@@ -309,13 +307,7 @@ public class EncodingManager implements EncodedValueLookup {
             for (EncodedValue ev : encodedValueList) {
                 em.addEncodedValue(ev, false);
             }
-            
-            for (EncodedValue ev : customEncodedValueList) {
-                em.addEncodedValue(ev, true);
-            }
 
-            if (!em.getCustomAreaLookup().getEncodedValueMap().isEmpty())
-                _addEdgeTagParser(new CustomAreaParser(), false);
             if (!em.hasEncodedValue(Roundabout.KEY))
                 _addEdgeTagParser(new OSMRoundaboutParser(), false);
             if (!em.hasEncodedValue(RoadClass.KEY))
@@ -424,17 +416,15 @@ public class EncodingManager implements EncodedValueLookup {
             if (entry.isEmpty())
                 continue;
 
+            String name = entry.split("\\|")[0];
             PMap map = new PMap(entry);
-            TagParser tp = factory.create(entry, map);
+            TagParser tp = factory.create(name, map);
             returnList.add(tp);
         }
     }
     
-    private void setCustomAreaLookup(List<EncodedValue> customEncodedValueList, CustomAreaLookup customAreaLookup) {
+    private void setCustomAreaLookup(CustomAreaLookup customAreaLookup) {
         this.customAreaLookup = customAreaLookup;
-        for (Entry<String, Integer> entry : customAreaLookup.getEncodedValueMap().entrySet()) {
-            customEncodedValueList.add(new StringEncodedValue(entry.getKey(), entry.getValue()));
-        }
     }
 
     static String fixWayName(String str) {

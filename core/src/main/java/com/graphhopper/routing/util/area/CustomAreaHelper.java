@@ -51,9 +51,8 @@ public class CustomAreaHelper {
     public static List<CustomArea> loadAreas(CustomAreaFile customAreaFile, JsonFeatureCollection geoJson) {
         String idField = customAreaFile.getIdField();
         Envelope bbox = BBox.toEnvelope(BBox.parseBBoxString(customAreaFile.getMaxBbox()));
-        int evLimit = customAreaFile.getEncodedValueLimit() == -1 ? geoJson.getFeatures().size() : customAreaFile.getEncodedValueLimit();
         
-        return loadAreas(geoJson, idField, bbox, customAreaFile.getEncodedValue(), evLimit);
+        return loadAreas(geoJson, idField, bbox, customAreaFile.getEncodedValue());
     }
     
     public static List<CustomArea> loadAreas(JsonFeatureCollection geoJson, String idField) {
@@ -61,7 +60,7 @@ public class CustomAreaHelper {
     }
     
     public static List<CustomArea> loadAreas(JsonFeatureCollection geoJson, String idField, Envelope bbox) {
-        return loadAreas(geoJson, idField, bbox, "", -1);
+        return loadAreas(geoJson, idField, bbox, "");
     }
 
     /**
@@ -79,13 +78,10 @@ public class CustomAreaHelper {
      *            boundingbox are retained.
      * @param encodedValue
      *            the name to be used for the encoded value: {@link CustomArea#getEncodedValue()}
-     * @param encodedValueLimit
-     *            the expected number of entries to be stored in the encoded value:
-     *            {@link CustomArea#getEncodedValueLimit()}
      * @return a (possibly empty) List of {@link CustomArea CustomAreas}
      */
     private static List<CustomArea> loadAreas(JsonFeatureCollection geoJson, String idField,
-                    Envelope bbox, String encodedValue, int encodedValueLimit) {
+                    Envelope bbox, String encodedValue) {
         Geometry bboxGeometry = FAC.toGeometry(bbox);
 
         List<CustomArea> customAreas = new ArrayList<>();
@@ -94,7 +90,7 @@ public class CustomAreaHelper {
             List<Polygon> borders = intersections(jsonFeature.getGeometry(), id, bboxGeometry);
 
             if (!borders.isEmpty()) {
-                customAreas.add(new CustomArea(id, borders, encodedValue, encodedValueLimit));
+                customAreas.add(new CustomArea(id, borders, encodedValue));
             }
         }
         

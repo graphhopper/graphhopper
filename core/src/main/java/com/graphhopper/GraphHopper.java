@@ -518,8 +518,7 @@ public class GraphHopper implements GraphHopperAPI {
     private EncodingManager createEncodingManager(GraphHopperConfig ghConfig) {
         String flagEncodersStr = ghConfig.getString("graph.flag_encoders", "");
         String encodedValueStr = ghConfig.getString("graph.encoded_values", "");
-        List<CustomArea> customAreas = ghConfig.getCustomAreas();
-        if (flagEncodersStr.isEmpty() && encodedValueStr.isEmpty() && customAreas.isEmpty()) {
+        if (flagEncodersStr.isEmpty() && encodedValueStr.isEmpty()) {
             return null;
         } else {
             EncodingManager.Builder emBuilder = new EncodingManager.Builder();
@@ -531,6 +530,7 @@ public class GraphHopper implements GraphHopperAPI {
             emBuilder.setEnableInstructions(ghConfig.getBool("datareader.instructions", true));
             emBuilder.setPreferredLanguage(ghConfig.getString("datareader.preferred_language", ""));
             emBuilder.setDateRangeParser(DateRangeParser.createInstance(ghConfig.getString("datareader.date_range_parser_day", "")));
+            List<CustomArea> customAreas = ghConfig.getCustomAreas();
             if (!customAreas.isEmpty()) {
                 emBuilder.setCustomAreaLookup(new CustomAreaLookupJTS(customAreas, CountriesSpatialRuleFactory.getRules()));
             }

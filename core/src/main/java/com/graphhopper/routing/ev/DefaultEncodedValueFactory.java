@@ -17,7 +17,12 @@
  */
 package com.graphhopper.routing.ev;
 
+import java.util.Arrays;
+import java.util.List;
+
+import com.graphhopper.config.CustomArea;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 
 public class DefaultEncodedValueFactory implements EncodedValueFactory {
     @Override
@@ -29,8 +34,8 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
         String name = string.split("\\|")[0];
         if (name.isEmpty())
             throw new IllegalArgumentException("To load EncodedValue a name is required. " + string);
+        PMap configuration = new PMap(string);
 
-        // creating the Country EV is done while SpatialRuleIndex is created and not here
         if (Roundabout.KEY.equals(name)) {
             enc = Roundabout.create();
         } else if (GetOffBike.KEY.equals(name)) {
@@ -69,6 +74,11 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             enc = new EnumEncodedValue<>(HazmatTunnel.KEY, HazmatTunnel.class);
         } else if (HazmatWater.KEY.equals(name)) {
             enc = new EnumEncodedValue<>(HazmatWater.KEY, HazmatWater.class);
+        } else if (name.endsWith(CustomArea.CUSTOM_EV_SUFFIX)) {
+            int bits = configuration.getInt("bits", -1);
+            List<String> values = Arrays.asList(configuration.getString("values", null).split(";"));
+            boolean storeTwoDirections = configuration.getBool("store_both_directions", false);
+            enc = new StringEncodedValue(name, bits, values, storeTwoDirections);
         } else {
             throw new IllegalArgumentException("DefaultEncodedValueFactory cannot find EncodedValue " + name);
         }

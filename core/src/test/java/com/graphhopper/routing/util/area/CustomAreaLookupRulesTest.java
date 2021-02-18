@@ -25,6 +25,7 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TransportationMode;
+import com.graphhopper.routing.util.parsers.CustomAreaParser;
 import com.graphhopper.routing.util.spatialrules.CountriesSpatialRuleFactory;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
@@ -131,11 +132,13 @@ public class CustomAreaLookupRulesTest {
                 new Coordinate(0, 0), new Coordinate(0, 1), new Coordinate(1, 1), new Coordinate(1, 0), new Coordinate(0, 0)});
         final SpatialRule germanyRule = new GermanySpatialRule();
         
-        CustomArea germanyArea = new CustomArea(germanyRule.getId(), Collections.singletonList(polygon), "country", 1);
+        CustomArea germanyArea = new CustomArea(germanyRule.getId(), Collections.singletonList(polygon), "country");
 
         CustomAreaLookup lookup = new CustomAreaLookupJTS(Collections.singletonList(germanyArea), Collections.singletonList(germanyRule));
 
-        EncodingManager em = new EncodingManager.Builder().setCustomAreaLookup(lookup).add(new CarFlagEncoder(new PMap())).build();
+        EncodingManager em = new EncodingManager.Builder()
+                        .add(new CustomAreaParser(new StringEncodedValue(CustomArea.key("country"), 1)))
+                        .setCustomAreaLookup(lookup).add(new CarFlagEncoder(new PMap())).build();
         StringEncodedValue countryIdEnc = em.getStringEncodedValue(CustomArea.key("country"));
         EnumEncodedValue<RoadAccess> tmpRoadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
         DecimalEncodedValue tmpCarMaxSpeedEnc = em.getDecimalEncodedValue(MaxSpeed.KEY);

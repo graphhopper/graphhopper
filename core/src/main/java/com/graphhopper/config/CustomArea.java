@@ -17,8 +17,6 @@
  */
 package com.graphhopper.config;
 
-import static com.graphhopper.routing.util.EncodingManager.getKey;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,30 +32,28 @@ import com.graphhopper.routing.util.spatialrules.SpatialRule;
  * @author Thomas Butz
  */
 public class CustomArea {
-    private static final String CUSTOM_EV_PREFIX = "custom_area";
+    public static final String CUSTOM_EV_SUFFIX = "_area";
 
     private final String id;
     private final List<Polygon> borders;
     private final String encodedValue;
-    private final int encodedValueLimit;
     
-    public CustomArea(String id, List<Polygon> borders, String encodedValueSuffix, int encodedValueLimit) {
+    public CustomArea(String id, List<Polygon> borders, String encodedValuePrefix) {
         this.id = id;
         this.borders = Collections.unmodifiableList(new ArrayList<>(borders));
-        if (encodedValueSuffix != null && !encodedValueSuffix.isEmpty()) {
-            this.encodedValue = key(encodedValueSuffix);
+        if (encodedValuePrefix != null && !encodedValuePrefix.isEmpty()) {
+            this.encodedValue = key(encodedValuePrefix);
         } else {
             this.encodedValue = "";
         }
-        this.encodedValueLimit = encodedValueLimit;
     }
     
     public CustomArea(String id, List<Polygon> borders) {
-        this(id, borders, "", -1);
+        this(id, borders, "");
     }
     
     public static String key(String str) {
-        return getKey(CUSTOM_EV_PREFIX, str);
+        return str + CUSTOM_EV_SUFFIX;
     }
     
     public String getId() {
@@ -70,10 +66,6 @@ public class CustomArea {
     
     public String getEncodedValue() {
         return encodedValue;
-    }
-    
-    public int getEncodedValueLimit() {
-        return encodedValueLimit;
     }
 
     @Override

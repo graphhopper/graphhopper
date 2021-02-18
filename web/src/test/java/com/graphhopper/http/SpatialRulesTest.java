@@ -52,11 +52,11 @@ public class SpatialRulesTest {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         CustomAreaFile customAreaFile = new CustomAreaFile("../core/files/spatialrules/countries.geojson");
         customAreaFile.setIdField("ISO3166-1:alpha3");
-        customAreaFile.setEncodedValue("countries");
+        customAreaFile.setEncodedValue("country");
         customAreaFile.setMaxBbox("5,15,47,55"); // germany
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "car").
-                putObject("graph.encoded_values", "road_environment,road_class,road_access,max_speed").
+                putObject("graph.encoded_values", "road_environment,road_class,road_access,max_speed,country_area|limit=63").
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
                 setCustomAreaFiles(Collections.singletonList(customAreaFile)).

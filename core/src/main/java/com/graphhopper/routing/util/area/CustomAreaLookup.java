@@ -19,7 +19,6 @@ package com.graphhopper.routing.util.area;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import org.locationtech.jts.geom.Envelope;
 
@@ -54,13 +53,6 @@ public interface CustomAreaLookup {
     List<SpatialRule> getRules();
 
     /**
-     * @return maps the name of each encoded value retrieved from
-     *         {@link CustomArea#getEncodedValue()} to the expected number of entries retrieved from
-     *         {@link CustomArea#getEncodedValueLimit()}
-     */
-    Map<String, Integer> getEncodedValueMap();
-
-    /**
      * @return the bounds of the SpatialRuleLookup
      */
     Envelope getBounds();
@@ -79,11 +71,6 @@ public interface CustomAreaLookup {
         @Override
         public List<SpatialRule> getRules() {
             return Collections.emptyList();
-        }
-        
-        @Override
-        public Map<String, Integer> getEncodedValueMap() {
-            return Collections.emptyMap();
         }
 
         @Override

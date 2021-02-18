@@ -15,10 +15,16 @@ graphhopper:
   # Enable turn restrictions for car or motorcycle.
   # graph.flag_encoders: car|turn_costs=true
 
-  # Add additional information to every edge. Used for path details (#1548), better instructions (#1844) and tunnel/bridge interpolation (#798).
+  # Add additional information to every edge. Used for path details (#1548), better instructions (#1844), tunnel/bridge interpolation (#798)
+  # and custom areas/rules (#2201)
   # Default values are: road_class,road_class_link,road_environment,max_speed,road_access (since #1805)
   # More are: surface,max_width,max_height,max_weight,max_axle_load,max_length,hazmat,hazmat_tunnel,hazmat_water,toll,track_type,
   #           mtb_rating, hiking_rating, horse_rating
+  #
+  # Encoded values for custom areas carry the `_area` suffix and require an additional limit which determines their size.
+  # e.g `country_area|limit=63` creates an encoded value which can later be used to store up to 63 different custom areas of type `country`.
+  # Check the `custom_area_files` subsection for how to populate and use these encoded values.
+  #
   # graph.encoded_values: surface,toll,track_type
 
   ##### Routing Profiles ####
@@ -159,14 +165,13 @@ graphhopper:
 
 
 
-  ##### Custom Areas & Spatial Rules #####
+  ##### Custom Areas & Rules #####
 
-  # Custom Areas are loaded from user provided GeoJSON files. A registered SpatialRule is enforced for an area if it has the same ID.
+  # Custom Areas are loaded from user provided GeoJSON files. A registered rule is enforced for an area if it has the same ID.
   # The following fields can be configured for each custom area file:
   # - location (required): the path of the GeoJSON file
   # - id_field (required): they GeoJSON property of the (multi)polygons to be used as the ID of the resulting area
-  # - encoded_value (optional, default: ""): the encoded value to be used if the area should be stored in the graph
-  # - encoded_value_limit (optional, default: -1): expected number of encountered areas to be stored in the encoded value. Defaults to the number of areas if -1.
+  # - encoded_value (optional, default: ""): the name of the encoded value without its `_area` suffix which is used to store the area in the graph.
   # - max_bbox (optional, default: -180,180,-90,90): maximum BBox for which custom areas are loaded. Having less areas, might result in a smaller graph.
   custom_area_files: []
   
@@ -174,7 +179,6 @@ graphhopper:
   #   - location: core/files/spatialrules/countries.geojson
   #     id_field: "ISO3166-1:alpha3"
   #     encoded_value: country
-  #     encoded_value_limit: 63
   #     max_bbox: -180,180,-90,90
 
 # Dropwizard server configuration
