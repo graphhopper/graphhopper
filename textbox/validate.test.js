@@ -100,7 +100,7 @@ describe("validate", () => {
         test_validate(`distance_influence: 86`, [])
     });
 
-    test.only('speed/priority statements keys are valid', () => {
+    test('speed/priority statements keys are valid', () => {
         test_validate(`speed: ['abc']`, [
             `speed[0]: every statement must be an object with a clause ['if', 'else if', 'else'] and an operator ['multiply by', 'limit to']. given type: string, range: [8, 13]`
         ]);
