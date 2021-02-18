@@ -89,8 +89,7 @@
             .map(cr => {
                 const condition = cm.getValue().substring(cr[0], cr[1]);
                 const offset = cr[0];
-                // todo: do not run this if cursor is outside of condition!
-                // but note that we allow the cursor being at the end (inclusive!) of the range, is this ok?!
+                // note that we allow the cursor to be at the end (inclusive!) of the range
                 if (cursor >= offset && cursor <= cr[1]) {
                     const completeRes = complete(condition, cursor - offset, categories);
                     if (completeRes.suggestions.length > 0) {

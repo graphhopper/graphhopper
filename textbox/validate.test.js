@@ -1,4 +1,4 @@
-import { validate } from './validate';
+import {validate} from './validate';
 
 describe("validate", () => {
     test('empty document is valid', () => {
@@ -59,6 +59,8 @@ describe("validate", () => {
     });
 
     test('root element values are not null', () => {
+        // in case values are null we use the key range as error range, because the yaml parser makes it hard for us
+        // to obtain the value range in this case
         test_validate(`speed: \ndistance_influence: \npriority\n`, [
             `speed: must not be null, range: [0, 5]`,
             `distance_influence: must not be null, range: [8, 26]`,
@@ -144,10 +146,23 @@ describe("validate", () => {
         test_validate(`speed: [{if: condition, multiply by: 0.2}, {else if: 3.4, limit to: 12}]`, [
             `speed[1]: the value of 'else if' must be a string or boolean. given type: number, range: [53, 56]`
         ]);
+        test_validate(`speed:\n  - if:     \n    limit to: 100`, [
+            `speed[0]: the value of 'if' must be a string or boolean. given type: null, range: [11, 13]`
+        ]);
         test_validate(`speed: [{if: condition, multiply by: 0.2}, {else if: , limit to: 12}]`, [
             `speed[1]: the value of 'else if' must be a string or boolean. given type: null, range: [44, 51]`
         ]);
+        test_validate(`speed: [{limit to: 100, if:`, [
+            `speed[0]: the value of 'if' must be a string or boolean. given type: null, range: [24, 26]`
+        ]);
         test_validate(`speed: [{if: true, multiply by: 0.15}]`, []);
+    });
+
+    test('get condition range even when if/else if value is null', () => {
+        // this is a bit tricky because normally we do not obtain a condition range for null values and we had
+        // to do a little workaround that inserts a condition range also in this case
+        expect(validate(`speed: [{if:   , limit to: 100}]`).conditionRanges).toStrictEqual([[12, 13]]);
+        expect(validate(`speed:\n  - if:   \n    limit to: 100}]`).conditionRanges).toStrictEqual([[14, 15]]);
     });
 
     test('speed/priority operator values must be numbers', () => {

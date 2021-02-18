@@ -14,8 +14,7 @@ const operatorsString = `['multiply by', 'limit to']`;
 const statementKeys = ['if', 'else if', 'else', 'multiply by', 'limit to'];
 const statementKeysString = `['if', 'else if', 'else', 'multiply by', 'limit to']`;
 
-// todo: made this global for quick experiment
-let conditionRanges = [];
+let _conditionRanges = [];
 
 /**
  * Checks that a given yaml string follows this schema:
@@ -41,12 +40,23 @@ let conditionRanges = [];
  *                    the 'conditions', i.e. the values of 'if' and 'else if' clauses
  */
 export function validate(yaml) {
-    conditionRanges = [];
-    const doc = YAML.parseDocument(yaml, { keepCstNodes: true });
+    _conditionRanges = [];
+    const doc = YAML.parseDocument(yaml, {
+        // with this option we can access the lower-level 'concrete syntax tree (cst)'. This helps us to obtain
+        // the character ranges in a few places but unfortunately there are also some cases where it does
+        // not help either, e.g. for null map values.
+        keepCstNodes: true
+    });
+    // doc.errors might contain syntax errors we do not show like unclosed brackets,
+    // but we do not really care as long as converting to json produces valid json?!
+    // we could also show these errors as we get them from the yaml parser, but how would we
+    // translate these errors to other languages?
+    // console.log(doc.errors);
+    // console.log(JSON.stringify(doc.toJSON(), null, 2));
     const errors = validateYamlDoc(doc);
     return {
         errors,
-        conditionRanges,
+        conditionRanges: _conditionRanges
     }
 }
 
@@ -167,12 +177,16 @@ function validateStatement(statementKey, statementIndex, statementItem) {
                     errors.push(error(`${statementKey}[${statementIndex}]`, `the value of 'else' must be null. given: '${entry.value}'`, entry.value.range));
                 }
             } else {
-                if (entry.value === null) {
+                if (entry.value === null || entry.value.value === null) {
                     errors.push(error(`${statementKey}[${statementIndex}]`, `the value of '${key}' must be a string or boolean. given type: null`, entry.key.range));
+                    // this is a very common case (we typed 'if: ' and the value is still null). unfortunately we cannot reliably
+                    // obtain the value range, not even from the cst(?!). So we do this workaround and only calculate
+                    // the range based on the key range, see this: https://github.com/eemeli/yaml/discussions/231
+                    _conditionRanges.push([entry.key.range[1]+1, entry.key.range[1]+2]);
                 } else if (!isString(entry.value) && !isBoolean(entry.value)) {
                     errors.push(error(`${statementKey}[${statementIndex}]`, `the value of '${key}' must be a string or boolean. given type: ${displayType(entry.value)}`, entry.value.range));
                 } else {
-                    conditionRanges.push(entry.value.range);
+                    _conditionRanges.push(entry.value.range);
                 }
             }
         }
