@@ -11,12 +11,7 @@ See the demo in action (black is GPS track, green is matched result):
 
 ### Web app
 
-Start via:
-```bash
-java -jar web/target/graphhopper-web-3.0-SNAPSHOT.jar server config.yml
-```
-
-Access the simple UI via `http://localhost:8989/maps/map-matching/` (including the trailing slash).
+To install GraphHopper see [these instructions](../README.md#installation). After the import process finished you can access a simple map matching UI via `http://localhost:8989/maps/map-matching/` (including the trailing slash).
 
 You can post GPX files and get back snapped results as GPX or as JSON. An example curl request is:
 ```bash

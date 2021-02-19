@@ -259,8 +259,8 @@ public class CustomModelParser {
                 if (!customModel.getAreas().containsKey(id))
                     throw new IllegalArgumentException("Area '" + id + "' wasn't found");
                 classSourceCode.append("protected " + Polygon.class.getSimpleName() + " " + arg + ";\n");
-                initSourceCode.append("JsonFeature feature = (JsonFeature) areas.get(\"" + id + "\");\n");
-                initSourceCode.append("this." + arg + " = new Polygon(new PreparedGeometryFactory().create(feature.getGeometry()));\n");
+                initSourceCode.append("JsonFeature feature_" + id + " = (JsonFeature) areas.get(\"" + id + "\");\n");
+                initSourceCode.append("this." + arg + " = new Polygon(new PreparedGeometryFactory().create(feature_" + id + ".getGeometry()));\n");
             } else {
                 if (!isValidVariableName(arg))
                     throw new IllegalArgumentException("Variable not supported: " + arg);
