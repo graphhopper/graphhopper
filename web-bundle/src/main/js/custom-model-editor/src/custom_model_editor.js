@@ -1,13 +1,19 @@
+import CodeMirror from "codemirror";
+import "codemirror/mode/yaml/yaml";
+import "codemirror/addon/hint/show-hint";
+import "codemirror/addon/lint/lint";
 import { validate } from "./validate.js";
 import { complete } from "./complete.js";
 import { parse } from "./parse.js";
 
 /**
- * Creates a custom model editor for the given categories in the given text area. Everything is configured
- * within this function at the moment and besides specifying these two parameters nothing can be customized
+ * Creates a custom model editor for the given categories calls the given callback with the editor element
+ * as argument. Everything is configured within this function at the moment and besides specifying these two parameters
+ * nothing can be customized. However, this function returns the CodeMirror instance that can be further modified at
+ * your own risk. For bigger changes it is probably better to implement the functionality here.
  */
-function createCustomModelEditor(categories, textArea) {
-    const cm = CodeMirror.fromTextArea(textArea, {
+function create(categories, callback) {
+    const cm = CodeMirror(callback, {
         lineNumbers: true,
         mode: "yaml",
         extraKeys: {
@@ -94,6 +100,8 @@ function createCustomModelEditor(categories, textArea) {
         };
         cm.showHint(options);
     }
+
+    return cm;
 }
 
-export { createCustomModelEditor }
+export { create }

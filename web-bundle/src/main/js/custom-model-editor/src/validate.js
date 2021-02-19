@@ -1,7 +1,4 @@
-// use this in browser
-import * as YAML from './node_modules/yaml/browser/dist/index.js';
-// ... and this for tests
-// import YAML from './node_modules/yaml/index.js';
+import YAML from 'yaml';
 
 const rootKeys = ['speed', 'priority', 'distance_influence', 'areas'];
 const rootKeysString = `['speed', 'priority', 'distance_influence', 'areas']`;
