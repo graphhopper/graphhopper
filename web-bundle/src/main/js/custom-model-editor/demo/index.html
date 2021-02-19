@@ -31,8 +31,10 @@
         document.querySelector("#custom_model_editor_box").appendChild(element);
     });
     editor.categories = categories;
-    editor.value = 'hello world';
     editor.setExtraKey('Ctrl-Enter', () => {editor.value = (editor.value + '\n ... hello')});
+    editor.value = 'hello world';
+    editor.cm.focus();
+    editor.cm.setCursor(editor.cm.lineCount())
 </script>
 </body>
 </html>

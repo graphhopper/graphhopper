@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "private": "true",
   "scripts": {
-    "watch": "webpack --watch --mode development",
+    "watch": "webpack --watch --mode production",
     "build": "webpack --mode production",
     "test": "jest",
     "test-watch": "jest --watchAll"
