@@ -478,3 +478,8 @@ td img.pic {
 .fullscreen-reverse-btn {
     background-image: url("../img/full-reverse.png");
 }
+
+.CodeMirror-lint-tooltip {
+    /* tool tip should not be hidden by map*/
+    z-index: 99999999999;
+}

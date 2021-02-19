@@ -43,6 +43,7 @@ var routeManipulation = require('./routeManipulation.js');
 var gpxExport = require('./gpxexport.js');
 var messages = require('./messages.js');
 var translate = require('./translate.js');
+var customModelEditor = require('custom-model-editor');
 
 var format = require('./tools/format.js');
 var urlTools = require('./tools/url.js');
@@ -72,17 +73,20 @@ $(document).ready(function (e) {
     jQuery.support.cors = true;
 
     gpxExport.addGpxExport(ghRequest);
-
-    $("#flex-input-link").click(function() {
-        $("#regular-input").toggle();
-        $("#flex-input").toggle();
+    // we start without encoded values, they will be loaded later
+    var cmEditor = customModelEditor.create({}, function (element) {
+        document.querySelector("#custom-model-editor").appendChild(element);
+    });
+    $("#custom-model-button").click(function() {
+        $("#custom-model-box").toggle();
         // avoid default action, so use a different search button
         $("#searchButton").toggle();
         mapLayer.adjustMapSize();
+        cmEditor.cm.refresh();
     });
-    $("#flex-example").click(function() {
-         $("#flex-input-text").val("speed:\n- if: road_class == MOTORWAY\n  multiply by: 0.8\n"
-          + "priority:\n- if: road_environment == TUNNEL\n  multiply by: 0.0\n- if: road_class == RESIDENTIAL\n  multiply by: 0.7\n- if: max_weight < 3\n  multiply by: 0.0");
+    $("#custom-model-example").click(function() {
+        cmEditor.value = "speed:\n- if: road_class == MOTORWAY\n  multiply by: 0.8\n"
+          + "priority:\n- if: road_environment == TUNNEL\n  multiply by: 0.0\n- if: road_class == RESIDENTIAL\n  multiply by: 0.7\n- if: max_weight < 3\n  multiply by: 0.0";
          return false;
     });
 
@@ -97,7 +101,7 @@ $(document).ready(function (e) {
        var routeResultsDiv = $("<div class='route_results'/>");
        infoDiv.append(routeResultsDiv);
        routeResultsDiv.html('<img src="img/indicator.gif"/> Search Route ...');
-       var inputText = $("#flex-input-text").val();
+       var inputText = cmEditor.value;
        if(inputText.length < 5) {
            routeResultsDiv.html("Routing configuration too short");
            return;
@@ -143,11 +147,8 @@ $(document).ready(function (e) {
         });
     };
 
-    $("#flex-input-text").keydown(function (e) {
-        // CTRL+Enter
-        if (e.ctrlKey && e.keyCode == 13) sendCustomData();
-    });
-    $("#flex-search-button").click(sendCustomData);
+    cmEditor.setExtraKey('Ctrl-Enter', sendCustomData);
+    $("#custom-model-search-button").click(sendCustomData);
 
     if (isProduction())
         $('#hosting').show();
@@ -173,13 +174,12 @@ $(document).ready(function (e) {
 
     var urlParams = urlTools.parseUrlWithHisto();
 
-    if(urlParams.flex)
-        $("#flex-input-link").click();
-
     var customURL = urlParams.load_custom;
+    if(urlParams.load_custom)
+        $("#custom-model-button").click();
     if(customURL && ghenv.environment === 'development')
         $.ajax(customURL).
-            done(function(data) { $("#flex-input-text").val(data); $("#flex-input-link").click(); }).
+            done(function(data) { cmEditor.value = data; $("#custom-model-search-button").click(); }).
             fail(function(err)  { console.log("Cannot load custom URL " + customURL); });
 
     $.when(ghRequest.fetchTranslationMap(urlParams.locale), ghRequest.getInfo())
@@ -269,21 +269,20 @@ $(document).ready(function (e) {
                 metaVersionInfo = messages.extractMetaVersionInfo(json);
                 // a very simplistic helper system that shows the possible entries and encoded values
                 if(json.encoded_values) {
-                    $('#flex-input-text').bind('keyup click', function() {
-                        var cleanedText = this.value.replace(/(\n|:)/gm, ' ');
-                        var startIndex = cleanedText.substring(0, this.selectionStart).lastIndexOf(" ");
-                        startIndex = startIndex < 0 ? 0 : startIndex + 1;
-                        var endIndex = cleanedText.indexOf(" ", this.selectionStart);
-                        endIndex = endIndex < 0 ? cleanedText.length : endIndex;
-                        var wordUnderCursor = cleanedText.substring(startIndex, endIndex);
-                        if(this.selectionStart == 0 || this.value.substr(this.selectionStart - 1, 1) === "\n") {
-                           document.getElementById("ev_value").innerHTML = "<b>root:</b> priority, speed, distance_influence, areas";
-                        } else if(wordUnderCursor === "priority" || wordUnderCursor === "speed") {
-                           document.getElementById("ev_value").innerHTML = "<b>" + wordUnderCursor + ":</b> " + Object.keys(json.encoded_values).join(", ");
-                        } else if(json.encoded_values[wordUnderCursor]) {
-                           document.getElementById("ev_value").innerHTML = "<b>" + wordUnderCursor + ":</b> " + json.encoded_values[wordUnderCursor].join(", ");
-                        }
-                    });
+                    // todonow: use real encoded values, but need to add the type field first!
+                    const categories = {
+                        "max_speed": {type: 'numeric'},
+                        "max_weight": {type: 'numeric'},
+                        "max_height": {type: 'numeric'},
+                        "max_width": {type: 'numeric'},
+                        "road_class": {type: 'enum', values: ["OTHER", "MOTORWAY", "TRUNK", "PRIMARY", "SECONDARY", "TERTIARY", "RESIDENTIAL", "UNCLASSIFIED", "SERVICE", "ROAD", "TRACK", "BRIDLEWAY", "STEPS", "CYCLEWAY", "PATH", "LIVING_STREET", "FOOTWAY", "PEDESTRIAN", "PLATFORM", "CORRIDOR"].sort()},
+                        "road_class_link": {type: 'boolean'},
+                        "road_environment": {type: 'enum', values: ["OTHER", "ROAD", "FERRY", "TUNNEL", "BRIDGE", "FORD", "SHUTTLE_TRAIN"].sort()},
+                        "road_access": {type: 'enum', values: ["YES", "DESTINATION", "CUSTOMERS", "DELIVERY", "FORESTRY", "AGRICULTURAL", "PRIVATE", "OTHER", "NO"].sort()},
+                        "surface": {type: 'enum', values: ["MISSING", "PAVED", "ASPHALT", "CONCRETE", "PAVING_STONES", "COBBLESTONE", "UNPAVED", "COMPACTED", "FINE_GRAVEL", "GRAVEL", "GROUND", "DIRT", "GRASS", "SAND", "OTHER"].sort()},
+                        "toll": {type: 'enum', values: ["NO", "ALL", "HGV"].sort()}
+                    };
+                    cmEditor.categories = categories;
                 }
 
                 mapLayer.initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, urlParams.layer, urlParams.use_miles);
