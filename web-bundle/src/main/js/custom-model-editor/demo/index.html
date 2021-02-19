@@ -27,9 +27,12 @@
         "surface": {type: 'enum', values: ["MISSING", "PAVED", "ASPHALT", "CONCRETE", "PAVING_STONES", "COBBLESTONE", "UNPAVED", "COMPACTED", "FINE_GRAVEL", "GRAVEL", "GROUND", "DIRT", "GRASS", "SAND", "OTHER"].sort()},
         "toll": {type: 'enum', values: ["NO", "ALL", "HGV"].sort()}
     };
-    GHCustomModelEditor.create(categories, (element) => {
+    const editor = GHCustomModelEditor.create({}, (element) => {
         document.querySelector("#custom_model_editor_box").appendChild(element);
     });
+    editor.categories = categories;
+    editor.value = 'hello world';
+    editor.setExtraKey('Ctrl-Enter', () => {editor.value = (editor.value + '\n ... hello')});
 </script>
 </body>
 </html>
