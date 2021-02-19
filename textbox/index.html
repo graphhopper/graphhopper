@@ -2,6 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8"/>
+    <!-- these are all needed for the custom model editor -->
     <link rel="stylesheet" href="./node_modules/codemirror/lib/codemirror.css"/>
     <link rel="stylesheet" href="./node_modules/codemirror/addon/hint/show-hint.css"/>
     <link rel="stylesheet" href="./node_modules/codemirror/addon/lint/lint.css"/>
@@ -12,16 +13,14 @@
 </head>
 <body>
 <textarea
-        id="textbox"
+        id="custom_model_editor"
         rows="50"
         cols="100"
         style="width: 500px; height: 400px"
 >
     </textarea>
 <script type="module">
-    import {validate} from "./validate.js";
-    import {complete} from "./complete.js";
-    import {parse} from "./parse.js";
+    import {createCustomModelEditor} from "./custom_model_editor.js";
 
     const categories = {
         "max_speed": {type: 'numeric'},
@@ -35,92 +34,7 @@
         "surface": {type: 'enum', values: ["MISSING", "PAVED", "ASPHALT", "CONCRETE", "PAVING_STONES", "COBBLESTONE", "UNPAVED", "COMPACTED", "FINE_GRAVEL", "GRAVEL", "GROUND", "DIRT", "GRASS", "SAND", "OTHER"].sort()},
         "toll": {type: 'enum', values: ["NO", "ALL", "HGV"].sort()}
     };
-
-    const textbox = document.querySelector("#textbox");
-    const cm = CodeMirror.fromTextArea(textbox, {
-        lineNumbers: true,
-        mode: "yaml",
-        extraKeys: {
-            'Ctrl-Space': showHints
-        },
-        lint: {
-            getAnnotations: getYamlErrors
-        },
-        gutters: ["CodeMirror-linenumbers", "CodeMirror-lint-markers"]
-    });
-
-    function getYamlErrors(text, options, editor) {
-        const validateResult = validate(text);
-        const errors = validateResult.errors.map((err, i) => {
-            return {
-                message: err.path + ': ' + err.message,
-                severity: 'error',
-                from: editor.posFromIndex(err.range[0]),
-                to: editor.posFromIndex(err.range[1])
-            }
-        });
-
-        const conditionRanges = validateResult.conditionRanges;
-        conditionRanges.forEach((cr, i) => {
-            const condition = text.substring(cr[0], cr[1]);
-            const parseRes = parse(condition, categories);
-            if (parseRes.error !== null) {
-                errors.push({
-                    message: parseRes.error,
-                    severity: 'error',
-                    from: editor.posFromIndex(cr[0] + parseRes.range[0]),
-                    to: editor.posFromIndex(cr[0] + parseRes.range[1])
-                });
-            }
-        });
-        return errors;
-    }
-
-    cm.on("cursorActivity", (e) => {
-        // in case the auto-complete popup is active already we update it (allow filtering values while typing with
-        // an open popup)
-        if (cm.state.completionActive) {
-            showHints();
-        }
-    });
-
-    function showHints() {
-        const validateResult = validate(cm.getValue());
-        const cursor = cm.indexFromPos(cm.getCursor());
-        validateResult.conditionRanges
-            .map(cr => {
-                const condition = cm.getValue().substring(cr[0], cr[1]);
-                const offset = cr[0];
-                // note that we allow the cursor to be at the end (inclusive!) of the range
-                if (cursor >= offset && cursor <= cr[1]) {
-                    const completeRes = complete(condition, cursor - offset, categories);
-                    if (completeRes.suggestions.length > 0) {
-                        const range = [
-                            cm.posFromIndex(completeRes.range[0] + offset),
-                            cm.posFromIndex(completeRes.range[1] + offset),
-                        ];
-                        showHint(range, completeRes.suggestions);
-                    }
-                }
-            });
-    }
-
-    function showHint(range, suggestions) {
-        const options = {
-            hint: function () {
-                const completion = {
-                    from: range[0],
-                    to: range[1],
-                    list: suggestions,
-                };
-                CodeMirror.on(completion, "pick", function (selectedItem) {
-                    // console.log(selectedItem);
-                });
-                return completion;
-            },
-        };
-        cm.showHint(options);
-    }
+    createCustomModelEditor(categories, document.querySelector("#custom_model_editor"));
 </script>
 </body>
 </html>
