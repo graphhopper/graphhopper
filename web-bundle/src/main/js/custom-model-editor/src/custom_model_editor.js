@@ -64,7 +64,7 @@ class CustomModelEditor {
         try {
             return YAML.parse(this.cm.getValue());
         } catch (e) {
-            console.error('invalid yaml');
+            console.error('invalid yaml', e);
             return null;
         }
     }
