@@ -1,5 +1,4 @@
 global.d3 = require('d3');
-var YAML = require('js-yaml');
 var Flatpickr = require('flatpickr');
 require('flatpickr/dist/l10n');
 
@@ -115,11 +114,6 @@ $(document).ready(function (e) {
        var routeResultsDiv = $("<div class='route_results'/>");
        infoDiv.append(routeResultsDiv);
        routeResultsDiv.html('<img src="img/indicator.gif"/> Search Route ...');
-       var inputText = cmEditor.value;
-       if(inputText.length < 5) {
-           routeResultsDiv.html("Routing configuration too short");
-           return;
-       }
 
        var points = [];
        for(var idx = 0; idx < ghRequest.route.size(); idx++) {
@@ -132,12 +126,10 @@ $(document).ready(function (e) {
            }
        }
 
-       var jsonModel;
-       try {
-         jsonModel = inputText.indexOf("{") == 0? JSON.parse(inputText) : YAML.safeLoad(inputText);
-       } catch(ex) {
-         routeResultsDiv.html("Cannot parse " + inputText + " " + ex);
-         return;
+       var jsonModel = cmEditor.jsonObj;
+       if (jsonModel === null) {
+           routeResultsDiv.html("Invalid custom model");
+           return;
        }
 
        jsonModel.points = points;
@@ -161,6 +153,7 @@ $(document).ready(function (e) {
         });
     };
 
+    // todo: prevent this as long as custom model is invalid?
     cmEditor.setExtraKey('Ctrl-Enter', sendCustomData);
     $("#custom-model-search-button").click(sendCustomData);
 
