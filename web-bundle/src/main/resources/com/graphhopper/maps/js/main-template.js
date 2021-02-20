@@ -273,19 +273,18 @@ $(document).ready(function (e) {
                 metaVersionInfo = messages.extractMetaVersionInfo(json);
                 // a very simplistic helper system that shows the possible entries and encoded values
                 if(json.encoded_values) {
-                    // todonow: use real encoded values, but need to add the type field first!
-                    const categories = {
-                        "max_speed": {type: 'numeric'},
-                        "max_weight": {type: 'numeric'},
-                        "max_height": {type: 'numeric'},
-                        "max_width": {type: 'numeric'},
-                        "road_class": {type: 'enum', values: ["OTHER", "MOTORWAY", "TRUNK", "PRIMARY", "SECONDARY", "TERTIARY", "RESIDENTIAL", "UNCLASSIFIED", "SERVICE", "ROAD", "TRACK", "BRIDLEWAY", "STEPS", "CYCLEWAY", "PATH", "LIVING_STREET", "FOOTWAY", "PEDESTRIAN", "PLATFORM", "CORRIDOR"].sort()},
-                        "road_class_link": {type: 'boolean'},
-                        "road_environment": {type: 'enum', values: ["OTHER", "ROAD", "FERRY", "TUNNEL", "BRIDGE", "FORD", "SHUTTLE_TRAIN"].sort()},
-                        "road_access": {type: 'enum', values: ["YES", "DESTINATION", "CUSTOMERS", "DELIVERY", "FORESTRY", "AGRICULTURAL", "PRIVATE", "OTHER", "NO"].sort()},
-                        "surface": {type: 'enum', values: ["MISSING", "PAVED", "ASPHALT", "CONCRETE", "PAVING_STONES", "COBBLESTONE", "UNPAVED", "COMPACTED", "FINE_GRAVEL", "GRAVEL", "GROUND", "DIRT", "GRASS", "SAND", "OTHER"].sort()},
-                        "toll": {type: 'enum', values: ["NO", "ALL", "HGV"].sort()}
-                    };
+                    const categories = {};
+                    Object.keys(json.encoded_values).forEach((k) => {
+                        const v = json.encoded_values[k];
+                        console.log(v);
+                        if (v.length == 2 && v[0] === 'true' && v[1] === 'false') {
+                            categories[k] = {type: 'boolean'};
+                        } else if (v.length === 2 && v[0] === '>number' && v[1] === '<number') {
+                            categories[k] = {type: 'numeric'};
+                        } else {
+                            categories[k] = {type: 'enum', values: v.sort()};
+                        }
+                    });
                     cmEditor.categories = categories;
                 }
 
