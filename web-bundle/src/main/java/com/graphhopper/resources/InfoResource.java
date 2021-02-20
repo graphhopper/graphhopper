@@ -112,7 +112,7 @@ public class InfoResource {
                 possibleValueList.add(">number");
                 possibleValueList.add("<number");
             } else {
-                // we only add enum encoded values and boolean encoded values to the list of possible values
+                // we only add enum, boolean and numeric encoded values to the list
                 continue;
             }
             info.encoded_values.put(encodedValue.getName(), possibleValueList);
