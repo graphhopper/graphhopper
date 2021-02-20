@@ -481,5 +481,10 @@ td img.pic {
 
 .CodeMirror-lint-tooltip {
     /* tool tip should not be hidden by map*/
-    z-index: 99999999999;
+    z-index: 2000;
+}
+
+.CodeMirror-hints {
+    /* hints should not be hidden by map*/
+    z-index: 1000;
 }
