@@ -26,7 +26,6 @@
   "dependencies": {
     "d3": "5.11.0",
     "flatpickr": "4.4.6",
-    "custom-model-editor": "file:src/main/js/custom-model-editor",
     "jquery": "3.5.0",
     "js-yaml": "3.13.1",
     "leaflet": "1.5.1",
