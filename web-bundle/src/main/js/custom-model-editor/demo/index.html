@@ -39,6 +39,8 @@
     const button = document.querySelector("#toggle-button")
     editor.validListener = (valid) => {
         button.disabled = !valid;
+        if (valid)
+            console.log(editor.jsonObj);
     }
     button.addEventListener("click", (e) => {
         editor.toggleJsonYAML();

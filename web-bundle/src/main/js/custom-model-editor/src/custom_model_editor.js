@@ -60,6 +60,15 @@ class CustomModelEditor {
         return this.cm.getValue();
     }
 
+    get jsonObj() {
+        try {
+            return YAML.parse(this.cm.getValue());
+        } catch (e) {
+            console.error('invalid yaml');
+            return null;
+        }
+    }
+
     setExtraKey = (keyString, callback) => {
         (this.cm.getOption('extraKeys'))[keyString] = callback;
     }
