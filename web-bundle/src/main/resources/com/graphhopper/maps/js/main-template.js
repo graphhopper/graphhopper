@@ -83,7 +83,7 @@ $(document).ready(function (e) {
     };
     $("#custom-model-toggle").text('JSON');
     $("#custom-model-toggle").click(function() {
-       cmEditor.toggleJsonYAML();
+        cmEditor.toggleJsonYAML();
         $("#custom-model-toggle").text(cmEditor.yaml ? 'JSON' : 'YAML');
         return false;
     });
@@ -147,7 +147,7 @@ $(document).ready(function (e) {
        var request = JSON.stringify(jsonModel);
 
        $.ajax({
-           url: "/route-custom",
+           url: host + "/route-custom",
            type: "POST",
            contentType: 'application/json; charset=utf-8',
            dataType: "json",
@@ -286,7 +286,6 @@ $(document).ready(function (e) {
                     const categories = {};
                     Object.keys(json.encoded_values).forEach((k) => {
                         const v = json.encoded_values[k];
-                        console.log(v);
                         if (v.length == 2 && v[0] === 'true' && v[1] === 'false') {
                             categories[k] = {type: 'boolean'};
                         } else if (v.length === 2 && v[0] === '>number' && v[1] === '<number') {
