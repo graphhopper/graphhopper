@@ -113,7 +113,7 @@ class CustomModelEditor {
                 const completion = {
                     from: range[0],
                     to: range[1],
-                    list: suggestions,
+                    list: suggestions.sort(),
                 };
                 CodeMirror.on(completion, "pick", function (selectedItem) {
                     // console.log(selectedItem);
