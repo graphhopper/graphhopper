@@ -1,7 +1,9 @@
 import CodeMirror from "codemirror";
 import "codemirror/mode/yaml/yaml";
+import "codemirror/mode/javascript/javascript";
 import "codemirror/addon/hint/show-hint";
 import "codemirror/addon/lint/lint";
+import YAML from "yaml";
 import {validate} from "./validate.js";
 import {complete} from "./complete.js";
 import {parse} from "./parse.js";
@@ -11,6 +13,10 @@ class CustomModelEditor {
     // The underlying code mirror object, use at your own risk. For bigger changes it is probably better to implement here
     cm;
     _categories = {};
+    _yaml = true;
+    _yamlContent = '';
+    _yamlCursor;
+    _validListener;
 
     /**
      * Creates a custom model editor for the given categories and calls the given callback with the editor element
@@ -32,6 +38,8 @@ class CustomModelEditor {
         });
 
         this.cm.on("cursorActivity", (e) => {
+            if (this._yaml)
+                return;
             // in case the auto-complete popup is active already we update it (this allows filtering values while typing
             // with an open popup)
             if (this.cm.state.completionActive) {
@@ -52,14 +60,43 @@ class CustomModelEditor {
         return this.cm.getValue();
     }
 
-    setExtraKey(keyString, callback) {
+    setExtraKey = (keyString, callback) => {
         (this.cm.getOption('extraKeys'))[keyString] = callback;
+    }
+
+    get yaml() {
+        return this._yaml;
+    }
+
+    set validListener(validListener) {
+        this._validListener = validListener;
+    }
+
+    toggleJsonYAML = () => {
+        if (this._yaml) {
+            this._yamlContent = this.cm.getValue();
+            this._yamlCursor = this.cm.getCursor();
+            const json = JSON.stringify(YAML.parseDocument(this._yamlContent).toJS(), null, 2);
+            this._yaml = false;
+            this.cm.setOption('mode', 'application/json');
+            this.cm.setOption('readOnly', true);
+            this.cm.setValue(json);
+        } else {
+            this.cm.setOption('mode', 'yaml');
+            this.cm.setOption('readOnly', false);
+            this.cm.setValue(this._yamlContent);
+            this.cm.setCursor(this._yamlCursor);
+            this.cm.focus();
+            this._yaml = true;
+        }
     }
 
     /**
      * Builds a list of errors for the current text such that they can be visualized in the editor.
      */
     getCurrentErrors = (text, options, editor) => {
+        if (!this._yaml)
+            return [];
         const validateResult = validate(text);
         const errors = validateResult.errors.map((err, i) => {
             return {
@@ -83,6 +120,8 @@ class CustomModelEditor {
                 });
             }
         });
+        if (this._validListener)
+            this._validListener(errors.length === 0);
         return errors;
     }
 

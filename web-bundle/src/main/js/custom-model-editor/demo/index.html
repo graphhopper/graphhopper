@@ -10,6 +10,7 @@
 </head>
 <body>
 <div id="custom_model_editor_box"></div>
+<button id="toggle-button">show json</button>
 <script type="module">
     // importing this module adds a global variable GHCustomModelEditor to,
     // it would be better to be able to use es6 imports, but since we are building
@@ -35,6 +36,14 @@
     editor.value = 'hello world';
     editor.cm.focus();
     editor.cm.setCursor(editor.cm.lineCount())
+    const button = document.querySelector("#toggle-button")
+    editor.validListener = (valid) => {
+        button.disabled = !valid;
+    }
+    button.addEventListener("click", (e) => {
+        editor.toggleJsonYAML();
+        button.innerText = editor.yaml ? 'show json' : 'edit yaml';
+    }, false);
 </script>
 </body>
 </html>

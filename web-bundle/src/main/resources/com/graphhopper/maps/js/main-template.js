@@ -75,7 +75,17 @@ $(document).ready(function (e) {
     gpxExport.addGpxExport(ghRequest);
     // we start without encoded values, they will be loaded later
     var cmEditor = customModelEditor.create({}, function (element) {
-        document.querySelector("#custom-model-editor").appendChild(element);
+        $("#custom-model-editor").append(element);
+    });
+    cmEditor.validListener = function(valid) {
+        $("#custom-model-search-button").prop('disabled', !valid);
+        // todo: disable yaml/json toggle when invalid
+    };
+    $("#custom-model-toggle").text('JSON');
+    $("#custom-model-toggle").click(function() {
+       cmEditor.toggleJsonYAML();
+        $("#custom-model-toggle").text(cmEditor.yaml ? 'JSON' : 'YAML');
+        return false;
     });
     $("#custom-model-button").click(function() {
         $("#custom-model-box").toggle();
