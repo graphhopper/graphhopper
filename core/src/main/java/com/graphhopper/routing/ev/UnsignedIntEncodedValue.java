@@ -37,7 +37,7 @@ import java.util.SortedMap;
  */
 public class UnsignedIntEncodedValue implements IntEncodedValue {
     
-    private static final List<String> ILLEGAL_PROPERTY_CHARS = Collections.unmodifiableList(Arrays.asList("|", "=", ","));
+    protected static final List<String> ILLEGAL_PROPERTY_CHARS = Collections.unmodifiableList(Arrays.asList("|", "=", ","));
 
     private final String name;
 

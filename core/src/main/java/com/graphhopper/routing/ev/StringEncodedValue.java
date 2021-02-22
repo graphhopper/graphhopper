@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * This class holds a List of up to {@link #maxValues} encountered Strings and stores
@@ -17,6 +19,14 @@ import java.util.Objects;
  * @author Thomas Butz
  */
 public final class StringEncodedValue extends UnsignedIntEncodedValue {
+    private static final String LIST_SEPARATOR = ";";
+    private static final List<String> ILLEGAL_VALUE_CHARS;
+    static {
+        List<String> illegalChars = new ArrayList<>(ILLEGAL_PROPERTY_CHARS);
+        illegalChars.add(LIST_SEPARATOR);
+        ILLEGAL_VALUE_CHARS = Collections.unmodifiableList(illegalChars);
+    }
+    
     private final int maxValues;
     private final List<String> values;
     private final ObjectIntMap<String> indexMap;
@@ -45,7 +55,7 @@ public final class StringEncodedValue extends UnsignedIntEncodedValue {
         this.indexMap = new ObjectIntHashMap<>(values.size());
         int index = 1;
         for (String value : values) {
-            indexMap.put(value, index++);
+            indexMap.put(validate(value), index++);
         }
     }
 
@@ -59,7 +69,7 @@ public final class StringEncodedValue extends UnsignedIntEncodedValue {
             if (values.size() == maxValues)
                 throw new IllegalStateException("Maximum number of values reached for " + getName() + ": " + maxValues);
 
-            values.add(value);
+            values.add(validate(value));
             index = values.size();
             indexMap.put(value, index);
         }
@@ -88,6 +98,20 @@ public final class StringEncodedValue extends UnsignedIntEncodedValue {
      */
     public int indexOf(String value) {
         return indexMap.get(value);
+    }
+    
+    private String validate(String value) {
+        for (String illegalChar : ILLEGAL_VALUE_CHARS) {
+            if (value.contains(illegalChar)) {
+                throw new IllegalArgumentException("Value \"" + value + "\" contains illegal character " + illegalChar);
+            }
+        }
+        return value;
+    }
+    
+    @Override
+    protected SortedMap<String, String> getAdditionalProperties() {
+        return new TreeMap<>(Collections.singletonMap("values", String.join(LIST_SEPARATOR, values)));
     }
 
     /**
