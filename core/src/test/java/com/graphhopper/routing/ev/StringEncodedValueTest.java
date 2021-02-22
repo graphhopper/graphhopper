@@ -161,4 +161,35 @@ public class StringEncodedValueTest {
         
         assertNotEquals(prop.toString(), shuffledProp.toString());
     }
+    
+    @Test
+    public void testIllegalCharacters() {
+        StringEncodedValue prop = new StringEncodedValue("country", 3);
+        prop.init(new EncodedValue.InitializerConfig());
+        
+        IntsRef ref = new IntsRef(1);
+        try {
+            prop.setString(false, ref, "ch;e");
+            fail();
+        } catch (Exception e) {
+        }
+        
+        try {
+            prop.setString(false, ref, "|che");
+            fail();
+        } catch (Exception e) {
+        }
+        
+        try {
+            prop.setString(false, ref, "che,");
+            fail();
+        } catch (Exception e) {
+        }
+        
+        try {
+            prop.setString(false, ref, "=che");
+            fail();
+        } catch (Exception e) {
+        }
+    }
 }
