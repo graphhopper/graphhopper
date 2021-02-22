@@ -23,13 +23,21 @@ import com.graphhopper.util.Helper;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.SortedMap;
 
 /**
  * Implementation of the IntEncodedValue via a limited number of bits and without a sign. It introduces handling
  * of "backward"- and "forward"-edge information.
  */
 public class UnsignedIntEncodedValue implements IntEncodedValue {
+    
+    private static final List<String> ILLEGAL_PROPERTY_CHARS = Collections.unmodifiableList(Arrays.asList("|", "=", ","));
 
     private final String name;
 
@@ -147,10 +155,45 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
     public final String getName() {
         return name;
     }
+    
+    protected SortedMap<String,String> getAdditionalProperties() {
+        return Collections.emptySortedMap();
+    }
+    
+    private void checkProperty(String key, String value) {
+        Objects.requireNonNull(key);
+        Objects.requireNonNull(value);
+        for (String illegalChar : ILLEGAL_PROPERTY_CHARS) {
+            if (key.contains(illegalChar)) {
+                throw new IllegalArgumentException("EncodedValue property key contains illegal character: " + illegalChar);
+            }
+            if (value.contains(illegalChar)) {
+                throw new IllegalArgumentException("EncodedValue property value contains illegal character: " + illegalChar);
+            }
+        }
+    }
 
     @Override
     public final String toString() {
-        return getName() + "|version=" + getVersion() + "|bits=" + bits + "|index=" + fwdDataIndex + "|shift=" + fwdShift + "|store_both_directions=" + storeTwoDirections;
+        Map<String,String> properties = new LinkedHashMap<>();
+        properties.put("version", String.valueOf(getVersion()));
+        properties.put("bits", String.valueOf(bits));
+        properties.put("index", String.valueOf(fwdDataIndex));
+        properties.put("shift", String.valueOf(fwdShift));
+        properties.put("store_both_directions", String.valueOf(storeTwoDirections));
+        
+        for (Entry<String,String> prop : getAdditionalProperties().entrySet()) {
+            if (properties.put(prop.getKey(), prop.getValue()) != null) {
+                throw new IllegalArgumentException("Overriding basic properties of an EncodedValue is not supported.");
+            }
+        }
+
+        StringBuilder builder = new StringBuilder(getName());
+        for (Entry<String, String> prop : properties.entrySet()) {
+            checkProperty(prop.getKey(), prop.getValue());
+            builder.append("|").append(prop.getKey()).append("=").append(prop.getValue());
+        }
+        return builder.toString();
     }
 
     @Override
