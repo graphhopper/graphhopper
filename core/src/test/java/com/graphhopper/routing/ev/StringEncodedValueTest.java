@@ -9,7 +9,10 @@ import static org.junit.Assert.fail;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 public class StringEncodedValueTest {
 
@@ -190,6 +193,24 @@ public class StringEncodedValueTest {
             prop.setString(false, ref, "=che");
             fail();
         } catch (Exception e) {
+        }
+    }
+    
+    @Test
+    public void testNoOverride() {
+        IntEncodedValue prop = new UnsignedIntEncodedValue("custom", 2, false) {
+            @Override
+            protected SortedMap<String, String> getAdditionalProperties() {
+                return new TreeMap<>(Collections.singletonMap("version", "1"));
+            }
+        };
+        prop.init(new EncodedValue.InitializerConfig());
+        
+        try {
+            prop.toString();
+            fail();
+        } catch (Exception e) {
+            assertTrue(e.getMessage().startsWith("Overriding basic properties"));
         }
     }
 }
