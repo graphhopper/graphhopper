@@ -76,6 +76,9 @@ $(document).ready(function (e) {
     var cmEditor = customModelEditor.create({}, function (element) {
         $("#custom-model-editor").append(element);
     });
+    // todo: the idea was to highlight everything so if we start typing the example is overwritten. But unfortunately
+    // this does not work. And not even sure this is so useful?
+    showCustomModelExample();
     cmEditor.validListener = function(valid) {
         $("#custom-model-search-button").prop('disabled', !valid);
         $("#custom-model-toggle").prop('disabled', !valid);
@@ -95,11 +98,27 @@ $(document).ready(function (e) {
         cmEditor.cm.focus();
         cmEditor.cm.setCursor(cmEditor.cm.lineCount())
     });
-    $("#custom-model-example").click(function() {
-        cmEditor.value = "speed:\n- if: road_class == MOTORWAY\n  multiply by: 0.8\n"
-          + "priority:\n- if: road_environment == TUNNEL\n  multiply by: 0.0\n- if: road_class == RESIDENTIAL\n  multiply by: 0.7\n- if: max_weight < 3\n  multiply by: 0.0";
+    function showCustomModelExample() {
+        cmEditor.value =
+            "speed:"
+            + "\n- if: road_class == MOTORWAY"
+            + "\n  multiply by: 0.8"
+            + "\n"
+            + "\npriority:"
+            + "\n- if: road_environment == TUNNEL"
+            + "\n  multiply by: 0.0"
+            + "\n- if: road_class == RESIDENTIAL"
+            + "\n  multiply by: 0.7"
+            + "\n- if: max_weight < 3"
+            + "\n  multiply by: 0.0"
+            + "\n";
         cmEditor.cm.focus();
-        cmEditor.cm.setCursor(cmEditor.cm.lineCount())
+        cmEditor.cm.setCursor(0);
+        cmEditor.cm.execCommand('selectAll');
+        cmEditor.cm.refresh();
+    }
+    $("#custom-model-example").click(function() {
+        showCustomModelExample();
         return false;
     });
 
