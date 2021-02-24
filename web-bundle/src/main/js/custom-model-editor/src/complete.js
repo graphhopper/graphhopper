@@ -31,7 +31,7 @@ function complete(expression, pos, categories, areas) {
             const partialToken = tokenPos.token.substring(0, tokenPos.token.length - 1);
             // todo: be careful with boolean encoded values later! c might not be a string here...
             // todo: not supported in IE11 for example, need to provide alternative!
-            return c.startsWith(partialToken);
+            return startsWith(c, partialToken);
         });
         return {
             suggestions: suggestions,
@@ -52,7 +52,7 @@ function complete(expression, pos, categories, areas) {
             let partialToken = tokenPos.token === null
                 ? modifiedTokenPos.token.substring(0, modifiedTokenPos.token.length - 1)
                 : tokenPos.token.substring(0, pos - tokenPos.range[0]);
-            return c.startsWith(partialToken);
+            return startsWith(c, partialToken);
         });
         return {
             suggestions: suggestions,
@@ -77,6 +77,11 @@ function getLastNonWhitespacePos(str) {
         }
     }
     return -1;
+}
+
+function startsWith(str, substr) {
+    // str.startsWith(substr) is not supported by IE11...
+    return str.substring(0, substr.length) === substr;
 }
 
 export {complete};
