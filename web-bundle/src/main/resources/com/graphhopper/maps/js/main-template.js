@@ -100,7 +100,8 @@ $(document).ready(function (e) {
     });
     function showCustomModelExample() {
         cmEditor.value =
-            "speed:"
+            "# Ctrl+Space shows suggestions for if-conditions"
+            + "\nspeed:"
             + "\n- if: road_class == MOTORWAY"
             + "\n  multiply by: 0.8"
             + "\n"
