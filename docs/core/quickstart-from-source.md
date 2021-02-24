@@ -28,7 +28,7 @@ In the last step the data is created to get routes within the Berlin area:
   4. It will create data for a special routing algorithm to dramatically improve query speed. It skips step 3. and 4. if these files are already present.
   5. It starts the web service to service the UI and also the many endpoints like /route
 
-For you favourite area do e.g.:
+For your favourite area do e.g.:
 
 ```bash
 $ ./graphhopper.sh -a web -i europe_france.pbf -o france-gh
@@ -104,6 +104,15 @@ To develop the web UI you need to rebuild the bundled main.js on every change. n
 ```bash
 cd web-bundle
 npm run watch
+```
+
+You also need to build the custom-model-editor
+
+```bash
+cd web-bundle/src/main/js/custom-model-editor
+npm run build
+# ... or in case you want to update the editor itself you can also build it on every change using
+# npm run watch
 ```
 
 To see your changes in the browser without restarting the server you can either run the GH server in debug mode from
