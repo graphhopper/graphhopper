@@ -33,6 +33,12 @@ describe("validate", () => {
         test_validate(`''  :`, [
             `root: possible keys: ['speed', 'priority', 'distance_influence', 'areas']. given: '', range: [0, 4]`
         ]);
+        test_validate(`"    " :`, [
+            `root: possible keys: ['speed', 'priority', 'distance_influence', 'areas']. given: '    ', range: [0, 7]`
+        ]);
+        test_validate(`"\n" :`, [
+            `root: possible keys: ['speed', 'priority', 'distance_influence', 'areas']. given: ' ', range: [0, 4]`
+        ]);
         test_validate(`"" \t: \n `, [
             `root: possible keys: ['speed', 'priority', 'distance_influence', 'areas']. given: '', range: [0, 4]`
         ]);
@@ -158,6 +164,12 @@ describe("validate", () => {
         test_validate(`speed: [{if: true, multiply by: 0.15}]`, []);
     });
 
+    test('get condition ranges', () => {
+        const res = validate(`speed: [{if: cond1, limit to: 50}, {else if: cond2, multiply by: 0.3}]\npriority: [{if: cond3, multiply by: 0.3}]`);
+        expect(res.errors).toStrictEqual([]);
+        expect(res.conditionRanges).toStrictEqual([[13, 18], [45, 50], [87, 92]]);
+    });
+
     test('get condition range even when if/else if value is null', () => {
         // this is a bit tricky because normally we do not obtain a condition range for null values and we had
         // to do a little workaround that inserts a condition range also in this case
@@ -190,13 +202,53 @@ describe("validate", () => {
         // multiple else ifs are possible
         test_validate(`priority: [{if: abc, limit to: 60}, {else if: def, multiply by: 0.2}, {else if: condition, limit to: 100}]`, []);
     });
+
+    test('areas is an object', () => {
+        test_validate(`areas: []`, [`areas: must be an object. given type: list, range: [7, 9]`]);
+        test_validate(`areas: not_an_object`, [`areas: must be an object. given type: string, range: [7, 20]`]);
+    });
+
+    test('area names must be strings', () => {
+        test_validate(`areas: { : {}}`, [`areas: keys must not be null, range: [7, 14]`]);
+        test_validate(`areas: { [] : {}}`, [`areas: keys must be strings. given type: list, range: [9, 12]`]);
+        test_validate(`areas: { '' : {}}`, [`areas: keys must not be empty. given: '', range: [9, 12]`]);
+        test_validate(`areas: {    "   " : {}}`, [`areas: invalid area name: '   ', only a-z, digits and _ are allowed, range: [12, 18]`]);
+        test_validate(`areas: {    " abc  " : {}}`, [`areas: invalid area name: ' abc  ', only a-z, digits and _ are allowed, range: [12, 21]`]);
+        test_validate(`areas: {    "a bc" : {}}`, [`areas: invalid area name: 'a bc', only a-z, digits and _ are allowed, range: [12, 19]`]);
+        test_validate(`areas: {    "_abc" : {}}`, [`areas: invalid area name: '_abc', only a-z, digits and _ are allowed, range: [12, 19]`]);
+        test_validate(`areas: {    "9abc" : {}}`, [`areas: invalid area name: '9abc', only a-z, digits and _ are allowed, range: [12, 19]`]);
+        test_validate(`areas: {    "a__9bc" : {}}`, []);
+    });
+
+    test(`area names must be unique`, () => {
+        test_validate(`areas:\n  area1: {}\n  area2: {}\n  area3: {}`, []);
+        test_validate(`areas:\n  area1: {}\n  area2: {}\n  area1: {}`, [
+            `areas: keys must be unique. duplicate: 'area1', range: [33, 38]`
+        ]);
+    });
+
+    test(`area names get returned correctly`, () => {
+        expectAreas(`areas:\n  area1: {}\n  area2: {}`, ['area1', 'area2']);
+        expectAreas(`areas: { x2: {}, p_qr: {}, rst6: {}}`, ['x2', 'p_qr', 'rst6']);
+    });
 });
 
-function test_validate(expression, errors) {
+function expectAreas(doc, areas) {
+    try {
+        const res = validate(doc);
+        expect(res.errors).toStrictEqual([]);
+        expect(res.areas).toStrictEqual(areas);
+    } catch (e) {
+        Error.captureStackTrace(e, expectAreas);
+        throw e;
+    }
+}
+
+function test_validate(doc, errors) {
     // previously we put the path and message into one string. later we added range. this is a quick way to re-use the existing tests.
     // to clean this up we should check `path`, `message` and `range` separately...
     try {
-        expect(validate(expression).errors.map(e => `${e.path}: ${e.message}, range: [${e.range[0]}, ${e.range[1]}]`)).toStrictEqual(errors);
+        expect(validate(doc).errors.map(e => `${e.path}: ${e.message}, range: [${e.range[0]}, ${e.range[1]}]`)).toStrictEqual(errors);
     } catch (e) {
         Error.captureStackTrace(e, test_validate);
         throw e;

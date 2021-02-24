@@ -5,19 +5,20 @@ const numericComparisonOperators = ['<', '<=', '>', '>=', '==', '!='];
 const logicOperators = ['||', '&&'];
 
 let _categories;
+let _areas;
 let _tokens;
 let _idx;
 
 /**
- * Tokenizes and then parses the given expression using the given categories. Returns an object containing:
+ * Tokenizes and then parses the given expression using the given categories and areas. Returns an object containing:
  * - error, completions: see parseTokens
  * - range: the character range in which the (first) error occurred as list [startInclusive, endExclusive].
  *          if there are no invalid tokens, but rather something is missing the range will be
  *          [expression.length, expression.length]
  */
-function parse(expression, categories) {
+function parse(expression, categories, areas) {
     const tokens = tokenize(expression);
-    const result = parseTokens(tokens.tokens, categories);
+    const result = parseTokens(tokens.tokens, categories, areas);
 
     // translate token ranges to character ranges
     if (result.error !== null) {
@@ -39,7 +40,7 @@ function parse(expression, categories) {
  * Parses a given list of tokens according to the following grammar.
  *
  * expression -> comparison (logicOperator comparison)*
- * comparison -> enumCategory comparator value | numericCategory numericComparator number | booleanCategory comparator boolean | booleanCategory | value'(' expression ')'
+ * comparison -> enumCategory comparator value | numericCategory numericComparator number | booleanCategory comparator boolean | 'in_area_' area | value'(' expression ')'
  * logicOperator -> '&&' | '||'
  * comparator -> '==' | '!='
  * numericComparator -> '>' | '<' | '>=' | '<=' | '==' | '!='
@@ -53,6 +54,8 @@ function parse(expression, categories) {
  * The categories parameter is an object that maps category names to objects that contain the category type
  * `enum`, `boolean` or `numeric` and a list of possible (string) values (for `enum` only).
  *
+ * The areas parameter is a list of valid area names.
+ *
  * This function returns an object containing:
  * - error: an error string (or null) in case the tokens do not represent a valid expression.
  *          the parsing stops when the first error is encountered.
@@ -61,10 +64,10 @@ function parse(expression, categories) {
  *          [tokens.length, tokens.length]
  * - completions: a list of suggested tokens that could be used to replace the faulty ones
  *
- * An alternative to the implementation here could be using a parser library like pegjs or nearly.
+ * An alternative to the implementation here could be using a parser library like pegjs, nearly or tree-sitter?
  *
  */
-function parseTokens(tokens, categories) {
+function parseTokens(tokens, categories, areas) {
     if (Object.keys(categories).length < 1)
         return error(`no categories given`);
     for (let [k, v] of Object.entries(categories)) {
@@ -77,6 +80,7 @@ function parseTokens(tokens, categories) {
     }
 
     _categories = categories;
+    _areas = areas;
     _tokens = tokens;
     _idx = 0;
 
@@ -110,12 +114,16 @@ function parseComparison() {
         return parseNumericComparison();
     } else if (isBooleanCategory()) {
         return parseBooleanComparison();
+    } else if (isArea()) {
+        return parseArea();
     } else if (isOpening()) {
         return parseComparisonInParentheses();
     } else if (finished()) {
         return error(`empty comparison`, [_idx, _idx], []);
+    } else if (isInvalidAreaOperator()) {
+        return parseInvalidAreaOperator();
     } else {
-        return error(`unexpected token '${_tokens[_idx]}'`, [_idx, _idx + 1], Object.keys(_categories));
+        return error(`unexpected token '${_tokens[_idx]}'`, [_idx, _idx + 1], Object.keys(_categories).concat(_areas.map(a => 'in_area_' + a)));
     }
 }
 
@@ -144,6 +152,29 @@ function parseBooleanComparison() {
         (category, operator, value) => isBoolean(value),
         (category, operator, value) =>['true', 'false']
     );
+}
+
+function parseArea() {
+    const token = _tokens[_idx];
+    if (token.length < `in_area_`.length) {
+        console.error(`expected something like 'in_area_xyz', but got: '${token}'`);
+        return;
+    }
+    const area = token.substring(`in_area_`.length)
+    if (_areas.indexOf(area) < 0) {
+        return error(`unknown area: '${area}'`, [_idx, _idx+1], _areas.map(a => 'in_area_' + a));
+    }
+    _idx++;
+    return valid();
+}
+
+function parseInvalidAreaOperator() {
+    const token = _tokens[_idx];
+    if (token.substring(0, 8) === `in_area_`) {
+        console.error(`${token} is a valid area operator and should have been detected earlier`);
+        return;
+    }
+    return error(`area names must be prefixed with 'in_area_'`, [_idx, _idx+1], _areas.map(a => 'in_area_' + a));
 }
 
 function parseTripleComparison(allowedComparators, isValid, getAllowedValues) {
@@ -202,6 +233,17 @@ function isNumericCategory() {
 
 function isBooleanCategory() {
     return isCategory() && _categories[_tokens[_idx]].type === 'boolean';
+}
+
+function isArea() {
+    const token = _tokens[_idx];
+    return typeof token === 'string' && token.substr(0, 8) === 'in_area_';
+}
+
+function isInvalidAreaOperator() {
+    const token = _tokens[_idx];
+    // typing something like in_area might be a common error so we provide some support for it
+    return typeof  token === 'string' && (token.substr(0, 3) === 'in_' || _areas.indexOf(token) >= 0);
 }
 
 function isCategory() {

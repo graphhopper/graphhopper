@@ -4,18 +4,19 @@ const categories = {
         'a': {type: 'enum', values: ['a1a', 'a1b', 'a2a', 'a2b']},
         'b': {type: 'enum', values: ['b1', 'b2']}
 };
+const areas = ['pqr', 'xyz'];
 
 describe("complete", () => {
     test("complete at end of expression", () => {
         test_complete('a == ', 5, ['a1a', 'a1b', 'a2a', 'a2b'], [5, 5]);
         test_complete('b == ', 5, ['b1', 'b2'], [5, 5]);
         test_complete('b ==       ', 5, ['b1', 'b2'], [5, 5]);
-        test_complete('', 12, ['a', 'b'], [12, 12]);
-        test_complete('  ', 12, ['a', 'b'], [12, 12]);
-        test_complete('\t\n', 12, ['a', 'b'], [12, 12]);
-        test_complete('    ', 0, ['a', 'b'], [0, 0]);
-        test_complete('    ', 1, ['a', 'b'], [1, 1]);
-        test_complete('    ', 2, ['a', 'b'], [2, 2]);
+        test_complete('', 12, ['a', 'b', 'in_area_pqr', 'in_area_xyz'], [12, 12]);
+        test_complete('  ', 12, ['a', 'b', 'in_area_pqr', 'in_area_xyz'], [12, 12]);
+        test_complete('\t\n', 12, ['a', 'b', 'in_area_pqr', 'in_area_xyz'], [12, 12]);
+        test_complete('    ', 0, ['a', 'b', 'in_area_pqr', 'in_area_xyz'], [0, 0]);
+        test_complete('    ', 1, ['a', 'b', 'in_area_pqr', 'in_area_xyz'], [1, 1]);
+        test_complete('    ', 2, ['a', 'b', 'in_area_pqr', 'in_area_xyz'], [2, 2]);
         test_complete('b == ', 4, ['b1', 'b2'], [4, 4]);
         test_complete('b ==', 4, ['b1', 'b2'], [4, 4]);
         test_complete('b ==', 9, ['b1', 'b2'], [9, 9]);
@@ -53,7 +54,7 @@ describe("complete", () => {
     });
 
     test("complete at token within expression", () => {
-        test_complete('a == a1a && b != b1', 0, ['a', 'b'], [0, 1]);
+        test_complete('a == a1a && b != b1', 0, ['a', 'b', 'in_area_pqr', 'in_area_xyz'], [0, 1]);
         test_complete('a == a1a && b != b2', 2, ['==', '!='], [2, 4]);
         test_complete('a == a1b && b == b1', 5, ['a1a', 'a1b', 'a2a', 'a2b'], [5, 8]);
         test_complete('a == a2a && b == b2', 6, ['a1a', 'a1b', 'a2a', 'a2b'], [5, 8]);
@@ -70,12 +71,14 @@ describe("complete", () => {
         test_complete('a == x2b && b == b1 || a == a1a', 17, [], null);
     });
 
-    // todo: similar to end of expression: partial token within expression!?! maybe we could also check the expression
-    // and only offer partial completions if there is an error already, otherwise offer 'replace'
+    test("complete areas", () => {
+       test_complete('in_ && a == a1a', 2, ['in_area_pqr', 'in_area_xyz'], [0, 3]);
+       test_complete('in_area_x && a == a1a', 9, ['in_area_xyz'], [0, 9]);
+    });
 });
 
 function test_complete(expression, pos, suggestions, range) {
-    const completion = complete(expression, pos, categories)
+    const completion = complete(expression, pos, categories, areas)
     try {
         expect(completion.suggestions).toStrictEqual(suggestions);
         expect(completion.range).toStrictEqual(range);

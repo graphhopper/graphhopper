@@ -12,6 +12,7 @@ const statementKeys = ['if', 'else if', 'else', 'multiply by', 'limit to'];
 const statementKeysString = `['if', 'else if', 'else', 'multiply by', 'limit to']`;
 
 let _conditionRanges = [];
+let _areas = [];
 
 /**
  * Checks that a given yaml string follows this schema:
@@ -35,9 +36,11 @@ let _conditionRanges = [];
  *           the character range associated with the error as array [startInclusive, endExclusive]
  * - conditionRanges: a list of character ranges in above format that indicates the positions of
  *                    the 'conditions', i.e. the values of 'if' and 'else if' clauses
+ * - areas: the list of area names used in the document
  */
 export function validate(yaml) {
     _conditionRanges = [];
+    _areas = [];
     const doc = YAML.parseDocument(yaml, {
         // with this option we can access the lower-level 'concrete syntax tree (cst)'. This helps us to obtain
         // the character ranges in a few places but unfortunately there are also some cases where it does
@@ -53,7 +56,8 @@ export function validate(yaml) {
     const errors = validateYamlDoc(doc);
     return {
         errors,
-        conditionRanges: _conditionRanges
+        conditionRanges: _conditionRanges,
+        areas: _areas
     }
 }
 
@@ -108,8 +112,11 @@ function validateRootValues(rootItems) {
                 else if (!isNumber(value))
                     errors.push(error(`${key}`, `must be a number. given: '${value.value}'`, value.range));
             } else if (key === 'areas') {
-                // todo: currently we are not validating areas! this could be a use-case for json schema validation
-                // because we could use a ready-made geo-json schema. or maybe just not validate it at all...
+                if (!isYamlObject(value.type)) {
+                    errors.push(error(`${key}`, `must be an object. given type: ${displayType(value)}`, value.range));
+                } else {
+                    errors.push.apply(errors, validateAreas(value));
+                }
             } else {
                 console.error(`Unexpected root key ${key}`);
             }
@@ -179,7 +186,7 @@ function validateStatement(statementKey, statementIndex, statementItem) {
                     // this is a very common case (we typed 'if: ' and the value is still null). unfortunately we cannot reliably
                     // obtain the value range, not even from the cst(?!). So we do this workaround and only calculate
                     // the range based on the key range, see this: https://github.com/eemeli/yaml/discussions/231
-                    _conditionRanges.push([entry.key.range[1]+1, entry.key.range[1]+2]);
+                    _conditionRanges.push([entry.key.range[1] + 1, entry.key.range[1] + 2]);
                 } else if (!isString(entry.value) && !isBoolean(entry.value)) {
                     errors.push(error(`${statementKey}[${statementIndex}]`, `the value of '${key}' must be a string or boolean. given type: ${displayType(entry.value)}`, entry.value.range));
                 } else {
@@ -208,6 +215,37 @@ function validateStatement(statementKey, statementIndex, statementItem) {
     return errors;
 }
 
+function validateAreas(areas) {
+    // todo: currently we only check the area names, but do not check their values! this could be a use-case for json
+    // schema validation, because we could use a ready-made geo-json schema. or maybe just not validate it at all...
+    const errors = [];
+    const keys = new Set();
+    const entries = areas.items;
+    for (let i = 0; i < entries.length; ++i) {
+        const key = entries[i].key;
+        if (key === undefined || key === null) {
+            errors.push(error(`areas`, `keys must not be null`, areas.range));
+        } else if (!isString(key)) {
+            errors.push(error(`areas`, `keys must be strings. given type: ${displayType(key)}`, key.range));
+        } else if (key.value.length === 0) {
+            errors.push(error(`areas`, `keys must not be empty. given: '${key}'`, key.range));
+        } else if (!isValidAreaName(key.value)) {
+            errors.push(error(`areas`, `invalid area name: '${key.value}', only a-z, digits and _ are allowed`, key.range));
+        } else if (keys.has(key.value)) {
+            errors.push(error(`areas`, `keys must be unique. duplicate: '${key.value}'`, key.range))
+        } else {
+            keys.add(key.value);
+            _areas.push(key.value);
+        }
+    }
+    return errors;
+}
+
+function isValidAreaName (string) {
+    const regex = /^[a-zA-Z][0-9A-Za-z_]*$/g
+    return regex.test(string);
+}
+
 function validateObjectKeys(objectKey, legalKeys, legalKeysString, obj, maxKeys) {
     const errors = [];
     const keys = new Set();
@@ -216,7 +254,7 @@ function validateObjectKeys(objectKey, legalKeys, legalKeysString, obj, maxKeys)
         const key = entries[i].key;
         if (key === undefined || key === null) {
             errors.push(error(`${objectKey}`, `possible keys: ${legalKeysString}. given: ${key}`, obj.range));
-        } else if (!isString(key) || key.value.length === 0 || legalKeys.indexOf(key.value) < 0) {
+        } else if (!isString(key) || key.value.length === 0 || key.value.trim().length === 0 || legalKeys.indexOf(key.value) < 0) {
             errors.push(error(`${objectKey}`, `possible keys: ${legalKeysString}. given: '${key}'`, key.range));
         } else if (keys.has(key.value)) {
             errors.push(error(`${objectKey}`, `keys must be unique. duplicate: '${key.value}'`, key.range))
@@ -231,7 +269,7 @@ function validateObjectKeys(objectKey, legalKeys, legalKeysString, obj, maxKeys)
 }
 
 function error(path, message, range) {
-    return { path, message, range };
+    return {path, message, range};
 }
 
 function isYamlObject(yamlParserType) {

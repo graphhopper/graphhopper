@@ -116,10 +116,11 @@ class CustomModelEditor {
             }
         });
 
+        const areas = validateResult.areas;
         const conditionRanges = validateResult.conditionRanges;
         conditionRanges.forEach((cr, i) => {
             const condition = text.substring(cr[0], cr[1]);
-            const parseRes = parse(condition, this._categories);
+            const parseRes = parse(condition, this._categories, areas);
             if (parseRes.error !== null) {
                 errors.push({
                     message: parseRes.error,
@@ -143,7 +144,7 @@ class CustomModelEditor {
                 const offset = cr[0];
                 // note that we allow the cursor to be at the end (inclusive!) of the range
                 if (cursor >= offset && cursor <= cr[1]) {
-                    const completeRes = complete(condition, cursor - offset, this._categories);
+                    const completeRes = complete(condition, cursor - offset, this._categories, validateResult.areas);
                     if (completeRes.suggestions.length > 0) {
                         const range = [
                             this.cm.posFromIndex(completeRes.range[0] + offset),
