@@ -488,3 +488,34 @@ td img.pic {
     /* hints should not be hidden by map*/
     z-index: 1000;
 }
+
+#custom-model-util-buttons button {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline;
+    color: #00cc33;
+}
+
+#custom-model-util-buttons button:disabled {
+    color: tomato;
+    cursor: default;
+    text-decoration: none;
+    opacity: 0.5;
+}
+
+#custom-model-help {
+    color: #00cc33;
+}
+
+#custom-model-search-button {
+    float: right;
+    margin-right: 5px;
+    cursor: pointer
+}
+
+#custom-model-search-button:disabled {
+    cursor: default;
+}
+

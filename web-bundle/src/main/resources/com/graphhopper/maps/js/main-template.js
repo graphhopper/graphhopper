@@ -78,7 +78,7 @@ $(document).ready(function (e) {
     });
     cmEditor.validListener = function(valid) {
         $("#custom-model-search-button").prop('disabled', !valid);
-        // todo: disable yaml/json toggle when invalid
+        $("#custom-model-toggle").prop('disabled', !valid);
     };
     $("#custom-model-toggle").text('JSON');
     $("#custom-model-toggle").click(function() {
