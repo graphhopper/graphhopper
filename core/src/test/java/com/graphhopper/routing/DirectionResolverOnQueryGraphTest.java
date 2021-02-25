@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Graph;
@@ -278,7 +279,7 @@ public class DirectionResolverOnQueryGraphTest {
             snaps.add(snapCoordinate(r.lat, r.lon));
         }
         queryGraph = QueryGraph.create(graph, snaps);
-        DirectionResolver resolver = new DirectionResolver(queryGraph, encoder.getAccessEnc());
+        DirectionResolver resolver = new DirectionResolver(queryGraph, this::isAccessible);
         for (int i = 0; i < expectedResults.length; i++) {
             assertEquals("unexpected resolved direction",
                     restrictedDirection(expectedResults[i]),
@@ -301,7 +302,7 @@ public class DirectionResolverOnQueryGraphTest {
     private void assertUnrestricted(double lat, double lon) {
         Snap snap = snapCoordinate(lat, lon);
         queryGraph = QueryGraph.create(graph, snap);
-        DirectionResolver resolver = new DirectionResolver(queryGraph, encoder.getAccessEnc());
+        DirectionResolver resolver = new DirectionResolver(queryGraph, this::isAccessible);
         assertEquals(unrestricted(), resolver.resolveDirections(snap.getClosestNode(), snap.getQueryPoint()));
     }
 
@@ -322,6 +323,11 @@ public class DirectionResolverOnQueryGraphTest {
             }
         }
         throw new IllegalStateException("Could not find edge from: " + from + ", to: " + to);
+    }
+
+    private boolean isAccessible(EdgeIteratorState edge, boolean reverse) {
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+        return reverse ? edge.getReverse(accessEnc) : edge.get(accessEnc);
     }
 
     private Snap snapCoordinate(double lat, double lon) {
