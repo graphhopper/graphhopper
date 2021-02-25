@@ -46,6 +46,7 @@ public class CustomModelParser {
     static final String IN_AREA_PREFIX = "in_area_";
     private static final Set<String> allowedNames = new HashSet<>(Arrays.asList("edge", "Math"));
     private static final boolean JANINO_DEBUG = Boolean.getBoolean(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE);
+    private static final String SCRIPT_FILE_DIR = System.getProperty(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_DIR, "./src/main/java/com/graphhopper/routing/weighting/custom");
 
     // Without a cache the class creation takes 10-40ms which makes routingLM8 requests 20% slower on average.
     // CH requests and preparation is unaffected as cached weighting from preparation is used.
@@ -258,6 +259,8 @@ public class CustomModelParser {
                     throw new IllegalArgumentException("Area has invalid name: " + arg);
                 if (!customModel.getAreas().containsKey(id))
                     throw new IllegalArgumentException("Area '" + id + "' wasn't found");
+                if (customModel.getAreas().get(id).getGeometry() == null)
+                    throw new IllegalArgumentException("Area '" + id + "' does not contain a geometry");
                 classSourceCode.append("protected " + Polygon.class.getSimpleName() + " " + arg + ";\n");
                 initSourceCode.append("JsonFeature feature_" + id + " = (JsonFeature) areas.get(\"" + id + "\");\n");
                 initSourceCode.append("this." + arg + " = new Polygon(new PreparedGeometryFactory().create(feature_" + id + ".getGeometry()));\n");
@@ -376,7 +379,7 @@ public class CustomModelParser {
                 StringWriter sw = new StringWriter();
                 Unparser.unparse(cu, sw);
                 // System.out.println(sw.toString());
-                File dir = new File("./src/main/java/com/graphhopper/routing/weighting/custom");
+                File dir = new File(SCRIPT_FILE_DIR);
                 File temporaryFile = new File(dir, "JaninoCustomWeightingHelperSubclass" + counter + ".java");
                 Reader reader = Readers.teeReader(
                         new StringReader(sw.toString()), // in
