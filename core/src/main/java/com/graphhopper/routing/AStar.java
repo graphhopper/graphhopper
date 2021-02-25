@@ -93,10 +93,7 @@ public class AStar extends AbstractRoutingAlgorithm {
                 if (!accept(iter, currEdge.edge))
                     continue;
 
-                // todo: for #1835 move the access check into weighting
-                double tmpWeight = !outEdgeFilter.accept(iter)
-                        ? Double.POSITIVE_INFINITY
-                        : (GHUtility.calcWeightWithTurnWeight(weighting, iter, false, currEdge.edge) + currEdge.weightOfVisitedPath);
+                double tmpWeight = GHUtility.calcWeightWithTurnWeightWithAccess(weighting, iter, false, currEdge.edge) + currEdge.weightOfVisitedPath;
                 if (Double.isInfinite(tmpWeight)) {
                     continue;
                 }

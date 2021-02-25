@@ -2,7 +2,6 @@ package com.graphhopper.resources;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -72,7 +71,6 @@ public class MVTResource {
         Coordinate se = num2deg(xInfo + 1, yInfo + 1, zInfo);
         LocationIndexTree locationIndex = (LocationIndexTree) graphHopper.getLocationIndex();
         final NodeAccess na = graphHopper.getGraphHopperStorage().getNodeAccess();
-        EdgeExplorer edgeExplorer = graphHopper.getGraphHopperStorage().createEdgeExplorer(DefaultEdgeFilter.ALL_EDGES);
         BBox bbox = new BBox(nw.x, se.x, se.y, nw.y);
         if (!bbox.isValid())
             throw new IllegalStateException("Invalid bbox " + bbox);

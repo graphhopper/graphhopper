@@ -17,8 +17,6 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
@@ -38,10 +36,8 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     protected final Weighting weighting;
     protected final FlagEncoder flagEncoder;
     protected final TraversalMode traversalMode;
-    protected NodeAccess nodeAccess;
-    protected EdgeExplorer edgeExplorer;
-    protected EdgeFilter inEdgeFilter;
-    protected EdgeFilter outEdgeFilter;
+    protected final NodeAccess nodeAccess;
+    protected final EdgeExplorer edgeExplorer;
     protected int maxVisitedNodes = Integer.MAX_VALUE;
     private boolean alreadyRun;
 
@@ -58,8 +54,6 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
         this.traversalMode = traversalMode;
         this.graph = graph;
         this.nodeAccess = graph.getNodeAccess();
-        inEdgeFilter = DefaultEdgeFilter.inEdges(flagEncoder.getAccessEnc());
-        outEdgeFilter = DefaultEdgeFilter.outEdges(flagEncoder.getAccessEnc());
         edgeExplorer = graph.createEdgeExplorer();
     }
 

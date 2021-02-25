@@ -22,7 +22,6 @@ import com.carrotsearch.hppc.cursors.ObjectCursor;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.AbstractRoutingAlgorithm;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -134,7 +133,6 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
         if (traversalMode == TraversalMode.NODE_BASED) {
             fromMap.put(from, currentLabel);
         }
-        EdgeFilter filter = reverseFlow ? inEdgeFilter : outEdgeFilter;
         while (!finished()) {
             currentLabel = queueByWeighting.poll();
             if (currentLabel.deleted)
@@ -149,10 +147,7 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
                     continue;
                 }
 
-                // todo: for #1835 move the access check into weighting
-                double nextWeight = !filter.accept(iter)
-                        ? Double.POSITIVE_INFINITY
-                        : (GHUtility.calcWeightWithTurnWeight(weighting, iter, reverseFlow, currentLabel.edge) + currentLabel.weight);
+                double nextWeight = GHUtility.calcWeightWithTurnWeightWithAccess(weighting, iter, reverseFlow, currentLabel.edge) + currentLabel.weight;
                 if (Double.isInfinite(nextWeight))
                     continue;
 

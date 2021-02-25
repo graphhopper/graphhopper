@@ -85,9 +85,8 @@ public class ViaRouting {
     }
 
     static EdgeFilter createEdgeFilter(final Weighting weighting) {
-        final BooleanEncodedValue accessEnc = weighting.getFlagEncoder().getAccessEnc();
-        return edgeState -> edgeState.get(accessEnc) && !Double.isInfinite(weighting.calcEdgeWeight(edgeState, false))
-                || edgeState.getReverse(accessEnc) && !Double.isInfinite(weighting.calcEdgeWeight(edgeState, true));
+        return edgeState -> !Double.isInfinite(weighting.calcEdgeWeightWithAccess(edgeState, false))
+                || !Double.isInfinite(weighting.calcEdgeWeightWithAccess(edgeState, true));
     }
 
     public static Result calcPaths(List<GHPoint> points, QueryGraph queryGraph, List<Snap> snaps, BooleanEncodedValue accessEnc, PathCalculator pathCalculator, List<String> curbsides, boolean forceCurbsides, List<Double> headings, boolean passThrough) {
