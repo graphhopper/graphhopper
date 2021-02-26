@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -70,5 +71,13 @@ public interface Weighting {
     FlagEncoder getFlagEncoder();
 
     String getName();
+
+    default double calcEdgeWeightWithAccess(EdgeIteratorState edgeState, boolean reverse) {
+        BooleanEncodedValue accessEnc = getFlagEncoder().getAccessEnc();
+        if ((!reverse && !edgeState.get(accessEnc)) || (reverse && !edgeState.getReverse(accessEnc))) {
+            return Double.POSITIVE_INFINITY;
+        }
+        return calcEdgeWeight(edgeState, reverse);
+    }
 
 }

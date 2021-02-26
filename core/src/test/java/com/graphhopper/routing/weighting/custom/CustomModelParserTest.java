@@ -20,17 +20,13 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.JsonFeature;
-import com.graphhopper.util.PMap;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -113,6 +109,21 @@ class CustomModelParserTest {
     }
 
     @Test
+    public void testBrackets() {
+        EdgeIteratorState primary = graph.edge(0, 1).setDistance(10).set(encoder.getAccessEnc(), true, true).
+                set(roadClassEnc, PRIMARY).set(avgSpeedEnc, 80);
+        EdgeIteratorState secondary = graph.edge(0, 1).setDistance(10).set(encoder.getAccessEnc(), true, true).
+                set(roadClassEnc, SECONDARY).set(avgSpeedEnc, 40);
+
+        CustomModel customModel = new CustomModel();
+        customModel.addToPriority(If("(road_class == PRIMARY || car$access == true) && car$average_speed > 50", MULTIPLY, 0.9));
+        CustomWeighting.Parameters parameters = CustomModelParser.createWeightingParameters(customModel, encodingManager,
+                encoder.getMaxSpeed(), avgSpeedEnc);
+        assertEquals(0.9, parameters.getEdgeToPriorityMapping().get(primary, false), 0.01);
+        assertEquals(1, parameters.getEdgeToPriorityMapping().get(secondary, false), 0.01);
+    }
+
+    @Test
     public void testSpeedFactorAndPriorityAndMaxSpeed() {
         EdgeIteratorState primary = graph.edge(0, 1).setDistance(10).
                 set(roadClassEnc, PRIMARY).set(avgSpeedEnc, 80).set(encoder.getAccessEnc(), true, true);
@@ -185,7 +196,7 @@ class CustomModelParserTest {
     }
 
     @Test
-    public void multipleAreas(){
+    public void multipleAreas() {
         CustomModel customModel = new CustomModel();
         Map<String, JsonFeature> areas = new HashMap<>();
         Coordinate[] area_1_coordinates = new Coordinate[]{

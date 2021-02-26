@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
@@ -385,12 +386,17 @@ public class DirectionResolverTest {
         return GHUtility.setSpeed(60, true, bothDirections, encoder, graph.edge(from, to).setDistance(1));
     }
 
+    private boolean isAccessible(EdgeIteratorState edge, boolean reverse) {
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+        return reverse ? edge.getReverse(accessEnc) : edge.get(accessEnc);
+    }
+
     private void checkResult(int node, DirectionResolverResult expectedResult) {
         checkResult(node, graph.getNodeAccess().getLat(node), graph.getNodeAccess().getLon(node), expectedResult);
     }
 
     private void checkResult(int node, double lat, double lon, DirectionResolverResult expectedResult) {
-        DirectionResolver resolver = new DirectionResolver(graph, encoder.getAccessEnc());
+        DirectionResolver resolver = new DirectionResolver(graph, this::isAccessible);
         assertEquals(expectedResult, resolver.resolveDirections(node, new GHPoint(lat, lon)));
     }
 

@@ -769,6 +769,8 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
      * It derives from DijkstraBidirectionRef, but is only used as forward or backward search.
      */
     private static class LandmarkExplorer extends DijkstraBidirectionRef {
+        // edgeFilter is null initially and must be set via setEdgeFilter
+        private EdgeFilter edgeFilter;
         // todo: rename 'from' to 'reverse' (and flip it) ? 'from' is used in many places for node ids and 'reverse' is mostly used for the direction
         private boolean from;
         private final LandmarkStorage lms;
@@ -788,9 +790,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         }
 
         public void setFilter(IntHashSet set, boolean bwd, boolean fwd) {
-            EdgeFilter ef = new BlockedEdgesFilter(flagEncoder.getAccessEnc(), bwd, fwd, set);
-            inEdgeFilter = ef;
-            outEdgeFilter = ef;
+            edgeFilter = new BlockedEdgesFilter(flagEncoder.getAccessEnc(), bwd, fwd, set);
         }
 
         public void setStartNode(int startNode) {
@@ -798,6 +798,13 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                 initFrom(startNode, 0);
             else
                 initTo(startNode, 0);
+        }
+
+        @Override
+        protected double calcWeight(EdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {
+            if (!edgeFilter.accept(iter))
+                return Double.POSITIVE_INFINITY;
+            return GHUtility.calcWeightWithTurnWeight(weighting, iter, reverse, currEdge.edge) + currEdge.getWeightOfVisitedPath();
         }
 
         int getFromCount() {
@@ -933,7 +940,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         @Override
         public final boolean accept(EdgeIteratorState iter) {
             boolean blocked = blockedEdges.contains(iter.getEdge());
-            return fwd && iter.get(accessEnc) && !blocked || bwd && iter.getReverse(accessEnc) && !blocked;
+            if (blocked)
+                return false;
+            return fwd && iter.get(accessEnc) || bwd && iter.getReverse(accessEnc);
         }
 
         @Override

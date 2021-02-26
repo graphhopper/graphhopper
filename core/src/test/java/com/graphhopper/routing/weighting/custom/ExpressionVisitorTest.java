@@ -126,6 +126,10 @@ public class ExpressionVisitorTest {
 
         assertTrue(parseExpression("road_class.ordinal()*2 == PRIMARY.ordinal()*2", validVariable, lookup).ok);
         assertTrue(parseExpression("Math.sqrt(road_class.ordinal()) > 1", validVariable, lookup).ok);
+
+        result = parseExpression("(toll == NO || road_class == PRIMARY) && toll == NO", validVariable, lookup);
+        assertTrue(result.ok);
+        assertEquals("[toll, road_class]", result.guessedVariables.toString());
     }
 
     @Test

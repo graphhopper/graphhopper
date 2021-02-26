@@ -97,8 +97,9 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
             }
             invalidMessage = mi.methodName + " is illegal method";
             return false;
-        }
-        if (rv instanceof Java.BinaryOperation) {
+        } else if (rv instanceof Java.ParenthesizedExpression) {
+            return ((Java.ParenthesizedExpression) rv).value.accept(this);
+        } else if (rv instanceof Java.BinaryOperation) {
             Java.BinaryOperation binOp = (Java.BinaryOperation) rv;
             int startRH = binOp.rhs.getLocation().getColumnNumber() - 1;
             if (binOp.lhs instanceof Java.AmbiguousName && ((Java.AmbiguousName) binOp.lhs).identifiers.length == 1) {

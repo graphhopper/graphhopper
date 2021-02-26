@@ -17,13 +17,13 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.*;
+import java.util.function.BiPredicate;
 
 /**
  * This class is used to determine the pairs of edges that go into/out of a node of the routing graph. Two such pairs
@@ -52,12 +52,12 @@ import java.util.*;
 public class DirectionResolver {
     private final EdgeExplorer edgeExplorer;
     private final NodeAccess nodeAccess;
-    private final BooleanEncodedValue accessEnc;
+    private final BiPredicate<EdgeIteratorState, Boolean> isAccessible;
 
-    public DirectionResolver(Graph graph, BooleanEncodedValue accessEnc) {
+    public DirectionResolver(Graph graph, BiPredicate<EdgeIteratorState, Boolean> isAccessible) {
         this.edgeExplorer = graph.createEdgeExplorer();
         this.nodeAccess = graph.getNodeAccess();
-        this.accessEnc = accessEnc;
+        this.isAccessible = isAccessible;
     }
 
     /**
@@ -173,8 +173,8 @@ public class DirectionResolver {
         AdjacentEdges adjacentEdges = new AdjacentEdges();
         EdgeIterator iter = edgeExplorer.setBaseNode(node);
         while (iter.next()) {
-            boolean isIn = iter.getReverse(accessEnc);
-            boolean isOut = iter.get(accessEnc);
+            boolean isIn = isAccessible.test(iter, true);
+            boolean isOut = isAccessible.test(iter, false);
             if (!isIn && !isOut) {
                 continue;
             }

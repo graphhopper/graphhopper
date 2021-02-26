@@ -21,7 +21,6 @@ package com.graphhopper.routing.querygraph;
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.carrotsearch.hppc.procedures.IntObjectProcedure;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
@@ -235,10 +234,8 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
 
     private VirtualCHEdgeIteratorState buildVirtualCHEdgeState(EdgeIteratorState edgeState, int edgeID) {
         int origEdge = edgeState.getEdge();
-        // todo: move access flag checks into weighting, #1835
-        BooleanEncodedValue accessEnc = weighting.getFlagEncoder().getAccessEnc();
-        double fwdWeight = !edgeState.get(accessEnc) ? Double.POSITIVE_INFINITY : weighting.calcEdgeWeight(edgeState, false);
-        double bwdWeight = !edgeState.getReverse(accessEnc) ? Double.POSITIVE_INFINITY : weighting.calcEdgeWeight(edgeState, true);
+        double fwdWeight = weighting.calcEdgeWeightWithAccess(edgeState, false);
+        double bwdWeight = weighting.calcEdgeWeightWithAccess(edgeState, true);
         return new VirtualCHEdgeIteratorState(edgeID, origEdge, edgeState.getBaseNode(), edgeState.getAdjNode(),
                 origEdge, origEdge, NO_EDGE, NO_EDGE, fwdWeight, bwdWeight);
     }

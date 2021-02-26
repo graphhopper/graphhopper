@@ -118,6 +118,7 @@ public class LandmarkStorageTest {
 
     @Test
     public void testWithSubnetworks() {
+        // 0-1-2..4-5->6
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10.1));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(10.2));
 
