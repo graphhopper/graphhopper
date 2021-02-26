@@ -61,7 +61,7 @@ import static org.junit.Assert.fail;
  *
  * @author easbar
  * @see RandomCHRoutingTest - similar but only tests CH algorithms
- * @see DirectedRoutingTest - similar but focuses on edge-based algorithms an directed queries
+ * @see DirectedRoutingTest - similar but focuses on edge-based algorithms and directed queries
  */
 @RunWith(Parameterized.class)
 public class RandomizedRoutingTest {
