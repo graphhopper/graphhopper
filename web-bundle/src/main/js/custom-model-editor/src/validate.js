@@ -242,7 +242,7 @@ function validateAreas(areas) {
 }
 
 function isValidAreaName (string) {
-    const regex = /^[a-zA-Z][0-9A-Za-z_]*$/g
+    const regex = /^[a-z][0-9A-Za-z_]*$/g
     return regex.test(string);
 }
 
