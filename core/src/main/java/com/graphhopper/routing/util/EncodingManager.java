@@ -257,15 +257,11 @@ public class EncodingManager implements EncodedValueLookup {
                 throw new IllegalStateException("Cannot call method after Builder.build() was called");
         }
 
-        private void _addEdgeTagParser(TagParser tagParser, boolean withNamespace) {
+        private void _addEdgeTagParser(TagParser tagParser) {
             if (!em.edgeEncoders.isEmpty())
                 throw new IllegalStateException("Avoid mixing encoded values from FlagEncoder with shared encoded values until we have a more clever mechanism, see #1862");
 
-            List<EncodedValue> list = new ArrayList<>();
-            tagParser.createEncodedValues(em, list);
-            for (EncodedValue ev : list) {
-                em.addEncodedValue(ev, withNamespace);
-            }
+            _registerEncodedValues(tagParser);
             em.edgeTagParsers.add(tagParser);
         }
 
@@ -277,7 +273,7 @@ public class EncodingManager implements EncodedValueLookup {
             }
             em.relationTagParsers.add(tagParser);
 
-            _addEdgeTagParser(tagParser, false);
+            _addEdgeTagParser(tagParser);
         }
 
         private void _addTurnCostParser(TurnCostParser parser) {
@@ -292,6 +288,14 @@ public class EncodingManager implements EncodedValueLookup {
             }
             em.turnCostParsers.put(parser.getName(), parser);
         }
+        
+        private void _registerEncodedValues(TagParser tagParser) {
+            List<EncodedValue> list = new ArrayList<>();
+            tagParser.createEncodedValues(em, list);
+            for (EncodedValue ev : list) {
+                em.addEncodedValue(ev, false);
+            }
+        }
 
         public EncodingManager build() {
             check();
@@ -301,7 +305,7 @@ public class EncodingManager implements EncodedValueLookup {
             }
 
             for (TagParser tagParser : tagParsers) {
-                _addEdgeTagParser(tagParser, false);
+                _registerEncodedValues(tagParser);
             }
 
             for (EncodedValue ev : encodedValueList) {
@@ -309,18 +313,28 @@ public class EncodingManager implements EncodedValueLookup {
             }
 
             if (!em.hasEncodedValue(Roundabout.KEY))
-                _addEdgeTagParser(new OSMRoundaboutParser(), false);
+                _addEdgeTagParser(new OSMRoundaboutParser());
             if (!em.hasEncodedValue(RoadClass.KEY))
-                _addEdgeTagParser(new OSMRoadClassParser(), false);
+                _addEdgeTagParser(new OSMRoadClassParser());
             if (!em.hasEncodedValue(RoadClassLink.KEY))
-                _addEdgeTagParser(new OSMRoadClassLinkParser(), false);
+                _addEdgeTagParser(new OSMRoadClassLinkParser());
             if (!em.hasEncodedValue(RoadEnvironment.KEY))
-                _addEdgeTagParser(new OSMRoadEnvironmentParser(), false);
+                _addEdgeTagParser(new OSMRoadEnvironmentParser());
             if (!em.hasEncodedValue(MaxSpeed.KEY))
-                _addEdgeTagParser(new OSMMaxSpeedParser(), false);
+                _addEdgeTagParser(new OSMMaxSpeedParser());
             if (!em.hasEncodedValue(RoadAccess.KEY)) {
                 // TODO introduce road_access for different vehicles? But how to create it in DefaultTagParserFactory?
-                _addEdgeTagParser(new OSMRoadAccessParser(), false);
+                _addEdgeTagParser(new OSMRoadAccessParser());
+            }
+            
+            // ensure that CustomAreaParsers are executed first
+            int insertPos = 0;
+            for (TagParser tagParser : tagParsers) {
+                if (tagParser instanceof CustomAreaParser) {
+                    em.edgeTagParsers.add(insertPos++, tagParser);
+                } else {
+                    em.edgeTagParsers.add(tagParser);
+                }
             }
 
             if (dateRangeParser == null)
@@ -331,7 +345,7 @@ public class EncodingManager implements EncodedValueLookup {
                     if (!em.hasEncodedValue(RouteNetwork.key("bike")))
                         _addRelationTagParser(new OSMBikeNetworkTagParser());
                     if (!em.hasEncodedValue(GetOffBike.KEY))
-                        _addEdgeTagParser(new OSMGetOffBikeParser(), false);
+                        _addEdgeTagParser(new OSMGetOffBikeParser());
 
                 } else if (encoder instanceof FootFlagEncoder) {
                     if (!em.hasEncodedValue(RouteNetwork.key("foot")))
