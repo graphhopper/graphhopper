@@ -478,3 +478,44 @@ td img.pic {
 .fullscreen-reverse-btn {
     background-image: url("../img/full-reverse.png");
 }
+
+.CodeMirror-lint-tooltip {
+    /* tool tip should not be hidden by map*/
+    z-index: 2000;
+}
+
+.CodeMirror-hints {
+    /* hints should not be hidden by map*/
+    z-index: 1000;
+}
+
+#custom-model-util-buttons button {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline;
+    color: #00cc33;
+}
+
+#custom-model-util-buttons button:disabled {
+    color: tomato;
+    cursor: default;
+    text-decoration: none;
+    opacity: 0.5;
+}
+
+#custom-model-docs {
+    color: #00cc33;
+}
+
+#custom-model-search-button {
+    float: right;
+    margin-right: 5px;
+    cursor: pointer
+}
+
+#custom-model-search-button:disabled {
+    cursor: default;
+}
+

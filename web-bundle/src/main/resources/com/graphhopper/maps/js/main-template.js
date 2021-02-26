@@ -1,5 +1,4 @@
 global.d3 = require('d3');
-var YAML = require('js-yaml');
 var Flatpickr = require('flatpickr');
 require('flatpickr/dist/l10n');
 
@@ -43,6 +42,7 @@ var routeManipulation = require('./routeManipulation.js');
 var gpxExport = require('./gpxexport.js');
 var messages = require('./messages.js');
 var translate = require('./translate.js');
+var customModelEditor = require('../../../../../js/custom-model-editor/dist/index.js');
 
 var format = require('./tools/format.js');
 var urlTools = require('./tools/url.js');
@@ -72,18 +72,56 @@ $(document).ready(function (e) {
     jQuery.support.cors = true;
 
     gpxExport.addGpxExport(ghRequest);
-
-    $("#flex-input-link").click(function() {
-        $("#regular-input").toggle();
-        $("#flex-input").toggle();
+    // we start without encoded values, they will be loaded later
+    var cmEditor = customModelEditor.create({}, function (element) {
+        $("#custom-model-editor").append(element);
+    });
+    // todo: the idea was to highlight everything so if we start typing the example is overwritten. But unfortunately
+    // this does not work. And not even sure this is so useful?
+    showCustomModelExample();
+    cmEditor.validListener = function(valid) {
+        $("#custom-model-search-button").prop('disabled', !valid);
+        $("#custom-model-toggle").prop('disabled', !valid);
+    };
+    $("#custom-model-toggle").text('JSON');
+    $("#custom-model-toggle").click(function() {
+        cmEditor.toggleJsonYAML();
+        $("#custom-model-toggle").text(cmEditor.yaml ? 'JSON' : 'YAML');
+        return false;
+    });
+    $("#custom-model-button").click(function() {
+        $("#custom-model-box").toggle();
         // avoid default action, so use a different search button
         $("#searchButton").toggle();
         mapLayer.adjustMapSize();
+        cmEditor.cm.refresh();
+        cmEditor.cm.focus();
+        cmEditor.cm.setCursor(cmEditor.cm.lineCount())
     });
-    $("#flex-example").click(function() {
-         $("#flex-input-text").val("speed:\n- if: road_class == MOTORWAY\n  multiply by: 0.8\n"
-          + "priority:\n- if: road_environment == TUNNEL\n  multiply by: 0.0\n- if: road_class == RESIDENTIAL\n  multiply by: 0.7\n- if: max_weight < 3\n  multiply by: 0.0");
-         return false;
+    function showCustomModelExample() {
+        cmEditor.value =
+            "# Ctrl+Space shows suggestions"
+            + "\n# for if-conditions"
+            + "\nspeed:"
+            + "\n- if: road_class == MOTORWAY"
+            + "\n  multiply by: 0.8"
+            + "\n"
+            + "\npriority:"
+            + "\n- if: road_environment == TUNNEL"
+            + "\n  multiply by: 0.0"
+            + "\n- if: road_class == RESIDENTIAL"
+            + "\n  multiply by: 0.7"
+            + "\n- if: max_weight < 3"
+            + "\n  multiply by: 0.0"
+            + "\n";
+        cmEditor.cm.focus();
+        cmEditor.cm.setCursor(0);
+        cmEditor.cm.execCommand('selectAll');
+        cmEditor.cm.refresh();
+    }
+    $("#custom-model-example").click(function() {
+        showCustomModelExample();
+        return false;
     });
 
     var sendCustomData = function() {
@@ -97,11 +135,6 @@ $(document).ready(function (e) {
        var routeResultsDiv = $("<div class='route_results'/>");
        infoDiv.append(routeResultsDiv);
        routeResultsDiv.html('<img src="img/indicator.gif"/> Search Route ...');
-       var inputText = $("#flex-input-text").val();
-       if(inputText.length < 5) {
-           routeResultsDiv.html("Routing configuration too short");
-           return;
-       }
 
        var points = [];
        for(var idx = 0; idx < ghRequest.route.size(); idx++) {
@@ -114,12 +147,10 @@ $(document).ready(function (e) {
            }
        }
 
-       var jsonModel;
-       try {
-         jsonModel = inputText.indexOf("{") == 0? JSON.parse(inputText) : YAML.safeLoad(inputText);
-       } catch(ex) {
-         routeResultsDiv.html("Cannot parse " + inputText + " " + ex);
-         return;
+       var jsonModel = cmEditor.jsonObj;
+       if (jsonModel === null) {
+           routeResultsDiv.html("Invalid custom model");
+           return;
        }
 
        jsonModel.points = points;
@@ -129,7 +160,7 @@ $(document).ready(function (e) {
        var request = JSON.stringify(jsonModel);
 
        $.ajax({
-           url: "/route-custom",
+           url: host + "/route-custom",
            type: "POST",
            contentType: 'application/json; charset=utf-8',
            dataType: "json",
@@ -143,11 +174,9 @@ $(document).ready(function (e) {
         });
     };
 
-    $("#flex-input-text").keydown(function (e) {
-        // CTRL+Enter
-        if (e.ctrlKey && e.keyCode == 13) sendCustomData();
-    });
-    $("#flex-search-button").click(sendCustomData);
+    // todo: prevent this as long as custom model is invalid?
+    cmEditor.setExtraKey('Ctrl-Enter', sendCustomData);
+    $("#custom-model-search-button").click(sendCustomData);
 
     if (isProduction())
         $('#hosting').show();
@@ -173,13 +202,12 @@ $(document).ready(function (e) {
 
     var urlParams = urlTools.parseUrlWithHisto();
 
-    if(urlParams.flex)
-        $("#flex-input-link").click();
-
     var customURL = urlParams.load_custom;
+    if(urlParams.load_custom)
+        $("#custom-model-button").click();
     if(customURL && ghenv.environment === 'development')
         $.ajax(customURL).
-            done(function(data) { $("#flex-input-text").val(data); $("#flex-input-link").click(); }).
+            done(function(data) { cmEditor.value = data; $("#custom-model-search-button").click(); }).
             fail(function(err)  { console.log("Cannot load custom URL " + customURL); });
 
     $.when(ghRequest.fetchTranslationMap(urlParams.locale), ghRequest.getInfo())
@@ -269,21 +297,18 @@ $(document).ready(function (e) {
                 metaVersionInfo = messages.extractMetaVersionInfo(json);
                 // a very simplistic helper system that shows the possible entries and encoded values
                 if(json.encoded_values) {
-                    $('#flex-input-text').bind('keyup click', function() {
-                        var cleanedText = this.value.replace(/(\n|:)/gm, ' ');
-                        var startIndex = cleanedText.substring(0, this.selectionStart).lastIndexOf(" ");
-                        startIndex = startIndex < 0 ? 0 : startIndex + 1;
-                        var endIndex = cleanedText.indexOf(" ", this.selectionStart);
-                        endIndex = endIndex < 0 ? cleanedText.length : endIndex;
-                        var wordUnderCursor = cleanedText.substring(startIndex, endIndex);
-                        if(this.selectionStart == 0 || this.value.substr(this.selectionStart - 1, 1) === "\n") {
-                           document.getElementById("ev_value").innerHTML = "<b>root:</b> priority, speed, distance_influence, areas";
-                        } else if(wordUnderCursor === "priority" || wordUnderCursor === "speed") {
-                           document.getElementById("ev_value").innerHTML = "<b>" + wordUnderCursor + ":</b> " + Object.keys(json.encoded_values).join(", ");
-                        } else if(json.encoded_values[wordUnderCursor]) {
-                           document.getElementById("ev_value").innerHTML = "<b>" + wordUnderCursor + ":</b> " + json.encoded_values[wordUnderCursor].join(", ");
+                    const categories = {};
+                    Object.keys(json.encoded_values).forEach((k) => {
+                        const v = json.encoded_values[k];
+                        if (v.length == 2 && v[0] === 'true' && v[1] === 'false') {
+                            categories[k] = {type: 'boolean'};
+                        } else if (v.length === 2 && v[0] === '>number' && v[1] === '<number') {
+                            categories[k] = {type: 'numeric'};
+                        } else {
+                            categories[k] = {type: 'enum', values: v.sort()};
                         }
                     });
+                    cmEditor.categories = categories;
                 }
 
                 mapLayer.initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, urlParams.layer, urlParams.use_miles);

@@ -33,6 +33,9 @@
         <link rel="stylesheet" href="css/ui-lightness/jquery-ui.min.css" />
         <link rel="stylesheet" href="css/L.Control.Heightgraph.css?v=0.2.0" />
         <link rel="stylesheet" href="css/flatpickr.min.css?v=4.4.6">
+        <link rel="stylesheet" href="css/codemirror/lib/codemirror.css?v=5.59.2">
+        <link rel="stylesheet" href="css/codemirror/addon/hint/show-hint.css?v=5.59.2">
+        <link rel="stylesheet" href="css/codemirror/addon/lint/lint.css?v=5.59.2">
         <script type="text/javascript" src="js/main.js?v=0.11.2"></script>
         <link rel="stylesheet" type="text/css" href="css/style.css" />
     </head>
@@ -60,17 +63,21 @@
             <div class="clear"></div>
             <input id="searchButton" type="submit" value="Search">
         </form>
-        <div id="flex-input-link" class="left" style="cursor: pointer"><small>flex</small></div>
-        <div id="export-link" class="left"><a href="/maps/"><img src='img/link.png'></a></div>
-        <div id="gpxExportButton"><a href=""><img alt="gpx" src='img/gpx.png'></a></div>
-        <div id="flex-input" style="display: none">
-            <div class="small_text" style="float: right; padding-right: 10px">
-                <a href="https://www.graphhopper.com/blog/2020/05/31/examples-for-customizable-routing/">Intro</a> |
-                <a id="flex-example" href="">Example</a>
+        <div style="overflow: hidden">
+            <div id="custom-model-button" class="left" style="cursor: pointer"><small>custom</small></div>
+            <div id="export-link" class="left"><a href="/maps/"><img src='img/link.png'></a></div>
+            <div id="gpxExportButton"><a href=""><img alt="gpx" src='img/gpx.png'></a></div>
+        </div>
+        <div id="custom-model-box" style="display: none">
+            <div id="custom-model-editor"></div>
+            <div style="overflow: hidden">
+                <div id="custom-model-util-buttons" class="small_text" style="float: left; padding-right: 10px">
+                    <a id="custom-model-docs" href="https://github.com/graphhopper/graphhopper/blob/master/docs/core/profiles.md#custom-weighting">Docs</a> |
+                    <button id="custom-model-example">Example</button> |
+                    <button id="custom-model-toggle"></button>
+                </div>
+                <input id="custom-model-search-button" type="submit" value="Search">
             </div>
-            <textarea id="flex-input-text" name="Text1" cols="34" rows="10"></textarea>
-            <input id="flex-search-button" style="float: right; margin-right: 5px" type="submit" value="Search">
-            <div style="font-size: 0.8em; height: 105px" id="ev_value"></div>
         </div>
         <div id="hosting">Powered by <a href='https://www.graphhopper.com/products/'>GraphHopper API</a></div>
     </div>
