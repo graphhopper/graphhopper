@@ -37,7 +37,7 @@ import static org.junit.Assert.assertEquals;
 public class PrincetonReaderTest {
     private FlagEncoder encoder = new CarFlagEncoder();
     private EncodingManager encodingManager = EncodingManager.create(encoder);
-    private EdgeFilter carOutEdges = DefaultEdgeFilter.outEdges(encoder);
+    private EdgeFilter carOutEdges = DefaultEdgeFilter.outEdges(encoder.getAccessEnc());
 
     @Test
     public void testRead() {

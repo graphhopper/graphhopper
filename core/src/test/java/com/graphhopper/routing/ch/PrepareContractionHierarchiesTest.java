@@ -400,7 +400,7 @@ public class PrepareContractionHierarchiesTest {
     }
 
     private EdgeIteratorState getEdge(Graph graph, int from, int to, boolean incoming) {
-        EdgeFilter filter = incoming ? DefaultEdgeFilter.inEdges(carEncoder) : DefaultEdgeFilter.outEdges(carEncoder);
+        EdgeFilter filter = incoming ? DefaultEdgeFilter.inEdges(carEncoder.getAccessEnc()) : DefaultEdgeFilter.outEdges(carEncoder.getAccessEnc());
         EdgeIterator iter = graph.createEdgeExplorer(filter).setBaseNode(from);
         while (iter.next()) {
             if (iter.getAdjNode() == to) {
@@ -411,7 +411,7 @@ public class PrepareContractionHierarchiesTest {
     }
 
     private CHEdgeIteratorState getEdge(CHGraph graph, int from, int to, boolean incoming) {
-        EdgeFilter filter = incoming ? DefaultEdgeFilter.inEdges(carEncoder) : DefaultEdgeFilter.outEdges(carEncoder);
+        EdgeFilter filter = incoming ? DefaultEdgeFilter.inEdges(carEncoder.getAccessEnc()) : DefaultEdgeFilter.outEdges(carEncoder.getAccessEnc());
         CHEdgeIterator iter = graph.createEdgeExplorer(filter).setBaseNode(from);
         while (iter.next()) {
             if (iter.getAdjNode() == to) {

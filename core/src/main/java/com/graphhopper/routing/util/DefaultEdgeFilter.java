@@ -51,18 +51,6 @@ public class DefaultEdgeFilter implements EdgeFilter {
         return new DefaultEdgeFilter(accessEnc, true, true);
     }
 
-    public static DefaultEdgeFilter outEdges(FlagEncoder flagEncoder) {
-        return DefaultEdgeFilter.outEdges(flagEncoder.getAccessEnc());
-    }
-
-    public static DefaultEdgeFilter inEdges(FlagEncoder flagEncoder) {
-        return DefaultEdgeFilter.inEdges(flagEncoder.getAccessEnc());
-    }
-
-    public static DefaultEdgeFilter allEdges(FlagEncoder flagEncoder) {
-        return DefaultEdgeFilter.allEdges(flagEncoder.getAccessEnc());
-    }
-
     public BooleanEncodedValue getAccessEnc() {
         return accessEnc;
     }

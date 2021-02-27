@@ -50,8 +50,8 @@ public class DefaultEdgeFilterTest {
         graph.freeze();
         // add loop shortcut in 'fwd' direction
         addShortcut(chGraph, 0, 0, true, 0, 2);
-        CHEdgeExplorer outExplorer = chGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
-        CHEdgeExplorer inExplorer = chGraph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder));
+        CHEdgeExplorer outExplorer = chGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder.getAccessEnc()));
+        CHEdgeExplorer inExplorer = chGraph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder.getAccessEnc()));
 
         IntSet inEdges = new IntHashSet();
         IntSet outEdges = new IntHashSet();

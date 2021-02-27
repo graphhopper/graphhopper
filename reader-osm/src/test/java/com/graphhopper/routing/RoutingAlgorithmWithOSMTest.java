@@ -670,7 +670,7 @@ public class RoutingAlgorithmWithOSMTest {
             FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
             Collection<AlgoHelperEntry> prepares = createAlgos(hopper, weightStr, vehicle, tMode);
 
-            EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
+            EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder.getAccessEnc());
             for (AlgoHelperEntry entry : prepares) {
                 if (entry.getExpectedAlgo().startsWith("astarbi|ch")) {
                     continue;
@@ -723,7 +723,7 @@ public class RoutingAlgorithmWithOSMTest {
         // also the preparing is too costly to be called for every thread
         int algosLength = 2;
         final Weighting weighting = new ShortestWeighting(encodingManager.getEncoder("car"));
-        final EdgeFilter filter = DefaultEdgeFilter.allEdges(carEncoder);
+        final EdgeFilter filter = DefaultEdgeFilter.allEdges(carEncoder.getAccessEnc());
         for (int no = 0; no < MAX; no++) {
             for (int instanceNo = 0; instanceNo < instances.size(); instanceNo++) {
                 String[] algos = new String[]{

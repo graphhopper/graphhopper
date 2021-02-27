@@ -120,7 +120,7 @@ public class LMApproximatorTest {
                     // That's a requirement for normal A*-implementations, because if it is violated,
                     // the heap-weight of settled nodes can decrease, and that would mean our
                     // stopping criterion is not sufficient.
-                    EdgeIterator neighbors = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder)).setBaseNode(v);
+                    EdgeIterator neighbors = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder.getAccessEnc())).setBaseNode(v);
                     while (neighbors.next()) {
                         int w = neighbors.getAdjNode();
                         double vw = weighting.calcEdgeWeight(neighbors, false);
@@ -131,7 +131,7 @@ public class LMApproximatorTest {
                         }
                     }
 
-                    neighbors = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder)).setBaseNode(v);
+                    neighbors = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder.getAccessEnc())).setBaseNode(v);
                     while (neighbors.next()) {
                         int w = neighbors.getAdjNode();
                         double vw = weighting.calcEdgeWeight(neighbors, false);

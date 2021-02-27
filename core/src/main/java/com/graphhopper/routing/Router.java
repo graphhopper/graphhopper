@@ -238,7 +238,7 @@ public class Router {
             if (requestHints.has(Parameters.Routing.BLOCK_AREA)) {
                 FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
                 GraphEdgeIdFinder.BlockArea blockArea = GraphEdgeIdFinder.createBlockArea(ghStorage, locationIndex,
-                        points, requestHints, DefaultEdgeFilter.allEdges(encoder));
+                        points, requestHints, DefaultEdgeFilter.allEdges(encoder.getAccessEnc()));
                 weighting = new BlockAreaWeighting(weighting, blockArea);
             }
             return weighting;

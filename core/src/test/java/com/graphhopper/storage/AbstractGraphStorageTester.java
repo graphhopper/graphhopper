@@ -52,8 +52,8 @@ public abstract class AbstractGraphStorageTester {
     protected DecimalEncodedValue carAvSpeedEnc = carEncoder.getAverageSpeedEnc();
     protected FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
     protected GraphHopperStorage graph;
-    EdgeFilter carOutFilter = DefaultEdgeFilter.outEdges(carEncoder);
-    EdgeFilter carInFilter = DefaultEdgeFilter.inEdges(carEncoder);
+    EdgeFilter carOutFilter = DefaultEdgeFilter.outEdges(carEncoder.getAccessEnc());
+    EdgeFilter carInFilter = DefaultEdgeFilter.inEdges(carEncoder.getAccessEnc());
     EdgeExplorer carOutExplorer;
     EdgeExplorer carInExplorer;
     EdgeExplorer carAllExplorer;
@@ -653,7 +653,7 @@ public abstract class AbstractGraphStorageTester {
         EdgeIteratorState edge = graph.edge(0, 3).setDistance(10);
         GHUtility.setSpeed(10, true, true, footEncoder, edge);
         GHUtility.setSpeed(10, true, true, carEncoder, edge);
-        EdgeExplorer footOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(footEncoder));
+        EdgeExplorer footOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(footEncoder.getAccessEnc()));
         assertEquals(GHUtility.asSet(3, 1), GHUtility.getNeighbors(footOutExplorer.setBaseNode(0)));
         assertEquals(GHUtility.asSet(3, 2), GHUtility.getNeighbors(carOutExplorer.setBaseNode(0)));
     }

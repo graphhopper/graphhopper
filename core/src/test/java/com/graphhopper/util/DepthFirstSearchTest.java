@@ -75,7 +75,7 @@ public class DepthFirstSearchTest {
         GHUtility.setSpeed(60, true, false, encoder, g.edge(5, 6).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, g.edge(6, 4).setDistance(1));
 
-        dfs.start(g.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder)), 1);
+        dfs.start(g.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder.getAccessEnc())), 1);
 
         assertTrue(counter > 0);
         assertEquals("[1, 2, 3, 4, 5, 6]", list.toString());
@@ -108,7 +108,7 @@ public class DepthFirstSearchTest {
         GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 3).setDistance(1));
         GHUtility.setSpeed(60, true, true, encoder, g.edge(4, 3).setDistance(1));
 
-        dfs.start(g.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder)), 1);
+        dfs.start(g.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder.getAccessEnc())), 1);
 
         assertTrue(counter > 0);
         assertEquals("[1, 2, 3, 4]", list.toString());

@@ -93,7 +93,7 @@ public class SPTResource {
             throw new IllegalArgumentException("The requested profile '" + profileName + "' does not exist");
         }
         FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
-        EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
+        EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder.getAccessEnc());
         LocationIndex locationIndex = graphHopper.getLocationIndex();
         Snap snap = locationIndex.findClosest(point.get().lat, point.get().lon, edgeFilter);
         if (!snap.isValid())
@@ -106,7 +106,7 @@ public class SPTResource {
         Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA))
             weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
-                    Collections.singletonList(point.get()), hintsMap, DefaultEdgeFilter.allEdges(encoder)));
+                    Collections.singletonList(point.get()), hintsMap, DefaultEdgeFilter.allEdges(encoder.getAccessEnc())));
         TraversalMode traversalMode = profile.isTurnCosts() ? EDGE_BASED : NODE_BASED;
         ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow, traversalMode);
 

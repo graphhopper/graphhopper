@@ -226,7 +226,7 @@ public class MapMatching {
     }
 
     private List<Snap> findCandidateSnapsInBBox(double queryLat, double queryLon, BBox queryShape) {
-        EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(weighting.getFlagEncoder());
+        EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(weighting.getFlagEncoder().getAccessEnc());
         List<Snap> snaps = new ArrayList<>();
         IntHashSet seenEdges = new IntHashSet();
         IntHashSet seenNodes = new IntHashSet();

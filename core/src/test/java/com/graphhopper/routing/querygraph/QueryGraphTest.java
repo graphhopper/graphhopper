@@ -28,7 +28,6 @@ import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
@@ -436,8 +435,8 @@ public class QueryGraphTest {
 
     @Test
     public void testIteration_Issue163() {
-        EdgeFilter outEdgeFilter = DefaultEdgeFilter.outEdges(encodingManager.getEncoder("car"));
-        EdgeFilter inEdgeFilter = DefaultEdgeFilter.inEdges(encodingManager.getEncoder("car"));
+        EdgeFilter outEdgeFilter = DefaultEdgeFilter.outEdges(encodingManager.getEncoder("car").getAccessEnc());
+        EdgeFilter inEdgeFilter = DefaultEdgeFilter.inEdges(encodingManager.getEncoder("car").getAccessEnc());
         EdgeExplorer inExplorer = g.createEdgeExplorer(inEdgeFilter);
         EdgeExplorer outExplorer = g.createEdgeExplorer(outEdgeFilter);
 
@@ -720,7 +719,7 @@ public class QueryGraphTest {
 
         LocationIndexTree locationIndex = new LocationIndexTree(g, new RAMDirectory());
         locationIndex.prepareIndex();
-        Snap snap = locationIndex.findClosest(0.15, 0.15, DefaultEdgeFilter.allEdges(encoder));
+        Snap snap = locationIndex.findClosest(0.15, 0.15, DefaultEdgeFilter.allEdges(encoder.getAccessEnc()));
         assertTrue(snap.isValid());
         assertEquals(EDGE, snap.getSnappedPosition(), "this test was supposed to test the Position.EDGE case");
         QueryGraph queryGraph = lookup(snap);
@@ -762,7 +761,7 @@ public class QueryGraphTest {
 
         LocationIndexTree locationIndex = new LocationIndexTree(g, new RAMDirectory());
         locationIndex.prepareIndex();
-        Snap snap = locationIndex.findClosest(0.2, 0.21, DefaultEdgeFilter.allEdges(encoder));
+        Snap snap = locationIndex.findClosest(0.2, 0.21, DefaultEdgeFilter.allEdges(encoder.getAccessEnc()));
         assertTrue(snap.isValid());
         assertEquals(PILLAR, snap.getSnappedPosition(), "this test was supposed to test the Position.PILLAR case");
         QueryGraph queryGraph = lookup(snap);

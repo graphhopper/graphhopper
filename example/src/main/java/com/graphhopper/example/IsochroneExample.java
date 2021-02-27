@@ -22,7 +22,7 @@ public class IsochroneExample {
         FlagEncoder encoder = encodingManager.getEncoder("car");
 
         // snap some GPS coordinates to the routing graph and build a query graph
-        Snap snap = hopper.getLocationIndex().findClosest(42.508679, 1.532078, DefaultEdgeFilter.allEdges(encoder));
+        Snap snap = hopper.getLocationIndex().findClosest(42.508679, 1.532078, DefaultEdgeFilter.allEdges(encoder.getAccessEnc()));
         QueryGraph queryGraph = QueryGraph.create(hopper.getGraphHopperStorage(), snap);
 
         // run the isochrone calculation
