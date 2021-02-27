@@ -27,9 +27,8 @@ import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LMRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FiniteWeightFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -236,9 +235,8 @@ public class Router {
         } else {
             Weighting weighting = weightingFactory.createWeighting(profile, requestHints, false);
             if (requestHints.has(Parameters.Routing.BLOCK_AREA)) {
-                FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
                 GraphEdgeIdFinder.BlockArea blockArea = GraphEdgeIdFinder.createBlockArea(ghStorage, locationIndex,
-                        points, requestHints, DefaultEdgeFilter.allEdges(encoder.getAccessEnc()));
+                        points, requestHints, new FiniteWeightFilter(weighting));
                 weighting = new BlockAreaWeighting(weighting, blockArea);
             }
             return weighting;
