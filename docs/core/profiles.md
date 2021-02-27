@@ -151,22 +151,22 @@ For every road segment a default speed is inherited from the profile's (base) ve
 series of conditional operations that are written in the `speed` section of the `custom_model_file` and modify the
 default speed. Currently the custom model language only comprises two operators:
 
-- `multiply by` multiplies the speed value with a given number
-- `limit to` limits the speed value to a given number
+- `multiply_by` multiplies the speed value with a given number
+- `limit_to` limits the speed value to a given number
 
 The operations are applied to the default speed from top to bottom, i.e. operations that are lower in the list are
 applied to the resulting value of previous operations. Each operation is only executed if the corresponding condition
 applies for the edge the speed is calculated for.
 
-##### `if` statements and the `multiply by` operation
+##### `if` statements and the `multiply_by` operation
 
-Let's start with a simple example using `multiply by`:
+Let's start with a simple example using `multiply_by`:
 
 ```yaml
 # this is the `custom_model_file`.
 speed:
   - if: road_class == MOTORWAY
-    multiply by: 0.5
+    multiply_by: 0.5
 ```
 
 This custom model reduces the speed of every road segment that has the value `MOTORWAY` for the category 'road_class' to
@@ -185,16 +185,16 @@ bottom:
 ```yaml
 speed:
   - if: road_class == MOTORWAY
-    multiply by: 0.5
+    multiply_by: 0.5
   - if: road_class == PRIMARY || road_environment == TUNNEL
-    multiply by: 0.7
+    multiply_by: 0.7
 ```
 
 In this example the default speed of edges with `road_class == MOTORWAY` will be multiplied by `0.5`, the default speed
 of edges with `road_class == PRIMARY` will be multiplied by `0.7` and for edges with both `road_class == MOTORWAY` and
 `road_environment == TUNNEL` the default speed will be multiplied first by `0.5` and then by `0.7` (the default speed
 will be multiplied with `0.35` overall). For edges with `road_class == PRIMARY` and `road_environment == TUNNEL` we only
-multiply by `0.7`, even though both parts of the second condition apply. It only matters whether the edge matches the
+multiply_by `0.7`, even though both parts of the second condition apply. It only matters whether the edge matches the
 condition or not.
 
 `road_class` and `road_environment` are categories of 'enum' type, i.e. their value can only be one of a fixed set of
@@ -205,7 +205,7 @@ Other categories like `get_off_bike` are of `boolean` type. They can be used as 
 ```yaml
 speed:
   - if: get_off_bike
-    multiply by: 0.6
+    multiply_by: 0.6
 ```
 
 which means that for edges with `get_off_bike==true` the speed factor will be `0.6`.
@@ -218,7 +218,7 @@ equals" `<=`, e.g.:
 ```yaml
 speed:
   - if: max_width < 2.5
-    multiply by: 0.8
+    multiply_by: 0.8
 ``` 
 
 which means that for all edges with `max_width` smaller than `2.5m` the speed is multiplied by `0.8`.
@@ -228,20 +228,20 @@ Categories of `string` type are used like this (note the quotes ""):
 ```yaml
 speed:
   - if: country == "DEU"
-    multiply by: 0
+    multiply_by: 0
 ```
 
-##### The `limit to` operation
+##### The `limit_to` operation
 
-As already mentioned, besides the `multiply by` operator there is also the `limit to` operator. As the name suggests
-`limit to` limits the current value to the given value. Take this example:
+As already mentioned, besides the `multiply_by` operator there is also the `limit_to` operator. As the name suggests
+`limit_to` limits the current value to the given value. Take this example:
 
 ```yaml
 speed:
   - if: road_class == MOTORWAY
     multiply_by: 0.8
   - if: surface == GRAVEL
-    limit to: 60
+    limit_to: 60
 ```
 
 This implies that on all road segments with the `GRAVEL` value for `surface` the speed will be at most `60km/h`,
@@ -250,15 +250,15 @@ regardless of the default speed and the previous rules. So for a road segment wi
 statement further reduces the speed from `80` to `60`. If the `road_class` was `PRIMARY` and the default speed was `50`
 the first rule would not apply and the second rule would do nothing, because limiting `50` to `60` is still `50`.
 
-Note that all values used for `limit to` must be in the range `[0, max_vehicle_speed]` where `max_vehicle_speed` is the
+Note that all values used for `limit_to` must be in the range `[0, max_vehicle_speed]` where `max_vehicle_speed` is the
 maximum speed that is set for the base vehicle and cannot be changed.
 
-A common use-case for the `limit to` operation is the following pattern:
+A common use-case for the `limit_to` operation is the following pattern:
 
 ```yaml
 speed:
   - if: true
-    limit to: 90
+    limit_to: 90
 ```
 
 which means that the speed is limited to `90km/h` for all road segments regardless of its properties. The condition
@@ -272,9 +272,9 @@ condition. So this example:
 ```yaml
 speed:
   - if: road_class == MOTORWAY
-    multiply by: 0.5
+    multiply_by: 0.5
   - else:
-    limit to: 50
+    limit_to: 50
 ```
 
 means that for all edges with `road_class == MOTORWAY` we multiply the default speed by `0.5` and for all others we
@@ -285,30 +285,30 @@ or `else if` statement did **not** match:
 ```yaml
 speed:
   - if: road_class == MOTORWAY
-    multiply by: 0.5
+    multiply_by: 0.5
   - else if: road_environment == TUNNEL
-    limit to: 70
+    limit_to: 70
   - else:
-    multiply by: 0.9
+    multiply_by: 0.9
 ```
 
 So if the first condition matches (`road_class == MOTORWAY`) the default speed is multiplied by `0.5` but the other two
 statements are ignored. Only if the first statement does not match (e.g. `road_class == PRIMARY`) the second statement
 is even considered and only if it matches (`road_environment == TUNNEL`) the default speed is limited to 70. The last
-operation (`multiply by: 0.9`) is only applied if the two previous conditions did not match.
+operation (`multiply_by: 0.9`) is only applied if the two previous conditions did not match.
 
 `else` and `else if` statements always require a preceding `if` or `else if` statement. However, there can be multiple
 'blocks' of subsequent `if/else if/else` statements in the list of rules for `speed`.
 
-`else if` is useful for example in case you have multiple `multiply by` operations, but you do not want that the speed
+`else if` is useful for example in case you have multiple `multiply_by` operations, but you do not want that the speed
 gets reduced by all of them. For the following model
 
 ```yaml
 speed:
   - if: road_class == MOTORWAY
-    multiply by: 0.5
+    multiply_by: 0.5
   - else if: road_environment == TUNNEL
-    multiply by: 0.8
+    multiply_by: 0.8
 ```
 
 only the first factor (`0.5`) will be applied even for road segments that fulfill both conditions.
@@ -326,9 +326,9 @@ to `50km/h`. Note that each area's name needs to be prefixed with `in_area_`:
 ```yaml
 speed:
   - if: in_area_custom1
-    multiply by: 0.7
+    multiply_by: 0.7
   - if: in_area_custom1
-    limit to: 50
+    limit_to: 50
 
 areas:
   custom1:
@@ -362,17 +362,17 @@ By default, the priority is `1` for every edge, so without doing anything it doe
 changing the priority of a road can yield a relative weight difference in comparison to other roads.
 
 Customizing the `priority` works very much like changing the `speed`, so in case you did not read the section about
-`speed` now should be the time to do this. The only real difference is that there is no `limit to` operator for
+`speed` now should be the time to do this. The only real difference is that there is no `limit_to` operator for
 `priority`. As a quick reminder here is an example for priority:
 
 ```yaml
 priority:
   - if: road_class == MOTORWAY
-    multiply by: 0.5
+    multiply_by: 0.5
   - else if: road_class == SECONDARY
-    multiply by: 0.9
+    multiply_by: 0.9
   - if: road_environment == TUNNEL
-    multiply by: 0.1
+    multiply_by: 0.1
 ```
 
 means that road segments with `road_class==MOTORWAY` and `road_environment==TUNNEL` get priority `0.5*0.1=0.05` and
@@ -385,7 +385,7 @@ rather which ones shall be preferred, you need to **decrease** the priority of o
 ```yaml
 priority:
   - if: road_class != CYCLEWAY
-    multiply by: 0.8
+    multiply_by: 0.8
 ```
 
 means decreasing the priority for all road_classes *except* cycleways.
@@ -396,7 +396,7 @@ same way:
 ```yaml
 priority:
   - if: in_area_custom1
-    multiply by: 0.7
+    multiply_by: 0.7
 ```
 
 To block an entire area completely set the priority value to `0`. Some other useful encoded values to restrict access to
@@ -405,11 +405,11 @@ certain roads depending on your vehicle dimensions are the following:
 ```yaml
 priority:
 - if: max_width < 2.5
-  multiply by: 0
+  multiply_by: 0
 - if: max_length < 10
-  multiply by: 0
+  multiply_by: 0
 - if: max_weight < 3.5
-  multiply by: 0
+  multiply_by: 0
 ```
 which means that the priority for all road segments that allow a maximum vehicle width of `2.5m`, a maximum vehicle
 length of `10m` or a maximum vehicle weight of `3.5tons`, or less, is zero, i.e. these "tight" road segments are
@@ -442,8 +442,8 @@ You can use a slightly shorter syntax than the one we used in the previous examp
 
 ```yaml
 speed:
-  - if: "road_class == MOTORWAY",     multiply by: 0.5
-  - if: "road_environment == TUNNEL", multiply by: 0.8
+  - if: "road_class == MOTORWAY",     multiply_by: 0.5
+  - if: "road_environment == TUNNEL", multiply_by: 0.8
 ```
 
 You can even use JSON language like this:
@@ -453,11 +453,11 @@ You can even use JSON language like this:
   "speed": [
     {
       "if": "road_class == MOTORWAY",
-      "multiply by": 0.5
+      "multiply_by": 0.5
     },
     {
       "if": "road_environment == TUNNEL",
-      "multiply by": 0.8
+      "multiply_by": 0.8
     }
   ]
 }
@@ -468,9 +468,9 @@ To use the `else` statement in JSON you need to use the `null` value where in YA
 ```yaml
 speed:
   - if: road_class == MOTORWAY
-    multiply by: 0.6
+    multiply_by: 0.6
   - else:
-    multiply by: 0.8
+    multiply_by: 0.8
 ```
 
 becomes
@@ -480,11 +480,11 @@ becomes
   "speed": [
     {
       "if": "road_class == MOTORWAY",
-      "multiply by": 0.6
+      "multiply_by": 0.6
     },
     {
       "else": null,
-      "multiply by": 0.8
+      "multiply_by": 0.8
     }
   ]
 }
@@ -542,7 +542,7 @@ the one given for the profile that we specify via the `profile` parameter. The a
 are merged into one. The two custom models are merged according to the following rules:
 
 * all expressions in the custom model of the query are appended to the existing custom model.
-* for the custom model of the query all values of `multiply by` need to be within the range of `[0, 1]` otherwise an
+* for the custom model of the query all values of `multiply_by` need to be within the range of `[0, 1]` otherwise an
   error will be thrown
 * the `distance_influence` of the query custom model overwrites the one from the server-side custom model *unless*
   it is not specified. However, the given value must not be smaller than the existing one.
@@ -571,17 +571,17 @@ So say your routing request (POST /route-custom) looks like this:
     "speed": [
       {
         "if": "road_class == MOTORWAY",
-        "multiply by": 0.8
+        "multiply_by": 0.8
       },
       {
         "else": null,
-        "multiply by": 0.9
+        "multiply_by": 0.9
       }
     ],
     "priority": [
       {
         "if": "road_environment == TUNNEL",
-        "multiply by": 0.95
+        "multiply_by": 0.95
       }
     ],
     "distance_influence": 0.7
@@ -604,7 +604,7 @@ and `my_custom_car.yml` looks like this:
 ```yaml
 speed:
   - if: surface == GRAVEL
-    limit to: 100
+    limit_to: 100
 ```
 
 then the resulting custom model used for your request will look like this:
@@ -612,16 +612,16 @@ then the resulting custom model used for your request will look like this:
 ```yaml
 speed:
   - if: surface == GRAVEL
-    limit to: 100
+    limit_to: 100
   # this was appended due to the custom model given by the request
   - if: road_class == MOTORWAY
-    multiply by: 0.8
+    multiply_by: 0.8
   - else:
-    multiply by: 0.9
+    multiply_by: 0.9
 
 priority:
   - if: road_environment == TUNNEL
-    multiply by: 0.95
+    multiply_by: 0.95
 
 distance_influence: 0.7
 ```

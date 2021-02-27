@@ -399,10 +399,10 @@ public class CustomModelParser {
         double globalMin_maxSpeed = maxSpeed;
         double blockMax_maxSpeed = 0;
         for (Statement statement : customModel.getSpeed()) {
-            // Lowering the max_speed estimate for 'limit to' only (TODO later also for MULTIPLY)
+            // Lowering the max_speed estimate for 'limit_to' only (TODO later also for MULTIPLY)
             if (statement.getOperation() == Statement.Op.LIMIT) {
                 if (statement.getValue() > maxSpeed)
-                    throw new IllegalArgumentException("Can never apply 'limit to': " + statement.getValue()
+                    throw new IllegalArgumentException("Can never apply 'limit_to': " + statement.getValue()
                             + " because maximum vehicle speed is " + maxSpeed);
 
                 switch (statement.getKeyword()) {

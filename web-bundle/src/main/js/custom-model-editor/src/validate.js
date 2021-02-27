@@ -3,13 +3,13 @@ import YAML from 'yaml';
 const rootKeys = ['speed', 'priority', 'distance_influence', 'areas'];
 const rootKeysString = `['speed', 'priority', 'distance_influence', 'areas']`;
 
-const clauses = ['if', 'else if', 'else'];
-const clausesString = `['if', 'else if', 'else']`;
-const operators = ['multiply by', 'limit to'];
-const operatorsString = `['multiply by', 'limit to']`;
+const clauses = ['if', 'else_if', 'else'];
+const clausesString = `['if', 'else_if', 'else']`;
+const operators = ['multiply_by', 'limit_to'];
+const operatorsString = `['multiply_by', 'limit_to']`;
 
-const statementKeys = ['if', 'else if', 'else', 'multiply by', 'limit to'];
-const statementKeysString = `['if', 'else if', 'else', 'multiply by', 'limit to']`;
+const statementKeys = ['if', 'else_if', 'else', 'multiply_by', 'limit_to'];
+const statementKeysString = `['if', 'else_if', 'else', 'multiply_by', 'limit_to']`;
 
 let _conditionRanges = [];
 let _areas = [];
@@ -22,20 +22,20 @@ let _areas = [];
  * distance_influence: number, optional, not null
  * areas: object, optional, not null
  *
- * the speed/priority array objects must contain a cause that can be either 'if', 'else if' or 'else' and
- * an operator that can be 'multiply by' or 'limit to'
+ * the speed/priority array objects must contain a cause that can be either 'if', 'else_if' or 'else' and
+ * an operator that can be 'multiply_by' or 'limit_to'
  *
  * the clause value must be a string and the operator value must be a number
  * except when the the clause is 'else' in which case the value must be null
  *
- * 'else if' and 'else' clauses must be preceded by an 'if' or 'else if' clause
+ * 'else_if' and 'else' clauses must be preceded by an 'if' or 'else_if' clause
  *
  * This method returns an object containing:
  *
  * - errors: a list of error objects that contain a message, a (yaml) path (as string) and
  *           the character range associated with the error as array [startInclusive, endExclusive]
  * - conditionRanges: a list of character ranges in above format that indicates the positions of
- *                    the 'conditions', i.e. the values of 'if' and 'else if' clauses
+ *                    the 'conditions', i.e. the values of 'if' and 'else_if' clauses
  * - areas: the list of area names used in the document
  */
 export function validate(yaml) {
@@ -153,8 +153,8 @@ function validateStatements(key, itemsObj) {
     }
     let prev = '';
     for (let i = 0; i < clausesList.length; ++i) {
-        if ((clausesList[i] === 'else if' || clausesList[i] === 'else') && (prev !== 'else if' && prev !== 'if'))
-            errors.push(error(`${key}[${i}]`, `'${clausesList[i]}' clause must be preceded by 'if' or 'else if'`, items[i].range));
+        if ((clausesList[i] === 'else_if' || clausesList[i] === 'else') && (prev !== 'else_if' && prev !== 'if'))
+            errors.push(error(`${key}[${i}]`, `'${clausesList[i]}' clause must be preceded by 'if' or 'else_if'`, items[i].range));
         prev = clausesList[i];
     }
     return errors;

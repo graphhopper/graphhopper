@@ -47,7 +47,7 @@ public class Statement {
     }
 
     public enum Keyword {
-        IF("if"), ELSEIF("else if"), ELSE("else");
+        IF("if"), ELSEIF("else_if"), ELSE("else");
 
         String name;
 
@@ -61,7 +61,7 @@ public class Statement {
     }
 
     public enum Op {
-        MULTIPLY("multiply by"), LIMIT("limit to");
+        MULTIPLY("multiply_by"), LIMIT("limit_to");
 
         String name;
 

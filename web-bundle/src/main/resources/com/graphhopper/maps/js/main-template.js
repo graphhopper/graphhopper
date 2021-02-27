@@ -104,15 +104,15 @@ $(document).ready(function (e) {
             + "\n# for if-conditions"
             + "\nspeed:"
             + "\n- if: road_class == MOTORWAY"
-            + "\n  multiply by: 0.8"
+            + "\n  multiply_by: 0.8"
             + "\n"
             + "\npriority:"
             + "\n- if: road_environment == TUNNEL"
-            + "\n  multiply by: 0.0"
+            + "\n  multiply_by: 0.0"
             + "\n- if: road_class == RESIDENTIAL"
-            + "\n  multiply by: 0.7"
+            + "\n  multiply_by: 0.7"
             + "\n- if: max_weight < 3"
-            + "\n  multiply by: 0.0"
+            + "\n  multiply_by: 0.0"
             + "\n";
         cmEditor.cm.focus();
         cmEditor.cm.setCursor(0);

@@ -103,7 +103,7 @@ public class CustomWeightingRouteResourceTest {
                 "priority:\n" +
                 // a faster road (see #2021)? or maybe do both?
                 "  - if: in_area_custom1\n" +
-                "    multiply by: " + priority + "\n" +
+                "    multiply_by: " + priority + "\n" +
                 "areas:\n" +
                 "  custom1:\n" +
                 "    type: \"Feature\"\n" +

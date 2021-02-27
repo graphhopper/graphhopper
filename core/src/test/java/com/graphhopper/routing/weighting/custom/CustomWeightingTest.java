@@ -236,7 +236,7 @@ class CustomWeightingTest {
         String message = assertThrows(IllegalArgumentException.class, () -> createWeighting(new CustomModel().
                 addToSpeed(If("true", Op.LIMIT, 150)))).
                 getMessage();
-        assertEquals("Can never apply 'limit to': 150.0 because maximum vehicle speed is 140.0", message);
+        assertEquals("Can never apply 'limit_to': 150.0 because maximum vehicle speed is 140.0", message);
         assertEquals(50 + 30, createWeighting(new CustomModel().
                 addToSpeed(If("true", Op.LIMIT, 72)).setDistanceInfluence(30)).getMinWeight(1000));
     }

@@ -2,8 +2,8 @@
 # standard car profile
 priority:
   - if: road_access == PRIVATE
-    multiply by: 0.1
-  - else if: road_access == DESTINATION
-    multiply by: 0.1
+    multiply_by: 0.1
+  - else_if: road_access == DESTINATION
+    multiply_by: 0.1
 
 distance_influence: 0
