@@ -40,7 +40,7 @@ import java.util.Arrays;
 
 import static com.graphhopper.http.resources.CustomWeightingRouteResourceTest.yamlToJson;
 import static com.graphhopper.http.util.TestUtils.clientTarget;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -106,7 +106,7 @@ public class CustomWeightingRouteResourceLMTest {
                 "priority:\n" +
                 "  - if: road_class == RESIDENTIAL\n" +
                 "    multiply_by: 0.8\n" +
-                "  - else if: road_class == PRIMARY\n" +
+                "  - else_if: road_class == PRIMARY\n" +
                 "    multiply_by: 1\n" +
                 "  - else:\n" +
                 "    multiply_by: 0.66\n";

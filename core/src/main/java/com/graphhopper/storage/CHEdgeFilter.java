@@ -20,12 +20,7 @@ package com.graphhopper.storage;
 
 public interface CHEdgeFilter {
 
-    CHEdgeFilter ALL_EDGES = new CHEdgeFilter() {
-        @Override
-        public final boolean accept(RoutingCHEdgeIteratorState edgeState) {
-            return true;
-        }
-    };
+    CHEdgeFilter ALL_EDGES = edgeState -> true;
 
     boolean accept(RoutingCHEdgeIteratorState edgeState);
 }
