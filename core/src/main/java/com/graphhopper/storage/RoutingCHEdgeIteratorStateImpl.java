@@ -29,6 +29,8 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
     private final EdgeIteratorState edgeState;
     private final Weighting weighting;
     private final BooleanEncodedValue accessEnc;
+    double cachedFwdWeight = Double.NaN;
+    double cachedBwdWeight = Double.NaN;
 
     public RoutingCHEdgeIteratorStateImpl(EdgeIteratorState edgeState, Weighting weighting) {
         this.edgeState = edgeState;
@@ -86,27 +88,27 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
         if (isShortcut()) {
             return ((CHEdgeIteratorState) edgeState()).getWeight();
         } else {
-            return getOrigEdgeWeight(reverse, true);
+            return getOrigEdgeWeight(reverse);
         }
     }
 
-    /**
-     * @param needWeight if true this method will return as soon as its clear that the weight is finite (no need to
-     *                   do the full computation)
-     */
-    double getOrigEdgeWeight(boolean reverse, boolean needWeight) {
-        // todo: for #1835 move the access check into the weighting
-        final EdgeIteratorState baseEdge = getBaseGraphEdgeState();
-        final boolean access = reverse
-                ? baseEdge.getReverse(accessEnc)
-                : baseEdge.get(accessEnc);
-        if (baseEdge.getBaseNode() != baseEdge.getAdjNode() && !access) {
-            return Double.POSITIVE_INFINITY;
+    double getOrigEdgeWeight(boolean reverse) {
+        if (reverse && !Double.isNaN(cachedBwdWeight)) {
+            return cachedBwdWeight;
+        } else if (!Double.isNaN(cachedFwdWeight)) {
+            return cachedFwdWeight;
         }
-//        if (!needWeight) {
-//            return 0;
-//        }
-        return weighting.calcEdgeWeight(baseEdge, reverse);
+        final EdgeIteratorState baseEdge = getBaseGraphEdgeState();
+        // todo: enable and maybe use an assert instead
+//        if (baseEdge.getBaseNode() == baseEdge.getAdjNode() && (baseEdge.get(accessEnc) != baseEdge.getReverse(accessEnc)))
+//            throw new AssertionError("Access flags for loop edges must be the same for both directions");
+        double weight = weighting.calcEdgeWeightWithAccess(baseEdge, reverse);
+        if (reverse) {
+            cachedBwdWeight = weight;
+        } else {
+            cachedFwdWeight = weight;
+        }
+        return weight;
     }
 
     private EdgeIteratorState getBaseGraphEdgeState() {

@@ -59,6 +59,8 @@ public class RoutingCHEdgeIteratorImpl extends RoutingCHEdgeIteratorStateImpl im
     public boolean next() {
         while (true) {
             boolean hasNext = edgeIterator.next();
+            cachedFwdWeight = Double.NaN;
+            cachedBwdWeight = Double.NaN;
             if (!hasNext) {
                 return false;
             } else if (hasAccess()) {
@@ -76,16 +78,12 @@ public class RoutingCHEdgeIteratorImpl extends RoutingCHEdgeIteratorStateImpl im
         if (isShortcut()) {
             return shortcutFilter.accept((CHEdgeIteratorState) edgeIterator);
         } else {
-            // c.f. comment in DefaultEdgeFilter
-            if (edgeIterator.getBaseNode() == edgeIterator.getAdjNode()) {
-                return finiteWeight(false) || finiteWeight(true);
-            }
             return shortcutFilter.fwd && finiteWeight(false) || shortcutFilter.bwd && finiteWeight(true);
         }
     }
 
     private boolean finiteWeight(boolean reverse) {
-        return !Double.isInfinite(getOrigEdgeWeight(reverse, false));
+        return !Double.isInfinite(getOrigEdgeWeight(reverse));
     }
 
 }
