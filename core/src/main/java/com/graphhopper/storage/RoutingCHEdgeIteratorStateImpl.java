@@ -29,8 +29,6 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
     private final EdgeIteratorState edgeState;
     private final Weighting weighting;
     private final BooleanEncodedValue accessEnc;
-    double cachedFwdWeight = Double.NaN;
-    double cachedBwdWeight = Double.NaN;
 
     public RoutingCHEdgeIteratorStateImpl(EdgeIteratorState edgeState, Weighting weighting) {
         this.edgeState = edgeState;
@@ -93,21 +91,11 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
     }
 
     double getOrigEdgeWeight(boolean reverse) {
-        if (reverse && !Double.isNaN(cachedBwdWeight)) {
-            return cachedBwdWeight;
-        } else if (!Double.isNaN(cachedFwdWeight)) {
-            return cachedFwdWeight;
-        }
         final EdgeIteratorState baseEdge = getBaseGraphEdgeState();
         // todo: enable and maybe use an assert instead
 //        if (baseEdge.getBaseNode() == baseEdge.getAdjNode() && (baseEdge.get(accessEnc) != baseEdge.getReverse(accessEnc)))
 //            throw new AssertionError("Access flags for loop edges must be the same for both directions");
         double weight = weighting.calcEdgeWeightWithAccess(baseEdge, reverse);
-        if (reverse) {
-            cachedBwdWeight = weight;
-        } else {
-            cachedFwdWeight = weight;
-        }
         return weight;
     }
 
