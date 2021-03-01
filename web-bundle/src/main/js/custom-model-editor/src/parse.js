@@ -1,4 +1,4 @@
-import { tokenize } from './tokenize.js';
+import {tokenize} from './tokenize.js';
 
 const comparisonOperators = ['==', '!='];
 const numericComparisonOperators = ['<', '<=', '>', '>=', '==', '!='];
@@ -40,7 +40,7 @@ function parse(expression, categories, areas) {
  * Parses a given list of tokens according to the following grammar.
  *
  * expression -> comparison (logicOperator comparison)*
- * comparison -> enumCategory comparator value | numericCategory numericComparator number | booleanCategory comparator boolean | 'in_area_' area | value'(' expression ')'
+ * comparison -> enumCategory comparator value | numericCategory numericComparator number | boolean | booleanCategory | booleanCategory comparator boolean | 'in_area_' area | value'(' expression ')'
  * logicOperator -> '&&' | '||'
  * comparator -> '==' | '!='
  * numericComparator -> '>' | '<' | '>=' | '<=' | '==' | '!='
@@ -113,6 +113,8 @@ function parseComparison() {
         return parseEnumComparison();
     } else if (isNumericCategory()) {
         return parseNumericComparison();
+    } else if (isBooleanLiteral()) {
+        return parseBooleanLiteral();
     } else if (isBooleanCategory()) {
         return parseBooleanComparison();
     } else if (isArea()) {
@@ -124,7 +126,7 @@ function parseComparison() {
     } else if (isInvalidAreaOperator()) {
         return parseInvalidAreaOperator();
     } else {
-        return error(`unexpected token '${_tokens[_idx]}'`, [_idx, _idx + 1], Object.keys(_categories).concat(_areas.map(a => 'in_area_' + a)));
+        return error(`unexpected token '${_tokens[_idx]}'`, [_idx, _idx + 1], Object.keys(_categories).concat(_areas.map(a => 'in_area_' + a)).concat(['true', 'false']));
     }
 }
 
@@ -146,7 +148,22 @@ function parseNumericComparison() {
     );
 }
 
+function parseBooleanLiteral() {
+    // rule: comparison -> boolean
+    _idx++;
+    return valid();
+}
+
 function parseBooleanComparison() {
+    // rule: comparison -> booleanCategory
+    if (_idx+1 === _tokens.length) {
+        _idx++;
+        return valid();
+    } else if (comparisonOperators.indexOf(_tokens[_idx+1]) < 0) {
+        _idx++;
+        return valid();
+    }
+
     // rule: comparison -> booleanCategory comparator boolean
     return parseTripleComparison(
         comparisonOperators,
@@ -234,6 +251,10 @@ function isNumericCategory() {
 
 function isBooleanCategory() {
     return isCategory() && _categories[_tokens[_idx]].type === 'boolean';
+}
+
+function isBooleanLiteral() {
+    return isBoolean(_tokens[_idx]);
 }
 
 function isArea() {
