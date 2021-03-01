@@ -73,7 +73,7 @@ public class JsonFeature {
         this.id = id;
     }
 
-    public void setBbox(Envelope bbox) {
+    public void setBBox(Envelope bbox) {
         this.bbox = bbox;
     }
 

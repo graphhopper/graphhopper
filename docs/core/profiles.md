@@ -333,6 +333,8 @@ speed:
 areas:
   custom1:
     type: "Feature"
+    # the following 'id' entry will be ignored and a 'properties' entry must be avoided or empty
+    id: "something"
     geometry:
       type: "Polygon"
       coordinates: [

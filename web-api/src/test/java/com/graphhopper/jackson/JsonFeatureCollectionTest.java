@@ -18,7 +18,6 @@
 package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.graphhopper.jackson.Jackson;
 import com.graphhopper.util.JsonFeature;
 import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.util.PointList;
@@ -80,7 +79,7 @@ public class JsonFeatureCollectionTest {
             prop1.put("test", "a");
             properties.put("prop1", prop1);
             jsonFeature.setProperties(properties);
-            jsonFeature.setBbox(new Envelope(102.0, 103.0, 0.0, 1));
+            jsonFeature.setBBox(new Envelope(102.0, 103.0, 0.0, 1));
             jsonFeatureCollection.getFeatures().add(jsonFeature);
         }
 

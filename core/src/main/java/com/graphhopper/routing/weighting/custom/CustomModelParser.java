@@ -34,7 +34,8 @@ import org.codehaus.commons.compiler.io.Readers;
 import org.codehaus.janino.Scanner;
 import org.codehaus.janino.*;
 import org.codehaus.janino.util.DeepCopier;
-import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
+import org.locationtech.jts.geom.Polygonal;
+import org.locationtech.jts.geom.prep.PreparedPolygon;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
@@ -135,7 +136,7 @@ public class CustomModelParser {
             String errString = "Cannot compile expression";
             if (ex instanceof CompileException)
                 errString += ", in " + ((CompileException) ex).getLocation().getFileName();
-            throw new IllegalArgumentException(errString + " " + ex.getMessage(), ex);
+            throw new IllegalArgumentException(errString + ": " + ex.getMessage(), ex);
         }
     }
 
@@ -248,7 +249,8 @@ public class CustomModelParser {
                 if (!includedAreaImports) {
                     importSourceCode.append("import " + BBox.class.getName() + ";\n");
                     importSourceCode.append("import " + GHUtility.class.getName() + ";\n");
-                    importSourceCode.append("import " + PreparedGeometryFactory.class.getName() + ";\n");
+                    importSourceCode.append("import " + PreparedPolygon.class.getName() + ";\n");
+                    importSourceCode.append("import " + Polygonal.class.getName() + ";\n");
                     importSourceCode.append("import " + JsonFeature.class.getName() + ";\n");
                     importSourceCode.append("import " + Polygon.class.getName() + ";\n");
                     includedAreaImports = true;
@@ -257,13 +259,18 @@ public class CustomModelParser {
                 String id = arg.substring(IN_AREA_PREFIX.length());
                 if (!EncodingManager.isValidEncodedValue(id))
                     throw new IllegalArgumentException("Area has invalid name: " + arg);
-                if (!customModel.getAreas().containsKey(id))
+                JsonFeature feature = customModel.getAreas().get(id);
+                if (feature == null)
                     throw new IllegalArgumentException("Area '" + id + "' wasn't found");
-                if (customModel.getAreas().get(id).getGeometry() == null)
+                if (feature.getGeometry() == null)
                     throw new IllegalArgumentException("Area '" + id + "' does not contain a geometry");
+                if (!(feature.getGeometry() instanceof Polygonal))
+                    throw new IllegalArgumentException("Currently only type=Polygon is supported for areas but was " + feature.getGeometry().getGeometryType());
+                if (feature.getProperties() != null && !feature.getProperties().isEmpty() || feature.getBBox() != null)
+                    throw new IllegalArgumentException("Bounding box and properties of area " + id + " must be empty");
                 classSourceCode.append("protected " + Polygon.class.getSimpleName() + " " + arg + ";\n");
                 initSourceCode.append("JsonFeature feature_" + id + " = (JsonFeature) areas.get(\"" + id + "\");\n");
-                initSourceCode.append("this." + arg + " = new Polygon(new PreparedGeometryFactory().create(feature_" + id + ".getGeometry()));\n");
+                initSourceCode.append("this." + arg + " = new Polygon(new PreparedPolygon((Polygonal) feature_" + id + ".getGeometry()));\n");
             } else {
                 if (!isValidVariableName(arg))
                     throw new IllegalArgumentException("Variable not supported: " + arg);

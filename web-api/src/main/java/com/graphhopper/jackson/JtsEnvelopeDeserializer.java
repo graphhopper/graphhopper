@@ -27,7 +27,7 @@ import java.io.IOException;
 
 class JtsEnvelopeDeserializer extends JsonDeserializer<Envelope> {
     @Override
-    public Envelope deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
+    public Envelope deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
         double[] bounds = jsonParser.readValueAs(double[].class);
         return new Envelope(bounds[0], bounds[2], bounds[1], bounds[3]);
     }

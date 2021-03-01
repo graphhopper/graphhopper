@@ -39,7 +39,7 @@ public class Polygon implements Shape {
     public final PreparedGeometry prepPolygon;
     public final Envelope envelope;
 
-    public Polygon(PreparedGeometry prepPolygon) {
+    public Polygon(PreparedPolygon prepPolygon) {
         this.prepPolygon = prepPolygon;
         this.envelope = prepPolygon.getGeometry().getEnvelopeInternal();
     }

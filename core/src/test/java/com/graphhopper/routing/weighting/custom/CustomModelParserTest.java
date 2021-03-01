@@ -30,7 +30,6 @@ import com.graphhopper.util.JsonFeature;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.GeometryFactory;
 
 import java.util.HashMap;
@@ -215,12 +214,12 @@ class CustomModelParserTest {
         };
         areas.put("area_1", new JsonFeature("area_1",
                 "Feature",
-                new Envelope(),
+                null,
                 new GeometryFactory().createPolygon(area_1_coordinates),
                 new HashMap<>()));
         areas.put("area_2", new JsonFeature("area_2",
                 "Feature",
-                new Envelope(),
+                null,
                 new GeometryFactory().createPolygon(area_2_coordinates),
                 new HashMap<>()));
         customModel.setAreas(areas);
