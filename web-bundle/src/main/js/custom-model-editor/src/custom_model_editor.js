@@ -162,16 +162,33 @@ class CustomModelEditor {
                 const completion = {
                     from: range[0],
                     to: range[1],
-                    list: suggestions.sort(),
+                    list: suggestions.sort().map(s => {
+                        // hints are shown to the user, but no auto-completion is actually performed
+                        if (startsWith(s, '__hint__')) {
+                            return {
+                                text: '',
+                                displayText: s.substring('__hint__'.length)
+                            }
+                        } else {
+                            return {
+                                text: s
+                            }
+                        }
+                    }),
                 };
                 CodeMirror.on(completion, "pick", function (selectedItem) {
                     // console.log(selectedItem);
                 });
                 return completion;
             },
+            completeSingle: false
         };
         this.cm.showHint(options);
     }
+}
+
+function startsWith(str, substr) {
+    return str.substr(0, substr.length) === substr;
 }
 
 export { CustomModelEditor }

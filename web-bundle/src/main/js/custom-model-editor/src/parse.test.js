@@ -73,7 +73,7 @@ describe("parse", () => {
         test_parseTokens(['a', '<', 'a1'], `invalid operator '<'`, [1, 2], ['==', '!=']);
         test_parseTokens(['bool1', '>=', 'true'], `invalid operator '>='`, [1, 2], ['==', '!=']);
         test_parseTokens(['num', '>', '0.5'], `unexpected token 'num'`, [0, 1], categoriesAndAreas);
-        test_parseTokens(['num2', '<', 'xyz'], `invalid num2: 'xyz'`, [2, 3], []);
+        test_parseTokens(['num2', '<', 'xyz'], `invalid num2: 'xyz'`, [2, 3], ['__hint__type a number']);
         test_parseTokens(['bool1', '<=', 'true'], `invalid operator '<='`, [1, 2], ['==', '!=']);
     });
 
@@ -136,7 +136,7 @@ describe("parse", () => {
         test_parse('a==a1||', `unexpected token '||'`, [5, 7], []);
         test_parse('a==a1&&(', `empty comparison`, [8, 8], []);
         test_parse(' (', `empty comparison`, [2, 2], []);
-        test_parse('a == a1 || num1 != b1', `invalid num1: 'b1'`, [19, 21], []);
+        test_parse('a == a1 || num1 != b1', `invalid num1: 'b1'`, [19, 21], ['__hint__type a number']);
         test_parse(`a == a1 || bool2 == 'false'`, `invalid bool2: ''false''`, [20, 27], ['true', 'false']);
         test_parse(`b != b1 || num2 > 0.7 && bool1 != 'true'`, `invalid bool1: ''true''`, [34, 40], ['true', 'false']);
         test_parse('a == a2 && b <= b1', `invalid operator '<='`, [13, 15], ['==', '!=']);

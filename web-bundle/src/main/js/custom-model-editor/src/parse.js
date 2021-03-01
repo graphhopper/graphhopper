@@ -62,7 +62,8 @@ function parse(expression, categories, areas) {
  * - range: the tokens range in which the (first) error occurred as list [startInclusive, endExclusive].
  *          if there are no invalid tokens, but rather something is missing the range will be
  *          [tokens.length, tokens.length]
- * - completions: a list of suggested tokens that could be used to replace the faulty ones
+ * - completions: a list of suggested tokens that could be used to replace the faulty ones. in case there is no
+ *                appropriate completion the completion might be prefixed with '__hint__'.
  *
  * An alternative to the implementation here could be using a parser library like pegjs, nearly or tree-sitter?
  *
@@ -141,7 +142,7 @@ function parseNumericComparison() {
     return parseTripleComparison(
         numericComparisonOperators,
         (category, operator, value) => isNumber(value),
-        (category, operator, value) => []
+        (category, operator, value) => ['__hint__type a number']
     );
 }
 
