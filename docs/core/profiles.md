@@ -345,9 +345,9 @@ areas:
       ]
 ```
 
-The areas are given in GeoJson format. Note that JSON can be directly copied into YAML without further modifications.
-Using the `areas` feature you can also block entire areas i.e. by multiplying the speed with `0`, but for this you
-should rather use the `priority` section that we will explain next.
+The areas are given in GeoJson format, but currently only Polygons are allowed. Note that JSON can be directly copied
+into YAML without further modifications. Using the `areas` feature you can also block entire areas i.e. by multiplying
+the speed with `0`, but for this you should rather use the `priority` section that we will explain next.
 
 #### Customizing `priority`
 
@@ -399,8 +399,17 @@ priority:
     multiply_by: 0.7
 ```
 
-To block an entire area completely set the priority value to `0`. Some other useful encoded values to restrict access to
-certain roads depending on your vehicle dimensions are the following:
+To block an entire area completely set the priority value to `0`. You can also set the priority only for certain roads
+in an area like this:
+
+```yaml
+priority:
+  - if: road_class == MOTORWAY && in_area_custom1
+    multiply_by: 0.1
+```
+
+Some other useful encoded values to restrict access to certain roads depending on your vehicle dimensions are the
+following:
 
 ```yaml
 priority:
