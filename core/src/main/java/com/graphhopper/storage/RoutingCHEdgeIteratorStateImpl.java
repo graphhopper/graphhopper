@@ -86,17 +86,27 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
         if (isShortcut()) {
             return ((CHEdgeIteratorState) edgeState()).getWeight();
         } else {
-            return getOrigEdgeWeight(reverse);
+            return getOrigEdgeWeight(reverse, true);
         }
     }
 
-    double getOrigEdgeWeight(boolean reverse) {
+    /**
+     * @param needWeight if true this method will return as soon as its clear that the weight is finite (no need to
+     *                   do the full computation)
+     */
+    double getOrigEdgeWeight(boolean reverse, boolean needWeight) {
+        // todo: for #1835 move the access check into the weighting
         final EdgeIteratorState baseEdge = getBaseGraphEdgeState();
-        // todo: enable and maybe use an assert instead
-//        if (baseEdge.getBaseNode() == baseEdge.getAdjNode() && (baseEdge.get(accessEnc) != baseEdge.getReverse(accessEnc)))
-//            throw new AssertionError("Access flags for loop edges must be the same for both directions");
-        double weight = weighting.calcEdgeWeightWithAccess(baseEdge, reverse);
-        return weight;
+        final boolean access = reverse
+                ? baseEdge.getReverse(accessEnc)
+                : baseEdge.get(accessEnc);
+        if (!access) {
+            return Double.POSITIVE_INFINITY;
+        }
+        if (!needWeight) {
+            return 0;
+        }
+        return weighting.calcEdgeWeight(baseEdge, reverse);
     }
 
     private EdgeIteratorState getBaseGraphEdgeState() {

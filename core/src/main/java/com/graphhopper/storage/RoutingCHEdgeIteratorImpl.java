@@ -81,14 +81,7 @@ public class RoutingCHEdgeIteratorImpl extends RoutingCHEdgeIteratorStateImpl im
     }
 
     private boolean finiteWeight(boolean reverse) {
-        // the problem here is that 'calculating' the weight just to find out whether the edge is accessible or not
-        // and later calculating it again when it is actually needed is slower than just calculating it once. Therefore
-        // it would be better to not do the filtering here at all. On the other hand iterating only incoming or only
-        // outgoing edges could be faster than iterating both, but probably *only* for edge-based CH where we do not
-        // use bidirectional shortcuts... *plus* so far we do not make use of this optimization! So maybe we should
-        // still provide createIn/OutEdgeExplorer, and not just createEdgeExplorer, but maybe make it return *all*
-        // original edges (no matter whether they are accessible or not) anyway?
-        return !Double.isInfinite(getOrigEdgeWeight(reverse));
+        return !Double.isInfinite(getOrigEdgeWeight(reverse, false));
     }
 
 }
