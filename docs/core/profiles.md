@@ -264,7 +264,7 @@ speed:
 which means that the speed is limited to `90km/h` for all road segments regardless of its properties. The condition
 `true` is always fulfilled.
 
-##### `else` and `else if` statements
+##### `else` and `else_if` statements
 
 The `else` statement allows you to define that some operations should be applied if an edge does **not** match a
 condition. So this example:
@@ -279,14 +279,14 @@ speed:
 
 means that for all edges with `road_class == MOTORWAY` we multiply the default speed by `0.5` and for all others we
 limit the default speed to `50` (but never both). In case you want to distinguish more than two cases (edges that match
-or match not a condition) you can use `else if` statements which are only evaluated in case the previous `if`
-or `else if` statement did **not** match:
+or match not a condition) you can use `else_if` statements which are only evaluated in case the previous `if`
+or `else_if` statement did **not** match:
 
 ```yaml
 speed:
   - if: road_class == MOTORWAY
     multiply_by: 0.5
-  - else if: road_environment == TUNNEL
+  - else_if: road_environment == TUNNEL
     limit_to: 70
   - else:
     multiply_by: 0.9
@@ -297,17 +297,17 @@ statements are ignored. Only if the first statement does not match (e.g. `road_c
 is even considered and only if it matches (`road_environment == TUNNEL`) the default speed is limited to 70. The last
 operation (`multiply_by: 0.9`) is only applied if the two previous conditions did not match.
 
-`else` and `else if` statements always require a preceding `if` or `else if` statement. However, there can be multiple
-'blocks' of subsequent `if/else if/else` statements in the list of rules for `speed`.
+`else` and `else_if` statements always require a preceding `if` or `else_if` statement. However, there can be multiple
+'blocks' of subsequent `if/else_if/else` statements in the list of rules for `speed`.
 
-`else if` is useful for example in case you have multiple `multiply_by` operations, but you do not want that the speed
+`else_if` is useful for example in case you have multiple `multiply_by` operations, but you do not want that the speed
 gets reduced by all of them. For the following model
 
 ```yaml
 speed:
   - if: road_class == MOTORWAY
     multiply_by: 0.5
-  - else if: road_environment == TUNNEL
+  - else_if: road_environment == TUNNEL
     multiply_by: 0.8
 ```
 
@@ -318,7 +318,7 @@ only the first factor (`0.5`) will be applied even for road segments that fulfil
 You can not only modify the speed of road segments based on properties as we saw in the previous examples, but you can
 also modify the speed of road segments based on their location. To do this you need to first create and add some areas
 to the `areas` section of in the custom model file. You can then use the name of these areas in the condition we used in
-the `if/else/else if` statements we saw in the previous sections.
+the `if/else/else_if` statements we saw in the previous sections.
 
 In the following example we multiply the speed of all edges in an area called `custom1` with `0.7` and also limit it
 to `50km/h`. Note that each area's name needs to be prefixed with `in_area_`:
@@ -369,7 +369,7 @@ Customizing the `priority` works very much like changing the `speed`, so in case
 priority:
   - if: road_class == MOTORWAY
     multiply_by: 0.5
-  - else if: road_class == SECONDARY
+  - else_if: road_class == SECONDARY
     multiply_by: 0.9
   - if: road_environment == TUNNEL
     multiply_by: 0.1
