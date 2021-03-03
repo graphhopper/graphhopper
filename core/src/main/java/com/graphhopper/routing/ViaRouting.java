@@ -24,6 +24,7 @@ import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.FiniteWeightFilter;
 import com.graphhopper.routing.util.NameSimilarityEdgeFilter;
 import com.graphhopper.routing.util.SnapPreventionEdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
@@ -59,7 +60,7 @@ public class ViaRouting {
 
         final EnumEncodedValue<RoadClass> roadClassEnc = lookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         final EnumEncodedValue<RoadEnvironment> roadEnvEnc = lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
-        EdgeFilter edgeFilter = createEdgeFilter(weighting);
+        EdgeFilter edgeFilter = new FiniteWeightFilter(weighting);
         EdgeFilter strictEdgeFilter = snapPreventions.isEmpty()
                 ? edgeFilter
                 : new SnapPreventionEdgeFilter(edgeFilter, roadClassEnc, roadEnvEnc, snapPreventions);
@@ -85,11 +86,6 @@ public class ViaRouting {
             throw new MultiplePointsNotFoundException(pointsNotFound);
 
         return snaps;
-    }
-
-    static EdgeFilter createEdgeFilter(final Weighting weighting) {
-        return edgeState -> !Double.isInfinite(weighting.calcEdgeWeightWithAccess(edgeState, false))
-                || !Double.isInfinite(weighting.calcEdgeWeightWithAccess(edgeState, true));
     }
 
     public static Result calcPaths(List<GHPoint> points, QueryGraph queryGraph, List<Snap> snaps, Weighting weighting, PathCalculator pathCalculator, List<String> curbsides, boolean forceCurbsides, List<Double> headings, boolean passThrough) {
