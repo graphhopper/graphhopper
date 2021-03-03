@@ -85,6 +85,7 @@ public class RouteResourceProfileSelectionTest {
         assertDistance("my_car", null, null, mode, 3563);
         assertDistance("my_bike", null, null, mode, 3085);
         assertDistance("my_feet", null, null, mode, 2935);
+        assertError("my_pink_car", null, null, mode, "The requested profile 'my_pink_car' does not exist");
     }
 
     @ParameterizedTest
