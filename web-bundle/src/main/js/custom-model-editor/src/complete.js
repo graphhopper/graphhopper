@@ -29,8 +29,6 @@ function complete(expression, pos, categories, areas) {
         const suggestions = parseResult.completions.filter(c => {
             // we need to remove our dummy character for the filtering
             const partialToken = tokenPos.token.substring(0, tokenPos.token.length - 1);
-            // todo: be careful with boolean encoded values later! c might not be a string here...
-            // todo: not supported in IE11 for example, need to provide alternative!
             return startsWith(c, partialToken);
         });
         return {

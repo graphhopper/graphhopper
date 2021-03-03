@@ -40,7 +40,8 @@ function parse(expression, categories, areas) {
  * Parses a given list of tokens according to the following grammar.
  *
  * expression -> comparison (logicOperator comparison)*
- * comparison -> enumCategory comparator value | numericCategory numericComparator number | boolean | booleanCategory | booleanCategory comparator boolean | 'in_area_' area | value'(' expression ')'
+ * comparison -> enumCategory comparator value | numericCategory numericComparator number | boolean | booleanCategory |
+ *               booleanCategory comparator boolean | 'in_area_' area | 'in_area_' area comparator boolean | value'(' expression ')'
  * logicOperator -> '&&' | '||'
  * comparator -> '==' | '!='
  * numericComparator -> '>' | '<' | '>=' | '<=' | '==' | '!='
@@ -50,7 +51,7 @@ function parse(expression, categories, areas) {
  *
  * Note that we do not care about operator precedence between && and || because our aim is not
  * actually evaluating the expression, but rather checking the validity.
- * 
+ *
  * The categories parameter is an object that maps category names to objects that contain the category type
  * `enum`, `boolean` or `numeric` and a list of possible (string) values (for `enum` only).
  *
@@ -75,8 +76,7 @@ function parseTokens(tokens, categories, areas) {
         if (v.type === 'enum') {
             if (v.values.length < 1)
                 return error(`no values given for enum category ${k}`);
-        }
-        else if (v.type !== 'boolean' && v.type !== 'numeric')
+        } else if (v.type !== 'boolean' && v.type !== 'numeric')
             return error(`unknown category type: ${v.type} for category ${k}`)
     }
 
@@ -156,10 +156,10 @@ function parseBooleanLiteral() {
 
 function parseBooleanComparison() {
     // rule: comparison -> booleanCategory
-    if (_idx+1 === _tokens.length) {
+    if (_idx + 1 === _tokens.length) {
         _idx++;
         return valid();
-    } else if (comparisonOperators.indexOf(_tokens[_idx+1]) < 0) {
+    } else if (comparisonOperators.indexOf(_tokens[_idx + 1]) < 0) {
         _idx++;
         return valid();
     }
@@ -168,7 +168,7 @@ function parseBooleanComparison() {
     return parseTripleComparison(
         comparisonOperators,
         (category, operator, value) => isBoolean(value),
-        (category, operator, value) =>['true', 'false']
+        (category, operator, value) => ['true', 'false']
     );
 }
 
@@ -180,10 +180,23 @@ function parseArea() {
     }
     const area = token.substring(`in_area_`.length)
     if (_areas.indexOf(area) < 0) {
-        return error(`unknown area: '${area}'`, [_idx, _idx+1], _areas.map(a => 'in_area_' + a));
+        return error(`unknown area: '${area}'`, [_idx, _idx + 1], _areas.map(a => 'in_area_' + a));
     }
-    _idx++;
-    return valid();
+
+    // rule: comparison -> 'in_area_' area
+    if (_idx + 1 === _tokens.length) {
+        _idx++;
+        return valid();
+    } else if (comparisonOperators.indexOf(_tokens[_idx + 1]) < 0) {
+        _idx++;
+        return valid();
+    }
+    // rule: comparison -> 'in_area_' area comparator boolean
+    return parseTripleComparison(
+        comparisonOperators,
+        (category, operator, value) => isBoolean(value),
+        (category, operator, value) => ['true', 'false']
+    );
 }
 
 function parseInvalidAreaOperator() {
@@ -192,7 +205,7 @@ function parseInvalidAreaOperator() {
         console.error(`${token} is a valid area operator and should have been detected earlier`);
         return;
     }
-    return error(`area names must be prefixed with 'in_area_'`, [_idx, _idx+1], _areas.map(a => 'in_area_' + a));
+    return error(`area names must be prefixed with 'in_area_'`, [_idx, _idx + 1], _areas.map(a => 'in_area_' + a));
 }
 
 function parseTripleComparison(allowedComparators, isValid, getAllowedValues) {
@@ -265,7 +278,7 @@ function isArea() {
 function isInvalidAreaOperator() {
     const token = _tokens[_idx];
     // typing something like in_area might be a common error so we provide some support for it
-    return typeof  token === 'string' && (token.substr(0, 3) === 'in_' || _areas.indexOf(token) >= 0);
+    return typeof token === 'string' && (token.substr(0, 3) === 'in_' || _areas.indexOf(token) >= 0);
 }
 
 function isCategory() {
@@ -293,11 +306,11 @@ function isBoolean(value) {
 }
 
 function error(error, range, completions) {
-    return { error, range, completions };
+    return {error, range, completions};
 }
 
 function valid() {
-    return { error: null, range: [], completions: [] };
+    return {error: null, range: [], completions: []};
 }
 
-export { parse, parseTokens };
+export {parse, parseTokens};
