@@ -38,7 +38,7 @@ class CustomModelEditor {
         });
 
         this.cm.on("cursorActivity", (e) => {
-            if (this._yaml)
+            if (!this._yaml)
                 return;
             // in case the auto-complete popup is active already we update it (this allows filtering values while typing
             // with an open popup)
