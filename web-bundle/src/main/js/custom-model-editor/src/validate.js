@@ -34,6 +34,8 @@ let _areas = [];
  *
  * - errors: a list of error objects that contain a message, a (yaml) path (as string) and
  *           the character range associated with the error as array [startInclusive, endExclusive]
+ * - yamlErrors: a list of errors returned by the yaml parser. using the same format except that the path is set
+ *               to 'syntax'
  * - conditionRanges: a list of character ranges in above format that indicates the positions of
  *                    the 'conditions', i.e. the values of 'if' and 'else_if' clauses
  * - areas: the list of area names used in the document
@@ -45,17 +47,26 @@ export function validate(yaml) {
         // with this option we can access the lower-level 'concrete syntax tree (cst)'. This helps us to obtain
         // the character ranges in a few places but unfortunately there are also some cases where it does
         // not help either, e.g. for null map values.
-        keepCstNodes: true
+        keepCstNodes: true,
+        prettyErrors: false
     });
-    // doc.errors might contain syntax errors we do not show like unclosed brackets,
-    // but we do not really care as long as converting to json produces valid json?!
-    // we could also show these errors as we get them from the yaml parser, but how would we
-    // translate these errors to other languages?
-    // console.log(doc.errors);
-    // console.log(JSON.stringify(doc.toJSON(), null, 2));
+    // the yaml parser returns a list of errors, but we keep them separate from the errors we find when we compare
+    // against our 'schema'
+    const yamlErrors = doc.errors.map(e => {
+        if (e.range) {
+            return error('syntax', e.message, [e.range.start, e.range.end]);
+        } else if (e.source && e.source.range) {
+            return error('syntax', e.message, [e.source.range.start, e.source.range.end]);
+        } else {
+            // last resort so to say, these errors should be rare because we do not provide very useful information
+            // to the user
+            return error('syntax', 'error', [0, yaml.length]);
+        }
+    });
     const errors = validateYamlDoc(doc);
     return {
         errors,
+        yamlErrors,
         conditionRanges: _conditionRanges,
         areas: _areas
     }
@@ -133,6 +144,8 @@ function validateStatements(key, itemsObj) {
         if (item === null) {
             const range = itemsObj.cstNode.items[i].range;
             errors.push(error(`${key}[${i}]`, `every statement must be an object with a clause ${clausesString} and an operator ${operatorsString}. given type: null`, [range.start, range.end]));
+        } else if (isYamlPair(item.type)) {
+            errors.push(error(`${key}[${i}]`, `every statement must be an object with a clause ${clausesString} and an operator ${operatorsString}. given type: ${displayType(item)}`, [item.key.range[0], item.value.range[1]]));
         } else if (!isYamlObject(item.type))
             errors.push(error(`${key}[${i}]`, `every statement must be an object with a clause ${clausesString} and an operator ${operatorsString}. given type: ${displayType(item)}`, item.range));
         else
@@ -241,7 +254,7 @@ function validateAreas(areas) {
     return errors;
 }
 
-function isValidAreaName (string) {
+function isValidAreaName(string) {
     const regex = /^[a-z][0-9A-Za-z_]*$/g
     return regex.test(string);
 }
@@ -289,6 +302,10 @@ function isYamlPlain(yamlParserType) {
     return yamlParserType === 'PLAIN';
 }
 
+function isYamlPair(yamlParserType) {
+    return yamlParserType === 'PAIR';
+}
+
 function displayType(node) {
     if (isYamlObject(node.type)) {
         return tr['object'];
@@ -300,6 +317,8 @@ function displayType(node) {
         return tr['number'];
     } else if (isBoolean(node)) {
         return tr['boolean'];
+    } else if (isPair(node)) {
+        return tr['pair'];
     } else {
         console.error(`Unknown yaml parser type ${node} ${node.type}`);
     }
@@ -317,6 +336,10 @@ function isBoolean(node) {
     return isYamlPlain(node.type) && typeof node.value === 'boolean';
 }
 
+function isPair(node) {
+    return isYamlPair(node.type);
+}
+
 // translations (english only atm)
 // todo: extract error messages as well
 const tr = {
@@ -324,5 +347,6 @@ const tr = {
     'list': 'list',
     'string': 'string',
     'number': 'number',
-    'boolean': 'boolean'
+    'boolean': 'boolean',
+    'pair': 'pair'
 }

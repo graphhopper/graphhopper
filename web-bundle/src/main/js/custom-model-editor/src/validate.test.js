@@ -134,6 +134,10 @@ describe("validate", () => {
         test_validate(`priority: [{if: condition1, limit_to: 100}, {if: condition2}]`, [
             `priority[1]: every statement must have an operator ['multiply_by', 'limit_to']. given: if, range: [44, 60]`
         ]);
+        test_validate(`speed: [ if: condition, limit_to: 100 ]`, [
+            `speed[0]: every statement must be an object with a clause ['if', 'else_if', 'else'] and an operator ['multiply_by', 'limit_to']. given type: pair, range: [9, 22]`,
+            `speed[1]: every statement must be an object with a clause ['if', 'else_if', 'else'] and an operator ['multiply_by', 'limit_to']. given type: pair, range: [24, 38]`
+        ]);
     });
 
     test('speed/priority statements conditions must be strings or booleans (or null for else)', () => {
@@ -231,6 +235,16 @@ describe("validate", () => {
         expectAreas(`areas:\n  area1: {}\n  area2: {}`, ['area1', 'area2']);
         expectAreas(`areas: { x2: {}, p_qr: {}, rst6: {}}`, ['x2', 'p_qr', 'rst6']);
     });
+
+    test(`includes yaml parser errors`, () => {
+        test_validate_yaml_parser_error(`{}[]`, [
+            `syntax: Document contains trailing content not separated by a ... or --- line, range: [2, 4]`
+        ]);
+        test_validate_yaml_parser_error(`speed: [{if: abc, limit_to: 100`, [
+            `syntax: Expected flow map to end with }, range: [28, 31]`,
+            `syntax: Expected flow sequence to end with ], range: [8, 31]`
+        ]);
+    });
 });
 
 function expectAreas(doc, areas) {
@@ -248,9 +262,31 @@ function test_validate(doc, errors) {
     // previously we put the path and message into one string. later we added range. this is a quick way to re-use the existing tests.
     // to clean this up we should check `path`, `message` and `range` separately...
     try {
-        expect(validate(doc).errors.map(e => `${e.path}: ${e.message}, range: [${e.range[0]}, ${e.range[1]}]`)).toStrictEqual(errors);
+        expect(validate(doc).errors.map(e => {
+            if (!e.range) {
+                fail(`test_validate: undefined error.range for error: ${e.path}: ${e.message}`);
+                return;
+            }
+            return `${e.path}: ${e.message}, range: [${e.range[0]}, ${e.range[1]}]`;
+        })).toStrictEqual(errors);
     } catch (e) {
         Error.captureStackTrace(e, test_validate);
+        throw e;
+    }
+}
+
+function test_validate_yaml_parser_error(doc, errors) {
+    // these are syntax errors that are caught by the yaml parser, but are not handled explicitly by our code
+    try {
+        expect(validate(doc).yamlErrors.map(e => {
+            if (!e.range) {
+                fail(`test_validate_yaml_parser_error: undefined error.range for error: ${e.path}: ${e.message}`);
+                return;
+            }
+            return `${e.path}: ${e.message}, range: [${e.range[0]}, ${e.range[1]}]`;
+        })).toStrictEqual(errors);
+    } catch (e) {
+        Error.captureStackTrace(e, test_validate_yaml_parser_error);
         throw e;
     }
 }

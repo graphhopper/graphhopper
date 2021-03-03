@@ -48,11 +48,11 @@ class CustomModelEditor {
         });
     }
 
-    set categories (categories) {
+    set categories(categories) {
         this._categories = categories;
     }
 
-    set value (value) {
+    set value(value) {
         this.cm.setValue(value);
     }
 
@@ -130,6 +130,21 @@ class CustomModelEditor {
                 });
             }
         });
+
+        // if there are no errors we consider the yamlErrors next (but most of them should be fixed at this point),
+        // catching the errors manually before we get here can be better, because this way we can provide better error
+        // messages and ranges and in some cases the user experience is better if we first show the more specific
+        // 'schema' errors and only later syntax errors like unclosed brackets etc.
+        if (errors.length === 0) {
+            validateResult.yamlErrors.forEach(err => {
+                errors.push({
+                    message: err.path + ': ' + err.message,
+                    severity: 'error',
+                    from: editor.posFromIndex(err.range[0]),
+                    to: editor.posFromIndex(err.range[1])
+                });
+            });
+        }
         if (this._validListener)
             this._validListener(errors.length === 0);
         return errors;
@@ -191,4 +206,4 @@ function startsWith(str, substr) {
     return str.substr(0, substr.length) === substr;
 }
 
-export { CustomModelEditor }
+export {CustomModelEditor}
