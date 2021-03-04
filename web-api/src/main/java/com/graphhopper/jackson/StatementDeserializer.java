@@ -41,9 +41,10 @@ class StatementDeserializer extends JsonDeserializer<Statement> {
         else if (treeNode.has(ELSEIF.getName()))
             return Statement.ElseIf(treeNode.get(ELSEIF.getName()).asText(), jsonOp, value);
         else if (treeNode.has(ELSE.getName())) {
-            if (!treeNode.get(ELSE.getName()).isNull())
-                throw new IllegalArgumentException("else cannot have expression but was " + treeNode.get(ELSE.getName()));
-            return Statement.Else(jsonOp, value);
+            JsonNode elseNode = treeNode.get(ELSE.getName());
+            if (elseNode.isNull() || elseNode.isValueNode() && elseNode.asText().isEmpty())
+                return Statement.Else(jsonOp, value);
+            throw new IllegalArgumentException("else cannot have expression but was " + treeNode.get(ELSE.getName()));
         }
 
         throw new IllegalArgumentException("Cannot find if, else_if or else for " + treeNode.toString());
