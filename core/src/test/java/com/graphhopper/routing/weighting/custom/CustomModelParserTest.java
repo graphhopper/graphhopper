@@ -225,7 +225,7 @@ class CustomModelParserTest {
         customModel.setAreas(areas);
 
         customModel.addToSpeed(If("in_area_area_1", LIMIT, 100));
-        customModel.addToSpeed(If("in_area_area_2", LIMIT, 25));
+        customModel.addToSpeed(If("!in_area_area_2", LIMIT, 25));
         customModel.addToSpeed(Else(LIMIT, 15));
 
         // No exception is thrown during createWeightingParameters

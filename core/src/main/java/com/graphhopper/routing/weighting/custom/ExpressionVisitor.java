@@ -83,9 +83,13 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
             invalidMessage = "identifier " + n + " invalid";
             return false;
         }
-        if (rv instanceof Java.Literal)
+        if (rv instanceof Java.Literal) {
             return true;
-        if (rv instanceof Java.MethodInvocation) {
+        } else if (rv instanceof Java.UnaryOperation) {
+            Java.UnaryOperation uo = (Java.UnaryOperation) rv;
+            if (uo.operator.equals("!")) return uo.operand.accept(this);
+            return false;
+        } else if (rv instanceof Java.MethodInvocation) {
             Java.MethodInvocation mi = (Java.MethodInvocation) rv;
             if (allowedMethods.contains(mi.methodName)) {
                 // skip methods like this.in() for now
