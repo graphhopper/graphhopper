@@ -333,23 +333,29 @@ speed:
 areas:
   custom1:
     type: "Feature"
-    # the following 'id' entry will be ignored and a 'properties' entry must be avoided or empty
-    id: "something"
+    id: "something" # optional, but will be ignored
+    properties: { } # optional, but will be ignored
     geometry:
       type: "Polygon"
-      coordinates: [
-        [ 10.75, 46.65 ],
-        [ 9.54, 45.65 ],
-        [ 10.75, 44.65 ],
-        [8.75, 44.65],
-        [8.75, 45.65],
-        [8.75, 46.65]
-      ]
+      coordinates: [ [
+        [ 1.525, 42.511 ],
+        [ 1.510, 42.503 ],
+        [ 1.531, 42.495 ],
+        [ 1.542, 42.505 ],
+        [ 1.525, 42.511 ]
+      ] ]
 ```
 
-The areas are given in GeoJson format, but currently only Polygons are allowed. Note that JSON can be directly copied
-into YAML without further modifications. Using the `areas` feature you can also block entire areas i.e. by multiplying
-the speed with `0`, but for this you should rather use the `priority` section that we will explain next.
+Areas are given in GeoJson format, but currently only the exact format in the above example is supported, i.e. one
+object with type `Feature`, a geometry with type `Polygon` and optional id and properties fields. Note that the
+coordinates array of `Polygon` is an array of arrays that each must describe a closed ring, i.e. the first point must be
+equal to the last. Each point is given as an array [longitude, latitude], so the coordinates array has three dimensions
+total.
+
+Since YAML is a superset of JSON you can also paste GeoJSON to the `areas` section directly.
+
+Using the `areas` feature you can also block entire areas i.e. by multiplying the speed with `0`, but for this you
+should rather use the `priority` section that we will explain next.
 
 #### Customizing `priority`
 
