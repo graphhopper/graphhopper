@@ -1,6 +1,7 @@
 import CodeMirror from "codemirror";
 import "codemirror/mode/yaml/yaml";
 import "codemirror/mode/javascript/javascript";
+import "codemirror/addon/edit/matchbrackets";
 import "codemirror/addon/hint/show-hint";
 import "codemirror/addon/lint/lint";
 import YAML from "yaml";
@@ -27,6 +28,7 @@ class CustomModelEditor {
 
         this.cm = CodeMirror(callback, {
             lineNumbers: true,
+            matchBrackets: true,
             mode: "yaml",
             extraKeys: {
                 'Ctrl-Space': this.showAutoCompleteSuggestions
