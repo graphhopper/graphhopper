@@ -7,40 +7,40 @@ describe("validate", () => {
 
     test('root must be an object', () => {
         test_validate(`[]`, [
-            `root: must be an object. possible keys: ['speed', 'priority', 'distance_influence', 'areas']. given type: list, range: [0, 2]`
+            `root: must be an object. given type: list, range: [0, 2]`
         ]);
         test_validate(`-\n-\n`, [
-            `root: must be an object. possible keys: ['speed', 'priority', 'distance_influence', 'areas']. given type: list, range: [0, 4]`
+            `root: must be an object. given type: list, range: [0, 4]`
         ]);
         test_validate(`abc`, [
-            `root: must be an object. possible keys: ['speed', 'priority', 'distance_influence', 'areas']. given type: string, range: [0, 3]`
+            `root: must be an object. given type: string, range: [0, 3]`
         ]);
         test_validate(`'abc'`, [
-            `root: must be an object. possible keys: ['speed', 'priority', 'distance_influence', 'areas']. given type: string, range: [0, 5]`
+            `root: must be an object. given type: string, range: [0, 5]`
         ]);
         test_validate(`"abc"`, [
-            `root: must be an object. possible keys: ['speed', 'priority', 'distance_influence', 'areas']. given type: string, range: [0, 5]`
+            `root: must be an object. given type: string, range: [0, 5]`
         ]);
         test_validate(`301`, [
-            `root: must be an object. possible keys: ['speed', 'priority', 'distance_influence', 'areas']. given type: number, range: [0, 3]`
+            `root: must be an object. given type: number, range: [0, 3]`
         ]);
     });
 
     test('root keys are not empty', () => {
         test_validate(`:`, [
-            `root: possible keys: ['speed', 'priority', 'distance_influence', 'areas']. given: null, range: [0, 1]`
+            `root: keys must not be null, range: [0, 1]`
         ]);
         test_validate(`''  :`, [
-            `root: possible keys: ['speed', 'priority', 'distance_influence', 'areas']. given: '', range: [0, 4]`
+            `root: keys must be non-empty and must not only consist of whitespace. given: '', range: [0, 4]`
         ]);
         test_validate(`"    " :`, [
-            `root: possible keys: ['speed', 'priority', 'distance_influence', 'areas']. given: '    ', range: [0, 7]`
+            `root: keys must be non-empty and must not only consist of whitespace. given: '    ', range: [0, 7]`
         ]);
         test_validate(`"\n" :`, [
-            `root: possible keys: ['speed', 'priority', 'distance_influence', 'areas']. given: ' ', range: [0, 4]`
+            `root: keys must be non-empty and must not only consist of whitespace. given: ' ', range: [0, 4]`
         ]);
         test_validate(`"" \t: \n `, [
-            `root: possible keys: ['speed', 'priority', 'distance_influence', 'areas']. given: '', range: [0, 4]`
+            `root: keys must be non-empty and must not only consist of whitespace. given: '', range: [0, 4]`
         ]);
     });
 
@@ -51,10 +51,13 @@ describe("validate", () => {
         test_validate(`spee: [dprio]`, [
             `root: possible keys: ['speed', 'priority', 'distance_influence', 'areas']. given: 'spee', range: [0, 4]`
         ]);
+        test_validate(`[]: abc`, [
+            `root: keys must be strings. given type: list, range: [0, 2]`
+        ]);
         // todo: this error message is not very helpful unfortunately, maybe it would be better to check
         // one section after the other instead of first checking all root keys?
         test_validate(`speed: \n    multiply_by: 0.3\n  - if: condition`, [
-            `root: possible keys: ['speed', 'priority', 'distance_influence', 'areas']. given: null, range: [0, 46]`
+            `root: keys must not be null, range: [0, 46]`
         ]);
     });
 
@@ -73,10 +76,10 @@ describe("validate", () => {
             `priority: must not be null, range: [29, 37]`
         ]);
         test_validate(`speed: \n  -`, [
-            `speed[0]: every statement must be an object with a clause ['if', 'else_if', 'else'] and an operator ['multiply_by', 'limit_to']. given type: null, range: [10, 11]`
+            `speed[0]: must not be null, range: [10, 11]`
         ]);
         test_validate(`speed:\n  - {if: condition, multiply_by: 0.9}\n  -`, [
-            `speed[1]: every statement must be an object with a clause ['if', 'else_if', 'else'] and an operator ['multiply_by', 'limit_to']. given type: null, range: [47, 48]`
+            `speed[1]: must not be null, range: [47, 48]`
         ]);
     });
 
@@ -110,7 +113,7 @@ describe("validate", () => {
 
     test('speed/priority statements keys are valid', () => {
         test_validate(`speed: ['abc']`, [
-            `speed[0]: every statement must be an object with a clause ['if', 'else_if', 'else'] and an operator ['multiply_by', 'limit_to']. given type: string, range: [8, 13]`
+            `speed[0]: must be an object. given type: string, range: [8, 13]`
         ]);
         test_validate(`speed: [{abc: def}]`, [
             `speed[0]: possible keys: ['if', 'else_if', 'else', 'multiply_by', 'limit_to']. given: 'abc', range: [9, 12]`
@@ -124,7 +127,7 @@ describe("validate", () => {
         ]);
         test_validate(`priority: [{if: condition, limit_to: 100}, {if: condition, else: null, multiply_by: 0.3}]`, [
             `priority[1]: too many keys. maximum: 2. given: else,if,multiply_by, range: [43, 88]`
-        ])
+        ]);
         test_validate(`priority: [{limit_to: 100, multiply_by: 0.3}]`, [
             `priority[0]: every statement must have a clause ['if', 'else_if', 'else']. given: limit_to,multiply_by, range: [11, 44]`
         ]);
@@ -135,35 +138,35 @@ describe("validate", () => {
             `priority[1]: every statement must have an operator ['multiply_by', 'limit_to']. given: if, range: [44, 60]`
         ]);
         test_validate(`speed: [ if: condition, limit_to: 100 ]`, [
-            `speed[0]: every statement must be an object with a clause ['if', 'else_if', 'else'] and an operator ['multiply_by', 'limit_to']. given type: pair, range: [9, 22]`,
-            `speed[1]: every statement must be an object with a clause ['if', 'else_if', 'else'] and an operator ['multiply_by', 'limit_to']. given type: pair, range: [24, 38]`
+            `speed[0]: must be an object. given type: pair, range: [9, 22]`,
+            `speed[1]: must be an object. given type: pair, range: [24, 38]`
         ]);
     });
 
     test('speed/priority statements conditions must be strings or booleans (or null for else)', () => {
         test_validate(`speed: [{if: condition, limit_to: 30}, {else: condition, multiply_by: 0.4}]`, [
-            `speed[1]: the value of 'else' must be null. given: 'condition', range: [46, 55]`
+            `speed[1][else]: must be null. given: 'condition', range: [46, 55]`
         ]);
         test_validate(`priority: [{if : [], multiply_by: 0.4}]`, [
-            `priority[0]: the value of 'if' must be a string or boolean. given type: list, range: [17, 19]`
+            `priority[0][if]: must be a string or boolean. given type: list, range: [17, 19]`
         ])
         test_validate(`priority: [{if : {}, multiply_by: 0.4}]`, [
-            `priority[0]: the value of 'if' must be a string or boolean. given type: object, range: [17, 19]`
+            `priority[0][if]: must be a string or boolean. given type: object, range: [17, 19]`
         ])
         test_validate(`priority: [{if : 35, multiply_by: 0.4}]`, [
-            `priority[0]: the value of 'if' must be a string or boolean. given type: number, range: [17, 19]`
+            `priority[0][if]: must be a string or boolean. given type: number, range: [17, 19]`
         ])
         test_validate(`speed: [{if: condition, multiply_by: 0.2}, {else_if: 3.4, limit_to: 12}]`, [
-            `speed[1]: the value of 'else_if' must be a string or boolean. given type: number, range: [53, 56]`
+            `speed[1][else_if]: must be a string or boolean. given type: number, range: [53, 56]`
         ]);
         test_validate(`speed:\n  - if:     \n    limit_to: 100`, [
-            `speed[0]: the value of 'if' must be a string or boolean. given type: null, range: [11, 13]`
+            `speed[0][if]: must be a string or boolean. given type: null, range: [11, 13]`
         ]);
         test_validate(`speed: [{if: condition, multiply_by: 0.2}, {else_if: , limit_to: 12}]`, [
-            `speed[1]: the value of 'else_if' must be a string or boolean. given type: null, range: [44, 51]`
+            `speed[1][else_if]: must be a string or boolean. given type: null, range: [44, 51]`
         ]);
         test_validate(`speed: [{limit_to: 100, if:`, [
-            `speed[0]: the value of 'if' must be a string or boolean. given type: null, range: [24, 26]`
+            `speed[0][if]: must be a string or boolean. given type: null, range: [24, 26]`
         ]);
         test_validate(`speed: [{if: true, multiply_by: 0.15}]`, []);
     });
@@ -183,16 +186,16 @@ describe("validate", () => {
 
     test('speed/priority operator values must be numbers', () => {
         test_validate(`speed: [{if: condition, multiply_by: []}]`, [
-            `speed[0]: the value of 'multiply_by' must be a number. given type: list, range: [37, 39]`
+            `speed[0][multiply_by]: must be a number. given type: list, range: [37, 39]`
         ]);
         test_validate(`priority: [{if: condition, multiply_by: {}}]`, [
-            `priority[0]: the value of 'multiply_by' must be a number. given type: object, range: [40, 42]`
+            `priority[0][multiply_by]: must be a number. given type: object, range: [40, 42]`
         ]);
         test_validate(`speed: [{if: condition, limit_to: abc}]`, [
-            `speed[0]: the value of 'limit_to' must be a number. given type: string, range: [34, 37]`
+            `speed[0][limit_to]: must be a number. given type: string, range: [34, 37]`
         ]);
         test_validate(`speed: [{if: condition, limit_to: }]`, [
-            `speed[0]: the value of 'limit_to' must be a number. given type: null, range: [24, 32]`
+            `speed[0][limit_to]: must be a number. given type: null, range: [24, 32]`
         ])
     });
 
@@ -215,25 +218,132 @@ describe("validate", () => {
     test('area names must be strings', () => {
         test_validate(`areas: { : {}}`, [`areas: keys must not be null, range: [7, 14]`]);
         test_validate(`areas: { [] : {}}`, [`areas: keys must be strings. given type: list, range: [9, 12]`]);
-        test_validate(`areas: { '' : {}}`, [`areas: keys must not be empty. given: '', range: [9, 12]`]);
-        test_validate(`areas: {    "   " : {}}`, [`areas: invalid area name: '   ', only a-z, digits and _ are allowed, range: [12, 18]`]);
-        test_validate(`areas: {    " abc  " : {}}`, [`areas: invalid area name: ' abc  ', only a-z, digits and _ are allowed, range: [12, 21]`]);
-        test_validate(`areas: {    "a bc" : {}}`, [`areas: invalid area name: 'a bc', only a-z, digits and _ are allowed, range: [12, 19]`]);
-        test_validate(`areas: {    "_abc" : {}}`, [`areas: invalid area name: '_abc', only a-z, digits and _ are allowed, range: [12, 19]`]);
-        test_validate(`areas: {    "9abc" : {}}`, [`areas: invalid area name: '9abc', only a-z, digits and _ are allowed, range: [12, 19]`]);
-        test_validate(`areas: {    "a__9bc" : {}}`, []);
+        test_validate(`areas: { '' : {}}`, [`areas: keys must be non-empty and must not only consist of whitespace. given: '', range: [9, 12]`]);
+        test_validate(`areas: {    "   " : {}}`, [`areas: keys must be non-empty and must not only consist of whitespace. given: '   ', range: [12, 18]`]);
+        test_validate(`areas: {    " abc  " : {}}`, [`areas: names may only contain a-z, digits and _. given: ' abc  ', range: [12, 21]`]);
+        test_validate(`areas: {    "a bc" : {}}`, [`areas: names may only contain a-z, digits and _. given: 'a bc', range: [12, 19]`]);
+        test_validate(`areas: {    "_abc" : {}}`, [`areas: names may only contain a-z, digits and _. given: '_abc', range: [12, 19]`]);
+        test_validate(`areas: {    "9abc" : {}}`, [`areas: names may only contain a-z, digits and _. given: '9abc', range: [12, 19]`]);
     });
 
     test(`area names must be unique`, () => {
-        test_validate(`areas:\n  area1: {}\n  area2: {}\n  area3: {}`, []);
         test_validate(`areas:\n  area1: {}\n  area2: {}\n  area1: {}`, [
             `areas: keys must be unique. duplicate: 'area1', range: [33, 38]`
         ]);
     });
 
     test(`area names get returned correctly`, () => {
-        expectAreas(`areas:\n  area1: {}\n  area2: {}`, ['area1', 'area2']);
-        expectAreas(`areas: { x2: {}, p_qr: {}, rst6: {}}`, ['x2', 'p_qr', 'rst6']);
+        expectAreaNames(`areas:\n  area1: {}\n  area2: {}`, ['area1', 'area2']);
+        expectAreaNames(`areas: { x2: {}, p_qr: {}, rst6: {}}`, ['x2', 'p_qr', 'rst6']);
+    });
+
+    test('areas must be objects', () => {
+        test_validate(`areas: {area1: `, [
+            `areas[area1]: must not be null, range: [8, 13]`
+        ]);
+
+        test_validate(`areas:\n  area1: []\n  area2: abc\n  area3: 100`, [
+            `areas[area1]: must be an object. given type: list, range: [16, 18]`,
+            `areas[area2]: must be an object. given type: string, range: [28, 31]`,
+            `areas[area3]: must be an object. given type: number, range: [41, 44]`
+        ]);
+    });
+
+    test('area keys', () => {
+        test_validate(`areas:\n  area1:\n    x: y\n    p: q`, [
+            `areas[area1]: possible keys: ['type', 'geometry', 'id', 'properties']. given: 'x', range: [20, 21]`,
+            `areas[area1]: possible keys: ['type', 'geometry', 'id', 'properties']. given: 'p', range: [29, 30]`
+        ]);
+
+        test_validate(`areas:\n  area1:\n    type: y\n    id: q`, [
+            `areas[area1]: missing 'geometry'. given: ['type', 'id'], range: [20, 37]`
+        ]);
+
+        test_validate(`areas: { area1: { geometry: {}`, [
+            `areas[area1]: missing 'type'. given: ['geometry'], range: [16, 30]`
+        ]);
+    });
+
+    test('area values', () => {
+        test_validate(`areas: {area1: { type: 'Future', geometry: }}`, [
+            `areas[area1][type]: must be 'Feature'. given: 'Future', range: [23, 31]`,
+            `areas[area1][geometry]: must not be null, range: [33, 41]`
+        ]);
+        test_validate(`areas: {area1: { type: 'Feature', geometry: []}}`, [
+            `areas[area1][geometry]: must be an object. given type: list, range: [44, 46]`
+        ]);
+        const validGeometry = `{type: Polygon, coordinates: [[[1,1], [2,2], [3,3], [1,1]]]}`;
+        test_validate(`areas: {area1: { type: 'Feature', geometry: ${validGeometry}, properties: []}}`, [
+            `areas[area1][properties]: must be an object. given type: list, range: [118, 120]`
+        ]);
+        test_validate(`areas: {area1: { type: 'Feature', geometry: ${validGeometry}, id: 123}}`, [
+            `areas[area1][id]: must be a string. given type: number, range: [110, 113]`
+        ]);
+    });
+
+    test('area geometry', () => {
+        test_validate(`areas: {area1: { type: 'Feature', geometry: {type: bla} }}`, [
+            `areas[area1][geometry]: missing 'coordinates'. given: ['type'], range: [44, 56]`
+        ]);
+        test_validate(`areas: {area1: { type: 'Feature', geometry: {teip: bla} }}`, [
+            `areas[area1][geometry]: possible keys: ['type', 'coordinates']. given: 'teip', range: [45, 49]`
+        ]);
+        test_validate(`areas: {area1: { type: 'Feature', geometry: {coordinates: [[[1,1], [2,2], [3,3], [1,1]]]} }}`, [
+            `areas[area1][geometry]: missing 'type'. given: ['coordinates'], range: [44, 90]`
+        ]);
+        test_validate(`areas: {area1: { type: 'Feature', geometry: {type: , coordinates: [[[1,1], [2,2], [3,3], [1,1]]]} }}`, [
+            `areas[area1][geometry][type]: must not be null, range: [45, 49]`
+        ]);
+        test_validate(`areas: {area1: { type: 'Feature', geometry: {type: bla, coordinates: [[[1,1], [2,2], [3,3], [1,1]]]} }}`, [
+            `areas[area1][geometry][type]: must be 'Polygon'. given: 'bla', range: [51, 54]`
+        ]);
+        test_validate(`areas: {area1: { type: 'Feature', geometry: {type: 'Polygon', coordinates: } }}`, [
+            `areas[area1][geometry][coordinates]: must not be null, range: [62, 73]`
+        ]);
+        test_validate(`areas: {area1: { type: 'Feature', geometry: {type: "Polygon", coordinates: abc} }}`, [
+            `areas[area1][geometry][coordinates]: must be a list. given type: string, range: [75, 78]`
+        ]);
+    });
+
+    test('area geometry coordinates list', () => {
+        test_validate(`areas: {area1: { type: 'Feature', geometry: {type: Polygon, coordinates: []} }}`, [
+            `areas[area1][geometry][coordinates]: minimum length: 1, given: 0, range: [73, 75]`
+        ]);
+        test_validate(`areas: {area1: { type: 'Feature', geometry: {type: Polygon, coordinates: [abc]} }}`, [
+            `areas[area1][geometry][coordinates][0]: must be a list. given type: string, range: [74, 77]`
+        ]);
+        // todo: check range and whitespace again
+        test_validate(`areas:\n area1:\n  type: Feature\n  geometry:\n   type: Polygon\n   coordinates: \n    - \n   `, [
+            `areas[area1][geometry][coordinates][0]: must not be null, range: [81, 83]`,
+        ]);
+        test_validate(`areas: {area1: { type: 'Feature', geometry: {type: Polygon, coordinates: [{}, abc]} }}`, [
+            `areas[area1][geometry][coordinates][0]: must be a list. given type: object, range: [74, 76]`,
+            `areas[area1][geometry][coordinates][1]: must be a list. given type: string, range: [78, 81]`
+        ]);
+        test_validate(`areas: {area1: { type: 'Feature', geometry: {type: Polygon, coordinates: [[]]} }}`, [
+            `areas[area1][geometry][coordinates][0]: minimum length: 4, given: 0, range: [74, 76]`
+        ]);
+        test_validate(`areas: {area1: { type: 'Feature', geometry: {type: Polygon, coordinates: [[], [], [], []]} }}`, [
+            `areas[area1][geometry][coordinates][0]: minimum length: 4, given: 0, range: [74, 76]`,
+            `areas[area1][geometry][coordinates][1]: minimum length: 4, given: 0, range: [78, 80]`,
+            `areas[area1][geometry][coordinates][2]: minimum length: 4, given: 0, range: [82, 84]`,
+            `areas[area1][geometry][coordinates][3]: minimum length: 4, given: 0, range: [86, 88]`
+        ]);
+        test_validate(`areas: {area1: { type: 'Feature', geometry: {type: Polygon, coordinates: [[[0, 0], [1, p], [2, 2], [x, 0]]]} }}`, [
+            `areas[area1][geometry][coordinates][0][1][1]: must be a number, range: [87, 88]`,
+            `areas[area1][geometry][coordinates][0][3][0]: must be a number, range: [100, 101]`,
+        ]);
+        test_validate(`areas: {area1: { type: 'Feature', geometry: {type: Polygon, coordinates: [[[0, 0], [1, 1], [2, 2], [0, 0, p]]]} }}`, [
+            `areas[area1][geometry][coordinates][0][3]: maximum length: 2, given: 3, range: [99, 108]`
+        ]);
+        test_validate(`areas: {area1: { type: 'Feature', geometry: {type: Polygon, coordinates: [[[1, 2], [3, 4], [5, 6], [1.1, 2.2]]]} }}`, [
+            `areas[area1][geometry][coordinates][0]: the last point must be equal to the first, range: [99, 109]`
+        ]);
+        test_validate(`areas: {area1: { type: 'Feature', geometry: {type: Polygon, coordinates: [[[100, 2], [3, 400], [5, 6], [1.1, 2.2]]]} }}`, [
+            `areas[area1][geometry][coordinates][0][0][0]: latitude must be in [-90, +90], range: [76, 79]`,
+            `areas[area1][geometry][coordinates][0][1][1]: longitude must be in [-180, +180], range: [89, 92]`
+        ]);
+        test_validate(`areas: {area1: { type: 'Feature', geometry: {type: Polygon, coordinates: [[[1, 2], [3, 4], [5, 6], [1, 2]]]} }}`, []);
     });
 
     test(`includes yaml parser errors`, () => {
@@ -247,13 +357,12 @@ describe("validate", () => {
     });
 });
 
-function expectAreas(doc, areas) {
+function expectAreaNames(doc, areas) {
     try {
         const res = validate(doc);
-        expect(res.errors).toStrictEqual([]);
         expect(res.areas).toStrictEqual(areas);
     } catch (e) {
-        Error.captureStackTrace(e, expectAreas);
+        Error.captureStackTrace(e, expectAreaNames);
         throw e;
     }
 }
