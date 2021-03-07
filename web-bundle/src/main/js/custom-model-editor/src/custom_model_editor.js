@@ -8,6 +8,7 @@ import YAML from "yaml";
 import {validate} from "./validate.js";
 import {complete} from "./complete.js";
 import {parse} from "./parse.js";
+import {completeYaml} from "./yaml_complete";
 
 
 class CustomModelEditor {
@@ -42,8 +43,8 @@ class CustomModelEditor {
         this.cm.on("cursorActivity", (e) => {
             if (!this._yaml)
                 return;
-            // in case the auto-complete popup is active already we update it (this allows filtering values while typing
-            // with an open popup)
+            // we update the auto complete window to allows filtering values while typing with an open popup)
+            this.cm.closeHint();
             if (this.cm.state.completionActive) {
                 this.showAutoCompleteSuggestions();
             }
@@ -155,22 +156,40 @@ class CustomModelEditor {
     showAutoCompleteSuggestions = () => {
         const validateResult = validate(this.cm.getValue());
         const cursor = this.cm.indexFromPos(this.cm.getCursor());
-        validateResult.conditionRanges
-            .map(cr => {
-                const condition = this.cm.getValue().substring(cr[0], cr[1]);
-                const offset = cr[0];
-                // note that we allow the cursor to be at the end (inclusive!) of the range
-                if (cursor >= offset && cursor <= cr[1]) {
-                    const completeRes = complete(condition, cursor - offset, this._categories, validateResult.areas);
-                    if (completeRes.suggestions.length > 0) {
-                        const range = [
-                            this.cm.posFromIndex(completeRes.range[0] + offset),
-                            this.cm.posFromIndex(completeRes.range[1] + offset),
-                        ];
-                        this._suggest(range, completeRes.suggestions);
-                    }
+        const completeRes = completeYaml(this.cm.getValue(), cursor);
+        if (completeRes.suggestions.length > 0) {
+            if (completeRes.suggestions.length === 1 && completeRes.suggestions[0] === `__hint__type a condition`) {
+                // if the yaml completion suggests entering a condition we run the condition completion on the found
+                // condition range instead
+                const condition = this.cm.getValue().substring(completeRes.range[0], completeRes.range[1]);
+                const offset = completeRes.range[0];
+                const completeConditionRes = complete(condition, cursor - offset, this._categories, validateResult.areas);
+                if (completeConditionRes.suggestions.length > 0) {
+                    const range = [
+                        this.cm.posFromIndex(completeConditionRes.range[0] + offset),
+                        this.cm.posFromIndex(completeConditionRes.range[1] + offset)
+                    ];
+                    this._suggest(range, completeConditionRes.suggestions);
                 }
-            });
+            } else {
+                // limit the replacement range to the current line and do not include the new line character at the
+                // end of the line. otherwise auto-complete messes up the following lines.
+                const currLineStart = this.cm.indexFromPos({line: this.cm.getCursor().line, ch: 0});
+                const currLineEnd = this.cm.indexFromPos({line: this.cm.getCursor().line + 1, ch: 0});
+                const start = Math.max(currLineStart, completeRes.range[0]);
+                let stop = Math.min(currLineEnd, completeRes.range[1]);
+                if (stop > start && /\r\n|\r|\n/g.test(this.cm.getValue()[stop - 1]))
+                    stop--;
+                const range = [
+                    this.cm.posFromIndex(start),
+                    this.cm.posFromIndex(stop)
+                ];
+                // filter suggestions based on existing value
+                const suggestions = completeRes.suggestions.filter(s =>
+                    startsWith(s, this.cm.getValue().substring(start, stop).trim()));
+                this._suggest(range, suggestions);
+            }
+        }
     }
 
     _suggest = (range, suggestions) => {
