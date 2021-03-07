@@ -136,14 +136,21 @@ And there are others that take on a numeric value, like:
 *Important note: Whenever you want to use any of these categories for a custom profile you need to add them to
 `graph.encoded_values` in `config.yml`.*
 
-### Creating the `custom_model_file`: Setting up a custom model
+### Setting up a custom model
 
 As we saw in one of the previous sections, the custom weighting function has three parameters that you can adjust:
 speed, priority and distance_influence. You can set up rules that determine these parameters from the edge's properties.
-A set of such rules is called a 'custom model' and it is written in a dedicated YAML or JSON file,
-the `custom_model_file`. We will explain how to set up these rules. Customizing speed and priority is very similar, so
-we will explain most of the details you need to know for speed, but they can be applied very much the same way for
-priority as well.
+A set of such rules is called a 'custom model' and it is written in the YAML language. If you are not familiar with
+YAML don't panic. Just make sure you know the very basic concepts like strings, numbers, lists and objects and you 
+should know enough to understand and use the custom model syntax. But be warned, YAML uses indentation to separate objects,
+lists etc. from each other and whitespace is an important part of the syntax.
+
+In the following we will explain how to set up the custom model rules. The rules for speed and priority are very 
+similar, so in our examples we will first concentrate on the speed rules, but as you will see they can be applied very
+much the same way for priority as well.
+
+The custom model can be entered in the custom model box of the web UI or for server configuration it can either be written
+within the routing profiles or a dedicated file that is referenced from the routing profiles (`custom_model_file`).
 
 #### The custom model language by the example of customizing `speed`
 
