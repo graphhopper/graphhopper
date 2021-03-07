@@ -138,8 +138,7 @@ describe("validate", () => {
             `priority[1]: every statement must have an operator ['multiply_by', 'limit_to']. given: if, range: [44, 60]`
         ]);
         test_validate(`speed: [ if: condition, limit_to: 100 ]`, [
-            `speed[0]: must be an object. given type: pair, range: [9, 22]`,
-            `speed[1]: must be an object. given type: pair, range: [24, 38]`
+            `speed: must not contain pairs, range: [7, 39]`
         ]);
     });
 
@@ -167,6 +166,16 @@ describe("validate", () => {
         ]);
         test_validate(`speed: [{limit_to: 100, if:`, [
             `speed[0][if]: must be a string or boolean. given type: null, range: [24, 26]`
+        ]);
+        test_validate(`speed: [ if:`, [
+            `speed[0]: must be an object. given type: string, range: [9, 11]`,
+            `speed[1]: must not be null, range: [11, 12]`
+        ]);
+        test_validate(`speed: [ if: `, [
+            `speed: must not contain pairs, range: [7, 13]`,
+        ]);
+        test_validate(`speed: [ if: if: `, [
+            `speed: must not contain pairs, range: [7, 17]`
         ]);
         test_validate(`speed: [{if: true, multiply_by: 0.15}]`, []);
     });

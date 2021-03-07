@@ -285,7 +285,10 @@ function validateList(path, node, minLength, maxLength, validateListItem) {
             const range = node.cstNode.items[i].range;
             errors.push(error(`${path}[${i}]`, `must not be null`, [range.start, range.end]));
         } else if (isYamlPair(item.type)) {
-            errors.push(error(`${path}[${i}]`, `must be an object. given type: ${displayType(item)}`, [item.key.range[0], item.value.range[1]]));
+            // this is a bit ugly. we do not reliably get useful range information, e.g. for nested pairs
+            // so we fallback to the range of the entire node. maybe related: https://github.com/eemeli/yaml/discussions/231
+            errors.push(error(`${path}`, `must not contain pairs`, node.range));
+            break;
         } else {
             errors.push.apply(errors, validateListItem(`${path}[${i}]`, item, i));
         }
@@ -332,6 +335,8 @@ function isValidAreaName(string) {
 }
 
 function validateObject(path, obj, keyIsValid, validateKeys, message, validateKeyValuePair) {
+    if (obj.value === null)
+        return [error(path, `must not be null`, obj.range)];
     if (!isYamlObject(obj.type))
         return [error(path, `must be an object. given type: ${displayType(obj)}`, obj.range)];
 
