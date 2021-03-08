@@ -41,7 +41,7 @@ function parse(expression, categories, areas) {
  *
  * expression -> comparison (logicOperator comparison)*
  * comparison -> enumCategory comparator value | numericCategory numericComparator number | boolean | booleanCategory |
- *               booleanCategory comparator boolean | 'in_area_' area | 'in_area_' area comparator boolean | value'(' expression ')'
+ *               booleanCategory comparator boolean | 'in_' area | 'in_' area comparator boolean | value'(' expression ')'
  * logicOperator -> '&&' | '||'
  * comparator -> '==' | '!='
  * numericComparator -> '>' | '<' | '>=' | '<=' | '==' | '!='
@@ -126,7 +126,7 @@ function parseComparison() {
     } else if (isInvalidAreaOperator()) {
         return parseInvalidAreaOperator();
     } else {
-        return error(`unexpected token '${_tokens[_idx]}'`, [_idx, _idx + 1], Object.keys(_categories).concat(_areas.map(a => 'in_area_' + a)).concat(['true', 'false']));
+        return error(`unexpected token '${_tokens[_idx]}'`, [_idx, _idx + 1], Object.keys(_categories).concat(_areas.map(a => 'in_' + a)).concat(['true', 'false']));
     }
 }
 
@@ -174,16 +174,16 @@ function parseBooleanComparison() {
 
 function parseArea() {
     const token = _tokens[_idx];
-    if (token.length < `in_area_`.length) {
-        console.error(`expected something like 'in_area_xyz', but got: '${token}'`);
+    if (token.length < `in_`.length) {
+        console.error(`expected something like 'in_xyz', but got: '${token}'`);
         return;
     }
-    const area = token.substring(`in_area_`.length)
+    const area = token.substring(`in_`.length)
     if (_areas.indexOf(area) < 0) {
-        return error(`unknown area: '${area}'`, [_idx, _idx + 1], _areas.map(a => 'in_area_' + a));
+        return error(`unknown area: '${area}'`, [_idx, _idx + 1], _areas.map(a => 'in_' + a));
     }
 
-    // rule: comparison -> 'in_area_' area
+    // rule: comparison -> 'in_' area
     if (_idx + 1 === _tokens.length) {
         _idx++;
         return valid();
@@ -191,7 +191,7 @@ function parseArea() {
         _idx++;
         return valid();
     }
-    // rule: comparison -> 'in_area_' area comparator boolean
+    // rule: comparison -> 'in_' area comparator boolean
     return parseTripleComparison(
         comparisonOperators,
         (category, operator, value) => isBoolean(value),
@@ -201,11 +201,11 @@ function parseArea() {
 
 function parseInvalidAreaOperator() {
     const token = _tokens[_idx];
-    if (token.substring(0, 8) === `in_area_`) {
+    if (token.substring(0, 3) === `in_`) {
         console.error(`${token} is a valid area operator and should have been detected earlier`);
         return;
     }
-    return error(`area names must be prefixed with 'in_area_'`, [_idx, _idx + 1], _areas.map(a => 'in_area_' + a));
+    return error(`area names must be prefixed with 'in_'`, [_idx, _idx + 1], _areas.map(a => 'in_' + a));
 }
 
 function parseTripleComparison(allowedComparators, isValid, getAllowedValues) {
@@ -272,13 +272,13 @@ function isBooleanLiteral() {
 
 function isArea() {
     const token = _tokens[_idx];
-    return typeof token === 'string' && token.substr(0, 8) === 'in_area_';
+    return typeof token === 'string' && token.substr(0, 3) === 'in_';
 }
 
 function isInvalidAreaOperator() {
     const token = _tokens[_idx];
-    // typing something like in_area might be a common error so we provide some support for it
-    return typeof token === 'string' && (token.substr(0, 3) === 'in_' || _areas.indexOf(token) >= 0);
+    // typing something like 'area12' might be a common error so we provide some support for it
+    return typeof token === 'string' && _areas.indexOf(token) >= 0;
 }
 
 function isCategory() {

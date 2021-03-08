@@ -224,8 +224,8 @@ class CustomModelParserTest {
                 new HashMap<>()));
         customModel.setAreas(areas);
 
-        customModel.addToSpeed(If("in_area_area_1", LIMIT, 100));
-        customModel.addToSpeed(If("!in_area_area_2", LIMIT, 25));
+        customModel.addToSpeed(If("in_area_1", LIMIT, 100));
+        customModel.addToSpeed(If("!in_area_2", LIMIT, 25));
         customModel.addToSpeed(Else(LIMIT, 15));
 
         // No exception is thrown during createWeightingParameters
@@ -236,9 +236,9 @@ class CustomModelParserTest {
         CustomModel customModel2 = new CustomModel();
         customModel2.setAreas(areas);
 
-        customModel2.addToSpeed(If("in_area_area_1", LIMIT, 100));
-        customModel2.addToSpeed(If("in_area_area_2", LIMIT, 25));
-        customModel2.addToSpeed(If("in_area_area_3", LIMIT, 150));
+        customModel2.addToSpeed(If("in_area_1", LIMIT, 100));
+        customModel2.addToSpeed(If("in_area_2", LIMIT, 25));
+        customModel2.addToSpeed(If("in_area_3", LIMIT, 150));
         customModel2.addToSpeed(Else(LIMIT, 15));
 
         assertThrows(IllegalArgumentException.class, () ->

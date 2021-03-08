@@ -33,7 +33,7 @@ priority:
   - if: toll != NO
     multiply_by: 0.5
   # avoid a certain area
-  - if: in_area_custom1
+  - if: in_custom1
     multiply_by: 0.5
   - if: max_weight < 4.5
     multiply_by: 0

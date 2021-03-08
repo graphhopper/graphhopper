@@ -219,7 +219,7 @@ class CustomWeightingTest {
 
         CustomModel vehicleModel = new CustomModel();
         vehicleModel.addToPriority(If("road_class == PRIMARY", MULTIPLY, 1.0));
-        vehicleModel.addToPriority(If("in_area_custom1", MULTIPLY, 0.5));
+        vehicleModel.addToPriority(If("in_custom1", MULTIPLY, 0.5));
 
         ObjectMapper om = new ObjectMapper().registerModule(new JtsModule());
         JsonFeature json = om.readValue("{ \"geometry\":{ \"type\": \"Polygon\", \"coordinates\": " +
