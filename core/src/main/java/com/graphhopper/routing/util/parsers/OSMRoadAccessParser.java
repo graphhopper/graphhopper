@@ -28,15 +28,15 @@ import java.util.List;
 
 import static com.graphhopper.routing.ev.CarAccess.YES;
 
-public class OSMCarAccessParser implements TagParser {
+public class OSMRoadAccessParser implements TagParser {
     protected final EnumEncodedValue<CarAccess> roadAccessEnc;
     private final List<String> restrictions;
 
-    public OSMCarAccessParser(TransportationMode mode) {
+    public OSMRoadAccessParser(TransportationMode mode) {
         this(new EnumEncodedValue<>(CarAccess.KEY, CarAccess.class), toOSMRestrictions(mode));
     }
 
-    public OSMCarAccessParser(EnumEncodedValue<CarAccess> roadAccessEnc, List<String> restrictions) {
+    public OSMRoadAccessParser(EnumEncodedValue<CarAccess> roadAccessEnc, List<String> restrictions) {
         this.roadAccessEnc = roadAccessEnc;
         this.restrictions = restrictions;
     }

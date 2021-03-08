@@ -320,7 +320,7 @@ public class EncodingManager implements EncodedValueLookup {
                 _addEdgeTagParser(new OSMMaxSpeedParser(), false, false);
             if (!em.hasEncodedValue(CarAccess.KEY)) {
                 // TODO introduce xy_access for every transportation mode? we could need a different one per direction
-                _addEdgeTagParser(new OSMCarAccessParser(TransportationMode.CAR), false, false);
+                _addEdgeTagParser(new OSMRoadAccessParser(TransportationMode.CAR), false, false);
             }
 
             // ensure that SpatialRuleParsers come after required EncodedValues like max_speed or car_access
@@ -359,7 +359,7 @@ public class EncodingManager implements EncodedValueLookup {
             for (AbstractFlagEncoder encoder : flagEncoderList) {
                 if (encoder.supportsTurnCosts() && !em.turnCostParsers.containsKey(encoder.toString()))
                     _addTurnCostParser(new OSMTurnRelationParser(encoder.toString(), encoder.getMaxTurnCosts(),
-                            OSMCarAccessParser.toOSMRestrictions(encoder.getTransportationMode())));
+                            OSMRoadAccessParser.toOSMRestrictions(encoder.getTransportationMode())));
             }
 
             if (em.encodedValueMap.isEmpty())
