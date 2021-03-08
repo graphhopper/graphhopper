@@ -191,6 +191,14 @@ public class CarFlagEncoderTest {
         assertTrue(accessEnc.getBool(false, flags));
         assertFalse(accessEnc.getBool(true, flags));
         way.clearTags();
+
+        // This is no one way
+        way.setTag("highway", "tertiary");
+        way.setTag("vehicle:backward", "designated");
+        flags = encoder.handleWayTags(em.createEdgeFlags(), way, encoder.getAccess(way));
+        assertTrue(accessEnc.getBool(false, flags));
+        assertTrue(accessEnc.getBool(true, flags));
+        way.clearTags();
     }
 
     @Test
