@@ -1,5 +1,5 @@
 {
-  "spec_dir": "src/test/resources/com/graphhopper/maps/assets/spec",
+  "spec_dir": "src/test/resources/com/graphhopper/maps/spec",
   "spec_files": [
     "**/*[sS]pec.js"
   ],
