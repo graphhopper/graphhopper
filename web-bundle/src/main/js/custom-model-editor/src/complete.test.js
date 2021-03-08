@@ -12,12 +12,12 @@ describe("complete", () => {
         test_complete('a == ', 5, ['a1a', 'a1b', 'a2a', 'a2b'], [5, 5]);
         test_complete('b == ', 5, ['b1', 'b2'], [5, 5]);
         test_complete('b ==       ', 5, ['b1', 'b2'], [5, 5]);
-        test_complete('', 12, ['a', 'b', 'c', 'in_area_pqr', 'in_area_xyz', 'true', 'false'], [12, 12]);
-        test_complete('  ', 12, ['a', 'b', 'c', 'in_area_pqr', 'in_area_xyz', 'true', 'false'], [12, 12]);
-        test_complete('\t\n', 12, ['a', 'b', 'c', 'in_area_pqr', 'in_area_xyz', 'true', 'false'], [12, 12]);
-        test_complete('    ', 0, ['a', 'b', 'c', 'in_area_pqr', 'in_area_xyz', 'true', 'false'], [0, 0]);
-        test_complete('    ', 1, ['a', 'b', 'c', 'in_area_pqr', 'in_area_xyz', 'true', 'false'], [1, 1]);
-        test_complete('    ', 2, ['a', 'b', 'c', 'in_area_pqr', 'in_area_xyz', 'true', 'false'], [2, 2]);
+        test_complete('', 12, ['a', 'b', 'c', 'in_pqr', 'in_xyz', 'true', 'false'], [12, 12]);
+        test_complete('  ', 12, ['a', 'b', 'c', 'in_pqr', 'in_xyz', 'true', 'false'], [12, 12]);
+        test_complete('\t\n', 12, ['a', 'b', 'c', 'in_pqr', 'in_xyz', 'true', 'false'], [12, 12]);
+        test_complete('    ', 0, ['a', 'b', 'c', 'in_pqr', 'in_xyz', 'true', 'false'], [0, 0]);
+        test_complete('    ', 1, ['a', 'b', 'c', 'in_pqr', 'in_xyz', 'true', 'false'], [1, 1]);
+        test_complete('    ', 2, ['a', 'b', 'c', 'in_pqr', 'in_xyz', 'true', 'false'], [2, 2]);
         test_complete('b == ', 4, ['b1', 'b2'], [4, 4]);
         test_complete('b ==', 4, ['b1', 'b2'], [4, 4]);
         test_complete('b ==', 9, ['b1', 'b2'], [9, 9]);
@@ -55,7 +55,7 @@ describe("complete", () => {
     });
 
     test("complete at token within expression", () => {
-        test_complete('a == a1a && b != b1', 0, ['a', 'b', 'c', 'in_area_pqr', 'in_area_xyz', 'true', 'false'], [0, 1]);
+        test_complete('a == a1a && b != b1', 0, ['a', 'b', 'c', 'in_pqr', 'in_xyz', 'true', 'false'], [0, 1]);
         test_complete('a == a1a && b != b2', 2, ['==', '!='], [2, 4]);
         test_complete('a == a1b && b == b1', 5, ['a1a', 'a1b', 'a2a', 'a2b'], [5, 8]);
         test_complete('a == a2a && b == b2', 6, ['a1a', 'a1b', 'a2a', 'a2b'], [5, 8]);
@@ -73,8 +73,8 @@ describe("complete", () => {
     });
 
     test("complete areas", () => {
-        test_complete('in_ && a == a1a', 2, ['in_area_pqr', 'in_area_xyz'], [0, 3]);
-        test_complete('in_area_x && a == a1a', 9, ['in_area_xyz'], [0, 9]);
+        test_complete('in_ && a == a1a', 2, ['in_pqr', 'in_xyz'], [0, 3]);
+        test_complete('in_x && a == a1a', 4, ['in_xyz'], [0, 4]);
     });
 
     test("complete update", () => {

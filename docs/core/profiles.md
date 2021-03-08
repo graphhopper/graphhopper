@@ -328,13 +328,13 @@ to the `areas` section of in the custom model file. You can then use the name of
 the `if/else/else_if` statements we saw in the previous sections.
 
 In the following example we multiply the speed of all edges in an area called `custom1` with `0.7` and also limit it
-to `50km/h`. Note that each area's name needs to be prefixed with `in_area_`:
+to `50km/h`. Note that each area's name needs to be prefixed with `in_`:
 
 ```yaml
 speed:
-  - if: in_area_custom1
+  - if: in_custom1
     multiply_by: 0.7
-  - if: in_area_custom1
+  - if: in_custom1
     limit_to: 50
 
 areas:
@@ -410,7 +410,7 @@ same way:
 
 ```yaml
 priority:
-  - if: in_area_custom1
+  - if: in_custom1
     multiply_by: 0.7
 ```
 
@@ -419,7 +419,7 @@ in an area like this:
 
 ```yaml
 priority:
-  - if: road_class == MOTORWAY && in_area_custom1
+  - if: road_class == MOTORWAY && in_custom1
     multiply_by: 0.1
 ```
 
