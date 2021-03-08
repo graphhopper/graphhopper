@@ -38,8 +38,8 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMRoadClassLinkParser();
         else if (name.equals(RoadEnvironment.KEY))
             return new OSMRoadEnvironmentParser();
-        else if (name.equals(RoadAccess.KEY))
-            return new OSMRoadAccessParser();
+        else if (name.equals(CarAccess.KEY))
+            return new OSMCarAccessParser();
         else if (name.equals(MaxSpeed.KEY))
             return new OSMMaxSpeedParser();
         else if (name.equals(MaxWeight.KEY))

@@ -26,17 +26,17 @@ import com.graphhopper.storage.IntsRef;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.graphhopper.routing.ev.RoadAccess.YES;
+import static com.graphhopper.routing.ev.CarAccess.YES;
 
-public class OSMRoadAccessParser implements TagParser {
-    protected final EnumEncodedValue<RoadAccess> roadAccessEnc;
+public class OSMCarAccessParser implements TagParser {
+    protected final EnumEncodedValue<CarAccess> roadAccessEnc;
     private final List<String> restrictions;
 
-    public OSMRoadAccessParser() {
-        this(new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class), toOSMRestrictions(TransportationMode.CAR));
+    public OSMCarAccessParser(TransportationMode mode) {
+        this(new EnumEncodedValue<>(CarAccess.KEY, CarAccess.class), toOSMRestrictions(mode));
     }
 
-    public OSMRoadAccessParser(EnumEncodedValue<RoadAccess> roadAccessEnc, List<String> restrictions) {
+    public OSMCarAccessParser(EnumEncodedValue<CarAccess> roadAccessEnc, List<String> restrictions) {
         this.roadAccessEnc = roadAccessEnc;
         this.restrictions = restrictions;
     }
@@ -48,10 +48,10 @@ public class OSMRoadAccessParser implements TagParser {
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
-        RoadAccess accessValue = YES;
-        RoadAccess tmpAccessValue;
+        CarAccess accessValue = YES;
+        CarAccess tmpAccessValue;
         for (String restriction : restrictions) {
-            tmpAccessValue = RoadAccess.find(readerWay.getTag(restriction, "yes"));
+            tmpAccessValue = CarAccess.find(readerWay.getTag(restriction, "yes"));
             if (tmpAccessValue != null && tmpAccessValue.ordinal() > accessValue.ordinal()) {
                 accessValue = tmpAccessValue;
             }

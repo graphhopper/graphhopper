@@ -318,12 +318,12 @@ public class EncodingManager implements EncodedValueLookup {
                 _addEdgeTagParser(new OSMRoadEnvironmentParser(), false, false);
             if (!em.hasEncodedValue(MaxSpeed.KEY))
                 _addEdgeTagParser(new OSMMaxSpeedParser(), false, false);
-            if (!em.hasEncodedValue(RoadAccess.KEY)) {
-                // TODO introduce road_access for different vehicles? But how to create it in DefaultTagParserFactory?
-                _addEdgeTagParser(new OSMRoadAccessParser(), false, false);
+            if (!em.hasEncodedValue(CarAccess.KEY)) {
+                // TODO introduce xy_access for every transportation mode? we could need a different one per direction
+                _addEdgeTagParser(new OSMCarAccessParser(TransportationMode.CAR), false, false);
             }
 
-            // ensure that SpatialRuleParsers come after required EncodedValues like max_speed or road_access
+            // ensure that SpatialRuleParsers come after required EncodedValues like max_speed or car_access
             // TODO can we avoid this hack without complex dependency management?
             boolean insert = true;
             for (SpatialRuleParser srp : insertLater) {
@@ -359,7 +359,7 @@ public class EncodingManager implements EncodedValueLookup {
             for (AbstractFlagEncoder encoder : flagEncoderList) {
                 if (encoder.supportsTurnCosts() && !em.turnCostParsers.containsKey(encoder.toString()))
                     _addTurnCostParser(new OSMTurnRelationParser(encoder.toString(), encoder.getMaxTurnCosts(),
-                            OSMRoadAccessParser.toOSMRestrictions(encoder.getTransportationMode())));
+                            OSMCarAccessParser.toOSMRestrictions(encoder.getTransportationMode())));
             }
 
             if (em.encodedValueMap.isEmpty())

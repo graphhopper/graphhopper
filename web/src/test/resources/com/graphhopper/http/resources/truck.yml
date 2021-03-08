@@ -24,7 +24,7 @@ priority:
     multiply_by: 0
   # avoid destination-only roads
   # TODO include private and delivery only access for base car profile so that we can avoid it here, but not exclude it
-  - if: road_access == DESTINATION
+  - if: car_access == DESTINATION
     multiply_by: 0.1
   # avoid turns if possible and links are one simple indication for that
   - if: road_class_link

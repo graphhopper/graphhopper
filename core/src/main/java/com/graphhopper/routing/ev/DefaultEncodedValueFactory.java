@@ -41,8 +41,8 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             enc = new SimpleBooleanEncodedValue(RoadClassLink.KEY);
         } else if (RoadEnvironment.KEY.equals(name)) {
             enc = new EnumEncodedValue<>(RoadEnvironment.KEY, RoadEnvironment.class);
-        } else if (RoadAccess.KEY.equals(name)) {
-            enc = new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class);
+        } else if (CarAccess.KEY.equals(name)) {
+            enc = new EnumEncodedValue<>(CarAccess.KEY, CarAccess.class);
         } else if (MaxSpeed.KEY.equals(name)) {
             enc = MaxSpeed.create();
         } else if (MaxWeight.KEY.equals(name)) {

@@ -1,6 +1,6 @@
 package com.graphhopper.routing.util.spatialrules;
 
-import com.graphhopper.routing.ev.RoadAccess;
+import com.graphhopper.routing.ev.CarAccess;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.util.TransportationMode;
 import org.junit.Test;
@@ -195,8 +195,8 @@ public class SpatialRuleLookupJTSTest {
             }
 
             @Override
-            public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
-                return RoadAccess.DESTINATION;
+            public CarAccess getAccess(RoadClass roadClass, TransportationMode transport, CarAccess currentCarAccess) {
+                return CarAccess.DESTINATION;
             }
 
             @Override

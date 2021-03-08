@@ -23,7 +23,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
+import com.graphhopper.routing.util.parsers.OSMCarAccessParser;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
@@ -85,7 +85,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         ferries.add("shuttle_train");
         ferries.add("ferry");
 
-        restrictions.addAll(OSMRoadAccessParser.toOSMRestrictions(getTransportationMode()));
+        restrictions.addAll(OSMCarAccessParser.toOSMRestrictions(getTransportationMode()));
     }
 
     protected void init(DateRangeParser dateRangeParser) {

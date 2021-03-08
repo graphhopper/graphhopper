@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util.spatialrules;
 
-import com.graphhopper.routing.ev.RoadAccess;
+import com.graphhopper.routing.ev.CarAccess;
 import com.graphhopper.routing.ev.RoadClass;
 
 import java.util.List;
@@ -46,14 +46,14 @@ public interface SpatialRule {
     double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed);
     
     /**
-     * Returns the {@link RoadAccess} for a certain highway type and transportation transport.
+     * Returns the {@link CarAccess} for a certain highway type and transportation transport.
      *
      * @param roadClass          The highway type, e.g. {@link RoadClass#MOTORWAY}
      * @param transport          The mode of transportation
-     * @param currentRoadAccess  The current road access value (default: {@link RoadAccess#YES})
+     * @param currentCarAccess  The current road access value (default: {@link CarAccess#YES})
      * @return the type of access to be used
      */
-    RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess);
+    CarAccess getAccess(RoadClass roadClass, TransportationMode transport, CarAccess currentCarAccess);
 
     /**
      * Returns the borders in which the SpatialRule is valid

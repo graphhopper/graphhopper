@@ -20,7 +20,7 @@ package com.graphhopper.routing.util.spatialrules;
 import java.util.Collections;
 import java.util.List;
 
-import com.graphhopper.routing.ev.RoadAccess;
+import com.graphhopper.routing.ev.CarAccess;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.util.TransportationMode;
 
@@ -61,15 +61,15 @@ public class SpatialRuleSet {
     }
 
     /**
-     * Returns the {@link RoadAccess} for a certain highway type and transportation mode.
+     * Returns the {@link CarAccess} for a certain highway type and transportation mode.
      *
      * @param roadClass          The highway type, e.g. {@link RoadClass#MOTORWAY}
      * @param transport          The mode of transportation
-     * @param currentRoadAccess  The current road access value (default: {@link RoadAccess#YES})
+     * @param currentCarAccess  The current road access value (default: {@link CarAccess#YES})
      * @return the type of access to be used
      */
-    public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
-        RoadAccess value = currentRoadAccess;
+    public CarAccess getAccess(RoadClass roadClass, TransportationMode transport, CarAccess currentCarAccess) {
+        CarAccess value = currentCarAccess;
         for (SpatialRule rule : rules) {
             value = rule.getAccess(roadClass, transport, value);
         }

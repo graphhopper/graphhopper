@@ -22,7 +22,7 @@ import java.util.List;
 import org.locationtech.jts.geom.Polygon;
 
 import com.graphhopper.routing.ev.Country;
-import com.graphhopper.routing.ev.RoadAccess;
+import com.graphhopper.routing.ev.CarAccess;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.TransportationMode;
@@ -67,28 +67,28 @@ public class AustriaSpatialRule extends AbstractSpatialRule {
     }
     
     @Override
-    public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
-        if (currentRoadAccess != RoadAccess.YES) {
-            return currentRoadAccess;
+    public CarAccess getAccess(RoadClass roadClass, TransportationMode transport, CarAccess currentCarAccess) {
+        if (currentCarAccess != CarAccess.YES) {
+            return currentCarAccess;
         }
         
         if (!transport.isMotorVehicle()) {
-            return RoadAccess.YES;
+            return CarAccess.YES;
         }
         
         switch (roadClass) {
         case LIVING_STREET:
-            return RoadAccess.DESTINATION;
+            return CarAccess.DESTINATION;
         case TRACK:
-            return RoadAccess.FORESTRY;
+            return CarAccess.FORESTRY;
         case PATH:
         case BRIDLEWAY:
         case CYCLEWAY:
         case FOOTWAY:
         case PEDESTRIAN:
-            return RoadAccess.NO;
+            return CarAccess.NO;
         default:
-            return RoadAccess.YES;
+            return CarAccess.YES;
         }
     }
 

@@ -20,20 +20,20 @@ package com.graphhopper.routing.ev;
 import com.graphhopper.util.Helper;
 
 /**
- * This enum defines the road access of an edge. Most edges are accessible from everyone and so the default value is
+ * This enum defines the car access of an edge. Most edges are accessible from everyone and so the default value is
  * YES. But some have restrictions like "accessible only for customers" or when delivering. Unknown tags will get the
  * value OTHER. The NO value does not permit any access.
  */
-public enum RoadAccess {
+public enum CarAccess {
     YES("yes"), DESTINATION("destination"), CUSTOMERS("customers"), DELIVERY("delivery"),
     FORESTRY("forestry"), AGRICULTURAL("agricultural"),
     PRIVATE("private"), OTHER("other"), NO("no");
 
-    public static final String KEY = "road_access";
+    public static final String KEY = "car_access";
 
     private final String name;
 
-    RoadAccess(String name) {
+    CarAccess(String name) {
         this.name = name;
     }
 
@@ -42,12 +42,12 @@ public enum RoadAccess {
         return name;
     }
 
-    public static RoadAccess find(String name) {
+    public static CarAccess find(String name) {
         if (name == null)
             return YES;
         try {
             // public and permissive will be converted into "yes"
-            return RoadAccess.valueOf(Helper.toUpperCase(name));
+            return CarAccess.valueOf(Helper.toUpperCase(name));
         } catch (IllegalArgumentException ex) {
             return YES;
         }

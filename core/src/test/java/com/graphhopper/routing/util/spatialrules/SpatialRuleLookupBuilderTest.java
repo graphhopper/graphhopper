@@ -73,24 +73,24 @@ public class SpatialRuleLookupBuilderTest {
         SpatialRuleLookup spatialRuleLookup = createLookup();
 
         // Berlin
-        assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRules(52.5243700, 13.4105300).
-                getAccess(RoadClass.TRACK, TransportationMode.CAR, RoadAccess.YES));
-        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRules(52.5243700, 13.4105300).
-                getAccess(RoadClass.PRIMARY, TransportationMode.CAR, RoadAccess.YES));
+        assertEquals(CarAccess.DESTINATION, spatialRuleLookup.lookupRules(52.5243700, 13.4105300).
+                getAccess(RoadClass.TRACK, TransportationMode.CAR, CarAccess.YES));
+        assertEquals(CarAccess.YES, spatialRuleLookup.lookupRules(52.5243700, 13.4105300).
+                getAccess(RoadClass.PRIMARY, TransportationMode.CAR, CarAccess.YES));
 
         // Paris -> empty rule
-        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRules(48.864716, 2.349014).
-                getAccess(RoadClass.TRACK, TransportationMode.CAR, RoadAccess.YES));
-        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRules(48.864716, 2.349014).
-                getAccess(RoadClass.PRIMARY, TransportationMode.CAR, RoadAccess.YES));
+        assertEquals(CarAccess.YES, spatialRuleLookup.lookupRules(48.864716, 2.349014).
+                getAccess(RoadClass.TRACK, TransportationMode.CAR, CarAccess.YES));
+        assertEquals(CarAccess.YES, spatialRuleLookup.lookupRules(48.864716, 2.349014).
+                getAccess(RoadClass.PRIMARY, TransportationMode.CAR, CarAccess.YES));
 
         // Austria
-        assertEquals(RoadAccess.FORESTRY, spatialRuleLookup.lookupRules(48.204484, 16.107888).
-                getAccess(RoadClass.TRACK, TransportationMode.CAR, RoadAccess.YES));
-        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRules(48.210033, 16.363449).
-                getAccess(RoadClass.PRIMARY, TransportationMode.CAR, RoadAccess.YES));
-        assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRules(48.210033, 16.363449).
-                getAccess(RoadClass.LIVING_STREET, TransportationMode.CAR, RoadAccess.YES));
+        assertEquals(CarAccess.FORESTRY, spatialRuleLookup.lookupRules(48.204484, 16.107888).
+                getAccess(RoadClass.TRACK, TransportationMode.CAR, CarAccess.YES));
+        assertEquals(CarAccess.YES, spatialRuleLookup.lookupRules(48.210033, 16.363449).
+                getAccess(RoadClass.PRIMARY, TransportationMode.CAR, CarAccess.YES));
+        assertEquals(CarAccess.DESTINATION, spatialRuleLookup.lookupRules(48.210033, 16.363449).
+                getAccess(RoadClass.LIVING_STREET, TransportationMode.CAR, CarAccess.YES));
     }
 
     @Test
@@ -158,7 +158,7 @@ public class SpatialRuleLookupBuilderTest {
 
         EncodingManager em = new EncodingManager.Builder().add(new SpatialRuleParser(index, Country.create())).add(new CarFlagEncoder(new PMap())).build();
         IntEncodedValue countrySpatialIdEnc = em.getIntEncodedValue(Country.KEY);
-        EnumEncodedValue<RoadAccess> tmpRoadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
+        EnumEncodedValue<CarAccess> tmpRoadAccessEnc = em.getEnumEncodedValue(CarAccess.KEY, CarAccess.class);
         DecimalEncodedValue tmpCarMaxSpeedEnc = em.getDecimalEncodedValue(MaxSpeed.KEY);
 
         Graph graph = new GraphBuilder(em).create();
@@ -179,13 +179,13 @@ public class SpatialRuleLookupBuilderTest {
         way.setTag("highway", "track");
         way.setTag("estimated_center", new GHPoint(0.005, 0.005));
         e1.setFlags(em.handleWayTags(way, map, relFlags));
-        assertEquals(RoadAccess.DESTINATION, e1.get(tmpRoadAccessEnc));
+        assertEquals(CarAccess.DESTINATION, e1.get(tmpRoadAccessEnc));
 
         ReaderWay way2 = new ReaderWay(28L);
         way2.setTag("highway", "track");
         way2.setTag("estimated_center", new GHPoint(-0.005, -0.005));
         e2.setFlags(em.handleWayTags(way2, map, relFlags));
-        assertEquals(RoadAccess.YES, e2.get(tmpRoadAccessEnc));
+        assertEquals(CarAccess.YES, e2.get(tmpRoadAccessEnc));
 
         assertEquals(index.getRules().indexOf(germany), e1.get(countrySpatialIdEnc) - 1);
         assertEquals(0, e2.get(countrySpatialIdEnc));
