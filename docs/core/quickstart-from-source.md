@@ -132,7 +132,7 @@ npm install -g live-server
 live-server --open=src/main/resources/com/graphhopper/maps/
 ```
 
-Other npm commands e.g. to produce a bundled main.js for production:
+To produce a bundled main.js for production you can run other npm commands from the `web-bundle`directory:
 
 ```bash
 # bundle creates the main file
