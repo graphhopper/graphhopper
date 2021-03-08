@@ -317,10 +317,10 @@ function validateCoordinate(path, coordinate, index) {
     if (!isNumber(coordinate)) {
         errors.push(error(path, `must be a number`, coordinate.range));
     } else {
-        if (index === 0 && (coordinate.value < -90 || coordinate.value > 90))
-            errors.push(error(`${path}`, `latitude must be in [-90, +90]`, coordinate.range));
-        if (index === 1 && (coordinate.value < -180 || coordinate.value > 180))
+        if (index === 0 && (coordinate.value < -180 || coordinate.value > 180))
             errors.push(error(`${path}`, `longitude must be in [-180, +180]`, coordinate.range));
+        if (index === 1 && (coordinate.value < -90 || coordinate.value > 90))
+            errors.push(error(`${path}`, `latitude must be in [-90, +90]`, coordinate.range));
     }
     return errors;
 }

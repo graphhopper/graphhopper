@@ -348,9 +348,9 @@ describe("validate", () => {
         test_validate(`areas: {area1: { type: 'Feature', geometry: {type: Polygon, coordinates: [[[1, 2], [3, 4], [5, 6], [1.1, 2.2]]]} }}`, [
             `areas[area1][geometry][coordinates][0]: the last point must be equal to the first, range: [99, 109]`
         ]);
-        test_validate(`areas: {area1: { type: 'Feature', geometry: {type: Polygon, coordinates: [[[100, 2], [3, 400], [5, 6], [1.1, 2.2]]]} }}`, [
-            `areas[area1][geometry][coordinates][0][0][0]: latitude must be in [-90, +90], range: [76, 79]`,
-            `areas[area1][geometry][coordinates][0][1][1]: longitude must be in [-180, +180], range: [89, 92]`
+        test_validate(`areas: {area1: { type: 'Feature', geometry: {type: Polygon, coordinates: [[[100, 200], [300, 40], [5, 6], [1.1, 2.2]]]} }}`, [
+            `areas[area1][geometry][coordinates][0][0][1]: latitude must be in [-90, +90], range: [81, 84]`,
+            `areas[area1][geometry][coordinates][0][1][0]: longitude must be in [-180, +180], range: [88, 91]`
         ]);
         test_validate(`areas: {area1: { type: 'Feature', geometry: {type: Polygon, coordinates: [[[1, 2], [3, 4], [5, 6], [1, 2]]]} }}`, []);
     });
