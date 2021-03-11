@@ -81,14 +81,7 @@ $(document).ready(function (e) {
     showCustomModelExample();
     cmEditor.validListener = function(valid) {
         $("#custom-model-search-button").prop('disabled', !valid);
-        $("#custom-model-toggle").prop('disabled', !valid);
     };
-    $("#custom-model-toggle").text('JSON');
-    $("#custom-model-toggle").click(function() {
-        cmEditor.toggleJsonYAML();
-        $("#custom-model-toggle").text(cmEditor.yaml ? 'JSON' : 'YAML');
-        return false;
-    });
     $("#custom-model-button").click(function() {
         $("#custom-model-box").toggle();
         // avoid default action, so use a different search button
@@ -100,19 +93,28 @@ $(document).ready(function (e) {
     });
     function showCustomModelExample() {
         cmEditor.value =
-            "# Press Ctrl+Space for suggestions"
-            + "\nspeed:"
-            + "\n - if: road_class == MOTORWAY"
-            + "\n   multiply_by: 0.8"
-            + "\n"
-            + "\npriority:"
-            + "\n - if: road_environment == TUNNEL"
-            + "\n   multiply_by: 0.0"
-            + "\n - if: road_class == RESIDENTIAL"
-            + "\n   multiply_by: 0.7"
-            + "\n - if: max_weight < 3"
-            + "\n   multiply_by: 0.0"
-            + "\n";
+            "{"
+            + "\n \"speed\": ["
+            + "\n  {"
+            + "\n   \"if\": \"road_class == MOTORWAY\","
+            + "\n   \"multiply_by\": 0.8"
+            + "\n  }"
+            + "\n ],"
+            + "\n \"priority\": ["
+            + "\n  {"
+            + "\n   \"if\": \"road_environment == TUNNEL\","
+            + "\n   \"multiply_by\": 0.0"
+            + "\n  },"
+            + "\n  {"
+            + "\n   \"if\": \"road_class == RESIDENTIAL\","
+            + "\n   \"multiply_by\": 0.7"
+            + "\n  },"
+            + "\n  {"
+            + "\n   \"if\": \"max_weight < 3\","
+            + "\n   \"multiply_by\": 0.0"
+            + "\n  }"
+            + "\n ]"
+            + "\n}";
         cmEditor.cm.focus();
         cmEditor.cm.setCursor(0);
         cmEditor.cm.execCommand('selectAll');
