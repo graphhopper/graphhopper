@@ -17,10 +17,10 @@
  */
 package com.graphhopper.resources;
 
+import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.Profile;
-import com.graphhopper.jackson.CustomRequest;
 import com.graphhopper.jackson.MultiException;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
@@ -68,9 +68,9 @@ public class CustomWeightingRouteResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response doPost(@NotNull CustomRequest request, @Context HttpServletRequest httpReq) {
+    public Response doPost(@NotNull GHRequest request, @Context HttpServletRequest httpReq) {
         StopWatch sw = new StopWatch().start();
-        CustomModel model = request.getModel();
+        CustomModel model = request.getCustomModel();
         if (model == null)
             throw new IllegalArgumentException("No custom model properties found");
         if (request.getHints().has(BLOCK_AREA))

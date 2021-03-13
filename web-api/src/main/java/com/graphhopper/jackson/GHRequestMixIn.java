@@ -19,7 +19,9 @@ package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import com.graphhopper.GHRequest;
+import com.graphhopper.util.CustomModel;
 
 import java.util.List;
 
@@ -34,4 +36,7 @@ interface GHRequestMixIn {
 
     @JsonProperty("details")
     GHRequest setPathDetails(List<String> pathDetails);
+
+    @JsonUnwrapped
+    GHRequest setCustomModel(CustomModel customModel);
 }
