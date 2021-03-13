@@ -123,20 +123,6 @@ public class RouteResourceCustomModelLMTest {
     }
 
     @Test
-    public void testUnknownProfile() {
-        String body = "{\"points\": [[1.540875,42.510672], [1.54212,42.511131]], \"profile\": \"unknown\"}";
-        JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
-        assertTrue(jsonNode.get("message").asText().startsWith("profile 'unknown' not found"));
-    }
-
-    @Test
-    public void testCustomWeightingRequired() {
-        String body = "{\"points\": [[1.540875,42.510672], [1.54212,42.511131]], \"profile\": \"foot_profile\"}";
-        JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
-        assertEquals("profile 'foot_profile' cannot be used for a custom request because it has weighting=fastest", jsonNode.get("message").asText());
-    }
-
-    @Test
     public void testCustomWeightingSimplisticWheelchair() {
         String body = "{\"points\": [[1.540875,42.510672], [1.54212,42.511131]]," +
                 "\"profile\": \"foot_custom\"," +

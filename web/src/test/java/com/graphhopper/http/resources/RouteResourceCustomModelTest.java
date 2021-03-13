@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
@@ -41,7 +42,7 @@ public class RouteResourceCustomModelTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "bike,car").
+                putObject("graph.flag_encoders", "bike,car,foot").
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
@@ -55,6 +56,7 @@ public class RouteResourceCustomModelTest {
                                 putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/cargo_bike.yml"),
                         new CustomProfile("json_bike").setVehicle("bike").
                                 putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/json_bike.json"),
+                        new Profile("foot_profile").setVehicle("foot").setWeighting("fastest"),
                         new CustomProfile("custom_bike").
                                 setCustomModel(new CustomModel().
                                         addToSpeed(If("road_class == PRIMARY", LIMIT, 28)).
@@ -68,6 +70,20 @@ public class RouteResourceCustomModelTest {
     @AfterAll
     public static void cleanUp() {
         Helper.removeDir(new File(DIR));
+    }
+
+    @Test
+    public void testUnknownProfile() {
+        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"unknown\"}";
+        JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
+        assertTrue(jsonNode.get("message").asText().startsWith("profile 'unknown' not found"));
+    }
+
+    @Test
+    public void testCustomWeightingRequired() {
+        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"foot_profile\"}";
+        JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
+        assertEquals("profile 'foot_profile' cannot be used for a custom request because it has weighting=fastest", jsonNode.get("message").asText());
     }
 
     @Test
