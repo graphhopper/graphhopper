@@ -15,6 +15,7 @@ import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -73,10 +74,39 @@ public class RouteResourceCustomModelTest {
     }
 
     @Test
+    @Disabled("todonow: this test seems to fail because the @JsonUnwrapped annotation seems to default-initialize the custom model field (?)")
+    public void testMissingCustomModel() {
+        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"car\"}";
+        JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
+        assertMessageStartsWith(jsonNode, "No custom model properties found");
+    }
+
+    @Test
+    public void testBlockAreaNotAllowed() {
+        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"block_area\": \"abc\", \"profile\": \"car\"}";
+        JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
+        assertMessageStartsWith(jsonNode, "Instead of block_area define the geometry under 'areas' as GeoJSON and use 'area_<id>: 0' in e.g. priority");
+    }
+
+    @Test
+    public void testCHDisabled() {
+        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"ch.disable\": false, \"profile\": \"truck\"}";
+        JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
+        assertMessageStartsWith(jsonNode, "Custom requests are not available for speed mode, do not use ch.disable=false");
+    }
+
+    @Test
+    public void testMissingProfile() {
+        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]}";
+        JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
+        assertMessageStartsWith(jsonNode, "The 'profile' parameter for CustomRequest is required");
+    }
+
+    @Test
     public void testUnknownProfile() {
         String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"unknown\"}";
         JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
-        assertTrue(jsonNode.get("message").asText().startsWith("profile 'unknown' not found"));
+        assertMessageStartsWith(jsonNode, "profile 'unknown' not found");
     }
 
     @Test
@@ -105,7 +135,7 @@ public class RouteResourceCustomModelTest {
     @CsvSource(value = {"0.05,3073", "0.5,1498"})
     public void testAvoidArea(double priority, double expectedDistance) {
         String pointsAndProfile = "\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"car\"";
-        JsonNode jsonNode = query("{" +  pointsAndProfile + "}", 200).readEntity(JsonNode.class);
+        JsonNode jsonNode = query("{" + pointsAndProfile + "}", 200).readEntity(JsonNode.class);
         JsonNode path = jsonNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 661, 10);
 
@@ -138,7 +168,7 @@ public class RouteResourceCustomModelTest {
 
         String jsonFromYamlFile = yamlToJson(Helper.isToString(getClass().getResourceAsStream("cargo_bike.yml")));
         assertTrue(jsonFromYamlFile.startsWith("{"));
-        body = "{" +"\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"bike\", " + jsonFromYamlFile.substring(1);
+        body = "{" + "\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"bike\", " + jsonFromYamlFile.substring(1);
         jsonNode = query(body, 200).readEntity(JsonNode.class);
         path = jsonNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 1007, 5);
@@ -176,6 +206,12 @@ public class RouteResourceCustomModelTest {
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 660, 10);
+    }
+
+    private void assertMessageStartsWith(JsonNode jsonNode, String message) {
+        assertNotNull(jsonNode.get("message"));
+        assertTrue(jsonNode.get("message").asText().startsWith(message), "Expected error message to start with:\n" +
+                message + "\nbut got:\n" + jsonNode.get("message").asText());
     }
 
     Response query(String body, int code) {

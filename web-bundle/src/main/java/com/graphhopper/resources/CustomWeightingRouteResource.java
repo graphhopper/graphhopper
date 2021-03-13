@@ -72,12 +72,16 @@ public class CustomWeightingRouteResource {
         StopWatch sw = new StopWatch().start();
         CustomModel model = request.getCustomModel();
         if (model == null)
+            // todonow: update error message
             throw new IllegalArgumentException("No custom model properties found");
         if (request.getHints().has(BLOCK_AREA))
+            // todonow: update error message
             throw new IllegalArgumentException("Instead of block_area define the geometry under 'areas' as GeoJSON and use 'area_<id>: 0' in e.g. priority");
         if (!request.getHints().getBool(Parameters.CH.DISABLE, true))
+            // todonow: update error message
             throw new IllegalArgumentException("Custom requests are not available for speed mode, do not use ch.disable=false");
         if (Helper.isEmpty(request.getProfile()))
+            // todonow: update error message
             throw new IllegalArgumentException("The 'profile' parameter for CustomRequest is required");
 
         Profile profile = graphHopper.getProfile(request.getProfile());
