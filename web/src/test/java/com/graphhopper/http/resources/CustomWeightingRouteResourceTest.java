@@ -30,8 +30,7 @@ import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static com.graphhopper.json.Statement.If;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class CustomWeightingRouteResourceTest {
@@ -90,50 +89,49 @@ public class CustomWeightingRouteResourceTest {
     @ParameterizedTest
     @CsvSource(value = {"0.05,3073", "0.5,1498"})
     public void testAvoidArea(double priority, double expectedDistance) {
-        String yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
-                "profile: car\n";
-
-        JsonNode yamlNode = clientTarget(app, "/route-custom").request().post(Entity.json(yamlToJson(yamlQuery))).readEntity(JsonNode.class);
-        JsonNode path = yamlNode.get("paths").get(0);
+        String pointsAndProfile = "\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"car\"";
+        JsonNode jsonNode = clientTarget(app, "/route-custom").request().post(Entity.json("{" +  pointsAndProfile + "}")).readEntity(JsonNode.class);
+        JsonNode path = jsonNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 661, 10);
 
         // 'blocking' the area either leads to a route that still crosses it (but on a faster road) or to a road
         // going all the way around it depending on the priority, see #2021
-        yamlQuery += "" +
-                "priority:\n" +
+        String body = "{" + pointsAndProfile + ", " +
+                "\"priority\":[{" +
                 // a faster road (see #2021)? or maybe do both?
-                "  - if: in_custom1\n" +
-                "    multiply_by: " + priority + "\n" +
-                "areas:\n" +
-                "  custom1:\n" +
-                "    type: \"Feature\"\n" +
-                "    geometry: { type: \"Polygon\", coordinates: [[[11.5818,50.0126], [11.5818,50.0119], [11.5861,50.0119], [11.5861,50.0126], [11.5818,50.0126]]] }";
-        yamlNode = clientTarget(app, "/route-custom").request().post(Entity.json(yamlToJson(yamlQuery))).readEntity(JsonNode.class);
-        path = yamlNode.get("paths").get(0);
+                "   \"if\": \"in_custom1\"," +
+                "   \"multiply_by\": " + priority +
+                "}], " +
+                "\"areas\":{" +
+                "  \"custom1\":{" +
+                "    \"type\": \"Feature\"," +
+                "    \"geometry\": { \"type\": \"Polygon\", \"coordinates\": [[[11.5818,50.0126], [11.5818,50.0119], [11.5861,50.0119], [11.5861,50.0126], [11.5818,50.0126]]] }" +
+                "   }" +
+                "}" +
+                "}";
+        jsonNode = clientTarget(app, "/route-custom").request().post(Entity.json(body)).readEntity(JsonNode.class);
+        path = jsonNode.get("paths").get(0);
         assertEquals(expectedDistance, path.get("distance").asDouble(), 10);
     }
 
     @Test
     public void testCargoBike() throws IOException {
-        String yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
-                "profile: bike\n";
-        JsonNode yamlNode = clientTarget(app, "/route-custom").request().post(Entity.json(yamlToJson(yamlQuery))).readEntity(JsonNode.class);
-        JsonNode path = yamlNode.get("paths").get(0);
+        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"bike\"}";
+        JsonNode jsonNode = clientTarget(app, "/route-custom").request().post(Entity.json(body)).readEntity(JsonNode.class);
+        JsonNode path = jsonNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 661, 5);
 
-        String queryYamlFromFile = Helper.isToString(getClass().getResourceAsStream("cargo_bike.yml"));
-        yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
-                "profile: bike\n" +
-                queryYamlFromFile;
-        yamlNode = clientTarget(app, "/route-custom").request().post(Entity.json(yamlToJson(yamlQuery))).readEntity(JsonNode.class);
-        path = yamlNode.get("paths").get(0);
+        String jsonFromYamlFile = yamlToJson(Helper.isToString(getClass().getResourceAsStream("cargo_bike.yml")));
+        assertTrue(jsonFromYamlFile.startsWith("{"));
+        body = "{" +"\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"bike\", " + jsonFromYamlFile.substring(1);
+        jsonNode = clientTarget(app, "/route-custom").request().post(Entity.json(body)).readEntity(JsonNode.class);
+        path = jsonNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 1007, 5);
 
         // results should be identical be it via server-side profile or query profile:
-        yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
-                "profile: cargo_bike";
-        yamlNode = clientTarget(app, "/route-custom").request().post(Entity.json(yamlToJson(yamlQuery))).readEntity(JsonNode.class);
-        JsonNode path2 = yamlNode.get("paths").get(0);
+        body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"cargo_bike\"}";
+        jsonNode = clientTarget(app, "/route-custom").request().post(Entity.json(body)).readEntity(JsonNode.class);
+        JsonNode path2 = jsonNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), path2.get("distance").asDouble(), 1);
     }
 

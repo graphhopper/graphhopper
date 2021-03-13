@@ -38,7 +38,6 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
 
-import static com.graphhopper.http.resources.CustomWeightingRouteResourceTest.yamlToJson;
 import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -91,72 +90,66 @@ public class CustomWeightingRouteResourceLMTest {
 
     @Test
     public void testCustomWeighting() {
-        String yamlQuery = "points: [[1.529106,42.506567], [1.54006,42.511178]]\n" +
-                "profile: car_custom\n" +
-                "priority:\n" +
-                "  - if: road_class != SECONDARY\n" +
-                "    multiply_by: 0.5\n";
-        JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
-        JsonNode path = yamlNode.get("paths").get(0);
+        String body = "{\"points\": [[1.529106,42.506567], [1.54006,42.511178]]," +
+                " \"profile\": \"car_custom\"," +
+                " \"priority\": [{\"if\": \"road_class != SECONDARY\", \"multiply_by\": 0.5}]}";
+        JsonNode jsonNode = query(body, 200).readEntity(JsonNode.class);
+        JsonNode path = jsonNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 1317, 5);
 
-        // now prefer primary roads via special yaml-map notation
-        yamlQuery = "points: [[1.5274,42.506211], [1.54006,42.511178]]\n" +
-                "profile: car_custom\n" +
-                "priority:\n" +
-                "  - if: road_class == RESIDENTIAL\n" +
-                "    multiply_by: 0.8\n" +
-                "  - else_if: road_class == PRIMARY\n" +
-                "    multiply_by: 1\n" +
-                "  - else:\n" +
-                "    multiply_by: 0.66\n";
-        yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
-        path = yamlNode.get("paths").get(0);
+        // now prefer primary roads
+        body = "{\"points\": [[1.5274,42.506211], [1.54006,42.511178]]," +
+                "\"profile\": \"car_custom\"," +
+                "\"priority\": [" +
+                "{\"if\": \"road_class == RESIDENTIAL\", \"multiply_by\": 0.8}," +
+                "{\"else_if\": \"road_class == PRIMARY\", \"multiply_by\": 1}," +
+                "{\"else\": \"\", \"multiply_by\": 0.66}" +
+                "]}";
+        jsonNode = query(body, 200).readEntity(JsonNode.class);
+        path = jsonNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 1707, 5);
     }
 
     @Test
     public void testCustomWeightingAvoidTunnels() {
-        String yamlQuery = "points: [[1.533365, 42.506211], [1.523924, 42.520605]]\n" +
-                "profile: car_custom\n" +
-                "priority:\n" +
-                "  - if: road_environment == TUNNEL\n" +
-                "    multiply_by: 0.1\n";
-        JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
-        JsonNode path = yamlNode.get("paths").get(0);
+        String body = "{\"points\": [[1.533365, 42.506211], [1.523924, 42.520605]]," +
+                "\"profile\": \"car_custom\"," +
+                "\"priority\": [" +
+                " {\"if\": \"road_environment == TUNNEL\", \"multiply_by\": 0.1}" +
+                "]" +
+                "}";
+        JsonNode jsonNode = query(body, 200).readEntity(JsonNode.class);
+        JsonNode path = jsonNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 2437, 5);
     }
 
     @Test
     public void testUnknownProfile() {
-        String yamlQuery = "points: [[1.540875,42.510672], [1.54212,42.511131]]\n" +
-                "profile: unknown";
-        JsonNode yamlNode = queryYaml(yamlQuery, 400).readEntity(JsonNode.class);
-        assertTrue(yamlNode.get("message").asText().startsWith("profile 'unknown' not found"));
+        String body = "{\"points\": [[1.540875,42.510672], [1.54212,42.511131]], \"profile\": \"unknown\"}";
+        JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
+        assertTrue(jsonNode.get("message").asText().startsWith("profile 'unknown' not found"));
     }
 
     @Test
     public void testCustomWeightingRequired() {
-        String yamlQuery = "points: [[1.540875,42.510672], [1.54212,42.511131]]\n" +
-                "profile: foot_profile";
-        JsonNode yamlNode = queryYaml(yamlQuery, 400).readEntity(JsonNode.class);
-        assertEquals("profile 'foot_profile' cannot be used for a custom request because it has weighting=fastest", yamlNode.get("message").asText());
+        String body = "{\"points\": [[1.540875,42.510672], [1.54212,42.511131]], \"profile\": \"foot_profile\"}";
+        JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
+        assertEquals("profile 'foot_profile' cannot be used for a custom request because it has weighting=fastest", jsonNode.get("message").asText());
     }
 
     @Test
     public void testCustomWeightingSimplisticWheelchair() {
-        String yamlQuery = "points: [[1.540875,42.510672], [1.54212,42.511131]]\n" +
-                "profile: foot_custom\n" +
-                "priority:\n" +
-                "  - if: road_class == STEPS\n" +
-                "    multiply_by: 0\n";
-        JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
-        JsonNode path = yamlNode.get("paths").get(0);
+        String body = "{\"points\": [[1.540875,42.510672], [1.54212,42.511131]]," +
+                "\"profile\": \"foot_custom\"," +
+                "\"priority\":[" +
+                " {\"if\": \"road_class == STEPS\", \"multiply_by\": 0}]}";
+        JsonNode jsonNode = query(body, 200).readEntity(JsonNode.class);
+        JsonNode path = jsonNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 328, 5);
     }
 
-    Response queryYaml(String yamlStr, int code) {
-        Response response = clientTarget(app, "/route-custom").request().post(Entity.json(yamlToJson(yamlStr)));
+    Response query(String body, int code) {
+        Response response = clientTarget(app, "/route-custom").request().post(Entity.json(body));
         assertEquals(code, response.getStatus());
         return response;
     }

@@ -161,8 +161,6 @@ public class RouteResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response doPost(@NotNull GHRequest request, @Context HttpServletRequest httpReq) {
         StopWatch sw = new StopWatch().start();
-        String weightingVehicleLogStr = "weighting: " + request.getHints().getString("weighting", "")
-                + ", vehicle: " + request.getHints().getString("vehicle", "");
         if (Helper.isEmpty(request.getProfile())) {
             enableEdgeBasedIfThereAreCurbsides(request.getCurbsides(), request);
             request.setProfile(profileResolver.resolveProfile(request.getHints()).getName());
@@ -178,6 +176,8 @@ public class RouteResource {
         long took = sw.stop().getNanos() / 1_000_000;
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String queryString = httpReq.getQueryString() == null ? "" : (httpReq.getQueryString() + " ");
+        String weightingVehicleLogStr = "weighting: " + request.getHints().getString("weighting", "")
+                + ", vehicle: " + request.getHints().getString("vehicle", "");
         String logStr = queryString + infoStr + " " + request.getPoints().size() + ", took: "
                 + String.format("%.1f", (double) took) + " ms, algo: " + request.getAlgorithm() + ", profile: " + request.getProfile()
                 + ", " + weightingVehicleLogStr;

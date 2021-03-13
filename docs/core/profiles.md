@@ -555,6 +555,7 @@ So far we talked only about standard and custom profiles that are configured on 
 However, with flex- and hybrid mode it is even possible to define the custom model on a per-request basis. This enables
 you to perform route calculations using custom models that you did not anticipate when setting up the server.
 
+// todonow: update
 To use this feature you need to query the `/route-custom` (*not* `/route`) endpoint and send the custom model along with
 your request in JSON format. The syntax for the custom model is the same as for server-side custom models (but using
 JSON not YAML notation, see above). The routing request has the same format as for `/route`, but with an
@@ -576,6 +577,7 @@ the merge process has to ensure that all weights resulting from the merged custo
 of the base profile that was used during the preparation process. This is necessary to maintain the optimality of the
 underlying routing algorithm.
 
+// todonow: update
 So say your routing request (POST /route-custom) looks like this:
 
 ```json
