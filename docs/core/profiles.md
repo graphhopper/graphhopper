@@ -555,11 +555,10 @@ So far we talked only about standard and custom profiles that are configured on 
 However, with flex- and hybrid mode it is even possible to define the custom model on a per-request basis. This enables
 you to perform route calculations using custom models that you did not anticipate when setting up the server.
 
-// todonow: update
-To use this feature you need to query the `/route-custom` (*not* `/route`) endpoint and send the custom model along with
-your request in JSON format. The syntax for the custom model is the same as for server-side custom models (but using
+To use this feature you need to send the custom model along with your request in JSON format.
+The syntax for the custom model is the same as for server-side custom models (but using
 JSON not YAML notation, see above). The routing request has the same format as for `/route`, but with an
-additional `model` field that contains the custom model. You still need to set the `profile` parameter for your request
+additional `custom_model` field that contains the custom model. You still need to set the `profile` parameter for your request
 and the given profile must be a custom profile.
 
 Now you might be wondering which custom model is used, because there is one set for the route request, but there is also
@@ -577,8 +576,7 @@ the merge process has to ensure that all weights resulting from the merged custo
 of the base profile that was used during the preparation process. This is necessary to maintain the optimality of the
 underlying routing algorithm.
 
-// todonow: update
-So say your routing request (POST /route-custom) looks like this:
+So say your routing request (POST /route) looks like this:
 
 ```json
 {
@@ -593,7 +591,7 @@ So say your routing request (POST /route-custom) looks like this:
     ]
   ],
   "profile": "my_custom_car",
-  "model": {
+  "custom_model": {
     "speed": [
       {
         "if": "road_class == MOTORWAY",

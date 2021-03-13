@@ -159,8 +159,7 @@ $(document).ready(function (e) {
        var request = JSON.stringify(jsonModel);
 
        $.ajax({
-           // todonow: update
-           url: host + "/route-custom",
+           url: host + "/route",
            type: "POST",
            contentType: 'application/json; charset=utf-8',
            dataType: "json",

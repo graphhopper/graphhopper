@@ -19,13 +19,16 @@ package com.graphhopper.resources;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
+import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperAPI;
-import com.graphhopper.jackson.MultiException;
+import com.graphhopper.config.Profile;
+import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.http.GHPointParam;
+import com.graphhopper.jackson.MultiException;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.routing.ProfileResolver;
+import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.*;
-import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.util.shapes.GHPoint;
 import io.dropwizard.jersey.params.AbstractParam;
 import org.slf4j.Logger;
@@ -56,12 +59,13 @@ public class RouteResource {
 
     private static final Logger logger = LoggerFactory.getLogger(RouteResource.class);
 
-    private final GraphHopperAPI graphHopper;
+    // todonow: revert to GraphHopperAPI? But why?
+    private final GraphHopper graphHopper;
     private final ProfileResolver profileResolver;
     private final Boolean hasElevation;
 
     @Inject
-    public RouteResource(GraphHopperAPI graphHopper, ProfileResolver profileResolver, @Named("hasElevation") Boolean hasElevation) {
+    public RouteResource(GraphHopper graphHopper, ProfileResolver profileResolver, @Named("hasElevation") Boolean hasElevation) {
         this.graphHopper = graphHopper;
         this.profileResolver = profileResolver;
         this.hasElevation = hasElevation;
@@ -161,10 +165,35 @@ public class RouteResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response doPost(@NotNull GHRequest request, @Context HttpServletRequest httpReq) {
         StopWatch sw = new StopWatch().start();
-        if (Helper.isEmpty(request.getProfile())) {
-            enableEdgeBasedIfThereAreCurbsides(request.getCurbsides(), request);
-            request.setProfile(profileResolver.resolveProfile(request.getHints()).getName());
-            removeLegacyParameters(request.getHints());
+        // todonow: this does not work as long as we 'unwrap' the custom model inside the request
+        if (request.getCustomModel() == null) {
+            // todonow: what if we choose a custom profile, but do not send a custom model (null). should
+            // there be an error? -> rather not?!
+            if (Helper.isEmpty(request.getProfile())) {
+                // legacy parameter resolution (only used when there is no custom model)
+                enableEdgeBasedIfThereAreCurbsides(request.getCurbsides(), request);
+                request.setProfile(profileResolver.resolveProfile(request.getHints()).getName());
+                removeLegacyParameters(request.getHints());
+            }
+        } else {
+            // todonow: most (all?) of these checks really belong into the router...
+            if (request.getHints().has(BLOCK_AREA))
+                // todonow: update error message
+                throw new IllegalArgumentException("Instead of block_area define the geometry under 'areas' as GeoJSON and use 'area_<id>: 0' in e.g. priority");
+            if (!request.getHints().getBool(Parameters.CH.DISABLE, true))
+                // todonow: update error message
+                throw new IllegalArgumentException("Custom requests are not available for speed mode, do not use ch.disable=false");
+            if (Helper.isEmpty(request.getProfile()))
+                // todonow: update error message
+                throw new IllegalArgumentException("The 'profile' parameter for CustomRequest is required");
+            Profile profile = graphHopper.getProfile(request.getProfile());
+            if (profile == null)
+                throw new IllegalArgumentException("profile '" + request.getProfile() + "' not found");
+            if (!(profile instanceof CustomProfile))
+                throw new IllegalArgumentException("profile '" + request.getProfile() + "' cannot be used for a custom request because it has weighting=" + profile.getWeighting());
+            request.putHint(Parameters.CH.DISABLE, true);
+            // todonow: should we handle the model via a hint or a separate field in GHRequest?
+            request.putHint(CustomModel.KEY, request.getCustomModel());
         }
         errorIfLegacyParameters(request.getHints());
         GHResponse ghResponse = graphHopper.route(request);
@@ -176,11 +205,13 @@ public class RouteResource {
         long took = sw.stop().getNanos() / 1_000_000;
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String queryString = httpReq.getQueryString() == null ? "" : (httpReq.getQueryString() + " ");
+        // todo: vehicle/weighting will always be empty at this point...
         String weightingVehicleLogStr = "weighting: " + request.getHints().getString("weighting", "")
                 + ", vehicle: " + request.getHints().getString("vehicle", "");
         String logStr = queryString + infoStr + " " + request.getPoints().size() + ", took: "
                 + String.format("%.1f", (double) took) + " ms, algo: " + request.getAlgorithm() + ", profile: " + request.getProfile()
-                + ", " + weightingVehicleLogStr;
+                + ", " + weightingVehicleLogStr
+                + ", custom_model: " + request.getCustomModel();
 
         if (ghResponse.hasErrors()) {
             logger.error(logStr + ", errors:" + ghResponse.getErrors());

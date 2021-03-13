@@ -45,6 +45,7 @@ public class GHRequest {
     private List<String> pathDetails = new ArrayList<>();
     private String algo = "";
     private Locale locale = Locale.US;
+    // todonow: or should this just be a hint?!
     private CustomModel customModel;
 
     public GHRequest() {

@@ -215,7 +215,7 @@ public class RouteResourceCustomModelTest {
     }
 
     Response query(String body, int code) {
-        Response response = clientTarget(app, "/route-custom").request().post(Entity.json(body));
+        Response response = clientTarget(app, "/route").request().post(Entity.json(body));
         assertEquals(code, response.getStatus());
         return response;
     }
