@@ -194,6 +194,8 @@ public class RouteResource {
             request.putHint(Parameters.CH.DISABLE, true);
             // todonow: should we handle the model via a hint or a separate field in GHRequest?
             request.putHint(CustomModel.KEY, request.getCustomModel());
+            // todonow: custom model + vehicle/weighting should not be allowed
+            // todonow: what about enableEdgeBasedIfThereAreCurbsides?
         }
         errorIfLegacyParameters(request.getHints());
         GHResponse ghResponse = graphHopper.route(request);

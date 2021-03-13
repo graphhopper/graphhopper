@@ -90,8 +90,9 @@ public class RouteResourceCustomModelLMTest {
     @Test
     public void testCustomWeighting() {
         String body = "{\"points\": [[1.529106,42.506567], [1.54006,42.511178]]," +
-                " \"profile\": \"car_custom\"," +
-                " \"priority\": [{\"if\": \"road_class != SECONDARY\", \"multiply_by\": 0.5}]}";
+                " \"profile\": \"car_custom\", \"custom_model\":{" +
+                " \"priority\": [{\"if\": \"road_class != SECONDARY\", \"multiply_by\": 0.5}]}" +
+                "}";
         JsonNode jsonNode = query(body, 200).readEntity(JsonNode.class);
         JsonNode path = jsonNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 1317, 5);
@@ -99,11 +100,13 @@ public class RouteResourceCustomModelLMTest {
         // now prefer primary roads
         body = "{\"points\": [[1.5274,42.506211], [1.54006,42.511178]]," +
                 "\"profile\": \"car_custom\"," +
+                "\"custom_model\": {" +
                 "\"priority\": [" +
                 "{\"if\": \"road_class == RESIDENTIAL\", \"multiply_by\": 0.8}," +
                 "{\"else_if\": \"road_class == PRIMARY\", \"multiply_by\": 1}," +
                 "{\"else\": \"\", \"multiply_by\": 0.66}" +
-                "]}";
+                "]}" +
+                "}";
         jsonNode = query(body, 200).readEntity(JsonNode.class);
         path = jsonNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 1707, 5);
@@ -113,9 +116,11 @@ public class RouteResourceCustomModelLMTest {
     public void testCustomWeightingAvoidTunnels() {
         String body = "{\"points\": [[1.533365, 42.506211], [1.523924, 42.520605]]," +
                 "\"profile\": \"car_custom\"," +
+                "\"custom_model\": {" +
                 "\"priority\": [" +
                 " {\"if\": \"road_environment == TUNNEL\", \"multiply_by\": 0.1}" +
                 "]" +
+                "}" +
                 "}";
         JsonNode jsonNode = query(body, 200).readEntity(JsonNode.class);
         JsonNode path = jsonNode.get("paths").get(0);
@@ -126,8 +131,10 @@ public class RouteResourceCustomModelLMTest {
     public void testCustomWeightingSimplisticWheelchair() {
         String body = "{\"points\": [[1.540875,42.510672], [1.54212,42.511131]]," +
                 "\"profile\": \"foot_custom\"," +
+                "\"custom_model\": {" +
                 "\"priority\":[" +
-                " {\"if\": \"road_class == STEPS\", \"multiply_by\": 0}]}";
+                " {\"if\": \"road_class == STEPS\", \"multiply_by\": 0}]}" +
+                "}";
         JsonNode jsonNode = query(body, 200).readEntity(JsonNode.class);
         JsonNode path = jsonNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 328, 5);

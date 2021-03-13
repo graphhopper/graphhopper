@@ -159,6 +159,7 @@ $(document).ready(function (e) {
        var request = JSON.stringify(jsonModel);
 
        $.ajax({
+           // todonow: put custom model into separate custom_model node
            url: host + "/route",
            type: "POST",
            contentType: 'application/json; charset=utf-8',
