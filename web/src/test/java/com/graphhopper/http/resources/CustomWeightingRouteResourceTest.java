@@ -76,8 +76,7 @@ public class CustomWeightingRouteResourceTest {
                 " \"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
                 " \"profile\": \"truck\"" +
                 "}";
-        final Response response = clientTarget(app, "/route").request().post(Entity.json(jsonQuery));
-        assertEquals(200, response.getStatus());
+        final Response response = query(jsonQuery, 200);
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
@@ -90,7 +89,7 @@ public class CustomWeightingRouteResourceTest {
     @CsvSource(value = {"0.05,3073", "0.5,1498"})
     public void testAvoidArea(double priority, double expectedDistance) {
         String pointsAndProfile = "\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"car\"";
-        JsonNode jsonNode = clientTarget(app, "/route-custom").request().post(Entity.json("{" +  pointsAndProfile + "}")).readEntity(JsonNode.class);
+        JsonNode jsonNode = query("{" +  pointsAndProfile + "}", 200).readEntity(JsonNode.class);
         JsonNode path = jsonNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 661, 10);
 
@@ -109,7 +108,7 @@ public class CustomWeightingRouteResourceTest {
                 "   }" +
                 "}" +
                 "}";
-        jsonNode = clientTarget(app, "/route-custom").request().post(Entity.json(body)).readEntity(JsonNode.class);
+        jsonNode = query(body, 200).readEntity(JsonNode.class);
         path = jsonNode.get("paths").get(0);
         assertEquals(expectedDistance, path.get("distance").asDouble(), 10);
     }
@@ -117,20 +116,20 @@ public class CustomWeightingRouteResourceTest {
     @Test
     public void testCargoBike() throws IOException {
         String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"bike\"}";
-        JsonNode jsonNode = clientTarget(app, "/route-custom").request().post(Entity.json(body)).readEntity(JsonNode.class);
+        JsonNode jsonNode = query(body, 200).readEntity(JsonNode.class);
         JsonNode path = jsonNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 661, 5);
 
         String jsonFromYamlFile = yamlToJson(Helper.isToString(getClass().getResourceAsStream("cargo_bike.yml")));
         assertTrue(jsonFromYamlFile.startsWith("{"));
         body = "{" +"\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"bike\", " + jsonFromYamlFile.substring(1);
-        jsonNode = clientTarget(app, "/route-custom").request().post(Entity.json(body)).readEntity(JsonNode.class);
+        jsonNode = query(body, 200).readEntity(JsonNode.class);
         path = jsonNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 1007, 5);
 
         // results should be identical be it via server-side profile or query profile:
         body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"cargo_bike\"}";
-        jsonNode = clientTarget(app, "/route-custom").request().post(Entity.json(body)).readEntity(JsonNode.class);
+        jsonNode = query(body, 200).readEntity(JsonNode.class);
         JsonNode path2 = jsonNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), path2.get("distance").asDouble(), 1);
     }
@@ -141,8 +140,7 @@ public class CustomWeightingRouteResourceTest {
                 " \"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
                 " \"profile\": \"json_bike\"" +
                 "}";
-        final Response response = clientTarget(app, "/route-custom").request().post(Entity.json(jsonQuery));
-        assertEquals(200, response.getStatus());
+        final Response response = query(jsonQuery, 200);
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
@@ -156,8 +154,7 @@ public class CustomWeightingRouteResourceTest {
                 " \"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
                 " \"profile\": \"custom_bike\"" +
                 "}";
-        final Response response = clientTarget(app, "/route-custom").request().post(Entity.json(jsonQuery));
-        assertEquals(200, response.getStatus());
+        final Response response = query(jsonQuery, 200);
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
@@ -165,7 +162,13 @@ public class CustomWeightingRouteResourceTest {
         assertEquals(path.get("distance").asDouble(), 660, 10);
     }
 
-    static String yamlToJson(String yaml) {
+    Response query(String body, int code) {
+        Response response = clientTarget(app, "/route-custom").request().post(Entity.json(body));
+        assertEquals(code, response.getStatus());
+        return response;
+    }
+
+    private static String yamlToJson(String yaml) {
         try {
             ObjectMapper yamlReader = new ObjectMapper(new YAMLFactory());
             Object obj = yamlReader.readValue(yaml, Object.class);

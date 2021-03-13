@@ -55,8 +55,8 @@ public class CustomWeightingRouteResourceLMTest {
                 putObject("graph.flag_encoders", "car,foot").
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
-                putObject("graph.encoded_values", "surface").
-                putObject("graph.location", DIR)
+                putObject("graph.location", DIR).
+                putObject("graph.encoded_values", "surface")
                 .setProfiles(Arrays.asList(
                         // give strange profile names to ensure that we do not mix vehicle and profile:
                         new CustomProfile("car_custom").setCustomModel(new CustomModel()).setVehicle("car"),
@@ -73,13 +73,12 @@ public class CustomWeightingRouteResourceLMTest {
     }
 
     @Test
-    public void testCustomWeightingJson() {
+    public void testCustomProfile() {
         String jsonQuery = "{" +
                 " \"points\": [[1.518946,42.531453],[1.54006,42.511178]]," +
                 " \"profile\": \"car_custom\"" +
                 "}";
-        final Response response = clientTarget(app, "/route-custom").request().post(Entity.json(jsonQuery));
-        assertEquals(200, response.getStatus());
+        Response response = query(jsonQuery, 200);
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
