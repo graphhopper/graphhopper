@@ -165,7 +165,6 @@ public class RouteResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response doPost(@NotNull GHRequest request, @Context HttpServletRequest httpReq) {
         StopWatch sw = new StopWatch().start();
-        // todonow: this does not work as long as we 'unwrap' the custom model inside the request
         if (request.getCustomModel() == null) {
             // todonow: what if we choose a custom profile, but do not send a custom model (null). should
             // there be an error? -> rather not?!
