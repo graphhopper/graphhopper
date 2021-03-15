@@ -1026,7 +1026,8 @@ public class GraphHopper implements GraphHopperAPI {
 
             if (closeEarly) {
                 locationIndex.close();
-                ghStorage.flushAndCloseEarly();
+                boolean includeWayGeometry = getProfiles().stream().noneMatch(p -> p instanceof CustomProfile);
+                ghStorage.flushAndCloseEarly(includeWayGeometry);
             }
 
             ghStorage.freeze();
