@@ -489,6 +489,16 @@ td img.pic {
     z-index: 1000;
 }
 
+/* override default (red) color for strings in custom model editor */
+.cm-s-default .cm-string {
+    color: black;
+}
+
+/* override default (blue-ish) color for property names in custom model editor */
+.cm-s-default .cm-property {
+    color: black;
+}
+
 #custom-model-util-buttons button {
     background: none;
     border: none;
@@ -496,13 +506,6 @@ td img.pic {
     cursor: pointer;
     text-decoration: underline;
     color: #00cc33;
-}
-
-#custom-model-util-buttons button:disabled {
-    color: tomato;
-    cursor: default;
-    text-decoration: none;
-    opacity: 0.5;
 }
 
 #custom-model-docs {
