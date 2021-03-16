@@ -171,18 +171,33 @@ public class LandmarkStorageTest {
     }
 
     @Test
-    public void testWeightingConsistence() {
+    public void testWeightingConsistence1() {
         // create an indifferent problem: shortest weighting can pass the speed==0 edge but fastest cannot (?)
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10.1));
-        GHUtility.setSpeed(0.9, true, true, encoder, graph.edge(1, 2).setDistance(10));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(10.3));
+        graph.edge(0, 1).setDistance(10.1).set(encoder.getAccessEnc(), true, true);
+        GHUtility.setSpeed(30, true, true, encoder, graph.edge(1, 2).setDistance(10));
+        graph.edge(2, 3).setDistance(10.1).set(encoder.getAccessEnc(), true, true);
 
         LandmarkStorage storage = new LandmarkStorage(graph, new RAMDirectory(), new LMConfig("c", new FastestWeighting(encoder)), 2);
         storage.setMinimumNodes(2);
         storage.createLandmarks();
 
         assertEquals(2, storage.getSubnetworksWithLandmarks());
+        assertEquals("[2, 1]", Arrays.toString(storage.getLandmarks(1)));
+    }
+
+    @Test
+    public void testWeightingConsistence2() {
+        GHUtility.setSpeed(30, true, true, encoder, graph.edge(0, 1).setDistance(10));
+        graph.edge(2, 3).setDistance(10.1).set(encoder.getAccessEnc(), true, true);
+        GHUtility.setSpeed(30, true, true, encoder, graph.edge(2, 3).setDistance(10));
+
+        LandmarkStorage storage = new LandmarkStorage(graph, new RAMDirectory(), new LMConfig("c", new FastestWeighting(encoder)), 2);
+        storage.setMinimumNodes(2);
+        storage.createLandmarks();
+
+        assertEquals(3, storage.getSubnetworksWithLandmarks());
         assertEquals("[1, 0]", Arrays.toString(storage.getLandmarks(1)));
+        assertEquals("[3, 2]", Arrays.toString(storage.getLandmarks(2)));
     }
 
     @Test

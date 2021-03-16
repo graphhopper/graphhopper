@@ -22,6 +22,7 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphBuilder;
@@ -77,7 +78,7 @@ class TarjanSCCTest {
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 14).setDistance(1));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(10, 14).setDistance(1));
 
-        TarjanSCC tarjan = new TarjanSCC(graph, accessEnc, false);
+        TarjanSCC tarjan = new TarjanSCC(graph, DefaultEdgeFilter.outEdges(accessEnc), false);
         TarjanSCC.ConnectedComponents scc = tarjan.findComponentsRecursive();
         List<IntArrayList> components = scc.getComponents();
 
@@ -110,7 +111,7 @@ class TarjanSCCTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(6, 7).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(7, 4).setDistance(1));
 
-        TarjanSCC tarjan = new TarjanSCC(graph, accessEnc, false);
+        TarjanSCC tarjan = new TarjanSCC(graph, DefaultEdgeFilter.outEdges(accessEnc), false);
         TarjanSCC.ConnectedComponents scc = tarjan.findComponentsRecursive();
         List<IntArrayList> components = scc.getComponents();
 
@@ -126,7 +127,7 @@ class TarjanSCCTest {
         assertEquals(components.get(0), scc.getBiggestComponent());
 
         // exclude single
-        scc = new TarjanSCC(graph, accessEnc, true).findComponentsRecursive();
+        scc = new TarjanSCC(graph, DefaultEdgeFilter.outEdges(accessEnc), true).findComponentsRecursive();
         assertTrue(scc.getSingleNodeComponents().isEmpty());
         assertEquals(3, scc.getTotalComponents());
         assertEquals(2, scc.getComponents().size());
@@ -173,7 +174,7 @@ class TarjanSCCTest {
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(15, 16).setDistance(1));
 
         FlagEncoder encoder = em.fetchEdgeEncoders().iterator().next();
-        TarjanSCC tarjan = new TarjanSCC(graph, encoder.getAccessEnc(), false);
+        TarjanSCC tarjan = new TarjanSCC(graph, DefaultEdgeFilter.outEdges(encoder.getAccessEnc()), false);
         TarjanSCC.ConnectedComponents scc = tarjan.findComponentsRecursive();
         assertEquals(2, scc.getTotalComponents());
         assertTrue(scc.getSingleNodeComponents().isEmpty());
@@ -197,8 +198,8 @@ class TarjanSCCTest {
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(g, rnd, 1_000, 2, true, true,
                 encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), 60d, 0.8, 0.7, 0);
-        TarjanSCC.ConnectedComponents implicit = new TarjanSCC(g, accessEnc, excludeSingle).findComponentsRecursive();
-        TarjanSCC.ConnectedComponents explicit = new TarjanSCC(g, accessEnc, excludeSingle).findComponents();
+        TarjanSCC.ConnectedComponents implicit = new TarjanSCC(g, DefaultEdgeFilter.outEdges(accessEnc), excludeSingle).findComponentsRecursive();
+        TarjanSCC.ConnectedComponents explicit = new TarjanSCC(g, DefaultEdgeFilter.outEdges(accessEnc), excludeSingle).findComponents();
 
         assertEquals(g.getNodes(), implicit.getNodes(), "total number of nodes in connected components should equal number of nodes in graph");
         assertEquals(g.getNodes(), explicit.getNodes(), "total number of nodes in connected components should equal number of nodes in graph");

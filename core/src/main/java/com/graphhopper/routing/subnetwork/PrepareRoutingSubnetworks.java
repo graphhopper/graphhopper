@@ -97,7 +97,7 @@ public class PrepareRoutingSubnetworks {
     private int removeSmallSubNetworksNodeBased(String jobName, BooleanEncodedValue accessEnc) {
         // partition graph into strongly connected components using Tarjan's algorithm
         StopWatch sw = new StopWatch().start();
-        TarjanSCC tarjan = new TarjanSCC(ghStorage, accessEnc, false);
+        TarjanSCC tarjan = new TarjanSCC(ghStorage, DefaultEdgeFilter.outEdges(accessEnc), false);
         TarjanSCC.ConnectedComponents ccs = tarjan.findComponents();
         List<IntArrayList> components = ccs.getComponents();
         BitSet singleNodeComponents = ccs.getSingleNodeComponents();

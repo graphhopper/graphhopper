@@ -20,7 +20,6 @@ package com.graphhopper.routing.lm;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntObjectMap;
-import com.carrotsearch.hppc.IntSet;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.carrotsearch.hppc.procedures.IntObjectProcedure;
 import com.graphhopper.coll.MapEntry;
@@ -30,10 +29,7 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.subnetwork.SubnetworkStorage;
 import com.graphhopper.routing.subnetwork.TarjanSCC;
 import com.graphhopper.routing.subnetwork.TarjanSCC.ConnectedComponents;
-import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleSet;
@@ -240,24 +236,27 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         byte[] subnetworks = new byte[graph.getNodes()];
         Arrays.fill(subnetworks, (byte) UNSET_SUBNETWORK);
-        EdgeFilter tarjanFilter = EdgeFilter.ALL_EDGES;
-        IntHashSet blockedEdges = new IntHashSet();
+        EdgeFilter accessFilter = new FiniteWeightFilter(weighting);
+        final EdgeFilter tarjanFilter;
+        final IntHashSet blockedEdges;
 
         // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
         if (ruleLookup != null && !ruleLookup.getRules().isEmpty()) {
             StopWatch sw = new StopWatch().start();
             blockedEdges = findBorderEdgeIds(ruleLookup);
-            tarjanFilter = new SimpleBlockedEdgesFilter(blockedEdges);
+            tarjanFilter = edgeState -> accessFilter.accept(edgeState) && !blockedEdges.contains(edgeState.getEdge());
             if (logDetails)
                 LOGGER.info("Made " + blockedEdges.size() + " edges inaccessible. Calculated country cut in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
+        } else {
+            tarjanFilter = accessFilter;
+            blockedEdges = new IntHashSet();
         }
 
         StopWatch sw = new StopWatch().start();
 
-        // we cannot reuse the components calculated in PrepareRoutingSubnetworks as the edgeIds changed in between (called graph.optimize)
+        // TODO: reuse the components calculated in PrepareRoutingSubnetworks as the edgeIds do no longer change in between (as we removed graph.optimize)
         // also calculating subnetworks from scratch makes bigger problems when working with many oneways
-        TarjanSCC tarjan = new TarjanSCC(graph, encoder.getAccessEnc(), true);
-        tarjan.setAdditionalEdgeFilter(tarjanFilter);
+        TarjanSCC tarjan = new TarjanSCC(graph, tarjanFilter, true);
         ConnectedComponents graphComponents = tarjan.findComponents();
         if (logDetails)
             LOGGER.info("Calculated " + graphComponents.getComponents().size() + " subnetworks via tarjan in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
@@ -908,19 +907,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         @Override
         public boolean accept(EdgeIteratorState edgeState) {
             return edgeState.get(accessEnc) && edgeState.getReverse(accessEnc);
-        }
-    }
-
-    private static class SimpleBlockedEdgesFilter implements EdgeFilter {
-        private final IntSet blockedEdges;
-
-        SimpleBlockedEdgesFilter(IntSet blockedEdges) {
-            this.blockedEdges = blockedEdges;
-        }
-
-        @Override
-        public boolean accept(EdgeIteratorState edgeState) {
-            return !blockedEdges.contains(edgeState.getEdge());
         }
     }
 
