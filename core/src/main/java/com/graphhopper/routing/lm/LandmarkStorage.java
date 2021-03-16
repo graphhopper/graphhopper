@@ -25,7 +25,6 @@ import com.carrotsearch.hppc.procedures.IntObjectProcedure;
 import com.graphhopper.coll.MapEntry;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.SPTEntry;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.subnetwork.SubnetworkStorage;
 import com.graphhopper.routing.subnetwork.TarjanSCC;
 import com.graphhopper.routing.subnetwork.TarjanSCC.ConnectedComponents;
@@ -36,7 +35,10 @@ import com.graphhopper.routing.util.spatialrules.SpatialRuleSet;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
@@ -261,7 +263,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         if (logDetails)
             LOGGER.info("Calculated " + graphComponents.getComponents().size() + " subnetworks via tarjan in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
 
-        EdgeExplorer tmpExplorer = graph.createEdgeExplorer(new RequireBothDirectionsEdgeFilter(encoder));
         String additionalInfo = "";
         // guess the factor
         if (factor <= 0) {
@@ -270,7 +271,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             // see estimateMaxWeight. If we pick the distance too big for small areas this could lead to (slightly)
             // suboptimal routes as there will be too big rounding errors. But picking it too small is bad for performance
             // e.g. for Germany at least 1500km is very important otherwise speed is at least twice as slow e.g. for 1000km
-            double maxWeight = estimateMaxWeight(tmpExplorer, graphComponents.getComponents(), blockedEdges);
+            double maxWeight = estimateMaxWeight(graphComponents.getComponents(), blockedEdges);
             setMaximumWeight(maxWeight);
             additionalInfo = ", maxWeight:" + maxWeight + " from quick estimation";
         }
@@ -291,9 +292,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             // ensure start node is reachable from both sides and no subnetwork is associated
             for (; index >= 0; index--) {
                 int nextStartNode = subnetworkIds.get(index);
-                if (subnetworks[nextStartNode] == UNSET_SUBNETWORK
-                        && GHUtility.count(tmpExplorer.setBaseNode(nextStartNode)) > 0) {
-
+                if (subnetworks[nextStartNode] == UNSET_SUBNETWORK) {
                     if (logDetails) {
                         GHPoint p = createPoint(graph, nextStartNode);
                         LOGGER.info("start node: " + nextStartNode + " (" + p + ") subnetwork " + index + ", subnetwork size: " + subnetworkIds.size()
@@ -342,7 +341,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     /**
      * This method returns the maximum weight for the graph starting from the landmarks
      */
-    private double estimateMaxWeight(EdgeExplorer requireBothDirExplorer, List<IntArrayList> graphComponents, IntHashSet blockedEdges) {
+    private double estimateMaxWeight(List<IntArrayList> graphComponents, IntHashSet blockedEdges) {
         double maxWeight = 0;
         int searchedSubnetworks = 0;
         // the maximum weight can only be an approximation so there is only a tiny improvement when we would do this for
@@ -357,22 +356,20 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             int index = subnetworkIds.size() - 1;
             for (; index >= 0; index--) {
                 int nextStartNode = subnetworkIds.get(index);
-                if (GHUtility.count(requireBothDirExplorer.setBaseNode(nextStartNode)) > 0) {
-                    LandmarkExplorer explorer = findLandmarks(tmpLandmarkNodeIds, nextStartNode, blockedEdges, "estimate " + index);
-                    if (explorer.getFromCount() < minimumNodes)
-                        continue;
+                LandmarkExplorer explorer = findLandmarks(tmpLandmarkNodeIds, nextStartNode, blockedEdges, "estimate " + index);
+                if (explorer.getFromCount() < minimumNodes)
+                    continue;
 
-                    // starting
-                    for (int lmIdx = 0; lmIdx < tmpLandmarkNodeIds.length; lmIdx++) {
-                        int lmNodeId = tmpLandmarkNodeIds[lmIdx];
-                        explorer = new LandmarkExplorer(graph, this, weighting, traversalMode, true);
-                        explorer.setStartNode(lmNodeId);
-                        explorer.setFilter(blockedEdges, true, true);
-                        explorer.runAlgo();
-                        maxWeight = Math.max(maxWeight, explorer.getLastEntry().weight);
-                    }
-                    break;
+                // starting
+                for (int lmIdx = 0; lmIdx < tmpLandmarkNodeIds.length; lmIdx++) {
+                    int lmNodeId = tmpLandmarkNodeIds[lmIdx];
+                    explorer = new LandmarkExplorer(graph, this, weighting, traversalMode, true);
+                    explorer.setStartNode(lmNodeId);
+                    explorer.setFilter(blockedEdges, true, true);
+                    explorer.runAlgo();
+                    maxWeight = Math.max(maxWeight, explorer.getLastEntry().weight);
                 }
+                break;
             }
         }
 
@@ -771,7 +768,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         // edgeFilter is null initially and must be set via setEdgeFilter
         private EdgeFilter edgeFilter;
         // todo: rename 'from' to 'reverse' (and flip it) ? 'from' is used in many places for node ids and 'reverse' is mostly used for the direction
-        private boolean from;
+        private final boolean from;
         private final LandmarkStorage lms;
         private SPTEntry lastEntry;
 
@@ -789,7 +786,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         }
 
         public void setFilter(IntHashSet set, boolean bwd, boolean fwd) {
-            edgeFilter = new BlockedEdgesFilter(flagEncoder.getAccessEnc(), bwd, fwd, set);
+            edgeFilter = new BlockedEdgesFilter(weighting, bwd, fwd, set);
         }
 
         public void setStartNode(int startNode) {
@@ -896,44 +893,31 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         return new GHPoint(graph.getNodeAccess().getLat(nodeId), graph.getNodeAccess().getLon(nodeId));
     }
 
-    final static class RequireBothDirectionsEdgeFilter implements EdgeFilter {
-
-        private BooleanEncodedValue accessEnc;
-
-        public RequireBothDirectionsEdgeFilter(FlagEncoder flagEncoder) {
-            this.accessEnc = flagEncoder.getAccessEnc();
-        }
-
-        @Override
-        public boolean accept(EdgeIteratorState edgeState) {
-            return edgeState.get(accessEnc) && edgeState.getReverse(accessEnc);
-        }
-    }
-
     private static class BlockedEdgesFilter implements EdgeFilter {
         private final IntHashSet blockedEdges;
-        private final BooleanEncodedValue accessEnc;
+        private final Weighting weighting;
         private final boolean fwd;
         private final boolean bwd;
 
-        public BlockedEdgesFilter(BooleanEncodedValue accessEnc, boolean bwd, boolean fwd, IntHashSet blockedEdges) {
-            this.accessEnc = accessEnc;
+        public BlockedEdgesFilter(Weighting w, boolean bwd, boolean fwd, IntHashSet blockedEdges) {
+            this.weighting = w;
             this.fwd = fwd;
             this.bwd = bwd;
             this.blockedEdges = blockedEdges;
         }
 
         @Override
-        public final boolean accept(EdgeIteratorState iter) {
-            boolean blocked = blockedEdges.contains(iter.getEdge());
+        public final boolean accept(EdgeIteratorState edgeState) {
+            boolean blocked = blockedEdges.contains(edgeState.getEdge());
             if (blocked)
                 return false;
-            return fwd && iter.get(accessEnc) || bwd && iter.getReverse(accessEnc);
+            return fwd && Double.isFinite(weighting.calcEdgeWeightWithAccess(edgeState, false)) ||
+                    bwd && Double.isFinite(weighting.calcEdgeWeightWithAccess(edgeState, true));
         }
 
         @Override
         public String toString() {
-            return accessEnc + ", bwd:" + bwd + ", fwd:" + fwd;
+            return weighting + ", bwd:" + bwd + ", fwd:" + fwd;
         }
     }
 }
