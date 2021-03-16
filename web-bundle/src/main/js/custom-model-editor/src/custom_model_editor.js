@@ -33,7 +33,7 @@ class CustomModelEditor {
                 'Alt-Enter': this.showAutoCompleteSuggestions
             },
             lint: {
-                getAnnotations: this.getCurrentErrors
+                getAnnotations: this.getAnnotations
             },
             gutters: []
         });
@@ -67,6 +67,13 @@ class CustomModelEditor {
         }
     }
 
+    getUsedCategories = () => {
+        const currentErrors = this.getCurrentErrors(this.cm.getValue(), this.cm);
+        if (currentErrors.errors.length !== 0)
+            console.warn('invalid custom model', currentErrors.errors);
+        return currentErrors.usedCategories;
+    }
+
     setExtraKey = (keyString, callback) => {
         (this.cm.getOption('extraKeys'))[keyString] = callback;
     }
@@ -75,10 +82,16 @@ class CustomModelEditor {
         this._validListener = validListener;
     }
 
+    getAnnotations = (text, options, editor) => {
+        const errors = this.getCurrentErrors(text, editor).errors;
+        if (this._validListener)
+            this._validListener(errors.length === 0);
+        return errors;
+    }
     /**
      * Builds a list of errors for the current text such that they can be visualized in the editor.
      */
-    getCurrentErrors = (text, options, editor) => {
+    getCurrentErrors = (text, editor) => {
         const validateResult = validateJson(text);
         const errors = validateResult.errors.map((err, i) => {
             return {
@@ -91,8 +104,13 @@ class CustomModelEditor {
 
         const areas = validateResult.areas;
         const conditionRanges = validateResult.conditionRanges;
+        const usedCategories = [];
         conditionRanges.forEach((cr, i) => {
             const condition = text.substring(cr[0], cr[1]);
+            Object.keys(this._categories).forEach((c) => {
+                if (condition.indexOf(c) >= 0)
+                    usedCategories.push(c);
+            });
             if (condition.length < 3 || condition[0] !== `"` || condition[condition.length - 1] !== `"`) {
                 errors.push({
                     message: `must be a non-empty string with double quotes, e.g. "true". given: ${condition}`,
@@ -127,9 +145,10 @@ class CustomModelEditor {
                 });
             });
         }
-        if (this._validListener)
-            this._validListener(errors.length === 0);
-        return errors;
+        return {
+            errors,
+            usedCategories
+        };
     }
 
     showAutoCompleteSuggestions = () => {

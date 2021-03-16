@@ -39,8 +39,10 @@
     const button = document.querySelector("#send-button")
     editor.validListener = (valid) => {
         button.disabled = !valid;
-        if (valid)
+        if (valid) {
+            console.log(editor.getUsedCategories());
             console.log(editor.jsonObj);
+        }
     }
 </script>
 </body>

@@ -154,6 +154,11 @@ $(document).ready(function (e) {
        jsonModel.points_encoded = false;
        jsonModel.elevation = ghRequest.api_params.elevation;
        jsonModel.profile = ghRequest.api_params.profile;
+       const details = cmEditor.getUsedCategories();
+       details.push('average_speed');
+       details.push('distance');
+       details.push('time');
+       jsonModel.details = details;
        var request = JSON.stringify(jsonModel);
 
        $.ajax({
