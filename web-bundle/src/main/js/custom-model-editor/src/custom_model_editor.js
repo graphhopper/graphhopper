@@ -24,7 +24,7 @@ class CustomModelEditor {
         this._categories = categories;
 
         this.cm = CodeMirror(callback, {
-            lineNumbers: true,
+            lineNumbers: false,
             matchBrackets: true,
             autoCloseBrackets: true,
             mode: "application/json",
@@ -35,7 +35,7 @@ class CustomModelEditor {
             lint: {
                 getAnnotations: this.getCurrentErrors
             },
-            gutters: ["CodeMirror-linenumbers", "CodeMirror-lint-markers"]
+            gutters: []
         });
 
         this.cm.on("cursorActivity", (e) => {
