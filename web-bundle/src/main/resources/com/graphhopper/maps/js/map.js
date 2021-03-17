@@ -285,8 +285,8 @@ module.exports.addElevation = function (geoJsonFeature, details) {
             bottom: 55,
             left: 50
         },
-        xTicks: 6,
-        yTicks: 6,
+        xTicks: 3,
+        yTicks: 3,
         position: "bottomright",
         expand: expandElevationDiagram,
         expandCallback: function (expand) {
