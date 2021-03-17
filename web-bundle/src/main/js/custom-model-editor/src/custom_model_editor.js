@@ -104,12 +104,12 @@ class CustomModelEditor {
 
         const areas = validateResult.areas;
         const conditionRanges = validateResult.conditionRanges;
-        const usedCategories = [];
+        const usedCategories = new Set();
         conditionRanges.forEach((cr, i) => {
             const condition = text.substring(cr[0], cr[1]);
             Object.keys(this._categories).forEach((c) => {
                 if (condition.indexOf(c) >= 0)
-                    usedCategories.push(c);
+                    usedCategories.add(c);
             });
             if (condition.length < 3 || condition[0] !== `"` || condition[condition.length - 1] !== `"`) {
                 errors.push({
@@ -147,7 +147,7 @@ class CustomModelEditor {
         }
         return {
             errors,
-            usedCategories
+            usedCategories: Array.from(usedCategories)
         };
     }
 
