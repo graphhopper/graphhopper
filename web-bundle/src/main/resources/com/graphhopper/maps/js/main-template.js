@@ -158,6 +158,7 @@ $(document).ready(function (e) {
            elevation: ghRequest.api_params.elevation,
            profile: ghRequest.api_params.profile,
            custom_model: customModel
+           // todo: add disable ch?!
            // todonow: should we allow adding parameters like details via the custom model box (at least via ctrl+enter)?
            // or maybe just take them from the url?
        }

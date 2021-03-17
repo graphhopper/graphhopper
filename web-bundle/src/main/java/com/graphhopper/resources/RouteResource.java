@@ -59,13 +59,12 @@ public class RouteResource {
 
     private static final Logger logger = LoggerFactory.getLogger(RouteResource.class);
 
-    // todonow: revert to GraphHopperAPI? But why?
-    private final GraphHopper graphHopper;
+    private final GraphHopperAPI graphHopper;
     private final ProfileResolver profileResolver;
     private final Boolean hasElevation;
 
     @Inject
-    public RouteResource(GraphHopper graphHopper, ProfileResolver profileResolver, @Named("hasElevation") Boolean hasElevation) {
+    public RouteResource(GraphHopperAPI graphHopper, ProfileResolver profileResolver, @Named("hasElevation") Boolean hasElevation) {
         this.graphHopper = graphHopper;
         this.profileResolver = profileResolver;
         this.hasElevation = hasElevation;
@@ -166,8 +165,6 @@ public class RouteResource {
     public Response doPost(@NotNull GHRequest request, @Context HttpServletRequest httpReq) {
         StopWatch sw = new StopWatch().start();
         if (request.getCustomModel() == null) {
-            // todonow: what if we choose a custom profile, but do not send a custom model (null). should
-            // there be an error? -> rather not?!
             if (Helper.isEmpty(request.getProfile())) {
                 // legacy parameter resolution (only used when there is no custom model)
                 enableEdgeBasedIfThereAreCurbsides(request.getCurbsides(), request);
@@ -175,26 +172,11 @@ public class RouteResource {
                 removeLegacyParameters(request.getHints());
             }
         } else {
-            // todonow: most (all?) of these checks really belong into the router...
-            if (request.getHints().has(BLOCK_AREA))
-                // todonow: update error message
-                throw new IllegalArgumentException("Instead of block_area define the geometry under 'areas' as GeoJSON and use 'area_<id>: 0' in e.g. priority");
-            if (!request.getHints().getBool(Parameters.CH.DISABLE, true))
-                // todonow: update error message
-                throw new IllegalArgumentException("Custom requests are not available for speed mode, do not use ch.disable=false");
             if (Helper.isEmpty(request.getProfile()))
-                // todonow: update error message
-                throw new IllegalArgumentException("The 'profile' parameter for CustomRequest is required");
-            Profile profile = graphHopper.getProfile(request.getProfile());
-            if (profile == null)
-                throw new IllegalArgumentException("profile '" + request.getProfile() + "' not found");
-            if (!(profile instanceof CustomProfile))
-                throw new IllegalArgumentException("profile '" + request.getProfile() + "' cannot be used for a custom request because it has weighting=" + profile.getWeighting());
-            request.putHint(Parameters.CH.DISABLE, true);
+                // throw a dedicated exception here, otherwise a missing profile is still caught in Router
+                throw new IllegalArgumentException("The 'profile' parameter is required when you use the `custom_model` parameter");
             // todonow: should we handle the model via a hint or a separate field in GHRequest?
             request.putHint(CustomModel.KEY, request.getCustomModel());
-            // todonow: custom model + vehicle/weighting should not be allowed
-            // todonow: what about enableEdgeBasedIfThereAreCurbsides?
         }
         errorIfLegacyParameters(request.getHints());
         GHResponse ghResponse = graphHopper.route(request);
