@@ -10,9 +10,9 @@
 </head>
 <body>
 <div id="custom_model_editor_box"></div>
-<button id="toggle-button">show json</button>
+<button id="send-button">send</button>
 <script type="module">
-    // importing this module adds a global variable GHCustomModelEditor to,
+    // importing this module adds a global variable GHCustomModelEditor
     // it would be better to be able to use es6 imports, but since we are building
     // with webpack this is not possible at the moment: https://github.com/webpack/webpack/issues/2933
     import "../dist/index.js";
@@ -32,20 +32,18 @@
         document.querySelector("#custom_model_editor_box").appendChild(element);
     });
     editor.categories = categories;
-    editor.setExtraKey('Ctrl-Enter', () => {editor.value = (editor.value + '\n ... hello')});
-    editor.value = 'hello world';
+    editor.setExtraKey('Ctrl-Enter', () => {editor.value = (editor.value + '\n You pressed Ctrl-Enter')});
+    editor.value = '{\n "hello": "world"\n}';
     editor.cm.focus();
     editor.cm.setCursor(editor.cm.lineCount())
-    const button = document.querySelector("#toggle-button")
+    const button = document.querySelector("#send-button")
     editor.validListener = (valid) => {
         button.disabled = !valid;
-        if (valid)
+        if (valid) {
+            console.log(editor.getUsedCategories());
             console.log(editor.jsonObj);
+        }
     }
-    button.addEventListener("click", (e) => {
-        editor.toggleJsonYAML();
-        button.innerText = editor.yaml ? 'show json' : 'edit yaml';
-    }, false);
 </script>
 </body>
 </html>
