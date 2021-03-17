@@ -273,7 +273,7 @@ module.exports.focus = focus;
 module.exports.initMap = initMap;
 module.exports.adjustMapSize = adjustMapSize;
 
-module.exports.addElevation = function (geoJsonFeature, details) {
+module.exports.addElevation = function (geoJsonFeature, details, selectedDetail, detailSelected) {
 
     // TODO no option to switch to miles yet
     var options = {
@@ -291,14 +291,23 @@ module.exports.addElevation = function (geoJsonFeature, details) {
         expand: expandElevationDiagram,
         expandCallback: function (expand) {
             expandElevationDiagram = expand;
-        }
+        },
+        selectedAttributeIdx: 0,
+        chooseSelectionCallback: detailSelected
     };
 
     var GHFeatureCollection = [];
 
+    var detailIdx = -1;
+    var selectedDetailIdx = -1;
     for (var detailKey in details) {
+        detailIdx++;
+        if (detailKey === selectedDetail)
+            selectedDetailIdx = detailIdx;
         GHFeatureCollection.push(sliceFeatureCollection(details[detailKey], detailKey, geoJsonFeature))
     }
+    if (selectedDetailIdx >= 0)
+        options.selectedAttributeIdx = selectedDetailIdx;
 
     if(GHFeatureCollection.length === 0) {
         // No Path Details => Show only elevation
