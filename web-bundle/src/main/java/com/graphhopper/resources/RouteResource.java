@@ -19,15 +19,12 @@ package com.graphhopper.resources;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperAPI;
-import com.graphhopper.config.Profile;
 import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.http.GHPointParam;
 import com.graphhopper.jackson.MultiException;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.routing.ProfileResolver;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import io.dropwizard.jersey.params.AbstractParam;

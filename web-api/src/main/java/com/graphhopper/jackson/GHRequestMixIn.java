@@ -34,5 +34,4 @@ interface GHRequestMixIn {
 
     @JsonProperty("details")
     GHRequest setPathDetails(List<String> pathDetails);
-
 }
