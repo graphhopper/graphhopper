@@ -1,6 +1,7 @@
 var mainTemplate = require('./main-template.js');
 var tileLayers = require('./config/tileLayers.js');
 var translate = require('./translate.js');
+var d3 = require('d3');
 
 var routingLayer;
 var map;
@@ -292,6 +293,7 @@ module.exports.addElevation = function (geoJsonFeature, details, selectedDetail,
         expandCallback: function (expand) {
             expandElevationDiagram = expand;
         },
+        mappings: {},
         selectedAttributeIdx: 0,
         chooseSelectionCallback: detailSelected
     };
@@ -304,7 +306,9 @@ module.exports.addElevation = function (geoJsonFeature, details, selectedDetail,
         detailIdx++;
         if (detailKey === selectedDetail)
             selectedDetailIdx = detailIdx;
-        GHFeatureCollection.push(sliceFeatureCollection(details[detailKey], detailKey, geoJsonFeature))
+        GHFeatureCollection.push(sliceFeatureCollection(details[detailKey], detailKey, geoJsonFeature));
+        options.mappings[detailKey] = getColorMapping(details[detailKey]);
+
     }
     if (selectedDetailIdx >= 0)
         options.selectedAttributeIdx = selectedDetailIdx;
@@ -323,7 +327,7 @@ module.exports.addElevation = function (geoJsonFeature, details, selectedDetail,
         };
         GHFeatureCollection.push(elevationCollection);
         // Use a fixed color for elevation
-        options.mappings = { Elevation: {'elevation': {text: 'Elevation [m]', color: '#27ce49'}}};
+        options.mappings['elevation'] = { text: 'Elevation [m]', color: '#27ce49'};
     }
 
     if (elevationControl === null) {
@@ -333,6 +337,62 @@ module.exports.addElevation = function (geoJsonFeature, details, selectedDetail,
 
     elevationControl.addData(GHFeatureCollection);
 };
+
+function getColorMapping(detail) {
+    var detailInfo = analyzeDetail(detail);
+    if (detailInfo.numeric === true && detailInfo.minVal !== detailInfo.maxVal) {
+        // for numeric details we use a color gradient
+        var colorMin = [47, 115, 54];
+        var colorMax = [170, 58, 56];
+        return function (data) {
+            var factor = (data - detailInfo.minVal) / (detailInfo.maxVal - detailInfo.minVal);
+            var color = [];
+            for (var i = 0; i < 3; i++)
+                color.push(colorMin[i] + factor * (colorMax[i] - colorMin[i]));
+            return {
+                'text': data,
+                'color': 'rgb(' + color[0] + ', ' + color[1] + ', ' + color[2] + ')'
+            }
+        }
+    } else {
+        // for discrete encoded values we use discrete colors
+        var values = detail.map(function (d) {
+            return d[2]
+        });
+        return function (data) {
+            var palette = d3.schemeCategory10;
+            var index = values.indexOf(data) % palette.length;
+            var color = palette[index];
+            return {
+                'text': data,
+                'color': color
+            }
+        }
+    }
+}
+
+function analyzeDetail(detail) {
+    // we check if all detail values are numeric
+    var numbers = new Set();
+    var minVal, maxVal;
+    var numberCount = 0;
+    for (var i = 0; i < detail.length; i++) {
+        var val = detail[i][2];
+        if (typeof val === "number") {
+            if (!minVal) minVal = val;
+            if (!maxVal) maxVal = val;
+            numbers.add(val);
+            numberCount++;
+            minVal = Math.min(val, minVal);
+            maxVal = Math.max(val, maxVal);
+        }
+    }
+    return {
+        numeric: numberCount === detail.length,
+        minVal: minVal,
+        maxVal: maxVal
+    }
+}
 
 function sliceFeatureCollection(detail, detailKey, geoJsonFeature){
 
