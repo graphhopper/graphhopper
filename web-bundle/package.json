@@ -6,7 +6,7 @@
   "license": "Apache-2.0",
   "main": "main.js",
   "scripts": {
-    "watch": "watchify src/main/resources/com/graphhopper/maps/js/main-template.js -o src/main/resources/com/graphhopper/maps/js/main.js --debug --verbose",
+    "watch": "BROWSERIFYSWAP_ENV='hot' watchify src/main/resources/com/graphhopper/maps/js/main-template.js -o src/main/resources/com/graphhopper/maps/js/main.js --debug --verbose",
     "bundle": "browserify src/main/resources/com/graphhopper/maps/js/main-template.js -o src/main/resources/com/graphhopper/maps/js/main.js",
     "bundleDebug": "browserify src/main/resources/com/graphhopper/maps/js/main-template.js --debug -o src/main/resources/com/graphhopper/maps/js/main.js",
     "bundleProduction": "browserify -g uglifyify src/main/resources/com/graphhopper/maps/js/main-template.js -o src/main/resources/com/graphhopper/maps/js/main.js",
@@ -22,6 +22,9 @@
   "browserify-swap": {
     "production": {
       "config/options.js$": "./src/main/resources/com/graphhopper/maps/js/config/options_prod.js"
+    },
+    "hot": {
+      "config/options.js$": "./src/main/resources/com/graphhopper/maps/js/config/options_hot.js"
     }
   },
   "dependencies": {
