@@ -327,7 +327,7 @@ module.exports.addElevation = function (geoJsonFeature, details, selectedDetail,
         };
         GHFeatureCollection.push(elevationCollection);
         // Use a fixed color for elevation
-        options.mappings['elevation'] = { text: 'Elevation [m]', color: '#27ce49'};
+        options.mappings = {Elevation: {'elevation': {text: 'Elevation [m]', color: '#27ce49'}}};
     }
 
     if (elevationControl === null) {
