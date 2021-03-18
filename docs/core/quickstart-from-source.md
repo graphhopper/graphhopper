@@ -113,8 +113,8 @@ to perform when you make changes to the JavaScript code:
 You can achieve an even faster development cycle by running `npm run watch` which will update `main.js` whenever you
 make changes to one of the .js files. The same command works in the custom-model-editor folder in case you want to make
 changes there. To hot-reload your changes in the browser the best option is to serve GH maps from a separate server like
-live-server. You can do this by running `npm run liveServer` from a separate terminal, but you need to adjust the
-routing host in options.js and point it to your GH server. It is also a good idea to remove `main.js`
+live-server. You can do this by running `npm run serve` from a separate terminal, but you need to adjust the routing
+host in options.js and point it to your GH server. It is also a good idea to remove `main.js`
 from the IntelliJ index. Right-click the file and choose `Mark as plain text`.
 
 The following npm commands are available in the `web-bundle` directory:
