@@ -13,7 +13,7 @@
     "bundleProduction": "browserify -g uglifyify src/main/resources/com/graphhopper/maps/js/main-template.js -o src/main/resources/com/graphhopper/maps/js/main.js",
     "test": "JASMINE_CONFIG_PATH=src/test/resources/com/graphhopper/maps/spec/jasmine.json jasmine",
     "lint": "jshint src/main/resources/com/graphhopper/maps/js/",
-    "serve": "live-server --port=8991 --mount=/:src/main/resources/com/graphhopper/maps/"
+    "serve": "live-server --port=8991 --mount=/:src/main/resources/com/graphhopper/maps/ --wait=1000"
   },
   "browserify": {
     "transform": [
