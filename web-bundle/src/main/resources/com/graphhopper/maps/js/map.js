@@ -342,9 +342,9 @@ module.exports.addElevation = function (geoJsonFeature, details, selectedDetail,
 function getColorMapping(detail) {
     var detailInfo = analyzeDetail(detail);
     if (detailInfo.numeric === true && detailInfo.minVal !== detailInfo.maxVal) {
-        // for numeric details we use a color gradient
-        var colorMin = [47, 115, 54];
-        var colorMax = [170, 58, 56];
+        // for numeric details we use a color gradient, taken from here:  https://uigradients.com/#Superman
+        var colorMin = [0, 153, 247];
+        var colorMax = [241, 23, 18];
         return function (data) {
             var factor = (data - detailInfo.minVal) / (detailInfo.maxVal - detailInfo.minVal);
             var color = [];
@@ -361,9 +361,14 @@ function getColorMapping(detail) {
             return d[2]
         });
         return function (data) {
-            var palette = d3.schemeCategory10;
+            // we choose a color-blind friendly palette from here: https://personal.sron.nl/~pault/#sec:qualitative
+            // see also this: https://thenode.biologists.com/data-visualization-with-flying-colors/research/
+            var palette = ['#332288', '#88ccee', '#44aa99', '#117733', '#999933', '#ddcc77', '#cc6677', '#882255', '#aa4499'];
+            var missingColor = '#dddddd';
             var index = values.indexOf(data) % palette.length;
-            var color = palette[index];
+            var color = data === 'missing' || data === 'unclassified'
+                ? missingColor
+                : palette[index];
             return {
                 'text': data,
                 'color': color
