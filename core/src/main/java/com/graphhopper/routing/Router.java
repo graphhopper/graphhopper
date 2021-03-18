@@ -118,7 +118,9 @@ public class Router {
             if (maxVisitedNodesForRequest > routerConfig.getMaxVisitedNodes())
                 throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + routerConfig.getMaxVisitedNodes());
 
-            Weighting weighting = createWeighting(profile, request.getHints(), request.getPoints(), disableCH);
+            PMap requestHints = new PMap(request.getHints());
+            requestHints.putObject(CustomModel.KEY, request.getCustomModel());
+            Weighting weighting = createWeighting(profile, requestHints, request.getPoints(), disableCH);
             AlgorithmOptions algoOpts = AlgorithmOptions.start().
                     algorithm(request.getAlgorithm()).
                     traversalMode(traversalMode).

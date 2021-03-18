@@ -172,8 +172,6 @@ public class RouteResource {
             if (Helper.isEmpty(request.getProfile()))
                 // throw a dedicated exception here, otherwise a missing profile is still caught in Router
                 throw new IllegalArgumentException("The 'profile' parameter is required when you use the `custom_model` parameter");
-            // todonow: should we handle the model via a hint or a separate field in GHRequest?
-            request.putHint(CustomModel.KEY, request.getCustomModel());
         }
         errorIfLegacyParameters(request.getHints());
         GHResponse ghResponse = graphHopper.route(request);
