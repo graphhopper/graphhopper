@@ -302,6 +302,7 @@ module.exports.addElevation = function (geoJsonFeature, details, selectedDetail,
     var selectedDetailIdx = -1;
     for (var detailKey in details) {
         detailIdx++;
+        console.log(detailIdx, detailKey);
         if (detailKey === selectedDetail)
             selectedDetailIdx = detailIdx;
         GHFeatureCollection.push(sliceFeatureCollection(details[detailKey], detailKey, geoJsonFeature))
