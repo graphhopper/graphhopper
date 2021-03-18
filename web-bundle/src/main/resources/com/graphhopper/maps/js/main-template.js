@@ -1,4 +1,3 @@
-global.d3 = require('d3');
 var Flatpickr = require('flatpickr');
 require('flatpickr/dist/l10n');
 
