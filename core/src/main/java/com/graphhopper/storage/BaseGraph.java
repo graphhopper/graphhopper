@@ -426,7 +426,7 @@ class BaseGraph implements Graph {
     }
 
     /**
-     * Flush and free resources that are not needed for post-processing (way geometries and name index).
+     * Flush and free resources that are not needed for post-processing (way geometries and StringIndex).
      */
     void flushAndCloseGeometryAndNameStorage() {
         setWayGeometryHeader();
@@ -1238,31 +1238,31 @@ class BaseGraph implements Graph {
             baseGraph.writeFlags(edgePointer, getFlags());
             return this;
         }
-        
+
         @Override
         public String get(StringEncodedValue property) {
             return property.getString(reverse, getFlags());
         }
-        
+
         @Override
         public EdgeIteratorState set(StringEncodedValue property, String value) {
             property.setString(reverse, getFlags(), value);
             baseGraph.writeFlags(edgePointer, getFlags());
             return this;
         }
-        
+
         @Override
         public String getReverse(StringEncodedValue property) {
             return property.getString(!reverse, getFlags());
         }
-        
+
         @Override
         public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
             property.setString(!reverse, getFlags(), value);
             baseGraph.writeFlags(edgePointer, getFlags());
             return this;
         }
-        
+
         @Override
         public EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd) {
             if (!property.isStoreTwoDirections())
