@@ -100,7 +100,7 @@ Running `mvn package` from the root folder will install a local copy of node/npm
 maps. You just need to start the server and GH maps and if you use the default port GH maps will be visible at
 `http://localhost:8989/`.
 
-To develop the web UI running the whole maven build usually takes to long so here are the separate steps that you need
+To develop the web UI running the whole maven build usually takes too long so here are the separate steps that you need
 to perform when you make changes to the JavaScript code:
 
 1. install the [node package manager](https://github.com/nvm-sh/nvm#install--update-script). For windows
@@ -112,10 +112,10 @@ to perform when you make changes to the JavaScript code:
 
 You can achieve an even faster development cycle by running `npm run watch` which will update `main.js` whenever you
 make changes to one of the .js files. The same command works in the custom-model-editor folder in case you want to make
-changes there. To hot-reload your changes in the browser the best option is to serve GH maps from a separate folder like
-live-server. You can do this by running `npm run liveServer` from a separate terminal. But to do this you need to adjust
-the host in options.js and point it to the port your GH server is running on. It is also a good idea to remove `main.js`
-from the IntelliJ index. To do so right-click the file and choose `Mark as plain text`.
+changes there. To hot-reload your changes in the browser the best option is to serve GH maps from a separate server like
+live-server. You can do this by running `npm run liveServer` from a separate terminal, but you need to adjust the
+routing host in options.js and point it to your GH server. It is also a good idea to remove `main.js`
+from the IntelliJ index. Right-click the file and choose `Mark as plain text`.
 
 The following npm commands are available in the `web-bundle` directory:
 
