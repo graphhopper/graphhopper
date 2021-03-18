@@ -292,6 +292,7 @@ module.exports.addElevation = function (geoJsonFeature, details, selectedDetail,
         expandCallback: function (expand) {
             expandElevationDiagram = expand;
         },
+        mappings: {},
         selectedAttributeIdx: 0,
         chooseSelectionCallback: detailSelected
     };
@@ -307,7 +308,9 @@ module.exports.addElevation = function (geoJsonFeature, details, selectedDetail,
         console.log(detailIdx, detailKey);
         if (detailKey === selectedDetail)
             selectedDetailIdx = detailIdx;
-        GHFeatureCollection.push(sliceFeatureCollection(details[detailKey], detailKey, geoJsonFeature))
+        GHFeatureCollection.push(sliceFeatureCollection(details[detailKey], detailKey, geoJsonFeature));
+        options.mappings[detailKey] = getColorMapping(details[detailKey]);
+
     }
     if (selectedDetailIdx >= 0)
         options.selectedAttributeIdx = selectedDetailIdx;
@@ -336,6 +339,67 @@ module.exports.addElevation = function (geoJsonFeature, details, selectedDetail,
 
     elevationControl.addData(GHFeatureCollection);
 };
+
+function getColorMapping(detail) {
+    var detailInfo = analyzeDetail(detail);
+    if (detailInfo.numeric === true && detailInfo.minVal !== detailInfo.maxVal) {
+        // for numeric details we use a color gradient, taken from here:  https://uigradients.com/#Superman
+        var colorMin = [0, 153, 247];
+        var colorMax = [241, 23, 18];
+        return function (data) {
+            var factor = (data - detailInfo.minVal) / (detailInfo.maxVal - detailInfo.minVal);
+            var color = [];
+            for (var i = 0; i < 3; i++)
+                color.push(colorMin[i] + factor * (colorMax[i] - colorMin[i]));
+            return {
+                'text': data,
+                'color': 'rgb(' + color[0] + ', ' + color[1] + ', ' + color[2] + ')'
+            }
+        }
+    } else {
+        // for discrete encoded values we use discrete colors
+        var values = detail.map(function (d) {
+            return d[2]
+        });
+        return function (data) {
+            // we choose a color-blind friendly palette from here: https://personal.sron.nl/~pault/#sec:qualitative
+            // see also this: https://thenode.biologists.com/data-visualization-with-flying-colors/research/
+            var palette = ['#332288', '#88ccee', '#44aa99', '#117733', '#999933', '#ddcc77', '#cc6677', '#882255', '#aa4499'];
+            var missingColor = '#dddddd';
+            var index = values.indexOf(data) % palette.length;
+            var color = data === 'missing' || data === 'unclassified'
+                ? missingColor
+                : palette[index];
+            return {
+                'text': data,
+                'color': color
+            }
+        }
+    }
+}
+
+function analyzeDetail(detail) {
+    // we check if all detail values are numeric
+    var numbers = new Set();
+    var minVal, maxVal;
+    var numberCount = 0;
+    for (var i = 0; i < detail.length; i++) {
+        var val = detail[i][2];
+        if (typeof val === "number") {
+            if (!minVal) minVal = val;
+            if (!maxVal) maxVal = val;
+            numbers.add(val);
+            numberCount++;
+            minVal = Math.min(val, minVal);
+            maxVal = Math.max(val, maxVal);
+        }
+    }
+    return {
+        numeric: numberCount === detail.length,
+        minVal: minVal,
+        maxVal: maxVal
+    }
+}
 
 function sliceFeatureCollection(detail, detailKey, geoJsonFeature){
 
