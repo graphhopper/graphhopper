@@ -303,9 +303,6 @@ module.exports.addElevation = function (geoJsonFeature, details, selectedDetail,
     var selectedDetailIdx = -1;
     for (var detailKey in details) {
         detailIdx++;
-        // strangely without this console.log the detail-selection does not work (tried FF and Chrome)
-        // no idea, just keeping it for now...
-        console.log(detailIdx, detailKey);
         if (detailKey === selectedDetail)
             selectedDetailIdx = detailIdx;
         GHFeatureCollection.push(sliceFeatureCollection(details[detailKey], detailKey, geoJsonFeature));
