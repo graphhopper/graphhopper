@@ -428,12 +428,11 @@ class BaseGraph implements Graph {
     /**
      * Flush and free resources that are not needed for post-processing (way geometries and StringIndex).
      */
-    void flushAndCloseGeometryAndNameStorage(boolean includingGeometry) {
-        if (includingGeometry) {
-            setWayGeometryHeader();
-            wayGeometry.flush();
-            wayGeometry.close();
-        }
+    void flushAndCloseGeometryAndNameStorage() {
+        setWayGeometryHeader();
+
+        wayGeometry.flush();
+        wayGeometry.close();
 
         stringIndex.flush();
         stringIndex.close();

@@ -431,11 +431,9 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     }
 
     /**
-     * Flush and free resources that are not needed for CH-preparation (way geometries and StringIndex).
-     *
-     * @param includingGeometry closes way geometries too
+     * Flush and free base graph resources like way geometries and StringIndex
      */
-    public void flushAndCloseEarly(boolean includingGeometry) {
-        baseGraph.flushAndCloseGeometryAndNameStorage(includingGeometry);
+    public void flushAndCloseEarly() {
+        baseGraph.flushAndCloseGeometryAndNameStorage();
     }
 }
