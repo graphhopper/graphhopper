@@ -156,14 +156,14 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
 
         for (Statement statement : list) {
             if (statement.getKeyword() == Statement.Keyword.ELSE) {
-                if (!Helper.isEmpty(statement.getExpression()))
-                    throw new IllegalArgumentException("expression must be empty but was " + statement.getExpression());
+                if (!Helper.isEmpty(statement.getCondition()))
+                    throw new IllegalArgumentException("expression must be empty but was " + statement.getCondition());
 
                 expressions.append("else {" + statement.getOperation().build(statement.getValue()) + "; }\n");
             } else if (statement.getKeyword() == Statement.Keyword.ELSEIF || statement.getKeyword() == Statement.Keyword.IF) {
-                ExpressionVisitor.ParseResult parseResult = parseExpression(statement.getExpression(), nameInConditionValidator, lookup);
+                ExpressionVisitor.ParseResult parseResult = parseExpression(statement.getCondition(), nameInConditionValidator, lookup);
                 if (!parseResult.ok)
-                    throw new IllegalArgumentException(exceptionInfo + " invalid expression \"" + statement.getExpression() + "\"" +
+                    throw new IllegalArgumentException(exceptionInfo + " invalid expression \"" + statement.getCondition() + "\"" +
                             (parseResult.invalidMessage == null ? "" : ": " + parseResult.invalidMessage));
                 createObjects.addAll(parseResult.guessedVariables);
                 if (statement.getKeyword() == Statement.Keyword.ELSEIF)

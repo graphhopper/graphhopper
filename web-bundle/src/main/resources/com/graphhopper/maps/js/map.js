@@ -303,6 +303,8 @@ module.exports.addElevation = function (geoJsonFeature, details, selectedDetail,
     var selectedDetailIdx = -1;
     for (var detailKey in details) {
         detailIdx++;
+        // strangely without this console.log the detail-selection does not work (tried FF and Chrome)
+        // no idea, just keeping it for now...
         console.log(detailIdx, detailKey);
         if (detailKey === selectedDetail)
             selectedDetailIdx = detailIdx;
@@ -327,7 +329,7 @@ module.exports.addElevation = function (geoJsonFeature, details, selectedDetail,
         };
         GHFeatureCollection.push(elevationCollection);
         // Use a fixed color for elevation
-        options.mappings = {Elevation: {'elevation': {text: 'Elevation [m]', color: '#27ce49'}}};
+        options.mappings = { Elevation: {'elevation': {text: 'Elevation [m]', color: '#27ce49'}}};
     }
 
     if (elevationControl === null) {
