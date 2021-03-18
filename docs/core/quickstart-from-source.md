@@ -96,29 +96,25 @@ as those versions are not in maven central:
 
 ### Web UI (JavaScript)
 
-To setup the JavaScript development environment you
+Running `mvn package` from the root folder will install a local copy of node/npm and build the javascript bundle for GH
+maps. You just need to start the server and GH maps and if you use the default port GH maps will be visible at
+`http://localhost:8989/`.
 
-1. install the [node package
-manager](https://github.com/nvm-sh/nvm#install--update-script). For windows use [nvm-windows](https://github.com/coreybutler/nvm-windows).
-3. Build the custom-model-editor component: `sh -c "cd web-bundle/src/main/js/custom-model-editor && npm install && npm run build"`
-2. Build the Web UI: `cd web-bundle && npm install && npm run bundle`
+To develop the web UI running the whole maven build usually takes to long so here are the separate steps that you need
+to perform when you make changes to the JavaScript code:
 
-Now the main.js file was created and you should be able to see GraphHopper Maps.
+1. install the [node package manager](https://github.com/nvm-sh/nvm#install--update-script). For windows
+   use [nvm-windows](https://github.com/coreybutler/nvm-windows).
+2. Build the custom-model-editor
+   component: `sh -c "cd web-bundle/src/main/js/custom-model-editor && npm install && npm run build"`
+3. Build the Web UI: `cd web-bundle && npm install && npm run bundle` which results in the `main.js` file
+4. Restart the GH server so it picks up the latest version of the UI bundle
 
-To see all changes in the browser without restarting the server you can either run the GH server in debug mode from
-IntelliJ (use `Run->Debugging Actions->Reload Changed Classes` and refresh your browser window) or you start a separate server. To start a separate server for the Web UI you change the routing.host property in src/main/resources/com/graphhopper/maps/js/config/options.js:
-```js
-...
-  routing: {host: 'http://localhost:8989', api_key: ''},
-...
-```
-
-And then in a second shell do:
-
-```
-npm install -g live-server
-live-server --open=src/main/resources/com/graphhopper/maps/
-```
+You can achieve an even faster development cycle by running `npm run watch` which will update `main.js` whenever you
+make changes to one of the .js files. The same command works in the custom-model-editor folder in case you want to make
+changes there. To hot-reload your changes in the browser the best option is to serve GH maps from a separate folder
+using live-server. You can do this by running `npm run liveServer` from a separate terminal. It is also a good idea to
+remove `main.js` from the IntelliJ index. To do so right-click the file and choose `Mark as plain text`.
 
 The following npm commands are available in the `web-bundle` directory:
 
