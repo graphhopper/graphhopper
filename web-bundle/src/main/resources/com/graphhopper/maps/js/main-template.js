@@ -681,7 +681,7 @@ function createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom) {
            return;
        }
 
-       function createClickHandler(geoJsons, currentLayerIndex, tabHeader, oneTab, hasElevation, details) {
+       function createClickHandler(geoJsons, currentLayerIndex, tabHeader, oneTab, hasElevation, details, selectedDetail, detailSelected) {
            return function () {
 
                var currentGeoJson = geoJsons[currentLayerIndex];
@@ -700,7 +700,7 @@ function createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom) {
 
                if (hasElevation) {
                    mapLayer.clearElevation();
-                   mapLayer.addElevation(currentGeoJson, details);
+                   mapLayer.addElevation(currentGeoJson, details, selectedDetail, detailSelected);
                }
 
                headerTabs.find("li").removeClass("current");
@@ -766,7 +766,10 @@ function createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom) {
            mapLayer.addDataToRoutingLayer(geojsonFeature);
            var oneTab = $("<div class='route_result_tab'>");
            routeResultsDiv.append(oneTab);
-           tabHeader.click(createClickHandler(geoJsons, pathIndex, tabHeader, oneTab, request.hasElevation(), path.details));
+           var detailSelected = function (id, type) {
+               ghRequest.selectedDetail = type.text;
+           }
+           tabHeader.click(createClickHandler(geoJsons, pathIndex, tabHeader, oneTab, request.hasElevation(), path.details, request.selectedDetail, detailSelected));
 
            var routeInfo = $("<div class='route_description'>");
            if (path.description && path.description.length > 0) {

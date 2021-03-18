@@ -60,7 +60,7 @@ var GHRequest = function (host, api_key) {
 
 GHRequest.prototype.init = function (params) {
     for (var key in params) {
-        if (key === "point" || key === "mathRandom" || key === "do_zoom" || key === "layer" || key === "use_miles")
+        if (key === "point" || key === "mathRandom" || key === "do_zoom" || key === "layer" || key === "use_miles" || key === "selected_detail")
             continue;
 
         var val = params[key];
@@ -77,6 +77,9 @@ GHRequest.prototype.init = function (params) {
 
     if ('use_miles' in params)
         this.useMiles = params.use_miles;
+
+    if ('selected_detail' in params)
+        this.selectedDetail = params.selected_detail;
 
     if (!this.api_params.profile)
         this.api_params.profile = this.profiles[0].profile_name
@@ -194,7 +197,7 @@ GHRequest.prototype.createGPXURL = function (withRoute, withTrack, withWayPoints
 
 GHRequest.prototype.createHistoryURL = function () {
     var skip = {"key": true};
-    return this.createPath("?" + this.createPointParams(true), skip) + "&use_miles=" + !!this.useMiles;
+    return this.createPath("?" + this.createPointParams(true), skip) + "&use_miles=" + !!this.useMiles + (this.selectedDetail ? "&selected_detail=" + this.selectedDetail : "");
 };
 
 GHRequest.prototype.createPointParams = function (useRawInput) {
