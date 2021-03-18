@@ -28,7 +28,7 @@ class StatementSerializer extends JsonSerializer<Statement> {
     @Override
     public void serialize(Statement statement, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
         jsonGenerator.writeStartObject();
-        jsonGenerator.writeStringField(statement.getKeyword().getName(), statement.getExpression());
+        jsonGenerator.writeStringField(statement.getKeyword().getName(), statement.getCondition());
         jsonGenerator.writeNumberField(statement.getOperation().getName(), statement.getValue());
         jsonGenerator.writeEndObject();
     }
