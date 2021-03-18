@@ -11,6 +11,8 @@
 exports.options = {
     with_tiles: true,
     environment: "development",
+    // if you server GH maps from another server than the GH server use this (assuming your GH server is running on the standard port)
+    // routing: {host: 'http://localhost:8989', api_key: ''},
     routing: {host: '', api_key: ''},
     geocoding: {host: '', api_key: ''},
     thunderforest: {api_key: ''},
