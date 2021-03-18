@@ -420,15 +420,10 @@ function sliceFeatureCollection(detail, detailKey, geoJsonFeature){
         // It's important to +1
         // Array.slice is exclusive the to element and the feature needs to include the to coordinate
         var to = detailObj[1] + 1;
-        var value;
-        try {
-            value = detailObj[2].toString()
-        } catch (error) {
-            console.error(error);
+        var value = detailObj[2];
+        if (typeof value === "undefined" || value === null)
             value = "Undefined";
-        }
-
-        var tmpPoints = points.slice(from,to);
+        var tmpPoints = points.slice(from, to);
 
         feature.features.push({
           "type": "Feature",
