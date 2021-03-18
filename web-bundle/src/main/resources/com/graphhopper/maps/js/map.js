@@ -1,7 +1,6 @@
 var mainTemplate = require('./main-template.js');
 var tileLayers = require('./config/tileLayers.js');
 var translate = require('./translate.js');
-var d3 = require('d3');
 
 var routingLayer;
 var map;

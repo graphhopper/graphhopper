@@ -24,7 +24,6 @@
     }
   },
   "dependencies": {
-    "d3": "5.11.0",
     "flatpickr": "4.4.6",
     "jquery": "3.5.0",
     "leaflet": "1.5.1",
