@@ -12,6 +12,8 @@ exports.options = {
     with_tiles: true,
     environment: "development",
     routing: {host: '', api_key: ''},
+    // use this when you run the watch-no-bs script
+    // routing: {host: 'http://localhost:8989', api_key: ''},
     geocoding: {host: '', api_key: ''},
     thunderforest: {api_key: ''},
     omniscale: {api_key: ''},
