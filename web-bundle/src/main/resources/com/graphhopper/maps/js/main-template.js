@@ -143,29 +143,32 @@ $(document).ready(function (e) {
            }
        }
 
-       var jsonModel = cmEditor.jsonObj;
-       if (jsonModel === null) {
+       var customModel = cmEditor.jsonObj;
+       if (customModel === null) {
            routeResultsDiv.html("Invalid custom model");
            return;
        }
 
-       jsonModel.points = points;
-       jsonModel.points_encoded = false;
-       jsonModel.elevation = ghRequest.api_params.elevation;
-       jsonModel.profile = ghRequest.api_params.profile;
        const details = cmEditor.getUsedCategories();
        details.push('average_speed');
        details.push('distance');
        details.push('time');
-       jsonModel.details = details;
-       var request = JSON.stringify(jsonModel);
+       var request = {
+           points: points,
+           points_encoded: false,
+           elevation: ghRequest.api_params.elevation,
+           profile: ghRequest.api_params.profile,
+           custom_model: customModel,
+           "ch.disable": true,
+           details: details
+       }
 
        $.ajax({
-           url: host + "/route-custom",
+           url: host + "/route",
            type: "POST",
            contentType: 'application/json; charset=utf-8',
            dataType: "json",
-           data: request,
+           data: JSON.stringify(request),
            success: createRouteCallback(ghRequest, routeResultsDiv, "", true),
            error: function(err) {
                routeResultsDiv.html("Error response: cannot process input");
@@ -176,6 +179,7 @@ $(document).ready(function (e) {
     };
 
     // todo: prevent this as long as custom model is invalid?
+    // so far it is useful so we can send the request regardless of the invalidation
     cmEditor.setExtraKey('Ctrl-Enter', sendCustomData);
     $("#custom-model-search-button").click(sendCustomData);
 

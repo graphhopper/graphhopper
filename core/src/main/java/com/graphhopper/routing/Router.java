@@ -32,6 +32,7 @@ import com.graphhopper.routing.util.FiniteWeightFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
@@ -101,6 +102,9 @@ public class Router {
             if (!profile.isTurnCosts() && !request.getCurbsides().isEmpty())
                 throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to use a profile that supports turn costs" +
                         "\nThe following profiles do support turn costs: " + getTurnCostProfiles());
+            if (request.getCustomModel() != null && !(profile instanceof CustomProfile))
+                throw new IllegalArgumentException("The requested profile '" + request.getProfile() + "' cannot be used with `custom_model`, because it has weighting=" + profile.getWeighting());
+
             // todo later: should we be able to control this using the edge_based parameter?
             TraversalMode traversalMode = profile.isTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
             final int uTurnCostsInt = request.getHints().getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
@@ -114,7 +118,9 @@ public class Router {
             if (maxVisitedNodesForRequest > routerConfig.getMaxVisitedNodes())
                 throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + routerConfig.getMaxVisitedNodes());
 
-            Weighting weighting = createWeighting(profile, request.getHints(), request.getPoints(), disableCH);
+            PMap requestHints = new PMap(request.getHints());
+            requestHints.putObject(CustomModel.KEY, request.getCustomModel());
+            Weighting weighting = createWeighting(profile, requestHints, request.getPoints(), disableCH);
             AlgorithmOptions algoOpts = AlgorithmOptions.start().
                     algorithm(request.getAlgorithm()).
                     traversalMode(traversalMode).
@@ -346,6 +352,9 @@ public class Router {
         if (request.getCurbsides().size() > 0 && request.getCurbsides().size() != request.getPoints().size())
             throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
 
+        if (request.getCustomModel() != null && request.getHints().has(BLOCK_AREA))
+            throw new IllegalArgumentException("When using `custom_model` do not use `block_area`. Use `areas` in the custom model instead");
+
         boolean disableCH = getDisableCH(request.getHints());
         if (chEnabled && !disableCH) {
             if (!request.getHeadings().isEmpty())
@@ -355,7 +364,10 @@ public class Router {
                 throw new IllegalArgumentException("The '" + Parameters.Routing.PASS_THROUGH + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #1765");
 
             if (request.getHints().has(Parameters.Routing.BLOCK_AREA))
-                throw new IllegalArgumentException("When CH is enabled the " + Parameters.Routing.BLOCK_AREA + " cannot be specified");
+                throw new IllegalArgumentException("The '" + Parameters.Routing.BLOCK_AREA + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`.");
+
+            if (request.getCustomModel() != null)
+                throw new IllegalArgumentException("The 'custom_model' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`.");
         } else {
             checkNonChMaxWaypointDistance(request.getPoints());
         }
