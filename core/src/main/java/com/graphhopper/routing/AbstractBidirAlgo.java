@@ -228,18 +228,6 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
         return currTo.weight;
     }
 
-    IntObjectMap<SPTEntry> getBestFromMap() {
-        return bestWeightMapFrom;
-    }
-
-    IntObjectMap<SPTEntry> getBestToMap() {
-        return bestWeightMapTo;
-    }
-
-    void setBestOtherMap(IntObjectMap<SPTEntry> other) {
-        bestWeightMapOther = other;
-    }
-
     protected void setUpdateBestPath(boolean b) {
         updateBestPath = b;
     }
@@ -247,17 +235,6 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
     @Override
     public int getVisitedNodes() {
         return visitedCountFrom + visitedCountTo;
-    }
-
-    void setToDataStructures(AbstractBidirAlgo other) {
-        to = other.to;
-        toInEdge = other.toInEdge;
-        pqOpenSetTo = other.pqOpenSetTo;
-        bestWeightMapTo = other.bestWeightMapTo;
-        finishedTo = other.finishedTo;
-        currTo = other.currTo;
-        visitedCountTo = other.visitedCountTo;
-        // inEdgeExplorer
     }
 
     @Override
