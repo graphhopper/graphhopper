@@ -28,7 +28,10 @@ import com.graphhopper.routing.SPTEntry;
 import com.graphhopper.routing.subnetwork.SubnetworkStorage;
 import com.graphhopper.routing.subnetwork.TarjanSCC;
 import com.graphhopper.routing.subnetwork.TarjanSCC.ConnectedComponents;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleSet;
@@ -238,7 +241,8 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         byte[] subnetworks = new byte[graph.getNodes()];
         Arrays.fill(subnetworks, (byte) UNSET_SUBNETWORK);
-        EdgeFilter accessFilter = new FiniteWeightFilter(weighting);
+        // always use "reverse = false" because EdgeFilter.accept is called within correct direction in Tarjan
+        EdgeFilter accessFilter = edgeState -> edgeState.get(encoder.getAccessEnc()) && Double.isFinite(weighting.calcEdgeWeight(edgeState, false));
         final EdgeFilter tarjanFilter;
         final IntHashSet blockedEdges;
 
