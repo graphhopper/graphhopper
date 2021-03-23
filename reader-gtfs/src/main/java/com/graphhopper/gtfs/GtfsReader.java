@@ -292,14 +292,7 @@ class GtfsReader {
             nodeAccess.setNode(arrivalNode, stop.stop_lat, stop.stop_lon);
             arrivalTime = stopTime.arrival_time + time;
             if (prev != null) {
-                Stop fromStop = feed.stops.get(prev.stop_id);
-                double distance = distCalc.calcDist(
-                        fromStop.stop_lat,
-                        fromStop.stop_lon,
-                        stop.stop_lat,
-                        stop.stop_lon);
                 EdgeIteratorState edge = graph.edge(departureNode, arrivalNode);
-                edge.setDistance(distance);
                 edge.set(accessEnc, true).setReverse(accessEnc, false);
                 edge.setName(stop.stop_name);
                 setEdgeTypeAndClearDistance(edge, GtfsStorage.EdgeType.HOP);
