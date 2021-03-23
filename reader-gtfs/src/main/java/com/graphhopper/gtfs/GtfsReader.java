@@ -524,10 +524,6 @@ class GtfsReader {
         }
     }
 
-    private static <T> int getValueOrPutSize(Map<T, Integer> map, T key) {
-        return map.computeIfAbsent(key, k -> map.size());
-    }
-
     private void insertOutboundTransfers(String toStopId, String toRouteId, int minimumTransferTime, NavigableMap<Integer, Integer> fromStopTimelineNodes) {
         int stationNode = gtfsStorage.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(id, toStopId));
         EdgeIterator i = graph.getBaseGraph().createEdgeExplorer().setBaseNode(stationNode);
@@ -590,6 +586,10 @@ class GtfsReader {
         } else {
             return ((GtfsStorageI.RoutePlatform) platformDescriptor).route_id;
         }
+    }
+
+    private static <T> int getValueOrPutSize(Map<T, Integer> map, T key) {
+        return map.computeIfAbsent(key, k -> map.size());
     }
 
     private void addPtNode(int node, Stop stop) {
