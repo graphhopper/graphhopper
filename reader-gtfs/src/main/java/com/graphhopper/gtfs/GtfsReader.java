@@ -35,8 +35,6 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import org.mapdb.Fun;
@@ -134,7 +132,7 @@ class GtfsReader {
                 }
                 Integer prev = gtfsStorage.getStationNodes().put(new GtfsStorage.FeedIdWithStopId(id, stop.stop_id), streetNode);
                 if (prev != null) {
-                    throw new RuntimeException("Duplicate stop id: "+stop.stop_id);
+                    throw new RuntimeException("Duplicate stop id: " + stop.stop_id);
                 }
             }
         }
