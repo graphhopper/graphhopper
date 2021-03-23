@@ -331,14 +331,7 @@ class GtfsReader {
             nodeAccess.setNode(departureNode, stop.stop_lat, stop.stop_lon);
             int dayShift = stopTime.departure_time / (24 * 60 * 60);
             GtfsStorage.Validity validOn = new GtfsStorage.Validity(getValidOn(trip.validOnDay, dayShift), zoneId, startDate);
-            int validityId;
-            if (gtfsStorage.getOperatingDayPatterns().containsKey(validOn)) {
-                validityId = gtfsStorage.getOperatingDayPatterns().get(validOn);
-            } else {
-                validityId = gtfsStorage.getOperatingDayPatterns().size();
-                gtfsStorage.getOperatingDayPatterns().put(validOn, validityId);
-            }
-
+            int validityId = getValueOrPutSize(gtfsStorage.getOperatingDayPatterns(), validOn);
             EdgeIteratorState boardEdge = graph.edge(departureTimelineNode, departureNode);
             boardEdge.setName(getRouteName(feed, trip.trip));
             setEdgeTypeAndClearDistance(boardEdge, GtfsStorage.EdgeType.BOARD);
@@ -520,14 +513,7 @@ class GtfsReader {
 
         int dayShift = departureTime / (24 * 60 * 60);
         GtfsStorage.Validity validOn = new GtfsStorage.Validity(getValidOn(validOnDay, dayShift), zoneId, startDate);
-        int validityId;
-        if (gtfsStorage.getOperatingDayPatterns().containsKey(validOn)) {
-            validityId = gtfsStorage.getOperatingDayPatterns().get(validOn);
-        } else {
-            validityId = gtfsStorage.getOperatingDayPatterns().size();
-            gtfsStorage.getOperatingDayPatterns().put(validOn, validityId);
-        }
-
+        int validityId = getValueOrPutSize(gtfsStorage.getOperatingDayPatterns(), validOn);
         EdgeIteratorState boardEdge = graph.edge(departureTimelineNode, departureNode);
         boardEdge.set(accessEnc, true).setReverse(accessEnc, false);
         boardEdge.setName(getRouteName(feed, trip));
@@ -578,13 +564,7 @@ class GtfsReader {
     }
 
     private void setFeedIdWithTimezone(EdgeIteratorState leaveTimeExpandedNetworkEdge, GtfsStorage.FeedIdWithTimezone validOn) {
-        int validityId;
-        if (gtfsStorage.getWritableTimeZones().containsKey(validOn)) {
-            validityId = gtfsStorage.getWritableTimeZones().get(validOn);
-        } else {
-            validityId = gtfsStorage.getWritableTimeZones().size();
-            gtfsStorage.getWritableTimeZones().put(validOn, validityId);
-        }
+        int validityId = getValueOrPutSize(gtfsStorage.getWritableTimeZones(), validOn);
         leaveTimeExpandedNetworkEdge.set(validityIdEnc, validityId);
     }
 
@@ -600,13 +580,7 @@ class GtfsReader {
                 blockTransferValidity.or(validOn.validity);
                 blockTransferValidity.and(accumulatorValidity);
                 GtfsStorage.Validity blockTransferValidOn = new GtfsStorage.Validity(blockTransferValidity, zoneId, startDate);
-                int blockTransferValidityId;
-                if (gtfsStorage.getOperatingDayPatterns().containsKey(blockTransferValidOn)) {
-                    blockTransferValidityId = gtfsStorage.getOperatingDayPatterns().get(blockTransferValidOn);
-                } else {
-                    blockTransferValidityId = gtfsStorage.getOperatingDayPatterns().size();
-                    gtfsStorage.getOperatingDayPatterns().put(blockTransferValidOn, blockTransferValidityId);
-                }
+                int blockTransferValidityId = getValueOrPutSize(gtfsStorage.getOperatingDayPatterns(), blockTransferValidOn);
                 nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
                 EdgeIteratorState transferEdge = graph.edge(lastTrip.arrivalNode, i - 1);
                 transferEdge.set(accessEnc, true).setReverse(accessEnc, false);
@@ -622,6 +596,10 @@ class GtfsReader {
                 accumulatorValidity.andNot(lastTrip.tripWithStopTimes.validOnDay);
             }
         }
+    }
+
+    private static <T> int getValueOrPutSize(Map<T, Integer> map, T key) {
+        return map.computeIfAbsent(key, k -> map.size());
     }
 
     private void insertOutboundTransfers(String toStopId, String toRouteId, int minimumTransferTime, NavigableMap<Integer, Integer> fromStopTimelineNodes) {
