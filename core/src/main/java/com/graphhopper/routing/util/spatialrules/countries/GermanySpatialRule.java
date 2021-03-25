@@ -59,13 +59,10 @@ public class GermanySpatialRule extends AbstractSpatialRule {
             case PRIMARY:
                 return 100;
             case SECONDARY:
-                return 100;
             case TERTIARY:
-                return 100;
             case UNCLASSIFIED:
-                return 100;
             case RESIDENTIAL:
-                return 100;
+                return 50;
             case LIVING_STREET:
                 return 4;
             default:
