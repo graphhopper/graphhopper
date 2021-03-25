@@ -274,53 +274,54 @@ public class FootFlagEncoderTest {
 
     @Test
     public void testPriority() {
+        IntsRef edgeFlags = encodingManager.createEdgeFlags();
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "cycleway");
-        assertEquals(PriorityCode.UNCHANGED.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.UNCHANGED.getValue(), footEncoder.handlePriority(edgeFlags, way, null));
 
         way.setTag("highway", "primary");
-        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(edgeFlags, way, null));
 
         way.setTag("highway", "track");
         way.setTag("bicycle", "official");
-        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(edgeFlags, way, null));
 
         way.setTag("highway", "track");
         way.setTag("bicycle", "designated");
-        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(edgeFlags, way, null));
 
         way.setTag("highway", "cycleway");
         way.setTag("bicycle", "designated");
         way.setTag("foot", "designated");
-        assertEquals(PriorityCode.PREFER.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.PREFER.getValue(), footEncoder.handlePriority(edgeFlags, way, null));
 
         way.clearTags();
         way.setTag("highway", "primary");
         way.setTag("sidewalk", "yes");
-        assertEquals(PriorityCode.UNCHANGED.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.UNCHANGED.getValue(), footEncoder.handlePriority(edgeFlags, way, null));
 
         way.clearTags();
         way.setTag("highway", "cycleway");
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.UNCHANGED.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.UNCHANGED.getValue(), footEncoder.handlePriority(edgeFlags, way, null));
 
         way.clearTags();
         way.setTag("highway", "road");
         way.setTag("bicycle", "official");
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(edgeFlags, way, null));
 
         way.clearTags();
         way.setTag("highway", "trunk");
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(edgeFlags, way, null));
         way.setTag("sidewalk", "none");
-        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(edgeFlags, way, null));
 
         way.clearTags();
         way.setTag("highway", "residential");
         way.setTag("sidewalk", "yes");
-        assertEquals(PriorityCode.PREFER.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.PREFER.getValue(), footEncoder.handlePriority(edgeFlags, way, null));
     }
 
     @Test

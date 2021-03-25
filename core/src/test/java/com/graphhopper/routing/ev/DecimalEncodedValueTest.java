@@ -25,12 +25,14 @@ public class DecimalEncodedValueTest {
         CarFlagEncoder carEncoder = new CarFlagEncoder(10, 0.5, 0);
         EncodingManager em = EncodingManager.create(carEncoder);
         DecimalEncodedValue carAverageSpeedEnc = em.getDecimalEncodedValue(EncodingManager.getKey(carEncoder, "average_speed"));
+        DecimalEncodedValue maxSpeedEnc = em.getDecimalEncodedValue(MaxSpeed.KEY);
 
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway_link");
-        way.setTag("maxspeed", "70 mph");
-        IntsRef flags = carEncoder.handleWayTags(em.createEdgeFlags(), way, carEncoder.getAccess(way));
-        assertEquals(101.5, carAverageSpeedEnc.getDecimal(true, flags), 1e-1);
+        IntsRef flags = em.createEdgeFlags();
+        maxSpeedEnc.setDecimal(false, flags, 110);
+        carEncoder.handleWayTags(flags, way, carEncoder.getAccess(way));
+        assertEquals(99, carAverageSpeedEnc.getDecimal(true, flags), 1e-1);
 
         DecimalEncodedValue instance1 = new UnsignedDecimalEncodedValue("test1", 8, 0.5, false);
         instance1.init(new EncodedValue.InitializerConfig());

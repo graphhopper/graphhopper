@@ -545,7 +545,8 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         way.setTag("highway", "tertiary");
         way.setTag("maxspeed", "90");
         edgeFlags = encodingManager.createEdgeFlags();
-        encoder.setSpeed(false, edgeFlags, encoder.applyMaxSpeed(way, 20));
+        maxSpeedEnc.setDecimal(false, edgeFlags, 90);
+        encoder.setSpeed(false, edgeFlags, encoder.applyMaxSpeed(edgeFlags, 20));
         assertEquals(20, avgSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
         assertPriority(UNCHANGED.getValue(), way);
 
@@ -553,7 +554,8 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         way.setTag("highway", "track");
         way.setTag("maxspeed", "90");
         edgeFlags = encodingManager.createEdgeFlags();
-        encoder.setSpeed(false, edgeFlags, encoder.applyMaxSpeed(way, 20));
+        maxSpeedEnc.setDecimal(false, edgeFlags, 90);
+        encoder.setSpeed(false, edgeFlags, encoder.applyMaxSpeed(edgeFlags, 20));
         assertEquals(20, avgSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
         assertPriority(UNCHANGED.getValue(), way);
 
@@ -561,7 +563,8 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         way.setTag("highway", "residential");
         way.setTag("maxspeed", "15");
         edgeFlags = encodingManager.createEdgeFlags();
-        encoder.setSpeed(false, edgeFlags, encoder.applyMaxSpeed(way, 15));
+        maxSpeedEnc.setDecimal(false, edgeFlags, 15);
+        encoder.setSpeed(false, edgeFlags, encoder.applyMaxSpeed(edgeFlags, 15));
         assertEquals(15, avgSpeedEnc.getDecimal(false, edgeFlags), 1.0);
         edgeFlags = encodingManager.handleWayTags(way, accessMap, encodingManager.createRelationFlags());
         assertEquals(15, avgSpeedEnc.getDecimal(false, edgeFlags), 1.0);
