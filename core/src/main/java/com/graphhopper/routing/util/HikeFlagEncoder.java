@@ -67,12 +67,12 @@ public class HikeFlagEncoder extends FootFlagEncoder {
     }
 
     @Override
-    void collect(ReaderWay way, TreeMap<Double, Integer> weightToPrioMap) {
+    void collect(IntsRef edgeFlags, ReaderWay way, TreeMap<Double, Integer> weightToPrioMap) {
         String highway = way.getTag("highway");
         if (way.hasTag("foot", "designated"))
             weightToPrioMap.put(100d, PREFER.getValue());
 
-        double maxSpeed = getMaxSpeed(way);
+        double maxSpeed = getMaxSpeed(edgeFlags);
         if (safeHighwayTags.contains(highway) || (isValidSpeed(maxSpeed) && maxSpeed <= 20)) {
             weightToPrioMap.put(40d, PREFER.getValue());
             if (way.hasTag("tunnel", intendedValues)) {

@@ -279,13 +279,13 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
      * we can reach the maxspeed for bicycles in case that the road type speed is higher and not
      * just only 90%.
      *
-     * @param way   needed to retrieve tags
+     * @param edgeFlags needed to retrieve max speed
      * @param speed speed guessed e.g. from the road type or other tags
      * @return The assumed average speed.
      */
     @Override
-    protected double applyMaxSpeed(ReaderWay way, double speed) {
-        double maxSpeed = getMaxSpeed(way);
+    protected double applyMaxSpeed(IntsRef edgeFlags, double speed) {
+        double maxSpeed = getMaxSpeed(edgeFlags);
         // We strictly obey speed limits, see #600
         if (isValidSpeed(maxSpeed) && speed > maxSpeed) {
             return maxSpeed;
@@ -303,7 +303,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         Integer priorityFromRelation = routeMap.get(bikeRouteEnc.getEnum(false, edgeFlags));
         double wayTypeSpeed = getSpeed(way);
         if (!access.isFerry()) {
-            wayTypeSpeed = applyMaxSpeed(way, wayTypeSpeed);
+            wayTypeSpeed = applyMaxSpeed(edgeFlags, wayTypeSpeed);
             handleSpeed(edgeFlags, way, wayTypeSpeed);
         } else {
             double ferrySpeed = ferrySpeedCalc.getSpeed(way);
@@ -313,7 +313,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             priorityFromRelation = AVOID_IF_POSSIBLE.getValue();
         }
 
-        priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getFactor(handlePriority(way, wayTypeSpeed, priorityFromRelation)));
+        priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getFactor(handlePriority(edgeFlags, way, wayTypeSpeed, priorityFromRelation)));
         return edgeFlags;
     }
 
@@ -385,14 +385,14 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
      *
      * @return new priority based on priorityFromRelation and on the tags in ReaderWay.
      */
-    int handlePriority(ReaderWay way, double wayTypeSpeed, Integer priorityFromRelation) {
+    int handlePriority(IntsRef edgeFlags, ReaderWay way, double wayTypeSpeed, Integer priorityFromRelation) {
         TreeMap<Double, Integer> weightToPrioMap = new TreeMap<>();
         if (priorityFromRelation == null)
             weightToPrioMap.put(0d, UNCHANGED.getValue());
         else
             weightToPrioMap.put(110d, priorityFromRelation);
 
-        collect(way, wayTypeSpeed, weightToPrioMap);
+        collect(edgeFlags, way, wayTypeSpeed, weightToPrioMap);
 
         // pick priority with biggest order value
         return weightToPrioMap.lastEntry().getValue();
@@ -431,7 +431,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
      * @param weightToPrioMap associate a weight with every priority. This sorted map allows
      *                        subclasses to 'insert' more important priorities as well as overwrite determined priorities.
      */
-    void collect(ReaderWay way, double wayTypeSpeed, TreeMap<Double, Integer> weightToPrioMap) {
+    void collect(IntsRef edgeFlags, ReaderWay way, double wayTypeSpeed, TreeMap<Double, Integer> weightToPrioMap) {
         String service = way.getTag("service");
         String highway = way.getTag("highway");
         if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official")) {
@@ -448,7 +448,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
                 weightToPrioMap.put(100d, VERY_NICE.getValue());
         }
 
-        double maxSpeed = getMaxSpeed(way);
+        double maxSpeed = getMaxSpeed(edgeFlags);
         if (preferHighwayTags.contains(highway) || (isValidSpeed(maxSpeed) && maxSpeed <= 30)) {
             if (!isValidSpeed(maxSpeed) || maxSpeed < avoidSpeedLimit) {
                 weightToPrioMap.put(40d, PREFER.getValue());

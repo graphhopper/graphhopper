@@ -242,7 +242,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             setSpeed(edgeFlags, true, true, ferrySpeed);
         }
 
-        priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getFactor(handlePriority(way, priorityFromRelation)));
+        priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getFactor(handlePriority(edgeFlags, way, priorityFromRelation)));
         return edgeFlags;
     }
 
@@ -255,14 +255,14 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             avgSpeedEnc.setDecimal(true, edgeFlags, speed);
     }
 
-    int handlePriority(ReaderWay way, Integer priorityFromRelation) {
+    int handlePriority(IntsRef edgeFlags, ReaderWay way, Integer priorityFromRelation) {
         TreeMap<Double, Integer> weightToPrioMap = new TreeMap<>();
         if (priorityFromRelation == null)
             weightToPrioMap.put(0d, UNCHANGED.getValue());
         else
             weightToPrioMap.put(110d, priorityFromRelation);
 
-        collect(way, weightToPrioMap);
+        collect(edgeFlags, way, weightToPrioMap);
 
         // pick priority with biggest order value
         return weightToPrioMap.lastEntry().getValue();
@@ -272,12 +272,12 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
      * @param weightToPrioMap associate a weight with every priority. This sorted map allows
      *                        subclasses to 'insert' more important priorities as well as overwrite determined priorities.
      */
-    void collect(ReaderWay way, TreeMap<Double, Integer> weightToPrioMap) {
+    void collect(IntsRef edgeFlags, ReaderWay way, TreeMap<Double, Integer> weightToPrioMap) {
         String highway = way.getTag("highway");
         if (way.hasTag("foot", "designated"))
             weightToPrioMap.put(100d, PREFER.getValue());
 
-        double maxSpeed = getMaxSpeed(way);
+        double maxSpeed = getMaxSpeed(edgeFlags);
         if (safeHighwayTags.contains(highway) || (isValidSpeed(maxSpeed) && maxSpeed <= 20)) {
             weightToPrioMap.put(40d, PREFER.getValue());
             if (way.hasTag("tunnel", intendedValues)) {

@@ -241,7 +241,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         if (!accept.isFerry()) {
             // get assumed speed from highway type
             double speed = getSpeed(way);
-            speed = applyMaxSpeed(way, speed);
+            speed = applyMaxSpeed(edgeFlags, speed);
 
             speed = applyBadSurfaceSpeed(way, speed);
 

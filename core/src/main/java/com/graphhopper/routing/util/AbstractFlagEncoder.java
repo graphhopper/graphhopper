@@ -24,7 +24,6 @@ import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
-import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -55,6 +54,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     private long encoderBit;
     protected BooleanEncodedValue accessEnc;
     protected BooleanEncodedValue roundaboutEnc;
+    protected DecimalEncodedValue maxSpeedEnc;
     protected DecimalEncodedValue avgSpeedEnc;
     // This value determines the maximal possible speed of any road regardless of the maxspeed value
     // lower values allow more compact representation of the routing graph
@@ -142,6 +142,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         // define the first 2 bits in flags for access
         registerNewEncodedValue.add(accessEnc = new SimpleBooleanEncodedValue(EncodingManager.getKey(prefix, "access"), true));
         roundaboutEnc = getBooleanEncodedValue(Roundabout.KEY);
+        maxSpeedEnc = getDecimalEncodedValue(MaxSpeed.KEY);
         encoderBit = 1L << index;
     }
 
@@ -209,16 +210,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     /**
      * @return {@link Double#NaN} if no maxspeed found
      */
-    protected double getMaxSpeed(ReaderWay way) {
-        double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
-        double fwdSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:forward"));
-        if (isValidSpeed(fwdSpeed) && (!isValidSpeed(maxSpeed) || fwdSpeed < maxSpeed))
-            maxSpeed = fwdSpeed;
-
-        double backSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:backward"));
-        if (isValidSpeed(backSpeed) && (!isValidSpeed(maxSpeed) || backSpeed < maxSpeed))
-            maxSpeed = backSpeed;
-
+    protected double getMaxSpeed(IntsRef edgeFlags) {
+        double fwdSpeed = maxSpeedEnc.getDecimal(false, edgeFlags);
+        double bwdSpeed = maxSpeedEnc.getDecimal(true, edgeFlags);
+        
+        double maxSpeed = Math.min(fwdSpeed, bwdSpeed);
+        if (maxSpeed == MaxSpeed.UNSET_SPEED) {
+            return Double.NaN;
+        }
         return maxSpeed;
     }
 
@@ -277,12 +276,12 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     /**
-     * @param way   needed to retrieve tags
+     * @param edgeFlags needed to retrieve max speed
      * @param speed speed guessed e.g. from the road type or other tags
      * @return The assumed speed.
      */
-    protected double applyMaxSpeed(ReaderWay way, double speed) {
-        double maxSpeed = getMaxSpeed(way);
+    protected double applyMaxSpeed(IntsRef edgeFlags, double speed) {
+        double maxSpeed = getMaxSpeed(edgeFlags);
         // We obey speed limits
         if (isValidSpeed(maxSpeed)) {
             // We assume that the average speed is 90% of the allowed maximum
