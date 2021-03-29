@@ -368,7 +368,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                         int lmNodeId = tmpLandmarkNodeIds[lmIdx];
                         explorer = new LandmarkExplorer(graph, this, weighting, traversalMode, true);
                         explorer.setStartNode(lmNodeId);
-                        explorer.setFilter(blockedEdges, true, true);
+                        explorer.setFilter(blockedEdges, encoder.getAccessEnc(), true, true);
                         explorer.runAlgo();
                         maxWeight = Math.max(maxWeight, explorer.getLastEntry().weight);
                     }
@@ -439,7 +439,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             int lmNodeId = tmpLandmarkNodeIds[lmIdx];
             LandmarkExplorer explorer = new LandmarkExplorer(graph, this, weighting, traversalMode, true);
             explorer.setStartNode(lmNodeId);
-            explorer.setFilter(blockedEdges, false, true);
+            explorer.setFilter(blockedEdges, encoder.getAccessEnc(), false, true);
             explorer.runAlgo();
             explorer.initLandmarkWeights(lmIdx, lmNodeId, LM_ROW_LENGTH, FROM_OFFSET);
 
@@ -451,7 +451,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
             explorer = new LandmarkExplorer(graph, this, weighting, traversalMode, false);
             explorer.setStartNode(lmNodeId);
-            explorer.setFilter(blockedEdges, true, false);
+            explorer.setFilter(blockedEdges, encoder.getAccessEnc(), true, false);
             explorer.runAlgo();
             explorer.initLandmarkWeights(lmIdx, lmNodeId, LM_ROW_LENGTH, TO_OFFSET);
 
@@ -740,7 +740,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         Weighting initWeighting = lmSelectionWeighting;
         LandmarkExplorer explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode, true);
         explorer.setStartNode(startNode);
-        explorer.setFilter(blockedEdges, true, true);
+        explorer.setFilter(blockedEdges, encoder.getAccessEnc(), true, true);
         explorer.runAlgo();
 
         if (explorer.getFromCount() >= minimumNodes) {
@@ -748,7 +748,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             landmarkNodeIdsToReturn[0] = explorer.getLastEntry().adjNode;
             for (int lmIdx = 0; lmIdx < landmarkNodeIdsToReturn.length - 1; lmIdx++) {
                 explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode, true);
-                explorer.setFilter(blockedEdges, true, true);
+                explorer.setFilter(blockedEdges, encoder.getAccessEnc(), true, true);
                 // set all current landmarks as start so that the next getLastNode is hopefully a "far away" node
                 for (int j = 0; j < lmIdx + 1; j++) {
                     explorer.setStartNode(landmarkNodeIdsToReturn[j]);
@@ -789,8 +789,8 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             setUpdateBestPath(false);
         }
 
-        public void setFilter(IntHashSet set, boolean bwd, boolean fwd) {
-            edgeFilter = new BlockedEdgesFilter(flagEncoder.getAccessEnc(), bwd, fwd, set);
+        public void setFilter(IntHashSet set, BooleanEncodedValue accessEnc, boolean bwd, boolean fwd) {
+            edgeFilter = new BlockedEdgesFilter(accessEnc, bwd, fwd, set);
         }
 
         public void setStartNode(int startNode) {

@@ -34,7 +34,6 @@ import java.util.List;
 public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     protected final Graph graph;
     protected final Weighting weighting;
-    protected final FlagEncoder flagEncoder;
     protected final TraversalMode traversalMode;
     protected final NodeAccess nodeAccess;
     protected final EdgeExplorer edgeExplorer;
@@ -50,7 +49,6 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
         if (weighting.hasTurnCosts() && !traversalMode.isEdgeBased())
             throw new IllegalStateException("Weightings supporting turn costs cannot be used with node-based traversal mode");
         this.weighting = weighting;
-        this.flagEncoder = weighting.getFlagEncoder();
         this.traversalMode = traversalMode;
         this.graph = graph;
         this.nodeAccess = graph.getNodeAccess();
