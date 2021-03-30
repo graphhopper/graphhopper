@@ -512,10 +512,12 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         avgSpeedEnc.setDecimal(false, edgeFlags, speed);
 
         // handle oneways
-        boolean isOneway = way.hasTag("oneway", oneways)
+        // oneway=-1 requires special handling
+        boolean isOneway = (way.hasTag("oneway", oneways) && !way.hasTag("oneway", "-1") && !way.hasTag("bicycle:backward", intendedValues))
+                || (way.hasTag("oneway", "-1") && !way.hasTag("bicycle:forward", intendedValues))
                 || way.hasTag("oneway:bicycle", oneways)
-                || way.hasTag("vehicle:backward", restrictedValues)
-                || way.hasTag("vehicle:forward", restrictedValues)
+                || (way.hasTag("vehicle:backward", restrictedValues) && !way.hasTag("bicycle:forward", intendedValues))
+                || (way.hasTag("vehicle:forward", restrictedValues) && !way.hasTag("bicycle:backward", intendedValues))
                 || way.hasTag("bicycle:forward", restrictedValues)
                 || way.hasTag("bicycle:backward", restrictedValues);
 
