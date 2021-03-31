@@ -46,12 +46,13 @@ public class OSMInputFile implements Sink, OSMInput {
     private final InputStream bis;
     private final BlockingQueue<ReaderElement> itemQueue;
     private final Queue<ReaderElement> itemBatch;
-    Thread pbfReaderThread;
     private boolean eof;
     // for xml parsing
     private XMLStreamReader parser;
     // for pbf parsing
     private boolean binary = false;
+    private PbfReader pbfReader;
+    private Thread pbfReaderThread;
     private boolean hasIncomingData;
     private int workerThreads = -1;
     private OSMFileHeader fileheader;
@@ -226,7 +227,9 @@ public class OSMInputFile implements Sink, OSMInput {
     @Override
     public void close() throws IOException {
         try {
-            if (!binary)
+            if (binary)
+                pbfReader.close();
+            else
                 parser.close();
         } catch (XMLStreamException ex) {
             throw new IOException(ex);
@@ -244,8 +247,8 @@ public class OSMInputFile implements Sink, OSMInput {
         if (workerThreads <= 0)
             workerThreads = 1;
 
-        PbfReader reader = new PbfReader(stream, this, workerThreads);
-        pbfReaderThread = new Thread(reader, "PBF Reader");
+        pbfReader = new PbfReader(stream, this, workerThreads);
+        pbfReaderThread = new Thread(pbfReader, "PBF Reader");
         pbfReaderThread.start();
     }
 
@@ -273,7 +276,7 @@ public class OSMInputFile implements Sink, OSMInput {
             if (!hasIncomingData && itemQueue.isEmpty()) {
                 return null; // signal EOF
             }
-            
+
             if (itemQueue.drainTo(itemBatch, MAX_BATCH_SIZE) == 0) {
                 try {
                     ReaderElement element = itemQueue.poll(100, TimeUnit.MILLISECONDS);
@@ -281,12 +284,11 @@ public class OSMInputFile implements Sink, OSMInput {
                         return element; // short circuit
                     }
                 } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    return null; // signal EOF
+                    throw new RuntimeException(e);
                 }
             }
         }
-        
+
         return itemBatch.poll();
     }
 }

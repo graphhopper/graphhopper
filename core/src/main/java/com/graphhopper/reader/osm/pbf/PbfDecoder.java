@@ -3,11 +3,9 @@ package com.graphhopper.reader.osm.pbf;
 
 import com.graphhopper.reader.ReaderElement;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -20,7 +18,7 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  * @author Brett Henderson
  */
-public class PbfDecoder implements Runnable {
+public class PbfDecoder {
     private final PbfStreamSplitter streamSplitter;
     private final ExecutorService executorService;
     private final int maxPendingBlobs;
@@ -155,7 +153,6 @@ public class PbfDecoder implements Runnable {
         sendResultsToSink(0);
     }
 
-    @Override
     public void run() {
         lock.lock();
         try {
