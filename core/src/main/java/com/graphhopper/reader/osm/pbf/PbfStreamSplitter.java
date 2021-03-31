@@ -110,7 +110,7 @@ public class PbfStreamSplitter implements Iterator<PbfRawBlob> {
             try {
                 dis.close();
             } catch (IOException e) {
-                log.log(Level.SEVERE, "Unable to close PBF stream.", e);
+                throw new RuntimeException(e);
             }
         }
         dis = null;
