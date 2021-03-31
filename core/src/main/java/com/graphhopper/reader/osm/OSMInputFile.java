@@ -48,7 +48,7 @@ public class OSMInputFile implements Sink, OSMInput {
     private final Queue<ReaderElement> itemBatch;
     private boolean eof;
     // for xml parsing
-    private XMLStreamReader parser;
+    private XMLStreamReader xmlParser;
     // for pbf parsing
     private boolean binary = false;
     private PbfReader pbfReader;
@@ -139,17 +139,17 @@ public class OSMInputFile implements Sink, OSMInput {
     private void openXMLStream(InputStream in)
             throws XMLStreamException {
         XMLInputFactory factory = XMLInputFactory.newInstance();
-        parser = factory.createXMLStreamReader(in, "UTF-8");
+        xmlParser = factory.createXMLStreamReader(in, "UTF-8");
 
-        int event = parser.next();
-        if (event != XMLStreamConstants.START_ELEMENT || !parser.getLocalName().equalsIgnoreCase("osm")) {
+        int event = xmlParser.next();
+        if (event != XMLStreamConstants.START_ELEMENT || !xmlParser.getLocalName().equalsIgnoreCase("osm")) {
             throw new IllegalArgumentException("File is not a valid OSM stream");
         }
         // See https://wiki.openstreetmap.org/wiki/PBF_Format#Definition_of_the_OSMHeader_fileblock
-        String timestamp = parser.getAttributeValue(null, "osmosis_replication_timestamp");
+        String timestamp = xmlParser.getAttributeValue(null, "osmosis_replication_timestamp");
 
         if (timestamp == null)
-            timestamp = parser.getAttributeValue(null, "timestamp");
+            timestamp = xmlParser.getAttributeValue(null, "timestamp");
 
         if (timestamp != null) {
             try {
@@ -182,7 +182,7 @@ public class OSMInputFile implements Sink, OSMInput {
 
     private ReaderElement getNextXML() throws XMLStreamException {
 
-        int event = parser.next();
+        int event = xmlParser.next();
         if (fileheader != null) {
             ReaderElement copyfileheader = fileheader;
             fileheader = null;
@@ -191,32 +191,32 @@ public class OSMInputFile implements Sink, OSMInput {
 
         while (event != XMLStreamConstants.END_DOCUMENT) {
             if (event == XMLStreamConstants.START_ELEMENT) {
-                String idStr = parser.getAttributeValue(null, "id");
+                String idStr = xmlParser.getAttributeValue(null, "id");
                 if (idStr != null) {
-                    String name = parser.getLocalName();
+                    String name = xmlParser.getLocalName();
                     long id = 0;
                     switch (name.charAt(0)) {
                         case 'n':
                             // note vs. node
                             if ("node".equals(name)) {
                                 id = Long.parseLong(idStr);
-                                return OSMXMLHelper.createNode(id, parser);
+                                return OSMXMLHelper.createNode(id, xmlParser);
                             }
                             break;
 
                         case 'w': {
                             id = Long.parseLong(idStr);
-                            return OSMXMLHelper.createWay(id, parser);
+                            return OSMXMLHelper.createWay(id, xmlParser);
                         }
                         case 'r':
                             id = Long.parseLong(idStr);
-                            return OSMXMLHelper.createRelation(id, parser);
+                            return OSMXMLHelper.createRelation(id, xmlParser);
                     }
                 }
             }
-            event = parser.next();
+            event = xmlParser.next();
         }
-        parser.close();
+        xmlParser.close();
         return null;
     }
 
@@ -230,7 +230,7 @@ public class OSMInputFile implements Sink, OSMInput {
             if (binary)
                 pbfReader.close();
             else
-                parser.close();
+                xmlParser.close();
         } catch (XMLStreamException ex) {
             throw new IOException(ex);
         } finally {
