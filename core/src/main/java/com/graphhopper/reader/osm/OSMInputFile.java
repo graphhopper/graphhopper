@@ -284,7 +284,8 @@ public class OSMInputFile implements Sink, OSMInput {
                         return element; // short circuit
                     }
                 } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+                    Thread.currentThread().interrupt();
+                    return null; // signal EOF
                 }
             }
         }
