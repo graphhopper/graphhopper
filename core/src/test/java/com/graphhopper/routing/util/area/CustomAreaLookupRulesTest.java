@@ -15,23 +15,26 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.spatialrules;
+package com.graphhopper.routing.util.area;
 
+import com.graphhopper.config.CustomArea;
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TransportationMode;
-import com.graphhopper.routing.util.parsers.SpatialRuleParser;
+import com.graphhopper.routing.util.parsers.CustomAreaParser;
+import com.graphhopper.routing.util.spatialrules.CountriesSpatialRuleFactory;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
@@ -49,59 +52,60 @@ import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 /**
  * @author Robin Boldt
+ * @author Thomas Butz
  */
-public class SpatialRuleLookupBuilderTest {
+public class CustomAreaLookupRulesTest {
 
     private static final String COUNTRIES_FILE = "../core/files/spatialrules/countries.geojson";
 
-    private static SpatialRuleLookup createLookup() throws IOException {
+    private static CustomAreaLookup createLookup() throws IOException {
         return createLookup(new Envelope(-180, 180, -90, 90));
     }
-
-    private static SpatialRuleLookup createLookup(Envelope maxBounds) throws IOException {
+    
+    private static CustomAreaLookup createLookup(Envelope maxBounds) throws IOException {
         final FileReader reader = new FileReader(COUNTRIES_FILE);
-        List<JsonFeatureCollection> feats = Collections.singletonList(
-                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class));
-        return SpatialRuleLookupBuilder.buildIndex(feats, "ISO3166-1:alpha3", new CountriesSpatialRuleFactory());
+        JsonFeatureCollection feats = Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class);
+        List<CustomArea> areas  = CustomAreaHelper.loadAreas(feats, "ISO3166-1:alpha3", maxBounds);
+        List<SpatialRule> rules = CountriesSpatialRuleFactory.getRules();
+        return new CustomAreaLookupJTS(areas, rules);
     }
 
     @Test
     public void testIndex() throws IOException {
-        SpatialRuleLookup spatialRuleLookup = createLookup();
+        CustomAreaLookup customAreaLookup = createLookup();
 
         // Berlin
-        assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRules(52.5243700, 13.4105300).
-                getAccess(RoadClass.TRACK, TransportationMode.CAR, RoadAccess.YES));
-        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRules(52.5243700, 13.4105300).
-                getAccess(RoadClass.PRIMARY, TransportationMode.CAR, RoadAccess.YES));
+        assertEquals(RoadAccess.DESTINATION, customAreaLookup.lookup(52.5243700, 13.4105300).
+                getRuleSet().getAccess(RoadClass.TRACK, TransportationMode.CAR, RoadAccess.YES));
+        assertEquals(RoadAccess.YES, customAreaLookup.lookup(52.5243700, 13.4105300).
+                getRuleSet().getAccess(RoadClass.PRIMARY, TransportationMode.CAR, RoadAccess.YES));
 
         // Paris -> empty rule
-        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRules(48.864716, 2.349014).
-                getAccess(RoadClass.TRACK, TransportationMode.CAR, RoadAccess.YES));
-        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRules(48.864716, 2.349014).
-                getAccess(RoadClass.PRIMARY, TransportationMode.CAR, RoadAccess.YES));
+        assertEquals(RoadAccess.YES, customAreaLookup.lookup(48.864716, 2.349014).
+                getRuleSet().getAccess(RoadClass.TRACK, TransportationMode.CAR, RoadAccess.YES));
+        assertEquals(RoadAccess.YES, customAreaLookup.lookup(48.864716, 2.349014).
+                getRuleSet().getAccess(RoadClass.PRIMARY, TransportationMode.CAR, RoadAccess.YES));
 
         // Austria
-        assertEquals(RoadAccess.FORESTRY, spatialRuleLookup.lookupRules(48.204484, 16.107888).
-                getAccess(RoadClass.TRACK, TransportationMode.CAR, RoadAccess.YES));
-        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRules(48.210033, 16.363449).
-                getAccess(RoadClass.PRIMARY, TransportationMode.CAR, RoadAccess.YES));
-        assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRules(48.210033, 16.363449).
-                getAccess(RoadClass.LIVING_STREET, TransportationMode.CAR, RoadAccess.YES));
+        assertEquals(RoadAccess.FORESTRY, customAreaLookup.lookup(48.204484, 16.107888).
+                getRuleSet().getAccess(RoadClass.TRACK, TransportationMode.CAR, RoadAccess.YES));
+        assertEquals(RoadAccess.YES, customAreaLookup.lookup(48.210033, 16.363449).
+                getRuleSet().getAccess(RoadClass.PRIMARY, TransportationMode.CAR, RoadAccess.YES));
+        assertEquals(RoadAccess.DESTINATION, customAreaLookup.lookup(48.210033, 16.363449).
+                getRuleSet().getAccess(RoadClass.LIVING_STREET, TransportationMode.CAR, RoadAccess.YES));
     }
 
     @Test
     public void testBounds() throws IOException {
-        final FileReader reader = new FileReader(COUNTRIES_FILE);
-        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(
-                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO3166-1:alpha3", new CountriesSpatialRuleFactory());
-        Envelope almostWorldWide = new Envelope(-179, 179, -89, 89);
+        CustomAreaLookup customAreaLookup = createLookup();
+        Envelope worldWide = new Envelope(-180, 180, -90, 90);
 
         // Might fail if a polygon is defined outside the above coordinates
-        assertTrue("BBox seems to be not contracted", almostWorldWide.contains(spatialRuleLookup.getBounds()));
+        assertTrue("BBox seems to be not contracted", worldWide.covers(customAreaLookup.getBounds()));
     }
 
     @Test
@@ -110,54 +114,32 @@ public class SpatialRuleLookupBuilderTest {
          We are creating a BBox smaller than Germany. We have the German Spatial rule activated by default.
          So the BBox should not contain a Point lying somewhere close in Germany.
         */
-        final FileReader reader = new FileReader(COUNTRIES_FILE);
-        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(
-                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO3166-1:alpha3",
-                new CountriesSpatialRuleFactory(), new Envelope(9, 10, 51, 52));
-        assertFalse("BBox seems to be incorrectly contracted", spatialRuleLookup.getBounds().contains(49.9, 8.9));
+        CustomAreaLookup customAreaLookup = createLookup(new Envelope(9, 10, 51, 52));
+        assertFalse("BBox seems to be incorrectly contracted", customAreaLookup.getBounds().contains(49.9, 8.9));
     }
 
     @Test
     public void testNoIntersection() throws IOException {
-        final FileReader reader = new FileReader(COUNTRIES_FILE);
-        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(
-                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO3166-1:alpha3",
-                new CountriesSpatialRuleFactory(), new Envelope(-180, -179, -90, -89));
-        assertEquals(SpatialRuleLookup.EMPTY, spatialRuleLookup);
+        CustomAreaLookup customAreaLookup = createLookup(new Envelope(-180, -179, -90, -89));
+        assertTrue(customAreaLookup.getAreas().isEmpty());
     }
 
 
     @Test
     public void testSpatialId() {
         final GeometryFactory fac = new GeometryFactory();
-        org.locationtech.jts.geom.Polygon polygon = fac.createPolygon(new Coordinate[]{
+        Polygon polygon = fac.createPolygon(new Coordinate[]{
                 new Coordinate(0, 0), new Coordinate(0, 1), new Coordinate(1, 1), new Coordinate(1, 0), new Coordinate(0, 0)});
-        final SpatialRule germany = new GermanySpatialRule(Collections.singletonList(polygon));
+        final SpatialRule germanyRule = new GermanySpatialRule();
+        
+        CustomArea germanyArea = new CustomArea(germanyRule.getId(), Collections.singletonList(polygon), "country");
 
-        SpatialRuleLookup index = new SpatialRuleLookup() {
-            @Override
-            public SpatialRuleSet lookupRules(double lat, double lon) {
-                for (Polygon polygon : germany.getBorders()) {
-                    if (polygon.covers(fac.createPoint(new Coordinate(lon, lat)))) {
-                        return new SpatialRuleSet(Collections.singletonList(germany), 1);
-                    }
-                }
-                return SpatialRuleSet.EMPTY;
-            }
+        CustomAreaLookup lookup = new CustomAreaLookupJTS(Collections.singletonList(germanyArea), Collections.singletonList(germanyRule));
 
-            @Override
-            public List<SpatialRule> getRules() {
-                return Collections.singletonList(germany);
-            }
-
-            @Override
-            public Envelope getBounds() {
-                return new Envelope(-180, 180, -90, 90);
-            }
-        };
-
-        EncodingManager em = new EncodingManager.Builder().add(new SpatialRuleParser(index, Country.create())).add(new CarFlagEncoder(new PMap())).build();
-        IntEncodedValue countrySpatialIdEnc = em.getIntEncodedValue(Country.KEY);
+        EncodingManager em = new EncodingManager.Builder()
+                        .add(new CustomAreaParser(new StringEncodedValue(CustomArea.key("country"), 1)))
+                        .setCustomAreaLookup(lookup).add(new CarFlagEncoder(new PMap())).build();
+        StringEncodedValue countryIdEnc = em.getStringEncodedValue(CustomArea.key("country"));
         EnumEncodedValue<RoadAccess> tmpRoadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
         DecimalEncodedValue tmpCarMaxSpeedEnc = em.getDecimalEncodedValue(MaxSpeed.KEY);
 
@@ -187,8 +169,8 @@ public class SpatialRuleLookupBuilderTest {
         e2.setFlags(em.handleWayTags(way2, map, relFlags));
         assertEquals(RoadAccess.YES, e2.get(tmpRoadAccessEnc));
 
-        assertEquals(index.getRules().indexOf(germany), e1.get(countrySpatialIdEnc) - 1);
-        assertEquals(0, e2.get(countrySpatialIdEnc));
+        assertEquals(germanyArea.getId(), e1.get(countryIdEnc));
+        assertNull(e2.get(countryIdEnc));
 
         ReaderWay livingStreet = new ReaderWay(29L);
         livingStreet.setTag("highway", "living_street");

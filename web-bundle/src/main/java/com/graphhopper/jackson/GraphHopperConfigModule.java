@@ -19,7 +19,6 @@
 package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 
@@ -28,7 +27,6 @@ public class GraphHopperConfigModule extends SimpleModule {
     public GraphHopperConfigModule() {
         setMixInAnnotation(Profile.class, ProfileMixIn.class);
         setMixInAnnotation(LMProfile.class, LMProfileMixIn.class);
-        setMixInAnnotation(GraphHopperConfig.class, GraphHopperConfigMixIn.class);
     }
 
 }

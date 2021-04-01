@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util.details;
 
+import com.graphhopper.config.CustomArea;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.weighting.Weighting;
 
@@ -59,8 +60,11 @@ public class PathDetailsBuilderFactory {
             builders.add(new DistanceDetails());
 
         for (String checkSuffix : requestedPathDetails) {
-            if (checkSuffix.endsWith(getKey("", "priority")) && evl.hasEncodedValue(checkSuffix))
+            if (checkSuffix.endsWith(getKey("", "priority")) && evl.hasEncodedValue(checkSuffix)) {
                 builders.add(new DecimalDetails(checkSuffix, evl.getDecimalEncodedValue(checkSuffix)));
+            } else if (checkSuffix.endsWith(CustomArea.CUSTOM_EV_SUFFIX) && evl.hasEncodedValue(checkSuffix)) {
+                builders.add(new StringDetails(checkSuffix, evl.getStringEncodedValue(checkSuffix)));
+            }
         }
 
         for (String key : Arrays.asList(MaxSpeed.KEY, MaxWidth.KEY, MaxHeight.KEY, MaxWeight.KEY,
@@ -76,7 +80,7 @@ public class PathDetailsBuilderFactory {
 
         for (String key : Arrays.asList(RoadClass.KEY, RoadEnvironment.KEY, Surface.KEY, RoadAccess.KEY,
                 BikeNetwork.KEY, FootNetwork.KEY, Toll.KEY, TrackType.KEY, Hazmat.KEY, HazmatTunnel.KEY,
-                HazmatWater.KEY, Country.KEY)) {
+                HazmatWater.KEY)) {
             if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
                 builders.add(new EnumDetails<>(key, evl.getEnumEncodedValue(key, Enum.class)));
         }

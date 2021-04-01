@@ -17,16 +17,12 @@
  */
 package com.graphhopper.routing.util.spatialrules.countries;
 
-import java.util.List;
-
-import org.locationtech.jts.geom.Polygon;
-
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
-import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.TransportationMode;
+import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 
 /**
  * Defines the default rules for German roads
@@ -34,10 +30,6 @@ import com.graphhopper.routing.util.TransportationMode;
  * @author Robin Boldt
  */
 public class GermanySpatialRule extends AbstractSpatialRule {
-    
-    public GermanySpatialRule(List<Polygon> borders) {
-        super(borders);
-    }
 
     /**
      * Germany contains roads with no speed limit. For these roads, this method

@@ -24,6 +24,7 @@ import com.carrotsearch.hppc.IntSet;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.carrotsearch.hppc.procedures.IntObjectProcedure;
 import com.graphhopper.coll.MapEntry;
+import com.graphhopper.config.CustomArea;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.SPTEntry;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
@@ -34,9 +35,7 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleSet;
+import com.graphhopper.routing.util.area.CustomAreaLookup;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
@@ -91,7 +90,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     private int minimumNodes;
     private final SubnetworkStorage subnetworkStorage;
     private List<LandmarkSuggestion> landmarkSuggestions = Collections.emptyList();
-    private SpatialRuleLookup ruleLookup;
+    private CustomAreaLookup areaLookup;
     private boolean logDetails = false;
     /**
      * 'to' and 'from' fit into 32 bit => 16 bit for each of them => 65536
@@ -244,9 +243,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         IntHashSet blockedEdges = new IntHashSet();
 
         // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
-        if (ruleLookup != null && !ruleLookup.getRules().isEmpty()) {
+        if (areaLookup != null && areaLookup != CustomAreaLookup.EMPTY) {
             StopWatch sw = new StopWatch().start();
-            blockedEdges = findBorderEdgeIds(ruleLookup);
+            blockedEdges = findBorderEdgeIds(areaLookup);
             tarjanFilter = new SimpleBlockedEdgesFilter(blockedEdges);
             if (logDetails)
                 LOGGER.info("Made " + blockedEdges.size() + " edges inaccessible. Calculated country cut in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
@@ -298,7 +297,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                     if (logDetails) {
                         GHPoint p = createPoint(graph, nextStartNode);
                         LOGGER.info("start node: " + nextStartNode + " (" + p + ") subnetwork " + index + ", subnetwork size: " + subnetworkIds.size()
-                                + ", " + Helper.getMemInfo() + ((ruleLookup == null) ? "" : " area:" + ruleLookup.lookupRules(p.lat, p.lon).getRules()));
+                                + ", " + Helper.getMemInfo() + ((areaLookup == null) ? "" : " area:" + areaLookup.lookup(p.lat, p.lon).getAreas()));
                     }
 
                     if (createLandmarksForSubnetwork(nextStartNode, subnetworks, blockedEdges))
@@ -474,26 +473,26 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
      * This method specifies the polygons which should be used to split the world wide area to improve performance and
      * quality in this scenario.
      */
-    public void setSpatialRuleLookup(SpatialRuleLookup ruleLookup) {
-        this.ruleLookup = ruleLookup;
+    public void setCustomAreaLookup(CustomAreaLookup areaLookup) {
+        this.areaLookup = areaLookup;
     }
 
     /**
      * This method makes edges crossing the specified border inaccessible to split a bigger area into smaller subnetworks.
      * This is important for the world wide use case to limit the maximum distance and also to detect unreasonable routes faster.
      */
-    protected IntHashSet findBorderEdgeIds(SpatialRuleLookup ruleLookup) {
+    protected IntHashSet findBorderEdgeIds(CustomAreaLookup areaLookup) {
         AllEdgesIterator allEdgesIterator = graph.getAllEdges();
         IntHashSet inaccessible = new IntHashSet();
         while (allEdgesIterator.next()) {
             int adjNode = allEdgesIterator.getAdjNode();
-            SpatialRuleSet set = ruleLookup.lookupRules(na.getLat(adjNode), na.getLon(adjNode));
-            SpatialRule ruleAdj = set.getRules().isEmpty() ? null : set.getRules().get(0);
+            List<CustomArea> areas = areaLookup.lookup(na.getLat(adjNode), na.getLon(adjNode)).getAreas();
+            CustomArea areaAdj = areas.isEmpty() ? null : areas.get(0);
 
             int baseNode = allEdgesIterator.getBaseNode();
-            set = ruleLookup.lookupRules(na.getLat(baseNode), na.getLon(baseNode));
-            SpatialRule ruleBase = set.getRules().isEmpty() ? null : set.getRules().get(0);
-            if (ruleAdj != ruleBase) {
+            areas = areaLookup.lookup(na.getLat(baseNode), na.getLon(baseNode)).getAreas();
+            CustomArea areaBase = areas.isEmpty() ? null : areas.get(0);
+            if (areaAdj != areaBase) {
                 inaccessible.add(allEdgesIterator.getEdge());
             }
         }

@@ -15,15 +15,31 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.spatialrules;
+package com.graphhopper.routing.util.area;
 
+import java.util.Collections;
 import java.util.List;
 
-import org.locationtech.jts.geom.Polygon;
+import com.graphhopper.config.CustomArea;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleSet;
 
-public interface SpatialRuleFactory {
+public class LookupResult {
     
-    SpatialRule createSpatialRule(String id, final List<Polygon> borders);
+    public static final LookupResult EMPTY = new LookupResult(Collections.emptyList(), SpatialRuleSet.EMPTY);
     
-    static SpatialRuleFactory EMPTY = (id, borders) -> null;
+    private final List<CustomArea> areas;
+    private final SpatialRuleSet ruleSet;
+
+    public LookupResult(List<CustomArea> areas, SpatialRuleSet ruleSet) {
+        this.areas = Collections.unmodifiableList(areas);
+        this.ruleSet = ruleSet;
+    }
+
+    public List<CustomArea> getAreas() {
+        return areas;
+    }
+
+    public SpatialRuleSet getRuleSet() {
+        return ruleSet;
+    }
 }

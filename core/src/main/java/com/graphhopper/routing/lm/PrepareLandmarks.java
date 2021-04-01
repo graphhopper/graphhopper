@@ -18,7 +18,7 @@
 package com.graphhopper.routing.lm;
 
 import com.graphhopper.routing.util.AbstractAlgoPreparation;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+import com.graphhopper.routing.util.area.CustomAreaLookup;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
@@ -59,10 +59,10 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
     }
 
     /**
-     * @see LandmarkStorage#setSpatialRuleLookup(SpatialRuleLookup)
+     * @see LandmarkStorage#setCustomAreaLookup(CustomAreaLookup)
      */
-    public PrepareLandmarks setSpatialRuleLookup(SpatialRuleLookup ruleLookup) {
-        lms.setSpatialRuleLookup(ruleLookup);
+    public PrepareLandmarks setCustomAreaLookup(CustomAreaLookup areaLookup) {
+        lms.setCustomAreaLookup(areaLookup);
         return this;
     }
 

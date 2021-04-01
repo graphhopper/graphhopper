@@ -15,35 +15,40 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.spatialrules;
+package com.graphhopper.routing.util.area;
 
 import java.util.Collections;
 import java.util.List;
 
 import org.locationtech.jts.geom.Envelope;
 
+import com.graphhopper.config.CustomArea;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
+
 /**
- * SpatialRuleLookup defines a container that stores SpatialRules and can lookup
- * applicable rules depending on the location.
+ * CustomAreaLookup defines a container that stores {@link CustomArea CustomAreas} and their related
+ * {@link SpatialRule SpatialRules} and can lookup applicable ones depending on the location.
  *
  * @author Robin Boldt
+ * @author Thomas Butz
  */
-public interface SpatialRuleLookup {
-    
-    /**
-     * Return applicable rules for this location.
-     * <p>
-     * If multiple rules with the same priority overlap for a location, the
-     * implementation can decide which of them to return and in which order.
-     * <p>
-     * If the requested location is outside of the supported bounds or no
-     * SpatialRule is registered at this location {@link SpatialRuleSet#EMPTY}
-     * is returned.
-     */
-    SpatialRuleSet lookupRules(double lat, double lon);
+public interface CustomAreaLookup {
 
     /**
-     * @return the rules which are active for {@link #getBounds()}
+     * Returns all areas this location belongs to.
+     * <p>
+     * If the requested location is outside of the supported bounds or no CustomArea is registered
+     * at this location an empty List is returned.
+     */
+    LookupResult lookup(double lat, double lon);
+
+    /**
+     * @return the registered areas
+     */
+    List<CustomArea> getAreas();
+
+    /**
+     * @return the registered rules
      */
     List<SpatialRule> getRules();
 
@@ -52,10 +57,15 @@ public interface SpatialRuleLookup {
      */
     Envelope getBounds();
 
-    SpatialRuleLookup EMPTY = new SpatialRuleLookup() {
+    CustomAreaLookup EMPTY = new CustomAreaLookup() {
         @Override
-        public SpatialRuleSet lookupRules(double lat, double lon) {
-            return SpatialRuleSet.EMPTY;
+        public LookupResult lookup(double lat, double lon) {
+            return LookupResult.EMPTY;
+        }
+        
+        @Override
+        public List<CustomArea> getAreas() {
+            return Collections.emptyList();
         }
         
         @Override

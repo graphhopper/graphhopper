@@ -22,6 +22,8 @@ import com.graphhopper.util.PMap;
 
 import static com.graphhopper.util.Helper.toLowerCase;
 
+import com.graphhopper.config.CustomArea;
+
 public class DefaultTagParserFactory implements TagParserFactory {
     @Override
     public TagParser create(String name, PMap configuration) {
@@ -29,7 +31,6 @@ public class DefaultTagParserFactory implements TagParserFactory {
         if (!name.equals(toLowerCase(name)))
             throw new IllegalArgumentException("Use lower case for TagParsers: " + name);
 
-        // for Country (SpatialRuleParser) see SpatialRuleLookupHelper
         if (Roundabout.KEY.equals(name))
             return new OSMRoundaboutParser();
         else if (name.equals(RoadClass.KEY))
@@ -70,9 +71,11 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMHikeRatingParser();
         else if (name.equals(HorseRating.KEY))
             return new OSMHorseRatingParser();
-        else if (name.equals(Country.KEY))
-            throw new IllegalArgumentException("The property spatial_rules.borders_directory is required in the configuration " +
-                    "when using 'country' in encoded_values");
+        else if (name.endsWith(CustomArea.CUSTOM_EV_SUFFIX)) {
+            int limit = configuration.getInt("limit", -1);
+            StringEncodedValue customAreaEV = new StringEncodedValue(name, limit);
+            return new CustomAreaParser(customAreaEV);
+        }
 
         throw new IllegalArgumentException("entry in encoder list not supported " + name);
     }

@@ -20,10 +20,7 @@ package com.graphhopper.routing.util.spatialrules;
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
 
-import java.util.List;
-
 import com.graphhopper.routing.util.TransportationMode;
-import org.locationtech.jts.geom.Polygon;
 
 /**
  * Defines rules that are valid for a certain region, e.g. a country.
@@ -54,11 +51,6 @@ public interface SpatialRule {
      * @return the type of access to be used
      */
     RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess);
-
-    /**
-     * Returns the borders in which the SpatialRule is valid
-     */
-    List<Polygon> getBorders();
 
     /**
      * Returns the priority of the rule. If multiple rules overlap they're

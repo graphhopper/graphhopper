@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.spatialrules;
+package com.graphhopper.routing.util.area;
 
 import java.util.*;
 
@@ -27,44 +27,31 @@ import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
 import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
 
+import com.graphhopper.config.CustomArea;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
+
 /**
- * This class contains a collection of SpatialRule which are valid for a certain Polygon.
+ * This class contains a collection of CustomAreas which are valid for a certain Polygon.
  *
  * @author Robin Boldt
  * @author Thomas Butz
  */
-class SpatialRuleContainer {
+class CustomAreaContainer {
     private static final PreparedGeometryFactory PREP_GEOM_FACTORY = new PreparedGeometryFactory();
     private static final GeometryFactory FAC = new GeometryFactory();
     private static final int GRID_SIZE = 10;
     private static final double COORD_EPSILON = 0.00001;
 
     private final PreparedGeometry preparedPolygon;
-    private final Set<SpatialRule> rules = new LinkedHashSet<>();
     private final List<Envelope> filledLines;
+    private final CustomArea area;
+    private final SpatialRule rule;
     
-    public SpatialRuleContainer(Polygon polygon) {
-        this(PREP_GEOM_FACTORY.create(polygon));
-    }
-    
-    private SpatialRuleContainer(PreparedGeometry preparedPolygon) {
-        this.preparedPolygon = preparedPolygon;
+    public CustomAreaContainer(Polygon polygon, CustomArea area, SpatialRule rule) {
+        this.preparedPolygon = PREP_GEOM_FACTORY.create(polygon);
         this.filledLines = findFilledLines(preparedPolygon);
-    }
-
-    public void addRule(SpatialRule spatialRule) {
-        rules.add(spatialRule);
-    }
-
-    /**
-     * Returns a list of all spatial rules including the EMPTY one.
-     */
-    public Collection<SpatialRule> getRules() {
-        return rules;
-    }
-
-    public int size() {
-        return this.rules.size();
+        this.area = area;
+        this.rule = rule;
     }
 
     public boolean covers(Point point) {
@@ -78,11 +65,13 @@ class SpatialRuleContainer {
         
         return preparedPolygon.intersects(point);
     }
-
-    public SpatialRuleContainer copy() {
-        SpatialRuleContainer container = new SpatialRuleContainer(this.preparedPolygon);
-        container.rules.addAll(this.rules);
-        return container;
+    
+    public CustomArea getCustomArea() {
+        return area;
+    }
+    
+    public SpatialRule getSpatialRule() {
+        return rule;
     }
     
     private static List<Envelope> findFilledLines(PreparedGeometry prepGeom) {

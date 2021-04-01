@@ -17,11 +17,7 @@
  */
 package com.graphhopper.routing.util.spatialrules;
 
-import java.util.Collections;
-import java.util.List;
-
 import com.graphhopper.routing.util.TransportationMode;
-import org.locationtech.jts.geom.Polygon;
 
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
@@ -32,16 +28,6 @@ import com.graphhopper.routing.ev.RoadClass;
 public abstract class AbstractSpatialRule implements SpatialRule {
     
     public static final int DEFAULT_PRIORITY = 100;
-
-    private final List<Polygon> borders;
-    
-    public AbstractSpatialRule(List<Polygon> borders) {
-        this.borders = borders;
-    }
-    
-    public AbstractSpatialRule(Polygon border) {
-        this(Collections.singletonList(border));
-    }
     
     @Override
     public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
@@ -51,10 +37,6 @@ public abstract class AbstractSpatialRule implements SpatialRule {
     @Override
     public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
         return currentRoadAccess;
-    }
-    
-    public List<Polygon> getBorders() {
-        return borders;
     }
 
     @Override

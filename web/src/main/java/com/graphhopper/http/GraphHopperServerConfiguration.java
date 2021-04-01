@@ -18,7 +18,8 @@
 package com.graphhopper.http;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.jackson.GraphHopperYAMLConfig;
+
 import io.dropwizard.Configuration;
 
 import javax.validation.constraints.NotNull;
@@ -27,7 +28,7 @@ public class GraphHopperServerConfiguration extends Configuration implements Gra
 
     @NotNull
     @JsonProperty
-    private final GraphHopperConfig graphhopper = new GraphHopperConfig();
+    private final GraphHopperYAMLConfig graphhopper = new GraphHopperYAMLConfig();
 
     @JsonProperty
     private final RealtimeConfiguration gtfsRealtime = new RealtimeConfiguration();
@@ -36,7 +37,7 @@ public class GraphHopperServerConfiguration extends Configuration implements Gra
     }
 
     @Override
-    public GraphHopperConfig getGraphHopperConfiguration() {
+    public GraphHopperYAMLConfig getGraphHopperConfiguration() {
         return graphhopper;
     }
 
