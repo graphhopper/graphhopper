@@ -30,10 +30,7 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.subnetwork.SubnetworkStorage;
 import com.graphhopper.routing.subnetwork.TarjanSCC;
 import com.graphhopper.routing.subnetwork.TarjanSCC.ConnectedComponents;
-import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleSet;
@@ -256,8 +253,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         // we cannot reuse the components calculated in PrepareRoutingSubnetworks as the edgeIds changed in between (called graph.optimize)
         // also calculating subnetworks from scratch makes bigger problems when working with many oneways
-        TarjanSCC tarjan = new TarjanSCC(graph, encoder.getAccessEnc(), true);
-        tarjan.setAdditionalEdgeFilter(tarjanFilter);
+        final EdgeFilter tmpFilter = tarjanFilter;
+        EdgeFilter edgeFilter = edge -> DefaultEdgeFilter.outEdges(encoder.getAccessEnc()).accept(edge) && tmpFilter.accept(edge);
+        TarjanSCC tarjan = new TarjanSCC(graph, edgeFilter, true);
         ConnectedComponents graphComponents = tarjan.findComponents();
         if (logDetails)
             LOGGER.info("Calculated " + graphComponents.getComponents().size() + " subnetworks via tarjan in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());

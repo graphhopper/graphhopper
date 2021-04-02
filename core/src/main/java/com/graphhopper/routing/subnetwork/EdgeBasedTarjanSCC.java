@@ -22,9 +22,8 @@ import com.carrotsearch.hppc.BitSet;
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.LongArrayDeque;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.BitUtil;
@@ -50,7 +49,7 @@ import java.util.List;
  */
 public class EdgeBasedTarjanSCC {
     private final Graph graph;
-    private final BooleanEncodedValue accessEnc;
+    private final EdgeFilter edgeFilter;
     private final EdgeExplorer explorer;
     private final BitUtil bitUtil = BitUtil.LITTLE;
     private final TurnCostProvider turnCostProvider;
@@ -77,10 +76,10 @@ public class EdgeBasedTarjanSCC {
      *                                    path will be ignored (edges that are only connected by a path with such a turn will not
      *                                    be considered to belong to the same component)
      */
-    public EdgeBasedTarjanSCC(Graph graph, BooleanEncodedValue accessEnc, TurnCostProvider turnCostProvider, boolean excludeSingleEdgeComponents) {
+    public EdgeBasedTarjanSCC(Graph graph, EdgeFilter edgeFilter, TurnCostProvider turnCostProvider, boolean excludeSingleEdgeComponents) {
         this.graph = graph;
-        this.accessEnc = accessEnc;
-        explorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(accessEnc));
+        this.edgeFilter = edgeFilter;
+        explorer = graph.createEdgeExplorer(edgeFilter);
         this.turnCostProvider = turnCostProvider;
 
         edgeKeyIndex = new int[2 * graph.getEdges()];
@@ -126,7 +125,7 @@ public class EdgeBasedTarjanSCC {
         setupNextEdgeKey(p);
         // we have to create a new explorer on each iteration because of the nested edge iterations
         final int edge = getEdgeFromKey(p);
-        EdgeExplorer explorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(accessEnc));
+        EdgeExplorer explorer = graph.createEdgeExplorer(edgeFilter);
         EdgeIterator iter = explorer.setBaseNode(adjNode);
         while (iter.next()) {
             if (isTurnRestricted(edge, adjNode, iter.getEdge()))
