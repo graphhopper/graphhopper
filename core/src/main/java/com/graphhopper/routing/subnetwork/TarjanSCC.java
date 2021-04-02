@@ -68,11 +68,28 @@ public class TarjanSCC {
     private State dfsState;
 
     /**
-     * @param excludeSingleNodeComponents if set to false components that only contain a single node will not be
+     * Runs Tarjan's algorithm using an explicit stack.
+     *
+     * @param excludeSingleNodeComponents if set to true components that only contain a single node will not be
      *                                    returned when calling {@link #findComponents} or {@link #findComponentsRecursive()},
      *                                    which can be useful to save some memory.
      */
-    public TarjanSCC(Graph graph, EdgeFilter edgeFilter, boolean excludeSingleNodeComponents) {
+    public static ConnectedComponents findComponents(Graph graph, EdgeFilter edgeFilter, boolean excludeSingleNodeComponents) {
+        return new TarjanSCC(graph, edgeFilter, excludeSingleNodeComponents).findComponents();
+    }
+
+    /**
+     * Runs Tarjan's algorithm in a recursive way. Doing it like this requires a large stack size for large graphs,
+     * which can be set like `-Xss1024M`. Usually the version using an explicit stack ({@link #findComponents()}) should be
+     * preferred. However, this recursive implementation is easier to understand.
+     *
+     * @see #findComponents(Graph, EdgeFilter, boolean)
+     */
+    public static ConnectedComponents findComponentsRecursive(Graph graph, EdgeFilter edgeFilter, boolean excludeSingleNodeComponents) {
+        return new TarjanSCC(graph, edgeFilter, excludeSingleNodeComponents).findComponentsRecursive();
+    }
+
+    private TarjanSCC(Graph graph, EdgeFilter edgeFilter, boolean excludeSingleNodeComponents) {
         this.graph = graph;
         this.edgeFilter = edgeFilter;
         explorer = graph.createEdgeExplorer(edgeFilter);
@@ -97,12 +114,7 @@ public class TarjanSCC {
         BUILD_COMPONENT
     }
 
-    /**
-     * Runs Tarjan's algorithm in a recursive way. Doing it like this requires a large stack size for large graphs,
-     * which can be set like `-Xss1024M`. Usually the version using an explicit stack ({@link #findComponents()}) should be
-     * preferred. However, this recursive implementation is easier to understand.
-     */
-    public ConnectedComponents findComponentsRecursive() {
+    private ConnectedComponents findComponentsRecursive() {
         for (int node = 0; node < graph.getNodes(); node++) {
             if (nodeIndex[node] == -1) {
                 findComponentForNode(node);
@@ -164,10 +176,7 @@ public class TarjanSCC {
         }
     }
 
-    /**
-     * Runs Tarjan's algorithm using an explicit stack.
-     */
-    public ConnectedComponents findComponents() {
+    private ConnectedComponents findComponents() {
         for (int node = 0; node < graph.getNodes(); ++node) {
             if (nodeIndex[node] != -1)
                 continue;

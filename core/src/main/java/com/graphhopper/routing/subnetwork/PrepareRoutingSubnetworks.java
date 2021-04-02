@@ -97,8 +97,7 @@ public class PrepareRoutingSubnetworks {
     private int removeSmallSubNetworksNodeBased(String jobName, BooleanEncodedValue accessEnc) {
         // partition graph into strongly connected components using Tarjan's algorithm
         StopWatch sw = new StopWatch().start();
-        TarjanSCC tarjan = new TarjanSCC(ghStorage, DefaultEdgeFilter.outEdges(accessEnc), false);
-        TarjanSCC.ConnectedComponents ccs = tarjan.findComponents();
+        TarjanSCC.ConnectedComponents ccs = TarjanSCC.findComponents(ghStorage, DefaultEdgeFilter.outEdges(accessEnc), false);
         List<IntArrayList> components = ccs.getComponents();
         BitSet singleNodeComponents = ccs.getSingleNodeComponents();
         long numSingleNodeComponents = singleNodeComponents.cardinality();
@@ -173,8 +172,7 @@ public class PrepareRoutingSubnetworks {
     private int removeSmallSubNetworksEdgeBased(String jobName, BooleanEncodedValue accessEnc, TurnCostProvider turnCostProvider) {
         // partition graph into strongly connected components using Tarjan's algorithm
         StopWatch sw = new StopWatch().start();
-        EdgeBasedTarjanSCC tarjan = new EdgeBasedTarjanSCC(ghStorage, DefaultEdgeFilter.outEdges(accessEnc), turnCostProvider, false);
-        EdgeBasedTarjanSCC.ConnectedComponents ccs = tarjan.findComponents();
+        EdgeBasedTarjanSCC.ConnectedComponents ccs = EdgeBasedTarjanSCC.findComponents(ghStorage, DefaultEdgeFilter.outEdges(accessEnc), turnCostProvider, false);
         List<IntArrayList> components = ccs.getComponents();
         BitSet singleEdgeComponents = ccs.getSingleEdgeComponents();
         long numSingleEdgeComponents = singleEdgeComponents.cardinality();

@@ -74,8 +74,7 @@ class TarjanSCCTest {
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 14).setDistance(1));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(10, 14).setDistance(1));
 
-        TarjanSCC tarjan = new TarjanSCC(graph, edgeFilter, false);
-        TarjanSCC.ConnectedComponents scc = tarjan.findComponentsRecursive();
+        TarjanSCC.ConnectedComponents scc = TarjanSCC.findComponentsRecursive(graph, edgeFilter, false);
         List<IntArrayList> components = scc.getComponents();
 
         assertEquals(4, components.size());
@@ -107,8 +106,7 @@ class TarjanSCCTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(6, 7).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(7, 4).setDistance(1));
 
-        TarjanSCC tarjan = new TarjanSCC(graph, edgeFilter, false);
-        TarjanSCC.ConnectedComponents scc = tarjan.findComponentsRecursive();
+        TarjanSCC.ConnectedComponents scc = TarjanSCC.findComponentsRecursive(graph, edgeFilter, false);
         List<IntArrayList> components = scc.getComponents();
 
         assertEquals(3, scc.getTotalComponents());
@@ -123,7 +121,7 @@ class TarjanSCCTest {
         assertEquals(components.get(0), scc.getBiggestComponent());
 
         // exclude single
-        scc = new TarjanSCC(graph, edgeFilter, true).findComponentsRecursive();
+        scc = TarjanSCC.findComponentsRecursive(graph, edgeFilter, true);
         assertTrue(scc.getSingleNodeComponents().isEmpty());
         assertEquals(3, scc.getTotalComponents());
         assertEquals(2, scc.getComponents().size());
@@ -169,8 +167,7 @@ class TarjanSCCTest {
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(15, 13).setDistance(1));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(15, 16).setDistance(1));
 
-        TarjanSCC tarjan = new TarjanSCC(graph, edgeFilter, false);
-        TarjanSCC.ConnectedComponents scc = tarjan.findComponentsRecursive();
+        TarjanSCC.ConnectedComponents scc = TarjanSCC.findComponentsRecursive(graph, edgeFilter, false);
         assertEquals(2, scc.getTotalComponents());
         assertTrue(scc.getSingleNodeComponents().isEmpty());
         assertEquals(17, scc.getNodes());
@@ -193,8 +190,8 @@ class TarjanSCCTest {
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(g, rnd, 1_000, 2, true, true,
                 encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), 60d, 0.8, 0.7, 0);
-        TarjanSCC.ConnectedComponents implicit = new TarjanSCC(g, edgeFilter, excludeSingle).findComponentsRecursive();
-        TarjanSCC.ConnectedComponents explicit = new TarjanSCC(g, edgeFilter, excludeSingle).findComponents();
+        TarjanSCC.ConnectedComponents implicit = TarjanSCC.findComponentsRecursive(g, edgeFilter, excludeSingle);
+        TarjanSCC.ConnectedComponents explicit = TarjanSCC.findComponents(g, edgeFilter, excludeSingle);
 
         assertEquals(g.getNodes(), implicit.getNodes(), "total number of nodes in connected components should equal number of nodes in graph");
         assertEquals(g.getNodes(), explicit.getNodes(), "total number of nodes in connected components should equal number of nodes in graph");
