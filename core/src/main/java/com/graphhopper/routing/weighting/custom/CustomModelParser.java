@@ -417,7 +417,7 @@ public class CustomModelParser {
 
                 switch (statement.getKeyword()) {
                     case IF:
-                        if ("true".equals(statement.getExpression())) {
+                        if ("true".equals(statement.getCondition())) {
                             blockMax_maxSpeed = globalMin_maxSpeed = Math.min(statement.getValue(), maxSpeed);
                         } else {
                             blockMax_maxSpeed = statement.getValue();

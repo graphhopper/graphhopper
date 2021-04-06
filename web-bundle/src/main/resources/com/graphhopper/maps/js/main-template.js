@@ -1,4 +1,3 @@
-global.d3 = require('d3');
 var Flatpickr = require('flatpickr');
 require('flatpickr/dist/l10n');
 
@@ -81,14 +80,7 @@ $(document).ready(function (e) {
     showCustomModelExample();
     cmEditor.validListener = function(valid) {
         $("#custom-model-search-button").prop('disabled', !valid);
-        $("#custom-model-toggle").prop('disabled', !valid);
     };
-    $("#custom-model-toggle").text('JSON');
-    $("#custom-model-toggle").click(function() {
-        cmEditor.toggleJsonYAML();
-        $("#custom-model-toggle").text(cmEditor.yaml ? 'JSON' : 'YAML');
-        return false;
-    });
     $("#custom-model-button").click(function() {
         $("#custom-model-box").toggle();
         // avoid default action, so use a different search button
@@ -100,19 +92,24 @@ $(document).ready(function (e) {
     });
     function showCustomModelExample() {
         cmEditor.value =
-            "# Press Ctrl+Space for suggestions"
-            + "\nspeed:"
-            + "\n - if: road_class == MOTORWAY"
-            + "\n   multiply_by: 0.8"
-            + "\n"
-            + "\npriority:"
-            + "\n - if: road_environment == TUNNEL"
-            + "\n   multiply_by: 0.0"
-            + "\n - if: road_class == RESIDENTIAL"
-            + "\n   multiply_by: 0.7"
-            + "\n - if: max_weight < 3"
-            + "\n   multiply_by: 0.0"
-            + "\n";
+            "{"
+            + "\n \"speed\": ["
+            + "\n  {"
+            + "\n   \"if\": \"road_class == MOTORWAY\","
+            + "\n   \"multiply_by\": 0.8"
+            + "\n  }"
+            + "\n ],"
+            + "\n \"priority\": ["
+            + "\n  {"
+            + "\n   \"if\": \"road_environment == TUNNEL\","
+            + "\n   \"multiply_by\": 0.0"
+            + "\n  },"
+            + "\n  {"
+            + "\n   \"if\": \"max_weight < 3\","
+            + "\n   \"multiply_by\": 0.0"
+            + "\n  }"
+            + "\n ]"
+            + "\n}";
         cmEditor.cm.focus();
         cmEditor.cm.setCursor(0);
         cmEditor.cm.execCommand('selectAll');
@@ -146,24 +143,32 @@ $(document).ready(function (e) {
            }
        }
 
-       var jsonModel = cmEditor.jsonObj;
-       if (jsonModel === null) {
+       var customModel = cmEditor.jsonObj;
+       if (customModel === null) {
            routeResultsDiv.html("Invalid custom model");
            return;
        }
 
-       jsonModel.points = points;
-       jsonModel.points_encoded = false;
-       jsonModel.elevation = ghRequest.api_params.elevation;
-       jsonModel.profile = ghRequest.api_params.profile;
-       var request = JSON.stringify(jsonModel);
+       const details = cmEditor.getUsedCategories();
+       details.push('average_speed');
+       details.push('distance');
+       details.push('time');
+       var request = {
+           points: points,
+           points_encoded: false,
+           elevation: ghRequest.api_params.elevation,
+           profile: ghRequest.api_params.profile,
+           custom_model: customModel,
+           "ch.disable": true,
+           details: details
+       }
 
        $.ajax({
-           url: host + "/route-custom",
+           url: host + "/route",
            type: "POST",
            contentType: 'application/json; charset=utf-8',
            dataType: "json",
-           data: request,
+           data: JSON.stringify(request),
            success: createRouteCallback(ghRequest, routeResultsDiv, "", true),
            error: function(err) {
                routeResultsDiv.html("Error response: cannot process input");
@@ -174,6 +179,7 @@ $(document).ready(function (e) {
     };
 
     // todo: prevent this as long as custom model is invalid?
+    // so far it is useful so we can send the request regardless of the invalidation
     cmEditor.setExtraKey('Ctrl-Enter', sendCustomData);
     $("#custom-model-search-button").click(sendCustomData);
 
@@ -188,7 +194,6 @@ $(document).ready(function (e) {
             // https://github.com/defunkt/jquery-pjax/issues/143#issuecomment-6194330
 
             var state = History.getState();
-            console.log(state);
             initFromParams(state.data, true);
         });
     }
@@ -678,7 +683,7 @@ function createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom) {
            return;
        }
 
-       function createClickHandler(geoJsons, currentLayerIndex, tabHeader, oneTab, hasElevation, details) {
+       function createClickHandler(geoJsons, currentLayerIndex, tabHeader, oneTab, hasElevation, details, selectedDetail, detailSelected) {
            return function () {
 
                var currentGeoJson = geoJsons[currentLayerIndex];
@@ -697,7 +702,7 @@ function createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom) {
 
                if (hasElevation) {
                    mapLayer.clearElevation();
-                   mapLayer.addElevation(currentGeoJson, details);
+                   mapLayer.addElevation(currentGeoJson, details, selectedDetail, detailSelected);
                }
 
                headerTabs.find("li").removeClass("current");
@@ -763,7 +768,10 @@ function createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom) {
            mapLayer.addDataToRoutingLayer(geojsonFeature);
            var oneTab = $("<div class='route_result_tab'>");
            routeResultsDiv.append(oneTab);
-           tabHeader.click(createClickHandler(geoJsons, pathIndex, tabHeader, oneTab, request.hasElevation(), path.details));
+           var detailSelected = function (id, type) {
+               ghRequest.selectedDetail = type.text;
+           }
+           tabHeader.click(createClickHandler(geoJsons, pathIndex, tabHeader, oneTab, request.hasElevation(), path.details, request.selectedDetail, detailSelected));
 
            var routeInfo = $("<div class='route_description'>");
            if (path.description && path.description.length > 0) {
@@ -871,7 +879,6 @@ function routeLatLng(request, doQuery) {
     if (!doQuery && History.enabled) {
         // 2. important workaround for encoding problems in history.js
         var params = urlTools.parseUrl(urlForHistory);
-        console.log(params);
         params.do_zoom = doZoom;
         // force a new request even if we have the same parameters
         params.mathRandom = Math.random();

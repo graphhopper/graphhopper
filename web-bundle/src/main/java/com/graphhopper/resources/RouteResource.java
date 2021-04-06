@@ -20,12 +20,12 @@ package com.graphhopper.resources;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
-import com.graphhopper.jackson.MultiException;
+import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.http.GHPointParam;
+import com.graphhopper.jackson.MultiException;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.util.*;
-import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.util.shapes.GHPoint;
 import io.dropwizard.jersey.params.AbstractParam;
 import org.slf4j.Logger;
@@ -161,12 +161,17 @@ public class RouteResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response doPost(@NotNull GHRequest request, @Context HttpServletRequest httpReq) {
         StopWatch sw = new StopWatch().start();
-        String weightingVehicleLogStr = "weighting: " + request.getHints().getString("weighting", "")
-                + ", vehicle: " + request.getHints().getString("vehicle", "");
-        if (Helper.isEmpty(request.getProfile())) {
-            enableEdgeBasedIfThereAreCurbsides(request.getCurbsides(), request);
-            request.setProfile(profileResolver.resolveProfile(request.getHints()).getName());
-            removeLegacyParameters(request.getHints());
+        if (request.getCustomModel() == null) {
+            if (Helper.isEmpty(request.getProfile())) {
+                // legacy parameter resolution (only used when there is no custom model)
+                enableEdgeBasedIfThereAreCurbsides(request.getCurbsides(), request);
+                request.setProfile(profileResolver.resolveProfile(request.getHints()).getName());
+                removeLegacyParameters(request.getHints());
+            }
+        } else {
+            if (Helper.isEmpty(request.getProfile()))
+                // throw a dedicated exception here, otherwise a missing profile is still caught in Router
+                throw new IllegalArgumentException("The 'profile' parameter is required when you use the `custom_model` parameter");
         }
         errorIfLegacyParameters(request.getHints());
         GHResponse ghResponse = graphHopper.route(request);
@@ -178,9 +183,13 @@ public class RouteResource {
         long took = sw.stop().getNanos() / 1_000_000;
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String queryString = httpReq.getQueryString() == null ? "" : (httpReq.getQueryString() + " ");
+        // todo: vehicle/weighting will always be empty at this point...
+        String weightingVehicleLogStr = "weighting: " + request.getHints().getString("weighting", "")
+                + ", vehicle: " + request.getHints().getString("vehicle", "");
         String logStr = queryString + infoStr + " " + request.getPoints().size() + ", took: "
                 + String.format("%.1f", (double) took) + " ms, algo: " + request.getAlgorithm() + ", profile: " + request.getProfile()
-                + ", " + weightingVehicleLogStr;
+                + ", " + weightingVehicleLogStr
+                + ", custom_model: " + request.getCustomModel();
 
         if (ghResponse.hasErrors()) {
             logger.error(logStr + ", errors:" + ghResponse.getErrors());

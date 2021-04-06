@@ -1026,7 +1026,11 @@ public class GraphHopper implements GraphHopperAPI {
 
             if (closeEarly) {
                 locationIndex.close();
-                ghStorage.flushAndCloseEarly();
+                boolean includesCustomProfiles = getProfiles().stream().anyMatch(p -> p instanceof CustomProfile);
+                if (!includesCustomProfiles)
+                    // when there are custom profiles we must not close way geometry or StringIndex, because
+                    // they might be needed to evaluate the custom weighting during CH preparation
+                    ghStorage.flushAndCloseEarly();
             }
 
             ghStorage.freeze();

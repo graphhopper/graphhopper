@@ -25,6 +25,6 @@
   },
   "dependencies": {
     "codemirror": "^5.59.2",
-    "yaml": "^2.0.0-3"
+    "jsonc-parser": "^3.0.0"
   }
 }

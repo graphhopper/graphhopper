@@ -17,6 +17,7 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.GHPoint;
@@ -44,6 +45,7 @@ public class GHRequest {
     private List<String> pathDetails = new ArrayList<>();
     private String algo = "";
     private Locale locale = Locale.US;
+    private CustomModel customModel;
 
     public GHRequest() {
         this(5);
@@ -182,6 +184,15 @@ public class GHRequest {
 
     public GHRequest setLocale(String localeStr) {
         return setLocale(Helper.getLocale(localeStr));
+    }
+
+    public CustomModel getCustomModel() {
+        return customModel;
+    }
+
+    public GHRequest setCustomModel(CustomModel customModel) {
+        this.customModel = customModel;
+        return this;
     }
 
     public String getProfile() {
