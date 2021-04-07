@@ -11,7 +11,8 @@ import com.graphhopper.isochrone.algorithm.Triangulator;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.FiniteWeightFilter;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -52,14 +53,12 @@ public class IsochroneResource {
     private final GraphHopper graphHopper;
     private final Triangulator triangulator;
     private final ProfileResolver profileResolver;
-    private final EncodingManager encodingManager;
 
     @Inject
-    public IsochroneResource(GraphHopper graphHopper, Triangulator triangulator, ProfileResolver profileResolver, EncodingManager encodingManager) {
+    public IsochroneResource(GraphHopper graphHopper, Triangulator triangulator, ProfileResolver profileResolver) {
         this.graphHopper = graphHopper;
         this.triangulator = triangulator;
         this.profileResolver = profileResolver;
-        this.encodingManager = encodingManager;
     }
 
     public enum ResponseType {json, geojson}
@@ -79,7 +78,6 @@ public class IsochroneResource {
             @QueryParam("tolerance") @DefaultValue("0") double toleranceInMeter,
             @QueryParam("full_geometry") @DefaultValue("false") boolean fullGeometry) {
         StopWatch sw = new StopWatch().start();
-
         PMap hintsMap = new PMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
         hintsMap.putObject(Parameters.CH.DISABLE, true);
@@ -91,23 +89,20 @@ public class IsochroneResource {
         errorIfLegacyParameters(hintsMap);
 
         Profile profile = graphHopper.getProfile(profileName);
-        if (profile == null) {
+        if (profile == null)
             throw new IllegalArgumentException("The requested profile '" + profileName + "' does not exist");
-        }
-        FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
-        EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder.getAccessEnc());
         LocationIndex locationIndex = graphHopper.getLocationIndex();
-        Snap snap = locationIndex.findClosest(point.get().lat, point.get().lon, edgeFilter);
+        Graph graph = graphHopper.getGraphHopperStorage();
+        Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
+        if (hintsMap.has(Parameters.Routing.BLOCK_AREA)) {
+            GraphEdgeIdFinder.BlockArea blockArea = GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
+                    Collections.singletonList(point.get()), hintsMap, new FiniteWeightFilter(weighting));
+            weighting = new BlockAreaWeighting(weighting, blockArea);
+        }
+        Snap snap = locationIndex.findClosest(point.get().lat, point.get().lon, new FiniteWeightFilter(weighting));
         if (!snap.isValid())
             throw new IllegalArgumentException("Point not found:" + point);
-
-        Graph graph = graphHopper.getGraphHopperStorage();
         QueryGraph queryGraph = QueryGraph.create(graph, snap);
-
-        Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
-        if (hintsMap.has(Parameters.Routing.BLOCK_AREA))
-            weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
-                    Collections.singletonList(point.get()), hintsMap, DefaultEdgeFilter.allEdges(encoder.getAccessEnc())));
         TraversalMode traversalMode = profile.isTurnCosts() ? EDGE_BASED : NODE_BASED;
         ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow, traversalMode);
 
