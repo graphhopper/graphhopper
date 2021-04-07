@@ -51,6 +51,7 @@ import static java.time.temporal.ChronoUnit.DAYS;
 
 class GtfsReader {
 
+    private static final int DAY_IN_SECONDS = 24 * 60 * 60;
     private LocalDate startDate;
     private LocalDate endDate;
 
@@ -203,7 +204,7 @@ class GtfsReader {
 
     private void insertGtfsTransfers() {
         departureTimelinesByStop.forEach((toStopId, departureTimelines) ->
-                departureTimelines.forEach((this::insertInboundTransfers)));
+                departureTimelines.forEach(this::insertInboundTransfers));
     }
 
     private void insertInboundTransfers(GtfsStorageI.PlatformDescriptor toPlatformDescriptor, NavigableMap<Integer, Integer> departureTimeline) {
@@ -302,21 +303,21 @@ class GtfsReader {
             }
             Map<GtfsStorageI.PlatformDescriptor, NavigableMap<Integer, Integer>> departureTimelines = departureTimelinesByStop.computeIfAbsent(stopTime.stop_id, s -> new HashMap<>());
             NavigableMap<Integer, Integer> departureTimeline = departureTimelines.computeIfAbsent(platform, s -> new TreeMap<>());
-            int departureTimelineNode = departureTimeline.computeIfAbsent((stopTime.departure_time + time) % (24 * 60 * 60), t -> {
+            int departureTimelineNode = departureTimeline.computeIfAbsent((stopTime.departure_time + time) % DAY_IN_SECONDS, t -> {
                 final int _departureTimelineNode = i++;
                 addPtNode(_departureTimelineNode, stop);
                 return _departureTimelineNode;
             });
             Map<GtfsStorageI.PlatformDescriptor, NavigableMap<Integer, Integer>> arrivalTimelines = arrivalTimelinesByStop.computeIfAbsent(stopTime.stop_id, s -> new HashMap<>());
             NavigableMap<Integer, Integer> arrivalTimeline = arrivalTimelines.computeIfAbsent(platform, s -> new TreeMap<>());
-            int arrivalTimelineNode = arrivalTimeline.computeIfAbsent((stopTime.arrival_time + time) % (24 * 60 * 60), t -> {
+            int arrivalTimelineNode = arrivalTimeline.computeIfAbsent((stopTime.arrival_time + time) % DAY_IN_SECONDS, t -> {
                 final int _arrivalTimelineNode = i++;
                 addPtNode(_arrivalTimelineNode, stop);
                 return _arrivalTimelineNode;
             });
             departureNode = i++;
             addPtNode(departureNode, stop);
-            int dayShift = stopTime.departure_time / (24 * 60 * 60);
+            int dayShift = stopTime.departure_time / DAY_IN_SECONDS;
             GtfsStorage.Validity validOn = new GtfsStorage.Validity(getValidOn(trip.validOnDay, dayShift), zoneId, startDate);
             int validityId = getValueOrPutSize(gtfsStorage.getOperatingDayPatterns(), validOn);
             int boardEdge = addPtEdge(departureTimelineNode, departureNode, GtfsStorage.EdgeType.BOARD, getRouteName(feed, trip.trip), 0, validityId, 1);
@@ -395,7 +396,7 @@ class GtfsReader {
     }
 
     private void addOvernightEdge(NavigableMap<Integer, Integer> timeLine, Stop stop) {
-        int rolloverTime = 24 * 60 * 60 - timeLine.lastKey() + timeLine.firstKey();
+        int rolloverTime = DAY_IN_SECONDS - timeLine.lastKey() + timeLine.firstKey();
         addPtEdge(timeLine.get(timeLine.lastKey()), timeLine.get(timeLine.firstKey()), GtfsStorage.EdgeType.OVERNIGHT, stop.stop_name, rolloverTime, 0, 0);
     }
 
@@ -487,13 +488,13 @@ class GtfsReader {
         Stop stop = feed.stops.get(stopTime.stop_id);
         Map<GtfsStorageI.PlatformDescriptor, NavigableMap<Integer, Integer>> departureTimelineNodesByRoute = departureTimelinesByStop.computeIfAbsent(stopTime.stop_id, s -> new HashMap<>());
         NavigableMap<Integer, Integer> departureTimelineNodes = departureTimelineNodesByRoute.computeIfAbsent(GtfsStorageI.PlatformDescriptor.route(id, stopTime.stop_id, trip.route_id), s -> new TreeMap<>());
-        int departureTimelineNode = departureTimelineNodes.computeIfAbsent(departureTime % (24 * 60 * 60), t -> {
+        int departureTimelineNode = departureTimelineNodes.computeIfAbsent(departureTime % DAY_IN_SECONDS, t -> {
             final int _departureTimelineNode = i++;
             addPtNode(_departureTimelineNode, stop);
             return _departureTimelineNode;
         });
 
-        int dayShift = departureTime / (24 * 60 * 60);
+        int dayShift = departureTime / DAY_IN_SECONDS;
         GtfsStorage.Validity validOn = new GtfsStorage.Validity(getValidOn(validOnDay, dayShift), zoneId, startDate);
         int validityId = getValueOrPutSize(gtfsStorage.getOperatingDayPatterns(), validOn);
         int boardEdge = addPtEdge(departureTimelineNode, departureNode, GtfsStorage.EdgeType.BOARD, getRouteName(feed, trip), 0, validityId, 1);
