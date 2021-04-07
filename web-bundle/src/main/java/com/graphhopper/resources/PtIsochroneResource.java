@@ -23,10 +23,12 @@ import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.isochrone.algorithm.ReadableTriangulation;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FiniteWeightFilter;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
@@ -98,7 +100,11 @@ public class PtIsochroneResource {
         double targetZ = initialTime.toEpochMilli() + seconds * 1000;
 
         GeometryFactory geometryFactory = new GeometryFactory();
-        final EdgeFilter filter = DefaultEdgeFilter.allEdges(graphHopperStorage.getEncodingManager().getEncoder("foot").getAccessEnc());
+        FlagEncoder footEncoder = encodingManager.getEncoder("foot");
+        Weighting weighting = new FastestWeighting(footEncoder);
+        EdgeFilter filter = edge -> edge.get(footEncoder.getAccessEnc()) || edge.getReverse(footEncoder.getAccessEnc());
+        // todo: see comment in PtRouterImpl
+//        EdgeFilter filter = new FiniteWeightFilter(weighting);
         Snap snap = locationIndex.findClosest(source.lat, source.lon, filter);
         QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, Collections.singletonList(snap));
         if (!snap.isValid()) {
@@ -106,7 +112,7 @@ public class PtIsochroneResource {
         }
 
         PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(encodingManager);
-        GraphExplorer graphExplorer = new GraphExplorer(queryGraph, new FastestWeighting(encodingManager.getEncoder("foot")), ptEncodedValues, gtfsStorage, RealtimeFeed.empty(gtfsStorage), reverseFlow, false, false, 5.0, reverseFlow, blockedRouteTypes);
+        GraphExplorer graphExplorer = new GraphExplorer(queryGraph, weighting, ptEncodedValues, gtfsStorage, RealtimeFeed.empty(gtfsStorage), reverseFlow, false, false, 5.0, reverseFlow, blockedRouteTypes);
         MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, reverseFlow, false, false, 1000000, Collections.emptyList());
 
         Map<Coordinate, Double> z1 = new HashMap<>();

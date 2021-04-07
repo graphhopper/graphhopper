@@ -23,9 +23,9 @@ import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -188,8 +188,12 @@ public final class PtRouterImpl implements PtRouter {
         }
 
         private Snap findByPoint(GHPoint point, int indexForErrorMessage) {
-            final EdgeFilter filter = DefaultEdgeFilter.allEdges(graphHopperStorage.getEncodingManager().getEncoder("foot").getAccessEnc());
-            Snap source = locationIndex.findClosest(point.lat, point.lon, filter);
+            BooleanEncodedValue accessEnc = graphHopperStorage.getEncodingManager().getEncoder("foot").getAccessEnc();
+            EdgeFilter edgeFilter = edge -> edge.get(accessEnc) || edge.getReverse(accessEnc);
+            // todo: this would be more consistent with core *but* PT does not set speed for edges so calcEdgeWeight is infinite
+            //       while calcEdgeMillis is not(!).
+//            EdgeFilter edgeFilter = new FiniteWeightFilter(accessEgressWeighting);
+            Snap source = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
             if (!source.isValid()) {
                 throw new PointNotFoundException("Cannot find point: " + point, indexForErrorMessage);
             }
