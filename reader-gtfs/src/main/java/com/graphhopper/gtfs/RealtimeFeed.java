@@ -19,7 +19,6 @@
 package com.graphhopper.gtfs;
 
 import com.carrotsearch.hppc.IntHashSet;
-import com.carrotsearch.hppc.IntIntHashMap;
 import com.carrotsearch.hppc.IntLongHashMap;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Fare;
@@ -72,8 +71,17 @@ public class RealtimeFeed {
     private final Map<Integer, GtfsStorage.Validity> validities;
     private final Map<Integer, GtfsStorageI.PlatformDescriptor> platformDescriptorByEdge;
 
-    private RealtimeFeed(GtfsStorage staticGtfs, Map<String, GtfsRealtime.FeedMessage> feedMessages, IntHashSet blockedEdges,
-                         IntLongHashMap delaysForBoardEdges, IntLongHashMap delaysForAlightEdges, List<VirtualEdgeIteratorState> additionalEdges, Map<Integer, byte[]> tripDescriptors, Map<Integer, Integer> stopSequences, Map<GtfsStorage.Validity, Integer> operatingDayPatterns, Map<GtfsStorage.FeedIdWithTimezone, Integer> writableTimeZones, Map<Integer, GtfsStorageI.PlatformDescriptor> platformDescriptorByEdge) {
+    private RealtimeFeed(GtfsStorage staticGtfs,
+                         Map<String, GtfsRealtime.FeedMessage> feedMessages,
+                         IntHashSet blockedEdges,
+                         IntLongHashMap delaysForBoardEdges,
+                         IntLongHashMap delaysForAlightEdges,
+                         List<VirtualEdgeIteratorState> additionalEdges,
+                         Map<Integer, byte[]> tripDescriptors,
+                         Map<Integer, Integer> stopSequences,
+                         Map<GtfsStorage.Validity, Integer> operatingDayPatterns,
+                         Map<GtfsStorage.FeedIdWithTimezone, Integer> writableTimeZones,
+                         Map<Integer, GtfsStorageI.PlatformDescriptor> platformDescriptorByEdge) {
         this.staticGtfs = staticGtfs;
         this.feedMessages = feedMessages;
         this.blockedEdges = blockedEdges;
@@ -101,10 +109,8 @@ public class RealtimeFeed {
         final LinkedList<VirtualEdgeIteratorState> additionalEdges = new LinkedList<>();
         final Graph overlayGraph = new Graph() {
             int firstEdge = graphHopperStorage.getEdges();
-            EncodingManager encodingManager = graphHopperStorage.getEncodingManager();
+            final EncodingManager encodingManager = graphHopperStorage.getEncodingManager();
             final NodeAccess nodeAccess = new NodeAccess() {
-                IntIntHashMap turnCostIndices = new IntIntHashMap();
-
                 @Override
                 public int getTurnCostIndex(int nodeId) {
                     return 0;
@@ -112,7 +118,6 @@ public class RealtimeFeed {
 
                 @Override
                 public void setTurnCostIndex(int nodeId, int additionalValue) {
-                    turnCostIndices.put(nodeId, additionalValue);
                 }
 
                 @Override
@@ -127,12 +132,10 @@ public class RealtimeFeed {
 
                 @Override
                 public void ensureNode(int nodeId) {
-
                 }
 
                 @Override
                 public void setNode(int nodeId, double lat, double lon, double ele) {
-
                 }
 
                 @Override
