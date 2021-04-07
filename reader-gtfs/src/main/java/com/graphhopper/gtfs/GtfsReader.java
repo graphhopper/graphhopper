@@ -131,10 +131,7 @@ class GtfsReader {
                 } else {
                     streetNode = locationSnap.getClosestNode();
                 }
-                Integer prev = gtfsStorage.getStationNodes().put(new GtfsStorage.FeedIdWithStopId(id, stop.stop_id), streetNode);
-                if (prev != null) {
-                    throw new RuntimeException("Duplicate stop id: " + stop.stop_id);
-                }
+                setStationNode(stop.stop_id, streetNode);
             }
         }
     }
@@ -189,13 +186,13 @@ class GtfsReader {
 
     private void wireUpStops() {
         arrivalTimelinesByStop.forEach((stopId, arrivalTimelines) -> {
-            int streetNode = gtfsStorage.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(id, stopId));
+            int streetNode = getStationNode(stopId);
             Stop stop = feed.stops.get(stopId);
             arrivalTimelines.forEach(((platformDescriptor, arrivalTimeline) ->
                     wireUpArrivalTimeline(streetNode, stop, arrivalTimeline, routeType(platformDescriptor), platformDescriptor)));
         });
         departureTimelinesByStop.forEach((stopId, departureTimelines) -> {
-            int streetNode = gtfsStorage.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(id, stopId));
+            int streetNode = getStationNode(stopId);
             Stop stop = feed.stops.get(stopId);
             departureTimelines.forEach(((platformDescriptor, departureTimeline) ->
                     wireUpDepartureTimeline(streetNode, stop, departureTimeline, routeType(platformDescriptor), platformDescriptor)));
@@ -211,7 +208,7 @@ class GtfsReader {
         LOGGER.debug("Creating transfers to stop {}, platform {}", toPlatformDescriptor.stop_id, toPlatformDescriptor);
         List<Transfer> transfersToPlatform = transfers.getTransfersToStop(toPlatformDescriptor.stop_id, routeIdOrNull(toPlatformDescriptor));
         transfersToPlatform.forEach(transfer -> {
-            int stationNode = gtfsStorage.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(id, transfer.from_stop_id));
+            int stationNode = getStationNode(transfer.from_stop_id);
             EdgeIterator i = graph.createEdgeExplorer().setBaseNode(stationNode);
             while (i.next()) {
                 if (i.get(edgeTypeEnc) == GtfsStorage.EdgeType.EXIT_PT) {
@@ -246,13 +243,13 @@ class GtfsReader {
 
     void wireUpAdditionalDeparturesAndArrivals(ZoneId zoneId) {
         departureTimelinesByStop.forEach((stopId, departureTimelines) -> {
-            int stationNode = gtfsStorage.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(id, stopId));
+            int stationNode = getStationNode(stopId);
             Stop stop = feed.stops.get(stopId);
             departureTimelines.forEach(((platformDescriptor, timeline) ->
                     wireUpOrPatchDepartureTimeline(zoneId, stationNode, stop, timeline, platformDescriptor)));
         });
         arrivalTimelinesByStop.forEach((stopId, arrivalTimelines) -> {
-            int stationNode = gtfsStorage.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(id, stopId));
+            int stationNode = getStationNode(stopId);
             Stop stop = feed.stops.get(stopId);
             arrivalTimelines.forEach(((platformDescriptor, timeline) ->
                     wireUpOrPatchArrivalTimeline(zoneId, stationNode, stop, routeIdOrNull(platformDescriptor), timeline, platformDescriptor)));
@@ -529,7 +526,7 @@ class GtfsReader {
     }
 
     private void insertOutboundTransfers(String toStopId, String toRouteId, int minimumTransferTime, NavigableMap<Integer, Integer> fromStopTimelineNodes) {
-        int stationNode = gtfsStorage.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(id, toStopId));
+        int stationNode = getStationNode(toStopId);
         EdgeIterator i = graph.getBaseGraph().createEdgeExplorer().setBaseNode(stationNode);
         while (i.next()) {
             GtfsStorage.EdgeType edgeType = i.get(edgeTypeEnc);
@@ -594,6 +591,17 @@ class GtfsReader {
 
     private static <T> int getValueOrPutSize(Map<T, Integer> map, T key) {
         return map.computeIfAbsent(key, k -> map.size());
+    }
+
+    private void setStationNode(String stopId, int stationNode) {
+        Integer prev = gtfsStorage.getStationNodes().put(new GtfsStorage.FeedIdWithStopId(id, stopId), stationNode);
+        if (prev != null) {
+            throw new RuntimeException("Duplicate stop id: " + stopId);
+        }
+    }
+
+    private int getStationNode(String stopId) {
+        return gtfsStorage.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(id, stopId));
     }
 
     private void addPtNode(int node, Stop stop) {
