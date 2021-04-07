@@ -37,6 +37,7 @@ import java.io.Writer;
 import java.util.*;
 
 import static com.graphhopper.resources.RouteResource.errorIfLegacyParameters;
+import static com.graphhopper.resources.RouteResource.removeLegacyParameters;
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
 
@@ -86,8 +87,7 @@ public class SPTResource {
         hintsMap.putObject(Parameters.Landmark.DISABLE, true);
         if (Helper.isEmpty(profileName)) {
             profileName = profileResolver.resolveProfile(hintsMap).getName();
-            hintsMap.remove("weighting");
-            hintsMap.remove("vehicle");
+            removeLegacyParameters(hintsMap);
         }
 
         errorIfLegacyParameters(hintsMap);
