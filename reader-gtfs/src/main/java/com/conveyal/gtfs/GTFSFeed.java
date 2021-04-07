@@ -246,6 +246,8 @@ public class GTFSFeed implements Cloneable, Closeable {
         int startOfInterpolatedBlock = -1;
         for (int stopTime = 0; stopTime < stopTimes.length; stopTime++) {
 
+            // todo: how can this ever happen? departure_time can never be INT_MISSING here, and at the same time
+            //       startOfInterpolatedBlock will always be -1 so we cannot enter the next else if
             if (stopTimes[stopTime].departure_time == Entity.INT_MISSING && startOfInterpolatedBlock == -1) {
                 startOfInterpolatedBlock = stopTime;
             }
