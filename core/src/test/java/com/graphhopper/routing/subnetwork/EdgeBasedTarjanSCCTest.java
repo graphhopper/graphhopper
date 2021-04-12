@@ -106,6 +106,31 @@ class EdgeBasedTarjanSCCTest {
     }
 
     @Test
+    public void oneWayBridges() {
+        GraphHopperStorage g = new GraphBuilder(em).create();
+        // 0 - 1 -> 2 - 3
+        //          |   |
+        //          4 - 5 -> 6 - 7
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(3, 5).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(4, 5).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(5, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(6, 7).setDistance(1));
+        EdgeBasedTarjanSCC tarjan = new EdgeBasedTarjanSCC(g, accessEnc, NO_TURN_COST_PROVIDER, false);
+        ConnectedComponents result = tarjan.findComponentsRecursive();
+        assertEquals(16, result.getEdgeKeys());
+        assertEquals(7, result.getTotalComponents());
+        // 0-1, 2-3-5-4-2 and 6-7
+        assertEquals(3, result.getComponents().size());
+        // 1->2, 2->1 and 5->6, 6<-5
+        assertEquals(4, result.getSingleEdgeComponents().cardinality());
+        assertEquals(result.getComponents().get(1), result.getBiggestComponent());
+    }
+
+    @Test
     public void tree() {
         GraphHopperStorage g = new GraphBuilder(em).create();
         // 0 - 1 - 2 - 4 - 5
