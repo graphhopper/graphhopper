@@ -119,8 +119,7 @@ class EdgeBasedTarjanSCCTest {
         GHUtility.setSpeed(60, true, true, encoder, g.edge(4, 5).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, g.edge(5, 6).setDistance(1));
         GHUtility.setSpeed(60, true, true, encoder, g.edge(6, 7).setDistance(1));
-        EdgeBasedTarjanSCC tarjan = new EdgeBasedTarjanSCC(g, accessEnc, NO_TURN_COST_PROVIDER, false);
-        ConnectedComponents result = tarjan.findComponentsRecursive();
+        ConnectedComponents result = EdgeBasedTarjanSCC.findComponentsRecursive(g, edgeFilter, NO_TURN_COST_PROVIDER, false);
         assertEquals(16, result.getEdgeKeys());
         assertEquals(7, result.getTotalComponents());
         // 0-1, 2-3-5-4-2 and 6-7
