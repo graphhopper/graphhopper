@@ -100,9 +100,7 @@ public class PrepareRoutingSubnetworks {
         logger.info(jobName + " - Found " + ccs.getTotalComponents() + " subnetworks (" + numSingleEdgeComponents + " single edges and "
                 + components.size() + " components with more than one edge, total nodes: " + ccs.getEdgeKeys() + "), took: " + sw.stop().getSeconds() + "s");
 
-        // n edge-keys roughly equal n/2 edges and components with n/2 edges approximately have n/2 nodes
-        // we could actually count the nodes to make this more consistent, but is it really needed?
-        final int minNetworkSizeEdges = 2 * minNetworkSize;
+        final int minNetworkSizeEdgeKeys = 2 * minNetworkSize;
 
         // remove all small networks, but keep the biggest (even when its smaller than the given min_network_size)
         sw = new StopWatch().start();
@@ -115,7 +113,7 @@ public class PrepareRoutingSubnetworks {
             if (component == ccs.getBiggestComponent())
                 continue;
 
-            if (component.size() < minNetworkSizeEdges) {
+            if (component.size() < minNetworkSizeEdgeKeys) {
                 for (IntCursor cursor : component) {
                     removedEdgeKeys += removeEdgeWithKey(cursor.value, accessEnc);
                 }
@@ -126,7 +124,7 @@ public class PrepareRoutingSubnetworks {
             }
         }
 
-        if (minNetworkSizeEdges > 0) {
+        if (minNetworkSizeEdgeKeys > 0) {
             BitSetIterator iter = singleEdgeComponents.iterator();
             for (int edgeKey = iter.nextSetBit(); edgeKey >= 0; edgeKey = iter.nextSetBit()) {
                 removedEdgeKeys += removeEdgeWithKey(edgeKey, accessEnc);
