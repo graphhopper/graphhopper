@@ -25,7 +25,7 @@ appear on your fork its github page afterwards.
 
 ## License Agreement
 
-Your contributions like pull requests, bug fixes, documentation changes and translations will fall under the Apache License and you agree to our
+All contributions like pull requests, bug fixes, documentation changes and translations fall under the Apache License and contributors agree to our
 <a href="https://www.graphhopper.com/code-of-conduct/">contributor covenant code of conduct</a>.
 
 ## Code formatting
