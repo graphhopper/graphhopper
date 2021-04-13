@@ -1106,7 +1106,7 @@ public class GraphHopper implements GraphHopperAPI {
                 TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), 0);
                 jobs.add(new PrepareJob(encoder.toString(), encoder.getAccessEnc(), turnCostProvider));
             } else {
-                jobs.add(new PrepareJob(encoder.toString(), encoder.getAccessEnc(), null));
+                jobs.add(new PrepareJob(encoder.toString(), encoder.getAccessEnc(), TurnCostProvider.NO_TURN_COST_PROVIDER));
             }
         }
         return jobs;
