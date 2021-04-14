@@ -59,7 +59,7 @@ public class GraphHopperGtfs extends GraphHopper {
     }
 
     @Override
-    protected void registerCustomEncodedValues(EncodingManager.Builder emBuilder) {
+    protected void customizeEncodingManager(EncodingManager.Builder emBuilder) {
         PtEncodedValues.createAndAddEncodedValues(emBuilder);
     }
 

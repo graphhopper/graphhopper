@@ -65,10 +65,10 @@ public class GraphHopperAPITest {
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 4).setDistance(40));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 3).setDistance(40));
 
-        GraphHopper instance = createGraphHopper(vehicle).
+        GraphHopper instance = new GraphHopper().
                 setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(false).
-                loadGraph(graph);
+                loadGraph(graph, em);
         // 3 -> 0
         GHResponse rsp = instance.route(new GHRequest(42, 10.4, 42, 10).setProfile(profile));
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
@@ -93,10 +93,10 @@ public class GraphHopperAPITest {
         GraphHopperStorage graph = new GraphBuilder(em).create();
         initGraph(graph, em.getEncoder(vehicle));
 
-        GraphHopper instance = createGraphHopper(vehicle).
+        GraphHopper instance = new GraphHopper().
                 setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(false).
-                loadGraph(graph);
+                loadGraph(graph, em);
         GHResponse rsp = instance.route(new GHRequest(42, 10, 42, 10.4).setProfile(profile));
         assertTrue(rsp.hasErrors());
 
@@ -129,10 +129,11 @@ public class GraphHopperAPITest {
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(10));
 
         final AtomicInteger counter = new AtomicInteger(0);
-        GraphHopper instance = createGraphHopper(vehicle)
+        GraphHopper instance = new GraphHopper()
+                .setProfiles(new Profile(vehicle).setVehicle(vehicle).setWeighting("fastest"))
                 .setElevation(true)
                 .setGraphHopperLocation(loc)
-                .loadGraph(graph);
+                .loadGraph(graph, encodingManager);
         instance.flush();
         instance.close();
         assertEquals(0, counter.get());
@@ -144,7 +145,6 @@ public class GraphHopperAPITest {
                 super.interpolateBridgesTunnelsAndFerries();
             }
         }
-                .setEncodingManager(encodingManager)
                 .setProfiles(new Profile(vehicle).setVehicle(vehicle).setWeighting("fastest"))
                 .setElevation(true);
         instance.load(loc);
@@ -159,7 +159,6 @@ public class GraphHopperAPITest {
                 super.interpolateBridgesTunnelsAndFerries();
             }
         }
-                .setEncodingManager(encodingManager)
                 .setProfiles(new Profile(vehicle).setVehicle(vehicle).setWeighting("fastest"))
                 .setElevation(true);
         instance.load(loc);
@@ -175,7 +174,7 @@ public class GraphHopperAPITest {
         String profile = "profile";
         String vehicle = "car";
         String weighting = "fastest";
-        GraphHopper instance = createGraphHopper(vehicle).
+        GraphHopper instance = new GraphHopper().
                 setProfiles(new Profile(profile).setVehicle(vehicle).setVehicle(weighting)).
                 setStoreOnFlush(false);
         try {
@@ -185,18 +184,13 @@ public class GraphHopperAPITest {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Do a successful call to load or importOrLoad before routing"));
         }
 
-        instance = createGraphHopper(vehicle);
+        instance = new GraphHopper()
+                .setProfiles(new Profile(vehicle).setVehicle(vehicle).setWeighting("fastest"));
         try {
             instance.route(new GHRequest(42, 10.4, 42, 10).setProfile(profile));
             fail();
         } catch (Exception ex) {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Do a successful call to load or importOrLoad before routing"));
         }
-    }
-
-    private GraphHopper createGraphHopper(String vehicle) {
-        return new GraphHopper()
-                .setEncodingManager(EncodingManager.create(vehicle))
-                .setProfiles(new Profile(vehicle).setVehicle(vehicle).setWeighting("fastest"));
     }
 }

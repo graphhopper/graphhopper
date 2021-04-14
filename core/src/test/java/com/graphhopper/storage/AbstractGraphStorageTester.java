@@ -314,7 +314,7 @@ public abstract class AbstractGraphStorageTester {
     public void testCopyTo() {
         graph = createGHStorage();
         initExampleGraph(graph);
-        GraphHopperStorage gs = GraphBuilder.start(encodingManager).setSegmentSize(8000).setBytes(10).create();
+        GraphHopperStorage gs = GraphBuilder.start(encodingManager).setSegmentSize(8000).create();
         graph.copyTo(gs);
         checkExampleGraph(gs);
 
