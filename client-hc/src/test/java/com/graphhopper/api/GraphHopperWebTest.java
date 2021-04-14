@@ -19,6 +19,7 @@ public class GraphHopperWebTest {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.509225, 1.534728)).
                 addPoint(new GHPoint(42.512602, 1.551558)).
+                // todonow: change to profile?
                 putHint("vehicle", "car");
         req.putHint(GraphHopperWeb.TIMEOUT, 5);
 

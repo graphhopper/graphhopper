@@ -37,6 +37,7 @@ public class Examples {
                 addPoint(new GHPoint(49.6724, 11.3494)).
                 addPoint(new GHPoint(49.6550, 11.4180));
         // Set vehicle like car, bike, foot, ...
+        // todonow: change to profile?
         req.putHint("vehicle", "bike");
         // Optionally enable/disable elevation in output PointList, currently bike and foot support elevation, default is false
         req.putHint("elevation", false);
@@ -94,6 +95,7 @@ public class Examples {
         GHMRequest ghmRequest = new GHMRequest();
         ghmRequest.addOutArray("distances");
         ghmRequest.addOutArray("times");
+        // todonow: change to profile?
         ghmRequest.putHint("vehicle", "car");
 
         // init points for a symmetric matrix

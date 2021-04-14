@@ -106,7 +106,6 @@ public class GraphHopperWeb implements GraphHopperAPI {
         ignoreSet.add("algorithm");
         ignoreSet.add("locale");
         ignoreSet.add("point");
-        ignoreSet.add("vehicle");
 
         // some are special and need to be avoided
         ignoreSet.add("points_encoded");
@@ -317,10 +316,6 @@ public class GraphHopperWeb implements GraphHopperAPI {
                 + "&locale=" + ghRequest.getLocale().toString()
                 + "&elevation=" + tmpElevation
                 + "&optimize=" + tmpOptimize;
-
-        if (ghRequest.getHints().has("vehicle")) {
-            url += "&vehicle=" + ghRequest.getHints().getString("vehicle", "");
-        }
 
         for (String details : ghRequest.getPathDetails()) {
             url += "&" + Parameters.Details.PATH_DETAILS + "=" + details;
