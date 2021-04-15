@@ -61,12 +61,12 @@ public class EncodingManager implements EncodedValueLookup {
      * Instantiate manager with the given list of encoders. The manager knows several default
      * encoders using DefaultFlagEncoderFactory.
      */
-    public static EncodingManager create(String flagEncoderString) {
-        return create(new DefaultFlagEncoderFactory(), flagEncoderString);
+    public static EncodingManager create(String flagEncodersStr) {
+        return create(new DefaultFlagEncoderFactory(), flagEncodersStr);
     }
 
-    public static EncodingManager create(FlagEncoderFactory factory, String flagEncodersString) {
-        return createBuilder(Arrays.stream(flagEncodersString.split(",")).filter(s -> !s.trim().isEmpty()).
+    public static EncodingManager create(FlagEncoderFactory factory, String flagEncodersStr) {
+        return createBuilder(Arrays.stream(flagEncodersStr.split(",")).filter(s -> !s.trim().isEmpty()).
                 map(s -> parseEncoderString(factory, s)).collect(Collectors.toList())).build();
     }
 
@@ -211,7 +211,7 @@ public class EncodingManager implements EncodedValueLookup {
         public Builder add(FlagEncoder encoder) {
             check();
             if (flagEncoderMap.containsKey(encoder.toString()))
-                throw new IllegalArgumentException("Encoder already exists: " + encoder);
+                throw new IllegalArgumentException("FlagEncoder already exists: " + encoder);
             flagEncoderMap.put(encoder.toString(), (AbstractFlagEncoder) encoder);
             return this;
         }
@@ -369,7 +369,7 @@ public class EncodingManager implements EncodedValueLookup {
 
     static FlagEncoder parseEncoderString(FlagEncoderFactory factory, String encoderString) {
         if (!encoderString.equals(toLowerCase(encoderString)))
-            throw new IllegalArgumentException("Since 0.7 EncodingManager does no longer accept upper case profiles: " + encoderString);
+            throw new IllegalArgumentException("An upper case name for the FlagEncoder is not allowed: " + encoderString);
 
         encoderString = encoderString.trim();
         if (encoderString.isEmpty())
@@ -395,7 +395,7 @@ public class EncodingManager implements EncodedValueLookup {
         EncodedValue evObject = factory.create(encodedValueString);
         PMap map = new PMap(encodedValueString);
         if (!map.has("version"))
-            throw new IllegalArgumentException("encoded value must have a version specified but it was " + encodedValueString);
+            throw new IllegalArgumentException("EncodedValue must have a version specified but it was " + encodedValueString);
         return evObject;
     }
 
@@ -485,7 +485,7 @@ public class EncodingManager implements EncodedValueLookup {
                 return encoder;
         }
         if (throwExc)
-            throw new IllegalArgumentException("Encoder for " + name + " not found. Existing: " + toFlagEncodersAsString());
+            throw new IllegalArgumentException("FlagEncoder for " + name + " not found. Existing: " + toFlagEncodersAsString());
         return null;
     }
 

@@ -79,7 +79,7 @@ public class EncodingManagerTest {
             EncodingManager.create(foot, foot);
             fail("There should have been an exception");
         } catch (Exception ex) {
-            assertEquals("Encoder already exists: foot", ex.getMessage());
+            assertEquals("FlagEncoder already exists: foot", ex.getMessage());
         }
     }
 
