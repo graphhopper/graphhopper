@@ -42,10 +42,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPInputStream;
 
@@ -67,7 +64,7 @@ public class RoutingAlgorithmWithOSMTest {
         final GraphHopperStorage ghStorage = hopper.getGraphHopperStorage();
         LocationIndex idx = hopper.getLocationIndex();
 
-        TraversalMode tMode = profile.isTurnCosts()? TraversalMode.EDGE_BASED:TraversalMode.NODE_BASED;
+        TraversalMode tMode = profile.isTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
         String addStr = "";
         if (profile.isTurnCosts())
             addStr = "turn|";
