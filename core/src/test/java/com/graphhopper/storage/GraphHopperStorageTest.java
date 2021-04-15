@@ -279,13 +279,10 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         assertEquals(edges, graph.getAllEdges().length());
         Helper.close(graph);
 
+        hopper = new GraphHopper();
         // load via explicitly configured FlagEncoders then we can define only one profile
-        hopper = new GraphHopper() {
-            @Override
-            protected void customizeEncodingManager(EncodingManager.Builder emBuilder) {
-                emBuilder.add(createCarFlagEncoder()).add(new BikeFlagEncoder());
-            }
-        }.setProfiles(Collections.singletonList(new Profile("p_car").setVehicle("car").setWeighting("fastest")));
+        hopper.getEncodingManagerBuilder().add(createCarFlagEncoder()).add(new BikeFlagEncoder());
+        hopper.setProfiles(Collections.singletonList(new Profile("p_car").setVehicle("car").setWeighting("fastest")));
         if (ch) {
             hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("p_car"));
         }

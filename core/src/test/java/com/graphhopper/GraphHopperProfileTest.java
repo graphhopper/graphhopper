@@ -67,20 +67,18 @@ public class GraphHopperProfileTest {
         }, "Profile names must be unique. Duplicate name: 'my_profile'");
     }
 
+    @Test
     public void vehicleDoesNotExist_error() {
-        final GraphHopper hopper = new GraphHopper() {
-            @Override
-            protected void customizeEncodingManager(EncodingManager.Builder emBuilder) {
-                emBuilder.add(new CarFlagEncoder());
-            }
-        }.setGraphHopperLocation(GH_LOCATION).setStoreOnFlush(false).
+        final GraphHopper hopper = new GraphHopper();
+        hopper.getEncodingManagerBuilder().add(new CarFlagEncoder());
+        hopper.setGraphHopperLocation(GH_LOCATION).setStoreOnFlush(false).
                 setProfiles(new Profile("profile").setVehicle("your_car"));
         assertIllegalArgument(new Runnable() {
             @Override
             public void run() {
                 hopper.load(GH_LOCATION);
             }
-        }, "Unknown vehicle 'your_car' in profile: name=profile");
+        }, "entry in encoder list not supported: your_car");
     }
 
     @Test
