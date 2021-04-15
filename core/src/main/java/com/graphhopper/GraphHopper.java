@@ -462,7 +462,7 @@ public class GraphHopper implements GraphHopperAPI {
         removeZipped = ghConfig.getBool("graph.remove_zipped", removeZipped);
 
         if (encodingManager != null)
-            throw new IllegalStateException("Cannot overwrite EncodingManager in init");
+            throw new IllegalStateException("Cannot call init twice. EncodingManager was already initialized.");
 
         emBuilder.setEnableInstructions(ghConfig.getBool("datareader.instructions", true));
         emBuilder.setPreferredLanguage(ghConfig.getString("datareader.preferred_language", ""));

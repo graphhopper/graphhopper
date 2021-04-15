@@ -173,7 +173,6 @@ public class EncodingManager implements EncodedValueLookup {
             if (flagEncoderMap.containsKey(key))
                 return false;
             FlagEncoder fe = parseEncoderString(factory, flagEncoderString);
-            if (!fe.toString().equals(key)) throw new IllegalStateException("not equal " + key + ", " + fe.toString());
             flagEncoderMap.put(fe.toString(), (AbstractFlagEncoder) fe);
             return true;
         }
@@ -184,7 +183,6 @@ public class EncodingManager implements EncodedValueLookup {
             if (encodedValueMap.containsKey(key))
                 return false;
             EncodedValue ev = parseEncodedValueString(factory, encodedValueString);
-            if (!ev.getName().equals(key)) throw new IllegalStateException("not equal " + key + ", " + ev.getName());
             encodedValueMap.put(ev.getName(), ev);
             return true;
         }
