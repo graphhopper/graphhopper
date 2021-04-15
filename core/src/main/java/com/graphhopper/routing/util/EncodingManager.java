@@ -61,12 +61,13 @@ public class EncodingManager implements EncodedValueLookup {
      * Instantiate manager with the given list of encoders. The manager knows several default
      * encoders using DefaultFlagEncoderFactory.
      */
-    public static EncodingManager create(String flagEncoders) {
-        return create(new DefaultFlagEncoderFactory(), Arrays.asList(flagEncoders.split(",")));
+    public static EncodingManager create(String flagEncoderString) {
+        return create(new DefaultFlagEncoderFactory(), flagEncoderString);
     }
 
-    public static EncodingManager create(FlagEncoderFactory factory, List<String> flagEncoderStrings) {
-        return createBuilder(flagEncoderStrings.stream().map(s -> parseEncoderString(factory, s)).collect(Collectors.toList())).build();
+    public static EncodingManager create(FlagEncoderFactory factory, String flagEncodersString) {
+        return createBuilder(Arrays.stream(flagEncodersString.split(",")).filter(s -> !s.trim().isEmpty()).
+                map(s -> parseEncoderString(factory, s)).collect(Collectors.toList())).build();
     }
 
     /**

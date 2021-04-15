@@ -25,7 +25,6 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.jackson.ProfileMixIn;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -95,18 +94,13 @@ public class GraphHopperProfileTest {
     }
 
     @Test
-    public void vehicleWithoutTurnCostSupport_error() {
+    public void oneVehicleWithoutTurnCostSupport_noerror() {
         final GraphHopper hopper = createHopper();
-        // either configure the EncodingManager or specify the profile with turn costs as the first to make this working:
+        // no error even if profile without turn costs is specified first
         hopper.setProfiles(
                 new Profile("profile1").setVehicle("car").setTurnCosts(false),
                 new Profile("profile2").setVehicle("car").setTurnCosts(true));
-        assertIllegalArgument(new Runnable() {
-            @Override
-            public void run() {
-                hopper.load(GH_LOCATION);
-            }
-        }, "The profile 'profile2' was configured with 'turn_costs=true', but the corresponding vehicle 'car' does not support turn costs");
+        hopper.load(GH_LOCATION);
     }
 
     @Test

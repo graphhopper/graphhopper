@@ -551,7 +551,6 @@ public class OSMReaderTest {
         String fileRoadAttributes = "test-road-attributes.xml";
         GraphHopper hopper = new GraphHopperFacade(fileRoadAttributes);
         hopper.getEncodingManagerBuilder().add(new OSMMaxWidthParser()).add(new OSMMaxHeightParser()).add(new OSMMaxWeightParser());
-        hopper.setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"));
         hopper.importOrLoad();
 
         DecimalEncodedValue widthEnc = hopper.getEncodingManager().getDecimalEncodedValue(MaxWidth.KEY);
@@ -833,14 +832,16 @@ public class OSMReaderTest {
 
     @Test
     public void testPreferredLanguage() {
-        GraphHopper hopper = new GraphHopperFacade(file1, false, "de").importOrLoad();
+        GraphHopper hopper = new GraphHopperFacade(file1, false, "de").
+                importOrLoad();
         GraphHopperStorage graph = hopper.getGraphHopperStorage();
         int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
         EdgeIterator iter = carOutExplorer.setBaseNode(n20);
         assertTrue(iter.next());
         assertEquals("straße 123, B 122", iter.getName());
 
-        hopper = new GraphHopperFacade(file1, false, "el").importOrLoad();
+        hopper = new GraphHopperFacade(file1, false, "el").
+                importOrLoad();
         graph = hopper.getGraphHopperStorage();
         n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
         iter = carOutExplorer.setBaseNode(n20);
@@ -920,9 +921,6 @@ public class OSMReaderTest {
     }
 
     class GraphHopperFacade extends GraphHopper {
-        boolean turnCosts;
-        String prefLang;
-
         public GraphHopperFacade(String osmFile) {
             this(osmFile, false, "");
         }
@@ -931,9 +929,6 @@ public class OSMReaderTest {
             setStoreOnFlush(false);
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);
-
-            this.prefLang = prefLang;
-            this.turnCosts = turnCosts;
             setProfiles(
                     new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                     new Profile("car").setVehicle("car").setWeighting("fastest"),
@@ -960,11 +955,9 @@ public class OSMReaderTest {
                     getEncodingManager().needsTurnCostsSupport());
             setGraphHopperStorage(tmpGraph);
             super.importOSM();
-            if (carEncoder != null) {
-                carAccessEnc = carEncoder.getAccessEnc();
-                carOutExplorer = getGraphHopperStorage().createEdgeExplorer(DefaultEdgeFilter.outEdges(carAccessEnc));
-                carAllExplorer = getGraphHopperStorage().createEdgeExplorer(DefaultEdgeFilter.allEdges(carAccessEnc));
-            }
+            carAccessEnc = carEncoder.getAccessEnc();
+            carOutExplorer = getGraphHopperStorage().createEdgeExplorer(DefaultEdgeFilter.outEdges(carAccessEnc));
+            carAllExplorer = getGraphHopperStorage().createEdgeExplorer(DefaultEdgeFilter.allEdges(carAccessEnc));
         }
 
         @Override

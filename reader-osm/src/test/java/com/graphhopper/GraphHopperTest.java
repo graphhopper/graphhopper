@@ -1643,8 +1643,8 @@ public class GraphHopperTest {
         final String profile = "profile";
         final String vehicle = "car";
         final String weighting = "fastest";
-        // note that the pure presence of the bike encoder leads to 'ghost' junctions with the bike network even for
-        // cars such that the number of visited nodes depends on the bike encoder added here or not, #1910
+        // note that the pure presence of the bike profile leads to 'ghost' junctions with the bike network even for
+        // cars such that the number of visited nodes depends on the bike profile added here or not, #1910
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
