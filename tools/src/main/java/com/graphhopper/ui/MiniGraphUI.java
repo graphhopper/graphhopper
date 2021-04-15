@@ -360,7 +360,7 @@ public class MiniGraphUI {
                 }
                 return algo;
             };
-            AlgorithmOptions algoOpts = new AlgorithmOptions(Algorithms.ASTAR_BI);
+            AlgorithmOptions algoOpts = new AlgorithmOptions().setAlgorithm(Algorithms.ASTAR_BI);
             logger.info("algoOpts:" + algoOpts + ", weighting: " + weighting);
             QueryGraph qGraph = QueryGraph.create(graph, fromRes, toRes);
             return algoFactory.createAlgo(qGraph, weighting, algoOpts);

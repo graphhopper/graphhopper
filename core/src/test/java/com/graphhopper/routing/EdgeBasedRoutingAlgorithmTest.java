@@ -103,10 +103,9 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     public RoutingAlgorithm createAlgo(Graph g, Weighting weighting, TraversalMode traversalMode) {
-        AlgorithmOptions opts = AlgorithmOptions.start()
-                .traversalMode(traversalMode)
-                .algorithm(algoStr)
-                .build();
+        AlgorithmOptions opts = new AlgorithmOptions()
+                .setTraversalMode(traversalMode)
+                .setAlgorithm(algoStr);
         return new RoutingAlgorithmFactorySimple().createAlgo(g, weighting, opts);
     }
 

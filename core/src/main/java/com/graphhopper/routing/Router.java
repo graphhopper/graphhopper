@@ -121,12 +121,11 @@ public class Router {
             PMap requestHints = new PMap(request.getHints());
             requestHints.putObject(CustomModel.KEY, request.getCustomModel());
             Weighting weighting = createWeighting(profile, requestHints, request.getPoints(), disableCH);
-            AlgorithmOptions algoOpts = AlgorithmOptions.start().
-                    algorithm(request.getAlgorithm()).
-                    traversalMode(traversalMode).
-                    maxVisitedNodes(maxVisitedNodesForRequest).
-                    hints(request.getHints()).
-                    build();
+            AlgorithmOptions algoOpts = new AlgorithmOptions().
+                    setAlgorithm(request.getAlgorithm()).
+                    setTraversalMode(traversalMode).
+                    setMaxVisitedNodes(maxVisitedNodesForRequest).
+                    setHints(request.getHints());
 
             if (ROUND_TRIP.equalsIgnoreCase(request.getAlgorithm())) {
                 return routeRoundTrip(request, algoOpts, weighting, profile, disableLM);
@@ -157,10 +156,7 @@ public class Router {
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
 
         // use A* for round trips
-        AlgorithmOptions roundTripAlgoOpts = AlgorithmOptions
-                .start(algoOpts)
-                .algorithm(Parameters.Algorithms.ASTAR_BI)
-                .build();
+        AlgorithmOptions roundTripAlgoOpts = new AlgorithmOptions(algoOpts).setAlgorithm(Parameters.Algorithms.ASTAR_BI);
         roundTripAlgoOpts.getHints().putObject(Parameters.Algorithms.AStarBi.EPSILON, 2);
         QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
         FlexiblePathCalculator pathCalculator = createFlexiblePathCalculator(queryGraph, profile, weighting, roundTripAlgoOpts, disableLM);

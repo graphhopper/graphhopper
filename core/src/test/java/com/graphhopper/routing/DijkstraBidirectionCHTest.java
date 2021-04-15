@@ -67,7 +67,7 @@ public class DijkstraBidirectionCHTest {
         prepareCH(ghStorage, CHConfig.nodeBased(weighting.getName(), weighting));
 
         // use base graph for solving normal Dijkstra
-        Path p1 = new RoutingAlgorithmFactorySimple().createAlgo(ghStorage, weighting, AlgorithmOptions.start().build()).calcPath(0, 3);
+        Path p1 = new RoutingAlgorithmFactorySimple().createAlgo(ghStorage, weighting, new AlgorithmOptions()).calcPath(0, 3);
         assertEquals(IntArrayList.from(0, 1, 5, 2, 3), p1.calcNodes());
         assertEquals(p1.toString(), 402.29, p1.getDistance(), 1e-2);
         assertEquals(p1.toString(), 144823, p1.getTime());
@@ -80,8 +80,6 @@ public class DijkstraBidirectionCHTest {
         FlagEncoder carEncoder = em.getEncoder("car");
         FastestWeighting footWeighting = new FastestWeighting(footEncoder);
         FastestWeighting carWeighting = new FastestWeighting(carEncoder);
-        AlgorithmOptions footOptions = AlgorithmOptions.start().build();
-        AlgorithmOptions carOptions = AlgorithmOptions.start().build();
 
         CHConfig footConfig = CHConfig.nodeBased("p_foot", footWeighting);
         CHConfig carConfig = CHConfig.nodeBased("p_car", carWeighting);
@@ -98,13 +96,13 @@ public class DijkstraBidirectionCHTest {
         assertEquals(p1.toString(), 15000, p1.getDistance(), 1e-6);
 
         // use base graph for solving normal Dijkstra via car
-        Path p2 = new RoutingAlgorithmFactorySimple().createAlgo(g, carWeighting, carOptions).calcPath(0, 7);
+        Path p2 = new RoutingAlgorithmFactorySimple().createAlgo(g, carWeighting, new AlgorithmOptions()).calcPath(0, 7);
         assertEquals(IntArrayList.from(0, 4, 6, 7), p2.calcNodes());
         assertEquals(p2.toString(), 15000, p2.getDistance(), 1e-6);
         assertEquals(p2.toString(), 2700 * 1000, p2.getTime());
 
         // use base graph for solving normal Dijkstra via foot
-        Path p4 = new RoutingAlgorithmFactorySimple().createAlgo(g, footWeighting, footOptions).calcPath(0, 7);
+        Path p4 = new RoutingAlgorithmFactorySimple().createAlgo(g, footWeighting, new AlgorithmOptions()).calcPath(0, 7);
         assertEquals(p4.toString(), 17000, p4.getDistance(), 1e-6);
         assertEquals(p4.toString(), 12240 * 1000, p4.getTime());
         assertEquals(IntArrayList.from(0, 4, 5, 7), p4.calcNodes());
