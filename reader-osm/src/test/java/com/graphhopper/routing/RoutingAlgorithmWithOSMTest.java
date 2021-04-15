@@ -80,26 +80,26 @@ public class RoutingAlgorithmWithOSMTest {
                 .putObject("vehicle", vehicleStr)
                 .putObject("weighting", weightingStr);
 
-        AlgorithmOptions defaultOpts = AlgorithmOptions.start(new AlgorithmOptions("", weighting, tMode)).hints(defaultHints).build();
+        AlgorithmOptions defaultOpts = AlgorithmOptions.start(new AlgorithmOptions("", tMode)).hints(defaultHints).build();
         List<AlgoHelperEntry> algos = new ArrayList<>();
-        algos.add(new AlgoHelperEntry(ghStorage, false, AlgorithmOptions.start(defaultOpts).algorithm(ASTAR).build(), idx, "astar|beeline|" + addStr + weighting));
+        algos.add(new AlgoHelperEntry(ghStorage, false, weighting, AlgorithmOptions.start(defaultOpts).algorithm(ASTAR).build(), idx, "astar|beeline|" + addStr + weighting));
         // later: include dijkstraOneToMany
-        algos.add(new AlgoHelperEntry(ghStorage, false, AlgorithmOptions.start(defaultOpts).algorithm(DIJKSTRA).build(), idx, "dijkstra|" + addStr + weighting));
+        algos.add(new AlgoHelperEntry(ghStorage, false, weighting, AlgorithmOptions.start(defaultOpts).algorithm(DIJKSTRA).build(), idx, "dijkstra|" + addStr + weighting));
 
         AlgorithmOptions astarbiOpts = AlgorithmOptions.start(defaultOpts).algorithm(ASTAR_BI).build();
         astarbiOpts.getHints().putObject(ASTAR_BI + ".approximation", "BeelineSimplification");
         AlgorithmOptions dijkstrabiOpts = AlgorithmOptions.start(defaultOpts).algorithm(DIJKSTRA_BI).build();
-        algos.add(new AlgoHelperEntry(ghStorage, false, astarbiOpts, idx, "astarbi|beeline|" + addStr + weighting));
-        algos.add(new AlgoHelperEntry(ghStorage, false, dijkstrabiOpts, idx, "dijkstrabi|" + addStr + weighting));
+        algos.add(new AlgoHelperEntry(ghStorage, false, weighting, astarbiOpts, idx, "astarbi|beeline|" + addStr + weighting));
+        algos.add(new AlgoHelperEntry(ghStorage, false, weighting, dijkstrabiOpts, idx, "dijkstrabi|" + addStr + weighting));
 
         // add additional preparations if CH and LM preparation are enabled
         if (hopper.getLMPreparationHandler().isEnabled()) {
             final PMap lmHints = new PMap(defaultHints).putObject(Parameters.Landmark.DISABLE, false);
             final AlgorithmOptions opts = AlgorithmOptions.start(astarbiOpts).hints(lmHints).build();
-            algos.add(new AlgoHelperEntry(ghStorage, false, opts, idx, "astarbi|landmarks|" + weighting) {
+            algos.add(new AlgoHelperEntry(ghStorage, false, weighting, opts, idx, "astarbi|landmarks|" + weighting) {
                 @Override
                 public RoutingAlgorithm createAlgo(Graph graph) {
-                    return hopper.getLMPreparationHandler().getPreparation(vehicleStr + "_profile").getRoutingAlgorithmFactory().createAlgo(graph, opts);
+                    return hopper.getLMPreparationHandler().getPreparation(vehicleStr + "_profile").getRoutingAlgorithmFactory().createAlgo(graph, weighting, opts);
                 }
             });
         }
@@ -109,7 +109,7 @@ public class RoutingAlgorithmWithOSMTest {
             chHints.putObject(Parameters.CH.DISABLE, false);
             chHints.putObject(Parameters.Routing.EDGE_BASED, tMode.isEdgeBased());
             final AlgorithmOptions dijkstraOpts = AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build();
-            algos.add(new AlgoHelperEntry(ghStorage, true, dijkstraOpts, idx, "dijkstrabi|ch|prepare|" + weightingStr) {
+            algos.add(new AlgoHelperEntry(ghStorage, true, weighting, dijkstraOpts, idx, "dijkstrabi|ch|prepare|" + weightingStr) {
                 @Override
                 public RoutingAlgorithm createAlgo(Graph g) {
                     PrepareContractionHierarchies pch = hopper.getCHPreparationHandler().getPreparation(vehicleStr + "_profile");
@@ -121,7 +121,7 @@ public class RoutingAlgorithmWithOSMTest {
             });
 
             final AlgorithmOptions astarOpts = AlgorithmOptions.start(astarbiOpts).hints(chHints).build();
-            algos.add(new AlgoHelperEntry(ghStorage, true, astarOpts, idx, "astarbi|ch|prepare|" + weightingStr) {
+            algos.add(new AlgoHelperEntry(ghStorage, true, weighting, astarOpts, idx, "astarbi|ch|prepare|" + weightingStr) {
                 public RoutingAlgorithm createAlgo(Graph g) {
                     PrepareContractionHierarchies pch = hopper.getCHPreparationHandler().getPreparation(vehicleStr + "_profile");
                     RoutingCHGraph routingCHGraph = ghStorage.getRoutingCHGraph(pch.getCHConfig().getName());
@@ -736,8 +736,8 @@ public class RoutingAlgorithmWithOSMTest {
                         @Override
                         public void run() {
                             OneRun oneRun = instances.get(instanceIndex);
-                            AlgorithmOptions opts = AlgorithmOptions.start().weighting(weighting).algorithm(algoStr).build();
-                            testCollector.assertDistance(encodingManager, new AlgoHelperEntry(g, false, opts, idx, algoStr + "|" + weighting),
+                            AlgorithmOptions opts = AlgorithmOptions.start().algorithm(algoStr).build();
+                            testCollector.assertDistance(encodingManager, new AlgoHelperEntry(g, false, weighting, opts, idx, algoStr + "|" + weighting),
                                     oneRun.getList(idx, filter), oneRun);
                             integ.addAndGet(1);
                         }

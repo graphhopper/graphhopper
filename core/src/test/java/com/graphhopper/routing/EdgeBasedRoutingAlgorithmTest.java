@@ -103,12 +103,11 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     public RoutingAlgorithm createAlgo(Graph g, Weighting weighting, TraversalMode traversalMode) {
-        return createAlgo(g, AlgorithmOptions.start().weighting(weighting).traversalMode(traversalMode).build());
-    }
-
-    public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
-        opts = AlgorithmOptions.start(opts).algorithm(algoStr).build();
-        return new RoutingAlgorithmFactorySimple().createAlgo(g, opts);
+        AlgorithmOptions opts = AlgorithmOptions.start()
+                .traversalMode(traversalMode)
+                .algorithm(algoStr)
+                .build();
+        return new RoutingAlgorithmFactorySimple().createAlgo(g, weighting, opts);
     }
 
     private GraphHopperStorage createStorage(EncodingManager em) {

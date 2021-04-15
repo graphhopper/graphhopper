@@ -173,7 +173,7 @@ public class DirectedRoutingTest {
                 return algoFactory.createAlgo(new PMap().putObject(ALGORITHM, ASTAR_BI));
             }
             case LM:
-                return (BidirRoutingAlgorithm) lm.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).traversalMode(TraversalMode.EDGE_BASED).build());
+                return (BidirRoutingAlgorithm) lm.getRoutingAlgorithmFactory().createAlgo(graph, weighting, AlgorithmOptions.start().algorithm(ASTAR_BI).traversalMode(TraversalMode.EDGE_BASED).build());
             default:
                 throw new IllegalArgumentException("unknown algo " + algo);
         }

@@ -18,7 +18,6 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 
@@ -27,7 +26,6 @@ import com.graphhopper.util.Parameters;
  * <pre>
  * AlgorithmOptions algoOpts = AlgorithmOptions.start().
  *        algorithm(Parameters.Algorithms.DIJKSTRA).
- *        weighting(weighting).
  *        build();
  * </pre>
  * <p>
@@ -37,7 +35,6 @@ import com.graphhopper.util.Parameters;
 public class AlgorithmOptions {
     private final PMap hints = new PMap(5);
     private String algorithm = Parameters.Algorithms.DIJKSTRA_BI;
-    private Weighting weighting;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private int maxVisitedNodes = Integer.MAX_VALUE;
 
@@ -47,14 +44,12 @@ public class AlgorithmOptions {
     /**
      * Default traversal mode NODE_BASED is used.
      */
-    public AlgorithmOptions(String algorithm, Weighting weighting) {
+    public AlgorithmOptions(String algorithm) {
         this.algorithm = algorithm;
-        this.weighting = weighting;
     }
 
-    public AlgorithmOptions(String algorithm, Weighting weighting, TraversalMode tMode) {
+    public AlgorithmOptions(String algorithm, TraversalMode tMode) {
         this.algorithm = algorithm;
-        this.weighting = weighting;
         this.traversalMode = tMode;
     }
 
@@ -75,8 +70,6 @@ public class AlgorithmOptions {
             b.algorithm(opts.getAlgorithm());
         if (opts.traversalMode != null)
             b.traversalMode(opts.getTraversalMode());
-        if (opts.weighting != null)
-            b.weighting(opts.getWeighting());
         if (opts.maxVisitedNodes >= 0)
             b.maxVisitedNodes(opts.maxVisitedNodes);
         if (!opts.hints.isEmpty())
@@ -90,15 +83,6 @@ public class AlgorithmOptions {
      */
     public TraversalMode getTraversalMode() {
         return traversalMode;
-    }
-
-    public boolean hasWeighting() {
-        return weighting != null;
-    }
-
-    public Weighting getWeighting() {
-        assertNotNull(weighting, "weighting");
-        return weighting;
     }
 
     public String getAlgorithm() {
@@ -121,7 +105,7 @@ public class AlgorithmOptions {
 
     @Override
     public String toString() {
-        return algorithm + ", " + weighting + ", " + traversalMode;
+        return algorithm + ", " + traversalMode;
     }
 
     public static class Builder {
@@ -133,11 +117,6 @@ public class AlgorithmOptions {
                 throw new IllegalArgumentException("null as traversal mode is not allowed");
 
             this.opts.traversalMode = traversalMode;
-            return this;
-        }
-
-        public Builder weighting(Weighting weighting) {
-            this.opts.weighting = weighting;
             return this;
         }
 

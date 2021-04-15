@@ -151,8 +151,8 @@ public class PrepareLandmarksTest {
         PMap hints = new PMap().putObject(Parameters.Landmark.ACTIVE_COUNT, 2);
 
         // landmarks with A*
-        RoutingAlgorithm oneDirAlgoWithLandmarks = prepare.getRoutingAlgorithmFactory().createAlgo(graph,
-                AlgorithmOptions.start().algorithm(ASTAR).weighting(weighting).traversalMode(tm).hints(hints).build());
+        RoutingAlgorithm oneDirAlgoWithLandmarks = prepare.getRoutingAlgorithmFactory().createAlgo(graph, weighting,
+                AlgorithmOptions.start().algorithm(ASTAR).traversalMode(tm).hints(hints).build());
 
         Path path = oneDirAlgoWithLandmarks.calcPath(41, 183);
 
@@ -161,8 +161,8 @@ public class PrepareLandmarksTest {
         assertEquals(expectedAlgo.getVisitedNodes() - 135, oneDirAlgoWithLandmarks.getVisitedNodes());
 
         // landmarks with bidir A*
-        RoutingAlgorithm biDirAlgoWithLandmarks = prepare.getRoutingAlgorithmFactory().createAlgo(graph,
-                AlgorithmOptions.start().algorithm(ASTAR_BI).weighting(weighting).traversalMode(tm).hints(hints).build());
+        RoutingAlgorithm biDirAlgoWithLandmarks = prepare.getRoutingAlgorithmFactory().createAlgo(graph, weighting,
+                AlgorithmOptions.start().algorithm(ASTAR_BI).traversalMode(tm).hints(hints).build());
         path = biDirAlgoWithLandmarks.calcPath(41, 183);
         assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
@@ -173,8 +173,8 @@ public class PrepareLandmarksTest {
         Snap fromSnap = index.findClosest(-0.0401, 0.2201, EdgeFilter.ALL_EDGES);
         Snap toSnap = index.findClosest(-0.2401, 0.0601, EdgeFilter.ALL_EDGES);
         QueryGraph qGraph = QueryGraph.create(graph, fromSnap, toSnap);
-        RoutingAlgorithm qGraphOneDirAlgo = prepare.getRoutingAlgorithmFactory().createAlgo(qGraph,
-                AlgorithmOptions.start().algorithm(ASTAR).weighting(weighting).traversalMode(tm).hints(hints).build());
+        RoutingAlgorithm qGraphOneDirAlgo = prepare.getRoutingAlgorithmFactory().createAlgo(qGraph, weighting,
+                AlgorithmOptions.start().algorithm(ASTAR).traversalMode(tm).hints(hints).build());
         path = qGraphOneDirAlgo.calcPath(fromSnap.getClosestNode(), toSnap.getClosestNode());
 
         expectedAlgo = new AStar(qGraph, weighting, tm);
