@@ -91,26 +91,11 @@ public class EncodingManager implements EncodedValueLookup {
         return builder;
     }
 
-    public static StorableProperties loadProperties(String ghLoc) {
-        Directory dir = new RAMDirectory(ghLoc, true);
-        StorableProperties properties = new StorableProperties(dir);
-        if (!properties.loadExisting())
-            return null;
-//            throw new IllegalStateException("Cannot load properties to fetch EncodingManager configuration at: " + dir.getLocation());
-        String encodedValuesStr = properties.get("graph.encoded_values");
-        String flagEncoderValuesStr = properties.get("graph.flag_encoders");
-        if (Helper.isEmpty(flagEncoderValuesStr) && Helper.isEmpty(encodedValuesStr))
-            return null;
-//            throw new IllegalStateException("EncodingManager was not found in the graph location: " + properties.getLocation());
-        return properties;
-    }
-
     /**
      * Create the EncodingManager from the provided GraphHopper location. Throws an
      * IllegalStateException if it fails. Used if no EncodingManager specified on load.
      */
-    public static EncodingManager create(EncodedValueFactory evFactory, FlagEncoderFactory flagEncoderFactory, StorableProperties properties) {
-        EncodingManager.Builder builder = new EncodingManager.Builder();
+    public static EncodingManager create(EncodingManager.Builder builder, EncodedValueFactory evFactory, FlagEncoderFactory flagEncoderFactory, StorableProperties properties) {
         String encodedValuesStr = properties.get("graph.encoded_values");
         for (String evString : encodedValuesStr.split(",")) {
             builder.addIfAbsent(evFactory, evString);

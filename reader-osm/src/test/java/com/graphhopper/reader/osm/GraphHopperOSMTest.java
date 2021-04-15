@@ -540,18 +540,15 @@ public class GraphHopperOSMTest {
         }
 
         // different version for car should fail
-        instance = new GraphHopper() {
-            @Override
-            protected void customizeEncodingManager(EncodingManager.Builder emBuilder) {
-                emBuilder.add(new FootFlagEncoder()).
+        instance = new GraphHopper();
+        instance.getEncodingManagerBuilder().add(new FootFlagEncoder()).
                         add(new CarFlagEncoder() {
                             @Override
                             public int getVersion() {
                                 return 0;
                             }
                         });
-            }
-        }.init(new GraphHopperConfig().
+        instance.init(new GraphHopperConfig().
                 putObject("datareader.file", testOsm3).
                 putObject("datareader.dataaccess", "RAM")).
                 setOSMFile(testOsm3).

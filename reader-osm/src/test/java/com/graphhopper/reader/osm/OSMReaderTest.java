@@ -549,14 +549,8 @@ public class OSMReaderTest {
     @Test
     public void testRoadAttributes() {
         String fileRoadAttributes = "test-road-attributes.xml";
-        CarFlagEncoder encoder = new CarFlagEncoder();
-        GraphHopper hopper = new GraphHopperFacade(fileRoadAttributes) {
-            @Override
-            protected void customizeEncodingManager(EncodingManager.Builder emBuilder) {
-                emBuilder.add(new OSMMaxWidthParser()).add(new OSMMaxHeightParser()).add(new OSMMaxWeightParser()).
-                        add(encoder);
-            }
-        };
+        GraphHopper hopper = new GraphHopperFacade(fileRoadAttributes);
+        hopper.getEncodingManagerBuilder().add(new OSMMaxWidthParser()).add(new OSMMaxHeightParser()).add(new OSMMaxWeightParser());
         hopper.setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"));
         hopper.importOrLoad();
 
@@ -686,19 +680,16 @@ public class OSMReaderTest {
         };
         BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24);
 
-        GraphHopper hopper = new GraphHopper() {
-            @Override
-            protected void customizeEncodingManager(EncodingManager.Builder emBuilder) {
-                emBuilder.add(bike).add(truck).add(car);
-            }
-        }.setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
-        setGraphHopperLocation(dir).
-        setProfiles(
-                new Profile("bike").setVehicle("bike").setWeighting("fastest"),
-                new Profile("car").setVehicle("car").setWeighting("fastest"),
-                new Profile("truck").setVehicle("truck").setWeighting("fastest")
-        ).
-        importOrLoad();
+        GraphHopper hopper = new GraphHopper();
+        hopper.getEncodingManagerBuilder().add(bike).add(truck).add(car);
+        hopper.setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
+                setGraphHopperLocation(dir).
+                setProfiles(
+                        new Profile("bike").setVehicle("bike").setWeighting("fastest"),
+                        new Profile("car").setVehicle("car").setWeighting("fastest"),
+                        new Profile("truck").setVehicle("truck").setWeighting("fastest")
+                ).
+                importOrLoad();
         EncodingManager manager = hopper.getEncodingManager();
         DecimalEncodedValue carTCEnc = manager.getDecimalEncodedValue(TurnCost.key("car"));
         DecimalEncodedValue truckTCEnc = manager.getDecimalEncodedValue(TurnCost.key("truck"));
@@ -948,10 +939,7 @@ public class OSMReaderTest {
                     new Profile("car").setVehicle("car").setWeighting("fastest"),
                     new Profile("bike").setVehicle("bike").setWeighting("fastest")
             );
-        }
 
-        @Override
-        protected void customizeEncodingManager(EncodingManager.Builder emBuilder) {
             BikeFlagEncoder bikeEncoder;
             if (turnCosts) {
                 carEncoder = new CarFlagEncoder(5, 5, 1);
@@ -962,7 +950,7 @@ public class OSMReaderTest {
             }
 
             footEncoder = new FootFlagEncoder();
-            emBuilder.add(footEncoder).add(carEncoder).add(bikeEncoder).
+            getEncodingManagerBuilder().add(footEncoder).add(carEncoder).add(bikeEncoder).
                     setPreferredLanguage(prefLang);
         }
 
@@ -972,7 +960,7 @@ public class OSMReaderTest {
                     getEncodingManager().needsTurnCostsSupport());
             setGraphHopperStorage(tmpGraph);
             super.importOSM();
-            if(carEncoder != null) {
+            if (carEncoder != null) {
                 carAccessEnc = carEncoder.getAccessEnc();
                 carOutExplorer = getGraphHopperStorage().createEdgeExplorer(DefaultEdgeFilter.outEdges(carAccessEnc));
                 carAllExplorer = getGraphHopperStorage().createEdgeExplorer(DefaultEdgeFilter.allEdges(carAccessEnc));

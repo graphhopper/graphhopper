@@ -28,7 +28,6 @@ import com.graphhopper.reader.dem.SkadiProvider;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
 import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
 import com.graphhopper.routing.weighting.Weighting;
@@ -1013,21 +1012,18 @@ public class GraphHopperTest {
         final String vehicle = "foot";
         final String weighting = "shortest";
 
-        GraphHopper hopper = new GraphHopper() {
+        GraphHopper hopper = new GraphHopper();
+        hopper.getEncodingManagerBuilder().add(new OSMRoadEnvironmentParser() {
             @Override
-            protected void customizeEncodingManager(EncodingManager.Builder emBuilder) {
-                emBuilder.add(new OSMRoadEnvironmentParser() {
-                    @Override
-                    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
-                        // do not change RoadEnvironment to avoid triggering tunnel interpolation
-                        return edgeFlags;
-                    }
-                }).addIfAbsent(new DefaultFlagEncoderFactory(), vehicle);
+            public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
+                // do not change RoadEnvironment to avoid triggering tunnel interpolation
+                return edgeFlags;
             }
-        }.setOSMFile(MONACO)
-         .setStoreOnFlush(true)
-         .setGraphHopperLocation(GH_LOCATION)
-         .setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting));
+        }).addIfAbsent(new DefaultFlagEncoderFactory(), vehicle);
+        hopper.setOSMFile(MONACO)
+                .setStoreOnFlush(true)
+                .setGraphHopperLocation(GH_LOCATION)
+                .setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting));
 
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
@@ -1059,7 +1055,7 @@ public class GraphHopperTest {
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
                 setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting),
-                                new Profile("car").setVehicle("foot").setWeighting(weighting)).
+                        new Profile("car").setVehicle("foot").setWeighting(weighting)).
                 setStoreOnFlush(true);
 
         hopper.setElevationProvider(new SRTMProvider(DIR));
@@ -1785,11 +1781,11 @@ public class GraphHopperTest {
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MOSCOW).
                 // add profile with turn costs first when no flag encoder is explicitly added
-                setProfiles(
+                        setProfiles(
                         new Profile(profile2).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true),
                         new Profile(profile1).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(false)
                 ).
-                setStoreOnFlush(true);
+                        setStoreOnFlush(true);
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
@@ -2106,16 +2102,13 @@ public class GraphHopperTest {
     @Test
     public void simplifyWithInstructionsAndPathDetails() {
         final String profile = "profile";
-        GraphHopper hopper = new GraphHopper() {
-            @Override
-            protected void customizeEncodingManager(EncodingManager.Builder emBuilder) {
-                    emBuilder.setEnableInstructions(true)
-                        .add(new OSMMaxSpeedParser())
-                        .add(new CarFlagEncoder());
-            }
-        }.setOSMFile(BAYREUTH).
-          setProfiles(new Profile(profile).setVehicle("car").setWeighting("fastest")).
-          setGraphHopperLocation(GH_LOCATION);
+        GraphHopper hopper = new GraphHopper();
+        hopper.getEncodingManagerBuilder().setEnableInstructions(true)
+                .add(new OSMMaxSpeedParser())
+                .add(new CarFlagEncoder());
+        hopper.setOSMFile(BAYREUTH).
+                setProfiles(new Profile(profile).setVehicle("car").setWeighting("fastest")).
+                setGraphHopperLocation(GH_LOCATION);
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest()
