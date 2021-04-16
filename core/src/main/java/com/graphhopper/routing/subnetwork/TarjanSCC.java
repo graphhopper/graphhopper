@@ -22,15 +22,11 @@ import com.carrotsearch.hppc.BitSet;
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.LongArrayDeque;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,7 +51,8 @@ import java.util.List;
  */
 public class TarjanSCC {
     private final Graph graph;
-    private final EdgeFilter outFilter;
+    private final EdgeExplorer explorer;
+    private final EdgeFilter edgeFilter;
     private final BitUtil bitUtil = BitUtil.LITTLE;
     private final int[] nodeIndex;
     private final int[] nodeLowLink;
@@ -64,8 +61,6 @@ public class TarjanSCC {
     private final LongArrayDeque dfsStack;
     private final ConnectedComponents components;
     private final boolean excludeSingleNodeComponents;
-    private EdgeExplorer explorer;
-    private EdgeFilter edgeFilter;
 
     private int currIndex = 0;
     private int v;
@@ -73,14 +68,30 @@ public class TarjanSCC {
     private State dfsState;
 
     /**
-     * @param excludeSingleNodeComponents if set to false components that only contain a single node will not be
+     * Runs Tarjan's algorithm using an explicit stack.
+     *
+     * @param excludeSingleNodeComponents if set to true components that only contain a single node will not be
      *                                    returned when calling {@link #findComponents} or {@link #findComponentsRecursive()},
      *                                    which can be useful to save some memory.
      */
-    public TarjanSCC(Graph graph, BooleanEncodedValue accessEnc, boolean excludeSingleNodeComponents) {
+    public static ConnectedComponents findComponents(Graph graph, EdgeFilter edgeFilter, boolean excludeSingleNodeComponents) {
+        return new TarjanSCC(graph, edgeFilter, excludeSingleNodeComponents).findComponents();
+    }
+
+    /**
+     * Runs Tarjan's algorithm in a recursive way. Doing it like this requires a large stack size for large graphs,
+     * which can be set like `-Xss1024M`. Usually the version using an explicit stack ({@link #findComponents()}) should be
+     * preferred. However, this recursive implementation is easier to understand.
+     *
+     * @see #findComponents(Graph, EdgeFilter, boolean)
+     */
+    public static ConnectedComponents findComponentsRecursive(Graph graph, EdgeFilter edgeFilter, boolean excludeSingleNodeComponents) {
+        return new TarjanSCC(graph, edgeFilter, excludeSingleNodeComponents).findComponentsRecursive();
+    }
+
+    private TarjanSCC(Graph graph, EdgeFilter edgeFilter, boolean excludeSingleNodeComponents) {
         this.graph = graph;
-        outFilter = DefaultEdgeFilter.outEdges(accessEnc);
-        edgeFilter = outFilter;
+        this.edgeFilter = edgeFilter;
         explorer = graph.createEdgeExplorer(edgeFilter);
 
         nodeIndex = new int[graph.getNodes()];
@@ -103,25 +114,7 @@ public class TarjanSCC {
         BUILD_COMPONENT
     }
 
-    /**
-     * Allows adding an additional edge filter to exclude edges while searching for connected components.
-     */
-    public void setAdditionalEdgeFilter(final EdgeFilter additionalFilter) {
-        edgeFilter = new EdgeFilter() {
-            @Override
-            public boolean accept(EdgeIteratorState edgeState) {
-                return outFilter.accept(edgeState) && additionalFilter.accept(edgeState);
-            }
-        };
-        explorer = graph.createEdgeExplorer(edgeFilter);
-    }
-
-    /**
-     * Runs Tarjan's algorithm in a recursive way. Doing it like this requires a large stack size for large graphs,
-     * which can be set like `-Xss1024M`. Usually the version using an explicit stack ({@link #findComponents()}) should be
-     * preferred. However, this recursive implementation is easier to understand.
-     */
-    public ConnectedComponents findComponentsRecursive() {
+    private ConnectedComponents findComponentsRecursive() {
         for (int node = 0; node < graph.getNodes(); node++) {
             if (nodeIndex[node] == -1) {
                 findComponentForNode(node);
@@ -183,10 +176,7 @@ public class TarjanSCC {
         }
     }
 
-    /**
-     * Runs Tarjan's algorithm using an explicit stack.
-     */
-    public ConnectedComponents findComponents() {
+    private ConnectedComponents findComponents() {
         for (int node = 0; node < graph.getNodes(); ++node) {
             if (nodeIndex[node] != -1)
                 continue;

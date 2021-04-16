@@ -136,14 +136,21 @@ And there are others that take on a numeric value, like:
 *Important note: Whenever you want to use any of these categories for a custom profile you need to add them to
 `graph.encoded_values` in `config.yml`.*
 
-### Creating the `custom_model_file`: Setting up a custom model
+### Setting up a custom model
 
 As we saw in one of the previous sections, the custom weighting function has three parameters that you can adjust:
 speed, priority and distance_influence. You can set up rules that determine these parameters from the edge's properties.
-A set of such rules is called a 'custom model' and it is written in a dedicated YAML or JSON file,
-the `custom_model_file`. We will explain how to set up these rules. Customizing speed and priority is very similar, so
-we will explain most of the details you need to know for speed, but they can be applied very much the same way for
-priority as well.
+A set of such rules is called a 'custom model' and it is written in the YAML language. If you are not familiar with
+YAML don't panic. Just make sure you know the very basic concepts like strings, numbers, lists and objects and you 
+should know enough to understand and use the custom model syntax. But be warned, YAML uses indentation to separate objects,
+lists etc. from each other and whitespace is an important part of the syntax.
+
+In the following we will explain how to set up the custom model rules. The rules for speed and priority are very 
+similar, so in our examples we will first concentrate on the speed rules, but as you will see they can be applied very
+much the same way for priority as well.
+
+The custom model can be entered in the custom model box of the web UI or for server configuration it can either be written
+within the routing profiles or a dedicated file that is referenced from the routing profiles (`custom_model_file`).
 
 #### The custom model language by the example of customizing `speed`
 
@@ -321,35 +328,41 @@ to the `areas` section of in the custom model file. You can then use the name of
 the `if/else/else_if` statements we saw in the previous sections.
 
 In the following example we multiply the speed of all edges in an area called `custom1` with `0.7` and also limit it
-to `50km/h`. Note that each area's name needs to be prefixed with `in_area_`:
+to `50km/h`. Note that each area's name needs to be prefixed with `in_`:
 
 ```yaml
 speed:
-  - if: in_area_custom1
+  - if: in_custom1
     multiply_by: 0.7
-  - if: in_area_custom1
+  - if: in_custom1
     limit_to: 50
 
 areas:
   custom1:
     type: "Feature"
-    # the following 'id' entry will be ignored and a 'properties' entry must be avoided or empty
-    id: "something"
+    id: "something" # optional, but will be ignored
+    properties: { } # optional, but will be ignored
     geometry:
       type: "Polygon"
-      coordinates: [
-        [ 10.75, 46.65 ],
-        [ 9.54, 45.65 ],
-        [ 10.75, 44.65 ],
-        [8.75, 44.65],
-        [8.75, 45.65],
-        [8.75, 46.65]
-      ]
+      coordinates: [ [
+        [ 1.525, 42.511 ],
+        [ 1.510, 42.503 ],
+        [ 1.531, 42.495 ],
+        [ 1.542, 42.505 ],
+        [ 1.525, 42.511 ]
+      ] ]
 ```
 
-The areas are given in GeoJson format, but currently only Polygons are allowed. Note that JSON can be directly copied
-into YAML without further modifications. Using the `areas` feature you can also block entire areas i.e. by multiplying
-the speed with `0`, but for this you should rather use the `priority` section that we will explain next.
+Areas are given in GeoJson format, but currently only the exact format in the above example is supported, i.e. one
+object with type `Feature`, a geometry with type `Polygon` and optional id and properties fields. Note that the
+coordinates array of `Polygon` is an array of arrays that each must describe a closed ring, i.e. the first point must be
+equal to the last. Each point is given as an array [longitude, latitude], so the coordinates array has three dimensions
+total.
+
+Since YAML is a superset of JSON you can also paste GeoJSON to the `areas` section directly.
+
+Using the `areas` feature you can also block entire areas i.e. by multiplying the speed with `0`, but for this you
+should rather use the `priority` section that we will explain next.
 
 #### Customizing `priority`
 
@@ -397,7 +410,7 @@ same way:
 
 ```yaml
 priority:
-  - if: in_area_custom1
+  - if: in_custom1
     multiply_by: 0.7
 ```
 
@@ -406,7 +419,7 @@ in an area like this:
 
 ```yaml
 priority:
-  - if: road_class == MOTORWAY && in_area_custom1
+  - if: road_class == MOTORWAY && in_custom1
     multiply_by: 0.1
 ```
 
@@ -542,10 +555,10 @@ So far we talked only about standard and custom profiles that are configured on 
 However, with flex- and hybrid mode it is even possible to define the custom model on a per-request basis. This enables
 you to perform route calculations using custom models that you did not anticipate when setting up the server.
 
-To use this feature you need to query the `/route-custom` (*not* `/route`) endpoint and send the custom model along with
-your request in JSON format. The syntax for the custom model is the same as for server-side custom models (but using
+To use this feature you need to send the custom model along with your request in JSON format.
+The syntax for the custom model is the same as for server-side custom models (but using
 JSON not YAML notation, see above). The routing request has the same format as for `/route`, but with an
-additional `model` field that contains the custom model. You still need to set the `profile` parameter for your request
+additional `custom_model` field that contains the custom model. You still need to set the `profile` parameter for your request
 and the given profile must be a custom profile.
 
 Now you might be wondering which custom model is used, because there is one set for the route request, but there is also
@@ -563,7 +576,7 @@ the merge process has to ensure that all weights resulting from the merged custo
 of the base profile that was used during the preparation process. This is necessary to maintain the optimality of the
 underlying routing algorithm.
 
-So say your routing request (POST /route-custom) looks like this:
+So say your routing request (POST /route) looks like this:
 
 ```json
 {
@@ -578,7 +591,7 @@ So say your routing request (POST /route-custom) looks like this:
     ]
   ],
   "profile": "my_custom_car",
-  "model": {
+  "custom_model": {
     "speed": [
       {
         "if": "road_class == MOTORWAY",

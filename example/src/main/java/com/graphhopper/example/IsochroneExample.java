@@ -4,8 +4,8 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.config.Profile;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FiniteWeightFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -22,11 +22,12 @@ public class IsochroneExample {
         FlagEncoder encoder = encodingManager.getEncoder("car");
 
         // snap some GPS coordinates to the routing graph and build a query graph
-        Snap snap = hopper.getLocationIndex().findClosest(42.508679, 1.532078, DefaultEdgeFilter.allEdges(encoder.getAccessEnc()));
+        FastestWeighting weighting = new FastestWeighting(encoder);
+        Snap snap = hopper.getLocationIndex().findClosest(42.508679, 1.532078, new FiniteWeightFilter(weighting));
         QueryGraph queryGraph = QueryGraph.create(hopper.getGraphHopperStorage(), snap);
 
         // run the isochrone calculation
-        ShortestPathTree tree = new ShortestPathTree(queryGraph, new FastestWeighting(encoder), false, TraversalMode.NODE_BASED);
+        ShortestPathTree tree = new ShortestPathTree(queryGraph, weighting, false, TraversalMode.NODE_BASED);
         // find all nodes that are within a radius of 120s
         tree.setTimeLimit(120_000);
 

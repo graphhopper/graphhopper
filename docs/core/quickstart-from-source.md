@@ -96,29 +96,17 @@ as those versions are not in maven central:
 
 ### Web UI (JavaScript)
 
-To setup the JavaScript development environment install the [node package
+To setup the JavaScript development environment you
+
+1. install the [node package
 manager](https://github.com/nvm-sh/nvm#install--update-script). For windows use [nvm-windows](https://github.com/coreybutler/nvm-windows).
+3. Build the custom-model-editor component: `sh -c "cd web-bundle/src/main/js/custom-model-editor && npm install && npm run build"`
+2. Build the Web UI: `cd web-bundle && npm install && npm run bundle`
 
-To develop the web UI you need to rebuild the bundled main.js on every change. npm does this for you automatically:
+Now the main.js file was created and you should be able to see GraphHopper Maps.
 
-```bash
-cd web-bundle
-npm run watch
-```
-
-You also need to build the custom-model-editor
-
-```bash
-cd web-bundle/src/main/js/custom-model-editor
-npm run build
-# ... or in case you want to update the editor itself you can also build it on every change using
-# npm run watch
-```
-
-To see your changes in the browser without restarting the server you can either run the GH server in debug mode from
-IntelliJ (use `Run->Debugging Actions->Reload Changed Classes` and refresh your browser window). 
-
-Or you start a separate server. For this you need to change the routing.host property in src/main/resources/com/graphhopper/maps/js/config/options.js:
+To see all changes in the browser without restarting the server you can either run the GH server in debug mode from
+IntelliJ (use `Run->Debugging Actions->Reload Changed Classes` and refresh your browser window) or you start a separate server. To start a separate server for the Web UI you change the routing.host property in src/main/resources/com/graphhopper/maps/js/config/options.js:
 ```js
 ...
   routing: {host: 'http://localhost:8989', api_key: ''},
@@ -132,7 +120,7 @@ npm install -g live-server
 live-server --open=src/main/resources/com/graphhopper/maps/
 ```
 
-Other npm commands e.g. to produce a bundled main.js for production:
+The following npm commands are available in the `web-bundle` directory:
 
 ```bash
 # bundle creates the main file

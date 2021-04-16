@@ -277,8 +277,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
      */
     protected boolean isBackwardOneway(ReaderWay way) {
         return way.hasTag("oneway", "-1")
-                || way.hasTag("vehicle:forward", "no")
-                || way.hasTag("motor_vehicle:forward", "no");
+                || way.hasTag("vehicle:forward", restrictedValues)
+                || way.hasTag("motor_vehicle:forward", restrictedValues);
     }
 
     /**
@@ -286,16 +286,16 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
      */
     protected boolean isForwardOneway(ReaderWay way) {
         return !way.hasTag("oneway", "-1")
-                && !way.hasTag("vehicle:forward", "no")
-                && !way.hasTag("motor_vehicle:forward", "no");
+                && !way.hasTag("vehicle:forward", restrictedValues)
+                && !way.hasTag("motor_vehicle:forward", restrictedValues);
     }
 
     protected boolean isOneway(ReaderWay way) {
         return way.hasTag("oneway", oneways)
-                || way.hasTag("vehicle:backward")
-                || way.hasTag("vehicle:forward")
-                || way.hasTag("motor_vehicle:backward")
-                || way.hasTag("motor_vehicle:forward");
+                || way.hasTag("vehicle:backward", restrictedValues)
+                || way.hasTag("vehicle:forward", restrictedValues)
+                || way.hasTag("motor_vehicle:backward", restrictedValues)
+                || way.hasTag("motor_vehicle:forward", restrictedValues);
     }
 
     /**

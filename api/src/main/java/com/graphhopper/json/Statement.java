@@ -19,13 +19,13 @@ package com.graphhopper.json;
 
 public class Statement {
     private final Keyword keyword;
-    private final String expression;
+    private final String condition;
     private final Op operation;
     private final double value;
 
-    private Statement(Keyword keyword, String expression, Op operation, double value) {
+    private Statement(Keyword keyword, String condition, Op operation, double value) {
         this.keyword = keyword;
-        this.expression = expression;
+        this.condition = condition;
         this.value = value;
         this.operation = operation;
     }
@@ -34,8 +34,8 @@ public class Statement {
         return keyword;
     }
 
-    public String getExpression() {
-        return expression;
+    public String getCondition() {
+        return condition;
     }
 
     public Op getOperation() {
@@ -87,7 +87,11 @@ public class Statement {
 
     @Override
     public String toString() {
-        return keyword.getName() + ": " + expression + ", " + operation.getName() + ": " + value;
+        return "{" + str(keyword.getName()) + ": " + str(condition) + ", " + str(operation.getName()) + ": " + value + "}";
+    }
+
+    private String str(String str) {
+        return "\"" + str + "\"";
     }
 
     public static Statement If(String expression, Op op, double value) {

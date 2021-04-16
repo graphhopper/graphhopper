@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage.index;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
@@ -26,10 +27,13 @@ import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
 
 import java.io.Closeable;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Peter Karich
@@ -106,7 +110,7 @@ public class LocationIndexTreeTest {
     @Test
     public void testSnappedPointAndGeometry() {
         Graph graph = createTestGraph(encodingManager);
-        LocationIndex index = (LocationIndexTree) createIndexNoPrepare(graph, 500000).prepareIndex();
+        LocationIndex index = createIndexNoPrepare(graph, 500000).prepareIndex();
         // query directly the tower node
         Snap res = index.findClosest(-0.4, 0.9, EdgeFilter.ALL_EDGES);
         assertTrue(res.isValid());
@@ -141,7 +145,7 @@ public class LocationIndexTreeTest {
     public void testBoundingBoxQuery1() {
         Graph graph = createTestGraph2();
         LocationIndexTree index = (LocationIndexTree) createIndexNoPrepare(graph, 500).prepareIndex();
-        final ArrayList edges = new ArrayList();
+        final IntArrayList edges = new IntArrayList();
         BBox bbox = new BBox(11.57314, 11.57614, 49.94553, 49.94853);
         index.query(bbox, new LocationIndex.Visitor() {
             @Override
@@ -166,7 +170,7 @@ public class LocationIndexTreeTest {
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 0));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 2));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 3)).setWayGeometry(Helper.createPointList(51.21, 9.43));
-        LocationIndex index = (LocationIndexTree) createIndexNoPrepare(graph, 500000).prepareIndex();
+        LocationIndex index = createIndexNoPrepare(graph, 500000).prepareIndex();
         assertEquals(1, findClosestEdge(index, 51.2, 9.4));
     }
 
@@ -202,7 +206,7 @@ public class LocationIndexTreeTest {
     @Test
     public void testWayGeometry() {
         Graph g = createTestGraphWithWayGeometry();
-        LocationIndex index = (LocationIndexTree) createIndexNoPrepare(g, 500000).prepareIndex();
+        LocationIndex index = createIndexNoPrepare(g, 500000).prepareIndex();
         assertEquals(3, findClosestEdge(index, 0, 0));
         assertEquals(3, findClosestEdge(index, 0, 0.1));
         assertEquals(3, findClosestEdge(index, 0.1, 0.1));
@@ -222,7 +226,7 @@ public class LocationIndexTreeTest {
         GHUtility.setSpeed(60, true, true, encoder, g.edge(10, 20));
         GHUtility.setSpeed(60, true, true, encoder, g.edge(20, 30));
 
-        LocationIndex index = (LocationIndexTree) createIndexNoPrepare(g, 2000).prepareIndex();
+        LocationIndex index = createIndexNoPrepare(g, 2000).prepareIndex();
         assertEquals(0, findClosestEdge(index, 51.25, 9.43));
     }
 
@@ -232,12 +236,7 @@ public class LocationIndexTreeTest {
         LocationIndexTree index = (LocationIndexTree) createIndexNoPrepare(graph, 500000).prepareIndex();
 
         assertEquals(1, index.findClosest(-.6, -.6, EdgeFilter.ALL_EDGES).getClosestNode());
-        assertEquals(2, index.findClosest(-.6, -.6, new EdgeFilter() {
-            @Override
-            public boolean accept(EdgeIteratorState iter) {
-                return iter.getBaseNode() == 2 || iter.getAdjNode() == 2;
-            }
-        }).getClosestNode());
+        assertEquals(2, index.findClosest(-.6, -.6, iter -> iter.getBaseNode() == 2 || iter.getAdjNode() == 2).getClosestNode());
     }
 
     // see testgraph2.jpg
@@ -519,7 +518,7 @@ public class LocationIndexTreeTest {
         for (int i = 0; i < locs; i++) {
             na.setNode(i, (float) rand.nextDouble() * 10 + 10, (float) rand.nextDouble() * 10 + 10);
         }
-        LocationIndexTree idx = (LocationIndexTree) createIndexNoPrepare(g, 200).prepareIndex();
+        createIndexNoPrepare(g, 200).prepareIndex();
         Helper.close((Closeable) g);
     }
 

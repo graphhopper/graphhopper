@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class CustomModelParser {
     private static final AtomicLong longVal = new AtomicLong(1);
-    static final String IN_AREA_PREFIX = "in_area_";
+    static final String IN_AREA_PREFIX = "in_";
     private static final Set<String> allowedNames = new HashSet<>(Arrays.asList("edge", "Math"));
     private static final boolean JANINO_DEBUG = Boolean.getBoolean(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE);
     private static final String SCRIPT_FILE_DIR = System.getProperty(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_DIR, "./src/main/java/com/graphhopper/routing/weighting/custom");
@@ -417,7 +417,7 @@ public class CustomModelParser {
 
                 switch (statement.getKeyword()) {
                     case IF:
-                        if ("true".equals(statement.getExpression())) {
+                        if ("true".equals(statement.getCondition())) {
                             blockMax_maxSpeed = globalMin_maxSpeed = Math.min(statement.getValue(), maxSpeed);
                         } else {
                             blockMax_maxSpeed = statement.getValue();

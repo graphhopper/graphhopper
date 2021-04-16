@@ -20,6 +20,7 @@ package com.graphhopper;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.json.Statement;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
@@ -31,6 +32,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
 import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
@@ -48,6 +50,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
 
 import java.io.File;
 import java.util.*;
@@ -228,35 +232,49 @@ public class GraphHopperTest {
         assertEquals("make a U-turn onto Avenue Princesse Grace", il.get(1).getTurnDescription(tr));
     }
 
-    private void testImportCloseAndLoad(boolean ch, boolean lm, boolean sort) {
-        final String profile = "profile";
+    private void testImportCloseAndLoad(boolean ch, boolean lm, boolean sort, boolean custom) {
         final String vehicle = "foot";
-        final String weighting = "shortest";
+        final String profileName = "profile";
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
-                setProfiles(Collections.singletonList(new Profile(profile).setVehicle(vehicle).setWeighting(weighting))).
                 setStoreOnFlush(true).
                 setSortGraph(sort);
+
+        Profile profile = new Profile(profileName).setVehicle(vehicle).setWeighting("shortest");
+        if (custom) {
+            JsonFeature area51Feature = new JsonFeature();
+            area51Feature.setGeometry(new GeometryFactory().createPolygon(new Coordinate[]{
+                    new Coordinate(7.4174, 43.7345),
+                    new Coordinate(7.4198, 43.7355),
+                    new Coordinate(7.4207, 43.7344),
+                    new Coordinate(7.4174, 43.7345)}));
+            CustomModel customModel = new CustomModel();
+            customModel.getPriority().add(Statement.If("in_area51", Statement.Op.MULTIPLY, 0.1));
+            customModel.getAreas().put("area51", area51Feature);
+            profile = new CustomProfile(profileName).setCustomModel(customModel).setVehicle(vehicle);
+        }
+        hopper.setProfiles(Collections.singletonList(profile));
+
         if (ch) {
             hopper.getCHPreparationHandler()
-                    .setCHProfiles(new CHProfile(profile));
+                    .setCHProfiles(new CHProfile(profileName));
         }
         if (lm) {
             hopper.getLMPreparationHandler()
-                    .setLMProfiles(new LMProfile(profile));
+                    .setLMProfiles(new LMProfile(profileName));
         }
         hopper.importAndClose();
         hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
-                setProfiles(Collections.singletonList(new Profile(profile).setVehicle(vehicle).setWeighting(weighting))).
+                setProfiles(Collections.singletonList(profile)).
                 setStoreOnFlush(true);
         if (ch) {
             hopper.getCHPreparationHandler()
-                    .setCHProfiles(new CHProfile(profile));
+                    .setCHProfiles(new CHProfile(profileName));
         }
         if (lm) {
             hopper.getLMPreparationHandler()
-                    .setLMProfiles(new LMProfile(profile));
+                    .setLMProfiles(new LMProfile(profileName));
         }
         hopper.importOrLoad();
 
@@ -265,7 +283,7 @@ public class GraphHopperTest {
 
         if (ch) {
             GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
-                    setProfile(profile);
+                    setProfile(profileName);
             req.putHint(CH.DISABLE, false);
             req.putHint(Landmark.DISABLE, true);
             GHResponse rsp = hopper.route(req);
@@ -280,7 +298,7 @@ public class GraphHopperTest {
 
         if (lm) {
             GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
-                    setProfile(profile).
+                    setProfile(profileName).
                     setAlgorithm(Parameters.Algorithms.ASTAR_BI);
             req.putHint(CH.DISABLE, true);
             req.putHint(Landmark.DISABLE, false);
@@ -296,7 +314,7 @@ public class GraphHopperTest {
 
         // flexible
         GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
-                setProfile(profile);
+                setProfile(profileName);
         req.putHint(CH.DISABLE, true);
         req.putHint(Landmark.DISABLE, true);
         GHResponse rsp = hopper.route(req);
@@ -313,27 +331,33 @@ public class GraphHopperTest {
 
     @Test
     public void testImportThenLoadCH() {
-        testImportCloseAndLoad(true, false, false);
+        testImportCloseAndLoad(true, false, false, false);
     }
 
     @Test
     public void testImportThenLoadLM() {
-        testImportCloseAndLoad(false, true, false);
+        testImportCloseAndLoad(false, true, false, false);
     }
 
     @Test
     public void testImportThenLoadCHLM() {
-        testImportCloseAndLoad(true, true, false);
+        testImportCloseAndLoad(true, true, false, false);
     }
 
     @Test
     public void testImportThenLoadCHLMAndSort() {
-        testImportCloseAndLoad(true, true, true);
+        testImportCloseAndLoad(true, true, true, false);
     }
 
     @Test
     public void testImportThenLoadFlexible() {
-        testImportCloseAndLoad(false, false, false);
+        testImportCloseAndLoad(false, false, false, false);
+    }
+
+    @Test
+    public void testImportWithCHANDCustomProfile() {
+        // we cannot unload geometry as it might be required in CustomWeighting when using in_area_xy in condition
+        testImportCloseAndLoad(true, false, false, true);
     }
 
     @Test
@@ -569,6 +593,52 @@ public class GraphHopperTest {
         req.putHint(Routing.BLOCK_AREA, "49.981875,11.515818,49.979522,11.521407");
         rsp = hopper.route(req);
         assertTrue("expected errors", rsp.hasErrors());
+    }
+
+    @Test
+    public void testCustomModel() {
+        final String vehicle = "car";
+        final String customCar = "custom_car";
+        final String emptyCar = "empty_car";
+        CustomModel customModel = new CustomModel();
+        customModel.addToSpeed(Statement.If("road_class == TERTIARY", Statement.Op.MULTIPLY, 0.1));
+        GraphHopper hopper = createGraphHopper(vehicle)
+                .setOSMFile(BAYREUTH)
+                .setProfiles(
+                        new CustomProfile(emptyCar).setCustomModel(new CustomModel()).setVehicle(vehicle),
+                        new CustomProfile(customCar).setCustomModel(customModel).setVehicle(vehicle)
+                )
+                .importOrLoad();
+
+        // standard car route
+        assertDistance(hopper, emptyCar, null, 8725);
+        // the custom car takes a detour in the north to avoid tertiary roads
+        assertDistance(hopper, customCar, null, 13223);
+        // we can achieve the same by using the empty profile and using a client-side model, we just need to copy the model because of the internal flag
+        assertDistance(hopper, emptyCar, new CustomModel(customModel), 13223);
+        // now we prevent using unclassified roads as well and the route goes even further north
+        CustomModel strictCustomModel = new CustomModel().addToSpeed(
+                Statement.If("road_class == TERTIARY || road_class == UNCLASSIFIED", Statement.Op.MULTIPLY, 0.1));
+        assertDistance(hopper, emptyCar, strictCustomModel, 18114);
+        // we can achieve the same by 'adding' a rule to the server-side custom model
+        CustomModel customModelWithUnclassifiedRule = new CustomModel().addToSpeed(
+                Statement.If("road_class == UNCLASSIFIED", Statement.Op.MULTIPLY, 0.1)
+        );
+        assertDistance(hopper, customCar, customModelWithUnclassifiedRule, 18114);
+        // now we use distance influence to avoid the detour
+        assertDistance(hopper, customCar, new CustomModel(customModelWithUnclassifiedRule).setDistanceInfluence(400), 8725);
+        // a slightly smaller value yields a completely different route going south
+        assertDistance(hopper, customCar, new CustomModel(customModelWithUnclassifiedRule).setDistanceInfluence(380), 12246);
+    }
+
+    private void assertDistance(GraphHopper hopper, String profile, CustomModel customModel, double expectedDistance) {
+        GHRequest req = new GHRequest(50.008732, 11.596413, 49.974361, 11.514509);
+        req.setProfile(profile);
+        if (customModel != null)
+            req.setCustomModel(customModel);
+        GHResponse rsp = hopper.route(req);
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+        assertEquals(expectedDistance, rsp.getBest().getDistance(), 1);
     }
 
     @Test

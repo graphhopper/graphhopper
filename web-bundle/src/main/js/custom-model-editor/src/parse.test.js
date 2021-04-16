@@ -9,7 +9,7 @@ const categories = {
     "bool2": {type: 'boolean'}
 }
 const areas = ["area1", "area2", "area3"];
-const allowedLefts = Object.keys(categories).concat(areas.map(a => 'in_area_' + a)).concat(['true', 'false']);
+const allowedLefts = Object.keys(categories).concat(areas.map(a => 'in_' + a)).concat(['true', 'false']);
 
 describe("parse", () => {
 
@@ -32,10 +32,10 @@ describe("parse", () => {
         test_parseTokens_valid(['(', 'a', '==', 'a1', ')']);
         test_parseTokens_valid(['(', 'a', '!=', 'a1', ')']);
         test_parseTokens_valid(['(', '(', 'a', '!=', 'a1', ')', ')']);
-        test_parseTokens_valid(['in_area_area1']);
-        test_parseTokens_valid(['(', 'in_area_area1', ')']);
-        test_parseTokens_valid(['in_area_area2', '==', 'true']);
-        test_parseTokens_valid(['(', 'in_area_area1', '!=', 'false', ')']);
+        test_parseTokens_valid(['in_area1']);
+        test_parseTokens_valid(['(', 'in_area1', ')']);
+        test_parseTokens_valid(['in_area2', '==', 'true']);
+        test_parseTokens_valid(['(', 'in_area1', '!=', 'false', ')']);
         test_parseTokens_valid(['true']);
         test_parseTokens_valid(['(', 'false', ')']);
         test_parseTokens_valid(['bool1']);
@@ -69,11 +69,10 @@ describe("parse", () => {
     });
 
     test("parse single comparison, invalid, area", () => {
-        test_parseTokens(['in_area_'], `unknown area: ''`, [0, 1], ['in_area_area1', 'in_area_area2', 'in_area_area3']);
-        test_parseTokens(['in_area_area404'], `unknown area: 'area404'`, [0, 1], ['in_area_area1', 'in_area_area2', 'in_area_area3']);
-        test_parseTokens(['in_area1'], `area names must be prefixed with 'in_area_'`, [0, 1], ['in_area_area1', 'in_area_area2', 'in_area_area3']);
-        test_parseTokens(['area2'], `area names must be prefixed with 'in_area_'`, [0, 1], ['in_area_area1', 'in_area_area2', 'in_area_area3']);
-        test_parseTokens(['in_area_area1', '<=', 'true'], `unexpected token '<='`, [1, 2], ['||', '&&']);
+        test_parseTokens(['in_'], `unknown area: ''`, [0, 1], ['in_area1', 'in_area2', 'in_area3']);
+        test_parseTokens(['in_area404'], `unknown area: 'area404'`, [0, 1], ['in_area1', 'in_area2', 'in_area3']);
+        test_parseTokens(['area2'], `area names must be prefixed with 'in_'`, [0, 1], ['in_area1', 'in_area2', 'in_area3']);
+        test_parseTokens(['in_area1', '<=', 'true'], `unexpected token '<='`, [1, 2], ['||', '&&']);
     });
 
     test("parse single comparison, invalid, numeric and boolean", () => {
@@ -88,9 +87,9 @@ describe("parse", () => {
         test_parseTokens_valid(['a', '==', 'a1', '&&', 'b', '==', 'b1']);
         test_parseTokens_valid(['a', '==', 'a1', '||', 'b', '==', 'b1', '&&', 'a', '!=', 'a2']);
         test_parseTokens_valid(['a', '==', 'a1', '||', '(', 'b', '==', 'b1', ')', '&&', 'a', '!=', 'a2']);
-        test_parseTokens_valid(['in_area_area3', '&&', 'a', '==', 'a1']);
-        test_parseTokens_valid(['b', '!=', 'b1', '||', 'in_area_area3']);
-        test_parseTokens_valid(['b', '!=', 'b1', '||', 'in_area_area2', '!=', 'true']);
+        test_parseTokens_valid(['in_area3', '&&', 'a', '==', 'a1']);
+        test_parseTokens_valid(['b', '!=', 'b1', '||', 'in_area3']);
+        test_parseTokens_valid(['b', '!=', 'b1', '||', 'in_area2', '!=', 'true']);
         test_parseTokens_valid(['bool1', '==', 'false', '&&', 'bool2', '||', 'bool1']);
     });
 
@@ -130,11 +129,11 @@ describe("parse", () => {
         test_parse_valid('( a==a1 ) || b != b1 && ( a==a2 ||\n b!=b1 && (a==a1 || b == b2)) && a == a1');
         test_parse_valid('num1 > 0.3 && bool1 != true || a == a2 && num2 > 0.5 || bool1 == false');
         test_parse_valid('num1>0.3 && num2<12 || num1>=0.5 && num2<=1.3');
-        test_parse_valid('num1>0.3 && in_area_area2 || num2<=1.3');
+        test_parse_valid('num1>0.3 && in_area2 || num2<=1.3');
         test_parse_valid('num1>0.3 && bool1');
-        test_parse_valid('a != a1 && (bool1 || (bool2 && in_area_area2))');
-        test_parse_valid('a != a1 && (bool1 != false || (in_area_area2 && bool2))');
-        test_parse_valid('a != a1 && (bool1 != false || ((in_area_area1 == false) && bool2))');
+        test_parse_valid('a != a1 && (bool1 || (bool2 && in_area2))');
+        test_parse_valid('a != a1 && (bool1 != false || (in_area2 && bool2))');
+        test_parse_valid('a != a1 && (bool1 != false || ((in_area1 == false) && bool2))');
     });
 
     test("parse, invalid", () => {
@@ -153,11 +152,11 @@ describe("parse", () => {
         test_parse(`a == a1 || bool2 == 'false'`, `invalid bool2: ''false''`, [20, 27], ['true', 'false']);
         test_parse(`b != b1 || num2 > 0.7 && bool1 != 'true'`, `invalid bool1: ''true''`, [34, 40], ['true', 'false']);
         test_parse('a == a2 && b <= b1', `invalid operator '<='`, [13, 15], ['==', '!=']);
-        test_parse('a == a1 || area1', `area names must be prefixed with 'in_area_'`, [11, 16], ['in_area_area1', 'in_area_area2', 'in_area_area3']);
+        test_parse('a == a1 || area1', `area names must be prefixed with 'in_'`, [11, 16], ['in_area1', 'in_area2', 'in_area3']);
         test_parse('a == a1 || area_1', `unexpected token 'area_1'`, [11, 17], allowedLefts);
         test_parse(' == bool1', `unexpected token '=='`, [1, 3], allowedLefts);
         test_parse('bool1 != a2', `invalid bool1: 'a2'`, [9, 11], ['true', 'false']);
-        test_parse('in_area_area1 == tru || a == a1', `invalid in_area_area1: 'tru'`, [17, 20], ['true', 'false']);
+        test_parse('in_area1 == tru || a == a1', `invalid in_area1: 'tru'`, [12, 15], ['true', 'false']);
     });
 
     function test_parse_valid(expression) {
