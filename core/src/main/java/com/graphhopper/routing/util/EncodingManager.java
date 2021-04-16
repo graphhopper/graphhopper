@@ -24,9 +24,10 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.*;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
@@ -224,19 +225,21 @@ public class EncodingManager implements EncodedValueLookup {
             return this;
         }
 
-        public Builder setDateRangeParser(DateRangeParser dateRangeParser) {
-            check();
-            this.dateRangeParser = dateRangeParser;
-            return this;
-        }
-
         /**
          * This method adds the specified TagParser and automatically adds EncodedValues as requested in
          * createEncodedValues.
          */
         public Builder add(TagParser tagParser) {
             check();
-            tagParserSet.add(tagParser);
+            if (!tagParserSet.add(tagParser))
+                throw new IllegalArgumentException("TagParser already exists: " + tagParser);
+
+            return this;
+        }
+
+        public Builder setDateRangeParser(DateRangeParser dateRangeParser) {
+            check();
+            this.dateRangeParser = dateRangeParser;
             return this;
         }
 
@@ -433,11 +436,6 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     private void addEncoder(AbstractFlagEncoder encoder) {
-        for (FlagEncoder fe : edgeEncoders) {
-            if (fe.toString().equals(encoder.toString()))
-                throw new IllegalArgumentException("Cannot register FlagEncoder. Name already exists: " + fe.toString());
-        }
-
         int encoderCount = edgeEncoders.size();
 
         encoder.setEncodedValueLookup(this);
@@ -451,8 +449,6 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     private void addEncodedValue(EncodedValue ev, boolean withNamespace) {
-        if (hasEncodedValue(ev.getName()))
-            throw new IllegalStateException("EncodedValue " + ev.getName() + " already exists " + encodedValueMap.get(ev.getName()) + " vs " + ev);
         String normalizedKey = ev.getName().replaceAll(SPECIAL_SEPARATOR, "_");
         if (hasEncodedValue(normalizedKey))
             throw new IllegalStateException("EncodedValue " + ev.getName() + " collides with " + normalizedKey);

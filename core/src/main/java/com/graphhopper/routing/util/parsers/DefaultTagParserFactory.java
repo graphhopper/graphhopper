@@ -74,6 +74,6 @@ public class DefaultTagParserFactory implements TagParserFactory {
             throw new IllegalArgumentException("The property spatial_rules.borders_directory is required in the configuration " +
                     "when using 'country' in encoded_values");
 
-        throw new IllegalArgumentException("encoded value not supported: " + name);
+        throw new IllegalArgumentException("DefaultTagParserFactory cannot find: " + name);
     }
 }
