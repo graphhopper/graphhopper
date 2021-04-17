@@ -13,6 +13,7 @@ import java.util.concurrent.Executors;
  * @author Brett Henderson
  */
 public class PbfReader implements Runnable {
+    private Throwable throwable;
     private InputStream inputStream;
     private Sink sink;
     private int workers;
@@ -33,10 +34,10 @@ public class PbfReader implements Runnable {
     @Override
     public void run() {
         ExecutorService executorService = Executors.newFixedThreadPool(workers);
-        try {
-            // Create a stream splitter to break the PBF stream into blobs.
-            PbfStreamSplitter streamSplitter = new PbfStreamSplitter(new DataInputStream(inputStream));
+        // Create a stream splitter to break the PBF stream into blobs.
+        PbfStreamSplitter streamSplitter = new PbfStreamSplitter(new DataInputStream(inputStream));
 
+        try {
             // Process all blobs of data in the stream using threads from the
             // executor service. We allow the decoder to issue an extra blob
             // than there are workers to ensure there is another blob
@@ -46,11 +47,18 @@ public class PbfReader implements Runnable {
             PbfDecoder pbfDecoder = new PbfDecoder(streamSplitter, executorService, workers + 1, sink);
             pbfDecoder.run();
 
-        } catch (Exception e) {
-            throw new RuntimeException("Unable to read PBF file.", e);
+        } catch (Throwable t) {
+            // properly propagate exception inside Thread, #2269
+            throwable = t;
         } finally {
             sink.complete();
             executorService.shutdownNow();
+            streamSplitter.release();
         }
+    }
+
+    public void close() {
+        if (throwable != null)
+            throw new RuntimeException("Unable to read PBF file.", throwable);
     }
 }

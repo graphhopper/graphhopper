@@ -356,6 +356,7 @@ public class PbfBlobDecoder implements Runnable {
             listener.complete(decodedEntities);
 
         } catch (RuntimeException e) {
+            // exception is properly rethrown in PbfDecoder.sendResultsToSink
             listener.error(e);
         }
     }

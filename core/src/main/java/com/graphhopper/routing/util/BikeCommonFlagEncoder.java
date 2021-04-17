@@ -512,22 +512,26 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         avgSpeedEnc.setDecimal(false, edgeFlags, speed);
 
         // handle oneways
-        boolean isOneway = way.hasTag("oneway", oneways)
+        // oneway=-1 requires special handling
+        boolean isOneway = (way.hasTag("oneway", oneways) && !way.hasTag("oneway", "-1") && !way.hasTag("bicycle:backward", intendedValues))
+                || (way.hasTag("oneway", "-1") && !way.hasTag("bicycle:forward", intendedValues))
                 || way.hasTag("oneway:bicycle", oneways)
-                || way.hasTag("vehicle:backward")
-                || way.hasTag("vehicle:forward")
-                || way.hasTag("bicycle:forward") && (way.hasTag("bicycle:forward", "yes") || way.hasTag("bicycle:forward", "no"));
+                || (way.hasTag("vehicle:backward", restrictedValues) && !way.hasTag("bicycle:forward", intendedValues))
+                || (way.hasTag("vehicle:forward", restrictedValues) && !way.hasTag("bicycle:backward", intendedValues))
+                || way.hasTag("bicycle:forward", restrictedValues)
+                || way.hasTag("bicycle:backward", restrictedValues);
 
         if ((isOneway || roundaboutEnc.getBool(false, edgeFlags))
                 && !way.hasTag("oneway:bicycle", "no")
-                && !way.hasTag("bicycle:backward")
                 && !way.hasTag("cycleway", oppositeLanes)
                 && !way.hasTag("cycleway:left", oppositeLanes)
-                && !way.hasTag("cycleway:right", oppositeLanes)) {
+                && !way.hasTag("cycleway:right", oppositeLanes)
+                && !way.hasTag("cycleway:left:oneway", "-1")
+                && !way.hasTag("cycleway:right:oneway", "-1")) {
             boolean isBackward = way.hasTag("oneway", "-1")
                     || way.hasTag("oneway:bicycle", "-1")
-                    || way.hasTag("vehicle:forward", "no")
-                    || way.hasTag("bicycle:forward", "no");
+                    || way.hasTag("vehicle:forward", restrictedValues)
+                    || way.hasTag("bicycle:forward", restrictedValues);
             accessEnc.setBool(isBackward, edgeFlags, true);
 
         } else {
