@@ -23,6 +23,7 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
@@ -62,7 +63,7 @@ public class TestAlgoCollector {
             altPaths.add(path);
         }
 
-        PathMerger pathMerger = new PathMerger(queryGraph.getBaseGraph(), algoEntry.getAlgorithmOptions().getWeighting()).
+        PathMerger pathMerger = new PathMerger(queryGraph.getBaseGraph(), algoEntry.getWeighting()).
                 setCalcPoints(true).
                 setSimplifyResponse(false).
                 setEnableInstructions(true);
@@ -137,26 +138,24 @@ public class TestAlgoCollector {
         private Graph graph;
         private boolean ch;
         private String expectedAlgo;
+        private Weighting weighting;
         private AlgorithmOptions opts;
 
-        public AlgoHelperEntry(Graph g, boolean ch, AlgorithmOptions opts, LocationIndex idx, String expectedAlgo) {
+        public AlgoHelperEntry(Graph g, boolean ch, Weighting weighting, AlgorithmOptions opts, LocationIndex idx, String expectedAlgo) {
             this.graph = g;
             this.ch = ch;
+            this.weighting = weighting;
             this.opts = opts;
             this.idx = idx;
             this.expectedAlgo = expectedAlgo;
         }
 
-        public void setAlgorithmOptions(AlgorithmOptions opts) {
-            this.opts = opts;
-        }
-
         public RoutingAlgorithm createAlgo(Graph graph) {
-            return new RoutingAlgorithmFactorySimple().createAlgo(graph, opts);
+            return new RoutingAlgorithmFactorySimple().createAlgo(graph, weighting, opts);
         }
 
-        public AlgorithmOptions getAlgorithmOptions() {
-            return opts;
+        public Weighting getWeighting() {
+            return weighting;
         }
 
         public LocationIndex getIdx() {
