@@ -152,12 +152,10 @@ public class RoundTripRouting {
         RoundTripCalculator(FlexiblePathCalculator pathCalculator) {
             this.pathCalculator = pathCalculator;
             // we make the path calculator use our avoid edges weighting
-            AvoidEdgesWeighting avoidPreviousPathsWeighting = new AvoidEdgesWeighting(pathCalculator.getAlgoOpts().getWeighting())
+            AvoidEdgesWeighting avoidPreviousPathsWeighting = new AvoidEdgesWeighting(pathCalculator.getWeighting())
                     .setEdgePenaltyFactor(5);
             avoidPreviousPathsWeighting.setAvoidedEdges(previousEdges);
-            AlgorithmOptions algoOpts = AlgorithmOptions.start(pathCalculator.getAlgoOpts()).
-                    weighting(avoidPreviousPathsWeighting).build();
-            pathCalculator.setAlgoOpts(algoOpts);
+            pathCalculator.setWeighting(avoidPreviousPathsWeighting);
         }
 
         Path calcPath(int from, int to) {

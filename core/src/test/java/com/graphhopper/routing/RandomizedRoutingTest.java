@@ -184,9 +184,9 @@ public class RandomizedRoutingTest {
                 return algoFactory.createAlgo(new PMap().putObject(ALGORITHM, ASTAR_BI));
             }
             case LM_BIDIR:
-                return lm.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).traversalMode(traversalMode).build());
+                return lm.getRoutingAlgorithmFactory().createAlgo(graph, weighting, new AlgorithmOptions().setAlgorithm(ASTAR_BI).setTraversalMode(traversalMode));
             case LM_UNIDIR:
-                return lm.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR).traversalMode(traversalMode).build());
+                return lm.getRoutingAlgorithmFactory().createAlgo(graph, weighting, new AlgorithmOptions().setAlgorithm(ASTAR).setTraversalMode(traversalMode));
             case PERFECT_ASTAR: {
                 AStarBidirection perfectAStarBi = new AStarBidirection(graph, weighting, traversalMode);
                 perfectAStarBi.setApproximation(new PerfectApproximator(graph, weighting, traversalMode, false));
