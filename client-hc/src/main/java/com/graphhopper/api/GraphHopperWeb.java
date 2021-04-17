@@ -37,10 +37,7 @@ import okhttp3.ResponseBody;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static com.graphhopper.api.GraphHopperMatrixWeb.*;
@@ -136,13 +133,15 @@ public class GraphHopperWeb implements GraphHopperAPI {
     }
 
     public GraphHopperWeb setKey(String key) {
-        if (key == null || key.isEmpty()) {
-            throw new IllegalStateException("Key cannot be empty");
+        Objects.requireNonNull(key,"Key must not be null");
+        if (key.isEmpty()) {
+            throw new IllegalArgumentException("Key must not be empty");
         }
 
         this.key = key;
         return this;
     }
+
 
     /**
      * Use new endpoint 'POST /route' instead of 'GET /route'
