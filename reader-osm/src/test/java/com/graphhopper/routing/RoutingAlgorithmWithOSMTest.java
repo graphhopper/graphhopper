@@ -42,11 +42,9 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
 import static com.graphhopper.GraphHopperTest.DIR;
@@ -63,22 +61,21 @@ import static org.junit.Assert.assertTrue;
 public class RoutingAlgorithmWithOSMTest {
     TestAlgoCollector testCollector;
 
-    public static List<AlgoHelperEntry> createAlgos(final GraphHopper hopper, final String weightingStr, final String vehicleStr, TraversalMode tMode) {
+    public static List<AlgoHelperEntry> createAlgos(final GraphHopper hopper, Profile profile) {
         final GraphHopperStorage ghStorage = hopper.getGraphHopperStorage();
         LocationIndex idx = hopper.getLocationIndex();
 
+        TraversalMode tMode = profile.isTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
         String addStr = "";
-        if (tMode.isEdgeBased())
+        if (profile.isTurnCosts())
             addStr = "turn|";
 
-        Profile profile = new Profile("profile").setVehicle(vehicleStr).setWeighting(weightingStr).setTurnCosts(tMode.isEdgeBased());
         Weighting weighting = hopper.createWeighting(profile, new PMap());
-
         PMap defaultHints = new PMap()
                 .putObject(Parameters.CH.DISABLE, true)
                 .putObject(Parameters.Landmark.DISABLE, true)
-                .putObject("vehicle", vehicleStr)
-                .putObject("weighting", weightingStr);
+                .putObject("vehicle", profile.getVehicle())
+                .putObject("weighting", profile.getWeighting());
 
         AlgorithmOptions defaultOpts = new AlgorithmOptions().setAlgorithm("").setTraversalMode(tMode).setHints(defaultHints);
         List<AlgoHelperEntry> algos = new ArrayList<>();
@@ -99,7 +96,7 @@ public class RoutingAlgorithmWithOSMTest {
             algos.add(new AlgoHelperEntry(ghStorage, false, weighting, opts, idx, "astarbi|landmarks|" + weighting) {
                 @Override
                 public RoutingAlgorithm createAlgo(Graph graph) {
-                    return hopper.getLMPreparationHandler().getPreparation(vehicleStr + "_profile").getRoutingAlgorithmFactory().createAlgo(graph, weighting, opts);
+                    return hopper.getLMPreparationHandler().getPreparation(profile.getName()).getRoutingAlgorithmFactory().createAlgo(graph, weighting, opts);
                 }
             });
         }
@@ -109,10 +106,10 @@ public class RoutingAlgorithmWithOSMTest {
             chHints.putObject(Parameters.CH.DISABLE, false);
             chHints.putObject(Parameters.Routing.EDGE_BASED, tMode.isEdgeBased());
             final AlgorithmOptions dijkstraOpts = new AlgorithmOptions(dijkstrabiOpts).setHints(chHints);
-            algos.add(new AlgoHelperEntry(ghStorage, true, weighting, dijkstraOpts, idx, "dijkstrabi|ch|prepare|" + weightingStr) {
+            algos.add(new AlgoHelperEntry(ghStorage, true, weighting, dijkstraOpts, idx, "dijkstrabi|ch|prepare|" + profile.getWeighting()) {
                 @Override
                 public RoutingAlgorithm createAlgo(Graph g) {
-                    PrepareContractionHierarchies pch = hopper.getCHPreparationHandler().getPreparation(vehicleStr + "_profile");
+                    PrepareContractionHierarchies pch = hopper.getCHPreparationHandler().getPreparation(profile.getName());
                     RoutingCHGraph routingCHGraph = ghStorage.getRoutingCHGraph(pch.getCHConfig().getName());
                     if (g instanceof QueryGraph)
                         routingCHGraph = new QueryRoutingCHGraph(routingCHGraph, (QueryGraph) g);
@@ -121,9 +118,9 @@ public class RoutingAlgorithmWithOSMTest {
             });
 
             final AlgorithmOptions astarOpts = new AlgorithmOptions(astarbiOpts).setHints(chHints);
-            algos.add(new AlgoHelperEntry(ghStorage, true, weighting, astarOpts, idx, "astarbi|ch|prepare|" + weightingStr) {
+            algos.add(new AlgoHelperEntry(ghStorage, true, weighting, astarOpts, idx, "astarbi|ch|prepare|" + profile.getWeighting()) {
                 public RoutingAlgorithm createAlgo(Graph g) {
-                    PrepareContractionHierarchies pch = hopper.getCHPreparationHandler().getPreparation(vehicleStr + "_profile");
+                    PrepareContractionHierarchies pch = hopper.getCHPreparationHandler().getPreparation(profile.getName());
                     RoutingCHGraph routingCHGraph = ghStorage.getRoutingCHGraph(pch.getCHConfig().getName());
                     if (g instanceof QueryGraph)
                         routingCHGraph = new QueryRoutingCHGraph(routingCHGraph, (QueryGraph) g);
@@ -162,7 +159,7 @@ public class RoutingAlgorithmWithOSMTest {
     @Test
     public void testMonaco() {
         Graph g = runAlgo(testCollector, DIR + "/monaco.osm.gz", "target/monaco-gh",
-                createMonacoCar(), "car", true, "car", "shortest", false);
+                createMonacoCar(), true, false, new Profile("car").setVehicle("car").setWeighting("shortest"));
 
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
 
@@ -185,7 +182,7 @@ public class RoutingAlgorithmWithOSMTest {
         list.add(new OneRun(43.730949, 7.412338, 43.739643, 7.424542, 2253, 120));
         list.add(new OneRun(43.727592, 7.419333, 43.727712, 7.419333, 0, 1));
         runAlgo(testCollector, DIR + "/monaco.osm.gz", "target/monaco-mc-gh",
-                list, "motorcycle", true, "motorcycle", "fastest", true);
+                list, true, true, new Profile("motorcycle").setVehicle("motorcycle").setWeighting("fastest"));
 
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
@@ -200,7 +197,7 @@ public class RoutingAlgorithmWithOSMTest {
         list.add(new OneRun(43.730949, 7.412338, 43.739643, 7.424542, 2253, 120));
         list.add(new OneRun(43.727592, 7.419333, 43.727712, 7.419333, 0, 1));
         runAlgo(testCollector, DIR + "/monaco.osm.gz", "target/monaco-mc-gh",
-                list, "motorcycle", true, "motorcycle", "curvature", true);
+                list, true, true, new Profile("motorcycle").setVehicle("motorcycle").setWeighting("curvature"));
 
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
@@ -212,7 +209,7 @@ public class RoutingAlgorithmWithOSMTest {
         // reverse route avoids the location
 //        list.add(new OneRun(52.349713, 8.013293, 52.349969, 8.013813, 293, 21));
         runAlgo(testCollector, DIR + "/map-bug432.osm.gz", "target/map-bug432-gh",
-                list, "bike2", true, "bike2", "fastest", true);
+                list, true, true, new Profile("bike2").setVehicle("bike2").setWeighting("fastest"));
 
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
@@ -227,7 +224,7 @@ public class RoutingAlgorithmWithOSMTest {
         list.add(new OneRun(51.376509, -0.530863, 51.376197, -0.531576, 75, 15));
 
         runAlgo(testCollector, DIR + "/circle-bug.osm.gz", "target/circle-bug-gh",
-                list, "car", true, "car", "shortest", false);
+                list, true, false, new Profile("car").setVehicle("car").setWeighting("shortest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -245,7 +242,7 @@ public class RoutingAlgorithmWithOSMTest {
         // http://localhost:8989/?point=55.819066%2C37.596374&point=55.818898%2C37.59661
         list.add(new OneRun(55.819066, 37.596374, 55.818898, 37.59661, 1114, 23));
         runAlgo(testCollector, DIR + "/moscow.osm.gz", "target/moscow-gh",
-                list, "car", true, "car", "fastest", false);
+                list, true, false, new Profile("car").setVehicle("car").setWeighting("fastest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -256,7 +253,7 @@ public class RoutingAlgorithmWithOSMTest {
         list.add(new OneRun(55.813159, 37.593884, 55.811278, 37.594217, 1048, 13));
         boolean testAlsoCH = true, is3D = false;
         runAlgo(testCollector, DIR + "/moscow.osm.gz", "target/graph-moscow",
-                list, "car|turn_costs=true", testAlsoCH, "car", "fastest", is3D);
+                list, testAlsoCH, is3D, new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(true));
 
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
@@ -267,7 +264,7 @@ public class RoutingAlgorithmWithOSMTest {
         list.add(new OneRun(-0.5, 0.0, 0.0, -0.5, 301015.98099, 6));
         boolean testAlsoCH = true, is3D = false;
         runAlgo(testCollector, DIR + "/test_simple_turncosts.osm.xml", "target/graph-simple_turncosts",
-                list, "car|turn_costs=true", testAlsoCH, "car", "fastest", is3D);
+                list, testAlsoCH, is3D, new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(true));
 
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
@@ -278,7 +275,7 @@ public class RoutingAlgorithmWithOSMTest {
         list.add(new OneRun(0, 1, -1, 0, 667.08, 6));
         boolean testAlsoCH = true, is3D = false;
         runAlgo(testCollector, DIR + "/test_simple_pturn.osm.xml", "target/graph-simple_turncosts",
-                list, "car|turn_costs=true", testAlsoCH, "car", "fastest", is3D);
+                list, testAlsoCH, is3D, new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(true));
 
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
@@ -293,7 +290,7 @@ public class RoutingAlgorithmWithOSMTest {
 
         boolean testAlsoCH = false, is3D = false;
         runAlgo(testCollector, DIR + "/map-sidewalk-no.osm.gz", "target/graph-sidewalkno",
-                list, "hike", testAlsoCH, "hike", "fastest", is3D);
+                list, testAlsoCH, is3D, new Profile("hike").setVehicle("hike").setWeighting("fastest"));
 
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
@@ -308,7 +305,7 @@ public class RoutingAlgorithmWithOSMTest {
         list.get(4).setDistance(1, 2149);
         list.get(4).setLocs(1, 120);
         runAlgo(testCollector, DIR + "/monaco.osm.gz", "target/monaco-gh",
-                list, "car", true, "car", "fastest", false);
+                list, true, false, new Profile("car").setVehicle("car").setWeighting("fastest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -324,7 +321,9 @@ public class RoutingAlgorithmWithOSMTest {
         list.get(4).setLocs(1, 116);
 
         runAlgo(testCollector, DIR + "/monaco.osm.gz", "target/monaco-gh",
-                list, "car,foot", false, "car", "shortest", false);
+                list, false, false,
+                new Profile("car").setVehicle("car").setWeighting("shortest"),
+                new Profile("foot").setVehicle("foot").setWeighting("shortest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -340,7 +339,7 @@ public class RoutingAlgorithmWithOSMTest {
     @Test
     public void testMonacoFoot() {
         Graph g = runAlgo(testCollector, DIR + "/monaco.osm.gz", "target/monaco-gh",
-                createMonacoFoot(), "foot", true, "foot", "shortest", false);
+                createMonacoFoot(), true, false, new Profile("foot").setVehicle("foot").setWeighting("shortest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
 
         // see testMonaco for a similar ID test
@@ -365,7 +364,7 @@ public class RoutingAlgorithmWithOSMTest {
         list.get(1).setLocs(1, 149);
 
         runAlgo(testCollector, DIR + "/monaco.osm.gz", "target/monaco-gh",
-                list, "foot", true, "foot", "shortest", true);
+                list, true, true, new Profile("foot").setVehicle("foot").setWeighting("shortest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -377,7 +376,7 @@ public class RoutingAlgorithmWithOSMTest {
         // prefer hiking route 'Markgrafenweg Bayreuth Kulmbach' but avoid tertiary highway from Pechgraben
         list.add(new OneRun(49.990967, 11.545258, 50.023182, 11.555386, 4746, 119));
         runAlgo(testCollector, DIR + "/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
-                list, "hike", true, "hike", "fastest", true);
+                list, true, true, new Profile("hike").setVehicle("hike").setWeighting("fastest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -401,7 +400,7 @@ public class RoutingAlgorithmWithOSMTest {
         // 4. avoid tunnel(s)!
         list.add(new OneRun(43.739662, 7.424355, 43.733802, 7.413433, 2436, 112));
         runAlgo(testCollector, DIR + "/monaco.osm.gz", "target/monaco-gh",
-                list, "bike2", true, "bike2", "fastest", true);
+                list, true, true, new Profile("bike2").setVehicle("bike2").setWeighting("fastest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -415,7 +414,7 @@ public class RoutingAlgorithmWithOSMTest {
         list.add(run);
 
         runAlgo(testCollector, DIR + "/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
-                list, "bike", true, "bike", "fastest", false);
+                list, true, false, new Profile("bike").setVehicle("bike").setWeighting("fastest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -429,7 +428,7 @@ public class RoutingAlgorithmWithOSMTest {
         list.add(run);
 
         runAlgo(testCollector, DIR + "/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
-                list, "bike", true, "bike", "fastest", false);
+                list, true, false, new Profile("bike").setVehicle("bike").setWeighting("fastest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -441,7 +440,7 @@ public class RoutingAlgorithmWithOSMTest {
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2323, 121));
         list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1434, 89));
         runAlgo(testCollector, DIR + "/monaco.osm.gz", "target/monaco-gh",
-                list, "bike", true, "bike", "shortest", false);
+                list, true, false, new Profile("bike").setVehicle("bike").setWeighting("shortest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -454,11 +453,13 @@ public class RoutingAlgorithmWithOSMTest {
         // hard to select between secondary and primary (both are AVOID for mtb)
         list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1459, 88));
         runAlgo(testCollector, DIR + "/monaco.osm.gz", "target/monaco-gh",
-                list, "mtb", true, "mtb", "fastest", false);
+                list, true, false, new Profile("mtb").setVehicle("mtb").setWeighting("fastest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
 
         runAlgo(testCollector, DIR + "/monaco.osm.gz", "target/monaco-gh",
-                list, "mtb,racingbike", false, "mtb", "fastest", false);
+                list, false, false,
+                new Profile("mtb").setVehicle("mtb").setWeighting("fastest"),
+                new Profile("racingbike").setVehicle("racingbike").setWeighting("fastest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -470,11 +471,13 @@ public class RoutingAlgorithmWithOSMTest {
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2572, 135));
         list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1490, 84));
         runAlgo(testCollector, DIR + "/monaco.osm.gz", "target/monaco-gh",
-                list, "racingbike", true, "racingbike", "fastest", false);
+                list, true, false, new Profile("racingbike").setVehicle("racingbike").setWeighting("fastest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
 
         runAlgo(testCollector, DIR + "/monaco.osm.gz", "target/monaco-gh",
-                list, "bike,racingbike", false, "racingbike", "fastest", false);
+                list, false, false,
+                new Profile("racingbike").setVehicle("racingbike").setWeighting("fastest"),
+                new Profile("bike").setVehicle("bike").setWeighting("fastest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -486,11 +489,13 @@ public class RoutingAlgorithmWithOSMTest {
         list.add(new OneRun(48.412294, 15.62007, 48.398306, 15.609667, 3965, 94));
 
         runAlgo(testCollector, DIR + "/krems.osm.gz", "target/krems-gh",
-                list, "bike", true, "bike", "fastest", false);
+                list, true, false, new Profile("bike").setVehicle("bike").setWeighting("fastest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
 
         runAlgo(testCollector, DIR + "/krems.osm.gz", "target/krems-gh",
-                list, "car,bike", false, "bike", "fastest", false);
+                list, false, false,
+                new Profile("bike").setVehicle("bike").setWeighting("fastest"),
+                new Profile("car").setVehicle("car").setWeighting("fastest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -502,11 +507,13 @@ public class RoutingAlgorithmWithOSMTest {
         list.add(new OneRun(48.412294, 15.62007, 48.398306, 15.609667, 3965, 95));
 
         runAlgo(testCollector, DIR + "/krems.osm.gz", "target/krems-gh",
-                list, "mtb", true, "mtb", "fastest", false);
+                list, true, false, new Profile("mtb").setVehicle("mtb").setWeighting("fastest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
 
         runAlgo(testCollector, DIR + "/krems.osm.gz", "target/krems-gh",
-                list, "bike,mtb", false, "mtb", "fastest", false);
+                list, false, false,
+                new Profile("mtb").setVehicle("mtb").setWeighting("fastest"),
+                new Profile("bike").setVehicle("bike").setWeighting("fastest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -520,14 +527,14 @@ public class RoutingAlgorithmWithOSMTest {
     @Test
     public void testAndorra() {
         runAlgo(testCollector, DIR + "/andorra.osm.gz", "target/andorra-gh",
-                createAndorra(), "car", true, "car", "shortest", false);
+                createAndorra(), true, false, new Profile("car").setVehicle("car").setWeighting("shortest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
     @Test
     public void testAndorraPbf() {
         runAlgo(testCollector, DIR + "/andorra.osm.pbf", "target/andorra-gh",
-                createAndorra(), "car", true, "car", "shortest", false);
+                createAndorra(), true, false, new Profile("car").setVehicle("car").setWeighting("shortest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -540,7 +547,7 @@ public class RoutingAlgorithmWithOSMTest {
         list.get(1).setLocs(1, 431);
 
         runAlgo(testCollector, DIR + "/andorra.osm.gz", "target/andorra-gh",
-                list, "foot", true, "foot", "shortest", false);
+                list, true, false, new Profile("foot").setVehicle("foot").setWeighting("shortest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -555,7 +562,7 @@ public class RoutingAlgorithmWithOSMTest {
         list.add(new OneRun(-20.4, -54.6, -20.6, -54.54, 25516, 271));
         list.add(new OneRun(-20.43, -54.54, -20.537, -54.674, 18009, 237));
         runAlgo(testCollector, DIR + "/campo-grande.osm.gz", "target/campo-grande-gh", list,
-                "car", false, "car", "shortest", false);
+                false, false, new Profile("car").setVehicle("car").setWeighting("shortest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -570,7 +577,7 @@ public class RoutingAlgorithmWithOSMTest {
         list.add(oneRun);
 
         runAlgo(testCollector, DIR + "/monaco.osm.gz", "target/monaco-gh",
-                list, "car", true, "car", "shortest", false);
+                list, true, false, new Profile("car").setVehicle("car").setWeighting("shortest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -583,7 +590,7 @@ public class RoutingAlgorithmWithOSMTest {
         // choose Unterloher Weg and the following residential + cycleway
         // list.add(new OneRun(50.004333, 11.600254, 50.044449, 11.543434, 6931, 184));
         runAlgo(testCollector, DIR + "/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
-                list, "bike", true, "bike", "fastest", false);
+                list, true, false, new Profile("bike").setVehicle("bike").setWeighting("fastest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -594,10 +601,10 @@ public class RoutingAlgorithmWithOSMTest {
         list.add(new OneRun(49.987132, 11.510496, 50.018839, 11.505024, 3985, 106));
 
         runAlgo(testCollector, DIR + "/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
-                list, "bike", true, "bike", "fastest", true);
+                list, true, true, new Profile("bike").setVehicle("bike").setWeighting("fastest"));
 
         runAlgo(testCollector, DIR + "/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
-                list, "bike2", true, "bike2", "fastest", true);
+                list, true, true, new Profile("bike2").setVehicle("bike2").setWeighting("fastest"));
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -611,7 +618,7 @@ public class RoutingAlgorithmWithOSMTest {
         list.add(oneRun);
 
         runAlgo(testCollector, DIR + "/krautsand.osm.gz", "target/krautsand-gh",
-                list, "car", true, "car", "fastest", true);
+                list, true, true, new Profile("car").setVehicle("car").setWeighting("fastest"));
     }
 
     /**
@@ -619,8 +626,7 @@ public class RoutingAlgorithmWithOSMTest {
      *               preparation and takes a bit longer
      */
     Graph runAlgo(TestAlgoCollector testCollector, String osmFile,
-                  String graphFile, List<OneRun> runs, String importVehicles,
-                  boolean withCH, String vehicle, String weightStr, boolean is3D) {
+                  String graphFile, List<OneRun> runs, boolean withCH, boolean is3D, Profile... profiles) {
 
         // for different weightings we need a different storage, otherwise we would need to remove the graph folder
         // every time we come with a different weighting
@@ -629,14 +635,10 @@ public class RoutingAlgorithmWithOSMTest {
         AlgoHelperEntry algoEntry = null;
         OneRun tmpOneRun = null;
         try {
+            Profile queryProfile = profiles[0];
             Helper.removeDir(new File(graphFile));
-            EncodingManager em = EncodingManager.create(importVehicles);
-            List<Profile> profiles = new ArrayList<>();
-            for (FlagEncoder encoder : em.fetchEdgeEncoders()) {
-                String vehicleName = encoder.toString();
-                profiles.add(new Profile(vehicleName + "_profile")
-                        .setVehicle(vehicleName).setWeighting(weightStr).setTurnCosts(encoder.supportsTurnCosts()));
-            }
+            String encodersString = Arrays.stream(profiles).map(p -> p.getVehicle() + (p.isTurnCosts() ? "|turn_costs=true" : "")).collect(Collectors.joining(","));
+            EncodingManager em = EncodingManager.create(encodersString);
             GraphHopper hopper = new GraphHopper().
                     setStoreOnFlush(true).
                     setOSMFile(osmFile).
@@ -652,12 +654,12 @@ public class RoutingAlgorithmWithOSMTest {
 
             // always enable landmarks
             hopper.getLMPreparationHandler().
-                    setLMProfiles(new LMProfile(vehicle + "_profile"));
+                    setLMProfiles(new LMProfile(queryProfile.getName()));
 
             if (withCH) {
-                assert !Helper.isEmpty(weightStr);
+                assert !Helper.isEmpty(queryProfile.getWeighting());
                 hopper.getCHPreparationHandler().
-                        setCHProfiles(new CHProfile(vehicle + "_profile"));
+                        setCHProfiles(new CHProfile(queryProfile.getName()));
             }
 
             if (is3D)
@@ -665,11 +667,8 @@ public class RoutingAlgorithmWithOSMTest {
 
             hopper.importOrLoad();
 
-            TraversalMode tMode = importVehicles.contains("turn_costs=true")
-                    ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
-            FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
-            Collection<AlgoHelperEntry> prepares = createAlgos(hopper, weightStr, vehicle, tMode);
-
+            Collection<AlgoHelperEntry> prepares = createAlgos(hopper, queryProfile);
+            FlagEncoder encoder = hopper.getEncodingManager().getEncoder(queryProfile.getName());
             EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder.getAccessEnc());
             for (AlgoHelperEntry entry : prepares) {
                 if (entry.getExpectedAlgo().startsWith("astarbi|ch")) {
@@ -784,7 +783,7 @@ public class RoutingAlgorithmWithOSMTest {
             }
         };
 
-        Collection<AlgoHelperEntry> prepares = createAlgos(hopper, "shortest", "car", TraversalMode.NODE_BASED);
+        Collection<AlgoHelperEntry> prepares = createAlgos(hopper, new Profile("car").setVehicle("car").setWeighting("shortest"));
 
         for (AlgoHelperEntry entry : prepares) {
             StopWatch sw = new StopWatch();

@@ -403,16 +403,30 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         assertTrue(encoder.getAccessEnc().getBool(true, flags));
         way.clearTags();
 
-        // attention bicycle:backward=no/yes has a completely different meaning!
-        // https://wiki.openstreetmap.org/wiki/Key:access#One-way_restrictions
         way.setTag("highway", "tertiary");
         way.setTag("oneway", "yes");
         way.setTag("bicycle:backward", "no");
         flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
         assertTrue(encoder.getAccessEnc().getBool(false, flags));
-        assertTrue(encoder.getAccessEnc().getBool(true, flags));
+        assertFalse(encoder.getAccessEnc().getBool(true, flags));
 
         way.setTag("bicycle:backward", "yes");
+        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
+        assertTrue(encoder.getAccessEnc().getBool(false, flags));
+        assertTrue(encoder.getAccessEnc().getBool(true, flags));
+
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("oneway", "yes");
+        way.setTag("bicycle:backward", "yes");
+        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
+        assertTrue(encoder.getAccessEnc().getBool(false, flags));
+        assertTrue(encoder.getAccessEnc().getBool(true, flags));
+
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("oneway", "-1");
+        way.setTag("bicycle:forward", "yes");
         flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
         assertTrue(encoder.getAccessEnc().getBool(false, flags));
         assertTrue(encoder.getAccessEnc().getBool(true, flags));
