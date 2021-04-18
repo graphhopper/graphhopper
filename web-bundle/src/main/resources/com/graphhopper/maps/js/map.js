@@ -277,7 +277,11 @@ module.exports.addElevation = function (geoJsonFeature, details, selectedDetail,
 
     // TODO no option to switch to miles yet
     var options = {
-        width: 600,
+        width: Math.min(
+            window.innerWidth - 15, // for mobile
+            window.innerWidth < 768 && window.innerWidth - 295, // for small desktops
+            600 // max width for all devices
+        ),
         height: 280,
         margins: {
             top: 10,
