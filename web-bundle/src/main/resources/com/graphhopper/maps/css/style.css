@@ -522,3 +522,50 @@ td img.pic {
     cursor: default;
 }
 
+@media screen and (max-width: 767px), screen and (max-height: 510px) {
+    body {
+        display: flex;
+        flex-direction: column;
+        min-width: 360px
+    }
+
+    .pointDiv {
+        display: flex;
+    }
+
+    .pointInput {
+        flex-grow: 1;
+        flex-shrink: 0;
+    }
+
+    .pointResolveError {
+        flex-basis: max-content;
+    }
+
+    #footer {
+        position: unset;
+    }
+
+    #header_img {
+        display: flex;
+        justify-content: center;
+    }
+
+    #input {
+        margin-right: 10px;
+        width: unset;
+        max-width: unset;
+    }
+
+    #locationform {
+        display: flex;
+        flex-direction: column;
+    }
+
+    #map {
+        max-height: 80vh;
+        flex-grow: 1;
+        flex-shrink: 1;
+        width: 100% !important;
+    }
+}
