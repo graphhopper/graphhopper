@@ -43,7 +43,7 @@ function adjustMapSize() {
     instructionInfoMaxHeight -= isNaN(tabHeight)? 0 : tabHeight;
     var routeDescHeight = $(".route_description").height();
     instructionInfoMaxHeight -= isNaN(routeDescHeight)? 0 : routeDescHeight;
-    $(".instructions_info").css("max-height", instructionInfoMaxHeight);
+    $(".instructions_info").css("max-height", Math.max(instructionInfoMaxHeight, 100));
     var width = $(window).width() - $("#input").width() - 10;
     mapDiv.width(width).height(height);
     // somehow this does not work: map.invalidateSize();
