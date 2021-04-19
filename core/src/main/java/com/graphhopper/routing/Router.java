@@ -121,13 +121,11 @@ public class Router {
             PMap requestHints = new PMap(request.getHints());
             requestHints.putObject(CustomModel.KEY, request.getCustomModel());
             Weighting weighting = createWeighting(profile, requestHints, request.getPoints(), disableCH);
-            AlgorithmOptions algoOpts = AlgorithmOptions.start().
-                    algorithm(request.getAlgorithm()).
-                    traversalMode(traversalMode).
-                    weighting(weighting).
-                    maxVisitedNodes(maxVisitedNodesForRequest).
-                    hints(request.getHints()).
-                    build();
+            AlgorithmOptions algoOpts = new AlgorithmOptions().
+                    setAlgorithm(request.getAlgorithm()).
+                    setTraversalMode(traversalMode).
+                    setMaxVisitedNodes(maxVisitedNodesForRequest).
+                    setHints(request.getHints());
 
             if (ROUND_TRIP.equalsIgnoreCase(request.getAlgorithm())) {
                 return routeRoundTrip(request, algoOpts, weighting, profile, disableLM);
@@ -158,13 +156,10 @@ public class Router {
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
 
         // use A* for round trips
-        AlgorithmOptions roundTripAlgoOpts = AlgorithmOptions
-                .start(algoOpts)
-                .algorithm(Parameters.Algorithms.ASTAR_BI)
-                .build();
+        AlgorithmOptions roundTripAlgoOpts = new AlgorithmOptions(algoOpts).setAlgorithm(Parameters.Algorithms.ASTAR_BI);
         roundTripAlgoOpts.getHints().putObject(Parameters.Algorithms.AStarBi.EPSILON, 2);
         QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
-        FlexiblePathCalculator pathCalculator = createFlexiblePathCalculator(queryGraph, profile, roundTripAlgoOpts, disableLM);
+        FlexiblePathCalculator pathCalculator = createFlexiblePathCalculator(queryGraph, profile, weighting, roundTripAlgoOpts, disableLM);
 
         RoundTripRouting.Result result = RoundTripRouting.calcPaths(qResults, pathCalculator);
         // we merge the different legs of the roundtrip into one response path
@@ -183,7 +178,7 @@ public class Router {
         List<Snap> qResults = ViaRouting.lookup(encodingManager, request.getPoints(), weighting, locationIndex, request.getSnapPreventions(), request.getPointHints());
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
         QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
-        PathCalculator pathCalculator = createPathCalculator(queryGraph, profile, algoOpts, disableCH, disableLM);
+        PathCalculator pathCalculator = createPathCalculator(queryGraph, profile, weighting, algoOpts, disableCH, disableLM);
 
         if (passThrough)
             throw new IllegalArgumentException("Alternative paths and " + PASS_THROUGH + " at the same time is currently not supported");
@@ -214,7 +209,7 @@ public class Router {
         // (base) query graph used to resolve headings, curbsides etc. this is not necessarily the same thing as
         // the (possibly implementation specific) query graph used by PathCalculator
         QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
-        PathCalculator pathCalculator = createPathCalculator(queryGraph, profile, algoOpts, disableCH, disableLM);
+        PathCalculator pathCalculator = createPathCalculator(queryGraph, profile, weighting, algoOpts, disableCH, disableLM);
         ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, qResults, weighting, pathCalculator, request.getCurbsides(), forceCurbsides, request.getHeadings(), passThrough);
 
         if (request.getPoints().size() != result.paths.size() + 1)
@@ -249,14 +244,14 @@ public class Router {
         }
     }
 
-    private PathCalculator createPathCalculator(QueryGraph queryGraph, Profile profile, AlgorithmOptions algoOpts, boolean disableCH, boolean disableLM) {
+    private PathCalculator createPathCalculator(QueryGraph queryGraph, Profile profile, Weighting weighting, AlgorithmOptions algoOpts, boolean disableCH, boolean disableLM) {
         if (chEnabled && !disableCH) {
             PMap opts = new PMap(algoOpts.getHints());
             opts.putObject(ALGORITHM, algoOpts.getAlgorithm());
             opts.putObject(MAX_VISITED_NODES, algoOpts.getMaxVisitedNodes());
             return createCHPathCalculator(queryGraph, profile, opts);
         } else {
-            return createFlexiblePathCalculator(queryGraph, profile, algoOpts, disableLM);
+            return createFlexiblePathCalculator(queryGraph, profile, weighting, algoOpts, disableLM);
         }
     }
 
@@ -264,7 +259,7 @@ public class Router {
         return new CHPathCalculator(new CHRoutingAlgorithmFactory(getRoutingCHGraph(profile.getName()), queryGraph), opts);
     }
 
-    private FlexiblePathCalculator createFlexiblePathCalculator(QueryGraph queryGraph, Profile profile, AlgorithmOptions algoOpts, boolean disableLM) {
+    private FlexiblePathCalculator createFlexiblePathCalculator(QueryGraph queryGraph, Profile profile, Weighting weighting, AlgorithmOptions algoOpts, boolean disableLM) {
         RoutingAlgorithmFactory algorithmFactory;
         // for now do not allow mixing CH&LM #1082,#1889
         if (lmEnabled && !disableLM) {
@@ -277,7 +272,7 @@ public class Router {
         } else {
             algorithmFactory = new RoutingAlgorithmFactorySimple();
         }
-        return new FlexiblePathCalculator(queryGraph, algorithmFactory, algoOpts);
+        return new FlexiblePathCalculator(queryGraph, algorithmFactory, weighting, algoOpts);
     }
 
     private RoutingCHGraph getRoutingCHGraph(String profileName) {

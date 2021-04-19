@@ -79,9 +79,9 @@ public class LMIssueTest {
             case ASTAR_BIDIR:
                 return new AStarBidirection(graph, weighting, NODE_BASED);
             case LM_BIDIR:
-                return lm.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).traversalMode(NODE_BASED).build());
+                return lm.getRoutingAlgorithmFactory().createAlgo(graph, weighting, new AlgorithmOptions().setAlgorithm(ASTAR_BI).setTraversalMode(NODE_BASED));
             case LM_UNIDIR:
-                return lm.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR).traversalMode(NODE_BASED).build());
+                return lm.getRoutingAlgorithmFactory().createAlgo(graph, weighting, new AlgorithmOptions().setAlgorithm(ASTAR).setTraversalMode(NODE_BASED));
             case PERFECT_ASTAR:
                 AStarBidirection perfectastarbi = new AStarBidirection(graph, weighting, NODE_BASED);
                 perfectastarbi.setApproximation(new PerfectApproximator(graph, weighting, NODE_BASED, false));

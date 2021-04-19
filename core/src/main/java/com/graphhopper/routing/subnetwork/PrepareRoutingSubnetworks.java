@@ -20,7 +20,6 @@ package com.graphhopper.routing.subnetwork;
 import com.carrotsearch.hppc.BitSet;
 import com.carrotsearch.hppc.BitSetIterator;
 import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.IntIndexedContainer;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
@@ -88,85 +87,7 @@ public class PrepareRoutingSubnetworks {
      * @return number of removed edges
      */
     int removeSmallSubNetworks(PrepareJob job) {
-        if (job.turnCostProvider == null)
-            return removeSmallSubNetworksNodeBased(job.name, job.accessEnc);
-        else
-            return removeSmallSubNetworksEdgeBased(job.name, job.accessEnc, job.turnCostProvider);
-    }
-
-    private int removeSmallSubNetworksNodeBased(String jobName, BooleanEncodedValue accessEnc) {
-        // partition graph into strongly connected components using Tarjan's algorithm
-        StopWatch sw = new StopWatch().start();
-        TarjanSCC.ConnectedComponents ccs = TarjanSCC.findComponents(ghStorage, DefaultEdgeFilter.outEdges(accessEnc), false);
-        List<IntArrayList> components = ccs.getComponents();
-        BitSet singleNodeComponents = ccs.getSingleNodeComponents();
-        long numSingleNodeComponents = singleNodeComponents.cardinality();
-        logger.info(jobName + " - Found " + ccs.getTotalComponents() + " subnetworks (" + numSingleNodeComponents + " single nodes and "
-                + components.size() + " components with more than one node, total nodes: " + ccs.getNodes() + "), took: " + sw.stop().getSeconds() + "s");
-
-        // remove all small networks, but keep the biggest (even when its smaller than the given min_network_size)
-        sw = new StopWatch().start();
-        int removedComponents = 0;
-        int removedEdges = 0;
-        int smallestRemaining = ccs.getBiggestComponent().size();
-        int biggestRemoved = 0;
-        EdgeExplorer explorer = ghStorage.createEdgeExplorer(DefaultEdgeFilter.allEdges(accessEnc));
-        for (IntArrayList component : components) {
-            if (component == ccs.getBiggestComponent())
-                continue;
-
-            if (component.size() < minNetworkSize) {
-                removedEdges += blockEdgesForComponent(explorer, accessEnc, component);
-                removedComponents++;
-                biggestRemoved = Math.max(biggestRemoved, component.size());
-            } else {
-                smallestRemaining = Math.min(smallestRemaining, component.size());
-            }
-        }
-
-        if (minNetworkSize > 0) {
-            BitSetIterator iter = singleNodeComponents.iterator();
-            for (int node = iter.nextSetBit(); node >= 0; node = iter.nextSetBit()) {
-                removedEdges += blockEdgesForNode(explorer, accessEnc, node);
-                removedComponents++;
-                biggestRemoved = Math.max(biggestRemoved, 1);
-            }
-        } else if (numSingleNodeComponents > 0) {
-            smallestRemaining = Math.min(smallestRemaining, 1);
-        }
-
-        int allowedRemoved = ghStorage.getEdges() / 2;
-        if (removedEdges > allowedRemoved)
-            throw new IllegalStateException("Too many total edges were removed: " + removedEdges + " out of " + ghStorage.getEdges() + "\n" +
-                    "The maximum number of removed edges is: " + allowedRemoved);
-
-        logger.info(jobName + " - Removed " + removedComponents + " subnetworks (biggest removed: " + biggestRemoved + " nodes) -> " +
-                (ccs.getTotalComponents() - removedComponents) + " subnetwork(s) left (smallest: " + smallestRemaining + ", biggest: " + ccs.getBiggestComponent().size() + " nodes)"
-                + ", total removed edges: " + removedEdges + ", took: " + sw.stop().getSeconds() + "s");
-        return removedEdges;
-    }
-
-    /**
-     * Makes all edges of the given component (the given set of node ids) inaccessible for the given access encoded value.
-     */
-    int blockEdgesForComponent(EdgeExplorer explorer, BooleanEncodedValue accessEnc, IntIndexedContainer component) {
-        int removedEdges = 0;
-        for (int i = 0; i < component.size(); i++) {
-            removedEdges += blockEdgesForNode(explorer, accessEnc, component.get(i));
-        }
-        return removedEdges;
-    }
-
-    private int blockEdgesForNode(EdgeExplorer explorer, BooleanEncodedValue accessEnc, int node) {
-        int removedEdges = 0;
-        EdgeIterator edge = explorer.setBaseNode(node);
-        while (edge.next()) {
-            if (!edge.get(accessEnc) && !edge.getReverse(accessEnc))
-                continue;
-            edge.set(accessEnc, false).setReverse(accessEnc, false);
-            removedEdges++;
-        }
-        return removedEdges;
+        return removeSmallSubNetworksEdgeBased(job.name, job.accessEnc, job.turnCostProvider);
     }
 
     private int removeSmallSubNetworksEdgeBased(String jobName, BooleanEncodedValue accessEnc, TurnCostProvider turnCostProvider) {
@@ -179,9 +100,7 @@ public class PrepareRoutingSubnetworks {
         logger.info(jobName + " - Found " + ccs.getTotalComponents() + " subnetworks (" + numSingleEdgeComponents + " single edges and "
                 + components.size() + " components with more than one edge, total nodes: " + ccs.getEdgeKeys() + "), took: " + sw.stop().getSeconds() + "s");
 
-        // n edge-keys roughly equal n/2 edges and components with n/2 edges approximately have n/2 nodes
-        // we could actually count the nodes to make this more consistent, but is it really needed?
-        final int minNetworkSizeEdges = 2 * minNetworkSize;
+        final int minNetworkSizeEdgeKeys = 2 * minNetworkSize;
 
         // remove all small networks, but keep the biggest (even when its smaller than the given min_network_size)
         sw = new StopWatch().start();
@@ -194,7 +113,7 @@ public class PrepareRoutingSubnetworks {
             if (component == ccs.getBiggestComponent())
                 continue;
 
-            if (component.size() < minNetworkSizeEdges) {
+            if (component.size() < minNetworkSizeEdgeKeys) {
                 for (IntCursor cursor : component) {
                     removedEdgeKeys += removeEdgeWithKey(cursor.value, accessEnc);
                 }
@@ -205,7 +124,7 @@ public class PrepareRoutingSubnetworks {
             }
         }
 
-        if (minNetworkSizeEdges > 0) {
+        if (minNetworkSizeEdgeKeys > 0) {
             BitSetIterator iter = singleEdgeComponents.iterator();
             for (int edgeKey = iter.nextSetBit(); edgeKey >= 0; edgeKey = iter.nextSetBit()) {
                 removedEdgeKeys += removeEdgeWithKey(edgeKey, accessEnc);
