@@ -102,7 +102,6 @@ public abstract class GHMatrixAbstractRequester {
 
         putStrings(requestJson, "snap_preventions", ghRequest.getSnapPreventions());
         putStrings(requestJson, "out_arrays", outArraysList);
-        requestJson.put("vehicle", ghRequest.getHints().getString("vehicle", ""));
         // requestJson.put("elevation", ghRequest.getHints().getBool("elevation", false));
         requestJson.put("fail_fast", ghRequest.getFailFast());
 
