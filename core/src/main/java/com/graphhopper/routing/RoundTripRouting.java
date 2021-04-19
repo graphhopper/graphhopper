@@ -67,9 +67,8 @@ public class RoundTripRouting {
         }
     }
 
-    public static List<Snap> lookup(List<GHPoint> points, Weighting weighting, LocationIndex locationIndex, Params params) {
+    public static List<Snap> lookup(List<GHPoint> points, EdgeFilter edgeFilter, LocationIndex locationIndex, Params params) {
         // todo: no snap preventions for round trip so far
-        EdgeFilter edgeFilter = new FiniteWeightFilter(weighting);
         if (points.size() != 1)
             throw new IllegalArgumentException("For round trip calculation exactly one point is required");
 
