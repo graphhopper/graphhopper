@@ -57,7 +57,7 @@ public class RoundTripRoutingTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void lookup_throwsIfNumberOfPointsNotOne() {
-        RoundTripRouting.lookup(Arrays.asList(ghPoint1, ghPoint2), fastestWeighting, null, new RoundTripRouting.Params());
+        RoundTripRouting.lookup(Arrays.asList(ghPoint1, ghPoint2), new FiniteWeightFilter(fastestWeighting), null, new RoundTripRouting.Params());
     }
 
     @Test
@@ -73,7 +73,7 @@ public class RoundTripRoutingTest {
         hints.putObject(Parameters.Algorithms.RoundTrip.POINTS, numPoints);
         hints.putObject(Parameters.Algorithms.RoundTrip.DISTANCE, roundTripDistance);
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
-        List<Snap> stagePoints = RoundTripRouting.lookup(Collections.singletonList(start), fastestWeighting, locationIndex,
+        List<Snap> stagePoints = RoundTripRouting.lookup(Collections.singletonList(start), new FiniteWeightFilter(fastestWeighting), locationIndex,
                 new RoundTripRouting.Params(hints, heading, 3));
         assertEquals(3, stagePoints.size());
         assertEquals(0, stagePoints.get(0).getClosestNode());

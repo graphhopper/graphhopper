@@ -974,6 +974,11 @@ public class GraphHopper implements GraphHopperAPI {
                             ? lmPreparationHandler.getPreparation(lmp.getPreparationProfile()).getLandmarkStorage()
                             : lmPreparationHandler.getPreparation(lmp.getProfile()).getLandmarkStorage());
         }
+        return doCreateRouter(ghStorage, locationIndex, profilesByName, pathBuilderFactory,
+                trMap, routerConfig, createWeightingFactory(), chGraphs, landmarks);
+    }
+
+    protected Router doCreateRouter(GraphHopperStorage ghStorage, LocationIndex locationIndex, Map<String, Profile> profilesByName, PathDetailsBuilderFactory pathBuilderFactory, TranslationMap trMap, RouterConfig routerConfig, WeightingFactory weightingFactory, Map<String, CHGraph> chGraphs, Map<String, LandmarkStorage> landmarks) {
         return new Router(ghStorage, locationIndex, profilesByName, pathBuilderFactory,
                 trMap, routerConfig, createWeightingFactory(), chGraphs, landmarks
         );
