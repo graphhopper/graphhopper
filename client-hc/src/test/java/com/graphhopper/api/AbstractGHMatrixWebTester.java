@@ -1,8 +1,9 @@
 package com.graphhopper.api;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,7 +11,8 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Collections;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 /**
  * @author Peter Karich
@@ -20,6 +22,8 @@ public abstract class AbstractGHMatrixWebTester {
     protected final ObjectMapper objectMapper = new ObjectMapper();
 
     abstract GraphHopperMatrixWeb createMatrixClient(String json) throws IOException;
+
+    abstract GHMatrixAbstractRequester createRequester(String url);
 
     public static GHMRequest createRequest() {
         GHMRequest req = new GHMRequest();
@@ -176,6 +180,22 @@ public abstract class AbstractGHMatrixWebTester {
         assertEquals(0., rsp.getWeight(1, 1), .1);
 
         assertEquals(886, rsp.getTime(0, 1) / 1000);
+    }
+
+    @Test
+    public void noVehicleWhenNotSpecified() {
+        GHMatrixBatchRequester requester = new GHMatrixBatchRequester("url");
+        JsonNode json = requester.createPostRequest(new GHMRequest(5), Collections.singletonList("weights"));
+        assertEquals("{\"out_arrays\":[\"weights\"],\"fail_fast\":true}", json.toString());
+    }
+
+    @Test
+    public void hasHintsWhenSpecified() {
+        GHMatrixAbstractRequester requester = createRequester("url");
+        GHMRequest ghmRequest = new GHMRequest(5);
+        ghmRequest.putHint("vehicle", "my_car").putHint("profile", "my_profile");
+        JsonNode json = requester.createPostRequest(ghmRequest, Collections.singletonList("weights"));
+        assertEquals("{\"out_arrays\":[\"weights\"],\"fail_fast\":true,\"vehicle\":\"my_car\",\"profile\":\"my_profile\"}", json.toString());
     }
 
     public static String readFile(Reader simpleReader) throws IOException {
