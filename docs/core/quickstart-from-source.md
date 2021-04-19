@@ -76,7 +76,9 @@ Have a look into the [Java API documentation](../index.md#developer) for further
 be embedded](./routing.md) into your application and how you create a [custom weighting](./weighting.md).
 
 Look [here](https://github.com/graphhopper/graphhopper#maven) for the maven snippet to use GraphHopper in your
-application. To use an unreleased snapshot version of GraphHopper you need the following snippet in your pom.xml
+application.
+
+To use an **unreleased** snapshot version of GraphHopper you need the following snippet in your pom.xml
 as those versions are not in maven central:
 
 ```xml
@@ -154,5 +156,3 @@ You can use Graphhopper on the Desktop with the help of mapsforge too. No exampl
 
 For smallish graph (e.g. size of Berlin) use a RAMDataAccess driven GraphStorage (loads all into memory).
 For larger ones use the ContractionHierarchies preparation class and MMapDataAccess to avoid OutOfMemoryErrors if you have only few RAM. 
-
-Raspberry Pi usage is also possible. Have a look into this [blog post](https://karussell.wordpress.com/2014/01/09/road-routing-on-raspberry-pi-with-graphhopper/).
