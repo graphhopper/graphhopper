@@ -100,8 +100,56 @@ of this you need to specify a so called 'custom model', which is a set of rules 
 `priority` of an edge. The custom model is written in JSON language and also includes a few more parameters like the
 `distance_influence`.
 
-Setting up rules for `speed` and `priority` is very similar, so in our examples we will first concentrate on the `speed`
-rules, but as you will see they can be applied very much the same way for priority as well.
+Here is a complete request example for a POST /route query in berlin that includes a custom model:
+
+```json
+{
+  "points": [
+    [
+      13.31543,
+      52.509535
+    ],
+    [
+      13.29779,
+      52.512434
+    ]
+  ],
+  "profile": "car",
+  "custom_model": {
+    "speed": [
+      {
+        "if": true,
+        "limit_to": 100
+      }
+    ],
+    "priority": [
+      {
+        "if": "road_class == MOTORWAY",
+        "multiply_by": 0
+      }
+    ],
+    "distance_influence": 50
+  }
+} 
+```
+
+If you put this JSON into a file `custom.json` you can send the request like this:
+
+```shell
+curl -XPOST -H "Content-Type: application/json" "http://localhost:8989/route" --data custom.json
+```
+
+Note that this only works for custom profiles and so far only for POST /route (but not GET /route or /isochrone, /spt or
+/map-matching).
+
+GraphHopper maps offers an interactive text editor that can be used to comfortably enter custom models. You can open it
+by pressing the 'custom' button. It will check the syntax of your custom model and mark errors in red. You can press
+Ctrl+Space or Alt+Enter to retrieve auto-complete suggestions. Pressing Ctrl+Enter will send a routing request for the
+custom model you entered.
+
+In the following we will explain custom models in detail. Setting up rules for `speed` and `priority` is very similar,
+so in our examples we will first concentrate on the `speed` rules, but as you will see they can be applied very much the
+same way for priority as well.
 
 ### Custom models by the example of customizing `speed`
 
@@ -521,18 +569,3 @@ use the `distance_influence` property of the custom value like this:
 ``` 
 
 If you do not use this property, GraphHopper will use the default value which is `70`.
-
-## How to use Custom Models
-
-### via HTTP
-
-Using custom models is simple. You just need to add the `custom_model` property to your request JSON. This only works
-for certain profiles, however, and so far only POST /route (but not GET /route or /isochrone, /spt or /map-matching)
-are supported.
-
-### via GraphHopper maps
-
-GraphHopper maps offers an interactive text editor that can be used to comfortably enter custom models. You can open it
-by pressing the 'custom' button. It will check the syntax of your custom model and mark errors in red. You can press
-Ctrl+Space or Alt+Enter to retrieve auto-complete suggestions. Pressing Ctrl+Enter will send a routing request for the
-custom model you entered.
