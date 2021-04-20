@@ -43,7 +43,7 @@ public class RouteResourceCustomModelTest {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "bike,car,foot").
-                putObject("prepare.min_network_size", 0).
+                putObject("prepare.min_network_size", 200).
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
                 putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type").
@@ -57,6 +57,10 @@ public class RouteResourceCustomModelTest {
                         new CustomProfile("json_bike").setVehicle("bike").
                                 putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/json_bike.json"),
                         new Profile("foot_profile").setVehicle("foot").setWeighting("fastest"),
+                        new CustomProfile("car_no_unclassified").setCustomModel(
+                                new CustomModel(new CustomModel().
+                                        addToPriority(If("road_class == UNCLASSIFIED", LIMIT, 0)))).
+                                setVehicle("car"),
                         new CustomProfile("custom_bike").
                                 setCustomModel(new CustomModel().
                                         addToSpeed(If("road_class == PRIMARY", LIMIT, 28)).
@@ -122,7 +126,7 @@ public class RouteResourceCustomModelTest {
     public void testUnknownProfile() {
         String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"unknown\", \"custom_model\": {}, \"ch.disable\": true}";
         JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
-        assertMessageStartsWith(jsonNode, "The requested profile 'unknown' does not exist.\nAvailable profiles: [car, bike, truck, cargo_bike, json_bike, foot_profile, custom_bike]");
+        assertMessageStartsWith(jsonNode, "The requested profile 'unknown' does not exist.\nAvailable profiles: [car, bike, truck, cargo_bike, json_bike, foot_profile, car_no_unclassified, custom_bike]");
     }
 
     @Test
@@ -223,6 +227,17 @@ public class RouteResourceCustomModelTest {
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 660, 10);
+    }
+
+    @Test
+    public void testSubnetworkRemovalPerProfile() {
+        String body = "{\"points\": [[11.556416,50.007739], [11.528864,50.021638]]," +
+                " \"profile\": \"car_no_unclassified\","+
+                " \"ch.disable\": true" +
+                "}";
+        JsonNode jsonNode = query(body, 200).readEntity(JsonNode.class);
+        JsonNode path = jsonNode.get("paths").get(0);
+        assertEquals(8754, path.get("distance").asDouble(), 5);
     }
 
     private void assertMessageStartsWith(JsonNode jsonNode, String message) {
