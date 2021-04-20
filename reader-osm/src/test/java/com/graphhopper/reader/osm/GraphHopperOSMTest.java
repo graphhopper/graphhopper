@@ -25,6 +25,7 @@ import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.ev.InSubnetwork;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -887,7 +888,7 @@ public class GraphHopperOSMTest {
 
     private GraphHopper createSquareGraphInstance() {
         CarFlagEncoder carEncoder = new CarFlagEncoder();
-        EncodingManager encodingManager = EncodingManager.create(carEncoder);
+        EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(InSubnetwork.create("profile")).build();
         Weighting weighting = new FastestWeighting(carEncoder);
         GraphHopperStorage g = new GraphBuilder(encodingManager).setCHConfigs(CHConfig.nodeBased("p", weighting)).create();
 

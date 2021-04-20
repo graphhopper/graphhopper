@@ -18,6 +18,8 @@
 package com.graphhopper;
 
 import com.graphhopper.config.Profile;
+import com.graphhopper.routing.ev.InSubnetwork;
+import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphBuilder;
@@ -50,12 +52,13 @@ public class GraphHopperAPITest {
 
     @Test
     public void testLoad() {
-        final String profile = "profile";
         final String vehicle = "car";
         final String weighting = "fastest";
-        EncodingManager em = EncodingManager.create(vehicle);
-        FlagEncoder encoder = em.getEncoder(vehicle);
+        EncodingManager.Builder emBuilder = new EncodingManager.Builder().add(InSubnetwork.create("car"));
+        emBuilder.addIfAbsent(new DefaultFlagEncoderFactory(), "car");
+        EncodingManager em = emBuilder.build();
         GraphHopperStorage graph = new GraphBuilder(em).create();
+        FlagEncoder encoder = em.getEncoder(vehicle);
         initGraph(graph, encoder);
         // do further changes:
         NodeAccess na = graph.getNodeAccess();
@@ -66,11 +69,11 @@ public class GraphHopperAPITest {
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 3).setDistance(40));
 
         GraphHopper instance = new GraphHopper().
-                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile(vehicle).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(false).
                 loadGraph(graph, em);
         // 3 -> 0
-        GHResponse rsp = instance.route(new GHRequest(42, 10.4, 42, 10).setProfile(profile));
+        GHResponse rsp = instance.route(new GHRequest(42, 10.4, 42, 10).setProfile("car"));
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         ResponsePath responsePath = rsp.getBest();
         assertEquals(80, responsePath.getDistance(), 1e-6);

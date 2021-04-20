@@ -97,12 +97,13 @@ public class SPTResource {
         LocationIndex locationIndex = graphHopper.getLocationIndex();
         Graph graph = graphHopper.getGraphHopperStorage();
         Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
+        BooleanEncodedValue inSubnetworkEnc = graphHopper.getEncodingManager().getBooleanEncodedValue(InSubnetwork.key(profileName));
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA)) {
             GraphEdgeIdFinder.BlockArea blockArea = GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
-                    Collections.singletonList(point.get()), hintsMap, new FiniteWeightFilter(weighting));
+                    Collections.singletonList(point.get()), hintsMap, new FiniteWeightFilter(weighting, inSubnetworkEnc));
             weighting = new BlockAreaWeighting(weighting, blockArea);
         }
-        Snap snap = locationIndex.findClosest(point.get().lat, point.get().lon, new FiniteWeightFilter(weighting));
+        Snap snap = locationIndex.findClosest(point.get().lat, point.get().lon, new FiniteWeightFilter(weighting, inSubnetworkEnc));
         if (!snap.isValid())
             throw new IllegalArgumentException("Point not found:" + point);
         QueryGraph queryGraph = QueryGraph.create(graph, snap);

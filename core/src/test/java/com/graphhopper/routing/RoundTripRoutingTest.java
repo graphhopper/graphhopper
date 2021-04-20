@@ -18,6 +18,8 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.GHRequest;
+import com.graphhopper.routing.ev.InSubnetwork;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -48,7 +50,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class RoundTripRoutingTest {
     private final FlagEncoder carFE = new CarFlagEncoder();
-    private final EncodingManager em = EncodingManager.create(carFE);
+    private final EncodingManager em = new EncodingManager.Builder().add(carFE).add(InSubnetwork.create("car")).build();
     private final Weighting fastestWeighting = new FastestWeighting(carFE);
     // TODO private final TraversalMode tMode = TraversalMode.EDGE_BASED;
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
@@ -57,7 +59,7 @@ public class RoundTripRoutingTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void lookup_throwsIfNumberOfPointsNotOne() {
-        RoundTripRouting.lookup(Arrays.asList(ghPoint1, ghPoint2), fastestWeighting, null, new RoundTripRouting.Params());
+        RoundTripRouting.lookup(em, new GHRequest(ghPoint1, ghPoint2).setProfile("car"), fastestWeighting, null, new RoundTripRouting.Params());
     }
 
     @Test
@@ -73,7 +75,7 @@ public class RoundTripRoutingTest {
         hints.putObject(Parameters.Algorithms.RoundTrip.POINTS, numPoints);
         hints.putObject(Parameters.Algorithms.RoundTrip.DISTANCE, roundTripDistance);
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
-        List<Snap> stagePoints = RoundTripRouting.lookup(Collections.singletonList(start), fastestWeighting, locationIndex,
+        List<Snap> stagePoints = RoundTripRouting.lookup(em, new GHRequest().addPoint(start).setProfile("car"), fastestWeighting, locationIndex,
                 new RoundTripRouting.Params(hints, heading, 3));
         assertEquals(3, stagePoints.size());
         assertEquals(0, stagePoints.get(0).getClosestNode());

@@ -22,8 +22,9 @@ import com.carrotsearch.hppc.BitSetIterator;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.TurnCostProvider;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
@@ -87,13 +88,13 @@ public class PrepareRoutingSubnetworks {
      * @return number of removed edges
      */
     int removeSmallSubNetworks(PrepareJob job) {
-        return removeSmallSubNetworksEdgeBased(job.name, job.accessEnc, job.turnCostProvider);
+        return removeSmallSubNetworksEdgeBased(job.name, job.filter, job.inSubnetworkEnc, job.turnCostProvider);
     }
 
-    private int removeSmallSubNetworksEdgeBased(String jobName, BooleanEncodedValue accessEnc, TurnCostProvider turnCostProvider) {
+    private int removeSmallSubNetworksEdgeBased(String jobName, EdgeFilter filter, BooleanEncodedValue inSubnetworkEnc, TurnCostProvider turnCostProvider) {
         // partition graph into strongly connected components using Tarjan's algorithm
         StopWatch sw = new StopWatch().start();
-        EdgeBasedTarjanSCC.ConnectedComponents ccs = EdgeBasedTarjanSCC.findComponents(ghStorage, DefaultEdgeFilter.outEdges(accessEnc), turnCostProvider, false);
+        EdgeBasedTarjanSCC.ConnectedComponents ccs = EdgeBasedTarjanSCC.findComponents(ghStorage, filter, turnCostProvider, false);
         List<IntArrayList> components = ccs.getComponents();
         BitSet singleEdgeComponents = ccs.getSingleEdgeComponents();
         long numSingleEdgeComponents = singleEdgeComponents.cardinality();
@@ -115,7 +116,7 @@ public class PrepareRoutingSubnetworks {
 
             if (component.size() < minNetworkSizeEdgeKeys) {
                 for (IntCursor cursor : component) {
-                    removedEdgeKeys += removeEdgeWithKey(cursor.value, accessEnc);
+                    removedEdgeKeys += setSubnetwork(cursor.value, filter, inSubnetworkEnc);
                 }
                 removedComponents++;
                 biggestRemoved = Math.max(biggestRemoved, component.size());
@@ -127,7 +128,7 @@ public class PrepareRoutingSubnetworks {
         if (minNetworkSizeEdgeKeys > 0) {
             BitSetIterator iter = singleEdgeComponents.iterator();
             for (int edgeKey = iter.nextSetBit(); edgeKey >= 0; edgeKey = iter.nextSetBit()) {
-                removedEdgeKeys += removeEdgeWithKey(edgeKey, accessEnc);
+                removedEdgeKeys += setSubnetwork(edgeKey, filter, inSubnetworkEnc);
                 removedComponents++;
                 biggestRemoved = Math.max(biggestRemoved, 1);
             }
@@ -146,15 +147,15 @@ public class PrepareRoutingSubnetworks {
         return removedEdgeKeys;
     }
 
-    private int removeEdgeWithKey(int edgeKey, BooleanEncodedValue accessEnc) {
+    private int setSubnetwork(int edgeKey, EdgeFilter filter, BooleanEncodedValue inSubnetworkEnc) {
         int edgeId = EdgeBasedTarjanSCC.getEdgeFromKey(edgeKey);
         EdgeIteratorState edge = ghStorage.getEdgeIteratorState(edgeId, Integer.MIN_VALUE);
-        if (edgeKey % 2 == 0 && edge.get(accessEnc)) {
-            edge.set(accessEnc, false);
+        if (edgeKey % 2 == 0 && filter.accept(edge)) {
+            edge.set(inSubnetworkEnc, true);
             return 1;
         }
-        if (edgeKey % 2 != 0 && edge.getReverse(accessEnc)) {
-            edge.setReverse(accessEnc, false);
+        if (edgeKey % 2 != 0 && filter.accept(edge.detach(true))) {
+            edge.set(inSubnetworkEnc, true);
             return 1;
         }
         return 0;
@@ -169,16 +170,16 @@ public class PrepareRoutingSubnetworks {
         // we could implement a 'fast check' for several previously marked removed nodes via GHBitSet 
         // removedNodesPerVehicle. The problem is that we would need long-indices but BitSet only supports int (due to nodeIndex*numberOfEncoders)
 
-        List<BooleanEncodedValue> accessEncList = new ArrayList<>();
+        List<EdgeFilter> inSubnetworkEncs = new ArrayList<>();
         for (PrepareJob job : prepareJobs) {
-            accessEncList.add(job.accessEnc);
+            inSubnetworkEncs.add(job.filter);
         }
         // if no edges are reachable return true
         EdgeIterator iter = edgeExplorerAllEdges.setBaseNode(nodeIndex);
         while (iter.next()) {
             // if at least one encoder allows one direction return false
-            for (BooleanEncodedValue accessEnc : accessEncList) {
-                if (iter.get(accessEnc) || iter.getReverse(accessEnc))
+            for (EdgeFilter edgeFilter : inSubnetworkEncs) {
+                if (edgeFilter.accept(iter))
                     return false;
             }
         }
@@ -188,12 +189,14 @@ public class PrepareRoutingSubnetworks {
 
     public static class PrepareJob {
         private final String name;
-        private final BooleanEncodedValue accessEnc;
+        private final BooleanEncodedValue inSubnetworkEnc;
+        private final EdgeFilter filter;
         private final TurnCostProvider turnCostProvider;
 
-        public PrepareJob(String name, BooleanEncodedValue accessEnc, TurnCostProvider turnCostProvider) {
+        public PrepareJob(String name, BooleanEncodedValue inSubnetworkEnc, BooleanEncodedValue accessEnc, Weighting weighting, TurnCostProvider turnCostProvider) {
             this.name = name;
-            this.accessEnc = accessEnc;
+            this.inSubnetworkEnc = inSubnetworkEnc;
+            this.filter = e -> !e.get(inSubnetworkEnc) && e.get(accessEnc) && Double.isFinite(weighting.calcEdgeWeight(e, false));
             this.turnCostProvider = turnCostProvider;
         }
 

@@ -24,6 +24,8 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.InSubnetwork;
 import com.graphhopper.routing.lm.LMRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -120,7 +122,8 @@ public class Router {
 
             PMap requestHints = new PMap(request.getHints());
             requestHints.putObject(CustomModel.KEY, request.getCustomModel());
-            Weighting weighting = createWeighting(profile, requestHints, request.getPoints(), disableCH);
+            BooleanEncodedValue inSubnetworkEnc = encodingManager.getBooleanEncodedValue(InSubnetwork.key(profile.getName()));
+            Weighting weighting = createWeighting(profile, inSubnetworkEnc, requestHints, request.getPoints(), disableCH);
             AlgorithmOptions algoOpts = AlgorithmOptions.start().
                     algorithm(request.getAlgorithm()).
                     traversalMode(traversalMode).
@@ -154,7 +157,7 @@ public class Router {
         StopWatch sw = new StopWatch().start();
         double startHeading = request.getHeadings().isEmpty() ? Double.NaN : request.getHeadings().get(0);
         RoundTripRouting.Params params = new RoundTripRouting.Params(request.getHints(), startHeading, routerConfig.getMaxRoundTripRetries());
-        List<Snap> qResults = RoundTripRouting.lookup(request.getPoints(), weighting, locationIndex, params);
+        List<Snap> qResults = RoundTripRouting.lookup(encodingManager, request, weighting, locationIndex, params);
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
 
         // use A* for round trips
@@ -180,7 +183,7 @@ public class Router {
             throw new IllegalArgumentException("Currently alternative routes work only with start and end point. You tried to use: " + request.getPoints().size() + " points");
         GHResponse ghRsp = new GHResponse();
         StopWatch sw = new StopWatch().start();
-        List<Snap> qResults = ViaRouting.lookup(encodingManager, request.getPoints(), weighting, locationIndex, request.getSnapPreventions(), request.getPointHints());
+        List<Snap> qResults = ViaRouting.lookup(encodingManager, request, weighting, locationIndex);
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
         QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
         PathCalculator pathCalculator = createPathCalculator(queryGraph, profile, algoOpts, disableCH, disableLM);
@@ -190,7 +193,7 @@ public class Router {
         if (!request.getCurbsides().isEmpty())
             throw new IllegalArgumentException("Alternative paths do not support the " + CURBSIDE + " parameter yet");
 
-        ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, qResults, weighting, pathCalculator, request.getCurbsides(), forceCurbsides, request.getHeadings(), passThrough);
+        ViaRouting.Result result = ViaRouting.calcPaths(request, queryGraph, qResults, weighting, pathCalculator, forceCurbsides, passThrough);
         if (result.paths.isEmpty())
             throw new RuntimeException("Empty paths for alternative route calculation not expected");
 
@@ -209,13 +212,13 @@ public class Router {
     protected GHResponse routeVia(GHRequest request, AlgorithmOptions algoOpts, Weighting weighting, Profile profile, boolean passThrough, boolean forceCurbsides, boolean disableCH, boolean disableLM) {
         GHResponse ghRsp = new GHResponse();
         StopWatch sw = new StopWatch().start();
-        List<Snap> qResults = ViaRouting.lookup(encodingManager, request.getPoints(), weighting, locationIndex, request.getSnapPreventions(), request.getPointHints());
+        List<Snap> qResults = ViaRouting.lookup(encodingManager, request, weighting, locationIndex);
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
         // (base) query graph used to resolve headings, curbsides etc. this is not necessarily the same thing as
         // the (possibly implementation specific) query graph used by PathCalculator
         QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
         PathCalculator pathCalculator = createPathCalculator(queryGraph, profile, algoOpts, disableCH, disableLM);
-        ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, qResults, weighting, pathCalculator, request.getCurbsides(), forceCurbsides, request.getHeadings(), passThrough);
+        ViaRouting.Result result = ViaRouting.calcPaths(request, queryGraph, qResults, weighting, pathCalculator, forceCurbsides, passThrough);
 
         if (request.getPoints().size() != result.paths.size() + 1)
             throw new RuntimeException("There should be exactly one more point than paths. points:" + request.getPoints().size() + ", paths:" + result.paths.size());
@@ -229,7 +232,7 @@ public class Router {
         return ghRsp;
     }
 
-    private Weighting createWeighting(Profile profile, PMap requestHints, List<GHPoint> points, boolean disableCH) {
+    private Weighting createWeighting(Profile profile, BooleanEncodedValue inSubnetworkEnc, PMap requestHints, List<GHPoint> points, boolean disableCH) {
         if (chEnabled && !disableCH) {
             // todo: do not allow things like short_fastest.distance_factor or u_turn_costs unless CH is disabled
             // and only under certain conditions for LM
@@ -242,7 +245,7 @@ public class Router {
             Weighting weighting = weightingFactory.createWeighting(profile, requestHints, false);
             if (requestHints.has(Parameters.Routing.BLOCK_AREA)) {
                 GraphEdgeIdFinder.BlockArea blockArea = GraphEdgeIdFinder.createBlockArea(ghStorage, locationIndex,
-                        points, requestHints, new FiniteWeightFilter(weighting));
+                        points, requestHints, new FiniteWeightFilter(weighting, inSubnetworkEnc));
                 weighting = new BlockAreaWeighting(weighting, blockArea);
             }
             return weighting;

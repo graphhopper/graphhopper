@@ -25,6 +25,8 @@ import com.graphhopper.reader.PrincetonReader;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.InSubnetwork;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.*;
@@ -38,6 +40,7 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -49,6 +52,7 @@ import java.util.zip.GZIPInputStream;
 import static com.graphhopper.GraphHopperTest.DIR;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
+import static com.graphhopper.util.Parameters.Routing.INSTRUCTIONS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -664,8 +668,8 @@ public class RoutingAlgorithmWithOSMTest {
             hopper.importOrLoad();
 
             Collection<AlgoHelperEntry> prepares = createAlgos(hopper, queryProfile);
-            FlagEncoder encoder = hopper.getEncodingManager().getEncoder(queryProfile.getName());
-            EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder.getAccessEnc());
+            BooleanEncodedValue inSubnetworkEnc = hopper.getEncodingManager().getBooleanEncodedValue(InSubnetwork.key(queryProfile.getName()));
+            EdgeFilter edgeFilter = new FiniteWeightFilter(hopper.createWeighting(queryProfile, new PMap()), inSubnetworkEnc);
             for (AlgoHelperEntry entry : prepares) {
                 if (entry.getExpectedAlgo().startsWith("astarbi|ch")) {
                     continue;

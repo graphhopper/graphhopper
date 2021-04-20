@@ -28,6 +28,8 @@ import com.graphhopper.routing.AStarBidirection;
 import com.graphhopper.routing.BidirRoutingAlgorithm;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.InSubnetwork;
 import com.graphhopper.routing.lm.LMApproximator;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.lm.PrepareLandmarks;
@@ -82,6 +84,7 @@ public class MapMatching {
     private final int maxVisitedNodes;
     private final DistanceCalc distanceCalc = new DistancePlaneProjection();
     private final Weighting weighting;
+    private final BooleanEncodedValue inSubnetworkEnc;
     private QueryGraph queryGraph;
 
     public MapMatching(GraphHopper graphHopper, PMap hints) {
@@ -139,6 +142,7 @@ public class MapMatching {
         }
         graph = graphHopper.getGraphHopperStorage();
         weighting = graphHopper.createWeighting(profile, hints);
+        inSubnetworkEnc = graphHopper.getEncodingManager().getBooleanEncodedValue(InSubnetwork.key(profileStr));
         this.maxVisitedNodes = hints.getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
     }
 
@@ -226,7 +230,7 @@ public class MapMatching {
     }
 
     private List<Snap> findCandidateSnapsInBBox(double queryLat, double queryLon, BBox queryShape) {
-        EdgeFilter edgeFilter = new FiniteWeightFilter(weighting);
+        EdgeFilter edgeFilter = new FiniteWeightFilter(weighting, inSubnetworkEnc);
         List<Snap> snaps = new ArrayList<>();
         IntHashSet seenEdges = new IntHashSet();
         IntHashSet seenNodes = new IntHashSet();

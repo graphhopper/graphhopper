@@ -28,10 +28,7 @@ import com.graphhopper.routing.Router;
 import com.graphhopper.routing.RouterConfig;
 import com.graphhopper.routing.WeightingFactory;
 import com.graphhopper.routing.ch.CHPreparationHandler;
-import com.graphhopper.routing.ev.DefaultEncodedValueFactory;
-import com.graphhopper.routing.ev.EncodedValueFactory;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.RoadEnvironment;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.lm.LandmarkStorage;
@@ -526,6 +523,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (requireProfilesByName && profilesByName.isEmpty())
             throw new IllegalStateException("no profiles exist but assumed to create EncodingManager. E.g. provide them in GraphHopperConfig when calling GraphHopper.init");
         for (Profile profile : profilesByName.values()) {
+            emBuilder.add(InSubnetwork.create(profile.getName()));
             if (!flagEncoderMap.containsKey(profile.getVehicle()) || profile.isTurnCosts())
                 flagEncoderMap.put(profile.getVehicle(), profile.getVehicle() + (profile.isTurnCosts() ? "|turn_costs=true" : ""));
         }
@@ -1100,18 +1098,18 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private List<PrepareJob> buildSubnetworkRemovalJobs() {
-        List<FlagEncoder> encoders = encodingManager.fetchEdgeEncoders();
         List<PrepareJob> jobs = new ArrayList<>();
-        for (FlagEncoder encoder : encoders) {
-            // for encoders with turn costs we do an edge-based subnetwork removal, because they *might* be used with
-            // a profile with turn_costs=true
-            if (encoder.supportsTurnCosts()) {
-                // u-turn costs are zero as we only want to make sure the graph is fully connected assuming finite
-                // u-turn costs
+        for (Profile profile : profilesByName.values()) {
+            FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
+            Weighting weighting = createWeighting(profile, new PMap());
+            if (profile.isTurnCosts()) {
+                // u-turn costs are zero as we only want to make sure the graph is fully connected assuming finite u-turn costs
                 TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), 0);
-                jobs.add(new PrepareJob(encoder.toString(), encoder.getAccessEnc(), turnCostProvider));
+                jobs.add(new PrepareJob(profile.getName(), encodingManager.getBooleanEncodedValue(InSubnetwork.key(profile.getName())),
+                        encoder.getAccessEnc(), weighting, turnCostProvider));
             } else {
-                jobs.add(new PrepareJob(encoder.toString(), encoder.getAccessEnc(), TurnCostProvider.NO_TURN_COST_PROVIDER));
+                jobs.add(new PrepareJob(profile.getName(), encodingManager.getBooleanEncodedValue(InSubnetwork.key(profile.getName())),
+                        encoder.getAccessEnc(), weighting, TurnCostProvider.NO_TURN_COST_PROVIDER));
             }
         }
         return jobs;
