@@ -133,12 +133,6 @@ Here is a complete request example for a POST /route query in berlin that includ
 } 
 ```
 
-If you put this JSON into a file `custom.json` you can send the request like this:
-
-```shell
-curl -XPOST -H "Content-Type: application/json" "http://localhost:8989/route" --data custom.json
-```
-
 Note that this only works for custom profiles and so far only for POST /route (but not GET /route or /isochrone, /spt or
 /map-matching).
 
