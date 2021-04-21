@@ -59,10 +59,13 @@ public final class GraphExplorer {
         this.accessEnc = accessEgressWeighting.getFlagEncoder().getAccessEnc();
         this.ignoreValidities = ignoreValidities;
         this.blockedRouteTypes = blockedRouteTypes;
-        DefaultEdgeFilter accessEgressIn = DefaultEdgeFilter.inEdges(accessEgressWeighting.getFlagEncoder().getAccessEnc());
-        DefaultEdgeFilter accessEgressOut = DefaultEdgeFilter.outEdges(accessEgressWeighting.getFlagEncoder().getAccessEnc());
-        DefaultEdgeFilter ptIn = DefaultEdgeFilter.inEdges(flagEncoder.getAccessEnc());
-        DefaultEdgeFilter ptOut = DefaultEdgeFilter.outEdges(flagEncoder.getAccessEnc());
+        EdgeFilter accessEgressIn = edge -> edge.getReverse(this.accessEnc);
+        EdgeFilter accessEgressOut = edge -> edge.get(this.accessEnc);
+        // todo: we probably rather want to use this, but see comment in PtRouterImpl
+//        EdgeFilter accessEgressIn = edge -> Double.isFinite(accessEgressWeighting.calcEdgeWeightWithAccess(edge, true));
+//        EdgeFilter accessEgressOut = edge -> Double.isFinite(accessEgressWeighting.calcEdgeWeightWithAccess(edge, false));
+        EdgeFilter ptIn = edge -> edge.getReverse(flagEncoder.getAccessEnc());
+        EdgeFilter ptOut = edge -> edge.get(flagEncoder.getAccessEnc());
         EdgeFilter in = edgeState -> accessEgressIn.accept(edgeState) || ptIn.accept(edgeState);
         EdgeFilter out = edgeState -> accessEgressOut.accept(edgeState) || ptOut.accept(edgeState);
         this.edgeExplorer = graph.createEdgeExplorer(reverse ? in : out);
@@ -102,6 +105,8 @@ public final class GraphExplorer {
                         }
                     }
                     if (edgeType == GtfsStorage.EdgeType.HIGHWAY) {
+                        // todo: if we move access flags into weighting we should probably check for finite weight here
+                        //       instead of relying on access flags
                         if (reverse ? edgeIterator.getReverse(accessEnc) : edgeIterator.get(accessEnc)) {
                             action.accept(edgeIterator);
                             return true;

@@ -25,7 +25,6 @@ import com.google.common.collect.HashMultimap;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.IntEncodedValue;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -114,7 +113,9 @@ class GtfsReader {
 
     void connectStopsToStreetNetwork() {
         FlagEncoder footEncoder = ((GraphHopperStorage) graph).getEncodingManager().getEncoder("foot");
-        final EdgeFilter filter = DefaultEdgeFilter.allEdges(footEncoder.getAccessEnc());
+        // todo: probably should use weighting here, because if the weight (or time!) is infinite the snap will be
+        //       useless since we cannot reach the station this way (also see PtRouterImpl comment)
+        final EdgeFilter filter = edge -> edge.get(footEncoder.getAccessEnc()) || edge.getReverse(footEncoder.getAccessEnc());
         for (Stop stop : feed.stops.values()) {
             if (stop.location_type == 0) { // Only stops. Not interested in parent stations for now.
                 Snap locationSnap = walkNetworkIndex.findClosest(stop.stop_lat, stop.stop_lon, filter);
@@ -477,7 +478,9 @@ class GtfsReader {
         if (platformEnterNode == -1) {
             return result;
         }
-        EdgeIterator edge = graph.getBaseGraph().createEdgeExplorer(DefaultEdgeFilter.outEdges(accessEnc)).setBaseNode(platformEnterNode);
+        // todo: probably we do not need an edge filter at all because we are filtering edges explicitly
+        // anyway (we search for ENTER_TIME_EXPANDED_NETWORK edges)
+        EdgeIterator edge = graph.getBaseGraph().createEdgeExplorer(e -> e.get(accessEnc)).setBaseNode(platformEnterNode);
         while (edge.next()) {
             if (edge.get(ptEncodedValues.getTypeEnc()) == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK) {
                 result.put(edge.get(timeEnc), edge.getAdjNode());
@@ -487,11 +490,13 @@ class GtfsReader {
     }
 
     private int findPlatformNode(int stationNode, GtfsStorageI.PlatformDescriptor platformDescriptor, GtfsStorage.EdgeType edgeType) {
-        DefaultEdgeFilter filter;
+        // todo: probably we do not need an edge filter at all because we are filtering edges explicitly
+        // anyway (we either search for an ENTER_PT or an EXIT_PT edge, so no need to also filter by access?)
+        EdgeFilter filter;
         if (edgeType == GtfsStorage.EdgeType.ENTER_PT) {
-            filter = DefaultEdgeFilter.outEdges(accessEnc);
+            filter = edge -> edge.get(accessEnc);
         } else if (edgeType == GtfsStorage.EdgeType.EXIT_PT) {
-            filter = DefaultEdgeFilter.inEdges(accessEnc);
+            filter = edge -> edge.getReverse(accessEnc);
         } else {
             throw new RuntimeException();
         }

@@ -24,7 +24,6 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.Directory;
@@ -163,8 +162,8 @@ public class GraphHopperGtfs extends GraphHopper {
                     EdgeIteratorState edgeIteratorState = graphHopperStorage.getEdgeIteratorState(label.edge, label.adjNode);
                     if (edgeIteratorState.get(ptEncodedValues.getTypeEnc()) == GtfsStorage.EdgeType.EXIT_PT) {
                         GtfsStorageI.PlatformDescriptor fromPlatformDescriptor = getGtfsStorage().getPlatformDescriptorByEdge().get(label.edge);
-                        DefaultEdgeFilter filter = DefaultEdgeFilter.outEdges(ptEncodedValues.getAccessEnc());
-                        EdgeExplorer edgeExplorer = graphHopperStorage.createEdgeExplorer(filter);
+                        // todo: maybe no need for an edge filter because we filter for ENTER_PT below anyway?!
+                        EdgeExplorer edgeExplorer = graphHopperStorage.createEdgeExplorer(edge -> edge.get(ptEncodedValues.getAccessEnc()));
                         EdgeIterator edgeIterator = edgeExplorer.setBaseNode(stationNode);
                         while (edgeIterator.next()) {
                             if (edgeIterator.get(ptEncodedValues.getTypeEnc()) == GtfsStorage.EdgeType.ENTER_PT) {
