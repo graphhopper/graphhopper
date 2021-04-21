@@ -115,6 +115,7 @@ Here is a complete request example for a POST /route query in berlin that includ
     ]
   ],
   "profile": "car",
+  "ch.disable": true,
   "custom_model": {
     "speed": [
       {
