@@ -139,7 +139,7 @@ public class RoutingExample {
 
         assert Math.round(res.getBest().getTime() / 1000d) == 96;
 
-        // 2. now avoid primary roads and reduce maximum speed, see docs/core/profiles.md for an in-depth explanation
+        // 2. now avoid primary roads and reduce maximum speed, see docs/core/custom-models.md for an in-depth explanation
         // and also the blog posts https://www.graphhopper.com/?s=customizable+routing
         CustomModel model = new CustomModel();
         model.addToPriority(If("road_class == PRIMARY", MULTIPLY, 0.5));
