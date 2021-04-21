@@ -129,7 +129,7 @@ Here is a complete request example for a POST /route query in berlin that includ
         "multiply_by": 0
       }
     ],
-    "distance_influence": 50
+    "distance_influence": 100
   }
 } 
 ```
