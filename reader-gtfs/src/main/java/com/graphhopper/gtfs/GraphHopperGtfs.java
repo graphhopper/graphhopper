@@ -107,17 +107,12 @@ public class GraphHopperGtfs extends GraphHopper {
                     }
                 }
                 getGtfsStorage().postInit();
-
-                //When set a transfer edge will be created between stops connected to same OSM node. This is to keep previous behavior before
-                //this commit https://github.com/graphhopper/graphhopper/commit/31ae1e1534849099f24e45d53c96340a7c6a5197.
-                boolean createTransferStopsConnectSameOsmNode = ghConfig.has("gtfs.create_transfers_stops_same_osm_node") &&
-                        ghConfig.getBool("gtfs.create_transfers_stops_same_osm_node", false);
-
-                HashMap<String, GtfsReader> readers = new HashMap<>();
+                Map<String, Transfers> allTransfers = new HashMap<>();
+                HashMap<String, GtfsReader> allReaders = new HashMap<>();
                 getGtfsStorage().getGtfsFeeds().forEach((id, gtfsFeed) -> {
                     Transfers transfers = new Transfers(gtfsFeed);
+                    allTransfers.put(id, transfers);
                     GtfsReader gtfsReader = new GtfsReader(id, graphHopperStorage, graphHopperStorage.getEncodingManager(), getGtfsStorage(), streetNetworkIndex, transfers);
-                    gtfsReader.setCreateTransferStopsConnectSameOsmNode(createTransferStopsConnectSameOsmNode);
                     gtfsReader.connectStopsToStreetNetwork();
                     getType0TransferWithTimes(id, gtfsFeed)
                             .forEach(t -> {
@@ -127,9 +122,9 @@ public class GraphHopperGtfs extends GraphHopper {
                             });
                     LOGGER.info("Building transit graph for feed {}", gtfsFeed.feedId);
                     gtfsReader.buildPtNetwork();
-                    readers.put(id, gtfsReader);
+                    allReaders.put(id, gtfsReader);
                 });
-                insertTransfersBetweenFeeds(readers);
+                interpolateTransfers(allReaders, allTransfers);
             } catch (Exception e) {
                 throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
             }
@@ -142,8 +137,9 @@ public class GraphHopperGtfs extends GraphHopper {
         }
     }
 
-    private void insertTransfersBetweenFeeds(HashMap<String, GtfsReader> readers) {
-        LOGGER.info("Looking for inter-feed transfers");
+    private void interpolateTransfers(HashMap<String, GtfsReader> readers, Map<String, Transfers> allTransfers) {
+        LOGGER.info("Looking for transfers");
+        final int maxTransferWalkTimeSeconds = ghConfig.getInt("gtfs.max_transfer_interpolation_walk_time_seconds", 120);
         GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
         QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, Collections.emptyList());
         FastestWeighting accessEgressWeighting = new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder("foot"));
@@ -151,7 +147,7 @@ public class GraphHopperGtfs extends GraphHopper {
         final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, getGtfsStorage(), RealtimeFeed.empty(getGtfsStorage()), true, true, false, 5.0, false, 0);
         getGtfsStorage().getStationNodes().values().stream().distinct().forEach(stationNode -> {
             MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, true, false, false, Integer.MAX_VALUE, new ArrayList<>());
-            router.setLimitStreetTime(Duration.ofMinutes(2).toMillis());
+            router.setLimitStreetTime(Duration.ofSeconds(maxTransferWalkTimeSeconds).toMillis());
             Iterator<Label> iterator = router.calcLabels(stationNode, Instant.ofEpochMilli(0)).iterator();
             while (iterator.hasNext()) {
                 Label label = iterator.next();
@@ -159,15 +155,25 @@ public class GraphHopperGtfs extends GraphHopper {
                     EdgeIteratorState edgeIteratorState = graphHopperStorage.getEdgeIteratorState(label.edge, label.adjNode);
                     if (edgeIteratorState.get(ptEncodedValues.getTypeEnc()) == GtfsStorage.EdgeType.EXIT_PT) {
                         GtfsStorageI.PlatformDescriptor fromPlatformDescriptor = getGtfsStorage().getPlatformDescriptorByEdge().get(label.edge);
+                        Transfers transfers = allTransfers.get(fromPlatformDescriptor.feed_id);
                         DefaultEdgeFilter filter = DefaultEdgeFilter.outEdges(ptEncodedValues.getAccessEnc());
                         EdgeExplorer edgeExplorer = graphHopperStorage.createEdgeExplorer(filter);
                         EdgeIterator edgeIterator = edgeExplorer.setBaseNode(stationNode);
                         while (edgeIterator.next()) {
                             if (edgeIterator.get(ptEncodedValues.getTypeEnc()) == GtfsStorage.EdgeType.ENTER_PT) {
                                 GtfsStorageI.PlatformDescriptor toPlatformDescriptor = getGtfsStorage().getPlatformDescriptorByEdge().get(edgeIterator.getEdge());
+                                LOGGER.debug(fromPlatformDescriptor + " -> " + toPlatformDescriptor);
                                 if (!toPlatformDescriptor.feed_id.equals(fromPlatformDescriptor.feed_id)) {
+                                    LOGGER.debug(" Different feed. Inserting transfer with " + (int) (label.walkTime / 1000L) + " s.");
                                     GtfsReader toFeedReader = readers.get(toPlatformDescriptor.feed_id);
-                                    toFeedReader.insertTransferEdges(label.adjNode, (int) Duration.ofMinutes(2).getSeconds(), toPlatformDescriptor);
+                                    toFeedReader.insertTransferEdges(label.adjNode, (int) (label.walkTime / 1000L), toPlatformDescriptor);
+                                } else {
+                                    List<Transfer> transfersToStop = transfers.getTransfersToStop(toPlatformDescriptor.stop_id, routeIdOrNull(toPlatformDescriptor));
+                                    if (transfersToStop.stream().noneMatch(t -> t.from_stop_id.equals(fromPlatformDescriptor.stop_id))) {
+                                        GtfsReader toFeedReader = readers.get(toPlatformDescriptor.feed_id);
+                                        toFeedReader.insertTransferEdges(label.adjNode, (int) (label.walkTime / 1000L), toPlatformDescriptor);
+                                        LOGGER.debug("  Inserting transfer with " + (int) (label.walkTime / 1000L) + " s.");
+                                    }
                                 }
                             }
                         }
@@ -175,6 +181,14 @@ public class GraphHopperGtfs extends GraphHopper {
                 }
             }
         });
+    }
+
+    private String routeIdOrNull(GtfsStorageI.PlatformDescriptor platformDescriptor) {
+        if (platformDescriptor instanceof GtfsStorageI.RouteTypePlatform) {
+            return null;
+        } else {
+            return ((GtfsStorageI.RoutePlatform) platformDescriptor).route_id;
+        }
     }
 
     private Stream<TransferWithTime> getType0TransferWithTimes(String id, GTFSFeed gtfsFeed) {
