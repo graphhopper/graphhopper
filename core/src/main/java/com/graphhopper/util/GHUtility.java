@@ -472,7 +472,6 @@ public class GHUtility {
                 .set3D(is3D)
                 .setDir(outdir)
                 .setCHConfigs(store.getCHConfigs())
-                .setBytes(store.getNodes())
                 .create();
     }
 

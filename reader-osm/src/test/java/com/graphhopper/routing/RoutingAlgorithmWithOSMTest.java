@@ -44,7 +44,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
 import static com.graphhopper.GraphHopperTest.DIR;
@@ -637,14 +636,11 @@ public class RoutingAlgorithmWithOSMTest {
         try {
             Profile queryProfile = profiles[0];
             Helper.removeDir(new File(graphFile));
-            String encodersString = Arrays.stream(profiles).map(p -> p.getVehicle() + (p.isTurnCosts() ? "|turn_costs=true" : "")).collect(Collectors.joining(","));
-            EncodingManager em = EncodingManager.create(encodersString);
             GraphHopper hopper = new GraphHopper().
                     setStoreOnFlush(true).
                     setOSMFile(osmFile).
                     setProfiles(profiles).
-                    setGraphHopperLocation(graphFile).
-                    setEncodingManager(em);
+                    setGraphHopperLocation(graphFile);
             hopper.setMinNetworkSize(0);
 
             if (osmFile.contains("moscow"))
@@ -700,10 +696,8 @@ public class RoutingAlgorithmWithOSMTest {
         System.out.println("testMonacoParallel takes a bit time...");
         String graphFile = "target/monaco-gh";
         Helper.removeDir(new File(graphFile));
-        final EncodingManager encodingManager = EncodingManager.create("car");
         final GraphHopper hopper = new GraphHopper().
                 setStoreOnFlush(true).
-                setEncodingManager(encodingManager).
                 setWayPointMaxDistance(0).
                 setOSMFile(DIR + "/monaco.osm.gz").
                 setGraphHopperLocation(graphFile).
@@ -716,6 +710,7 @@ public class RoutingAlgorithmWithOSMTest {
         List<Thread> threads = new ArrayList<>();
         final AtomicInteger integ = new AtomicInteger(0);
         int MAX = 100;
+        EncodingManager encodingManager = hopper.getEncodingManager();
         final FlagEncoder carEncoder = encodingManager.getEncoder("car");
 
         // testing if algorithms are independent. should be. so test only two algorithms. 
@@ -773,8 +768,7 @@ public class RoutingAlgorithmWithOSMTest {
         new PrincetonReader(graph, eManager.getEncoder("car")).setStream(new GZIPInputStream(PrincetonReader.class.getResourceAsStream(bigFile))).read();
         GraphHopper hopper = new GraphHopper() {
             {
-                setEncodingManager(eManager);
-                loadGraph(graph);
+                loadGraph(graph, eManager);
             }
 
             @Override

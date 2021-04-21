@@ -1,4 +1,5 @@
 3.0
+    removed setEncodingManager use setProfiles instead or for more custom requirements use GraphHopper.getEncodingManagerBuilder
     CustomWeighting language breaks old format but is more powerful and easier to read; it also allows factors >1 for server-side CustomModels
     renamed GHUtilities.setProperties to setSpeed
     Helper.createFormatter is using the ENGLISH Locale instead of UK, see #2186

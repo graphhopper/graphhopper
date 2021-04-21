@@ -70,8 +70,6 @@ public class RoutingExampleTC {
         hopper.setGraphHopperLocation("target/routing-tc-graph-cache");
         // by enabling turn costs for the FlagEncoder, turn restriction constraints like 'no_left_turn' will be taken
         // from OSM
-        EncodingManager encodingManager = EncodingManager.create("car|turn_costs=true");
-        hopper.setEncodingManager(encodingManager);
         Profile profile = new Profile("car").setVehicle("car").setWeighting("fastest")
                 // to actually use the turn restrictions when routing we have to enable turn costs for our routing profile
                 .setTurnCosts(true)

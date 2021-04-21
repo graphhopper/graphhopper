@@ -8,6 +8,7 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.parsers.OSMSurfaceParser;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
@@ -37,7 +38,6 @@ public class RoutingExample {
         hopper.setOSMFile(ghLoc);
         // specify where to store graphhopper files
         hopper.setGraphHopperLocation("target/routing-graph-cache");
-        hopper.setEncodingManager(EncodingManager.create("car"));
 
         // see docs/core/profiles.md to learn more about profiles
         hopper.setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(false));
@@ -121,7 +121,6 @@ public class RoutingExample {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/routing-custom-graph-cache");
-        hopper.setEncodingManager(EncodingManager.create("car"));
         hopper.setProfiles(new CustomProfile("car_custom").setCustomModel(new CustomModel()).setVehicle("car"));
 
         // The hybrid mode uses the "landmark algorithm" and is up to 15x faster than the flexible mode (Dijkstra).

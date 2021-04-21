@@ -58,11 +58,9 @@ public class MapMatching2Test {
 
     @Test
     public void testIssue13() throws IOException {
-        CarFlagEncoder encoder = new CarFlagEncoder();
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile("../map-matching/files/map-issue13.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
-        hopper.setEncodingManager(EncodingManager.create(encoder));
         hopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         hopper.importOrLoad();
@@ -86,11 +84,9 @@ public class MapMatching2Test {
 
     @Test
     public void testIssue70() throws IOException {
-        CarFlagEncoder encoder = new CarFlagEncoder();
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile("../map-matching/files/issue-70.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
-        hopper.setEncodingManager(EncodingManager.create(encoder));
         hopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         hopper.importOrLoad();
@@ -108,11 +104,9 @@ public class MapMatching2Test {
 
     @Test
     public void testIssue127() throws IOException {
-        CarFlagEncoder encoder = new CarFlagEncoder();
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile("../map-matching/files/map-issue13.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
-        hopper.setEncodingManager(EncodingManager.create(encoder));
         hopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         hopper.importOrLoad();

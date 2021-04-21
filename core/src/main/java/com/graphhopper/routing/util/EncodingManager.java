@@ -24,13 +24,15 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.*;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.graphhopper.util.Helper.toLowerCase;
 
@@ -58,22 +60,19 @@ public class EncodingManager implements EncodedValueLookup {
 
     /**
      * Instantiate manager with the given list of encoders. The manager knows several default
-     * encoders ignoring case.
-     *
-     * @param flagEncodersStr comma delimited list of encoders. The order does not matter.
+     * encoders using DefaultFlagEncoderFactory.
      */
     public static EncodingManager create(String flagEncodersStr) {
         return create(new DefaultFlagEncoderFactory(), flagEncodersStr);
     }
 
     public static EncodingManager create(FlagEncoderFactory factory, String flagEncodersStr) {
-        return createBuilder(parseEncoderString(factory, flagEncodersStr)).build();
+        return createBuilder(Arrays.stream(flagEncodersStr.split(",")).filter(s -> !s.trim().isEmpty()).
+                map(s -> parseEncoderString(factory, s)).collect(Collectors.toList())).build();
     }
 
     /**
      * Instantiate manager with the given list of encoders.
-     *
-     * @param flagEncoders comma delimited list of encoders. The order does not matter.
      */
     public static EncodingManager create(FlagEncoder... flagEncoders) {
         return create(Arrays.asList(flagEncoders));
@@ -81,8 +80,6 @@ public class EncodingManager implements EncodedValueLookup {
 
     /**
      * Instantiate manager with the given list of encoders.
-     *
-     * @param flagEncoders comma delimited list of encoders. The order does not matter.
      */
     public static EncodingManager create(List<? extends FlagEncoder> flagEncoders) {
         return createBuilder(flagEncoders).build();
@@ -100,25 +97,15 @@ public class EncodingManager implements EncodedValueLookup {
      * Create the EncodingManager from the provided GraphHopper location. Throws an
      * IllegalStateException if it fails. Used if no EncodingManager specified on load.
      */
-    public static EncodingManager create(EncodedValueFactory evFactory, FlagEncoderFactory flagEncoderFactory, String ghLoc) {
-        Directory dir = new RAMDirectory(ghLoc, true);
-        StorableProperties properties = new StorableProperties(dir);
-        if (!properties.loadExisting())
-            throw new IllegalStateException("Cannot load properties to fetch EncodingManager configuration at: "
-                    + dir.getLocation());
-
-        EncodingManager.Builder builder = new EncodingManager.Builder();
+    public static EncodingManager create(EncodingManager.Builder builder, EncodedValueFactory evFactory, FlagEncoderFactory flagEncoderFactory, StorableProperties properties) {
         String encodedValuesStr = properties.get("graph.encoded_values");
-        if (!Helper.isEmpty(encodedValuesStr))
-            builder.addAll(evFactory, encodedValuesStr);
+        for (String evString : encodedValuesStr.split(",")) {
+            builder.addIfAbsent(evFactory, evString);
+        }
         String flagEncoderValuesStr = properties.get("graph.flag_encoders");
-        if (!Helper.isEmpty(flagEncoderValuesStr))
-            builder.addAll(flagEncoderFactory, flagEncoderValuesStr);
-
-        if (Helper.isEmpty(flagEncoderValuesStr) && Helper.isEmpty(encodedValuesStr))
-            throw new IllegalStateException("EncodingManager was not configured. And no one was found in the graph: "
-                    + dir.getLocation());
-
+        for (String encoderString : flagEncoderValuesStr.split(",")) {
+            builder.addIfAbsent(flagEncoderFactory, encoderString);
+        }
         return builder.build();
     }
 
@@ -144,9 +131,9 @@ public class EncodingManager implements EncodedValueLookup {
     public static class Builder {
         private EncodingManager em;
         private DateRangeParser dateRangeParser;
-        private final List<AbstractFlagEncoder> flagEncoderList = new ArrayList<>();
-        private final List<EncodedValue> encodedValueList = new ArrayList<>();
-        private final List<TagParser> tagParsers = new ArrayList<>();
+        private final Map<String, AbstractFlagEncoder> flagEncoderMap = new LinkedHashMap<>();
+        private final Map<String, EncodedValue> encodedValueMap = new LinkedHashMap<>();
+        private final Set<TagParser> tagParserSet = new LinkedHashSet<>();
         private final List<TurnCostParser> turnCostParsers = new ArrayList<>();
         private final List<RelationTagParser> relationTagParsers = new ArrayList<>();
 
@@ -181,27 +168,33 @@ public class EncodingManager implements EncodedValueLookup {
             return this;
         }
 
-        /**
-         * For backward compatibility provide a way to add multiple FlagEncoders
-         */
-        public Builder addAll(FlagEncoderFactory factory, String flagEncodersStr) {
+        public boolean addIfAbsent(FlagEncoderFactory factory, String flagEncoderString) {
             check();
-            for (FlagEncoder fe : parseEncoderString(factory, flagEncodersStr)) {
-                flagEncoderList.add((AbstractFlagEncoder) fe);
-            }
-            return this;
+            String key = flagEncoderString.split("\\|")[0].trim();
+            if (flagEncoderMap.containsKey(key))
+                return false;
+            FlagEncoder fe = parseEncoderString(factory, flagEncoderString);
+            flagEncoderMap.put(fe.toString(), (AbstractFlagEncoder) fe);
+            return true;
         }
 
-        public Builder addAll(EncodedValueFactory factory, String encodedValueString) {
+        public boolean addIfAbsent(EncodedValueFactory factory, String encodedValueString) {
             check();
-            em.add(encodedValueList, factory, encodedValueString);
-            return this;
+            String key = encodedValueString.split("\\|")[0].trim();
+            if (encodedValueMap.containsKey(key))
+                return false;
+            EncodedValue ev = parseEncodedValueString(factory, encodedValueString);
+            encodedValueMap.put(ev.getName(), ev);
+            return true;
         }
 
-        public Builder addAll(TagParserFactory factory, String tagParserString) {
+        public boolean addIfAbsent(TagParserFactory factory, String tagParserString) {
             check();
-            em.add(tagParsers, factory, tagParserString);
-            return this;
+            tagParserString = tagParserString.trim();
+            if (tagParserString.isEmpty()) return false;
+
+            TagParser tagParser = em.parseEncodedValueString(factory, tagParserString);
+            return tagParserSet.add(tagParser);
         }
 
         public Builder addTurnCostParser(TurnCostParser parser) {
@@ -218,19 +211,17 @@ public class EncodingManager implements EncodedValueLookup {
 
         public Builder add(FlagEncoder encoder) {
             check();
-            flagEncoderList.add((AbstractFlagEncoder) encoder);
+            if (flagEncoderMap.containsKey(encoder.toString()))
+                throw new IllegalArgumentException("FlagEncoder already exists: " + encoder);
+            flagEncoderMap.put(encoder.toString(), (AbstractFlagEncoder) encoder);
             return this;
         }
 
         public Builder add(EncodedValue encodedValue) {
             check();
-            encodedValueList.add(encodedValue);
-            return this;
-        }
-
-        public Builder setDateRangeParser(DateRangeParser dateRangeParser) {
-            check();
-            this.dateRangeParser = dateRangeParser;
+            if (encodedValueMap.containsKey(encodedValue.getName()))
+                throw new IllegalArgumentException("EncodedValue already exists: " + encodedValue.getName());
+            encodedValueMap.put(encodedValue.getName(), encodedValue);
             return this;
         }
 
@@ -240,7 +231,15 @@ public class EncodingManager implements EncodedValueLookup {
          */
         public Builder add(TagParser tagParser) {
             check();
-            tagParsers.add(tagParser);
+            if (!tagParserSet.add(tagParser))
+                throw new IllegalArgumentException("TagParser already exists: " + tagParser);
+
+            return this;
+        }
+
+        public Builder setDateRangeParser(DateRangeParser dateRangeParser) {
+            check();
+            this.dateRangeParser = dateRangeParser;
             return this;
         }
 
@@ -296,7 +295,7 @@ public class EncodingManager implements EncodedValueLookup {
             }
 
             List<SpatialRuleParser> insertLater = new ArrayList<>();
-            for (TagParser tagParser : tagParsers) {
+            for (TagParser tagParser : tagParserSet) {
                 if (SpatialRuleParser.class.isAssignableFrom(tagParser.getClass())) {
                     insertLater.add((SpatialRuleParser) tagParser);
                 } else {
@@ -304,7 +303,7 @@ public class EncodingManager implements EncodedValueLookup {
                 }
             }
 
-            for (EncodedValue ev : encodedValueList) {
+            for (EncodedValue ev : encodedValueMap.values()) {
                 em.addEncodedValue(ev, false);
             }
 
@@ -333,7 +332,7 @@ public class EncodingManager implements EncodedValueLookup {
             if (dateRangeParser == null)
                 dateRangeParser = new DateRangeParser(DateRangeParser.createCalendar());
 
-            for (AbstractFlagEncoder encoder : flagEncoderList) {
+            for (AbstractFlagEncoder encoder : flagEncoderMap.values()) {
                 if (encoder instanceof BikeCommonFlagEncoder) {
                     if (!em.hasEncodedValue(RouteNetwork.key("bike")))
                         _addRelationTagParser(new OSMBikeNetworkTagParser());
@@ -346,7 +345,7 @@ public class EncodingManager implements EncodedValueLookup {
                 }
             }
 
-            for (AbstractFlagEncoder encoder : flagEncoderList) {
+            for (AbstractFlagEncoder encoder : flagEncoderMap.values()) {
                 encoder.init(dateRangeParser);
                 em.addEncoder(encoder);
             }
@@ -356,7 +355,7 @@ public class EncodingManager implements EncodedValueLookup {
             }
 
             // FlagEncoder can demand TurnCostParsers => add them after the explicitly added ones
-            for (AbstractFlagEncoder encoder : flagEncoderList) {
+            for (AbstractFlagEncoder encoder : flagEncoderMap.values()) {
                 if (encoder.supportsTurnCosts() && !em.turnCostParsers.containsKey(encoder.toString()))
                     _addTurnCostParser(new OSMTurnRelationParser(encoder.toString(), encoder.getMaxTurnCosts(),
                             OSMRoadAccessParser.toOSMRestrictions(encoder.getTransportationMode())));
@@ -371,62 +370,44 @@ public class EncodingManager implements EncodedValueLookup {
         }
     }
 
-    static List<FlagEncoder> parseEncoderString(FlagEncoderFactory factory, String encoderList) {
-        if (encoderList.contains(":"))
-            throw new IllegalArgumentException("EncodingManager does no longer use reflection instantiate encoders directly.");
+    static FlagEncoder parseEncoderString(FlagEncoderFactory factory, String encoderString) {
+        if (!encoderString.equals(toLowerCase(encoderString)))
+            throw new IllegalArgumentException("An upper case name for the FlagEncoder is not allowed: " + encoderString);
 
-        if (!encoderList.equals(toLowerCase(encoderList)))
-            throw new IllegalArgumentException("Since 0.7 EncodingManager does no longer accept upper case profiles: " + encoderList);
+        encoderString = encoderString.trim();
+        if (encoderString.isEmpty())
+            throw new IllegalArgumentException("FlagEncoder cannot be empty. " + encoderString);
 
-        String[] entries = encoderList.split(",");
-        List<FlagEncoder> resultEncoders = new ArrayList<>();
-
-        for (String entry : entries) {
-            entry = toLowerCase(entry.trim());
-            if (entry.isEmpty())
-                continue;
-
-            String entryVal = "";
-            if (entry.contains("|")) {
-                entryVal = entry;
-                entry = entry.split("\\|")[0];
-            }
-            PMap configuration = new PMap(entryVal);
-            resultEncoders.add(factory.createFlagEncoder(entry, configuration));
+        String entryVal = "";
+        if (encoderString.contains("|")) {
+            entryVal = encoderString;
+            encoderString = encoderString.split("\\|")[0];
         }
-        return resultEncoders;
+        PMap configuration = new PMap(entryVal);
+        return factory.createFlagEncoder(encoderString, configuration);
     }
 
-    private void add(List<EncodedValue> returnList, EncodedValueFactory factory, String evList) {
-        if (!evList.equals(toLowerCase(evList)))
-            throw new IllegalArgumentException("Use lower case for EncodedValues: " + evList);
+    static EncodedValue parseEncodedValueString(EncodedValueFactory factory, String encodedValueString) {
+        if (!encodedValueString.equals(toLowerCase(encodedValueString)))
+            throw new IllegalArgumentException("Use lower case for EncodedValues: " + encodedValueString);
 
-        for (String entry : evList.split(",")) {
-            entry = toLowerCase(entry.trim());
-            if (entry.isEmpty())
-                continue;
+        encodedValueString = encodedValueString.trim();
+        if (encodedValueString.isEmpty())
+            throw new IllegalArgumentException("EncodedValue cannot be empty. " + encodedValueString);
 
-            EncodedValue evObject = factory.create(entry);
-            PMap map = new PMap(entry);
-            if (!map.has("version"))
-                throw new IllegalArgumentException("encoded value must have a version specified but it was " + entry);
-            returnList.add(evObject);
-        }
+        EncodedValue evObject = factory.create(encodedValueString);
+        PMap map = new PMap(encodedValueString);
+        if (!map.has("version"))
+            throw new IllegalArgumentException("EncodedValue must have a version specified but it was " + encodedValueString);
+        return evObject;
     }
 
-    private void add(List<TagParser> returnList, TagParserFactory factory, String tpList) {
-        if (!tpList.equals(toLowerCase(tpList)))
-            throw new IllegalArgumentException("Use lower case for TagParser: " + tpList);
+    private TagParser parseEncodedValueString(TagParserFactory factory, String tagParserString) {
+        if (!tagParserString.equals(toLowerCase(tagParserString)))
+            throw new IllegalArgumentException("Use lower case for TagParser: " + tagParserString);
 
-        for (String entry : tpList.split(",")) {
-            entry = entry.trim();
-            if (entry.isEmpty())
-                continue;
-
-            PMap map = new PMap(entry);
-            TagParser tp = factory.create(entry, map);
-            returnList.add(tp);
-        }
+        PMap map = new PMap(tagParserString);
+        return factory.create(tagParserString, map);
     }
 
     static String fixWayName(String str) {
@@ -455,11 +436,6 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     private void addEncoder(AbstractFlagEncoder encoder) {
-        for (FlagEncoder fe : edgeEncoders) {
-            if (fe.toString().equals(encoder.toString()))
-                throw new IllegalArgumentException("Cannot register edge encoder. Name already exists: " + fe.toString());
-        }
-
         int encoderCount = edgeEncoders.size();
 
         encoder.setEncodedValueLookup(this);
@@ -473,8 +449,6 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     private void addEncodedValue(EncodedValue ev, boolean withNamespace) {
-        if (hasEncodedValue(ev.getName()))
-            throw new IllegalStateException("EncodedValue " + ev.getName() + " already exists " + encodedValueMap.get(ev.getName()) + " vs " + ev);
         String normalizedKey = ev.getName().replaceAll(SPECIAL_SEPARATOR, "_");
         if (hasEncodedValue(normalizedKey))
             throw new IllegalStateException("EncodedValue " + ev.getName() + " collides with " + normalizedKey);
@@ -507,7 +481,7 @@ public class EncodingManager implements EncodedValueLookup {
                 return encoder;
         }
         if (throwExc)
-            throw new IllegalArgumentException("Encoder for " + name + " not found. Existing: " + toFlagEncodersAsString());
+            throw new IllegalArgumentException("FlagEncoder for " + name + " not found. Existing: " + toFlagEncodersAsString());
         return null;
     }
 

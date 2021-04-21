@@ -27,6 +27,7 @@ import com.graphhopper.storage.IntsRef;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -78,7 +79,7 @@ public class EncodingManagerTest {
             EncodingManager.create(foot, foot);
             fail("There should have been an exception");
         } catch (Exception ex) {
-            assertEquals("You must not register a FlagEncoder (foot) twice or for two EncodingManagers!", ex.getMessage());
+            assertEquals("FlagEncoder already exists: foot", ex.getMessage());
         }
     }
 
@@ -221,24 +222,24 @@ public class EncodingManagerTest {
     @Test
     public void testSupportFords() {
         // 1) no encoder crossing fords
-        String flagEncodersStr = "car,bike,foot";
-        EncodingManager manager = EncodingManager.create(new DefaultFlagEncoderFactory(), flagEncodersStr);
+        String flagEncoderStrings = "car,bike,foot";
+        EncodingManager manager = EncodingManager.create(new DefaultFlagEncoderFactory(), flagEncoderStrings);
 
         assertFalse(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
         assertFalse(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());
         assertFalse(((AbstractFlagEncoder) manager.getEncoder("foot")).isBlockFords());
 
         // 2) two encoders crossing fords
-        flagEncodersStr = "car,bike|block_fords=true,foot|block_fords=false";
-        manager = EncodingManager.create(new DefaultFlagEncoderFactory(), flagEncodersStr);
+        flagEncoderStrings = "car, bike|block_fords=true, foot|block_fords=false";
+        manager = EncodingManager.create(new DefaultFlagEncoderFactory(), flagEncoderStrings);
 
         assertFalse(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
         assertTrue(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());
         assertFalse(((AbstractFlagEncoder) manager.getEncoder("foot")).isBlockFords());
 
         // 2) Try combined with another tag
-        flagEncodersStr = "car|turn_costs=true|block_fords=true,bike,foot|block_fords=false";
-        manager = EncodingManager.create(new DefaultFlagEncoderFactory(), flagEncodersStr);
+        flagEncoderStrings = "car|turn_costs=true|block_fords=true, bike, foot|block_fords=false";
+        manager = EncodingManager.create(new DefaultFlagEncoderFactory(), flagEncoderStrings);
 
         assertTrue(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
         assertFalse(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());

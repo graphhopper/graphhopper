@@ -21,6 +21,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.BikeFlagEncoder;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -28,6 +29,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 
 import static com.graphhopper.util.EdgeIteratorState.REVERSE_STATE;
@@ -266,7 +268,8 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
         // load without configured FlagEncoders
         GraphHopper hopper = new GraphHopper();
-        hopper.setProfiles(Collections.singletonList(new Profile("p_car").setVehicle("car").setWeighting("fastest")));
+        hopper.setProfiles(Arrays.asList(new Profile("p_car").setVehicle("car").setWeighting("fastest"),
+                new Profile("p_bike").setVehicle("bike").setWeighting("fastest")));
         if (ch) {
             hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("p_car"));
         }
@@ -276,10 +279,10 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         assertEquals(edges, graph.getAllEdges().length());
         Helper.close(graph);
 
-        // load via explicitly configured FlagEncoders
-        hopper = new GraphHopper()
-                .setEncodingManager(encodingManager)
-                .setProfiles(Collections.singletonList(new Profile("p_car").setVehicle("car").setWeighting("fastest")));
+        hopper = new GraphHopper();
+        // load via explicitly configured FlagEncoders then we can define only one profile
+        hopper.getEncodingManagerBuilder().add(createCarFlagEncoder()).add(new BikeFlagEncoder());
+        hopper.setProfiles(Collections.singletonList(new Profile("p_car").setVehicle("car").setWeighting("fastest")));
         if (ch) {
             hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("p_car"));
         }

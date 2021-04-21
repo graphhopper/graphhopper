@@ -56,11 +56,7 @@ public class GraphHopperGtfs extends GraphHopper {
 
     public GraphHopperGtfs(GraphHopperConfig ghConfig) {
         this.ghConfig = ghConfig;
-    }
-
-    @Override
-    protected void registerCustomEncodedValues(EncodingManager.Builder emBuilder) {
-        PtEncodedValues.createAndAddEncodedValues(emBuilder);
+        PtEncodedValues.createAndAddEncodedValues(getEncodingManagerBuilder());
     }
 
     @Override
