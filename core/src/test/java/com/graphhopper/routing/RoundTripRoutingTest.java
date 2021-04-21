@@ -18,7 +18,6 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.GHRequest;
 import com.graphhopper.routing.ev.InSubnetwork;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
@@ -59,7 +58,8 @@ public class RoundTripRoutingTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void lookup_throwsIfNumberOfPointsNotOne() {
-        RoundTripRouting.lookup(em, new GHRequest(ghPoint1, ghPoint2).setProfile("car"), fastestWeighting, null, new RoundTripRouting.Params());
+        RoundTripRouting.lookup(Arrays.asList(ghPoint1, ghPoint2),
+                new FiniteWeightFilter(fastestWeighting, em.getBooleanEncodedValue(InSubnetwork.key("car"))),null, new RoundTripRouting.Params());
     }
 
     @Test
@@ -75,7 +75,8 @@ public class RoundTripRoutingTest {
         hints.putObject(Parameters.Algorithms.RoundTrip.POINTS, numPoints);
         hints.putObject(Parameters.Algorithms.RoundTrip.DISTANCE, roundTripDistance);
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
-        List<Snap> stagePoints = RoundTripRouting.lookup(em, new GHRequest().addPoint(start).setProfile("car"), fastestWeighting, locationIndex,
+        List<Snap> stagePoints = RoundTripRouting.lookup(Collections.singletonList(start),
+                new FiniteWeightFilter(fastestWeighting, em.getBooleanEncodedValue(InSubnetwork.key("car"))), locationIndex,
                 new RoundTripRouting.Params(hints, heading, 3));
         assertEquals(3, stagePoints.size());
         assertEquals(0, stagePoints.get(0).getClosestNode());
@@ -84,7 +85,7 @@ public class RoundTripRoutingTest {
 
         QueryGraph queryGraph = QueryGraph.create(g, stagePoints);
         List<Path> paths = RoundTripRouting.calcPaths(stagePoints, new FlexiblePathCalculator(queryGraph,
-                new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, fastestWeighting, tMode))).paths;
+                new RoutingAlgorithmFactorySimple(), fastestWeighting, new AlgorithmOptions().setAlgorithm(DIJKSTRA_BI).setTraversalMode(tMode))).paths;
         // make sure the resulting paths are connected and form a round trip starting and ending at the start node 0
         assertEquals(2, paths.size());
         assertEquals(IntArrayList.from(0, 7, 6, 5), paths.get(0).calcNodes());
@@ -106,7 +107,7 @@ public class RoundTripRoutingTest {
         QueryGraph qGraph = QueryGraph.create(g, Arrays.asList(snap4, snap5));
 
         FlexiblePathCalculator pathCalculator = new FlexiblePathCalculator(
-                qGraph, new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, fastestWeighting, tMode));
+                qGraph, new RoutingAlgorithmFactorySimple(), fastestWeighting, new AlgorithmOptions().setAlgorithm(DIJKSTRA_BI).setTraversalMode(tMode));
         List<Path> paths = RoundTripRouting.calcPaths(Arrays.asList(snap5, snap4, snap5), pathCalculator).paths;
         assertEquals(2, paths.size());
         assertEquals(IntArrayList.from(5, 6, 3), paths.get(0).calcNodes());
@@ -114,7 +115,7 @@ public class RoundTripRoutingTest {
 
         qGraph = QueryGraph.create(g, Arrays.asList(snap4, snap6));
         pathCalculator = new FlexiblePathCalculator(
-                qGraph, new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, fastestWeighting, tMode));
+                qGraph, new RoutingAlgorithmFactorySimple(), fastestWeighting, new AlgorithmOptions().setAlgorithm(DIJKSTRA_BI).setTraversalMode(tMode));
         paths = RoundTripRouting.calcPaths(Arrays.asList(snap6, snap4, snap6), pathCalculator).paths;
         assertEquals(2, paths.size());
         assertEquals(IntArrayList.from(6, 3), paths.get(0).calcNodes());

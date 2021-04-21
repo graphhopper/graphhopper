@@ -38,10 +38,10 @@ import static com.graphhopper.util.Parameters.Algorithms.AltRoute.*;
  */
 public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory {
     @Override
-    public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
+    public RoutingAlgorithm createAlgo(Graph g, Weighting w, AlgorithmOptions opts) {
         RoutingAlgorithm ra;
         String algoStr = opts.getAlgorithm();
-        Weighting weighting = g.wrapWeighting(opts.getWeighting());
+        Weighting weighting = g.wrapWeighting(w);
         if (DIJKSTRA_BI.equalsIgnoreCase(algoStr)) {
             ra = new DijkstraBidirectionRef(g, weighting, opts.getTraversalMode());
         } else if (DIJKSTRA.equalsIgnoreCase(algoStr)) {
@@ -58,7 +58,7 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory {
 
         } else if (ASTAR.equalsIgnoreCase(algoStr)) {
             AStar aStar = new AStar(g, weighting, opts.getTraversalMode());
-            aStar.setApproximation(getApproximation(ASTAR, opts.getHints(), opts.getWeighting(), g.getNodeAccess()));
+            aStar.setApproximation(getApproximation(ASTAR, opts.getHints(), w, g.getNodeAccess()));
             ra = aStar;
 
         } else if (ALT_ROUTE.equalsIgnoreCase(algoStr)) {

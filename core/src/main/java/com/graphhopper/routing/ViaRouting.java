@@ -18,8 +18,10 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.GHRequest;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FiniteWeightFilter;
@@ -52,18 +54,12 @@ public class ViaRouting {
     /**
      * @throws MultiplePointsNotFoundException in case one or more points could not be resolved
      */
-    public static List<Snap> lookup(EncodedValueLookup lookup, GHRequest request, Weighting weighting, LocationIndex locationIndex) {
-        if (request.getProfile().isEmpty())
-            throw new IllegalStateException("profile not set");
-        List<GHPoint> points = request.getPoints();
+    public static List<Snap> lookup(EncodedValueLookup lookup, List<GHPoint> points, EdgeFilter edgeFilter, LocationIndex locationIndex, List<String> snapPreventions, List<String> pointHints) {
         if (points.size() < 2)
             throw new IllegalArgumentException("At least 2 points have to be specified, but was:" + points.size());
 
-        List<String> snapPreventions = request.getSnapPreventions();
         final EnumEncodedValue<RoadClass> roadClassEnc = lookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         final EnumEncodedValue<RoadEnvironment> roadEnvEnc = lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
-        BooleanEncodedValue inSubnetworkEnc = lookup.getBooleanEncodedValue(InSubnetwork.key(request.getProfile()));
-        EdgeFilter edgeFilter = new FiniteWeightFilter(weighting, inSubnetworkEnc);
         EdgeFilter strictEdgeFilter = snapPreventions.isEmpty()
                 ? edgeFilter
                 : new SnapPreventionEdgeFilter(edgeFilter, roadClassEnc, roadEnvEnc, snapPreventions);
@@ -72,9 +68,9 @@ public class ViaRouting {
         for (int placeIndex = 0; placeIndex < points.size(); placeIndex++) {
             GHPoint point = points.get(placeIndex);
             Snap snap = null;
-            if (!request.getPointHints().isEmpty())
+            if (!pointHints.isEmpty())
                 snap = locationIndex.findClosest(point.lat, point.lon, new NameSimilarityEdgeFilter(strictEdgeFilter,
-                        request.getPointHints().get(placeIndex), point, 100));
+                        pointHints.get(placeIndex), point, 100));
             else if (!snapPreventions.isEmpty())
                 snap = locationIndex.findClosest(point.lat, point.lon, strictEdgeFilter);
             if (snap == null || !snap.isValid())
@@ -91,12 +87,9 @@ public class ViaRouting {
         return snaps;
     }
 
-    public static Result calcPaths(GHRequest request, QueryGraph queryGraph, List<Snap> snaps, Weighting weighting,
-                                   PathCalculator pathCalculator, boolean forceCurbsides, boolean passThrough) {
-        List<String> curbsides = request.getCurbsides();
-        if (!curbsides.isEmpty() && curbsides.size() != request.getPoints().size())
+    public static Result calcPaths(List<GHPoint> points, QueryGraph queryGraph, List<Snap> snaps, Weighting weighting, PathCalculator pathCalculator, List<String> curbsides, boolean forceCurbsides, List<Double> headings, boolean passThrough) {
+        if (!curbsides.isEmpty() && curbsides.size() != points.size())
             throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
-        List<Double> headings = request.getHeadings();
         if (!curbsides.isEmpty() && !headings.isEmpty())
             throw new IllegalArgumentException("You cannot use curbsides and headings or pass_through at the same time");
 
