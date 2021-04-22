@@ -967,14 +967,14 @@ public class GraphHopper implements GraphHopperAPI {
                             : lmPreparationHandler.getPreparation(lmp.getProfile()).getLandmarkStorage());
         }
         return doCreateRouter(ghStorage, locationIndex, profilesByName, pathBuilderFactory,
-                trMap, routerConfig, chGraphs, landmarks);
+                trMap, routerConfig, createWeightingFactory(), chGraphs, landmarks);
     }
 
     protected Router doCreateRouter(GraphHopperStorage ghStorage, LocationIndex locationIndex, Map<String, Profile> profilesByName,
                                     PathDetailsBuilderFactory pathBuilderFactory, TranslationMap trMap, RouterConfig routerConfig,
-                                    Map<String, CHGraph> chGraphs, Map<String, LandmarkStorage> landmarks) {
+                                    WeightingFactory weightingFactory, Map<String, CHGraph> chGraphs, Map<String, LandmarkStorage> landmarks) {
         return new Router(ghStorage, locationIndex, profilesByName, pathBuilderFactory,
-                trMap, routerConfig, createWeightingFactory(), chGraphs, landmarks
+                trMap, routerConfig, weightingFactory, chGraphs, landmarks
         );
     }
 
