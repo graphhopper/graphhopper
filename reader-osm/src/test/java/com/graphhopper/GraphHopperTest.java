@@ -2183,7 +2183,7 @@ public class GraphHopperTest {
         String vehicle = "car";
         String weighting = "fastest";
         final GraphHopper hopper = new GraphHopper().
-                setProfiles(new Profile(profile).setVehicle(vehicle).setVehicle(weighting));
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting));
         IllegalStateException e = assertThrows(IllegalStateException.class, () -> hopper.route(new GHRequest(42, 10.4, 42, 10).setProfile(profile)));
         assertTrue(e.getMessage().startsWith("Do a successful call to load or importOrLoad before routing"), e.getMessage());
     }
