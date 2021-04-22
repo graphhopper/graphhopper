@@ -131,17 +131,6 @@ public class GraphHopper implements GraphHopperAPI {
         this.landmarkSplittingFeatureCollection = landmarkSplittingFeatureCollection;
     }
 
-    /**
-     * For testing only
-     */
-    protected GraphHopper loadGraph(GraphHopperStorage g, EncodingManager encodingManager) {
-        this.ghStorage = g;
-        this.encodingManager = encodingManager;
-        setFullyLoaded();
-        initLocationIndex();
-        return this;
-    }
-
     public EncodingManager.Builder getEncodingManagerBuilder() {
         return emBuilder;
     }

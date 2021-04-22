@@ -21,7 +21,6 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.reader.PrincetonReader;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
@@ -753,53 +752,5 @@ public class RoutingAlgorithmWithOSMTest {
         assertEquals(MAX * algosLength * instances.size(), integ.get());
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
         hopper.close();
-    }
-
-    @Test
-    public void testPerformance() throws IOException {
-        int N = 10;
-        int noJvmWarming = N / 4;
-
-        Random rand = new Random(0);
-        final EncodingManager eManager = EncodingManager.create("car");
-        final GraphHopperStorage graph = new GraphBuilder(eManager).create();
-
-        String bigFile = "10000EWD.txt.gz";
-        new PrincetonReader(graph, eManager.getEncoder("car")).setStream(new GZIPInputStream(PrincetonReader.class.getResourceAsStream(bigFile))).read();
-        GraphHopper hopper = new GraphHopper() {
-            {
-                loadGraph(graph, eManager);
-            }
-
-            @Override
-            protected LocationIndex createLocationIndex(Directory dir) {
-                return new LocationIndexTree(graph, dir);
-            }
-        };
-
-        Collection<AlgoHelperEntry> prepares = createAlgos(hopper, new Profile("car").setVehicle("car").setWeighting("shortest"));
-
-        for (AlgoHelperEntry entry : prepares) {
-            StopWatch sw = new StopWatch();
-            for (int i = 0; i < N; i++) {
-                int node1 = Math.abs(rand.nextInt(graph.getNodes()));
-                int node2 = Math.abs(rand.nextInt(graph.getNodes()));
-                RoutingAlgorithm d = entry.createAlgo(graph);
-                if (i >= noJvmWarming)
-                    sw.start();
-
-                Path p = d.calcPath(node1, node2);
-                // avoid jvm optimization => call p.distance
-                if (i >= noJvmWarming && p.getDistance() > -1)
-                    sw.stop();
-
-                // System.out.println("#" + i + " " + name + ":" + sw.getSeconds() + " " + p.nodes());
-            }
-
-            float perRun = sw.stop().getSeconds() / ((float) (N - noJvmWarming));
-            System.out.println("# " + getClass().getSimpleName() + " " + entry
-                    + ":" + sw.stop().getSeconds() + ", per run:" + perRun);
-            assertTrue("speed too low!? " + perRun + " per run", perRun < 0.08);
-        }
     }
 }

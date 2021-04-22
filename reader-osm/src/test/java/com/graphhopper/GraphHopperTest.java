@@ -25,9 +25,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.SkadiProvider;
-import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
 import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
 import com.graphhopper.routing.weighting.Weighting;
@@ -54,12 +52,14 @@ import org.locationtech.jts.geom.GeometryFactory;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.graphhopper.Junit4To5Assertions.*;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static com.graphhopper.util.Parameters.Curbsides.*;
 import static com.graphhopper.util.Parameters.Routing.U_TURN_COSTS;
 import static java.util.Arrays.asList;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author Peter Karich
@@ -2175,5 +2175,76 @@ public class GraphHopperTest {
 
     private void assertDetail(PathDetail detail, String expected) {
         assertEquals(expected, detail.toString());
+    }
+
+    @Test
+    public void testNoLoad() {
+        String profile = "profile";
+        String vehicle = "car";
+        String weighting = "fastest";
+        final GraphHopper hopper = new GraphHopper().
+                setProfiles(new Profile(profile).setVehicle(vehicle).setVehicle(weighting));
+        IllegalStateException e = assertThrows(IllegalStateException.class, () -> hopper.route(new GHRequest(42, 10.4, 42, 10).setProfile(profile)));
+        assertTrue(e.getMessage().startsWith("Do a successful call to load or importOrLoad before routing"), e.getMessage());
+    }
+
+    @Test
+    public void connectionNotFound() {
+        final String profile = "profile";
+        final String vehicle = "car";
+        final String weighting = "fastest";
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile(BAYREUTH).
+                setProfiles(new Profile("profile").setVehicle(vehicle).setWeighting(weighting)).
+                setStoreOnFlush(true);
+        hopper.getCHPreparationHandler()
+                .setCHProfiles(new CHProfile("profile"));
+        hopper.setMinNetworkSize(0);
+        hopper.importOrLoad();
+        // here from and to both snap to small subnetworks that are disconnected from the main graph and
+        // since we set min network size to 0 we expect a connection not found error
+        GHPoint from = new GHPoint(49.97964, 11.539593);
+        GHPoint to = new GHPoint(50.029247, 11.582851);
+        GHRequest req = new GHRequest(from, to).setProfile(profile);
+        GHResponse res = hopper.route(req);
+        assertEquals("[com.graphhopper.util.exceptions.ConnectionNotFoundException: Connection between locations not found]",
+                res.getErrors().toString());
+    }
+
+    @Test
+    public void testDoNotInterpolateTwice1645() {
+        final AtomicInteger counter = new AtomicInteger(0);
+        {
+            GraphHopper hopper = new GraphHopper() {
+                @Override
+                void interpolateBridgesTunnelsAndFerries() {
+                    counter.incrementAndGet();
+                    super.interpolateBridgesTunnelsAndFerries();
+                }
+            }.
+                    setGraphHopperLocation(GH_LOCATION).
+                    setOSMFile(BAYREUTH).
+                    setProfiles(new Profile("profile")).
+                    setElevation(true).
+                    setStoreOnFlush(true);
+            hopper.importOrLoad();
+            hopper.flush();
+            hopper.close();
+        }
+        assertEquals(1, counter.get());
+        {
+            GraphHopper hopper = new GraphHopper() {
+                @Override
+                void interpolateBridgesTunnelsAndFerries() {
+                    counter.incrementAndGet();
+                    super.interpolateBridgesTunnelsAndFerries();
+                }
+            }.
+                    setProfiles(new Profile("profile")).
+                    setElevation(true);
+            hopper.load(GH_LOCATION);
+        }
+        assertEquals(1, counter.get());
     }
 }
