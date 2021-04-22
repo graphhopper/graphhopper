@@ -93,6 +93,11 @@ public class Router {
         // CHGraphs that were not built yet (and possibly no CH profiles were configured).
         this.chEnabled = !chGraphs.isEmpty();
         this.lmEnabled = !landmarks.isEmpty();
+
+        for (String profile : profilesByName.keySet()) {
+            if (!encodingManager.hasEncodedValue(InSubnetwork.key(profile)))
+                throw new IllegalStateException("The profile '" + profile + "' needs an EncodedValue '" + InSubnetwork.key(profile) + "'");
+        }
     }
 
     public GHResponse route(GHRequest request) {

@@ -187,14 +187,13 @@ public class Measurement {
             throw new IllegalArgumentException("There has to be exactly one encoder for each measurement");
         }
         FlagEncoder encoder = encodingManager.fetchEdgeEncoders().get(0);
-        final String vehicleStr = encoder.toString();
 
         StopWatch sw = new StopWatch().start();
         try {
             maxNode = g.getNodes();
 
             final boolean runSlow = args.getBool("measurement.run_slow_routing", true);
-            printGraphDetails(g, vehicleStr);
+            printGraphDetails(g, vehicle);
             measureGraphTraversal(g, encoder, count * 100);
             measureLocationIndex(g, hopper.getLocationIndex(), count);
 
