@@ -33,7 +33,7 @@ public class FlexiblePathCalculator implements PathCalculator {
     private final QueryGraph queryGraph;
     private final RoutingAlgorithmFactory algoFactory;
     private Weighting weighting;
-    private AlgorithmOptions algoOpts;
+    private final AlgorithmOptions algoOpts;
     private String debug;
     private int visitedNodes;
 
