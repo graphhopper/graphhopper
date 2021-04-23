@@ -43,7 +43,7 @@ public class PrepareRoutingSubnetworksTest {
 
     private PrepareRoutingSubnetworks.PrepareJob createJob(EncodingManager em, FlagEncoder encoder, TurnCostProvider turnCostProvider) {
         return new PrepareRoutingSubnetworks.PrepareJob(encoder.toString(), em.getBooleanEncodedValue(Subnetwork.key(encoder.toString())),
-                encoder.getAccessEnc(), new FastestWeighting(encoder), turnCostProvider);
+                new FastestWeighting(encoder, turnCostProvider));
     }
 
     private static EncodingManager createEncodingManager(String flagEncodersStr) {
@@ -233,7 +233,7 @@ public class PrepareRoutingSubnetworksTest {
         PrepareRoutingSubnetworks.PrepareJob job = createJob(g.getEncodingManager(), encoder, NO_TURN_COST_PROVIDER);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(job)).
                 setMinNetworkSize(3);
-        int removed = instance.removeSmallSubNetworks(job);
+        int removed = instance.setSubnetworks(job);
 
         // the (7) and the (5,6) components get removed -> 2 remaining components and 3 removed edges plus the 2 connecting oneway edges
         // note that the subnetworkEV per profile is one bit per *edge*. Before we used the encoder$access with 2 bits and got more fine grained response here (8 removed *edgeKeys*)
@@ -249,7 +249,7 @@ public class PrepareRoutingSubnetworksTest {
         PrepareRoutingSubnetworks.PrepareJob job = createJob(g.getEncodingManager(), encoder, NO_TURN_COST_PROVIDER);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(job)).
                 setMinNetworkSize(3);
-        int removed = instance.removeSmallSubNetworks(job);
+        int removed = instance.setSubnetworks(job);
 
         assertEquals(5, removed);
         assertTrue(isConsistent(g));
@@ -272,7 +272,7 @@ public class PrepareRoutingSubnetworksTest {
         PrepareRoutingSubnetworks.PrepareJob job = createJob(g.getEncodingManager(), encoder, NO_TURN_COST_PROVIDER);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(job)).
                 setMinNetworkSize(2);
-        int removedEdges = instance.removeSmallSubNetworks(job);
+        int removedEdges = instance.setSubnetworks(job);
         assertEquals(2, removedEdges);
     }
 

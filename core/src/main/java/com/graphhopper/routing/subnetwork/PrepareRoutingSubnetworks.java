@@ -23,8 +23,6 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.AccessFilter;
-import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.*;
@@ -76,7 +74,7 @@ public class PrepareRoutingSubnetworks {
         logger.info("Start removing subnetworks, prepare.min_network_size: " + minNetworkSize + ", nodes: " +
                 Helper.nf(ghStorage.getNodes()) + ", edges: " + Helper.nf(ghStorage.getEdges()) + ", jobs: " + prepareJobs + ", " + Helper.getMemInfo());
         for (PrepareJob job : prepareJobs) {
-            removeSmallSubNetworks(job);
+            setSubnetworks(job);
         }
         logger.info("Finished finding and removing subnetworks for " + prepareJobs.size() + " vehicles, took: " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
     }
@@ -88,14 +86,14 @@ public class PrepareRoutingSubnetworks {
      *
      * @return number of removed edges
      */
-    int removeSmallSubNetworks(PrepareJob job) {
-        return removeSmallSubNetworksEdgeBased(job.name, job.filter, job.inSubnetworkEnc, job.turnCostProvider);
+    int setSubnetworks(PrepareJob job) {
+        return setSubnetworks(job.name, job.weighting, job.inSubnetworkEnc);
     }
 
-    private int removeSmallSubNetworksEdgeBased(String jobName, EdgeFilter filter, BooleanEncodedValue inSubnetworkEnc, TurnCostProvider turnCostProvider) {
+    private int setSubnetworks(String jobName, Weighting weighting, BooleanEncodedValue inSubnetworkEnc) {
         // partition graph into strongly connected components using Tarjan's algorithm
         StopWatch sw = new StopWatch().start();
-        EdgeBasedTarjanSCC.ConnectedComponents ccs = EdgeBasedTarjanSCC.findComponents(ghStorage, filter, turnCostProvider, false);
+        EdgeBasedTarjanSCC.ConnectedComponents ccs = EdgeBasedTarjanSCC.findComponents(ghStorage, weighting, false);
         List<IntArrayList> components = ccs.getComponents();
         BitSet singleEdgeComponents = ccs.getSingleEdgeComponents();
         long numSingleEdgeComponents = singleEdgeComponents.cardinality();
@@ -104,6 +102,7 @@ public class PrepareRoutingSubnetworks {
 
         final int minNetworkSizeEdgeKeys = 2 * minNetworkSize;
 
+        EdgeFilter filter = createEdgeFilter(weighting, inSubnetworkEnc);
         // remove all small networks, but keep the biggest (even when its smaller than the given min_network_size)
         sw = new StopWatch().start();
         int removedComponents = 0;
@@ -173,7 +172,7 @@ public class PrepareRoutingSubnetworks {
 
         List<EdgeFilter> inSubnetworkEncs = new ArrayList<>();
         for (PrepareJob job : prepareJobs) {
-            inSubnetworkEncs.add(job.filter);
+            inSubnetworkEncs.add(createEdgeFilter(job.weighting, job.inSubnetworkEnc));
         }
         // if no edges are reachable return true
         EdgeIterator iter = edgeExplorerAllEdges.setBaseNode(nodeIndex);
@@ -188,22 +187,24 @@ public class PrepareRoutingSubnetworks {
         return true;
     }
 
+    private static EdgeFilter createEdgeFilter(Weighting weighting, BooleanEncodedValue inSubnetworkEnc) {
+        return e -> !e.get(inSubnetworkEnc) && Double.isFinite(weighting.calcEdgeWeightWithAccess(e, false));
+    }
+
     public static class PrepareJob {
         private final String name;
         private final BooleanEncodedValue inSubnetworkEnc;
-        private final EdgeFilter filter;
-        private final TurnCostProvider turnCostProvider;
+        private final Weighting weighting;
 
-        public PrepareJob(String name, BooleanEncodedValue inSubnetworkEnc, BooleanEncodedValue accessEnc, Weighting weighting, TurnCostProvider turnCostProvider) {
+        public PrepareJob(String name, BooleanEncodedValue inSubnetworkEnc, Weighting weighting) {
             this.name = name;
+            this.weighting = weighting;
             this.inSubnetworkEnc = inSubnetworkEnc;
-            this.filter = e -> !e.get(inSubnetworkEnc) && e.get(accessEnc) && Double.isFinite(weighting.calcEdgeWeight(e, false));
-            this.turnCostProvider = turnCostProvider;
         }
 
         @Override
         public String toString() {
-            return name + "|" + (turnCostProvider == null ? "node-based" : "edge-based");
+            return name + "|" + (weighting.hasTurnCosts() ? "edge-based" : "node-based");
         }
     }
 }

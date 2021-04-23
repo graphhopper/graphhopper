@@ -21,8 +21,7 @@ package com.graphhopper.routing.subnetwork;
 import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.weighting.TurnCostProvider;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeExplorer;
@@ -47,10 +46,9 @@ import java.util.List;
  */
 public class EdgeBasedTarjanSCC {
     private final Graph graph;
-    private final EdgeFilter edgeFilter;
+    private final Weighting weighting;
     private final EdgeExplorer explorer;
     private final BitUtil bitUtil = BitUtil.LITTLE;
-    private final TurnCostProvider turnCostProvider;
     private final IntArrayDeque tarjanStack;
     private final LongArrayDeque dfsStackPQ;
     private final IntArrayDeque dfsStackAdj;
@@ -69,26 +67,26 @@ public class EdgeBasedTarjanSCC {
     /**
      * Runs Tarjan's algorithm using an explicit stack.
      *
-     * @param edgeFilter                  only edges accepted by this filter will be considered when we explore the graph
-     * @param turnCostProvider            used to check the turn costs between edges. if a turn has infinite costs the corresponding
+     * @param weighting                   Only edges accepted by this filter will be considered when we explore the graph.
+     *                                    If a turn has infinite costs the corresponding
      *                                    path will be ignored (edges that are only connected by a path with such a turn will not
      *                                    be considered to belong to the same component)
      * @param excludeSingleEdgeComponents if set to true components that only contain a single edge will not be
      *                                    returned when calling {@link #findComponents} or {@link #findComponentsRecursive()},
      *                                    which can be useful to save some memory.
      */
-    public static ConnectedComponents findComponents(Graph graph, EdgeFilter edgeFilter, TurnCostProvider turnCostProvider, boolean excludeSingleEdgeComponents) {
-        return new EdgeBasedTarjanSCC(graph, edgeFilter, turnCostProvider, excludeSingleEdgeComponents).findComponents();
+    public static ConnectedComponents findComponents(Graph graph, Weighting weighting, boolean excludeSingleEdgeComponents) {
+        return new EdgeBasedTarjanSCC(graph, weighting, excludeSingleEdgeComponents).findComponents();
     }
 
     /**
-     * Like {@link #findComponents(Graph, EdgeFilter, TurnCostProvider, boolean)}, but the search only starts at the
+     * Like {@link #findComponents(Graph, Weighting, boolean)}, but the search only starts at the
      * given edges. This does not mean the search cannot expand to other edges, but this can be controlled using by
      * the edgeFilter. This method does not return single edge components (the excludeSingleEdgeComponents option is
      * set to true).
      */
-    public static ConnectedComponents findComponentsForStartEdges(Graph graph, EdgeFilter edgeFilter, IntContainer edges, TurnCostProvider turnCostProvider) {
-        return new EdgeBasedTarjanSCC(graph, edgeFilter, turnCostProvider, true).findComponentsForStartEdges(edges);
+    public static ConnectedComponents findComponentsForStartEdges(Graph graph, Weighting weighting, IntContainer edges) {
+        return new EdgeBasedTarjanSCC(graph, weighting, true).findComponentsForStartEdges(edges);
     }
 
     /**
@@ -96,17 +94,16 @@ public class EdgeBasedTarjanSCC {
      * which can be set like `-Xss1024M`. Usually the version using an explicit stack ({@link #findComponents()}) should be
      * preferred. However, this recursive implementation is easier to understand.
      *
-     * @see #findComponents(Graph, EdgeFilter, TurnCostProvider, boolean)
+     * @see #findComponents(Graph, Weighting, boolean)
      */
-    public static ConnectedComponents findComponentsRecursive(Graph graph, EdgeFilter edgeFilter, TurnCostProvider turnCostProvider, boolean excludeSingleEdgeComponents) {
-        return new EdgeBasedTarjanSCC(graph, edgeFilter, turnCostProvider, excludeSingleEdgeComponents).findComponentsRecursive();
+    public static ConnectedComponents findComponentsRecursive(Graph graph, Weighting weighting, boolean excludeSingleEdgeComponents) {
+        return new EdgeBasedTarjanSCC(graph, weighting, excludeSingleEdgeComponents).findComponentsRecursive();
     }
 
-    private EdgeBasedTarjanSCC(Graph graph, EdgeFilter edgeFilter, TurnCostProvider turnCostProvider, boolean excludeSingleEdgeComponents) {
+    private EdgeBasedTarjanSCC(Graph graph, Weighting weighting, boolean excludeSingleEdgeComponents) {
         this.graph = graph;
-        this.edgeFilter = edgeFilter;
-        explorer = graph.createEdgeExplorer(edgeFilter);
-        this.turnCostProvider = turnCostProvider;
+        this.weighting = weighting;
+        this.explorer = graph.createEdgeExplorer();
         tarjanStack = new IntArrayDeque();
         dfsStackPQ = new LongArrayDeque();
         dfsStackAdj = new IntArrayDeque();
@@ -152,10 +149,11 @@ public class EdgeBasedTarjanSCC {
         setupNextEdgeKey(p);
         // we have to create a new explorer on each iteration because of the nested edge iterations
         final int edge = getEdgeFromKey(p);
-        EdgeExplorer explorer = graph.createEdgeExplorer(edgeFilter);
+        EdgeExplorer explorer = graph.createEdgeExplorer();
         EdgeIterator iter = explorer.setBaseNode(adjNode);
         while (iter.next()) {
-            if (isTurnRestricted(edge, adjNode, iter.getEdge()))
+            if (Double.isInfinite(weighting.calcEdgeWeightWithAccess(iter, false)) ||
+                    Double.isInfinite(weighting.calcTurnWeight(edge, adjNode, iter.getEdge())))
                 continue;
             int q = createEdgeKey(iter, false);
             handleNeighbor(p, q, iter.getAdjNode());
@@ -270,7 +268,8 @@ public class EdgeBasedTarjanSCC {
                     final int edge = getEdgeFromKey(p);
                     EdgeIterator it = explorer.setBaseNode(adj);
                     while (it.next()) {
-                        if (isTurnRestricted(edge, adj, it.getEdge()))
+                        if (Double.isInfinite(weighting.calcEdgeWeightWithAccess(it, false))
+                                || Double.isInfinite(weighting.calcTurnWeight(edge, adj, it.getEdge())))
                             continue;
                         int q = createEdgeKey(it, false);
                         pushHandleNeighbor(p, q, it.getAdjNode());
@@ -342,10 +341,6 @@ public class EdgeBasedTarjanSCC {
         assert p >= 0 && q >= 0 && adj >= 0;
         dfsStackPQ.addLast(bitUtil.combineIntsToLong(p, q));
         dfsStackAdj.addLast(adj);
-    }
-
-    private boolean isTurnRestricted(int inEdge, int node, int outEdge) {
-        return turnCostProvider.calcTurnWeight(inEdge, node, outEdge) == Double.POSITIVE_INFINITY;
     }
 
     public static int createEdgeKey(EdgeIteratorState edgeState, boolean reverse) {

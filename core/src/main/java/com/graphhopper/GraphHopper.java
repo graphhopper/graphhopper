@@ -44,8 +44,6 @@ import com.graphhopper.routing.util.parsers.TagParserFactory;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
-import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
@@ -1096,17 +1094,9 @@ public class GraphHopper implements GraphHopperAPI {
     private List<PrepareJob> buildSubnetworkRemovalJobs() {
         List<PrepareJob> jobs = new ArrayList<>();
         for (Profile profile : profilesByName.values()) {
-            FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
-            Weighting weighting = createWeighting(profile, new PMap());
-            if (profile.isTurnCosts()) {
-                // u-turn costs are zero as we only want to make sure the graph is fully connected assuming finite u-turn costs
-                TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), 0);
-                jobs.add(new PrepareJob(profile.getName(), encodingManager.getBooleanEncodedValue(Subnetwork.key(profile.getName())),
-                        encoder.getAccessEnc(), weighting, turnCostProvider));
-            } else {
-                jobs.add(new PrepareJob(profile.getName(), encodingManager.getBooleanEncodedValue(Subnetwork.key(profile.getName())),
-                        encoder.getAccessEnc(), weighting, TurnCostProvider.NO_TURN_COST_PROVIDER));
-            }
+            // if turn costs are enabled use u-turn costs of zero as we only want to make sure the graph is fully connected assuming finite u-turn costs
+            Weighting weighting = createWeighting(profile, new PMap().putObject(Parameters.Routing.U_TURN_COSTS, 0));
+            jobs.add(new PrepareJob(profile.getName(), encodingManager.getBooleanEncodedValue(Subnetwork.key(profile.getName())), weighting));
         }
         return jobs;
     }
