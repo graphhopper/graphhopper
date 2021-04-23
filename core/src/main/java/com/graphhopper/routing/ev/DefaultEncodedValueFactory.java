@@ -69,7 +69,7 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             enc = new EnumEncodedValue<>(HazmatTunnel.KEY, HazmatTunnel.class);
         } else if (HazmatWater.KEY.equals(name)) {
             enc = new EnumEncodedValue<>(HazmatWater.KEY, HazmatWater.class);
-        } else if (name.endsWith(InSubnetwork.key(""))) {
+        } else if (name.endsWith(Subnetwork.key(""))) {
             enc = new SimpleBooleanEncodedValue(name);
         } else {
             throw new IllegalArgumentException("DefaultEncodedValueFactory cannot find EncodedValue " + name);

@@ -23,11 +23,11 @@ package com.graphhopper.routing.ev;
  *
  * @see com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks
  */
-public class InSubnetwork {
+public class Subnetwork {
     public static String key(String prefix) {
-        if (prefix.contains("in_subnetwork"))
-            throw new IllegalArgumentException("Cannot create key containing 'in_subnetwork' in prefix: " + prefix);
-        return prefix + "_in_subnetwork";
+        if (prefix.contains("subnetwork"))
+            throw new IllegalArgumentException("Cannot create key containing 'subnetwork' in prefix: " + prefix);
+        return prefix + "_subnetwork";
     }
 
     public static BooleanEncodedValue create(String prefix) {

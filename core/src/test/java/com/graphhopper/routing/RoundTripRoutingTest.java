@@ -18,7 +18,7 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.routing.ev.InSubnetwork;
+import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -49,7 +49,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class RoundTripRoutingTest {
     private final FlagEncoder carFE = new CarFlagEncoder();
-    private final EncodingManager em = new EncodingManager.Builder().add(carFE).add(InSubnetwork.create("car")).build();
+    private final EncodingManager em = new EncodingManager.Builder().add(carFE).add(Subnetwork.create("car")).build();
     private final Weighting fastestWeighting = new FastestWeighting(carFE);
     // TODO private final TraversalMode tMode = TraversalMode.EDGE_BASED;
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
@@ -59,7 +59,7 @@ public class RoundTripRoutingTest {
     @Test(expected = IllegalArgumentException.class)
     public void lookup_throwsIfNumberOfPointsNotOne() {
         RoundTripRouting.lookup(Arrays.asList(ghPoint1, ghPoint2),
-                new DefaultSnapFilter(fastestWeighting, em.getBooleanEncodedValue(InSubnetwork.key("car"))),null, new RoundTripRouting.Params());
+                new DefaultSnapFilter(fastestWeighting, em.getBooleanEncodedValue(Subnetwork.key("car"))),null, new RoundTripRouting.Params());
     }
 
     @Test
@@ -76,7 +76,7 @@ public class RoundTripRoutingTest {
         hints.putObject(Parameters.Algorithms.RoundTrip.DISTANCE, roundTripDistance);
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
         List<Snap> stagePoints = RoundTripRouting.lookup(Collections.singletonList(start),
-                new DefaultSnapFilter(fastestWeighting, em.getBooleanEncodedValue(InSubnetwork.key("car"))), locationIndex,
+                new DefaultSnapFilter(fastestWeighting, em.getBooleanEncodedValue(Subnetwork.key("car"))), locationIndex,
                 new RoundTripRouting.Params(hints, heading, 3));
         assertEquals(3, stagePoints.size());
         assertEquals(0, stagePoints.get(0).getClosestNode());

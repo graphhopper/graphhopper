@@ -29,7 +29,7 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.routing.ev.InSubnetwork;
+import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
@@ -610,7 +610,7 @@ public class Measurement {
 
         String profileName = querySettings.edgeBased ? "profile_tc" : "profile_no_tc";
         Weighting weighting = hopper.createWeighting(hopper.getProfile(profileName), new PMap());
-        final EdgeFilter edgeFilter = new DefaultSnapFilter(weighting, hopper.getEncodingManager().getBooleanEncodedValue(InSubnetwork.key(profileName)));
+        final EdgeFilter edgeFilter = new DefaultSnapFilter(weighting, hopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profileName)));
         final EdgeExplorer edgeExplorer = g.createEdgeExplorer(edgeFilter);
         final AtomicLong visitedNodesSum = new AtomicLong(0);
         final AtomicLong maxVisitedNodes = new AtomicLong(0);

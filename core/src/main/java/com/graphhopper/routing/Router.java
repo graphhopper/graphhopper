@@ -26,7 +26,7 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.InSubnetwork;
+import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.lm.LMRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -92,8 +92,8 @@ public class Router {
         this.lmEnabled = !landmarks.isEmpty();
 
         for (String profile : profilesByName.keySet()) {
-            if (!encodingManager.hasEncodedValue(InSubnetwork.key(profile)))
-                throw new IllegalStateException("The profile '" + profile + "' needs an EncodedValue '" + InSubnetwork.key(profile) + "'");
+            if (!encodingManager.hasEncodedValue(Subnetwork.key(profile)))
+                throw new IllegalStateException("The profile '" + profile + "' needs an EncodedValue '" + Subnetwork.key(profile) + "'");
         }
     }
 
@@ -382,7 +382,7 @@ public class Router {
         protected abstract Weighting createWeighting();
 
         protected EdgeFilter getSnappingFilter() {
-            return new DefaultSnapFilter(weighting, lookup.getBooleanEncodedValue(InSubnetwork.key(profile.getName())));
+            return new DefaultSnapFilter(weighting, lookup.getBooleanEncodedValue(Subnetwork.key(profile.getName())));
         }
 
         protected abstract PathCalculator createPathCalculator(QueryGraph queryGraph);
@@ -485,7 +485,7 @@ public class Router {
             requestHints.putObject(CustomModel.KEY, request.getCustomModel());
             Weighting weighting = weightingFactory.createWeighting(profile, requestHints, false);
             if (requestHints.has(Parameters.Routing.BLOCK_AREA)) {
-                BooleanEncodedValue inSubnetworkEnc = lookup.getBooleanEncodedValue(InSubnetwork.key(profile.getName()));
+                BooleanEncodedValue inSubnetworkEnc = lookup.getBooleanEncodedValue(Subnetwork.key(profile.getName()));
                 GraphEdgeIdFinder.BlockArea blockArea = GraphEdgeIdFinder.createBlockArea(ghStorage, locationIndex,
                         request.getPoints(), requestHints, new FiniteWeightFilter(weighting));
                 weighting = new BlockAreaWeighting(weighting, blockArea);

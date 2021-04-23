@@ -18,7 +18,7 @@
 package com.graphhopper.routing.subnetwork;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.InSubnetwork;
+import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class PrepareRoutingSubnetworksTest {
 
     private PrepareRoutingSubnetworks.PrepareJob createJob(EncodingManager em, FlagEncoder encoder, TurnCostProvider turnCostProvider) {
-        return new PrepareRoutingSubnetworks.PrepareJob(encoder.toString(), em.getBooleanEncodedValue(InSubnetwork.key(encoder.toString())),
+        return new PrepareRoutingSubnetworks.PrepareJob(encoder.toString(), em.getBooleanEncodedValue(Subnetwork.key(encoder.toString())),
                 encoder.getAccessEnc(), new FastestWeighting(encoder), turnCostProvider);
     }
 
@@ -52,7 +52,7 @@ public class PrepareRoutingSubnetworksTest {
             encoderStr = encoderStr.trim();
             FlagEncoder encoder = new DefaultFlagEncoderFactory().createFlagEncoder(encoderStr.split("\\|")[0], new PMap(encoderStr));
             builder.add(encoder);
-            builder.add(InSubnetwork.create(encoder.toString()));
+            builder.add(Subnetwork.create(encoder.toString()));
         }
         return builder.build();
     }
@@ -107,7 +107,7 @@ public class PrepareRoutingSubnetworksTest {
     }
 
     private static EdgeFilter createFilter(EncodingManager em, String str) {
-        BooleanEncodedValue inSubnetwork = em.getBooleanEncodedValue(InSubnetwork.key(str));
+        BooleanEncodedValue inSubnetwork = em.getBooleanEncodedValue(Subnetwork.key(str));
         BooleanEncodedValue accessEnc = em.getEncoder(str).getAccessEnc();
         return e -> !e.get(inSubnetwork) && e.get(accessEnc);
     }

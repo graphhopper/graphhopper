@@ -512,7 +512,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (requireProfilesByName && profilesByName.isEmpty())
             throw new IllegalStateException("no profiles exist but assumed to create EncodingManager. E.g. provide them in GraphHopperConfig when calling GraphHopper.init");
         for (Profile profile : profilesByName.values()) {
-            emBuilder.add(InSubnetwork.create(profile.getName()));
+            emBuilder.add(Subnetwork.create(profile.getName()));
             if (!flagEncoderMap.containsKey(profile.getVehicle()) || profile.isTurnCosts())
                 flagEncoderMap.put(profile.getVehicle(), profile.getVehicle() + (profile.isTurnCosts() ? "|turn_costs=true" : ""));
         }
@@ -1101,10 +1101,10 @@ public class GraphHopper implements GraphHopperAPI {
             if (profile.isTurnCosts()) {
                 // u-turn costs are zero as we only want to make sure the graph is fully connected assuming finite u-turn costs
                 TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), 0);
-                jobs.add(new PrepareJob(profile.getName(), encodingManager.getBooleanEncodedValue(InSubnetwork.key(profile.getName())),
+                jobs.add(new PrepareJob(profile.getName(), encodingManager.getBooleanEncodedValue(Subnetwork.key(profile.getName())),
                         encoder.getAccessEnc(), weighting, turnCostProvider));
             } else {
-                jobs.add(new PrepareJob(profile.getName(), encodingManager.getBooleanEncodedValue(InSubnetwork.key(profile.getName())),
+                jobs.add(new PrepareJob(profile.getName(), encodingManager.getBooleanEncodedValue(Subnetwork.key(profile.getName())),
                         encoder.getAccessEnc(), weighting, TurnCostProvider.NO_TURN_COST_PROVIDER));
             }
         }

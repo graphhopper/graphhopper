@@ -3,7 +3,7 @@ package com.graphhopper.example;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.Profile;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
-import com.graphhopper.routing.ev.InSubnetwork;
+import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -21,7 +21,7 @@ public class IsochroneExample {
 
         // snap some GPS coordinates to the routing graph and build a query graph
         FastestWeighting weighting = new FastestWeighting(encoder);
-        Snap snap = hopper.getLocationIndex().findClosest(42.508679, 1.532078, new DefaultSnapFilter(weighting, encodingManager.getBooleanEncodedValue(InSubnetwork.key("car"))));
+        Snap snap = hopper.getLocationIndex().findClosest(42.508679, 1.532078, new DefaultSnapFilter(weighting, encodingManager.getBooleanEncodedValue(Subnetwork.key("car"))));
         QueryGraph queryGraph = QueryGraph.create(hopper.getGraphHopperStorage(), snap);
 
         // run the isochrone calculation
