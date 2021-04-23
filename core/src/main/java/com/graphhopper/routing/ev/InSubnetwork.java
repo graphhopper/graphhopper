@@ -17,11 +17,17 @@
  */
 package com.graphhopper.routing.ev;
 
+/**
+ * This EncodedValue, which should be available per profile, stores a boolean value per edge that indicates if the edge
+ * is part of a too small subnetwork.
+ *
+ * @see com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks
+ */
 public class InSubnetwork {
     public static String key(String prefix) {
-        if (prefix.contains("subnetwork"))
-            throw new IllegalArgumentException("Cannot create key containing 'subnetwork' in prefix: " + prefix);
-        return prefix + "_subnetwork";
+        if (prefix.contains("in_subnetwork"))
+            throw new IllegalArgumentException("Cannot create key containing 'in_subnetwork' in prefix: " + prefix);
+        return prefix + "_in_subnetwork";
     }
 
     public static BooleanEncodedValue create(String prefix) {
