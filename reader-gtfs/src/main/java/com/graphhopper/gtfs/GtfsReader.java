@@ -25,7 +25,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.IntEncodedValue;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -109,7 +109,7 @@ class GtfsReader {
 
     void connectStopsToStreetNetwork() {
         FlagEncoder footEncoder = ((GraphHopperStorage) graph).getEncodingManager().getEncoder("foot");
-        final EdgeFilter filter = DefaultEdgeFilter.allEdges(footEncoder.getAccessEnc());
+        final EdgeFilter filter = AccessFilter.allEdges(footEncoder.getAccessEnc());
         for (Stop stop : feed.stops.values()) {
             if (stop.location_type == 0) { // Only stops. Not interested in parent stations for now.
                 Snap locationSnap = walkNetworkIndex.findClosest(stop.stop_lat, stop.stop_lon, filter);
@@ -472,7 +472,7 @@ class GtfsReader {
         if (platformEnterNode == -1) {
             return result;
         }
-        EdgeIterator edge = graph.getBaseGraph().createEdgeExplorer(DefaultEdgeFilter.outEdges(accessEnc)).setBaseNode(platformEnterNode);
+        EdgeIterator edge = graph.getBaseGraph().createEdgeExplorer(AccessFilter.outEdges(accessEnc)).setBaseNode(platformEnterNode);
         while (edge.next()) {
             if (edge.get(ptEncodedValues.getTypeEnc()) == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK) {
                 result.put(edge.get(timeEnc), edge.getAdjNode());
@@ -482,11 +482,11 @@ class GtfsReader {
     }
 
     private int findPlatformNode(int stationNode, GtfsStorageI.PlatformDescriptor platformDescriptor, GtfsStorage.EdgeType edgeType) {
-        DefaultEdgeFilter filter;
+        AccessFilter filter;
         if (edgeType == GtfsStorage.EdgeType.ENTER_PT) {
-            filter = DefaultEdgeFilter.outEdges(accessEnc);
+            filter = AccessFilter.outEdges(accessEnc);
         } else if (edgeType == GtfsStorage.EdgeType.EXIT_PT) {
-            filter = DefaultEdgeFilter.inEdges(accessEnc);
+            filter = AccessFilter.inEdges(accessEnc);
         } else {
             throw new RuntimeException();
         }

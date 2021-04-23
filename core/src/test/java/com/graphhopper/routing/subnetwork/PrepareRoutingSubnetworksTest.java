@@ -20,7 +20,6 @@ package com.graphhopper.routing.subnetwork;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeExplorer;
@@ -79,7 +78,7 @@ public class PrepareRoutingSubnetworksTest {
         instance.setMinNetworkSize(4);
         instance.doWork();
         assertTrue(GHUtility.getProblems(g).isEmpty());
-        EdgeExplorer explorer = g.createEdgeExplorer(DefaultEdgeFilter.allEdges(encoder.getAccessEnc()));
+        EdgeExplorer explorer = g.createEdgeExplorer(AccessFilter.allEdges(encoder.getAccessEnc()));
         assertEquals(GHUtility.asSet(), GHUtility.getNeighbors(explorer.setBaseNode(4)));
 
         // this time we lower the threshold and the small network will remain
@@ -88,7 +87,7 @@ public class PrepareRoutingSubnetworksTest {
                 new PrepareRoutingSubnetworks.PrepareJob("car", accessEnc, NO_TURN_COST_PROVIDER)));
         instance.setMinNetworkSize(3);
         instance.doWork();
-        explorer = g.createEdgeExplorer(DefaultEdgeFilter.allEdges(encoder.getAccessEnc()));
+        explorer = g.createEdgeExplorer(AccessFilter.allEdges(encoder.getAccessEnc()));
         assertEquals(GHUtility.asSet(5, 6), GHUtility.getNeighbors(explorer.setBaseNode(4)));
     }
 
@@ -103,7 +102,7 @@ public class PrepareRoutingSubnetworksTest {
         instance.setMinNetworkSize(4);
         instance.doWork();
         assertTrue(GHUtility.getProblems(g).isEmpty());
-        EdgeExplorer explorer = g.createEdgeExplorer(DefaultEdgeFilter.allEdges(encoder.getAccessEnc()));
+        EdgeExplorer explorer = g.createEdgeExplorer(AccessFilter.allEdges(encoder.getAccessEnc()));
         assertEquals(GHUtility.asSet(), GHUtility.getNeighbors(explorer.setBaseNode(4)));
 
         // this time we lower the threshold and the small network will remain
@@ -112,7 +111,7 @@ public class PrepareRoutingSubnetworksTest {
                 new PrepareRoutingSubnetworks.PrepareJob("car", accessEnc, NO_TURN_COST_PROVIDER)));
         instance.setMinNetworkSize(3);
         instance.doWork();
-        explorer = g.createEdgeExplorer(DefaultEdgeFilter.allEdges(encoder.getAccessEnc()));
+        explorer = g.createEdgeExplorer(AccessFilter.allEdges(encoder.getAccessEnc()));
         assertEquals(GHUtility.asSet(5, 6), GHUtility.getNeighbors(explorer.setBaseNode(4)));
     }
 
@@ -170,9 +169,9 @@ public class PrepareRoutingSubnetworksTest {
         instance.setMinNetworkSize(5);
         instance.doWork();
 
-        EdgeExplorer carExplorer = g.createEdgeExplorer(DefaultEdgeFilter.allEdges(carEncoder.getAccessEnc()));
+        EdgeExplorer carExplorer = g.createEdgeExplorer(AccessFilter.allEdges(carEncoder.getAccessEnc()));
         assertEquals(GHUtility.asSet(7, 2, 1), GHUtility.getNeighbors(carExplorer.setBaseNode(3)));
-        EdgeExplorer bikeExplorer = g.createEdgeExplorer(DefaultEdgeFilter.allEdges(((FlagEncoder) bikeEncoder).getAccessEnc()));
+        EdgeExplorer bikeExplorer = g.createEdgeExplorer(AccessFilter.allEdges(((FlagEncoder) bikeEncoder).getAccessEnc()));
         assertEquals(GHUtility.asSet(7, 2, 1, 4), GHUtility.getNeighbors(bikeExplorer.setBaseNode(3)));
 
         // now we block the edge for both vehicles, in which case the smaller subnetwork gets removed

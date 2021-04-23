@@ -76,7 +76,7 @@ public class RoutingCHEdgeIteratorImpl extends RoutingCHEdgeIteratorStateImpl im
         if (isShortcut()) {
             return shortcutFilter.accept((CHEdgeIteratorState) edgeIterator);
         } else {
-            // c.f. comment in DefaultEdgeFilter
+            // c.f. comment in AccessFilter
             if (edgeIterator.getBaseNode() == edgeIterator.getAdjNode()) {
                 return finiteWeight(false) || finiteWeight(true);
             }

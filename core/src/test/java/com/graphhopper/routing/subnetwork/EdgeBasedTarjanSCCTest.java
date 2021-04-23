@@ -41,7 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class EdgeBasedTarjanSCCTest {
     private final FlagEncoder encoder = new CarFlagEncoder(5, 5, 1);
     private final EncodingManager em = EncodingManager.create(encoder);
-    private final EdgeFilter edgeFilter = DefaultEdgeFilter.outEdges(encoder.getAccessEnc());
+    private final EdgeFilter edgeFilter = AccessFilter.outEdges(encoder.getAccessEnc());
 
     @Test
     public void linearSingle() {

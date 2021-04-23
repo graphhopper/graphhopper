@@ -22,7 +22,7 @@ import com.carrotsearch.hppc.BitSetIterator;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.*;
@@ -93,7 +93,7 @@ public class PrepareRoutingSubnetworks {
     private int removeSmallSubNetworksEdgeBased(String jobName, BooleanEncodedValue accessEnc, TurnCostProvider turnCostProvider) {
         // partition graph into strongly connected components using Tarjan's algorithm
         StopWatch sw = new StopWatch().start();
-        EdgeBasedTarjanSCC.ConnectedComponents ccs = EdgeBasedTarjanSCC.findComponents(ghStorage, DefaultEdgeFilter.outEdges(accessEnc), turnCostProvider, false);
+        EdgeBasedTarjanSCC.ConnectedComponents ccs = EdgeBasedTarjanSCC.findComponents(ghStorage, AccessFilter.outEdges(accessEnc), turnCostProvider, false);
         List<IntArrayList> components = ccs.getComponents();
         BitSet singleEdgeComponents = ccs.getSingleEdgeComponents();
         long numSingleEdgeComponents = singleEdgeComponents.cardinality();

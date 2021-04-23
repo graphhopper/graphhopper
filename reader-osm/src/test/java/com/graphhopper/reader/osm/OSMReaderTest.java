@@ -308,7 +308,7 @@ public class OSMReaderTest {
         assertEquals(GHUtility.asSet(n10, n30, n40), GHUtility.getNeighbors(carAllExplorer.setBaseNode(n20)));
         assertEquals(GHUtility.asSet(n30, n40), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n20)));
 
-        EdgeExplorer footOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(footEncoder.getAccessEnc()));
+        EdgeExplorer footOutExplorer = graph.createEdgeExplorer(AccessFilter.outEdges(footEncoder.getAccessEnc()));
         assertEquals(GHUtility.asSet(n20, n50), GHUtility.getNeighbors(footOutExplorer.setBaseNode(n10)));
         assertEquals(GHUtility.asSet(n20, n50), GHUtility.getNeighbors(footOutExplorer.setBaseNode(n30)));
         assertEquals(GHUtility.asSet(n10, n30), GHUtility.getNeighbors(footOutExplorer.setBaseNode(n20)));
@@ -956,8 +956,8 @@ public class OSMReaderTest {
             setGraphHopperStorage(tmpGraph);
             super.importOSM();
             carAccessEnc = carEncoder.getAccessEnc();
-            carOutExplorer = getGraphHopperStorage().createEdgeExplorer(DefaultEdgeFilter.outEdges(carAccessEnc));
-            carAllExplorer = getGraphHopperStorage().createEdgeExplorer(DefaultEdgeFilter.allEdges(carAccessEnc));
+            carOutExplorer = getGraphHopperStorage().createEdgeExplorer(AccessFilter.outEdges(carAccessEnc));
+            carAllExplorer = getGraphHopperStorage().createEdgeExplorer(AccessFilter.allEdges(carAccessEnc));
         }
 
         @Override
