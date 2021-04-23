@@ -23,6 +23,7 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.GraphHopperStorage;

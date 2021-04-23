@@ -448,7 +448,7 @@ public class Measurement {
     private void measureGraphTraversal(final Graph graph, final FlagEncoder encoder, int count) {
         final Random rand = new Random(seed);
 
-        EdgeFilter outFilter = DefaultEdgeFilter.outEdges(encoder.getAccessEnc());
+        EdgeFilter outFilter = AccessFilter.outEdges(encoder.getAccessEnc());
         final EdgeExplorer outExplorer = graph.createEdgeExplorer(outFilter);
         MiniPerfTest miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
             int nodeId = rand.nextInt(maxNode);
@@ -489,7 +489,7 @@ public class Measurement {
         });
         print("unit_testsCH.get_weight", miniPerf);
 
-        EdgeFilter outFilter = DefaultEdgeFilter.outEdges(encoder.getAccessEnc());
+        EdgeFilter outFilter = AccessFilter.outEdges(encoder.getAccessEnc());
         final CHEdgeExplorer outExplorer = lg.createEdgeExplorer(outFilter);
         miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
             int nodeId = rand.nextInt(maxNode);
@@ -610,7 +610,7 @@ public class Measurement {
 
         String profileName = querySettings.edgeBased ? "profile_tc" : "profile_no_tc";
         Weighting weighting = hopper.createWeighting(hopper.getProfile(profileName), new PMap());
-         final EdgeFilter edgeFilter = new FiniteWeightFilter(weighting, hopper.getEncodingManager().getBooleanEncodedValue(InSubnetwork.key(profileName)));
+        final EdgeFilter edgeFilter = new DefaultSnapFilter(weighting, hopper.getEncodingManager().getBooleanEncodedValue(InSubnetwork.key(profileName)));
         final EdgeExplorer edgeExplorer = g.createEdgeExplorer(edgeFilter);
         final AtomicLong visitedNodesSum = new AtomicLong(0);
         final AtomicLong maxVisitedNodes = new AtomicLong(0);

@@ -31,8 +31,8 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,8 +40,7 @@ import java.util.List;
 import static com.graphhopper.routing.DirectionResolverResult.unrestricted;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.Helper.createPointList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * This test simulates incoming lat/lon coordinates that get snapped to graph edges (using {@link QueryGraph}) and the
@@ -56,7 +55,7 @@ public class DirectionResolverOnQueryGraphTest {
     private Graph graph;
     private LocationIndexTree locationIndex;
 
-    @Before
+    @BeforeEach
     public void setup() {
         encoder = new CarFlagEncoder();
         graph = new GraphBuilder(EncodingManager.create(encoder)).create();
@@ -281,9 +280,10 @@ public class DirectionResolverOnQueryGraphTest {
         queryGraph = QueryGraph.create(graph, snaps);
         DirectionResolver resolver = new DirectionResolver(queryGraph, this::isAccessible);
         for (int i = 0; i < expectedResults.length; i++) {
-            assertEquals("unexpected resolved direction",
+            assertEquals(
                     restrictedDirection(expectedResults[i]),
-                    resolver.resolveDirections(snaps.get(i).getClosestNode(), snaps.get(i).getQueryPoint()));
+                    resolver.resolveDirections(snaps.get(i).getClosestNode(), snaps.get(i).getQueryPoint()),
+                    "unexpected resolved direction");
         }
     }
 
@@ -315,7 +315,7 @@ public class DirectionResolverOnQueryGraphTest {
     }
 
     private int findEdge(int from, int to) {
-        EdgeExplorer explorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder.getAccessEnc()));
+        EdgeExplorer explorer = queryGraph.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc()));
         EdgeIterator iter = explorer.setBaseNode(from);
         while (iter.next()) {
             if (iter.getAdjNode() == to) {

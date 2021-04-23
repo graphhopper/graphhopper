@@ -30,10 +30,7 @@ import com.graphhopper.routing.ev.InSubnetwork;
 import com.graphhopper.routing.lm.LMRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FiniteWeightFilter;
-import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
@@ -385,7 +382,7 @@ public class Router {
         protected abstract Weighting createWeighting();
 
         protected EdgeFilter getSnappingFilter() {
-            return new FiniteWeightFilter(weighting, lookup.getBooleanEncodedValue(InSubnetwork.key(profile.getName())));
+            return new DefaultSnapFilter(weighting, lookup.getBooleanEncodedValue(InSubnetwork.key(profile.getName())));
         }
 
         protected abstract PathCalculator createPathCalculator(QueryGraph queryGraph);
@@ -490,7 +487,7 @@ public class Router {
             if (requestHints.has(Parameters.Routing.BLOCK_AREA)) {
                 BooleanEncodedValue inSubnetworkEnc = lookup.getBooleanEncodedValue(InSubnetwork.key(profile.getName()));
                 GraphEdgeIdFinder.BlockArea blockArea = GraphEdgeIdFinder.createBlockArea(ghStorage, locationIndex,
-                        request.getPoints(), requestHints, new FiniteWeightFilter(weighting, inSubnetworkEnc));
+                        request.getPoints(), requestHints, new FiniteWeightFilter(weighting));
                 weighting = new BlockAreaWeighting(weighting, blockArea);
             }
             return weighting;

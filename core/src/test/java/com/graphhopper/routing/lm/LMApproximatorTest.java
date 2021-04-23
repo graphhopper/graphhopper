@@ -23,7 +23,7 @@ import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.*;
@@ -33,25 +33,15 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.RepeatedTest;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Random;
 
-import static org.junit.Assert.assertEquals;
-
 public class LMApproximatorTest {
 
-    @Rule
-    public RepeatRule repeatRule = new RepeatRule();
-
-    @Before
-    public void init() {
-    }
-
-    @Test
-    @Repeat(times = 5)
+    @RepeatedTest(value = 10)
     public void randomGraph() {
         final long seed = System.nanoTime();
         run(seed);
@@ -120,7 +110,7 @@ public class LMApproximatorTest {
                     // That's a requirement for normal A*-implementations, because if it is violated,
                     // the heap-weight of settled nodes can decrease, and that would mean our
                     // stopping criterion is not sufficient.
-                    EdgeIterator neighbors = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder.getAccessEnc())).setBaseNode(v);
+                    EdgeIterator neighbors = graph.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc())).setBaseNode(v);
                     while (neighbors.next()) {
                         int w = neighbors.getAdjNode();
                         double vw = weighting.calcEdgeWeight(neighbors, false);
@@ -131,7 +121,7 @@ public class LMApproximatorTest {
                         }
                     }
 
-                    neighbors = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder.getAccessEnc())).setBaseNode(v);
+                    neighbors = graph.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc())).setBaseNode(v);
                     while (neighbors.next()) {
                         int w = neighbors.getAdjNode();
                         double vw = weighting.calcEdgeWeight(neighbors, false);
@@ -168,8 +158,8 @@ public class LMApproximatorTest {
 
             }
 
-            assertEquals("too many over approximated weights, seed: " + seed, 0, nOverApproximatedWeights);
-            assertEquals("too many inconsistent weights, seed: " + seed, 0, nInconsistentWeights);
+            assertEquals(0, nOverApproximatedWeights, "too many over approximated weights, seed: " + seed);
+            assertEquals(0, nInconsistentWeights, "too many inconsistent weights, seed: " + seed);
         }
     }
 

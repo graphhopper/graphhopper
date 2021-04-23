@@ -23,12 +23,12 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.text.DateFormat;
 import java.util.Date;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author don-philipe
@@ -79,7 +79,7 @@ public class WheelchairFlagEncoderTest {
         g.edge(0, 1).setDistance(10).set(wheelchairAvSpeedEnc, 10.0).set(wheelchairAccessEnc, true, true);
         g.edge(0, 2).setDistance(10).set(wheelchairAvSpeedEnc, 5.0).set(wheelchairAccessEnc, true, true);
         g.edge(1, 3).setDistance(10).set(wheelchairAvSpeedEnc, 10.0).set(wheelchairAccessEnc, true, true);
-        EdgeExplorer out = g.createEdgeExplorer(DefaultEdgeFilter.outEdges(wheelchairEncoder.getAccessEnc()));
+        EdgeExplorer out = g.createEdgeExplorer(AccessFilter.outEdges(wheelchairEncoder.getAccessEnc()));
         assertEquals(GHUtility.asSet(1, 2), GHUtility.getNeighbors(out.setBaseNode(0)));
         assertEquals(GHUtility.asSet(0, 3), GHUtility.getNeighbors(out.setBaseNode(1)));
         assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(out.setBaseNode(2)));
@@ -361,13 +361,13 @@ public class WheelchairFlagEncoderTest {
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         // no barrier!
-        assertTrue(wheelchairEncoder.handleNodeTags(node) == 0);
+        assertEquals(0, wheelchairEncoder.handleNodeTags(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "yes");
         // no barrier!
-        assertTrue(wheelchairEncoder.handleNodeTags(node) == 0);
+        assertEquals(0, wheelchairEncoder.handleNodeTags(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
@@ -384,7 +384,7 @@ public class WheelchairFlagEncoderTest {
         node.setTag("access", "no");
         node.setTag("foot", "yes");
         // no barrier!
-        assertTrue(wheelchairEncoder.handleNodeTags(node) == 0);
+        assertEquals(0, wheelchairEncoder.handleNodeTags(node));
 
         node.setTag("locked", "yes");
         // barrier!
@@ -399,7 +399,7 @@ public class WheelchairFlagEncoderTest {
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         // potential barriers are no barrier by default
-        assertTrue(tmpWheelchairEncoder.handleNodeTags(node) == 0);
+        assertEquals(0, tmpWheelchairEncoder.handleNodeTags(node));
         node.setTag("access", "no");
         assertTrue(tmpWheelchairEncoder.handleNodeTags(node) > 0);
 
@@ -424,13 +424,13 @@ public class WheelchairFlagEncoderTest {
         node.setTag("barrier", "gate");
         assertTrue(tmpWheelchairEncoder.handleNodeTags(node) > 0);
         node.setTag("access", "yes");
-        assertTrue(tmpWheelchairEncoder.handleNodeTags(node) == 0);
+        assertEquals(0, tmpWheelchairEncoder.handleNodeTags(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "kerb");
         assertTrue(tmpWheelchairEncoder.handleNodeTags(node) > 0);
         node.setTag("wheelchair", "yes");
-        assertTrue(tmpWheelchairEncoder.handleNodeTags(node) == 0);
+        assertEquals(0, tmpWheelchairEncoder.handleNodeTags(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "fence");

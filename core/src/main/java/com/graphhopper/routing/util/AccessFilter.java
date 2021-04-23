@@ -23,23 +23,23 @@ import com.graphhopper.util.EdgeIteratorState;
 /**
  * @author Peter Karich
  */
-public class DefaultEdgeFilter implements EdgeFilter {
+public class AccessFilter implements EdgeFilter {
     private final boolean bwd;
     private final boolean fwd;
     private final BooleanEncodedValue accessEnc;
 
-    private DefaultEdgeFilter(BooleanEncodedValue accessEnc, boolean fwd, boolean bwd) {
+    private AccessFilter(BooleanEncodedValue accessEnc, boolean fwd, boolean bwd) {
         this.accessEnc = accessEnc;
         this.fwd = fwd;
         this.bwd = bwd;
     }
 
-    public static DefaultEdgeFilter outEdges(BooleanEncodedValue accessEnc) {
-        return new DefaultEdgeFilter(accessEnc, true, false);
+    public static AccessFilter outEdges(BooleanEncodedValue accessEnc) {
+        return new AccessFilter(accessEnc, true, false);
     }
 
-    public static DefaultEdgeFilter inEdges(BooleanEncodedValue accessEnc) {
-        return new DefaultEdgeFilter(accessEnc, false, true);
+    public static AccessFilter inEdges(BooleanEncodedValue accessEnc) {
+        return new AccessFilter(accessEnc, false, true);
     }
 
     /**
@@ -47,8 +47,8 @@ public class DefaultEdgeFilter implements EdgeFilter {
      * Edges where neither one of the flags is enabled will still not be accepted. If you need to retrieve all edges
      * regardless of their encoding use {@link EdgeFilter#ALL_EDGES} instead.
      */
-    public static DefaultEdgeFilter allEdges(BooleanEncodedValue accessEnc) {
-        return new DefaultEdgeFilter(accessEnc, true, true);
+    public static AccessFilter allEdges(BooleanEncodedValue accessEnc) {
+        return new AccessFilter(accessEnc, true, true);
     }
 
     public BooleanEncodedValue getAccessEnc() {
@@ -60,7 +60,7 @@ public class DefaultEdgeFilter implements EdgeFilter {
         if (iter.getBaseNode() == iter.getAdjNode()) {
             // this is needed for edge-based CH, see #1525
             // background: we need to explicitly accept shortcut edges that are loops, because if we insert a loop
-            // shortcut with the fwd flag a DefaultEdgeFilter with bwd=true and fwd=false does not find it, although
+            // shortcut with the fwd flag an AccessFilter with bwd=true and fwd=false does not find it, although
             // it is also an 'incoming' edge.
             return iter.get(accessEnc) || iter.getReverse(accessEnc);
         }
@@ -77,7 +77,7 @@ public class DefaultEdgeFilter implements EdgeFilter {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        DefaultEdgeFilter that = (DefaultEdgeFilter) o;
+        AccessFilter that = (AccessFilter) o;
 
         if (bwd != that.bwd) return false;
         if (fwd != that.fwd) return false;

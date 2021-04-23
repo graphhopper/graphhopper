@@ -59,7 +59,7 @@ public class RoundTripRoutingTest {
     @Test(expected = IllegalArgumentException.class)
     public void lookup_throwsIfNumberOfPointsNotOne() {
         RoundTripRouting.lookup(Arrays.asList(ghPoint1, ghPoint2),
-                new FiniteWeightFilter(fastestWeighting, em.getBooleanEncodedValue(InSubnetwork.key("car"))),null, new RoundTripRouting.Params());
+                new DefaultSnapFilter(fastestWeighting, em.getBooleanEncodedValue(InSubnetwork.key("car"))),null, new RoundTripRouting.Params());
     }
 
     @Test
@@ -76,7 +76,7 @@ public class RoundTripRoutingTest {
         hints.putObject(Parameters.Algorithms.RoundTrip.DISTANCE, roundTripDistance);
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
         List<Snap> stagePoints = RoundTripRouting.lookup(Collections.singletonList(start),
-                new FiniteWeightFilter(fastestWeighting, em.getBooleanEncodedValue(InSubnetwork.key("car"))), locationIndex,
+                new DefaultSnapFilter(fastestWeighting, em.getBooleanEncodedValue(InSubnetwork.key("car"))), locationIndex,
                 new RoundTripRouting.Params(hints, heading, 3));
         assertEquals(3, stagePoints.size());
         assertEquals(0, stagePoints.get(0).getClosestNode());

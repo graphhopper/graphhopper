@@ -35,6 +35,7 @@ import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
+import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FiniteWeightFilter;
 import com.graphhopper.routing.util.TraversalMode;
@@ -230,7 +231,7 @@ public class MapMatching {
     }
 
     private List<Snap> findCandidateSnapsInBBox(double queryLat, double queryLon, BBox queryShape) {
-        EdgeFilter edgeFilter = new FiniteWeightFilter(weighting, inSubnetworkEnc);
+        EdgeFilter edgeFilter = new DefaultSnapFilter(weighting, inSubnetworkEnc);
         List<Snap> snaps = new ArrayList<>();
         IntHashSet seenEdges = new IntHashSet();
         IntHashSet seenNodes = new IntHashSet();

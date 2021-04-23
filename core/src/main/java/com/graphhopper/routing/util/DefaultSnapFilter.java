@@ -15,25 +15,28 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package com.graphhopper.routing.util;
 
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
- * An {@link EdgeFilter} that only accepts edges with finite weight (in either direction)
+ * This EdgeFilter combines the weighting result and the 'subnetwork' EncodedValue to consider the subnetwork removal
+ * in LocationIndex lookup. In future the 'subnetwork' EncodedValue could be moved into the Weighting.
  */
-public class FiniteWeightFilter implements EdgeFilter {
+public class DefaultSnapFilter implements EdgeFilter {
     private final Weighting weighting;
+    private final BooleanEncodedValue inSubnetworkEnc;
 
-    public FiniteWeightFilter(Weighting weighting) {
+    public DefaultSnapFilter(Weighting weighting, BooleanEncodedValue inSubnetworkEnc) {
         this.weighting = weighting;
+        this.inSubnetworkEnc = inSubnetworkEnc;
     }
 
     @Override
     public boolean accept(EdgeIteratorState edgeState) {
-        return Double.isFinite(weighting.calcEdgeWeightWithAccess(edgeState, false)) ||
-                Double.isFinite(weighting.calcEdgeWeightWithAccess(edgeState, true));
+        return !edgeState.get(inSubnetworkEnc) && (Double.isFinite(weighting.calcEdgeWeightWithAccess(edgeState, false)) ||
+                Double.isFinite(weighting.calcEdgeWeightWithAccess(edgeState, true)));
     }
 }

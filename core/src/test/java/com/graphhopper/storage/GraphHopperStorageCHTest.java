@@ -28,7 +28,7 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.shapes.BBox;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -36,7 +36,7 @@ import java.util.List;
 
 import static com.graphhopper.routing.ch.NodeBasedNodeContractorTest.SC_ACCESS;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -73,18 +73,18 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         return graph;
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     @Override
     public void testClone() {
         // todo: implement graph copying in the presence of turn costs
-        super.testClone();
+        assertThrows(IllegalArgumentException.class, super::testClone);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     @Override
     public void testCopyTo() {
         // todo: implement graph copying in the presence of turn costs
-        super.testCopyTo();
+        assertThrows(IllegalArgumentException.class, super::testCopyTo);
     }
 
     @Test
@@ -303,7 +303,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         setIdentityLevels(lg);
         lg.shortcut(1, 4, PrepareEncoder.getScFwdDir(), 3, NO_EDGE, NO_EDGE);
 
-        EdgeExplorer vehicleOutExplorer = lg.createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder.getAccessEnc()));
+        EdgeExplorer vehicleOutExplorer = lg.createEdgeExplorer(AccessFilter.outEdges(carEncoder.getAccessEnc()));
         // iteration should result in same nodes even if reusing the iterator
         assertEquals(GHUtility.asSet(3, 4), GHUtility.getNeighbors(vehicleOutExplorer.setBaseNode(1)));
         assertEquals(GHUtility.asSet(3, 4), GHUtility.getNeighbors(vehicleOutExplorer.setBaseNode(1)));
@@ -350,13 +350,13 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         assertEquals(edge2.getEdge(), iter.getSkippedEdge2());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testAddShortcut_edgeBased_throwsIfNotConfiguredForEdgeBased() {
         graph = newGHStorage(false, false);
         GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(0, 1).setDistance(1));
         GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(1, 2).setDistance(1));
         graph.freeze();
-        addShortcut(getGraph(graph), 0, 2, true, 0, 1, 0, 1, 2);
+        assertThrows(IllegalStateException.class, () -> addShortcut(getGraph(graph), 0, 2, true, 0, 1, 0, 1, 2));
     }
 
     @Test
@@ -467,14 +467,14 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         }
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testLoadingWithWrongWeighting_node_throws() {
-        testLoadingWithWrongWeighting_throws(false);
+        assertThrows(IllegalStateException.class, () -> testLoadingWithWrongWeighting_throws(false));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testLoadingWithWrongWeighting_edge_throws() {
-        testLoadingWithWrongWeighting_throws(true);
+        assertThrows(IllegalStateException.class, () -> testLoadingWithWrongWeighting_throws(true));
     }
 
     private void testLoadingWithWrongWeighting_throws(boolean edgeBased) {
@@ -489,7 +489,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         newGHStorage.loadExisting();
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testLoadingWithExtraWeighting_throws() {
         // we start with one profile
         GraphHopperStorage ghStorage = createStorageWithWeightings("p|car|fastest|node");
@@ -498,7 +498,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
         // but then add an additional profile and try to load the graph from disk -> error
         GraphHopperStorage newGHStorage = createStorageWithWeightings("p|car|fastest|node", "q|car|shortest|node");
-        newGHStorage.loadExisting();
+        assertThrows(IllegalStateException.class, newGHStorage::loadExisting);
     }
 
     @Test
@@ -591,7 +591,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
                         .create();
                 fail("creating multiple profiles with the same name should be an error");
             } catch (Exception e) {
-                assertTrue("unexpected error: " + e.getMessage(), e.getMessage().contains("a CHGraph already exists"));
+                assertTrue(e.getMessage().contains("a CHGraph already exists"), "unexpected error: " + e.getMessage());
             }
         }
         // ... but using multiple profiles with different names is fine even when their properties/weighting are the same
