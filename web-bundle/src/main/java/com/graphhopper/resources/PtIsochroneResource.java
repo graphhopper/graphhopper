@@ -49,6 +49,7 @@ import javax.ws.rs.core.MediaType;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 @Path("isochrone-pt")
 public class PtIsochroneResource {
@@ -118,11 +119,11 @@ public class PtIsochroneResource {
         };
 
         if (format.equals("multipoint")) {
-            router.calcLabels(snap.getClosestNode(), initialTime, sptVisitor, label -> label.currentTime <= targetZ);
+            calcLabels(router, snap.getClosestNode(), initialTime, sptVisitor, label -> label.currentTime <= targetZ);
             MultiPoint exploredPoints = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
             return wrap(exploredPoints);
         } else {
-            router.calcLabels(snap.getClosestNode(), initialTime, sptVisitor, label -> label.currentTime <= targetZ);
+            calcLabels(router, snap.getClosestNode(), initialTime, sptVisitor, label -> label.currentTime <= targetZ);
             MultiPoint exploredPoints = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
 
             // Get at least all nodes within our bounding box (I think convex hull would be enough.)
@@ -198,6 +199,17 @@ public class PtIsochroneResource {
             }
         }
 
+    }
+
+    private static void calcLabels(MultiCriteriaLabelSetting router, int from, Instant startTime, MultiCriteriaLabelSetting.SPTVisitor visitor, Predicate<Label> predicate) {
+        Iterator<Label> iterator = router.calcLabels(from, startTime).iterator();
+        while(iterator.hasNext()) {
+            Label label = iterator.next();
+            if (!predicate.test(label)) {
+                break;
+            }
+            visitor.visit(label);
+        }
     }
 
     private Response wrap(Geometry isoline) {

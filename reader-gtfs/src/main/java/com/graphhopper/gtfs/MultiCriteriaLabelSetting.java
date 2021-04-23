@@ -25,7 +25,6 @@ import com.graphhopper.util.EdgeIterator;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -84,15 +83,6 @@ public class MultiCriteriaLabelSetting {
         return StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from), false)
                 .limit(maxVisitedNodes)
                 .peek(label -> visitedNodes++);
-    }
-
-    public void calcLabels(int from, Instant startTime, SPTVisitor visitor, Predicate<Label> predicate) {
-        this.startTime = startTime.toEpochMilli();
-        Iterator<Label> iterator = StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from), false).iterator();
-        Label l;
-        while (iterator.hasNext() && predicate.test(l = iterator.next())) {
-            visitor.visit(l);
-        }
     }
 
     // experimental
