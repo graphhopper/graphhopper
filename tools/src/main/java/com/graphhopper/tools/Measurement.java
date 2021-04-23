@@ -607,7 +607,7 @@ public class Measurement {
         final AtomicInteger failedCount = new AtomicInteger(0);
         final DistanceCalc distCalc = new DistanceCalcEarth();
 
-        final EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(hopper.getEncodingManager().getEncoder(vehicle).getAccessEnc());
+        final EdgeFilter edgeFilter = AccessFilter.allEdges(hopper.getEncodingManager().getEncoder(vehicle).getAccessEnc());
         final EdgeExplorer edgeExplorer = g.createEdgeExplorer(edgeFilter);
         final AtomicLong visitedNodesSum = new AtomicLong(0);
         final AtomicLong maxVisitedNodes = new AtomicLong(0);
