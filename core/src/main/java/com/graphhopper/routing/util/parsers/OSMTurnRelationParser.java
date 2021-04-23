@@ -19,7 +19,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeExplorer;
@@ -73,11 +73,11 @@ public class OSMTurnRelationParser implements TurnCostParser {
     }
 
     private EdgeExplorer getInExplorer(Graph graph) {
-        return cachedInExplorer == null ? cachedInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(accessEnc)) : cachedInExplorer;
+        return cachedInExplorer == null ? cachedInExplorer = graph.createEdgeExplorer(AccessFilter.inEdges(accessEnc)) : cachedInExplorer;
     }
 
     private EdgeExplorer getOutExplorer(Graph graph) {
-        return cachedOutExplorer == null ? cachedOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(accessEnc)) : cachedOutExplorer;
+        return cachedOutExplorer == null ? cachedOutExplorer = graph.createEdgeExplorer(AccessFilter.outEdges(accessEnc)) : cachedOutExplorer;
     }
 
     /**

@@ -23,7 +23,7 @@ import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.isochrone.algorithm.ReadableTriangulation;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -98,7 +98,7 @@ public class PtIsochroneResource {
         double targetZ = initialTime.toEpochMilli() + seconds * 1000;
 
         GeometryFactory geometryFactory = new GeometryFactory();
-        final EdgeFilter filter = DefaultEdgeFilter.allEdges(graphHopperStorage.getEncodingManager().getEncoder("foot").getAccessEnc());
+        final EdgeFilter filter = AccessFilter.allEdges(graphHopperStorage.getEncodingManager().getEncoder("foot").getAccessEnc());
         Snap snap = locationIndex.findClosest(source.lat, source.lon, filter);
         QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, Collections.singletonList(snap));
         if (!snap.isValid()) {

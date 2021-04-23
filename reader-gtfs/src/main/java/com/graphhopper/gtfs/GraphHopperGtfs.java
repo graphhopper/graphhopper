@@ -24,8 +24,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -156,7 +155,7 @@ public class GraphHopperGtfs extends GraphHopper {
                     if (edgeIteratorState.get(ptEncodedValues.getTypeEnc()) == GtfsStorage.EdgeType.EXIT_PT) {
                         GtfsStorageI.PlatformDescriptor fromPlatformDescriptor = getGtfsStorage().getPlatformDescriptorByEdge().get(label.edge);
                         Transfers transfers = allTransfers.get(fromPlatformDescriptor.feed_id);
-                        DefaultEdgeFilter filter = DefaultEdgeFilter.outEdges(ptEncodedValues.getAccessEnc());
+                        AccessFilter filter = AccessFilter.outEdges(ptEncodedValues.getAccessEnc());
                         EdgeExplorer edgeExplorer = graphHopperStorage.createEdgeExplorer(filter);
                         EdgeIterator edgeIterator = edgeExplorer.setBaseNode(stationNode);
                         while (edgeIterator.next()) {

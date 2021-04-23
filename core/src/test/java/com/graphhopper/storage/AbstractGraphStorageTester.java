@@ -22,9 +22,9 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.Closeable;
 import java.io.File;
@@ -33,7 +33,7 @@ import java.util.List;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.util.GHUtility.count;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Abstract test class to be extended for implementations of the Graph interface. Graphs
@@ -52,14 +52,14 @@ public abstract class AbstractGraphStorageTester {
     protected DecimalEncodedValue carAvSpeedEnc = carEncoder.getAverageSpeedEnc();
     protected FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
     protected GraphHopperStorage graph;
-    EdgeFilter carOutFilter = DefaultEdgeFilter.outEdges(carEncoder.getAccessEnc());
-    EdgeFilter carInFilter = DefaultEdgeFilter.inEdges(carEncoder.getAccessEnc());
+    EdgeFilter carOutFilter = AccessFilter.outEdges(carEncoder.getAccessEnc());
+    EdgeFilter carInFilter = AccessFilter.inEdges(carEncoder.getAccessEnc());
     EdgeExplorer carOutExplorer;
     EdgeExplorer carInExplorer;
     EdgeExplorer carAllExplorer;
 
     public static void assertPList(PointList expected, PointList list) {
-        assertEquals("size of point lists is not equal", expected.getSize(), list.getSize());
+        assertEquals(expected.getSize(), list.getSize(), "size of point lists is not equal");
         for (int i = 0; i < expected.getSize(); i++) {
             assertEquals(expected.getLat(i), list.getLat(i), 1e-4);
             assertEquals(expected.getLon(i), list.getLon(i), 1e-4);
@@ -102,12 +102,12 @@ public abstract class AbstractGraphStorageTester {
 
     abstract GraphHopperStorage createGHStorage(String location, boolean is3D);
 
-    @Before
+    @BeforeEach
     public void setUp() {
         Helper.removeDir(new File(locationParent));
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         Helper.close(graph);
         Helper.removeDir(new File(locationParent));
@@ -653,7 +653,7 @@ public abstract class AbstractGraphStorageTester {
         EdgeIteratorState edge = graph.edge(0, 3).setDistance(10);
         GHUtility.setSpeed(10, true, true, footEncoder, edge);
         GHUtility.setSpeed(10, true, true, carEncoder, edge);
-        EdgeExplorer footOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(footEncoder.getAccessEnc()));
+        EdgeExplorer footOutExplorer = graph.createEdgeExplorer(AccessFilter.outEdges(footEncoder.getAccessEnc()));
         assertEquals(GHUtility.asSet(3, 1), GHUtility.getNeighbors(footOutExplorer.setBaseNode(0)));
         assertEquals(GHUtility.asSet(3, 2), GHUtility.getNeighbors(carOutExplorer.setBaseNode(0)));
     }
@@ -694,8 +694,8 @@ public abstract class AbstractGraphStorageTester {
         EdgeIteratorState iter2 = GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 1).setDistance(10));
         iter2.setName("named street2");
 
-        assertEquals("named street1", graph.getEdgeIteratorState(iter1.getEdge(), iter1.getAdjNode()).getName());
-        assertEquals("named street2", graph.getEdgeIteratorState(iter2.getEdge(), iter2.getAdjNode()).getName());
+        assertEquals(graph.getEdgeIteratorState(iter1.getEdge(), iter1.getAdjNode()).getName(), "named street1");
+        assertEquals(graph.getEdgeIteratorState(iter2.getEdge(), iter2.getAdjNode()).getName(), "named street2");
     }
 
     @Test

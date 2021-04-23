@@ -447,7 +447,7 @@ public class Measurement {
     private void measureGraphTraversal(final Graph graph, final FlagEncoder encoder, int count) {
         final Random rand = new Random(seed);
 
-        EdgeFilter outFilter = DefaultEdgeFilter.outEdges(encoder.getAccessEnc());
+        EdgeFilter outFilter = AccessFilter.outEdges(encoder.getAccessEnc());
         final EdgeExplorer outExplorer = graph.createEdgeExplorer(outFilter);
         MiniPerfTest miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
             int nodeId = rand.nextInt(maxNode);
@@ -488,7 +488,7 @@ public class Measurement {
         });
         print("unit_testsCH.get_weight", miniPerf);
 
-        EdgeFilter outFilter = DefaultEdgeFilter.outEdges(encoder.getAccessEnc());
+        EdgeFilter outFilter = AccessFilter.outEdges(encoder.getAccessEnc());
         final CHEdgeExplorer outExplorer = lg.createEdgeExplorer(outFilter);
         miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
             int nodeId = rand.nextInt(maxNode);

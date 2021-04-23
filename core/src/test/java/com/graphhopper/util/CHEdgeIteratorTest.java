@@ -20,7 +20,7 @@ package com.graphhopper.util;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -28,9 +28,9 @@ import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -41,7 +41,7 @@ public class CHEdgeIteratorTest {
         CarFlagEncoder carFlagEncoder = new CarFlagEncoder();
         EncodingManager encodingManager = EncodingManager.create(carFlagEncoder);
         FastestWeighting weighting = new FastestWeighting(carFlagEncoder);
-        EdgeFilter carOutFilter = DefaultEdgeFilter.outEdges(carFlagEncoder.getAccessEnc());
+        EdgeFilter carOutFilter = AccessFilter.outEdges(carFlagEncoder.getAccessEnc());
         GraphHopperStorage g = new GraphBuilder(encodingManager).setCHConfigs(CHConfig.nodeBased("p", weighting)).create();
         BooleanEncodedValue accessEnc = carFlagEncoder.getAccessEnc();
         DecimalEncodedValue avSpeedEnc = carFlagEncoder.getAverageSpeedEnc();

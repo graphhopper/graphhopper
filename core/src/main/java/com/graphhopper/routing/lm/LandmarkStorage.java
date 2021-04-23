@@ -254,7 +254,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         // we cannot reuse the components calculated in PrepareRoutingSubnetworks as the edgeIds changed in between (called graph.optimize)
         // also calculating subnetworks from scratch makes bigger problems when working with many oneways
         final EdgeFilter tmpFilter = tarjanFilter;
-        EdgeFilter edgeFilter = edge -> DefaultEdgeFilter.outEdges(encoder.getAccessEnc()).accept(edge) && tmpFilter.accept(edge);
+        EdgeFilter edgeFilter = edge -> AccessFilter.outEdges(encoder.getAccessEnc()).accept(edge) && tmpFilter.accept(edge);
         ConnectedComponents graphComponents = TarjanSCC.findComponents(graph, edgeFilter, true);
         if (logDetails)
             LOGGER.info("Calculated " + graphComponents.getComponents().size() + " subnetworks via tarjan in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());

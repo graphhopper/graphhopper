@@ -20,7 +20,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphBuilder;
@@ -31,12 +31,13 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 import static com.graphhopper.routing.DirectionResolverResult.*;
 import static com.graphhopper.util.Helper.createPointList;
-import static org.junit.Assert.assertEquals;
 
 /**
  * Tests {@link DirectionResolver} on a simple graph (no {@link QueryGraph}.
@@ -48,7 +49,7 @@ public class DirectionResolverTest {
     private GraphHopperStorage graph;
     private NodeAccess na;
 
-    @Before
+    @BeforeEach
     public void setup() {
         encoder = new CarFlagEncoder();
         graph = new GraphBuilder(EncodingManager.create(encoder)).create();
@@ -401,7 +402,7 @@ public class DirectionResolverTest {
     }
 
     private int edge(int from, int to) {
-        EdgeExplorer explorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder.getAccessEnc()));
+        EdgeExplorer explorer = graph.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc()));
         EdgeIterator iter = explorer.setBaseNode(from);
         while (iter.next()) {
             if (iter.getAdjNode() == to) {

@@ -634,8 +634,8 @@ public class CHTurnCostTest {
             }
         }
         graph.freeze();
-        EdgeExplorer inExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder.getAccessEnc()));
-        EdgeExplorer outExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder.getAccessEnc()));
+        EdgeExplorer inExplorer = graph.createEdgeExplorer(AccessFilter.inEdges(encoder.getAccessEnc()));
+        EdgeExplorer outExplorer = graph.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc()));
 
         // add turn costs or restrictions
         for (int node = 0; node < size * size; ++node) {

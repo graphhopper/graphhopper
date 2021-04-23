@@ -26,11 +26,12 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.CHEdgeExplorer;
 import com.graphhopper.util.CHEdgeIterator;
 import com.graphhopper.util.GHUtility;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class DefaultEdgeFilterTest {
+public class AccessFilterTest {
     private final CarFlagEncoder encoder = new CarFlagEncoder();
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final GraphHopperStorage graph = new GraphBuilder(encodingManager)
@@ -50,8 +51,8 @@ public class DefaultEdgeFilterTest {
         graph.freeze();
         // add loop shortcut in 'fwd' direction
         addShortcut(chGraph, 0, 0, true, 0, 2);
-        CHEdgeExplorer outExplorer = chGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder.getAccessEnc()));
-        CHEdgeExplorer inExplorer = chGraph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder.getAccessEnc()));
+        CHEdgeExplorer outExplorer = chGraph.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc()));
+        CHEdgeExplorer inExplorer = chGraph.createEdgeExplorer(AccessFilter.inEdges(encoder.getAccessEnc()));
 
         IntSet inEdges = new IntHashSet();
         IntSet outEdges = new IntHashSet();
@@ -64,8 +65,8 @@ public class DefaultEdgeFilterTest {
             inEdges.add(inIter.getEdge());
         }
         // the loop should be accepted by in- and outExplorers
-        assertEquals("Wrong outgoing edges", IntHashSet.from(0, 3), outEdges);
-        assertEquals("Wrong incoming edges", IntHashSet.from(2, 3), inEdges);
+        assertEquals(IntHashSet.from(0, 3), outEdges, "Wrong outgoing edges");
+        assertEquals(IntHashSet.from(2, 3), inEdges, "Wrong incoming edges");
     }
 
     private void addShortcut(CHGraph chGraph, int from, int to, boolean fwd, int skip1, int skip2) {
