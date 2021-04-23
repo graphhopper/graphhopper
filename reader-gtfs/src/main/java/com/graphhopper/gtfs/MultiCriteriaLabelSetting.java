@@ -118,6 +118,8 @@ public class MultiCriteriaLabelSetting {
 
         @Override
         public boolean tryAdvance(Consumer<? super Label> action) {
+            while (!fromHeap.isEmpty() && fromHeap.peek().deleted)
+                fromHeap.poll();
             if (fromHeap.isEmpty()) {
                 return false;
             } else {
@@ -212,7 +214,7 @@ public class MultiCriteriaLabelSetting {
         for (Iterator<Label> iterator = sptEntries.iterator(); iterator.hasNext(); ) {
             Label sptEntry = iterator.next();
             if (dominates(me, sptEntry)) {
-                fromHeap.remove(sptEntry);
+                sptEntry.deleted = true;
                 iterator.remove();
             }
         }
