@@ -93,7 +93,9 @@ public class PrepareRoutingSubnetworks {
     private int setSubnetworks(String jobName, Weighting weighting, BooleanEncodedValue inSubnetworkEnc) {
         // partition graph into strongly connected components using Tarjan's algorithm
         StopWatch sw = new StopWatch().start();
-        EdgeBasedTarjanSCC.ConnectedComponents ccs = EdgeBasedTarjanSCC.findComponents(ghStorage, weighting, false);
+        EdgeBasedTarjanSCC.ConnectedComponents ccs = EdgeBasedTarjanSCC.findComponents(ghStorage,
+                (prev, edge) -> Double.isFinite(GHUtility.calcWeightWithTurnWeightWithAccess(weighting, edge, false, prev)),
+                false);
         List<IntArrayList> components = ccs.getComponents();
         BitSet singleEdgeComponents = ccs.getSingleEdgeComponents();
         long numSingleEdgeComponents = singleEdgeComponents.cardinality();
