@@ -1096,7 +1096,7 @@ public class GraphHopper implements GraphHopperAPI {
         for (Profile profile : profilesByName.values()) {
             // if turn costs are enabled use u-turn costs of zero as we only want to make sure the graph is fully connected assuming finite u-turn costs
             Weighting weighting = createWeighting(profile, new PMap().putObject(Parameters.Routing.U_TURN_COSTS, 0));
-            jobs.add(new PrepareJob(profile.getName(), encodingManager.getBooleanEncodedValue(Subnetwork.key(profile.getName())), weighting));
+            jobs.add(new PrepareJob(encodingManager.getBooleanEncodedValue(Subnetwork.key(profile.getName())), weighting));
         }
         return jobs;
     }

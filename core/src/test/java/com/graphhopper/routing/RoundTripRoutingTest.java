@@ -48,7 +48,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class RoundTripRoutingTest {
     private final FlagEncoder carFE = new CarFlagEncoder();
-    private final EncodingManager em = new EncodingManager.Builder().add(carFE).build();
+    private final EncodingManager em = EncodingManager.create(carFE);
     private final Weighting fastestWeighting = new FastestWeighting(carFE);
     // TODO private final TraversalMode tMode = TraversalMode.EDGE_BASED;
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
@@ -58,7 +58,7 @@ public class RoundTripRoutingTest {
     @Test(expected = IllegalArgumentException.class)
     public void lookup_throwsIfNumberOfPointsNotOne() {
         RoundTripRouting.lookup(Arrays.asList(ghPoint1, ghPoint2),
-                new FiniteWeightFilter(fastestWeighting),null, new RoundTripRouting.Params());
+                new FiniteWeightFilter(fastestWeighting), null, new RoundTripRouting.Params());
     }
 
     @Test
