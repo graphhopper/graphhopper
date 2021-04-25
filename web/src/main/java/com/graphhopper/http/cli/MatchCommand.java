@@ -108,8 +108,6 @@ public class MatchCommand extends ConfiguredCommand<GraphHopperServerConfigurati
         final boolean withRoute = !args.getString("instructions").isEmpty();
         XmlMapper xmlMapper = new XmlMapper();
 
-        Weighting weighting = hopper.createWeighting(hopper.getProfiles().get(0), hints);
-
         for (File gpxFile : args.<File>getList("gpx")) {
             try {
                 importSW.start();
@@ -132,7 +130,7 @@ public class MatchCommand extends ConfiguredCommand<GraphHopperServerConfigurati
                 String outFile = gpxFile.getAbsolutePath() + ".res.gpx";
                 System.out.println("\texport results to:" + outFile);
 
-                ResponsePath responsePath = new PathMerger(mr.getGraph(), weighting).
+                ResponsePath responsePath = new PathMerger(mr.getGraph(), mr.getWeighting()).
                         doWork(PointList.EMPTY, Collections.singletonList(mr.getMergedPath()), hopper.getEncodingManager(), tr);
                 if (responsePath.hasErrors()) {
                     System.err.println("Problem with file " + gpxFile + ", " + responsePath.getErrors());
