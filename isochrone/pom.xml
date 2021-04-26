@@ -23,9 +23,9 @@
         </dependency>
 
         <dependency>
-            <groupId>com.wdtinc</groupId>
-            <artifactId>mapbox-vector-tile</artifactId>
-            <version>3.1.0</version>
+            <groupId>org.locationtech.jts</groupId>
+            <artifactId>jts-core</artifactId>
+            <version>1.15.1</version>
         </dependency>
 
         <dependency>
