@@ -29,12 +29,14 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
+import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleFactory;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
@@ -187,14 +189,13 @@ public class Measurement {
             throw new IllegalArgumentException("There has to be exactly one encoder for each measurement");
         }
         FlagEncoder encoder = encodingManager.fetchEdgeEncoders().get(0);
-        final String vehicleStr = encoder.toString();
 
         StopWatch sw = new StopWatch().start();
         try {
             maxNode = g.getNodes();
 
             final boolean runSlow = args.getBool("measurement.run_slow_routing", true);
-            printGraphDetails(g, vehicleStr);
+            printGraphDetails(g, vehicle);
             measureGraphTraversal(g, encoder, count * 100);
             measureLocationIndex(g, hopper.getLocationIndex(), count);
 
@@ -607,14 +608,12 @@ public class Measurement {
         final AtomicInteger failedCount = new AtomicInteger(0);
         final DistanceCalc distCalc = new DistanceCalcEarth();
 
-        final EdgeFilter edgeFilter = AccessFilter.allEdges(hopper.getEncodingManager().getEncoder(vehicle).getAccessEnc());
+        String profileName = querySettings.edgeBased ? "profile_tc" : "profile_no_tc";
+        Weighting weighting = hopper.createWeighting(hopper.getProfile(profileName), new PMap());
+        final EdgeFilter edgeFilter = new DefaultSnapFilter(weighting, hopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profileName)));
         final EdgeExplorer edgeExplorer = g.createEdgeExplorer(edgeFilter);
         final AtomicLong visitedNodesSum = new AtomicLong(0);
         final AtomicLong maxVisitedNodes = new AtomicLong(0);
-//        final AtomicLong extractTimeSum = new AtomicLong(0);
-//        final AtomicLong calcPointsTimeSum = new AtomicLong(0);
-//        final AtomicLong calcDistTimeSum = new AtomicLong(0);
-//        final AtomicLong tmpDist = new AtomicLong(0);
         final Random rand = new Random(seed);
         final NodeAccess na = g.getNodeAccess();
 
@@ -631,9 +630,8 @@ public class Measurement {
                     int node = rand.nextInt(maxNode);
                     if (++tries > g.getNodes())
                         throw new RuntimeException("Could not find accessible points");
+                    // probe location. it could be a pedestrian area or an edge removed in the subnetwork removal process
                     if (GHUtility.count(edgeExplorer.setBaseNode(node)) == 0)
-                        // this node is not accessible via any roads, probably was removed during subnetwork removal
-                        // -> discard
                         continue;
                     nodes.add(node);
                     points.add(new GHPoint(na.getLat(node), na.getLon(node)));
@@ -648,6 +646,7 @@ public class Measurement {
                     break;
                 try {
                     req.getHints().putObject(BLOCK_AREA, querySettings.blockArea);
+                    // run this method to check if creating the blocked area is possible
                     GraphEdgeIdFinder.createBlockArea(hopper.getGraphHopperStorage(), hopper.getLocationIndex(), req.getPoints(), req.getHints(), edgeFilter);
                     break;
                 } catch (IllegalArgumentException ex) {
@@ -656,7 +655,7 @@ public class Measurement {
                                 + querySettings.blockArea + " - too big block_area or map too small? Request:" + req);
                 }
             }
-            req.setProfile(querySettings.edgeBased ? "profile_tc" : "profile_no_tc");
+            req.setProfile(profileName);
             req.getHints().
                     putObject(CH.DISABLE, !querySettings.ch).
                     putObject("stall_on_demand", querySettings.sod).

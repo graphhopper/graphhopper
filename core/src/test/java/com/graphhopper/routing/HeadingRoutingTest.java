@@ -22,6 +22,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.Profile;
+import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.*;
@@ -195,7 +196,7 @@ class HeadingRoutingTest {
 
     private GraphHopperStorage createSquareGraph() {
         CarFlagEncoder carEncoder = new CarFlagEncoder();
-        EncodingManager encodingManager = EncodingManager.create(carEncoder);
+        EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
         GraphHopperStorage g = new GraphBuilder(encodingManager).create();
 
         //   2---3---4
