@@ -24,6 +24,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -65,8 +66,12 @@ public class RouteResourceCustomModelTest {
                                 setCustomModel(new CustomModel().
                                         addToSpeed(If("road_class == PRIMARY", LIMIT, 28)).
                                         addToPriority(If("max_width < 1.2", MULTIPLY, 0))).
+                                setVehicle("bike"),
+                        new CustomProfile("custom_bike2").setCustomModel(
+                                new CustomModel(new CustomModel().
+                                        addToPriority(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, 0)))).
                                 setVehicle("bike"))).
-                setCHProfiles(Collections.singletonList(new CHProfile("truck")));
+                setCHProfiles(Arrays.asList(new CHProfile("truck"), new CHProfile("car_no_unclassified")));
         return config;
     }
 
@@ -231,13 +236,31 @@ public class RouteResourceCustomModelTest {
 
     @Test
     public void testSubnetworkRemovalPerProfile() {
+        // none-CH
         String body = "{\"points\": [[11.556416,50.007739], [11.528864,50.021638]]," +
-                " \"profile\": \"car_no_unclassified\","+
+                " \"profile\": \"car_no_unclassified\"," +
                 " \"ch.disable\": true" +
                 "}";
         JsonNode jsonNode = query(body, 200).readEntity(JsonNode.class);
         JsonNode path = jsonNode.get("paths").get(0);
         assertEquals(8754, path.get("distance").asDouble(), 5);
+
+        // CH
+        body = "{\"points\": [[11.556416,50.007739], [11.528864,50.021638]]," +
+                " \"profile\": \"car_no_unclassified\"" +
+                "}";
+        jsonNode = query(body, 200).readEntity(JsonNode.class);
+        path = jsonNode.get("paths").get(0);
+        assertEquals(8754, path.get("distance").asDouble(), 5);
+
+        // different profile
+        body = "{\"points\": [[11.494446, 50.027814], [11.511483, 49.987628]]," +
+                " \"profile\": \"custom_bike2\"," +
+                " \"ch.disable\": true" +
+                "}";
+        jsonNode = query(body, 200).readEntity(JsonNode.class);
+        path = jsonNode.get("paths").get(0);
+        assertEquals(5370, path.get("distance").asDouble(), 5);
     }
 
     private void assertMessageStartsWith(JsonNode jsonNode, String message) {
