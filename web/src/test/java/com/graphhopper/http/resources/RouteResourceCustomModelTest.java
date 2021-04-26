@@ -131,7 +131,7 @@ public class RouteResourceCustomModelTest {
     public void testUnknownProfile() {
         String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"unknown\", \"custom_model\": {}, \"ch.disable\": true}";
         JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
-        assertMessageStartsWith(jsonNode, "The requested profile 'unknown' does not exist.\nAvailable profiles: [car, bike, truck, cargo_bike, json_bike, foot_profile, car_no_unclassified, custom_bike]");
+        assertMessageStartsWith(jsonNode, "The requested profile 'unknown' does not exist.\nAvailable profiles: [car, bike, truck, cargo_bike, json_bike, foot_profile, car_no_unclassified, custom_bike, custom_bike2]");
     }
 
     @Test
