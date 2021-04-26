@@ -73,10 +73,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.wdtinc</groupId>
-            <artifactId>mapbox-vector-tile</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.fasterxml.jackson.jaxrs</groupId>
             <artifactId>jackson-jaxrs-xml-provider</artifactId>
         </dependency>
