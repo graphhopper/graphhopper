@@ -38,10 +38,8 @@ import static java.util.Comparator.comparingDouble;
 
 /**
  * Computes a shortest path tree by a given weighting. Terminates when all shortest paths up to
- * a given travel time or distance have been explored. The catch is that the function for termination
- * is different from the function for search. This implementation uses a second queue to keep track of
- * the termination criterion.
- *
+ * a given travel time, distance, or weight have been explored.
+ * <p>
  * IMPLEMENTATION NOTE:
  * util.PriorityQueue doesn't support efficient removes. We work around this by giving the labels
  * a deleted flag, not remove()ing them, and popping deleted elements off both queues.
@@ -86,8 +84,8 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
         }
     }
 
-    private IntObjectHashMap<IsoLabel> fromMap;
-    private PriorityQueue<IsoLabel> queueByWeighting;
+    private final IntObjectHashMap<IsoLabel> fromMap;
+    private final PriorityQueue<IsoLabel> queueByWeighting;
     private int visitedNodes;
     private double limit = -1;
     private ExploreType exploreType = TIME;
