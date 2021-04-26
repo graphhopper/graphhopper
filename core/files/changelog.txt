@@ -1,7 +1,8 @@
 3.0
+    moved the graphhopper-reader-osm module into core, use the graphhopper-core module directly instead. GraphHopperOSM is deprecated, use GraphHopper instead.
     subnetwork removal has changed and for every LocationIndex lookup one needs to explicitly include the new 'subnetwork' EncodedValue, see #2290
     DefaultEdgeFilter was renamed to AccessFilter. Use DefaultSnapFilter for the location lookup to make sure the query points do not snap to subnetworks. Previously subnetwork edges' access was set to zero, but this is no longer the case. Now subnetworks need to be identified by the subnetwork encoded value.
-    moved the isochrone module into core
+    moved the graphhopper-isochrone module into graphhopper-core
     removed setEncodingManager use setProfiles instead or for more custom requirements use GraphHopper.getEncodingManagerBuilder
     CustomWeighting language breaks old format but is more powerful and easier to read; it also allows factors >1 for server-side CustomModels
     renamed GHUtilities.setProperties to setSpeed

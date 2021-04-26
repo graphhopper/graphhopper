@@ -96,7 +96,7 @@
     <build>
         <pluginManagement>
             <plugins>
-                <!-- create jar with test classes to be reused in other projects like external or our reader-osm -->
+                <!-- create jar with test classes to be reused in other projects -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
