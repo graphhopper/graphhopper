@@ -43,7 +43,6 @@ public class QuadEdgeSubdivisionTest {
         QuadEdge e3 = quadEdgeSubdivision.connect(e2, e1);
 
 
-
         QuadEdge e4 = quadEdgeSubdivision.makeEdge(v4, v2);
         QuadEdge.splice(e2.sym(), e4.lNext());
         QuadEdge e41 = quadEdgeSubdivision.connect(e2.sym(), e4);
@@ -89,14 +88,14 @@ public class QuadEdgeSubdivisionTest {
 
         ReadableTriangulation readableTriangulation = ReadableTriangulation.wrap(triangulation);
 
-        ReadableQuadEdge e1 = readableTriangulation.getEdge(1,3);
-        ReadableQuadEdge e2 = readableTriangulation.getEdge(3,2);
-        ReadableQuadEdge e3 = readableTriangulation.getEdge(2,1);
-        ReadableQuadEdge e4 = readableTriangulation.getEdge(4,2);
-        ReadableQuadEdge e41 = readableTriangulation.getEdge(3,4);
-        ReadableQuadEdge e5 = readableTriangulation.getEdge(5,1);
-        ReadableQuadEdge e6 = readableTriangulation.getEdge(2,5);
-        ReadableQuadEdge e7 = readableTriangulation.getEdge(4,5);
+        ReadableQuadEdge e1 = readableTriangulation.getEdge(1, 3);
+        ReadableQuadEdge e2 = readableTriangulation.getEdge(3, 2);
+        ReadableQuadEdge e3 = readableTriangulation.getEdge(2, 1);
+        ReadableQuadEdge e4 = readableTriangulation.getEdge(4, 2);
+        ReadableQuadEdge e41 = readableTriangulation.getEdge(3, 4);
+        ReadableQuadEdge e5 = readableTriangulation.getEdge(5, 1);
+        ReadableQuadEdge e6 = readableTriangulation.getEdge(2, 5);
+        ReadableQuadEdge e7 = readableTriangulation.getEdge(4, 5);
 
         assertTriangle(e1, e2, e3);
         assertTriangle(e4, e2.sym(), e41);
@@ -135,14 +134,14 @@ public class QuadEdgeSubdivisionTest {
 
         ReadableTriangulation readableTriangulation = ReadableTriangulation.wrap(triangulation);
 
-        ReadableQuadEdge e1 = readableTriangulation.getEdge(1,3);
-        ReadableQuadEdge e2 = readableTriangulation.getEdge(3,2);
-        ReadableQuadEdge e3 = readableTriangulation.getEdge(2,1);
-        ReadableQuadEdge e4 = readableTriangulation.getEdge(4,2);
-        ReadableQuadEdge e41 = readableTriangulation.getEdge(3,4);
-        ReadableQuadEdge e5 = readableTriangulation.getEdge(5,1);
-        ReadableQuadEdge e6 = readableTriangulation.getEdge(2,5);
-        ReadableQuadEdge e7 = readableTriangulation.getEdge(4,5);
+        ReadableQuadEdge e1 = readableTriangulation.getEdge(1, 3);
+        ReadableQuadEdge e2 = readableTriangulation.getEdge(3, 2);
+        ReadableQuadEdge e3 = readableTriangulation.getEdge(2, 1);
+        ReadableQuadEdge e4 = readableTriangulation.getEdge(4, 2);
+        ReadableQuadEdge e41 = readableTriangulation.getEdge(3, 4);
+        ReadableQuadEdge e5 = readableTriangulation.getEdge(5, 1);
+        ReadableQuadEdge e6 = readableTriangulation.getEdge(2, 5);
+        ReadableQuadEdge e7 = readableTriangulation.getEdge(4, 5);
         ReadableQuadEdge e0 = readableTriangulation.getEdge(1, 0);
         ReadableQuadEdge e00 = readableTriangulation.getEdge(3, 0);
 

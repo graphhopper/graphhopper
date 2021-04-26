@@ -88,7 +88,7 @@ demo and [this pull request](http://github.com/graphhopper/graphhopper-ios) of t
 
 ## Analysis
 
-There is the isochrone subproject to calculate and visualize the reachable area for a certain travel mode
+Use isochrones to calculate and visualize the reachable area for a certain travel mode
 
 ### [Isochrone Web API](../stable/docs/web/api-doc.md#isochrone)
 

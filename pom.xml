@@ -71,7 +71,6 @@
     <modules>
         <module>core</module>
         <module>reader-osm</module>
-        <module>isochrone</module>
         <module>reader-gtfs</module>
         <module>tools</module>
         <module>hmm-lib</module>
