@@ -33,11 +33,6 @@
         </dependency>
         <dependency>
             <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-isochrone</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-map-matching</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
