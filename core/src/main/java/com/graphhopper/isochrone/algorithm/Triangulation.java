@@ -41,7 +41,7 @@ public class Triangulation {
 
     public QuadEdge getEdge(int o, int d) {
         if (o < d) {
-            return edges.get(o+","+d);
+            return edges.get(o + "," + d);
         } else {
             QuadEdge quadEdge = edges.get(d + "," + o);
             return quadEdge != null ? quadEdge.sym() : null;
@@ -52,9 +52,9 @@ public class Triangulation {
     private void putEdge(int o, int d, QuadEdge quadEdge) {
         vertexQuadEdges.put(o, quadEdge);
         if (o < d) {
-            edges.put(o+","+d, quadEdge);
+            edges.put(o + "," + d, quadEdge);
         } else {
-            edges.put(d+","+o, quadEdge.sym());
+            edges.put(d + "," + o, quadEdge.sym());
         }
     }
 

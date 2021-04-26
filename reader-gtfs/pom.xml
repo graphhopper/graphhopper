@@ -4,7 +4,6 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>graphhopper-reader-gtfs</artifactId>
-    <version>3.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>GraphHopper Reader for Gtfs Data</name>
 
@@ -32,36 +31,30 @@
         <dependency>
             <groupId>net.sourceforge.javacsv</groupId>
             <artifactId>javacsv</artifactId>
-            <version>2.0</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.4</version>
         </dependency>
         <dependency>
             <groupId>org.mapdb</groupId>
             <artifactId>mapdb</artifactId>
-            <version>1.0.8</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.google.transit</groupId>
+            <groupId>io.mobilitydata.transit</groupId>
             <artifactId>gtfs-realtime-bindings</artifactId>
-            <version>0.0.4</version>
         </dependency>
         <dependency>
             <groupId>javax.inject</groupId>
             <artifactId>javax.inject</artifactId>
-            <version>1</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.2.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -74,19 +67,16 @@
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-library</artifactId>
-            <version>1.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>3.6.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>2.23.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -97,7 +87,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <!-- Currently we need a bit more memory than for other tests -->
                 <configuration>
-                    <argLine>-Xmx1200m -Xms1200m</argLine>
+                    <argLine>-Xmx1200m -Xms1200m -Duser.language=en</argLine>
                 </configuration>
             </plugin>
         </plugins>
