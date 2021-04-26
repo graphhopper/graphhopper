@@ -21,7 +21,6 @@ package com.graphhopper.routing.subnetwork;
 import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeExplorer;
@@ -46,7 +45,7 @@ import java.util.List;
  */
 public class EdgeBasedTarjanSCC {
     private final Graph graph;
-    private final Weighting weighting;
+    private final EdgeTransitionFilter edgeTransitionFilter;
     private final EdgeExplorer explorer;
     private final BitUtil bitUtil = BitUtil.LITTLE;
     private final IntArrayDeque tarjanStack;
@@ -67,26 +66,25 @@ public class EdgeBasedTarjanSCC {
     /**
      * Runs Tarjan's algorithm using an explicit stack.
      *
-     * @param weighting                   Only edges accepted by this filter will be considered when we explore the graph.
-     *                                    If a turn has infinite costs the corresponding
-     *                                    path will be ignored (edges that are only connected by a path with such a turn will not
-     *                                    be considered to belong to the same component)
+     * @param edgeTransitionFilter        Only edge transitions accepted by this filter will be considered when we explore the graph.
+     *                                    If a turn is not accepted the corresponding path will be ignored (edges that are only connected
+     *                                    by a path with such a turn will not be considered to belong to the same component)
      * @param excludeSingleEdgeComponents if set to true components that only contain a single edge will not be
      *                                    returned when calling {@link #findComponents} or {@link #findComponentsRecursive()},
      *                                    which can be useful to save some memory.
      */
-    public static ConnectedComponents findComponents(Graph graph, Weighting weighting, boolean excludeSingleEdgeComponents) {
-        return new EdgeBasedTarjanSCC(graph, weighting, excludeSingleEdgeComponents).findComponents();
+    public static ConnectedComponents findComponents(Graph graph, EdgeTransitionFilter edgeTransitionFilter, boolean excludeSingleEdgeComponents) {
+        return new EdgeBasedTarjanSCC(graph, edgeTransitionFilter, excludeSingleEdgeComponents).findComponents();
     }
 
     /**
-     * Like {@link #findComponents(Graph, Weighting, boolean)}, but the search only starts at the
-     * given edges. This does not mean the search cannot expand to other edges, but this can be controlled using by
-     * the edgeFilter. This method does not return single edge components (the excludeSingleEdgeComponents option is
+     * Like {@link #findComponents(Graph, EdgeTransitionFilter, boolean)}, but the search only starts at the
+     * given edges. This does not mean the search cannot expand to other edges, but this can be controlled by the
+     * edgeTransitionFilter. This method does not return single edge components (the excludeSingleEdgeComponents option is
      * set to true).
      */
-    public static ConnectedComponents findComponentsForStartEdges(Graph graph, Weighting weighting, IntContainer edges) {
-        return new EdgeBasedTarjanSCC(graph, weighting, true).findComponentsForStartEdges(edges);
+    public static ConnectedComponents findComponentsForStartEdges(Graph graph, EdgeTransitionFilter edgeTransitionFilter, IntContainer edges) {
+        return new EdgeBasedTarjanSCC(graph, edgeTransitionFilter, true).findComponentsForStartEdges(edges);
     }
 
     /**
@@ -94,15 +92,15 @@ public class EdgeBasedTarjanSCC {
      * which can be set like `-Xss1024M`. Usually the version using an explicit stack ({@link #findComponents()}) should be
      * preferred. However, this recursive implementation is easier to understand.
      *
-     * @see #findComponents(Graph, Weighting, boolean)
+     * @see #findComponents(Graph, EdgeTransitionFilter, boolean)
      */
-    public static ConnectedComponents findComponentsRecursive(Graph graph, Weighting weighting, boolean excludeSingleEdgeComponents) {
-        return new EdgeBasedTarjanSCC(graph, weighting, excludeSingleEdgeComponents).findComponentsRecursive();
+    public static ConnectedComponents findComponentsRecursive(Graph graph, EdgeTransitionFilter edgeTransitionFilter, boolean excludeSingleEdgeComponents) {
+        return new EdgeBasedTarjanSCC(graph, edgeTransitionFilter, excludeSingleEdgeComponents).findComponentsRecursive();
     }
 
-    private EdgeBasedTarjanSCC(Graph graph, Weighting weighting, boolean excludeSingleEdgeComponents) {
+    private EdgeBasedTarjanSCC(Graph graph, EdgeTransitionFilter edgeTransitionFilter, boolean excludeSingleEdgeComponents) {
         this.graph = graph;
-        this.weighting = weighting;
+        this.edgeTransitionFilter = edgeTransitionFilter;
         this.explorer = graph.createEdgeExplorer();
         tarjanStack = new IntArrayDeque();
         dfsStackPQ = new LongArrayDeque();
@@ -152,8 +150,7 @@ public class EdgeBasedTarjanSCC {
         EdgeExplorer explorer = graph.createEdgeExplorer();
         EdgeIterator iter = explorer.setBaseNode(adjNode);
         while (iter.next()) {
-            if (Double.isInfinite(weighting.calcEdgeWeightWithAccess(iter, false)) ||
-                    Double.isInfinite(weighting.calcTurnWeight(edge, adjNode, iter.getEdge())))
+            if (!edgeTransitionFilter.accept(edge, iter))
                 continue;
             int q = createEdgeKey(iter, false);
             handleNeighbor(p, q, iter.getAdjNode());
@@ -268,8 +265,7 @@ public class EdgeBasedTarjanSCC {
                     final int edge = getEdgeFromKey(p);
                     EdgeIterator it = explorer.setBaseNode(adj);
                     while (it.next()) {
-                        if (Double.isInfinite(weighting.calcEdgeWeightWithAccess(it, false))
-                                || Double.isInfinite(weighting.calcTurnWeight(edge, adj, it.getEdge())))
+                        if (!edgeTransitionFilter.accept(edge, it))
                             continue;
                         int q = createEdgeKey(it, false);
                         pushHandleNeighbor(p, q, it.getAdjNode());
@@ -530,6 +526,13 @@ public class EdgeBasedTarjanSCC {
         public void remove(int key) {
             set.remove(key);
         }
+    }
+
+    public interface EdgeTransitionFilter {
+        /**
+         * @return true if edgeState is allowed *and* turning from prevEdge onto edgeState is allowed, false otherwise
+         */
+        boolean accept(int prevEdge, EdgeIteratorState edgeState);
     }
 
 }
