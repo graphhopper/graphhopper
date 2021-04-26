@@ -24,7 +24,6 @@ android/libs/graphhopper-*-android.jar
 /web-bundle/src/main/resources/com/graphhopper/maps/js/main.js
 /web/dependency-reduced-pom.xml
 *.pbf
-!/reader-osm/src/test/resources/com/graphhopper/reader/osm/*.pbf
 *.dem
 *.log
 /logs

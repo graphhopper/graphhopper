@@ -57,9 +57,6 @@ public class OSMReaderTest {
     private final String file2 = "test-osm2.xml";
     private final String file3 = "test-osm3.xml";
     private final String file4 = "test-osm4.xml";
-    // test-osm6.pbf was created by running "osmconvert test-osm6.xml --timestamp=2014-01-02T00:10:14Z -o=test-osm6.pbf"
-    // The osmconvert tool can be found here: http://wiki.openstreetmap.org/wiki/Osmconvert
-    private final String file6 = "test-osm6.pbf";
     private final String file7 = "test-osm7.xml";
     private final String fileBarriers = "test-barriers.xml";
     private final String dir = "./target/tmp/test-db";

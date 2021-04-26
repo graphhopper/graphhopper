@@ -33,21 +33,21 @@
         <nd ref="3"/>
         <tag k="highway" v="motorway"/>
     </way>
-    
+
     <!-- 3-4 -->
     <way id="34" version="1">
         <nd ref="3"/>
         <nd ref="4"/>
         <tag k="highway" v="motorway"/>
-    </way>     
-    
+    </way>
+
     <!-- 4-5 -->
     <way id="45" version="1">
         <nd ref="5"/>
         <nd ref="4"/>
         <tag k="highway" v="motorway"/>
-    </way>  
-    
+    </way>
+
     <!-- 5-1 -->
     <way id="51" version="1">
         <nd ref="1"/>
@@ -92,5 +92,5 @@
         <tag k="type" v="restriction"/>
         <tag k="except" v="bus;bicycle"/>
     </relation>
-    
+
 </osm>

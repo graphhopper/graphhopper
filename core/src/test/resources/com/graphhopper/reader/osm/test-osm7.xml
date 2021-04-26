@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="CGImap 0.4.0 (21273 thorn-02.openstreetmap.org)"
+     copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright"
+     license="http://opendatacommons.org/licenses/odbl/1-0/">
+    <bounds minlat="48.9772300" minlon="8.2547700" maxlat="48.9789600" maxlon="8.2570200"/>
+    <node id="15230524" visible="true" version="10" changeset="31551591" timestamp="2015-05-28T23:31:48Z" user="maction"
+          uid="62423" lat="48.9788809" lon="8.2548809">
+        <tag k="amenity" v="ferry_terminal"/>
+        <tag k="cargo" v="passengers;vehicle"/>
+        <tag k="name" v="Rheinfähre Neuburg"/>
+        <tag k="TMC:cid_58:tabcd_1:Class" v="Point"/>
+        <tag k="TMC:cid_58:tabcd_1:LCLversion" v="9.00"/>
+        <tag k="TMC:cid_58:tabcd_1:LocationCode" v="53045"/>
+        <tag k="TMC:cid_58:tabcd_1:NextLocationCode" v="54998"/>
+    </node>
+    <node id="1422857309" visible="true" version="1" changeset="9207458" timestamp="2011-09-04T10:34:59Z" user="KK-O"
+          uid="14228" lat="48.9788068" lon="8.2554001"/>
+    <node id="1422857311" visible="true" version="1" changeset="9207458" timestamp="2011-09-04T10:34:59Z" user="KK-O"
+          uid="14228" lat="48.9781625" lon="8.2562316"/>
+    <node id="1422857313" visible="true" version="1" changeset="9207458" timestamp="2011-09-04T10:34:59Z" user="KK-O"
+          uid="14228" lat="48.9776344" lon="8.2568485"/>
+    <node id="15237462" visible="true" version="8" changeset="27528220" timestamp="2014-12-17T12:00:56Z" user="guenz"
+          uid="176514" lat="48.9772732" lon="8.2569129">
+        <tag k="amenity" v="ferry_terminal"/>
+        <tag k="cargo" v="passengers;vehicle"/>
+        <tag k="name" v="Rheinfähre Neuburg"/>
+        <tag k="TMC:cid_58:tabcd_1:Class" v="Point"/>
+        <tag k="TMC:cid_58:tabcd_1:LCLversion" v="9.00"/>
+        <tag k="TMC:cid_58:tabcd_1:LocationCode" v="53046"/>
+        <tag k="TMC:cid_58:tabcd_1:PrevLocationCode" v="54998"/>
+    </node>
+    <way id="3500103" visible="true" version="13" changeset="34403208" timestamp="2015-10-03T08:12:50Z" user="W0lle"
+         uid="2111313">
+        <nd ref="15230524"/>
+        <nd ref="1422857309"/>
+        <nd ref="1422857311"/>
+        <nd ref="1422857313"/>
+        <nd ref="15237462"/>
+        <tag k="duration" v="00:04"/>
+        <tag k="fee" v="yes"/>
+        <tag k="motorcar" v="yes"/>
+        <tag k="motor_vehicle" v="yes"/>
+        <tag k="name" v="Rheinfähre Neuburg"/>
+        <tag k="note" v="Fährverbindung März - Nov"/>
+        <tag k="ref" v="F3"/>
+        <tag k="route" v="ferry"/>
+        <tag k="tmc" v="DE:53045+54998;DE:54998-53045"/>
+        <tag k="TMC:cid_58:tabcd_1:Class" v="Point"/>
+        <tag k="TMC:cid_58:tabcd_1:LCLversion" v="9.00"/>
+        <tag k="TMC:cid_58:tabcd_1:LocationCode" v="54998"/>
+        <tag k="TMC:cid_58:tabcd_1:NextLocationCode" v="53046"/>
+        <tag k="TMC:cid_58:tabcd_1:PrevLocationCode" v="53045"/>
+        <tag k="website" v="http://www.rheinfaehre-neuburg.de/Home.html"/>
+    </way>
+</osm>
