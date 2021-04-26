@@ -24,13 +24,12 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.lm.LMRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FiniteWeightFilter;
-import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
@@ -90,6 +89,11 @@ public class Router {
         // CHGraphs that were not built yet (and possibly no CH profiles were configured).
         this.chEnabled = !chGraphs.isEmpty();
         this.lmEnabled = !landmarks.isEmpty();
+
+        for (String profile : profilesByName.keySet()) {
+            if (!encodingManager.hasEncodedValue(Subnetwork.key(profile)))
+                throw new IllegalStateException("The profile '" + profile + "' needs an EncodedValue '" + Subnetwork.key(profile) + "'");
+        }
     }
 
     public GHResponse route(GHRequest request) {
@@ -182,11 +186,11 @@ public class Router {
         final boolean disableCH = getDisableCH(request.getHints());
         final boolean disableLM = getDisableLM(request.getHints());
         if (chEnabled && !disableCH) {
-            return new CHSolver(request, profilesByName, routerConfig, chGraphs);
+            return new CHSolver(request, profilesByName, routerConfig, encodingManager, chGraphs);
         } else if (lmEnabled && !disableLM) {
-            return new LMSolver(request, profilesByName, routerConfig, weightingFactory, ghStorage, locationIndex, landmarks);
+            return new LMSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, ghStorage, locationIndex, landmarks);
         } else {
-            return new FlexSolver(request, profilesByName, routerConfig, weightingFactory, ghStorage, locationIndex);
+            return new FlexSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, ghStorage, locationIndex);
         }
     }
 
@@ -195,7 +199,7 @@ public class Router {
         StopWatch sw = new StopWatch().start();
         double startHeading = request.getHeadings().isEmpty() ? Double.NaN : request.getHeadings().get(0);
         RoundTripRouting.Params params = new RoundTripRouting.Params(request.getHints(), startHeading, routerConfig.getMaxRoundTripRetries());
-        List<Snap> snaps = RoundTripRouting.lookup(request.getPoints(), solver.getSnappingFilter(), locationIndex, params);
+        List<Snap> snaps = RoundTripRouting.lookup(request.getPoints(), solver.getSnapFilter(), locationIndex, params);
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
 
         QueryGraph queryGraph = QueryGraph.create(ghStorage, snaps);
@@ -215,7 +219,7 @@ public class Router {
             throw new IllegalArgumentException("Currently alternative routes work only with start and end point. You tried to use: " + request.getPoints().size() + " points");
         GHResponse ghRsp = new GHResponse();
         StopWatch sw = new StopWatch().start();
-        List<Snap> snaps = ViaRouting.lookup(encodingManager, request.getPoints(), solver.getSnappingFilter(), locationIndex, request.getSnapPreventions(), request.getPointHints());
+        List<Snap> snaps = ViaRouting.lookup(encodingManager, request.getPoints(), solver.getSnapFilter(), locationIndex, request.getSnapPreventions(), request.getPointHints());
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
         QueryGraph queryGraph = QueryGraph.create(ghStorage, snaps);
         PathCalculator pathCalculator = solver.createPathCalculator(queryGraph);
@@ -245,7 +249,7 @@ public class Router {
     protected GHResponse routeVia(GHRequest request, Solver solver) {
         GHResponse ghRsp = new GHResponse();
         StopWatch sw = new StopWatch().start();
-        List<Snap> snaps = ViaRouting.lookup(encodingManager, request.getPoints(), solver.getSnappingFilter(), locationIndex, request.getSnapPreventions(), request.getPointHints());
+        List<Snap> snaps = ViaRouting.lookup(encodingManager, request.getPoints(), solver.getSnapFilter(), locationIndex, request.getSnapPreventions(), request.getPointHints());
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
         // (base) query graph used to resolve headings, curbsides etc. this is not necessarily the same thing as
         // the (possibly implementation specific) query graph used by PathCalculator
@@ -323,11 +327,13 @@ public class Router {
         private final RouterConfig routerConfig;
         protected Profile profile;
         protected Weighting weighting;
+        protected final EncodedValueLookup lookup;
 
-        public Solver(GHRequest request, Map<String, Profile> profilesByName, RouterConfig routerConfig) {
+        public Solver(GHRequest request, Map<String, Profile> profilesByName, RouterConfig routerConfig, EncodedValueLookup lookup) {
             this.request = request;
             this.profilesByName = profilesByName;
             this.routerConfig = routerConfig;
+            this.lookup = lookup;
         }
 
         protected void checkRequest() {
@@ -374,8 +380,8 @@ public class Router {
 
         protected abstract Weighting createWeighting();
 
-        protected EdgeFilter getSnappingFilter() {
-            return new FiniteWeightFilter(weighting);
+        protected EdgeFilter getSnapFilter() {
+            return new DefaultSnapFilter(weighting, lookup.getBooleanEncodedValue(Subnetwork.key(profile.getName())));
         }
 
         protected abstract PathCalculator createPathCalculator(QueryGraph queryGraph);
@@ -398,8 +404,8 @@ public class Router {
     private static class CHSolver extends Solver {
         private final Map<String, RoutingCHGraph> chGraphs;
 
-        CHSolver(GHRequest request, Map<String, Profile> profilesByName, RouterConfig routerConfig, Map<String, RoutingCHGraph> chGraphs) {
-            super(request, profilesByName, routerConfig);
+        CHSolver(GHRequest request, Map<String, Profile> profilesByName, RouterConfig routerConfig, EncodedValueLookup lookup, Map<String, RoutingCHGraph> chGraphs) {
+            super(request, profilesByName, routerConfig, lookup);
             this.chGraphs = chGraphs;
         }
 
@@ -457,8 +463,9 @@ public class Router {
         private final GraphHopperStorage ghStorage;
         private final LocationIndex locationIndex;
 
-        FlexSolver(GHRequest request, Map<String, Profile> profilesByName, RouterConfig routerConfig, WeightingFactory weightingFactory, GraphHopperStorage ghStorage, LocationIndex locationIndex) {
-            super(request, profilesByName, routerConfig);
+        FlexSolver(GHRequest request, Map<String, Profile> profilesByName, RouterConfig routerConfig,
+                   EncodedValueLookup lookup, WeightingFactory weightingFactory, GraphHopperStorage ghStorage, LocationIndex locationIndex) {
+            super(request, profilesByName, routerConfig, lookup);
             this.routerConfig = routerConfig;
             this.weightingFactory = weightingFactory;
             this.ghStorage = ghStorage;
@@ -529,8 +536,9 @@ public class Router {
     private static class LMSolver extends FlexSolver {
         private final Map<String, LandmarkStorage> landmarks;
 
-        LMSolver(GHRequest request, Map<String, Profile> profilesByName, RouterConfig routerConfig, WeightingFactory weightingFactory, GraphHopperStorage ghStorage, LocationIndex locationIndex, Map<String, LandmarkStorage> landmarks) {
-            super(request, profilesByName, routerConfig, weightingFactory, ghStorage, locationIndex);
+        LMSolver(GHRequest request, Map<String, Profile> profilesByName, RouterConfig routerConfig, EncodedValueLookup lookup,
+                 WeightingFactory weightingFactory, GraphHopperStorage ghStorage, LocationIndex locationIndex, Map<String, LandmarkStorage> landmarks) {
+            super(request, profilesByName, routerConfig, lookup, weightingFactory, ghStorage, locationIndex);
             this.landmarks = landmarks;
         }
 

@@ -10,7 +10,10 @@ import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.isochrone.algorithm.Triangulator;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.routing.ProfileResolver;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.FiniteWeightFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
@@ -94,12 +97,13 @@ public class IsochroneResource {
         LocationIndex locationIndex = graphHopper.getLocationIndex();
         Graph graph = graphHopper.getGraphHopperStorage();
         Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
+        BooleanEncodedValue inSubnetworkEnc = graphHopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profileName));
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA)) {
             GraphEdgeIdFinder.BlockArea blockArea = GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
                     Collections.singletonList(point.get()), hintsMap, new FiniteWeightFilter(weighting));
             weighting = new BlockAreaWeighting(weighting, blockArea);
         }
-        Snap snap = locationIndex.findClosest(point.get().lat, point.get().lon, new FiniteWeightFilter(weighting));
+        Snap snap = locationIndex.findClosest(point.get().lat, point.get().lon, new DefaultSnapFilter(weighting, inSubnetworkEnc));
         if (!snap.isValid())
             throw new IllegalArgumentException("Point not found:" + point);
         QueryGraph queryGraph = QueryGraph.create(graph, snap);
