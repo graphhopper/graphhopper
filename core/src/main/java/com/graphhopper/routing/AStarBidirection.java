@@ -118,6 +118,11 @@ public class AStarBidirection extends AbstractNonCHBidirAlgo {
     }
 
     @Override
+    void setToDataStructures(AbstractBidirAlgo other) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public String getName() {
         return Parameters.Algorithms.ASTAR_BI + "|" + weightApprox;
     }
