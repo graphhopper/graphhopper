@@ -1,9 +1,6 @@
 # Contributors
 
-Most of the contributors are mentioned at Github as [Members](https://github.com/graphhopper?tab=members) or [Contributors](https://github.com/graphhopper/graphhopper/contributors). 
-
-Contributors that agree to the [project its CLA](https://www.graphhopper.com/individual-contributor-license-agreement/)
-state this as a comment via a separate, signed commit.
+Most of the contributors are mentioned at Github as [Members](https://github.com/graphhopper?tab=members) or [Contributors](https://github.com/graphhopper/graphhopper/contributors).
 
 Here is an overview:
 
@@ -38,6 +35,7 @@ Here is an overview:
  * HelgeKrueger, modularization of javascript, #590
  * henningvs, doc improvements
  * highsource, more efficient geometry update, UI fixes
+ * hoofstephan, bug fix   
  * IsNull, improvements like #708
  * Janekdererste, GUI for public transit
  * jansoe, many improvements regarding A* algorithm, forcing direction, roundabouts etc

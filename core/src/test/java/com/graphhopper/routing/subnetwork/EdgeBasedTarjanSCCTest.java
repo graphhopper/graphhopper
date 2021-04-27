@@ -23,11 +23,9 @@ import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.subnetwork.EdgeBasedTarjanSCC.ConnectedComponents;
 import com.graphhopper.routing.subnetwork.TarjanSCCTest.IntWithArray;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.GHUtility;
@@ -38,21 +36,20 @@ import java.util.Random;
 import java.util.Set;
 
 import static com.graphhopper.routing.subnetwork.TarjanSCCTest.buildComponentSet;
-import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class EdgeBasedTarjanSCCTest {
     private final FlagEncoder encoder = new CarFlagEncoder(5, 5, 1);
     private final EncodingManager em = EncodingManager.create(encoder);
-    private final EdgeFilter edgeFilter = DefaultEdgeFilter.outEdges(encoder.getAccessEnc());
+    private final EdgeBasedTarjanSCC.EdgeTransitionFilter fwdAccessFilter = (prev, edge) -> edge.get(encoder.getAccessEnc());
 
     @Test
     public void linearSingle() {
         GraphHopperStorage g = new GraphBuilder(em).create();
         // 0 - 1
         GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(1));
-        ConnectedComponents result = EdgeBasedTarjanSCC.findComponentsRecursive(g, edgeFilter, NO_TURN_COST_PROVIDER, false);
+        ConnectedComponents result = EdgeBasedTarjanSCC.findComponentsRecursive(g, fwdAccessFilter, false);
         assertEquals(2, result.getEdgeKeys());
         assertEquals(1, result.getTotalComponents());
         assertEquals(1, result.getComponents().size());
@@ -67,7 +64,7 @@ class EdgeBasedTarjanSCCTest {
         // 0 - 1 - 2
         GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(1));
         GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 2).setDistance(1));
-        ConnectedComponents result = EdgeBasedTarjanSCC.findComponentsRecursive(g, edgeFilter, NO_TURN_COST_PROVIDER, false);
+        ConnectedComponents result = EdgeBasedTarjanSCC.findComponentsRecursive(g, fwdAccessFilter, false);
         assertEquals(4, result.getEdgeKeys());
         assertEquals(1, result.getTotalComponents());
         assertEquals(1, result.getComponents().size());
@@ -82,7 +79,7 @@ class EdgeBasedTarjanSCCTest {
         // 0 -> 1 -> 2
         GHUtility.setSpeed(60, true, false, encoder, g.edge(0, 1).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(1));
-        ConnectedComponents result = EdgeBasedTarjanSCC.findComponentsRecursive(g, edgeFilter, NO_TURN_COST_PROVIDER, false);
+        ConnectedComponents result = EdgeBasedTarjanSCC.findComponentsRecursive(g, fwdAccessFilter, false);
         assertEquals(4, result.getEdgeKeys());
         assertEquals(4, result.getTotalComponents());
         assertEquals(0, result.getComponents().size());
@@ -99,7 +96,7 @@ class EdgeBasedTarjanSCCTest {
         GHUtility.setSpeed(60, true, false, encoder, g.edge(0, 1).setDistance(1));
         GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 2).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, g.edge(3, 2).setDistance(1));
-        ConnectedComponents result = EdgeBasedTarjanSCC.findComponentsRecursive(g, edgeFilter, NO_TURN_COST_PROVIDER, false);
+        ConnectedComponents result = EdgeBasedTarjanSCC.findComponentsRecursive(g, fwdAccessFilter, false);
         assertEquals(6, result.getEdgeKeys());
         assertEquals(5, result.getTotalComponents());
         // a single bidirectional edge is treated as a 'real' component with two edge-keys. this is not nearly as
@@ -107,6 +104,30 @@ class EdgeBasedTarjanSCCTest {
         assertEquals(1, result.getComponents().size());
         assertEquals(4, result.getSingleEdgeComponents().cardinality());
         assertEquals(result.getComponents().get(0), result.getBiggestComponent());
+    }
+
+    @Test
+    public void oneWayBridges() {
+        GraphHopperStorage g = new GraphBuilder(em).create();
+        // 0 - 1 -> 2 - 3
+        //          |   |
+        //          4 - 5 -> 6 - 7
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(3, 5).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(4, 5).setDistance(1));
+        GHUtility.setSpeed(60, true, false, encoder, g.edge(5, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(6, 7).setDistance(1));
+        ConnectedComponents result = EdgeBasedTarjanSCC.findComponentsRecursive(g, fwdAccessFilter, false);
+        assertEquals(16, result.getEdgeKeys());
+        assertEquals(7, result.getTotalComponents());
+        // 0-1, 2-3-5-4-2 and 6-7
+        assertEquals(3, result.getComponents().size());
+        // 1->2, 2->1 and 5->6, 6<-5
+        assertEquals(4, result.getSingleEdgeComponents().cardinality());
+        assertEquals(result.getComponents().get(1), result.getBiggestComponent());
     }
 
     @Test
@@ -123,7 +144,7 @@ class EdgeBasedTarjanSCCTest {
         GHUtility.setSpeed(60, true, true, encoder, g.edge(4, 5).setDistance(1));
         GHUtility.setSpeed(60, true, true, encoder, g.edge(6, 7).setDistance(1));
         GHUtility.setSpeed(60, true, true, encoder, g.edge(6, 8).setDistance(1));
-        ConnectedComponents result = EdgeBasedTarjanSCC.findComponentsRecursive(g, edgeFilter, NO_TURN_COST_PROVIDER, false);
+        ConnectedComponents result = EdgeBasedTarjanSCC.findComponentsRecursive(g, fwdAccessFilter, false);
         assertEquals(16, result.getEdgeKeys());
         assertEquals(1, result.getTotalComponents());
         assertEquals(1, result.getComponents().size());
@@ -142,7 +163,7 @@ class EdgeBasedTarjanSCCTest {
         GHUtility.setSpeed(60, true, false, encoder, g.edge(0, 3).setDistance(1)); // edge-keys 4,5
         GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 1).setDistance(1)); // edge-keys 6,7
         GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 1).setDistance(1)); // edge-keys 8,9
-        ConnectedComponents result = EdgeBasedTarjanSCC.findComponentsRecursive(g, edgeFilter, NO_TURN_COST_PROVIDER, false);
+        ConnectedComponents result = EdgeBasedTarjanSCC.findComponentsRecursive(g, fwdAccessFilter, false);
         assertEquals(10, result.getEdgeKeys());
         assertEquals(6, result.getTotalComponents());
         assertEquals(2, result.getComponents().size());
@@ -173,7 +194,7 @@ class EdgeBasedTarjanSCCTest {
         GHUtility.setSpeed(60, true, true, encoder, g.edge(5, 7).setDistance(1)); // edge-keys 12,13
         GHUtility.setSpeed(60, true, true, encoder, g.edge(6, 7).setDistance(1)); // edge-keys 14,15
         GHUtility.setSpeed(60, true, true, encoder, g.edge(6, 8).setDistance(1)); // edge-keys 16,17
-        ConnectedComponents result = EdgeBasedTarjanSCC.findComponentsRecursive(g, edgeFilter, NO_TURN_COST_PROVIDER, false);
+        ConnectedComponents result = EdgeBasedTarjanSCC.findComponentsRecursive(g, fwdAccessFilter, false);
         assertEquals(18, result.getEdgeKeys());
         assertEquals(6, result.getTotalComponents());
         assertEquals(2, result.getComponents().size());
@@ -201,7 +222,7 @@ class EdgeBasedTarjanSCCTest {
         GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 4).setDistance(1)); // edge-keys 8,9
 
         // first lets check what happens without turn costs
-        ConnectedComponents result = EdgeBasedTarjanSCC.findComponentsRecursive(g, edgeFilter, NO_TURN_COST_PROVIDER, false);
+        ConnectedComponents result = EdgeBasedTarjanSCC.findComponentsRecursive(g, fwdAccessFilter, false);
         assertEquals(7, result.getTotalComponents());
         assertEquals(1, result.getComponents().size());
         assertEquals(IntArrayList.from(6, 4, 2, 0), result.getBiggestComponent());
@@ -211,18 +232,9 @@ class EdgeBasedTarjanSCCTest {
         }
 
         // now lets try with a restricted turn
-        result = EdgeBasedTarjanSCC.findComponentsRecursive(g, edgeFilter, new TurnCostProvider() {
-            @Override
-            public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-                return (inEdge == 1 && viaNode == 2 && outEdge == 2) ? Double.POSITIVE_INFINITY : 0;
-            }
-
-            @Override
-            public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
-                return 0;
-            }
-        }, false);
-        // all none of the edges are strongly connected anymore!
+        result = EdgeBasedTarjanSCC.findComponentsRecursive(g,
+                (prev, edge) -> fwdAccessFilter.accept(prev, edge) && !(prev == 1 && edge.getBaseNode() == 2 && edge.getEdge() == 2), false);
+        // none of the edges are strongly connected anymore!
         assertEquals(10, result.getTotalComponents());
         assertEquals(0, result.getComponents().size());
         assertEquals(IntArrayList.from(), result.getBiggestComponent());
@@ -244,8 +256,8 @@ class EdgeBasedTarjanSCCTest {
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(g, rnd, 500, 2, true, true,
                 encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), 60d, 0.8, 0.7, 0);
-        ConnectedComponents implicit = EdgeBasedTarjanSCC.findComponentsRecursive(g, edgeFilter, NO_TURN_COST_PROVIDER, excludeSingle);
-        ConnectedComponents explicit = EdgeBasedTarjanSCC.findComponents(g, edgeFilter, NO_TURN_COST_PROVIDER, excludeSingle);
+        ConnectedComponents implicit = EdgeBasedTarjanSCC.findComponentsRecursive(g, fwdAccessFilter, excludeSingle);
+        ConnectedComponents explicit = EdgeBasedTarjanSCC.findComponents(g, fwdAccessFilter, excludeSingle);
         assertEquals(2 * g.getEdges(), implicit.getEdgeKeys(), "total number of edge keys in connected components should equal twice the number of edges in graph");
         assertEquals(2 * g.getEdges(), explicit.getEdgeKeys(), "total number of edge keys in connected components should equal twice the number of edges in graph");
 
@@ -260,12 +272,12 @@ class EdgeBasedTarjanSCCTest {
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(g, rnd, 500, 2, true, true,
                 encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), 60d, 0.8, 0.7, 0);
-        ConnectedComponents components = EdgeBasedTarjanSCC.findComponents(g, edgeFilter, NO_TURN_COST_PROVIDER, true);
+        ConnectedComponents components = EdgeBasedTarjanSCC.findComponents(g, fwdAccessFilter, true);
         IntArrayList edges = new IntArrayList();
         AllEdgesIterator iter = g.getAllEdges();
         while (iter.next())
             edges.add(iter.getEdge());
-        ConnectedComponents componentsForStartEdges = EdgeBasedTarjanSCC.findComponentsForStartEdges(g, edgeFilter, edges, NO_TURN_COST_PROVIDER);
+        ConnectedComponents componentsForStartEdges = EdgeBasedTarjanSCC.findComponentsForStartEdges(g, fwdAccessFilter, edges);
         compareResults(g, seed, components, componentsForStartEdges);
     }
 

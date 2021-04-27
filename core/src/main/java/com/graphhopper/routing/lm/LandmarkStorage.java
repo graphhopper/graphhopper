@@ -25,6 +25,8 @@ import com.carrotsearch.hppc.procedures.IntObjectProcedure;
 import com.graphhopper.coll.MapEntry;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.SPTEntry;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.subnetwork.SubnetworkStorage;
 import com.graphhopper.routing.subnetwork.TarjanSCC;
 import com.graphhopper.routing.subnetwork.TarjanSCC.ConnectedComponents;
@@ -241,8 +243,19 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         byte[] subnetworks = new byte[graph.getNodes()];
         Arrays.fill(subnetworks, (byte) UNSET_SUBNETWORK);
-        // always use "reverse = false" because EdgeFilter.accept is called within correct direction in Tarjan
-        EdgeFilter accessFilter = edgeState -> edgeState.get(encoder.getAccessEnc()) && Double.isFinite(weighting.calcEdgeWeight(edgeState, false));
+
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+        final EdgeFilter accessFilter;
+        // TODO NOW adjust tests so that we do not need this check?
+        if (graph.getEncodingManager().hasEncodedValue(Subnetwork.key(lmConfig.getName()))) {
+            // exclude edges that we previously marked in PrepareRoutingSubnetworks to avoid problems like "connection not found"
+            BooleanEncodedValue edgeInSubnetworkEnc = graph.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(lmConfig.getName()));
+            accessFilter = edgeState -> !edgeState.get(edgeInSubnetworkEnc) && edgeState.get(accessEnc) && Double.isFinite(weighting.calcEdgeWeight(edgeState, false));
+        } else {
+            // always use "reverse = false" because EdgeFilter.accept is called within correct direction in Tarjan
+            accessFilter = edgeState -> edgeState.get(accessEnc) && Double.isFinite(weighting.calcEdgeWeight(edgeState, false));
+        }
+
         final EdgeFilter tarjanFilter;
         final IntHashSet blockedEdges;
 

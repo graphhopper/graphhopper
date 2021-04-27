@@ -64,6 +64,8 @@ public class Label {
         }
     }
 
+    public boolean deleted = false;
+
     public final long currentTime;
 
     public final int edge;

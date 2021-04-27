@@ -7,7 +7,10 @@ import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.DefaultSnapFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FiniteWeightFilter;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -35,6 +38,7 @@ import java.io.Writer;
 import java.util.*;
 
 import static com.graphhopper.resources.RouteResource.errorIfLegacyParameters;
+import static com.graphhopper.resources.RouteResource.removeLegacyParameters;
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
 
@@ -66,7 +70,7 @@ public class SPTResource {
     }
 
     // Annotating this as application/json because errors come out as json, and
-    // IllegalArgumentExceptions are not mapped to a fixed mediatype, because in RouteRessource, it could be GPX.
+    // IllegalArgumentExceptions are not mapped to a fixed mediatype, because in RouteResource, it could be GPX.
     @GET
     @Produces({"text/csv", "application/json"})
     public Response doGet(
@@ -84,29 +88,27 @@ public class SPTResource {
         hintsMap.putObject(Parameters.Landmark.DISABLE, true);
         if (Helper.isEmpty(profileName)) {
             profileName = profileResolver.resolveProfile(hintsMap).getName();
-            hintsMap.remove("weighting");
-            hintsMap.remove("vehicle");
+            removeLegacyParameters(hintsMap);
         }
+
         errorIfLegacyParameters(hintsMap);
         Profile profile = graphHopper.getProfile(profileName);
-        if (profile == null) {
+        if (profile == null)
             throw new IllegalArgumentException("The requested profile '" + profileName + "' does not exist");
-        }
-        FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
-        EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder.getAccessEnc());
         LocationIndex locationIndex = graphHopper.getLocationIndex();
-        Snap snap = locationIndex.findClosest(point.get().lat, point.get().lon, edgeFilter);
+        Graph graph = graphHopper.getGraphHopperStorage();
+        Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
+        BooleanEncodedValue inSubnetworkEnc = graphHopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profileName));
+        if (hintsMap.has(Parameters.Routing.BLOCK_AREA)) {
+            GraphEdgeIdFinder.BlockArea blockArea = GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
+                    Collections.singletonList(point.get()), hintsMap, new FiniteWeightFilter(weighting));
+            weighting = new BlockAreaWeighting(weighting, blockArea);
+        }
+        Snap snap = locationIndex.findClosest(point.get().lat, point.get().lon, new DefaultSnapFilter(weighting, inSubnetworkEnc));
         if (!snap.isValid())
             throw new IllegalArgumentException("Point not found:" + point);
-
-        Graph graph = graphHopper.getGraphHopperStorage();
         QueryGraph queryGraph = QueryGraph.create(graph, snap);
         NodeAccess nodeAccess = queryGraph.getNodeAccess();
-
-        Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
-        if (hintsMap.has(Parameters.Routing.BLOCK_AREA))
-            weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
-                    Collections.singletonList(point.get()), hintsMap, DefaultEdgeFilter.allEdges(encoder.getAccessEnc())));
         TraversalMode traversalMode = profile.isTurnCosts() ? EDGE_BASED : NODE_BASED;
         ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow, traversalMode);
 

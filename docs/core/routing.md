@@ -21,9 +21,6 @@ can disable speed mode using `ch.disable=true`. In this case either hybrid mode 
 chosen profile) or flexible mode will be used. To use flexible mode in the presence of an LM preparation you need to 
 also set `lm.disable=true`.
 
-If you need multiple vehicle profiles you can specify a list of vehicle profiles (see
-config.yml e.g. `graph.flag_encoders=car,bike` or use `EncodingManager.create("car,bike")`). 
-
 To calculate a route you have to pick one vehicle and optionally an algorithm like
 `bidirectional_astar`, see the test speedModeVersusHybridMode.
 

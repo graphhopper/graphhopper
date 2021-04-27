@@ -28,10 +28,7 @@ import com.graphhopper.routing.Router;
 import com.graphhopper.routing.RouterConfig;
 import com.graphhopper.routing.WeightingFactory;
 import com.graphhopper.routing.ch.CHPreparationHandler;
-import com.graphhopper.routing.ev.DefaultEncodedValueFactory;
-import com.graphhopper.routing.ev.EncodedValueFactory;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.RoadEnvironment;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.lm.LandmarkStorage;
@@ -47,8 +44,6 @@ import com.graphhopper.routing.util.parsers.TagParserFactory;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
-import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
@@ -86,6 +81,7 @@ public class GraphHopper implements GraphHopperAPI {
     boolean removeZipped = true;
     // for graph:
     private GraphHopperStorage ghStorage;
+    private final EncodingManager.Builder emBuilder = new EncodingManager.Builder();
     private EncodingManager encodingManager;
     private int defaultSegmentSize = -1;
     private String ghLocation = "";
@@ -130,28 +126,14 @@ public class GraphHopper implements GraphHopperAPI {
         this.landmarkSplittingFeatureCollection = landmarkSplittingFeatureCollection;
     }
 
-    /**
-     * For testing only
-     */
-    protected GraphHopper loadGraph(GraphHopperStorage g) {
-        this.ghStorage = g;
-        setFullyLoaded();
-        initLocationIndex();
-        return this;
+    public EncodingManager.Builder getEncodingManagerBuilder() {
+        return emBuilder;
     }
 
     public EncodingManager getEncodingManager() {
+        if (encodingManager == null)
+            throw new IllegalStateException("EncodingManager not yet build");
         return encodingManager;
-    }
-
-    /**
-     * Specify which vehicles can be read by this GraphHopper instance. An encoding manager defines
-     * how data from every vehicle is written (und read) into edges of the graph.
-     */
-    public GraphHopper setEncodingManager(EncodingManager em) {
-        ensureNotLoaded();
-        this.encodingManager = em;
-        return this;
     }
 
     public ElevationProvider getElevationProvider() {
@@ -240,7 +222,6 @@ public class GraphHopper implements GraphHopperAPI {
      *
      * <pre>
      * {@code
-     *   // make sure the encoding manager contains a "car" and a "bike" flag encoder
      *   hopper.setProfiles(
      *     new Profile("my_car").setVehicle("car").setWeighting("shortest"),
      *     new Profile("your_bike").setVehicle("bike").setWeighting("fastest")
@@ -265,7 +246,10 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     public GraphHopper setProfiles(List<Profile> profiles) {
-        profilesByName.clear();
+        if (!profilesByName.isEmpty())
+            throw new IllegalArgumentException("Cannot initialize profiles multiple times");
+        if (encodingManager != null)
+            throw new IllegalArgumentException("Cannot set profiles after EncodingManager was built");
         for (Profile profile : profiles) {
             Profile previous = this.profilesByName.put(profile.getName(), profile);
             if (previous != null)
@@ -373,7 +357,7 @@ public class GraphHopper implements GraphHopperAPI {
      */
     public LocationIndex getLocationIndex() {
         if (locationIndex == null)
-            throw new IllegalStateException("Location index not initialized");
+            throw new IllegalStateException("LocationIndex not initialized");
 
         return locationIndex;
     }
@@ -460,11 +444,16 @@ public class GraphHopper implements GraphHopperAPI {
 
         sortGraph = ghConfig.getBool("graph.do_sort", sortGraph);
         removeZipped = ghConfig.getBool("graph.remove_zipped", removeZipped);
-        EncodingManager encodingManager = createEncodingManager(ghConfig);
-        if (encodingManager != null) {
-            // overwrite EncodingManager object from configuration file
-            setEncodingManager(encodingManager);
-        }
+
+        if (encodingManager != null)
+            throw new IllegalStateException("Cannot call init twice. EncodingManager was already initialized.");
+
+        emBuilder.setEnableInstructions(ghConfig.getBool("datareader.instructions", true));
+        emBuilder.setPreferredLanguage(ghConfig.getString("datareader.preferred_language", ""));
+        emBuilder.setDateRangeParser(DateRangeParser.createInstance(ghConfig.getString("datareader.date_range_parser_day", "")));
+        setProfiles(ghConfig.getProfiles());
+        // currently we cannot require profiles at this point as GTFS module does not use them
+        encodingManager = buildEncodingManager(ghConfig, false);
 
         if (ghConfig.getString("graph.locktype", "native").equals("simple"))
             lockFactory = new SimpleFSLockFactory();
@@ -483,9 +472,6 @@ public class GraphHopper implements GraphHopperAPI {
 
         // optimizable prepare
         minNetworkSize = ghConfig.getInt("prepare.min_network_size", minNetworkSize);
-
-        // profiles
-        setProfiles(ghConfig.getProfiles());
 
         // prepare CH&LM
         chPreparationHandler.init(ghConfig);
@@ -513,23 +499,27 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
-    private EncodingManager createEncodingManager(GraphHopperConfig ghConfig) {
+    private EncodingManager buildEncodingManager(GraphHopperConfig ghConfig, boolean requireProfilesByName) {
         String flagEncodersStr = ghConfig.getString("graph.flag_encoders", "");
         String encodedValueStr = ghConfig.getString("graph.encoded_values", "");
-        if (flagEncodersStr.isEmpty() && encodedValueStr.isEmpty()) {
-            return null;
-        } else {
-            EncodingManager.Builder emBuilder = new EncodingManager.Builder();
-            if (!encodedValueStr.isEmpty())
-                emBuilder.addAll(tagParserFactory, encodedValueStr);
-            registerCustomEncodedValues(emBuilder);
-            if (!flagEncodersStr.isEmpty())
-                emBuilder.addAll(flagEncoderFactory, flagEncodersStr);
-            emBuilder.setEnableInstructions(ghConfig.getBool("datareader.instructions", true));
-            emBuilder.setPreferredLanguage(ghConfig.getString("datareader.preferred_language", ""));
-            emBuilder.setDateRangeParser(DateRangeParser.createInstance(ghConfig.getString("datareader.date_range_parser_day", "")));
-            return emBuilder.build();
+        Map<String, String> flagEncoderMap = new LinkedHashMap<>();
+        for (String encoderStr : Arrays.asList(flagEncodersStr.split(","))) {
+            String key = encoderStr.split("\\|")[0];
+            if (!key.isEmpty()) flagEncoderMap.put(key, encoderStr);
         }
+        if (requireProfilesByName && profilesByName.isEmpty())
+            throw new IllegalStateException("no profiles exist but assumed to create EncodingManager. E.g. provide them in GraphHopperConfig when calling GraphHopper.init");
+        for (Profile profile : profilesByName.values()) {
+            emBuilder.add(Subnetwork.create(profile.getName()));
+            if (!flagEncoderMap.containsKey(profile.getVehicle()) || profile.isTurnCosts())
+                flagEncoderMap.put(profile.getVehicle(), profile.getVehicle() + (profile.isTurnCosts() ? "|turn_costs=true" : ""));
+        }
+        flagEncoderMap.values().stream().forEach(s -> emBuilder.addIfAbsent(flagEncoderFactory, s));
+        for (String tpStr : encodedValueStr.split(",")) {
+            if (!tpStr.isEmpty()) emBuilder.addIfAbsent(tagParserFactory, tpStr);
+        }
+
+        return emBuilder.build();
     }
 
     private static ElevationProvider createElevationProvider(GraphHopperConfig ghConfig) {
@@ -702,15 +692,17 @@ public class GraphHopper implements GraphHopperAPI {
 
         setGraphHopperLocation(graphHopperFolder);
 
-        if (encodingManager == null)
-            setEncodingManager(EncodingManager.create(encodedValueFactory, flagEncoderFactory, ghLocation));
-
         if (!allowWrites && dataAccessType.isMMap())
             dataAccessType = DAType.MMAP_RO;
+        if (encodingManager == null) {
+            StorableProperties properties = new StorableProperties(new GHDirectory(ghLocation, dataAccessType));
+            encodingManager = properties.loadExisting()
+                    ? EncodingManager.create(emBuilder, encodedValueFactory, flagEncoderFactory, properties)
+                    : buildEncodingManager(new GraphHopperConfig(), true);
+        }
 
         GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
         ghStorage = new GraphHopperStorage(dir, encodingManager, hasElevation(), encodingManager.needsTurnCostsSupport(), defaultSegmentSize);
-
         checkProfilesConsistency();
 
         if (lmPreparationHandler.isEnabled())
@@ -753,6 +745,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private void checkProfilesConsistency() {
+        EncodingManager encodingManager = getEncodingManager();
         for (Profile profile : profilesByName.values()) {
             if (!encodingManager.hasEncoder(profile.getVehicle())) {
                 throw new IllegalArgumentException("Unknown vehicle '" + profile.getVehicle() + "' in profile: " + profile + ". Make sure all vehicles used in 'profiles' exist in 'graph.flag_encoders'");
@@ -906,9 +899,6 @@ public class GraphHopper implements GraphHopperAPI {
         }
     }
 
-    protected void registerCustomEncodedValues(EncodingManager.Builder emBuilder) {
-    }
-
     protected void importPublicTransit() {
     }
 
@@ -945,7 +935,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     protected WeightingFactory createWeightingFactory() {
-        return new DefaultWeightingFactory(ghStorage, encodingManager);
+        return new DefaultWeightingFactory(ghStorage, getEncodingManager());
     }
 
     @Override
@@ -974,8 +964,15 @@ public class GraphHopper implements GraphHopperAPI {
                             ? lmPreparationHandler.getPreparation(lmp.getPreparationProfile()).getLandmarkStorage()
                             : lmPreparationHandler.getPreparation(lmp.getProfile()).getLandmarkStorage());
         }
+        return doCreateRouter(ghStorage, locationIndex, profilesByName, pathBuilderFactory,
+                trMap, routerConfig, createWeightingFactory(), chGraphs, landmarks);
+    }
+
+    protected Router doCreateRouter(GraphHopperStorage ghStorage, LocationIndex locationIndex, Map<String, Profile> profilesByName,
+                                    PathDetailsBuilderFactory pathBuilderFactory, TranslationMap trMap, RouterConfig routerConfig,
+                                    WeightingFactory weightingFactory, Map<String, CHGraph> chGraphs, Map<String, LandmarkStorage> landmarks) {
         return new Router(ghStorage, locationIndex, profilesByName, pathBuilderFactory,
-                trMap, routerConfig, createWeightingFactory(), chGraphs, landmarks
+                trMap, routerConfig, weightingFactory, chGraphs, landmarks
         );
     }
 
@@ -1095,19 +1092,11 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private List<PrepareJob> buildSubnetworkRemovalJobs() {
-        List<FlagEncoder> encoders = encodingManager.fetchEdgeEncoders();
         List<PrepareJob> jobs = new ArrayList<>();
-        for (FlagEncoder encoder : encoders) {
-            // for encoders with turn costs we do an edge-based subnetwork removal, because they *might* be used with
-            // a profile with turn_costs=true
-            if (encoder.supportsTurnCosts()) {
-                // u-turn costs are zero as we only want to make sure the graph is fully connected assuming finite
-                // u-turn costs
-                TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), 0);
-                jobs.add(new PrepareJob(encoder.toString(), encoder.getAccessEnc(), turnCostProvider));
-            } else {
-                jobs.add(new PrepareJob(encoder.toString(), encoder.getAccessEnc(), null));
-            }
+        for (Profile profile : profilesByName.values()) {
+            // if turn costs are enabled use u-turn costs of zero as we only want to make sure the graph is fully connected assuming finite u-turn costs
+            Weighting weighting = createWeighting(profile, new PMap().putObject(Parameters.Routing.U_TURN_COSTS, 0));
+            jobs.add(new PrepareJob(encodingManager.getBooleanEncodedValue(Subnetwork.key(profile.getName())), weighting));
         }
         return jobs;
     }

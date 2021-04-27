@@ -43,12 +43,12 @@ public class LMRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
     }
 
     @Override
-    public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
+    public RoutingAlgorithm createAlgo(Graph g, Weighting w, AlgorithmOptions opts) {
         if (!lms.isInitialized())
             throw new IllegalStateException("Initialize landmark storage before creating algorithms");
         int activeLM = Math.max(1, opts.getHints().getInt(Parameters.Landmark.ACTIVE_COUNT, defaultActiveLandmarks));
         final String algoStr = opts.getAlgorithm();
-        final Weighting weighting = g.wrapWeighting(opts.getWeighting());
+        final Weighting weighting = g.wrapWeighting(w);
         if (ASTAR.equalsIgnoreCase(algoStr)) {
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.AStar.EPSILON, 1);
             AStar algo = new AStar(g, weighting, opts.getTraversalMode());

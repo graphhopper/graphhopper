@@ -50,7 +50,6 @@ public class GpxTravelTimeConsistencyTest {
                 setProfiles(new Profile("profile").setVehicle("foot").setWeighting("fastest")).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(graphFileFoot).
-                setEncodingManager(EncodingManager.create("foot")).
                 importOrLoad();
     }
 

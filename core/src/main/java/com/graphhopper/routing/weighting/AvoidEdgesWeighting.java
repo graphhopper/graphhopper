@@ -41,8 +41,9 @@ public class AvoidEdgesWeighting extends AbstractAdjustedWeighting {
         return this;
     }
 
-    public void setAvoidedEdges(IntSet avoidedEdges) {
+    public AvoidEdgesWeighting setAvoidedEdges(IntSet avoidedEdges) {
         this.avoidedEdges = avoidedEdges;
+        return this;
     }
 
     @Override

@@ -97,11 +97,6 @@ public class GraphBuilder {
         return setDir(new RAMDirectory(location, store));
     }
 
-    public GraphBuilder setBytes(long bytes) {
-        this.bytes = bytes;
-        return this;
-    }
-
     public GraphBuilder set3D(boolean withElevation) {
         this.elevation = withElevation;
         return this;

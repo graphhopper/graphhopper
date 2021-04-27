@@ -10,7 +10,7 @@ graphhopper:
 
   # More options: foot,hike,bike,bike2,mtb,racingbike,motorcycle,car4wd,wheelchair (comma separated)
   # bike2 takes elevation data into account (like up-hill is slower than down-hill) and requires enabling graph.elevation.provider below.
-  graph.flag_encoders: car
+  # graph.flag_encoders: car
 
   # Enable turn restrictions for car or motorcycle.
   # graph.flag_encoders: car|turn_costs=true
@@ -123,7 +123,7 @@ graphhopper:
 
   # In many cases the road network consists of independent components without any routes going in between. In
   # the most simple case you can imagine an island without a bridge or ferry connection. The following parameter
-  # allows setting a minimum size (number of nodes) for such detached components. This can be used to reduce the number
+  # allows setting a minimum size (number of edges) for such detached components. This can be used to reduce the number
   # of cases where a connection between locations might not be found.
   prepare.min_network_size: 200
 

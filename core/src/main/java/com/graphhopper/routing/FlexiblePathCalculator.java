@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
 
@@ -31,13 +32,15 @@ import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 public class FlexiblePathCalculator implements PathCalculator {
     private final QueryGraph queryGraph;
     private final RoutingAlgorithmFactory algoFactory;
-    private AlgorithmOptions algoOpts;
+    private Weighting weighting;
+    private final AlgorithmOptions algoOpts;
     private String debug;
     private int visitedNodes;
 
-    public FlexiblePathCalculator(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts) {
+    public FlexiblePathCalculator(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, Weighting weighting, AlgorithmOptions algoOpts) {
         this.queryGraph = queryGraph;
         this.algoFactory = algoFactory;
+        this.weighting = weighting;
         this.algoOpts = algoOpts;
     }
 
@@ -49,7 +52,7 @@ public class FlexiblePathCalculator implements PathCalculator {
 
     private RoutingAlgorithm createAlgo() {
         StopWatch sw = new StopWatch().start();
-        RoutingAlgorithm algo = algoFactory.createAlgo(queryGraph, algoOpts);
+        RoutingAlgorithm algo = algoFactory.createAlgo(queryGraph, weighting, algoOpts);
         debug = ", algoInit:" + (sw.stop().getNanos() / 1000) + " μs";
         return algo;
     }
@@ -97,11 +100,11 @@ public class FlexiblePathCalculator implements PathCalculator {
         return visitedNodes;
     }
 
-    public AlgorithmOptions getAlgoOpts() {
-        return algoOpts;
+    public Weighting getWeighting() {
+        return weighting;
     }
 
-    public void setAlgoOpts(AlgorithmOptions algoOpts) {
-        this.algoOpts = algoOpts;
+    public void setWeighting(Weighting weighting) {
+        this.weighting = weighting;
     }
 }

@@ -346,24 +346,24 @@ public class MiniGraphUI {
         } else {
             Weighting weighting = hopper.createWeighting(profile, new PMap());
             final PrepareLandmarks preparation = hopper.getLMPreparationHandler().getPreparation(profile.getName());
-            RoutingAlgorithmFactory algoFactory = (g, opts) -> {
-                RoutingAlgorithm algo = preparation.getRoutingAlgorithmFactory().createAlgo(g, opts);
+            RoutingAlgorithmFactory algoFactory = (g, w, opts) -> {
+                RoutingAlgorithm algo = preparation.getRoutingAlgorithmFactory().createAlgo(g, w, opts);
                 if (algo instanceof AStarBidirection) {
-                    return new DebugAStarBi(g, opts.getWeighting(), opts.getTraversalMode(), mg).
+                    return new DebugAStarBi(g, w, opts.getTraversalMode(), mg).
                             setApproximation(((AStarBidirection) algo).getApproximation());
                 } else if (algo instanceof AStar) {
-                    return new DebugAStar(g, opts.getWeighting(), opts.getTraversalMode(), mg);
+                    return new DebugAStar(g, w, opts.getTraversalMode(), mg);
                 } else if (algo instanceof DijkstraBidirectionRef) {
-                    return new DebugDijkstraBidirection(g, opts.getWeighting(), opts.getTraversalMode(), mg);
+                    return new DebugDijkstraBidirection(g, w, opts.getTraversalMode(), mg);
                 } else if (algo instanceof Dijkstra) {
-                    return new DebugDijkstraSimple(g, opts.getWeighting(), opts.getTraversalMode(), mg);
+                    return new DebugDijkstraSimple(g, w, opts.getTraversalMode(), mg);
                 }
                 return algo;
             };
-            AlgorithmOptions algoOpts = new AlgorithmOptions(Algorithms.ASTAR_BI, weighting);
+            AlgorithmOptions algoOpts = new AlgorithmOptions().setAlgorithm(Algorithms.ASTAR_BI);
             logger.info("algoOpts:" + algoOpts + ", weighting: " + weighting);
             QueryGraph qGraph = QueryGraph.create(graph, fromRes, toRes);
-            return algoFactory.createAlgo(qGraph, algoOpts);
+            return algoFactory.createAlgo(qGraph, weighting, algoOpts);
         }
     }
 
@@ -405,7 +405,7 @@ public class MiniGraphUI {
 //
 ////        System.out.println("path " + from + "->" + to);
 //        return algo.calcPath(from, to);
-        // System.out.println(GraphUtility.getNodeInfo(graph, 60139, DefaultEdgeFilter.allEdges(new CarFlagEncoder()).direction(false, true)));
+        // System.out.println(GraphUtility.getNodeInfo(graph, 60139, AccessFilter.allEdges(new CarFlagEncoder()).direction(false, true)));
         // System.out.println(((GraphStorage) graph).debug(202947, 10));
 //        GraphUtility.printInfo(graph, 106511, 10);
         return algo.calcPath(162810, 35120);

@@ -26,4 +26,9 @@ public class GHMatrixBatchTest extends AbstractGHMatrixWebTester {
             }
         }.setSleepAfterGET(0));
     }
+
+    @Override
+    GHMatrixAbstractRequester createRequester(String url) {
+        return new GHMatrixBatchRequester(url);
+    }
 }
