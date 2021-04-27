@@ -22,10 +22,7 @@ import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -146,7 +143,7 @@ public class EdgeBasedTarjanSCC {
     private void findComponentForEdgeKey(int p, int adjNode) {
         setupNextEdgeKey(p);
         // we have to create a new explorer on each iteration because of the nested edge iterations
-        final int edge = getEdgeFromKey(p);
+        final int edge = GHUtility.getEdgeFromEdgeKey(p);
         EdgeExplorer explorer = graph.createEdgeExplorer();
         EdgeIterator iter = explorer.setBaseNode(adjNode);
         while (iter.next()) {
@@ -262,7 +259,7 @@ public class EdgeBasedTarjanSCC {
                     setupNextEdgeKey(p);
                     // we push buildComponent first so it will run *after* we finished traversing the edges
                     pushBuildComponent(p);
-                    final int edge = getEdgeFromKey(p);
+                    final int edge = GHUtility.getEdgeFromEdgeKey(p);
                     EdgeIterator it = explorer.setBaseNode(adj);
                     while (it.next()) {
                         if (!edgeTransitionFilter.accept(edge, it))
@@ -344,10 +341,6 @@ public class EdgeBasedTarjanSCC {
         if (edgeState.get(EdgeIteratorState.REVERSE_STATE) == !reverse)
             edgeKey++;
         return edgeKey;
-    }
-
-    public static int getEdgeFromKey(int edgeKey) {
-        return edgeKey / 2;
     }
 
     public static class ConnectedComponents {
