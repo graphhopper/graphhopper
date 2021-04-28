@@ -352,4 +352,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     public boolean hasEncodedValue(String key) {
         return encodedValueLookup.hasEncodedValue(key);
     }
+
+    public final List<String> getRestrictions() {
+        return restrictions;
+    }
 }
