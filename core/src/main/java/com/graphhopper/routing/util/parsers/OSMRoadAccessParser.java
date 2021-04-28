@@ -81,6 +81,8 @@ public class OSMRoadAccessParser implements TagParser {
                 return Arrays.asList("motorcycle", "motor_vehicle", "vehicle", "access");
             case HGV:
                 return Arrays.asList("hgv", "motor_vehicle", "vehicle", "access");
+            case PSV:
+                return Arrays.asList("psv", "motor_vehicle", "vehicle", "access");
             default:
                 throw new IllegalArgumentException("Cannot convert TransportationMode " + mode + " to list of restrictions");
         }
