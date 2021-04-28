@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 
@@ -137,14 +138,17 @@ public class GraphHopperGtfs extends GraphHopper {
     }
 
     private void interpolateTransfers(HashMap<String, GtfsReader> readers, Map<String, Transfers> allTransfers) {
-        LOGGER.info("Looking for transfers");
+        LOGGER.info("Interpolating unspecified transfers");
         final int maxTransferWalkTimeSeconds = ghConfig.getInt("gtfs.max_transfer_interpolation_walk_time_seconds", 120);
         GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
         QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, Collections.emptyList());
         FastestWeighting accessEgressWeighting = new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder("foot"));
         PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
         final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, getGtfsStorage(), RealtimeFeed.empty(getGtfsStorage()), true, true, false, 5.0, false, 0);
+        long count = getGtfsStorage().getStationNodes().values().stream().distinct().count();
+        AtomicLong i = new AtomicLong();
         getGtfsStorage().getStationNodes().values().stream().distinct().forEach(stationNode -> {
+            LOGGER.info("{}/{}", i.getAndIncrement(), count);
             MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, true, false, false, Integer.MAX_VALUE, new ArrayList<>());
             router.setLimitStreetTime(Duration.ofSeconds(maxTransferWalkTimeSeconds).toMillis());
             Iterator<Label> iterator = router.calcLabels(stationNode, Instant.ofEpochMilli(0)).iterator();
@@ -191,6 +195,7 @@ public class GraphHopperGtfs extends GraphHopper {
     }
 
     private Stream<TransferWithTime> getType0TransferWithTimes(String id, GTFSFeed gtfsFeed) {
+        LOGGER.info("Interpolating type-0 transfers");
         GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
         RealtimeFeed realtimeFeed = RealtimeFeed.empty(getGtfsStorage());
         PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
@@ -224,7 +229,11 @@ public class GraphHopperGtfs extends GraphHopper {
                         }
                     }
                     if (solution == null) {
-                        throw new RuntimeException("Can't find a transfer walk route.");
+                        TransferWithTime transferWithTime = new TransferWithTime();
+                        transferWithTime.id = e.getKey();
+                        transferWithTime.transfer = e.getValue();
+                        transferWithTime.time = 120_000L;
+                        return transferWithTime;
                     }
                     TransferWithTime transferWithTime = new TransferWithTime();
                     transferWithTime.id = e.getKey();
