@@ -143,7 +143,7 @@ public class EdgeBasedTarjanSCC {
     private void findComponentForEdgeKey(int p, int adjNode) {
         setupNextEdgeKey(p);
         // we have to create a new explorer on each iteration because of the nested edge iterations
-        final int edge = GHUtility.getEdgeFromEdgeKey(p);
+        final int edge = getEdgeFromKey(p);
         EdgeExplorer explorer = graph.createEdgeExplorer();
         EdgeIterator iter = explorer.setBaseNode(adjNode);
         while (iter.next()) {
@@ -259,7 +259,7 @@ public class EdgeBasedTarjanSCC {
                     setupNextEdgeKey(p);
                     // we push buildComponent first so it will run *after* we finished traversing the edges
                     pushBuildComponent(p);
-                    final int edge = GHUtility.getEdgeFromEdgeKey(p);
+                    final int edge = getEdgeFromKey(p);
                     EdgeIterator it = explorer.setBaseNode(adj);
                     while (it.next()) {
                         if (!edgeTransitionFilter.accept(edge, it))
@@ -334,6 +334,14 @@ public class EdgeBasedTarjanSCC {
         assert p >= 0 && q >= 0 && adj >= 0;
         dfsStackPQ.addLast(bitUtil.combineIntsToLong(p, q));
         dfsStackAdj.addLast(adj);
+    }
+
+    /**
+     * This method returns the edge for the specified edgeKey. The implementation is like GHUtility.getEdgeFromEdgeKey
+     * but might be different in the future. See #2152.
+     */
+    public static int getEdgeFromKey(int edgeKey) {
+        return edgeKey / 2;
     }
 
     public static int createEdgeKey(EdgeIteratorState edgeState, boolean reverse) {
