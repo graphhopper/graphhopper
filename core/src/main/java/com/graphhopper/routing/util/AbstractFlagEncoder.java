@@ -115,6 +115,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         this.blockByDefault = blockByDefault;
     }
 
+    public boolean isBlockBarriers() {
+        return blockByDefault;
+    }
+
     public boolean isBlockFords() {
         return blockFords;
     }

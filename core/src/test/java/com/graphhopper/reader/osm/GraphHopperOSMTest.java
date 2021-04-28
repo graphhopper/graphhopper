@@ -36,8 +36,6 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.*;
-import com.graphhopper.util.Parameters.Routing;
-import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.After;
@@ -50,7 +48,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static org.junit.Assert.*;
 
@@ -621,6 +618,22 @@ public class GraphHopperOSMTest {
         } catch (IllegalStateException ex) {
             assertEquals("Do a successful call to load or importOrLoad before routing", ex.getMessage());
         }
+    }
+
+    @Test
+    public void profileWithExistingEncoderConfig() {
+        final GraphHopper hopper = new GraphHopper();
+        GraphHopperConfig config = new GraphHopperConfig();
+        config.putObject("graph.flag_encoders", "car|block_barriers=false|turn_costs=true");
+        config.putObject("graph.dataaccess", "RAM");
+        config.putObject("graph.location", ghLoc);
+        config.putObject("datareader.file", testOsm);
+        config.setProfiles(Arrays.asList(new Profile("profile2").setVehicle("car").setTurnCosts(true)));
+        hopper.init(config);
+
+        hopper.importOrLoad();
+
+        assertFalse(((CarFlagEncoder) hopper.getEncodingManager().getEncoder("car")).isBlockBarriers());
     }
 
     @Test

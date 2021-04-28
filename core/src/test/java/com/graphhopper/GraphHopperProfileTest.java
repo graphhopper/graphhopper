@@ -94,12 +94,20 @@ public class GraphHopperProfileTest {
     }
 
     @Test
-    public void oneVehicleWithoutTurnCostSupport_noerror() {
+    public void oneVehicleTwoProfilesWithAndWithoutTC_noError() {
         final GraphHopper hopper = createHopper();
-        // no error even if profile without turn costs is specified first
         hopper.setProfiles(
                 new Profile("profile1").setVehicle("car").setTurnCosts(false),
                 new Profile("profile2").setVehicle("car").setTurnCosts(true));
+        hopper.load(GH_LOCATION);
+    }
+
+    @Test
+    public void oneVehicleTwoProfilesWithAndWithoutTC2_noError() {
+        final GraphHopper hopper = createHopper();
+        hopper.setProfiles(
+                new Profile("profile2").setVehicle("car").setTurnCosts(true),
+                new Profile("profile1").setVehicle("car").setTurnCosts(false));
         hopper.load(GH_LOCATION);
     }
 

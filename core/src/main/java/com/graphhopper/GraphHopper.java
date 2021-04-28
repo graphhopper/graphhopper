@@ -502,7 +502,7 @@ public class GraphHopper implements GraphHopperAPI {
     private EncodingManager buildEncodingManager(GraphHopperConfig ghConfig, boolean requireProfilesByName) {
         String flagEncodersStr = ghConfig.getString("graph.flag_encoders", "");
         String encodedValueStr = ghConfig.getString("graph.encoded_values", "");
-        Map<String, String> flagEncoderMap = new LinkedHashMap<>();
+        Map<String, String> flagEncoderMap = new LinkedHashMap<>(), implicitFlagEncoderMap = new HashMap<>();
         for (String encoderStr : Arrays.asList(flagEncodersStr.split(","))) {
             String key = encoderStr.split("\\|")[0];
             if (!key.isEmpty()) flagEncoderMap.put(key, encoderStr);
@@ -511,9 +511,12 @@ public class GraphHopper implements GraphHopperAPI {
             throw new IllegalStateException("no profiles exist but assumed to create EncodingManager. E.g. provide them in GraphHopperConfig when calling GraphHopper.init");
         for (Profile profile : profilesByName.values()) {
             emBuilder.add(Subnetwork.create(profile.getName()));
-            if (!flagEncoderMap.containsKey(profile.getVehicle()) || profile.isTurnCosts())
-                flagEncoderMap.put(profile.getVehicle(), profile.getVehicle() + (profile.isTurnCosts() ? "|turn_costs=true" : ""));
+            if (!flagEncoderMap.containsKey(profile.getVehicle())
+                    // overwrite key in implicit map if turn cost support required
+                    && (!implicitFlagEncoderMap.containsKey(profile.getVehicle()) || profile.isTurnCosts()))
+                implicitFlagEncoderMap.put(profile.getVehicle(), profile.getVehicle() + (profile.isTurnCosts() ? "|turn_costs=true" : ""));
         }
+        flagEncoderMap.putAll(implicitFlagEncoderMap);
         flagEncoderMap.values().stream().forEach(s -> emBuilder.addIfAbsent(flagEncoderFactory, s));
         for (String tpStr : encodedValueStr.split(",")) {
             if (!tpStr.isEmpty()) emBuilder.addIfAbsent(tagParserFactory, tpStr);
