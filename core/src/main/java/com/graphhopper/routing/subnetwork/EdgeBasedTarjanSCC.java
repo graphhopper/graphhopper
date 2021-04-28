@@ -22,7 +22,10 @@ import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.*;
+import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -337,8 +340,8 @@ public class EdgeBasedTarjanSCC {
     }
 
     /**
-     * This method returns the edge for the specified edgeKey. The implementation is like GHUtility.getEdgeFromEdgeKey
-     * but might be different in the future. See #2152.
+     * Use this method to return the edge for the specified edgeKeys that get returned by {@link #findComponents()}} etc.
+     * The implementation is like GHUtility.getEdgeFromEdgeKey but might be different in the future. See #2152.
      */
     public static int getEdgeFromKey(int edgeKey) {
         return edgeKey / 2;
@@ -370,7 +373,8 @@ public class EdgeBasedTarjanSCC {
          * A list of arrays each containing the edge keys of a strongly connected component. Components with only a single
          * edge key are not included here, but need to be obtained using {@link #getSingleEdgeComponents()}.
          * The edge key is either 2*edgeId (if the edge direction corresponds to the storage order) or 2*edgeId+1 (for
-         * the opposite direction).
+         * the opposite direction). Use {@link EdgeBasedTarjanSCC#getEdgeFromKey(int)} to convert edge keys back to
+         * edge IDs.
          */
         public List<IntArrayList> getComponents() {
             return components;

@@ -159,7 +159,7 @@ public class PrepareRoutingSubnetworks {
             return 0;
 
         // now get edge again but in stored direction so that subnetwork EV is not overwritten (as it is unidirectional)
-        EdgeIteratorState edgeState = ghStorage.getEdgeIteratorState(GHUtility.getEdgeFromEdgeKey(edgeKey), Integer.MIN_VALUE);
+        EdgeIteratorState edgeState = ghStorage.getEdgeIteratorState(EdgeBasedTarjanSCC.getEdgeFromKey(edgeKey), Integer.MIN_VALUE);
         if (!edgeState.get(subnetworkEnc)) {
             edgeState.set(subnetworkEnc, true);
             return 1;
