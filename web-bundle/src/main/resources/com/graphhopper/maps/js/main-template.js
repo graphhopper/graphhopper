@@ -78,12 +78,12 @@ $(document).ready(function (e) {
     // todo: the idea was to highlight everything so if we start typing the example is overwritten. But unfortunately
     // this does not work. And not even sure this is so useful?
     showCustomModelExample();
-    cmEditor.validListener = function (valid) {
+    cmEditor.validListener = function(valid) {
         $("#custom-model-search-button").prop('disabled', !valid);
     };
     ghRequest.cmEditor = cmEditor;
     ghRequest.cmEditorActive = false;
-    $("#custom-model-button").click(function () {
+    $("#custom-model-button").click(function() {
         $("#custom-model-box").toggle();
         ghRequest.cmEditorActive = !ghRequest.cmEditorActive;
         // avoid default action, so use a different search button
@@ -119,7 +119,6 @@ $(document).ready(function (e) {
         cmEditor.cm.execCommand('selectAll');
         cmEditor.cm.refresh();
     }
-
     $("#custom-model-example").click(function () {
         showCustomModelExample();
         return false;
@@ -856,7 +855,7 @@ function routeLatLng(request, doQuery) {
     var buttonToSelectId = request.getProfile();
     // for legacy requests this might be undefined then we just do not select anything
     if (buttonToSelectId)
-        $("button#" + buttonToSelectId.toLowerCase()).addClass("selectprofile");
+    $("button#" + buttonToSelectId.toLowerCase()).addClass("selectprofile");
 
     routeResultsDiv.html('<img src="img/indicator.gif"/> Search Route ...');
     if (request.cmEditorActive) {
@@ -917,10 +916,10 @@ function doCustomRequest(request, routeResultsDiv) {
 
 function mySubmit() {
     var fromStr,
-        toStr,
-        viaStr,
-        allStr = [],
-        inputOk = true;
+            toStr,
+            viaStr,
+            allStr = [],
+            inputOk = true;
     var location_points = $("#locationpoints > div.pointDiv > input.pointInput");
     var len = location_points.size;
     $.each(location_points, function (index) {
