@@ -78,17 +78,21 @@ $(document).ready(function (e) {
     // todo: the idea was to highlight everything so if we start typing the example is overwritten. But unfortunately
     // this does not work. And not even sure this is so useful?
     showCustomModelExample();
-    cmEditor.validListener = function(valid) {
+    cmEditor.validListener = function (valid) {
         $("#custom-model-search-button").prop('disabled', !valid);
     };
-    $("#custom-model-button").click(function() {
+    ghRequest.cmEditor = cmEditor;
+    ghRequest.cmEditorActive = false;
+    $("#custom-model-button").click(function () {
         $("#custom-model-box").toggle();
+        ghRequest.cmEditorActive = !ghRequest.cmEditorActive;
         // avoid default action, so use a different search button
         $("#searchButton").toggle();
         mapLayer.adjustMapSize();
         cmEditor.cm.refresh();
         cmEditor.cm.focus();
-        cmEditor.cm.setCursor(cmEditor.cm.lineCount())
+        cmEditor.cm.setCursor(cmEditor.cm.lineCount());
+        sendCustomData();
     });
     function showCustomModelExample() {
         cmEditor.value =
@@ -115,72 +119,23 @@ $(document).ready(function (e) {
         cmEditor.cm.execCommand('selectAll');
         cmEditor.cm.refresh();
     }
-    $("#custom-model-example").click(function() {
+
+    $("#custom-model-example").click(function () {
         showCustomModelExample();
         return false;
     });
 
-    var sendCustomData = function() {
-       mapLayer.clearElevation();
-       mapLayer.clearLayers();
-       flagAll();
-
-       var infoDiv = $("#info");
-       infoDiv.empty();
-       infoDiv.show();
-       var routeResultsDiv = $("<div class='route_results'/>");
-       infoDiv.append(routeResultsDiv);
-       routeResultsDiv.html('<img src="img/indicator.gif"/> Search Route ...');
-
-       var points = [];
-       for(var idx = 0; idx < ghRequest.route.size(); idx++) {
-           var point = ghRequest.route.getIndex(idx);
-           if (point.isResolved()) {
-               points.push([point.lng, point.lat]);
-           } else {
-               routeResultsDiv.html("Unresolved points");
-               return;
-           }
-       }
-
-       var customModel = cmEditor.jsonObj;
-       if (customModel === null) {
-           routeResultsDiv.html("Invalid custom model");
-           return;
-       }
-
-       const details = cmEditor.getUsedCategories();
-       details.push('average_speed');
-       details.push('distance');
-       details.push('time');
-       var request = {
-           points: points,
-           points_encoded: false,
-           elevation: ghRequest.api_params.elevation,
-           profile: ghRequest.api_params.profile,
-           custom_model: customModel,
-           "ch.disable": true,
-           details: details
-       }
-
-       $.ajax({
-           url: host + "/route",
-           type: "POST",
-           contentType: 'application/json; charset=utf-8',
-           dataType: "json",
-           data: JSON.stringify(request),
-           success: createRouteCallback(ghRequest, routeResultsDiv, "", true),
-           error: function(err) {
-               routeResultsDiv.html("Error response: cannot process input");
-               var json = JSON.parse(err.responseText);
-               createRouteCallback(ghRequest, routeResultsDiv, "", true)(json);
-           }
-        });
+    var sendCustomData = function () {
+        ghRequest.ignoreCustomErrors = false;
+        mySubmit();
     };
 
-    // todo: prevent this as long as custom model is invalid?
-    // so far it is useful so we can send the request regardless of the invalidation
-    cmEditor.setExtraKey('Ctrl-Enter', sendCustomData);
+    var sendCustomDataIgnoreErrors = function () {
+        ghRequest.ignoreCustomErrors = true;
+        mySubmit();
+    }
+
+    cmEditor.setExtraKey('Ctrl-Enter', sendCustomDataIgnoreErrors);
     $("#custom-model-search-button").click(sendCustomData);
 
     if (isProduction())
@@ -901,19 +856,71 @@ function routeLatLng(request, doQuery) {
     var buttonToSelectId = request.getProfile();
     // for legacy requests this might be undefined then we just do not select anything
     if (buttonToSelectId)
-    $("button#" + buttonToSelectId.toLowerCase()).addClass("selectprofile");
+        $("button#" + buttonToSelectId.toLowerCase()).addClass("selectprofile");
 
-    var urlForAPI = request.createURL();
     routeResultsDiv.html('<img src="img/indicator.gif"/> Search Route ...');
-    request.doRequest(urlForAPI, createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom));
+    if (request.cmEditorActive) {
+        doCustomRequest(request, routeResultsDiv);
+    } else {
+        var urlForAPI = request.createURL();
+        request.doRequest(urlForAPI, createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom));
+    }
+}
+
+function doCustomRequest(request, routeResultsDiv) {
+    var customModelErrors = request.cmEditor.getCurrentErrors(request.cmEditor.cm.getValue(), request.cmEditor.cm);
+    if (customModelErrors.errors.length !== 0) {
+        if (request.ignoreCustomErrors)
+            console.warn('sending custom model that is likely invalid');
+        else {
+            routeResultsDiv.html('');
+            routeResultsDiv.append("<div class='error'>Invalid custom model</div>");
+            return;
+        }
+    }
+    var customModel = request.cmEditor.jsonObj;
+    var details = request.cmEditor.getUsedCategories();
+    details.push('average_speed');
+    details.push('distance');
+    details.push('time');
+
+    var points = [];
+    for (var idx = 0; idx < ghRequest.route.size(); idx++) {
+        var point = ghRequest.route.getIndex(idx);
+        points.push([point.lng, point.lat]);
+    }
+
+    var reqBody = {
+        points: points,
+        points_encoded: false,
+        elevation: ghRequest.api_params.elevation,
+        profile: ghRequest.api_params.profile,
+        custom_model: customModel,
+        "ch.disable": true,
+        details: details
+    }
+
+    $.ajax({
+        url: host + "/route",
+        type: "POST",
+        contentType: 'application/json; charset=utf-8',
+        dataType: "json",
+        data: JSON.stringify(reqBody),
+        success: createRouteCallback(ghRequest, routeResultsDiv, "", true),
+        error: function (err) {
+            routeResultsDiv.html("Error response: cannot process input");
+            var json = JSON.parse(err.responseText);
+            createRouteCallback(ghRequest, routeResultsDiv, "", true)(json);
+        }
+    });
 }
 
 function mySubmit() {
     var fromStr,
-            toStr,
-            viaStr,
-            allStr = [],
-            inputOk = true;
+        toStr,
+        viaStr,
+        allStr = [],
+        inputOk = true;
     var location_points = $("#locationpoints > div.pointDiv > input.pointInput");
     var len = location_points.size;
     $.each(location_points, function (index) {
