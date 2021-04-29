@@ -379,7 +379,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                 // starting
                 for (int lmIdx = 0; lmIdx < tmpLandmarkNodeIds.length; lmIdx++) {
                     int lmNodeId = tmpLandmarkNodeIds[lmIdx];
-                    explorer = new LandmarkExplorer(graph, this, weighting, traversalMode, true, accessFilter);
+                    explorer = new LandmarkExplorer(graph, this, weighting, traversalMode, accessFilter, false);
                     explorer.setStartNode(lmNodeId);
                     explorer.runAlgo();
                     maxWeight = Math.max(maxWeight, explorer.getLastEntry().weight);
@@ -448,7 +448,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                 throw new RuntimeException("Thread was interrupted for landmark " + lmIdx);
             }
             int lmNodeId = tmpLandmarkNodeIds[lmIdx];
-            LandmarkExplorer explorer = new LandmarkExplorer(graph, this, weighting, traversalMode, true, accessFilter);
+            LandmarkExplorer explorer = new LandmarkExplorer(graph, this, weighting, traversalMode, accessFilter, false);
             explorer.setStartNode(lmNodeId);
             explorer.runAlgo();
             explorer.initLandmarkWeights(lmIdx, lmNodeId, LM_ROW_LENGTH, FROM_OFFSET);
@@ -459,7 +459,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                     return false;
             }
 
-            explorer = new LandmarkExplorer(graph, this, weighting, traversalMode, false, accessFilter);
+            explorer = new LandmarkExplorer(graph, this, weighting, traversalMode, accessFilter, true);
             explorer.setStartNode(lmNodeId);
             explorer.runAlgo();
             explorer.initLandmarkWeights(lmIdx, lmNodeId, LM_ROW_LENGTH, TO_OFFSET);
@@ -747,7 +747,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         int logOffset = Math.max(1, landmarkNodeIdsToReturn.length / 2);
         // 1a) pick landmarks via special weighting for a better geographical spreading
         Weighting initWeighting = lmSelectionWeighting;
-        LandmarkExplorer explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode, true, accessFilter);
+        LandmarkExplorer explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode, accessFilter, false);
         explorer.setStartNode(startNode);
         explorer.runAlgo();
 
@@ -755,7 +755,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             // 1b) we have one landmark, now determine the other landmarks
             landmarkNodeIdsToReturn[0] = explorer.getLastEntry().adjNode;
             for (int lmIdx = 0; lmIdx < landmarkNodeIdsToReturn.length - 1; lmIdx++) {
-                explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode, true, accessFilter);
+                explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode, accessFilter, false);
                 // set all current landmarks as start so that the next getLastNode is hopefully a "far away" node
                 for (int j = 0; j < lmIdx + 1; j++) {
                     explorer.setStartNode(landmarkNodeIdsToReturn[j]);
@@ -777,30 +777,30 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
      */
     private static class LandmarkExplorer extends DijkstraBidirectionRef {
         private EdgeFilter accessFilter;
-        // todo: rename 'from' to 'reverse' (and flip it) ? 'from' is used in many places for node ids and 'reverse' is mostly used for the direction
-        private final boolean from;
+        private final boolean reverse;
         private final LandmarkStorage lms;
         private SPTEntry lastEntry;
 
-        public LandmarkExplorer(Graph g, LandmarkStorage lms, Weighting weighting, TraversalMode tMode, boolean from, EdgeFilter accessFilter) {
+        public LandmarkExplorer(Graph g, LandmarkStorage lms, Weighting weighting, TraversalMode tMode, EdgeFilter accessFilter, boolean reverse) {
             super(g, weighting, tMode);
             this.accessFilter = accessFilter;
             this.lms = lms;
-            this.from = from;
+            this.reverse = reverse;
             // set one of the bi directions as already finished
-            if (from)
-                finishedTo = true;
-            else
+            if (reverse)
                 finishedFrom = true;
+            else
+                finishedTo = true;
+
             // no path should be calculated
             setUpdateBestPath(false);
         }
 
         public void setStartNode(int startNode) {
-            if (from)
-                initFrom(startNode, 0);
-            else
+            if (reverse)
                 initTo(startNode, 0);
+            else
+                initFrom(startNode, 0);
         }
 
         @Override
@@ -826,12 +826,12 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         @Override
         public boolean finished() {
-            if (from) {
-                lastEntry = currFrom;
-                return finishedFrom;
-            } else {
+            if (reverse) {
                 lastEntry = currTo;
                 return finishedTo;
+            } else {
+                lastEntry = currFrom;
+                return finishedFrom;
             }
         }
 
@@ -840,7 +840,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                 throw new IllegalStateException("Too many subnetworks " + subnetworkId);
 
             final AtomicBoolean failed = new AtomicBoolean(false);
-            IntObjectMap<SPTEntry> map = from ? bestWeightMapFrom : bestWeightMapTo;
+            IntObjectMap<SPTEntry> map = reverse ? bestWeightMapTo : bestWeightMapFrom;
             map.forEach(new IntObjectPredicate<SPTEntry>() {
                 @Override
                 public boolean apply(int nodeId, SPTEntry value) {
@@ -864,7 +864,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         }
 
         public void initLandmarkWeights(final int lmIdx, int lmNodeId, final long rowSize, final int offset) {
-            IntObjectMap<SPTEntry> map = from ? bestWeightMapFrom : bestWeightMapTo;
+            IntObjectMap<SPTEntry> map = reverse ? bestWeightMapTo : bestWeightMapFrom;
             final AtomicInteger maxedout = new AtomicInteger(0);
             final Map.Entry<Double, Double> finalMaxWeight = new MapEntry<>(0d, 0d);
 
