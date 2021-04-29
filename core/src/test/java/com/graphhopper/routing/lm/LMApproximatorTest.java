@@ -22,6 +22,7 @@ import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -50,7 +51,7 @@ public class LMApproximatorTest {
     private void run(long seed) {
         Directory dir = new RAMDirectory();
         CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 1);
-        EncodingManager encodingManager = EncodingManager.create(encoder);
+        EncodingManager encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
         GraphHopperStorage graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).create();
 
         Random rnd = new Random(seed);
@@ -59,7 +60,7 @@ public class LMApproximatorTest {
 
         Weighting weighting = new FastestWeighting(encoder);
 
-        PrepareLandmarks lm = new PrepareLandmarks(dir, graph, new LMConfig("c", weighting), 16);
+        PrepareLandmarks lm = new PrepareLandmarks(dir, graph, new LMConfig("car", weighting), 16);
         lm.setMaximumWeight(10000);
         lm.doWork();
         LandmarkStorage landmarkStorage = lm.getLandmarkStorage();
