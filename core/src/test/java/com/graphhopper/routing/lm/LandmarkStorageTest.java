@@ -167,7 +167,8 @@ public class LandmarkStorageTest {
     }
 
     private void subnetworkRemoval(Weighting weighting, int minNodeSize) {
-        // currently we rely on subnetwork removal in Landmark preparation (PrepareRoutingSubnetworks removes OSM bugs regarding turn restriction mapping which the node-based Tarjan in Landmark preparation can't)
+        // currently we rely on subnetwork removal in Landmark preparation, see #2256
+        // PrepareRoutingSubnetworks removes OSM bugs regarding turn restriction mapping which the node-based Tarjan in Landmark preparation can't
         new PrepareRoutingSubnetworks(graph, Collections.singletonList(new PrepareRoutingSubnetworks.PrepareJob(subnetworkEnc, weighting))).
                 setMinNetworkSize(minNodeSize).
                 doWork();

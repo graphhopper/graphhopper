@@ -355,6 +355,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     private double estimateMaxWeight(List<IntArrayList> graphComponents, EdgeFilter blockedEdgesFilter) {
         double maxWeight = 0;
         int searchedSubnetworks = 0;
+        Random random = new Random(0);
         // the maximum weight can only be an approximation so there is only a tiny improvement when we would do this for
         // all landmarks. See #2027 (1st commit) where only 1 landmark was sufficient when multiplied with 1.01 at the end
         // TODO instead of calculating the landmarks again here we could store them in landmarkIDs and do this for all here
@@ -364,13 +365,14 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                 continue;
 
             searchedSubnetworks++;
-            int index = subnetworkIds.size() - 1;
-            for (; index >= 0; index--) {
+            int maxRetries = Math.max(subnetworkIds.size(), 100);
+            for (int retry = 0; retry < maxRetries; retry++) {
+                int index = random.nextInt(subnetworkIds.size());
                 int nextStartNode = subnetworkIds.get(index);
                 LandmarkExplorer explorer = findLandmarks(tmpLandmarkNodeIds, nextStartNode, blockedEdgesFilter, "estimate " + index);
                 if (explorer.getFromCount() < minimumNodes) {
-                    LOGGER.warn("findLandmarks for " + createPoint(graph, nextStartNode) + " (" + nextStartNode + ")"
-                            + " resulted in too few visited nodes: " + explorer.getFromCount() + " vs expected minimum " + minimumNodes);
+                    LOGGER.error("method findLandmarks for " + createPoint(graph, nextStartNode) + " (" + nextStartNode + ")"
+                            + " resulted in too few visited nodes: " + explorer.getFromCount() + " vs expected minimum " + minimumNodes + ", see #2256");
                     continue;
                 }
 
