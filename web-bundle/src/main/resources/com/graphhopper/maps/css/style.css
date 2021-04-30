@@ -539,6 +539,7 @@ td img.pic {
     }
 
     .pointResolveError {
+        flex-basis: 0;
         flex-basis: max-content;
     }
 
