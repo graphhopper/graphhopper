@@ -382,12 +382,12 @@ public class LocationIndexTreeTest {
         index.prepareIndex();
         index.setMaxRegionSearch(8);
 
-        EdgeFilter carFilter = DefaultEdgeFilter.allEdges(carEncoder.getAccessEnc());
+        EdgeFilter carFilter = AccessFilter.allEdges(carEncoder.getAccessEnc());
         Snap snap = index.findClosest(0.03, 0.03, carFilter);
         assertTrue(snap.isValid());
         assertEquals(33, snap.getClosestNode());
 
-        EdgeFilter bikeFilter = DefaultEdgeFilter.allEdges(bikeEncoder.getAccessEnc());
+        EdgeFilter bikeFilter = AccessFilter.allEdges(bikeEncoder.getAccessEnc());
         snap = index.findClosest(0.03, 0.03, bikeFilter);
         assertTrue(snap.isValid());
         assertEquals(2, snap.getClosestNode());
@@ -620,7 +620,7 @@ public class LocationIndexTreeTest {
 
         idx = (LocationIndexTree) createIndexNoPrepare(g, 500000).prepareIndex();
         FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
-        assertEquals(2, idx.findClosest(1, -1, DefaultEdgeFilter.allEdges(footEncoder.getAccessEnc())).getClosestNode());
+        assertEquals(2, idx.findClosest(1, -1, AccessFilter.allEdges(footEncoder.getAccessEnc())).getClosestNode());
         Helper.close((Closeable) g);
     }
 }

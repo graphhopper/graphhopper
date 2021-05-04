@@ -42,7 +42,7 @@ public class ShortcutFilter {
     }
 
     public boolean accept(CHEdgeIteratorState edgeState) {
-        // c.f. comment in DefaultEdgeFilter
+        // c.f. comment in AccessFilter
         if (edgeState.getBaseNode() == edgeState.getAdjNode()) {
             return edgeState.getFwdAccess() || edgeState.getBwdAccess();
         }

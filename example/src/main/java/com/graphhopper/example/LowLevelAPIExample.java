@@ -16,6 +16,11 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
+/**
+ * Use this example to gain access to the low level API of GraphHopper.
+ * If you want to keep using the GraphHopper class but want to customize the internal EncodingManager
+ * you can use the hook GraphHopper.customizeEncodingManager.
+ */
 public class LowLevelAPIExample {
     public static void main(String[] args) {
         createAndSaveGraph();

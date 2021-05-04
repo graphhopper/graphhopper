@@ -40,7 +40,7 @@ public interface LocationIndex extends Storable<LocationIndex> {
      *
      * @param edgeFilter if a graph supports multiple vehicles we have to make sure that the entry
      *                   node into the graph is accessible from a selected vehicle. E.g. if you have a FOOT-query do:
-     *                   <pre>DefaultEdgeFilter.allEdges(footFlagEncoder);</pre>
+     *                   <pre>AccessFilter.allEdges(footFlagEncoder);</pre>
      * @return An object containing the closest node and edge for the specified location. The node id
      * has at least one edge which is accepted by the specified edgeFilter. If nothing is found
      * the method Snap.isValid will return false.

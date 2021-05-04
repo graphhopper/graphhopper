@@ -8,6 +8,7 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.parsers.OSMSurfaceParser;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
@@ -37,7 +38,6 @@ public class RoutingExample {
         hopper.setOSMFile(ghLoc);
         // specify where to store graphhopper files
         hopper.setGraphHopperLocation("target/routing-graph-cache");
-        hopper.setEncodingManager(EncodingManager.create("car"));
 
         // see docs/core/profiles.md to learn more about profiles
         hopper.setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(false));
@@ -121,7 +121,6 @@ public class RoutingExample {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/routing-custom-graph-cache");
-        hopper.setEncodingManager(EncodingManager.create("car"));
         hopper.setProfiles(new CustomProfile("car_custom").setCustomModel(new CustomModel()).setVehicle("car"));
 
         // The hybrid mode uses the "landmark algorithm" and is up to 15x faster than the flexible mode (Dijkstra).
@@ -140,7 +139,7 @@ public class RoutingExample {
 
         assert Math.round(res.getBest().getTime() / 1000d) == 96;
 
-        // 2. now avoid primary roads and reduce maximum speed, see docs/core/profiles.md for an in-depth explanation
+        // 2. now avoid primary roads and reduce maximum speed, see docs/core/custom-models.md for an in-depth explanation
         // and also the blog posts https://www.graphhopper.com/?s=customizable+routing
         CustomModel model = new CustomModel();
         model.addToPriority(If("road_class == PRIMARY", MULTIPLY, 0.5));

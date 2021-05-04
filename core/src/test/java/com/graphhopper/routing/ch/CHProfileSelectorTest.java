@@ -214,12 +214,11 @@ public class CHProfileSelectorTest {
     @Test
     public void multipleVehiclesMissingWeighting() {
         // this is a common use-case, there are multiple vehicles for one weighting
-        EncodingManager em = EncodingManager.create("car,bike,motorcycle,bike2,foot");
         List<Profile> profiles = new ArrayList<>();
         List<CHProfile> chProfiles = new ArrayList<>();
-        for (FlagEncoder encoder : em.fetchEdgeEncoders()) {
-            profiles.add(new Profile(encoder.toString()).setVehicle(encoder.toString()).setWeighting("short_fastest").setTurnCosts(false));
-            chProfiles.add(new CHProfile(encoder.toString()));
+        for (String vehicle : Arrays.asList("car", "bike", "motorcycle", "bike2", "foot")) {
+            profiles.add(new Profile(vehicle).setVehicle(vehicle).setWeighting("short_fastest").setTurnCosts(false));
+            chProfiles.add(new CHProfile(vehicle));
         }
         // we do not specify the weighting but this is ok, because there is only one in use
         String weighting = null;

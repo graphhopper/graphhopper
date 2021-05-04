@@ -25,7 +25,6 @@ import com.graphhopper.util.EdgeIterator;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -86,15 +85,6 @@ public class MultiCriteriaLabelSetting {
                 .peek(label -> visitedNodes++);
     }
 
-    public void calcLabels(int from, Instant startTime, SPTVisitor visitor, Predicate<Label> predicate) {
-        this.startTime = startTime.toEpochMilli();
-        Iterator<Label> iterator = StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from), false).iterator();
-        Label l;
-        while (iterator.hasNext() && predicate.test(l = iterator.next())) {
-            visitor.visit(l);
-        }
-    }
-
     // experimental
     void setBetaTransfers(double betaTransfers) {
         this.betaTransfers = betaTransfers;
@@ -118,6 +108,8 @@ public class MultiCriteriaLabelSetting {
 
         @Override
         public boolean tryAdvance(Consumer<? super Label> action) {
+            while (!fromHeap.isEmpty() && fromHeap.peek().deleted)
+                fromHeap.poll();
             if (fromHeap.isEmpty()) {
                 return false;
             } else {
@@ -212,7 +204,7 @@ public class MultiCriteriaLabelSetting {
         for (Iterator<Label> iterator = sptEntries.iterator(); iterator.hasNext(); ) {
             Label sptEntry = iterator.next();
             if (dominates(me, sptEntry)) {
-                fromHeap.remove(sptEntry);
+                sptEntry.deleted = true;
                 iterator.remove();
             }
         }

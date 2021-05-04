@@ -71,11 +71,9 @@ public class MapMatchingTest {
     @BeforeClass
     public static void setup() {
         Helper.removeDir(new File(GH_LOCATION));
-        CarFlagEncoder encoder = new CarFlagEncoder();
         graphHopper = new GraphHopper();
         graphHopper.setOSMFile("../map-matching/files/leipzig_germany.osm.pbf");
         graphHopper.setGraphHopperLocation(GH_LOCATION);
-        graphHopper.setEncodingManager(EncodingManager.create(encoder));
         graphHopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
         graphHopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         graphHopper.importOrLoad();

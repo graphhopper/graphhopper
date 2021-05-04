@@ -115,6 +115,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         this.blockByDefault = blockByDefault;
     }
 
+    public boolean isBlockBarriers() {
+        return blockByDefault;
+    }
+
     public boolean isBlockFords() {
         return blockFords;
     }
@@ -347,5 +351,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     @Override
     public boolean hasEncodedValue(String key) {
         return encodedValueLookup.hasEncodedValue(key);
+    }
+
+    public final List<String> getRestrictions() {
+        return restrictions;
     }
 }

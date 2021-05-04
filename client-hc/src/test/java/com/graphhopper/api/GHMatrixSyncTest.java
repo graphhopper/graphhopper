@@ -27,4 +27,9 @@ public class GHMatrixSyncTest extends AbstractGHMatrixWebTester {
             }
         });
     }
+
+    @Override
+    GHMatrixAbstractRequester createRequester(String url) {
+        return new GHMatrixSyncRequester(url);
+    }
 }

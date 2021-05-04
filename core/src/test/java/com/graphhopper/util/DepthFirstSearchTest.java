@@ -21,16 +21,15 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntHashSet;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author jansoe
@@ -41,7 +40,7 @@ public class DepthFirstSearchTest {
     GHIntHashSet set = new GHIntHashSet();
     IntArrayList list = new IntArrayList();
 
-    @Before
+    @BeforeEach
     public void setup() {
         counter = 0;
     }
@@ -57,7 +56,7 @@ public class DepthFirstSearchTest {
             @Override
             public boolean goFurther(int v) {
                 counter++;
-                assertTrue("v " + v + " is already contained in set. iteration:" + counter, !set.contains(v));
+                assertTrue(!set.contains(v), "v " + v + " is already contained in set. iteration:" + counter);
                 set.add(v);
                 list.add(v);
                 return super.goFurther(v);
@@ -75,10 +74,10 @@ public class DepthFirstSearchTest {
         GHUtility.setSpeed(60, true, false, encoder, g.edge(5, 6).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, g.edge(6, 4).setDistance(1));
 
-        dfs.start(g.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder.getAccessEnc())), 1);
+        dfs.start(g.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc())), 1);
 
         assertTrue(counter > 0);
-        assertEquals("[1, 2, 3, 4, 5, 6]", list.toString());
+        assertEquals(list.toString(), "[1, 2, 3, 4, 5, 6]");
     }
 
     @Test
@@ -92,7 +91,7 @@ public class DepthFirstSearchTest {
             @Override
             public boolean goFurther(int v) {
                 counter++;
-                assertTrue("v " + v + " is already contained in set. iteration:" + counter, !set.contains(v));
+                assertTrue(!set.contains(v), "v " + v + " is already contained in set. iteration:" + counter);
                 set.add(v);
                 list.add(v);
                 return super.goFurther(v);
@@ -108,10 +107,10 @@ public class DepthFirstSearchTest {
         GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 3).setDistance(1));
         GHUtility.setSpeed(60, true, true, encoder, g.edge(4, 3).setDistance(1));
 
-        dfs.start(g.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder.getAccessEnc())), 1);
+        dfs.start(g.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc())), 1);
 
         assertTrue(counter > 0);
-        assertEquals("[1, 2, 3, 4]", list.toString());
+        assertEquals(list.toString(), "[1, 2, 3, 4]");
     }
 
 }

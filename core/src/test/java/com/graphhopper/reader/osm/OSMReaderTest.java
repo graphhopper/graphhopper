@@ -1,0 +1,965 @@
+/*
+ *  Licensed to GraphHopper GmbH under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for
+ *  additional information regarding copyright ownership.
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
+ *  compliance with the License. You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+package com.graphhopper.reader.osm;
+
+import com.carrotsearch.hppc.LongIndexedContainer;
+import com.graphhopper.GHRequest;
+import com.graphhopper.GHResponse;
+import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperTest;
+import com.graphhopper.config.Profile;
+import com.graphhopper.reader.ReaderRelation;
+import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.dem.ElevationProvider;
+import com.graphhopper.reader.dem.SRTMProvider;
+import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.parsers.OSMMaxHeightParser;
+import com.graphhopper.routing.util.parsers.OSMMaxWeightParser;
+import com.graphhopper.routing.util.parsers.OSMMaxWidthParser;
+import com.graphhopper.storage.*;
+import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.index.Snap;
+import com.graphhopper.util.*;
+import com.graphhopper.util.details.PathDetail;
+import com.graphhopper.util.shapes.GHPoint;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Tests the OSMReader with the normal helper initialized.
+ *
+ * @author Peter Karich
+ */
+public class OSMReaderTest {
+    private final String file1 = "test-osm.xml";
+    private final String file2 = "test-osm2.xml";
+    private final String file3 = "test-osm3.xml";
+    private final String file4 = "test-osm4.xml";
+    private final String file7 = "test-osm7.xml";
+    private final String fileBarriers = "test-barriers.xml";
+    private final String dir = "./target/tmp/test-db";
+    private CarFlagEncoder carEncoder;
+    private BooleanEncodedValue carAccessEnc;
+    private FlagEncoder footEncoder;
+    private EdgeExplorer carOutExplorer;
+    private EdgeExplorer carAllExplorer;
+
+    @BeforeEach
+    public void setUp() {
+        new File(dir).mkdirs();
+    }
+
+    @AfterEach
+    public void tearDown() {
+        Helper.removeDir(new File(dir));
+    }
+
+    GraphHopperStorage newGraph(String directory, EncodingManager encodingManager, boolean is3D, boolean turnRestrictionsImport) {
+        return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager, is3D, turnRestrictionsImport);
+    }
+
+    @Test
+    public void testMain() {
+        GraphHopper hopper = new GraphHopperFacade(file1).importOrLoad();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+
+        assertNotNull(graph.getProperties().get("datareader.import.date"));
+        assertNotEquals("", graph.getProperties().get("datareader.import.date"));
+
+        assertEquals("2013-01-02T01:10:14Z", graph.getProperties().get("datareader.data.date"));
+
+        assertEquals(4, graph.getNodes());
+        int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
+        int n10 = AbstractGraphStorageTester.getIdOf(graph, 51.2492152);
+        int n30 = AbstractGraphStorageTester.getIdOf(graph, 51.2);
+        int n50 = AbstractGraphStorageTester.getIdOf(graph, 49);
+        assertEquals(GHUtility.asSet(n20), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n10)));
+        assertEquals(3, GHUtility.count(carOutExplorer.setBaseNode(n20)));
+        assertEquals(GHUtility.asSet(n20), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n30)));
+
+        EdgeIterator iter = carOutExplorer.setBaseNode(n20);
+        assertTrue(iter.next());
+        assertEquals("street 123, B 122", iter.getName());
+        assertEquals(n50, iter.getAdjNode());
+        AbstractGraphStorageTester.assertPList(Helper.createPointList(51.25, 9.43), iter.fetchWayGeometry(FetchMode.PILLAR_ONLY));
+        assertTrue(iter.get(carAccessEnc));
+        assertTrue(iter.getReverse(carAccessEnc));
+
+        assertTrue(iter.next());
+        assertEquals("route 666", iter.getName());
+        assertEquals(n30, iter.getAdjNode());
+        assertEquals(93147, iter.getDistance(), 1);
+
+        assertTrue(iter.next());
+        assertEquals("route 666", iter.getName());
+        assertEquals(n10, iter.getAdjNode());
+        assertEquals(88643, iter.getDistance(), 1);
+
+        assertTrue(iter.get(carAccessEnc));
+        assertTrue(iter.getReverse(carAccessEnc));
+        assertFalse(iter.next());
+
+        // get third added location id=30
+        iter = carOutExplorer.setBaseNode(n30);
+        assertTrue(iter.next());
+        assertEquals("route 666", iter.getName());
+        assertEquals(n20, iter.getAdjNode());
+        assertEquals(93146.888, iter.getDistance(), 1);
+
+        NodeAccess na = graph.getNodeAccess();
+        assertEquals(9.4, na.getLon(findID(hopper.getLocationIndex(), 51.2, 9.4)), 1e-3);
+        assertEquals(10, na.getLon(findID(hopper.getLocationIndex(), 49, 10)), 1e-3);
+        assertEquals(51.249, na.getLat(findID(hopper.getLocationIndex(), 51.2492152, 9.4317166)), 1e-3);
+
+        // node 40 is on the way between 30 and 50 => 9.0
+        assertEquals(9, na.getLon(findID(hopper.getLocationIndex(), 51.25, 9.43)), 1e-3);
+    }
+
+    protected int findID(LocationIndex index, double lat, double lon) {
+        return index.findClosest(lat, lon, EdgeFilter.ALL_EDGES).getClosestNode();
+    }
+
+    @Test
+    public void testSort() {
+        GraphHopper hopper = new GraphHopperFacade(file1).setSortGraph(true).importOrLoad();
+        NodeAccess na = hopper.getGraphHopperStorage().getNodeAccess();
+        assertEquals(10, na.getLon(findID(hopper.getLocationIndex(), 49, 10)), 1e-3);
+        assertEquals(51.249, na.getLat(findID(hopper.getLocationIndex(), 51.2492152, 9.4317166)), 1e-3);
+    }
+
+    @Test
+    public void testOneWay() {
+        GraphHopper hopper = new GraphHopperFacade(file2)
+                .setMinNetworkSize(0)
+                .importOrLoad();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+
+        assertEquals("2014-01-02T01:10:14Z", graph.getProperties().get("datareader.data.date"));
+
+        int n20 = AbstractGraphStorageTester.getIdOf(graph, 52.0);
+        int n22 = AbstractGraphStorageTester.getIdOf(graph, 52.133);
+        int n23 = AbstractGraphStorageTester.getIdOf(graph, 52.144);
+        int n10 = AbstractGraphStorageTester.getIdOf(graph, 51.2492152);
+        int n30 = AbstractGraphStorageTester.getIdOf(graph, 51.2);
+
+        assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(n10)));
+        assertEquals(2, GHUtility.count(carOutExplorer.setBaseNode(n20)));
+        assertEquals(0, GHUtility.count(carOutExplorer.setBaseNode(n30)));
+
+        EdgeIterator iter = carOutExplorer.setBaseNode(n20);
+        assertTrue(iter.next());
+        assertTrue(iter.next());
+        assertEquals(n30, iter.getAdjNode());
+
+        iter = carAllExplorer.setBaseNode(n20);
+        assertTrue(iter.next());
+        assertEquals(n23, iter.getAdjNode());
+        assertTrue(iter.get(carAccessEnc));
+        assertFalse(iter.getReverse(carAccessEnc));
+
+        assertTrue(iter.next());
+        assertEquals(n22, iter.getAdjNode());
+        assertFalse(iter.get(carAccessEnc));
+        assertTrue(iter.getReverse(carAccessEnc));
+
+        assertTrue(iter.next());
+        assertFalse(iter.get(carAccessEnc));
+        assertTrue(iter.getReverse(carAccessEnc));
+
+        assertTrue(iter.next());
+        assertEquals(n30, iter.getAdjNode());
+        assertTrue(iter.get(carAccessEnc));
+        assertFalse(iter.getReverse(carAccessEnc));
+
+        assertTrue(iter.next());
+        assertEquals(n10, iter.getAdjNode());
+        assertFalse(iter.get(carAccessEnc));
+        assertTrue(iter.getReverse(carAccessEnc));
+    }
+
+    @Test
+    public void testFerry() {
+        GraphHopper hopper = new GraphHopperFacade(file2) {
+            @Override
+            public void cleanUp() {
+            }
+        }.importOrLoad();
+        Graph graph = hopper.getGraphHopperStorage();
+
+        int n40 = AbstractGraphStorageTester.getIdOf(graph, 54.0);
+        int n50 = AbstractGraphStorageTester.getIdOf(graph, 55.0);
+        assertEquals(GHUtility.asSet(n40), GHUtility.getNeighbors(carAllExplorer.setBaseNode(n50)));
+
+        // no duration is given => slow speed only!
+        int n80 = AbstractGraphStorageTester.getIdOf(graph, 54.1);
+        EdgeIterator iter = carOutExplorer.setBaseNode(n80);
+        iter.next();
+        assertEquals(5, iter.get(carEncoder.getAverageSpeedEnc()), 1e-1);
+
+        // duration 01:10 is given => more precise speed calculation!
+        // ~111km (from 54.0,10.1 to 55.0,10.2) in duration=70 minutes => 95km/h => / 1.4 => 71km/h
+        iter = carOutExplorer.setBaseNode(n40);
+        iter.next();
+        assertEquals(70, iter.get(carEncoder.getAverageSpeedEnc()), 1e-1);
+    }
+
+    @Test
+    public void testMaxSpeed() {
+        GraphHopper hopper = new GraphHopperFacade(file2) {
+            @Override
+            public void cleanUp() {
+            }
+        }.importOrLoad();
+        Graph graph = hopper.getGraphHopperStorage();
+
+        int n60 = AbstractGraphStorageTester.getIdOf(graph, 56.0);
+        EdgeIterator iter = carOutExplorer.setBaseNode(n60);
+        iter.next();
+        assertEquals(35, iter.get(carEncoder.getAverageSpeedEnc()), 1e-1);
+    }
+
+    @Test
+    public void testWayReferencesNotExistingAdjNode_issue19() {
+        GraphHopper hopper = new GraphHopperFacade(file4).importOrLoad();
+        Graph graph = hopper.getGraphHopperStorage();
+
+        assertEquals(2, graph.getNodes());
+        int n10 = AbstractGraphStorageTester.getIdOf(graph, 51.2492152);
+        int n30 = AbstractGraphStorageTester.getIdOf(graph, 51.2);
+
+        assertEquals(GHUtility.asSet(n30), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n10)));
+    }
+
+    @Test
+    public void testDoNotRejectEdgeIfFirstNodeIsMissing_issue2221() {
+        GraphHopper hopper = new GraphHopperFacade("test-osm9.xml").importOrLoad();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+        assertEquals(2, graph.getNodes());
+        assertEquals(1, graph.getEdges());
+        AllEdgesIterator iter = graph.getAllEdges();
+        iter.next();
+        assertEquals(0, iter.getBaseNode());
+        assertEquals(1, iter.getAdjNode());
+        assertEquals(51.21, graph.getNodeAccess().getLat(0), 1.e-3);
+        assertEquals(9.41, graph.getNodeAccess().getLon(0), 1.e-3);
+        assertEquals(51.22, graph.getNodeAccess().getLat(1), 1.e-3);
+        assertEquals(9.42, graph.getNodeAccess().getLon(1), 1.e-3);
+        assertEquals(DistanceCalcEarth.DIST_EARTH.calcDistance(iter.fetchWayGeometry(FetchMode.ALL)), iter.getDistance(), 1.e-3);
+        assertEquals(1312.1, iter.getDistance(), 1.e-1);
+        assertEquals(1312.1, DistanceCalcEarth.DIST_EARTH.calcDistance(iter.fetchWayGeometry(FetchMode.ALL)), 1.e-1);
+        assertFalse(iter.next());
+    }
+
+    @Test
+    public void test_edgeDistanceWhenFirstNodeIsMissing_issue2221() {
+        GraphHopper hopper = new GraphHopperFacade("test-osm10.xml").importOrLoad();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+        assertEquals(3, graph.getNodes());
+        assertEquals(3, graph.getEdges());
+        AllEdgesIterator iter = graph.getAllEdges();
+        while (iter.next()) {
+            assertEquals(DistanceCalcEarth.DIST_EARTH.calcDistance(iter.fetchWayGeometry(FetchMode.ALL)), iter.getDistance(), 1.e-3);
+        }
+        assertEquals(35.609, graph.getEdgeIteratorState(0, Integer.MIN_VALUE).getDistance(), 1.e-3);
+        assertEquals(75.262, graph.getEdgeIteratorState(1, Integer.MIN_VALUE).getDistance(), 1.e-3);
+        assertEquals(143.354, graph.getEdgeIteratorState(2, Integer.MIN_VALUE).getDistance(), 1.e-3);
+    }
+
+    @Test
+    public void testFoot() {
+        GraphHopper hopper = new GraphHopperFacade(file3)
+                .setMinNetworkSize(0)
+                .importOrLoad();
+        Graph graph = hopper.getGraphHopperStorage();
+
+        int n10 = AbstractGraphStorageTester.getIdOf(graph, 11.1);
+        int n20 = AbstractGraphStorageTester.getIdOf(graph, 12);
+        int n30 = AbstractGraphStorageTester.getIdOf(graph, 11.2);
+        int n40 = AbstractGraphStorageTester.getIdOf(graph, 11.3);
+        int n50 = AbstractGraphStorageTester.getIdOf(graph, 10);
+
+        assertEquals(GHUtility.asSet(n20, n40), GHUtility.getNeighbors(carAllExplorer.setBaseNode(n10)));
+        assertEquals(GHUtility.asSet(), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n30)));
+        assertEquals(GHUtility.asSet(n10, n30, n40), GHUtility.getNeighbors(carAllExplorer.setBaseNode(n20)));
+        assertEquals(GHUtility.asSet(n30, n40), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n20)));
+
+        EdgeExplorer footOutExplorer = graph.createEdgeExplorer(AccessFilter.outEdges(footEncoder.getAccessEnc()));
+        assertEquals(GHUtility.asSet(n20, n50), GHUtility.getNeighbors(footOutExplorer.setBaseNode(n10)));
+        assertEquals(GHUtility.asSet(n20, n50), GHUtility.getNeighbors(footOutExplorer.setBaseNode(n30)));
+        assertEquals(GHUtility.asSet(n10, n30), GHUtility.getNeighbors(footOutExplorer.setBaseNode(n20)));
+    }
+
+    @Test
+    public void testNegativeIds() {
+        String fileNegIds = "test-osm-negative-ids.xml";
+        GraphHopper hopper = new GraphHopperFacade(fileNegIds).importOrLoad();
+        Graph graph = hopper.getGraphHopperStorage();
+        assertEquals(4, graph.getNodes());
+        int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
+        int n10 = AbstractGraphStorageTester.getIdOf(graph, 51.2492152);
+        int n30 = AbstractGraphStorageTester.getIdOf(graph, 51.2);
+        assertEquals(GHUtility.asSet(n20), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n10)));
+        assertEquals(3, GHUtility.count(carOutExplorer.setBaseNode(n20)));
+        assertEquals(GHUtility.asSet(n20), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n30)));
+
+        EdgeIterator iter = carOutExplorer.setBaseNode(n20);
+        assertTrue(iter.next());
+
+        assertTrue(iter.next());
+        assertEquals(n30, iter.getAdjNode());
+        assertEquals(93147, iter.getDistance(), 1);
+
+        assertTrue(iter.next());
+        assertEquals(n10, iter.getAdjNode());
+        assertEquals(88643, iter.getDistance(), 1);
+    }
+
+    @Test
+    public void testBarriers() {
+        GraphHopper hopper = new GraphHopperFacade(fileBarriers).
+                setMinNetworkSize(0).
+                importOrLoad();
+
+        Graph graph = hopper.getGraphHopperStorage();
+        assertEquals(8, graph.getNodes());
+
+        int n10 = AbstractGraphStorageTester.getIdOf(graph, 51);
+        int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
+        int n30 = AbstractGraphStorageTester.getIdOf(graph, 53);
+        int n50 = AbstractGraphStorageTester.getIdOf(graph, 55);
+
+        // separate id
+        int new20 = 4;
+        assertNotEquals(n20, new20);
+        NodeAccess na = graph.getNodeAccess();
+        assertEquals(na.getLat(n20), na.getLat(new20), 1e-5);
+        assertEquals(na.getLon(n20), na.getLon(new20), 1e-5);
+
+        assertEquals(n20, findID(hopper.getLocationIndex(), 52, 9.4));
+
+        assertEquals(GHUtility.asSet(n20, n30), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n10)));
+        assertEquals(GHUtility.asSet(new20, n10, n50), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n30)));
+
+        EdgeIterator iter = carOutExplorer.setBaseNode(n20);
+        assertTrue(iter.next());
+        assertEquals(n10, iter.getAdjNode());
+        assertFalse(iter.next());
+
+        iter = carOutExplorer.setBaseNode(new20);
+        assertTrue(iter.next());
+        assertEquals(n30, iter.getAdjNode());
+        assertFalse(iter.next());
+    }
+
+    @Test
+    public void avoidsLoopEdges_1525() {
+        // loops in OSM should be avoided by adding additional tower node (see #1525, #1531)
+        //     C - D
+        //      \ /
+        //   A - B - E
+        GraphHopper hopper = new GraphHopperFacade("test-avoid-loops.xml").importOrLoad();
+        checkLoop(hopper);
+    }
+
+    void checkLoop(GraphHopper hopper) {
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+
+        // A, B, E and one of C or D should be tower nodes, in any case C and D should not be collapsed entirely
+        // into a loop edge from B to B.
+        assertEquals(4, graph.getNodes());
+        // two edges going to A and E and two edges going to C or D
+        AllEdgesIterator iter = graph.getAllEdges();
+        assertEquals(4, iter.length());
+        while (iter.next()) {
+            assertTrue(iter.getAdjNode() != iter.getBaseNode(), "found a loop");
+        }
+        int nodeB = AbstractGraphStorageTester.getIdOf(graph, 12);
+        assertTrue(nodeB > -1, "could not find OSM node B");
+        assertEquals(4, GHUtility.count(graph.createEdgeExplorer().setBaseNode(nodeB)));
+    }
+
+    @Test
+    public void avoidsLoopEdgesIdenticalLatLon_1533() {
+        checkLoop(new GraphHopperFacade("test-avoid-loops2.xml").importOrLoad());
+    }
+
+    @Test
+    public void avoidsLoopEdgesIdenticalNodeIds_1533() {
+        // We can handle the following case with the proper result:
+        checkLoop(new GraphHopperFacade("test-avoid-loops3.xml").importOrLoad());
+        // We cannot handle the following case, i.e. no loop is created. so we only check that there are no loops
+        GraphHopper hopper = new GraphHopperFacade("test-avoid-loops4.xml").importOrLoad();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+        AllEdgesIterator iter = graph.getAllEdges();
+        assertEquals(2, iter.length());
+        while (iter.next()) {
+            assertTrue(iter.getAdjNode() != iter.getBaseNode(), "found a loop");
+        }
+        int nodeB = AbstractGraphStorageTester.getIdOf(graph, 12);
+        assertTrue(nodeB > -1, "could not find OSM node B");
+        assertEquals(2, GHUtility.count(graph.createEdgeExplorer().setBaseNode(nodeB)));
+    }
+
+    @Test
+    public void testBarriersOnTowerNodes() {
+        GraphHopper hopper = new GraphHopperFacade(fileBarriers).
+                setMinNetworkSize(0).
+                importOrLoad();
+        Graph graph = hopper.getGraphHopperStorage();
+        assertEquals(8, graph.getNodes());
+
+        int n60 = AbstractGraphStorageTester.getIdOf(graph, 56);
+        int newId = 5;
+        assertEquals(GHUtility.asSet(newId), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n60)));
+
+        EdgeIterator iter = carOutExplorer.setBaseNode(n60);
+        assertTrue(iter.next());
+        assertEquals(newId, iter.getAdjNode());
+        assertFalse(iter.next());
+
+        iter = carOutExplorer.setBaseNode(newId);
+        assertTrue(iter.next());
+        assertEquals(n60, iter.getAdjNode());
+        assertFalse(iter.next());
+    }
+
+    @Test
+    public void testRelation() {
+        EncodingManager manager = EncodingManager.create("bike");
+        GraphHopperStorage ghStorage = new GraphHopperStorage(new RAMDirectory(), manager, false);
+        OSMReader reader = new OSMReader(ghStorage);
+        ReaderRelation osmRel = new ReaderRelation(1);
+        osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 1, ""));
+        osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 2, ""));
+
+        osmRel.setTag("route", "bicycle");
+        osmRel.setTag("network", "lcn");
+        reader.prepareWaysWithRelationInfo(osmRel);
+
+        IntsRef flags = IntsRef.deepCopyOf(reader.getRelFlagsMap(1));
+        assertFalse(flags.isEmpty());
+
+        // unchanged network
+        reader.prepareWaysWithRelationInfo(osmRel);
+        IntsRef flags2 = reader.getRelFlagsMap(1);
+        assertEquals(flags, flags2);
+
+        // overwrite network
+        osmRel.setTag("network", "ncn");
+        reader.prepareWaysWithRelationInfo(osmRel);
+        IntsRef flags3 = reader.getRelFlagsMap(1);
+        assertNotEquals(flags, flags3);
+    }
+
+    @Test
+    public void testTurnRestrictions() {
+        String fileTurnRestrictions = "test-restrictions.xml";
+        GraphHopper hopper = new GraphHopperFacade(fileTurnRestrictions, true, "").
+                importOrLoad();
+
+        Graph graph = hopper.getGraphHopperStorage();
+        assertEquals(15, graph.getNodes());
+        TurnCostStorage tcStorage = graph.getTurnCostStorage();
+        assertNotNull(tcStorage);
+
+        int n1 = AbstractGraphStorageTester.getIdOf(graph, 50, 10);
+        int n2 = AbstractGraphStorageTester.getIdOf(graph, 52, 10);
+        int n3 = AbstractGraphStorageTester.getIdOf(graph, 52, 11);
+        int n4 = AbstractGraphStorageTester.getIdOf(graph, 52, 12);
+        int n5 = AbstractGraphStorageTester.getIdOf(graph, 50, 12);
+        int n6 = AbstractGraphStorageTester.getIdOf(graph, 51, 11);
+        int n8 = AbstractGraphStorageTester.getIdOf(graph, 54, 11);
+
+        int edge1_6 = GHUtility.getEdge(graph, n1, n6).getEdge();
+        int edge2_3 = GHUtility.getEdge(graph, n2, n3).getEdge();
+        int edge3_4 = GHUtility.getEdge(graph, n3, n4).getEdge();
+        int edge3_8 = GHUtility.getEdge(graph, n3, n8).getEdge();
+
+        int edge3_2 = GHUtility.getEdge(graph, n3, n2).getEdge();
+        int edge4_3 = GHUtility.getEdge(graph, n4, n3).getEdge();
+        int edge8_3 = GHUtility.getEdge(graph, n8, n3).getEdge();
+
+        // (2-3)->(3-4) only_straight_on = (2-3)->(3-8) restricted
+        // (4-3)->(3-8) no_right_turn = (4-3)->(3-8) restricted
+        // (2-3)->(3-8) no_entry = (2-3)->(3-8) restricted
+        DecimalEncodedValue carTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("car"));
+        assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_8) > 0);
+        assertTrue(tcStorage.get(carTCEnc, edge4_3, n3, edge3_8) > 0);
+        assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_8) > 0);
+        assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_4) == 0);
+        assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_2) == 0);
+        assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_4) == 0);
+        assertTrue(tcStorage.get(carTCEnc, edge4_3, n3, edge3_2) == 0);
+        assertTrue(tcStorage.get(carTCEnc, edge8_3, n3, edge3_2) == 0);
+
+        // u-turn restriction for (6-1)->(1-6) but not for (1-6)->(6-1)
+        assertTrue(tcStorage.get(carTCEnc, edge1_6, n1, edge1_6) > 0);
+        assertTrue(tcStorage.get(carTCEnc, edge1_6, n6, edge1_6) == 0);
+
+        int edge4_5 = GHUtility.getEdge(graph, n4, n5).getEdge();
+        int edge5_6 = GHUtility.getEdge(graph, n5, n6).getEdge();
+        int edge5_1 = GHUtility.getEdge(graph, n5, n1).getEdge();
+
+        // (4-5)->(5-1) right_turn_only = (4-5)->(5-6) restricted
+        assertTrue(tcStorage.get(carTCEnc, edge4_5, n5, edge5_6) == 0);
+        assertTrue(tcStorage.get(carTCEnc, edge4_5, n5, edge5_1) > 0);
+
+        DecimalEncodedValue bikeTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("bike"));
+        assertTrue(tcStorage.get(bikeTCEnc, edge4_5, n5, edge5_6) == 0);
+
+        int n10 = AbstractGraphStorageTester.getIdOf(graph, 40, 10);
+        int n11 = AbstractGraphStorageTester.getIdOf(graph, 40, 11);
+        int n14 = AbstractGraphStorageTester.getIdOf(graph, 39, 11);
+
+        int edge10_11 = GHUtility.getEdge(graph, n10, n11).getEdge();
+        int edge11_14 = GHUtility.getEdge(graph, n11, n14).getEdge();
+
+        assertTrue(tcStorage.get(carTCEnc, edge11_14, n11, edge10_11) == 0);
+        assertTrue(tcStorage.get(bikeTCEnc, edge11_14, n11, edge10_11) == 0);
+
+        assertTrue(tcStorage.get(carTCEnc, edge10_11, n11, edge11_14) == 0);
+        assertTrue(tcStorage.get(bikeTCEnc, edge10_11, n11, edge11_14) > 0);
+    }
+
+    @Test
+    public void testRoadAttributes() {
+        String fileRoadAttributes = "test-road-attributes.xml";
+        GraphHopper hopper = new GraphHopperFacade(fileRoadAttributes);
+        hopper.getEncodingManagerBuilder().add(new OSMMaxWidthParser()).add(new OSMMaxHeightParser()).add(new OSMMaxWeightParser());
+        hopper.importOrLoad();
+
+        DecimalEncodedValue widthEnc = hopper.getEncodingManager().getDecimalEncodedValue(MaxWidth.KEY);
+        DecimalEncodedValue heightEnc = hopper.getEncodingManager().getDecimalEncodedValue(MaxHeight.KEY);
+        DecimalEncodedValue weightEnc = hopper.getEncodingManager().getDecimalEncodedValue(MaxWeight.KEY);
+
+        Graph graph = hopper.getGraphHopperStorage();
+        assertEquals(5, graph.getNodes());
+
+        int na = AbstractGraphStorageTester.getIdOf(graph, 11.1, 50);
+        int nb = AbstractGraphStorageTester.getIdOf(graph, 12, 51);
+        int nc = AbstractGraphStorageTester.getIdOf(graph, 11.2, 52);
+        int nd = AbstractGraphStorageTester.getIdOf(graph, 11.3, 51);
+        int ne = AbstractGraphStorageTester.getIdOf(graph, 10, 51);
+
+        EdgeIteratorState edge_ab = GHUtility.getEdge(graph, na, nb);
+        EdgeIteratorState edge_ad = GHUtility.getEdge(graph, na, nd);
+        EdgeIteratorState edge_ae = GHUtility.getEdge(graph, na, ne);
+        EdgeIteratorState edge_bc = GHUtility.getEdge(graph, nb, nc);
+        EdgeIteratorState edge_bd = GHUtility.getEdge(graph, nb, nd);
+        EdgeIteratorState edge_cd = GHUtility.getEdge(graph, nc, nd);
+        EdgeIteratorState edge_ce = GHUtility.getEdge(graph, nc, ne);
+        EdgeIteratorState edge_de = GHUtility.getEdge(graph, nd, ne);
+
+        assertEquals(4.0, edge_ab.get(heightEnc), 1e-5);
+        assertEquals(2.5, edge_ab.get(widthEnc), 1e-5);
+        assertEquals(4.4, edge_ab.get(weightEnc), 1e-5);
+
+        assertEquals(4.0, edge_bc.get(heightEnc), 1e-5);
+        assertEquals(2.5, edge_bc.get(widthEnc), 1e-5);
+        assertEquals(4.4, edge_bc.get(weightEnc), 1e-5);
+
+        assertEquals(4.4, edge_ad.get(heightEnc), 1e-5);
+        assertEquals(3.5, edge_ad.get(widthEnc), 1e-5);
+        assertEquals(17.5, edge_ad.get(weightEnc), 1e-5);
+
+        assertEquals(4.4, edge_cd.get(heightEnc), 1e-5);
+        assertEquals(3.5, edge_cd.get(widthEnc), 1e-5);
+        assertEquals(17.5, edge_cd.get(weightEnc), 1e-5);
+    }
+
+    @Test
+    public void testEstimatedCenter() {
+        final CarFlagEncoder encoder = new CarFlagEncoder();
+        EncodingManager manager = EncodingManager.create(encoder);
+        GraphHopperStorage ghStorage = newGraph(dir, manager, false, false);
+        final Map<Integer, Double> latMap = new HashMap<>();
+        final Map<Integer, Double> lonMap = new HashMap<>();
+        latMap.put(1, 1.1d);
+        latMap.put(2, 1.2d);
+
+        lonMap.put(1, 1.0d);
+        lonMap.put(2, 1.0d);
+
+        OSMReader osmreader = new OSMReader(ghStorage) {
+            // mock data access
+            @Override
+            double getTmpLatitude(int id) {
+                return latMap.get(id);
+            }
+
+            @Override
+            double getTmpLongitude(int id) {
+                return lonMap.get(id);
+            }
+
+            @Override
+            Collection<EdgeIteratorState> addOSMWay(LongIndexedContainer osmNodeIds, IntsRef wayFlags, long osmId) {
+                return Collections.emptyList();
+            }
+        };
+
+        ReaderWay way = new ReaderWay(1L);
+        way.getNodes().add(1);
+        way.getNodes().add(2);
+        way.setTag("highway", "motorway");
+        osmreader.getNodeMap().put(1, 1);
+        osmreader.getNodeMap().put(2, 2);
+        osmreader.processWay(way);
+
+        GHPoint p = way.getTag("estimated_center", null);
+        assertEquals(1.15, p.lat, 1e-3);
+        assertEquals(1.0, p.lon, 1e-3);
+        Double d = way.getTag("estimated_distance", null);
+        assertEquals(11119.5, d, 1e-1);
+    }
+
+    @Test
+    public void testReadEleFromDataProvider() {
+        GraphHopper hopper = new GraphHopperFacade("test-osm5.xml");
+        // get N10E046.hgt.zip
+        ElevationProvider provider = new SRTMProvider(GraphHopperTest.DIR);
+        hopper.setElevationProvider(provider);
+        hopper.importOrLoad();
+
+        Graph graph = hopper.getGraphHopperStorage();
+        int n10 = AbstractGraphStorageTester.getIdOf(graph, 49.501);
+        int n30 = AbstractGraphStorageTester.getIdOf(graph, 49.5011);
+        int n50 = AbstractGraphStorageTester.getIdOf(graph, 49.5001);
+
+        EdgeIteratorState edge = GHUtility.getEdge(graph, n50, n30);
+        assertEquals(Helper.createPointList3D(49.5001, 11.501, 426, 49.5002, 11.5015, 441, 49.5011, 11.502, 410.0),
+                edge.fetchWayGeometry(FetchMode.ALL));
+
+        edge = GHUtility.getEdge(graph, n10, n50);
+        assertEquals(Helper.createPointList3D(49.501, 11.5001, 383.0, 49.5001, 11.501, 426.0),
+                edge.fetchWayGeometry(FetchMode.ALL));
+    }
+
+    /**
+     * Tests the combination of different turn cost flags by different encoders.
+     */
+    @Test
+    public void testTurnFlagCombination() {
+        CarFlagEncoder car = new CarFlagEncoder(5, 5, 24);
+        CarFlagEncoder truck = new CarFlagEncoder(5, 5, 24) {
+            @Override
+            public TransportationMode getTransportationMode() {
+                return TransportationMode.HGV;
+            }
+
+            @Override
+            public String toString() {
+                return "truck";
+            }
+        };
+        BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24);
+
+        GraphHopper hopper = new GraphHopper();
+        hopper.getEncodingManagerBuilder().add(bike).add(truck).add(car);
+        hopper.setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
+                setGraphHopperLocation(dir).
+                setProfiles(
+                        new Profile("bike").setVehicle("bike").setWeighting("fastest"),
+                        new Profile("car").setVehicle("car").setWeighting("fastest"),
+                        new Profile("truck").setVehicle("truck").setWeighting("fastest")
+                ).
+                importOrLoad();
+        EncodingManager manager = hopper.getEncodingManager();
+        DecimalEncodedValue carTCEnc = manager.getDecimalEncodedValue(TurnCost.key("car"));
+        DecimalEncodedValue truckTCEnc = manager.getDecimalEncodedValue(TurnCost.key("truck"));
+        DecimalEncodedValue bikeTCEnc = manager.getDecimalEncodedValue(TurnCost.key("bike"));
+
+        Graph graph = hopper.getGraphHopperStorage();
+        TurnCostStorage tcStorage = graph.getTurnCostStorage();
+
+        int edge1 = GHUtility.getEdge(graph, 1, 0).getEdge();
+        int edge2 = GHUtility.getEdge(graph, 0, 2).getEdge();
+        // the 2nd entry provides turn flags for bike only
+        assertTrue(Double.isInfinite(tcStorage.get(carTCEnc, edge1, 0, edge2)));
+        assertTrue(Double.isInfinite(tcStorage.get(truckTCEnc, edge1, 0, edge2)));
+        assertEquals(0, tcStorage.get(bikeTCEnc, edge1, 0, edge2), .1);
+
+        edge1 = GHUtility.getEdge(graph, 2, 0).getEdge();
+        edge2 = GHUtility.getEdge(graph, 0, 3).getEdge();
+        // the first entry provides turn flags for car and foot only
+        assertEquals(0, tcStorage.get(carTCEnc, edge1, 0, edge2), .1);
+        assertEquals(0, tcStorage.get(truckTCEnc, edge1, 0, edge2), .1);
+        assertTrue(Double.isInfinite(tcStorage.get(bikeTCEnc, edge1, 0, edge2)));
+
+        edge1 = GHUtility.getEdge(graph, 3, 0).getEdge();
+        edge2 = GHUtility.getEdge(graph, 0, 2).getEdge();
+        assertEquals(0, tcStorage.get(carTCEnc, edge1, 0, edge2), .1);
+        assertTrue(Double.isInfinite(tcStorage.get(truckTCEnc, edge1, 0, edge2)));
+        assertEquals(0, tcStorage.get(bikeTCEnc, edge1, 0, edge2), .1);
+    }
+
+    @Test
+    public void testConditionalTurnRestriction() {
+        String fileConditionalTurnRestrictions = "test-conditional-turn-restrictions.xml";
+        GraphHopper hopper = new GraphHopperFacade(fileConditionalTurnRestrictions, true, "").
+                setMinNetworkSize(0).
+                importOrLoad();
+
+        Graph graph = hopper.getGraphHopperStorage();
+        assertEquals(8, graph.getNodes());
+        TurnCostStorage tcStorage = graph.getTurnCostStorage();
+        assertNotNull(tcStorage);
+
+        int n1 = AbstractGraphStorageTester.getIdOf(graph, 50, 10);
+        int n2 = AbstractGraphStorageTester.getIdOf(graph, 52, 10);
+        int n3 = AbstractGraphStorageTester.getIdOf(graph, 52, 11);
+        int n4 = AbstractGraphStorageTester.getIdOf(graph, 52, 12);
+        int n5 = AbstractGraphStorageTester.getIdOf(graph, 50, 12);
+        int n6 = AbstractGraphStorageTester.getIdOf(graph, 51, 11);
+        int n8 = AbstractGraphStorageTester.getIdOf(graph, 54, 11);
+
+        int edge1_6 = GHUtility.getEdge(graph, n1, n6).getEdge();
+        int edge2_3 = GHUtility.getEdge(graph, n2, n3).getEdge();
+        int edge3_4 = GHUtility.getEdge(graph, n3, n4).getEdge();
+        int edge3_8 = GHUtility.getEdge(graph, n3, n8).getEdge();
+
+        int edge3_2 = GHUtility.getEdge(graph, n3, n2).getEdge();
+        int edge4_3 = GHUtility.getEdge(graph, n4, n3).getEdge();
+        int edge8_3 = GHUtility.getEdge(graph, n8, n3).getEdge();
+
+        int edge4_5 = GHUtility.getEdge(graph, n4, n5).getEdge();
+        int edge5_6 = GHUtility.getEdge(graph, n5, n6).getEdge();
+        int edge5_1 = GHUtility.getEdge(graph, n5, n1).getEdge();
+
+        // (2-3)->(3-4) only_straight_on except bicycle = (2-3)->(3-8) restricted for car
+        // (4-3)->(3-8) no_right_turn dedicated to motorcar = (4-3)->(3-8) restricted for car
+
+        DecimalEncodedValue carTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("car"));
+        assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_8) > 0);
+        assertTrue(tcStorage.get(carTCEnc, edge4_3, n3, edge3_8) > 0);
+        assertEquals(0, tcStorage.get(carTCEnc, edge2_3, n3, edge3_4), .1);
+        assertEquals(0, tcStorage.get(carTCEnc, edge2_3, n3, edge3_2), .1);
+        assertEquals(0, tcStorage.get(carTCEnc, edge2_3, n3, edge3_4), .1);
+        assertEquals(0, tcStorage.get(carTCEnc, edge4_3, n3, edge3_2), .1);
+        assertEquals(0, tcStorage.get(carTCEnc, edge8_3, n3, edge3_2), .1);
+
+        DecimalEncodedValue bikeTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("bike"));
+        assertEquals(0, tcStorage.get(bikeTCEnc, edge2_3, n3, edge3_8), .1);
+        assertEquals(0, tcStorage.get(bikeTCEnc, edge4_3, n3, edge3_8), .1);
+        assertEquals(0, tcStorage.get(bikeTCEnc, edge2_3, n3, edge3_4), .1);
+        assertEquals(0, tcStorage.get(bikeTCEnc, edge2_3, n3, edge3_2), .1);
+        assertEquals(0, tcStorage.get(bikeTCEnc, edge2_3, n3, edge3_4), .1);
+        assertEquals(0, tcStorage.get(bikeTCEnc, edge4_3, n3, edge3_2), .1);
+        assertEquals(0, tcStorage.get(bikeTCEnc, edge8_3, n3, edge3_2), .1);
+
+        // u-turn except bus;bicycle restriction for (6-1)->(1-6) but not for (1-6)->(6-1)
+        assertTrue(tcStorage.get(carTCEnc, edge1_6, n1, edge1_6) > 0);
+        assertEquals(0, tcStorage.get(carTCEnc, edge1_6, n6, edge1_6), .1);
+
+        assertEquals(0, tcStorage.get(bikeTCEnc, edge1_6, n1, edge1_6), .1);
+        assertEquals(0, tcStorage.get(bikeTCEnc, edge1_6, n6, edge1_6), .1);
+
+        // (4-5)->(5-6) right_turn_only dedicated to motorcar = (4-5)->(5-1) restricted
+        assertEquals(0, tcStorage.get(carTCEnc, edge4_5, n5, edge5_6), .1);
+        assertTrue(tcStorage.get(carTCEnc, edge4_5, n5, edge5_1) > 0);
+
+        assertEquals(0, tcStorage.get(bikeTCEnc, edge4_5, n5, edge5_6), .1);
+        assertEquals(0, tcStorage.get(bikeTCEnc, edge4_5, n5, edge5_1), .1);
+    }
+
+    @Test
+    public void testMultipleTurnRestrictions() {
+        String fileMultipleConditionalTurnRestrictions = "test-multiple-conditional-turn-restrictions.xml";
+        GraphHopper hopper = new GraphHopperFacade(fileMultipleConditionalTurnRestrictions, true, "").
+                importOrLoad();
+
+        Graph graph = hopper.getGraphHopperStorage();
+        assertEquals(5, graph.getNodes());
+        TurnCostStorage tcStorage = graph.getTurnCostStorage();
+        assertNotNull(tcStorage);
+
+        int n1 = AbstractGraphStorageTester.getIdOf(graph, 50, 10);
+        int n2 = AbstractGraphStorageTester.getIdOf(graph, 52, 10);
+        int n3 = AbstractGraphStorageTester.getIdOf(graph, 52, 11);
+        int n4 = AbstractGraphStorageTester.getIdOf(graph, 52, 12);
+        int n5 = AbstractGraphStorageTester.getIdOf(graph, 50, 12);
+
+        int edge1_2 = GHUtility.getEdge(graph, n1, n2).getEdge();
+        int edge2_3 = GHUtility.getEdge(graph, n2, n3).getEdge();
+        int edge3_4 = GHUtility.getEdge(graph, n3, n4).getEdge();
+        int edge4_5 = GHUtility.getEdge(graph, n4, n5).getEdge();
+        int edge5_1 = GHUtility.getEdge(graph, n5, n1).getEdge();
+
+        DecimalEncodedValue carTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("car"));
+        DecimalEncodedValue bikeTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("bike"));
+
+        // (1-2)->(2-3) no_right_turn for motorcar and bus
+        assertTrue(tcStorage.get(carTCEnc, edge1_2, n2, edge2_3) > 0);
+        assertEquals(0, tcStorage.get(bikeTCEnc, edge1_2, n2, edge2_3), .1);
+
+        // (3-4)->(4-5) no_right_turn for motorcycle and motorcar
+        assertTrue(Double.isInfinite(tcStorage.get(carTCEnc, edge3_4, n4, edge4_5)));
+        assertEquals(0, tcStorage.get(bikeTCEnc, edge3_4, n4, edge4_5), .1);
+
+        // (5-1)->(1-2) no_right_turn for bus and psv except for motorcar and bicycle
+        assertEquals(0, tcStorage.get(carTCEnc, edge4_5, n5, edge5_1), .1);
+        assertEquals(0, tcStorage.get(bikeTCEnc, edge4_5, n5, edge5_1), .1);
+
+        // (5-1)->(1-2) no_right_turn for motorcar and motorcycle except for bus and bicycle
+        assertTrue(Double.isInfinite(tcStorage.get(carTCEnc, edge5_1, n1, edge1_2)));
+        assertEquals(0, tcStorage.get(bikeTCEnc, edge5_1, n1, edge1_2), .1);
+    }
+
+    @Test
+    public void testPreferredLanguage() {
+        GraphHopper hopper = new GraphHopperFacade(file1, false, "de").
+                importOrLoad();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+        int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
+        EdgeIterator iter = carOutExplorer.setBaseNode(n20);
+        assertTrue(iter.next());
+        assertEquals("straße 123, B 122", iter.getName());
+
+        hopper = new GraphHopperFacade(file1, false, "el").
+                importOrLoad();
+        graph = hopper.getGraphHopperStorage();
+        n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
+        iter = carOutExplorer.setBaseNode(n20);
+        assertTrue(iter.next());
+        assertTrue(iter.next());
+        assertEquals("διαδρομή 666", iter.getName());
+    }
+
+    @Test
+    public void testDataDateWithinPBF() {
+        GraphHopper hopper = new GraphHopperFacade("test-osm6.pbf")
+                .setMinNetworkSize(0)
+                .importOrLoad();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+
+        assertEquals("2014-01-02T00:10:14Z", graph.getProperties().get("datareader.data.date"));
+    }
+
+    @Test
+    public void testCrossBoundary_issue667() {
+        GraphHopper hopper = new GraphHopperFacade("test-osm-waterway.xml").importOrLoad();
+        Snap snap = hopper.getLocationIndex().findClosest(0.1, 179.5, EdgeFilter.ALL_EDGES);
+        assertTrue(snap.isValid());
+        assertEquals(0.1, snap.getSnappedPoint().lat, 0.1);
+        assertEquals(179.5, snap.getSnappedPoint().lon, 0.1);
+        assertEquals(11, snap.getClosestEdge().getDistance() / 1000, 1);
+
+        snap = hopper.getLocationIndex().findClosest(0.1, -179.6, EdgeFilter.ALL_EDGES);
+        assertTrue(snap.isValid());
+        assertEquals(0.1, snap.getSnappedPoint().lat, 0.1);
+        assertEquals(-179.6, snap.getSnappedPoint().lon, 0.1);
+        assertEquals(112, snap.getClosestEdge().getDistance() / 1000, 1);
+    }
+
+    @Test
+    public void testRoutingRequestFails_issue665() {
+        GraphHopper hopper = new GraphHopper()
+                .setOSMFile(getClass().getResource(file7).getFile())
+                .setProfiles(
+                        new Profile("profile1").setVehicle("car").setWeighting("fastest"),
+                        new Profile("profile2").setVehicle("motorcycle").setWeighting("curvature")
+                )
+                .setGraphHopperLocation(dir);
+        hopper.importOrLoad();
+        GHRequest req = new GHRequest(48.977277, 8.256896, 48.978876, 8.254884).
+                setProfile("profile2");
+
+        GHResponse ghRsp = hopper.route(req);
+        assertFalse(ghRsp.hasErrors(), ghRsp.getErrors().toString());
+    }
+
+    @Test
+    public void testRoadClassInfo() {
+        GraphHopper gh = new GraphHopper() {
+            @Override
+            protected File _getOSMFile() {
+                return new File(getClass().getResource(file2).getFile());
+            }
+        }.setOSMFile("dummy").
+                setProfiles(new Profile("profile").setVehicle("car").setWeighting("fastest")).
+                setMinNetworkSize(0).
+                setGraphHopperLocation(dir).
+                importOrLoad();
+
+        GHResponse response = gh.route(new GHRequest(51.2492152, 9.4317166, 52.133, 9.1)
+                .setProfile("profile")
+                .setPathDetails(Collections.singletonList(RoadClass.KEY)));
+        List<PathDetail> list = response.getBest().getPathDetails().get(RoadClass.KEY);
+        assertEquals(3, list.size());
+        assertEquals(RoadClass.MOTORWAY.toString(), list.get(0).getValue());
+
+        response = gh.route(new GHRequest(51.2492152, 9.4317166, 52.133, 9.1)
+                .setProfile("profile")
+                .setPathDetails(Collections.singletonList(Toll.KEY)));
+        Throwable ex = response.getErrors().get(0);
+        assertTrue(ex.getMessage().contains("You requested the details [toll]"), ex.getMessage());
+    }
+
+    class GraphHopperFacade extends GraphHopper {
+        public GraphHopperFacade(String osmFile) {
+            this(osmFile, false, "");
+        }
+
+        public GraphHopperFacade(String osmFile, boolean turnCosts, String prefLang) {
+            setStoreOnFlush(false);
+            setOSMFile(osmFile);
+            setGraphHopperLocation(dir);
+            setProfiles(
+                    new Profile("foot").setVehicle("foot").setWeighting("fastest"),
+                    new Profile("car").setVehicle("car").setWeighting("fastest"),
+                    new Profile("bike").setVehicle("bike").setWeighting("fastest")
+            );
+
+            BikeFlagEncoder bikeEncoder;
+            if (turnCosts) {
+                carEncoder = new CarFlagEncoder(5, 5, 1);
+                bikeEncoder = new BikeFlagEncoder(4, 2, 1);
+            } else {
+                carEncoder = new CarFlagEncoder();
+                bikeEncoder = new BikeFlagEncoder();
+            }
+
+            footEncoder = new FootFlagEncoder();
+            getEncodingManagerBuilder().add(footEncoder).add(carEncoder).add(bikeEncoder).
+                    setPreferredLanguage(prefLang);
+        }
+
+        @Override
+        protected void importOSM() {
+            GraphHopperStorage tmpGraph = newGraph(dir, getEncodingManager(), hasElevation(),
+                    getEncodingManager().needsTurnCostsSupport());
+            setGraphHopperStorage(tmpGraph);
+            super.importOSM();
+            carAccessEnc = carEncoder.getAccessEnc();
+            carOutExplorer = getGraphHopperStorage().createEdgeExplorer(AccessFilter.outEdges(carAccessEnc));
+            carAllExplorer = getGraphHopperStorage().createEdgeExplorer(AccessFilter.allEdges(carAccessEnc));
+        }
+
+        @Override
+        protected File _getOSMFile() {
+            return new File(getClass().getResource(getOSMFile()).getFile());
+        }
+    }
+}

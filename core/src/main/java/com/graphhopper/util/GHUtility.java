@@ -240,8 +240,8 @@ public class GHUtility {
         double pCostIsRestriction = 0.1;
 
         DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(TurnCost.key(encoder.toString()));
-        EdgeExplorer inExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder.getAccessEnc()));
-        EdgeExplorer outExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder.getAccessEnc()));
+        EdgeExplorer inExplorer = graph.createEdgeExplorer(AccessFilter.inEdges(encoder.getAccessEnc()));
+        EdgeExplorer outExplorer = graph.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc()));
         for (int node = 0; node < graph.getNodes(); ++node) {
             if (random.nextDouble() < pNodeHasTurnCosts) {
                 EdgeIterator inIter = inExplorer.setBaseNode(node);
@@ -472,7 +472,6 @@ public class GHUtility {
                 .set3D(is3D)
                 .setDir(outdir)
                 .setCHConfigs(store.getCHConfigs())
-                .setBytes(store.getNodes())
                 .create();
     }
 
@@ -680,7 +679,7 @@ public class GHUtility {
 
         BooleanEncodedValue accessEnc = encoder.getAccessEnc();
         DecimalEncodedValue avSpeedEnc = encoder.getAverageSpeedEnc();
-        edge.set(accessEnc, fwd).setReverse(accessEnc, bwd);
+        edge.set(accessEnc, fwd, bwd);
         if (fwd)
             edge.set(avSpeedEnc, averageSpeed);
         if (bwd && avSpeedEnc.isStoreTwoDirections())

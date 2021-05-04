@@ -35,6 +35,7 @@ Here is an overview:
  * HelgeKrueger, modularization of javascript, #590
  * henningvs, doc improvements
  * highsource, more efficient geometry update, UI fixes
+ * hoofstephan, bug fix   
  * IsNull, improvements like #708
  * Janekdererste, GUI for public transit
  * jansoe, many improvements regarding A* algorithm, forcing direction, roundabouts etc

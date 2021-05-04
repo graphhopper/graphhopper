@@ -25,7 +25,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -188,7 +188,7 @@ public final class PtRouterImpl implements PtRouter {
         }
 
         private Snap findByPoint(GHPoint point, int indexForErrorMessage) {
-            final EdgeFilter filter = DefaultEdgeFilter.allEdges(graphHopperStorage.getEncodingManager().getEncoder("foot").getAccessEnc());
+            final EdgeFilter filter = AccessFilter.allEdges(graphHopperStorage.getEncodingManager().getEncoder("foot").getAccessEnc());
             Snap source = locationIndex.findClosest(point.lat, point.lon, filter);
             if (!source.isValid()) {
                 throw new PointNotFoundException("Cannot find point: " + point, indexForErrorMessage);

@@ -34,4 +34,5 @@ and call edge.fetchWayGeometry(FetchMode.ALL) or again, see Bike2WeightFlagEncod
 ## Add to the core
 
 If you want to include your FlagEncoder in GraphHopper and e.g. still want to use the config.yml
-you can use a subclass of DefaultFlagEncoderFactory and use the configuration object to change different properties.
+you can use a subclass of DefaultFlagEncoderFactory, set it to to the GraphHopper instance
+and use the configuration object to change different properties.

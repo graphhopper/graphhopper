@@ -53,11 +53,10 @@ public class RouteResourceCustomModelLMTest {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "car,foot").
-                putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", DIR).
-                putObject("graph.encoded_values", "surface")
-                .setProfiles(Arrays.asList(
+                putObject("graph.encoded_values", "surface").
+                setProfiles(Arrays.asList(
                         // give strange profile names to ensure that we do not mix vehicle and profile:
                         new CustomProfile("car_custom").setCustomModel(new CustomModel()).setVehicle("car"),
                         new Profile("foot_profile").setVehicle("foot").setWeighting("fastest"),
@@ -117,9 +116,9 @@ public class RouteResourceCustomModelLMTest {
         String body = "{\"points\": [[1.533365, 42.506211], [1.523924, 42.520605]]," +
                 "\"profile\": \"car_custom\"," +
                 "\"custom_model\": {" +
-                "\"priority\": [" +
-                " {\"if\": \"road_environment == TUNNEL\", \"multiply_by\": 0.1}" +
-                "]" +
+                "  \"priority\": [" +
+                "    {\"if\": \"road_environment == TUNNEL\", \"multiply_by\": 0.1}" +
+                "  ]" +
                 "}" +
                 "}";
         JsonNode jsonNode = query(body, 200).readEntity(JsonNode.class);

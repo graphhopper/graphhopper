@@ -16,7 +16,7 @@
     <dependencies>
         <dependency>
             <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-reader-osm</artifactId>
+            <artifactId>graphhopper-core</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
