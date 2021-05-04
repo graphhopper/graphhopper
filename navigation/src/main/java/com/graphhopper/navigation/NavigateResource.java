@@ -188,13 +188,11 @@ public class NavigateResource {
      * The url looks like: ".../{profile}/1.522438,42.504606;1.527209,42.504776;1.526113,42.505144;1.527218,42.50529?.."
      */
     private List<GHPoint> getPointsFromRequest(HttpServletRequest httpServletRequest, String profile) {
-
         String url = httpServletRequest.getRequestURI();
-        url = url.replaceFirst("/navigate/directions/v5/gh/" + profile + "/", "");
-        url = url.replaceAll("\\?[*]", "");
-
+        String urlStart = "/navigate/directions/v5/gh/" + profile + "/";
+        if (!url.startsWith(urlStart)) throw new IllegalArgumentException("Incorrect URL " + url);
+        url = url.substring(urlStart.length());
         String[] pointStrings = url.split(";");
-
         List<GHPoint> points = new ArrayList<>(pointStrings.length);
         for (int i = 0; i < pointStrings.length; i++) {
             points.add(GHPoint.fromStringLonLat(pointStrings[i]));
