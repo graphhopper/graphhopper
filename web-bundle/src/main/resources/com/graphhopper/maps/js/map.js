@@ -121,6 +121,9 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
             var container = this.getContainer();
             L.DomUtil.setClass(container, full ? 'fullscreen-reverse-btn' : 'fullscreen-btn');
             L.DomUtil.addClass(container, 'leaflet-control');
+            if (full) {
+                L.DomUtil.addClass(container, 'fullsceen');
+            }
         },
         onAdd: function (map) {
             var container = L.DomUtil.create('div', 'fullscreen-btn');

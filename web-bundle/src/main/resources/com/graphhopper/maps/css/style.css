@@ -564,9 +564,12 @@ td img.pic {
     }
 
     #map {
-        max-height: 80vh;
         flex-grow: 1;
         flex-shrink: 1;
         width: 100% !important;
+    }
+
+    #map.fullscreen {
+        max-height: 100vh;
     }
 }
