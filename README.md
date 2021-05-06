@@ -45,7 +45,7 @@ To install the [GraphHopper Maps](https://graphhopper.com/maps/) and the web ser
 
 ```bash
 # download and install a JVM that supports at least Java 8 (https://adoptopenjdk.net)
-wget https://graphhopper.com/public/releases/graphhopper-web-2.3.jar https://raw.githubusercontent.com/graphhopper/graphhopper/stable/config-example.yml http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
+wget https://graphhopper.com/public/releases/graphhopper-web-2.4.jar https://raw.githubusercontent.com/graphhopper/graphhopper/stable/config-example.yml http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
 java -Ddw.graphhopper.datareader.file=berlin-latest.osm.pbf -jar *.jar server config-example.yml
 ```
 
