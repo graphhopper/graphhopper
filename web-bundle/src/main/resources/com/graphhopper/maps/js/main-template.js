@@ -83,7 +83,7 @@ $(document).ready(function (e) {
     };
     ghRequest.cmEditor = cmEditor;
     ghRequest.cmEditorActive = false;
-    $("#custom-model-button").click(function() {
+    var toggleCustomModelBox = function(sendRoute) {
         $("#custom-model-box").toggle();
         ghRequest.cmEditorActive = !ghRequest.cmEditorActive;
         // avoid default action, so use a different search button
@@ -92,7 +92,11 @@ $(document).ready(function (e) {
         cmEditor.cm.refresh();
         cmEditor.cm.focus();
         cmEditor.cm.setCursor(cmEditor.cm.lineCount());
-        sendCustomData();
+        if (sendRoute)
+            sendCustomData();
+    };
+    $("#custom-model-button").click(function() {
+        toggleCustomModelBox(true);
     });
     function showCustomModelExample() {
         cmEditor.value =
@@ -162,10 +166,10 @@ $(document).ready(function (e) {
 
     var customURL = urlParams.load_custom;
     if(urlParams.load_custom)
-        $("#custom-model-button").click();
+        toggleCustomModelBox(false);
     if(customURL && ghenv.environment === 'development')
         $.ajax(customURL).
-            done(function(data) { cmEditor.value = data; $("#custom-model-search-button").click(); }).
+            done(function(data) { cmEditor.value = data; sendCustomData(); }).
             fail(function(err)  { console.log("Cannot load custom URL " + customURL); });
 
     $.when(ghRequest.fetchTranslationMap(urlParams.locale), ghRequest.getInfo())
