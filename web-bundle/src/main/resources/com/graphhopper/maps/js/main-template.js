@@ -911,9 +911,26 @@ function doCustomRequest(request, routeResultsDiv) {
         data: JSON.stringify(reqBody),
         success: createRouteCallback(ghRequest, routeResultsDiv, "", true),
         error: function (err) {
-            routeResultsDiv.html("Error response: cannot process input");
-            var json = JSON.parse(err.responseText);
-            createRouteCallback(ghRequest, routeResultsDiv, "", true)(json);
+            if (JSON.stringify(err.responseText).includes("Cannot find LM preparation for the requested profile")) {
+                reqBody["lm.disable"] = true;
+                $.ajax({
+                    url: host + "/route",
+                    type: "POST",
+                    contentType: 'application/json; charset=utf-8',
+                    datatType: "json",
+                    data: JSON.stringify(reqBody),
+                    success: createRouteCallback(ghRequest, routeResultsDiv, "", true),
+                    error: function (err) {
+                        routeResultsDiv.html("Error response: cannot process input");
+                        var json = JSON.parse(err.responseText);
+                        createRouteCallback(ghRequest, routeResultsDiv, "", true)(json);
+                    }
+                })
+            } else {
+                routeResultsDiv.html("Error response: cannot process input");
+                var json = JSON.parse(err.responseText);
+                createRouteCallback(ghRequest, routeResultsDiv, "", true)(json);
+            }
         }
     });
 }
