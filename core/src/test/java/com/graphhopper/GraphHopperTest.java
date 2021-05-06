@@ -25,12 +25,14 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.SkadiProvider;
+import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
 import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
@@ -2246,5 +2248,22 @@ public class GraphHopperTest {
             hopper.load(GH_LOCATION);
         }
         assertEquals(1, counter.get());
+    }
+
+    @Test
+    public void issue2306() {
+        final String profile = "profile";
+        final String vehicle = "car";
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile("../map-matching/files/leipzig_germany.osm.pbf").
+                setProfiles(new Profile("profile").setVehicle(vehicle).setWeighting("fastest")).
+                setMinNetworkSize(200);
+        hopper.importOrLoad();
+        Weighting weighting = hopper.createWeighting(hopper.getProfile(profile), new PMap());
+        EdgeFilter edgeFilter = new DefaultSnapFilter(weighting, hopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profile)));
+        Snap snap = hopper.getLocationIndex().findClosest(51.229248, 12.328892, edgeFilter);
+        assertTrue(snap.isValid());
+        assertTrue(snap.getQueryDistance() < 3_000);
     }
 }
