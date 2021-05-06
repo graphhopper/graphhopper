@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PUSHING_SECTION_SPEED;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
@@ -81,6 +82,52 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         way.setTag("surface", "ground");
         assertEquals(16, encoder.getSpeed(way));
         assertPriority(PREFER.getValue(), way);
+    }
+    
+    @Test
+    public void testSmoothness() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "residential");
+        way.setTag("smoothness", "excellent");
+        IntsRef relFlags = encodingManager.createRelationFlags();
+        IntsRef flags = encodingManager.handleWayTags(way, accessMap, relFlags);
+        assertEquals(18, encoder.getAverageSpeedEnc().getDecimal(false, flags), 0.01);
+
+        way.setTag("smoothness", "bad");
+        flags = encodingManager.handleWayTags(way, accessMap, relFlags);
+        assertEquals(12, encoder.getAverageSpeedEnc().getDecimal(false, flags), 0.01);
+
+        way.setTag("smoothness", "impassable");
+        flags = encodingManager.handleWayTags(way, accessMap, relFlags);
+        assertEquals(PUSHING_SECTION_SPEED, encoder.getAverageSpeedEnc().getDecimal(false, flags), 0.01);
+
+        way.setTag("smoothness", "unknown");
+        flags = encodingManager.handleWayTags(way, accessMap, relFlags);
+        assertEquals(12, encoder.getAverageSpeedEnc().getDecimal(false, flags), 0.01);
+
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("surface", "ground");
+        flags = encodingManager.handleWayTags(way, accessMap, relFlags);
+        assertEquals(16, encoder.getAverageSpeedEnc().getDecimal(false, flags), 0.01);
+
+        way.setTag("smoothness", "bad");
+        flags = encodingManager.handleWayTags(way, accessMap, relFlags);
+        assertEquals(12, encoder.getAverageSpeedEnc().getDecimal(false, flags), 0.01);
+
+        way.clearTags();
+        way.setTag("highway", "track");
+        way.setTag("tracktype", "grade5");
+        flags = encodingManager.handleWayTags(way, accessMap, relFlags);
+        assertEquals(6, encoder.getAverageSpeedEnc().getDecimal(false, flags), 0.01);
+
+        way.setTag("smoothness", "bad");
+        flags = encodingManager.handleWayTags(way, accessMap, relFlags);
+        assertEquals(PUSHING_SECTION_SPEED, encoder.getAverageSpeedEnc().getDecimal(false, flags), 0.01);
+
+        way.setTag("smoothness", "impassable");
+        flags = encodingManager.handleWayTags(way, accessMap, relFlags);
+        assertEquals(PUSHING_SECTION_SPEED, encoder.getAverageSpeedEnc().getDecimal(false, flags), 0.01);
     }
 
     @Test
