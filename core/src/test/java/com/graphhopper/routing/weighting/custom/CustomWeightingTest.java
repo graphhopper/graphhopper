@@ -253,15 +253,15 @@ class CustomWeightingTest {
     }
 
     @Test
-    public void maxSpeedViolated_bug() {
+    public void maxSpeedViolated_bug_2307() {
         EdgeIteratorState motorway = graph.edge(0, 1).setDistance(10).
                 set(roadClassEnc, MOTORWAY).set(avSpeedEnc, 80).set(accessEnc, true, true);
         CustomModel customModel = new CustomModel()
                 .addToSpeed(Statement.If("road_class == MOTORWAY", Statement.Op.MULTIPLY, 0.7))
                 .addToSpeed(Statement.Else(Statement.Op.LIMIT, 30));
         Weighting weighting = createWeighting(customModel);
-        double weight = weighting.calcEdgeWeight(motorway, false);
-        assertEquals(1.3429, weight, 1e-4);
+        assertEquals(1.3429, weighting.calcEdgeWeight(motorway, false), 1e-4);
+        assertEquals(10 / (80 * 0.7 / 3.6) * 1000, weighting.calcEdgeMillis(motorway, false), 1);
     }
 
     private Weighting createWeighting(CustomModel vehicleModel) {
