@@ -471,9 +471,9 @@ public class CustomModelParser {
         for (Statement st : statements) {
             final Statement.Keyword keyword = st.getKeyword();
             if (ELSEIF.equals(keyword) && ELSE.equals(prev))
-                throw new IllegalArgumentException();
+                throw new IllegalArgumentException("After each else-statement there must be an if-statement");
             if (ELSE.equals(keyword) && ELSE.equals(prev))
-                throw new IllegalArgumentException();
+                throw new IllegalArgumentException("After each else-statement there must be an if-statement");
             if (IF.equals(keyword)) {
                 block = new ArrayList<>();
                 result.add(block);
