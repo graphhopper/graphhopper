@@ -195,6 +195,16 @@ class CustomModelParserTest {
     }
 
     @Test
+    public void findMaxSpeed_limitAndMultiply() {
+        CustomModel customModel = new CustomModel();
+        customModel.addToSpeed(If("road_class == TERTIARY", LIMIT, 90));
+        customModel.addToSpeed(ElseIf("road_class == SECONDARY", MULTIPLY, 1.0));
+        customModel.addToSpeed(ElseIf("road_class == PRIMARY", LIMIT, 30));
+        customModel.addToSpeed(Else(LIMIT, 3));
+        assertEquals(140, CustomModelParser.findMaxSpeed(customModel, 140));
+    }
+
+    @Test
     public void multipleAreas() {
         CustomModel customModel = new CustomModel();
         Map<String, JsonFeature> areas = new HashMap<>();
