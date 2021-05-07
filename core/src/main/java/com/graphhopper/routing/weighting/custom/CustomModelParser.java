@@ -42,6 +42,8 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.graphhopper.json.Statement.Keyword.*;
+
 public class CustomModelParser {
     private static final AtomicLong longVal = new AtomicLong(1);
     static final String IN_AREA_PREFIX = "in_";
@@ -405,43 +407,70 @@ public class CustomModelParser {
         }
     }
 
-    static double findMaxSpeed(CustomModel customModel, final double maxSpeed) {
-        double globalMin_maxSpeed = maxSpeed, blockMax_maxSpeed = maxSpeed;
-        for (Statement statement : customModel.getSpeed()) {
-            if (statement.getOperation() == Statement.Op.LIMIT) {
-                if (statement.getValue() > maxSpeed)
-                    throw new IllegalArgumentException("Can never apply 'limit_to': " + statement.getValue()
-                            + " because maximum vehicle speed is " + maxSpeed);
+    static double findMaxSpeed(CustomModel customModel, double maxSpeed) {
+        return findMaxSpeed(customModel.getSpeed(), maxSpeed);
+    }
 
-                switch (statement.getKeyword()) {
-                    case IF:
-                        if ("true".equals(statement.getCondition())) {
-                            blockMax_maxSpeed = globalMin_maxSpeed = Math.min(statement.getValue(), maxSpeed);
-                        } else {
-                            blockMax_maxSpeed = statement.getValue();
-                        }
-                        break;
-                    case ELSEIF:
-                        blockMax_maxSpeed = Math.max(blockMax_maxSpeed, statement.getValue());
-                        break;
-                    case ELSE:
-                        blockMax_maxSpeed = Math.max(blockMax_maxSpeed, statement.getValue());
-                        globalMin_maxSpeed = Math.min(globalMin_maxSpeed, blockMax_maxSpeed);
-                        break;
-                    default:
-                        throw new IllegalArgumentException("unknown keyword " + statement.getKeyword());
-                }
+    static double findMaxSpeed(List<Statement> speedStatements, double maxSpeed) {
+        // we want to find the smallest speed that cannot be exceeded by any edge. the 'blocks' of speed statements
+        // are applied one after the other.
+        List<List<Statement>> blocks = splitIntoBlocks(speedStatements);
+        for (List<Statement> block : blocks)
+            maxSpeed = getMaxSpeedForBlock(block, maxSpeed);
+        if (maxSpeed <= 0)
+            throw new IllegalStateException("max speed is <= 0");
+        return maxSpeed;
+    }
 
-                if (globalMin_maxSpeed <= 0)
-                    throw new IllegalArgumentException("speed is always limited to 0. This must not be but results from " + statement);
-            } else {
-                // reset blockMax for every new block that starts with IF but has no limit_to Op
-                // TODO further reduce max speed via value in Statement.Op.MULTIPLY
-                if (statement.getKeyword() == Statement.Keyword.IF)
-                    blockMax_maxSpeed = maxSpeed;
+    static double getMaxSpeedForBlock(List<Statement> block, final double maxSpeed) {
+        if (block.isEmpty() || !IF.equals(block.get(0).getKeyword()))
+            throw new IllegalArgumentException("Every block must start with an if-statement");
+        if (block.get(0).getCondition().trim().equals("true"))
+            // this if statement is always executed while the other statements are never executed
+            // -> we just apply this one statement
+            return applyOperator(maxSpeed, block.get(0).getOperation(), block.get(0).getValue());
+
+        double blockMax = block.stream()
+                .mapToDouble(branch -> applyOperator(maxSpeed, branch.getOperation(), branch.getValue()))
+                .max()
+                .orElse(maxSpeed);
+        // if there is no 'else' statement it's like there is a 'neutral' branch that leaves the initial max speed as is
+        if (block.stream().noneMatch(st -> ELSE.equals(st.getKeyword())))
+            blockMax = Math.max(blockMax, maxSpeed);
+        return blockMax;
+    }
+
+    private static double applyOperator(double startValue, Statement.Op op, double applyValue) {
+        if (Statement.Op.LIMIT.equals(op))
+            return Math.min(applyValue, startValue);
+        else if (Statement.Op.MULTIPLY.equals(op))
+            return startValue * applyValue;
+        else
+            throw new IllegalArgumentException("Unknown operator " + op.getName());
+    }
+
+    /**
+     * Splits a list of if, else_if, else, if, else_if, else_if, ... statements into if/else_if/else blocks
+     */
+    static List<List<Statement>> splitIntoBlocks(List<Statement> statements) {
+        if (!statements.isEmpty() && !IF.equals(statements.get(0).getKeyword()))
+            throw new IllegalArgumentException("The first statement must be an if-statement, but was: " + statements.get(0).getKeyword().getName());
+        List<List<Statement>> result = new ArrayList<>();
+        List<Statement> block = null;
+        Statement.Keyword prev = null;
+        for (Statement st : statements) {
+            final Statement.Keyword keyword = st.getKeyword();
+            if (ELSEIF.equals(keyword) && ELSE.equals(prev))
+                throw new IllegalArgumentException();
+            if (ELSE.equals(keyword) && ELSE.equals(prev))
+                throw new IllegalArgumentException();
+            if (IF.equals(keyword)) {
+                block = new ArrayList<>();
+                result.add(block);
             }
+            block.add(st);
+            prev = keyword;
         }
-
-        return globalMin_maxSpeed;
+        return result;
     }
 }
