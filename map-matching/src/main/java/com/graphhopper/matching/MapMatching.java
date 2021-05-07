@@ -242,7 +242,7 @@ public class MapMatching {
                         if (seenEdges.add(edgeId) && edgeFilter.accept(edge)) {
                             Snap snap = new Snap(queryLat, queryLon);
                             locationIndex.traverseEdge(queryLat, queryLon, edge, (node, normedDist, wayIndex, pos) -> {
-                                if ((pos != Snap.Position.TOWER || seenNodes.add(node)) && normedDist < snap.getQueryDistance()) {
+                                if (normedDist < snap.getQueryDistance()) {
                                     snap.setQueryDistance(normedDist);
                                     snap.setClosestNode(node);
                                     snap.setWayIndex(wayIndex);
@@ -252,7 +252,7 @@ public class MapMatching {
                             double dist = DIST_PLANE.calcDenormalizedDist(snap.getQueryDistance());
                             snap.setClosestEdge(edge);
                             snap.setQueryDistance(dist);
-                            if (snap.isValid()) {
+                            if (snap.isValid() && (snap.getSnappedPosition() != Snap.Position.TOWER || seenNodes.add(snap.getClosestNode()))) {
                                 snap.calcSnappedPoint(DistanceCalcEarth.DIST_EARTH);
                                 if (queryShape.contains(snap.getSnappedPoint().lat, snap.getSnappedPoint().lon)) {
                                     snaps.add(snap);
