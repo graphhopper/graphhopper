@@ -260,8 +260,8 @@ class CustomWeightingTest {
                 .addToSpeed(Statement.If("road_class == MOTORWAY", Statement.Op.MULTIPLY, 0.7))
                 .addToSpeed(Statement.Else(Statement.Op.LIMIT, 30));
         Weighting weighting = createWeighting(customModel);
-        // todonow: assert weight/time
-        weighting.calcEdgeWeight(motorway, false);
+        double weight = weighting.calcEdgeWeight(motorway, false);
+        assertEquals(1.3429, weight, 1e-4);
     }
 
     private Weighting createWeighting(CustomModel vehicleModel) {

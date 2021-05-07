@@ -406,10 +406,8 @@ public class CustomModelParser {
     }
 
     static double findMaxSpeed(CustomModel customModel, final double maxSpeed) {
-        double globalMin_maxSpeed = maxSpeed;
-        double blockMax_maxSpeed = 0;
+        double globalMin_maxSpeed = maxSpeed, blockMax_maxSpeed = maxSpeed;
         for (Statement statement : customModel.getSpeed()) {
-            // Lowering the max_speed estimate for 'limit_to' only (TODO later also for MULTIPLY)
             if (statement.getOperation() == Statement.Op.LIMIT) {
                 if (statement.getValue() > maxSpeed)
                     throw new IllegalArgumentException("Can never apply 'limit_to': " + statement.getValue()
@@ -436,6 +434,11 @@ public class CustomModelParser {
 
                 if (globalMin_maxSpeed <= 0)
                     throw new IllegalArgumentException("speed is always limited to 0. This must not be but results from " + statement);
+            } else {
+                // reset blockMax for every new block that starts with IF but has no limit_to Op
+                // TODO further reduce max speed via value in Statement.Op.MULTIPLY
+                if (statement.getKeyword() == Statement.Keyword.IF)
+                    blockMax_maxSpeed = maxSpeed;
             }
         }
 
