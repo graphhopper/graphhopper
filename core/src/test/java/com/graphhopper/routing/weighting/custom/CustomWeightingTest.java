@@ -2,6 +2,7 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -249,6 +250,18 @@ class CustomWeightingTest {
         }
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> createWeighting(customModel));
         assertTrue(ex.getMessage().startsWith("Custom Model too big"), ex.getMessage());
+    }
+
+    @Test
+    public void maxSpeedViolated_bug() {
+        EdgeIteratorState motorway = graph.edge(0, 1).setDistance(10).
+                set(roadClassEnc, MOTORWAY).set(avSpeedEnc, 80).set(accessEnc, true, true);
+        CustomModel customModel = new CustomModel()
+                .addToSpeed(Statement.If("road_class == MOTORWAY", Statement.Op.MULTIPLY, 0.7))
+                .addToSpeed(Statement.Else(Statement.Op.LIMIT, 30));
+        Weighting weighting = createWeighting(customModel);
+        // todonow: assert weight/time
+        weighting.calcEdgeWeight(motorway, false);
     }
 
     private Weighting createWeighting(CustomModel vehicleModel) {
