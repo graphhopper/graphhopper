@@ -210,12 +210,12 @@ class CustomModelParserTest {
         List<Statement> statements = Arrays.asList(
                 If("road_class == TERTIARY", MULTIPLY, 0.2),
                 ElseIf("road_class == SECONDARY", LIMIT, 25),
-                If("road_environment == TUNNEL", MULTIPLY, 0.4),
-                ElseIf("road_environment == BRIDGE", LIMIT, 100),
-                Else(LIMIT, 65)
+                If("road_environment == TUNNEL", LIMIT, 60),
+                ElseIf("road_environment == BRIDGE", LIMIT, 50),
+                Else(MULTIPLY, 0.8)
         );
-        assertEquals(100, CustomModelParser.findMaxSpeed(statements, 150));
-        assertEquals(100, CustomModelParser.findMaxSpeed(statements, 100));
+        assertEquals(120, CustomModelParser.findMaxSpeed(statements, 150));
+        assertEquals(80, CustomModelParser.findMaxSpeed(statements, 100));
         assertEquals(60, CustomModelParser.findMaxSpeed(statements, 60));
 
         statements = Arrays.asList(
@@ -226,8 +226,7 @@ class CustomModelParserTest {
                 ElseIf("road_environment == BRIDGE", LIMIT, 30)
         );
         assertEquals(40, CustomModelParser.findMaxSpeed(statements, 150));
-        assertEquals(30, CustomModelParser.findMaxSpeed(statements, 30));
-        assertEquals(20, CustomModelParser.findMaxSpeed(statements, 20));
+        assertEquals(40, CustomModelParser.findMaxSpeed(statements, 40));
     }
 
     @Test

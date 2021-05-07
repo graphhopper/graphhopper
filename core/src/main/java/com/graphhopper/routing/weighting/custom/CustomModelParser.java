@@ -43,6 +43,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.graphhopper.json.Statement.Keyword.*;
+import static com.graphhopper.json.Statement.Op.LIMIT;
 
 public class CustomModelParser {
     private static final AtomicLong longVal = new AtomicLong(1);
@@ -411,15 +412,24 @@ public class CustomModelParser {
         return findMaxSpeed(customModel.getSpeed(), maxSpeed);
     }
 
-    static double findMaxSpeed(List<Statement> speedStatements, double maxSpeed) {
+    static double findMaxSpeed(List<Statement> speedStatements, final double maxSpeed) {
+        // throw an error if one of the limit statements won't possibly do anything
+        Optional<Statement> falseStatement = speedStatements.stream()
+                .filter(st -> LIMIT.equals(st.getOperation()) && st.getValue() > maxSpeed)
+                .findFirst();
+        if (falseStatement.isPresent())
+            throw new IllegalArgumentException("Can never apply 'limit_to': " + falseStatement.get().getValue()
+                    + " because maximum vehicle speed is " + maxSpeed);
+
         // we want to find the smallest speed that cannot be exceeded by any edge. the 'blocks' of speed statements
         // are applied one after the other.
+        double result = maxSpeed;
         List<List<Statement>> blocks = splitIntoBlocks(speedStatements);
         for (List<Statement> block : blocks)
-            maxSpeed = getMaxSpeedForBlock(block, maxSpeed);
+            result = getMaxSpeedForBlock(block, result);
         if (maxSpeed <= 0)
             throw new IllegalStateException("max speed is <= 0");
-        return maxSpeed;
+        return result;
     }
 
     static double getMaxSpeedForBlock(List<Statement> block, final double maxSpeed) {
@@ -441,7 +451,7 @@ public class CustomModelParser {
     }
 
     private static double applyOperator(double startValue, Statement.Op op, double applyValue) {
-        if (Statement.Op.LIMIT.equals(op))
+        if (LIMIT.equals(op))
             return Math.min(applyValue, startValue);
         else if (Statement.Op.MULTIPLY.equals(op))
             return startValue * applyValue;
