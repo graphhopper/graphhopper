@@ -42,7 +42,8 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.graphhopper.json.Statement.Keyword.*;
+import static com.graphhopper.json.Statement.Keyword.ELSE;
+import static com.graphhopper.json.Statement.Keyword.IF;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 
 public class CustomModelParser {
@@ -438,10 +439,10 @@ public class CustomModelParser {
         if (block.get(0).getCondition().trim().equals("true"))
             // this if statement is always executed while the other statements are never executed
             // -> we just apply this one statement
-            return applyOperator(maxSpeed, block.get(0).getOperation(), block.get(0).getValue());
+            return block.get(0).apply(maxSpeed);
 
         double blockMax = block.stream()
-                .mapToDouble(branch -> applyOperator(maxSpeed, branch.getOperation(), branch.getValue()))
+                .mapToDouble(statement -> statement.apply(maxSpeed))
                 .max()
                 .orElse(maxSpeed);
         // if there is no 'else' statement it's like there is a 'neutral' branch that leaves the initial max speed as is
@@ -450,36 +451,15 @@ public class CustomModelParser {
         return blockMax;
     }
 
-    private static double applyOperator(double startValue, Statement.Op op, double applyValue) {
-        if (LIMIT.equals(op))
-            return Math.min(applyValue, startValue);
-        else if (Statement.Op.MULTIPLY.equals(op))
-            return startValue * applyValue;
-        else
-            throw new IllegalArgumentException("Unknown operator " + op.getName());
-    }
-
     /**
-     * Splits a list of if, else_if, else, if, else_if, else_if, ... statements into if/else_if/else blocks
+     * Splits the specified list into several list of statements starting with if
      */
     static List<List<Statement>> splitIntoBlocks(List<Statement> statements) {
-        if (!statements.isEmpty() && !IF.equals(statements.get(0).getKeyword()))
-            throw new IllegalArgumentException("The first statement must be an if-statement, but was: " + statements.get(0).getKeyword().getName());
         List<List<Statement>> result = new ArrayList<>();
         List<Statement> block = null;
-        Statement.Keyword prev = null;
         for (Statement st : statements) {
-            final Statement.Keyword keyword = st.getKeyword();
-            if (ELSEIF.equals(keyword) && ELSE.equals(prev))
-                throw new IllegalArgumentException("After each else-statement there must be an if-statement");
-            if (ELSE.equals(keyword) && ELSE.equals(prev))
-                throw new IllegalArgumentException("After each else-statement there must be an if-statement");
-            if (IF.equals(keyword)) {
-                block = new ArrayList<>();
-                result.add(block);
-            }
+            if (IF.equals(st.getKeyword())) result.add(block = new ArrayList<>());
             block.add(st);
-            prev = keyword;
         }
         return result;
     }

@@ -46,6 +46,17 @@ public class Statement {
         return value;
     }
 
+    public double apply(double externValue) {
+        switch (operation) {
+            case MULTIPLY:
+                return value * externValue;
+            case LIMIT:
+                return Math.min(value, externValue);
+            default:
+                throw new IllegalArgumentException();
+        }
+    }
+
     public enum Keyword {
         IF("if"), ELSEIF("else_if"), ELSE("else");
 
