@@ -18,6 +18,7 @@
 
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -32,8 +33,7 @@ import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static com.graphhopper.json.Statement.*;
 import static com.graphhopper.json.Statement.Op.LIMIT;
@@ -181,17 +181,52 @@ class CustomModelParserTest {
 
     @Test
     public void testFindMaxSpeed() {
-        CustomModel customModel = new CustomModel();
-        customModel.addToSpeed(If("true", LIMIT, 100));
-        assertEquals(100, CustomModelParser.findMaxSpeed(customModel, 120));
+        List<Statement> statements = new ArrayList<>();
+        statements.add(If("true", LIMIT, 100));
+        assertEquals(100, CustomModelParser.findMaxSpeed(statements, 120));
 
-        customModel.addToSpeed(Else(LIMIT, 20));
-        assertEquals(100, CustomModelParser.findMaxSpeed(customModel, 120));
+        statements.add(Else(LIMIT, 20));
+        assertEquals(100, CustomModelParser.findMaxSpeed(statements, 120));
 
-        customModel = new CustomModel();
-        customModel.addToSpeed(If("road_environment == BRIDGE", LIMIT, 85));
-        customModel.addToSpeed(Else(LIMIT, 100));
-        assertEquals(100, CustomModelParser.findMaxSpeed(customModel, 120));
+        statements = new ArrayList<>();
+        statements.add(If("road_environment == BRIDGE", LIMIT, 85));
+        statements.add(Else(LIMIT, 100));
+        assertEquals(100, CustomModelParser.findMaxSpeed(statements, 120));
+    }
+
+    @Test
+    public void findMaxSpeed_limitAndMultiply() {
+        List<Statement> statements = Arrays.asList(
+                If("road_class == TERTIARY", LIMIT, 90),
+                ElseIf("road_class == SECONDARY", MULTIPLY, 1.0),
+                ElseIf("road_class == PRIMARY", LIMIT, 30),
+                Else(LIMIT, 3)
+        );
+        assertEquals(140, CustomModelParser.findMaxSpeed(statements, 140));
+    }
+
+    @Test
+    public void findMaxSpeed_multipleBlocks() {
+        List<Statement> statements = Arrays.asList(
+                If("road_class == TERTIARY", MULTIPLY, 0.2),
+                ElseIf("road_class == SECONDARY", LIMIT, 25),
+                If("road_environment == TUNNEL", LIMIT, 60),
+                ElseIf("road_environment == BRIDGE", LIMIT, 50),
+                Else(MULTIPLY, 0.8)
+        );
+        assertEquals(120, CustomModelParser.findMaxSpeed(statements, 150));
+        assertEquals(80, CustomModelParser.findMaxSpeed(statements, 100));
+        assertEquals(60, CustomModelParser.findMaxSpeed(statements, 60));
+
+        statements = Arrays.asList(
+                If("road_class == TERTIARY", MULTIPLY, 0.2),
+                ElseIf("road_class == SECONDARY", LIMIT, 25),
+                Else(LIMIT, 40),
+                If("road_environment == TUNNEL", MULTIPLY, 0.8),
+                ElseIf("road_environment == BRIDGE", LIMIT, 30)
+        );
+        assertEquals(40, CustomModelParser.findMaxSpeed(statements, 150));
+        assertEquals(40, CustomModelParser.findMaxSpeed(statements, 40));
     }
 
     @Test
