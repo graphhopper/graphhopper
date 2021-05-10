@@ -29,46 +29,43 @@ import com.graphhopper.matching.EdgeMatch;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.matching.Observation;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
  * @author kodonnell
  */
-@RunWith(Parameterized.class)
 public class MapMatchingTest {
 
     private static final String GH_LOCATION = "../target/mapmatchingtest-ch";
     private final XmlMapper xmlMapper = new XmlMapper();
 
     private static GraphHopper graphHopper;
-    private final PMap hints;
 
-
-    @BeforeClass
+    @BeforeAll
     public static void setup() {
         Helper.removeDir(new File(GH_LOCATION));
         graphHopper = new GraphHopper();
@@ -79,29 +76,31 @@ public class MapMatchingTest {
         graphHopper.importOrLoad();
     }
 
-    @AfterClass
+    @AfterAll
     public static void after() {
         Helper.removeDir(new File(GH_LOCATION));
         graphHopper = null;
     }
 
-    @Parameterized.Parameters(name = "{0}")
-    public static Collection<Object[]> algoOptions() {
-        return Arrays.asList(new Object[][]{
-                {"non-LM", new PMap().putObject(Parameters.Landmark.DISABLE, true)},
-                {"LM", new PMap().putObject(Parameters.Landmark.DISABLE, false)}
-        });
-    }
+    private static class FixtureProvider implements ArgumentsProvider {
+        @Override
+        public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
+            return Stream.of(
+                    new PMap().putObject(Parameters.Landmark.DISABLE, true),
+                    new PMap().putObject(Parameters.Landmark.DISABLE, false)
 
-    public MapMatchingTest(String parameterName, PMap hints) {
-        this.hints = hints.putObject("profile", "my_profile");
+            )
+                    .map(hints -> hints.putObject("profile", "my_profile"))
+                    .map(Arguments::of);
+        }
     }
 
     /**
      * TODO: split this test up into smaller units with better names?
      */
-    @Test
-    public void testDoWork() {
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void testDoWork(PMap hints) {
         MapMatching mapMatching = new MapMatching(graphHopper, hints);
         ResponsePath route2 = graphHopper.route(new GHRequest(
                 new GHPoint(51.358735, 12.360574),
@@ -113,8 +112,7 @@ public class MapMatchingTest {
         // make sure no virtual edges are returned
         int edgeCount = graphHopper.getGraphHopperStorage().getAllEdges().length();
         for (EdgeMatch em : mr.getEdgeMatches()) {
-            assertTrue("result contains virtual edges:" + em.getEdgeState().toString(),
-                    em.getEdgeState().getEdge() < edgeCount);
+            assertTrue(em.getEdgeState().getEdge() < edgeCount, "result contains virtual edges:" + em.getEdgeState().toString());
         }
 
         // create street names
@@ -157,8 +155,9 @@ public class MapMatchingTest {
      * distant input points. createRandomGPXEntries currently creates very close input points.
      * The length of the route doesn't seem to matter.
      */
-    @Test
-    public void testDistantPoints() {
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void testDistantPoints(PMap hints) {
         // OK with 1000 visited nodes:
         MapMatching mapMatching = new MapMatching(graphHopper, hints);
         ResponsePath route = graphHopper.route(new GHRequest(
@@ -187,8 +186,9 @@ public class MapMatchingTest {
      * This test is to check behavior over short tracks. GPX input:
      * https://graphhopper.com/maps/?point=51.342422%2C12.3613358&point=51.3423281%2C12.3613358&layer=Lyrk
      */
-    @Test
-    public void testClosePoints() {
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void testClosePoints(PMap hints) {
         MapMatching mapMatching = new MapMatching(graphHopper, hints);
         ResponsePath route = graphHopper.route(new GHRequest(
                 new GHPoint(51.342422, 12.3613358),
@@ -209,8 +209,9 @@ public class MapMatchingTest {
      * input:
      * https://graphhopper.com/maps/?point=51.359723%2C12.360108&point=51.358748%2C12.358798&point=51.358001%2C12.357597&point=51.358709%2C12.356511&layer=Lyrk
      */
-    @Test
-    public void testSmallSeparatedSearchDistance() throws IOException {
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void testSmallSeparatedSearchDistance(PMap hints) throws IOException {
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour3-with-long-edge.gpx"), Gpx.class);
         MapMatching mapMatching = new MapMatching(graphHopper, hints);
         mapMatching.setMeasurementErrorSigma(20);
@@ -223,8 +224,9 @@ public class MapMatchingTest {
      * This test is to check that loops are maintained. GPX input:
      * https://graphhopper.com/maps/?point=51.343657%2C12.360708&point=51.344982%2C12.364066&point=51.344841%2C12.361223&point=51.342781%2C12.361867&layer=Lyrk
      */
-    @Test
-    public void testLoop() throws IOException {
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void testLoop(PMap hints) throws IOException {
         MapMatching mapMatching = new MapMatching(graphHopper, hints);
 
         // Need to reduce GPS accuracy because too many GPX are filtered out otherwise.
@@ -242,8 +244,9 @@ public class MapMatchingTest {
      * This test is to check that loops are maintained. GPX input:
      * https://graphhopper.com/maps/?point=51.342439%2C12.361615&point=51.343719%2C12.362784&point=51.343933%2C12.361781&point=51.342325%2C12.362607&layer=Lyrk
      */
-    @Test
-    public void testLoop2() throws IOException {
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void testLoop2(PMap hints) throws IOException {
         MapMatching mapMatching = new MapMatching(graphHopper, hints);
         // TODO smaller sigma like 40m leads to U-turn at Tschaikowskistraße
         mapMatching.setMeasurementErrorSigma(50);
@@ -260,9 +263,10 @@ public class MapMatchingTest {
      * measurement error. GPX input:
      * https://graphhopper.com/maps/?point=51.343618%2C12.360772&point=51.34401%2C12.361776&point=51.343977%2C12.362886&point=51.344734%2C12.36236&point=51.345233%2C12.362055&layer=Lyrk
      */
-    @Test
-    public void testUTurns() throws IOException {
-        final PMap hints = new PMap(this.hints)
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void testUTurns(PMap hints) throws IOException {
+        hints = new PMap(hints)
                 // Reduce penalty to allow U-turns
                 .putObject(Parameters.Routing.HEADING_PENALTY, 50);
 
@@ -287,8 +291,8 @@ public class MapMatchingTest {
         for (EdgeMatch em : emList) {
             String str = em.getEdgeState().getName();// + ":" + em.getEdgeState().getBaseNode() +
             // "->" + em.getEdgeState().getAdjNode();
-            if (list.size() == 0 || !list.get(list.size()-1).equals(str))
-            list.add(str);
+            if (list.size() == 0 || !list.get(list.size() - 1).equals(str))
+                list.add(str);
             if (prevNode >= 0) {
                 if (em.getEdgeState().getBaseNode() != prevNode) {
                     errors.add(str);

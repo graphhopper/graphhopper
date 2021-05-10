@@ -15,10 +15,12 @@ import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.MiniPerfTest;
 import com.graphhopper.util.PMap;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,70 +28,85 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Random;
+import java.util.stream.Stream;
 
 import static java.lang.System.nanoTime;
-import static org.junit.Assert.assertEquals;
-import static org.junit.runners.Parameterized.Parameters;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Tests CH contraction and query performance when re-using the node ordering after random changes
  * have been applied to the edge weights (like when considering traffic).
  */
-@Ignore("for performance testing only")
-@RunWith(Parameterized.class)
+@Disabled("for performance testing only")
 public class TrafficChangeWithNodeOrderingReusingTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TrafficChangeWithNodeOrderingReusingTest.class);
     // make sure to increase xmx/xms for the JVM created by the surefire plugin in parent pom.xml when using bigger maps
     private static final String OSM_FILE = "../core/files/monaco.osm.gz";
 
-    private final GraphHopperStorage ghStorage;
-    private final int maxDeviationPercentage;
-    private final CHConfig baseCHConfig;
-    private final CHConfig trafficCHConfig;
+    private static class Fixture {
+        private final int maxDeviationPercentage;
+        private final GraphHopperStorage ghStorage;
+        private final CHConfig baseCHConfig;
+        private final CHConfig trafficCHConfig;
 
-    @Parameters(name = "maxDeviationPercentage = {0}")
-    public static Object[] data() {
-        return new Object[]{0, 1, 5, 10, 50};
+        public Fixture(int maxDeviationPercentage) {
+            this.maxDeviationPercentage = maxDeviationPercentage;
+            FlagEncoder encoder = new CarFlagEncoder();
+            EncodingManager em = EncodingManager.create(encoder);
+            baseCHConfig = CHConfig.nodeBased("base", new FastestWeighting(encoder));
+            trafficCHConfig = CHConfig.nodeBased("traffic", new RandomDeviationWeighting(baseCHConfig.getWeighting(), maxDeviationPercentage));
+            ghStorage = new GraphBuilder(em).setCHConfigs(baseCHConfig, trafficCHConfig).build();
+        }
+
+        @Override
+        public String toString() {
+            return "maxDeviationPercentage=" + maxDeviationPercentage;
+        }
     }
 
-    public TrafficChangeWithNodeOrderingReusingTest(int maxDeviationPercentage) {
-        this.maxDeviationPercentage = maxDeviationPercentage;
-        FlagEncoder encoder = new CarFlagEncoder();
-        EncodingManager em = EncodingManager.create(encoder);
-        baseCHConfig = CHConfig.nodeBased("base", new FastestWeighting(encoder));
-        trafficCHConfig = CHConfig.nodeBased("traffic", new RandomDeviationWeighting(baseCHConfig.getWeighting(), maxDeviationPercentage));
-        ghStorage = new GraphBuilder(em).setCHConfigs(baseCHConfig, trafficCHConfig).build();
+    private static class FixtureProvider implements ArgumentsProvider {
+        @Override
+        public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
+            return Stream.of(
+                    new Fixture(0),
+                    new Fixture(1),
+                    new Fixture(5),
+                    new Fixture(10),
+                    new Fixture(50)
+            ).map(Arguments::of);
+        }
     }
 
-    @Test
-    public void testPerformanceForRandomTrafficChange() throws IOException {
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void testPerformanceForRandomTrafficChange(Fixture f) throws IOException {
         final long seed = 2139960664L;
         final int numQueries = 50_000;
 
-        LOGGER.info("Running performance test, max deviation percentage: " + maxDeviationPercentage);
+        LOGGER.info("Running performance test, max deviation percentage: " + f.maxDeviationPercentage);
         // read osm
-        OSMReader reader = new OSMReader(ghStorage);
+        OSMReader reader = new OSMReader(f.ghStorage);
         reader.setFile(new File(OSM_FILE));
         reader.readGraph();
-        ghStorage.freeze();
+        f.ghStorage.freeze();
 
         // create CH
-        PrepareContractionHierarchies basePch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, baseCHConfig);
+        PrepareContractionHierarchies basePch = PrepareContractionHierarchies.fromGraphHopperStorage(f.ghStorage, f.baseCHConfig);
         basePch.doWork();
-        CHGraph baseCHGraph = ghStorage.getCHGraph(baseCHConfig.getName());
+        CHGraph baseCHGraph = f.ghStorage.getCHGraph(f.baseCHConfig.getName());
 
         // check correctness & performance
-        checkCorrectness(ghStorage, baseCHConfig, seed, 100);
-        runPerformanceTest(ghStorage, baseCHConfig, seed, numQueries);
+        checkCorrectness(f.ghStorage, f.baseCHConfig, seed, 100);
+        runPerformanceTest(f.ghStorage, f.baseCHConfig, seed, numQueries);
 
         // now we re-use the contraction order from the previous contraction and re-run it with the traffic weighting
-        PrepareContractionHierarchies trafficPch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, trafficCHConfig)
+        PrepareContractionHierarchies trafficPch = PrepareContractionHierarchies.fromGraphHopperStorage(f.ghStorage, f.trafficCHConfig)
                 .useFixedNodeOrdering(baseCHGraph.getNodeOrderingProvider());
         trafficPch.doWork();
 
         // check correctness & performance
-        checkCorrectness(ghStorage, trafficCHConfig, seed, 100);
-        runPerformanceTest(ghStorage, trafficCHConfig, seed, numQueries);
+        checkCorrectness(f.ghStorage, f.trafficCHConfig, seed, 100);
+        runPerformanceTest(f.ghStorage, f.trafficCHConfig, seed, numQueries);
     }
 
     private static void checkCorrectness(GraphHopperStorage ghStorage, CHConfig chConfig, long seed, long numQueries) {
