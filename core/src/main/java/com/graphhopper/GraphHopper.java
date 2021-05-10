@@ -420,6 +420,11 @@ public class GraphHopper implements GraphHopperAPI {
      * is read from `config.yml`.
      */
     public GraphHopper init(GraphHopperConfig ghConfig) {
+        // disabling_allowed config options were removed for GH 3.0
+        if (ghConfig.has("routing.ch.disabling_allowed"))
+            throw new IllegalArgumentException("The 'routing.ch.disabling_allowed' configuration option is no longer supported");
+        if (ghConfig.has("routing.lm.disabling_allowed"))
+            throw new IllegalArgumentException("The 'routing.lm.disabling_allowed' configuration option is no longer supported");
         if (ghConfig.has("osmreader.osm"))
             throw new IllegalArgumentException("Instead osmreader.osm use datareader.file, for other changes see core/files/changelog.txt");
 
