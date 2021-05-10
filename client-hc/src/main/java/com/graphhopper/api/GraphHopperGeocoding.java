@@ -22,8 +22,10 @@ import com.graphhopper.api.model.GHGeocodingRequest;
 import com.graphhopper.api.model.GHGeocodingResponse;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.Response;
 import okhttp3.ResponseBody;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.concurrent.TimeUnit;
@@ -73,13 +75,16 @@ public class GraphHopperGeocoding {
      */
     public GHGeocodingResponse geocode(GHGeocodingRequest request) {
         String url = buildUrl(request);
-
         try {
             Request okRequest = new Request.Builder().url(url).build();
-            ResponseBody rspBody = getClientForRequest(request).newCall(okRequest).execute().body();
-            return objectMapper.readValue(rspBody.bytes(), GHGeocodingResponse.class);
-        } catch (Exception ex) {
-            throw new RuntimeException("Problem performing geocoding for " + url + ": " + ex.getMessage(), ex);
+            Response rsp = getClientForRequest(request).newCall(okRequest).execute();
+            ResponseBody rspBody = rsp.body();
+            if (!rsp.isSuccessful())
+                throw new RuntimeException(rspBody.string());
+            GHGeocodingResponse geoRsp = objectMapper.readValue(rspBody.bytes(), GHGeocodingResponse.class);
+            return geoRsp;
+        } catch (IOException ex) {
+            throw new RuntimeException("IO problem for geocoding URL " + url + ": " + ex.getMessage(), ex);
         }
     }
 

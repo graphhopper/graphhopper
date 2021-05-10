@@ -464,11 +464,11 @@ public class LocationIndexTree implements LocationIndex {
             int subqueryY = y + yreg;
             int subqueryXA = x - iteration;
             int subqueryXB = x + iteration;
-            long keyPart1 = keyAlgo.encode(subqueryXA, subqueryY) << (64 - keyAlgo.getBits());
-            fillIDs(keyPart1, foundEntries);
-
-            // When iteration == 0, I just check one tile (the center)
-            if (iteration > 0) {
+            if (subqueryXA >= 0 && subqueryY >= 0) { // TODO: Also don't walk off the _other_ side of the grid.
+                long keyPart = keyAlgo.encode(subqueryXA, subqueryY) << (64 - keyAlgo.getBits());
+                fillIDs(keyPart, foundEntries);
+            }
+            if (iteration > 0 && subqueryXB >= 0 && subqueryY >= 0) {
                 long keyPart = keyAlgo.encode(subqueryXB, subqueryY) << (64 - keyAlgo.getBits());
                 fillIDs(keyPart, foundEntries);
             }
@@ -478,10 +478,14 @@ public class LocationIndexTree implements LocationIndex {
             int subqueryX = x + xreg;
             int subqueryYA = y - iteration;
             int subqueryYB = y + iteration;
-            long keyPart1 = keyAlgo.encode(subqueryX, subqueryYA) << (64 - keyAlgo.getBits());
-            fillIDs(keyPart1, foundEntries);
-            long keyPart = keyAlgo.encode(subqueryX, subqueryYB) << (64 - keyAlgo.getBits());
-            fillIDs(keyPart, foundEntries);
+            if (subqueryX >= 0 && subqueryYA >= 0) {
+                long keyPart = keyAlgo.encode(subqueryX, subqueryYA) << (64 - keyAlgo.getBits());
+                fillIDs(keyPart, foundEntries);
+            }
+            if (subqueryX >= 0 && subqueryYB >= 0) {
+                long keyPart = keyAlgo.encode(subqueryX, subqueryYB) << (64 - keyAlgo.getBits());
+                fillIDs(keyPart, foundEntries);
+            }
         }
     }
 

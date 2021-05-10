@@ -23,6 +23,7 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -64,7 +65,7 @@ public class PrepareLandmarksTest {
     public void setUp() {
         encoder = new CarFlagEncoder();
         tm = TraversalMode.NODE_BASED;
-        encodingManager = EncodingManager.create(encoder);
+        encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
         GraphHopperStorage tmp = new GraphHopperStorage(new RAMDirectory(),
                 encodingManager, false);
         tmp.create(1000);
@@ -103,7 +104,7 @@ public class PrepareLandmarksTest {
 
         int lm = 5, activeLM = 2;
         Weighting weighting = new FastestWeighting(encoder);
-        LMConfig lmConfig = new LMConfig("c", weighting);
+        LMConfig lmConfig = new LMConfig("car", weighting);
         LandmarkStorage store = new LandmarkStorage(graph, dir, lmConfig, lm);
         store.setMinimumNodes(2);
         store.createLandmarks();
@@ -192,7 +193,7 @@ public class PrepareLandmarksTest {
 
         Directory dir = new RAMDirectory(fileStr, true).create();
         Weighting weighting = new FastestWeighting(encoder);
-        LMConfig lmConfig = new LMConfig("c", weighting);
+        LMConfig lmConfig = new LMConfig("car", weighting);
         PrepareLandmarks plm = new PrepareLandmarks(dir, graph, lmConfig, 2);
         plm.setMinimumNodes(2);
         plm.doWork();

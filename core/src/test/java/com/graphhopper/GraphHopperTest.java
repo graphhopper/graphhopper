@@ -25,12 +25,16 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.SkadiProvider;
+import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
 import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.index.LocationIndexTree;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
@@ -1551,16 +1555,16 @@ public class GraphHopperTest {
 
         // LM (should be the same as flex, but with less visited nodes!)
         testCrossQueryAssert(profile1, hopper, 528.3, 74, false);
-        testCrossQueryAssert(profile2, hopper, 635.8, 84, false);
+        testCrossQueryAssert(profile2, hopper, 635.8, 82, false);
         // this is actually interesting: the number of visited nodes *increases* once again (while it strictly decreases
         // with rising distance factor for flex): cross-querying 'works', but performs *worse*, because the landmarks
         // were not customized for the weighting in use. Creating a separate LM preparation for profile3 yields 74
-        // instead of 124 visited nodes (not shown here)
-        testCrossQueryAssert(profile3, hopper, 815.2, 128, false);
+        testCrossQueryAssert(profile3, hopper, 815.2, 138, false);
     }
 
     private void testCrossQueryAssert(String profile, GraphHopper hopper, double expectedWeight, int expectedVisitedNodes, boolean disableLM) {
-        GHResponse response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).setProfile(profile).putHint("lm.disable", disableLM));
+        GHResponse response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
+                setProfile(profile).putHint("lm.disable", disableLM));
         assertEquals(expectedWeight, response.getBest().getRouteWeight(), 0.1);
         int visitedNodes = response.getHints().getInt("visited_nodes.sum", 0);
         assertEquals(expectedVisitedNodes, visitedNodes);
@@ -2246,5 +2250,46 @@ public class GraphHopperTest {
             hopper.load(GH_LOCATION);
         }
         assertEquals(1, counter.get());
+    }
+
+    @Test
+    public void issue2306_1() {
+        final String profile = "profile";
+        final String vehicle = "car";
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile("../map-matching/files/leipzig_germany.osm.pbf").
+                setProfiles(new Profile("profile").setVehicle(vehicle).setWeighting("fastest")).
+                setMinNetworkSize(200);
+        hopper.importOrLoad();
+        Weighting weighting = hopper.createWeighting(hopper.getProfile(profile), new PMap());
+        EdgeFilter edgeFilter = new DefaultSnapFilter(weighting, hopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profile)));
+        LocationIndexTree locationIndex = ((LocationIndexTree) hopper.getLocationIndex());
+        locationIndex.setMaxRegionSearch(6); // have to increase the default search radius to find our snap
+        Snap snap = locationIndex.findClosest(51.229248, 12.328892, edgeFilter);
+        assertTrue(snap.isValid());
+        assertTrue(snap.getQueryDistance() < 3_000);
+    }
+
+    @Test
+    public void issue2306_2() {
+        // This is the same test as above, but without increasing the search radius.
+        // As I am writing this, we find _no_ match here. But since the search radius
+        // is a meta-parameter that could go away at some point, I say that _if_ we find a match,
+        // it should be a close one. (And not a far away one, as happened in issue2306.)
+        final String profile = "profile";
+        final String vehicle = "car";
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile("../map-matching/files/leipzig_germany.osm.pbf").
+                setProfiles(new Profile("profile").setVehicle(vehicle).setWeighting("fastest")).
+                setMinNetworkSize(200);
+        hopper.importOrLoad();
+        Weighting weighting = hopper.createWeighting(hopper.getProfile(profile), new PMap());
+        EdgeFilter edgeFilter = new DefaultSnapFilter(weighting, hopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profile)));
+        Snap snap = hopper.getLocationIndex().findClosest(51.229248, 12.328892, edgeFilter);
+        if (snap.isValid()) {
+            assertTrue(snap.getQueryDistance() < 3_000);
+        }
     }
 }

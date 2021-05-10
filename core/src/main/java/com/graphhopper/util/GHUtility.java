@@ -679,7 +679,7 @@ public class GHUtility {
 
         BooleanEncodedValue accessEnc = encoder.getAccessEnc();
         DecimalEncodedValue avSpeedEnc = encoder.getAverageSpeedEnc();
-        edge.set(accessEnc, fwd).setReverse(accessEnc, bwd);
+        edge.set(accessEnc, fwd, bwd);
         if (fwd)
             edge.set(avSpeedEnc, averageSpeed);
         if (bwd && avSpeedEnc.isStoreTwoDirections())
