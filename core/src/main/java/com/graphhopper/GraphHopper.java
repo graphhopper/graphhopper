@@ -943,7 +943,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     protected WeightingFactory createWeightingFactory() {
-        return new DefaultWeightingFactory(ghStorage, getEncodingManager());
+        return new DefaultWeightingFactory(ghStorage, locationIndex, getEncodingManager());
     }
 
     @Override

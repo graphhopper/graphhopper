@@ -22,6 +22,8 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.TurnCostProvider;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -74,11 +76,12 @@ public class CustomModelParser {
         // utility class
     }
 
-    public static CustomWeighting createWeighting(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup, TurnCostProvider turnCostProvider,
-                                                  CustomModel customModel) {
+    public static CustomWeighting createWeighting(FlagEncoder baseFlagEncoder, Graph graph, LocationIndex locationIndex, EncodedValueLookup lookup,
+                                                  TurnCostProvider turnCostProvider, CustomModel customModel) {
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");
-        CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup, baseFlagEncoder.getMaxSpeed(), baseFlagEncoder.getAverageSpeedEnc());
+        CustomWeighting.Parameters parameters = createWeightingParameters(customModel, graph, locationIndex, lookup, baseFlagEncoder.getMaxSpeed(),
+                        baseFlagEncoder.getAverageSpeedEnc());
         return new CustomWeighting(baseFlagEncoder, turnCostProvider, parameters);
     }
 
@@ -86,8 +89,8 @@ public class CustomModelParser {
      * This method compiles a new subclass of CustomWeightingHelper composed from the provided CustomModel caches this
      * and returns an instance.
      */
-    static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, EncodedValueLookup lookup, double globalMaxSpeed,
-                                                                DecimalEncodedValue avgSpeedEnc) {
+    static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, Graph graph, LocationIndex locationIndex,
+                                     EncodedValueLookup lookup, double globalMaxSpeed, DecimalEncodedValue avgSpeedEnc) {
         String key = customModel.toString() + ",global:" + globalMaxSpeed;
         if (key.length() > 100_000) throw new IllegalArgumentException("Custom Model too big: " + key.length());
 
