@@ -97,7 +97,9 @@ public class GraphHopperManaged implements Managed {
         try (Reader reader = splitAreaLocation.isEmpty() ?
                 new InputStreamReader(LandmarkStorage.class.getResource("map.geo.json").openStream(), UTF_CS) :
                 new InputStreamReader(new FileInputStream(splitAreaLocation), UTF_CS)) {
-            return localObjectMapper.readValue(reader, JsonFeatureCollection.class);
+            JsonFeatureCollection result = localObjectMapper.readValue(reader, JsonFeatureCollection.class);
+            logger.info("Loaded landmark splitting collection from " + splitAreaLocation);
+            return result;
         } catch (IOException e1) {
             logger.error("Problem while reading border map GeoJSON. Skipping this.", e1);
             return null;
