@@ -52,22 +52,13 @@ import static com.graphhopper.util.Helper.UTF_CS;
 
 public class GraphHopperManaged implements Managed {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final static Logger logger = LoggerFactory.getLogger(GraphHopperManaged.class);
     private final GraphHopper graphHopper;
 
     public GraphHopperManaged(GraphHopperConfig configuration, ObjectMapper objectMapper) {
         ObjectMapper localObjectMapper = objectMapper.copy();
         localObjectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        String splitAreaLocation = configuration.getString(Parameters.Landmark.PREPARE + "split_area_location", "");
-        JsonFeatureCollection landmarkSplittingFeatureCollection;
-        try (Reader reader = splitAreaLocation.isEmpty() ?
-                new InputStreamReader(LandmarkStorage.class.getResource("map.geo.json").openStream(), UTF_CS) :
-                new InputStreamReader(new FileInputStream(splitAreaLocation), UTF_CS)) {
-            landmarkSplittingFeatureCollection = localObjectMapper.readValue(reader, JsonFeatureCollection.class);
-        } catch (IOException e1) {
-            logger.error("Problem while reading border map GeoJSON. Skipping this.", e1);
-            landmarkSplittingFeatureCollection = null;
-        }
+        JsonFeatureCollection landmarkSplittingFeatureCollection = loadLandmarkSplittingFeatureCollection(configuration, localObjectMapper);
         if (configuration.has("gtfs.file")) {
             graphHopper = new GraphHopperGtfs(configuration);
         } else {
@@ -99,6 +90,18 @@ public class GraphHopperManaged implements Managed {
         configuration.setProfiles(newProfiles);
 
         graphHopper.init(configuration);
+    }
+
+    public static JsonFeatureCollection loadLandmarkSplittingFeatureCollection(GraphHopperConfig configuration, ObjectMapper localObjectMapper) {
+        String splitAreaLocation = configuration.getString(Parameters.Landmark.PREPARE + "split_area_location", "");
+        try (Reader reader = splitAreaLocation.isEmpty() ?
+                new InputStreamReader(LandmarkStorage.class.getResource("map.geo.json").openStream(), UTF_CS) :
+                new InputStreamReader(new FileInputStream(splitAreaLocation), UTF_CS)) {
+            return localObjectMapper.readValue(reader, JsonFeatureCollection.class);
+        } catch (IOException e1) {
+            logger.error("Problem while reading border map GeoJSON. Skipping this.", e1);
+            return null;
+        }
     }
 
     public static List<Profile> resolveCustomModelFiles(String customModelFolder, List<Profile> profiles) {
