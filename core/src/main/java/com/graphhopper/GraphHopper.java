@@ -674,7 +674,6 @@ public class GraphHopper implements GraphHopperAPI {
      * @param graphHopperFolder is the folder containing graphhopper files. Can be a compressed file
      *                          too ala folder-content.ghz.
      */
-    @Override
     public boolean load(String graphHopperFolder) {
         if (isEmpty(graphHopperFolder))
             throw new IllegalStateException("GraphHopperLocation is not specified. Call setGraphHopperLocation or init before");

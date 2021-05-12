@@ -24,14 +24,6 @@ package com.graphhopper;
  * @author Peter Karich
  */
 public interface GraphHopperAPI {
-    /**
-     * Connects to the specified service (graphhopper URL) or loads a graph from the graphhopper
-     * folder.
-     * <p>
-     *
-     * @return true if successfully connected or loaded
-     */
-    boolean load(String urlOrFile);
 
     /**
      * Calculates the path from specified request visiting the specified locations.
