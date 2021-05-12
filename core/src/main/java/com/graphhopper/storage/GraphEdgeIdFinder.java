@@ -94,10 +94,10 @@ public class GraphEdgeIdFinder {
         return edgeIds;
     }
 
-    public static GraphEdgeIdFinder.BlockArea createBlockArea(Graph graph, LocationIndex locationIndex,
+    public static GraphEdgeIdFinder.ShapeFilter createBlockArea(Graph graph, LocationIndex locationIndex,
                                                               List<GHPoint> points, PMap hints, EdgeFilter edgeFilter) {
         String blockAreaStr = hints.getString(Parameters.Routing.BLOCK_AREA, "");
-        GraphEdgeIdFinder.BlockArea blockArea = new GraphEdgeIdFinder(graph, locationIndex).
+        GraphEdgeIdFinder.ShapeFilter blockArea = new GraphEdgeIdFinder(graph, locationIndex).
                 parseBlockArea(blockAreaStr, edgeFilter, hints.getDouble(Parameters.Routing.BLOCK_AREA + ".edge_id_max_area", 1000 * 1000));
         for (GHPoint p : points) {
             if (blockArea.contains(p))
@@ -111,10 +111,10 @@ public class GraphEdgeIdFinder {
      *
      * @param useEdgeIdsUntilAreaSize until the specified area (specified in m²) use the findEdgesInShape method
      */
-    public BlockArea parseBlockArea(String blockAreaString, EdgeFilter filter, double useEdgeIdsUntilAreaSize) {
+    public ShapeFilter parseBlockArea(String blockAreaString, EdgeFilter filter, double useEdgeIdsUntilAreaSize) {
         final String objectSeparator = ";";
         final String innerObjSep = ",";
-        BlockArea blockArea = new BlockArea(graph);
+        ShapeFilter blockArea = new ShapeFilter(graph);
 
         // Add blocked circular areas or points
         if (!blockAreaString.isEmpty()) {
@@ -167,14 +167,14 @@ public class GraphEdgeIdFinder {
     }
 
     /**
-     * This class handles edges and areas where access should be blocked.
+     * This class allows to check if an {@link EdgeIteratorState} intersects one or more shapes.
      */
-    public static class BlockArea {
+    public static class ShapeFilter {
         private final List<GHIntHashSet> edgesList = new ArrayList<>();
-        private final List<Shape> blockedShapes = new ArrayList<>();
+        private final List<Shape> shapes = new ArrayList<>();
         private final int baseEdgeCount;
 
-        public BlockArea(Graph g) {
+        public ShapeFilter(Graph g) {
             baseEdgeCount = g.getAllEdges().length();
         }
 
@@ -195,13 +195,13 @@ public class GraphEdgeIdFinder {
             add(shape, new GHIntHashSet());
         }
 
-        public void add(Shape shape, GHIntHashSet blockedEdgeIds) {
-            blockedShapes.add(shape);
-            edgesList.add(Objects.requireNonNull(blockedEdgeIds));
+        public void add(Shape shape, GHIntHashSet edgeIds) {
+            shapes.add(shape);
+            edgesList.add(Objects.requireNonNull(edgeIds));
         }
 
         public final boolean contains(GHPoint point) {
-            for (Shape shape : blockedShapes) {
+            for (Shape shape : shapes) {
                 if (shape.contains(point.lat, point.lon))
                     return true;
             }
@@ -209,16 +209,16 @@ public class GraphEdgeIdFinder {
         }
 
         /**
-         * @return true if the specified edgeState is part of this BlockArea
+         * @return true if the specified edgeState matches this filter
          */
         public final boolean intersects(EdgeIteratorState edgeState) {
             PointList pointList = null;
             BBox bbox = null;
-            for (int shapeIdx = 0; shapeIdx < blockedShapes.size(); shapeIdx++) {
-                GHIntHashSet blockedEdges = edgesList.get(shapeIdx);
-                // blockedEdges acts as cache that is only useful when filled and for non-virtual edges
-                if (!blockedEdges.isEmpty() && edgeState.getEdge() < baseEdgeCount) {
-                    if (blockedEdges.contains(edgeState.getEdge()))
+            for (int shapeIdx = 0; shapeIdx < shapes.size(); shapeIdx++) {
+                GHIntHashSet edges = edgesList.get(shapeIdx);
+                // the hashset acts as cache that is only useful when filled and for non-virtual edges
+                if (!edges.isEmpty() && edgeState.getEdge() < baseEdgeCount) {
+                    if (edges.contains(edgeState.getEdge()))
                         return true;
                     continue;
                 }
@@ -227,7 +227,7 @@ public class GraphEdgeIdFinder {
                 if (bbox == null)
                     bbox = GHUtility.createBBox(edgeState);
 
-                Shape shape = blockedShapes.get(shapeIdx);
+                Shape shape = shapes.get(shapeIdx);
                 if (shape.getBounds().intersects(bbox)) {
                     if (pointList == null)
                         pointList = edgeState.fetchWayGeometry(FetchMode.ALL).makeImmutable();

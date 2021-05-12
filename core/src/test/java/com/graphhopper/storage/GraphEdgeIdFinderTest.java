@@ -58,7 +58,7 @@ public class GraphEdgeIdFinderTest {
                 .prepareIndex();
 
         GraphEdgeIdFinder graphFinder = new GraphEdgeIdFinder(graph, locationIndex);
-        GraphEdgeIdFinder.BlockArea blockArea = graphFinder.parseBlockArea("0.01,0.005,1", AccessFilter.allEdges(encoder.getAccessEnc()), 1000 * 1000);
+        GraphEdgeIdFinder.ShapeFilter blockArea = graphFinder.parseBlockArea("0.01,0.005,1", AccessFilter.allEdges(encoder.getAccessEnc()), 1000 * 1000);
         assertEquals("[0]", blockArea.toString(0));
 
         // big area => no edgeIds are collected up-front
@@ -111,7 +111,7 @@ public class GraphEdgeIdFinderTest {
         GraphEdgeIdFinder graphFinder = new GraphEdgeIdFinder(graph, locationIndex);
         // big value => the polygon is small => force edgeId optimization
         double area = 500_000L * 500_000L;
-        GraphEdgeIdFinder.BlockArea blockArea = graphFinder.parseBlockArea("2.1,1, -1.1,2, 2,3", AccessFilter.allEdges(encoder.getAccessEnc()), area);
+        GraphEdgeIdFinder.ShapeFilter blockArea = graphFinder.parseBlockArea("2.1,1, -1.1,2, 2,3", AccessFilter.allEdges(encoder.getAccessEnc()), area);
         assertEquals("[1, 2, 6, 7, 11, 12]", blockArea.toString(0));
         assertEdges(graph, "[1, 2, 6, 7, 11, 12]", blockArea);
 
@@ -125,7 +125,7 @@ public class GraphEdgeIdFinderTest {
         assertEdges(graph, "[2, 7]", blockArea);
     }
 
-    private void assertEdges(Graph g, String assertSetContent, GraphEdgeIdFinder.BlockArea blockArea) {
+    private void assertEdges(Graph g, String assertSetContent, GraphEdgeIdFinder.ShapeFilter blockArea) {
         Set<Integer> blockedEdges = new TreeSet<>();
         AllEdgesIterator edgeIterator = g.getAllEdges();
         while (edgeIterator.next()) {

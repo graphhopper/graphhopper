@@ -484,7 +484,7 @@ public class Router {
             requestHints.putObject(CustomModel.KEY, request.getCustomModel());
             Weighting weighting = weightingFactory.createWeighting(profile, requestHints, false);
             if (requestHints.has(Parameters.Routing.BLOCK_AREA)) {
-                GraphEdgeIdFinder.BlockArea blockArea = GraphEdgeIdFinder.createBlockArea(ghStorage, locationIndex,
+                GraphEdgeIdFinder.ShapeFilter blockArea = GraphEdgeIdFinder.createBlockArea(ghStorage, locationIndex,
                         request.getPoints(), requestHints, new FiniteWeightFilter(weighting));
                 weighting = new BlockAreaWeighting(weighting, blockArea);
             }

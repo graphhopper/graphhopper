@@ -100,7 +100,7 @@ public class SPTResource {
         Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
         BooleanEncodedValue inSubnetworkEnc = graphHopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profileName));
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA)) {
-            GraphEdgeIdFinder.BlockArea blockArea = GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
+            GraphEdgeIdFinder.ShapeFilter blockArea = GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
                     Collections.singletonList(point.get()), hintsMap, new FiniteWeightFilter(weighting));
             weighting = new BlockAreaWeighting(weighting, blockArea);
         }
