@@ -57,13 +57,13 @@ public class GraphEdgeIdFinderTest {
         LocationIndex locationIndex = new LocationIndexTree(graph, new RAMDirectory())
                 .prepareIndex();
 
-        GraphEdgeIdFinder graphFinder = new GraphEdgeIdFinder(graph, locationIndex);
-        GraphEdgeIdFinder.ShapeFilter blockArea = graphFinder.parseBlockArea("0.01,0.005,1", AccessFilter.allEdges(encoder.getAccessEnc()), 1000 * 1000);
+        GraphEdgeIdFinder graphFinder = new GraphEdgeIdFinder(graph, locationIndex, AccessFilter.allEdges(encoder.getAccessEnc()), 1000 * 1000);
+        GraphEdgeIdFinder.ShapeFilter blockArea = graphFinder.parseBlockArea("0.01,0.005,1");
         assertEquals("[0]", blockArea.toString(0));
 
         // big area => no edgeIds are collected up-front
-        graphFinder = new GraphEdgeIdFinder(graph, locationIndex);
-        blockArea = graphFinder.parseBlockArea("0,0,1000", AccessFilter.allEdges(encoder.getAccessEnc()), 1000 * 1000);
+        graphFinder = new GraphEdgeIdFinder(graph, locationIndex, AccessFilter.allEdges(encoder.getAccessEnc()), 1000 * 1000);
+        blockArea = graphFinder.parseBlockArea("0,0,1000");
         assertFalse(blockArea.hasCachedEdgeIds(0));
     }
 
@@ -108,19 +108,22 @@ public class GraphEdgeIdFinderTest {
         LocationIndex locationIndex = new LocationIndexTree(graph, new RAMDirectory())
                 .prepareIndex();
 
-        GraphEdgeIdFinder graphFinder = new GraphEdgeIdFinder(graph, locationIndex);
         // big value => the polygon is small => force edgeId optimization
-        double area = 500_000L * 500_000L;
-        GraphEdgeIdFinder.ShapeFilter blockArea = graphFinder.parseBlockArea("2.1,1, -1.1,2, 2,3", AccessFilter.allEdges(encoder.getAccessEnc()), area);
+        double largeArea = 500_000L * 500_000L;
+        GraphEdgeIdFinder graphFinder = new GraphEdgeIdFinder(graph, locationIndex, AccessFilter.allEdges(encoder.getAccessEnc()), largeArea);
+        GraphEdgeIdFinder.ShapeFilter blockArea = graphFinder.parseBlockArea("2.1,1, -1.1,2, 2,3");
         assertEquals("[1, 2, 6, 7, 11, 12]", blockArea.toString(0));
         assertEdges(graph, "[1, 2, 6, 7, 11, 12]", blockArea);
 
         // small value => same polygon is now "large" => do not pre-calculate edgeId set => check only geometries
-        blockArea = graphFinder.parseBlockArea("2.1,1, 0.9,3, 0.9,2, -0.3,0", AccessFilter.allEdges(encoder.getAccessEnc()), 1000 * 1000);
+        double smallArea = 1000 * 1000;
+        graphFinder = new GraphEdgeIdFinder(graph, locationIndex, AccessFilter.allEdges(encoder.getAccessEnc()), smallArea);
+        blockArea = graphFinder.parseBlockArea("2.1,1, 0.9,3, 0.9,2, -0.3,0");
         assertFalse(blockArea.hasCachedEdgeIds(0));
         assertEdges(graph, "[0, 1, 4, 5, 6, 7, 9, 10]", blockArea);
 
-        blockArea = graphFinder.parseBlockArea("1.5,3,100000", AccessFilter.allEdges(encoder.getAccessEnc()), area);
+        graphFinder = new GraphEdgeIdFinder(graph, locationIndex, AccessFilter.allEdges(encoder.getAccessEnc()), largeArea);
+        blockArea = graphFinder.parseBlockArea("1.5,3,100000");
         assertEquals("[2, 7]", blockArea.toString(0));
         assertEdges(graph, "[2, 7]", blockArea);
     }
