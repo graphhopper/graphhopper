@@ -131,7 +131,7 @@ public class GraphHopperManaged implements Managed {
             if ("empty".equals(customModelFileName))
                 newProfiles.add(new CustomProfile(profile).setCustomModel(new CustomModel()));
             else {
-                if (customModelFileName.contains("/"))
+                if (customModelFileName.contains(File.separator))
                     throw new IllegalArgumentException("Use custom_model_folder for the custom_model_file parent");
                 // Somehow dropwizard makes it very hard to find out the folder of config.yml -> use an extra parameter for the folder
                 File file = new File(customModelFolder, customModelFileName);

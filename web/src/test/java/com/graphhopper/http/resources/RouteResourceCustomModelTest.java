@@ -48,15 +48,16 @@ public class RouteResourceCustomModelTest {
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
                 putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type").
+                putObject("custom_model_folder", "./src/test/resources/com/graphhopper/http/resources/").
                 setProfiles(Arrays.asList(
                         new CustomProfile("car").setCustomModel(new CustomModel()).setVehicle("car"),
                         new CustomProfile("bike").setCustomModel(new CustomModel()).setVehicle("bike"),
                         new CustomProfile("truck").setVehicle("car").
-                                putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/truck.yml"),
+                                putHint("custom_model_file", "truck.yml"),
                         new CustomProfile("cargo_bike").setVehicle("bike").
-                                putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/cargo_bike.yml"),
+                                putHint("custom_model_file", "cargo_bike.yml"),
                         new CustomProfile("json_bike").setVehicle("bike").
-                                putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/json_bike.json"),
+                                putHint("custom_model_file", "json_bike.json"),
                         new Profile("foot_profile").setVehicle("foot").setWeighting("fastest"),
                         new CustomProfile("car_no_unclassified").setCustomModel(
                                 new CustomModel(new CustomModel().
