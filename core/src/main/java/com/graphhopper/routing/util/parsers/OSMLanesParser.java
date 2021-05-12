@@ -27,6 +27,9 @@ import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
 
+/**
+ * https://wiki.openstreetmap.org/wiki/Key:lanes
+ */
 public class OSMLanesParser implements TagParser {
     private final IntEncodedValue lanesEnc;
 
