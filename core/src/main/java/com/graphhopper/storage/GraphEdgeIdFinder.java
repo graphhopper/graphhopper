@@ -169,7 +169,7 @@ public class GraphEdgeIdFinder {
     public ShapeFilter createFilter(List<Shape> shapes) {
         ShapeFilter shapeFilter = new ShapeFilter(graph);
         for (Shape shape : shapes) {
-            if (calculateArea(shape) <= useEdgeIdsUntilAreaSize) {
+            if (locationIndex != null && calculateArea(shape) <= useEdgeIdsUntilAreaSize) {
                 GHIntHashSet blockedEdges = findEdgesInShape(shape, edgeFilter);
                 if (!blockedEdges.isEmpty()) {
                     shapeFilter.add(shape, blockedEdges);

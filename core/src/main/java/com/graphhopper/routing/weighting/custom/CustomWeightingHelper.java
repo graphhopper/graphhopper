@@ -19,12 +19,8 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.storage.GraphEdgeIdFinder.ShapeFilter;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.JsonFeature;
-import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.Polygon;
 
 import java.util.Map;
 
@@ -38,7 +34,7 @@ public class CustomWeightingHelper {
     protected CustomWeightingHelper() {
     }
 
-    public void init(EncodedValueLookup lookup, DecimalEncodedValue avgSpeedEnc, Map<String, JsonFeature> areas) {
+    public void init(EncodedValueLookup lookup, DecimalEncodedValue avgSpeedEnc, Map<String, ShapeFilter> areas) {
         this.avg_speed_enc = avgSpeedEnc;
     }
 
@@ -55,12 +51,5 @@ public class CustomWeightingHelper {
         if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)
             throw new IllegalStateException("Invalid estimated speed " + speed);
         return speed;
-    }
-
-    public static boolean in(Polygon p, EdgeIteratorState edge) {
-        BBox bbox = GHUtility.createBBox(edge);
-        if (p.getBounds().intersects(bbox))
-            return p.intersects(edge.fetchWayGeometry(FetchMode.ALL).makeImmutable()); // TODO PERF: cache bbox and edge wayGeometry for multiple area
-        return false;
     }
 }
