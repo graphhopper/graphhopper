@@ -510,7 +510,11 @@ public class GraphHopper implements GraphHopperAPI {
         Map<String, String> flagEncoderMap = new LinkedHashMap<>(), implicitFlagEncoderMap = new HashMap<>();
         for (String encoderStr : Arrays.asList(flagEncodersStr.split(","))) {
             String key = encoderStr.split("\\|")[0];
-            if (!key.isEmpty()) flagEncoderMap.put(key, encoderStr);
+            if (!key.isEmpty()) {
+                if (flagEncoderMap.containsKey(key))
+                    throw new IllegalArgumentException("FlagEncoder " + key + " needs to be unique");
+                flagEncoderMap.put(key, encoderStr);
+            }
         }
         if (requireProfilesByName && profilesByName.isEmpty())
             throw new IllegalStateException("no profiles exist but assumed to create EncodingManager. E.g. provide them in GraphHopperConfig when calling GraphHopper.init");
