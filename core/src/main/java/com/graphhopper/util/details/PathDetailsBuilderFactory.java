@@ -81,7 +81,7 @@ public class PathDetailsBuilderFactory {
                 builders.add(new EnumDetails<>(key, evl.getEnumEncodedValue(key, Enum.class)));
         }
 
-        for (String key : Arrays.asList(MtbRating.KEY, HikeRating.KEY, HorseRating.KEY)) {
+        for (String key : Arrays.asList(MtbRating.KEY, HikeRating.KEY, HorseRating.KEY, Lanes.KEY)) {
             if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
                 builders.add(new IntDetails(key, evl.getIntEncodedValue(key)));
         }
