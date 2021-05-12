@@ -48,7 +48,7 @@ public class RouteResourceCustomModelTest {
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
                 putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type").
-                putObject("custom_model_folder", "./src/test/resources/com/graphhopper/http/resources/").
+                putObject("custom_model_folder", "./src/test/resources/com/graphhopper/http/resources").
                 setProfiles(Arrays.asList(
                         new CustomProfile("car").setCustomModel(new CustomModel()).setVehicle("car"),
                         new CustomProfile("bike").setCustomModel(new CustomModel()).setVehicle("bike"),

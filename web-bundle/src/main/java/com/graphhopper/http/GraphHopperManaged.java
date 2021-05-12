@@ -134,7 +134,7 @@ public class GraphHopperManaged implements Managed {
                 if (customModelFileName.contains(File.separator))
                     throw new IllegalArgumentException("Use custom_model_folder for the custom_model_file parent");
                 // Somehow dropwizard makes it very hard to find out the folder of config.yml -> use an extra parameter for the folder
-                File file = new File(customModelFolder, customModelFileName);
+                File file = Paths.get(customModelFolder).resolve(customModelFileName).toFile();
                 try {
                     CustomModel customModel = (customModelFileName.endsWith(".json") ? jsonOM : yamlOM).readValue(file, CustomModel.class);
                     newProfiles.add(new CustomProfile(profile).setCustomModel(customModel));
