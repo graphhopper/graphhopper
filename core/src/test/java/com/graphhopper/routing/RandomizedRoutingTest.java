@@ -48,6 +48,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
@@ -71,22 +72,22 @@ public class RandomizedRoutingTest {
     private static class FixtureProvider implements ArgumentsProvider {
         @Override
         public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
-            return Stream.of(
-                    new Fixture(Algo.DIJKSTRA, false, false, NODE_BASED),
-                    new Fixture(Algo.ASTAR_UNIDIR, false, false, NODE_BASED),
-                    new Fixture(Algo.ASTAR_BIDIR, false, false, NODE_BASED),
-                    new Fixture(Algo.CH_ASTAR, true, false, NODE_BASED),
-                    new Fixture(Algo.CH_DIJKSTRA, true, false, NODE_BASED),
-                    new Fixture(Algo.LM_UNIDIR, false, true, NODE_BASED),
-                    new Fixture(Algo.LM_BIDIR, false, true, NODE_BASED),
-                    new Fixture(Algo.DIJKSTRA, false, false, EDGE_BASED),
-                    new Fixture(Algo.ASTAR_UNIDIR, false, false, EDGE_BASED),
-                    new Fixture(Algo.ASTAR_BIDIR, false, false, EDGE_BASED),
-                    new Fixture(Algo.CH_ASTAR, true, false, EDGE_BASED),
-                    new Fixture(Algo.CH_DIJKSTRA, true, false, EDGE_BASED),
-                    new Fixture(Algo.LM_UNIDIR, false, true, EDGE_BASED),
-                    new Fixture(Algo.LM_BIDIR, false, true, EDGE_BASED),
-                    new Fixture(Algo.PERFECT_ASTAR, false, false, NODE_BASED)
+            return Stream.<Supplier<Fixture>>of(
+                    () -> new Fixture(Algo.DIJKSTRA, false, false, NODE_BASED),
+                    () -> new Fixture(Algo.ASTAR_UNIDIR, false, false, NODE_BASED),
+                    () -> new Fixture(Algo.ASTAR_BIDIR, false, false, NODE_BASED),
+                    () -> new Fixture(Algo.CH_ASTAR, true, false, NODE_BASED),
+                    () -> new Fixture(Algo.CH_DIJKSTRA, true, false, NODE_BASED),
+                    () -> new Fixture(Algo.LM_UNIDIR, false, true, NODE_BASED),
+                    () -> new Fixture(Algo.LM_BIDIR, false, true, NODE_BASED),
+                    () -> new Fixture(Algo.DIJKSTRA, false, false, EDGE_BASED),
+                    () -> new Fixture(Algo.ASTAR_UNIDIR, false, false, EDGE_BASED),
+                    () -> new Fixture(Algo.ASTAR_BIDIR, false, false, EDGE_BASED),
+                    () -> new Fixture(Algo.CH_ASTAR, true, false, EDGE_BASED),
+                    () -> new Fixture(Algo.CH_DIJKSTRA, true, false, EDGE_BASED),
+                    () -> new Fixture(Algo.LM_UNIDIR, false, true, EDGE_BASED),
+                    () -> new Fixture(Algo.LM_BIDIR, false, true, EDGE_BASED),
+                    () -> new Fixture(Algo.PERFECT_ASTAR, false, false, NODE_BASED)
             ).map(Arguments::of);
         }
     }
@@ -292,7 +293,8 @@ public class RandomizedRoutingTest {
 
     @ParameterizedTest
     @ArgumentsSource(RepeatedFixtureProvider.class)
-    public void randomGraph(Fixture f) {
+    public void randomGraph(Supplier<Fixture> fixtureSupplier) {
+        Fixture f = fixtureSupplier.get();
         final long seed = System.nanoTime();
         final int numQueries = 50;
         Random rnd = new Random(seed);
@@ -325,7 +327,8 @@ public class RandomizedRoutingTest {
      */
     @ParameterizedTest
     @ArgumentsSource(RepeatedFixtureProvider.class)
-    public void randomGraph_withQueryGraph(Fixture f) {
+    public void randomGraph_withQueryGraph(Supplier<Fixture> fixtureSupplier) {
+        Fixture f = fixtureSupplier.get();
         final long seed = System.nanoTime();
         final int numQueries = 50;
 
