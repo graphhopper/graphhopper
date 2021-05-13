@@ -24,8 +24,7 @@
 - refactored TransportationMode to better reflect the usage in source data parsing only
 - customizable routing is included in the endpoint /route (under the "custom_model" entry) and does not need to be
   enabled
-- the format of customizable routing completely changed but the maps demo includes a simple editor to learn it easily (
-  #2239). See #2209 and #2251. See examples in this blog
+- the format of customizable routing completely changed but the maps demo includes a simple editor to learn it easily (#2239). See #2209 and #2251. See examples in this blog
   post: https://www.graphhopper.com/blog/2020/05/31/examples-for-customizable-routing/
 - removed Dockerfile
 - the second argument of the VirtualEdgeIteratorState constructor is now an edge key (was an edge id before)
@@ -101,8 +100,7 @@
   to TraversalMode.EDGE_BASED
 - to prevent u-turns when using edge-based algorithms it is now required to use TurnWeighting, #1640
 - GraphHopperStorage.getGraph(Class) was replaced by GraphHopperStorage.getBase/CHGraph(), #1669
-- CHGraph.shortcut(int, int) was removed (use .shortcut(int, int, ...) and/or .shortcutEdgeBased(int, int, ...) instead,
-  #1693
+- CHGraph.shortcut(int, int) was removed (use .shortcut(int, int, ...) and/or .shortcutEdgeBased(int, int, ...) instead, #1693
 - CH graphs are now identified using CHProfile instead of Weighting, #1670
 - removed the 'traversal_mode` request parameter for /route, instead of 'traversal_mode=edge_based_2dir' use
   edge_based=true
