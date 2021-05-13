@@ -52,20 +52,13 @@ import static com.graphhopper.util.Helper.UTF_CS;
 
 public class GraphHopperManaged implements Managed {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final static Logger logger = LoggerFactory.getLogger(GraphHopperManaged.class);
     private final GraphHopper graphHopper;
 
     public GraphHopperManaged(GraphHopperConfig configuration, ObjectMapper objectMapper) {
         ObjectMapper localObjectMapper = objectMapper.copy();
         localObjectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        String splitAreaLocation = configuration.getString(Parameters.Landmark.PREPARE + "split_area_location", "");
-        JsonFeatureCollection landmarkSplittingFeatureCollection;
-        try (Reader reader = splitAreaLocation.isEmpty() ? new InputStreamReader(LandmarkStorage.class.getResource("map.geo.json").openStream(), UTF_CS) : new InputStreamReader(new FileInputStream(splitAreaLocation), UTF_CS)) {
-            landmarkSplittingFeatureCollection = localObjectMapper.readValue(reader, JsonFeatureCollection.class);
-        } catch (IOException e1) {
-            logger.error("Problem while reading border map GeoJSON. Skipping this.", e1);
-            landmarkSplittingFeatureCollection = null;
-        }
+        JsonFeatureCollection landmarkSplittingFeatureCollection = loadLandmarkSplittingFeatureCollection(configuration, localObjectMapper);
         if (configuration.has("gtfs.file")) {
             graphHopper = new GraphHopperGtfs(configuration);
         } else {
@@ -92,10 +85,32 @@ public class GraphHopperManaged implements Managed {
             SpatialRuleLookupHelper.buildAndInjectCountrySpatialRules(graphHopper, maxBounds, jsonFeatureCollections);
         }
 
+        String customModelFolder = configuration.getString("custom_model_folder", "");
+        List<Profile> newProfiles = resolveCustomModelFiles(customModelFolder, configuration.getProfiles());
+        configuration.setProfiles(newProfiles);
+
+        graphHopper.init(configuration);
+    }
+
+    public static JsonFeatureCollection loadLandmarkSplittingFeatureCollection(GraphHopperConfig configuration, ObjectMapper localObjectMapper) {
+        String splitAreaLocation = configuration.getString(Parameters.Landmark.PREPARE + "split_area_location", "");
+        try (Reader reader = splitAreaLocation.isEmpty() ?
+                new InputStreamReader(LandmarkStorage.class.getResource("map.geo.json").openStream(), UTF_CS) :
+                new InputStreamReader(new FileInputStream(splitAreaLocation), UTF_CS)) {
+            JsonFeatureCollection result = localObjectMapper.readValue(reader, JsonFeatureCollection.class);
+            logger.info("Loaded landmark splitting collection from " + splitAreaLocation);
+            return result;
+        } catch (IOException e1) {
+            logger.error("Problem while reading border map GeoJSON. Skipping this.", e1);
+            return null;
+        }
+    }
+
+    public static List<Profile> resolveCustomModelFiles(String customModelFolder, List<Profile> profiles) {
         ObjectMapper yamlOM = Jackson.initObjectMapper(new ObjectMapper(new YAMLFactory()));
         ObjectMapper jsonOM = Jackson.newObjectMapper();
         List<Profile> newProfiles = new ArrayList<>();
-        for (Profile profile : configuration.getProfiles()) {
+        for (Profile profile : profiles) {
             if (!CustomWeighting.NAME.equals(profile.getWeighting())) {
                 newProfiles.add(profile);
                 continue;
@@ -111,23 +126,26 @@ public class GraphHopperManaged implements Managed {
                     throw new RuntimeException("Cannot load custom_model from " + cm + " for profile " + profile.getName(), ex);
                 }
             }
-            String customModelLocation = profile.getHints().getString("custom_model_file", "");
-            if (customModelLocation.isEmpty())
+            String customModelFileName = profile.getHints().getString("custom_model_file", "");
+            if (customModelFileName.isEmpty())
                 throw new IllegalArgumentException("Missing 'custom_model' or 'custom_model_file' field in profile '"
                         + profile.getName() + "'. To use default specify custom_model_file: empty");
-            if ("empty".equals(customModelLocation))
+            if ("empty".equals(customModelFileName))
                 newProfiles.add(new CustomProfile(profile).setCustomModel(new CustomModel()));
-            else
+            else {
+                if (customModelFileName.contains(File.separator))
+                    throw new IllegalArgumentException("Use custom_model_folder for the custom_model_file parent");
+                // Somehow dropwizard makes it very hard to find out the folder of config.yml -> use an extra parameter for the folder
+                File file = Paths.get(customModelFolder).resolve(customModelFileName).toFile();
                 try {
-                    CustomModel customModel = (customModelLocation.endsWith(".json") ? jsonOM : yamlOM).readValue(new File(customModelLocation), CustomModel.class);
+                    CustomModel customModel = (customModelFileName.endsWith(".json") ? jsonOM : yamlOM).readValue(file, CustomModel.class);
                     newProfiles.add(new CustomProfile(profile).setCustomModel(customModel));
                 } catch (Exception ex) {
-                    throw new RuntimeException("Cannot load custom_model from location " + customModelLocation + " for profile " + profile.getName(), ex);
+                    throw new RuntimeException("Cannot load custom_model from location " + customModelFileName + " for profile " + profile.getName(), ex);
                 }
+            }
         }
-        configuration.setProfiles(newProfiles);
-
-        graphHopper.init(configuration);
+        return newProfiles;
     }
 
     @Override
