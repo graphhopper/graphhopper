@@ -44,7 +44,7 @@ public class OSMLanesParser implements TagParser {
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
-        int laneCount = 0;
+        int laneCount = 1;
         if (way.hasTag("lanes")) {
             String noLanes = way.getTag("lanes");
             String[] noLanesTok = noLanes.split(";|\\.");
@@ -53,7 +53,7 @@ public class OSMLanesParser implements TagParser {
                     int noLanesInt = Integer.parseInt(noLanesTok[0]);
                     // there was a proposal with negative lanes but I cannot find it
                     if (noLanesInt < 0)
-                        laneCount = 0;
+                        laneCount = 1;
                     else if (noLanesInt > 6)
                         laneCount = 6;
                     else

@@ -51,7 +51,7 @@ class OSMLanesParserTest {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef intsRef = em.createEdgeFlags();
         parser.handleWayTags(intsRef, readerWay, false, em.createRelationFlags());
-        Assertions.assertEquals(0, em.getIntEncodedValue(Lanes.KEY).getInt(false, intsRef));
+        Assertions.assertEquals(1, em.getIntEncodedValue(Lanes.KEY).getInt(false, intsRef));
     }
 
 }
