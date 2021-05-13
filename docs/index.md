@@ -37,7 +37,7 @@ The elevation configuration is separately documented [here](./core/elevation.md)
 
 [The quickstart](./core/quickstart-from-source.md) is an introduction for developers. Explains git checkout, IDE setup and commands for setting up a GraphHopper server.
 
-Find all changes in previous and current versions in the [changelogs](../core/files/changelog.txt).
+Find all changes in previous and current versions in the [changelogs](../CHANGELOG.md).
 
 #### Contribute
 
