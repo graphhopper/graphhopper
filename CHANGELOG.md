@@ -1,4 +1,4 @@
-## 3.0
+### 3.0 [not yet released]
 
 - custom_model_file only accepts file names without path. Use custom_model_folder instead.
 - the load method in GraphHopperWeb (client-hc) was removed
@@ -32,7 +32,7 @@
 - removed instruction annotations(cycleway, off_bike, ford, ferry, private, toll)
 - the boundaries file is now expected to provide the countrycodes via the `ISO3166-1:alpha3` property
 
-## 2.0
+### 2.0 [29 Sep 2020]
 
 - AbstractFlagEncoder#getMaxSpeed returns now Double#NaN instead of -1 if no maxspeed was found
 - renamed QueryResult -> Snap
@@ -44,7 +44,7 @@
 - fixed bug for turn restrictions on bridges/tunnels, #2070
 - improved resolution of elevation profiles, 3D Douglas-Peucker and long edge sampling, #1953
 
-## 1.0
+### 1.0 [22 May 2020]
 
 - changes to config.yml:
   * properties have to follow the snake_case, #1918, easy convert via https://github.com/karussell/snake_case
@@ -82,7 +82,7 @@
 - removed GraphExtension, #1783, renamed TurnCostExtension to TurnCostStorage
 - removed `heading`, `pass_through` and `ch.force_heading` parameters for speed mode/CH, #1763
 
-## 0.13
+### 0.13 [17 Sep 2019]
 
 - removed docker compose file
 - PathDetails return null instead of -1 for Infinity by default
@@ -111,7 +111,7 @@
 - it is now possible to specify finite u-turn costs for CH preparation, #1671
 - removed distances from CH shortcuts, reduces memory consumption per shortcut by 4 bytes (about 8-10%), #1719
 
-## 0.12
+### 0.12 [25 Mar 2019]
 
 - renamed VirtualEdgeIteratorState.getOriginalEdgeKey to more precise getOriginalEdgeKey #1549
 - access refactoring #1436 that moves AccessValue into SpatialRule.Access
@@ -124,7 +124,7 @@
   this interface at a later stage)
 - moved shp-reader into separate repository: https://github.com/graphhopper/graphhopper-reader-shp
 
-## 0.11
+### 0.11 [12 Sep 2018]
 
 - web resources for dropwizard web framework (no servlets anymore) #1108
 - prefix -Dgraphhopper. for command line arguments necessary, see docs/web/quickstart.md or
@@ -133,12 +133,12 @@
 - changed file format for landmarks #1376
 - convert properties into new yml format via: https://gist.github.com/karussell/dbc9b4c455bca98b6a38e4a160e23bf8
 
-## 0.10
+### 0.10 [26 Feb 2018]
 
 - introduce path details
 - added handcoded API java client to this repository
 
-## 0.9
+### 0.9 [13 Jun 2017]
 
 - remove war bundling support #297
 - rename of DefaultModule to GraphHopperModule and GHServletModule to GraphHopperServletModule
@@ -150,7 +150,7 @@
 - removed deprecated methods in GraphHopper (setCHWeighting, setCHWeightings, getCHWeightings, setCHWeightings,
   getCHPrepareThreads, setCHPrepareThreads), Path.calcMillis, findID of LocationIndex and all implementations
 
-## 0.8
+### 0.8 [18 Oct 2016]
 
 - refactoring to Weighting class, see #807
 - removed FlagEncoder from parameters as weighting.getFlagEncoder can and is used
@@ -164,7 +164,7 @@
 - moved weighting code into own package com.graphhopper.routing.weighting
 - code format has changed, so it is important to change your PRs too before you merge master, see discussion #770
 
-## 0.7
+### 0.7 [15 Jun 2016]
 
 - added snapped points to output JSON for every path
 - the foot routing is now much smoother and only considers safe paths, to use beautiful roads (i.e. prefer hiking routes
@@ -185,7 +185,7 @@
 - removed setWeightLimit as too unspecific for arbitrary weights, use setMaxVisitedNodes instead
 - missing renames for Path.setEdgeEntry -> setSPTEntry and AbstractAlgorithm.createEdgeEntry -> createSPTEntry
 
-## 0.6
+### 0.6 [08 Feb 2016]
 
 - removed methods deprecated in 0.4 and 0.5
 - renamed EdgeEntry to SPTEntry and AStar.AStarEdge to AStar.AStarEntry
@@ -199,7 +199,7 @@
 - renaming of getCHWeighting to getCHWeightings due to supporting multiple CH weightings, #623
 - deprecation of setCHWeighting, please use setCHWeightings instead, #623
 
-## 0.5
+### 0.5 [12 Aug 2015]
 
 - Several names have changed see #466, #467, #468
 - GraphHopper.optimize removed use postProcessing instead
@@ -222,7 +222,7 @@
 - made GHResponse.getMillis, Path.getMillis, GPXEntry.getMillis deprecated, use getTime instead
 - in AbstractFlagEncoder, parse*() and getStr() are now deprecated, use properties.get* instead
 
-## 0.4
+### 0.4 [18 Mar 2015]
 
 - translation key turn changed and merged with left etc into turn_left, turn_right etc
 - create location index before preparation in the GraphHopper class
@@ -275,7 +275,7 @@
 - with the introduction of lock protection mechanism (see #112) GraphHopper needs always write access, see also #217
 - new GraphHopper.clean method to remove the graph directory via Java API
 
-## 0.3.0
+### 0.3.0 [13 May 2014]
 
 - introduced prefer bits, now bike uses more bits and 3 bike encoder do not fit into 32 bit anymore, will be fixed later
 - moved Translation argument into Path.calcInstruction for more fine grained control, instructions are now uncached and
@@ -302,7 +302,7 @@
 - improved bike routing #132, #138, #139, #150
 - gpx export via API, HTTP (route?type=gpx) and web interface is possible: #113, #136, #141
 
-## 0.2.0 [23 Nov 2013]
+### 0.2.0 [23 Nov 2013]
 
 - change inconsistent default settings for contraction hierarchies in the API -
   see https://lists.openstreetmap.org/pipermail/graphhopper/2013-December/000585.html
@@ -343,12 +343,12 @@
 - edge explorer makes none-CH algorithms ~8% faster
 - link to all closed issues: https://github.com/graphhopper/graphhopper/issues?milestone=2&state=closed
 
-## 0.1.1 [06 August 2013]
+### 0.1.1 [06 August 2013]
 
 - correct maven bundling and some more issues
 - more i18n
 
-## 0.1 [23 July 2013]
+### 0.1 [23 July 2013]
 
 - initial version with lots of features
 - 24 closed issues: https://github.com/graphhopper/graphhopper/issues?milestone=3&state=closed, e.g.:
