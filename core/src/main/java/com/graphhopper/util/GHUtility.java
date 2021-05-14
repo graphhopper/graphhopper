@@ -1019,9 +1019,8 @@ public class GHUtility {
     }
 
     public static BBox createBBox(EdgeIteratorState edgeState) {
-        PointList towerNodes = edgeState.fetchWayGeometry(FetchMode.TOWER_ONLY);
-        int secondIndex = towerNodes.getSize() == 1 ? 0 : 1;
-        return BBox.fromPoints(towerNodes.getLat(0), towerNodes.getLon(0),
-                towerNodes.getLat(secondIndex), towerNodes.getLon(secondIndex));
+        BBox bbox = BBox.createInverse(false);
+        edgeState.visitWayGeometry(FetchMode.TOWER_ONLY, (lat,lon,ele) -> bbox.update(lat, lon));
+        return bbox;
     }
 }
