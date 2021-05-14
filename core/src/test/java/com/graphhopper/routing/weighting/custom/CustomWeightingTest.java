@@ -7,6 +7,7 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.routing.util.parsers.OSMBikeNetworkTagParser;
 import com.graphhopper.routing.util.parsers.OSMHazmatParser;
 import com.graphhopper.routing.util.parsers.OSMTollParser;
@@ -14,16 +15,14 @@ import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.CustomModel;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.JsonFeature;
+import com.graphhopper.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static com.graphhopper.json.Statement.*;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.routing.ev.RoadClass.*;
+import static com.graphhopper.routing.ev.RoadEnvironment.FERRY;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -266,5 +265,21 @@ class CustomWeightingTest {
 
     private Weighting createWeighting(CustomModel vehicleModel) {
         return CustomModelParser.createWeighting(carFE, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
+    }
+
+    @Test
+    public void maxSpeedViolated_bug_() {
+        FootFlagEncoder encoder = new FootFlagEncoder(new PMap().putObject("speed_bits", 4).putObject("speed_factor", 2));
+        EncodingManager em = EncodingManager.create(encoder);
+        GraphHopperStorage graph = new GraphBuilder(em).create();
+        EnumEncodedValue<RoadEnvironment> roadEnvEnc = em.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
+        EdgeIteratorState ferry = graph.edge(0, 1).setDistance(100).
+                set(roadEnvEnc, FERRY).set(encoder.getAverageSpeedEnc(), 15).set(encoder.getAccessEnc(), true, true);
+        CustomModel customModel = new CustomModel()
+                .addToSpeed(Statement.If("road_environment == FERRY", Statement.Op.MULTIPLY, 0.7))
+                .addToSpeed(Statement.Else(Statement.Op.LIMIT, 10));
+        Weighting weighting = CustomModelParser.createWeighting(encoder, em, NO_TURN_COST_PROVIDER, customModel);
+        assertEquals(41.2857, weighting.calcEdgeWeight(ferry, false), 1e-4);
+        assertEquals(100 / (15 * 0.7 / 3.6) * 1000, weighting.calcEdgeMillis(ferry, false), 1);
     }
 }

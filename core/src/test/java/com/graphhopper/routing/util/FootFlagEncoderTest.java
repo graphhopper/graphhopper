@@ -23,6 +23,7 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import org.junit.jupiter.api.Test;
@@ -449,5 +450,16 @@ public class FootFlagEncoderTest {
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "cattle_grid");
         assertEquals(0, tmpFootEncoder.handleNodeTags(node));
+    }
+
+    @Test
+    public void maxSpeed() {
+        FootFlagEncoder encoder = new FootFlagEncoder(new PMap().putObject("speed_bits", 4).putObject("speed_factor", 2));
+        assertEquals(15, encoder.getMaxSpeed());
+
+        EncodingManager em = EncodingManager.create(encoder);
+        GraphHopperStorage graph = new GraphBuilder(em).create();
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance(100).set(encoder.getAverageSpeedEnc(), 15);
+        assertEquals(15, edge.get(encoder.getAverageSpeedEnc()));
     }
 }
