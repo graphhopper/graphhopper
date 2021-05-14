@@ -175,12 +175,8 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         // we should include the entire geometry, see #2319
         PointList geometry = edgeState.fetchWayGeometry(FetchMode.ALL);
         BBox bbox = new BBox(180, -180, 90, -90);
-        for (int i = 0; i < geometry.getSize(); i++) {
-            bbox.minLon = Math.min(bbox.minLon, geometry.getLon(i));
-            bbox.maxLon = Math.max(bbox.maxLon, geometry.getLon(i));
-            bbox.minLat = Math.min(bbox.minLat, geometry.getLat(i));
-            bbox.maxLat = Math.max(bbox.maxLat, geometry.getLat(i));
-        }
+        for (int i = 0; i < geometry.getSize(); i++)
+            bbox.update(geometry.getLat(i), geometry.getLon(i));
         return bbox;
     }
 
