@@ -24,6 +24,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.search.StringIndex;
 import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeIteratorState.WayGeometryVisitor;
 import com.graphhopper.util.shapes.BBox;
 
 import java.util.Collections;
@@ -809,13 +810,13 @@ class BaseGraph implements Graph {
         return bytes;
     }
 
-    private PointList fetchWayGeometry_(long edgePointer, boolean reverse, FetchMode mode, int baseNode, int adjNode) {
+    private void visitWayGeometry_(long edgePointer, boolean reverse, FetchMode mode, WayGeometryVisitor visitor, int baseNode, int adjNode) {
         if (mode == FetchMode.TOWER_ONLY) {
+            visitor.init(2, nodeAccess.is3D());
             // no reverse handling required as adjNode and baseNode is already properly switched
-            PointList pillarNodes = new PointList(2, nodeAccess.is3D());
-            pillarNodes.add(nodeAccess, baseNode);
-            pillarNodes.add(nodeAccess, adjNode);
-            return pillarNodes;
+            visitPoint(nodeAccess, baseNode, visitor);
+            visitPoint(nodeAccess, adjNode, visitor);
+            return;
         }
         long geoRef = Helper.toUnsignedLong(edges.getInt(edgePointer + E_GEO));
         int count = 0;
@@ -827,39 +828,35 @@ class BaseGraph implements Graph {
             geoRef += 4L;
             bytes = new byte[count * nodeAccess.getDimension() * 4];
             wayGeometry.getBytes(geoRef, bytes, bytes.length);
-        } else if (mode == FetchMode.PILLAR_ONLY)
-            return PointList.EMPTY;
-
-        PointList pillarNodes = new PointList(getPointListLength(count, mode), nodeAccess.is3D());
-        if (reverse) {
-            if (mode == FetchMode.ALL || mode == FetchMode.PILLAR_AND_ADJ)
-                pillarNodes.add(nodeAccess, adjNode);
-        } else if (mode == FetchMode.ALL || mode == FetchMode.BASE_AND_PILLAR)
-            pillarNodes.add(nodeAccess, baseNode);
-
-        int index = 0;
-        for (int i = 0; i < count; i++) {
-            double lat = Helper.intToDegree(bitUtil.toInt(bytes, index));
-            index += 4;
-            double lon = Helper.intToDegree(bitUtil.toInt(bytes, index));
-            index += 4;
-            if (nodeAccess.is3D()) {
-                pillarNodes.add(lat, lon, Helper.intToEle(bitUtil.toInt(bytes, index)));
-                index += 4;
-            } else {
-                pillarNodes.add(lat, lon);
-            }
+        } else if (mode == FetchMode.PILLAR_ONLY) {
+            visitor.init(0, nodeAccess.is3D());
+            return;
         }
 
+        visitor.init(getPointListLength(count, mode), nodeAccess.is3D());
+        if (mode == FetchMode.ALL || mode == FetchMode.BASE_AND_PILLAR)
+            visitPoint(nodeAccess, baseNode, visitor);
+
+        int index = 0;
+        int pointOffset = (nodeAccess.is3D() ? 3 : 2) * 4;
         if (reverse) {
-            if (mode == FetchMode.ALL || mode == FetchMode.BASE_AND_PILLAR)
-                pillarNodes.add(nodeAccess, baseNode);
+            index = (count-1) * pointOffset;
+            pointOffset = (-1) * pointOffset;
+        }
+        for (int i = 0; i < count; i++) {
+            double lat = Helper.intToDegree(bitUtil.toInt(bytes, index));
+            double lon = Helper.intToDegree(bitUtil.toInt(bytes, index+4));
+            double ele = nodeAccess.is3D() ? Helper.intToEle(bitUtil.toInt(bytes, index+8)) : Double.NaN;
+            visitor.onPoint(lat, lon, ele);
+            index += pointOffset;
+        }
 
-            pillarNodes.reverse();
-        } else if (mode == FetchMode.ALL || mode == FetchMode.PILLAR_AND_ADJ)
-            pillarNodes.add(nodeAccess, adjNode);
-
-        return pillarNodes;
+        if (mode == FetchMode.ALL || mode == FetchMode.PILLAR_AND_ADJ)
+            visitPoint(nodeAccess, adjNode, visitor);
+    }
+    
+    static void visitPoint(NodeAccess nodeAccess, int nodeId, WayGeometryVisitor visitor) {
+        visitor.onPoint(nodeAccess.getLat(nodeId), nodeAccess.getLon(nodeId), nodeAccess.is3D() ? nodeAccess.getEle(nodeId) : Double.NaN);
     }
 
     static int getPointListLength(int pillarNodes, FetchMode mode) {
@@ -1283,10 +1280,17 @@ class BaseGraph implements Graph {
             baseGraph.setWayGeometry_(pillarNodes, edgePointer, reverse);
             return this;
         }
+        
+        @Override
+        public void visitWayGeometry(FetchMode mode, WayGeometryVisitor visitor) {
+            baseGraph.visitWayGeometry_(edgePointer, reverse, mode, visitor, getBaseNode(), getAdjNode());
+        }
 
         @Override
         public PointList fetchWayGeometry(FetchMode mode) {
-            return baseGraph.fetchWayGeometry_(edgePointer, reverse, mode, getBaseNode(), getAdjNode());
+            PointListVisitor visitor = new PointListVisitor();
+            baseGraph.visitWayGeometry_(edgePointer, reverse, mode, visitor, getBaseNode(), getAdjNode());
+            return visitor.getPointList();
         }
 
         @Override
@@ -1340,6 +1344,30 @@ class BaseGraph implements Graph {
         @Override
         public final String toString() {
             return getEdge() + " " + getBaseNode() + "-" + getAdjNode();
+        }
+        
+        private static class PointListVisitor implements WayGeometryVisitor {
+            
+            private PointList pointList;
+            
+            @Override
+            public void init(int pointCount, boolean is3d) {
+                this.pointList = new PointList(pointCount, is3d);
+            }
+            
+            @Override
+            public void onPoint(double lat, double lon, double ele) {
+                if (pointList.is3D()) {
+                    pointList.add(lat, lon, ele);
+                } else {
+                    pointList.add(lat, lon);
+                }
+            }
+            
+            public PointList getPointList() {
+                return pointList;
+            }
+            
         }
     }
 }

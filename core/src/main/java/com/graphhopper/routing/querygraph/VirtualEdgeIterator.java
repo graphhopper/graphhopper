@@ -86,6 +86,11 @@ class VirtualEdgeIterator implements EdgeIterator {
     public int getAdjNode() {
         return getCurrentEdge().getAdjNode();
     }
+    
+    @Override
+    public void visitWayGeometry(FetchMode mode, WayGeometryVisitor visitor) {
+        getCurrentEdge().visitWayGeometry(mode, visitor);
+    }
 
     @Override
     public PointList fetchWayGeometry(FetchMode mode) {

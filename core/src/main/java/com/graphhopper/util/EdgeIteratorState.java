@@ -114,6 +114,8 @@ public interface EdgeIteratorState {
      * @see EdgeIterator
      */
     int getAdjNode();
+    
+    void visitWayGeometry(FetchMode mode, WayGeometryVisitor visitor);
 
     /**
      * For road network data like OSM a way is often not just a straight line. The nodes between the junction nodes
@@ -221,4 +223,12 @@ public interface EdgeIteratorState {
      * @return the specified edge e
      */
     EdgeIteratorState copyPropertiesFrom(EdgeIteratorState e);
+    
+    @FunctionalInterface
+    interface WayGeometryVisitor {
+        default void init(int pointCount, boolean is3D) {
+        }
+        
+        void onPoint(double lat, double lon, double ele);
+    }
 }

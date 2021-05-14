@@ -90,6 +90,31 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     public int getAdjNode() {
         return adjNode;
     }
+    
+    @Override
+    public void visitWayGeometry(FetchMode mode, WayGeometryVisitor visitor) {
+        visitor.init(pointList.getSize(), pointList.is3D());
+        if (pointList.getSize() == 0) {
+            return;
+        }
+        
+        boolean includeBase = mode == FetchMode.ALL || mode == FetchMode.BASE_AND_PILLAR || mode == FetchMode.TOWER_ONLY;
+        boolean includePillar = mode != FetchMode.TOWER_ONLY;
+        boolean includeAdj  = mode == FetchMode.ALL || mode == FetchMode.PILLAR_AND_ADJ  || mode == FetchMode.TOWER_ONLY;
+        for (int i = 0; i < pointList.getSize(); i++) {
+            boolean visit = true;
+            if (i == 0) {
+                visit = includeBase;
+            } else if (i < pointList.getSize() - 1) {
+                visit = includePillar;
+            } else {
+                visit = includeAdj;
+            }
+            
+            if (visit)
+                visitor.onPoint(pointList.getLat(i), pointList.getLon(i), pointList.is3D() ? pointList.getEle(i) : Double.NaN);
+        }
+    }
 
     @Override
     public PointList fetchWayGeometry(FetchMode mode) {

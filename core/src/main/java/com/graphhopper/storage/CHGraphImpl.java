@@ -816,6 +816,12 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             checkShortcut(false, "setName");
             return edgeIterable.setName(name);
         }
+        
+        @Override
+        public void visitWayGeometry(FetchMode mode, WayGeometryVisitor visitor) {
+            checkShortcut(false, "visitWayGeometry");
+            edgeIterable.visitWayGeometry(mode, visitor);
+        }
 
         @Override
         public final PointList fetchWayGeometry(FetchMode mode) {

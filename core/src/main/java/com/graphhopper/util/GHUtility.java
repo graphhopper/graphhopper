@@ -799,6 +799,11 @@ public class GHUtility {
         public IntsRef getFlags() {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
+        
+        @Override
+        public void visitWayGeometry(FetchMode mode, WayGeometryVisitor visitor) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
 
         @Override
         public PointList fetchWayGeometry(FetchMode type) {

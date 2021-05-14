@@ -158,6 +158,11 @@ public class WrapperGraph implements Graph {
             public int getAdjNode() {
                 throw new UnsupportedOperationException();
             }
+            
+            @Override
+            public void visitWayGeometry(FetchMode mode, WayGeometryVisitor visitor) {
+                throw new UnsupportedOperationException();
+            }
 
             @Override
             public PointList fetchWayGeometry(FetchMode mode) {
@@ -406,6 +411,11 @@ public class WrapperGraph implements Graph {
                     @Override
                     public int getAdjNode() {
                         return current.getAdjNode();
+                    }
+                    
+                    @Override
+                    public void visitWayGeometry(FetchMode mode, WayGeometryVisitor visitor) {
+                        current.visitWayGeometry(mode, visitor);
                     }
 
                     @Override
