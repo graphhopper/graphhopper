@@ -143,10 +143,6 @@ public class MVTResource {
 
 
             }
-            @Override
-            public void onTile(BBox bbox, int depth) {
-            }
-
         });
 
         MvtLayerBuild.writeProps(layerBuilder, layerProps);
