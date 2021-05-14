@@ -226,9 +226,23 @@ public interface EdgeIteratorState {
     
     @FunctionalInterface
     interface WayGeometryVisitor {
+        /**
+         * Gets called exactly once before the first call to
+         * {@link #onPoint(double, double, double)}.
+         * 
+         * @param pointCount
+         *            the number of points in the geometry
+         * @param is3D
+         *            if {@link #onPoint(double, double, double)} will receive elevation values
+         */
         default void init(int pointCount, boolean is3D) {
         }
         
+        /**
+         * @param lat
+         * @param lon
+         * @param ele the elevation or {@link Double#NaN} if not supported
+         */
         void onPoint(double lat, double lon, double ele);
     }
 }
