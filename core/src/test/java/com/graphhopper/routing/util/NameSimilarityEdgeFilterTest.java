@@ -256,6 +256,12 @@ public class NameSimilarityEdgeFilterTest {
             public int getAdjNode() {
                 return adjNodeId;
             }
+            
+            @Override
+            public void visitWayGeometry(FetchMode mode, WayGeometryVisitor visitor) {
+                visitor.init(1, false);
+                visitor.onPoint(basePoint.lat, basePoint.lon, Double.NaN);
+            }
 
             @Override
             public PointList fetchWayGeometry(FetchMode type) {
