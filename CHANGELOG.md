@@ -1,5 +1,6 @@
 ### 3.0 [not yet released]
 
+- fix location lookup with point hints for curved roads, #2319
 - custom_model_file only accepts file names without path. Use custom_model_folder instead.
 - the load method in GraphHopperWeb (client-hc) was removed
 - routing.ch.disabling_allowed and routing.lm.disabling_allowed configuration options are no longer supported
