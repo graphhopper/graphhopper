@@ -171,7 +171,7 @@ public class LocationIndexTree implements LocationIndex {
         if (!bounds.isValid())
             bounds = new BBox(-10.0,10.0,-10.0,10.0);
 
-        InMemConstructionIndex inMemConstructionIndex = prepareInMemConstructionIndex(edgeFilter);
+        InMemConstructionIndex inMemConstructionIndex = prepareInMemConstructionIndex(bounds, edgeFilter);
 
         lineIntIndex = new LineIntIndex(bounds, directory, "location_index");
         lineIntIndex.setMinResolutionInMeter(minResolutionInMeter);
@@ -190,8 +190,8 @@ public class LocationIndexTree implements LocationIndex {
         return this;
     }
 
-    InMemConstructionIndex prepareInMemConstructionIndex(EdgeFilter edgeFilter) {
-        indexStructureInfo = IndexStructureInfo.create(graph.getBounds(), minResolutionInMeter);
+    InMemConstructionIndex prepareInMemConstructionIndex(BBox bounds, EdgeFilter edgeFilter) {
+        indexStructureInfo = IndexStructureInfo.create(bounds, minResolutionInMeter);
         InMemConstructionIndex inMem = new InMemConstructionIndex(indexStructureInfo);
         AllEdgesIterator allIter = graph.getAllEdges();
         try {
