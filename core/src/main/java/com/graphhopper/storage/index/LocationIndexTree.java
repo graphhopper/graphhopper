@@ -133,11 +133,15 @@ public class LocationIndexTree implements LocationIndex {
             bounds = new BBox(-10.0,10.0,-10.0,10.0);
 
         lineIntIndex = new LineIntIndex(bounds, directory, "location_index");
-        lineIntIndex.loadExisting();
+
+        if (!lineIntIndex.loadExisting())
+            return false;
+
         if (lineIntIndex.getChecksum() != checksum())
             throw new IllegalStateException("location index was opened with incorrect graph: "
                     + lineIntIndex.getChecksum() + " vs. " + checksum());
         minResolutionInMeter = lineIntIndex.getMinResolutionInMeter();
+        indexStructureInfo = IndexStructureInfo.create(graph.getBounds(), minResolutionInMeter);
         initialized = true;
         return true;
     }
