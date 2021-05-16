@@ -91,58 +91,52 @@ public class MVTResource {
         final MvtLayerProps layerProps = new MvtLayerProps();
         final VectorTile.Tile.Layer.Builder layerBuilder = MvtLayerBuild.newLayerBuilder("roads", layerParams);
 
-        locationIndex.query(bbox, new LocationIndexTree.Visitor() {
-            @Override
-            public void onEdge(int edgeId) {
-                EdgeIteratorState edge = graphHopper.getGraphHopperStorage().getEdgeIteratorStateForKey(edgeId * 2);
-                LineString lineString;
-                RoadClass rc = edge.get(roadClassEnc);
-                if (zInfo >= 14) {
-                    PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
-                    lineString = pl.toLineString(false);
-                } else if (rc == RoadClass.MOTORWAY
-                        || zInfo > 10 && (rc == RoadClass.PRIMARY || rc == RoadClass.TRUNK)
-                        || zInfo > 11 && (rc == RoadClass.SECONDARY)
-                        || zInfo > 12) {
-                    double lat = na.getLat(edge.getBaseNode());
-                    double lon = na.getLon(edge.getBaseNode());
-                    double toLat = na.getLat(edge.getAdjNode());
-                    double toLon = na.getLon(edge.getAdjNode());
-                    lineString = geometryFactory.createLineString(new Coordinate[]{new Coordinate(lon, lat), new Coordinate(toLon, toLat)});
-                } else {
-                    // skip edge for certain zoom
-                    return;
-                }
-
-                edgeCounter.incrementAndGet();
-                Map<String, Object> map = new HashMap<>(2);
-                map.put("name", edge.getName());
-                for (String str : pathDetails) {
-                    // how to indicate an erroneous parameter?
-                    if (str.contains(",") || !encodingManager.hasEncodedValue(str))
-                        continue;
-
-                    EncodedValue ev = encodingManager.getEncodedValue(str, EncodedValue.class);
-                    if (ev instanceof EnumEncodedValue)
-                        map.put(ev.getName(), edge.get((EnumEncodedValue) ev).toString());
-                    else if (ev instanceof DecimalEncodedValue)
-                        map.put(ev.getName(), edge.get((DecimalEncodedValue) ev));
-                    else if (ev instanceof BooleanEncodedValue)
-                        map.put(ev.getName(), edge.get((BooleanEncodedValue) ev));
-                    else if (ev instanceof IntEncodedValue)
-                        map.put(ev.getName(), edge.get((IntEncodedValue) ev));
-                }
-
-                lineString.setUserData(map);
-
-                // doing some AffineTransformation
-                TileGeomResult tileGeom = JtsAdapter.createTileGeom(lineString, tileEnvelope, geometryFactory, layerParams, acceptAllGeomFilter);
-                List<VectorTile.Tile.Feature> features = JtsAdapter.toFeatures(tileGeom.mvtGeoms, layerProps, converter);
-                layerBuilder.addAllFeatures(features);
-
-
-
+        locationIndex.query(bbox, edgeId -> {
+            EdgeIteratorState edge = graphHopper.getGraphHopperStorage().getEdgeIteratorStateForKey(edgeId * 2);
+            LineString lineString;
+            RoadClass rc = edge.get(roadClassEnc);
+            if (zInfo >= 14) {
+                PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
+                lineString = pl.toLineString(false);
+            } else if (rc == RoadClass.MOTORWAY
+                    || zInfo > 10 && (rc == RoadClass.PRIMARY || rc == RoadClass.TRUNK)
+                    || zInfo > 11 && (rc == RoadClass.SECONDARY)
+                    || zInfo > 12) {
+                double lat = na.getLat(edge.getBaseNode());
+                double lon = na.getLon(edge.getBaseNode());
+                double toLat = na.getLat(edge.getAdjNode());
+                double toLon = na.getLon(edge.getAdjNode());
+                lineString = geometryFactory.createLineString(new Coordinate[]{new Coordinate(lon, lat), new Coordinate(toLon, toLat)});
+            } else {
+                // skip edge for certain zoom
+                return;
             }
+
+            edgeCounter.incrementAndGet();
+            Map<String, Object> map = new HashMap<>(2);
+            map.put("name", edge.getName());
+            for (String str : pathDetails) {
+                // how to indicate an erroneous parameter?
+                if (str.contains(",") || !encodingManager.hasEncodedValue(str))
+                    continue;
+
+                EncodedValue ev = encodingManager.getEncodedValue(str, EncodedValue.class);
+                if (ev instanceof EnumEncodedValue)
+                    map.put(ev.getName(), edge.get((EnumEncodedValue) ev).toString());
+                else if (ev instanceof DecimalEncodedValue)
+                    map.put(ev.getName(), edge.get((DecimalEncodedValue) ev));
+                else if (ev instanceof BooleanEncodedValue)
+                    map.put(ev.getName(), edge.get((BooleanEncodedValue) ev));
+                else if (ev instanceof IntEncodedValue)
+                    map.put(ev.getName(), edge.get((IntEncodedValue) ev));
+            }
+
+            lineString.setUserData(map);
+
+            // doing some AffineTransformation
+            TileGeomResult tileGeom = JtsAdapter.createTileGeom(lineString, tileEnvelope, geometryFactory, layerParams, acceptAllGeomFilter);
+            List<VectorTile.Tile.Feature> features = JtsAdapter.toFeatures(tileGeom.mvtGeoms, layerProps, converter);
+            layerBuilder.addAllFeatures(features);
         });
 
         MvtLayerBuild.writeProps(layerBuilder, layerProps);
