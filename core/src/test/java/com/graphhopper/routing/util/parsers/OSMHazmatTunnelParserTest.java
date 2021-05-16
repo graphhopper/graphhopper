@@ -5,10 +5,10 @@ import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.HazmatTunnel;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class OSMHazmatTunnelParserTest {
 
@@ -17,7 +17,7 @@ public class OSMHazmatTunnelParserTest {
     private OSMHazmatTunnelParser parser;
     private IntsRef relFlags;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         parser = new OSMHazmatTunnelParser();
         em = new EncodingManager.Builder().add(parser).build();
