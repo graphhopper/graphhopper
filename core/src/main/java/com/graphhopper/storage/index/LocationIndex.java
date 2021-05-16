@@ -57,18 +57,20 @@ public interface LocationIndex extends Storable<LocationIndex> {
     /**
      * This interface allows to visit edges stored in the LocationIndex.
      */
-    abstract class Visitor {
-        public boolean isTileInfo() {
+    @FunctionalInterface
+    interface Visitor {
+
+        void onEdge(int edgeId);
+        
+        default boolean isTileInfo() {
             return false;
         }
 
         /**
          * This method is called if isTileInfo returns true.
          */
-        public void onTile(BBox bbox, int depth) {
+        default void onTile(BBox bbox, int depth) {
         }
-
-        public abstract void onEdge(int edgeId);
     }
 
 }
