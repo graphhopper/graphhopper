@@ -636,8 +636,8 @@ public class Measurement {
                     nodes.add(node);
                     points.add(new GHPoint(na.getLat(node), na.getLon(node)));
                     if (querySettings.withPointHints) {
-                        EdgeIterator iter = edgeExplorer.setBaseNode(node);
-                        pointHints.add(iter.next() ? iter.getName() : "");
+                        // we add some point hint to make sure the name similarity filter has to do some actual work
+                        pointHints.add("probably_not_found");
                     }
                 }
                 req.setPoints(points);
