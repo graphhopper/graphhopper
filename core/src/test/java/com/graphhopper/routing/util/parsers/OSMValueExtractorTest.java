@@ -4,8 +4,8 @@ import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import org.junit.jupiter.api.Test;
 
-import static com.graphhopper.Junit4To5Assertions.assertEquals;
-import static com.graphhopper.Junit4To5Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class OSMValueExtractorTest {
 

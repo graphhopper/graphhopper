@@ -32,9 +32,9 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Arrays;
 
-import static com.graphhopper.Junit4To5Assertions.assertEquals;
-import static com.graphhopper.Junit4To5Assertions.assertFalse;
 import static com.graphhopper.gtfs.GtfsHelper.time;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class AnotherAgencyIT {
 

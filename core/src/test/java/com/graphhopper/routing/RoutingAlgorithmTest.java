@@ -52,8 +52,6 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.stream.Stream;
 
-import static com.graphhopper.Junit4To5Assertions.assertEquals;
-import static com.graphhopper.Junit4To5Assertions.assertTrue;
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
 import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
@@ -62,8 +60,7 @@ import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
 import static com.graphhopper.util.Parameters.Routing.MAX_VISITED_NODES;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * This test tests the different routing algorithms on small user-defined sample graphs. It tests node- and edge-based

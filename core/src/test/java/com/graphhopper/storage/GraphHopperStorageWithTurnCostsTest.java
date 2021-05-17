@@ -27,9 +27,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Random;
 
-import static com.graphhopper.Junit4To5Assertions.assertEquals;
-import static com.graphhopper.Junit4To5Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Karl Hübner

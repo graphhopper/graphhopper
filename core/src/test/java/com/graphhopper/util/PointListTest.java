@@ -20,7 +20,7 @@ package com.graphhopper.util;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
 
-import static com.graphhopper.Junit4To5Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich

@@ -21,7 +21,7 @@ import com.graphhopper.routing.SPTEntry;
 import com.graphhopper.util.EdgeIterator;
 import org.junit.jupiter.api.Test;
 
-import static com.graphhopper.Junit4To5Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich

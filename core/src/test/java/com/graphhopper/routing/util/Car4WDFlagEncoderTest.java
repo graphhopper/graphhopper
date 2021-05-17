@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test;
 import java.text.DateFormat;
 import java.util.Date;
 
-import static com.graphhopper.Junit4To5Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Peter Karich

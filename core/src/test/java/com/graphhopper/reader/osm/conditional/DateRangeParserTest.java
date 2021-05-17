@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import java.text.ParseException;
 import java.util.Calendar;
 
-import static com.graphhopper.Junit4To5Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Robin Boldt

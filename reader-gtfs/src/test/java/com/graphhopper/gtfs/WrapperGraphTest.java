@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
-import static com.graphhopper.Junit4To5Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class WrapperGraphTest {
 

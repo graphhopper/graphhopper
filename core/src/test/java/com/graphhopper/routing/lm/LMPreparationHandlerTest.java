@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
-import static com.graphhopper.Junit4To5Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 
 public class LMPreparationHandlerTest {

@@ -45,10 +45,8 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-import static com.graphhopper.Junit4To5Assertions.assertEquals;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Robin Boldt

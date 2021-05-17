@@ -3,8 +3,8 @@ package com.graphhopper.routing.ev;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.Test;
 
-import static com.graphhopper.Junit4To5Assertions.assertFalse;
-import static com.graphhopper.Junit4To5Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class BooleanEncodedValueTest {
 

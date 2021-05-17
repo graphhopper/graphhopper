@@ -17,7 +17,7 @@
  */
 package com.graphhopper.coll;
 
-import static com.graphhopper.Junit4To5Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Peter Karich

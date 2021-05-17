@@ -29,9 +29,9 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.Test;
 
-import static com.graphhopper.Junit4To5Assertions.assertEquals;
-import static com.graphhopper.Junit4To5Assertions.assertTrue;
 import static com.graphhopper.routing.RoutingAlgorithmTest.initTestStorage;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Run some tests specific for {@link DijkstraOneToMany}

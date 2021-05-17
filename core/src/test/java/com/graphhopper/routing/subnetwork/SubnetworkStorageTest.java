@@ -3,7 +3,7 @@ package com.graphhopper.routing.subnetwork;
 import com.graphhopper.storage.RAMDirectory;
 import org.junit.jupiter.api.Test;
 
-import static com.graphhopper.Junit4To5Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SubnetworkStorageTest {
 

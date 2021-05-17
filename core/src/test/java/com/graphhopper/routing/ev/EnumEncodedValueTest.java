@@ -3,7 +3,7 @@ package com.graphhopper.routing.ev;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.Test;
 
-import static com.graphhopper.Junit4To5Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class EnumEncodedValueTest {
 

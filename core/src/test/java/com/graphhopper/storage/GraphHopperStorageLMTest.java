@@ -14,9 +14,9 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
-import static com.graphhopper.Junit4To5Assertions.assertEquals;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class GraphHopperStorageLMTest {
     @Test

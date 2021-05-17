@@ -20,7 +20,7 @@ package com.graphhopper.reader.dem;
 import com.graphhopper.util.PointList;
 import org.junit.jupiter.api.Test;
 
-import static com.graphhopper.Junit4To5Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Robin Boldt

@@ -28,8 +28,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
-import static com.graphhopper.Junit4To5Assertions.*;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich

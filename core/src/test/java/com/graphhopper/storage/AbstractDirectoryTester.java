@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
-import static com.graphhopper.Junit4To5Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 /**
  * @author Peter Karich
@@ -52,7 +52,7 @@ public abstract class AbstractDirectoryTester {
         Directory dir = createDir();
         DataAccess da1 = dir.find("testing");
         DataAccess da2 = dir.find("testing");
-        assertTrue(da1 == da2);
+        assertSame(da1, da2);
         da1.close();
         da2.close();
     }
