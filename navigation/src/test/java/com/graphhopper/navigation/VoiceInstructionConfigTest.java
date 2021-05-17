@@ -6,8 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Locale;
 
 import static com.graphhopper.navigation.DistanceUtils.UnitTranslationKey.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 
 public class VoiceInstructionConfigTest {
@@ -15,9 +14,9 @@ public class VoiceInstructionConfigTest {
     private final TranslationMap trMap = new TranslationMap().doImport();
     private final Locale locale = Locale.ENGLISH;
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void conditionalDistanceVICShouldHaveSameImportValueSize() {
-        new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, trMap, locale, new int[]{400, 200}, new int[]{400});
+        assertThrows(IllegalArgumentException.class, () -> new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, trMap, locale, new int[]{400, 200}, new int[]{400}));
     }
 
     @Test

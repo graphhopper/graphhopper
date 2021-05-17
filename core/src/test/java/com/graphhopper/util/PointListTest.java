@@ -168,11 +168,11 @@ public class PointListTest {
 
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testImmutable() {
         PointList pl = new PointList();
         pl.makeImmutable();
-        pl.add(0, 0, 0);
+        assertThrows(IllegalStateException.class, () -> pl.add(0, 0, 0));
     }
 
     @Test()

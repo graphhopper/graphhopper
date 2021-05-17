@@ -27,8 +27,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Random;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Karl Hübner
@@ -154,18 +153,18 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
         assertEquals(12, na.getTurnCostIndex(4000));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     @Override
     public void testClone() {
         // todo: implement graph copying in the presence of turn costs
-        super.testClone();
+        assertThrows(IllegalArgumentException.class, super::testClone);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     @Override
     public void testCopyTo() {
         // todo: implement graph coyping in the presence of turn costs
-        super.testCopyTo();
+        assertThrows(IllegalArgumentException.class, super::testCopyTo);
     }
 
     private double getTurnCost(EdgeIteratorState fromEdge, int viaNode, EdgeIteratorState toEdge) {

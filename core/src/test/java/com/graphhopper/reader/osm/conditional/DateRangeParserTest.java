@@ -204,10 +204,9 @@ public class DateRangeParserTest extends CalendarBasedTest {
         assertFalse(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 28)));
     }
 
-    @Test(expected = ParseException.class)
-    public void testParseUnparsableDate() throws ParseException {
-        dateRangeParser.getRange("Sat");
-        fail();
+    @Test
+    public void testParseUnparsableDate() {
+        assertThrows(ParseException.class, () -> dateRangeParser.getRange("Sat"));
     }
 
     private void assertSameDate(int year, int month, int day, String dateString) throws ParseException {
