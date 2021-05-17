@@ -10,9 +10,9 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Ignore;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -32,7 +32,7 @@ public class NavigateResponseConverterTest {
     private final TranslationMap trMap = hopper.getTranslationMap();
     private final DistanceConfig distanceConfig = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH);
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
         // make sure we are using fresh files with correct vehicle
         Helper.removeDir(new File(graphFolder));
@@ -45,7 +45,7 @@ public class NavigateResponseConverterTest {
                 importOrLoad();
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         Helper.removeDir(new File(graphFolder));
     }
