@@ -59,7 +59,6 @@ public class EdgeBasedNodeContractorTest {
 
     @BeforeEach
     public void setup() {
-        // its important to use @Before when using RepeatRule!
         initialize();
     }
 

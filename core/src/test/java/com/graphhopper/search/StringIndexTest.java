@@ -1,9 +1,9 @@
 package com.graphhopper.search;
 
 import com.carrotsearch.hppc.LongArrayList;
-import com.graphhopper.Repeat;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.Helper;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -223,8 +223,7 @@ public class StringIndexTest {
         assertNull(index.get(pointerB, ""));
     }
 
-    @Test
-    @Repeat(times = 100)
+    @RepeatedTest(100)
     public void testRandom() {
         StringIndex index = create();
         long seed = new Random().nextLong();

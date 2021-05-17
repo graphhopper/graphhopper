@@ -2,8 +2,6 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntHashSet;
-import com.graphhopper.Repeat;
-import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -17,8 +15,8 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import org.junit.Rule;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -44,9 +42,6 @@ public class DirectedBidirectionalDijkstraTest {
     private EncodingManager encodingManager;
     private Weighting weighting;
     private DecimalEncodedValue turnCostEnc;
-
-    @Rule
-    public RepeatRule repeatRule = new RepeatRule();
 
     @BeforeEach
     public void setup() {
@@ -374,14 +369,12 @@ public class DirectedBidirectionalDijkstraTest {
         assertPath(calcPath(0, 6, left0, left6, createWeighting(40)), 43.6, 60, 43600, nodes(0, 7, 8, 9, 6, 1, 6));
     }
 
-    @Test
-    @Repeat(times = 10)
+    @RepeatedTest(10)
     public void compare_standard_dijkstra() {
         compare_with_dijkstra(weighting);
     }
 
-    @Test
-    @Repeat(times = 10)
+    @RepeatedTest(10)
     public void compare_standard_dijkstra_finite_uturn_costs() {
         compare_with_dijkstra(createWeighting(40));
     }
