@@ -19,9 +19,9 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.apache.commons.lang3.StringUtils;
 import com.graphhopper.debatty.java.stringsimilarity.JaroWinkler;
-import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.FetchMode;
+import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Circle;
 import com.graphhopper.util.shapes.GHPoint;
@@ -160,7 +160,7 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
             return false;
         }
 
-        BBox bbox = GHUtility.createBBox(iter);
+        BBox bbox = createBBox(iter);
         if (!pointCircle.intersects(bbox)) {
             return false;
         }
@@ -171,9 +171,13 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         return isJaroWinklerSimilar(pointHint, edgeName);
     }
 
-    private static BBox createBBox(NodeAccess na, EdgeIteratorState edgeState) {
-        return BBox.fromPoints(na.getLat(edgeState.getBaseNode()), na.getLon(edgeState.getBaseNode()),
-                na.getLat(edgeState.getAdjNode()), na.getLon(edgeState.getAdjNode()));
+    private static BBox createBBox(EdgeIteratorState edgeState) {
+        // we should include the entire geometry, see #2319
+        PointList geometry = edgeState.fetchWayGeometry(FetchMode.ALL);
+        BBox bbox = new BBox(180, -180, 90, -90);
+        for (int i = 0; i < geometry.getSize(); i++)
+            bbox.update(geometry.getLat(i), geometry.getLon(i));
+        return bbox;
     }
 
     private boolean isJaroWinklerSimilar(String str1, String str2) {

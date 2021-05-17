@@ -236,33 +236,29 @@ public class MapMatching {
         List<Snap> snaps = new ArrayList<>();
         IntHashSet seenEdges = new IntHashSet();
         IntHashSet seenNodes = new IntHashSet();
-        locationIndex.query(queryShape,
-                new LocationIndex.Visitor() {
-                    @Override
-                    public void onEdge(int edgeId) {
-                        EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeId * 2);
-                        if (seenEdges.add(edgeId) && edgeFilter.accept(edge)) {
-                            Snap snap = new Snap(queryLat, queryLon);
-                            locationIndex.traverseEdge(queryLat, queryLon, edge, (node, normedDist, wayIndex, pos) -> {
-                                if (normedDist < snap.getQueryDistance()) {
-                                    snap.setQueryDistance(normedDist);
-                                    snap.setClosestNode(node);
-                                    snap.setWayIndex(wayIndex);
-                                    snap.setSnappedPosition(pos);
-                                }
-                            });
-                            double dist = DIST_PLANE.calcDenormalizedDist(snap.getQueryDistance());
-                            snap.setClosestEdge(edge);
-                            snap.setQueryDistance(dist);
-                            if (snap.isValid() && (snap.getSnappedPosition() != Snap.Position.TOWER || seenNodes.add(snap.getClosestNode()))) {
-                                snap.calcSnappedPoint(DistanceCalcEarth.DIST_EARTH);
-                                if (queryShape.contains(snap.getSnappedPoint().lat, snap.getSnappedPoint().lon)) {
-                                    snaps.add(snap);
-                                }
-                            }
-                        }
+        locationIndex.query(queryShape, edgeId -> {
+            EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeId * 2);
+            if (seenEdges.add(edgeId) && edgeFilter.accept(edge)) {
+                Snap snap = new Snap(queryLat, queryLon);
+                locationIndex.traverseEdge(queryLat, queryLon, edge, (node, normedDist, wayIndex, pos) -> {
+                    if (normedDist < snap.getQueryDistance()) {
+                        snap.setQueryDistance(normedDist);
+                        snap.setClosestNode(node);
+                        snap.setWayIndex(wayIndex);
+                        snap.setSnappedPosition(pos);
                     }
                 });
+                double dist = DIST_PLANE.calcDenormalizedDist(snap.getQueryDistance());
+                snap.setClosestEdge(edge);
+                snap.setQueryDistance(dist);
+                if (snap.isValid() && (snap.getSnappedPosition() != Snap.Position.TOWER || seenNodes.add(snap.getClosestNode()))) {
+                    snap.calcSnappedPoint(DistanceCalcEarth.DIST_EARTH);
+                    if (queryShape.contains(snap.getSnappedPoint().lat, snap.getSnappedPoint().lon)) {
+                        snaps.add(snap);
+                    }
+                }
+            }
+        });
         return snaps;
     }
 
