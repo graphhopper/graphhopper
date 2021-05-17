@@ -84,7 +84,7 @@ profiles:
 The name and vehicle fields are the same as for standard profiles and the vehicle field is used as the 'base' vehicle
 for the custom profile. The weighting must be always set to `custom` for custom profiles. The custom model itself goes
 into the `custom_model` property. Alternatively, you can also set a path to a custom model file using the
-`custom_model_file` property.
+`custom_model_folder` and `custom_model_file` properties.
 
 Using custom profiles for your routing requests works just the same way as for standard profiles. Simply add
 `profile=my_custom_profile` as request parameter to your routing request.
@@ -203,11 +203,12 @@ So say your routing request (POST /route) looks like this:
 where in `config.yml` we have:
 
 ```yaml
+custom_model_file: path/to/my/custom/models
 profiles:
   - name: my_custom_car
     vehicle: car
     weighting: custom
-    custom_model_file: path/to/my_custom_car.json
+    custom_model_file: my_custom_car.json
 ```
 
 and `my_custom_car.json` looks like this:

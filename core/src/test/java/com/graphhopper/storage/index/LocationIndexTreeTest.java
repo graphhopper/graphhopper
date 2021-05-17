@@ -131,12 +131,7 @@ public class LocationIndexTreeTest {
         Graph graph = createTestGraph2();
         LocationIndexTree index = (LocationIndexTree) createIndexNoPrepare(graph, 500).prepareIndex();
         final HashSet<Integer> edges = new HashSet<>();
-        index.query(graph.getBounds(), new LocationIndex.Visitor() {
-            @Override
-            public void onEdge(int edgeId) {
-                edges.add(edgeId);
-            }
-        });
+        index.query(graph.getBounds(), edges::add);
         // All edges (see testgraph2.jpg)
         assertEquals(edges.size(), graph.getEdges());
     }
@@ -147,12 +142,7 @@ public class LocationIndexTreeTest {
         LocationIndexTree index = (LocationIndexTree) createIndexNoPrepare(graph, 500).prepareIndex();
         final IntArrayList edges = new IntArrayList();
         BBox bbox = new BBox(11.57314, 11.57614, 49.94553, 49.94853);
-        index.query(bbox, new LocationIndex.Visitor() {
-            @Override
-            public void onEdge(int edgeId) {
-                edges.add(edgeId);
-            }
-        });
+        index.query(bbox, edges::add);
         // Also all edges (see testgraph2.jpg)
         assertEquals(edges.size(), graph.getEdges());
     }

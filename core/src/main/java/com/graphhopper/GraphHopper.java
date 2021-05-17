@@ -420,8 +420,13 @@ public class GraphHopper implements GraphHopperAPI {
      * is read from `config.yml`.
      */
     public GraphHopper init(GraphHopperConfig ghConfig) {
+        // disabling_allowed config options were removed for GH 3.0
+        if (ghConfig.has("routing.ch.disabling_allowed"))
+            throw new IllegalArgumentException("The 'routing.ch.disabling_allowed' configuration option is no longer supported");
+        if (ghConfig.has("routing.lm.disabling_allowed"))
+            throw new IllegalArgumentException("The 'routing.lm.disabling_allowed' configuration option is no longer supported");
         if (ghConfig.has("osmreader.osm"))
-            throw new IllegalArgumentException("Instead osmreader.osm use datareader.file, for other changes see core/files/changelog.txt");
+            throw new IllegalArgumentException("Instead osmreader.osm use datareader.file, for other changes see CHANGELOG.md");
 
         String tmpOsmFile = ghConfig.getString("datareader.file", "");
         if (!isEmpty(tmpOsmFile))
@@ -505,7 +510,11 @@ public class GraphHopper implements GraphHopperAPI {
         Map<String, String> flagEncoderMap = new LinkedHashMap<>(), implicitFlagEncoderMap = new HashMap<>();
         for (String encoderStr : Arrays.asList(flagEncodersStr.split(","))) {
             String key = encoderStr.split("\\|")[0];
-            if (!key.isEmpty()) flagEncoderMap.put(key, encoderStr);
+            if (!key.isEmpty()) {
+                if (flagEncoderMap.containsKey(key))
+                    throw new IllegalArgumentException("FlagEncoder " + key + " needs to be unique");
+                flagEncoderMap.put(key, encoderStr);
+            }
         }
         if (requireProfilesByName && profilesByName.isEmpty())
             throw new IllegalStateException("no profiles exist but assumed to create EncodingManager. E.g. provide them in GraphHopperConfig when calling GraphHopper.init");
@@ -669,7 +678,6 @@ public class GraphHopper implements GraphHopperAPI {
      * @param graphHopperFolder is the folder containing graphhopper files. Can be a compressed file
      *                          too ala folder-content.ghz.
      */
-    @Override
     public boolean load(String graphHopperFolder) {
         if (isEmpty(graphHopperFolder))
             throw new IllegalStateException("GraphHopperLocation is not specified. Call setGraphHopperLocation or init before");
