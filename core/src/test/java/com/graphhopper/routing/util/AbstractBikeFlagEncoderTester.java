@@ -70,7 +70,8 @@ public abstract class AbstractBikeFlagEncoderTester {
     }
 
     protected double getSpeedFromFlags(ReaderWay way) {
-        IntsRef flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, WAY);
+        IntsRef relFlags = encodingManager.createRelationFlags();
+        IntsRef flags = encodingManager.handleWayTags(way, new EncodingManager.AcceptWay().put(encoder.toString(), WAY), relFlags);
         return avgSpeedEnc.getDecimal(false, flags);
     }
 
@@ -255,13 +256,13 @@ public abstract class AbstractBikeFlagEncoderTester {
         way.setTag("railway", "platform");
         IntsRef relFlags = encodingManager.createRelationFlags();
         IntsRef flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
-        assertNotEquals(0, flags.ints[0]);
+        assertNotEquals(true, flags.isEmpty());
 
         way = new ReaderWay(1);
         way.setTag("highway", "track");
         way.setTag("railway", "platform");
         flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
-        assertNotEquals(0, flags.ints[0]);
+        assertNotEquals(true, flags.isEmpty());
 
         way = new ReaderWay(1);
         way.setTag("highway", "track");
@@ -269,7 +270,7 @@ public abstract class AbstractBikeFlagEncoderTester {
         way.setTag("bicycle", "no");
 
         flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
-        assertEquals(0, flags.ints[0]);
+        assertEquals(true, flags.isEmpty());
     }
 
     @Test

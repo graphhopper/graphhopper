@@ -26,6 +26,7 @@
         "road_environment": {type: 'enum', values: ["OTHER", "ROAD", "FERRY", "TUNNEL", "BRIDGE", "FORD", "SHUTTLE_TRAIN"].sort()},
         "road_access": {type: 'enum', values: ["YES", "DESTINATION", "CUSTOMERS", "DELIVERY", "FORESTRY", "AGRICULTURAL", "PRIVATE", "OTHER", "NO"].sort()},
         "surface": {type: 'enum', values: ["MISSING", "PAVED", "ASPHALT", "CONCRETE", "PAVING_STONES", "COBBLESTONE", "UNPAVED", "COMPACTED", "FINE_GRAVEL", "GRAVEL", "GROUND", "DIRT", "GRASS", "SAND", "OTHER"].sort()},
+        "smoothness": {type: 'enum', values: ["MISSING", "EXCELLENT", "GOOD", "INTERMEDIATE", "BAD", "VERY_BAD", "HORRIBLE", "VERY_HORRIBLE", "IMPASSABLE", "OTHER"].sort()},
         "toll": {type: 'enum', values: ["NO", "ALL", "HGV"].sort()}
     };
     const editor = GHCustomModelEditor.create({}, (element) => {

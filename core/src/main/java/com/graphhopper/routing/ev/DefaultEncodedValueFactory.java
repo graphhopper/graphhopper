@@ -57,6 +57,8 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             enc = MaxLength.create();
         } else if (Surface.KEY.equals(name)) {
             enc = new EnumEncodedValue<>(Surface.KEY, Surface.class);
+        } else if (Smoothness.KEY.equals(name)) {
+            enc = new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class);
         } else if (Toll.KEY.equals(name)) {
             enc = new EnumEncodedValue<>(Toll.KEY, Toll.class);
         } else if (TrackType.KEY.equals(name)) {

@@ -54,6 +54,8 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMMaxLengthParser();
         else if (name.equals(Surface.KEY))
             return new OSMSurfaceParser();
+        else if (name.equals(Smoothness.KEY))
+            return new OSMSmoothnessParser();
         else if (name.equals(Toll.KEY))
             return new OSMTollParser();
         else if (name.equals(TrackType.KEY))
