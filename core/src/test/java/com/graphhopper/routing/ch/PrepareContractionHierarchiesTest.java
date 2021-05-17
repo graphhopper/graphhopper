@@ -571,7 +571,7 @@ public class PrepareContractionHierarchiesTest {
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, c);
         useNodeOrdering(prepare, nodeOrdering);
         prepare.doWork();
-        //assertEquals(expShortcuts, prepare.getShortcuts(), c.toString());
+        assertEquals(expShortcuts, prepare.getShortcuts(), c.toString());
         RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(lg).createAlgo(new PMap());
         Path path = algo.calcPath(3, 12);
         assertEquals(expDistance, path.getDistance(), 1e-5, path.toString());
