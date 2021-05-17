@@ -19,9 +19,8 @@
 package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.graphhopper.jackson.Jackson;
 import com.graphhopper.util.*;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Collections;

@@ -17,9 +17,9 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -48,7 +48,7 @@ public class DirectedBidirectionalDijkstraTest {
     @Rule
     public RepeatRule repeatRule = new RepeatRule();
 
-    @Before
+    @BeforeEach
     public void setup() {
         dir = new RAMDirectory();
         maxTurnCosts = 10;

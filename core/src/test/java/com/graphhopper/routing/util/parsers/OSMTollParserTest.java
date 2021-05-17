@@ -5,8 +5,8 @@ import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.Toll;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.assertEquals;
 
@@ -15,7 +15,7 @@ public class OSMTollParserTest {
     private EnumEncodedValue<Toll> tollEnc;
     private OSMTollParser parser;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         parser = new OSMTollParser();
         em = new EncodingManager.Builder().add(parser).build();

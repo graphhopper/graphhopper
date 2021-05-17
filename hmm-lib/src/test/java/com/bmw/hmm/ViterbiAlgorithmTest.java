@@ -17,22 +17,12 @@
 
 package com.bmw.hmm;
 
+import org.junit.jupiter.api.Test;
+
+import java.util.*;
+
 import static java.lang.Math.log;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.junit.Test;
-
-import com.bmw.hmm.SequenceState;
-import com.bmw.hmm.Transition;
-import com.bmw.hmm.ViterbiAlgorithm;
+import static org.junit.Assert.*;
 
 public class ViterbiAlgorithmTest {
 

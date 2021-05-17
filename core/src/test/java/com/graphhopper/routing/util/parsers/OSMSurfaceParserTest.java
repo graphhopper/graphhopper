@@ -5,8 +5,8 @@ import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.Surface;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -16,7 +16,7 @@ public class OSMSurfaceParserTest {
     private EnumEncodedValue<Surface> surfaceEnc;
     private OSMSurfaceParser parser;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         parser = new OSMSurfaceParser();
         em = new EncodingManager.Builder().add(parser).build();

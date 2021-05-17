@@ -17,10 +17,10 @@
  */
 package com.graphhopper.reader.dem;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
@@ -33,12 +33,12 @@ public class SRTMProviderTest {
     private double precision = .1;
     SRTMProvider instance;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         instance = new SRTMProvider();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         instance.release();
     }

@@ -2,7 +2,7 @@ package com.graphhopper.routing.util.spatialrules;
 
 import com.graphhopper.util.JsonFeature;
 import com.graphhopper.util.JsonFeatureCollection;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.*;
 

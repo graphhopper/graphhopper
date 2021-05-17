@@ -5,8 +5,8 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.MaxAxleLoad;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.assertEquals;
 
@@ -17,7 +17,7 @@ public class OSMMaxAxleLoadParserTest {
     private OSMMaxAxleLoadParser parser;
     private IntsRef relFlags;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         parser = new OSMMaxAxleLoadParser();
         em = new EncodingManager.Builder().add(parser).build();

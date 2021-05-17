@@ -28,7 +28,7 @@ import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.details.PathDetail;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.time.LocalDateTime;

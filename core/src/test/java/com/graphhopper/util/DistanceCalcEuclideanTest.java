@@ -18,10 +18,9 @@
 
 package com.graphhopper.util;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.graphhopper.util.shapes.GHPoint;
+import org.junit.Assert;
+import org.junit.jupiter.api.Test;
 
 public class DistanceCalcEuclideanTest {
 

@@ -1,7 +1,7 @@
 package com.graphhopper.navigation;
 
 import com.graphhopper.util.TranslationMap;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Locale;
 

@@ -31,7 +31,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.details.PathDetailsFromEdges;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.*;
 

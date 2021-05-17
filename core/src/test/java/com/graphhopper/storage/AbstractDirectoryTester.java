@@ -18,14 +18,12 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.util.Helper;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -37,14 +35,14 @@ public abstract class AbstractDirectoryTester {
 
     abstract Directory createDir();
 
-    @After
+    @AfterEach
     public void tearDown() {
         if (da != null)
             da.close();
         Helper.removeDir(new File(location));
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         Helper.removeDir(new File(location));
     }

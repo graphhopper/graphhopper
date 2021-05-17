@@ -19,10 +19,10 @@ package com.graphhopper.http;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.gpx.GpxConversions;
-import com.graphhopper.matching.Observation;
 import com.graphhopper.jackson.Gpx;
+import com.graphhopper.matching.Observation;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.List;

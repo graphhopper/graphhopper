@@ -18,10 +18,10 @@
 package com.graphhopper.reader.dem;
 
 import com.graphhopper.util.Downloader;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -38,12 +38,12 @@ public class GMTEDProviderTest {
     private double precision = .1;
     GMTEDProvider instance;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         instance = new GMTEDProvider();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         instance.release();
     }

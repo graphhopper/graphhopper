@@ -1,6 +1,6 @@
 package com.graphhopper.routing.ev;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static com.graphhopper.routing.ev.RoadAccess.NO;
 import static com.graphhopper.routing.ev.RoadAccess.YES;

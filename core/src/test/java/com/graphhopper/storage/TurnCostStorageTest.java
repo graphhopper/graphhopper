@@ -25,8 +25,8 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.GHUtility;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -41,7 +41,7 @@ public class TurnCostStorageTest {
 
     private EncodingManager manager;
 
-    @Before
+    @BeforeEach
     public void setup() {
         FlagEncoder carEncoder = new CarFlagEncoder(5, 5, 3);
         FlagEncoder bikeEncoder = new BikeFlagEncoder(5, 5, 3);
