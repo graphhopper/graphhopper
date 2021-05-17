@@ -170,12 +170,12 @@ public class DirectedRoutingTest {
                     new Fixture(Algo.CH_ASTAR, INFINITE_U_TURN_COSTS, true, false),
                     new Fixture(Algo.CH_DIJKSTRA, INFINITE_U_TURN_COSTS, true, false),
                     // todo: LM+directed still fails sometimes, #1971,
-//                  new MyFixture(Algo.LM, INFINITE_U_TURN_COSTS, false, true),
+//                  new Fixture(Algo.LM, INFINITE_U_TURN_COSTS, false, true),
                     new Fixture(Algo.ASTAR, 40, false, false),
                     new Fixture(Algo.CH_ASTAR, 40, true, false),
                     new Fixture(Algo.CH_DIJKSTRA, 40, true, false)
                     // todo: LM+directed still fails sometimes, #1971,
-//                  new MyFixture(Algo.LM, 40, false, true),
+//                  new Fixture(Algo.LM, 40, false, true),
             ).map(Arguments::of);
         }
     }
