@@ -264,10 +264,10 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
      * @return a priority for the given way
      */
     @Override
-    protected int handlePriority(ReaderWay way, Integer priorityFromRelation) {
+    protected int handlePriority(IntsRef edgeFlags, ReaderWay way, Integer priorityFromRelation) {
         TreeMap<Double, Integer> weightToPrioMap = new TreeMap<>();
 
-        weightToPrioMap.put(100d, super.handlePriority(way, priorityFromRelation));
+        weightToPrioMap.put(100d, super.handlePriority(edgeFlags, way, priorityFromRelation));
 
         if (way.hasTag("wheelchair", "designated")) {
             weightToPrioMap.put(102d, VERY_NICE.getValue());

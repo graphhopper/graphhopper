@@ -22,6 +22,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValue;
+import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.routing.ev.Roundabout;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.IntsRef;
@@ -49,7 +50,8 @@ public class CarFlagEncoderTest {
     private final BooleanEncodedValue roundaboutEnc = em.getBooleanEncodedValue(Roundabout.KEY);
     private final DecimalEncodedValue avSpeedEnc = encoder.getAverageSpeedEnc();
     private final BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-
+    private final DecimalEncodedValue maxSpeedEnc = em.getDecimalEncodedValue(MaxSpeed.KEY);
+    
     CarFlagEncoder createEncoder() {
         return new CarFlagEncoder(new PMap("speed_two_directions=true|block_fords=true"));
     }
@@ -294,7 +296,7 @@ public class CarFlagEncoderTest {
             allowed.put(encoder.toString(), EncodingManager.Access.WAY);
         IntsRef relFlags = em.createRelationFlags();
         IntsRef edgeFlags = em.handleWayTags(way, allowed, relFlags);
-        assertEquals(140, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
+        assertEquals(135, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
 
         way = new ReaderWay(1);
         way.setTag("highway", "primary");
@@ -329,7 +331,9 @@ public class CarFlagEncoderTest {
         way.setTag("highway", "trunk");
         way.setTag("maxspeed", "110");
         EncodingManager.Access allowed = encoder.getAccess(way);
-        IntsRef edgeFlags = encoder.handleWayTags(em.createEdgeFlags(), way, allowed);
+        IntsRef edgeFlags = em.createEdgeFlags();
+        maxSpeedEnc.setDecimal(false, edgeFlags, 110);
+        encoder.handleWayTags(edgeFlags, way, allowed);
         assertEquals(100, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
 
         way.clearTags();
@@ -597,22 +601,23 @@ public class CarFlagEncoderTest {
         CarFlagEncoder instance = new CarFlagEncoder(10, 0.5, 0);
         EncodingManager em = EncodingManager.create(instance);
         DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(EncodingManager.getKey(instance, "average_speed"));
+        IntsRef edgeFlags = em.createEdgeFlags();
+        maxSpeedEnc.setDecimal(false, edgeFlags, 100);
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway_link");
-        way.setTag("maxspeed", "60 mph");
-        IntsRef edgeFlags = instance.handleWayTags(em.createEdgeFlags(), way, EncodingManager.Access.WAY);
-
-        // double speed = AbstractFlagEncoder.parseSpeed("60 mph");
-        // => 96.56 * 0.9 => 86.9
-        assertEquals(86.9, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
-        assertEquals(86.9, avSpeedEnc.getDecimal(true, edgeFlags), 1e-1);
+        instance.handleWayTags(edgeFlags, way, EncodingManager.Access.WAY);
+        
+        assertEquals(90, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
+        assertEquals(90, avSpeedEnc.getDecimal(true, edgeFlags), 1e-1);
 
         // test that maxPossibleValue  is not exceeded
+        edgeFlags = em.createEdgeFlags();
+        maxSpeedEnc.setDecimal(false, edgeFlags, MaxSpeed.UNLIMITED_SIGN_SPEED);
         way = new ReaderWay(2);
         way.setTag("highway", "motorway_link");
-        way.setTag("maxspeed", "70 mph");
-        edgeFlags = instance.handleWayTags(em.createEdgeFlags(), way, EncodingManager.Access.WAY);
-        assertEquals(101.5, avSpeedEnc.getDecimal(false, edgeFlags), .1);
+        instance.handleWayTags(edgeFlags, way, EncodingManager.Access.WAY);
+        // 150 * 0.9
+        assertEquals(135, avSpeedEnc.getDecimal(false, edgeFlags), .1);
     }
 
     @Test
@@ -628,9 +633,10 @@ public class CarFlagEncoderTest {
 
     @Test
     public void testSetToMaxSpeed() {
-        ReaderWay way = new ReaderWay(12);
-        way.setTag("maxspeed", "90");
-        assertEquals(90, encoder.getMaxSpeed(way), 1e-2);
+        IntsRef edgeFlags = em.createEdgeFlags();
+        DecimalEncodedValue maxSpeedEnc = em.getDecimalEncodedValue(MaxSpeed.KEY);
+        maxSpeedEnc.setDecimal(false, edgeFlags, 90);
+        assertEquals(90, encoder.getMaxSpeed(edgeFlags), 1e-2);
     }
 
     @Test

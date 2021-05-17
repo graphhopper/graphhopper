@@ -60,7 +60,7 @@ public class AustriaSpatialRule extends AbstractSpatialRule {
         case RESIDENTIAL:
             return 50;
         case LIVING_STREET:
-            return 20;
+            return 5;
         default:
             return Double.NaN;
         }

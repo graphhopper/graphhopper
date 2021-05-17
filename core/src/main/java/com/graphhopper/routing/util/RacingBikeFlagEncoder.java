@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
 import java.util.TreeMap;
@@ -125,8 +126,8 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
     }
 
     @Override
-    void collect(ReaderWay way, double wayTypeSpeed, TreeMap<Double, Integer> weightToPrioMap) {
-        super.collect(way, wayTypeSpeed, weightToPrioMap);
+    void collect(IntsRef edgeFlags, ReaderWay way, double wayTypeSpeed, TreeMap<Double, Integer> weightToPrioMap) {
+        super.collect(edgeFlags, way, wayTypeSpeed, weightToPrioMap);
 
         String highway = way.getTag("highway");
         if ("service".equals(highway)) {
