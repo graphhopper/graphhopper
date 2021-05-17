@@ -70,7 +70,8 @@ public abstract class AbstractBikeFlagEncoderTester {
     }
 
     protected double getSpeedFromFlags(ReaderWay way) {
-        IntsRef flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, WAY);
+        IntsRef relFlags = encodingManager.createRelationFlags();
+        IntsRef flags = encodingManager.handleWayTags(way, new EncodingManager.AcceptWay().put(encoder.toString(), WAY), relFlags);
         return avgSpeedEnc.getDecimal(false, flags);
     }
 

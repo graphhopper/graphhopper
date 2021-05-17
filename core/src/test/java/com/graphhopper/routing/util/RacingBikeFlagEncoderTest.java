@@ -129,49 +129,38 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
     public void testSmoothness() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "residential");
-        IntsRef relFlags = encodingManager.createRelationFlags();
-        IntsRef flags = encodingManager.handleWayTags(way, accessMap, relFlags);
-        assertEquals(16, encoder.getAverageSpeedEnc().getDecimal(false, flags), 0.01);
+        assertEquals(16, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "excellent");
-        flags = encodingManager.handleWayTags(way, accessMap, relFlags);
-        assertEquals(20, encoder.getAverageSpeedEnc().getDecimal(false, flags), 0.01);
+        assertEquals(20, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "bad");
-        flags = encodingManager.handleWayTags(way, accessMap, relFlags);
-        assertEquals(12, encoder.getAverageSpeedEnc().getDecimal(false, flags), 0.01);
+        assertEquals(12, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "impassable");
-        flags = encodingManager.handleWayTags(way, accessMap, relFlags);
-        assertEquals(PUSHING_SECTION_SPEED, encoder.getAverageSpeedEnc().getDecimal(false, flags), 0.01);
+        assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 0.01);
         
         way.setTag("smoothness", "unknown");
-        flags = encodingManager.handleWayTags(way, accessMap, relFlags);
-        assertEquals(12, encoder.getAverageSpeedEnc().getDecimal(false, flags), 0.01);
+        assertEquals(12, getSpeedFromFlags(way), 0.01);
 
         way.clearTags();
         way.setTag("highway", "residential");
         way.setTag("surface", "ground");
-        flags = encodingManager.handleWayTags(way, accessMap, relFlags);
-        assertEquals(2, encoder.getAverageSpeedEnc().getDecimal(false, flags), 0.01);
+        assertEquals(2, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "bad");
-        flags = encodingManager.handleWayTags(way, accessMap, relFlags);
-        assertEquals(2, encoder.getAverageSpeedEnc().getDecimal(false, flags), 0.01);
+        assertEquals(2, getSpeedFromFlags(way), 0.01);
 
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade5");
-        flags = encodingManager.handleWayTags(way, accessMap, relFlags);
-        assertEquals(PUSHING_SECTION_SPEED, encoder.getAverageSpeedEnc().getDecimal(false, flags), 0.01);
+        assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "bad");
-        flags = encodingManager.handleWayTags(way, accessMap, relFlags);
-        assertEquals(PUSHING_SECTION_SPEED, encoder.getAverageSpeedEnc().getDecimal(false, flags), 0.01);
+        assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "impassable");
-        flags = encodingManager.handleWayTags(way, accessMap, relFlags);
-        assertEquals(PUSHING_SECTION_SPEED, encoder.getAverageSpeedEnc().getDecimal(false, flags), 0.01);
+        assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 0.01);
     }
 
     @Test
