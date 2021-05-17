@@ -128,13 +128,10 @@ public class PtIsochroneResource {
 
             // Get at least all nodes within our bounding box (I think convex hull would be enough.)
             // I think then we should have all possible encroaching points. (Proof needed.)
-            locationIndex.query(BBox.fromEnvelope(exploredPoints.getEnvelopeInternal()), new LocationIndex.Visitor() {
-                @Override
-                public void onEdge(int edgeId) {
-                    EdgeIteratorState edge = queryGraph.getEdgeIteratorStateForKey(edgeId * 2);
-                    z1.merge(new Coordinate(nodeAccess.getLon(edge.getBaseNode()), nodeAccess.getLat(edge.getBaseNode())), Double.MAX_VALUE, Math::min);
-                    z1.merge(new Coordinate(nodeAccess.getLon(edge.getAdjNode()), nodeAccess.getLat(edge.getAdjNode())), Double.MAX_VALUE, Math::min);
-                }
+            locationIndex.query(BBox.fromEnvelope(exploredPoints.getEnvelopeInternal()), edgeId -> {
+                EdgeIteratorState edge = queryGraph.getEdgeIteratorStateForKey(edgeId * 2);
+                z1.merge(new Coordinate(nodeAccess.getLon(edge.getBaseNode()), nodeAccess.getLat(edge.getBaseNode())), Double.MAX_VALUE, Math::min);
+                z1.merge(new Coordinate(nodeAccess.getLon(edge.getAdjNode()), nodeAccess.getLat(edge.getAdjNode())), Double.MAX_VALUE, Math::min);
             });
             exploredPoints = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
 

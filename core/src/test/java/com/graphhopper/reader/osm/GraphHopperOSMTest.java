@@ -174,21 +174,14 @@ public class GraphHopperOSMTest {
         LocationIndexTree index = (LocationIndexTree) gh.getLocationIndex();
         final EdgeExplorer edgeExplorer = gh.getGraphHopperStorage().createEdgeExplorer();
         final BBox bbox = new BBox(7.422, 7.429, 43.729, 43.734);
-        index.query(bbox, new LocationIndexTree.Visitor() {
-            @Override
-            public void onTile(BBox bbox, int width) {
-            }
-
-            @Override
-            public void onEdge(int edgeId) {
-                EdgeIteratorState edge = gh.getGraphHopperStorage().getEdgeIteratorStateForKey(edgeId * 2);
-                for (int i = 0; i < 2; i++) {
-                    int nodeId = i == 0 ? edge.getBaseNode() : edge.getAdjNode();
-                    double lat = na.getLat(nodeId);
-                    double lon = na.getLon(nodeId);
-                    if (bbox.contains(lat, lon))
-                        indexNodeList.add(nodeId);
-                }
+        index.query(bbox, edgeId -> {
+            EdgeIteratorState edge = gh.getGraphHopperStorage().getEdgeIteratorStateForKey(edgeId * 2);
+            for (int i = 0; i < 2; i++) {
+                int nodeId = i == 0 ? edge.getBaseNode() : edge.getAdjNode();
+                double lat = na.getLat(nodeId);
+                double lon = na.getLon(nodeId);
+                if (bbox.contains(lat, lon))
+                    indexNodeList.add(nodeId);
             }
         });
 

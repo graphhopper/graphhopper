@@ -426,7 +426,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (ghConfig.has("routing.lm.disabling_allowed"))
             throw new IllegalArgumentException("The 'routing.lm.disabling_allowed' configuration option is no longer supported");
         if (ghConfig.has("osmreader.osm"))
-            throw new IllegalArgumentException("Instead osmreader.osm use datareader.file, for other changes see core/files/changelog.txt");
+            throw new IllegalArgumentException("Instead osmreader.osm use datareader.file, for other changes see CHANGELOG.md");
 
         String tmpOsmFile = ghConfig.getString("datareader.file", "");
         if (!isEmpty(tmpOsmFile))

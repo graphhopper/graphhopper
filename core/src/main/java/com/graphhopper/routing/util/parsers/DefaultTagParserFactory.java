@@ -64,6 +64,8 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMHazmatTunnelParser();
         else if (name.equals(HazmatWater.KEY))
             return new OSMHazmatWaterParser();
+        else if (name.equals(Lanes.KEY))
+            return new OSMLanesParser();
         else if (name.equals(MtbRating.KEY))
             return new OSMMtbRatingParser();
         else if (name.equals(HikeRating.KEY))
