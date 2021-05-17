@@ -1,5 +1,6 @@
-### 3.0 [not yet released]
+### 3.0 [17 May 2021]
 
+- removed the stable tag (was pointing to commit dd2c20c763e4c19b701e92386432b37713cd8dc5)
 - fix location lookup with point hints for curved roads, #2319
 - custom_model_file only accepts file names without path. Use custom_model_folder instead.
 - the load method in GraphHopperWeb (client-hc) was removed
