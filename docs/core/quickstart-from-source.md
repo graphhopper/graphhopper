@@ -15,7 +15,7 @@ Then do:
 ```bash
 git clone git://github.com/graphhopper/graphhopper.git
 cd graphhopper
-git checkout stable
+git checkout master # if you prefer a less moving branch you can use e.g. 3.x
 ./graphhopper.sh -a web -i europe_germany_berlin.pbf
 # after Server started go to http://localhost:8989/ and you should see something similar to GraphHopper Maps: https://graphhopper.com/maps/
 ```

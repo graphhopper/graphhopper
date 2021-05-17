@@ -15,21 +15,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper;
 
-/**
- * Wrapper of the graphhopper online or offline API. Provides read only access.
- * <p>
- *
- * @author Peter Karich
- */
-public interface GraphHopperAPI {
+package com.graphhopper.routing.ev;
 
-    /**
-     * Calculates the path from specified request visiting the specified locations.
-     * <p>
-     *
-     * @return the response with the route and possible errors
-     */
-    GHResponse route(GHRequest request);
+public class Lanes {
+    public static final String KEY = "lanes";
+
+    public static IntEncodedValue create() {
+        return new UnsignedIntEncodedValue(KEY, 3, false);
+    }
 }

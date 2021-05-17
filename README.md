@@ -23,12 +23,13 @@ We even have [good first issues](https://github.com/graphhopper/graphhopper/issu
 
 To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read through our documentation and install the GraphHopper Web Service locally.
 
- * stable 2.x: [documentation](https://github.com/graphhopper/graphhopper/blob/2.x/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-2.4.jar), [announcement](https://www.graphhopper.com/blog/2020/09/30/graphhopper-routing-engine-2-0-released/)
+ * 3.x: [documentation](https://github.com/graphhopper/graphhopper/blob/3.x/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-3.0.jar), [announcement](https://www.graphhopper.com/blog/2021/05/18/graphhopper-routing-engine-3-0-released/)
  * unstable master: [documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)
 
 <details><summary>Click to see older releases</summary>
 
- * See our [changelog file](./core/files/changelog.txt) for Java API Changes.
+ * See our [changelog file](./CHANGELOG.md) for Java API Changes.
+ * 2.x: [documentation](https://github.com/graphhopper/graphhopper/blob/2.x/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-2.4.jar), [announcement](https://www.graphhopper.com/blog/2020/09/30/graphhopper-routing-engine-2-0-released/)
  * 1.0: [documentation](https://github.com/graphhopper/graphhopper/blob/1.0/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-1.0.jar), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-1.0.apk), [announcement](https://www.graphhopper.com/blog/2020/05/25/graphhopper-routing-engine-1-0-released/)
  * 0.13.0: [documentation](https://github.com/graphhopper/graphhopper/blob/0.13/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-0.13.0.jar), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.13.0.apk), [announcement](https://www.graphhopper.com/blog/2019/09/18/graphhopper-routing-engine-0-13-released/)
  * 0.12.0: [documentation](https://github.com/graphhopper/graphhopper/blob/0.12/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-0.12.0.jar), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.12.0.apk), [announcement](https://www.graphhopper.com/blog/2019/03/26/graphhopper-routing-engine-0-12-released/)
@@ -45,7 +46,7 @@ To install the [GraphHopper Maps](https://graphhopper.com/maps/) and the web ser
 
 ```bash
 # download and install a JVM that supports at least Java 8 (https://adoptopenjdk.net)
-wget https://graphhopper.com/public/releases/graphhopper-web-2.4.jar https://raw.githubusercontent.com/graphhopper/graphhopper/stable/config-example.yml http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
+wget https://graphhopper.com/public/releases/graphhopper-web-3.0.jar https://raw.githubusercontent.com/graphhopper/graphhopper/3.x/config-example.yml http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
 java -Ddw.graphhopper.datareader.file=berlin-latest.osm.pbf -jar *.jar server config-example.yml
 ```
 
@@ -90,9 +91,9 @@ demo and [this pull request](http://github.com/graphhopper/graphhopper-ios) of t
 
 Use isochrones to calculate and visualize the reachable area for a certain travel mode
 
-### [Isochrone Web API](../stable/docs/web/api-doc.md#isochrone)
+### [Isochrone Web API](./docs/web/api-doc.md#isochrone)
 
-[![Isochrone API image](./docs/isochrone/images/isochrone.png)](../stable/docs/web/api-doc.md#isochrone)
+[![Isochrone API image](./docs/isochrone/images/isochrone.png)](./docs/web/api-doc.md#isochrone)
 
 ### [Shortest Path Tree API](//www.graphhopper.com/blog/2018/07/04/high-precision-reachability/)
 
@@ -191,17 +192,17 @@ Here is a list of the more detailed features:
  * Works out of the box with OpenStreetMap (osm/xml and pbf) and can be adapted to custom data
  * OpenStreetMap integration: stores and considers road type, speed limit, the surface, barriers, access restrictions, ferries, [conditional access restrictions](https://github.com/graphhopper/graphhopper/pull/621), ...
  * GraphHopper is fast. And with the so called "Contraction Hierarchies" it can be even faster (enabled by default).
- * Memory efficient data structures, algorithms and [the low and high level API](../stable/docs/core/low-level-api.md) is tuned towards ease of use and efficiency
- * Provides a simple [web API](../stable/docs/web/api-doc.md) including JavaScript and Java clients
+ * Memory efficient data structures, algorithms and [the low and high level API](./docs/core/low-level-api.md) is tuned towards ease of use and efficiency
+ * Provides a simple [web API](./docs/web/api-doc.md) including JavaScript and Java clients
  * Multiple weightings (fastest/shortest/custom/...) and pre-built routing profiles: car, bike, racing bike, mountain bike, foot, hike, motorcycle, wheelchair, ...
- * [Customization of these profiles](../stable/docs/core/profiles.md#custom-profiles) are possible to get truck and cargo bike support or individual improvements
+ * [Customization of these profiles](./docs/core/profiles.md#custom-profiles) are possible to get truck and cargo bike support or individual improvements
  * Does [map matching](./map-matching)
- * Supports public transit routing and [GTFS](../stable/reader-gtfs/README.md).
- * Offers turn instructions in more than 42 languages, contribute or improve [here](../stable/docs/core/translations.md)
- * Displays and takes into account [elevation data](../stable/docs/core/elevation.md)
+ * Supports public transit routing and [GTFS](./reader-gtfs/README.md).
+ * Offers turn instructions in more than 42 languages, contribute or improve [here](./docs/core/translations.md)
+ * Displays and takes into account [elevation data](./docs/core/elevation.md)
  * Can apply [real time changes to edge weights](https://graphhopper.com/blog/2015/04/08/visualize-and-handle-traffic-information-with-graphhopper-in-real-time-for-cologne-germany-koln/) (flexible and hybrid mode only)
  * [Alternative routes](https://discuss.graphhopper.com/t/alternative-routes/424)
- * [Turn costs and restrictions](../stable/docs/core/turn-restrictions.md)
+ * [Turn costs and restrictions](./docs/core/turn-restrictions.md)
  * Country specific routing via SpatialRules
  * The core uses only a few dependencies (hppc, jts, janino and slf4j)
  * Scales from small indoor-sized to world-wide-sized graphs

@@ -83,13 +83,10 @@ public class GraphEdgeIdFinder {
      */
     private GHIntHashSet findEdgesInShape(final Shape shape, EdgeFilter filter) {
         GHIntHashSet edgeIds = new GHIntHashSet();
-        locationIndex.query(shape.getBounds(), new LocationIndex.Visitor() {
-            @Override
-            public void onEdge(int edgeId) {
-                EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeId * 2);
-                if (filter.accept(edge) && shape.intersects(edge.fetchWayGeometry(FetchMode.ALL).makeImmutable()))
-                    edgeIds.add(edge.getEdge());
-            }
+        locationIndex.query(shape.getBounds(), edgeId -> {
+            EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeId * 2);
+            if (filter.accept(edge) && shape.intersects(edge.fetchWayGeometry(FetchMode.ALL).makeImmutable()))
+                edgeIds.add(edge.getEdge());
         });
         return edgeIds;
     }

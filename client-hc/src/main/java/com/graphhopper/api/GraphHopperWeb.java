@@ -23,7 +23,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.jackson.ResponsePathDeserializer;
@@ -52,11 +51,11 @@ import static com.graphhopper.util.Parameters.Routing.INSTRUCTIONS;
  *
  * @author Peter Karich
  */
-public class GraphHopperWeb implements GraphHopperAPI {
+public class GraphHopperWeb {
 
     private final ObjectMapper objectMapper;
+    private final String routeServiceUrl;
     private OkHttpClient downloader;
-    private String routeServiceUrl;
     private String key = "";
     private boolean instructions = true;
     private boolean calcPoints = true;
@@ -125,12 +124,6 @@ public class GraphHopperWeb implements GraphHopperAPI {
         return downloader;
     }
 
-    @Override
-    public boolean load(String serviceUrl) {
-        this.routeServiceUrl = serviceUrl;
-        return true;
-    }
-
     public GraphHopperWeb setKey(String key) {
         Objects.requireNonNull(key,"Key must not be null");
         if (key.isEmpty()) {
@@ -189,7 +182,6 @@ public class GraphHopperWeb implements GraphHopperAPI {
         return this;
     }
 
-    @Override
     public GHResponse route(GHRequest ghRequest) {
         ResponseBody rspBody = null;
         try {
