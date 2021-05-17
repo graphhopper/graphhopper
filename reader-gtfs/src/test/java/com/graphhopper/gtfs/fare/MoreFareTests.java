@@ -19,6 +19,7 @@
 package com.graphhopper.gtfs.fare;
 
 import com.conveyal.gtfs.model.Fare;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -32,7 +33,6 @@ import static com.graphhopper.gtfs.fare.FareTest.map;
 import static com.graphhopper.gtfs.fare.FareTest.parseFares;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assume.assumeThat;
 
 public class MoreFareTests {
 
@@ -44,7 +44,7 @@ public class MoreFareTests {
         );
         for (Map.Entry<String, Map<String, Fare>> entry : twoFeeds.entrySet()) {
             for (Fare fare : entry.getValue().values()) {
-                assumeThat(fare.fare_attribute.feed_id, equalTo(entry.getKey()));
+                Assumptions.assumeTrue(fare.fare_attribute.feed_id.equals(entry.getKey()));
             }
         }
         Trip twoLegsWithDistinctFeeds = new Trip();
