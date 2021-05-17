@@ -213,7 +213,7 @@ public class ResponsePath {
     public Envelope calcBBox2D() {
         check("calcRouteBBox");
         Envelope bounds = new Envelope();
-        for (int i = 0; i < pointList.getSize(); i++) {
+        for (int i = 0; i < pointList.size(); i++) {
             bounds.expandToInclude(pointList.getLon(i), pointList.getLat(i));
         }
         return bounds;
@@ -221,7 +221,7 @@ public class ResponsePath {
 
     @Override
     public String toString() {
-        String str = "nodes:" + pointList.getSize() + "; " + pointList.toString();
+        String str = "nodes:" + pointList.size() + "; " + pointList.toString();
         if (instructions != null && !instructions.isEmpty())
             str += ", " + instructions.toString();
 

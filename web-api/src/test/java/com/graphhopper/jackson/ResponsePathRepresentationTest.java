@@ -50,12 +50,12 @@ public class ResponsePathRepresentationTest {
         PointList list = Helper.createPointList(38.5, -120.2, 43.252, -126.453,
                 40.7, -120.95, 50.3139, 10.61279, 50.04303, 9.49768);
         String str = ResponsePathSerializer.encodePolyline(list, list.is3D(), 1e5);
-        assertEquals(list, ResponsePathDeserializer.decodePolyline(str, list.getSize(), false));
+        assertEquals(list, ResponsePathDeserializer.decodePolyline(str, list.size(), false));
 
         list = Helper.createPointList(38.5, -120.2, 43.252, -126.453,
                 40.7, -120.95, 40.70001, -120.95001);
         str = ResponsePathSerializer.encodePolyline(list, list.is3D(), 1e5);
-        assertEquals(list, ResponsePathDeserializer.decodePolyline(str, list.getSize(), false));
+        assertEquals(list, ResponsePathDeserializer.decodePolyline(str, list.size(), false));
     }
 
     @Test

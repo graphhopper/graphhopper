@@ -61,8 +61,8 @@ public class JTSTriangulator implements Triangulator {
             if (label.parent != null) {
                 EdgeIteratorState edge = queryGraph.getEdgeIteratorState(label.edge, label.node);
                 PointList innerPoints = edge.fetchWayGeometry(FetchMode.PILLAR_ONLY);
-                if (innerPoints.getSize() > 0) {
-                    int midIndex = innerPoints.getSize() / 2;
+                if (innerPoints.size() > 0) {
+                    int midIndex = innerPoints.size() / 2;
                     double lat2 = innerPoints.getLat(midIndex);
                     double lon2 = innerPoints.getLon(midIndex);
                     Coordinate site2 = new Coordinate(lon2, lat2);

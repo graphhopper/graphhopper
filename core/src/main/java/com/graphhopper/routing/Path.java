@@ -284,7 +284,7 @@ public class Path {
             @Override
             public void next(EdgeIteratorState eb, int index, int prevEdgeId) {
                 PointList pl = eb.fetchWayGeometry(FetchMode.PILLAR_AND_ADJ);
-                for (int j = 0; j < pl.getSize(); j++) {
+                for (int j = 0; j < pl.size(); j++) {
                     points.add(pl, j);
                 }
             }

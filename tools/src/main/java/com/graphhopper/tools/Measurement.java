@@ -722,7 +722,7 @@ public class Measurement {
                     altCount.addAndGet(rsp.getAll().size());
             }
 
-            return responsePath.getPoints().getSize();
+            return responsePath.getPoints().size();
         });
 
         int count = querySettings.count - failedCount.get();

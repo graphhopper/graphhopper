@@ -120,7 +120,7 @@ public class GraphHopperTest {
         ResponsePath res = rsp.getBest();
         assertEquals(3586.9, res.getDistance(), .1);
         assertEquals(277112, res.getTime(), 10);
-        assertEquals(91, res.getPoints().getSize());
+        assertEquals(91, res.getPoints().size());
 
         assertEquals(43.7276852, res.getWaypoints().getLat(0), 1e-7);
         assertEquals(43.7495432, res.getWaypoints().getLat(1), 1e-7);
@@ -146,7 +146,7 @@ public class GraphHopperTest {
 
         ResponsePath res = rsp.getBest();
         assertEquals(3437.1, res.getDistance(), .1);
-        assertEquals(85, res.getPoints().getSize());
+        assertEquals(85, res.getPoints().size());
 
         assertEquals(43.7276852, res.getWaypoints().getLat(0), 1e-7);
         assertEquals(43.7495432, res.getWaypoints().getLat(1), 1e-7);
@@ -300,7 +300,7 @@ public class GraphHopperTest {
             assertNotEquals(sum, 0);
             assertTrue(sum < 120, "Too many nodes visited " + sum);
             assertEquals(3437.1, bestPath.getDistance(), .1);
-            assertEquals(85, bestPath.getPoints().getSize());
+            assertEquals(85, bestPath.getPoints().size());
         }
 
         if (lm) {
@@ -316,7 +316,7 @@ public class GraphHopperTest {
             assertNotEquals(sum, 0);
             assertTrue(sum < 120, "Too many nodes visited " + sum);
             assertEquals(3437.1, bestPath.getDistance(), .1);
-            assertEquals(85, bestPath.getPoints().getSize());
+            assertEquals(85, bestPath.getPoints().size());
         }
 
         // flexible
@@ -331,7 +331,7 @@ public class GraphHopperTest {
         assertNotEquals(sum, 0);
         assertTrue(sum > 120, "Too few nodes visited " + sum);
         assertEquals(3437.1, bestPath.getDistance(), .1);
-        assertEquals(85, bestPath.getPoints().getSize());
+        assertEquals(85, bestPath.getPoints().size());
 
         hopper.close();
     }
@@ -676,7 +676,7 @@ public class GraphHopperTest {
 
         ResponsePath res = rsp.getBest();
         assertEquals(6874.2, res.getDistance(), .1);
-        assertEquals(170, res.getPoints().getSize());
+        assertEquals(170, res.getPoints().size());
 
         InstructionList il = res.getInstructions();
         assertEquals(30, il.size());
@@ -719,7 +719,7 @@ public class GraphHopperTest {
         res = rsp.getBest();
         assertEquals(0, res.getDistance(), .1);
         assertEquals(0, res.getRouteWeight(), .1);
-        assertEquals(1, res.getPoints().getSize());
+        assertEquals(1, res.getPoints().size());
         assertEquals(1, res.getInstructions().size());
         assertEquals("arrive at destination", res.getInstructions().get(0).getTurnDescription(tr));
         assertEquals(Instruction.FINISH, res.getInstructions().get(0).getSign());
@@ -735,7 +735,7 @@ public class GraphHopperTest {
         res = rsp.getBest();
         assertEquals(0, res.getDistance(), .1);
         assertEquals(0, res.getRouteWeight(), .1);
-        assertEquals(1, res.getPoints().getSize());
+        assertEquals(1, res.getPoints().size());
         assertEquals(2, res.getInstructions().size());
         assertEquals(Instruction.REACHED_VIA, res.getInstructions().get(0).getSign());
         assertEquals(Instruction.FINISH, res.getInstructions().get(1).getSign());
@@ -795,7 +795,7 @@ public class GraphHopperTest {
 
         ResponsePath res = rsp.getBest();
         assertEquals(839., res.getDistance(), 10.);
-        assertEquals(26, res.getPoints().getSize());
+        assertEquals(26, res.getPoints().size());
 
         // headings must be in [0, 360)
         req = new GHRequest().
@@ -941,7 +941,7 @@ public class GraphHopperTest {
 
         ResponsePath res = rsp.getBest();
         assertEquals(297, res.getDistance(), 5.);
-        assertEquals(23, res.getPoints().getSize());
+        assertEquals(23, res.getPoints().size());
 
         // test if start and first point are identical leading to an empty path, #788
         rq = new GHRequest().
@@ -974,7 +974,7 @@ public class GraphHopperTest {
 
         ResponsePath res = rsp.getBest();
         assertEquals(1614.3, res.getDistance(), .1);
-        assertEquals(55, res.getPoints().getSize());
+        assertEquals(55, res.getPoints().size());
         assertTrue(res.getPoints().is3D());
 
         InstructionList il = res.getInstructions();
@@ -1036,7 +1036,7 @@ public class GraphHopperTest {
         ResponsePath res = rsp.getBest();
         assertEquals(356.5, res.getDistance(), .1);
         PointList pointList = res.getPoints();
-        assertEquals(6, pointList.getSize());
+        assertEquals(6, pointList.size());
         assertTrue(pointList.is3D());
 
         assertEquals(20.0, pointList.getEle(0), .1);
@@ -1070,7 +1070,7 @@ public class GraphHopperTest {
         // Without interpolation: 356.5
         assertEquals(351, res.getDistance(), .1);
         PointList pointList = res.getPoints();
-        assertEquals(6, pointList.getSize());
+        assertEquals(6, pointList.size());
         assertTrue(pointList.is3D());
 
         assertEquals(18, pointList.getEle(0), .1);
@@ -1105,7 +1105,7 @@ public class GraphHopperTest {
 
         ResponsePath arsp = rsp.getBest();
         assertEquals(1569.7, arsp.getDistance(), .1);
-        assertEquals(60, arsp.getPoints().getSize());
+        assertEquals(60, arsp.getPoints().size());
         assertTrue(arsp.getPoints().is3D());
 
         InstructionList il = arsp.getInstructions();
@@ -1148,7 +1148,7 @@ public class GraphHopperTest {
 
         ResponsePath res = rsp.getBest();
         assertEquals(1601.6, res.getDistance(), .1);
-        assertEquals(55, res.getPoints().getSize());
+        assertEquals(55, res.getPoints().size());
         assertTrue(res.getPoints().is3D());
         assertEquals(69, res.getAscend(), 1e-1);
         assertEquals(121, res.getDescend(), 1e-1);
@@ -1178,7 +1178,7 @@ public class GraphHopperTest {
         assertFalse(rsp.hasErrors());
         ResponsePath res = rsp.getBest();
         assertEquals(6931.8, res.getDistance(), .1);
-        assertEquals(103, res.getPoints().getSize());
+        assertEquals(103, res.getPoints().size());
 
         InstructionList il = res.getInstructions();
         assertEquals(19, il.size());
@@ -1367,7 +1367,7 @@ public class GraphHopperTest {
         assertNotEquals(sum, 0);
         assertTrue(sum < 120, "Too many nodes visited " + sum);
         assertEquals(3437.0, bestPath.getDistance(), .1);
-        assertEquals(85, bestPath.getPoints().getSize());
+        assertEquals(85, bestPath.getPoints().size());
 
         hopper.close();
     }
@@ -1488,7 +1488,7 @@ public class GraphHopperTest {
         assertTrue(chSum < 60, "Too many visited nodes for ch mode " + chSum);
         ResponsePath bestPath = rsp.getBest();
         assertEquals(3587, bestPath.getDistance(), 1);
-        assertEquals(91, bestPath.getPoints().getSize());
+        assertEquals(91, bestPath.getPoints().size());
 
         // request flex mode
         req.setAlgorithm(Parameters.Algorithms.ASTAR_BI);
@@ -1500,7 +1500,7 @@ public class GraphHopperTest {
 
         bestPath = rsp.getBest();
         assertEquals(3587, bestPath.getDistance(), 1);
-        assertEquals(91, bestPath.getPoints().getSize());
+        assertEquals(91, bestPath.getPoints().size());
 
         // request hybrid mode
         req.putHint(Landmark.DISABLE, false);
@@ -1514,7 +1514,7 @@ public class GraphHopperTest {
 
         bestPath = rsp.getBest();
         assertEquals(3587, bestPath.getDistance(), 1);
-        assertEquals(91, bestPath.getPoints().getSize());
+        assertEquals(91, bestPath.getPoints().size());
 
         // note: combining hybrid & speed mode is currently not possible and should be avoided: #1082
     }

@@ -155,7 +155,7 @@ public class QueryGraph implements Graph {
 
     @Override
     public int getNodes() {
-        return queryOverlay.getVirtualNodes().getSize() + baseNodes;
+        return queryOverlay.getVirtualNodes().size() + baseNodes;
     }
 
     @Override

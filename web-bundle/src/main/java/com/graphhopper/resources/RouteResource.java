@@ -142,7 +142,7 @@ public class RouteResource {
                     + ", distance0: " + ghResponse.getBest().getDistance()
                     + ", weight0: " + ghResponse.getBest().getRouteWeight()
                     + ", time0: " + Math.round(ghResponse.getBest().getTime() / 60000f) + "min"
-                    + ", points0: " + ghResponse.getBest().getPoints().getSize()
+                    + ", points0: " + ghResponse.getBest().getPoints().size()
                     + ", debugInfo: " + ghResponse.getDebugInfo());
             return writeGPX ?
                     gpxSuccessResponseBuilder(ghResponse, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints, Constants.VERSION).
@@ -199,7 +199,7 @@ public class RouteResource {
                     + ", distance0: " + ghResponse.getBest().getDistance()
                     + ", weight0: " + ghResponse.getBest().getRouteWeight()
                     + ", time0: " + Math.round(ghResponse.getBest().getTime() / 60000f) + "min"
-                    + ", points0: " + ghResponse.getBest().getPoints().getSize()
+                    + ", points0: " + ghResponse.getBest().getPoints().size()
                     + ", debugInfo: " + ghResponse.getDebugInfo());
             return Response.ok(ResponsePathSerializer.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
                     header("X-GH-Took", "" + Math.round(took)).

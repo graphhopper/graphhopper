@@ -59,8 +59,8 @@ public abstract class AbstractGraphStorageTester {
     EdgeExplorer carAllExplorer;
 
     public static void assertPList(PointList expected, PointList list) {
-        assertEquals(expected.getSize(), list.getSize(), "size of point lists is not equal");
-        for (int i = 0; i < expected.getSize(); i++) {
+        assertEquals(expected.size(), list.size(), "size of point lists is not equal");
+        for (int i = 0; i < expected.size(); i++) {
             assertEquals(expected.getLat(i), list.getLat(i), 1e-4);
             assertEquals(expected.getLon(i), list.getLon(i), 1e-4);
         }

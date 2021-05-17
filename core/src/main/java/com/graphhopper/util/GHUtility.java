@@ -327,7 +327,7 @@ public class GHUtility {
         String str = nodeId + ":" + na.getLat(nodeId) + "," + na.getLon(nodeId) + "\n";
         while (iter.next()) {
             str += "  ->" + iter.getAdjNode() + " (" + iter.getDistance() + ") pillars:"
-                    + iter.fetchWayGeometry(FetchMode.PILLAR_ONLY).getSize() + ", edgeId:" + iter.getEdge()
+                    + iter.fetchWayGeometry(FetchMode.PILLAR_ONLY).size() + ", edgeId:" + iter.getEdge()
                     + "\t" + BitUtil.BIG.toBitString(iter.getFlags().ints[0], 8) + "\n";
         }
         return str;
@@ -1015,7 +1015,7 @@ public class GHUtility {
 
     public static BBox createBBox(EdgeIteratorState edgeState) {
         PointList towerNodes = edgeState.fetchWayGeometry(FetchMode.TOWER_ONLY);
-        int secondIndex = towerNodes.getSize() == 1 ? 0 : 1;
+        int secondIndex = towerNodes.size() == 1 ? 0 : 1;
         return BBox.fromPoints(towerNodes.getLat(0), towerNodes.getLon(0),
                 towerNodes.getLat(secondIndex), towerNodes.getLon(secondIndex));
     }

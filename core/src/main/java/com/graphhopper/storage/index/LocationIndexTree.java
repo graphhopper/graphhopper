@@ -206,7 +206,7 @@ public class LocationIndexTree implements LocationIndex {
                 double lat2;
                 double lon2;
                 PointList points = allIter.fetchWayGeometry(FetchMode.PILLAR_ONLY);
-                int len = points.getSize();
+                int len = points.size();
                 for (int i = 0; i < len; i++) {
                     lat2 = points.getLat(i);
                     lon2 = points.getLon(i);
@@ -351,7 +351,7 @@ public class LocationIndexTree implements LocationIndex {
         double tmpLon = currLon;
         double tmpNormedDist;
         PointList pointList = currEdge.fetchWayGeometry(FetchMode.PILLAR_AND_ADJ);
-        int len = pointList.getSize();
+        int len = pointList.size();
         for (int pointIndex = 0; pointIndex < len; pointIndex++) {
             double wayLat = pointList.getLat(pointIndex);
             double wayLon = pointList.getLon(pointIndex);

@@ -605,7 +605,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
                         tmpNode = lastInBoundsPillarNode;
                         tmpNode = handlePillarNode(tmpNode, osmNodeId, null, true);
                         tmpNode = -tmpNode - 3;
-                        if (pointList.getSize() > 1 && firstNode >= 0) {
+                        if (pointList.size() > 1 && firstNode >= 0) {
                             // TOWER node
                             newEdges.add(addEdge(firstNode, tmpNode, pointList, flags, wayOsmId));
                             pointList.clear();

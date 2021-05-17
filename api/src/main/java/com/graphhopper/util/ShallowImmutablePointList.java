@@ -35,7 +35,7 @@ public final class ShallowImmutablePointList extends PointList {
     public ShallowImmutablePointList(int fromOffset, int toOffset, PointList wrappedPointList) {
         if (fromOffset > toOffset)
             throw new IllegalArgumentException("from must be smaller or equal to end");
-        if (fromOffset < 0 || toOffset > wrappedPointList.getSize())
+        if (fromOffset < 0 || toOffset > wrappedPointList.size())
             throw new IllegalArgumentException("Illegal interval: " + fromOffset + ", " + toOffset);
         this.fromOffset = fromOffset;
         this.toOffset = toOffset;
@@ -47,7 +47,6 @@ public final class ShallowImmutablePointList extends PointList {
         return toOffset - fromOffset;
     }
 
-    @Override
     public int getSize() {
         return size();
     }
@@ -63,22 +62,22 @@ public final class ShallowImmutablePointList extends PointList {
 
     @Override
     public double getLat(int index) {
-        if (index > getSize())
-            throw new ArrayIndexOutOfBoundsException(ERR_MSG + " index:" + index + ", size:" + getSize());
+        if (index > size())
+            throw new ArrayIndexOutOfBoundsException(ERR_MSG + " index:" + index + ", size:" + size());
         return wrappedPointList.getLat(fromOffset + index);
     }
 
     @Override
     public double getLon(int index) {
-        if (index > getSize())
-            throw new ArrayIndexOutOfBoundsException(ERR_MSG + " index:" + index + ", size:" + getSize());
+        if (index > size())
+            throw new ArrayIndexOutOfBoundsException(ERR_MSG + " index:" + index + ", size:" + size());
         return wrappedPointList.getLon(fromOffset + index);
     }
 
     @Override
     public double getEle(int index) {
-        if (index > getSize())
-            throw new ArrayIndexOutOfBoundsException(ERR_MSG + " index:" + index + ", size:" + getSize());
+        if (index > size())
+            throw new ArrayIndexOutOfBoundsException(ERR_MSG + " index:" + index + ", size:" + size());
         return wrappedPointList.getEle(fromOffset + index);
     }
 

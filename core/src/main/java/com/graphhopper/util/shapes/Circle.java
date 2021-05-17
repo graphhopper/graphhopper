@@ -71,7 +71,7 @@ public class Circle implements Shape {
     @Override
     public boolean intersects(PointList pointList) {
         // similar code to LocationIndexTree.checkAdjacent
-        int len = pointList.getSize();
+        int len = pointList.size();
         if (len == 0)
             throw new IllegalArgumentException("PointList must not be empty");
 

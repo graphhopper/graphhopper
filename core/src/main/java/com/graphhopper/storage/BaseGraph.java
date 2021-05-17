@@ -755,7 +755,7 @@ class BaseGraph implements Graph {
 
             long existingGeoRef = Helper.toUnsignedLong(edges.getInt(edgePointer + E_GEO));
 
-            int len = pillarNodes.getSize();
+            int len = pillarNodes.size();
             int dim = nodeAccess.getDimension();
             if (existingGeoRef > 0) {
                 final int count = wayGeometry.getInt(existingGeoRef * 4L);
@@ -773,7 +773,7 @@ class BaseGraph implements Graph {
     }
 
     private void setWayGeometryAtGeoRef(PointList pillarNodes, long edgePointer, boolean reverse, long geoRef) {
-        int len = pillarNodes.getSize();
+        int len = pillarNodes.size();
         int dim = nodeAccess.getDimension();
         long geoRefPosition = geoRef * 4;
         int totalLen = len * dim * 4 + 4;
@@ -784,7 +784,7 @@ class BaseGraph implements Graph {
     }
 
     private byte[] createWayGeometryBytes(PointList pillarNodes, boolean reverse) {
-        int len = pillarNodes.getSize();
+        int len = pillarNodes.size();
         int dim = nodeAccess.getDimension();
         int totalLen = len * dim * 4 + 4;
         byte[] bytes = new byte[totalLen];

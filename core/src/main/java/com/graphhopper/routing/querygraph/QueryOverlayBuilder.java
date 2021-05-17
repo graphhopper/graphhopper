@@ -96,10 +96,10 @@ class QueryOverlayBuilder {
                 snap.setClosestEdge(closestEdge);
                 if (snap.getSnappedPosition() == Snap.Position.PILLAR)
                     // ON pillar node
-                    snap.setWayIndex(fullPL.getSize() - snap.getWayIndex() - 1);
+                    snap.setWayIndex(fullPL.size() - snap.getWayIndex() - 1);
                 else
                     // for case "OFF pillar node"
-                    snap.setWayIndex(fullPL.getSize() - snap.getWayIndex() - 2);
+                    snap.setWayIndex(fullPL.size() - snap.getWayIndex() - 2);
 
                 if (snap.getWayIndex() < 0)
                     throw new IllegalStateException("Problem with wayIndex while reversing closest edge:" + closestEdge + ", " + snap);
@@ -150,7 +150,7 @@ class QueryOverlayBuilder {
                 int origRevEdgeKey = GHUtility.reverseEdgeKey(origEdgeKey);
                 int prevWayIndex = 1;
                 int prevNodeId = baseNode;
-                int virtNodeId = queryOverlay.getVirtualNodes().getSize() + firstVirtualNodeId;
+                int virtNodeId = queryOverlay.getVirtualNodes().size() + firstVirtualNodeId;
                 boolean addedEdges = false;
 
                 // Create base and adjacent PointLists for all non-equal virtual nodes.
@@ -195,7 +195,7 @@ class QueryOverlayBuilder {
                 if (addedEdges)
                     createEdges(origEdgeKey, origRevEdgeKey,
                             prevPoint, prevWayIndex, false,
-                            fullPL.get(fullPL.getSize() - 1), fullPL.getSize() - 2,
+                            fullPL.get(fullPL.size() - 1), fullPL.size() - 2,
                             fullPL, closestEdge, virtNodeId - 1, adjNode);
 
                 return true;

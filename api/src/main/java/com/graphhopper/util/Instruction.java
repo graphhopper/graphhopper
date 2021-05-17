@@ -153,7 +153,7 @@ public class Instruction {
      * See #1216 and #1138
      */
     public int getLength() {
-        return points.getSize();
+        return points.size();
     }
 
     public String getTurnDescription(Translation tr) {

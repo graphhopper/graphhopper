@@ -433,7 +433,7 @@ public class MiniGraphUI {
             }
         }
         PointList list = tmpPath.calcPoints();
-        for (int i = 0; i < list.getSize(); i++) {
+        for (int i = 0; i < list.size(); i++) {
             double lat = list.getLat(i);
             double lon = list.getLon(i);
             if (!Double.isNaN(prevLat)) {
@@ -444,7 +444,7 @@ public class MiniGraphUI {
             prevLat = lat;
             prevLon = lon;
         }
-        logger.info("dist:" + tmpPath.getDistance() + ", path points(" + list.getSize() + ")");
+        logger.info("dist:" + tmpPath.getDistance() + ", path points(" + list.size() + ")");
         return tmpPath;
     }
 
