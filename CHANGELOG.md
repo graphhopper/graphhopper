@@ -1,6 +1,7 @@
 ### 4.0 [not yet released]
 
-- added smoothness encoded value, used to determine bike speed
+- added smoothness encoded value, used to determine bike speed (#2303)
+- migrated tests from junit 4 to 5 (#2324)
 
 ### 3.0 [17 May 2021]
 
