@@ -263,8 +263,8 @@ public class EncodingManagerTest {
             IntsRef edgeFlags = manager.handleWayTags(way, aw, manager.createRelationFlags());
             assertTrue(accessEnc.getBool(false, edgeFlags));
             if (!encoder.toString().equals("foot"))
-                assertFalse(encoder.toString(), accessEnc.getBool(true, edgeFlags));
-            assertTrue(encoder.toString(), roundaboutEnc.getBool(false, edgeFlags));
+                assertFalse(accessEnc.getBool(true, edgeFlags), encoder.toString());
+            assertTrue(roundaboutEnc.getBool(false, edgeFlags), encoder.toString());
 
             way.clearTags();
             way.setTag("highway", "tertiary");
@@ -274,24 +274,24 @@ public class EncodingManagerTest {
             edgeFlags = manager.handleWayTags(way, aw, manager.createRelationFlags());
             assertTrue(accessEnc.getBool(false, edgeFlags));
             if (!encoder.toString().equals("foot"))
-                assertFalse(encoder.toString(), accessEnc.getBool(true, edgeFlags));
-            assertTrue(encoder.toString(), roundaboutEnc.getBool(false, edgeFlags));
+                assertFalse(accessEnc.getBool(true, edgeFlags), encoder.toString());
+            assertTrue(roundaboutEnc.getBool(false, edgeFlags), encoder.toString());
         }
     }
 
     @Test
     public void validEV() {
         for (String str : Arrays.asList("blup_test", "test", "test12", "tes$0", "car_test_test", "small_car$average_speed")) {
-            assertTrue(str, EncodingManager.isValidEncodedValue(str));
+            assertTrue(EncodingManager.isValidEncodedValue(str), str);
         }
 
         for (String str : Arrays.asList("Test", "12test", "test|3", "car__test", "blup_te.st_", "car___test", "car$$access",
                 "test{34", "truck__average_speed", "blup.test", "test,21", "täst", "blup.two.three", "blup..test")) {
-            assertFalse(str, EncodingManager.isValidEncodedValue(str));
+            assertFalse(EncodingManager.isValidEncodedValue(str), str);
         }
 
         for (String str : Arrays.asList("break", "switch")) {
-            assertFalse(str, EncodingManager.isValidEncodedValue(str));
+            assertFalse(EncodingManager.isValidEncodedValue(str), str);
         }
     }
 }

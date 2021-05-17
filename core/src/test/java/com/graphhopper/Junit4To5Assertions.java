@@ -31,10 +31,6 @@ public class Junit4To5Assertions {
         org.junit.jupiter.api.Assertions.assertTrue(b);
     }
 
-    public static void assertTrue(String message, boolean b) {
-        org.junit.jupiter.api.Assertions.assertTrue(b, message);
-    }
-
     public static void assertTrue(boolean b, String message) {
         org.junit.jupiter.api.Assertions.assertTrue(b, message);
     }
@@ -47,16 +43,8 @@ public class Junit4To5Assertions {
         org.junit.jupiter.api.Assertions.assertFalse(b, message);
     }
 
-    public static void assertFalse(String message, boolean b) {
-        org.junit.jupiter.api.Assertions.assertFalse(b, message);
-    }
-
     public static void assertEquals(int expected, int given) {
         org.junit.jupiter.api.Assertions.assertEquals(expected, given);
-    }
-
-    public static void assertEquals(String message, int expected, int given) {
-        org.junit.jupiter.api.Assertions.assertEquals(expected, given, message);
     }
 
     public static void assertEquals(int expected, int given, String message) {
@@ -67,16 +55,8 @@ public class Junit4To5Assertions {
         org.junit.jupiter.api.Assertions.assertEquals(expected, given);
     }
 
-    public static void assertEquals(String message, long expected, long given) {
-        org.junit.jupiter.api.Assertions.assertEquals(expected, given, message);
-    }
-
     public static void assertEquals(int expected, long given, String message) {
         org.junit.jupiter.api.Assertions.assertEquals(expected, given, message);
-    }
-
-    public static void assertEquals(String message, float expected, float given, float precision) {
-        org.junit.jupiter.api.Assertions.assertEquals(expected, given, precision, message);
     }
 
     public static void assertEquals(float expected, float given, float precision, String message) {
@@ -87,20 +67,12 @@ public class Junit4To5Assertions {
         org.junit.jupiter.api.Assertions.assertEquals(expected, given, precision);
     }
 
-    public static void assertEquals(String message, double expected, double given, double precision) {
-        org.junit.jupiter.api.Assertions.assertEquals(expected, given, precision, message);
-    }
-
     public static void assertEquals(double expected, double given, double precision, String message) {
         org.junit.jupiter.api.Assertions.assertEquals(expected, given, precision, message);
     }
 
     public static void assertEquals(double expected, double given, double precision) {
         org.junit.jupiter.api.Assertions.assertEquals(expected, given, precision);
-    }
-
-    public static void assertEquals(String message, Object expected, Object given) {
-        org.junit.jupiter.api.Assertions.assertEquals(expected, given, message);
     }
 
     public static void assertEquals(Object expected, Object given, String message) {
@@ -115,16 +87,8 @@ public class Junit4To5Assertions {
         org.junit.jupiter.api.Assertions.assertNotEquals(expected, given);
     }
 
-    public static void assertNotEquals(String message, int expected, int given) {
-        org.junit.jupiter.api.Assertions.assertNotEquals(expected, given, message);
-    }
-
     public static void assertNotEquals(int expected, int given, String message) {
         org.junit.jupiter.api.Assertions.assertNotEquals(expected, given, message);
-    }
-
-    public static void assertNotEquals(String message, double expected, double given, double precision) {
-        org.junit.jupiter.api.Assertions.assertNotEquals(expected, given, precision, message);
     }
 
     public static void assertNotEquals(double expected, double given, double precision, String message) {
@@ -133,10 +97,6 @@ public class Junit4To5Assertions {
 
     public static void assertNotEquals(double expected, double given, double precision) {
         org.junit.jupiter.api.Assertions.assertNotEquals(expected, given, precision);
-    }
-
-    public static void assertNotEquals(String message, Object expected, Object given) {
-        org.junit.jupiter.api.Assertions.assertNotEquals(expected, given, message);
     }
 
     public static void assertNotEquals(Object expected, Object given, String message) {
@@ -149,10 +109,6 @@ public class Junit4To5Assertions {
 
     public static void assertNull(Object object) {
         org.junit.jupiter.api.Assertions.assertNull(object);
-    }
-
-    public static void assertNull(String message, Object object) {
-        org.junit.jupiter.api.Assertions.assertNull(object, message);
     }
 
     public static void assertNull(Object object, String message) {

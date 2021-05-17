@@ -398,8 +398,8 @@ public class DirectedBidirectionalDijkstraTest {
             int target = rnd.nextInt(numNodes);
             Path dijkstraPath = new Dijkstra(graph, w, TraversalMode.EDGE_BASED).calcPath(source, target);
             Path path = calcPath(source, target, ANY_EDGE, ANY_EDGE, w);
-            assertEquals("dijkstra found/did not find a path, from: " + source + ", to: " + target + ", seed: " + seed, dijkstraPath.isFound(), path.isFound());
-            assertEquals("weight does not match dijkstra, from: " + source + ", to: " + target + ", seed: " + seed, dijkstraPath.getWeight(), path.getWeight(), 1.e-6);
+            assertEquals(dijkstraPath.isFound(), path.isFound(), "dijkstra found/did not find a path, from: " + source + ", to: " + target + ", seed: " + seed);
+            assertEquals(dijkstraPath.getWeight(), path.getWeight(), 1.e-6, "weight does not match dijkstra, from: " + source + ", to: " + target + ", seed: " + seed);
             // we do not do a strict check because there can be ambiguity, for example when there are zero weight loops.
             // however, when there are too many deviations we fail
             if (
@@ -483,7 +483,7 @@ public class DirectedBidirectionalDijkstraTest {
         Snap snap = locationIndex.findClosest(1.1, 0.5, EdgeFilter.ALL_EDGES);
         QueryGraph queryGraph = QueryGraph.create(graph, snap);
 
-        assertEquals("wanted to get EDGE", Snap.Position.EDGE, snap.getSnappedPosition());
+        assertEquals(Snap.Position.EDGE, snap.getSnappedPosition(), "wanted to get EDGE");
         assertEquals(6, snap.getClosestNode());
 
         // check what edges there are on the query graph directly, there should not be a direct connection from 1 to 0
@@ -517,15 +517,15 @@ public class DirectedBidirectionalDijkstraTest {
     }
 
     private void assertPath(Path path, double weight, double distance, long time, IntArrayList nodes) {
-        assertTrue("expected a path, but no path was found", path.isFound());
-        assertEquals("unexpected weight", weight, path.getWeight(), 1.e-6);
-        assertEquals("unexpected distance", distance, path.getDistance(), 1.e-6);
-        assertEquals("unexpected time", time, path.getTime());
-        assertEquals("unexpected nodes", nodes, path.calcNodes());
+        assertTrue(path.isFound(), "expected a path, but no path was found");
+        assertEquals(weight, path.getWeight(), 1.e-6, "unexpected weight");
+        assertEquals(distance, path.getDistance(), 1.e-6, "unexpected distance");
+        assertEquals(time, path.getTime(), "unexpected time");
+        assertEquals(nodes, path.calcNodes(), "unexpected nodes");
     }
 
     private void assertNotFound(Path path) {
-        assertFalse("expected no path, but a path was found", path.isFound());
+        assertFalse(path.isFound(), "expected no path, but a path was found");
         assertEquals(Double.MAX_VALUE, path.getWeight(), 1.e-6);
         // if no path is found dist&time are zero, see core #1566
         assertEquals(0, path.getDistance(), 1.e-6);

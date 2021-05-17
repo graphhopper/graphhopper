@@ -79,7 +79,7 @@ public class AnotherAgencyIT {
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
         ResponsePath transitSolution = route.getBest();
-        assertEquals("Expected total travel time == scheduled travel time + wait time", time(1, 30), transitSolution.getTime());
+        assertEquals(time(1, 30), transitSolution.getTime(), "Expected total travel time == scheduled travel time + wait time");
     }
 
     @Test
@@ -111,7 +111,7 @@ public class AnotherAgencyIT {
         assertEquals("NEXT_TO_MUSEUM", ptLeg2.stops.get(0).stop_id);
         assertEquals("AIRPORT", ptLeg2.stops.get(1).stop_id);
 
-        assertEquals("Expected total travel time == scheduled travel time + wait time", time(2, 10), transitSolution.getTime());
+        assertEquals(time(2, 10), transitSolution.getTime(), "Expected total travel time == scheduled travel time + wait time");
     }
 
     @Test
@@ -147,7 +147,7 @@ public class AnotherAgencyIT {
         assertEquals(1, route.getAll().size());
         ResponsePath transitSolution = route.getBest();
         // TODO: We probably want something like a transfer leg here
-        assertEquals("Expected total travel time == scheduled travel time + wait time", time(1, 15), transitSolution.getTime());
+        assertEquals(time(1, 15), transitSolution.getTime(), "Expected total travel time == scheduled travel time + wait time");
     }
 
 }

@@ -160,7 +160,7 @@ public class MotorcycleFlagEncoderTest {
         double bendinessOfStraightWay = getBendiness(edge, 100.0);
         double bendinessOfCurvyWay = getBendiness(edge, 10.0);
 
-        assertTrue("The bendiness of the straight road is smaller than the one of the curvy road", bendinessOfCurvyWay < bendinessOfStraightWay);
+        assertTrue(bendinessOfCurvyWay < bendinessOfStraightWay, "The bendiness of the straight road is smaller than the one of the curvy road");
     }
 
     private double getBendiness(EdgeIteratorState edge, double estimatedDistance) {

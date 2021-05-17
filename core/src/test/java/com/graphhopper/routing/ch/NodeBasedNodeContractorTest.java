@@ -219,7 +219,7 @@ public class NodeBasedNodeContractorTest {
 
     @Test
     public void testNodeContraction_shortcutDistanceRounding() {
-        assertTrue("this test was constructed assuming we are using the ShortestWeighting", weighting instanceof ShortestWeighting);
+        assertTrue(weighting instanceof ShortestWeighting, "this test was constructed assuming we are using the ShortestWeighting");
         // 0 ------------> 4
         //  \             /
         //   1 --> 2 --> 3
