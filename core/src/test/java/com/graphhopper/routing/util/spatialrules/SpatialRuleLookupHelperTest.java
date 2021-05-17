@@ -2,13 +2,13 @@ package com.graphhopper.routing.util.spatialrules;
 
 import com.graphhopper.util.JsonFeature;
 import com.graphhopper.util.JsonFeatureCollection;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
 import static com.graphhopper.routing.util.spatialrules.SpatialRuleLookupHelper.JSON_ID_FIELD;
 import static com.graphhopper.routing.util.spatialrules.SpatialRuleLookupHelper.reorder;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SpatialRuleLookupHelperTest {
 

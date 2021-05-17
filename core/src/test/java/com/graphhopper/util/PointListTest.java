@@ -18,9 +18,9 @@
 package com.graphhopper.util;
 
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -168,11 +168,11 @@ public class PointListTest {
 
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testImmutable() {
         PointList pl = new PointList();
         pl.makeImmutable();
-        pl.add(0, 0, 0);
+        assertThrows(IllegalStateException.class, () -> pl.add(0, 0, 0));
     }
 
     @Test()

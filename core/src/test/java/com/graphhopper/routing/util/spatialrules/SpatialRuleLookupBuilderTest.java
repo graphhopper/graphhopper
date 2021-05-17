@@ -18,7 +18,6 @@
 package com.graphhopper.routing.util.spatialrules;
 
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
@@ -32,9 +31,10 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -46,9 +46,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
-import static junit.framework.TestCase.assertFalse;
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Robin Boldt
@@ -101,7 +99,7 @@ public class SpatialRuleLookupBuilderTest {
         Envelope almostWorldWide = new Envelope(-179, 179, -89, 89);
 
         // Might fail if a polygon is defined outside the above coordinates
-        assertTrue("BBox seems to be not contracted", almostWorldWide.contains(spatialRuleLookup.getBounds()));
+        assertTrue(almostWorldWide.contains(spatialRuleLookup.getBounds()), "BBox seems to be not contracted");
     }
 
     @Test
@@ -114,7 +112,7 @@ public class SpatialRuleLookupBuilderTest {
         SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(
                 Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO3166-1:alpha3",
                 new CountriesSpatialRuleFactory(), new Envelope(9, 10, 51, 52));
-        assertFalse("BBox seems to be incorrectly contracted", spatialRuleLookup.getBounds().contains(49.9, 8.9));
+        assertFalse(spatialRuleLookup.getBounds().contains(49.9, 8.9), "BBox seems to be incorrectly contracted");
     }
 
     @Test

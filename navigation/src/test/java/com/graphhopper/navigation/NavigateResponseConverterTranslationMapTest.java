@@ -1,20 +1,20 @@
 package com.graphhopper.navigation;
 
 import com.graphhopper.util.TranslationMap;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Locale;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class NavigateResponseConverterTranslationMapTest {
 
     @Test
     public void basicTest() {
         TranslationMap translationMap = new TranslationMap().doImport();
-        assertEquals("In 12 kilometers", translationMap.getWithFallBack(Locale.US).tr("navigate.in_km", 12));
-        assertEquals("In 12 Kilometern", translationMap.getWithFallBack(Locale.GERMAN).tr("navigate.in_km", 12));
-        assertEquals("In 12 Kilometern", translationMap.getWithFallBack(new Locale("de", "DE")).tr("navigate.in_km", 12));
-        assertEquals("In 1 Kilometer", translationMap.getWithFallBack(new Locale("de", "CH")).tr("navigate.in_km_singular"));
+        assertEquals(translationMap.getWithFallBack(Locale.US).tr("navigate.in_km", 12), "In 12 kilometers");
+        assertEquals(translationMap.getWithFallBack(Locale.GERMAN).tr("navigate.in_km", 12), "In 12 Kilometern");
+        assertEquals(translationMap.getWithFallBack(new Locale("de", "DE")).tr("navigate.in_km", 12), "In 12 Kilometern");
+        assertEquals(translationMap.getWithFallBack(new Locale("de", "CH")).tr("navigate.in_km_singular"), "In 1 Kilometer");
     }
 }

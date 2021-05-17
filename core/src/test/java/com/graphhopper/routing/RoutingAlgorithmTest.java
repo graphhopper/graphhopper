@@ -52,8 +52,6 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.stream.Stream;
 
-import static com.graphhopper.Junit4To5Assertions.assertEquals;
-import static com.graphhopper.Junit4To5Assertions.assertTrue;
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
 import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
@@ -62,8 +60,7 @@ import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
 import static com.graphhopper.util.Parameters.Routing.MAX_VISITED_NODES;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * This test tests the different routing algorithms on small user-defined sample graphs. It tests node- and edge-based
@@ -191,10 +188,10 @@ public class RoutingAlgorithmTest {
         private void compareWithRef(Weighting weighting, GraphHopperStorage graph, PathCalculator refCalculator, GHPoint from, GHPoint to, long seed) {
             Path path = calcPath(graph, weighting, from, to);
             Path refPath = refCalculator.calcPath(graph, weighting, traversalMode, defaultMaxVisitedNodes, from, to);
-            assertEquals("wrong weight, " + weighting + ", seed: " + seed, refPath.getWeight(), path.getWeight(), 1.e-1);
-            assertEquals("wrong nodes, " + weighting + ", seed: " + seed, refPath.calcNodes(), path.calcNodes());
-            assertEquals("wrong distance, " + weighting + ", seed: " + seed, refPath.getDistance(), path.getDistance(), 1.e-1);
-            assertEquals("wrong time, " + weighting + ", seed: " + seed, refPath.getTime(), path.getTime(), 100);
+            assertEquals(refPath.getWeight(), path.getWeight(), 1.e-1, "wrong weight, " + weighting + ", seed: " + seed);
+            assertEquals(refPath.calcNodes(), path.calcNodes(), "wrong nodes, " + weighting + ", seed: " + seed);
+            assertEquals(refPath.getDistance(), path.getDistance(), 1.e-1, "wrong distance, " + weighting + ", seed: " + seed);
+            assertEquals(refPath.getTime(), path.getTime(), 100, "wrong time, " + weighting + ", seed: " + seed);
         }
     }
 
@@ -226,8 +223,8 @@ public class RoutingAlgorithmTest {
         GraphHopperStorage ghStorage = f.createGHStorage();
         initTestStorage(ghStorage, f.carEncoder);
         Path p = f.calcPath(ghStorage, 0, 7);
-        assertEquals(p.toString(), nodes(0, 4, 5, 7), p.calcNodes());
-        assertEquals(p.toString(), 62.1, p.getDistance(), .1);
+        assertEquals(nodes(0, 4, 5, 7), p.calcNodes(), p.toString());
+        assertEquals(62.1, p.getDistance(), .1, p.toString());
     }
 
     @ParameterizedTest
@@ -255,7 +252,7 @@ public class RoutingAlgorithmTest {
         GHUtility.setSpeed(60, true, true, f.carEncoder, graph.edge(3, 4).setDistance(6));
         GHUtility.setSpeed(60, true, true, f.carEncoder, graph.edge(4, 1).setDistance(9));
         Path p = f.calcPath(graph, 0, 4);
-        assertEquals(p.toString(), 20, p.getDistance(), 1e-4);
+        assertEquals(20, p.getDistance(), 1e-4, p.toString());
         assertEquals(nodes(0, 2, 1, 4), p.calcNodes());
     }
 
@@ -269,7 +266,7 @@ public class RoutingAlgorithmTest {
         GHUtility.setSpeed(60, true, true, f.carEncoder, graph.edge(5, 4).setDistance(6));
         GHUtility.setSpeed(60, true, true, f.carEncoder, graph.edge(4, 1).setDistance(9));
         Path p = f.calcPath(graph, 3, 5);
-        assertEquals(p.toString(), 28, p.getDistance(), 1e-4);
+        assertEquals(28, p.getDistance(), 1e-4, p.toString());
         assertEquals(nodes(3, 2, 1, 4, 5), p.calcNodes());
     }
 
@@ -283,13 +280,13 @@ public class RoutingAlgorithmTest {
 
         Path p1 = f.calcPath(graph, f.defaultWeighting, 0, 3);
         assertEquals(nodes(0, 1, 5, 2, 3), p1.calcNodes());
-        assertEquals(p1.toString(), 402.3, p1.getDistance(), .1);
-        assertEquals(p1.toString(), 144823, p1.getTime());
+        assertEquals(402.3, p1.getDistance(), .1, p1.toString());
+        assertEquals(144823, p1.getTime(), p1.toString());
 
         Path p2 = f.calcPath(graph, fastestWeighting, 0, 3);
         assertEquals(nodes(0, 4, 6, 7, 5, 3), p2.calcNodes());
-        assertEquals(p2.toString(), 1261.7, p2.getDistance(), 0.1);
-        assertEquals(p2.toString(), 111442, p2.getTime());
+        assertEquals(1261.7, p2.getDistance(), 0.1, p2.toString());
+        assertEquals(111442, p2.getTime(), p2.toString());
     }
 
     // 0-1-2-3
@@ -339,8 +336,8 @@ public class RoutingAlgorithmTest {
         GraphHopperStorage graph = f.createGHStorage(false, shortestWeighting);
         initFootVsCar(f.carEncoder, f.footEncoder, graph);
         Path p1 = f.calcPath(graph, shortestWeighting, 0, 7);
-        assertEquals(p1.toString(), 17000, p1.getDistance(), 1e-6);
-        assertEquals(p1.toString(), 12240 * 1000, p1.getTime());
+        assertEquals(17000, p1.getDistance(), 1e-6, p1.toString());
+        assertEquals(12240 * 1000, p1.getTime(), p1.toString());
         assertEquals(nodes(0, 4, 5, 7), p1.calcNodes());
     }
 
@@ -454,8 +451,8 @@ public class RoutingAlgorithmTest {
         GraphHopperStorage graph = f.createGHStorage();
         initWikipediaTestGraph(graph, f.carEncoder);
         Path p = f.calcPath(graph, 0, 4);
-        assertEquals(p.toString(), nodes(0, 2, 5, 4), p.calcNodes());
-        assertEquals(p.toString(), 20, p.getDistance(), 1e-4);
+        assertEquals(nodes(0, 2, 5, 4), p.calcNodes(), p.toString());
+        assertEquals(20, p.getDistance(), 1e-4, p.toString());
     }
 
     @ParameterizedTest
@@ -465,7 +462,7 @@ public class RoutingAlgorithmTest {
         initTestStorage(graph, f.carEncoder);
         Path p = f.calcPath(graph, 1, 2);
         assertEquals(nodes(1, 2), p.calcNodes());
-        assertEquals(p.toString(), 35.1, p.getDistance(), .1);
+        assertEquals(35.1, p.getDistance(), .1, p.toString());
     }
 
     // see wikipedia-graph.svg !
@@ -488,13 +485,13 @@ public class RoutingAlgorithmTest {
         initBiGraph(graph, f.carEncoder);
 
         Path p = f.calcPath(graph, 0, 4);
-        assertEquals(p.toString(), nodes(0, 7, 6, 8, 3, 4), p.calcNodes());
-        assertEquals(p.toString(), 335.8, p.getDistance(), .1);
+        assertEquals(nodes(0, 7, 6, 8, 3, 4), p.calcNodes(), p.toString());
+        assertEquals(335.8, p.getDistance(), .1, p.toString());
 
         p = f.calcPath(graph, 1, 2);
         // the other way around is even larger as 0-1 is already 11008.452
-        assertEquals(p.toString(), nodes(1, 2), p.calcNodes());
-        assertEquals(p.toString(), 10007.7, p.getDistance(), .1);
+        assertEquals(nodes(1, 2), p.calcNodes(), p.toString());
+        assertEquals(10007.7, p.getDistance(), .1, p.toString());
     }
 
     // 0-1-2-3-4
@@ -577,8 +574,8 @@ public class RoutingAlgorithmTest {
         GraphHopperStorage graph = f.createGHStorage();
         initBidirGraphManualDistances(graph, f.carEncoder);
         Path p = f.calcPath(graph, 0, 4);
-        assertEquals(p.toString(), 40, p.getDistance(), 1e-4);
-        assertEquals(p.toString(), 5, p.calcNodes().size());
+        assertEquals(40, p.getDistance(), 1e-4, p.toString());
+        assertEquals(5, p.calcNodes().size(), p.toString());
         assertEquals(nodes(0, 7, 6, 5, 4), p.calcNodes());
     }
 
@@ -691,7 +688,7 @@ public class RoutingAlgorithmTest {
         GHUtility.setSpeed(60, true, false, f.carEncoder, graph.edge(0, 1).setDistance(1));
         GHUtility.setSpeed(60, true, false, f.carEncoder, graph.edge(1, 2).setDistance(1));
         Path p = f.calcPath(graph, 0, 2);
-        assertEquals(p.toString(), 3, p.calcNodes().size());
+        assertEquals(3, p.calcNodes().size(), p.toString());
     }
 
     @ParameterizedTest
@@ -706,8 +703,8 @@ public class RoutingAlgorithmTest {
         GHUtility.setSpeed(60, true, false, f.carEncoder, graph.edge(4, 2).setDistance(1));
 
         Path p = f.calcPath(graph, 0, 2);
-        assertEquals(p.toString(), nodes(0, 1, 2), p.calcNodes());
-        assertEquals(p.toString(), 5.99, p.getDistance(), 1e-4);
+        assertEquals(nodes(0, 1, 2), p.calcNodes(), p.toString());
+        assertEquals(5.99, p.getDistance(), 1e-4, p.toString());
     }
 
     @ParameterizedTest
@@ -793,7 +790,7 @@ public class RoutingAlgorithmTest {
         // very close
         p = f.calcPath(ghStorage, new GHPoint(0.00092, 0), new GHPoint(0.00091, 0));
         assertEquals(nodes(8, 9), p.calcNodes());
-        assertEquals(p.toString(), 1.11, p.getDistance(), .1);
+        assertEquals(1.11, p.getDistance(), .1, p.toString());
     }
 
     @ParameterizedTest
@@ -804,13 +801,13 @@ public class RoutingAlgorithmTest {
 
         // 0-7 to 4-3
         Path p = f.calcPath(graph, new GHPoint(0.0009, 0), new GHPoint(0.001, 0.001105));
-        assertEquals(p.toString(), nodes(10, 7, 6, 8, 3, 9), p.calcNodes());
-        assertEquals(p.toString(), 324.11, p.getDistance(), 0.01);
+        assertEquals(nodes(10, 7, 6, 8, 3, 9), p.calcNodes(), p.toString());
+        assertEquals(324.11, p.getDistance(), 0.01, p.toString());
 
         // 0-1 to 2-3
         p = f.calcPath(graph, new GHPoint(0.001, 0.0001), new GHPoint(0.010, 0.0011));
-        assertEquals(p.toString(), nodes(0, 7, 6, 8, 3, 9), p.calcNodes());
-        assertEquals(p.toString(), 1335.35, p.getDistance(), 0.01);
+        assertEquals(nodes(0, 7, 6, 8, 3, 9), p.calcNodes(), p.toString());
+        assertEquals(1335.35, p.getDistance(), 0.01, p.toString());
     }
 
     @ParameterizedTest
@@ -820,7 +817,7 @@ public class RoutingAlgorithmTest {
         initTestStorage(ghStorage, f.carEncoder);
         Path p = f.calcPath(ghStorage, f.defaultWeighting, 0, 1, 2, 3);
         assertEquals(nodes(8, 1, 2, 9), p.calcNodes());
-        assertEquals(p.toString(), 56.7, p.getDistance(), .1);
+        assertEquals(56.7, p.getDistance(), .1, p.toString());
     }
 
     @ParameterizedTest
@@ -845,17 +842,17 @@ public class RoutingAlgorithmTest {
         // 0-1 to 3-4
         Path p = f.calcPath(graph, new GHPoint(0.00010, 0.00001), new GHPoint(0, 0.00009));
         assertEquals(nodes(5, 1, 2, 3, 6), p.calcNodes());
-        assertEquals(p.toString(), 26.81, p.getDistance(), .1);
+        assertEquals(26.81, p.getDistance(), .1, p.toString());
 
         // overlapping edges: 2-3 and 3-2
         p = f.calcPath(graph, new GHPoint(0.000049, 0.00014), new GHPoint(0.00001, 0.0001));
         assertEquals(nodes(5, 6), p.calcNodes());
-        assertEquals(p.toString(), 6.2, p.getDistance(), .1);
+        assertEquals(6.2, p.getDistance(), .1, p.toString());
 
         // 'from' and 'to' edge share one node '2': 1-2 to 3-2
         p = f.calcPath(graph, new GHPoint(0.00009, 0.00011), new GHPoint(0.00001, 0.00011));
-        assertEquals(p.toString(), nodes(6, 2, 5), p.calcNodes());
-        assertEquals(p.toString(), 12.57, p.getDistance(), .1);
+        assertEquals(nodes(6, 2, 5), p.calcNodes(), p.toString());
+        assertEquals(12.57, p.getDistance(), .1, p.toString());
     }
 
     @ParameterizedTest
@@ -904,7 +901,7 @@ public class RoutingAlgorithmTest {
             f.calcPath(graph, 0, 2);
             fail("there should have been an exception");
         } catch (Exception ex) {
-            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Speed cannot be 0"));
+            assertTrue(ex.getMessage().startsWith("Speed cannot be 0"), ex.getMessage());
         }
     }
 
@@ -1027,11 +1024,11 @@ public class RoutingAlgorithmTest {
         // normal path would be 0-4-6-7 for car:
         Path carPath1 = f.calcPath(ghStorage, carWeighting, 0, 7);
         assertEquals(nodes(0, 4, 6, 7), carPath1.calcNodes());
-        assertEquals(carPath1.toString(), 15000, carPath1.getDistance(), 1e-6);
+        assertEquals(15000, carPath1.getDistance(), 1e-6, carPath1.toString());
         // ... and 0-4-5-7 for foot
         Path footPath1 = f.calcPath(ghStorage, footWeighting, 0, 7);
         assertEquals(nodes(0, 4, 5, 7), footPath1.calcNodes());
-        assertEquals(footPath1.toString(), 17000, footPath1.getDistance(), 1e-6);
+        assertEquals(17000, footPath1.getDistance(), 1e-6, footPath1.toString());
 
         // ... but now we block 4-6 for car, note that we have to recreate the storage otherwise CH graphs won't be
         // refreshed
@@ -1042,11 +1039,11 @@ public class RoutingAlgorithmTest {
         // ... car needs to take another way
         Path carPath2 = f.calcPath(ghStorage, carWeighting, 0, 7);
         assertEquals(nodes(0, 1, 5, 6, 7), carPath2.calcNodes());
-        assertEquals(carPath2.toString(), 26000, carPath2.getDistance(), 1e-6);
+        assertEquals(26000, carPath2.getDistance(), 1e-6, carPath2.toString());
         // ... for foot it stays the same
         Path footPath2 = f.calcPath(ghStorage, footWeighting, 0, 7);
         assertEquals(nodes(0, 4, 5, 7), footPath2.calcNodes());
-        assertEquals(footPath2.toString(), 17000, footPath2.getDistance(), 1e-6);
+        assertEquals(17000, footPath2.getDistance(), 1e-6, footPath2.toString());
     }
 
     // 0-1-2
@@ -1096,12 +1093,12 @@ public class RoutingAlgorithmTest {
 
     private static void assertPathFromEqualsTo(Path p, int node) {
         assertTrue(p.isFound());
-        assertEquals(p.toString(), nodes(node), p.calcNodes());
-        assertEquals(p.toString(), 1, p.calcPoints().size());
-        assertEquals(p.toString(), 0, p.calcEdges().size());
-        assertEquals(p.toString(), 0, p.getWeight(), 1e-4);
-        assertEquals(p.toString(), 0, p.getDistance(), 1e-4);
-        assertEquals(p.toString(), 0, p.getTime(), 1e-4);
+        assertEquals(nodes(node), p.calcNodes(), p.toString());
+        assertEquals(1, p.calcPoints().size(), p.toString());
+        assertEquals(0, p.calcEdges().size(), p.toString());
+        assertEquals(0, p.getWeight(), 1e-4, p.toString());
+        assertEquals(0, p.getDistance(), 1e-4, p.toString());
+        assertEquals(0, p.getTime(), 1e-4, p.toString());
     }
 
     private static IntArrayList nodes(int... nodes) {

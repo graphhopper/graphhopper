@@ -30,8 +30,8 @@ import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 /**
  * @author Alexey Valikov
@@ -51,7 +51,7 @@ public abstract class EdgeElevationInterpolatorTest {
     protected EdgeElevationInterpolator edgeElevationInterpolator;
 
     @SuppressWarnings("resource")
-    @Before
+    @BeforeEach
     public void setUp() {
         graph = new GraphHopperStorage(new RAMDirectory(),
                 encodingManager = new EncodingManager.Builder().add(new CarFlagEncoder()).add(new FootFlagEncoder()).build(),
@@ -64,7 +64,7 @@ public abstract class EdgeElevationInterpolatorTest {
         normalWay.setTag("highway", "primary");
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         Helper.close(graph);
     }

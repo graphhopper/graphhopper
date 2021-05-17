@@ -28,11 +28,11 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class EdgeBasedWitnessPathSearcherTest {
 
@@ -41,7 +41,7 @@ public class EdgeBasedWitnessPathSearcherTest {
     private Weighting weighting;
     private FlagEncoder encoder;
 
-    @Before
+    @BeforeEach
     public void setup() {
         encoder = new CarFlagEncoder(5, 5, 10);
         EncodingManager encodingManager = EncodingManager.create(encoder);

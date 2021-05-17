@@ -2,9 +2,9 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.util.EncodingManager;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static junit.framework.TestCase.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SpatialRuleParserTest {
 

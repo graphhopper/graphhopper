@@ -1,13 +1,13 @@
 /**
  * Copyright (C) 2015-2016, BMW Car IT GmbH and BMW AG
  * Author: Stefan Holder (stefan.holder@bmw.de)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,22 +17,12 @@
 
 package com.bmw.hmm;
 
+import org.junit.jupiter.api.Test;
+
+import java.util.*;
+
 import static java.lang.Math.log;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.junit.Test;
-
-import com.bmw.hmm.SequenceState;
-import com.bmw.hmm.Transition;
-import com.bmw.hmm.ViterbiAlgorithm;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ViterbiAlgorithmTest {
 
@@ -154,7 +144,7 @@ public class ViterbiAlgorithmTest {
         assertEquals(Umbrella.F, result.get(2).observation);
         assertEquals(Umbrella.T, result.get(3).observation);
 
-        assertEquals(null,           result.get(0).transitionDescriptor);
+        assertEquals(null, result.get(0).transitionDescriptor);
         assertEquals(Descriptor.R2R, result.get(1).transitionDescriptor);
         assertEquals(Descriptor.R2S, result.get(2).transitionDescriptor);
         assertEquals(Descriptor.S2R, result.get(3).transitionDescriptor);
@@ -189,9 +179,9 @@ public class ViterbiAlgorithmTest {
     }
 
     private void checkMessageHistory(List<Map<Rain, Double>> expectedMessageHistory,
-            List<Map<Rain, Double>> actualMessageHistory) {
+                                     List<Map<Rain, Double>> actualMessageHistory) {
         assertEquals(expectedMessageHistory.size(), actualMessageHistory.size());
-        for (int i = 0 ; i < expectedMessageHistory.size() ; i++) {
+        for (int i = 0; i < expectedMessageHistory.size(); i++) {
             checkMessage(expectedMessageHistory.get(i), actualMessageHistory.get(i));
         }
     }

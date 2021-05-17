@@ -23,16 +23,15 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.text.DateFormat;
 import java.util.Date;
 
 import static com.graphhopper.routing.util.EncodingManager.Access.WAY;
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.routing.util.PriorityCode.*;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -46,7 +45,7 @@ public abstract class AbstractBikeFlagEncoderTester {
     protected DecimalEncodedValue avgSpeedEnc;
     protected EncodingManager.AcceptWay accessMap;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         encodingManager = EncodingManager.create(encoder = createBikeEncoder());
         roundaboutEnc = encodingManager.getBooleanEncodedValue(Roundabout.KEY);

@@ -10,13 +10,13 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.EncodingManager.Access;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class GraphHopperStorageLMTest {
     @Test

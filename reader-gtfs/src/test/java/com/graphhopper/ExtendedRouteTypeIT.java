@@ -24,17 +24,17 @@ import com.graphhopper.gtfs.PtRouterImpl;
 import com.graphhopper.gtfs.Request;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 import static com.graphhopper.gtfs.GtfsHelper.time;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class ExtendedRouteTypeIT {
 
@@ -43,7 +43,7 @@ public class ExtendedRouteTypeIT {
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
     private static GraphHopperGtfs graphHopperGtfs;
 
-    @BeforeClass
+    @BeforeAll
     public static void init() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
         ghConfig.putObject("graph.flag_encoders", "car,foot");
@@ -57,7 +57,7 @@ public class ExtendedRouteTypeIT {
                 .createWithoutRealtimeFeed();
     }
 
-    @AfterClass
+    @AfterAll
     public static void close() {
         graphHopperGtfs.close();
     }
@@ -76,7 +76,7 @@ public class ExtendedRouteTypeIT {
 
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
-        assertEquals("Expected travel time == scheduled arrival time", time(1, 0), route.getBest().getTime(), 0.1);
+        assertEquals(time(1, 0), route.getBest().getTime(), 0.1, "Expected travel time == scheduled arrival time");
     }
 
 }

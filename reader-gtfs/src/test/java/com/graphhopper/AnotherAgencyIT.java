@@ -21,9 +21,9 @@ package com.graphhopper;
 import com.graphhopper.gtfs.*;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.time.Instant;
@@ -33,8 +33,8 @@ import java.time.ZoneId;
 import java.util.Arrays;
 
 import static com.graphhopper.gtfs.GtfsHelper.time;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class AnotherAgencyIT {
 
@@ -43,7 +43,7 @@ public class AnotherAgencyIT {
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
     private static GraphHopperGtfs graphHopperGtfs;
 
-    @BeforeClass
+    @BeforeAll
     public static void init() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
         ghConfig.putObject("graph.flag_encoders", "car,foot");
@@ -58,7 +58,7 @@ public class AnotherAgencyIT {
                 .createWithoutRealtimeFeed();
     }
 
-    @AfterClass
+    @AfterAll
     public static void close() {
         graphHopperGtfs.close();
     }
@@ -79,7 +79,7 @@ public class AnotherAgencyIT {
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
         ResponsePath transitSolution = route.getBest();
-        assertEquals("Expected total travel time == scheduled travel time + wait time", time(1, 30), transitSolution.getTime());
+        assertEquals(time(1, 30), transitSolution.getTime(), "Expected total travel time == scheduled travel time + wait time");
     }
 
     @Test
@@ -111,7 +111,7 @@ public class AnotherAgencyIT {
         assertEquals("NEXT_TO_MUSEUM", ptLeg2.stops.get(0).stop_id);
         assertEquals("AIRPORT", ptLeg2.stops.get(1).stop_id);
 
-        assertEquals("Expected total travel time == scheduled travel time + wait time", time(2, 10), transitSolution.getTime());
+        assertEquals(time(2, 10), transitSolution.getTime(), "Expected total travel time == scheduled travel time + wait time");
     }
 
     @Test
@@ -147,7 +147,7 @@ public class AnotherAgencyIT {
         assertEquals(1, route.getAll().size());
         ResponsePath transitSolution = route.getBest();
         // TODO: We probably want something like a transfer leg here
-        assertEquals("Expected total travel time == scheduled travel time + wait time", time(1, 15), transitSolution.getTime());
+        assertEquals(time(1, 15), transitSolution.getTime(), "Expected total travel time == scheduled travel time + wait time");
     }
 
 }

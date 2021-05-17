@@ -19,9 +19,9 @@ package com.graphhopper.coll;
 
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.RAMDirectory;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Peter Karich

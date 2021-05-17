@@ -18,10 +18,10 @@
 
 package com.graphhopper.util;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.graphhopper.util.shapes.GHPoint;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DistanceCalcEuclideanTest {
 
@@ -29,41 +29,41 @@ public class DistanceCalcEuclideanTest {
     public void testCrossingPointToEdge() {
         DistanceCalcEuclidean distanceCalc = new DistanceCalcEuclidean();
         GHPoint point = distanceCalc.calcCrossingPointToEdge(0, 10, 0, 0, 10, 10);
-        Assert.assertEquals(5, point.getLat(), 0);
-        Assert.assertEquals(5, point.getLon(), 0);
+        assertEquals(5, point.getLat(), 0);
+        assertEquals(5, point.getLon(), 0);
     }
 
     @Test
     public void testCalcNormalizedEdgeDistance() {
         DistanceCalcEuclidean distanceCalc = new DistanceCalcEuclidean();
         double distance = distanceCalc.calcNormalizedEdgeDistance(0, 10, 0, 0, 10, 10);
-        Assert.assertEquals(50, distance, 0);
+        assertEquals(50, distance, 0);
     }
 
     @Test
     public void testCalcNormalizedEdgeDistance3dStartEndSame() {
         DistanceCalcEuclidean distanceCalc = new DistanceCalcEuclidean();
         double distance = distanceCalc.calcNormalizedEdgeDistance3D(0, 3, 4, 0, 0, 0, 0, 0, 0);
-        Assert.assertEquals(25, distance, 0);
+        assertEquals(25, distance, 0);
     }
 
     @Test
     public void testValidEdgeDistance() {
         DistanceCalcEuclidean distanceCalc = new DistanceCalcEuclidean();
         boolean validEdgeDistance = distanceCalc.validEdgeDistance(5, 15, 0, 0, 10, 10);
-        Assert.assertEquals(false, validEdgeDistance);
+        assertEquals(false, validEdgeDistance);
         validEdgeDistance = distanceCalc.validEdgeDistance(15, 5, 0, 0, 10, 10);
-        Assert.assertEquals(false, validEdgeDistance);
+        assertEquals(false, validEdgeDistance);
     }
 
     @Test
     public void testDistance3dEuclidean() {
         DistanceCalcEuclidean distCalc = new DistanceCalcEuclidean();
-        Assert.assertEquals(1, distCalc.calcDist3D(
+        assertEquals(1, distCalc.calcDist3D(
                 0, 0, 0,
                 0, 0, 1
         ), 1e-6);
-        Assert.assertEquals(10, distCalc.calcDist3D(
+        assertEquals(10, distCalc.calcDist3D(
                 0, 0, 0,
                 0, 0, 10
         ), 1e-6);

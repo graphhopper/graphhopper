@@ -36,9 +36,9 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Polygon;
 
@@ -46,7 +46,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -57,7 +57,7 @@ public class LandmarkStorageTest {
     private EncodingManager encodingManager;
     private BooleanEncodedValue subnetworkEnc;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         encoder = new CarFlagEncoder();
         subnetworkEnc = Subnetwork.create("car");
@@ -67,7 +67,7 @@ public class LandmarkStorageTest {
         graph.create(1000);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         if (graph != null)
             graph.close();

@@ -31,12 +31,12 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ExtendedJsonResponseTest {
 
@@ -46,14 +46,14 @@ public class ExtendedJsonResponseTest {
         JsonNode route = jsonObject.get("diary").get("entries").get(0);
         JsonNode link = route.get("links").get(0);
         JsonNode geometry = link.get("geometry");
-        assertEquals("geometry should have type", "LineString", geometry.get("type").asText());
-        assertEquals("geometry should have coordinates", "LINESTRING (-38.999 -3.4445, -38.799 -3.555)", geometry.get("coordinates").asText());
+        assertEquals("LineString", geometry.get("type").asText(), "geometry should have type");
+        assertEquals("LINESTRING (-38.999 -3.4445, -38.799 -3.555)", geometry.get("coordinates").asText(), "geometry should have coordinates");
 
-        assertEquals("wpts[0].y should exists", "-3.4446", link.get("wpts").get(0).get("y").asText());
-        assertEquals("wpts[0].x should exists", "-38.9996", link.get("wpts").get(0).get("x").asText());
+        assertEquals("-3.4446", link.get("wpts").get(0).get("y").asText(), "wpts[0].y should exists");
+        assertEquals("-38.9996", link.get("wpts").get(0).get("x").asText(), "wpts[0].x should exists");
 
-        assertEquals("wpts[1].y should exists", "-3.4449", link.get("wpts").get(1).get("y").asText());
-        assertEquals("wpts[1].x should exists", "-38.9999", link.get("wpts").get(1).get("x").asText());
+        assertEquals("-3.4449", link.get("wpts").get(1).get("y").asText(), "wpts[1].y should exists");
+        assertEquals("-38.9999", link.get("wpts").get(1).get("x").asText(), "wpts[1].x should exists");
     }
 
     private List<EdgeMatch> getEdgeMatch() {

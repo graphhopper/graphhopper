@@ -42,7 +42,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author easbar
@@ -110,7 +110,7 @@ public class MapMatchingResourceTurnCostsTest {
                 .buildPost(Entity.xml(getClass().getResourceAsStream("tour2-with-loop.gpx")))
                 .invoke();
         JsonNode json = response.readEntity(JsonNode.class);
-        assertTrue(json.toString(), json.has("message"));
+        assertTrue(json.has("message"), json.toString());
         assertEquals(400, response.getStatus());
         assertTrue(json.toString().contains("Could not find profile 'xyz', choose one of: [car, car_no_tc, bike]"));
     }
@@ -121,7 +121,7 @@ public class MapMatchingResourceTurnCostsTest {
                 .buildPost(Entity.xml(getClass().getResourceAsStream("tour2-with-loop.gpx")))
                 .invoke();
         JsonNode json = response.readEntity(JsonNode.class);
-        assertFalse(json.toString(), json.has("message"));
+        assertFalse(json.has("message"), json.toString());
         assertEquals(200, response.getStatus());
         JsonNode path = json.get("paths").get(0);
 
@@ -140,7 +140,7 @@ public class MapMatchingResourceTurnCostsTest {
                 .buildPost(Entity.xml(getClass().getResourceAsStream("tour2-with-loop.gpx")))
                 .invoke();
         JsonNode json = response.readEntity(JsonNode.class);
-        assertFalse(json.toString(), json.has("message"));
+        assertFalse(json.has("message"), json.toString());
         assertEquals(200, response.getStatus());
         JsonNode path = json.get("paths").get(0);
 

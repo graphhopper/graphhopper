@@ -24,12 +24,12 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.text.DateFormat;
 import java.util.Date;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -160,7 +160,7 @@ public class MotorcycleFlagEncoderTest {
         double bendinessOfStraightWay = getBendiness(edge, 100.0);
         double bendinessOfCurvyWay = getBendiness(edge, 10.0);
 
-        assertTrue("The bendiness of the straight road is smaller than the one of the curvy road", bendinessOfCurvyWay < bendinessOfStraightWay);
+        assertTrue(bendinessOfCurvyWay < bendinessOfStraightWay, "The bendiness of the straight road is smaller than the one of the curvy road");
     }
 
     private double getBendiness(EdgeIteratorState edge, double estimatedDistance) {

@@ -21,11 +21,11 @@ package com.graphhopper.api.model;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.jackson.Jackson;
-import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Envelope;
 
 import static io.dropwizard.testing.FixtureHelpers.fixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 public class GHGeocodingResponseRepresentationTest {
@@ -36,10 +36,10 @@ public class GHGeocodingResponseRepresentationTest {
         GHGeocodingResponse geocodingResponse = objectMapper.readValue(fixture("fixtures/geocoding-response.json"), GHGeocodingResponse.class);
         Envelope extent = geocodingResponse.getHits().get(0).getExtent();
         // Despite the unusual representation of the bounding box...
-        Assert.assertEquals(10.0598605, extent.getMinX(), 0.0);
-        Assert.assertEquals(10.0612079, extent.getMaxX(), 0.0);
-        Assert.assertEquals(53.7445489, extent.getMinY(), 0.0);
-        Assert.assertEquals(53.7456315, extent.getMaxY(), 0.0);
+        assertEquals(10.0598605, extent.getMinX(), 0.0);
+        assertEquals(10.0612079, extent.getMaxX(), 0.0);
+        assertEquals(53.7445489, extent.getMinY(), 0.0);
+        assertEquals(53.7456315, extent.getMaxY(), 0.0);
     }
 
 }

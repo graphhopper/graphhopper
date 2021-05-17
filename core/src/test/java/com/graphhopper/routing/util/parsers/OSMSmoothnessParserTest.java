@@ -5,18 +5,18 @@ import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.Smoothness;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class OSMSmoothnessParserTest {
     private EncodingManager em;
     private EnumEncodedValue<Smoothness> smoothnessEnc;
     private OSMSmoothnessParser parser;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         parser = new OSMSmoothnessParser();
         em = new EncodingManager.Builder().add(parser).build();

@@ -32,7 +32,6 @@ import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
@@ -44,9 +43,9 @@ import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
-import org.junit.Ignore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -58,12 +57,11 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.graphhopper.Junit4To5Assertions.*;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static com.graphhopper.util.Parameters.Curbsides.*;
 import static com.graphhopper.util.Parameters.Routing.U_TURN_COSTS;
 import static java.util.Arrays.asList;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -116,7 +114,7 @@ public class GraphHopperTest {
                 .setProfile("profile");
         req.putHint(CH.DISABLE, !withCH);
         GHResponse rsp = hopper.route(req);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(expectedVisitedNodes, rsp.getHints().getLong("visited_nodes.sum", 0));
 
         ResponsePath res = rsp.getBest();
@@ -203,8 +201,8 @@ public class GraphHopperTest {
         request.getHints().putObject("instructions", false);
         routeRsp = hopper.route(request);
 
-        assertTrue("there should not be more points if instructions are disabled due to simplify but was " + withInstructionsPoints + " vs " + routeRsp.getBest().getPoints().size(),
-                withInstructionsPoints >= routeRsp.getBest().getPoints().size());
+        assertTrue(withInstructionsPoints >= routeRsp.getBest().getPoints().size(), "there should not be more points if instructions are disabled due to simplify but was " + withInstructionsPoints + " vs " + routeRsp.getBest().getPoints().size()
+        );
     }
 
     @Test
@@ -300,7 +298,7 @@ public class GraphHopperTest {
             ResponsePath bestPath = rsp.getBest();
             long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
             assertNotEquals(sum, 0);
-            assertTrue("Too many nodes visited " + sum, sum < 120);
+            assertTrue(sum < 120, "Too many nodes visited " + sum);
             assertEquals(3437.1, bestPath.getDistance(), .1);
             assertEquals(85, bestPath.getPoints().getSize());
         }
@@ -316,7 +314,7 @@ public class GraphHopperTest {
             ResponsePath bestPath = rsp.getBest();
             long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
             assertNotEquals(sum, 0);
-            assertTrue("Too many nodes visited " + sum, sum < 120);
+            assertTrue(sum < 120, "Too many nodes visited " + sum);
             assertEquals(3437.1, bestPath.getDistance(), .1);
             assertEquals(85, bestPath.getPoints().getSize());
         }
@@ -331,7 +329,7 @@ public class GraphHopperTest {
         ResponsePath bestPath = rsp.getBest();
         long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
         assertNotEquals(sum, 0);
-        assertTrue("Too few nodes visited " + sum, sum > 120);
+        assertTrue(sum > 120, "Too few nodes visited " + sum);
         assertEquals(3437.1, bestPath.getDistance(), .1);
         assertEquals(85, bestPath.getPoints().getSize());
 
@@ -418,7 +416,7 @@ public class GraphHopperTest {
                 setAlgorithm(ALT_ROUTE).setProfile(profile);
         req.putHint("alternative_route.max_paths", 3);
         GHResponse rsp = hopper.route(req);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
 
         assertEquals(3, rsp.getAll().size());
         // via ramsenthal
@@ -445,7 +443,7 @@ public class GraphHopperTest {
                 setAlgorithm(ALT_ROUTE).setProfile(profile);
         req.putHint("alternative_route.max_paths", 3);
         GHResponse rsp = hopper.route(req);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
 
         assertEquals(3, rsp.getAll().size());
         // directly via obergräfenthal
@@ -473,14 +471,14 @@ public class GraphHopperTest {
 
         req.setPointHints(new ArrayList<>(asList("Laufamholzstraße, 90482, Nürnberg, Deutschland", "")));
         GHResponse rsp = hopper.route(req);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         GHPoint snappedPoint = rsp.getBest().getWaypoints().get(0);
         assertEquals(49.465686, snappedPoint.getLat(), .000001);
         assertEquals(11.154605, snappedPoint.getLon(), .000001);
 
         req.setPointHints(new ArrayList<>(asList("", "")));
         rsp = hopper.route(req);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         snappedPoint = rsp.getBest().getWaypoints().get(0);
         assertEquals(49.465502, snappedPoint.getLat(), .000001);
         assertEquals(11.154498, snappedPoint.getLon(), .000001);
@@ -488,7 +486,7 @@ public class GraphHopperTest {
         // Match to closest edge, since hint was not found
         req.setPointHints(new ArrayList<>(asList("xy", "")));
         rsp = hopper.route(req);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         snappedPoint = rsp.getBest().getWaypoints().get(0);
         assertEquals(49.465502, snappedPoint.getLat(), .000001);
         assertEquals(11.154498, snappedPoint.getLon(), .000001);
@@ -510,7 +508,7 @@ public class GraphHopperTest {
                 setProfile(profile);
 
         GHResponse rsp = hopper.route(req);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(550, rsp.getBest().getDistance(), 1);
     }
 
@@ -530,62 +528,62 @@ public class GraphHopperTest {
                 setProfile(profile);
 
         GHResponse rsp = hopper.route(req);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(122, rsp.getBest().getDistance(), 1);
 
         // block point 49.985759,11.50687
         req.putHint(Routing.BLOCK_AREA, "49.985759,11.50687");
         rsp = hopper.route(req);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(365, rsp.getBest().getDistance(), 1);
 
         req = new GHRequest(49.975845, 11.522598, 50.026821, 11.497364).
                 setProfile(profile);
 
         rsp = hopper.route(req);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(6685, rsp.getBest().getDistance(), 1);
 
         // block by area
         String someArea = "49.97986,11.472902,50.003946,11.534357";
         req.putHint(Routing.BLOCK_AREA, someArea);
         rsp = hopper.route(req);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(13988, rsp.getBest().getDistance(), 1);
 
         // Add blocked point to above area, to increase detour
         req.putHint(Routing.BLOCK_AREA, "50.017578,11.547527;" + someArea);
         rsp = hopper.route(req);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(14601, rsp.getBest().getDistance(), 1);
 
         // block by edge IDs -> i.e. use small circular area
         req.putHint(Routing.BLOCK_AREA, "49.979929,11.520066,200");
         rsp = hopper.route(req);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(12173, rsp.getBest().getDistance(), 1);
 
         req.putHint(Routing.BLOCK_AREA, "49.980868,11.516397,150");
         rsp = hopper.route(req);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(12173, rsp.getBest().getDistance(), 1);
 
         // block by edge IDs -> i.e. use small rectangular area
         req.putHint(Routing.BLOCK_AREA, "49.981875,11.515818,49.979522,11.521407");
         rsp = hopper.route(req);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(12173, rsp.getBest().getDistance(), 1);
 
         // blocking works for all weightings
         req = new GHRequest(50.009504, 11.490669, 50.024726, 11.496162).
                 setProfile(profile);
         rsp = hopper.route(req);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(1807, rsp.getBest().getDistance(), 1);
 
         req.putHint(Routing.BLOCK_AREA, "50.018277,11.492336");
         rsp = hopper.route(req);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(3363, rsp.getBest().getDistance(), 1);
 
         // query point and snapped point are different => block snapped point only => show that block_area changes lookup
@@ -593,13 +591,13 @@ public class GraphHopperTest {
                 setProfile(profile);
         rsp = hopper.route(req);
         assertEquals(11.506, rsp.getBest().getWaypoints().getLon(0), 0.001);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(155, rsp.getBest().getDistance(), 10);
 
         req.putHint(Routing.BLOCK_AREA, "49.984434,11.505212,49.985394,11.506333");
         rsp = hopper.route(req);
         assertEquals(11.508, rsp.getBest().getWaypoints().getLon(0), 0.001);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(1185, rsp.getBest().getDistance(), 10);
 
         // first point is contained in block_area => error
@@ -607,7 +605,7 @@ public class GraphHopperTest {
                 setProfile(profile);
         req.putHint(Routing.BLOCK_AREA, "49.981875,11.515818,49.979522,11.521407");
         rsp = hopper.route(req);
-        assertTrue("expected errors", rsp.hasErrors());
+        assertTrue(rsp.hasErrors(), "expected errors");
     }
 
     @Test
@@ -842,12 +840,12 @@ public class GraphHopperTest {
         GHResponse rsp = hopper.route(req);
 
         assertTrue(rsp.hasErrors());
-        assertTrue(rsp.getErrors().toString(), rsp.getErrors().toString().contains("maximum nodes exceeded"));
+        assertTrue(rsp.getErrors().toString().contains("maximum nodes exceeded"), rsp.getErrors().toString());
 
         req = new GHRequest(from, to).setProfile(profile);
         rsp = hopper.route(req);
 
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
     }
 
     @Test
@@ -873,13 +871,13 @@ public class GraphHopperTest {
 
         assertTrue(rsp.hasErrors());
         String errorString = rsp.getErrors().toString();
-        assertTrue(errorString, errorString.contains("Point 1 is too far from Point 0"));
+        assertTrue(errorString.contains("Point 1 is too far from Point 0"), errorString);
 
         // Succeed since points are not far anymore
         hopper.getRouterConfig().setNonChMaxWaypointDistance(Integer.MAX_VALUE);
         rsp = hopper.route(req);
 
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
     }
 
     @Test
@@ -908,7 +906,7 @@ public class GraphHopperTest {
 
         assertTrue(rsp.hasErrors());
         String errorString = rsp.getErrors().toString();
-        assertTrue(errorString, errorString.contains("Point 2 is too far from Point 1"));
+        assertTrue(errorString.contains("Point 2 is too far from Point 1"), errorString);
 
         PointDistanceExceededException exception = (PointDistanceExceededException) rsp.getErrors().get(0);
         assertEquals(1, exception.getDetails().get("from"));
@@ -918,7 +916,7 @@ public class GraphHopperTest {
         hopper.getRouterConfig().setNonChMaxWaypointDistance(Integer.MAX_VALUE);
         rsp = hopper.route(req);
 
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
     }
 
     @Test
@@ -1128,7 +1126,7 @@ public class GraphHopperTest {
         assertEquals(52.43, arsp.getPoints().get(10).getEle(), 1e-2);
     }
 
-    @Ignore
+    @Disabled
     public void testSkadiElevationProvider() {
         final String profile = "profile";
         final String vehicle = "foot";
@@ -1281,7 +1279,7 @@ public class GraphHopperTest {
         GHResponse rsp = hopper.route(new GHRequest(52.513505, 13.350443, 52.513505, 13.350245)
                 .setProfile(profile1));
 
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         Instruction instr = rsp.getBest().getInstructions().get(1);
         assertTrue(instr instanceof RoundaboutInstruction);
         assertEquals(5, ((RoundaboutInstruction) instr).getExitNumber());
@@ -1312,20 +1310,20 @@ public class GraphHopperTest {
         GHResponse rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setProfile("profile2"));
         ResponsePath res = rsp.getBest();
-        assertFalse("car routing for " + str + " should not have errors:" + rsp.getErrors(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), "car routing for " + str + " should not have errors:" + rsp.getErrors());
         assertEquals(207, res.getTime() / 1000f, 1);
         assertEquals(2837, res.getDistance(), 1);
 
         rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setProfile("profile1"));
         res = rsp.getBest();
-        assertFalse("bike routing for " + str + " should not have errors:" + rsp.getErrors(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), "bike routing for " + str + " should not have errors:" + rsp.getErrors());
         assertEquals(494, res.getTime() / 1000f, 1);
         assertEquals(2192, res.getDistance(), 1);
 
         rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setProfile("profile3"));
-        assertTrue("only profile1 and profile2 exist, request for profile3 should fail", rsp.hasErrors());
+        assertTrue(rsp.hasErrors(), "only profile1 and profile2 exist, request for profile3 should fail");
 
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(43.741069, 7.426854)).
@@ -1334,7 +1332,7 @@ public class GraphHopperTest {
                 setProfile("profile1");
 
         rsp = hopper.route(req);
-        assertTrue("heading not allowed for CH enabled graph", rsp.hasErrors());
+        assertTrue(rsp.hasErrors(), "heading not allowed for CH enabled graph");
     }
 
     @Test
@@ -1367,7 +1365,7 @@ public class GraphHopperTest {
         // identify the number of counts to compare with none-CH foot route which had nearly 700 counts
         long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
         assertNotEquals(sum, 0);
-        assertTrue("Too many nodes visited " + sum, sum < 120);
+        assertTrue(sum < 120, "Too many nodes visited " + sum);
         assertEquals(3437.0, bestPath.getDistance(), .1);
         assertEquals(85, bestPath.getPoints().getSize());
 
@@ -1435,7 +1433,7 @@ public class GraphHopperTest {
                 setPathDetails(Collections.singletonList(Parameters.Details.AVERAGE_SPEED));
 
         GHResponse rsp = hopper.route(req);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
     }
 
     @Test
@@ -1487,7 +1485,7 @@ public class GraphHopperTest {
 
         GHResponse rsp = hopper.route(req);
         long chSum = rsp.getHints().getLong("visited_nodes.sum", 0);
-        assertTrue("Too many visited nodes for ch mode " + chSum, chSum < 60);
+        assertTrue(chSum < 60, "Too many visited nodes for ch mode " + chSum);
         ResponsePath bestPath = rsp.getBest();
         assertEquals(3587, bestPath.getDistance(), 1);
         assertEquals(91, bestPath.getPoints().getSize());
@@ -1498,7 +1496,7 @@ public class GraphHopperTest {
         req.putHint(CH.DISABLE, true);
         rsp = hopper.route(req);
         long flexSum = rsp.getHints().getLong("visited_nodes.sum", 0);
-        assertTrue("Too few visited nodes for flex mode " + flexSum, flexSum > 60);
+        assertTrue(flexSum > 60, "Too few visited nodes for flex mode " + flexSum);
 
         bestPath = rsp.getBest();
         assertEquals(3587, bestPath.getDistance(), 1);
@@ -1511,8 +1509,8 @@ public class GraphHopperTest {
 
         long hSum = rsp.getHints().getLong("visited_nodes.sum", 0);
         // hybrid is better than CH: 40 vs. 42 !
-        assertTrue("Visited nodes for hybrid mode should be different to CH but " + hSum + "==" + chSum, hSum != chSum);
-        assertTrue("Too many visited nodes for hybrid mode " + hSum + ">=" + flexSum, hSum < flexSum);
+        assertTrue(hSum != chSum, "Visited nodes for hybrid mode should be different to CH but " + hSum + "==" + chSum);
+        assertTrue(hSum < flexSum, "Too many visited nodes for hybrid mode " + hSum + ">=" + flexSum);
 
         bestPath = rsp.getBest();
         assertEquals(3587, bestPath.getDistance(), 1);
@@ -1623,21 +1621,21 @@ public class GraphHopperTest {
         req.putHint(CH.DISABLE, false);
         req.putHint(Landmark.DISABLE, false);
         GHResponse res = hopper.route(req);
-        assertTrue(res.getErrors().toString(), res.hasErrors());
-        assertTrue(res.getErrors().toString(), res.getErrors().get(0).getMessage().contains("Cannot find CH preparation for the requested profile: 'short_fast_profile'"));
+        assertTrue(res.hasErrors(), res.getErrors().toString());
+        assertTrue(res.getErrors().get(0).getMessage().contains("Cannot find CH preparation for the requested profile: 'short_fast_profile'"), res.getErrors().toString());
 
         // try with LM
         req.putHint(CH.DISABLE, true);
         req.putHint(Landmark.DISABLE, false);
         res = hopper.route(req);
-        assertTrue(res.getErrors().toString(), res.hasErrors());
-        assertTrue(res.getErrors().toString(), res.getErrors().get(0).getMessage().contains("Cannot find LM preparation for the requested profile: 'short_fast_profile'"));
+        assertTrue(res.hasErrors(), res.getErrors().toString());
+        assertTrue(res.getErrors().get(0).getMessage().contains("Cannot find LM preparation for the requested profile: 'short_fast_profile'"), res.getErrors().toString());
 
         // falling back to non-prepared algo works
         req.putHint(CH.DISABLE, true);
         req.putHint(Landmark.DISABLE, true);
         res = hopper.route(req);
-        assertFalse(res.getErrors().toString(), res.hasErrors());
+        assertFalse(res.hasErrors(), res.getErrors().toString());
         assertEquals(3587, res.getBest().getDistance(), 1);
     }
 
@@ -1890,8 +1888,8 @@ public class GraphHopperTest {
         String expected = "Cannot find CH preparation for the requested profile: 'car_profile_tc'" +
                 "\nYou can try disabling CH using ch.disable=true" +
                 "\navailable CH profiles: [car_profile_notc]";
-        assertTrue("unexpected error:\n" + rsp.getErrors().toString() + "\nwhen expecting an error containing:\n" + expected,
-                rsp.getErrors().toString().contains(expected));
+        assertTrue(rsp.getErrors().toString().contains(expected), "unexpected error:\n" + rsp.getErrors().toString() + "\nwhen expecting an error containing:\n" + expected
+        );
     }
 
     @Test
@@ -1912,7 +1910,7 @@ public class GraphHopperTest {
         GHRequest req = new GHRequest(p, q);
         req.setProfile(profile);
         GHResponse rsp = hopper.route(req);
-        assertEquals("there should not be an error, but was: " + rsp.getErrors(), 0, rsp.getErrors().size());
+        assertEquals(0, rsp.getErrors().size(), "there should not be an error, but was: " + rsp.getErrors());
     }
 
     @Test
@@ -2051,7 +2049,7 @@ public class GraphHopperTest {
 
     private void assertCurbsidesPath(GraphHopper hopper, GHPoint source, GHPoint target, List<String> curbsides, int expectedDistance, List<String> expectedStreets, boolean force) {
         GHResponse rsp = calcCurbsidePath(hopper, source, target, curbsides, force);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         ResponsePath path = rsp.getBest();
         List<String> streets = new ArrayList<>(path.getInstructions().size());
         for (Instruction instruction : path.getInstructions()) {
@@ -2066,8 +2064,8 @@ public class GraphHopperTest {
     private void assertCurbsidesPathError(GraphHopper hopper, GHPoint source, GHPoint target, List<String> curbsides, String errorMessage, boolean force) {
         GHResponse rsp = calcCurbsidePath(hopper, source, target, curbsides, force);
         assertTrue(rsp.hasErrors());
-        assertTrue("unexpected error. expected message containing: " + errorMessage + ", but got: " +
-                rsp.getErrors(), rsp.getErrors().toString().contains(errorMessage));
+        assertTrue(rsp.getErrors().toString().contains(errorMessage), "unexpected error. expected message containing: " + errorMessage + ", but got: " +
+                rsp.getErrors());
     }
 
     private GHResponse calcCurbsidePath(GraphHopper hopper, GHPoint source, GHPoint target, List<String> curbsides, boolean force) {
@@ -2097,7 +2095,7 @@ public class GraphHopperTest {
         // we reach the target
         req.setCurbsides(Arrays.asList("right", "right"));
         GHResponse res = h.route(req);
-        assertFalse("routing should not fail", res.hasErrors());
+        assertFalse(res.hasErrors(), "routing should not fail");
         assertEquals(266.8, res.getBest().getRouteWeight(), 0.1);
         assertEquals(2116, res.getBest().getDistance(), 1);
         assertEquals(266800, res.getBest().getTime(), 1000);
@@ -2124,7 +2122,7 @@ public class GraphHopperTest {
         req.putHint("elevation", true);
 
         GHResponse rsp = hopper.route(req);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
 
         ResponsePath path = rsp.getBest();
 

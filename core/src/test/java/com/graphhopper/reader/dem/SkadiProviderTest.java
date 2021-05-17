@@ -1,20 +1,20 @@
 package com.graphhopper.reader.dem;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SkadiProviderTest {
     SkadiProvider instance;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         instance = new SkadiProvider();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         instance.release();
     }

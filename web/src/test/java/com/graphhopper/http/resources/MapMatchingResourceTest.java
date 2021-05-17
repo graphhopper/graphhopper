@@ -38,8 +38,8 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Peter Karich
@@ -93,7 +93,7 @@ public class MapMatchingResourceTest {
                 .request()
                 .buildPost(Entity.xml(getClass().getResourceAsStream("tour2-with-loop.gpx")))
                 .invoke();
-        assertEquals("no success", 200, response.getStatus());
+        assertEquals(200, response.getStatus(), "no success");
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode path = json.get("paths").get(0);
 

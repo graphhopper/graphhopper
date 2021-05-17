@@ -6,21 +6,20 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.Locale;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class NavigateResponseConverterTest {
 
@@ -33,7 +32,7 @@ public class NavigateResponseConverterTest {
     private final TranslationMap trMap = hopper.getTranslationMap();
     private final DistanceConfig distanceConfig = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH);
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
         // make sure we are using fresh files with correct vehicle
         Helper.removeDir(new File(graphFolder));
@@ -46,7 +45,7 @@ public class NavigateResponseConverterTest {
                 importOrLoad();
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         Helper.removeDir(new File(graphFolder));
     }
@@ -61,12 +60,12 @@ public class NavigateResponseConverterTest {
 
         JsonNode route = json.get("routes").get(0);
         double routeDistance = route.get("distance").asDouble();
-        assertTrue("distance wasn't correct:" + routeDistance, routeDistance > 9000);
-        assertTrue("distance wasn't correct:" + routeDistance, routeDistance < 9500);
+        assertTrue(routeDistance > 9000, "distance wasn't correct:" + routeDistance);
+        assertTrue(routeDistance < 9500, "distance wasn't correct:" + routeDistance);
 
         double routeDuration = route.get("duration").asDouble();
-        assertTrue("duration wasn't correct:" + routeDuration, routeDuration > 500);
-        assertTrue("duration wasn't correct:" + routeDuration, routeDuration < 600);
+        assertTrue(routeDuration > 500, "duration wasn't correct:" + routeDuration);
+        assertTrue(routeDuration < 600, "duration wasn't correct:" + routeDuration);
 
         assertEquals("en", route.get("voiceLocale").asText());
 
@@ -189,7 +188,7 @@ public class NavigateResponseConverterTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void alternativeRoutesTest() {
 
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).

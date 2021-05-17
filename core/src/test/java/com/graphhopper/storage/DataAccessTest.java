@@ -19,14 +19,14 @@ package com.graphhopper.storage;
 
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Helper;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.nio.ByteOrder;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -39,7 +39,7 @@ public abstract class DataAccessTest {
 
     public abstract DataAccess createDataAccess(String location);
 
-    @Before
+    @BeforeEach
     public void setUp() {
         if (!Helper.removeDir(folder))
             throw new IllegalStateException("cannot delete folder " + folder);
@@ -48,7 +48,7 @@ public abstract class DataAccessTest {
         directory = folder.getAbsolutePath() + "/";
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         Helper.removeDir(folder);
     }

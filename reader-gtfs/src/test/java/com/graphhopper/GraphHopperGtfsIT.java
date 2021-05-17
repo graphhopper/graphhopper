@@ -25,10 +25,9 @@ import com.graphhopper.gtfs.Request;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
 import com.graphhopper.util.TranslationMap;
-import org.junit.AfterClass;
-import org.junit.Assume;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.math.BigDecimal;
@@ -41,7 +40,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.graphhopper.gtfs.GtfsHelper.time;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class GraphHopperGtfsIT {
 
@@ -50,7 +50,7 @@ public class GraphHopperGtfsIT {
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
     private static GraphHopperGtfs graphHopperGtfs;
 
-    @BeforeClass
+    @BeforeAll
     public static void init() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
         ghConfig.putObject("graph.flag_encoders", "car,foot");
@@ -64,7 +64,7 @@ public class GraphHopperGtfsIT {
                 .createWithoutRealtimeFeed();
     }
 
-    @AfterClass
+    @AfterAll
     public static void close() {
         graphHopperGtfs.close();
     }
@@ -83,7 +83,7 @@ public class GraphHopperGtfsIT {
 
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
-        assertEquals("Expected travel time == scheduled arrival time", time(6, 49), route.getBest().getTime());
+        assertEquals(time(6, 49), route.getBest().getTime(), "Expected travel time == scheduled arrival time");
     }
 
     @Test
@@ -99,7 +99,7 @@ public class GraphHopperGtfsIT {
 
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
-        assertEquals("Expected travel time == scheduled arrival time", time(0, 25), route.getBest().getTime());
+        assertEquals(time(0, 25), route.getBest().getTime(), "Expected travel time == scheduled arrival time");
     }
 
     @Test
@@ -117,7 +117,7 @@ public class GraphHopperGtfsIT {
         GHResponse response = ptRouter.route(ghRequest);
 
         assertEquals(1, response.getAll().size());
-        assertEquals("Expected travel time == scheduled arrival time", time(0, 5), response.getBest().getTime());
+        assertEquals(time(0, 5), response.getBest().getTime(), "Expected travel time == scheduled arrival time");
     }
 
     @Test
@@ -133,7 +133,7 @@ public class GraphHopperGtfsIT {
 
         GHResponse response = ptRouter.route(ghRequest);
 
-        assertTrue("When I block busses, there is no solution", response.getAll().isEmpty());
+        assertTrue(response.getAll().isEmpty(), "When I block busses, there is no solution");
     }
 
     @Test
@@ -151,7 +151,7 @@ public class GraphHopperGtfsIT {
 
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
-        assertEquals("Expected travel time == scheduled travel time", time(0, 5), route.getBest().getTime());
+        assertEquals(time(0, 5), route.getBest().getTime(), "Expected travel time == scheduled travel time");
 
     }
 
@@ -171,7 +171,7 @@ public class GraphHopperGtfsIT {
 
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
-        assertEquals("Expected travel time == scheduled travel time", time(0, 6), route.getBest().getTime());
+        assertEquals(time(0, 6), route.getBest().getTime(), "Expected travel time == scheduled travel time");
 
     }
 
@@ -286,12 +286,12 @@ public class GraphHopperGtfsIT {
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 0, 0).atZone(zoneId).toInstant());
         GHResponse route = ptRouter.route(ghRequest);
 
-        assertFalse(route.toString(), route.hasErrors());
+        assertFalse(route.hasErrors(), route.toString());
         assertFalse(route.getAll().isEmpty());
-        assertEquals("Expected travel time == scheduled travel time", time(8, 10), route.getBest().getTime());
-        assertEquals("Using expected route", "STBA", (((Trip.PtLeg) route.getBest().getLegs().get(0)).trip_id));
-        assertEquals("Using expected route", "AB1", (((Trip.PtLeg) route.getBest().getLegs().get(1)).trip_id));
-        assertEquals("Paid expected fare", 250, route.getBest().getFare().multiply(BigDecimal.valueOf(100)).intValue()); // Two legs, no transfers allowed. Need two 'p' tickets costing 125 cents each.
+        assertEquals(time(8, 10), route.getBest().getTime(), "Expected travel time == scheduled travel time");
+        assertEquals("STBA", (((Trip.PtLeg) route.getBest().getLegs().get(0)).trip_id), "Using expected route");
+        assertEquals("AB1", (((Trip.PtLeg) route.getBest().getLegs().get(1)).trip_id), "Using expected route");
+        assertEquals(250, route.getBest().getFare().multiply(BigDecimal.valueOf(100)).intValue(), "Paid expected fare"); // Two legs, no transfers allowed. Need two 'p' tickets costing 125 cents each.
     }
 
     @Test
@@ -308,9 +308,9 @@ public class GraphHopperGtfsIT {
 
         assertFalse(route.hasErrors());
         assertFalse(route.getAll().isEmpty());
-        assertEquals("Using expected route", "STBA", (((Trip.PtLeg) route.getBest().getLegs().get(0)).trip_id));
-        assertEquals("Using expected route", "AB1", (((Trip.PtLeg) route.getBest().getLegs().get(1)).trip_id));
-        assertEquals("Paid expected fare", 250, route.getBest().getFare().multiply(BigDecimal.valueOf(100)).intValue()); // Two legs, no transfers allowed. Need two 'p' tickets costing 125 cents each.
+        assertEquals("STBA", (((Trip.PtLeg) route.getBest().getLegs().get(0)).trip_id), "Using expected route");
+        assertEquals("AB1", (((Trip.PtLeg) route.getBest().getLegs().get(1)).trip_id), "Using expected route");
+        assertEquals(250, route.getBest().getFare().multiply(BigDecimal.valueOf(100)).intValue(), "Paid expected fare"); // Two legs, no transfers allowed. Need two 'p' tickets costing 125 cents each.
     }
 
     @Test
@@ -334,7 +334,7 @@ public class GraphHopperGtfsIT {
 
         assertFalse(route.hasErrors());
         assertFalse(route.getAll().isEmpty());
-        assertEquals("Expected travel time == scheduled travel time", time(0, 41), route.getBest().getTime());
+        assertEquals(time(0, 41), route.getBest().getTime(), "Expected travel time == scheduled travel time");
     }
 
     @Test
@@ -351,7 +351,7 @@ public class GraphHopperGtfsIT {
         GHResponse route = ptRouter.route(ghRequest);
         assertFalse(route.getAll().isEmpty());
         // On Mondays, there is only a complicated evening trip.
-        assertEquals("Expected travel time == scheduled travel time", time(22, 0), route.getBest().getTime());
+        assertEquals(time(22, 0), route.getBest().getTime(), "Expected travel time == scheduled travel time");
 
         ghRequest = new Request(
                 FROM_LAT, FROM_LON,
@@ -360,9 +360,9 @@ public class GraphHopperGtfsIT {
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 6, 0, 0).atZone(zoneId).toInstant());
         route = ptRouter.route(ghRequest);
         assertFalse(route.getAll().isEmpty());
-        assertEquals("Expected travel time == scheduled travel time", time(9, 0), route.getBest().getTime());
-        assertEquals("Using expected trip", "AAMV1", (((Trip.PtLeg) route.getBest().getLegs().get(0)).trip_id));
-        assertEquals("Paid expected fare", 525, route.getBest().getFare().multiply(BigDecimal.valueOf(100)).intValue());
+        assertEquals(time(9, 0), route.getBest().getTime(), "Expected travel time == scheduled travel time");
+        assertEquals("AAMV1", (((Trip.PtLeg) route.getBest().getLegs().get(0)).trip_id), "Using expected trip");
+        assertEquals(525, route.getBest().getFare().multiply(BigDecimal.valueOf(100)).intValue(), "Paid expected fare");
 
     }
 
@@ -376,11 +376,11 @@ public class GraphHopperGtfsIT {
         );
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 8, 0).atZone(zoneId).toInstant());
         GHResponse response = ptRouter.route(ghRequest);
-        assertEquals("Only find one solution. If blocks wouldn't work, there would be two. (There is a slower alternative without transfer.)", 1, response.getAll().size());
-        assertEquals("Expected travel time == scheduled travel time", time(1, 20), response.getBest().getTime());
-        assertEquals("Two legs: pt, pt, but the two pt legs are in one vehicle, so...", 2, response.getBest().getLegs().size());
-        assertEquals("...one boarding instruction", 1, response.getBest().getInstructions().stream().filter(i -> i.getSign() == Instruction.PT_START_TRIP).count());
-        assertEquals("...and one alighting instruction", 1, response.getBest().getInstructions().stream().filter(i -> i.getSign() == Instruction.PT_END_TRIP).count());
+        assertEquals(1, response.getAll().size(), "Only find one solution. If blocks wouldn't work, there would be two. (There is a slower alternative without transfer.)");
+        assertEquals(time(1, 20), response.getBest().getTime(), "Expected travel time == scheduled travel time");
+        assertEquals(2, response.getBest().getLegs().size(), "Two legs: pt, pt, but the two pt legs are in one vehicle, so...");
+        assertEquals(1, response.getBest().getInstructions().stream().filter(i -> i.getSign() == Instruction.PT_START_TRIP).count(), "Two legs: pt, pt, but the two pt legs are in one vehicle, so...");
+        assertEquals(1, response.getBest().getInstructions().stream().filter(i -> i.getSign() == Instruction.PT_END_TRIP).count(), "...and one alighting instruction");
     }
 
     @Test
@@ -394,8 +394,8 @@ public class GraphHopperGtfsIT {
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 18, 0).atZone(zoneId).toInstant());
         GHResponse response = ptRouter.route(ghRequest);
         ResponsePath mondayTrip = response.getBest();
-        assertEquals("Monday trip has no transfers", 0, mondayTrip.getNumChanges());
-        assertEquals("Monday trip has 3 legs", 3, mondayTrip.getLegs().size());
+        assertEquals(0, mondayTrip.getNumChanges(), "Monday trip has no transfers");
+        assertEquals(3, mondayTrip.getLegs().size(), "Monday trip has 3 legs");
         assertEquals("FUNNY_BLOCK_AB1", (((Trip.PtLeg) mondayTrip.getLegs().get(0)).trip_id));
         assertEquals("FUNNY_BLOCK_BFC1", (((Trip.PtLeg) mondayTrip.getLegs().get(1)).trip_id));
         assertEquals("FUNNY_BLOCK_FCAMV1", (((Trip.PtLeg) mondayTrip.getLegs().get(2)).trip_id));
@@ -405,8 +405,8 @@ public class GraphHopperGtfsIT {
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 7, 18, 0).atZone(zoneId).toInstant());
         response = ptRouter.route(ghRequest);
         ResponsePath sundayTrip = response.getBest();
-        assertEquals("Sunday trip has no transfers", 0, sundayTrip.getNumChanges());
-        assertEquals("Sunday trip has 2 legs", 2, sundayTrip.getLegs().size());
+        assertEquals(0, sundayTrip.getNumChanges(), "Sunday trip has no transfers");
+        assertEquals(2, sundayTrip.getLegs().size(), "Sunday trip has 2 legs");
         assertEquals("FUNNY_BLOCK_AB1", (((Trip.PtLeg) sundayTrip.getLegs().get(0)).trip_id));
         // On Sundays, the second trip of the block does not run. Here, it's okay if in the response
         // it looks like we are teleporting -- this case is unlikely, but only revenue trips should be
@@ -430,7 +430,7 @@ public class GraphHopperGtfsIT {
         request.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 6, 7, 30).atZone(zoneId).toInstant());
 
         GHResponse response = ptRouter.route(request);
-        assertEquals("Transfer rule: 11 minutes. Will miss connection, and be there at 14.", time(6, 30), response.getBest().getTime());
+        assertEquals(time(6, 30), response.getBest().getTime(), "Transfer rule: 11 minutes. Will miss connection, and be there at 14.");
 
         request = new Request(
                 FROM_LAT, FROM_LON,
@@ -439,7 +439,7 @@ public class GraphHopperGtfsIT {
         request.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 6, 7, 30).atZone(zoneId).toInstant());
 
         response = ptRouter.route(request);
-        assertEquals("Will still be there at 8:10 because there is a route-specific exception for this route.", time(0, 40), response.getBest().getTime());
+        assertEquals(time(0, 40), response.getBest().getTime(), "Will still be there at 8:10 because there is a route-specific exception for this route.");
 
         request = new Request(
                 TO2_LAT, TO2_LON,
@@ -448,7 +448,7 @@ public class GraphHopperGtfsIT {
         request.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 6, 12, 5).atZone(zoneId).toInstant());
 
         response = ptRouter.route(request);
-        assertEquals("Will take 1:15 because of a 'from route' exception with a longer transfer time.", time(1, 15), response.getBest().getTime());
+        assertEquals(time(1, 15), response.getBest().getTime(), "Will take 1:15 because of a 'from route' exception with a longer transfer time.");
     }
 
 
@@ -462,7 +462,7 @@ public class GraphHopperGtfsIT {
 
         assertFalse(route.hasErrors());
         assertFalse(route.getAll().isEmpty());
-        assertEquals("Expected travel time == scheduled travel time", expectedWeight, route.getBest().getTime());
+        assertEquals(expectedWeight, route.getBest().getTime(), "Expected travel time == scheduled travel time");
     }
 
     private void assertNoRoute(PtRouter graphHopper, double from_lat, double from_lon, double to_lat, double to_lon) {
@@ -493,7 +493,7 @@ public class GraphHopperGtfsIT {
 
         Trip.PtLeg lastLeg = ((Trip.PtLeg) response.getBest().getLegs().get(response.getBest().getLegs().size() - 1));
         Trip.Stop lastStop = lastLeg.stops.get(lastLeg.stops.size() - 1);
-        assertEquals("Arrive at 7:20", LocalDateTime.parse("2007-01-01T07:20:00").atZone(zoneId).toInstant(), lastStop.plannedArrivalTime.toInstant());
+        assertEquals(LocalDateTime.parse("2007-01-01T07:20:00").atZone(zoneId).toInstant(), lastStop.plannedArrivalTime.toInstant(), "Arrive at 7:20");
     }
 
     @Test
@@ -509,9 +509,9 @@ public class GraphHopperGtfsIT {
         ResponsePath solutionWithTransfer = response.getAll().get(0);
         ResponsePath solutionWithoutTransfer = response.getAll().get(1);
 
-        Assume.assumeTrue("First solution has one transfer", solutionWithTransfer.getNumChanges() == 1);
-        Assume.assumeTrue("Second solution has no transfers", solutionWithoutTransfer.getNumChanges() == 0);
-        Assume.assumeTrue("With transfers is faster than without", solutionWithTransfer.getTime() < solutionWithoutTransfer.getTime());
+        assumeTrue(solutionWithTransfer.getNumChanges() == 1, "First solution has one transfer");
+        assumeTrue(solutionWithoutTransfer.getNumChanges() == 0, "Second solution has no transfers");
+        assumeTrue(solutionWithTransfer.getTime() < solutionWithoutTransfer.getTime(), "With transfers is faster than without");
 
         // If one transfer is worth beta_transfers milliseconds of travel time savings
         // to me, I will be indifferent when choosing between the two routes.
@@ -524,15 +524,15 @@ public class GraphHopperGtfsIT {
         ghRequest.setBetaTransfers(betaTransfers - 10);
         response = ptRouter.route(ghRequest);
 
-        assertEquals("Get exactly one solution", 1, response.getAll().size());
-        assertEquals("Prefer solution with transfers when I give the smaller beta", solutionWithTransfer.getTime(), response.getBest().getTime());
+        assertEquals(1, response.getAll().size(), "Get exactly one solution");
+        assertEquals(solutionWithTransfer.getTime(), response.getBest().getTime(), "Prefer solution with transfers when I give the smaller beta");
 
         ghRequest.setBetaTransfers(betaTransfers + 10);
 
         response = ptRouter.route(ghRequest);
 
-        assertEquals("Get exactly one solution", 1, response.getAll().size());
-        assertEquals("Prefer solution without transfers when I give the higher beta", solutionWithoutTransfer.getTime(), response.getBest().getTime());
+        assertEquals(1, response.getAll().size(), "Get exactly one solution");
+        assertEquals(solutionWithoutTransfer.getTime(), response.getBest().getTime(), "Prefer solution without transfers when I give the higher beta");
     }
 
 }
