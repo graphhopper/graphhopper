@@ -14,8 +14,8 @@ import org.junit.jupiter.api.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
+import static com.graphhopper.Junit4To5Assertions.assertEquals;
+import static com.graphhopper.Junit4To5Assertions.assertTrue;
 
 public class OSMTurnRelationParserTest {
 

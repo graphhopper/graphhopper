@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Locale;
 
 import static com.graphhopper.navigation.DistanceUtils.UnitTranslationKey.*;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 
 public class VoiceInstructionConfigTest {
@@ -212,6 +212,5 @@ public class VoiceInstructionConfigTest {
                                                VoiceInstructionConfig.VoiceInstructionValue values) {
         assertEquals(expectedSpokenDistance, values.spokenDistance);
         assertEquals(expectedInstruction, values.turnDescription);
-
     }
 }

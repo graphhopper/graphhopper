@@ -27,7 +27,7 @@ import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static com.graphhopper.Junit4To5Assertions.*;
 
 /**
  * @author Peter Karich

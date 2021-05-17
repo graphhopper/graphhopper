@@ -4,7 +4,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static com.graphhopper.Junit4To5Assertions.assertEquals;
 
 public class SkadiProviderTest {
     SkadiProvider instance;

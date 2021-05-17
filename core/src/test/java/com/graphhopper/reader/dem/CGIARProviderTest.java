@@ -28,8 +28,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static com.graphhopper.Junit4To5Assertions.*;
 
 /**
  * @author Peter Karich
@@ -104,7 +103,7 @@ public class CGIARProviderTest {
         try {
             instance.setSleep(30);
             instance.getEle(16, -20);
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
         }
 
@@ -113,6 +112,7 @@ public class CGIARProviderTest {
     }
 
     @Disabled
+    @Test
     public void testGetEle() {
         assertEquals(337, instance.getEle(49.949784, 11.57517), precision);
         assertEquals(466, instance.getEle(49.968668, 11.575127), precision);
@@ -136,6 +136,7 @@ public class CGIARProviderTest {
     }
 
     @Disabled
+    @Test
     public void testGetEleVerticalBorder() {
         // Border between the tiles srtm_39_04 and srtm_39_03
         assertEquals("srtm_39_04", instance.getFileName(44.999999, 11.5));
@@ -145,6 +146,7 @@ public class CGIARProviderTest {
     }
 
     @Disabled
+    @Test
     public void testGetEleHorizontalBorder() {
         // Border between the tiles N42E011 and N42E012
         assertEquals("srtm_38_04", instance.getFileName(44.94, 9.999999));

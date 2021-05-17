@@ -24,10 +24,10 @@ import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
+import static com.graphhopper.Junit4To5Assertions.assertEquals;
+import static com.graphhopper.Junit4To5Assertions.assertTrue;
 import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PUSHING_SECTION_SPEED;
 import static com.graphhopper.routing.util.PriorityCode.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author ratrun

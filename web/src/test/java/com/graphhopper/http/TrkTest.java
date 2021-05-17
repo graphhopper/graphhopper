@@ -27,12 +27,10 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.List;
 
-import static org.hamcrest.Matchers.empty;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- *
  * @author Peter Karich
  */
 public class TrkTest {
@@ -67,19 +65,19 @@ public class TrkTest {
     @Test
     public void testNoTrk() throws IOException {
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/no_trk.gpx"), Gpx.class);
-        assertThat(gpx.trk, empty());
+        assertTrue(gpx.trk.isEmpty());
     }
 
     @Test
     public void testNoTrkseg() throws IOException {
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/no_trkseg.gpx"), Gpx.class);
-        assertThat(GpxConversions.getEntries(gpx.trk.get(0)), empty());
+        assertTrue(GpxConversions.getEntries(gpx.trk.get(0)).isEmpty());
     }
 
     @Test
     public void testNoTrkpt() throws IOException {
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/no_trkpt.gpx"), Gpx.class);
-        assertThat(GpxConversions.getEntries(gpx.trk.get(0)), empty());
+        assertTrue(GpxConversions.getEntries(gpx.trk.get(0)).isEmpty());
     }
 
 }

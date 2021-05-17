@@ -18,13 +18,11 @@
 
 package com.graphhopper.routing.lm;
 
-import com.graphhopper.Repeat;
-import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.Subnetwork;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.AccessFilter;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.*;
@@ -36,9 +34,9 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.RepeatedTest;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.util.Random;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class LMApproximatorTest {
 

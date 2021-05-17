@@ -33,8 +33,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 import static com.graphhopper.gtfs.GtfsHelper.time;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class ExtendedRouteTypeIT {
 
@@ -76,7 +76,7 @@ public class ExtendedRouteTypeIT {
 
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
-        assertEquals("Expected travel time == scheduled arrival time", time(1, 0), route.getBest().getTime(), 0.1);
+        assertEquals(time(1, 0), route.getBest().getTime(), 0.1, "Expected travel time == scheduled arrival time");
     }
 
 }

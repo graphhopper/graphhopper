@@ -24,7 +24,7 @@ import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static com.graphhopper.Junit4To5Assertions.*;
 
 /**
  * @author Robin Boldt

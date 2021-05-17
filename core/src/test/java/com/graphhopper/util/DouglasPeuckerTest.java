@@ -23,8 +23,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static com.graphhopper.Junit4To5Assertions.assertEquals;
+import static com.graphhopper.Junit4To5Assertions.assertFalse;
 
 /**
  * @author Peter Karich

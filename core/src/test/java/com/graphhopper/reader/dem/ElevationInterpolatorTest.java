@@ -20,7 +20,7 @@ package com.graphhopper.reader.dem;
 import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static com.graphhopper.Junit4To5Assertions.assertEquals;
 
 /**
  * @author Alexey Valikov

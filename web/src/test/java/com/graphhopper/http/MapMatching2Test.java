@@ -39,14 +39,14 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import static com.graphhopper.http.MapMatchingTest.fetchStreets;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
  */
 public class MapMatching2Test {
     private static final String GH_LOCATION = "../target/mapmatchingtest2-gh";
-    private XmlMapper xmlMapper = new XmlMapper();
+    private final XmlMapper xmlMapper = new XmlMapper();
 
     @BeforeEach
     @AfterEach
@@ -71,8 +71,7 @@ public class MapMatching2Test {
         // make sure no virtual edges are returned
         int edgeCount = hopper.getGraphHopperStorage().getAllEdges().length();
         for (EdgeMatch em : mr.getEdgeMatches()) {
-            assertTrue("result contains virtual edges:" + em.getEdgeState().toString(),
-                    em.getEdgeState().getEdge() < edgeCount);
+            assertTrue(em.getEdgeState().getEdge() < edgeCount, "result contains virtual edges:" + em.getEdgeState().toString());
             validateEdgeMatch(em);
         }
 
@@ -118,8 +117,7 @@ public class MapMatching2Test {
         // make sure no virtual edges are returned
         int edgeCount = hopper.getGraphHopperStorage().getAllEdges().length();
         for (EdgeMatch em : mr.getEdgeMatches()) {
-            assertTrue("result contains virtual edges:" + em.getEdgeState().toString(),
-                    em.getEdgeState().getEdge() < edgeCount);
+            assertTrue(em.getEdgeState().getEdge() < edgeCount, "result contains virtual edges:" + em.getEdgeState().toString());
             validateEdgeMatch(em);
         }
 

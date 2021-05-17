@@ -21,8 +21,8 @@ import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.PointList;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static com.graphhopper.Junit4To5Assertions.assertFalse;
+import static com.graphhopper.Junit4To5Assertions.assertTrue;
 
 /**
  * @author Peter Karich

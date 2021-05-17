@@ -32,9 +32,9 @@ import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
+import static com.graphhopper.Junit4To5Assertions.assertEquals;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
-import static org.junit.Assert.assertEquals;
 
 /**
  * Run some tests specific for {@link DijkstraBidirectionCH}, e.g. fine grained path unpacking and stall on demand

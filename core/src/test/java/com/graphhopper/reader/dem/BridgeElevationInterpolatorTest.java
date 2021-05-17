@@ -26,7 +26,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static com.graphhopper.Junit4To5Assertions.assertEquals;
 
 /**
  * @author Alexey Valikov

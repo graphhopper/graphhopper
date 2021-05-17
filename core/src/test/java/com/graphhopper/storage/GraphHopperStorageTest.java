@@ -31,9 +31,9 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static com.graphhopper.Junit4To5Assertions.*;
 import static com.graphhopper.util.EdgeIteratorState.REVERSE_STATE;
 import static com.graphhopper.util.FetchMode.*;
-import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich

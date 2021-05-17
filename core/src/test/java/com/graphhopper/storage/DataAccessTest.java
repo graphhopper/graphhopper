@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.nio.ByteOrder;
 
-import static org.junit.Assert.*;
+import static com.graphhopper.Junit4To5Assertions.*;
 
 /**
  * @author Peter Karich

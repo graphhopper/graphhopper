@@ -39,9 +39,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
+import static com.graphhopper.Junit4To5Assertions.assertEquals;
+import static com.graphhopper.Junit4To5Assertions.assertTrue;
 import static com.graphhopper.util.Parameters.Details.AVERAGE_SPEED;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author Robin Boldt

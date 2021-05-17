@@ -6,9 +6,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
+import static com.graphhopper.Junit4To5Assertions.assertEquals;
 import static com.graphhopper.routing.util.spatialrules.SpatialRuleLookupHelper.JSON_ID_FIELD;
 import static com.graphhopper.routing.util.spatialrules.SpatialRuleLookupHelper.reorder;
-import static org.junit.Assert.assertEquals;
 
 public class SpatialRuleLookupHelperTest {
 

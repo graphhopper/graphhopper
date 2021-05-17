@@ -19,7 +19,7 @@ package com.graphhopper.coll;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static com.graphhopper.Junit4To5Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**

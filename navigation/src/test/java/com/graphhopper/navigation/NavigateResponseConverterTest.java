@@ -18,8 +18,8 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.util.Locale;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class NavigateResponseConverterTest {
 
@@ -60,12 +60,12 @@ public class NavigateResponseConverterTest {
 
         JsonNode route = json.get("routes").get(0);
         double routeDistance = route.get("distance").asDouble();
-        assertTrue("distance wasn't correct:" + routeDistance, routeDistance > 9000);
-        assertTrue("distance wasn't correct:" + routeDistance, routeDistance < 9500);
+        assertTrue(routeDistance > 9000, "distance wasn't correct:" + routeDistance);
+        assertTrue(routeDistance < 9500, "distance wasn't correct:" + routeDistance);
 
         double routeDuration = route.get("duration").asDouble();
-        assertTrue("duration wasn't correct:" + routeDuration, routeDuration > 500);
-        assertTrue("duration wasn't correct:" + routeDuration, routeDuration < 600);
+        assertTrue(routeDuration > 500, "duration wasn't correct:" + routeDuration);
+        assertTrue(routeDuration < 600, "duration wasn't correct:" + routeDuration);
 
         assertEquals("en", route.get("voiceLocale").asText());
 

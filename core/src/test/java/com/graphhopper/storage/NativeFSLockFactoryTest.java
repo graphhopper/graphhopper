@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.channels.OverlappingFileLockException;
 
-import static org.junit.Assert.*;
+import static com.graphhopper.Junit4To5Assertions.*;
 
 /**
  * @author Peter Karich

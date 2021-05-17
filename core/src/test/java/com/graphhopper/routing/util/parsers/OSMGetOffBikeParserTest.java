@@ -10,7 +10,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static com.graphhopper.Junit4To5Assertions.*;
 
 public class OSMGetOffBikeParserTest {
 

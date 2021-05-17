@@ -21,7 +21,7 @@ import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static com.graphhopper.Junit4To5Assertions.assertEquals;
 
 /**
  * @author Peter Karich

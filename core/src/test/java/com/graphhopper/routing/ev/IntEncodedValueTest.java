@@ -3,7 +3,7 @@ package com.graphhopper.routing.ev;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static com.graphhopper.Junit4To5Assertions.*;
 
 public class IntEncodedValueTest {
 
@@ -13,7 +13,7 @@ public class IntEncodedValueTest {
         prop.init(new EncodedValue.InitializerConfig());
         try {
             prop.setInt(true, new IntsRef(1), -1);
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
         }
     }

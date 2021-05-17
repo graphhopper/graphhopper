@@ -38,9 +38,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static com.graphhopper.Junit4To5Assertions.assertEquals;
+import static com.graphhopper.Junit4To5Assertions.assertTrue;
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class AlternativeRouteEdgeCHTest {
     private final FlagEncoder carFE = new CarFlagEncoder(new PMap().putObject("turn_costs", true));

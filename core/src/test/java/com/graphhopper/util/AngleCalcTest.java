@@ -19,7 +19,7 @@ package com.graphhopper.util;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static com.graphhopper.Junit4To5Assertions.*;
 
 /**
  * @author Johannes Pelzer

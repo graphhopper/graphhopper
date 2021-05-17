@@ -33,9 +33,7 @@ import java.io.File;
 import java.util.Collections;
 
 import static com.graphhopper.http.util.TestUtils.clientTarget;
-import static org.junit.Assert.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests the DataFlagEncoder with the SpatialRuleLookup enabled

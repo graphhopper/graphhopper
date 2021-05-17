@@ -31,7 +31,7 @@ import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static com.graphhopper.Junit4To5Assertions.assertEquals;
 import static org.junit.Assert.assertNull;
 
 public class EdgeBasedWitnessPathSearcherTest {

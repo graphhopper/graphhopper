@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
 import java.text.DateFormat;
 import java.util.Date;
 
-import static org.junit.Assert.*;
+import static com.graphhopper.Junit4To5Assertions.*;
 
 /**
  * @author Peter Karich

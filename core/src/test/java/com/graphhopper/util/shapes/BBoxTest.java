@@ -22,7 +22,7 @@ import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.PointList;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static com.graphhopper.Junit4To5Assertions.*;
 
 /**
  * @author Peter Karich

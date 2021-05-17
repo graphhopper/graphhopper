@@ -24,8 +24,8 @@ import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
+import static com.graphhopper.Junit4To5Assertions.assertEquals;
 import static com.graphhopper.util.GHUtility.createMockedEdgeIteratorState;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 /**

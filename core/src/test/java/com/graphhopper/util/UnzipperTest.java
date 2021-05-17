@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
-import static org.junit.Assert.assertTrue;
+import static com.graphhopper.Junit4To5Assertions.assertTrue;
 
 public class UnzipperTest {
 

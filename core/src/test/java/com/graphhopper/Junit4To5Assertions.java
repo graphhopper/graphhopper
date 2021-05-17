@@ -18,6 +18,8 @@
 
 package com.graphhopper;
 
+import org.junit.jupiter.api.function.Executable;
+
 /**
  * This class is used for junit4->5 migration. Unfortunately to do the migration the (optional) message parameter of
  * the various assertXYZ methods was moved from the beginning to the end of the parameter list. This wrapper class
@@ -167,5 +169,21 @@ public class Junit4To5Assertions {
 
     public static void assertNotNull(Object object, String message) {
         org.junit.jupiter.api.Assertions.assertNotNull(object, message);
+    }
+
+    public static void fail() {
+        org.junit.jupiter.api.Assertions.fail();
+    }
+
+    public static void fail(String message) {
+        org.junit.jupiter.api.Assertions.fail(message);
+    }
+
+    public static <T extends Throwable> T assertThrows(Class<T> expectedType, Executable executable) {
+        return org.junit.jupiter.api.Assertions.assertThrows(expectedType, executable);
+    }
+
+    public static void assertSame(Object expected, Object given) {
+        org.junit.jupiter.api.Assertions.assertSame(expected, given);
     }
 }

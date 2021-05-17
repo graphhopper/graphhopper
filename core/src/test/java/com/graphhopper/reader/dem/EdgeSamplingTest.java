@@ -4,7 +4,7 @@ import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.PointList;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static com.graphhopper.Junit4To5Assertions.assertEquals;
 
 public class EdgeSamplingTest {
     private final ElevationProvider elevation = new AbstractElevationProvider("") {

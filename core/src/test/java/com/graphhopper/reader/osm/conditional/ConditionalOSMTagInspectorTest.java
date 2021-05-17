@@ -23,8 +23,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static com.graphhopper.Junit4To5Assertions.assertFalse;
+import static com.graphhopper.Junit4To5Assertions.assertTrue;
 
 /**
  * @author Robin Boldt

@@ -32,7 +32,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static com.graphhopper.Junit4To5Assertions.assertEquals;
 
 public class AlternativeRouteCHTest {
     private final FlagEncoder carFE = new CarFlagEncoder();

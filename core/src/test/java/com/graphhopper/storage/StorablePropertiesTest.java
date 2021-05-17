@@ -26,7 +26,7 @@ import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static com.graphhopper.Junit4To5Assertions.*;
 
 /**
  * @author Peter Karich

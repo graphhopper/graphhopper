@@ -21,8 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
+import static com.graphhopper.Junit4To5Assertions.assertEquals;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
-import static org.junit.Assert.assertEquals;
 
 public class BlockAreaWeightingTest {
 

@@ -3,7 +3,7 @@ package com.graphhopper.routing.ev;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static com.graphhopper.Junit4To5Assertions.assertEquals;
 
 public class MaxWeightTest {
 

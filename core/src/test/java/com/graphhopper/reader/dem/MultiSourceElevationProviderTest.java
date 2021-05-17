@@ -21,7 +21,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static com.graphhopper.Junit4To5Assertions.assertEquals;
 
 /**
  * @author Robin Boldt
@@ -61,6 +61,7 @@ public class MultiSourceElevationProviderTest {
     Change to: <argLine>-Xmx500m -Xms500m</argLine>
     */
     @Disabled
+    @Test
     public void testGetEle() {
         instance = new MultiSourceElevationProvider();
         double precision = .1;

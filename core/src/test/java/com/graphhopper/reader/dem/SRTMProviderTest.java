@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static org.junit.Assert.assertEquals;
+import static com.graphhopper.Junit4To5Assertions.assertEquals;
 
 /**
  * @author Peter Karich
@@ -100,6 +100,7 @@ public class SRTMProviderTest {
     }
 
     @Disabled
+    @Test
     public void testGetEle() {
         instance = new SRTMProvider();
         assertEquals(337, instance.getEle(49.949784, 11.57517), precision);
@@ -125,6 +126,7 @@ public class SRTMProviderTest {
     }
 
     @Disabled
+    @Test
     public void testGetEleVerticalBorder() {
         instance = new SRTMProvider();
         // Border between the tiles N42E011 and N43E011
@@ -135,6 +137,7 @@ public class SRTMProviderTest {
     }
 
     @Disabled
+    @Test
     public void testGetEleHorizontalBorder() {
         instance = new SRTMProvider();
         // Border between the tiles N42E011 and N42E012
@@ -145,6 +148,7 @@ public class SRTMProviderTest {
     }
 
     @Disabled
+    @Test
     public void testDownloadIssue_1274() {
         instance = new SRTMProvider();
         // The file is incorrectly named on the sever: N55W061hgt.zip (it should be N55W061.hgt.zip)
