@@ -47,12 +47,15 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     protected final Set<String> unpavedSurfaceTags = new HashSet<>();
     private final Map<String, Integer> trackTypeSpeeds = new HashMap<>();
     private final Map<String, Integer> surfaceSpeeds = new HashMap<>();
+    protected static final double smoothnessFactorPushingSectionThreshold = 0.3d;
+    private final Map<Smoothness, Double> smoothnessFactor = new HashMap<>();
     private final Map<String, Integer> highwaySpeeds = new HashMap<>();
     protected boolean speedTwoDirections;
     DecimalEncodedValue priorityEnc;
     // Car speed limit which switches the preference from UNCHANGED to AVOID_IF_POSSIBLE
     private int avoidSpeedLimit;
     EnumEncodedValue<RouteNetwork> bikeRouteEnc;
+    EnumEncodedValue<Smoothness> smoothnessEnc;
     Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
     // This is the specific bicycle class
@@ -178,6 +181,9 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         routeMap.put(REGIONAL, VERY_NICE.getValue());
         routeMap.put(LOCAL, PREFER.getValue());
 
+        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.MISSING, 1.0d);
+        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.OTHER, 0.7d);
+
         setAvoidSpeedLimit(71);
     }
 
@@ -199,6 +205,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         registerNewEncodedValue.add(priorityEnc = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 3, PriorityCode.getFactor(1), false));
 
         bikeRouteEnc = getEnumEncodedValue(RouteNetwork.key("bike"), RouteNetwork.class);
+        smoothnessEnc = getEnumEncodedValue(Smoothness.KEY, Smoothness.class);
     }
 
     @Override
@@ -304,6 +311,12 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         double wayTypeSpeed = getSpeed(way);
         if (!access.isFerry()) {
             wayTypeSpeed = applyMaxSpeed(way, wayTypeSpeed);
+            Smoothness smoothness = smoothnessEnc.getEnum(false, edgeFlags);
+            if (smoothness != Smoothness.MISSING) {
+               // smoothness handling: Multiply speed with smoothnessFactor
+               Double smoothnessSpeedFactor = smoothnessFactor.get(smoothness);
+               wayTypeSpeed = (smoothnessSpeedFactor <= smoothnessFactorPushingSectionThreshold) ? PUSHING_SECTION_SPEED: (int)Math.round(smoothnessSpeedFactor * wayTypeSpeed);
+            }
             handleSpeed(edgeFlags, way, wayTypeSpeed);
         } else {
             double ferrySpeed = ferrySpeedCalc.getSpeed(way);
@@ -554,6 +567,10 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
     void setSurfaceSpeed(String surface, int speed) {
         surfaceSpeeds.put(surface, speed);
+    }
+
+    void setSmoothnessSpeedFactor(Smoothness smoothness, double speedfactor) {
+        smoothnessFactor.put(smoothness, speedfactor);
     }
 
     void addPushingSection(String highway) {

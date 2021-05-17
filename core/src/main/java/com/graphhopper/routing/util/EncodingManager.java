@@ -338,7 +338,8 @@ public class EncodingManager implements EncodedValueLookup {
                         _addRelationTagParser(new OSMBikeNetworkTagParser());
                     if (!em.hasEncodedValue(GetOffBike.KEY))
                         _addEdgeTagParser(new OSMGetOffBikeParser(), false, false);
-
+                    if (!em.hasEncodedValue(Smoothness.KEY))
+                        _addEdgeTagParser(new OSMSmoothnessParser(), false, false);
                 } else if (encoder instanceof FootFlagEncoder) {
                     if (!em.hasEncodedValue(RouteNetwork.key("foot")))
                         _addRelationTagParser(new OSMFootNetworkTagParser());
