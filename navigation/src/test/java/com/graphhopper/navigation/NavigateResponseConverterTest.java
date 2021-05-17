@@ -10,9 +10,9 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.Ignore;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -188,7 +188,7 @@ public class NavigateResponseConverterTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void alternativeRoutesTest() {
 
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).

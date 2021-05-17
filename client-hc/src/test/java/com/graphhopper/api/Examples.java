@@ -10,7 +10,7 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.shapes.GHPoint;
 import okhttp3.OkHttpClient;
-import org.junit.Ignore;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-@Ignore
+@Disabled
 public class Examples {
 
     String apiKey = "<YOUR_API_KEY>";
