@@ -2,7 +2,7 @@
 
 - added smoothness encoded value, used to determine bike speed (#2303)
 - migrated tests from junit 4 to 5 (#2324)
-- changed handling of motorroad tag (#2329)
+- use road_class=motorway if motorroad=yes (#2329)
 
 ### 3.0 [17 May 2021]
 
