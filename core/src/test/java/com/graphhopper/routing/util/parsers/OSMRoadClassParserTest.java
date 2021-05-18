@@ -60,4 +60,17 @@ public class OSMRoadClassParserTest {
         parser.handleWayTags(edgeFlags, readerWay, false, relFlags);
         assertEquals(RoadClass.OTHER, rcEnc.getEnum(false, edgeFlags));
     }
+
+    @Test
+    public void testMotorroad() {
+        ReaderWay readerWay = new ReaderWay(1);
+        readerWay.setTag("highway", "trunk");
+        IntsRef edgeFlags = em.createEdgeFlags();
+        parser.handleWayTags(edgeFlags, readerWay, false, relFlags);
+        assertEquals(RoadClass.TRUNK, rcEnc.getEnum(false, edgeFlags));
+
+        readerWay.setTag("motorroad", "yes");
+        parser.handleWayTags(edgeFlags, readerWay, false, relFlags);
+        assertEquals(RoadClass.MOTORWAY, rcEnc.getEnum(false, edgeFlags));
+    }
 }
