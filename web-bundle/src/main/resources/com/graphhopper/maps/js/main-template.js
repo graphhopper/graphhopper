@@ -164,13 +164,17 @@ $(document).ready(function (e) {
 
     var urlParams = urlTools.parseUrlWithHisto();
 
-    var customURL = urlParams.load_custom;
-    if(urlParams.load_custom)
+    var customModelJSON = urlParams.custom_model;
+    if(customModelJSON) {
         toggleCustomModelBox(false);
-    if(customURL && ghenv.environment === 'development')
-        $.ajax(customURL).
-            done(function(data) { cmEditor.value = data; sendCustomData(); }).
-            fail(function(err)  { console.log("Cannot load custom URL " + customURL); });
+        cmEditor.value = customModelJSON;
+        try {
+            var tmpObj = JSON.parse(customModelJSON);
+            cmEditor.value = JSON.stringify(tmpObj, null, 2);
+        } catch(e) {
+            console.warn('cannot pretty print custom model');
+        }
+    }
 
     $.when(ghRequest.fetchTranslationMap(urlParams.locale), ghRequest.getInfo())
             .then(function (arg1, arg2) {
