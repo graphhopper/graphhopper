@@ -66,7 +66,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
                 if (arg.startsWith(IN_AREA_PREFIX)) {
                     int start = rv.getLocation().getColumnNumber() - 1;
                     replacements.put(start, new Replacement(start, arg.length(),
-                            CustomWeightingHelper.class.getSimpleName() + ".in(this." + arg + ", edge)"));
+                            "this.in(this." + arg + ", edge)"));
                     result.guessedVariables.add(arg);
                     return true;
                 } else {
