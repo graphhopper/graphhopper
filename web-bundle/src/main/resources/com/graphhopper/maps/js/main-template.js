@@ -899,12 +899,15 @@ function doCustomRequest(request, routeResultsDiv) {
         elevation: ghRequest.api_params.elevation,
         profile: ghRequest.api_params.profile,
         custom_model: customModel,
+        locale: ghRequest.api_params.locale,
         "ch.disable": true,
         details: details
     }
+    var reqURL = host + "/route";
+    if(ghRequest.api_params.key) reqURL += "?key=" + ghRequest.api_params.key;
 
     $.ajax({
-        url: host + "/route",
+        url: reqURL,
         type: "POST",
         contentType: 'application/json; charset=utf-8',
         dataType: "json",
