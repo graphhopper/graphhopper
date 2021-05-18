@@ -109,12 +109,11 @@ public class RandomizedRoutingTest {
         private RoutingCHGraph routingCHGraph;
         private PrepareLandmarks lm;
 
-        public Fixture(Algo algo, boolean prepareCH, boolean prepareLM, TraversalMode traversalMode) {
+        Fixture(Algo algo, boolean prepareCH, boolean prepareLM, TraversalMode traversalMode) {
             this.algo = algo;
             this.prepareCH = prepareCH;
             this.prepareLM = prepareLM;
             this.traversalMode = traversalMode;
-
             maxTurnCosts = 10;
             dir = new RAMDirectory();
             // todo: this test only works with speedTwoDirections=false (as long as loops are enabled), otherwise it will
@@ -287,7 +286,7 @@ public class RandomizedRoutingTest {
     private static class RepeatedFixtureProvider implements ArgumentsProvider {
         @Override
         public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
-            return Stream.generate(() -> new FixtureProvider().provideArguments(context)).flatMap(s -> s).limit(5);
+            return Stream.generate(() -> new FixtureProvider().provideArguments(context)).limit(5).flatMap(s -> s);
         }
     }
 
