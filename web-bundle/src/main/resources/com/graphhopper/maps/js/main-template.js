@@ -132,8 +132,10 @@ $(document).ready(function (e) {
           var url = location.href;
           if(url.indexOf("?") > 0)
             url = url.substring(0, url.indexOf("?")) + ghRequest.createHistoryURL() + "&layer=" + encodeURIComponent(tileLayers.activeLayerName);
-          if(ghRequest.cmEditorActive)
-            url += "&custom_model=" + new URLSearchParams(JSON.stringify(JSON.parse(cmEditor.value))).toString();
+          if(ghRequest.cmEditorActive) {
+            var text = cmEditor.value.replaceAll("&","%26");
+            url += "&custom_model=" + new URLSearchParams(JSON.stringify(JSON.parse(text))).toString();
+          }
           navigator.clipboard.writeText(url).then(() => { alert('Link copied to clipboard'); });
         } catch(e) { console.warn(e); }
     });
