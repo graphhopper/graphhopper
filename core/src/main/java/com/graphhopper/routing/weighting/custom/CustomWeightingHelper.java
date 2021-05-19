@@ -36,7 +36,7 @@ import java.util.Map;
 public class CustomWeightingHelper {
     protected DecimalEncodedValue avg_speed_enc;
     
-    private Integer currentEdge;
+    private int currentEdge;
     private BBox edgeBBox;
     private PointList edgeGeom;
     
@@ -63,7 +63,7 @@ public class CustomWeightingHelper {
     }
 
     protected final boolean in(Polygon p, EdgeIteratorState edge) {
-        if (currentEdge == null || currentEdge != edge.getEdge()) {
+        if (edgeBBox == null || currentEdge != edge.getEdge()) {
             currentEdge = edge.getEdge();
             edgeBBox = GHUtility.createBBox(edge);
             edgeGeom = null;
