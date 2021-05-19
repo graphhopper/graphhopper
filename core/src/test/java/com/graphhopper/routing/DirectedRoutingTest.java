@@ -183,7 +183,7 @@ public class DirectedRoutingTest {
     private static class RepeatedFixtureProvider implements ArgumentsProvider {
         @Override
         public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
-            return Stream.generate(() -> new FixtureProvider().provideArguments(context)).flatMap(s -> s).limit(10);
+            return Stream.generate(() -> new FixtureProvider().provideArguments(context)).limit(10).flatMap(s -> s);
         }
     }
 
