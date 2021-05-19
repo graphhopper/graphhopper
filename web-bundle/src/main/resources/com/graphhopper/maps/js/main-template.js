@@ -129,7 +129,9 @@ $(document).ready(function (e) {
     $("#export-link").click(function (e) {
         try {
           e.preventDefault();
-          var url = host + "/maps/" + ghRequest.createHistoryURL() + "&layer=" + tileLayers.activeLayerName;
+          var url = location.href;
+          if(url.indexOf("?") > 0)
+            url = url.substring(0, url.indexOf("?")) + ghRequest.createHistoryURL() + "&layer=" + encodeURIComponent(tileLayers.activeLayerName);
           if(ghRequest.cmEditorActive)
             url += "&custom_model=" + new URLSearchParams(JSON.stringify(JSON.parse(cmEditor.value))).toString();
           navigator.clipboard.writeText(url).then(() => { alert('Link copied to clipboard'); });
