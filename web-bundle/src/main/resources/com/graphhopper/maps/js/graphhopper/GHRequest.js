@@ -196,7 +196,7 @@ GHRequest.prototype.createGPXURL = function (withRoute, withTrack, withWayPoints
 };
 
 GHRequest.prototype.createHistoryURL = function () {
-    var skip = {"key": true};
+    var skip = {"key": true, "custom_model": true};
     return this.createPath("?" + this.createPointParams(true), skip) + "&use_miles=" + !!this.useMiles + (this.selectedDetail ? "&selected_detail=" + this.selectedDetail : "");
 };
 

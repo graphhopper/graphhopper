@@ -75,9 +75,7 @@ $(document).ready(function (e) {
     var cmEditor = customModelEditor.create({}, function (element) {
         $("#custom-model-editor").append(element);
     });
-    // todo: the idea was to highlight everything so if we start typing the example is overwritten. But unfortunately
-    // this does not work. And not even sure this is so useful?
-    showCustomModelExample();
+
     cmEditor.validListener = function(valid) {
         $("#custom-model-search-button").prop('disabled', !valid);
     };
@@ -128,6 +126,20 @@ $(document).ready(function (e) {
         return false;
     });
 
+    $("#export-link").click(function (e) {
+        try {
+          e.preventDefault();
+          var url = location.href;
+          if(url.indexOf("?") > 0)
+            url = url.substring(0, url.indexOf("?")) + ghRequest.createHistoryURL() + "&layer=" + encodeURIComponent(tileLayers.activeLayerName);
+          if(ghRequest.cmEditorActive) {
+            var text = cmEditor.value.replaceAll("&","%26");
+            url += "&custom_model=" + new URLSearchParams(JSON.stringify(JSON.parse(text))).toString();
+          }
+          navigator.clipboard.writeText(url).then(() => { alert('Link copied to clipboard'); });
+        } catch(e) { console.warn(e); }
+    });
+
     var sendCustomData = function () {
         ghRequest.ignoreCustomErrors = false;
         mySubmit();
@@ -167,13 +179,18 @@ $(document).ready(function (e) {
     var customModelJSON = urlParams.custom_model;
     if(customModelJSON) {
         toggleCustomModelBox(false);
-        cmEditor.value = customModelJSON;
+        cmEditor.value = customModelJSON; // if json parsing fails we still have the partial custom model in the box
         try {
             var tmpObj = JSON.parse(customModelJSON);
             cmEditor.value = JSON.stringify(tmpObj, null, 2);
         } catch(e) {
-            console.warn('cannot pretty print custom model');
+            console.warn('cannot pretty print custom model: ' + e);
         }
+
+    } else {
+        // todo: the idea was to highlight everything so if we start typing the example is overwritten. But unfortunately
+        // this does not work. And not even sure this is so useful?
+        showCustomModelExample();
     }
 
     $.when(ghRequest.fetchTranslationMap(urlParams.locale), ghRequest.getInfo())
