@@ -32,12 +32,13 @@ import java.util.*;
 import static com.graphhopper.routing.weighting.custom.CustomModelParser.IN_AREA_PREFIX;
 
 class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
-    private final Set<String> allowedMethods = new HashSet<>(Arrays.asList("ordinal", "getDistance", "getName",
-            "contains", "sqrt", "abs"));
+
     private final ParseResult result;
     private final EncodedValueLookup lookup;
     private final TreeMap<Integer, Replacement> replacements = new TreeMap<>();
     private final NameValidator nameValidator;
+    private final Set<String> allowedMethods = new HashSet<>(Arrays.asList("ordinal", "getDistance", "getName",
+            "contains", "sqrt", "abs"));
     private String invalidMessage;
 
     public ExpressionVisitor(ParseResult result, NameValidator nameValidator, EncodedValueLookup lookup) {
@@ -175,14 +176,14 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
                 createObjects.addAll(parseResult.guessedVariables);
                 expressions.append(statement.getOperation().build(parseResult.converted.toString()) + ";\n");
             } else {
-                throw new IllegalArgumentException("The clause must be either 'if', 'else_if', 'else' or 'set_to'");
+                throw new IllegalArgumentException("The statement must be either 'if', 'else_if', 'else' or 'set_to'");
             }
         }
         expressions.append(lastStmt);
     }
 
     /**
-     * Enforce simple conditional expressions of user input to increase security.
+     * Enforce simple expressions of user input to increase security.
      *
      * @return ParseResult with ok if it is a valid and "simple" expression. It contains all guessed variables and a
      * converted expression that includes class names for constants to avoid conflicts e.g. when doing "toll == Toll.NO"
