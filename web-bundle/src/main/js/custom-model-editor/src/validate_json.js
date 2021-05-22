@@ -2,7 +2,7 @@ import {parseTree, printParseErrorCode} from "jsonc-parser";
 
 const rootKeys = ['speed', 'priority', 'distance_influence', 'areas'];
 const clauses = ['if', 'else_if', 'else'];
-const operators = ['multiply_by', 'limit_to'];
+const operators = ['multiply_by', 'limit_to', 'set_to'];
 const statementKeys = clauses.concat(operators);
 
 let _conditionRanges = [];

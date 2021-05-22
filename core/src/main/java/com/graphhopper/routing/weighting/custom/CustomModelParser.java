@@ -42,8 +42,7 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.graphhopper.json.Statement.Keyword.ELSE;
-import static com.graphhopper.json.Statement.Keyword.IF;
+import static com.graphhopper.json.Statement.Keyword.*;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 
 public class CustomModelParser {
@@ -318,9 +317,9 @@ public class CustomModelParser {
                                                                List<Statement> list, EncodedValueLookup lookup,
                                                                String lastStmt) throws Exception {
         // allow variables, all encoded values, constants
-        ExpressionVisitor.NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
+        ExpressionVisitor.NameValidator nameInExpressionValidator = name -> lookup.hasEncodedValue(name)
                 || name.toUpperCase(Locale.ROOT).equals(name) || isValidVariableName(name);
-        ExpressionVisitor.parseExpressions(expressions, nameInConditionValidator, info, createObjects, list, lookup, lastStmt);
+        ExpressionVisitor.parseExpressions(expressions, nameInExpressionValidator, info, createObjects, list, lookup, lastStmt);
         return new Parser(new org.codehaus.janino.Scanner(info, new StringReader(expressions.toString()))).
                 parseBlockStatements();
     }
@@ -434,12 +433,17 @@ public class CustomModelParser {
     }
 
     static double getMaxSpeedForBlock(List<Statement> block, final double maxSpeed) {
-        if (block.isEmpty() || !IF.equals(block.get(0).getKeyword()))
-            throw new IllegalArgumentException("Every block must start with an if-statement");
-        if (block.get(0).getCondition().trim().equals("true"))
+        if (block.isEmpty())
+            throw new IllegalArgumentException("Every block must start with an if or unconditional statement");
+        Statement firstStatement = block.get(0);
+        if (UNCONDITIONAL.equals(firstStatement.getKeyword()))
+            return firstStatement.apply(maxSpeed);
+        else if (!IF.equals(firstStatement.getKeyword()))
+            throw new IllegalArgumentException("Every block must start with an if or unconditional statement");
+        if (firstStatement.getExpression().trim().equals("true"))
             // this if statement is always executed while the other statements are never executed
             // -> we just apply this one statement
-            return block.get(0).apply(maxSpeed);
+            return firstStatement.apply(maxSpeed);
 
         double blockMax = block.stream()
                 .mapToDouble(statement -> statement.apply(maxSpeed))

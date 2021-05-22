@@ -32,13 +32,12 @@ import java.util.*;
 import static com.graphhopper.routing.weighting.custom.CustomModelParser.IN_AREA_PREFIX;
 
 class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
-
+    private final Set<String> allowedMethods = new HashSet<>(Arrays.asList("ordinal", "getDistance", "getName",
+            "contains", "sqrt", "abs"));
     private final ParseResult result;
     private final EncodedValueLookup lookup;
     private final TreeMap<Integer, Replacement> replacements = new TreeMap<>();
     private final NameValidator nameValidator;
-    private final Set<String> allowedMethods = new HashSet<>(Arrays.asList("ordinal", "getDistance", "getName",
-            "contains", "sqrt", "abs"));
     private String invalidMessage;
 
     public ExpressionVisitor(ParseResult result, NameValidator nameValidator, EncodedValueLookup lookup) {
@@ -82,8 +81,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
             }
             invalidMessage = "identifier " + n + " invalid";
             return false;
-        }
-        if (rv instanceof Java.Literal) {
+        } else if (rv instanceof Java.Literal) {
             return true;
         } else if (rv instanceof Java.UnaryOperation) {
             Java.UnaryOperation uo = (Java.UnaryOperation) rv;
@@ -151,33 +149,40 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
         return false;
     }
 
-    static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator, String exceptionInfo,
+    static void parseExpressions(StringBuilder expressions, NameValidator nameInExpressionValidator, String exceptionInfo,
                                  Set<String> createObjects, List<Statement> list, EncodedValueLookup lookup, String lastStmt) {
 
         for (Statement statement : list) {
             if (statement.getKeyword() == Statement.Keyword.ELSE) {
-                if (!Helper.isEmpty(statement.getCondition()))
-                    throw new IllegalArgumentException("expression must be empty but was " + statement.getCondition());
+                if (!Helper.isEmpty(statement.getExpression()))
+                    throw new IllegalArgumentException("expression must be empty but was " + statement.getExpression());
 
-                expressions.append("else {" + statement.getOperation().build(statement.getValue()) + "; }\n");
+                expressions.append("else {" + statement.getOperation().build("" + statement.getValue()) + "; }\n");
             } else if (statement.getKeyword() == Statement.Keyword.ELSEIF || statement.getKeyword() == Statement.Keyword.IF) {
-                ExpressionVisitor.ParseResult parseResult = parseExpression(statement.getCondition(), nameInConditionValidator, lookup);
+                com.graphhopper.routing.weighting.custom.ExpressionVisitor.ParseResult parseResult = parseExpression(statement.getExpression(), nameInExpressionValidator, lookup);
                 if (!parseResult.ok)
-                    throw new IllegalArgumentException(exceptionInfo + " invalid expression \"" + statement.getCondition() + "\"" +
+                    throw new IllegalArgumentException(exceptionInfo + " invalid expression \"" + statement.getExpression() + "\"" +
                             (parseResult.invalidMessage == null ? "" : ": " + parseResult.invalidMessage));
                 createObjects.addAll(parseResult.guessedVariables);
                 if (statement.getKeyword() == Statement.Keyword.ELSEIF)
                     expressions.append("else ");
-                expressions.append("if (" + parseResult.converted + ") {" + statement.getOperation().build(statement.getValue()) + "; }\n");
+                expressions.append("if (" + parseResult.converted + ") {" + statement.getOperation().build("" + statement.getValue()) + "; }\n");
+            } else if (statement.getKeyword() == Statement.Keyword.UNCONDITIONAL) {
+                com.graphhopper.routing.weighting.custom.ExpressionVisitor.ParseResult parseResult = parseExpression(statement.getExpression(), nameInExpressionValidator, lookup);
+                if (!parseResult.ok)
+                    throw new IllegalArgumentException(exceptionInfo + " invalid expression \"" + statement.getExpression() + "\"" +
+                            (parseResult.invalidMessage == null ? "" : ": " + parseResult.invalidMessage));
+                createObjects.addAll(parseResult.guessedVariables);
+                expressions.append(statement.getOperation().build(parseResult.converted.toString()) + ";\n");
             } else {
-                throw new IllegalArgumentException("The clause must be either 'if', 'else_if' or 'else'");
+                throw new IllegalArgumentException("The clause must be either 'if', 'else_if', 'else' or 'set_to'");
             }
         }
         expressions.append(lastStmt);
     }
 
     /**
-     * Enforce simple expressions of user input to increase security.
+     * Enforce simple conditional expressions of user input to increase security.
      *
      * @return ParseResult with ok if it is a valid and "simple" expression. It contains all guessed variables and a
      * converted expression that includes class names for constants to avoid conflicts e.g. when doing "toll == Toll.NO"
@@ -187,7 +192,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
         ParseResult result = new ParseResult();
         try {
             Parser parser = new Parser(new Scanner("ignore", new StringReader(expression)));
-            Java.Atom atom = parser.parseConditionalExpression();
+            Java.Atom atom = parser.parseExpression();
             // after parsing the expression the input should end (otherwise it is not "simple")
             if (parser.peek().type == TokenType.END_OF_INPUT) {
                 result.guessedVariables = new LinkedHashSet<>();
@@ -227,7 +232,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
         boolean isValid(String name);
     }
 
-    class Replacement {
+    static class Replacement {
         int start;
         int oldLength;
         String newString;

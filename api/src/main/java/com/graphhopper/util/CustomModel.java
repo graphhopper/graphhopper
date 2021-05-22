@@ -177,15 +177,15 @@ public class CustomModel {
         return mergedCM;
     }
 
-    private static void checkFirst(List<Statement> priority) {
-        if (!priority.isEmpty() && priority.get(0).getKeyword() != Statement.Keyword.IF)
-            throw new IllegalArgumentException("First statement needs to be an if statement but was " + priority.get(0).getKeyword().getName());
+    private static void checkFirst(List<Statement> statements) {
+        if (!statements.isEmpty() && statements.get(0).getKeyword() != Statement.Keyword.IF && statements.get(0).getKeyword() != Statement.Keyword.UNCONDITIONAL)
+            throw new IllegalArgumentException("First statement needs to be an if or unconditional statement but was " + statements.get(0).getKeyword().getName());
     }
 
-    private static void check(List<Statement> list) {
-        for (Statement statement : list) {
-            if (statement.getOperation() == Statement.Op.MULTIPLY && statement.getValue() > 1)
-                throw new IllegalArgumentException("factor cannot be larger than 1 but was " + statement.getValue());
+    private static void check(List<Statement> statements) {
+        for (Statement statement : statements) {
+            if ((statement.getOperation() == Statement.Op.MULTIPLY || statement.getOperation() == Statement.Op.SET_TO) && statement.getValue() > 1)
+                throw new IllegalArgumentException("factor cannot be larger than 1 but was " + statement.getValue() + " for " + statement.getOperation());
         }
     }
 }

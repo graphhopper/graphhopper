@@ -80,7 +80,7 @@ public class ExpressionVisitorTest {
     }
 
     @Test
-    public void testStringExpression() {
+    public void testStringConditionalExpression() {
         ExpressionVisitor.NameValidator validVariable = s -> isValidVariableName(s) || s.equals("country");
 
         ExpressionVisitor.ParseResult result = parseExpression("country == \"DEU\"", validVariable, lookup);
@@ -97,7 +97,7 @@ public class ExpressionVisitorTest {
     }
 
     @Test
-    public void isValidAndSimpleCondition() {
+    public void isValidAndSimpleConditionalExpression() {
         ExpressionVisitor.NameValidator validVariable = s -> isValidVariableName(s)
                 || Helper.toUpperCase(s).equals(s) || s.equals("road_class") || s.equals("toll");
         ExpressionVisitor.ParseResult result = parseExpression("edge == edge", validVariable, lookup);
@@ -159,5 +159,15 @@ public class ExpressionVisitorTest {
                         Arrays.asList(If("edge.fetchWayGeometry().size() > 2", Statement.Op.MULTIPLY, 0)),
                         lookup, ""));
         assertTrue(ret.getMessage().startsWith("[HERE] invalid expression \"edge.fetchWayGeometry().size() > 2\": size is illegal method"), ret.getMessage());
+    }
+
+    @Test
+    public void testAssignmentExpression() {
+        ExpressionVisitor.NameValidator validVariable = name -> true;
+
+        ExpressionVisitor.ParseResult result = parseExpression("bike$something * 3", validVariable, lookup);
+        assertTrue(result.ok, result.invalidMessage);
+        assertEquals("[bike$something]", result.guessedVariables.toString());
+        assertEquals("bike$something * 3", result.converted.toString());
     }
 }

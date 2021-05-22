@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import static com.graphhopper.json.Statement.Keyword.*;
+import static com.graphhopper.json.Statement.Op.SET_TO;
 
 class StatementDeserializer extends JsonDeserializer<Statement> {
     @Override
@@ -20,6 +21,18 @@ class StatementDeserializer extends JsonDeserializer<Statement> {
         double value = Double.NaN;
         if (treeNode.size() != 2)
             throw new IllegalArgumentException("Statement expects two entries but was " + treeNode.size() + " for " + treeNode);
+
+        if (treeNode.has(SET_TO.getName())) {
+            for (Statement.Keyword kw : Statement.Keyword.values()) {
+                if (treeNode.has(kw.getName()) && kw != UNCONDITIONAL)
+                    throw new IllegalArgumentException("set_to has to be unconditional but was " + kw.getName());
+            }
+            if (!treeNode.get("maximum").isNumber())
+                throw new IllegalArgumentException("missing maximum entry for set_to");
+            double maximum = treeNode.get("maximum").asDouble();
+
+            return Statement.Unconditional(SET_TO, treeNode.get(SET_TO.getName()).asText(), maximum);
+        }
 
         for (Statement.Op op : Statement.Op.values()) {
             if (treeNode.has(op.getName())) {
@@ -36,11 +49,11 @@ class StatementDeserializer extends JsonDeserializer<Statement> {
         if (Double.isNaN(value))
             throw new IllegalArgumentException("Value of operation " + jsonOp.getName() + " is not a number");
 
-        if (treeNode.has(IF.getName()))
+        if (treeNode.has(IF.getName())) {
             return Statement.If(treeNode.get(IF.getName()).asText(), jsonOp, value);
-        else if (treeNode.has(ELSEIF.getName()))
+        } else if (treeNode.has(ELSEIF.getName())) {
             return Statement.ElseIf(treeNode.get(ELSEIF.getName()).asText(), jsonOp, value);
-        else if (treeNode.has(ELSE.getName())) {
+        } else if (treeNode.has(ELSE.getName())) {
             JsonNode elseNode = treeNode.get(ELSE.getName());
             if (elseNode.isNull() || elseNode.isValueNode() && elseNode.asText().isEmpty())
                 return Statement.Else(jsonOp, value);

@@ -19,13 +19,13 @@ package com.graphhopper.json;
 
 public class Statement {
     private final Keyword keyword;
-    private final String condition;
+    private final String expression;
     private final Op operation;
     private final double value;
 
-    private Statement(Keyword keyword, String condition, Op operation, double value) {
+    private Statement(Keyword keyword, String expression, Op operation, double value) {
         this.keyword = keyword;
-        this.condition = condition;
+        this.expression = expression;
         this.value = value;
         this.operation = operation;
     }
@@ -34,8 +34,8 @@ public class Statement {
         return keyword;
     }
 
-    public String getCondition() {
-        return condition;
+    public String getExpression() {
+        return expression;
     }
 
     public Op getOperation() {
@@ -50,7 +50,7 @@ public class Statement {
         switch (operation) {
             case MULTIPLY:
                 return value * externValue;
-            case LIMIT:
+            case LIMIT: case SET_TO:
                 return Math.min(value, externValue);
             default:
                 throw new IllegalArgumentException();
@@ -58,7 +58,7 @@ public class Statement {
     }
 
     public enum Keyword {
-        IF("if"), ELSEIF("else_if"), ELSE("else");
+        IF("if"), ELSEIF("else_if"), ELSE("else"), UNCONDITIONAL("unconditional");
 
         String name;
 
@@ -72,7 +72,7 @@ public class Statement {
     }
 
     public enum Op {
-        MULTIPLY("multiply_by"), LIMIT("limit_to");
+        MULTIPLY("multiply_by"), LIMIT("limit_to"), SET_TO("set_to");
 
         String name;
 
@@ -84,12 +84,14 @@ public class Statement {
             return name;
         }
 
-        public String build(double value) {
+        public String build(String value) {
             switch (this) {
                 case MULTIPLY:
                     return "value *= " + value;
                 case LIMIT:
                     return "value = Math.min(value," + value + ")";
+                case SET_TO:
+                    return "value = " + value;
                 default:
                     throw new IllegalArgumentException();
             }
@@ -98,7 +100,7 @@ public class Statement {
 
     @Override
     public String toString() {
-        return "{" + str(keyword.getName()) + ": " + str(condition) + ", " + str(operation.getName()) + ": " + value + "}";
+        return "{" + str(keyword.getName()) + ": " + str(expression) + ", " + str(operation.getName()) + ": " + value + "}";
     }
 
     private String str(String str) {
@@ -115,5 +117,9 @@ public class Statement {
 
     public static Statement Else(Op op, double value) {
         return new Statement(Keyword.ELSE, null, op, value);
+    }
+
+    public static Statement Unconditional(Op op, String expression, double max) {
+        return new Statement(Keyword.UNCONDITIONAL, expression, op, max);
     }
 }
