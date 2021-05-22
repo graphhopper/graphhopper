@@ -30,8 +30,7 @@ class StatementDeserializer extends JsonDeserializer<Statement> {
             if (!treeNode.get("maximum").isNumber())
                 throw new IllegalArgumentException("missing maximum entry for set_to");
             double maximum = treeNode.get("maximum").asDouble();
-
-            return Statement.Unconditional(SET_TO, treeNode.get(SET_TO.getName()).asText(), maximum);
+            return Statement.SetTo(treeNode.get(SET_TO.getName()).asText(), maximum);
         }
 
         for (Statement.Op op : Statement.Op.values()) {

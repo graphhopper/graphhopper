@@ -119,7 +119,8 @@ public class Statement {
         return new Statement(Keyword.ELSE, null, op, value);
     }
 
-    public static Statement Unconditional(Op op, String expression, double max) {
-        return new Statement(Keyword.UNCONDITIONAL, expression, op, max);
+    public static Statement SetTo(String expression, double maximumValue) {
+        if(maximumValue <= 0) throw new IllegalArgumentException("maximum value must be greater 0");
+        return new Statement(Keyword.UNCONDITIONAL, expression, Op.SET_TO, maximumValue);
     }
 }

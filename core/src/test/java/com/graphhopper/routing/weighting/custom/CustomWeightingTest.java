@@ -162,6 +162,30 @@ class CustomWeightingTest {
     }
 
     @Test
+    public void testSetTo() {
+        EdgeIteratorState primary = graph.edge(0, 1).setDistance(10).
+                set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80).set(accessEnc, true, true);
+        EdgeIteratorState secondary = graph.edge(1, 2).setDistance(10).
+                set(roadClassEnc, SECONDARY).set(avSpeedEnc, 70).set(accessEnc, true, true);
+
+        CustomModel vehicleModel = new CustomModel().setDistanceInfluence(0);
+        vehicleModel.addToPriority(SetTo("1", 1));
+        assertEquals(0.450, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
+        assertEquals(0.514, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
+
+        vehicleModel = new CustomModel().setDistanceInfluence(0);
+        vehicleModel.addToPriority(SetTo("2", 2));
+        assertEquals(0.225, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
+        assertEquals(0.257, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
+
+        // divide by the speed to get identical weights although different speed
+        vehicleModel = new CustomModel();
+        vehicleModel.addToPriority(SetTo("1 / car$average_speed", 1 / 150.0));
+        assertEquals(36.7, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
+        assertEquals(36.7, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
+    }
+
+    @Test
     public void testIssueSameKey() {
         EdgeIteratorState withToll = graph.edge(0, 1).setDistance(10).
                 set(avSpeedEnc, 80).set(accessEnc, true, true);

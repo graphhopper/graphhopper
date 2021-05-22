@@ -177,6 +177,12 @@ class CustomModelParserTest {
         customModel2.addToPriority(If("road_class != PRIMARY", MULTIPLY, 0.8));
         assertThrows(IllegalArgumentException.class, () -> CustomModelParser.createWeightingParameters(customModel2, encodingManager,
                 encoder.getMaxSpeed(), avgSpeedEnc));
+
+        CustomModel customModel3 = new CustomModel();
+        customModel3.addToPriority(If("road_class != PRIMARY", MULTIPLY, 0.8));
+        customModel3.addToPriority(SetTo("1", 1));
+        assertThrows(IllegalArgumentException.class, () -> CustomModelParser.createWeightingParameters(customModel2, encodingManager,
+                encoder.getMaxSpeed(), avgSpeedEnc));
     }
 
     @Test

@@ -41,7 +41,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
             "contains", "sqrt", "abs"));
     private String invalidMessage;
 
-    public ExpressionVisitor(ParseResult result, NameValidator nameValidator, EncodedValueLookup lookup) {
+    ExpressionVisitor(ParseResult result, NameValidator nameValidator, EncodedValueLookup lookup) {
         this.result = result;
         this.nameValidator = nameValidator;
         this.lookup = lookup;
@@ -153,14 +153,15 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
     static void parseExpressions(StringBuilder expressions, NameValidator nameInExpressionValidator, String exceptionInfo,
                                  Set<String> createObjects, List<Statement> list, EncodedValueLookup lookup, String lastStmt) {
 
-        for (Statement statement : list) {
+        for (int i = 0; i < list.size(); i++) {
+            Statement statement = list.get(i);
             if (statement.getKeyword() == Statement.Keyword.ELSE) {
                 if (!Helper.isEmpty(statement.getExpression()))
                     throw new IllegalArgumentException("expression must be empty but was " + statement.getExpression());
 
                 expressions.append("else {" + statement.getOperation().build("" + statement.getValue()) + "; }\n");
             } else if (statement.getKeyword() == Statement.Keyword.ELSEIF || statement.getKeyword() == Statement.Keyword.IF) {
-                com.graphhopper.routing.weighting.custom.ExpressionVisitor.ParseResult parseResult = parseExpression(statement.getExpression(), nameInExpressionValidator, lookup);
+                ParseResult parseResult = parseExpression(statement.getExpression(), nameInExpressionValidator, lookup);
                 if (!parseResult.ok)
                     throw new IllegalArgumentException(exceptionInfo + " invalid expression \"" + statement.getExpression() + "\"" +
                             (parseResult.invalidMessage == null ? "" : ": " + parseResult.invalidMessage));
@@ -169,7 +170,9 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
                     expressions.append("else ");
                 expressions.append("if (" + parseResult.converted + ") {" + statement.getOperation().build("" + statement.getValue()) + "; }\n");
             } else if (statement.getKeyword() == Statement.Keyword.UNCONDITIONAL) {
-                com.graphhopper.routing.weighting.custom.ExpressionVisitor.ParseResult parseResult = parseExpression(statement.getExpression(), nameInExpressionValidator, lookup);
+                if (i != 0 && statement.getOperation() == Statement.Op.SET_TO)
+                    throw new IllegalArgumentException("set_to must be the first statement but was " + i);
+                ParseResult parseResult = parseExpression(statement.getExpression(), nameInExpressionValidator, lookup);
                 if (!parseResult.ok)
                     throw new IllegalArgumentException(exceptionInfo + " invalid expression \"" + statement.getExpression() + "\"" +
                             (parseResult.invalidMessage == null ? "" : ": " + parseResult.invalidMessage));
