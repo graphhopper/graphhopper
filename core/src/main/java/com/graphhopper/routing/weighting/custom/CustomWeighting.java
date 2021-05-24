@@ -79,6 +79,7 @@ public final class CustomWeighting extends AbstractWeighting {
     private final static double SPEED_CONV = 3.6;
     private final BooleanEncodedValue baseVehicleAccessEnc;
     private final double maxSpeed;
+    private final double maxPriority;
     private final double distanceInfluence;
     private final double headingPenaltySeconds;
     private final EdgeToDoubleMapping edgeToSpeedMapping;
@@ -91,6 +92,7 @@ public final class CustomWeighting extends AbstractWeighting {
         this.baseVehicleAccessEnc = baseFlagEncoder.getAccessEnc();
         this.headingPenaltySeconds = parameters.getHeadingPenaltySeconds();
         this.maxSpeed = parameters.getMaxSpeed() / SPEED_CONV;
+        this.maxPriority = parameters.getMaxPriority();
 
         // given unit is s/km -> convert to s/m
         this.distanceInfluence = parameters.getDistanceInfluence() / 1000.0;
@@ -100,7 +102,7 @@ public final class CustomWeighting extends AbstractWeighting {
 
     @Override
     public double getMinWeight(double distance) {
-        return distance / maxSpeed + distance * distanceInfluence;
+        return distance / maxSpeed / maxPriority + distance * distanceInfluence;
     }
 
     @Override
@@ -157,14 +159,16 @@ public final class CustomWeighting extends AbstractWeighting {
         private final EdgeToDoubleMapping edgeToSpeedMapping;
         private final EdgeToDoubleMapping edgeToPriorityMapping;
         private final double maxSpeed;
+        private final double maxPriority;
         private final double distanceInfluence;
         private final double headingPenaltySeconds;
 
         Parameters(EdgeToDoubleMapping edgeToSpeedMapping, EdgeToDoubleMapping edgeToPriorityMapping,
-                   double maxSpeed, double distanceInfluence, double headingPenaltySeconds) {
+                   double maxSpeed, double maxPriority, double distanceInfluence, double headingPenaltySeconds) {
             this.edgeToSpeedMapping = edgeToSpeedMapping;
             this.edgeToPriorityMapping = edgeToPriorityMapping;
             this.maxSpeed = maxSpeed;
+            this.maxPriority = maxPriority;
             this.distanceInfluence = distanceInfluence;
             this.headingPenaltySeconds = headingPenaltySeconds;
         }
@@ -187,6 +191,10 @@ public final class CustomWeighting extends AbstractWeighting {
 
         public double getHeadingPenaltySeconds() {
             return headingPenaltySeconds;
+        }
+
+        public double getMaxPriority() {
+            return maxPriority;
         }
     }
 }

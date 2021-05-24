@@ -113,7 +113,9 @@ public class CustomModelParser {
             // The class does not need to be thread-safe as we create an instance per request
             CustomWeightingHelper prio = (CustomWeightingHelper) clazz.getDeclaredConstructor().newInstance();
             prio.init(lookup, avgSpeedEnc, customModel.getAreas());
-            return new CustomWeighting.Parameters(prio::getSpeed, prio::getPriority, findMaxSpeed(customModel, globalMaxSpeed),
+            return new CustomWeighting.Parameters(prio::getSpeed, prio::getPriority,
+                    findMax(customModel.getSpeed(), globalMaxSpeed),
+                    findMaxWithoutCheck(customModel.getPriority(), 1),
                     customModel.getDistanceInfluence(), customModel.getHeadingPenalty());
         } catch (ReflectiveOperationException ex) {
             throw new IllegalArgumentException("Cannot compile expression " + ex.getMessage(), ex);
@@ -409,45 +411,44 @@ public class CustomModelParser {
         }
     }
 
-    static double findMaxSpeed(CustomModel customModel, double maxSpeed) {
-        return findMaxSpeed(customModel.getSpeed(), maxSpeed);
+    static double findMaxWithoutCheck(List<Statement> statements, double max) {
+        // we want to find the smallest speed that cannot be exceeded by any edge. the 'blocks' of speed statements
+        // are applied one after the other.
+        List<List<Statement>> blocks = splitIntoBlocks(statements);
+        for (List<Statement> block : blocks) max = findMaxForBlock(block, max);
+        return max;
     }
 
-    static double findMaxSpeed(List<Statement> speedStatements, final double maxSpeed) {
+    static double findMax(List<Statement> statements, final double max) {
         // throw an error if one of the limit statements won't possibly do anything
-        Optional<Statement> falseStatement = speedStatements.stream()
-                .filter(st -> LIMIT.equals(st.getOperation()) && st.getValue() > maxSpeed)
+        Optional<Statement> falseStatement = statements.stream()
+                .filter(st -> LIMIT.equals(st.getOperation()) && st.getValue() > max)
                 .findFirst();
         if (falseStatement.isPresent())
             throw new IllegalArgumentException("Can never apply 'limit_to': " + falseStatement.get().getValue()
-                    + " because maximum vehicle speed is " + maxSpeed);
+                    + " because maximum vehicle speed is " + max);
 
-        // we want to find the smallest speed that cannot be exceeded by any edge. the 'blocks' of speed statements
-        // are applied one after the other.
-        double result = maxSpeed;
-        List<List<Statement>> blocks = splitIntoBlocks(speedStatements);
-        for (List<Statement> block : blocks)
-            result = getMaxSpeedForBlock(block, result);
-        if (maxSpeed <= 0)
-            throw new IllegalStateException("max speed is <= 0");
+        double result = findMaxWithoutCheck(statements, max);
+        if (result <= 0)
+            throw new IllegalStateException("maximum vehicle speed is <= 0");
         return result;
     }
 
-    static double getMaxSpeedForBlock(List<Statement> block, final double maxSpeed) {
+    static double findMaxForBlock(List<Statement> block, final double max) {
         if (block.isEmpty() || !IF.equals(block.get(0).getKeyword()))
             throw new IllegalArgumentException("Every block must start with an if-statement");
         if (block.get(0).getCondition().trim().equals("true"))
             // this if statement is always executed while the other statements are never executed
             // -> we just apply this one statement
-            return block.get(0).apply(maxSpeed);
+            return block.get(0).apply(max);
 
         double blockMax = block.stream()
-                .mapToDouble(statement -> statement.apply(maxSpeed))
+                .mapToDouble(statement -> statement.apply(max))
                 .max()
-                .orElse(maxSpeed);
-        // if there is no 'else' statement it's like there is a 'neutral' branch that leaves the initial max speed as is
+                .orElse(max);
+        // if there is no 'else' statement it's like there is a 'neutral' branch that leaves the initial value as is
         if (block.stream().noneMatch(st -> ELSE.equals(st.getKeyword())))
-            blockMax = Math.max(blockMax, maxSpeed);
+            blockMax = Math.max(blockMax, max);
         return blockMax;
     }
 
