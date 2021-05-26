@@ -64,7 +64,7 @@ public abstract class AbstractBikeFlagEncoderTester {
         IntsRef relFlags = encodingManager.handleRelationTags(rel, encodingManager.createRelationFlags());
         IntsRef edgeFlags = encodingManager.handleWayTags(way, new EncodingManager.AcceptWay().put(encoder.toString(), WAY), relFlags);
         DecimalEncodedValue enc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(encoder.toString(), "priority"));
-        assertEquals((double) expectedPrio / BEST.getValue(), enc.getDecimal(false, edgeFlags), 0.01);
+        assertEquals(PriorityCode.getValue(expectedPrio), enc.getDecimal(false, edgeFlags), 0.01);
         return edgeFlags;
     }
 
@@ -349,7 +349,7 @@ public abstract class AbstractBikeFlagEncoderTester {
         osmWay.setTag("highway", "cycleway");
         IntsRef edgeFlags = encoder.handleWayTags(encodingManager.createEdgeFlags(), osmWay, EncodingManager.Access.WAY);
         DecimalEncodedValue priorityEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(encoder, "priority"));
-        assertEquals((double) VERY_NICE.getValue() / BEST.getValue(), priorityEnc.getDecimal(false, edgeFlags), 1e-3);
+        assertEquals(PriorityCode.getValue(VERY_NICE.getValue()), priorityEnc.getDecimal(false, edgeFlags), 1e-3);
     }
 
     @Test
@@ -358,18 +358,6 @@ public abstract class AbstractBikeFlagEncoderTester {
         osmWay.setTag("highway", "motorway");
         osmWay.setTag("bicycle", "yes");
         assertPriority(REACH_DEST.getValue(), osmWay);
-    }
-
-    @Test
-    public void testPriority() {
-        IntsRef flags = encodingManager.createEdgeFlags();
-        encoder.priorityEnc.setDecimal(false, flags, PriorityCode.getFactor(PriorityCode.BEST.getValue()));
-        DecimalEncodedValue priorityEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(encoder, "priority"));
-        assertEquals(1, priorityEnc.getDecimal(false, flags), 1e-3);
-
-        flags = encodingManager.createEdgeFlags();
-        encoder.priorityEnc.setDecimal(false, flags, PriorityCode.getFactor(PriorityCode.AVOID_IF_POSSIBLE.getValue()));
-        assertEquals(3d / 7d, priorityEnc.getDecimal(false, flags), 1e-3);
     }
 
     @Test

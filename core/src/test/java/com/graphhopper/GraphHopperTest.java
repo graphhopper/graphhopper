@@ -1318,8 +1318,8 @@ public class GraphHopperTest {
                 .setProfile("profile1"));
         res = rsp.getBest();
         assertFalse(rsp.hasErrors(), "bike routing for " + str + " should not have errors:" + rsp.getErrors());
-        assertEquals(494, res.getTime() / 1000f, 1);
-        assertEquals(2192, res.getDistance(), 1);
+        assertEquals(511, res.getTime() / 1000f, 1);
+        assertEquals(2481, res.getDistance(), 1);
 
         rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setProfile("profile3"));
@@ -1936,7 +1936,7 @@ public class GraphHopperTest {
         req.setProfile("foot");
         GHResponse rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
-        assertEquals(86, rsp.getBest().getDistance(), 1);
+        assertEquals(95, rsp.getBest().getDistance(), 1);
 
         // Using the car profile there is no way we can reach the destination and the subnetwork is supposed to be removed
         // such that the destination snaps to a point that can be reached.

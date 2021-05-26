@@ -24,14 +24,25 @@ package com.graphhopper.routing.util;
  * @author Peter Karich
  */
 public enum PriorityCode {
+    // add 0.5 (i.e. 5) inside encoded value:
+//    WORST(5),
+//    AVOID_AT_ALL_COSTS(6),
+//    REACH_DEST(8),
+//    AVOID_IF_POSSIBLE(9),
+//    UNCHANGED(10),
+//    PREFER(12),
+//    VERY_NICE(13),
+//    BEST(15);
+
+    // we could pick other assignments but they they introduce more changes
     WORST(0),
     AVOID_AT_ALL_COSTS(1),
-    REACH_DEST(2),
-    AVOID_IF_POSSIBLE(3),
-    UNCHANGED(4),
-    PREFER(5),
-    VERY_NICE(6),
-    BEST(7);
+    REACH_DEST(3),
+    AVOID_IF_POSSIBLE(4),
+    UNCHANGED(5),
+    PREFER(7),
+    VERY_NICE(8),
+    BEST(10);
     private final int value;
 
     PriorityCode(int value) {
@@ -42,11 +53,11 @@ public enum PriorityCode {
         return value;
     }
 
-    /**
-     * This method returns the PriorityCode.value in a range between 0 and 1 suitable for direct usage in a Weighting.
-     */
-    public static double getFactor(int val) {
-        return (double) val / BEST.getValue();
+    public static double getFactor(int value) {
+        return (double) value / 10.0;
     }
 
+    public static double getValue(int value) {
+        return getFactor(value);
+    }
 }

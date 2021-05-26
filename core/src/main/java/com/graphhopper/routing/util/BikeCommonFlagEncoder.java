@@ -202,7 +202,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         // first two bits are reserved for route handling in superclass
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
         registerNewEncodedValue.add(avgSpeedEnc = new UnsignedDecimalEncodedValue(getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
-        registerNewEncodedValue.add(priorityEnc = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 3, PriorityCode.getFactor(1), false));
+        registerNewEncodedValue.add(priorityEnc = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 4, PriorityCode.getFactor(1), false));
 
         bikeRouteEnc = getEnumEncodedValue(RouteNetwork.key("bike"), RouteNetwork.class);
         smoothnessEnc = getEnumEncodedValue(Smoothness.KEY, Smoothness.class);
@@ -313,9 +313,10 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             wayTypeSpeed = applyMaxSpeed(way, wayTypeSpeed);
             Smoothness smoothness = smoothnessEnc.getEnum(false, edgeFlags);
             if (smoothness != Smoothness.MISSING) {
-               // smoothness handling: Multiply speed with smoothnessFactor
-               Double smoothnessSpeedFactor = smoothnessFactor.get(smoothness);
-               wayTypeSpeed = (smoothnessSpeedFactor <= smoothnessFactorPushingSectionThreshold) ? PUSHING_SECTION_SPEED: (int)Math.round(smoothnessSpeedFactor * wayTypeSpeed);
+                // smoothness handling: Multiply speed with smoothnessFactor
+                double smoothnessSpeedFactor = smoothnessFactor.get(smoothness);
+                wayTypeSpeed = (smoothnessSpeedFactor <= smoothnessFactorPushingSectionThreshold) ?
+                        PUSHING_SECTION_SPEED : Math.round(smoothnessSpeedFactor * wayTypeSpeed);
             }
             handleSpeed(edgeFlags, way, wayTypeSpeed);
         } else {
@@ -326,7 +327,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             priorityFromRelation = AVOID_IF_POSSIBLE.getValue();
         }
 
-        priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getFactor(handlePriority(way, wayTypeSpeed, priorityFromRelation)));
+        priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, wayTypeSpeed, priorityFromRelation)));
         return edgeFlags;
     }
 

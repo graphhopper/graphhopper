@@ -109,7 +109,7 @@ public class RoutingAlgorithmWithOSMTest {
         List<Query> queries = new ArrayList<>();
         queries.add(new Query(43.730729, 7.42135, 43.727697, 7.419199, 2682, 119));
         queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3728, 170));
-        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.4277, 3168, 169));
+        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.4277, 3156, 165));
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 2423, 141));
         queries.add(new Query(43.730949, 7.412338, 43.739643, 7.424542, 2253, 120));
         queries.add(new Query(43.727592, 7.419333, 43.727712, 7.419333, 0, 1));
@@ -387,7 +387,7 @@ public class RoutingAlgorithmWithOSMTest {
     @Test
     public void testMonacoMountainBike() {
         List<Query> queries = new ArrayList<>();
-        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2322, 110));
+        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2593, 110));
         queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3655, 176));
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2331, 121));
         // hard to select between secondary and primary (both are AVOID for mtb)
@@ -410,7 +410,7 @@ public class RoutingAlgorithmWithOSMTest {
     public void testMonacoRacingBike() {
         List<Query> queries = new ArrayList<>();
         queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2594, 111));
-        queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3588, 170));
+        queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3614, 184));
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2572, 135));
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1490, 84));
 
