@@ -43,7 +43,7 @@ public class BlockAreaWeightingTest {
 
     @Test
     public void testBlockedById() {
-        GraphEdgeIdFinder.BlockArea bArea = new GraphEdgeIdFinder.BlockArea(graph);
+        GraphEdgeIdFinder.ShapeFilter bArea = new GraphEdgeIdFinder.ShapeFilter(graph);
         EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
         BlockAreaWeighting instance = new BlockAreaWeighting(new FastestWeighting(encoder), bArea);
         assertEquals(94.35, instance.calcEdgeWeight(edge, false), .01);
@@ -58,14 +58,14 @@ public class BlockAreaWeightingTest {
     @Test
     public void testBlockedByShape() {
         EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
-        GraphEdgeIdFinder.BlockArea bArea = new GraphEdgeIdFinder.BlockArea(graph);
+        GraphEdgeIdFinder.ShapeFilter bArea = new GraphEdgeIdFinder.ShapeFilter(graph);
         BlockAreaWeighting instance = new BlockAreaWeighting(new FastestWeighting(encoder), bArea);
         assertEquals(94.35, instance.calcEdgeWeight(edge, false), 0.01);
 
         bArea.add(new Circle(0.01, 0.01, 100));
         assertEquals(Double.POSITIVE_INFINITY, instance.calcEdgeWeight(edge, false), .01);
 
-        bArea = new GraphEdgeIdFinder.BlockArea(graph);
+        bArea = new GraphEdgeIdFinder.ShapeFilter(graph);
         instance = new BlockAreaWeighting(new FastestWeighting(encoder), bArea);
         // Do not match 1,1 of edge
         bArea.add(new Circle(0.1, 0.1, 100));
@@ -74,7 +74,7 @@ public class BlockAreaWeightingTest {
 
     @Test
     public void testBlockVirtualEdges_QueryGraph() {
-        GraphEdgeIdFinder.BlockArea bArea = new GraphEdgeIdFinder.BlockArea(graph);
+        GraphEdgeIdFinder.ShapeFilter bArea = new GraphEdgeIdFinder.ShapeFilter(graph);
         // add base graph edge to fill caches and trigger edgeId cache search (without virtual edges)
         GHIntHashSet set = new GHIntHashSet();
         set.add(0);

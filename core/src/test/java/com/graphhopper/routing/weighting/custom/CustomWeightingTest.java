@@ -14,6 +14,8 @@ import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -30,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class CustomWeightingTest {
 
     GraphHopperStorage graph;
+    LocationIndexTree locationIndex;
     DecimalEncodedValue avSpeedEnc;
     BooleanEncodedValue accessEnc;
     DecimalEncodedValue maxSpeedEnc;
@@ -46,6 +49,8 @@ class CustomWeightingTest {
         maxSpeedEnc = encodingManager.getDecimalEncodedValue(MaxSpeed.KEY);
         roadClassEnc = encodingManager.getEnumEncodedValue(KEY, RoadClass.class);
         graph = new GraphBuilder(encodingManager).create();
+        locationIndex = new LocationIndexTree(graph, new RAMDirectory());
+        locationIndex.prepareIndex();
     }
 
     @Test
@@ -265,6 +270,6 @@ class CustomWeightingTest {
     }
 
     private Weighting createWeighting(CustomModel vehicleModel) {
-        return CustomModelParser.createWeighting(carFE, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
+        return CustomModelParser.createWeighting(carFE, graph, locationIndex, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
     }
 }

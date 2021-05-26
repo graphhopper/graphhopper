@@ -26,6 +26,7 @@ import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
@@ -36,10 +37,12 @@ import static com.graphhopper.util.Helper.toLowerCase;
 
 public class DefaultWeightingFactory implements WeightingFactory {
     private final GraphHopperStorage ghStorage;
+    private final LocationIndex locationIndex;
     private final EncodingManager encodingManager;
 
-    public DefaultWeightingFactory(GraphHopperStorage ghStorage, EncodingManager encodingManager) {
+    public DefaultWeightingFactory(GraphHopperStorage ghStorage, LocationIndex locationIndex, EncodingManager encodingManager) {
         this.ghStorage = ghStorage;
+        this.locationIndex = locationIndex;
         this.encodingManager = encodingManager;
     }
 
@@ -77,7 +80,7 @@ public class DefaultWeightingFactory implements WeightingFactory {
             CustomProfile customProfile = (CustomProfile) profile;
             queryCustomModel = queryCustomModel == null ?
                     customProfile.getCustomModel() : CustomModel.merge(customProfile.getCustomModel(), queryCustomModel);
-            weighting = CustomModelParser.createWeighting(encoder, encodingManager, turnCostProvider, queryCustomModel);
+            weighting = CustomModelParser.createWeighting(encoder, ghStorage, locationIndex, encodingManager, turnCostProvider, queryCustomModel);
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
             weighting = new ShortestWeighting(encoder, turnCostProvider);
         } else if ("fastest".equalsIgnoreCase(weightingStr)) {

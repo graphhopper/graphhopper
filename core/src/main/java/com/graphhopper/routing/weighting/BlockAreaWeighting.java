@@ -9,9 +9,9 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 public class BlockAreaWeighting extends AbstractAdjustedWeighting {
 
-    private GraphEdgeIdFinder.BlockArea blockArea;
+    private GraphEdgeIdFinder.ShapeFilter blockArea;
 
-    public BlockAreaWeighting(Weighting superWeighting, GraphEdgeIdFinder.BlockArea blockArea) {
+    public BlockAreaWeighting(Weighting superWeighting, GraphEdgeIdFinder.ShapeFilter blockArea) {
         super(superWeighting);
         this.blockArea = blockArea;
     }

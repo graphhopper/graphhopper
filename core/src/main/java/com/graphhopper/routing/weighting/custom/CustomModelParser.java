@@ -19,9 +19,14 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.TurnCostProvider;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphEdgeIdFinder;
+import com.graphhopper.storage.GraphEdgeIdFinder.ShapeFilter;
+import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -40,6 +45,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.graphhopper.json.Statement.Keyword.ELSE;
@@ -74,11 +80,12 @@ public class CustomModelParser {
         // utility class
     }
 
-    public static CustomWeighting createWeighting(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup, TurnCostProvider turnCostProvider,
-                                                  CustomModel customModel) {
+    public static CustomWeighting createWeighting(FlagEncoder baseFlagEncoder, Graph graph, LocationIndex locationIndex, EncodedValueLookup lookup,
+                                                  TurnCostProvider turnCostProvider, CustomModel customModel) {
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");
-        CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup, baseFlagEncoder.getMaxSpeed(), baseFlagEncoder.getAverageSpeedEnc());
+        CustomWeighting.Parameters parameters = createWeightingParameters(customModel, graph, locationIndex, lookup, baseFlagEncoder.getMaxSpeed(),
+                        baseFlagEncoder.getAverageSpeedEnc());
         return new CustomWeighting(baseFlagEncoder, turnCostProvider, parameters);
     }
 
@@ -86,8 +93,8 @@ public class CustomModelParser {
      * This method compiles a new subclass of CustomWeightingHelper composed from the provided CustomModel caches this
      * and returns an instance.
      */
-    static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, EncodedValueLookup lookup, double globalMaxSpeed,
-                                                                DecimalEncodedValue avgSpeedEnc) {
+    static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, Graph graph, LocationIndex locationIndex,
+                                     EncodedValueLookup lookup, double globalMaxSpeed, DecimalEncodedValue avgSpeedEnc) {
         String key = customModel.toString() + ",global:" + globalMaxSpeed;
         if (key.length() > 100_000) throw new IllegalArgumentException("Custom Model too big: " + key.length());
 
@@ -112,7 +119,14 @@ public class CustomModelParser {
         try {
             // The class does not need to be thread-safe as we create an instance per request
             CustomWeightingHelper prio = (CustomWeightingHelper) clazz.getDeclaredConstructor().newInstance();
-            prio.init(lookup, avgSpeedEnc, customModel.getAreas());
+            GraphEdgeIdFinder edgeFinder = new GraphEdgeIdFinder(graph, locationIndex, EdgeFilter.ALL_EDGES, GraphEdgeIdFinder.SMALL_AREA);
+            Map<String, ShapeFilter> shapeFilters = new HashMap<>();
+            for (Entry<String, JsonFeature> entry : customModel.getAreas().entrySet()) {
+                Polygon polygon = new Polygon(new PreparedPolygon((Polygonal) entry.getValue().getGeometry()));
+                ShapeFilter shapeFilter = edgeFinder.createFilter(Collections.singletonList(polygon));
+                shapeFilters.put(entry.getKey(), shapeFilter);
+            }
+            prio.init(lookup, avgSpeedEnc, shapeFilters);
             return new CustomWeighting.Parameters(prio::getSpeed, prio::getPriority, findMaxSpeed(customModel, globalMaxSpeed),
                     customModel.getDistanceInfluence(), customModel.getHeadingPenalty());
         } catch (ReflectiveOperationException ex) {
@@ -253,10 +267,7 @@ public class CustomModelParser {
                 if (!includedAreaImports) {
                     importSourceCode.append("import " + BBox.class.getName() + ";\n");
                     importSourceCode.append("import " + GHUtility.class.getName() + ";\n");
-                    importSourceCode.append("import " + PreparedPolygon.class.getName() + ";\n");
-                    importSourceCode.append("import " + Polygonal.class.getName() + ";\n");
-                    importSourceCode.append("import " + JsonFeature.class.getName() + ";\n");
-                    importSourceCode.append("import " + Polygon.class.getName() + ";\n");
+                    importSourceCode.append("import " + ShapeFilter.class.getName().replace('$', '.') + ";\n");
                     includedAreaImports = true;
                 }
 
@@ -272,9 +283,8 @@ public class CustomModelParser {
                     throw new IllegalArgumentException("Currently only type=Polygon is supported for areas but was " + feature.getGeometry().getGeometryType());
                 if (feature.getProperties() != null && !feature.getProperties().isEmpty() || feature.getBBox() != null)
                     throw new IllegalArgumentException("Bounding box and properties of area " + id + " must be empty");
-                classSourceCode.append("protected " + Polygon.class.getSimpleName() + " " + arg + ";\n");
-                initSourceCode.append("JsonFeature feature_" + id + " = (JsonFeature) areas.get(\"" + id + "\");\n");
-                initSourceCode.append("this." + arg + " = new Polygon(new PreparedPolygon((Polygonal) feature_" + id + ".getGeometry()));\n");
+                classSourceCode.append("protected " + ShapeFilter.class.getSimpleName() + " " + arg + ";\n");
+                initSourceCode.append("this." + arg + " = (ShapeFilter) areas.get(\"" + id + "\");\n");
             } else {
                 if (!isValidVariableName(arg))
                     throw new IllegalArgumentException("Variable not supported: " + arg);
@@ -291,7 +301,7 @@ public class CustomModelParser {
                 + classSourceCode
                 + "   @Override\n"
                 + "   public void init(EncodedValueLookup lookup, "
-                + DecimalEncodedValue.class.getName() + " avgSpeedEnc, Map<String, " + JsonFeature.class.getName() + "> areas) {\n"
+                + DecimalEncodedValue.class.getName() + " avgSpeedEnc, Map<String, " + ShapeFilter.class.getSimpleName() + "> areas) {\n"
                 + initSourceCode
                 + "   }\n\n"
                 // we need these placeholder methods so that the hooks in DeepCopier are invoked

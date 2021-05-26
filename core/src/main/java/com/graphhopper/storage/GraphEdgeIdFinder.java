@@ -39,16 +39,29 @@ import static com.graphhopper.util.shapes.BBox.toEnvelope;
  */
 public class GraphEdgeIdFinder {
 
+    /** 1km² */
+    public static final double SMALL_AREA = 1_000_000d;
+    
     private static final int P_RADIUS = 5;
     private final Graph graph;
     private final LocationIndex locationIndex;
+    private final EdgeFilter edgeFilter;
+    private final double useEdgeIdsUntilAreaSize;
 
-    public GraphEdgeIdFinder(Graph graph, LocationIndex locationIndex) {
+    /**
+     * @param graph
+     * @param locationIndex
+     * @param edgeFilter
+     * @param useEdgeIdsUntilAreaSize until the specified area (specified in m²) use the findEdgesInShape method
+     */
+    public GraphEdgeIdFinder(Graph graph, LocationIndex locationIndex, EdgeFilter edgeFilter, double useEdgeIdsUntilAreaSize) {
         this.graph = graph;
         this.locationIndex = locationIndex;
+        this.edgeFilter = edgeFilter;
+        this.useEdgeIdsUntilAreaSize = useEdgeIdsUntilAreaSize;
     }
 
-    static double calculateArea(Shape shape) {
+    private static double calculateArea(Shape shape) {
         if (shape instanceof BBox)
             return calculateArea((BBox) shape);
         if (shape instanceof Polygon)
@@ -62,19 +75,19 @@ public class GraphEdgeIdFinder {
      * @param bBox
      * @return an estimated area in m^2 using the mean value of latitudes for longitude distance
      */
-    static double calculateArea(BBox bBox) {
+    private static double calculateArea(BBox bBox) {
         double meanLat = (bBox.maxLat + bBox.minLat) / 2;
         return DistancePlaneProjection.DIST_PLANE.calcDist(meanLat, bBox.minLon, meanLat, bBox.maxLon)
                 // left side should be equal to right side no mean value necessary
                 * DistancePlaneProjection.DIST_PLANE.calcDist(bBox.minLat, bBox.minLon, bBox.maxLat, bBox.minLon);
     }
 
-    static double calculateArea(Polygon polygon) {
+    private static double calculateArea(Polygon polygon) {
         // for estimation use bounding box as reference:
         return calculateArea(polygon.getBounds()) * polygon.envelope.getArea() / polygon.prepPolygon.getGeometry().getArea();
     }
 
-    static double calculateArea(Circle circle) {
+    private static double calculateArea(Circle circle) {
         return Math.PI * circle.radiusInMeter * circle.radiusInMeter;
     }
 
@@ -91,11 +104,11 @@ public class GraphEdgeIdFinder {
         return edgeIds;
     }
 
-    public static GraphEdgeIdFinder.BlockArea createBlockArea(Graph graph, LocationIndex locationIndex,
+    public static GraphEdgeIdFinder.ShapeFilter createBlockArea(Graph graph, LocationIndex locationIndex,
                                                               List<GHPoint> points, PMap hints, EdgeFilter edgeFilter) {
         String blockAreaStr = hints.getString(Parameters.Routing.BLOCK_AREA, "");
-        GraphEdgeIdFinder.BlockArea blockArea = new GraphEdgeIdFinder(graph, locationIndex).
-                parseBlockArea(blockAreaStr, edgeFilter, hints.getDouble(Parameters.Routing.BLOCK_AREA + ".edge_id_max_area", 1000 * 1000));
+        double edgeIdMaxArea = hints.getDouble(Parameters.Routing.BLOCK_AREA + ".edge_id_max_area", SMALL_AREA);
+        GraphEdgeIdFinder.ShapeFilter blockArea = new GraphEdgeIdFinder(graph, locationIndex, edgeFilter, edgeIdMaxArea).parseBlockArea(blockAreaStr);
         for (GHPoint p : points) {
             if (blockArea.contains(p))
                 throw new IllegalArgumentException("Request with " + Parameters.Routing.BLOCK_AREA + " contained query point " + p + ". This is not allowed.");
@@ -108,70 +121,72 @@ public class GraphEdgeIdFinder {
      *
      * @param useEdgeIdsUntilAreaSize until the specified area (specified in m²) use the findEdgesInShape method
      */
-    public BlockArea parseBlockArea(String blockAreaString, EdgeFilter filter, double useEdgeIdsUntilAreaSize) {
+    public ShapeFilter parseBlockArea(String blockAreaString) {
         final String objectSeparator = ";";
         final String innerObjSep = ",";
-        BlockArea blockArea = new BlockArea(graph);
-
+        
+        List<Shape> shapes = new ArrayList<>();
         // Add blocked circular areas or points
-        if (!blockAreaString.isEmpty()) {
-            String[] blockedCircularAreasArr = blockAreaString.split(objectSeparator);
-            for (int i = 0; i < blockedCircularAreasArr.length; i++) {
-                String objectAsString = blockedCircularAreasArr[i];
-                String[] splittedObject = objectAsString.split(innerObjSep);
+        String[] blockedCircularAreasArr = blockAreaString.split(objectSeparator);
+        for (int i = 0; i < blockedCircularAreasArr.length; i++) {
+            String objectAsString = blockedCircularAreasArr[i];
+            String[] splittedObject = objectAsString.split(innerObjSep);
 
-                Shape shape;
-                boolean point = false;
-                // always add the shape as we'll need this for virtual edges and for debugging.
-                if (splittedObject.length > 4) {
-                    shape = Polygon.parsePoints(objectAsString);
-                } else if (splittedObject.length == 4) {
-                    final BBox bbox = BBox.parseTwoPoints(objectAsString);
-                    final RectangleLineIntersector cachedIntersector = new RectangleLineIntersector(toEnvelope(bbox));
-                    shape = new BBox(bbox.minLon, bbox.maxLon, bbox.minLat, bbox.maxLat) {
-                        @Override
-                        public boolean intersects(PointList pointList) {
-                            return BBox.intersects(cachedIntersector, pointList);
-                        }
-                    };
-                } else if (splittedObject.length == 3) {
-                    double lat = Double.parseDouble(splittedObject[0]);
-                    double lon = Double.parseDouble(splittedObject[1]);
-                    int radius = Integer.parseInt(splittedObject[2]);
-                    shape = new Circle(lat, lon, radius);
-                } else if (splittedObject.length == 2) {
-                    double lat = Double.parseDouble(splittedObject[0]);
-                    double lon = Double.parseDouble(splittedObject[1]);
-                    shape = new Circle(lat, lon, P_RADIUS);
-                    point = true;
-                } else {
-                    throw new IllegalArgumentException(objectAsString + " at index " + i + " need to be defined as lat,lon "
-                            + "or as a circle lat,lon,radius or rectangular lat1,lon1,lat2,lon2");
-                }
-                
-                
-                if (point || calculateArea(shape) <= useEdgeIdsUntilAreaSize) {
-                    GHIntHashSet blockedEdges = findEdgesInShape(shape, filter);
-                    if (!blockedEdges.isEmpty()) {
-                        blockArea.add(shape, blockedEdges);
+            Shape shape;
+            // always add the shape as we'll need this for virtual edges and for debugging.
+            if (splittedObject.length > 4) {
+                shape = Polygon.parsePoints(objectAsString);
+            } else if (splittedObject.length == 4) {
+                final BBox bbox = BBox.parseTwoPoints(objectAsString);
+                final RectangleLineIntersector cachedIntersector = new RectangleLineIntersector(toEnvelope(bbox));
+                shape = new BBox(bbox.minLon, bbox.maxLon, bbox.minLat, bbox.maxLat) {
+                    @Override
+                    public boolean intersects(PointList pointList) {
+                        return BBox.intersects(cachedIntersector, pointList);
                     }
-                } else {
-                    blockArea.add(shape);
+                };
+            } else if (splittedObject.length == 3) {
+                double lat = Double.parseDouble(splittedObject[0]);
+                double lon = Double.parseDouble(splittedObject[1]);
+                int radius = Integer.parseInt(splittedObject[2]);
+                shape = new Circle(lat, lon, radius);
+            } else if (splittedObject.length == 2) {
+                double lat = Double.parseDouble(splittedObject[0]);
+                double lon = Double.parseDouble(splittedObject[1]);
+                shape = new Circle(lat, lon, P_RADIUS);
+            } else {
+                throw new IllegalArgumentException(objectAsString + " at index " + i + " need to be defined as lat,lon "
+                        + "or as a circle lat,lon,radius or rectangular lat1,lon1,lat2,lon2");
+            }
+            shapes.add(shape);
+        }
+        return createFilter(shapes);
+    }
+    
+    public ShapeFilter createFilter(List<Shape> shapes) {
+        ShapeFilter shapeFilter = new ShapeFilter(graph);
+        for (Shape shape : shapes) {
+            if (locationIndex != null && calculateArea(shape) <= useEdgeIdsUntilAreaSize) {
+                GHIntHashSet blockedEdges = findEdgesInShape(shape, edgeFilter);
+                if (!blockedEdges.isEmpty()) {
+                    shapeFilter.add(shape, blockedEdges);
                 }
+            } else {
+                shapeFilter.add(shape);
             }
         }
-        return blockArea;
+        return shapeFilter;
     }
 
     /**
-     * This class handles edges and areas where access should be blocked.
+     * This class allows to check if an {@link EdgeIteratorState} intersects one or more shapes.
      */
-    public static class BlockArea {
+    public static class ShapeFilter {
         private final List<GHIntHashSet> edgesList = new ArrayList<>();
-        private final List<Shape> blockedShapes = new ArrayList<>();
+        private final List<Shape> shapes = new ArrayList<>();
         private final int baseEdgeCount;
 
-        public BlockArea(Graph g) {
+        public ShapeFilter(Graph g) {
             baseEdgeCount = g.getAllEdges().length();
         }
 
@@ -192,13 +207,13 @@ public class GraphEdgeIdFinder {
             add(shape, new GHIntHashSet());
         }
 
-        public void add(Shape shape, GHIntHashSet blockedEdgeIds) {
-            blockedShapes.add(shape);
-            edgesList.add(Objects.requireNonNull(blockedEdgeIds));
+        public void add(Shape shape, GHIntHashSet edgeIds) {
+            shapes.add(shape);
+            edgesList.add(Objects.requireNonNull(edgeIds));
         }
 
         public final boolean contains(GHPoint point) {
-            for (Shape shape : blockedShapes) {
+            for (Shape shape : shapes) {
                 if (shape.contains(point.lat, point.lon))
                     return true;
             }
@@ -206,16 +221,16 @@ public class GraphEdgeIdFinder {
         }
 
         /**
-         * @return true if the specified edgeState is part of this BlockArea
+         * @return true if the specified edgeState matches this filter
          */
         public final boolean intersects(EdgeIteratorState edgeState) {
             PointList pointList = null;
             BBox bbox = null;
-            for (int shapeIdx = 0; shapeIdx < blockedShapes.size(); shapeIdx++) {
-                GHIntHashSet blockedEdges = edgesList.get(shapeIdx);
-                // blockedEdges acts as cache that is only useful when filled and for non-virtual edges
-                if (!blockedEdges.isEmpty() && edgeState.getEdge() < baseEdgeCount) {
-                    if (blockedEdges.contains(edgeState.getEdge()))
+            for (int shapeIdx = 0; shapeIdx < shapes.size(); shapeIdx++) {
+                GHIntHashSet edges = edgesList.get(shapeIdx);
+                // the hashset acts as cache that is only useful when filled and for non-virtual edges
+                if (!edges.isEmpty() && edgeState.getEdge() < baseEdgeCount) {
+                    if (edges.contains(edgeState.getEdge()))
                         return true;
                     continue;
                 }
@@ -224,7 +239,7 @@ public class GraphEdgeIdFinder {
                 if (bbox == null)
                     bbox = GHUtility.createBBox(edgeState);
 
-                Shape shape = blockedShapes.get(shapeIdx);
+                Shape shape = shapes.get(shapeIdx);
                 if (shape.getBounds().intersects(bbox)) {
                     if (pointList == null)
                         pointList = edgeState.fetchWayGeometry(FetchMode.ALL).makeImmutable();
