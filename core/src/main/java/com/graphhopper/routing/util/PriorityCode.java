@@ -24,25 +24,14 @@ package com.graphhopper.routing.util;
  * @author Peter Karich
  */
 public enum PriorityCode {
-    // add 0.5 (i.e. 5) inside encoded value:
-//    WORST(5),
-//    AVOID_AT_ALL_COSTS(6),
-//    REACH_DEST(8),
-//    AVOID_IF_POSSIBLE(9),
-//    UNCHANGED(10),
-//    PREFER(12),
-//    VERY_NICE(13),
-//    BEST(15);
-
-    // we could pick other assignments but they they introduce more changes
-    WORST(0),
-    AVOID_AT_ALL_COSTS(1),
-    REACH_DEST(3),
-    AVOID_IF_POSSIBLE(4),
-    UNCHANGED(5),
-    PREFER(7),
-    VERY_NICE(8),
-    BEST(10);
+    WORST(5),
+    AVOID_AT_ALL_COSTS(6),
+    REACH_DEST(8),
+    AVOID_IF_POSSIBLE(9),
+    UNCHANGED(10),
+    PREFER(12),
+    VERY_NICE(13),
+    BEST(15);
     private final int value;
 
     PriorityCode(int value) {

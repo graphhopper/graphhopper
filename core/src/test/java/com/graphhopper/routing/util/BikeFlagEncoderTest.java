@@ -82,7 +82,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         assertEquals(10, encoder.getSpeed(way));
         assertPriority(PREFER.getValue(), way);
         way.setTag("segregated", "no");
-        assertEquals(10 , encoder.getSpeed(way));
+        assertEquals(10, encoder.getSpeed(way));
         assertPriority(PREFER.getValue(), way);
         way.setTag("segregated", "yes");
         assertEquals(18, encoder.getSpeed(way));
@@ -480,7 +480,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
         assertTrue(encoder.getAccessEnc().getBool(false, flags));
         assertTrue(encoder.getAccessEnc().getBool(true, flags));
-        
+
         way.clearTags();
         way.setTag("highway", "tertiary");
         way.setTag("oneway", "yes");
