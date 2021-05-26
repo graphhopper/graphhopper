@@ -23,7 +23,8 @@ var menu = new Vue({
         showGraph: false,
         isochroneRadius: 600,
         showSpt: false,
-        isochronePoint: undefined
+        isochronePoint: undefined,
+        isochroneProfile: undefined 
     },
     methods: {
         changeLayer: function (event) {
@@ -74,8 +75,23 @@ var vectorStyle = 'https://api.maptiler.com/maps/basic/style.json?key=' + mapTil
 
 fetch('/info')
     .then(response => response.json())
-    .then(json => _drawMap(json.bbox))
+    .then(json => { _drawMap(json.bbox);
+                    _updateProfiles(json.profiles);
+                  })
     .catch(e => console.error('Could not receive bbox from GH server', e));
+
+function _updateProfiles (profiles) {
+    var sel = document.getElementById('isochrone-profile');
+    profiles.forEach(function(item, index) {
+         var opt = document.createElement('option');
+         opt.innerHTML = item.name;
+         opt.value = item.name;
+         sel.appendChild(opt);
+         if (index == 0) {
+             menu.isochroneProfile = item.name;
+         }
+    });
+}
 
 // the mapbox map object used in various places here
 var map;
@@ -158,7 +174,8 @@ function fetchAndDrawSPT(point) {
     var counter = 0;
     var coordinates = [];
     var radius = menu.isochroneRadius;
-    Papa.parse("http://" + window.location.host + "/spt?profile=car&point=" + point.lat + "," + point.lng + "&columns=prev_longitude,prev_latitude,longitude,latitude,distance,time&time_limit=" + radius, {
+    var profile = menu.isochroneProfile;
+    Papa.parse("http://" + window.location.host + "/spt?profile=" + profile + "&point=" + point.lat + "," + point.lng + "&columns=prev_longitude,prev_latitude,longitude,latitude,distance,time&time_limit=" + radius, {
         download: true,
         worker: true,
         step: function (results) {
@@ -191,7 +208,8 @@ function fetchAndDrawSPT(point) {
 
 function fetchAndDrawIsoline(point) {
     var radius = menu.isochroneRadius;
-    fetch("/isochrone?profile=car&point=" + point.lat + "," + point.lng + "&time_limit=" + radius)
+    var profile = menu.isochroneProfile;
+    fetch("/isochrone?profile=" + profile + "&point=" + point.lat + "," + point.lng + "&time_limit=" + radius)
         .then(response => response.json())
         .then(data => {
             console.log('isoline took: ' + data.info.took + 'ms');
