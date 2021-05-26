@@ -24,7 +24,8 @@ var menu = new Vue({
         isochroneRadius: 600,
         showSpt: false,
         isochronePoint: undefined,
-        isochroneProfile: undefined 
+        isochroneProfile: undefined,
+        isochroneProfiles: []
     },
     methods: {
         changeLayer: function (event) {
@@ -75,24 +76,16 @@ var vectorStyle = 'https://api.maptiler.com/maps/basic/style.json?key=' + mapTil
 
 fetch('/info')
     .then(response => response.json())
-    .then(json => { _drawMap(json.bbox);
-                    _updateProfiles(json.profiles);
-                  })
+    .then(json => {
+        _updateProfiles(json.profiles);
+        _drawMap(json.bbox);
+        })
     .catch(e => console.error('Could not receive bbox from GH server', e));
 
-function _updateProfiles (profiles) {
-    var sel = document.getElementById('isochrone-profile');
-    profiles.forEach(function(item, index) {
-         var opt = document.createElement('option');
-         opt.innerHTML = item.name;
-         opt.value = item.name;
-         sel.appendChild(opt);
-         if (index == 0) {
-             menu.isochroneProfile = item.name;
-         }
-    });
+function _updateProfiles(profiles) {
+    menu.isochroneProfiles = profiles.map(p => p.name)
+    menu.isochroneProfile = menu.isochroneProfiles[0]
 }
-
 // the mapbox map object used in various places here
 var map;
 
