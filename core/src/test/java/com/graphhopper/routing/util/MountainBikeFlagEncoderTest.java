@@ -42,7 +42,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
         assertEquals(18, encoder.getSpeed(way));
-        assertPriority(REACH_DEST.getValue(), way);
+        assertPriority(AVOID.getValue(), way);
 
         way.setTag("highway", "residential");
         assertEquals(16, encoder.getSpeed(way));
@@ -51,7 +51,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         // Test pushing section speeds
         way.setTag("highway", "footway");
         assertEquals(4, encoder.getSpeed(way));
-        assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
+        assertPriority(SLIGHT_AVOID.getValue(), way);
 
         way.setTag("highway", "track");
         assertEquals(18, encoder.getSpeed(way));
@@ -59,7 +59,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
 
         way.setTag("highway", "steps");
         assertEquals(4, encoder.getSpeed(way));
-        assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
+        assertPriority(SLIGHT_AVOID.getValue(), way);
         way.clearTags();
 
         // test speed for allowed pushing section types

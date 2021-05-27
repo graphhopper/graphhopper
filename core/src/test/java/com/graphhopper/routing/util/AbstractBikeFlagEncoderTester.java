@@ -283,7 +283,7 @@ public abstract class AbstractBikeFlagEncoderTester {
 
         osmWay.setTag("highway", "secondary");
         osmWay.setTag("tunnel", "yes");
-        assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay);
+        assertPriority(AVOID_MORE.getValue(), osmWay);
 
         osmWay.setTag("bicycle", "designated");
         assertPriority(PREFER.getValue(), osmWay);
@@ -295,7 +295,7 @@ public abstract class AbstractBikeFlagEncoderTester {
         // very dangerous
         way.setTag("highway", "secondary");
         way.setTag("railway", "tram");
-        assertPriority(AVOID_AT_ALL_COSTS.getValue(), way);
+        assertPriority(AVOID_MORE.getValue(), way);
 
         // should be safe now
         way.setTag("bicycle", "designated");
@@ -311,7 +311,7 @@ public abstract class AbstractBikeFlagEncoderTester {
 
         way.setTag("service", "parking_aisle");
         assertEquals(6, encoder.getSpeed(way));
-        assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
+        assertPriority(SLIGHT_AVOID.getValue(), way);
     }
 
     @Test
@@ -357,7 +357,7 @@ public abstract class AbstractBikeFlagEncoderTester {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "motorway");
         osmWay.setTag("bicycle", "yes");
-        assertPriority(REACH_DEST.getValue(), osmWay);
+        assertPriority(AVOID.getValue(), osmWay);
     }
 
     @Test

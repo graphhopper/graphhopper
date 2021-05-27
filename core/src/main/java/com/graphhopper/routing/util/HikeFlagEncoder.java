@@ -77,19 +77,19 @@ public class HikeFlagEncoder extends FootFlagEncoder {
             weightToPrioMap.put(40d, PREFER.getValue());
             if (way.hasTag("tunnel", intendedValues)) {
                 if (way.hasTag("sidewalk", sidewalksNoValues))
-                    weightToPrioMap.put(40d, REACH_DEST.getValue());
+                    weightToPrioMap.put(40d, AVOID.getValue());
                 else
                     weightToPrioMap.put(40d, UNCHANGED.getValue());
             }
         } else if ((isValidSpeed(maxSpeed) && maxSpeed > 50) || avoidHighwayTags.contains(highway)) {
             if (way.hasTag("sidewalk", sidewalksNoValues))
-                weightToPrioMap.put(45d, WORST.getValue());
+                weightToPrioMap.put(45d, BAD.getValue());
             else
-                weightToPrioMap.put(45d, REACH_DEST.getValue());
+                weightToPrioMap.put(45d, AVOID.getValue());
         }
 
         if (way.hasTag("bicycle", "official") || way.hasTag("bicycle", "designated"))
-            weightToPrioMap.put(44d, AVOID_IF_POSSIBLE.getValue());
+            weightToPrioMap.put(44d, SLIGHT_AVOID.getValue());
     }
 
 

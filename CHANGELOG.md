@@ -1,5 +1,6 @@
 ### 4.0 [not yet released]
 
+- renamed PriorityCode enums: AVOID_IF_POSSIBLE -> SLIGHT_AVOID, REACH_DEST -> AVOID, AVOID_AT_ALL_COSTS -> AVOID_MORE, WORST -> BAD
 - added smoothness encoded value, used to determine bike speed (#2303)
 - migrated tests from junit 4 to 5 (#2324)
 

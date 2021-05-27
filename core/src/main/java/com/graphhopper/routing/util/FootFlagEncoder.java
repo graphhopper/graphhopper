@@ -237,7 +237,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
                 setSpeed(edgeFlags, true, true, way.hasTag("highway", "steps") ? MEAN_SPEED - 2 : MEAN_SPEED);
             }
         } else {
-            priorityFromRelation = PriorityCode.AVOID_IF_POSSIBLE.getValue();
+            priorityFromRelation = PriorityCode.SLIGHT_AVOID.getValue();
             double ferrySpeed = ferrySpeedCalc.getSpeed(way);
             setSpeed(edgeFlags, true, true, ferrySpeed);
         }
@@ -282,17 +282,17 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             weightToPrioMap.put(40d, PREFER.getValue());
             if (way.hasTag("tunnel", intendedValues)) {
                 if (way.hasTag("sidewalk", sidewalksNoValues))
-                    weightToPrioMap.put(40d, AVOID_IF_POSSIBLE.getValue());
+                    weightToPrioMap.put(40d, SLIGHT_AVOID.getValue());
                 else
                     weightToPrioMap.put(40d, UNCHANGED.getValue());
             }
         } else if ((isValidSpeed(maxSpeed) && maxSpeed > 50) || avoidHighwayTags.contains(highway)) {
             if (!way.hasTag("sidewalk", sidewalkValues))
-                weightToPrioMap.put(45d, AVOID_IF_POSSIBLE.getValue());
+                weightToPrioMap.put(45d, SLIGHT_AVOID.getValue());
         }
 
         if (way.hasTag("bicycle", "official") || way.hasTag("bicycle", "designated"))
-            weightToPrioMap.put(44d, AVOID_IF_POSSIBLE.getValue());
+            weightToPrioMap.put(44d, SLIGHT_AVOID.getValue());
     }
 
     @Override

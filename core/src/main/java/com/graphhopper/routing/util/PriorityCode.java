@@ -24,11 +24,15 @@ package com.graphhopper.routing.util;
  * @author Peter Karich
  */
 public enum PriorityCode {
-    WORST(5),
-    AVOID_AT_ALL_COSTS(6),
-    REACH_DEST(8),
-    AVOID_IF_POSSIBLE(9),
+    EXCLUDE(0),
+    REACH_DESTINATION(1),
+    VERY_BAD(3),
+    BAD(5),
+    AVOID_MORE(6),
+    AVOID(8),
+    SLIGHT_AVOID(9),
     UNCHANGED(10),
+    SLIGHT_PREFER(11),
     PREFER(12),
     VERY_NICE(13),
     BEST(15);
