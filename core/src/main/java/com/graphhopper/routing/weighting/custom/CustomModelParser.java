@@ -114,7 +114,7 @@ public class CustomModelParser {
             CustomWeightingHelper prio = (CustomWeightingHelper) clazz.getDeclaredConstructor().newInstance();
             prio.init(lookup, avgSpeedEnc, customModel.getAreas());
             return new CustomWeighting.Parameters(prio::getSpeed, prio::getPriority,
-                    findMax(customModel.getSpeed(), globalMaxSpeed),
+                    findMaxSpeed(customModel.getSpeed(), globalMaxSpeed),
                     findMaxWithoutCheck(customModel.getPriority(), 1),
                     customModel.getDistanceInfluence(), customModel.getHeadingPenalty());
         } catch (ReflectiveOperationException ex) {
@@ -419,16 +419,16 @@ public class CustomModelParser {
         return max;
     }
 
-    static double findMax(List<Statement> statements, final double max) {
+    static double findMaxSpeed(List<Statement> statements, final double maxSpeed) {
         // throw an error if one of the limit statements won't possibly do anything
         Optional<Statement> falseStatement = statements.stream()
-                .filter(st -> LIMIT.equals(st.getOperation()) && st.getValue() > max)
+                .filter(st -> LIMIT.equals(st.getOperation()) && st.getValue() > maxSpeed)
                 .findFirst();
         if (falseStatement.isPresent())
             throw new IllegalArgumentException("Can never apply 'limit_to': " + falseStatement.get().getValue()
-                    + " because maximum vehicle speed is " + max);
+                    + " because maximum vehicle speed is " + maxSpeed);
 
-        double result = findMaxWithoutCheck(statements, max);
+        double result = findMaxWithoutCheck(statements, maxSpeed);
         if (result <= 0)
             throw new IllegalStateException("maximum vehicle speed is <= 0");
         return result;
