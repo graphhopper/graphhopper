@@ -222,31 +222,34 @@ public class StringIndexTest {
         assertNull(index.get(pointerB, ""));
     }
 
-    @RepeatedTest(100)
+    @RepeatedTest(20)
     public void testRandom() {
-        StringIndex index = create();
         long seed = new Random().nextLong();
-        System.out.println("StringIndexText.testRandom seed:" + seed);
-        Random random = new Random(seed);
-        List<String> keys = createRandomList(random, "_key", 1000);
-        List<String> values = createRandomList(random, "_value", 5000);
+        try {
+            StringIndex index = create();
+            Random random = new Random(seed);
+            List<String> keys = createRandomList(random, "_key", 1000);
+            List<String> values = createRandomList(random, "_value", 5000);
 
-        int size = 20000;
-        LongArrayList pointers = new LongArrayList(size);
-        for (int i = 0; i < size; i++) {
-            Map<String, String> map = createRandomMap(random, keys, values);
-            long pointer = index.add(map);
-            try {
-                assertEquals(map.size(), index.getAll(pointer).size(), "" + i);
-            } catch (Exception ex) {
-                throw new RuntimeException(i + " " + map + ", " + pointer, ex);
+            int size = 20000;
+            LongArrayList pointers = new LongArrayList(size);
+            for (int i = 0; i < size; i++) {
+                Map<String, String> map = createRandomMap(random, keys, values);
+                long pointer = index.add(map);
+                try {
+                    assertEquals(map.size(), index.getAll(pointer).size(), "" + i);
+                } catch (Exception ex) {
+                    throw new RuntimeException(i + " " + map + ", " + pointer, ex);
+                }
+                pointers.add(pointer);
             }
-            pointers.add(pointer);
-        }
 
-        for (int i = 0; i < size; i++) {
-            Map<String, String> map = index.getAll(pointers.get(i));
-            assertTrue(map.size() > 0, i + " " + map);
+            for (int i = 0; i < size; i++) {
+                Map<String, String> map = index.getAll(pointers.get(i));
+                assertTrue(map.size() > 0, i + " " + map);
+            }
+        } catch (Throwable t) {
+            throw new RuntimeException("seed:" + seed + ", error:" + t);
         }
     }
 

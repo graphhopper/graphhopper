@@ -1,6 +1,10 @@
 ### 4.0 [not yet released]
 
 - added smoothness encoded value, used to determine bike speed (#2303)
+- maps: custom_model is now included in URL (#2328)
+- maps/isochrone: works for different profiles now (#2332)  
+- there is no stable tag anymore, either use master or one of the release branches like 2.x, 3.x, ...  
+- PointList#getSize() -> PointList#size()
 - migrated tests from junit 4 to 5 (#2324)
 
 ### 3.0 [17 May 2021]

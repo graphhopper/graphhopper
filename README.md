@@ -55,6 +55,11 @@ you'll see a map of Berlin. You should be able to right click on the map to crea
 
 For more details about the installation, see [here](./docs/web/quickstart.md).
 
+### Docker
+
+The Docker images created by the community from the `master` branch can be found [here](https://hub.docker.com/r/israelhikingmap/graphhopper)
+(currently daily). See the [Dockerfile](https://github.com/IsraelHikingMap/graphhopper-docker-image-push) for more details.
+
 ## GraphHopper Maps
 
 To see the road routing feature of GraphHopper in action please go to [GraphHopper Maps](https://graphhopper.com/maps).
