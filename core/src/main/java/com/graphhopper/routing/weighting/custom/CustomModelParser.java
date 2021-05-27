@@ -428,7 +428,7 @@ public class CustomModelParser {
         List<List<Statement>> blocks = splitIntoBlocks(speedStatements);
         for (List<Statement> block : blocks)
             result = getMaxSpeedForBlock(block, result);
-        if (maxSpeed <= 0)
+        if (result <= 0)
             throw new IllegalStateException("max speed is <= 0");
         return result;
     }
