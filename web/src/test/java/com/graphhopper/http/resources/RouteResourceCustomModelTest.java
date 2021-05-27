@@ -24,9 +24,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.Arrays;
-import java.util.Collections;
 
 import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static com.graphhopper.json.Statement.If;
@@ -51,7 +49,8 @@ public class RouteResourceCustomModelTest {
                 putObject("custom_model_folder", "./src/test/resources/com/graphhopper/http/resources").
                 setProfiles(Arrays.asList(
                         new CustomProfile("car").setCustomModel(new CustomModel()).setVehicle("car"),
-                        new CustomProfile("bike").setCustomModel(new CustomModel()).setVehicle("bike"),
+                        new CustomProfile("bike").setCustomModel(new CustomModel().setDistanceInfluence(0)).setVehicle("bike"),
+                        new Profile("bike_fastest").setWeighting("fastest").setVehicle("bike"),
                         new CustomProfile("truck").setVehicle("car").
                                 putHint("custom_model_file", "truck.yml"),
                         new CustomProfile("cargo_bike").setVehicle("bike").
@@ -132,7 +131,7 @@ public class RouteResourceCustomModelTest {
     public void testUnknownProfile() {
         String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"unknown\", \"custom_model\": {}, \"ch.disable\": true}";
         JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
-        assertMessageStartsWith(jsonNode, "The requested profile 'unknown' does not exist.\nAvailable profiles: [car, bike, truck, cargo_bike, json_bike, foot_profile, car_no_unclassified, custom_bike, custom_bike2]");
+        assertMessageStartsWith(jsonNode, "The requested profile 'unknown' does not exist.\nAvailable profiles: [car, bike, ");
     }
 
     @Test
@@ -216,7 +215,34 @@ public class RouteResourceCustomModelTest {
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
-        assertEquals(path.get("distance").asDouble(), 660, 10);
+        assertEquals(660, path.get("distance").asDouble(), 10);
+    }
+
+    @Test
+    public void testBikeWithPriority() {
+        String coords = " \"points\": [[11.539421, 50.018274], [11.593966, 50.007739]],";
+        String jsonQuery = "{" +
+                coords +
+                " \"profile\": \"bike_fastest\"," +
+                " \"ch.disable\": true" +
+                "}";
+        Response response = query(jsonQuery, 200);
+        JsonNode json = response.readEntity(JsonNode.class);
+        double expectedDistance = json.get("paths").get(0).get("distance").asDouble();
+        assertEquals(4781, expectedDistance, 10);
+
+        // base profile bike has to use distance_influence = 0 (unlike default) otherwise not comparable to "fastest"
+        jsonQuery = "{" +
+                coords +
+                " \"profile\": \"bike\"," +
+                " \"ch.disable\": true" +
+                "}";
+        response = query(jsonQuery, 200);
+        json = response.readEntity(JsonNode.class);
+        JsonNode infoJson = json.get("info");
+        assertFalse(infoJson.has("errors"));
+        JsonNode path = json.get("paths").get(0);
+        assertEquals(4781, path.get("distance").asDouble(), 10);
     }
 
     @Test

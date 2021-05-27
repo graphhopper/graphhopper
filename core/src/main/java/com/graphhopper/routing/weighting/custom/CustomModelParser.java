@@ -176,9 +176,9 @@ public class CustomModelParser {
     private static List<Java.BlockStatement> createGetPriorityStatements(Set<String> priorityVariables,
                                                                          CustomModel customModel, EncodedValueLookup lookup) throws Exception {
         List<Java.BlockStatement> priorityStatements = new ArrayList<>();
-        priorityStatements.addAll(verifyExpressions(new StringBuilder("double value = 1;\n"), "in 'priority' entry, ",
+        priorityStatements.addAll(verifyExpressions(new StringBuilder(), "in 'priority' entry, ",
                 priorityVariables, customModel.getPriority(), lookup, "return value;"));
-        String priorityMethodStartBlock = "";
+        String priorityMethodStartBlock = "double value = super.getRawPriority(edge, reverse);\n";
         for (String arg : priorityVariables) {
             priorityMethodStartBlock += getVariableDeclaration(lookup, arg);
         }
