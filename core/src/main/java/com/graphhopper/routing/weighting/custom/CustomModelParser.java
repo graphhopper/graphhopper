@@ -115,7 +115,7 @@ public class CustomModelParser {
             prio.init(lookup, avgSpeedEnc, customModel.getAreas());
             return new CustomWeighting.Parameters(prio::getSpeed, prio::getPriority,
                     findMaxSpeed(customModel.getSpeed(), globalMaxSpeed),
-                    findMaxWithoutCheck(customModel.getPriority(), 1),
+                    findMaxPriority(customModel.getPriority(), 1),
                     customModel.getDistanceInfluence(), customModel.getHeadingPenalty());
         } catch (ReflectiveOperationException ex) {
             throw new IllegalArgumentException("Cannot compile expression " + ex.getMessage(), ex);
@@ -411,12 +411,18 @@ public class CustomModelParser {
         }
     }
 
-    static double findMaxWithoutCheck(List<Statement> statements, double max) {
-        // we want to find the smallest speed that cannot be exceeded by any edge. the 'blocks' of speed statements
+    static double findMax(List<Statement> statements, double max, String type) {
+        // we want to find the smallest value that cannot be exceeded by any edge. the 'blocks' of speed statements
         // are applied one after the other.
         List<List<Statement>> blocks = splitIntoBlocks(statements);
         for (List<Statement> block : blocks) max = findMaxForBlock(block, max);
+        if (max <= 0)
+            throw new IllegalArgumentException(type + " cannot be negative or 0");
         return max;
+    }
+
+    static double findMaxPriority(List<Statement> statements, final double maxPriority) {
+        return findMax(statements, maxPriority, "priority");
     }
 
     static double findMaxSpeed(List<Statement> statements, final double maxSpeed) {
@@ -428,10 +434,7 @@ public class CustomModelParser {
             throw new IllegalArgumentException("Can never apply 'limit_to': " + falseStatement.get().getValue()
                     + " because maximum vehicle speed is " + maxSpeed);
 
-        double result = findMaxWithoutCheck(statements, maxSpeed);
-        if (result <= 0)
-            throw new IllegalStateException("maximum vehicle speed is <= 0");
-        return result;
+        return findMax(statements, maxSpeed, "vehicle speed");
     }
 
     static double findMaxForBlock(List<Statement> block, final double max) {
