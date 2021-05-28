@@ -809,6 +809,11 @@ public class GHUtility {
         public EdgeIteratorState setWayGeometry(PointList list) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
+        
+        @Override
+        public BBox getTowerBBox() {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
 
         @Override
         public String getName() {

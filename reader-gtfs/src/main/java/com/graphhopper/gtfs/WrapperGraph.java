@@ -168,6 +168,11 @@ public class WrapperGraph implements Graph {
             public EdgeIteratorState setWayGeometry(PointList list) {
                 throw new UnsupportedOperationException();
             }
+            
+            @Override
+            public BBox getTowerBBox() {
+                throw new UnsupportedOperationException();
+            }
 
             @Override
             public double getDistance() {
@@ -417,6 +422,11 @@ public class WrapperGraph implements Graph {
                     public EdgeIteratorState setWayGeometry(PointList list) {
                         current.setWayGeometry(list);
                         return this;
+                    }
+                    
+                    @Override
+                    public BBox getTowerBBox() {
+                        return current.getTowerBBox();
                     }
 
                     @Override
