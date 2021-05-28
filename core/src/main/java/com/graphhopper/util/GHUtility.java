@@ -1019,11 +1019,4 @@ public class GHUtility {
             throw new UnsupportedOperationException("Not supported.");
         }
     }
-
-    public static BBox createBBox(EdgeIteratorState edgeState) {
-        PointList towerNodes = edgeState.fetchWayGeometry(FetchMode.TOWER_ONLY);
-        int secondIndex = towerNodes.size() == 1 ? 0 : 1;
-        return BBox.fromPoints(towerNodes.getLat(0), towerNodes.getLon(0),
-                towerNodes.getLat(secondIndex), towerNodes.getLon(secondIndex));
-    }
 }
