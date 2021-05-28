@@ -198,11 +198,11 @@ class CustomModelParserTest {
     public void testFindMaxPriority() {
         List<Statement> statements = new ArrayList<>();
         statements.add(If("true", MULTIPLY, 2));
-        assertEquals(2, CustomModelParser.findMaxSpeed(statements, 1));
+        assertEquals(2, CustomModelParser.findMaxPriority(statements, 1));
 
         statements = new ArrayList<>();
         statements.add(If("true", MULTIPLY, 0.5));
-        assertEquals(0.5, CustomModelParser.findMaxSpeed(statements, 1));
+        assertEquals(0.5, CustomModelParser.findMaxPriority(statements, 1));
     }
 
     @Test
