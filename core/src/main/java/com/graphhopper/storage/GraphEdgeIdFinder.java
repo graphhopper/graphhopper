@@ -226,6 +226,8 @@ public class GraphEdgeIdFinder {
 
                 Shape shape = blockedShapes.get(shapeIdx);
                 if (shape.getBounds().intersects(bbox)) {
+                    if (shape instanceof Polygon && ((Polygon) shape).isRectangle())
+                        return true;
                     if (pointList == null)
                         pointList = edgeState.fetchWayGeometry(FetchMode.ALL).makeImmutable();
                     if (shape.intersects(pointList))
