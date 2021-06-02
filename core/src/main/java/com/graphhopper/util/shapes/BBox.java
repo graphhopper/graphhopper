@@ -151,11 +151,6 @@ public class BBox implements Shape, ReadableBBox, Cloneable {
 
     }
 
-    /**
-     * Calculates the intersecting BBox between this and the specified BBox
-     *
-     * @return the intersecting BBox or null if not intersecting
-     */
     @Override
     public BBox calculateIntersection(ReadableBBox bBox) {
         if (!this.intersects(bBox))
@@ -197,17 +192,11 @@ public class BBox implements Shape, ReadableBBox, Cloneable {
         return intersects(new RectangleLineIntersector(toEnvelope(this)), pointList);
     }
 
-    /**
-     * This method calculates if this BBox intersects with the specified BBox
-     */
     @Override
     public boolean intersects(double minLon, double maxLon, double minLat, double maxLat) {
         return this.minLon < maxLon && this.minLat < maxLat && minLon < this.maxLon && minLat < this.maxLat;
     }
 
-    /**
-     * This method calculates if this BBox intersects with the specified BBox
-     */
     @Override
     public boolean intersects(ReadableBBox o) {
         return this.minLon < o.getMaxLon() && this.minLat < o.getMaxLat() && o.getMinLon() < this.maxLon && o.getMinLat() < this.maxLat;
