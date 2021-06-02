@@ -37,10 +37,12 @@ public class Polygon implements Shape {
 
     private final GeometryFactory factory = new GeometryFactory();
     public final PreparedGeometry prepPolygon;
+    public final boolean rectangle;
     public final Envelope envelope;
 
     public Polygon(PreparedPolygon prepPolygon) {
         this.prepPolygon = prepPolygon;
+        this.rectangle = prepPolygon.getGeometry().isRectangle();
         this.envelope = prepPolygon.getGeometry().getEnvelopeInternal();
     }
 
@@ -57,6 +59,7 @@ public class Polygon implements Shape {
         }
         coordinates[lats.length] = coordinates[0];
         this.prepPolygon = new PreparedPolygon(factory.createPolygon(new PackedCoordinateSequence.Double(coordinates, 2)));
+        this.rectangle = prepPolygon.getGeometry().isRectangle();
         this.envelope = prepPolygon.getGeometry().getEnvelopeInternal();
     }
 
@@ -98,6 +101,10 @@ public class Polygon implements Shape {
 
     public double getMaxLon() {
         return envelope.getMaxX();
+    }
+    
+    public boolean isRectangle() {
+        return rectangle;
     }
 
     @Override
