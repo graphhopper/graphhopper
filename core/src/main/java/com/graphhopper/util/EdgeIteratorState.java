@@ -20,7 +20,7 @@ package com.graphhopper.util;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.ReadableBBox;
 
 /**
  * This interface represents an edge and is one possible state of an EdgeIterator.
@@ -138,7 +138,7 @@ public interface EdgeIteratorState {
     /**
      * @return the (cached) bbox describing the area spanned by the tower nodes of the edge.
      */
-    BBox getTowerBBox();
+    ReadableBBox getTowerBBox();
 
     /**
      * @return the distance of the current edge in meter

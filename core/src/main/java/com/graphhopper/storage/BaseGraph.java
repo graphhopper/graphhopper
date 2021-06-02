@@ -25,6 +25,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.search.StringIndex;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.ReadableBBox;
 
 import java.util.Collections;
 import java.util.Locale;
@@ -1296,7 +1297,7 @@ class BaseGraph implements Graph {
         }
         
         @Override
-        public BBox getTowerBBox() {
+        public ReadableBBox getTowerBBox() {
             if (!hasBBox) {
                 NodeAccess nodeAccess = baseGraph.getNodeAccess();
                 towerBBox.update(nodeAccess.getLat(getBaseNode()), nodeAccess.getLon(getBaseNode()));

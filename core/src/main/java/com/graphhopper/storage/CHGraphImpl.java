@@ -29,7 +29,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.BaseGraph.AllEdgeIterator;
 import com.graphhopper.storage.BaseGraph.EdgeIteratorImpl;
 import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.ReadableBBox;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -832,7 +832,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
         
         @Override
-        public BBox getTowerBBox() {
+        public ReadableBBox getTowerBBox() {
             checkShortcut(false, "getTowerBBox");
             return edgeIterable.getTowerBBox();
         }

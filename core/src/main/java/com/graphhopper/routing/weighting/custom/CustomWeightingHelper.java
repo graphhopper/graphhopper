@@ -21,10 +21,9 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
-import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.JsonFeature;
-import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
+import com.graphhopper.util.shapes.ReadableBBox;
 
 import java.util.Map;
 

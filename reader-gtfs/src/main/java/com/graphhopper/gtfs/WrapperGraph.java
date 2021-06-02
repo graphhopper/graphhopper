@@ -36,6 +36,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.ReadableBBox;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -170,7 +171,7 @@ public class WrapperGraph implements Graph {
             }
             
             @Override
-            public BBox getTowerBBox() {
+            public ReadableBBox getTowerBBox() {
                 throw new UnsupportedOperationException();
             }
 
@@ -425,7 +426,7 @@ public class WrapperGraph implements Graph {
                     }
                     
                     @Override
-                    public BBox getTowerBBox() {
+                    public ReadableBBox getTowerBBox() {
                         return current.getTowerBBox();
                     }
 

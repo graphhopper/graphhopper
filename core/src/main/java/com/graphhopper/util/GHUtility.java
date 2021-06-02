@@ -29,6 +29,8 @@ import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.ReadableBBox;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -811,7 +813,7 @@ public class GHUtility {
         }
         
         @Override
-        public BBox getTowerBBox() {
+        public ReadableBBox getTowerBBox() {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
