@@ -141,28 +141,6 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>install custom model editor</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <configuration>
-                            <arguments>install</arguments>
-                            <workingDirectory>src/main/js/custom-model-editor</workingDirectory>
-                            <installDirectory>${project.basedir}</installDirectory>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>build custom model editor</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <configuration>
-                            <arguments>run build</arguments>
-                            <workingDirectory>src/main/js/custom-model-editor</workingDirectory>
-                            <installDirectory>${project.basedir}</installDirectory>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>npm install</id>
                         <goals>
                             <goal>npm</goal>

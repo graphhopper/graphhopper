@@ -2,8 +2,9 @@
 
 - added smoothness encoded value, used to determine bike speed (#2303)
 - maps: custom_model is now included in URL (#2328)
-- maps/isochrone: works for different profiles now (#2332)  
-- there is no stable tag anymore, either use master or one of the release branches like 2.x, 3.x, ...  
+- maps/isochrone: works for different profiles now (#2332)
+- there is no stable tag anymore, either use master or one of the release branches like 2.x, 3.x, ...
+- moved custom model editor to github.com/graphhopper/custom-model-editor
 - PointList#getSize() -> PointList#size()
 - migrated tests from junit 4 to 5 (#2324)
 
