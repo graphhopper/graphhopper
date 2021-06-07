@@ -25,6 +25,7 @@
     }
   },
   "dependencies": {
+    "custom-model-editor": "github:graphhopper/custom-model-editor#2256e6eaf8d22253f024eb1cd3d02bdabe457869",
     "flatpickr": "4.4.6",
     "jquery": "3.5.0",
     "leaflet": "1.5.1",

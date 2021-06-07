@@ -41,7 +41,7 @@ var routeManipulation = require('./routeManipulation.js');
 var gpxExport = require('./gpxexport.js');
 var messages = require('./messages.js');
 var translate = require('./translate.js');
-var customModelEditor = require('../../../../../js/custom-model-editor/dist/index.js');
+var customModelEditor = require('custom-model-editor/dist/index.js');
 
 var format = require('./tools/format.js');
 var urlTools = require('./tools/url.js');
