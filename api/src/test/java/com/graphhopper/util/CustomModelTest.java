@@ -42,6 +42,10 @@ public class CustomModelTest {
         assertEquals(1, CustomModel.merge(queryModel, new CustomModel()).getPriority().size());
         // priority bigger than 1 is not ok for CustomModel of query
         assertThrows(IllegalArgumentException.class, () -> queryModel.check(new CustomModel(), 100));
+
+        CustomModel queryModel2 = new CustomModel();
+        queryModel2.addToSpeed(If("true", LIMIT, 40));
+        assertThrows(IllegalArgumentException.class, () -> queryModel2.check(new CustomModel(), 30));
     }
 
     @Test
@@ -57,6 +61,13 @@ public class CustomModelTest {
         statements.add(If("road_environment == BRIDGE", LIMIT, 85));
         statements.add(Else(LIMIT, 100));
         assertEquals(100, findMax(statements, 120, "speed"));
+
+        // find bigger speed than stored max_speed in server-side custom_models
+        double storedMaxSpeed = 30;
+        statements = new ArrayList<>();
+        statements.add(If("true", MULTIPLY, 2));
+        statements.add(If("true", LIMIT, 35));
+        assertEquals(35, findMax(statements, 30, "speed"));
     }
 
     @Test

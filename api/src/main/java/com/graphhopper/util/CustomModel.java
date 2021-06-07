@@ -143,7 +143,7 @@ public class CustomModel {
                 + "|speedStatements=" + speedStatements + "|priorityStatements=" + priorityStatements + "|areas=" + areas;
     }
 
-    public void check(CustomModel baseModel, double globalMaxSpeed) {
+    public void check(CustomModel baseModel, double physicalMaxSpeed) {
         if (isInternal())
             throw new IllegalArgumentException("CustomModel of query cannot be internal");
         if (distanceInfluence != null && distanceInfluence < baseModel.getDistanceInfluence())
@@ -157,9 +157,11 @@ public class CustomModel {
             throw new IllegalArgumentException("priority of CustomModel in query cannot be bigger than 1. Was: " + maxPrio);
 
         checkMultiplyValue(getSpeed());
-        double maxSpeed = findMaxSpeed(globalMaxSpeed);
-        if (maxSpeed > globalMaxSpeed)
-            throw new IllegalArgumentException("vehicle speed of CustomModel in query cannot be bigger than " + globalMaxSpeed + ". Was: " + maxSpeed);
+
+        // check speed against max_speed if statements specified
+        double maxSpeed = findMaxSpeed(Double.POSITIVE_INFINITY);
+        if (Double.isFinite(maxSpeed) && maxSpeed > physicalMaxSpeed)
+            throw new IllegalArgumentException("vehicle speed of CustomModel in query cannot be bigger than " + physicalMaxSpeed + ". Was: " + maxSpeed);
     }
 
     private static void checkMultiplyValue(List<Statement> list) {
