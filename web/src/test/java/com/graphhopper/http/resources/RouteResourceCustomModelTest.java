@@ -70,6 +70,11 @@ public class RouteResourceCustomModelTest {
                         new CustomProfile("custom_bike2").setCustomModel(
                                 new CustomModel(new CustomModel().
                                         addToPriority(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, 0)))).
+                                setVehicle("bike"),
+                        new CustomProfile("custom_bike3").setCustomModel(
+                                new CustomModel(new CustomModel().
+                                        addToSpeed(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, 10)).
+                                        addToSpeed(If("true", LIMIT, 40)))).
                                 setVehicle("bike"))).
                 setCHProfiles(Arrays.asList(new CHProfile("truck"), new CHProfile("car_no_unclassified")));
         return config;
@@ -92,8 +97,7 @@ public class RouteResourceCustomModelTest {
     public void testCHPossibleWithoutCustomModel() {
         // the truck profile is a custom profile and we can use its CH preparation as long as we do not add a custom model
         String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\"}";
-        JsonNode json = query(body, 200).readEntity(JsonNode.class);
-        JsonNode path = json.get("paths").get(0);
+        JsonNode path = getPath(body);
         assertEquals(path.get("distance").asDouble(), 1500, 10);
         assertEquals(path.get("time").asLong(), 151_000, 1_000);
     }
@@ -114,8 +118,7 @@ public class RouteResourceCustomModelTest {
 
         // ... but when we disable CH it works of course
         body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\", \"custom_model\": {}, \"ch.disable\": true}";
-        json = query(body, 200).readEntity(JsonNode.class);
-        JsonNode path = json.get("paths").get(0);
+        JsonNode path = getPath(body);
         assertEquals(path.get("distance").asDouble(), 1500, 10);
         assertEquals(path.get("time").asLong(), 151_000, 1_000);
     }
@@ -131,7 +134,7 @@ public class RouteResourceCustomModelTest {
     public void testUnknownProfile() {
         String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"unknown\", \"custom_model\": {}, \"ch.disable\": true}";
         JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
-        assertMessageStartsWith(jsonNode, "The requested profile 'unknown' does not exist.\nAvailable profiles: [car, bike, ");
+        assertMessageStartsWith(jsonNode, "The requested profile 'unknown' does not exist.\nAvailable profiles: ");
     }
 
     @Test
@@ -158,8 +161,7 @@ public class RouteResourceCustomModelTest {
     @CsvSource(value = {"0.05,3073", "0.5,1498"})
     public void testAvoidArea(double priority, double expectedDistance) {
         String bodyFragment = "\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"car\", \"ch.disable\": true";
-        JsonNode jsonNode = query("{" + bodyFragment + ", \"custom_model\": {}}", 200).readEntity(JsonNode.class);
-        JsonNode path = jsonNode.get("paths").get(0);
+        JsonNode path = getPath("{" + bodyFragment + ", \"custom_model\": {}}");
         assertEquals(path.get("distance").asDouble(), 661, 10);
 
         // 'blocking' the area either leads to a route that still crosses it (but on a faster road) or to a road
@@ -177,28 +179,24 @@ public class RouteResourceCustomModelTest {
                 "   }" +
                 "}}" +
                 "}";
-        jsonNode = query(body, 200).readEntity(JsonNode.class);
-        path = jsonNode.get("paths").get(0);
+        path = getPath(body);
         assertEquals(expectedDistance, path.get("distance").asDouble(), 10);
     }
 
     @Test
     public void testCargoBike() throws IOException {
         String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"bike\", \"custom_model\": {}, \"ch.disable\": true}";
-        JsonNode jsonNode = query(body, 200).readEntity(JsonNode.class);
-        JsonNode path = jsonNode.get("paths").get(0);
+        JsonNode path = getPath(body);
         assertEquals(path.get("distance").asDouble(), 661, 5);
 
         String jsonFromYamlFile = yamlToJson(Helper.isToString(getClass().getResourceAsStream("cargo_bike.yml")));
         body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"bike\", \"custom_model\":" + jsonFromYamlFile + ", \"ch.disable\": true}";
-        jsonNode = query(body, 200).readEntity(JsonNode.class);
-        path = jsonNode.get("paths").get(0);
+        path = getPath(body);
         assertEquals(path.get("distance").asDouble(), 1007, 5);
 
         // results should be identical be it via server-side profile or query profile:
         body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"cargo_bike\", \"custom_model\": {}, \"ch.disable\": true}";
-        jsonNode = query(body, 200).readEntity(JsonNode.class);
-        JsonNode path2 = jsonNode.get("paths").get(0);
+        JsonNode path2 = getPath(body);
         assertEquals(path.get("distance").asDouble(), path2.get("distance").asDouble(), 1);
     }
 
@@ -210,11 +208,7 @@ public class RouteResourceCustomModelTest {
                 " \"custom_model\": {}," +
                 " \"ch.disable\": true" +
                 "}";
-        final Response response = query(jsonQuery, 200);
-        JsonNode json = response.readEntity(JsonNode.class);
-        JsonNode infoJson = json.get("info");
-        assertFalse(infoJson.has("errors"));
-        JsonNode path = json.get("paths").get(0);
+        JsonNode path = getPath(jsonQuery);
         assertEquals(660, path.get("distance").asDouble(), 10);
     }
 
@@ -226,9 +220,8 @@ public class RouteResourceCustomModelTest {
                 " \"profile\": \"bike_fastest\"," +
                 " \"ch.disable\": true" +
                 "}";
-        Response response = query(jsonQuery, 200);
-        JsonNode json = response.readEntity(JsonNode.class);
-        double expectedDistance = json.get("paths").get(0).get("distance").asDouble();
+        JsonNode path = getPath(jsonQuery);
+        double expectedDistance = path.get("distance").asDouble();
         assertEquals(4781, expectedDistance, 10);
 
         // base profile bike has to use distance_influence = 0 (unlike default) otherwise not comparable to "fastest"
@@ -237,11 +230,7 @@ public class RouteResourceCustomModelTest {
                 " \"profile\": \"bike\"," +
                 " \"ch.disable\": true" +
                 "}";
-        response = query(jsonQuery, 200);
-        json = response.readEntity(JsonNode.class);
-        JsonNode infoJson = json.get("info");
-        assertFalse(infoJson.has("errors"));
-        JsonNode path = json.get("paths").get(0);
+        path = getPath(jsonQuery);
         assertEquals(4781, path.get("distance").asDouble(), 10);
     }
 
@@ -253,11 +242,7 @@ public class RouteResourceCustomModelTest {
                 " \"custom_model\": {}," +
                 " \"ch.disable\": true" +
                 "}";
-        final Response response = query(jsonQuery, 200);
-        JsonNode json = response.readEntity(JsonNode.class);
-        JsonNode infoJson = json.get("info");
-        assertFalse(infoJson.has("errors"));
-        JsonNode path = json.get("paths").get(0);
+        JsonNode path = getPath(jsonQuery);
         assertEquals(path.get("distance").asDouble(), 660, 10);
     }
 
@@ -268,16 +253,14 @@ public class RouteResourceCustomModelTest {
                 " \"profile\": \"car_no_unclassified\"," +
                 " \"ch.disable\": true" +
                 "}";
-        JsonNode jsonNode = query(body, 200).readEntity(JsonNode.class);
-        JsonNode path = jsonNode.get("paths").get(0);
+        JsonNode path = getPath(body);
         assertEquals(8754, path.get("distance").asDouble(), 5);
 
         // CH
         body = "{\"points\": [[11.556416,50.007739], [11.528864,50.021638]]," +
                 " \"profile\": \"car_no_unclassified\"" +
                 "}";
-        jsonNode = query(body, 200).readEntity(JsonNode.class);
-        path = jsonNode.get("paths").get(0);
+        path = getPath(body);
         assertEquals(8754, path.get("distance").asDouble(), 5);
 
         // different profile
@@ -285,15 +268,56 @@ public class RouteResourceCustomModelTest {
                 " \"profile\": \"custom_bike2\"," +
                 " \"ch.disable\": true" +
                 "}";
-        jsonNode = query(body, 200).readEntity(JsonNode.class);
-        path = jsonNode.get("paths").get(0);
+        path = getPath(body);
         assertEquals(5370, path.get("distance").asDouble(), 5);
+    }
+
+    @Test
+    public void customBikeWithHighSpeed() {
+        // encoder.getMaxSpeed is 30km/h and limit_to statement is 40km/h in server-side custom model
+        // since #2335 do no longer throw exception in case too high limit_to is used
+        String jsonQuery = "{" +
+                " \"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
+                " \"profile\": \"custom_bike3\"," +
+                " \"custom_model\": { " +
+                "   \"speed\": [{" +
+                "       \"if\": \"true\", \"limit_to\": 55" +
+                "     }] " +
+                " }," +
+                " \"ch.disable\": true" +
+                "}";
+
+        JsonNode path = getPath(jsonQuery);
+        assertEquals(660, path.get("distance").asDouble(), 10);
+        assertEquals(69, path.get("time").asLong() / 1000, 1);
+
+        // now limit_to increases time
+        jsonQuery = "{" +
+                " \"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
+                " \"profile\": \"custom_bike3\"," +
+                " \"custom_model\": { " +
+                "   \"speed\": [{" +
+                "      \"if\": \"true\", \"limit_to\": 35" +
+                "   }] " +
+                " }," +
+                " \"ch.disable\": true" +
+                "}";
+        path = getPath(jsonQuery);
+        assertEquals(660, path.get("distance").asDouble(), 10);
+        assertEquals(77, path.get("time").asLong() / 1000, 1);
     }
 
     private void assertMessageStartsWith(JsonNode jsonNode, String message) {
         assertNotNull(jsonNode.get("message"));
         assertTrue(jsonNode.get("message").asText().startsWith(message), "Expected error message to start with:\n" +
                 message + "\nbut got:\n" + jsonNode.get("message").asText());
+    }
+
+    JsonNode getPath(String body) {
+        final Response response = query(body, 200);
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertFalse(json.get("info").has("errors"));
+        return json.get("paths").get(0);
     }
 
     Response query(String body, int code) {

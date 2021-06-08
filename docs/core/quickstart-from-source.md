@@ -107,16 +107,13 @@ to perform when you make changes to the JavaScript code:
 
 1. install the [node package manager](https://github.com/nvm-sh/nvm#install--update-script). For windows
    use [nvm-windows](https://github.com/coreybutler/nvm-windows).
-2. Build the custom-model-editor
-   component: `sh -c "cd web-bundle/src/main/js/custom-model-editor && npm install && npm run build"`
-3. Build the Web UI: `cd web-bundle && npm install && npm run bundle` which results in the `main.js` file
-4. Restart the GH server so it picks up the latest version of the UI bundle
+2. Build the Web UI: `cd web-bundle && npm install && npm run bundle` which results in the `main.js` file
+3. Restart the GH server so it picks up the latest version of the UI bundle
 
 You can achieve an even faster development cycle by running `npm run watch` which will update `main.js` whenever you
-make changes to one of the .js files. The same command works in the custom-model-editor folder in case you want to make
-changes there. To hot-reload your changes in the browser the best option is to serve GH maps from a separate server like
-live-server. You can do this by running `npm run serve` from a separate terminal and pointing the routing.host property
-in src/main/resources/com/graphhopper/maps/js/config/options.js to your GH server:
+make changes to one of the .js files. To hot-reload your changes in the browser the best option is to serve GH maps from
+a separate server like live-server. You can do this by running `npm run serve` from a separate terminal and pointing the
+routing.host property in src/main/resources/com/graphhopper/maps/js/config/options.js to your GH server:
 
 ```js
 ...

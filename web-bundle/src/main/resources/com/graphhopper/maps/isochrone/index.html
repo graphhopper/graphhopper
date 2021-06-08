@@ -45,6 +45,11 @@
         <label for='show-graph'> show GH graph</label>
     </div>
     <div id='iso-menu'>
+        <select id='isochrone-profile' type='text' v-model='isochroneProfile' @change='updateIsochrone'>
+            <option v-for='profile in isochroneProfiles' v-bind:value='profile'>
+                {{ profile }}
+            </option>
+        </select>
         <input id='isochrone-point' type='text' v-model='isochronePoint' @keyup.enter='updateIsochrone'>
         <input id='isochrone-radius' type='number' v-model='isochroneRadius' @change='updateIsochrone'>
         <label for='isochrone-radius'> iso radius (s)</label>
