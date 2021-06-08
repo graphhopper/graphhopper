@@ -143,7 +143,12 @@ public class CustomModel {
                 + "|speedStatements=" + speedStatements + "|priorityStatements=" + priorityStatements + "|areas=" + areas;
     }
 
-    public void check(CustomModel baseModel, double physicalMaxSpeed) {
+    /**
+     * This method throws an exception when this CustomModel would decrease the edge weight compared to the specified
+     * baseModel as in such a case the optimality of A* with landmarks can no longer be guaranteed (as the preparation
+     * is based on baseModel).
+     */
+    public void checkLMConstraints(CustomModel baseModel) {
         if (isInternal())
             throw new IllegalArgumentException("CustomModel of query cannot be internal");
         if (distanceInfluence != null && distanceInfluence < baseModel.getDistanceInfluence())
@@ -157,11 +162,6 @@ public class CustomModel {
             throw new IllegalArgumentException("priority of CustomModel in query cannot be bigger than 1. Was: " + maxPrio);
 
         checkMultiplyValue(getSpeed());
-
-        // check speed against max_speed if statements specified
-        double maxSpeed = findMaxSpeed(Double.POSITIVE_INFINITY);
-        if (Double.isFinite(maxSpeed) && maxSpeed > physicalMaxSpeed)
-            throw new IllegalArgumentException("vehicle speed of CustomModel in query cannot be bigger than " + physicalMaxSpeed + ". Was: " + maxSpeed);
     }
 
     private static void checkMultiplyValue(List<Statement> list) {

@@ -41,11 +41,7 @@ public class CustomModelTest {
         queryModel.addToPriority(If("max_width < 3", MULTIPLY, 10));
         assertEquals(1, CustomModel.merge(queryModel, new CustomModel()).getPriority().size());
         // priority bigger than 1 is not ok for CustomModel of query
-        assertThrows(IllegalArgumentException.class, () -> queryModel.check(new CustomModel(), 100));
-
-        CustomModel queryModel2 = new CustomModel();
-        queryModel2.addToSpeed(If("true", LIMIT, 40));
-        assertThrows(IllegalArgumentException.class, () -> queryModel2.check(new CustomModel(), 30));
+        assertThrows(IllegalArgumentException.class, () -> queryModel.checkLMConstraints(new CustomModel()));
     }
 
     @Test

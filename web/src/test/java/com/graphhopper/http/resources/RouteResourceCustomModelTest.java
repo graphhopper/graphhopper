@@ -252,6 +252,7 @@ public class RouteResourceCustomModelTest {
     @Test
     public void customBikeWithHighSpeed() {
         // encoder.getMaxSpeed is 30km/h and limit_to statement is 40km/h in server-side custom model
+        // since #2335 do no longer throw exception in case too high limit_to is used
         String jsonQuery = "{" +
                 " \"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
                 " \"profile\": \"custom_bike3\"," +
@@ -263,10 +264,11 @@ public class RouteResourceCustomModelTest {
                 " \"ch.disable\": true" +
                 "}";
 
-        final Response response = query(jsonQuery, 400);
-        JsonNode json = response.readEntity(JsonNode.class);
-        assertTrue(json.get("message").asText().startsWith("vehicle speed of CustomModel in query cannot be bigger than 40"), json.get("message").asText());
+        JsonNode path = getPath(jsonQuery);
+        assertEquals(660, path.get("distance").asDouble(), 10);
+        assertEquals(69, path.get("time").asLong() / 1000, 1);
 
+        // now limit_to increases time
         jsonQuery = "{" +
                 " \"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
                 " \"profile\": \"custom_bike3\"," +
@@ -277,7 +279,7 @@ public class RouteResourceCustomModelTest {
                 " }," +
                 " \"ch.disable\": true" +
                 "}";
-        JsonNode path = getPath(jsonQuery);
+        path = getPath(jsonQuery);
         assertEquals(660, path.get("distance").asDouble(), 10);
         assertEquals(77, path.get("time").asLong() / 1000, 1);
     }
