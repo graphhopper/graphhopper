@@ -42,10 +42,6 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.graphhopper.json.Statement.Keyword.ELSE;
-import static com.graphhopper.json.Statement.Keyword.IF;
-import static com.graphhopper.json.Statement.Op.LIMIT;
-
 public class CustomModelParser {
     private static final AtomicLong longVal = new AtomicLong(1);
     static final String IN_AREA_PREFIX = "in_";
@@ -86,16 +82,18 @@ public class CustomModelParser {
      * This method compiles a new subclass of CustomWeightingHelper composed from the provided CustomModel caches this
      * and returns an instance.
      */
-    static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, EncodedValueLookup lookup, double globalMaxSpeed,
-                                                                DecimalEncodedValue avgSpeedEnc) {
-        String key = customModel.toString() + ",global:" + globalMaxSpeed;
+    static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, EncodedValueLookup lookup,
+                                                                double globalMaxSpeed, DecimalEncodedValue avgSpeedEnc) {
+        final double maxSpeed = customModel.findMaxSpeed(globalMaxSpeed);
+        final double maxPriority = customModel.findMaxPriority(1);
+        String key = customModel.toString() + ",maxSpeed:" + maxSpeed + ",maxPriority:" + maxPriority;
         if (key.length() > 100_000) throw new IllegalArgumentException("Custom Model too big: " + key.length());
 
         Class<?> clazz = customModel.isInternal() ? INTERNAL_CACHE.get(key) : null;
         if (CACHE_SIZE > 0 && clazz == null)
             clazz = CACHE.get(key);
         if (clazz == null) {
-            clazz = createClazz(customModel, lookup, globalMaxSpeed);
+            clazz = createClazz(customModel, lookup, maxSpeed);
             if (customModel.isInternal()) {
                 INTERNAL_CACHE.put(key, clazz);
                 if (INTERNAL_CACHE.size() > 100) {
@@ -113,7 +111,7 @@ public class CustomModelParser {
             // The class does not need to be thread-safe as we create an instance per request
             CustomWeightingHelper prio = (CustomWeightingHelper) clazz.getDeclaredConstructor().newInstance();
             prio.init(lookup, avgSpeedEnc, customModel.getAreas());
-            return new CustomWeighting.Parameters(prio::getSpeed, prio::getPriority, findMaxSpeed(customModel, globalMaxSpeed),
+            return new CustomWeighting.Parameters(prio::getSpeed, prio::getPriority, maxSpeed, maxPriority,
                     customModel.getDistanceInfluence(), customModel.getHeadingPenalty());
         } catch (ReflectiveOperationException ex) {
             throw new IllegalArgumentException("Cannot compile expression " + ex.getMessage(), ex);
@@ -407,60 +405,5 @@ public class CustomModelParser {
             compiler.cook(cu);
             return compiler;
         }
-    }
-
-    static double findMaxSpeed(CustomModel customModel, double maxSpeed) {
-        return findMaxSpeed(customModel.getSpeed(), maxSpeed);
-    }
-
-    static double findMaxSpeed(List<Statement> speedStatements, final double maxSpeed) {
-        // throw an error if one of the limit statements won't possibly do anything
-        Optional<Statement> falseStatement = speedStatements.stream()
-                .filter(st -> LIMIT.equals(st.getOperation()) && st.getValue() > maxSpeed)
-                .findFirst();
-        if (falseStatement.isPresent())
-            throw new IllegalArgumentException("Can never apply 'limit_to': " + falseStatement.get().getValue()
-                    + " because maximum vehicle speed is " + maxSpeed);
-
-        // we want to find the smallest speed that cannot be exceeded by any edge. the 'blocks' of speed statements
-        // are applied one after the other.
-        double result = maxSpeed;
-        List<List<Statement>> blocks = splitIntoBlocks(speedStatements);
-        for (List<Statement> block : blocks)
-            result = getMaxSpeedForBlock(block, result);
-        if (result <= 0)
-            throw new IllegalStateException("max speed is <= 0");
-        return result;
-    }
-
-    static double getMaxSpeedForBlock(List<Statement> block, final double maxSpeed) {
-        if (block.isEmpty() || !IF.equals(block.get(0).getKeyword()))
-            throw new IllegalArgumentException("Every block must start with an if-statement");
-        if (block.get(0).getCondition().trim().equals("true"))
-            // this if statement is always executed while the other statements are never executed
-            // -> we just apply this one statement
-            return block.get(0).apply(maxSpeed);
-
-        double blockMax = block.stream()
-                .mapToDouble(statement -> statement.apply(maxSpeed))
-                .max()
-                .orElse(maxSpeed);
-        // if there is no 'else' statement it's like there is a 'neutral' branch that leaves the initial max speed as is
-        if (block.stream().noneMatch(st -> ELSE.equals(st.getKeyword())))
-            blockMax = Math.max(blockMax, maxSpeed);
-        return blockMax;
-    }
-
-    /**
-     * Splits the specified list into several list of statements starting with if
-     */
-    static List<List<Statement>> splitIntoBlocks(List<Statement> statements) {
-        List<List<Statement>> result = new ArrayList<>();
-        List<Statement> block = null;
-        for (Statement st : statements) {
-            if (IF.equals(st.getKeyword())) result.add(block = new ArrayList<>());
-            block.add(st);
-        }
-        return result;
     }
 }
