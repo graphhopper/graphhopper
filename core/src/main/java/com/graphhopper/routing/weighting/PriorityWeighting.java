@@ -34,12 +34,14 @@ import static com.graphhopper.routing.util.PriorityCode.BEST;
 public class PriorityWeighting extends FastestWeighting {
 
     private final double minFactor;
+    private final double maxPrio;
     private final DecimalEncodedValue priorityEnc;
 
     public PriorityWeighting(FlagEncoder encoder, PMap pMap, TurnCostProvider turnCostProvider) {
         super(encoder, pMap, turnCostProvider);
         priorityEnc = encoder.getDecimalEncodedValue(EncodingManager.getKey(encoder, "priority"));
         minFactor = 1 / PriorityCode.getValue(BEST.getValue());
+        maxPrio = PriorityCode.getFactor(BEST.getValue());
     }
 
     @Override
@@ -53,8 +55,8 @@ public class PriorityWeighting extends FastestWeighting {
         if (Double.isInfinite(weight))
             return Double.POSITIVE_INFINITY;
         double priority = edgeState.get(priorityEnc);
-        if (priority > 1.5)
-            throw new IllegalArgumentException("priority cannot be bigger than 1.5 but was " + priority);
+        if (priority > maxPrio)
+            throw new IllegalArgumentException("priority cannot be bigger than " + maxPrio + " but was " + priority);
         return weight / priority;
     }
 }

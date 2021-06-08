@@ -24,10 +24,7 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
-import com.graphhopper.routing.util.BikeFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
@@ -64,7 +61,7 @@ public class PriorityRoutingTest {
         dist1 += maxSpeedEdge(em, graph, 1, 2, encoder, 1.0).getDistance();
         dist1 += maxSpeedEdge(em, graph, 2, 3, encoder, 1.0).getDistance();
 
-        final double maxPrio = 1.5;
+        final double maxPrio = PriorityCode.getFactor(PriorityCode.BEST.getValue());
         double dist2 = 0;
         dist2 += maxSpeedEdge(em, graph, 0, 4, encoder, maxPrio).getDistance();
         dist2 += maxSpeedEdge(em, graph, 4, 5, encoder, maxPrio).getDistance();
