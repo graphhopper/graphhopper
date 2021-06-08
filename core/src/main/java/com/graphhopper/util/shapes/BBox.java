@@ -38,7 +38,7 @@ import java.util.List;
  *
  * @author Peter Karich
  */
-public class BBox implements Shape, ReadableBBox, Cloneable {
+public class BBox implements Shape, ReadableBBox {
 
     private final boolean elevation;
     // longitude (theta) = x, latitude (phi) = y, elevation = z

@@ -19,7 +19,7 @@ package com.graphhopper.util.shapes;
 
 import com.graphhopper.util.PointList;
 
-public interface ReadableBBox {
+public interface ReadableBBox extends Cloneable {
 
     boolean isValid();
     
@@ -60,4 +60,5 @@ public interface ReadableBBox {
      */
     BBox calculateIntersection(ReadableBBox bBox);
 
+    BBox clone();
 }
