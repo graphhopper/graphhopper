@@ -410,6 +410,24 @@ public abstract class AbstractBikeFlagEncoderTester {
         node.setTag("bicycle", "yes");
         // no barrier!
         assertTrue(encoder.handleNodeTags(node) == 0);
+
+        // Issue 407
+        // kissing_gate without bicycle tag
+        node.setTag("barrier", "kissing_gate");
+        // barrier!
+        assertFalse(encoder.handleNodeTags(node) == 0);
+
+        // kissing_gate with bicycle tag
+        node = new ReaderNode(1, -1, -1);
+        node.setTag("barrier", "kissing_gate");
+        node.setTag("bicycle", "yes");
+        // barrier!
+        assertTrue(encoder.handleNodeTags(node) == 0);
+
+        // Test if cattle_grid is non blocking
+        node = new ReaderNode(1, -1, -1);
+        node.setTag("barrier", "cattle_grid");
+        assertTrue(encoder.handleNodeTags(node) == 0);
     }
 
     @Test
