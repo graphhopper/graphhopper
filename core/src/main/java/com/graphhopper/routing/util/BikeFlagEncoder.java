@@ -72,7 +72,10 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
         // SmoothnessSpeed <= smoothnessFactorPushingSectionThreshold gets mapped to speed PUSHING_SECTION_SPEED
         setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.IMPASSABLE, smoothnessFactorPushingSectionThreshold);
 
-        absoluteBarriers.add("kissing_gate");
+        defaultBlockedBarriers.add("stile");
+        defaultBlockedBarriers.add("kissing_gate");
+        defaultBlockedBarriers.add("turnstile");
+
         setSpecificClassBicycle("touring");
     }
 

@@ -186,4 +186,30 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         assertEquals(18, avgSpeedEnc.getDecimal(false, flags), 1e-1);
         assertPriority(PriorityCode.PREFER.getValue(), osmWay);
     }
+    
+    // Issue 407 : Always block kissing_gate execpt for mountainbikes
+    @Test
+    @Override
+    public void testBarrierAccess() {
+        super.testBarrierAccess();
+        // kissing_gate without bicycle tag
+        ReaderNode node = new ReaderNode(1, -1, -1);
+        node.setTag("barrier", "kissing_gate");
+        // No barrier!
+        assertTrue(encoder.handleNodeTags(node) == 0);
+
+        // kissing_gate with bicycle tag = no
+        node = new ReaderNode(1, -1, -1);
+        node.setTag("barrier", "kissing_gate");
+        node.setTag("bicycle", "no");
+        // barrier!
+        assertFalse(encoder.handleNodeTags(node) == 0);
+
+        // kissing_gate with bicycle tag
+        node = new ReaderNode(1, -1, -1);
+        node.setTag("barrier", "kissing_gate");
+        node.setTag("bicycle", "yes");
+        // No barrier!
+        assertTrue(encoder.handleNodeTags(node) == 0);
+    }    
 }
