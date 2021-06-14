@@ -246,7 +246,7 @@ public class GraphHopperTest {
                 setStoreOnFlush(true).
                 setSortGraph(sort);
 
-        Profile profile = new Profile(profileName).setVehicle(vehicle).setWeighting("shortest");
+        Profile profile = new Profile(profileName).setVehicle(vehicle).setWeighting("fastest");
         if (custom) {
             JsonFeature area51Feature = new JsonFeature();
             area51Feature.setGeometry(new GeometryFactory().createPolygon(new Coordinate[]{
@@ -254,7 +254,7 @@ public class GraphHopperTest {
                     new Coordinate(7.4198, 43.7355),
                     new Coordinate(7.4207, 43.7344),
                     new Coordinate(7.4174, 43.7345)}));
-            CustomModel customModel = new CustomModel();
+            CustomModel customModel = new CustomModel().setDistanceInfluence(0);
             customModel.getPriority().add(Statement.If("in_area51", Statement.Op.MULTIPLY, 0.1));
             customModel.getAreas().put("area51", area51Feature);
             profile = new CustomProfile(profileName).setCustomModel(customModel).setVehicle(vehicle);
@@ -299,8 +299,8 @@ public class GraphHopperTest {
             long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
             assertNotEquals(sum, 0);
             assertTrue(sum < 120, "Too many nodes visited " + sum);
-            assertEquals(3437.1, bestPath.getDistance(), .1);
-            assertEquals(85, bestPath.getPoints().size());
+            assertEquals(3521.9, bestPath.getDistance(), .1);
+            assertEquals(112, bestPath.getPoints().size());
         }
 
         if (lm) {
@@ -315,8 +315,8 @@ public class GraphHopperTest {
             long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
             assertNotEquals(sum, 0);
             assertTrue(sum < 120, "Too many nodes visited " + sum);
-            assertEquals(3437.1, bestPath.getDistance(), .1);
-            assertEquals(85, bestPath.getPoints().size());
+            assertEquals(3521.9, bestPath.getDistance(), .1);
+            assertEquals(112, bestPath.getPoints().size());
         }
 
         // flexible
@@ -330,8 +330,8 @@ public class GraphHopperTest {
         long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
         assertNotEquals(sum, 0);
         assertTrue(sum > 120, "Too few nodes visited " + sum);
-        assertEquals(3437.1, bestPath.getDistance(), .1);
-        assertEquals(85, bestPath.getPoints().size());
+        assertEquals(3521.9, bestPath.getDistance(), .1);
+        assertEquals(112, bestPath.getPoints().size());
 
         hopper.close();
     }
@@ -1318,8 +1318,8 @@ public class GraphHopperTest {
                 .setProfile("profile1"));
         res = rsp.getBest();
         assertFalse(rsp.hasErrors(), "bike routing for " + str + " should not have errors:" + rsp.getErrors());
-        assertEquals(494, res.getTime() / 1000f, 1);
-        assertEquals(2192, res.getDistance(), 1);
+        assertEquals(511, res.getTime() / 1000f, 1);
+        assertEquals(2481, res.getDistance(), 1);
 
         rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setProfile("profile3"));
@@ -1936,7 +1936,7 @@ public class GraphHopperTest {
         req.setProfile("foot");
         GHResponse rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
-        assertEquals(86, rsp.getBest().getDistance(), 1);
+        assertEquals(95, rsp.getBest().getDistance(), 1);
 
         // Using the car profile there is no way we can reach the destination and the subnetwork is supposed to be removed
         // such that the destination snaps to a point that can be reached.

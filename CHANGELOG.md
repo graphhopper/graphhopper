@@ -1,5 +1,6 @@
 ### 4.0 [not yet released]
 
+- renamed PriorityCode enums: AVOID_IF_POSSIBLE -> SLIGHT_AVOID, REACH_DEST -> AVOID, AVOID_AT_ALL_COSTS -> AVOID_MORE, WORST -> BAD
 - added smoothness encoded value, used to determine bike speed (#2303)
 - maps: custom_model is now included in URL (#2328)
 - maps/isochrone: works for different profiles now (#2332)

@@ -145,7 +145,7 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
             if ("grade1".equals(trackType))
                 weightToPrioMap.put(110d, PREFER.getValue());
             else if (trackType == null || trackType.startsWith("grade"))
-                weightToPrioMap.put(110d, AVOID_AT_ALL_COSTS.getValue());
+                weightToPrioMap.put(110d, AVOID_MORE.getValue());
         }
     }
 

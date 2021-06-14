@@ -20,7 +20,6 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.routing.ev.UnsignedDecimalEncodedValue;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.routing.weighting.CurvatureWeighting;
@@ -117,7 +116,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
         // first two bits are reserved for route handling in superclass
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
 
-        registerNewEncodedValue.add(priorityWayEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 3, PriorityCode.getFactor(1), false));
+        registerNewEncodedValue.add(priorityWayEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 4, PriorityCode.getFactor(1), false));
         registerNewEncodedValue.add(curvatureEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "curvature"), 4, 0.1, false));
     }
 
@@ -208,17 +207,15 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
             setSpeed(true, edgeFlags, ferrySpeed);
         }
 
-        priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getFactor(handlePriority(way)));
-
-        // Set the curvature to the Maximum
-        curvatureEncoder.setDecimal(false, edgeFlags, PriorityCode.getFactor(10));
+        priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way)));
+        curvatureEncoder.setDecimal(false, edgeFlags, 10.0 / 7.0);
         return edgeFlags;
     }
 
     private int handlePriority(ReaderWay way) {
         String highway = way.getTag("highway", "");
         if (avoidSet.contains(highway)) {
-            return PriorityCode.WORST.getValue();
+            return PriorityCode.BAD.getValue();
         } else if (preferSet.contains(highway)) {
             return PriorityCode.BEST.getValue();
         }

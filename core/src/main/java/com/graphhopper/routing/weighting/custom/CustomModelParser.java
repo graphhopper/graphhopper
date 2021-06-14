@@ -70,22 +70,30 @@ public class CustomModelParser {
         // utility class
     }
 
-    public static CustomWeighting createWeighting(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup, TurnCostProvider turnCostProvider,
-                                                  CustomModel customModel) {
+    public static CustomWeighting createWeighting(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup,
+                                                  TurnCostProvider turnCostProvider, CustomModel customModel) {
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");
-        CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup, baseFlagEncoder.getMaxSpeed(), baseFlagEncoder.getAverageSpeedEnc());
+        DecimalEncodedValue avgSpeedEnc = lookup.getDecimalEncodedValue(EncodingManager.getKey(baseFlagEncoder.toString(), "average_speed"));
+        final String pKey = EncodingManager.getKey(baseFlagEncoder.toString(), "priority");
+        DecimalEncodedValue priorityEnc = lookup.hasEncodedValue(pKey) ? lookup.getDecimalEncodedValue(pKey) : null;
+
+        CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup,
+                avgSpeedEnc, baseFlagEncoder.getMaxSpeed(), priorityEnc);
         return new CustomWeighting(baseFlagEncoder, turnCostProvider, parameters);
     }
 
     /**
      * This method compiles a new subclass of CustomWeightingHelper composed from the provided CustomModel caches this
      * and returns an instance.
+     * @param priorityEnc can be null
      */
     static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, EncodedValueLookup lookup,
-                                                                double globalMaxSpeed, DecimalEncodedValue avgSpeedEnc) {
-        final double maxSpeed = customModel.findMaxSpeed(globalMaxSpeed);
-        final double maxPriority = customModel.findMaxPriority(1);
+                                                                DecimalEncodedValue avgSpeedEnc, double globalMaxSpeed,
+                                                                DecimalEncodedValue priorityEnc) {
+
+        final double maxSpeed = customModel.findMaxSpeed(globalMaxSpeed); // globalMaxSpeed can be lower than avgSpeedEnc.getMaxDecimal()
+        final double maxPriority = customModel.findMaxPriority(priorityEnc == null ? 1 : priorityEnc.getMaxDecimal());
         String key = customModel.toString() + ",maxSpeed:" + maxSpeed + ",maxPriority:" + maxPriority;
         if (key.length() > 100_000) throw new IllegalArgumentException("Custom Model too big: " + key.length());
 
@@ -110,7 +118,7 @@ public class CustomModelParser {
         try {
             // The class does not need to be thread-safe as we create an instance per request
             CustomWeightingHelper prio = (CustomWeightingHelper) clazz.getDeclaredConstructor().newInstance();
-            prio.init(lookup, avgSpeedEnc, customModel.getAreas());
+            prio.init(lookup, avgSpeedEnc, priorityEnc, customModel.getAreas());
             return new CustomWeighting.Parameters(prio::getSpeed, prio::getPriority, maxSpeed, maxPriority,
                     customModel.getDistanceInfluence(), customModel.getHeadingPenalty());
         } catch (ReflectiveOperationException ex) {
@@ -171,9 +179,9 @@ public class CustomModelParser {
     private static List<Java.BlockStatement> createGetPriorityStatements(Set<String> priorityVariables,
                                                                          CustomModel customModel, EncodedValueLookup lookup) throws Exception {
         List<Java.BlockStatement> priorityStatements = new ArrayList<>();
-        priorityStatements.addAll(verifyExpressions(new StringBuilder("double value = 1;\n"), "in 'priority' entry, ",
+        priorityStatements.addAll(verifyExpressions(new StringBuilder(), "in 'priority' entry, ",
                 priorityVariables, customModel.getPriority(), lookup, "return value;"));
-        String priorityMethodStartBlock = "";
+        String priorityMethodStartBlock = "double value = super.getRawPriority(edge, reverse);\n";
         for (String arg : priorityVariables) {
             priorityMethodStartBlock += getVariableDeclaration(lookup, arg);
         }
@@ -238,6 +246,7 @@ public class CustomModelParser {
         boolean includedAreaImports = false;
 
         final StringBuilder initSourceCode = new StringBuilder("this.avg_speed_enc = avgSpeedEnc;\n");
+        initSourceCode.append("this.priority_enc = priorityEnc;\n");
         Set<String> set = new HashSet<>(priorityVariables);
         set.addAll(speedVariables);
         for (String arg : set) {
@@ -288,8 +297,8 @@ public class CustomModelParser {
                 + "\npublic class JaninoCustomWeightingHelperSubclass" + counter + " extends " + CustomWeightingHelper.class.getSimpleName() + " {\n"
                 + classSourceCode
                 + "   @Override\n"
-                + "   public void init(EncodedValueLookup lookup, "
-                + DecimalEncodedValue.class.getName() + " avgSpeedEnc, Map<String, " + JsonFeature.class.getName() + "> areas) {\n"
+                + "   public void init(EncodedValueLookup lookup, " + DecimalEncodedValue.class.getName() + " avgSpeedEnc, "
+                + DecimalEncodedValue.class.getName() + " priorityEnc, Map<String, " + JsonFeature.class.getName() + "> areas) {\n"
                 + initSourceCode
                 + "   }\n\n"
                 // we need these placeholder methods so that the hooks in DeepCopier are invoked

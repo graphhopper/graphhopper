@@ -49,7 +49,8 @@ public class RouteResourceCustomModelTest {
                 putObject("custom_model_folder", "./src/test/resources/com/graphhopper/http/resources").
                 setProfiles(Arrays.asList(
                         new CustomProfile("car").setCustomModel(new CustomModel()).setVehicle("car"),
-                        new CustomProfile("bike").setCustomModel(new CustomModel()).setVehicle("bike"),
+                        new CustomProfile("bike").setCustomModel(new CustomModel().setDistanceInfluence(0)).setVehicle("bike"),
+                        new Profile("bike_fastest").setWeighting("fastest").setVehicle("bike"),
                         new CustomProfile("truck").setVehicle("car").
                                 putHint("custom_model_file", "truck.yml"),
                         new CustomProfile("cargo_bike").setVehicle("bike").
@@ -208,7 +209,29 @@ public class RouteResourceCustomModelTest {
                 " \"ch.disable\": true" +
                 "}";
         JsonNode path = getPath(jsonQuery);
-        assertEquals(path.get("distance").asDouble(), 660, 10);
+        assertEquals(660, path.get("distance").asDouble(), 10);
+    }
+
+    @Test
+    public void testBikeWithPriority() {
+        String coords = " \"points\": [[11.539421, 50.018274], [11.593966, 50.007739]],";
+        String jsonQuery = "{" +
+                coords +
+                " \"profile\": \"bike_fastest\"," +
+                " \"ch.disable\": true" +
+                "}";
+        JsonNode path = getPath(jsonQuery);
+        double expectedDistance = path.get("distance").asDouble();
+        assertEquals(4781, expectedDistance, 10);
+
+        // base profile bike has to use distance_influence = 0 (unlike default) otherwise not comparable to "fastest"
+        jsonQuery = "{" +
+                coords +
+                " \"profile\": \"bike\"," +
+                " \"ch.disable\": true" +
+                "}";
+        path = getPath(jsonQuery);
+        assertEquals(4781, path.get("distance").asDouble(), 10);
     }
 
     @Test

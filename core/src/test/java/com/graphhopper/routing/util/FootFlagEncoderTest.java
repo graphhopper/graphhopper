@@ -279,15 +279,15 @@ public class FootFlagEncoderTest {
         assertEquals(PriorityCode.UNCHANGED.getValue(), footEncoder.handlePriority(way, null));
 
         way.setTag("highway", "primary");
-        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), footEncoder.handlePriority(way, null));
 
         way.setTag("highway", "track");
         way.setTag("bicycle", "official");
-        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), footEncoder.handlePriority(way, null));
 
         way.setTag("highway", "track");
         way.setTag("bicycle", "designated");
-        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), footEncoder.handlePriority(way, null));
 
         way.setTag("highway", "cycleway");
         way.setTag("bicycle", "designated");
@@ -308,14 +308,14 @@ public class FootFlagEncoderTest {
         way.setTag("highway", "road");
         way.setTag("bicycle", "official");
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), footEncoder.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "trunk");
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), footEncoder.handlePriority(way, null));
         way.setTag("sidewalk", "none");
-        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), footEncoder.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "residential");
