@@ -25,10 +25,9 @@ import com.google.common.collect.HashMultimap;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.IntEncodedValue;
-import com.graphhopper.routing.util.AccessFilter;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
@@ -108,8 +107,9 @@ class GtfsReader {
     }
 
     void connectStopsToStreetNetwork() {
-        FlagEncoder footEncoder = ((GraphHopperStorage) graph).getEncodingManager().getEncoder("foot");
-        final EdgeFilter filter = AccessFilter.allEdges(footEncoder.getAccessEnc());
+        EncodingManager em = ((GraphHopperStorage) graph).getEncodingManager();
+        FlagEncoder footEncoder = em.getEncoder("foot");
+        final EdgeFilter filter = new DefaultSnapFilter(new FastestWeighting(footEncoder), em.getBooleanEncodedValue(Subnetwork.key("foot")));
         for (Stop stop : feed.stops.values()) {
             if (stop.location_type == 0) { // Only stops. Not interested in parent stations for now.
                 Snap locationSnap = walkNetworkIndex.findClosest(stop.stop_lat, stop.stop_lon, filter);
