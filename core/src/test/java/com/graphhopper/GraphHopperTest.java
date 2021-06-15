@@ -299,8 +299,8 @@ public class GraphHopperTest {
             long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
             assertNotEquals(sum, 0);
             assertTrue(sum < 120, "Too many nodes visited " + sum);
-            assertEquals(3521.9, bestPath.getDistance(), .1);
-            assertEquals(112, bestPath.getPoints().size());
+            assertEquals(3535, bestPath.getDistance(), 1);
+            assertEquals(115, bestPath.getPoints().size());
         }
 
         if (lm) {
@@ -315,8 +315,8 @@ public class GraphHopperTest {
             long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
             assertNotEquals(sum, 0);
             assertTrue(sum < 120, "Too many nodes visited " + sum);
-            assertEquals(3521.9, bestPath.getDistance(), .1);
-            assertEquals(112, bestPath.getPoints().size());
+            assertEquals(3535, bestPath.getDistance(), 1);
+            assertEquals(115, bestPath.getPoints().size());
         }
 
         // flexible
@@ -330,8 +330,8 @@ public class GraphHopperTest {
         long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
         assertNotEquals(sum, 0);
         assertTrue(sum > 120, "Too few nodes visited " + sum);
-        assertEquals(3521.9, bestPath.getDistance(), .1);
-        assertEquals(112, bestPath.getPoints().size());
+        assertEquals(3535, bestPath.getDistance(), 1);
+        assertEquals(115, bestPath.getPoints().size());
 
         hopper.close();
     }
@@ -790,12 +790,12 @@ public class GraphHopperTest {
                 addPoint(new GHPoint(43.744445, 7.429483)).
                 setHeadings(Arrays.asList(0., 190.)).
                 setProfile(profile);
-        req.putHint(Routing.HEADING_PENALTY, "300");
+        req.putHint(Routing.HEADING_PENALTY, "400");
         GHResponse rsp = hopper.route(req);
 
         ResponsePath res = rsp.getBest();
-        assertEquals(839., res.getDistance(), 10.);
-        assertEquals(26, res.getPoints().size());
+        assertEquals(921, res.getDistance(), 10.);
+        assertEquals(36, res.getPoints().size());
 
         // headings must be in [0, 360)
         req = new GHRequest().

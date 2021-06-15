@@ -279,7 +279,7 @@ public class FootFlagEncoderTest {
         assertEquals(PriorityCode.UNCHANGED.getValue(), footEncoder.handlePriority(way, null));
 
         way.setTag("highway", "primary");
-        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.AVOID.getValue(), footEncoder.handlePriority(way, null));
 
         way.setTag("highway", "track");
         way.setTag("bicycle", "official");
@@ -313,9 +313,9 @@ public class FootFlagEncoderTest {
         way.clearTags();
         way.setTag("highway", "trunk");
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.AVOID.getValue(), footEncoder.handlePriority(way, null));
         way.setTag("sidewalk", "none");
-        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.AVOID.getValue(), footEncoder.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "residential");

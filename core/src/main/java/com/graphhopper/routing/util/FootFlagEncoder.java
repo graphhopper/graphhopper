@@ -288,7 +288,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             }
         } else if ((isValidSpeed(maxSpeed) && maxSpeed > 50) || avoidHighwayTags.contains(highway)) {
             if (!way.hasTag("sidewalk", sidewalkValues))
-                weightToPrioMap.put(45d, SLIGHT_AVOID.getValue());
+                weightToPrioMap.put(45d, AVOID.getValue());
         }
 
         if (way.hasTag("bicycle", "official") || way.hasTag("bicycle", "designated"))
