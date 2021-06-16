@@ -42,10 +42,9 @@ To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read 
 
 ## Installation
 
-To install the [GraphHopper Maps](https://graphhopper.com/maps/) and the web service locally you just do:
+To install the [GraphHopper Maps](https://graphhopper.com/maps/) UI and the web service locally you [need a JVM](https://adoptopenjdk.net/) (>= Java 8) and do:
 
 ```bash
-# download and install a JVM that supports at least Java 8 (https://adoptopenjdk.net)
 wget https://graphhopper.com/public/releases/graphhopper-web-3.0.jar https://raw.githubusercontent.com/graphhopper/graphhopper/3.x/config-example.yml http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
 java -Ddw.graphhopper.datareader.file=berlin-latest.osm.pbf -jar *.jar server config-example.yml
 ```
