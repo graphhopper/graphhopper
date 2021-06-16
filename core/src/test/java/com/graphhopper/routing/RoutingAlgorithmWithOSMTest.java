@@ -499,12 +499,14 @@ public class RoutingAlgorithmWithOSMTest {
     @Test
     public void testAndorraFoot() {
         List<Query> queries = createAndorraQueries();
-        queries.get(0).getPoints().get(1).expectedDistance = 16354;
-        queries.get(0).getPoints().get(1).expectedPoints = 648;
-        queries.get(1).getPoints().get(1).expectedDistance = 12701;
-        queries.get(1).getPoints().get(1).expectedPoints = 431;
+        queries.get(0).getPoints().get(1).expectedDistance = 16460;
+        queries.get(0).getPoints().get(1).expectedPoints = 653;
+        queries.get(1).getPoints().get(1).expectedDistance = 12839;
+        queries.get(1).getPoints().get(1).expectedPoints = 435;
 
-        GraphHopper hopper = createHopper(ANDORRA, new Profile("foot").setVehicle("foot").setWeighting("shortest"));
+        queries.add(new Query(42.521269, 1.52298, 42.50418, 1.520662, 3223, 107));
+
+        GraphHopper hopper = createHopper(ANDORRA, new Profile("foot").setVehicle("foot").setWeighting("fastest"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
     }
