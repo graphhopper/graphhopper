@@ -79,16 +79,15 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         oppositeLanes.add("opposite_lane");
         oppositeLanes.add("opposite_track");
 
-        blockBarriersByDefault(false);
-        potentialBarriers.add("gate");
+        passByDefaultBarriers.add("gate");
         // potentialBarriers.add("lift_gate");
-        potentialBarriers.add("swing_gate");
-        potentialBarriers.add("cattle_grid");
-        potentialBarriers.add("chain");
+        passByDefaultBarriers.add("swing_gate");
+        passByDefaultBarriers.add("cattle_grid");
+        passByDefaultBarriers.add("chain");
 
-        absoluteBarriers.add("fence");
-        absoluteBarriers.add("stile");
-        absoluteBarriers.add("turnstile");
+        blockByDefaultBarriers.add("fence");
+        blockByDefaultBarriers.add("stile");
+        blockByDefaultBarriers.add("turnstile");
 
         unpavedSurfaceTags.add("unpaved");
         unpavedSurfaceTags.add("gravel");

@@ -43,7 +43,6 @@ public class HikeFlagEncoder extends FootFlagEncoder {
 
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
-        blockBarriersByDefault(properties.getBool("block_barriers", false));
         speedTwoDirections = properties.getBool("speed_two_directions", false);
     }
 

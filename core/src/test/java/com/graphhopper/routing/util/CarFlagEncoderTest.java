@@ -544,8 +544,8 @@ public class CarFlagEncoderTest {
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "lift_gate");
         node.setTag("bicycle", "yes");
-        // barrier!
-        assertTrue(encoder.handleNodeTags(node) > 0);
+        // no barrier!
+        assertTrue(encoder.handleNodeTags(node) == 0);
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "lift_gate");
@@ -566,11 +566,6 @@ public class CarFlagEncoderTest {
         // barrier!
         assertTrue(encoder.handleNodeTags(node) > 0);
 
-        // ignore other access tags for absolute barriers!
-        node.setTag("motorcar", "yes");
-        // still barrier!
-        assertTrue(encoder.handleNodeTags(node) > 0);
-
         CarFlagEncoder tmpEncoder = new CarFlagEncoder(new PMap("block_barriers=false"));
         EncodingManager.create(tmpEncoder);
 
@@ -585,7 +580,7 @@ public class CarFlagEncoderTest {
         // by default allow access through the gate for bike & foot!
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "chain");
-        assertTrue(encoder.handleNodeTags(node) > 0);
+        assertTrue(encoder.handleNodeTags(node) == 0);
         node.setTag("motor_vehicle", "no");
         assertTrue(encoder.handleNodeTags(node) > 0);
         node.setTag("motor_vehicle", "yes");

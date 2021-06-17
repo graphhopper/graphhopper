@@ -41,7 +41,6 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
                 properties.getDouble("speed_factor", 2),
                 properties.getBool("turn_costs", false) ? 1 : 0);
 
-        blockBarriersByDefault(properties.getBool("block_barriers", false));
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
@@ -127,7 +126,7 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
         routeMap.put(REGIONAL, VERY_NICE.getValue());
         routeMap.put(LOCAL, UNCHANGED.getValue());
 
-        absoluteBarriers.add("kissing_gate");
+        blockByDefaultBarriers.add("kissing_gate");
 
         setAvoidSpeedLimit(81);
         setSpecificClassBicycle("roadcycling");

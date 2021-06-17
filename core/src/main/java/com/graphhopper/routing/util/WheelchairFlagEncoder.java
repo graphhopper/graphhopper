@@ -54,19 +54,18 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
 
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
-        blockBarriersByDefault(properties.getBool("block_barriers", false));
     }
 
     protected WheelchairFlagEncoder(int speedBits, double speedFactor) {
         super(speedBits, speedFactor);
 
         restrictions.add("wheelchair");
-        absoluteBarriers.add("handrail");
-        absoluteBarriers.add("wall");
-        absoluteBarriers.add("turnstile");
-        potentialBarriers.add("kerb");
-        potentialBarriers.add("cattle_grid");
-        potentialBarriers.add("motorcycle_barrier");
+        blockByDefaultBarriers.add("handrail");
+        blockByDefaultBarriers.add("wall");
+        blockByDefaultBarriers.add("turnstile");
+        passByDefaultBarriers.add("kerb");
+        passByDefaultBarriers.add("cattle_grid");
+        passByDefaultBarriers.add("motorcycle_barrier");
 
         safeHighwayTags.add("footway");
         safeHighwayTags.add("pedestrian");

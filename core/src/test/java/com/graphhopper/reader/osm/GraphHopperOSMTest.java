@@ -614,22 +614,6 @@ public class GraphHopperOSMTest {
     }
 
     @Test
-    public void profileWithExistingEncoderConfig() {
-        final GraphHopper hopper = new GraphHopper();
-        GraphHopperConfig config = new GraphHopperConfig();
-        config.putObject("graph.flag_encoders", "car|block_barriers=false|turn_costs=true");
-        config.putObject("graph.dataaccess", "RAM");
-        config.putObject("graph.location", ghLoc);
-        config.putObject("datareader.file", testOsm);
-        config.setProfiles(Arrays.asList(new Profile("profile2").setVehicle("car").setTurnCosts(true)));
-        hopper.init(config);
-
-        hopper.importOrLoad();
-
-        assertFalse(((CarFlagEncoder) hopper.getEncodingManager().getEncoder("car")).isBlockBarriers());
-    }
-
-    @Test
     public void testDoesNotCreateEmptyFolderIfLoadingFromNonExistingPath() {
         instance = new GraphHopper();
         instance.setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"));

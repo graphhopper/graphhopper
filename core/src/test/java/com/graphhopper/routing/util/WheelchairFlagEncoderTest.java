@@ -398,12 +398,12 @@ public class WheelchairFlagEncoderTest {
 
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
-        // potential barriers are no barrier by default
+        // passByDefaultBarriers are no barrier by default
         assertEquals(0, tmpWheelchairEncoder.handleNodeTags(node));
         node.setTag("access", "no");
         assertTrue(tmpWheelchairEncoder.handleNodeTags(node) > 0);
 
-        // absolute barriers always block
+        // these barriers block
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "fence");
         assertTrue(tmpWheelchairEncoder.handleNodeTags(node) > 0);
@@ -413,22 +413,19 @@ public class WheelchairFlagEncoderTest {
         assertTrue(tmpWheelchairEncoder.handleNodeTags(node) > 0);
         node.setTag("barrier", "turnstile");
         assertTrue(tmpWheelchairEncoder.handleNodeTags(node) > 0);
+        // Explictly allowed access is allowed
         node.setTag("barrier", "fence");
         node.setTag("access", "yes");
-        assertTrue(tmpWheelchairEncoder.handleNodeTags(node) > 0);
+        assertTrue(tmpWheelchairEncoder.handleNodeTags(node) == 0);
 
-        // Now let's block potential barriers per default (if no other access tag exists)
-        tmpWheelchairEncoder = new WheelchairFlagEncoder(new PMap("block_barriers=true"));
-        EncodingManager.create(tmpWheelchairEncoder);
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
-        assertTrue(tmpWheelchairEncoder.handleNodeTags(node) > 0);
         node.setTag("access", "yes");
         assertEquals(0, tmpWheelchairEncoder.handleNodeTags(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "kerb");
-        assertTrue(tmpWheelchairEncoder.handleNodeTags(node) > 0);
+        assertTrue(tmpWheelchairEncoder.handleNodeTags(node) == 0);
         node.setTag("wheelchair", "yes");
         assertEquals(0, tmpWheelchairEncoder.handleNodeTags(node));
 

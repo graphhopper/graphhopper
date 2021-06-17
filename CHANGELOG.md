@@ -8,6 +8,7 @@
 - moved custom model editor to github.com/graphhopper/custom-model-editor
 - PointList#getSize() -> PointList#size()
 - migrated tests from junit 4 to 5 (#2324)
+- removal of block_barriers config option (result of discussion in #2340)
 
 ### 3.0 [17 May 2021]
 
