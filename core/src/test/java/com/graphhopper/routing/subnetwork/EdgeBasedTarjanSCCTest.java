@@ -264,8 +264,41 @@ class EdgeBasedTarjanSCCTest {
         compareResults(g, seed, implicit, explicit);
     }
 
+    @Test
+    public void withStartEdges_simple() {
+        // 0 - 1   4 - 5 - 6 - 7
+        // |   |
+        // 3 - 2   8 - 9
+        GraphHopperStorage g = new GraphBuilder(em).create();
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 2).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 3).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(3, 0).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(4, 5).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(5, 6).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(6, 7).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder, g.edge(8, 9).setDistance(10));
+
+        // just the left island
+        ConnectedComponents components = EdgeBasedTarjanSCC.findComponentsForStartEdges(g, (prev, edge) -> true, IntArrayList.from(0));
+        assertEquals(8, components.getEdgeKeys());
+        assertEquals(1, components.getComponents().size());
+
+        // all islands
+        components = EdgeBasedTarjanSCC.findComponentsForStartEdges(g, (prev, edge) -> true, IntArrayList.from(0, 4, 7));
+        assertEquals(16, components.getEdgeKeys());
+        assertEquals(3, components.getComponents().size());
+
+        // here we initialize as for all islands but the filter still prevents some edges to be found
+        components = EdgeBasedTarjanSCC.findComponentsForStartEdges(g,
+                (prev, edge) -> edge.getEdge() > 3 && edge.getEdge() < 7, IntArrayList.from(0, 4, 7));
+        assertEquals(6, components.getEdgeKeys());
+        assertEquals(1, components.getComponents().size());
+
+    }
+
     @RepeatedTest(20)
-    public void withStartEdges() {
+    public void withStartEdges_comparison() {
         // we test the case where we specify all start edges (in this case the behavior should be the same for both methods)
         GraphHopperStorage g = new GraphBuilder(em).create();
         long seed = System.nanoTime();
