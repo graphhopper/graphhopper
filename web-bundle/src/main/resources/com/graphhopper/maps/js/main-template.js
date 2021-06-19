@@ -753,7 +753,7 @@ function createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom) {
            tabHeader.click(createClickHandler(geoJsons, pathIndex, tabHeader, oneTab, request.hasElevation(), path.details, request.selectedDetail, detailSelected));
 
            var routeInfo = $("<div class='route_description'>");
-           console.log("Path description :" path.description);
+           console.log("Path description :" +path.description);
            if (path.description && path.description.length > 0) {
                routeInfo.text(path.description);
                routeInfo.append("<br/>");
