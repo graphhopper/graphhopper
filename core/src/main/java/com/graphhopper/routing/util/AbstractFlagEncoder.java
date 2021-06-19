@@ -163,8 +163,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      * @return encoded values or 0 if not blocking or no value stored
      */
     public long handleNodeTags(ReaderNode node) {
-        if ((node.hasTag("barrier", blockByDefaultBarriers)) || 
-           (node.hasTag("barrier", passByDefaultBarriers)) ) {
+        boolean blockByDefault = node.hasTag("barrier", blockByDefaultBarriers);
+        if (blockByDefault || node.hasTag("barrier", passByDefaultBarriers)) {
             boolean locked = false;
             if (node.hasTag("locked", "yes"))
                 locked = true;
@@ -176,12 +176,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
                 if (node.hasTag(res, restrictedValues))
                     return encoderBit;
             }
-            // blockByDefaultBarriers are blocked except they are explicitly allowed
-            if (node.hasTag("barrier", blockByDefaultBarriers))
-               return encoderBit;
-            else
-               // passByDefaultBarriers only blocks if explicitly blocked in the above checks
-               return 0;
+
+            if (blockByDefault)
+                return encoderBit;
+            return 0;
         }
 
         if ((node.hasTag("highway", "ford") || node.hasTag("ford", "yes"))
