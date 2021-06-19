@@ -8,6 +8,7 @@
 - moved custom model editor to github.com/graphhopper/custom-model-editor
 - PointList#getSize() -> PointList#size()
 - migrated tests from junit 4 to 5 (#2324)
+- use road_class=motorway if motorroad=yes (#2329)
 
 ### 3.0 [17 May 2021]
 
