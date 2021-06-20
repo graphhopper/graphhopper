@@ -755,6 +755,7 @@ function createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom) {
            var routeInfo = $("<div class='route_description'>");
            console.log("Path description :" +path.description);
            if (path.description && path.description.length > 0) {
+        	   console.log("Path description :" +path.description);
                routeInfo.text(path.description);
                routeInfo.append("<br/>");
            }
