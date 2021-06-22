@@ -81,7 +81,7 @@ public class MultiCriteriaLabelSetting {
     public Stream<Label> calcLabels(int from, Instant startTime) {
         this.startTime = startTime.toEpochMilli();
         return StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from), false)
-                .limit(maxVisitedNodes)
+                //.limit(maxVisitedNodes)
                 .peek(label -> visitedNodes++);
     }
 
