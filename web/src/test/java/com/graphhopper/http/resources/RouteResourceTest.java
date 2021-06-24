@@ -111,6 +111,16 @@ public class RouteResourceTest {
     }
 
     @Test
+    public void testBasicQuerySamePoint() {
+        final Response response = clientTarget(app, "/route?profile=my_car&" +
+                "point=42.510071,1.548128&point=42.510071,1.548128").request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        JsonNode path = response.readEntity(JsonNode.class).get("paths").get(0);
+        assertEquals(0, path.get("distance").asDouble(), 0.001);
+        assertEquals("[1.548191,42.510033,1.548191,42.510033]", path.get("bbox").toString());
+    }
+
+    @Test
     public void testBasicPostQuery() {
         String jsonStr = "{ \"profile\": \"my_car\", \"points\": [[1.536198,42.554851], [1.548128, 42.510071]] }";
         Response response = clientTarget(app, "/route").request().post(Entity.json(jsonStr));
@@ -343,7 +353,7 @@ public class RouteResourceTest {
         int firstLink = edgeIds.get(0).get(2).asInt();
         int lastLink = edgeIds.get(edgeIds.size() - 1).get(2).asInt();
         assertEquals(880, firstLink);
-        assertEquals(1421, lastLink);
+        assertEquals(1420, lastLink);
 
         JsonNode maxSpeed = details.get("max_speed");
         assertEquals(-1, maxSpeed.get(0).get(2).asDouble(-1), .01);

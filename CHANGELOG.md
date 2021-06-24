@@ -1,5 +1,7 @@
 ### 4.0 [not yet released]
 
+- JSON route response contains now bbox if start and end are identical
+- renamed PriorityCode enums: AVOID_IF_POSSIBLE -> SLIGHT_AVOID, REACH_DEST -> AVOID, AVOID_AT_ALL_COSTS -> AVOID_MORE, WORST -> BAD
 - added smoothness encoded value, used to determine bike speed (#2303)
 - maps: custom_model is now included in URL (#2328)
 - maps/isochrone: works for different profiles now (#2332)
@@ -7,6 +9,7 @@
 - moved custom model editor to github.com/graphhopper/custom-model-editor
 - PointList#getSize() -> PointList#size()
 - migrated tests from junit 4 to 5 (#2324)
+- barriers do no longer block by default for car; remove block_barriers config option (see discussion in #2340)
 
 ### 3.0 [17 May 2021]
 

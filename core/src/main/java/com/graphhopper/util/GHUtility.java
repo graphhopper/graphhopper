@@ -563,25 +563,52 @@ public class GHUtility {
     }
 
     /**
-     * @return the <b>first</b> edge containing the specified nodes base and adj. Returns null if
-     * not found.
+     * @return the the edge between base and adj, or null if there is no such edge
+     * @throws IllegalArgumentException when there are multiple edges
      */
     public static EdgeIteratorState getEdge(Graph graph, int base, int adj) {
-        EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(base);
+        EdgeExplorer explorer = graph.createEdgeExplorer();
+        int count = count(explorer.setBaseNode(base), adj);
+        if (count > 1)
+            throw new IllegalArgumentException("There are multiple edges between nodes " + base + " and " + adj);
+        else if (count == 0)
+            return null;
+        EdgeIterator iter = explorer.setBaseNode(base);
         while (iter.next()) {
             if (iter.getAdjNode() == adj)
                 return iter;
         }
-        return null;
+        throw new IllegalStateException("There should be an edge");
     }
 
+    /**
+     * @see #getEdge(Graph, int, int)
+     */
     public static CHEdgeIteratorState getEdge(CHGraph graph, int base, int adj) {
-        CHEdgeIterator iter = graph.createEdgeExplorer().setBaseNode(base);
+        CHEdgeExplorer explorer = graph.createEdgeExplorer();
+        int count = count(explorer.setBaseNode(base), adj);
+        if (count > 1)
+            throw new IllegalArgumentException("There are multiple edges between nodes " + base + " and " + adj);
+        else if (count == 0)
+            return null;
+        CHEdgeIterator iter = explorer.setBaseNode(base);
         while (iter.next()) {
             if (iter.getAdjNode() == adj)
                 return iter;
         }
-        return null;
+        throw new IllegalStateException("There should be an edge");
+    }
+
+    /**
+     * @return the number of edges with the given adj node
+     */
+    public static int count(EdgeIterator iterator, int adj) {
+        int count = 0;
+        while (iterator.next()) {
+            if (iterator.getAdjNode() == adj)
+                count++;
+        }
+        return count;
     }
 
     /**

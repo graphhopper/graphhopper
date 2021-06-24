@@ -28,7 +28,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
 
-import static com.graphhopper.routing.util.PriorityCode.REACH_DEST;
+import static com.graphhopper.routing.util.PriorityCode.AVOID;
 import static com.graphhopper.routing.util.PriorityCode.VERY_NICE;
 
 /**
@@ -54,19 +54,18 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
 
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
-        blockBarriersByDefault(properties.getBool("block_barriers", false));
     }
 
     protected WheelchairFlagEncoder(int speedBits, double speedFactor) {
         super(speedBits, speedFactor);
 
         restrictions.add("wheelchair");
-        absoluteBarriers.add("handrail");
-        absoluteBarriers.add("wall");
-        absoluteBarriers.add("turnstile");
-        potentialBarriers.add("kerb");
-        potentialBarriers.add("cattle_grid");
-        potentialBarriers.add("motorcycle_barrier");
+        blockByDefaultBarriers.add("handrail");
+        blockByDefaultBarriers.add("wall");
+        blockByDefaultBarriers.add("turnstile");
+        passByDefaultBarriers.add("kerb");
+        passByDefaultBarriers.add("cattle_grid");
+        passByDefaultBarriers.add("motorcycle_barrier");
 
         safeHighwayTags.add("footway");
         safeHighwayTags.add("pedestrian");
@@ -272,7 +271,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         if (way.hasTag("wheelchair", "designated")) {
             weightToPrioMap.put(102d, VERY_NICE.getValue());
         } else if (way.hasTag("wheelchair", "limited")) {
-            weightToPrioMap.put(102d, REACH_DEST.getValue());
+            weightToPrioMap.put(102d, AVOID.getValue());
         }
 
         return weightToPrioMap.lastEntry().getValue();

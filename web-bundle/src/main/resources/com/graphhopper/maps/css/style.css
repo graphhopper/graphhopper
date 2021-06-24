@@ -489,14 +489,18 @@ td img.pic {
     z-index: 1000;
 }
 
-/* override default (red) color for strings in custom model editor */
+/* override default json mode colors in custom model editor */
 .cm-s-default .cm-string {
-    color: black;
+    color: #067D17;
 }
-
-/* override default (blue-ish) color for property names in custom model editor */
 .cm-s-default .cm-property {
-    color: black;
+    color: #871094;
+}
+.cm-s-default .cm-number {
+    color: #1750EB;
+}
+.cm-s-default .cm-atom {
+    color: #0033B3;
 }
 
 #custom-model-util-buttons button {

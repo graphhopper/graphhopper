@@ -90,12 +90,12 @@ public class GraphHopperTest {
 
     @ParameterizedTest
     @CsvSource({
-            DIJKSTRA + ",false,501",
-            ASTAR + ",false,439",
-            DIJKSTRA_BI + ",false,208",
-            ASTAR_BI + ",false,172",
-            ASTAR_BI + ",true,35",
-            DIJKSTRA_BI + ",true,34"
+            DIJKSTRA + ",false,505",
+            ASTAR + ",false,438",
+            DIJKSTRA_BI + ",false,224",
+            ASTAR_BI + ",false,180",
+            ASTAR_BI + ",true,41",
+            DIJKSTRA_BI + ",true,41"
     })
     public void testMonacoDifferentAlgorithms(String algo, boolean withCH, int expectedVisitedNodes) {
         final String vehicle = "car";
@@ -246,7 +246,7 @@ public class GraphHopperTest {
                 setStoreOnFlush(true).
                 setSortGraph(sort);
 
-        Profile profile = new Profile(profileName).setVehicle(vehicle).setWeighting("shortest");
+        Profile profile = new Profile(profileName).setVehicle(vehicle).setWeighting("fastest");
         if (custom) {
             JsonFeature area51Feature = new JsonFeature();
             area51Feature.setGeometry(new GeometryFactory().createPolygon(new Coordinate[]{
@@ -254,7 +254,7 @@ public class GraphHopperTest {
                     new Coordinate(7.4198, 43.7355),
                     new Coordinate(7.4207, 43.7344),
                     new Coordinate(7.4174, 43.7345)}));
-            CustomModel customModel = new CustomModel();
+            CustomModel customModel = new CustomModel().setDistanceInfluence(0);
             customModel.getPriority().add(Statement.If("in_area51", Statement.Op.MULTIPLY, 0.1));
             customModel.getAreas().put("area51", area51Feature);
             profile = new CustomProfile(profileName).setCustomModel(customModel).setVehicle(vehicle);
@@ -299,8 +299,8 @@ public class GraphHopperTest {
             long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
             assertNotEquals(sum, 0);
             assertTrue(sum < 120, "Too many nodes visited " + sum);
-            assertEquals(3437.1, bestPath.getDistance(), .1);
-            assertEquals(85, bestPath.getPoints().size());
+            assertEquals(3535, bestPath.getDistance(), 1);
+            assertEquals(115, bestPath.getPoints().size());
         }
 
         if (lm) {
@@ -315,8 +315,8 @@ public class GraphHopperTest {
             long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
             assertNotEquals(sum, 0);
             assertTrue(sum < 120, "Too many nodes visited " + sum);
-            assertEquals(3437.1, bestPath.getDistance(), .1);
-            assertEquals(85, bestPath.getPoints().size());
+            assertEquals(3535, bestPath.getDistance(), 1);
+            assertEquals(115, bestPath.getPoints().size());
         }
 
         // flexible
@@ -330,8 +330,8 @@ public class GraphHopperTest {
         long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
         assertNotEquals(sum, 0);
         assertTrue(sum > 120, "Too few nodes visited " + sum);
-        assertEquals(3437.1, bestPath.getDistance(), .1);
-        assertEquals(85, bestPath.getPoints().size());
+        assertEquals(3535, bestPath.getDistance(), 1);
+        assertEquals(115, bestPath.getPoints().size());
 
         hopper.close();
     }
@@ -614,7 +614,7 @@ public class GraphHopperTest {
         final String customCar = "custom_car";
         final String emptyCar = "empty_car";
         CustomModel customModel = new CustomModel();
-        customModel.addToSpeed(Statement.If("road_class == TERTIARY", Statement.Op.MULTIPLY, 0.1));
+        customModel.addToSpeed(Statement.If("road_class == TERTIARY || road_class == TRACK", Statement.Op.MULTIPLY, 0.1));
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
@@ -632,17 +632,16 @@ public class GraphHopperTest {
         assertDistance(hopper, emptyCar, new CustomModel(customModel), 13223);
         // now we prevent using unclassified roads as well and the route goes even further north
         CustomModel strictCustomModel = new CustomModel().addToSpeed(
-                Statement.If("road_class == TERTIARY || road_class == UNCLASSIFIED", Statement.Op.MULTIPLY, 0.1));
-        assertDistance(hopper, emptyCar, strictCustomModel, 18114);
+                Statement.If("road_class == TERTIARY || road_class == TRACK || road_class == UNCLASSIFIED", Statement.Op.MULTIPLY, 0.1));
+        assertDistance(hopper, emptyCar, strictCustomModel, 19289);
         // we can achieve the same by 'adding' a rule to the server-side custom model
         CustomModel customModelWithUnclassifiedRule = new CustomModel().addToSpeed(
                 Statement.If("road_class == UNCLASSIFIED", Statement.Op.MULTIPLY, 0.1)
         );
-        assertDistance(hopper, customCar, customModelWithUnclassifiedRule, 18114);
+        assertDistance(hopper, customCar, customModelWithUnclassifiedRule, 19289);
         // now we use distance influence to avoid the detour
-        assertDistance(hopper, customCar, new CustomModel(customModelWithUnclassifiedRule).setDistanceInfluence(400), 8725);
-        // a slightly smaller value yields a completely different route going south
-        assertDistance(hopper, customCar, new CustomModel(customModelWithUnclassifiedRule).setDistanceInfluence(380), 12246);
+        assertDistance(hopper, customCar, new CustomModel(customModelWithUnclassifiedRule).setDistanceInfluence(200), 8725);
+        assertDistance(hopper, customCar, new CustomModel(customModelWithUnclassifiedRule).setDistanceInfluence(100), 14475);
     }
 
     private void assertDistance(GraphHopper hopper, String profile, CustomModel customModel, double expectedDistance) {
@@ -790,12 +789,12 @@ public class GraphHopperTest {
                 addPoint(new GHPoint(43.744445, 7.429483)).
                 setHeadings(Arrays.asList(0., 190.)).
                 setProfile(profile);
-        req.putHint(Routing.HEADING_PENALTY, "300");
+        req.putHint(Routing.HEADING_PENALTY, "400");
         GHResponse rsp = hopper.route(req);
 
         ResponsePath res = rsp.getBest();
-        assertEquals(839., res.getDistance(), 10.);
-        assertEquals(26, res.getPoints().size());
+        assertEquals(921, res.getDistance(), 10.);
+        assertEquals(36, res.getPoints().size());
 
         // headings must be in [0, 360)
         req = new GHRequest().
@@ -1318,8 +1317,8 @@ public class GraphHopperTest {
                 .setProfile("profile1"));
         res = rsp.getBest();
         assertFalse(rsp.hasErrors(), "bike routing for " + str + " should not have errors:" + rsp.getErrors());
-        assertEquals(494, res.getTime() / 1000f, 1);
-        assertEquals(2192, res.getDistance(), 1);
+        assertEquals(511, res.getTime() / 1000f, 1);
+        assertEquals(2481, res.getDistance(), 1);
 
         rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setProfile("profile3"));
@@ -1547,9 +1546,9 @@ public class GraphHopperTest {
         hopper.importOrLoad();
 
         // flex
-        testCrossQueryAssert(profile1, hopper, 528.3, 152, true);
-        testCrossQueryAssert(profile2, hopper, 635.8, 150, true);
-        testCrossQueryAssert(profile3, hopper, 815.2, 146, true);
+        testCrossQueryAssert(profile1, hopper, 528.3, 160, true);
+        testCrossQueryAssert(profile2, hopper, 635.8, 158, true);
+        testCrossQueryAssert(profile3, hopper, 815.2, 154, true);
 
         // LM (should be the same as flex, but with less visited nodes!)
         testCrossQueryAssert(profile1, hopper, 528.3, 74, false);
@@ -1557,7 +1556,7 @@ public class GraphHopperTest {
         // this is actually interesting: the number of visited nodes *increases* once again (while it strictly decreases
         // with rising distance factor for flex): cross-querying 'works', but performs *worse*, because the landmarks
         // were not customized for the weighting in use. Creating a separate LM preparation for profile3 yields 74
-        testCrossQueryAssert(profile3, hopper, 815.2, 138, false);
+        testCrossQueryAssert(profile3, hopper, 815.2, 148, false);
     }
 
     private void testCrossQueryAssert(String profile, GraphHopper hopper, double expectedWeight, int expectedVisitedNodes, boolean disableLM) {
@@ -1936,7 +1935,7 @@ public class GraphHopperTest {
         req.setProfile("foot");
         GHResponse rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
-        assertEquals(86, rsp.getBest().getDistance(), 1);
+        assertEquals(95, rsp.getBest().getDistance(), 1);
 
         // Using the car profile there is no way we can reach the destination and the subnetwork is supposed to be removed
         // such that the destination snaps to a point that can be reached.

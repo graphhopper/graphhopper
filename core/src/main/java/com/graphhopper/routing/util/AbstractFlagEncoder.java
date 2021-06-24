@@ -47,8 +47,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected final Set<String> ferries = new HashSet<>(5);
     protected final Set<String> oneways = new HashSet<>(5);
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
-    protected final Set<String> absoluteBarriers = new HashSet<>(5);
-    protected final Set<String> potentialBarriers = new HashSet<>(5);
+    protected final Set<String> blockByDefaultBarriers = new HashSet<>(5); // barrier which needs to be explicitly allowed, otherwise it blocks
+    protected final Set<String> passByDefaultBarriers = new HashSet<>(5);  // barrier which may be explicitly forbidden, otherwise it is allowed
     protected final int speedBits;
     protected final double speedFactor;
     private final int maxTurnCosts;
@@ -59,7 +59,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     // This value determines the maximal possible speed of any road regardless of the maxspeed value
     // lower values allow more compact representation of the routing graph
     protected int maxPossibleSpeed;
-    private boolean blockByDefault = true;
     private boolean blockFords = true;
     private boolean registered;
     protected EncodedValueLookup encodedValueLookup;
@@ -106,17 +105,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     @Override
     public boolean isRegistered() {
         return registered;
-    }
-
-    /**
-     * Should potential barriers block when no access limits are given?
-     */
-    protected void blockBarriersByDefault(boolean blockByDefault) {
-        this.blockByDefault = blockByDefault;
-    }
-
-    public boolean isBlockBarriers() {
-        return blockByDefault;
     }
 
     public boolean isBlockFords() {
@@ -175,12 +163,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      * @return encoded values or 0 if not blocking or no value stored
      */
     public long handleNodeTags(ReaderNode node) {
-        // absolute barriers always block
-        if (node.hasTag("barrier", absoluteBarriers))
-            return encoderBit;
-
-        // movable barriers block if they are not marked as passable
-        if (node.hasTag("barrier", potentialBarriers)) {
+        boolean blockByDefault = node.hasTag("barrier", blockByDefaultBarriers);
+        if (blockByDefault || node.hasTag("barrier", passByDefaultBarriers)) {
             boolean locked = false;
             if (node.hasTag("locked", "yes"))
                 locked = true;
@@ -195,6 +179,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
 
             if (blockByDefault)
                 return encoderBit;
+            return 0;
         }
 
         if ((node.hasTag("highway", "ford") || node.hasTag("ford", "yes"))

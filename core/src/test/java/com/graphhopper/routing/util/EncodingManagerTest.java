@@ -169,7 +169,7 @@ public class EncodingManagerTest {
         MountainBikeFlagEncoder mtbEncoder = new MountainBikeFlagEncoder();
         EncodingManager manager = EncodingManager.create(bikeEncoder, mtbEncoder);
 
-        // relation code for network rcn is VERY_NICE for bike and PREFER for mountainbike
+        // relation code for network rcn is NICE for bike and PREFER for mountainbike
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "rcn");
         IntsRef relFlags = manager.handleRelationTags(osmRel, manager.createRelationFlags());
@@ -177,7 +177,7 @@ public class EncodingManagerTest {
         manager.acceptWay(osmWay, map);
         IntsRef edgeFlags = manager.handleWayTags(osmWay, map, relFlags);
 
-        // bike: uninfluenced speed for grade but via network => VERY_NICE                
+        // bike: uninfluenced speed for grade but via network => NICE
         // mtb: uninfluenced speed only PREFER
         assertTrue(bikeEncoder.priorityEnc.getDecimal(false, edgeFlags)
                 > mtbEncoder.priorityEnc.getDecimal(false, edgeFlags));

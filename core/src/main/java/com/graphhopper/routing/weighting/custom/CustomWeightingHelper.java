@@ -34,12 +34,14 @@ import java.util.Map;
  */
 public class CustomWeightingHelper {
     protected DecimalEncodedValue avg_speed_enc;
+    protected DecimalEncodedValue priority_enc;
 
     protected CustomWeightingHelper() {
     }
 
-    public void init(EncodedValueLookup lookup, DecimalEncodedValue avgSpeedEnc, Map<String, JsonFeature> areas) {
+    public void init(EncodedValueLookup lookup, DecimalEncodedValue avgSpeedEnc, DecimalEncodedValue priorityEnc, Map<String, JsonFeature> areas) {
         this.avg_speed_enc = avgSpeedEnc;
+        this.priority_enc = priorityEnc;
     }
 
     public double getPriority(EdgeIteratorState edge, boolean reverse) {
@@ -55,6 +57,14 @@ public class CustomWeightingHelper {
         if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)
             throw new IllegalStateException("Invalid estimated speed " + speed);
         return speed;
+    }
+
+    protected final double getRawPriority(EdgeIteratorState edge, boolean reverse) {
+        if (priority_enc == null) return 1;
+        double priority = reverse ? edge.getReverse(priority_enc) : edge.get(priority_enc);
+        if (Double.isInfinite(priority) || Double.isNaN(priority) || priority < 0)
+            throw new IllegalStateException("Invalid priority " + priority);
+        return priority;
     }
 
     public static boolean in(Polygon p, EdgeIteratorState edge) {
