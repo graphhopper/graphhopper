@@ -138,6 +138,9 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
         setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.IMPASSABLE, smoothnessFactorPushingSectionThreshold);
 
         passByDefaultBarriers.add("kissing_gate");
+        passByDefaultBarriers.add("stile");
+        passByDefaultBarriers.add("turnstile");
+
         setSpecificClassBicycle("mtb");
     }
 
