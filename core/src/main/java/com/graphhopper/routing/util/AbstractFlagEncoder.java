@@ -47,9 +47,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected final Set<String> ferries = new HashSet<>(5);
     protected final Set<String> oneways = new HashSet<>(5);
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
-    protected final Set<String> absoluteBarriers = new HashSet<>(5);  // always blocked
-    protected final Set<String> potentialBarriers = new HashSet<>(5); // default assumed unblocked
-    protected final Set<String> defaultBlockedBarriers = new HashSet<>(5); // default assumed blocked
+    protected final Set<String> absoluteBarriers = new HashSet<>(5);
+    protected final Set<String> potentialBarriers = new HashSet<>(5);
     protected final int speedBits;
     protected final double speedFactor;
     private final int maxTurnCosts;
@@ -180,11 +179,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         if (node.hasTag("barrier", absoluteBarriers))
             return encoderBit;
 
-        // defaultBlockedBarriers barriers block if they are not marked as passable,
-        // potentialBarriers block only if blockByDefault=true
-        boolean isPotentialBarrier = (node.hasTag("barrier", potentialBarriers));
-        boolean isDefaultBlockedBarrier = (node.hasTag("barrier", defaultBlockedBarriers));
-        if ( isPotentialBarrier || isDefaultBlockedBarrier) {
+        // movable barriers block if they are not marked as passable
+        if (node.hasTag("barrier", potentialBarriers)) {
             boolean locked = false;
             if (node.hasTag("locked", "yes"))
                 locked = true;
@@ -197,7 +193,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
                     return encoderBit;
             }
 
-            if ((blockByDefault) || isDefaultBlockedBarrier)
+            if (blockByDefault)
                 return encoderBit;
         }
 

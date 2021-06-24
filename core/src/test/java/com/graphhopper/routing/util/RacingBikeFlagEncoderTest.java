@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.storage.IntsRef;
@@ -28,7 +27,6 @@ import org.junit.jupiter.api.Test;
 import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PUSHING_SECTION_SPEED;
 import static com.graphhopper.routing.util.PriorityCode.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -294,30 +292,4 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         way.setTag("class:bicycle", "-2");
         assertPriority(BEST.getValue(), way);
     }
-
-    // Issue 407 : Always block kissing_gate execpt for mountainbikes
-    @Test
-    @Override
-    public void testBarrierAccess() {
-        super.testBarrierAccess();
-        // kissing_gate without bicycle tag
-        ReaderNode node = new ReaderNode(1, -1, -1);
-        node.setTag("barrier", "kissing_gate");
-        // barrier!
-        assertFalse(encoder.handleNodeTags(node) == 0);
-
-        // kissing_gate with bicycle tag = no
-        node = new ReaderNode(1, -1, -1);
-        node.setTag("barrier", "kissing_gate");
-        node.setTag("bicycle", "no");
-        // barrier!
-        assertFalse(encoder.handleNodeTags(node) == 0);
-
-        // kissing_gate with bicycle tag
-        node = new ReaderNode(1, -1, -1);
-        node.setTag("barrier", "kissing_gate");
-        node.setTag("bicycle", "yes");
-        // No barrier!
-        assertTrue(encoder.handleNodeTags(node) == 0);
-    }    
 }

@@ -127,9 +127,7 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
         routeMap.put(REGIONAL, VERY_NICE.getValue());
         routeMap.put(LOCAL, UNCHANGED.getValue());
 
-        defaultBlockedBarriers.add("stile");
-        defaultBlockedBarriers.add("kissing_gate");
-        defaultBlockedBarriers.add("turnstile");
+        absoluteBarriers.add("kissing_gate");
 
         setAvoidSpeedLimit(81);
         setSpecificClassBicycle("roadcycling");
