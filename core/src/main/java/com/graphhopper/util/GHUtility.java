@@ -568,17 +568,12 @@ public class GHUtility {
      */
     public static EdgeIteratorState getEdge(Graph graph, int base, int adj) {
         EdgeExplorer explorer = graph.createEdgeExplorer();
-        int count = 0;
-        EdgeIterator iter = explorer.setBaseNode(base);
-        while (iter.next()) {
-            if (iter.getAdjNode() == adj)
-                count++;
-        }
+        int count = count(explorer.setBaseNode(base), adj);
         if (count > 1)
             throw new IllegalArgumentException("There are multiple edges between nodes " + base + " and " + adj);
         else if (count == 0)
             return null;
-        iter = explorer.setBaseNode(base);
+        EdgeIterator iter = explorer.setBaseNode(base);
         while (iter.next()) {
             if (iter.getAdjNode() == adj)
                 return iter;
@@ -586,13 +581,34 @@ public class GHUtility {
         throw new IllegalStateException("There should be an edge");
     }
 
+    /**
+     * @see #getEdge(Graph, int, int)
+     */
     public static CHEdgeIteratorState getEdge(CHGraph graph, int base, int adj) {
-        CHEdgeIterator iter = graph.createEdgeExplorer().setBaseNode(base);
+        CHEdgeExplorer explorer = graph.createEdgeExplorer();
+        int count = count(explorer.setBaseNode(base), adj);
+        if (count > 1)
+            throw new IllegalArgumentException("There are multiple edges between nodes " + base + " and " + adj);
+        else if (count == 0)
+            return null;
+        CHEdgeIterator iter = explorer.setBaseNode(base);
         while (iter.next()) {
             if (iter.getAdjNode() == adj)
                 return iter;
         }
-        return null;
+        throw new IllegalStateException("There should be an edge");
+    }
+
+    /**
+     * @return the number of edges with the given adj node
+     */
+    public static int count(EdgeIterator iterator, int adj) {
+        int count = 0;
+        while (iterator.next()) {
+            if (iterator.getAdjNode() == adj)
+                count++;
+        }
+        return count;
     }
 
     /**
