@@ -211,7 +211,7 @@ public class ResponsePath {
      * Calculates the 2D bounding box of this route
      */
     public Envelope calcBBox2D() {
-        check("calcRouteBBox");
+        check("calcBBox2D");
         Envelope bounds = new Envelope();
         for (int i = 0; i < pointList.size(); i++) {
             bounds.expandToInclude(pointList.getLon(i), pointList.getLat(i));
