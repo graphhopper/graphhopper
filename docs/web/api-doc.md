@@ -5,7 +5,7 @@ server you need to understand how to use it. There is a separate [JavaScript](ht
 To find out how to use the hosted GraphHopper Directions API you should refer to the online documentation [here](https://docs.graphhopper.com/). This file describes the web API of the open source routing server.
 
 ### A simple example
-[http://localhost:8989/route?point=45.752193%2C-0.686646&point=46.229253%2C-0.32959](http://localhost:8989/route?point=45.752193%2C-0.686646&point=46.229253%2C-0.32959)
+[http://localhost:8989/route?point=52.5300591%2C13.3565022&point=52.5060440%2C13.4378107](http://localhost:8989/route?point=52.5300591%2C13.3565022&point=52.5060440%2C13.4378107)
 
 The URL path of the local instance is [http://localhost:8989](http://localhost:8989)
 
