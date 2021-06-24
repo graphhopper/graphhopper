@@ -63,7 +63,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
-        blockBarriersByDefault(properties.getBool("block_barriers", false));
         speedTwoDirections = properties.getBool("speed_two_directions", false);
     }
 
@@ -91,11 +90,10 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         sidewalkValues.add("left");
         sidewalkValues.add("right");
 
-        blockBarriersByDefault(false);
-        absoluteBarriers.add("fence");
-        potentialBarriers.add("gate");
-        potentialBarriers.add("cattle_grid");
-        potentialBarriers.add("chain");
+        blockByDefaultBarriers.add("fence");
+        passByDefaultBarriers.add("gate");
+        passByDefaultBarriers.add("cattle_grid");
+        passByDefaultBarriers.add("chain");
 
         safeHighwayTags.add("footway");
         safeHighwayTags.add("path");

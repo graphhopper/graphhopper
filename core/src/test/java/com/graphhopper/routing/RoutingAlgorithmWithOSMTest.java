@@ -170,13 +170,13 @@ public class RoutingAlgorithmWithOSMTest {
         List<Query> queries = new ArrayList<>();
         // choose perpendicular
         // http://localhost:8989/?point=55.818994%2C37.595354&point=55.819175%2C37.596931
-        queries.add(new Query(55.818994, 37.595354, 55.819175, 37.596931, 1052, 14));
+        queries.add(new Query(55.818891, 37.59515, 55.81997, 37.59854, 1052, 14));
         // should choose the closest road not the other one (opposite direction)
         // http://localhost:8989/?point=55.818898%2C37.59661&point=55.819066%2C37.596374
-        queries.add(new Query(55.818898, 37.59661, 55.819066, 37.596374, 24, 2));
+        queries.add(new Query(55.818536, 37.595848, 55.818702, 37.595564, 24, 2));
         // respect one way!
         // http://localhost:8989/?point=55.819066%2C37.596374&point=55.818898%2C37.59661
-        queries.add(new Query(55.819066, 37.596374, 55.818898, 37.59661, 1114, 23));
+        queries.add(new Query(55.818702, 37.595564, 55.818536, 37.595848, 1114, 23));
         GraphHopper hopper = createHopper(MOSCOW,
                 new Profile("car").setVehicle("car").setWeighting("fastest"));
         hopper.setMinNetworkSize(200);

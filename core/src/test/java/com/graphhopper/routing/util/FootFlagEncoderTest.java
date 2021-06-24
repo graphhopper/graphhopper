@@ -428,14 +428,14 @@ public class FootFlagEncoderTest {
         assertTrue(tmpFootEncoder.handleNodeTags(node) > 0);
         node.setTag("barrier", "fence");
         node.setTag("access", "yes");
-        assertTrue(tmpFootEncoder.handleNodeTags(node) > 0);
+        assertFalse(tmpFootEncoder.handleNodeTags(node) > 0);
 
-        // block potential barriers per default (if no other access tag exists)
-        tmpFootEncoder = new FootFlagEncoder(new PMap("block_barriers=true"));
+        // pass potential barriers per default (if no other access tag exists)
+        tmpFootEncoder = new FootFlagEncoder();
         EncodingManager.create(tmpFootEncoder);
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
-        assertTrue(tmpFootEncoder.handleNodeTags(node) > 0);
+        assertFalse(tmpFootEncoder.handleNodeTags(node) > 0);
         node.setTag("access", "yes");
         assertEquals(0, tmpFootEncoder.handleNodeTags(node));
 

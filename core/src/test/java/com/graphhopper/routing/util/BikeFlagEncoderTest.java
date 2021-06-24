@@ -632,8 +632,8 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "kissing_gate");
         node.setTag("bicycle", "yes");
-        // barrier!
-        assertFalse(encoder.handleNodeTags(node) == 0);
+        // no barrier!
+        assertTrue(encoder.handleNodeTags(node) == 0);
 
         // Test if cattle_grid is non blocking
         node = new ReaderNode(1, -1, -1);

@@ -353,7 +353,7 @@ public class RouteResourceTest {
         int firstLink = edgeIds.get(0).get(2).asInt();
         int lastLink = edgeIds.get(edgeIds.size() - 1).get(2).asInt();
         assertEquals(880, firstLink);
-        assertEquals(1421, lastLink);
+        assertEquals(1420, lastLink);
 
         JsonNode maxSpeed = details.get("max_speed");
         assertEquals(-1, maxSpeed.get(0).get(2).asDouble(-1), .01);

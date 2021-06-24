@@ -90,12 +90,12 @@ public class GraphHopperTest {
 
     @ParameterizedTest
     @CsvSource({
-            DIJKSTRA + ",false,501",
-            ASTAR + ",false,439",
-            DIJKSTRA_BI + ",false,208",
-            ASTAR_BI + ",false,172",
-            ASTAR_BI + ",true,35",
-            DIJKSTRA_BI + ",true,34"
+            DIJKSTRA + ",false,505",
+            ASTAR + ",false,438",
+            DIJKSTRA_BI + ",false,224",
+            ASTAR_BI + ",false,180",
+            ASTAR_BI + ",true,41",
+            DIJKSTRA_BI + ",true,41"
     })
     public void testMonacoDifferentAlgorithms(String algo, boolean withCH, int expectedVisitedNodes) {
         final String vehicle = "car";
@@ -614,7 +614,7 @@ public class GraphHopperTest {
         final String customCar = "custom_car";
         final String emptyCar = "empty_car";
         CustomModel customModel = new CustomModel();
-        customModel.addToSpeed(Statement.If("road_class == TERTIARY", Statement.Op.MULTIPLY, 0.1));
+        customModel.addToSpeed(Statement.If("road_class == TERTIARY || road_class == TRACK", Statement.Op.MULTIPLY, 0.1));
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
@@ -632,17 +632,16 @@ public class GraphHopperTest {
         assertDistance(hopper, emptyCar, new CustomModel(customModel), 13223);
         // now we prevent using unclassified roads as well and the route goes even further north
         CustomModel strictCustomModel = new CustomModel().addToSpeed(
-                Statement.If("road_class == TERTIARY || road_class == UNCLASSIFIED", Statement.Op.MULTIPLY, 0.1));
-        assertDistance(hopper, emptyCar, strictCustomModel, 18114);
+                Statement.If("road_class == TERTIARY || road_class == TRACK || road_class == UNCLASSIFIED", Statement.Op.MULTIPLY, 0.1));
+        assertDistance(hopper, emptyCar, strictCustomModel, 19289);
         // we can achieve the same by 'adding' a rule to the server-side custom model
         CustomModel customModelWithUnclassifiedRule = new CustomModel().addToSpeed(
                 Statement.If("road_class == UNCLASSIFIED", Statement.Op.MULTIPLY, 0.1)
         );
-        assertDistance(hopper, customCar, customModelWithUnclassifiedRule, 18114);
+        assertDistance(hopper, customCar, customModelWithUnclassifiedRule, 19289);
         // now we use distance influence to avoid the detour
-        assertDistance(hopper, customCar, new CustomModel(customModelWithUnclassifiedRule).setDistanceInfluence(400), 8725);
-        // a slightly smaller value yields a completely different route going south
-        assertDistance(hopper, customCar, new CustomModel(customModelWithUnclassifiedRule).setDistanceInfluence(380), 12246);
+        assertDistance(hopper, customCar, new CustomModel(customModelWithUnclassifiedRule).setDistanceInfluence(200), 8725);
+        assertDistance(hopper, customCar, new CustomModel(customModelWithUnclassifiedRule).setDistanceInfluence(100), 14475);
     }
 
     private void assertDistance(GraphHopper hopper, String profile, CustomModel customModel, double expectedDistance) {
@@ -1547,9 +1546,9 @@ public class GraphHopperTest {
         hopper.importOrLoad();
 
         // flex
-        testCrossQueryAssert(profile1, hopper, 528.3, 152, true);
-        testCrossQueryAssert(profile2, hopper, 635.8, 150, true);
-        testCrossQueryAssert(profile3, hopper, 815.2, 146, true);
+        testCrossQueryAssert(profile1, hopper, 528.3, 160, true);
+        testCrossQueryAssert(profile2, hopper, 635.8, 158, true);
+        testCrossQueryAssert(profile3, hopper, 815.2, 154, true);
 
         // LM (should be the same as flex, but with less visited nodes!)
         testCrossQueryAssert(profile1, hopper, 528.3, 74, false);
@@ -1557,7 +1556,7 @@ public class GraphHopperTest {
         // this is actually interesting: the number of visited nodes *increases* once again (while it strictly decreases
         // with rising distance factor for flex): cross-querying 'works', but performs *worse*, because the landmarks
         // were not customized for the weighting in use. Creating a separate LM preparation for profile3 yields 74
-        testCrossQueryAssert(profile3, hopper, 815.2, 138, false);
+        testCrossQueryAssert(profile3, hopper, 815.2, 148, false);
     }
 
     private void testCrossQueryAssert(String profile, GraphHopper hopper, double expectedWeight, int expectedVisitedNodes, boolean disableLM) {

@@ -42,7 +42,6 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
                 properties.getDouble("speed_factor", 2),
                 properties.getBool("turn_costs", false) ? 1 : 0);
 
-        blockBarriersByDefault(properties.getBool("block_barriers", false));
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
@@ -138,7 +137,7 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
         // SmoothnessSpeed <= smoothnessFactorPushingSectionThreshold gets mapped to speed PUSHING_SECTION_SPEED
         setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.IMPASSABLE, smoothnessFactorPushingSectionThreshold);
 
-        potentialBarriers.add("kissing_gate");
+        passByDefaultBarriers.add("kissing_gate");
         setSpecificClassBicycle("mtb");
     }
 
