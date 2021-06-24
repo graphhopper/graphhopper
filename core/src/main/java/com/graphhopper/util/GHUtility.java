@@ -563,22 +563,16 @@ public class GHUtility {
     }
 
     /**
-     * @return the the edge between base and adj, or null if there is no such edge
-     * @throws IllegalArgumentException when there are multiple edges
+     * @return the <b>first</b> edge containing the specified nodes base and adj. Returns null if
+     * not found.
      */
     public static EdgeIteratorState getEdge(Graph graph, int base, int adj) {
-        EdgeExplorer explorer = graph.createEdgeExplorer();
-        int count = count(explorer.setBaseNode(base));
-        if (count > 1)
-            throw new IllegalArgumentException("There are multiple edges between nodes " + base + " and " + adj);
-        else if (count == 0)
-            return null;
-        EdgeIterator iter = explorer.setBaseNode(base);
+        EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(base);
         while (iter.next()) {
             if (iter.getAdjNode() == adj)
                 return iter;
         }
-        throw new IllegalStateException("There should be an edge");
+        return null;
     }
 
     public static CHEdgeIteratorState getEdge(CHGraph graph, int base, int adj) {
