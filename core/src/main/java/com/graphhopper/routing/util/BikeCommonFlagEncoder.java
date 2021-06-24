@@ -86,8 +86,6 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         passByDefaultBarriers.add("chain");
 
         blockByDefaultBarriers.add("fence");
-        blockByDefaultBarriers.add("stile");
-        blockByDefaultBarriers.add("turnstile");
 
         unpavedSurfaceTags.add("unpaved");
         unpavedSurfaceTags.add("gravel");

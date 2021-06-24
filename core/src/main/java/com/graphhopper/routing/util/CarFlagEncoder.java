@@ -79,11 +79,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
         passByDefaultBarriers.add("gate");
         passByDefaultBarriers.add("lift_gate");
-        passByDefaultBarriers.add("kissing_gate");
         passByDefaultBarriers.add("swing_gate");
         passByDefaultBarriers.add("cattle_grid");
         passByDefaultBarriers.add("chain");
 
+        blockByDefaultBarriers.add("kissing_gate");
         blockByDefaultBarriers.add("fence");
         blockByDefaultBarriers.add("bollard");
         blockByDefaultBarriers.add("stile");
