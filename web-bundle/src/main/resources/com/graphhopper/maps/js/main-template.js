@@ -212,7 +212,6 @@ $(document).ready(function (e) {
                 nominatim.setBounds(bounds);
                 var profilesDiv = $("#profiles");
 
-               
                 function createButton(profile, hide) {
                     var vehicle = profile.vehicle;
                     var profileName = profile.name;
@@ -226,8 +225,7 @@ $(document).ready(function (e) {
                         ghRequest.setProfile(profileName);
                         ghRequest.removeLegacyParameters();
                         resolveAll();
-                        
-                       if (ghRequest.route.isResolved())
+                        if (ghRequest.route.isResolved())
                           routeLatLng(ghRequest);
                     });
                     return button;
@@ -470,6 +468,7 @@ function checkInput() {
         routeLatLng(ghRequest, false);
     };
 
+    // console.log("## new checkInput");
     for (var i = 0; i < len; i++) {
         var div = $('#locationpoints > div.pointDiv').eq(i);
         // console.log(div.length + ", index:" + i + ", len:" + len);
@@ -694,7 +693,6 @@ function createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom) {
        }
 
        var headerTabs = $("<ul id='route_result_tabs'/>");
-      
        if (json.paths.length > 1) {
            routeResultsDiv.append(headerTabs);
            routeResultsDiv.append("<div class='clear'/>");
@@ -755,7 +753,6 @@ function createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom) {
            tabHeader.click(createClickHandler(geoJsons, pathIndex, tabHeader, oneTab, request.hasElevation(), path.details, request.selectedDetail, detailSelected));
 
            var routeInfo = $("<div class='route_description'>");
-           console.log("what is in path:" +JSON.stringify(path, null, 4));
            if (path.description && path.description.length > 0) {
                routeInfo.text(path.description);
                routeInfo.append("<br/>");
@@ -776,7 +773,7 @@ function createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom) {
                tempRouteInfo = translate.tr("route_info", [tempDistance, tmpDuration]);
            }
 
-          routeInfo.append(tempRouteInfo);
+           routeInfo.append(tempRouteInfo);
 
            var kmButton = $("<button class='plain_text_button " + (request.useMiles ? "gray" : "") + "'>");
            kmButton.text(translate.tr2("km_abbr"));
@@ -806,7 +803,7 @@ function createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom) {
            }
 
            var detailObj = path.details;
-            if(detailObj && request.api_params.debug) {
+           if(detailObj && request.api_params.debug) {
                // detailKey, would be for example average_speed
                for (var detailKey in detailObj) {
                    var pathDetailsArr = detailObj[detailKey];
@@ -924,7 +921,7 @@ function doCustomRequest(request, routeResultsDiv) {
         profile: ghRequest.api_params.profile,
         custom_model: customModel,
         locale: ghRequest.api_params.locale,
-        "ch.disable": false,
+        "ch.disable": true,
         details: details
     }
     var reqURL = host + "/route";
