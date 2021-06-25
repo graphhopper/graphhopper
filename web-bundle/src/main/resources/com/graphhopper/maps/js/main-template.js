@@ -193,8 +193,6 @@ $(document).ready(function (e) {
         showCustomModelExample();
     }
 
-    //console.log("GH request :"+JSON.stringify(ghRequest, null, 4));
-    
     $.when(ghRequest.fetchTranslationMap(urlParams.locale), ghRequest.getInfo())
             .then(function (arg1, arg2) {
                 // init translation retrieved from first call (fetchTranslationMap)
@@ -204,7 +202,6 @@ $(document).ready(function (e) {
                 translate.init(translations);
 
                 // init bounding box from getInfo result
-                //console.log("Argument: "+arg2);
                 var json = arg2[0];
                 var tmp = json.bbox;
                 bounds.initialized = true;
@@ -230,11 +227,7 @@ $(document).ready(function (e) {
                         ghRequest.removeLegacyParameters();
                         resolveAll();
                         
-                        console.log("GHRequest From :"+ghRequest.route.first());
-                        console.log("GH Request To :"+ghRequest.route.last());
-                        console.log("GH Request Profiles :"+ghRequest.profiles);
-                        
-                        if (ghRequest.route.isResolved())
+                       if (ghRequest.route.isResolved())
                           routeLatLng(ghRequest);
                     });
                     return button;
@@ -477,7 +470,6 @@ function checkInput() {
         routeLatLng(ghRequest, false);
     };
 
-    // console.log("## new checkInput");
     for (var i = 0; i < len; i++) {
         var div = $('#locationpoints > div.pointDiv').eq(i);
         // console.log(div.length + ", index:" + i + ", len:" + len);
@@ -633,9 +625,6 @@ function resolveIndex(index) {
             mapLayer.setDisabledForMapsContextMenu('end', false);
     }
 
-    console.log("ghReques route --------- :"+JSON.stringify(ghRequest.route, null, 4));
-    console.log("ghReques route Index --------- :"+JSON.stringify(ghRequest.route.getIndex(index), null, 4));
-
     return nominatim.resolve(index, ghRequest.route.getIndex(index));
 }
 
@@ -705,15 +694,7 @@ function createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom) {
        }
 
        var headerTabs = $("<ul id='route_result_tabs'/>");
-       console.log ("path json : "+ JSON.stringify(json.paths, null, 4));
-       
-       console.log("GHRequest From -----:"+ghRequest.route.first());
-       console.log("GH Request To ------:"+ghRequest.route.last());
-       console.log("GH Request Profiles -------:"+JSON.stringify(ghRequest.profiles, null, 4));
-       
-       //console.log ("path json FIRST : "+ JSON.stringify(json.paths[0], null, 4));
-       //console.log ("path json SECOND: "+ JSON.stringify(json.paths[1], null, 4));
-       console.log ("path json length: "+json.paths.length);
+      
        if (json.paths.length > 1) {
            routeResultsDiv.append(headerTabs);
            routeResultsDiv.append("<div class='clear'/>");
@@ -782,7 +763,6 @@ function createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom) {
 
            var tempDistance = translate.createDistanceString(path.distance, request.useMiles);
            var tempRouteInfo;
-           //console.log("Lets look at Request :"+JSON.stringify(request, null, 4));
            if(request.isPublicTransit()) {
                var tempArrTime = moment(ghRequest.getEarliestDepartureTime())
                                        .add(path.time, 'milliseconds')
@@ -796,8 +776,7 @@ function createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom) {
                tempRouteInfo = translate.tr("route_info", [tempDistance, tmpDuration]);
            }
 
-           console.log("Let's see route info : "+tempRouteInfo);
-           routeInfo.append(tempRouteInfo);
+          routeInfo.append(tempRouteInfo);
 
            var kmButton = $("<button class='plain_text_button " + (request.useMiles ? "gray" : "") + "'>");
            kmButton.text(translate.tr2("km_abbr"));
@@ -827,8 +806,7 @@ function createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom) {
            }
 
            var detailObj = path.details;
-           console.log("Details of path :"+JSON.stringify(path.details, null, 4));
-           if(detailObj && request.api_params.debug) {
+            if(detailObj && request.api_params.debug) {
                // detailKey, would be for example average_speed
                for (var detailKey in detailObj) {
                    var pathDetailsArr = detailObj[detailKey];

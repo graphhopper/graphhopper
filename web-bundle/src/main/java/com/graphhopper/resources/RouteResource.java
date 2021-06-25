@@ -115,11 +115,7 @@ public class RouteResource {
             removeLegacyParameters(request.getHints());
         }
         errorIfLegacyParameters(request.getHints());
-        
-        logger.info("_________________________________________");
-        logger.info("Algorithm : "+algoStr);
-        logger.info("Locale : "+localeStr);
-        logger.info("Path details : "+headings);
+       
         
         List<String> pathDetails = new ArrayList<String>();
         
@@ -151,8 +147,6 @@ public class RouteResource {
         }
 
         GHResponse ghResponse = graphHopper.route(request);
-        //Sharmila
-        logger.info("GH Request : "+request.toString());
         
         long took = sw.stop().getNanos() / 1_000_000;
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
@@ -190,7 +184,6 @@ public class RouteResource {
         if (request.getCustomModel() == null) {
             if (Helper.isEmpty(request.getProfile())) {
                 // legacy parameter resolution (only used when there is no custom model)
-            	logger.info("Request get curbside :"+request.getCurbsides());
                 enableEdgeBasedIfThereAreCurbsides(request.getCurbsides(), request);
                 request.setProfile(profileResolver.resolveProfile(request.getHints()).getName());
                 removeLegacyParameters(request.getHints());
