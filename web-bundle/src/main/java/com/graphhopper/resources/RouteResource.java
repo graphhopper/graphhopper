@@ -28,9 +28,11 @@ import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import io.dropwizard.jersey.params.AbstractParam;
+import com.graphhopper.routing.ev.Surface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
@@ -40,7 +42,8 @@ import javax.ws.rs.core.*;
 import java.util.List;
 import java.util.Map;
 
-import static com.graphhopper.util.Parameters.Details.PATH_DETAILS;
+//import static com.graphhopper.util.Parameters.Details.PATH_DETAILS;
+import com.graphhopper.util.Parameters;
 import static com.graphhopper.util.Parameters.Routing.*;
 import static java.util.stream.Collectors.toList;
 
@@ -80,13 +83,14 @@ public class RouteResource {
             @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
             @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
             @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
+            //Sharmila
+            @QueryParam(CURBSIDE) @DefaultValue("left") String curbSide,
             @QueryParam("profile") String profileName,
-            @QueryParam(ALGORITHM) @DefaultValue("") String algoStr,
+            @QueryParam(ALGORITHM) @DefaultValue("alternative_route") String algoStr,
             @QueryParam("locale") @DefaultValue("en") String localeStr,
             @QueryParam(POINT_HINT) List<String> pointHints,
             @QueryParam(CURBSIDE) List<String> curbsides,
             @QueryParam(SNAP_PREVENTION) List<String> snapPreventions,
-            @QueryParam(PATH_DETAILS) List<String> pathDetails,
             @QueryParam("heading") @NotNull List<Double> headings,
             @QueryParam("gpx.route") @DefaultValue("true") boolean withRoute /* default to false for the route part in next API version, see #437 */,
             @QueryParam("gpx.track") @DefaultValue("true") boolean withTrack,
@@ -99,6 +103,8 @@ public class RouteResource {
         if (enableElevation && !hasElevation)
             throw new IllegalArgumentException("Elevation not supported!");
 
+        //curbsides.add("left");
+        
         StopWatch sw = new StopWatch().start();
         GHRequest request = new GHRequest();
         initHints(request.getHints(), uriInfo.getQueryParameters());
@@ -109,6 +115,19 @@ public class RouteResource {
             removeLegacyParameters(request.getHints());
         }
         errorIfLegacyParameters(request.getHints());
+        
+        logger.info("_________________________________________");
+        logger.info("Algorithm : "+algoStr);
+        logger.info("Locale : "+localeStr);
+        logger.info("Path details : "+headings);
+        
+        List<String> pathDetails = new ArrayList<String>();
+        
+        pathDetails.add(Parameters.Details.STREET_NAME);
+        pathDetails.add(Parameters.Details.AVERAGE_SPEED);
+        pathDetails.add(Parameters.Details.EDGE_ID);
+
+        
         request.setPoints(points).
                 setProfile(profileName).
                 setAlgorithm(algoStr).
@@ -120,15 +139,21 @@ public class RouteResource {
                 setPathDetails(pathDetails).
                 getHints().
                 putObject(CALC_POINTS, calcPoints).
-                putObject(INSTRUCTIONS, instructions).
-                putObject(WAY_POINT_MAX_DISTANCE, minPathPrecision);
+                putObject(INSTRUCTIONS, true).
+                putObject(WAY_POINT_MAX_DISTANCE, minPathPrecision).
+               //Sharmila
+                putObject("elevation", true).
+                putObject("ch.disable", true);
+                 //putObject(CURBSIDE, "left");
 
         if (minPathElevationPrecision != null) {
             request.getHints().putObject(ELEVATION_WAY_POINT_MAX_DISTANCE, minPathElevationPrecision);
         }
 
         GHResponse ghResponse = graphHopper.route(request);
-
+        //Sharmila
+        logger.info("GH Request : "+request.toString());
+        
         long took = sw.stop().getNanos() / 1_000_000;
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String logStr = httpReq.getQueryString() + " " + infoStr + " " + points + ", took: "
@@ -144,6 +169,12 @@ public class RouteResource {
                     + ", time0: " + Math.round(ghResponse.getBest().getTime() / 60000f) + "min"
                     + ", points0: " + ghResponse.getBest().getPoints().size()
                     + ", debugInfo: " + ghResponse.getDebugInfo());
+            
+            logger.info("************************* \n");
+            logger.info("GET ALL :::::"+ghResponse.getAll());
+            logger.info("-------------------------- \n");
+            logger.info("GET BEST) :::::"+ghResponse.getBest());
+            
             return writeGPX ?
                     gpxSuccessResponseBuilder(ghResponse, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints, Constants.VERSION).
                             header("X-GH-Took", "" + Math.round(took)).
@@ -164,6 +195,7 @@ public class RouteResource {
         if (request.getCustomModel() == null) {
             if (Helper.isEmpty(request.getProfile())) {
                 // legacy parameter resolution (only used when there is no custom model)
+            	logger.info("Request get curbside :"+request.getCurbsides());
                 enableEdgeBasedIfThereAreCurbsides(request.getCurbsides(), request);
                 request.setProfile(profileResolver.resolveProfile(request.getHints()).getName());
                 removeLegacyParameters(request.getHints());
@@ -180,6 +212,8 @@ public class RouteResource {
         boolean calcPoints = request.getHints().getBool(CALC_POINTS, true);
         boolean pointsEncoded = request.getHints().getBool("points_encoded", true);
 
+       //String curbSide = request.getHints().getString(curbSide,"left");
+        
         long took = sw.stop().getNanos() / 1_000_000;
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String queryString = httpReq.getQueryString() == null ? "" : (httpReq.getQueryString() + " ");
