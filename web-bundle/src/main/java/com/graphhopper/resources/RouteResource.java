@@ -169,12 +169,7 @@ public class RouteResource {
                     + ", time0: " + Math.round(ghResponse.getBest().getTime() / 60000f) + "min"
                     + ", points0: " + ghResponse.getBest().getPoints().size()
                     + ", debugInfo: " + ghResponse.getDebugInfo());
-            
-            logger.info("************************* \n");
-            logger.info("GET ALL :::::"+ghResponse.getAll());
-            logger.info("-------------------------- \n");
-            logger.info("GET BEST) :::::"+ghResponse.getBest());
-            
+         
             return writeGPX ?
                     gpxSuccessResponseBuilder(ghResponse, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints, Constants.VERSION).
                             header("X-GH-Took", "" + Math.round(took)).

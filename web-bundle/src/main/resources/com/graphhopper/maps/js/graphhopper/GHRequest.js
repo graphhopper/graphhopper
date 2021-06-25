@@ -284,7 +284,7 @@ GHRequest.prototype.doRequest = function (url, callback) {
             callback(json);
         },
         error: function (err) {
-            var msg = "Sharmila - API did not respond! ";
+            var msg = "API did not respond!";
             var json;
 
             if (err && err.responseText && err.responseText.indexOf('{') >= 0) {
