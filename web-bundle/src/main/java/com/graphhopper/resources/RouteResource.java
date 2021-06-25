@@ -102,8 +102,6 @@ public class RouteResource {
         if (enableElevation && !hasElevation)
             throw new IllegalArgumentException("Elevation not supported!");
 
-        //curbsides.add("left");
-        
         StopWatch sw = new StopWatch().start();
         GHRequest request = new GHRequest();
         initHints(request.getHints(), uriInfo.getQueryParameters());
@@ -114,15 +112,12 @@ public class RouteResource {
             removeLegacyParameters(request.getHints());
         }
         errorIfLegacyParameters(request.getHints());
-       
         
         List<String> pathDetails = new ArrayList<String>();
-        
         pathDetails.add(Parameters.Details.STREET_NAME);
         pathDetails.add(Parameters.Details.AVERAGE_SPEED);
         pathDetails.add(Parameters.Details.EDGE_ID);
-
-        
+ 
         request.setPoints(points).
                 setProfile(profileName).
                 setAlgorithm(algoStr).
@@ -144,7 +139,6 @@ public class RouteResource {
         }
 
         GHResponse ghResponse = graphHopper.route(request);
-        
         long took = sw.stop().getNanos() / 1_000_000;
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String logStr = httpReq.getQueryString() + " " + infoStr + " " + points + ", took: "
@@ -196,7 +190,6 @@ public class RouteResource {
         boolean enableElevation = request.getHints().getBool("elevation", false);
         boolean calcPoints = request.getHints().getBool(CALC_POINTS, true);
         boolean pointsEncoded = request.getHints().getBool("points_encoded", true);
- 
         long took = sw.stop().getNanos() / 1_000_000;
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String queryString = httpReq.getQueryString() == null ? "" : (httpReq.getQueryString() + " ");
