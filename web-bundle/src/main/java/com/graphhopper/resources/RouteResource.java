@@ -83,7 +83,6 @@ public class RouteResource {
             @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
             @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
             @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
-            //Sharmila
             @QueryParam(CURBSIDE) @DefaultValue("left") String curbSide,
             @QueryParam("profile") String profileName,
             @QueryParam(ALGORITHM) @DefaultValue("alternative_route") String algoStr,
@@ -137,10 +136,8 @@ public class RouteResource {
                 putObject(CALC_POINTS, calcPoints).
                 putObject(INSTRUCTIONS, true).
                 putObject(WAY_POINT_MAX_DISTANCE, minPathPrecision).
-               //Sharmila
                 putObject("elevation", true).
                 putObject("ch.disable", true);
-                 //putObject(CURBSIDE, "left");
 
         if (minPathElevationPrecision != null) {
             request.getHints().putObject(ELEVATION_WAY_POINT_MAX_DISTANCE, minPathElevationPrecision);
@@ -199,9 +196,7 @@ public class RouteResource {
         boolean enableElevation = request.getHints().getBool("elevation", false);
         boolean calcPoints = request.getHints().getBool(CALC_POINTS, true);
         boolean pointsEncoded = request.getHints().getBool("points_encoded", true);
-
-       //String curbSide = request.getHints().getString(curbSide,"left");
-        
+ 
         long took = sw.stop().getNanos() / 1_000_000;
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String queryString = httpReq.getQueryString() == null ? "" : (httpReq.getQueryString() + " ");
