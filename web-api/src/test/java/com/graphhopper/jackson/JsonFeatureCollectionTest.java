@@ -32,7 +32,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -83,13 +82,13 @@ public class JsonFeatureCollectionTest {
         }
 
         String expected = objectMapper.writeValueAsString(
-                objectMapper.readValue(fixture("fixtures/geojson1.json"), JsonFeatureCollection.class));
+                objectMapper.readValue(getClass().getClassLoader().getResourceAsStream("fixtures/geojson1.json"), JsonFeatureCollection.class));
         assertEquals(objectMapper.writeValueAsString(jsonFeatureCollection), expected);
     }
 
     @Test
     public void testDeserialization() throws IOException {
-        JsonFeatureCollection data = objectMapper.readValue(fixture("fixtures/geojson1.json"), JsonFeatureCollection.class);
+        JsonFeatureCollection data = objectMapper.readValue(getClass().getClassLoader().getResourceAsStream("fixtures/geojson1.json"), JsonFeatureCollection.class);
         assertEquals(3, data.getFeatures().size());
 
         JsonFeature f1 = data.getFeatures().get(0);
