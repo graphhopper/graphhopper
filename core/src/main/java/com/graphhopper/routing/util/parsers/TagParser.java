@@ -20,6 +20,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.util.spatialrules.CustomArea;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
@@ -33,4 +34,10 @@ public interface TagParser {
     void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue);
 
     IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags);
+
+    // todo: this way subclasses have to overwrite both methods in case they need to make use of custom areas, but on the
+    // otherhand existing subclasses can remain unchanged...
+    default IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags, List<CustomArea> customAreas) {
+        return handleWayTags(edgeFlags, way, ferry, relationFlags);
+    }
 }

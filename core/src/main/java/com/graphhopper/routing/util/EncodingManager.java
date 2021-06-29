@@ -24,6 +24,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.*;
+import com.graphhopper.routing.util.spatialrules.CustomArea;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.StorableProperties;
@@ -35,6 +36,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.graphhopper.util.Helper.toLowerCase;
+import static java.util.Collections.emptyList;
 
 /**
  * Manager class to register encoder, assign their flag values and check objects with all encoders
@@ -579,18 +581,22 @@ public class EncodingManager implements EncodedValueLookup {
         }
     }
 
+    public final IntsRef handleWayTags(ReaderWay way, AcceptWay acceptWay, IntsRef relationFlags) {
+        return handleWayTags(way, acceptWay, relationFlags, emptyList());
+    }
+
     /**
      * Processes way properties of different kind to determine speed and direction.
      *
      * @param relationFlags The preprocessed relation flags is used to influence the way properties.
      */
-    public IntsRef handleWayTags(ReaderWay way, AcceptWay acceptWay, IntsRef relationFlags) {
+    public IntsRef handleWayTags(ReaderWay way, AcceptWay acceptWay, IntsRef relationFlags, List<CustomArea> customAreas) {
         IntsRef edgeFlags = createEdgeFlags();
         for (TagParser parser : edgeTagParsers) {
-            parser.handleWayTags(edgeFlags, way, acceptWay.isFerry(), relationFlags);
+            parser.handleWayTags(edgeFlags, way, acceptWay.isFerry(), relationFlags, customAreas);
         }
         for (AbstractFlagEncoder encoder : edgeEncoders) {
-            encoder.handleWayTags(edgeFlags, way, acceptWay.get(encoder.toString()));
+            encoder.handleWayTags(edgeFlags, way, acceptWay.get(encoder.toString()), customAreas);
         }
         return edgeFlags;
     }

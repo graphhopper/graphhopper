@@ -27,6 +27,8 @@ import com.graphhopper.reader.dem.GraphElevationSmoothing;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.parsers.TurnCostParser;
+import com.graphhopper.routing.util.spatialrules.CustomArea;
+import com.graphhopper.routing.util.spatialrules.CustomAreaIndex;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
@@ -39,6 +41,7 @@ import java.io.IOException;
 import java.util.*;
 
 import static com.graphhopper.util.Helper.nf;
+import static java.util.Collections.emptyList;
 
 /**
  * This class parses an OSM xml or pbf file and creates a graph from it. It does so in a two phase
@@ -72,6 +75,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     protected static final int TOWER_NODE = -2;
     private static final Logger LOGGER = LoggerFactory.getLogger(OSMReader.class);
     private final GraphStorage ghStorage;
+    private final CustomAreaIndex customAreaIndex;
     private final Graph graph;
     private final NodeAccess nodeAccess;
     private final LongIndexedContainer barrierNodeIds = new LongArrayList();
@@ -110,8 +114,9 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     private final IntsRef tempRelFlags;
     private final TurnCostStorage tcs;
 
-    public OSMReader(GraphHopperStorage ghStorage) {
+    public OSMReader(GraphHopperStorage ghStorage, CustomAreaIndex customAreaIndex) {
         this.ghStorage = ghStorage;
+        this.customAreaIndex = customAreaIndex;
         this.graph = ghStorage;
         this.nodeAccess = graph.getNodeAccess();
         this.encodingManager = ghStorage.getEncodingManager();
@@ -329,11 +334,13 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         int last = getNodeMap().get(osmNodeIds.get(osmNodeIds.size() - 1));
         double firstLat = getTmpLatitude(first), firstLon = getTmpLongitude(first);
         double lastLat = getTmpLatitude(last), lastLon = getTmpLongitude(last);
+        GHPoint estimatedCenter = null;
         if (!Double.isNaN(firstLat) && !Double.isNaN(firstLon) && !Double.isNaN(lastLat) && !Double.isNaN(lastLon)) {
             double estimatedDist = distCalc.calcDist(firstLat, firstLon, lastLat, lastLon);
             // Add artificial tag for the estimated distance and center
             way.setTag("estimated_distance", estimatedDist);
-            way.setTag("estimated_center", new GHPoint((firstLat + lastLat) / 2, (firstLon + lastLon) / 2));
+            estimatedCenter = new GHPoint((firstLat + lastLat) / 2, (firstLon + lastLon) / 2);
+            way.setTag("estimated_center", estimatedCenter);
         }
 
         if (way.getTag("duration") != null) {
@@ -346,7 +353,8 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             }
         }
 
-        IntsRef edgeFlags = encodingManager.handleWayTags(way, acceptWay, relationFlags);
+        List<CustomArea> customAreas = estimatedCenter == null ? emptyList() : customAreaIndex.query(estimatedCenter.lat, estimatedCenter.lon);
+        IntsRef edgeFlags = encodingManager.handleWayTags(way, acceptWay, relationFlags, customAreas);
         if (edgeFlags.isEmpty())
             return;
 

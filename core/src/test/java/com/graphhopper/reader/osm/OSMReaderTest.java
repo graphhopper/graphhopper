@@ -32,6 +32,7 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.OSMMaxHeightParser;
 import com.graphhopper.routing.util.parsers.OSMMaxWeightParser;
 import com.graphhopper.routing.util.parsers.OSMMaxWidthParser;
+import com.graphhopper.routing.util.spatialrules.CustomAreaIndex;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
@@ -45,6 +46,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.util.*;
 
+import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -449,7 +451,7 @@ public class OSMReaderTest {
     public void testRelation() {
         EncodingManager manager = EncodingManager.create("bike");
         GraphHopperStorage ghStorage = new GraphHopperStorage(new RAMDirectory(), manager, false);
-        OSMReader reader = new OSMReader(ghStorage);
+        OSMReader reader = new OSMReader(ghStorage, new CustomAreaIndex(emptyList()));
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 1, ""));
         osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 2, ""));
@@ -602,7 +604,7 @@ public class OSMReaderTest {
         lonMap.put(1, 1.0d);
         lonMap.put(2, 1.0d);
 
-        OSMReader osmreader = new OSMReader(ghStorage) {
+        OSMReader osmreader = new OSMReader(ghStorage, new CustomAreaIndex(emptyList())) {
             // mock data access
             @Override
             double getTmpLatitude(int id) {

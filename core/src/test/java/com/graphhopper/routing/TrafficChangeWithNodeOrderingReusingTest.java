@@ -7,6 +7,7 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.spatialrules.CustomAreaIndex;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -31,6 +32,7 @@ import java.util.Random;
 import java.util.stream.Stream;
 
 import static java.lang.System.nanoTime;
+import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -85,7 +87,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
 
         LOGGER.info("Running performance test, max deviation percentage: " + f.maxDeviationPercentage);
         // read osm
-        OSMReader reader = new OSMReader(f.ghStorage);
+        OSMReader reader = new OSMReader(f.ghStorage, new CustomAreaIndex(emptyList()));
         reader.setFile(new File(OSM_FILE));
         reader.readGraph();
         f.ghStorage.freeze();
