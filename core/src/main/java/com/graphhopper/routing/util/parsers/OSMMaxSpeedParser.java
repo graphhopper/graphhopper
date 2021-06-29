@@ -18,16 +18,15 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.MaxSpeed;
-import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
+import com.graphhopper.routing.util.spatialrules.CustomArea;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleSet;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.IntsRef;
 
+import java.util.Collections;
 import java.util.List;
 
 import static com.graphhopper.routing.ev.MaxSpeed.UNSET_SPEED;
@@ -54,11 +53,26 @@ public class OSMMaxSpeedParser implements TagParser {
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
+        return handleWayTags(edgeFlags, way, ferry, relationFlags, Collections.emptyList());
+    }
+
+    @Override
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags, List<CustomArea> customAreas) {
         double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
 
+        RoadClass roadClass = RoadClass.find(way.getTag("highway", ""));
+        for (CustomArea customArea : customAreas) {
+            Object countryCode = customArea.getProperties().get("ISO3166-1:alpha3");
+            if (countryCode != null) {
+                NewCountry country = NewCountry.valueOf(countryCode.toString());
+                CountryRule countryRule = CountryRule.getCountryRule(country);
+                if (countryRule != null) {
+                    maxSpeed = countryRule.getMaxSpeed(roadClass, TransportationMode.CAR, maxSpeed);
+                }
+            }
+        }
         SpatialRuleSet spatialRuleSet = way.getTag("spatial_rule_set", null);
         if (spatialRuleSet != null && spatialRuleSet != SpatialRuleSet.EMPTY) {
-            RoadClass roadClass = RoadClass.find(way.getTag("highway", ""));
             maxSpeed = spatialRuleSet.getMaxSpeed(roadClass, TransportationMode.CAR, maxSpeed);
         }
 
