@@ -616,9 +616,7 @@ public class EncodingManager implements EncodedValueLookup {
 
             str.append(encoder.toString())
                     .append("|")
-                    .append(encoder.getPropertiesString())
-                    .append("|version=")
-                    .append(encoder.getVersion());
+                    .append(encoder.getPropertiesString());
         }
 
         return str.toString();

@@ -145,11 +145,6 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
     }
 
     @Override
-    public int getVersion() {
-        return 2;
-    }
-
-    @Override
     void collect(ReaderWay way, double wayTypeSpeed, TreeMap<Double, Integer> weightToPrioMap) {
         super.collect(way, wayTypeSpeed, weightToPrioMap);
 
