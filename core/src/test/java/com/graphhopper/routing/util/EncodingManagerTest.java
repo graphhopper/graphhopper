@@ -83,16 +83,11 @@ public class EncodingManagerTest {
     }
 
     @Test
-    public void testToDetailsStringIncludesEncoderVersionNumber() {
+    public void testToDetailsString() {
         FlagEncoder encoder = new AbstractFlagEncoder(1, 2.0, 0) {
             @Override
             public TransportationMode getTransportationMode() {
                 return TransportationMode.BIKE;
-            }
-
-            @Override
-            public int getVersion() {
-                return 10;
             }
 
             @Override
@@ -118,7 +113,7 @@ public class EncodingManagerTest {
 
         EncodingManager subject = EncodingManager.create(encoder);
 
-        assertEquals("new_encoder|my_properties|version=10", subject.toFlagEncodersAsString());
+        assertEquals("new_encoder|my_properties", subject.toFlagEncodersAsString());
     }
 
     @Test

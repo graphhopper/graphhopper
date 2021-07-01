@@ -151,11 +151,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         return TransportationMode.CAR;
     }
 
-    @Override
-    public int getVersion() {
-        return 2;
-    }
-
     /**
      * Define the place of the speedBits in the edge flags for car.
      */

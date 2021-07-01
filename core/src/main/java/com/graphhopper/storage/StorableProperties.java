@@ -169,9 +169,6 @@ public class StorableProperties implements Storable<StorableProperties> {
 
         if (!check("shortcuts", Constants.VERSION_SHORTCUT, silent))
             return false;
-
-        // The check for the encoder version is done in EncoderManager, as this class does not know about the
-        // registered encoders and their version
         return true;
     }
 
