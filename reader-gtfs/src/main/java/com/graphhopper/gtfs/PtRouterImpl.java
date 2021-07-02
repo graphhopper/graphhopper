@@ -131,7 +131,8 @@ public final class PtRouterImpl implements PtRouter {
         private final Graph graphWithExtraEdges = new WrapperGraph(graphHopperStorage, extraEdges);
         private final long limitStreetTime;
         private QueryGraph queryGraph;
-        private int visitedNodes;
+        private int relaxedNodes;
+        private int exploredNodes;
 
         RequestHandler(Request request) {
             maxVisitedNodesForRequest = request.getMaxVisitedNodes();
@@ -242,7 +243,8 @@ public final class PtRouterImpl implements PtRouter {
                     stationLabels.add(label);
                 }
             }
-            visitedNodes += stationRouter.getVisitedNodes();
+            relaxedNodes += stationRouter.getRelaxedNodes();
+            exploredNodes += stationRouter.getExploredNodes();
 
             Map<Integer, Label> reverseSettledSet = new HashMap<>();
             for (Label stationLabel : stationLabels) {
@@ -344,13 +346,14 @@ public final class PtRouterImpl implements PtRouter {
                 }
             }
 
-            visitedNodes += router.getVisitedNodes();
+            relaxedNodes += router.getRelaxedNodes();
+            exploredNodes += router.getExploredNodes();
             response.addDebugInfo("routing:" + stopWatch.stop().getSeconds() + "s");
-            if (discoveredSolutions.isEmpty() && router.getVisitedNodes() >= maxVisitedNodesForRequest) {
+            if (discoveredSolutions.isEmpty() && router.getRelaxedNodes() >= maxVisitedNodesForRequest) {
                 response.addError(new IllegalArgumentException("No path found - maximum number of nodes exceeded: " + maxVisitedNodesForRequest));
             }
-            response.getHints().putObject("visited_nodes.sum", visitedNodes);
-            response.getHints().putObject("visited_nodes.average", visitedNodes);
+            response.getHints().putObject("visited_nodes", relaxedNodes);
+            response.getHints().putObject("explored_nodes", exploredNodes);
             if (discoveredSolutions.isEmpty()) {
                 response.addError(new RuntimeException("No route found"));
             }

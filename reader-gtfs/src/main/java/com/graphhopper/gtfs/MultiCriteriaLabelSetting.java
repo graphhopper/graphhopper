@@ -49,18 +49,19 @@ public class MultiCriteriaLabelSetting {
     private final EnumEncodedValue<GtfsStorage.EdgeType> typeEnc;
     private final IntObjectMap<List<Label>> fromMap;
     private final PriorityQueue<Label> fromHeap;
-    private final int maxVisitedNodes;
+    private final int maxRelaxedNodes;
     private final boolean reverse;
     private final boolean mindTransfers;
     private final boolean profileQuery;
-    private int visitedNodes;
+    private int relaxedNodes;
+    private int exploredNodes;
     private final GraphExplorer explorer;
     private double betaTransfers;
     private double betaWalkTime = 1.0;
     private long limitStreetTime = Long.MAX_VALUE;
 
-    public MultiCriteriaLabelSetting(GraphExplorer explorer, PtEncodedValues flagEncoder, boolean reverse, boolean mindTransfers, boolean profileQuery, int maxVisitedNodes, List<Label> solutions) {
-        this.maxVisitedNodes = maxVisitedNodes;
+    public MultiCriteriaLabelSetting(GraphExplorer explorer, PtEncodedValues flagEncoder, boolean reverse, boolean mindTransfers, boolean profileQuery, int maxRelaxedNodes, List<Label> solutions) {
+        this.maxRelaxedNodes = maxRelaxedNodes;
         this.explorer = explorer;
         this.reverse = reverse;
         this.mindTransfers = mindTransfers;
@@ -82,7 +83,7 @@ public class MultiCriteriaLabelSetting {
         this.startTime = startTime.toEpochMilli();
         return StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from), false)
                 //.limit(maxVisitedNodes)
-                .peek(label -> visitedNodes++);
+                .peek(label -> relaxedNodes++);
     }
 
     // experimental
@@ -116,6 +117,7 @@ public class MultiCriteriaLabelSetting {
                 Label label = fromHeap.poll();
                 action.accept(label);
                 explorer.exploreEdgesAround(label).forEach(edge -> {
+                    exploredNodes++;
                     long nextTime;
                     if (reverse) {
                         nextTime = label.currentTime - explorer.calcTravelTimeMillis(edge, label.currentTime);
@@ -270,8 +272,12 @@ public class MultiCriteriaLabelSetting {
         this.limitStreetTime = limitStreetTime;
     }
 
-    int getVisitedNodes() {
-        return visitedNodes;
+    int getRelaxedNodes() {
+        return relaxedNodes;
+    }
+
+    int getExploredNodes() {
+        return exploredNodes;
     }
 
 }
