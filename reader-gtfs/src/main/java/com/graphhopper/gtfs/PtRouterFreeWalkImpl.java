@@ -296,8 +296,8 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
             if (discoveredSolutions.isEmpty() && router.getRelaxedNodes() >= maxVisitedNodesForRequest) {
                 response.addError(new IllegalArgumentException("No path found - maximum number of nodes exceeded: " + maxVisitedNodesForRequest));
             }
-            response.getHints().putObject("visited_nodes", relaxedNodes);
-            response.getHints().putObject("explored_nodes", exploredNodes);
+            response.getHints().putObject("visited_nodes.sum", relaxedNodes);
+            response.getHints().putObject("explored_nodes.sum", exploredNodes);
             if (discoveredSolutions.isEmpty()) {
                 response.addError(new RuntimeException("No route found"));
             }
