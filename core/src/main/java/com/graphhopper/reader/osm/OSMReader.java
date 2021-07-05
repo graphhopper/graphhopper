@@ -25,7 +25,9 @@ import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.NewCountry;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.routing.util.parsers.TurnCostParser;
 import com.graphhopper.routing.util.spatialrules.CustomArea;
 import com.graphhopper.routing.util.spatialrules.CustomAreaIndex;
@@ -354,6 +356,17 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         }
 
         List<CustomArea> customAreas = estimatedCenter == null ? emptyList() : customAreaIndex.query(estimatedCenter.lat, estimatedCenter.lon);
+        CountryRule countryRule = null;
+        for (CustomArea customArea : customAreas) {
+            Object countryCode = customArea.getProperties().get("ISO3166-1:alpha3");
+            if (countryCode != null) {
+                NewCountry country = NewCountry.valueOf(countryCode.toString());
+                if (countryRule != null)
+                    LOGGER.warn("Multiple country rules found for way {}", way.getId());
+                countryRule = CountryRule.getCountryRule(country);
+            }
+        }
+        way.setTag("country_rule", countryRule);
         way.setTag("custom_areas", customAreas);
         IntsRef edgeFlags = encodingManager.handleWayTags(way, acceptWay, relationFlags);
         if (edgeFlags.isEmpty())

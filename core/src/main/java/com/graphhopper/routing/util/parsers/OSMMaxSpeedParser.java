@@ -56,17 +56,10 @@ public class OSMMaxSpeedParser implements TagParser {
         double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
 
         RoadClass roadClass = RoadClass.find(way.getTag("highway", ""));
-        List<CustomArea> customAreas = way.getTag("custom_areas", Collections.emptyList());
-        for (CustomArea customArea : customAreas) {
-            Object countryCode = customArea.getProperties().get("ISO3166-1:alpha3");
-            if (countryCode != null) {
-                NewCountry country = NewCountry.valueOf(countryCode.toString());
-                CountryRule countryRule = CountryRule.getCountryRule(country);
-                if (countryRule != null) {
-                    maxSpeed = countryRule.getMaxSpeed(roadClass, TransportationMode.CAR, maxSpeed);
-                }
-            }
-        }
+        CountryRule countryRule = way.getTag("country_rule", null);
+        if (countryRule != null)
+            maxSpeed = countryRule.getMaxSpeed(roadClass, TransportationMode.CAR, maxSpeed);
+
         SpatialRuleSet spatialRuleSet = way.getTag("spatial_rule_set", null);
         if (spatialRuleSet != null && spatialRuleSet != SpatialRuleSet.EMPTY) {
             maxSpeed = spatialRuleSet.getMaxSpeed(roadClass, TransportationMode.CAR, maxSpeed);
