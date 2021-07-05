@@ -532,27 +532,6 @@ public class GraphHopperOSMTest {
         } catch (Exception ex) {
             assertTrue(ex.getMessage().startsWith("Encoded values do not match"), ex.getMessage());
         }
-
-        // different version for car should fail
-        instance = new GraphHopper();
-        instance.getEncodingManagerBuilder().add(new FootFlagEncoder()).
-                add(new CarFlagEncoder() {
-                    @Override
-                    public int getVersion() {
-                        return 0;
-                    }
-                });
-        instance.init(new GraphHopperConfig().
-                putObject("datareader.file", testOsm3).
-                putObject("datareader.dataaccess", "RAM").
-                setProfiles(Collections.singletonList(new Profile("car").setVehicle("car").setWeighting("fastest")))).
-                setOSMFile(testOsm3);
-        try {
-            instance.load(ghLoc);
-            fail();
-        } catch (Exception ex) {
-            assertTrue(ex.getMessage().startsWith("Encoding does not match"), ex.getMessage());
-        }
     }
 
     @Test

@@ -103,11 +103,6 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
         defaultSpeedMap.put("track", 15);
     }
 
-    @Override
-    public int getVersion() {
-        return 3;
-    }
-
     /**
      * Define the place of the speedBits in the edge flags for car.
      */

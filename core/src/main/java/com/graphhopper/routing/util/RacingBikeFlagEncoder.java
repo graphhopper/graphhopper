@@ -157,11 +157,6 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
     }
 
     @Override
-    public int getVersion() {
-        return 2;
-    }
-
-    @Override
     public String toString() {
         return "racingbike";
     }
