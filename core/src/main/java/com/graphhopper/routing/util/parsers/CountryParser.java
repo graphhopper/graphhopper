@@ -40,11 +40,7 @@ public class CountryParser implements TagParser {
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
-        return handleWayTags(edgeFlags, way, ferry, relationFlags, Collections.emptyList());
-    }
-
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags, List<CustomArea> customAreas) {
+        List<CustomArea> customAreas = way.getTag("custom_areas", Collections.emptyList());
         for (CustomArea customArea : customAreas) {
             Object countryCode = customArea.getProperties().get("ISO3166-1:alpha3");
             if (countryCode != null) {

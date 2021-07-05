@@ -354,7 +354,8 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         }
 
         List<CustomArea> customAreas = estimatedCenter == null ? emptyList() : customAreaIndex.query(estimatedCenter.lat, estimatedCenter.lon);
-        IntsRef edgeFlags = encodingManager.handleWayTags(way, acceptWay, relationFlags, customAreas);
+        way.setTag("custom_areas", customAreas);
+        IntsRef edgeFlags = encodingManager.handleWayTags(way, acceptWay, relationFlags);
         if (edgeFlags.isEmpty())
             return;
 
