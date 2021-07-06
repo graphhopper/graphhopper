@@ -158,7 +158,7 @@ public class RoundTripRouting {
         }
 
         Path calcPath(int from, int to) {
-            Path path = pathCalculator.calcPaths(from, to, new EdgeRestrictions()).get(0);
+            Path path = pathCalculator.calcPaths(from, to, EdgeRestrictions.none()).get(0);
             // add the edges of this path to the set of previous edges so they will be avoided from now, otherwise
             // we do not get a nice 'round trip'. note that for this reason we cannot use CH for round-trips currently
             for (IntCursor c : path.getEdges()) {

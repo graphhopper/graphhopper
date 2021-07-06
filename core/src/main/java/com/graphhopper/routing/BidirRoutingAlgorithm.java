@@ -19,7 +19,17 @@ package com.graphhopper.routing;
 
 import com.graphhopper.util.EdgeIterator;
 
+import java.util.function.IntToDoubleFunction;
+
+import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
+
 public interface BidirRoutingAlgorithm extends RoutingAlgorithm {
+
+    @Override
+    default Path calcPath(int from, int to) {
+        return calcPath(from, to, null, null);
+    }
+
     /**
      * like {@link #calcPath(int, int)}, but this method also allows to strictly restrict the edge the
      * path will begin with and the edge it will end with.
@@ -31,5 +41,12 @@ public interface BidirRoutingAlgorithm extends RoutingAlgorithm {
      */
     // todo: in principle its also possible to implement this method for unidirectional algorithms (but not sure
     // if it is really worth it).
-    Path calcPath(int from, int to, int fromOutEdge, int toInEdge);
+    default Path calcPath(int from, int to, int fromOutEdge, int toInEdge) {
+        return calcPath(from, to,
+                fromOutEdge == ANY_EDGE ? null : e -> e == fromOutEdge ? 0 : Double.POSITIVE_INFINITY,
+                toInEdge == ANY_EDGE ? null : e -> e == toInEdge ? 0 : Double.POSITIVE_INFINITY
+        );
+    }
+
+    Path calcPath(int from, int to, IntToDoubleFunction edgePenalizerFrom, IntToDoubleFunction edgePenalizerTo);
 }

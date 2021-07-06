@@ -30,8 +30,6 @@ import com.graphhopper.util.GHUtility;
 
 import java.util.PriorityQueue;
 
-import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
-
 /**
  * Common subclass for bidirectional algorithms.
  *
@@ -44,7 +42,6 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
     protected final NodeAccess nodeAccess;
     protected final Weighting weighting;
     protected EdgeExplorer edgeExplorer;
-    protected EdgeFilter additionalEdgeFilter;
 
     public AbstractNonCHBidirAlgo(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(tMode);
@@ -71,40 +68,6 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
 
     protected DefaultBidirPathExtractor createPathExtractor(Graph graph, Weighting weighting) {
         return new DefaultBidirPathExtractor(graph, weighting);
-    }
-
-    protected void postInitFrom() {
-        if (fromOutEdge == ANY_EDGE) {
-            fillEdgesFrom();
-        } else {
-            fillEdgesFromUsingFilter(edgeState -> edgeState.getOrigEdgeFirst() == fromOutEdge);
-        }
-    }
-
-    protected void postInitTo() {
-        if (toInEdge == ANY_EDGE) {
-            fillEdgesTo();
-        } else {
-            fillEdgesToUsingFilter(edgeState -> edgeState.getOrigEdgeLast() == toInEdge);
-        }
-    }
-
-    /**
-     * @param edgeFilter edge filter used to filter edges during {@link #fillEdgesFrom()}
-     */
-    protected void fillEdgesFromUsingFilter(EdgeFilter edgeFilter) {
-        additionalEdgeFilter = edgeFilter;
-        finishedFrom = !fillEdgesFrom();
-        additionalEdgeFilter = null;
-    }
-
-    /**
-     * @see #fillEdgesFromUsingFilter(EdgeFilter)
-     */
-    protected void fillEdgesToUsingFilter(EdgeFilter edgeFilter) {
-        additionalEdgeFilter = edgeFilter;
-        finishedTo = !fillEdgesTo();
-        additionalEdgeFilter = null;
     }
 
     @Override
@@ -146,13 +109,12 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
     private void fillEdges(SPTEntry currEdge, PriorityQueue<SPTEntry> prioQueue, IntObjectMap<SPTEntry> bestWeightMap, boolean reverse) {
         EdgeIterator iter = edgeExplorer.setBaseNode(currEdge.adjNode);
         while (iter.next()) {
-            if (!accept(iter, currEdge.edge))
+            double edgePenalty = getEdgePenalty(iter, currEdge.edge, reverse);
+            if (Double.isInfinite(edgePenalty))
                 continue;
-
-            final double weight = calcWeight(iter, currEdge, reverse);
-            if (Double.isInfinite(weight)) {
+            final double weight = calcWeight(iter, currEdge, reverse) + edgePenalty;
+            if (Double.isInfinite(weight))
                 continue;
-            }
             final int traversalId = traversalMode.createTraversalId(iter, reverse);
             SPTEntry entry = bestWeightMap.get(traversalId);
             if (entry == null) {
@@ -206,13 +168,15 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         return createEmptyPath();
     }
 
-    protected boolean accept(EdgeIteratorState iter, int prevOrNextEdgeId) {
-        // for edge-based traversal we leave it for TurnWeighting to decide whether or not a u-turn is acceptable,
+    protected double getEdgePenalty(EdgeIteratorState iter, int prevOrNextEdgeId, boolean reverse) {
+        // for edge-based traversal we leave it for the Weighting to decide whether or not a u-turn is acceptable,
         // but for node-based traversal we exclude such a turn for performance reasons already here
         if (!traversalMode.isEdgeBased() && iter.getEdge() == prevOrNextEdgeId)
-            return false;
-
-        return additionalEdgeFilter == null || additionalEdgeFilter.accept(iter);
+            return Double.POSITIVE_INFINITY;
+        if (reverse)
+            return penalizeTo ? edgePenalizerTo.applyAsDouble(iter.getOrigEdgeLast()) : 0;
+        else
+            return penalizeFrom ? edgePenalizerFrom.applyAsDouble(iter.getOrigEdgeFirst()) : 0;
     }
 
     protected Path createEmptyPath() {

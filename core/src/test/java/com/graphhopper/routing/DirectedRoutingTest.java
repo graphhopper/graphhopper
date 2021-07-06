@@ -55,7 +55,7 @@ import static com.graphhopper.util.GHUtility.createRandomSnaps;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * This test makes sure the different bidirectional routing algorithms correctly implement restrictions of the source/

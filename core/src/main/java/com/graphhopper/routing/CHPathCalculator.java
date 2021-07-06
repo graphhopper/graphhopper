@@ -41,8 +41,7 @@ public class CHPathCalculator implements PathCalculator {
 
     @Override
     public List<Path> calcPaths(int from, int to, EdgeRestrictions edgeRestrictions) {
-        if (!edgeRestrictions.getUnfavoredEdges().isEmpty())
-            throw new IllegalArgumentException("Using unfavored edges is currently not supported for CH");
+        // todonow: we support heading + CH now, but still we need edge-based routing, but the same is true for flex??
         BidirRoutingAlgorithm algo = createAlgo();
         return calcPaths(from, to, edgeRestrictions, algo);
     }
@@ -57,10 +56,10 @@ public class CHPathCalculator implements PathCalculator {
     private List<Path> calcPaths(int from, int to, EdgeRestrictions edgeRestrictions, BidirRoutingAlgorithm algo) {
         StopWatch sw = new StopWatch().start();
         List<Path> paths;
-        if (edgeRestrictions.getSourceOutEdge() != ANY_EDGE || edgeRestrictions.getTargetInEdge() != ANY_EDGE) {
+        if (edgeRestrictions.getGetEdgePenaltyFrom() != null || edgeRestrictions.getGetGetEdgePenaltyTo() != null) {
             paths = Collections.singletonList(algo.calcPath(from, to,
-                    edgeRestrictions.getSourceOutEdge(),
-                    edgeRestrictions.getTargetInEdge()));
+                    edgeRestrictions.getGetEdgePenaltyFrom(),
+                    edgeRestrictions.getGetGetEdgePenaltyTo()));
         } else {
             paths = algo.calcPaths(from, to);
         }

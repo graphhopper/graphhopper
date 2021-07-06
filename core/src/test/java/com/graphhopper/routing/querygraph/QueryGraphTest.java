@@ -17,9 +17,7 @@
  */
 package com.graphhopper.routing.querygraph;
 
-import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntObjectMap;
-import com.graphhopper.routing.HeadingResolver;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.TurnCost;
@@ -38,11 +36,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.List;
 
 import static com.graphhopper.storage.index.Snap.Position.*;
-import static com.graphhopper.util.EdgeIteratorState.UNFAVORED_EDGE;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -530,154 +526,6 @@ public class QueryGraphTest {
         assertEquals(10, weighting.calcTurnWeight(fromQueryEdge, 1, toQueryEdge), .1);
 
         graphWithTurnCosts.close();
-    }
-
-    private Snap fakeEdgeSnap(EdgeIteratorState edge, double lat, double lon, int wayIndex) {
-        Snap snap = new Snap(lat, lon);
-        snap.setClosestEdge(edge);
-        snap.setWayIndex(wayIndex);
-        snap.setSnappedPosition(EDGE);
-        snap.calcSnappedPoint(new DistanceCalcEuclidean());
-        return snap;
-    }
-
-    private boolean isAvoidEdge(EdgeIteratorState edge) {
-        return edge.get(EdgeIteratorState.UNFAVORED_EDGE);
-    }
-
-    @Test
-    public void testEnforceHeading() {
-        // setup graph
-        //   ____
-        //  |    |
-        //  x    |
-        //  |    |
-        //  0    1
-        NodeAccess na = g.getNodeAccess();
-        na.setNode(0, 0, 0);
-        na.setNode(1, 0, 2);
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(10)).
-                setWayGeometry(Helper.createPointList(2, 0, 2, 2));
-        EdgeIteratorState edge = GHUtility.getEdge(g, 0, 1);
-
-        // snap on first vertical part of way (upward, base is in south)
-        Snap snap = fakeEdgeSnap(edge, 1.5, 0, 0);
-        QueryGraph queryGraph = lookup(snap);
-
-        // enforce going out north
-        HeadingResolver headingResolver = new HeadingResolver(queryGraph);
-        IntArrayList unfavoredEdges = headingResolver.getEdgesWithDifferentHeading(snap.getClosestNode(), 0);
-        queryGraph.unfavorVirtualEdges(unfavoredEdges);
-
-        // test penalized south
-        boolean expect = true;
-        assertEquals(expect, isAvoidEdge(queryGraph.getEdgeIteratorState(1, 2)));
-        assertEquals(expect, isAvoidEdge(queryGraph.getEdgeIteratorState(1, 0)));
-
-        queryGraph.clearUnfavoredStatus();
-        // test cleared edges south
-        expect = false;
-        assertEquals(expect, isAvoidEdge(queryGraph.getEdgeIteratorState(1, 2)));
-        assertEquals(expect, isAvoidEdge(queryGraph.getEdgeIteratorState(1, 0)));
-
-        // enforce going south (same as coming in from north)
-        unfavoredEdges = headingResolver.getEdgesWithDifferentHeading(snap.getClosestNode(), 180);
-        queryGraph.unfavorVirtualEdges(unfavoredEdges);
-
-        // test penalized north
-        expect = true;
-        assertEquals(expect, isAvoidEdge(queryGraph.getEdgeIteratorState(2, 1)));
-        assertEquals(expect, isAvoidEdge(queryGraph.getEdgeIteratorState(2, 2)));
-
-        // snap on second vertical part of way (downward, base is in north)
-        //   ____
-        //  |    |
-        //  |    x
-        //  |    |
-        //  0    1
-        snap = fakeEdgeSnap(edge, 1.5, 2, 2);
-        queryGraph = lookup(Arrays.asList(snap));
-
-        // enforce north
-        unfavoredEdges = headingResolver.getEdgesWithDifferentHeading(snap.getClosestNode(), 180);
-        queryGraph.unfavorVirtualEdges(unfavoredEdges);
-        // test penalized south
-        expect = true;
-        assertEquals(expect, isAvoidEdge(queryGraph.getEdgeIteratorState(2, 1)));
-        assertEquals(expect, isAvoidEdge(queryGraph.getEdgeIteratorState(2, 2)));
-
-        queryGraph.clearUnfavoredStatus();
-        // enforce south
-        unfavoredEdges = headingResolver.getEdgesWithDifferentHeading(snap.getClosestNode(), 0);
-        queryGraph.unfavorVirtualEdges(unfavoredEdges);
-
-        // test penalized north
-        expect = true;
-        assertEquals(expect, isAvoidEdge(queryGraph.getEdgeIteratorState(1, 0)));
-        assertEquals(expect, isAvoidEdge(queryGraph.getEdgeIteratorState(1, 2)));
-    }
-
-    @Test
-    public void testUnfavoredEdgeDirections() {
-        NodeAccess na = g.getNodeAccess();
-        // 0 <-> x <-> 1
-        //       2
-        na.setNode(0, 0, 0);
-        na.setNode(1, 0, 2);
-        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(10));
-
-        Snap snap = fakeEdgeSnap(edge, 0, 1, 0);
-        QueryGraph queryGraph = QueryGraph.create(g, snap);
-        queryGraph.unfavorVirtualEdge(1);
-        // this sets the unfavored flag for both 'directions' (not sure if this is really what we want, but this is how
-        // it is). for example we can not set the virtual edge 0-2 unfavored when going from 0 to 2 but *not* unfavored
-        // when going from 2 to 0. this would be a problem for edge-based routing where we might apply a penalty when
-        // going in one direction but not the other
-        assertTrue(GHUtility.getEdge(queryGraph, 2, 0).get(UNFAVORED_EDGE));
-        assertTrue(GHUtility.getEdge(queryGraph, 2, 0).getReverse(UNFAVORED_EDGE));
-        assertTrue(GHUtility.getEdge(queryGraph, 0, 2).get(UNFAVORED_EDGE));
-        assertTrue(GHUtility.getEdge(queryGraph, 0, 2).getReverse(UNFAVORED_EDGE));
-
-        assertFalse(GHUtility.getEdge(queryGraph, 2, 1).get(UNFAVORED_EDGE));
-        assertFalse(GHUtility.getEdge(queryGraph, 2, 1).getReverse(UNFAVORED_EDGE));
-        assertFalse(GHUtility.getEdge(queryGraph, 1, 2).get(UNFAVORED_EDGE));
-        assertFalse(GHUtility.getEdge(queryGraph, 1, 2).getReverse(UNFAVORED_EDGE));
-    }
-
-    @Test
-    public void testUnfavorVirtualEdgePair() {
-        // setup graph
-        //   ____
-        //  |    |
-        //  |    |
-        //  0    1
-        NodeAccess na = g.getNodeAccess();
-        na.setNode(0, 0, 0);
-        na.setNode(1, 0, 2);
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(10)).
-                setWayGeometry(Helper.createPointList(2, 0, 2, 2));
-        EdgeIteratorState edge = GHUtility.getEdge(g, 0, 1);
-
-        // snap on first vertical part of way (upward)
-        Snap snap = fakeEdgeSnap(edge, 1.5, 0, 0);
-        QueryGraph queryGraph = lookup(snap);
-
-        // enforce coming in north
-        queryGraph.unfavorVirtualEdge(1);
-        // test penalized south
-        VirtualEdgeIteratorState incomingEdge = (VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(1, 2);
-        VirtualEdgeIteratorState incomingEdgeReverse = (VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(1, incomingEdge.getBaseNode());
-        boolean expect = true;  // expect incoming and reverse incoming edge to be avoided
-        assertEquals(expect, isAvoidEdge(incomingEdge));
-        assertEquals(expect, isAvoidEdge(incomingEdgeReverse));
-        assertEquals(new LinkedHashSet<>(Arrays.asList(incomingEdge, incomingEdgeReverse)),
-                queryGraph.getUnfavoredVirtualEdges());
-
-        queryGraph.clearUnfavoredStatus();
-        expect = false; // expect incoming and reverse incoming edge not to be avoided
-        assertEquals(expect, isAvoidEdge(incomingEdge));
-        assertEquals(expect, isAvoidEdge(incomingEdgeReverse));
-        assertEquals(new LinkedHashSet<>(), queryGraph.getUnfavoredVirtualEdges());
     }
 
     @Test

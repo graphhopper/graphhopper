@@ -22,18 +22,17 @@ import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.util.EdgeIterator;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.PriorityQueue;
-
-import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
+import java.util.*;
+import java.util.function.IntToDoubleFunction;
 
 public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
     protected final TraversalMode traversalMode;
     protected int from;
     protected int to;
-    protected int fromOutEdge;
-    protected int toInEdge;
+    protected IntToDoubleFunction edgePenalizerFrom;
+    protected IntToDoubleFunction edgePenalizerTo;
+    protected boolean penalizeFrom;
+    protected boolean penalizeTo;
     protected IntObjectMap<SPTEntry> bestWeightMapFrom;
     protected IntObjectMap<SPTEntry> bestWeightMapTo;
     protected IntObjectMap<SPTEntry> bestWeightMapOther;
@@ -54,8 +53,6 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
 
     public AbstractBidirAlgo(TraversalMode traversalMode) {
         this.traversalMode = traversalMode;
-        fromOutEdge = ANY_EDGE;
-        toInEdge = ANY_EDGE;
     }
 
     protected void initCollections(int size) {
@@ -77,17 +74,17 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
     }
 
     @Override
-    public Path calcPath(int from, int to) {
-        return calcPath(from, to, ANY_EDGE, ANY_EDGE);
-    }
-
-    @Override
-    public Path calcPath(int from, int to, int fromOutEdge, int toInEdge) {
-        if ((fromOutEdge != ANY_EDGE || toInEdge != ANY_EDGE) && !traversalMode.isEdgeBased()) {
-            throw new IllegalArgumentException("Restricting the start/target edges is only possible for edge-based graph traversal");
-        }
-        this.fromOutEdge = fromOutEdge;
-        this.toInEdge = toInEdge;
+    public Path calcPath(int from, int to, IntToDoubleFunction edgePenalizerFrom, IntToDoubleFunction edgePenalizerTo) {
+        if (!traversalMode.isEdgeBased() && (edgePenalizerFrom != null || edgePenalizerTo != null))
+            // in principle we could also use initial edge weights for node-based routing, but think about P-shaped routes
+            // that start in one direction, take some turns to come back to the start location and then continue in
+            // another direction than the start direction. this is not possible for node-based. For node-based routing
+            // we should rather allow initial node weights to achieve something similar.
+            throw new IllegalArgumentException("Routing with initial edge weights is only possible for edge-based graph traversal");
+        this.edgePenalizerFrom = edgePenalizerFrom;
+        this.edgePenalizerTo = edgePenalizerTo;
+        penalizeFrom = edgePenalizerFrom != null;
+        penalizeTo = edgePenalizerTo != null;
         checkAlreadyRun();
         init(from, 0, to, 0);
         runAlgo();
@@ -124,7 +121,8 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
                 bestWeightMapOther = bestWeightMapFrom;
                 updateBestPath(Double.POSITIVE_INFINITY, currFrom, EdgeIterator.NO_EDGE, to, true);
             }
-        } else if (from == to && fromOutEdge == ANY_EDGE && toInEdge == ANY_EDGE) {
+            // todo: what if the penalizers are not null, but do not restrict anything either?
+        } else if (from == to && !penalizeFrom && !penalizeTo) {
             // special handling if start and end are the same and no directions are restricted
             // the resulting weight should be zero
             if (currFrom.weight != 0 || currTo.weight != 0) {
@@ -139,11 +137,17 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
         }
         postInitFrom();
         postInitTo();
+        penalizeFrom = false;
+        penalizeTo = false;
     }
 
-    protected abstract void postInitFrom();
+    protected void postInitFrom() {
+        finishedFrom = !fillEdgesFrom();
+    }
 
-    protected abstract void postInitTo();
+    protected void postInitTo() {
+        finishedTo = !fillEdgesTo();
+    }
 
     protected void runAlgo() {
         while (!finished() && !isMaxVisitedNodesExceeded()) {
@@ -251,7 +255,7 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
 
     void setToDataStructures(AbstractBidirAlgo other) {
         to = other.to;
-        toInEdge = other.toInEdge;
+        edgePenalizerTo = other.edgePenalizerTo;
         pqOpenSetTo = other.pqOpenSetTo;
         bestWeightMapTo = other.bestWeightMapTo;
         finishedTo = other.finishedTo;

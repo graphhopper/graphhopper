@@ -81,6 +81,7 @@ public final class CustomWeighting extends AbstractWeighting {
     private final double maxSpeed;
     private final double maxPriority;
     private final double distanceInfluence;
+    // todonow: not sure if we can/should keep this here
     private final double headingPenaltySeconds;
     private final EdgeToDoubleMapping edgeToSpeedMapping;
     private final EdgeToDoubleMapping edgeToPriorityMapping;
@@ -135,9 +136,7 @@ public final class CustomWeighting extends AbstractWeighting {
         if (speed < 0)
             throw new IllegalArgumentException("Speed cannot be negative");
 
-        double seconds = distance / speed * SPEED_CONV;
-        // add penalty at start/stop/via points
-        return edgeState.get(EdgeIteratorState.UNFAVORED_EDGE) ? seconds + headingPenaltySeconds : seconds;
+        return distance / speed * SPEED_CONV;
     }
 
     @Override

@@ -39,8 +39,6 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     private double distance;
     private IntsRef edgeFlags;
     private String name;
-    // true if edge should be avoided as start/stop
-    private boolean unfavored;
     private EdgeIteratorState reverseEdge;
     private final boolean reverse;
 
@@ -142,9 +140,6 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
 
     @Override
     public boolean get(BooleanEncodedValue property) {
-        if (property == EdgeIteratorState.UNFAVORED_EDGE)
-            return unfavored;
-
         return property.getBool(reverse, edgeFlags);
     }
 
@@ -156,8 +151,6 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
 
     @Override
     public boolean getReverse(BooleanEncodedValue property) {
-        if (property == EdgeIteratorState.UNFAVORED_EDGE)
-            return unfavored;
         return property.getBool(!reverse, edgeFlags);
     }
 
@@ -309,13 +302,6 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     public EdgeIteratorState setName(String name) {
         this.name = name;
         return this;
-    }
-
-    /**
-     * This method sets edge to unfavored status for routing from the start or to the stop location.
-     */
-    public void setUnfavored(boolean unfavored) {
-        this.unfavored = unfavored;
     }
 
     @Override

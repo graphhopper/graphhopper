@@ -18,32 +18,26 @@
 
 package com.graphhopper.routing;
 
-import com.carrotsearch.hppc.IntArrayList;
-
-import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
+import java.util.function.IntToDoubleFunction;
 
 public class EdgeRestrictions {
-    private int sourceOutEdge = ANY_EDGE;
-    private int targetInEdge = ANY_EDGE;
-    private final IntArrayList unfavoredEdges = IntArrayList.from();
+    private final IntToDoubleFunction getEdgePenaltyFrom;
+    private final IntToDoubleFunction getGetEdgePenaltyTo;
 
-    public int getSourceOutEdge() {
-        return sourceOutEdge;
+    public static EdgeRestrictions none() {
+        return new EdgeRestrictions(null, null);
     }
 
-    public void setSourceOutEdge(int sourceOutEdge) {
-        this.sourceOutEdge = sourceOutEdge;
+    public EdgeRestrictions(IntToDoubleFunction getEdgePenaltyFrom, IntToDoubleFunction getGetEdgePenaltyTo) {
+        this.getEdgePenaltyFrom = getEdgePenaltyFrom;
+        this.getGetEdgePenaltyTo = getGetEdgePenaltyTo;
     }
 
-    public int getTargetInEdge() {
-        return targetInEdge;
+    public IntToDoubleFunction getGetEdgePenaltyFrom() {
+        return getEdgePenaltyFrom;
     }
 
-    public void setTargetInEdge(int targetInEdge) {
-        this.targetInEdge = targetInEdge;
-    }
-
-    public IntArrayList getUnfavoredEdges() {
-        return unfavoredEdges;
+    public IntToDoubleFunction getGetGetEdgePenaltyTo() {
+        return getGetEdgePenaltyTo;
     }
 }

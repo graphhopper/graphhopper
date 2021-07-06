@@ -412,11 +412,12 @@ public class Router {
         @Override
         protected void checkRequest() {
             super.checkRequest();
-            if (!request.getHeadings().isEmpty())
-                throw new IllegalArgumentException("The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483");
+            // todonow: update tests etc. also it has to be edge-based CH, right?
+//            if (!request.getHeadings().isEmpty())
+//                throw new IllegalArgumentException("The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483");
 
-            if (getPassThrough(request.getHints()))
-                throw new IllegalArgumentException("The '" + Parameters.Routing.PASS_THROUGH + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #1765");
+//            if (getPassThrough(request.getHints()))
+//                throw new IllegalArgumentException("The '" + Parameters.Routing.PASS_THROUGH + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #1765");
 
             if (request.getHints().has(Parameters.Routing.BLOCK_AREA))
                 throw new IllegalArgumentException("The '" + Parameters.Routing.BLOCK_AREA + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`.");

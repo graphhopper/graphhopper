@@ -27,6 +27,8 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 
+import java.util.function.IntToDoubleFunction;
+
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 
 /**
@@ -34,6 +36,7 @@ import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
  */
 public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo {
     private final EdgeExplorer innerExplorer;
+    private boolean levelFilterEnabled = true;
 
     public AbstractBidirectionEdgeCHNoSOD(RoutingCHGraph graph) {
         super(graph, TraversalMode.EDGE_BASED);
@@ -51,21 +54,17 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
     @Override
     protected void postInitFrom() {
         // We use the levelEdgeFilter to filter out edges leading or coming from lower rank nodes.
-        // For the first step though we need all edges, so we need to ignore this filter.
-        if (fromOutEdge == ANY_EDGE) {
-            fillEdgesFromUsingFilter(CHEdgeFilter.ALL_EDGES);
-        } else {
-            fillEdgesFromUsingFilter(edgeState -> edgeState.getOrigEdgeFirst() == fromOutEdge);
-        }
+        // For the first step though we need all edges, so we need to disable this filter.
+        levelFilterEnabled = false;
+        super.postInitFrom();
+        levelFilterEnabled = true;
     }
 
     @Override
     protected void postInitTo() {
-        if (toInEdge == ANY_EDGE) {
-            fillEdgesToUsingFilter(CHEdgeFilter.ALL_EDGES);
-        } else {
-            fillEdgesToUsingFilter(edgeState -> edgeState.getOrigEdgeLast() == toInEdge);
-        }
+        levelFilterEnabled = false;
+        super.postInitTo();
+        levelFilterEnabled = true;
     }
 
     @Override
@@ -75,9 +74,8 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
         // node of the shortest path matches the source or target. in this case one of the searches does not contribute
         // anything to the shortest path.
         int oppositeNode = reverse ? from : to;
-        int oppositeEdge = reverse ? fromOutEdge : toInEdge;
-        boolean oppositeEdgeRestricted = reverse ? (fromOutEdge != ANY_EDGE) : (toInEdge != ANY_EDGE);
-        if (entry.adjNode == oppositeNode && (!oppositeEdgeRestricted || origEdgeId == oppositeEdge)) {
+        IntToDoubleFunction oppositePenalizer = reverse ? edgePenalizerFrom : edgePenalizerTo;
+        if (entry.adjNode == oppositeNode && (oppositePenalizer == null || Double.isFinite(oppositePenalizer.applyAsDouble(origEdgeId)))) {
             if (entry.getWeightOfVisitedPath() < bestWeight) {
                 bestFwdEntry = reverse ? new CHEntry(oppositeNode, 0) : entry;
                 bestBwdEntry = reverse ? entry : new CHEntry(oppositeNode, 0);
@@ -127,8 +125,12 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
     }
 
     @Override
-    protected boolean accept(RoutingCHEdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
-        return levelEdgeFilter == null || levelEdgeFilter.accept(edge);
+    protected double getEdgePenalty(RoutingCHEdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
+        if (levelFilterEnabled && !levelEdgeFilter.accept(edge))
+            return Double.POSITIVE_INFINITY;
+        if (reverse)
+            return penalizeTo ? edgePenalizerTo.applyAsDouble(edge.getOrigEdgeLast()) : 0;
+        else
+            return penalizeFrom ? edgePenalizerFrom.applyAsDouble(edge.getOrigEdgeFirst()) : 0;
     }
-
 }

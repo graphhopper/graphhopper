@@ -25,8 +25,6 @@ import com.graphhopper.storage.*;
 import java.util.PriorityQueue;
 import java.util.function.Supplier;
 
-import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
-
 /**
  * Common subclass for bidirectional CH algorithms.
  * <p>
@@ -78,50 +76,6 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
     protected abstract SPTEntry createEntry(int edge, int adjNode, int incEdge, double weight, SPTEntry parent, boolean reverse);
 
     @Override
-    protected void postInitFrom() {
-        if (fromOutEdge == ANY_EDGE) {
-            fillEdgesFromUsingFilter(levelEdgeFilter);
-        } else {
-            // need to use a local reference here, because levelEdgeFilter is modified when calling fillEdgesFromUsingFilter
-            final CHEdgeFilter tmpFilter = levelEdgeFilter;
-            fillEdgesFromUsingFilter(edgeState -> (tmpFilter == null || tmpFilter.accept(edgeState)) && edgeState.getOrigEdgeFirst() == fromOutEdge);
-        }
-    }
-
-    @Override
-    protected void postInitTo() {
-        if (toInEdge == ANY_EDGE) {
-            fillEdgesToUsingFilter(levelEdgeFilter);
-        } else {
-            final CHEdgeFilter tmpFilter = levelEdgeFilter;
-            fillEdgesToUsingFilter(edgeState -> (tmpFilter == null || tmpFilter.accept(edgeState)) && edgeState.getOrigEdgeLast() == toInEdge);
-        }
-    }
-
-    /**
-     * @param edgeFilter edge filter used to fill edges. the {@link #levelEdgeFilter} reference will be set to
-     *                   edgeFilter by this method, so make sure edgeFilter does not use it directly.
-     */
-    protected void fillEdgesFromUsingFilter(CHEdgeFilter edgeFilter) {
-        // we temporarily ignore the additionalEdgeFilter
-        CHEdgeFilter tmpFilter = levelEdgeFilter;
-        levelEdgeFilter = edgeFilter;
-        finishedFrom = !fillEdgesFrom();
-        levelEdgeFilter = tmpFilter;
-    }
-
-    /**
-     * @see #fillEdgesFromUsingFilter(CHEdgeFilter)
-     */
-    protected void fillEdgesToUsingFilter(CHEdgeFilter edgeFilter) {
-        // we temporarily ignore the additionalEdgeFilter
-        CHEdgeFilter tmpFilter = levelEdgeFilter;
-        levelEdgeFilter = edgeFilter;
-        finishedTo = !fillEdgesTo();
-        levelEdgeFilter = tmpFilter;
-    }
-
-    @Override
     public boolean finished() {
         // we need to finish BOTH searches for CH!
         if (finishedFrom && finishedTo)
@@ -171,13 +125,12 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
                            IntObjectMap<SPTEntry> bestWeightMap, RoutingCHEdgeExplorer explorer, boolean reverse) {
         RoutingCHEdgeIterator iter = explorer.setBaseNode(currEdge.adjNode);
         while (iter.next()) {
-            if (!accept(iter, currEdge, reverse))
+            double edgePenalty = getEdgePenalty(iter, currEdge, reverse);
+            if (Double.isInfinite(edgePenalty))
                 continue;
-
-            final double weight = calcWeight(iter, currEdge, reverse);
-            if (Double.isInfinite(weight)) {
+            final double weight = calcWeight(iter, currEdge, reverse) + edgePenalty;
+            if (Double.isInfinite(weight))
                 continue;
-            }
             final int origEdgeId = getOrigEdgeId(iter, reverse);
             final int traversalId = getTraversalId(iter, origEdgeId, reverse);
             SPTEntry entry = bestWeightMap.get(traversalId);
@@ -214,13 +167,17 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
         entry.parent = parent;
     }
 
-    protected boolean accept(RoutingCHEdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
-        // for edge-based traversal we leave it for TurnWeighting to decide whether or not a u-turn is acceptable,
+    protected double getEdgePenalty(RoutingCHEdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
+        // for edge-based traversal we leave it for the Weighting to decide whether or not a u-turn is acceptable,
         // but for node-based traversal we exclude such a turn for performance reasons already here
         if (!traversalMode.isEdgeBased() && edge.getEdge() == getIncomingEdge(currEdge))
-            return false;
-
-        return levelEdgeFilter == null || levelEdgeFilter.accept(edge);
+            return Double.POSITIVE_INFINITY;
+        if (!levelEdgeFilter.accept(edge))
+            return Double.POSITIVE_INFINITY;
+        if (reverse)
+            return penalizeTo ? edgePenalizerTo.applyAsDouble(edge.getOrigEdgeLast()) : 0;
+        else
+            return penalizeFrom ? edgePenalizerFrom.applyAsDouble(edge.getOrigEdgeFirst()) : 0;
     }
 
     protected int getOrigEdgeId(RoutingCHEdgeIteratorState edge, boolean reverse) {

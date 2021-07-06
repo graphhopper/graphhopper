@@ -61,8 +61,6 @@ public class QueryGraph implements Graph {
     private final NodeAccess nodeAccess;
     private final QueryOverlay queryOverlay;
 
-    // Use LinkedHashSet for predictable iteration order.
-    private final Set<VirtualEdgeIteratorState> unfavoredEdges = new LinkedHashSet<>(5);
     private final IntObjectMap<List<EdgeIteratorState>> virtualEdgesAtRealNodes;
     private final List<List<EdgeIteratorState>> virtualEdgesAtVirtualNodes;
 
@@ -109,48 +107,6 @@ public class QueryGraph implements Graph {
 
     public boolean isVirtualNode(int nodeId) {
         return nodeId >= baseNodes;
-    }
-
-    public void unfavorVirtualEdges(IntArrayList edgeIds) {
-        for (IntCursor c : edgeIds) {
-            unfavorVirtualEdge(c.value);
-        }
-    }
-
-    /**
-     * Assigns the 'unfavored' flag to a virtual edge (for both directions)
-     */
-    public void unfavorVirtualEdge(int virtualEdgeId) {
-        if (!isVirtualEdge(virtualEdgeId))
-            return;
-        VirtualEdgeIteratorState edge = getVirtualEdge(getInternalVirtualEdgeId(virtualEdgeId));
-        edge.setUnfavored(true);
-        unfavoredEdges.add(edge);
-        // we have to set the unfavored flag also for the virtual edge state that is used when we discover the same edge
-        // from the adjacent node. note that the unfavored flag will be set for both 'directions' of the same edge state.
-        VirtualEdgeIteratorState reverseEdge = getVirtualEdge(getPosOfReverseEdge(getInternalVirtualEdgeId(virtualEdgeId)));
-        reverseEdge.setUnfavored(true);
-        unfavoredEdges.add(reverseEdge);
-    }
-
-    /**
-     * Returns all virtual edges that have been unfavored via
-     * {@link #unfavorVirtualEdge(int)} or {@link #unfavorVirtualEdges(IntArrayList)}
-     */
-    public Set<EdgeIteratorState> getUnfavoredVirtualEdges() {
-        // Need to create a new set to convert Set<VirtualEdgeIteratorState> to
-        // Set<EdgeIteratorState>.
-        return new LinkedHashSet<>(unfavoredEdges);
-    }
-
-    /**
-     * Removes the 'unfavored' status of all virtual edges.
-     */
-    public void clearUnfavoredStatus() {
-        for (VirtualEdgeIteratorState edge : unfavoredEdges) {
-            edge.setUnfavored(false);
-        }
-        unfavoredEdges.clear();
     }
 
     @Override

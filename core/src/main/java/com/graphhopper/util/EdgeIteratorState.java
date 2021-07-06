@@ -37,7 +37,6 @@ import com.graphhopper.storage.IntsRef;
  * @see EdgeExplorer
  */
 public interface EdgeIteratorState {
-    BooleanEncodedValue UNFAVORED_EDGE = new SimpleBooleanEncodedValue("unfavored");
     /**
      * This method can be used to fetch the internal reverse state of an edge.
      */

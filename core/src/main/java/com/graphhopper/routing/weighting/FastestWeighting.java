@@ -40,6 +40,7 @@ public class FastestWeighting extends AbstractWeighting {
      * costs or traffic light costs etc)
      */
     protected final static double SPEED_CONV = 3.6;
+    // todonow: not sure if we can/should keep this here
     private final double headingPenalty;
     private final long headingPenaltyMillis;
     private final double maxSpeed;
@@ -95,24 +96,10 @@ public class FastestWeighting extends AbstractWeighting {
             else if (access == RoadAccess.PRIVATE)
                 time *= privatePenalty;
         }
-        // add direction penalties at start/stop/via points
-        boolean unfavoredEdge = edgeState.get(EdgeIteratorState.UNFAVORED_EDGE);
-        if (unfavoredEdge)
-            time += headingPenalty;
-
         return time;
     }
 
-    @Override
-    public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
-        // TODO move this to AbstractWeighting? see #485
-        long time = 0;
-        boolean unfavoredEdge = edgeState.get(EdgeIteratorState.UNFAVORED_EDGE);
-        if (unfavoredEdge)
-            time += headingPenaltyMillis;
-
-        return time + super.calcEdgeMillis(edgeState, reverse);
-    }
+    // todonow: why did calcmillis include headingpenalty??
 
     static double checkBounds(String key, double val, double from, double to) {
         if (val < from || val > to)

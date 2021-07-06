@@ -51,30 +51,6 @@ public class FastestWeightingTest {
     }
 
     @Test
-    public void testWeightWrongHeading() {
-        Weighting instance = new FastestWeighting(encoder, new PMap().putObject(Parameters.Routing.HEADING_PENALTY, 100));
-
-        VirtualEdgeIteratorState virtEdge = new VirtualEdgeIteratorState(0, GHUtility.createEdgeKey(1, false), 1, 2, 10,
-                GHUtility.setSpeed(10, 0, encoder, encodingManager.createEdgeFlags()), "test", Helper.createPointList(51, 0, 51, 1), false);
-        double time = instance.calcEdgeWeight(virtEdge, false);
-
-        virtEdge.setUnfavored(true);
-        // heading penalty on edge
-        assertEquals(time + 100, instance.calcEdgeWeight(virtEdge, false), 1e-8);
-        // only after setting it
-        virtEdge.setUnfavored(true);
-        assertEquals(time + 100, instance.calcEdgeWeight(virtEdge, true), 1e-8);
-        // but not after releasing it
-        virtEdge.setUnfavored(false);
-        assertEquals(time, instance.calcEdgeWeight(virtEdge, true), 1e-8);
-
-        // test default penalty
-        virtEdge.setUnfavored(true);
-        instance = new FastestWeighting(encoder);
-        assertEquals(time + Routing.DEFAULT_HEADING_PENALTY, instance.calcEdgeWeight(virtEdge, false), 1e-8);
-    }
-
-    @Test
     public void testSpeed0() {
         Weighting instance = new FastestWeighting(encoder);
         IntsRef edgeFlags = encodingManager.createEdgeFlags();

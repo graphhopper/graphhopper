@@ -18,16 +18,12 @@
 
 package com.graphhopper.routing;
 
-import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
 
 import java.util.Collections;
 import java.util.List;
-
-import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 
 public class FlexiblePathCalculator implements PathCalculator {
     private final QueryGraph queryGraph;
@@ -59,27 +55,14 @@ public class FlexiblePathCalculator implements PathCalculator {
 
     private List<Path> calcPaths(int from, int to, EdgeRestrictions edgeRestrictions, RoutingAlgorithm algo) {
         StopWatch sw = new StopWatch().start();
-        // todo: so far 'heading' is implemented like this: we mark the unfavored edges on the query graph and then
-        // our weighting applies a penalty to these edges. however, this only works for virtual edges and to make
-        // this compatible with edge-based routing we would have to use edge keys instead of edge ids. either way a
-        // better approach seems to be making the weighting (or the algorithm for that matter) aware of the unfavored
-        // edges directly without changing the graph
-        for (IntCursor c : edgeRestrictions.getUnfavoredEdges())
-            queryGraph.unfavorVirtualEdge(c.value);
-
         List<Path> paths;
-        if (edgeRestrictions.getSourceOutEdge() != ANY_EDGE || edgeRestrictions.getTargetInEdge() != ANY_EDGE) {
+        if (edgeRestrictions.getGetEdgePenaltyFrom() != null || edgeRestrictions.getGetGetEdgePenaltyTo() != null) {
             if (!(algo instanceof BidirRoutingAlgorithm))
-                throw new IllegalArgumentException("To make use of the " + Parameters.Routing.CURBSIDE + " parameter you need a bidirectional algorithm, got: " + algo.getName());
-            paths = Collections.singletonList(((BidirRoutingAlgorithm) algo).calcPath(from, to, edgeRestrictions.getSourceOutEdge(), edgeRestrictions.getTargetInEdge()));
+                throw new IllegalArgumentException("For directed routing you need a bidirectional algorithm, got: " + algo.getName());
+            paths = Collections.singletonList(((BidirRoutingAlgorithm) algo).calcPath(from, to, edgeRestrictions.getGetEdgePenaltyFrom(), edgeRestrictions.getGetGetEdgePenaltyTo()));
         } else {
             paths = algo.calcPaths(from, to);
         }
-
-        // reset all direction enforcements in queryGraph to avoid influencing next path
-        // todo: is this correct? aren't we taking a second look at these edges later when we calc times or
-        // instructions etc.?
-        queryGraph.clearUnfavoredStatus();
 
         if (paths.isEmpty())
             throw new IllegalStateException("Path list was empty for " + from + " -> " + to);

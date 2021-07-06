@@ -24,18 +24,17 @@ import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FiniteWeightFilter;
 import com.graphhopper.routing.util.NameSimilarityEdgeFilter;
 import com.graphhopper.routing.util.SnapPreventionEdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.IntToDoubleFunction;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
@@ -93,42 +92,30 @@ public class ViaRouting {
         if (!curbsides.isEmpty() && !headings.isEmpty())
             throw new IllegalArgumentException("You cannot use curbsides and headings or pass_through at the same time");
 
+        DirectionResolver directionResolver = new DirectionResolver(queryGraph,
+                (edge, reverse) -> Double.isFinite(weighting.calcEdgeWeightWithAccess(edge, reverse)));
+        HeadingResolver headingResolver = new HeadingResolver(queryGraph);
         final int legs = snaps.size() - 1;
         Result result = new Result(legs);
         for (int leg = 0; leg < legs; ++leg) {
-            Snap fromSnap = snaps.get(leg);
-            Snap toSnap = snaps.get(leg + 1);
-
-            // enforce headings
-            // at via-nodes and the target node the heading parameter is interpreted as the direction we want
-            // to enforce for arriving (not starting) at this node. the starting direction is not enforced at
-            // all for these points (unless using pass through). see this forum discussion:
-            // https://discuss.graphhopper.com/t/meaning-of-heading-parameter-for-via-routing/5643/6
-            double fromHeading = (leg == 0 && !headings.isEmpty()) ? headings.get(0) : Double.NaN;
-            double toHeading = (snaps.size() == headings.size() && !Double.isNaN(headings.get(leg + 1))) ? headings.get(leg + 1) : Double.NaN;
-
-            // enforce pass-through
-            int incomingEdge = NO_EDGE;
-            if (leg != 0) {
-                // enforce straight start after via stop
-                Path prevRoute = result.paths.get(leg - 1);
-                if (prevRoute.getEdgeCount() > 0)
-                    incomingEdge = prevRoute.getFinalEdge().getEdge();
-            }
-
-            // enforce curbsides
-            final String fromCurbside = curbsides.isEmpty() ? CURBSIDE_ANY : curbsides.get(leg);
-            final String toCurbside = curbsides.isEmpty() ? CURBSIDE_ANY : curbsides.get(leg + 1);
-
-            EdgeRestrictions edgeRestrictions = buildEdgeRestrictions(queryGraph, fromSnap, toSnap,
-                    fromHeading, toHeading, incomingEdge, passThrough,
-                    fromCurbside, toCurbside, weighting);
-
-            edgeRestrictions.setSourceOutEdge(ignoreThrowOrAcceptImpossibleCurbsides(curbsides, edgeRestrictions.getSourceOutEdge(), leg, forceCurbsides));
-            edgeRestrictions.setTargetInEdge(ignoreThrowOrAcceptImpossibleCurbsides(curbsides, edgeRestrictions.getTargetInEdge(), leg + 1, forceCurbsides));
+            // depending on the heading, pass_through and curbside parameters we might have to penalize some of the
+            // possible start/target edges
+            EdgeRestrictions edgeRestrictions;
+            if (!curbsides.isEmpty())
+                edgeRestrictions = buildEdgeRestrictionsForCurbsides(directionResolver, snaps, curbsides, leg, forceCurbsides);
+            else if (!headings.isEmpty() || passThrough) {
+                int incomingEdge = NO_EDGE;
+                if (leg != 0) {
+                    Path prevRoute = result.paths.get(leg - 1);
+                    if (prevRoute.getEdgeCount() > 0)
+                        incomingEdge = prevRoute.getFinalEdge().getEdge();
+                }
+                edgeRestrictions = buildEdgeRestrictionsForHeading(headingResolver, snaps, headings, leg, passThrough, incomingEdge);
+            } else
+                edgeRestrictions = EdgeRestrictions.none();
 
             // calculate paths
-            List<Path> paths = pathCalculator.calcPaths(fromSnap.getClosestNode(), toSnap.getClosestNode(), edgeRestrictions);
+            List<Path> paths = pathCalculator.calcPaths(snaps.get(leg).getClosestNode(), snaps.get(leg + 1).getClosestNode(), edgeRestrictions);
             result.debug += pathCalculator.getDebugString();
 
             // for alternative routing we get multiple paths and add all of them (which is ok, because we do not allow
@@ -150,35 +137,14 @@ public class ViaRouting {
         return result;
     }
 
-    public static class Result {
-        public List<Path> paths;
-        public long visitedNodes;
-        public String debug = "";
-
-        Result(int legs) {
-            paths = new ArrayList<>(legs);
-        }
-    }
-
-    /**
-     * Determines restrictions for the start/target edges to account for the heading, pass_through and curbside parameters
-     * for a single via-route leg.
-     *
-     * @param fromHeading  the heading at the start node of this leg, or NaN if no restriction should be applied
-     * @param toHeading    the heading at the target node (the vehicle's heading when arriving at the target), or NaN if
-     *                     no restriction should be applied
-     * @param incomingEdge the last edge of the previous leg (or {@link EdgeIterator#NO_EDGE} if not available
-     */
-    private static EdgeRestrictions buildEdgeRestrictions(
-            QueryGraph queryGraph, Snap fromSnap, Snap toSnap,
-            double fromHeading, double toHeading, int incomingEdge, boolean passThrough,
-            String fromCurbside, String toCurbside, Weighting weighting) {
-        EdgeRestrictions edgeRestrictions = new EdgeRestrictions();
-
-        // curbsides
+    private static EdgeRestrictions buildEdgeRestrictionsForCurbsides(DirectionResolver directionResolver, List<Snap> snaps, List<String> curbsides, int leg, boolean forceCurbsides) {
+        final Snap fromSnap = snaps.get(leg);
+        final Snap toSnap = snaps.get(leg + 1);
+        final String fromCurbside = curbsides.isEmpty() ? CURBSIDE_ANY : curbsides.get(leg);
+        final String toCurbside = curbsides.isEmpty() ? CURBSIDE_ANY : curbsides.get(leg + 1);
+        IntToDoubleFunction getEdgePenaltyFrom = null;
+        IntToDoubleFunction getEdgePenaltyTo = null;
         if (!fromCurbside.equals(CURBSIDE_ANY) || !toCurbside.equals(CURBSIDE_ANY)) {
-            DirectionResolver directionResolver = new DirectionResolver(queryGraph,
-                    (edge, reverse) -> Double.isFinite(weighting.calcEdgeWeightWithAccess(edge, reverse)));
             DirectionResolverResult fromDirection = directionResolver.resolveDirections(fromSnap.getClosestNode(), fromSnap.getQueryPoint());
             DirectionResolverResult toDirection = directionResolver.resolveDirections(toSnap.getClosestNode(), toSnap.getQueryPoint());
             int sourceOutEdge = DirectionResolverResult.getOutEdge(fromDirection, fromCurbside);
@@ -198,33 +164,57 @@ public class ViaRouting {
                     targetInEdge = ANY_EDGE;
                 }
             }
-            edgeRestrictions.setSourceOutEdge(sourceOutEdge);
-            edgeRestrictions.setTargetInEdge(targetInEdge);
+            final int tmpSourceOutEdge = ignoreThrowOrAcceptImpossibleCurbsides(curbsides, sourceOutEdge, leg, forceCurbsides);
+            final int tmpTargetInEdge = ignoreThrowOrAcceptImpossibleCurbsides(curbsides, targetInEdge, leg + 1, forceCurbsides);
+            getEdgePenaltyFrom = edge -> (tmpSourceOutEdge == ANY_EDGE || edge == tmpSourceOutEdge) ? 0 : Double.POSITIVE_INFINITY;
+            getEdgePenaltyTo = edge -> (tmpTargetInEdge == ANY_EDGE || edge == tmpTargetInEdge) ? 0 : Double.POSITIVE_INFINITY;
         }
+        return new EdgeRestrictions(getEdgePenaltyFrom, getEdgePenaltyTo);
+    }
 
+    private static EdgeRestrictions buildEdgeRestrictionsForHeading(HeadingResolver headingResolver, List<Snap> snaps, List<Double> headings, int leg, boolean passThrough, int incomingEdge) {
+        IntArrayList unfavoredOutEdges = new IntArrayList();
+        IntArrayList unfavoredInEdges = new IntArrayList();
         // heading
-        if (!Double.isNaN(fromHeading) || !Double.isNaN(toHeading)) {
-            // todo: for heading/pass_through with edge-based routing (especially CH) we have to find the edge closest
-            // to the heading and use it as sourceOutEdge/targetInEdge here. the heading penalty will not be applied
-            // this way (unless we implement this), but this is more or less ok as we can use finite u-turn costs
-            // instead. maybe the hardest part is dealing with headings that cannot be fulfilled, like in one-way
-            // streets. see also #1765
-            HeadingResolver headingResolver = new HeadingResolver(queryGraph);
-            if (!Double.isNaN(fromHeading))
-                edgeRestrictions.getUnfavoredEdges().addAll(headingResolver.getEdgesWithDifferentHeading(fromSnap.getClosestNode(), fromHeading));
+        // The heading at the start node is the direction we want to enforce at the beginning of the route.
+        // At via-nodes and the target node the heading parameter is interpreted as the direction we want
+        // to enforce for arriving (not starting) at this node. It's the vehicle's heading when arriving at the node.
+        // The starting direction is not enforced at all for these points (unless using pass through).
+        // See this forum discussion:
+        // https://discuss.graphhopper.com/t/meaning-of-heading-parameter-for-via-routing/5643/6
+        double fromHeading = (leg == 0 && !headings.isEmpty()) ? headings.get(0) : Double.NaN;
+        double toHeading = (snaps.size() == headings.size() && !Double.isNaN(headings.get(leg + 1))) ? headings.get(leg + 1) : Double.NaN;
+        if (!Double.isNaN(fromHeading))
+            unfavoredOutEdges.addAll(headingResolver.getEdgesWithDifferentHeading(snaps.get(leg).getClosestNode(), fromHeading));
 
-            if (!Double.isNaN(toHeading)) {
-                toHeading += 180;
-                if (toHeading > 360)
-                    toHeading -= 360;
-                edgeRestrictions.getUnfavoredEdges().addAll(headingResolver.getEdgesWithDifferentHeading(toSnap.getClosestNode(), toHeading));
-            }
+        if (!Double.isNaN(toHeading)) {
+            toHeading += 180;
+            if (toHeading > 360)
+                toHeading -= 360;
+            unfavoredInEdges.addAll(headingResolver.getEdgesWithDifferentHeading(snaps.get(leg + 1).getClosestNode(), toHeading));
         }
 
         // pass through
-        if (incomingEdge != NO_EDGE && passThrough)
-            edgeRestrictions.getUnfavoredEdges().add(incomingEdge);
-        return edgeRestrictions;
+        if (passThrough && incomingEdge != NO_EDGE)
+            unfavoredOutEdges.add(incomingEdge);
+
+        // todonow: how should this be configurable? also why is heading penalty added to *time* in FastestWeighting?!
+        //          maybe we could just set it to one here and then in the algorithms scale it with something like
+        //          weighting.getHeadingPenalty()?
+        final double headingPenalty = 300;
+        IntToDoubleFunction getEdgePenaltyFrom = edge -> unfavoredOutEdges.contains(edge) ? headingPenalty : 0;
+        IntToDoubleFunction getEdgePenaltyTo = edge -> unfavoredInEdges.contains(edge) ? headingPenalty : 0;
+        return new EdgeRestrictions(getEdgePenaltyFrom, getEdgePenaltyTo);
+    }
+
+    public static class Result {
+        public List<Path> paths;
+        public long visitedNodes;
+        public String debug = "";
+
+        Result(int legs) {
+            paths = new ArrayList<>(legs);
+        }
     }
 
     private static int ignoreThrowOrAcceptImpossibleCurbsides(List<String> curbsides, int edge, int placeIndex, boolean forceCurbsides) {
