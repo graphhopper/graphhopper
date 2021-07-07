@@ -19,6 +19,7 @@ package com.graphhopper.gtfs;
 
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
+import com.carrotsearch.hppc.cursors.IntObjectCursor;
 import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.util.EdgeIterator;
 
@@ -51,6 +52,7 @@ public class MultiCriteriaLabelSetting {
     private final PtEncodedValues flagEncoder;
     private final IntObjectMap<List<Label>> fromMap;
     private final PriorityQueue<Label> fromHeap;
+    private long maxProfileDuration;
     private final int maxVisitedNodes;
     private final boolean reverse;
     private final boolean ptOnly;
@@ -62,7 +64,7 @@ public class MultiCriteriaLabelSetting {
     private double betaWalkTime = 1.0;
     private long limitStreetTime = Long.MAX_VALUE;
 
-    public MultiCriteriaLabelSetting(GraphExplorer explorer, PtEncodedValues flagEncoder, boolean reverse, boolean ptOnly, boolean mindTransfers, boolean profileQuery, int maxVisitedNodes, List<Label> solutions) {
+    public MultiCriteriaLabelSetting(GraphExplorer explorer, PtEncodedValues flagEncoder, boolean reverse, boolean ptOnly, boolean mindTransfers, boolean profileQuery, long maxProfileDuration, int maxVisitedNodes, List<Label> solutions) {
         this.flagEncoder = flagEncoder;
         this.maxVisitedNodes = maxVisitedNodes;
         this.explorer = explorer;
@@ -70,6 +72,7 @@ public class MultiCriteriaLabelSetting {
         this.ptOnly = ptOnly;
         this.mindTransfers = mindTransfers;
         this.profileQuery = profileQuery;
+        this.maxProfileDuration = maxProfileDuration;
         this.targetLabels = solutions;
 
         queueComparator = Comparator
@@ -235,7 +238,7 @@ public class MultiCriteriaLabelSetting {
 
         if (profileQuery) {
             if (me.departureTime != null && they.departureTime != null) {
-                if (departureTimeCriterion(me) > departureTimeCriterion(they))
+                if (departureTimeCriterion(me) > departureTimeCriterion(they) && departureTimeCriterion(me) < departureTimeCriterion(they) + maxProfileDuration)
                     return false;
             } else {
                 if (travelTimeCriterion(me) > travelTimeCriterion(they))
@@ -291,6 +294,13 @@ public class MultiCriteriaLabelSetting {
 
     int getVisitedNodes() {
         return visitedNodes;
+    }
+
+    void postMortemCheck() {
+        IntSummaryStatistics nLabelsStatistics = StreamSupport.stream(fromMap.spliterator(), false)
+                .mapToInt(l -> l.value.size())
+                .summaryStatistics();
+        System.out.println(nLabelsStatistics);
     }
 
 }

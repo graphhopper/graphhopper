@@ -200,7 +200,7 @@ public class GraphHopperGtfs extends GraphHopperOSM {
         PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
         final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, getGtfsStorage(), RealtimeFeed.empty(getGtfsStorage()), true, true, 5.0, false);
         getGtfsStorage().getStationNodes().values().stream().distinct().forEach(stationNode -> {
-            MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, true, false, false, false, Integer.MAX_VALUE, new ArrayList<>());
+            MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, true, false, false, false,0, Integer.MAX_VALUE, new ArrayList<>());
             router.setLimitStreetTime(Duration.ofSeconds(maxTransferWalkTimeSeconds).toMillis());
             Iterator<Label> iterator = router.calcLabels(stationNode, Instant.ofEpochMilli(0), 0).iterator();
             while (iterator.hasNext()) {
@@ -268,7 +268,7 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                     QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, Collections.emptyList());
                     final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, getGtfsStorage(), realtimeFeed, false, true, 5.0, false);
 
-                    MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, false, false, false, false, Integer.MAX_VALUE, new ArrayList<>());
+                    MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, false, false, false, false, 0, Integer.MAX_VALUE, new ArrayList<>());
                     Iterator<Label> iterator = router.calcLabels(fromnode, Instant.ofEpochMilli(0), 0).iterator();
                     Label solution = null;
                     while (iterator.hasNext()) {

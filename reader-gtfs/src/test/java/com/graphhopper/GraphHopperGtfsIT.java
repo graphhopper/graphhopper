@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.graphhopper.gtfs.GtfsHelper.time;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
 public class GraphHopperGtfsIT {
@@ -214,6 +215,7 @@ public class GraphHopperGtfsIT {
         );
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 23, 0).atZone(zoneId).toInstant());
         ghRequest.setProfileQuery(true);
+        ghRequest.setMaxProfileDuration(Duration.ofHours(1));
         ghRequest.setIgnoreTransfers(true);
 
         GHResponse response = ptRouter.route(ghRequest);
@@ -381,6 +383,7 @@ public class GraphHopperGtfsIT {
         assertEquals("Two legs: pt, pt, but the two pt legs are in one vehicle, so...", 2, response.getBest().getLegs().size());
         assertEquals("...one boarding instruction", 1, response.getBest().getInstructions().stream().filter(i -> i.getSign() == Instruction.PT_START_TRIP).count());
         assertEquals("...and one alighting instruction", 1, response.getBest().getInstructions().stream().filter(i -> i.getSign() == Instruction.PT_END_TRIP).count());
+        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(200);
     }
 
     @Test

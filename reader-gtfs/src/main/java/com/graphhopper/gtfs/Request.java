@@ -42,7 +42,7 @@ public class Request {
     private int blockedRouteTypes;
     private Locale locale = Helper.getLocale("en");
     private Duration limitStreetTime;
-    private Duration maxProfileDuration = Duration.ofHours(1);
+    private Duration maxProfileDuration = Duration.ofDays(1);
     private List<String> pathDetails = new ArrayList<>();
 
     public Request(List<GHLocation> points, Instant departureTime) {
