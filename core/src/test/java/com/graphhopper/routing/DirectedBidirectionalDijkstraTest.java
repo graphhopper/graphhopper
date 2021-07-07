@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Random;
+import java.util.function.IntToDoubleFunction;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
@@ -499,6 +500,50 @@ public class DirectedBidirectionalDijkstraTest {
         assertEquals(5 + virtualEdge.getDistance(), path.getDistance(), 1.e-3);
     }
 
+    @Test
+    void startAndTargetPenalties() {
+        //   /- 1 - 4 -\     slow
+        // 0 -- 2 - 5 -- 7   medium
+        //   \- 3 - 6 -/     fast
+        GHUtility.setSpeed(20, true, true, encoder, graph.edge(0, 1).setDistance(100));
+        GHUtility.setSpeed(30, true, true, encoder, graph.edge(0, 2).setDistance(100));
+        GHUtility.setSpeed(40, true, true, encoder, graph.edge(0, 3).setDistance(100));
+        GHUtility.setSpeed(20, true, true, encoder, graph.edge(1, 4).setDistance(100));
+        GHUtility.setSpeed(30, true, true, encoder, graph.edge(2, 5).setDistance(100));
+        GHUtility.setSpeed(40, true, true, encoder, graph.edge(3, 6).setDistance(100));
+        GHUtility.setSpeed(20, true, true, encoder, graph.edge(4, 7).setDistance(100));
+        GHUtility.setSpeed(30, true, true, encoder, graph.edge(5, 7).setDistance(100));
+        GHUtility.setSpeed(40, true, true, encoder, graph.edge(6, 7).setDistance(100));
+
+        // without penalty we use the fast road of course
+        assertPath(calcPath(0, 7, null, null), 27, 300, 27_000, nodes(0, 3, 6, 7));
+        // when we block all start or target edges we get no path
+        assertNotFound(calcPath(0, 7, e -> Double.POSITIVE_INFINITY, null));
+        assertNotFound(calcPath(0, 7, null, e -> Double.POSITIVE_INFINITY));
+        assertNotFound(calcPath(0, 7, e -> Double.POSITIVE_INFINITY, e -> Double.POSITIVE_INFINITY));
+        // when we block two roads we get the third
+        assertPath(calcPath(0, 7, e -> (e == 0 || e == 2) ? Double.POSITIVE_INFINITY : 0, null), 36, 300, 36_000, nodes(0, 2, 5, 7));
+        assertPath(calcPath(0, 7, e -> (e == 1 || e == 2) ? Double.POSITIVE_INFINITY : 0, null), 54, 300, 54_000, nodes(0, 1, 4, 7));
+        assertPath(calcPath(0, 7, null, e -> (e == 6 || e == 8) ? Double.POSITIVE_INFINITY : 0), 36, 300, 36_000, nodes(0, 2, 5, 7));
+        assertPath(calcPath(0, 7, null, e -> (e == 7 || e == 8) ? Double.POSITIVE_INFINITY : 0), 54, 300, 54_000, nodes(0, 1, 4, 7));
+        // if we just apply a finite penalty it won't change the route unless it is large enough
+        // note that the penalty does not affect the time
+        assertPath(calcPath(0, 7, e -> e == 2 ? 5 : 0, null), 32, 300, 27_000, nodes(0, 3, 6, 7));
+        assertPath(calcPath(0, 7, e -> e == 2 ? 8 : 0, null), 35, 300, 27_000, nodes(0, 3, 6, 7));
+        assertPath(calcPath(0, 7, e -> e == 2 ? 10 : 0, null), 36, 300, 36_000, nodes(0, 2, 5, 7));
+        assertPath(calcPath(0, 7, e -> e == 2 ? 10 : e == 1 ? 5 : 0, null), 37, 300, 27_000, nodes(0, 3, 6, 7));
+        assertPath(calcPath(0, 7, e -> e == 2 ? 30 : e == 1 ? 20 : 0, null), 54, 300, 54_000, nodes(0, 1, 4, 7));
+        assertPath(calcPath(0, 7, e -> e == 2 ? 30 : 0, e -> e == 7 ? 20 : 0), 54, 300, 54_000, nodes(0, 1, 4, 7));
+        assertPath(calcPath(0, 7, e -> e == 2 ? 30 : 0, e -> e == 7 ? 10 : 0), 46, 300, 36_000, nodes(0, 2, 5, 7));
+
+        // special case where start=end
+        assertPath(calcPath(0, 0, null, null), 0, 0, 0, nodes(0));
+        // when calcFromToPenalty is not null, but also the penalty is zero a loop is enforced
+        assertPath(calcPath(0, 0, e -> 0, e -> 0), 63, 600, 63_000, nodes(0, 3, 6, 7, 5, 2, 0));
+        assertPath(calcPath(0, 0, e -> e == 0 ? 0 : Double.POSITIVE_INFINITY, null), 81, 600, 81_000, nodes(0, 1, 4, 7, 6, 3, 0));
+        assertPath(calcPath(0, 0, e -> e == 0 ? 0 : Double.POSITIVE_INFINITY, e -> e == 0 ? 0 : Double.POSITIVE_INFINITY), 171, 1200, 171_000, nodes(0, 1, 4, 7, 6, 3, 0, 2, 5, 7, 4, 1, 0));
+    }
+
     private Path calcPath(int source, int target, int sourceOutEdge, int targetInEdge) {
         return calcPath(source, target, sourceOutEdge, targetInEdge, weighting);
     }
@@ -506,6 +551,10 @@ public class DirectedBidirectionalDijkstraTest {
     private Path calcPath(int source, int target, int sourceOutEdge, int targetInEdge, Weighting w) {
         BidirRoutingAlgorithm algo = createAlgo(graph, w);
         return algo.calcPath(source, target, sourceOutEdge, targetInEdge);
+    }
+
+    private Path calcPath(int source, int target, IntToDoubleFunction calcSourcePenalty, IntToDoubleFunction calcTargetPenalty) {
+        return createAlgo(graph, weighting).calcPath(source, target, calcSourcePenalty, calcTargetPenalty);
     }
 
     private BidirRoutingAlgorithm createAlgo(Graph graph, Weighting weighting) {

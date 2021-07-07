@@ -72,12 +72,15 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
         // anything to the shortest path.
         int oppositeNode = reverse ? from : to;
         IntToDoubleFunction calcOppositeEdgePenalty = reverse ? calcFromEdgePenalty : calcToEdgePenalty;
-        if (entry.adjNode == oppositeNode && (calcOppositeEdgePenalty == null || Double.isFinite(calcOppositeEdgePenalty.applyAsDouble(origEdgeId)))) {
-            if (entry.getWeightOfVisitedPath() < bestWeight) {
-                bestFwdEntry = reverse ? new CHEntry(oppositeNode, 0) : entry;
-                bestBwdEntry = reverse ? entry : new CHEntry(oppositeNode, 0);
-                bestWeight = entry.getWeightOfVisitedPath();
-                return;
+        if (entry.adjNode == oppositeNode) {
+            double penalty = calcOppositeEdgePenalty == null ? 0 : calcOppositeEdgePenalty.applyAsDouble(origEdgeId);
+            if (Double.isFinite(penalty)) {
+                if (entry.getWeightOfVisitedPath() + penalty < bestWeight) {
+                    bestFwdEntry = reverse ? new CHEntry(oppositeNode, 0) : entry;
+                    bestBwdEntry = reverse ? entry : new CHEntry(oppositeNode, 0);
+                    bestWeight = entry.getWeightOfVisitedPath() + penalty;
+                    return;
+                }
             }
         }
 

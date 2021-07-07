@@ -18,6 +18,8 @@
 
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.DoubleArrayList;
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.LMConfig;
@@ -46,16 +48,15 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.function.IntToDoubleFunction;
 import java.util.stream.Stream;
 
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
-import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
-import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.GHUtility.createRandomSnaps;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * This test makes sure the different bidirectional routing algorithms correctly implement restrictions of the source/
@@ -96,7 +97,7 @@ public class DirectedRoutingTest {
             // todo: this test only works with speedTwoDirections=false (as long as loops are enabled), otherwise it will
             // fail sometimes for edge-based algorithms, #1631, but maybe we can should disable different fwd/bwd speeds
             // only for loops instead?
-            encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
+            encoder = new CarFlagEncoder(8, 1, maxTurnCosts);
             encodingManager = EncodingManager.create(encoder);
             graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).build();
             turnCostStorage = graph.getTurnCostStorage();
@@ -183,7 +184,7 @@ public class DirectedRoutingTest {
     private static class RepeatedFixtureProvider implements ArgumentsProvider {
         @Override
         public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
-            return Stream.generate(() -> new FixtureProvider().provideArguments(context)).limit(10).flatMap(s -> s);
+            return Stream.generate(() -> new FixtureProvider().provideArguments(context)).limit(1).flatMap(s -> s);
         }
     }
 
@@ -209,13 +210,13 @@ public class DirectedRoutingTest {
         for (int i = 0; i < numQueries; i++) {
             int source = f.getRandom(rnd);
             int target = f.getRandom(rnd);
-            int sourceOutEdge = getSourceOutEdge(rnd, source, f.graph);
-            int targetInEdge = getTargetInEdge(rnd, target, f.graph);
-//            LOGGER.info("source: " + source + ", target: " + target + ", sourceOutEdge: " + sourceOutEdge + ", targetInEdge: " + targetInEdge);
+//            LOGGER.info("source: " + source + ", target: " + target)
+            IntToDoubleFunction calcStartEdgePenalty = getEdgePenalty(rnd, source, f.graph);
+            IntToDoubleFunction calcTargetEdgePenalty = getEdgePenalty(rnd, target, f.graph);
             Path refPath = new DijkstraBidirectionRef(f.graph, ((Graph) f.graph).wrapWeighting(f.weighting), TraversalMode.EDGE_BASED)
-                    .calcPath(source, target, sourceOutEdge, targetInEdge);
+                    .calcPath(source, target, calcStartEdgePenalty, calcTargetEdgePenalty);
             Path path = f.createAlgo()
-                    .calcPath(source, target, sourceOutEdge, targetInEdge);
+                    .calcPath(source, target, calcStartEdgePenalty, calcTargetEdgePenalty);
             // do not check nodes, because there can be ambiguity when there are zero weight loops
             strictViolations.addAll(comparePaths(refPath, path, source, target, false, seed));
         }
@@ -226,6 +227,85 @@ public class DirectedRoutingTest {
                 LOGGER.info("strict violation: " + strictViolation);
             }
             fail("Too many strict violations, with seed: " + seed + " - " + strictViolations.size() + " / " + numQueries);
+        }
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void specificSample(Fixture f) {
+        // should be covered by the random tests anyway, but adding this for debugging and double safety
+        // 4 < 5
+        // |   |
+        // 0 - 1 - 2 - 3
+        GHUtility.setSpeed(36, true, true, f.encoder, f.graph.edge(0, 1).setDistance(100));
+        GHUtility.setSpeed(36, true, true, f.encoder, f.graph.edge(1, 2).setDistance(100));
+        GHUtility.setSpeed(36, true, true, f.encoder, f.graph.edge(2, 3).setDistance(100));
+        GHUtility.setSpeed(36, true, true, f.encoder, f.graph.edge(0, 4).setDistance(1000));
+        GHUtility.setSpeed(36, true, false, f.encoder, f.graph.edge(5, 4).setDistance(1000));
+        GHUtility.setSpeed(36, true, true, f.encoder, f.graph.edge(5, 1).setDistance(1000));
+        f.preProcessGraph();
+        {
+            BidirRoutingAlgorithm algo = f.createAlgo();
+            Path path = algo.calcPath(0, 3, e -> 10, e -> 15);
+            assertTrue(path.isFound());
+            assertEquals(300, path.getDistance());
+            assertEquals(55, path.getWeight());
+            assertEquals(30_000, path.getTime());
+            assertEquals(IntArrayList.from(0, 1, 2, 3), path.calcNodes());
+        }
+        {
+            BidirRoutingAlgorithm algo = f.createAlgo();
+            Path path = algo.calcPath(0, 1, e -> 10, e -> 15);
+            assertTrue(path.isFound());
+            assertEquals(100, path.getDistance());
+            assertEquals(35, path.getWeight());
+            assertEquals(10_000, path.getTime());
+            assertEquals(IntArrayList.from(0, 1), path.calcNodes());
+        }
+        {
+            // going from one node to the same node, but there are some penalties
+            BidirRoutingAlgorithm algo = f.createAlgo();
+            Path path = algo.calcPath(0, 0, e -> 10, e -> 15);
+            assertTrue(path.isFound());
+            if (f.uTurnCosts == INFINITE_U_TURN_COSTS) {
+                assertEquals(3100, path.getDistance());
+                assertEquals(335, path.getWeight());
+                assertEquals(310_000, path.getTime());
+                assertEquals(IntArrayList.from(0, 1, 5, 4, 0), path.calcNodes());
+            } else {
+                assertEquals(200, path.getDistance());
+                assertEquals(85, path.getWeight());
+                assertEquals(60_000, path.getTime());
+                assertEquals(IntArrayList.from(0, 1, 0), path.calcNodes());
+            }
+        }
+        {
+            // going from one node to the same node, but there are some (zero) 'penalties'
+            BidirRoutingAlgorithm algo = f.createAlgo();
+            Path path = algo.calcPath(0, 0, e -> 0, e -> 0);
+            assertTrue(path.isFound());
+            if (f.uTurnCosts == INFINITE_U_TURN_COSTS) {
+                assertEquals(3100, path.getDistance());
+                assertEquals(310, path.getWeight());
+                assertEquals(310_000, path.getTime());
+                assertEquals(IntArrayList.from(0, 1, 5, 4, 0), path.calcNodes());
+            } else {
+                assertEquals(200, path.getDistance());
+                assertEquals(60, path.getWeight());
+                assertEquals(60_000, path.getTime());
+                assertEquals(IntArrayList.from(0, 1, 0), path.calcNodes());
+            }
+        }
+        {
+            // going from one node to the same node, penalties are null. in this case leaving the start node is not
+            // enforced at all
+            BidirRoutingAlgorithm algo = f.createAlgo();
+            Path path = algo.calcPath(0, 0, null, null);
+            assertTrue(path.isFound());
+            assertEquals(0, path.getDistance());
+            assertEquals(0, path.getWeight());
+            assertEquals(0, path.getTime());
+            assertEquals(IntArrayList.from(0), path.calcNodes());
         }
     }
 
@@ -256,17 +336,12 @@ public class DirectedRoutingTest {
 
             int source = snaps.get(0).getClosestNode();
             int target = snaps.get(1).getClosestNode();
-            Random tmpRnd1 = new Random(seed);
-            int sourceOutEdge = getSourceOutEdge(tmpRnd1, source, queryGraph);
-            int targetInEdge = getTargetInEdge(tmpRnd1, target, queryGraph);
-            Random tmpRnd2 = new Random(seed);
-            int chSourceOutEdge = getSourceOutEdge(tmpRnd2, source, queryGraph);
-            int chTargetInEdge = getTargetInEdge(tmpRnd2, target, queryGraph);
-
+            IntToDoubleFunction calcStartEdgePenalty = getEdgePenalty(rnd, source, queryGraph);
+            IntToDoubleFunction calcTargetEdgePenalty = getEdgePenalty(rnd, target, queryGraph);
             Path refPath = new DijkstraBidirectionRef(queryGraph, ((Graph) queryGraph).wrapWeighting(f.weighting), TraversalMode.EDGE_BASED)
-                    .calcPath(source, target, sourceOutEdge, targetInEdge);
+                    .calcPath(source, target, calcStartEdgePenalty, calcTargetEdgePenalty);
             Path path = f.createAlgo(queryGraph)
-                    .calcPath(source, target, chSourceOutEdge, chTargetInEdge);
+                    .calcPath(source, target, calcStartEdgePenalty, calcTargetEdgePenalty);
 
             // do not check nodes, because there can be ambiguity when there are zero weight loops
             strictViolations.addAll(comparePaths(refPath, path, source, target, false, seed));
@@ -299,32 +374,46 @@ public class DirectedRoutingTest {
         return strictViolations;
     }
 
-    private int getTargetInEdge(Random rnd, int node, Graph graph) {
-        return getAdjEdge(rnd, node, graph);
-    }
-
-    private int getSourceOutEdge(Random rnd, int node, Graph graph) {
-        return getAdjEdge(rnd, node, graph);
-    }
-
-    private int getAdjEdge(Random rnd, int node, Graph graph) {
+    private IntToDoubleFunction getEdgePenalty(Random rnd, int node, Graph graph) {
         // sometimes do not restrict anything
         if (rnd.nextDouble() < 0.05) {
-            return ANY_EDGE;
+            return null;
         }
-        // sometimes use NO_EDGE
+        // this is different than using null!
         if (rnd.nextDouble() < 0.05) {
-            return NO_EDGE;
+            return e -> 0;
         }
-        // use all edge explorer, sometimes we will find an edge we can restrict sometimes we do not
+        // sometimes restrict everything
+        if (rnd.nextDouble() < 0.05) {
+            return e -> Double.POSITIVE_INFINITY;
+        }
+        // use all edge explorer, sometimes we will find an edge we can restrict, sometimes we do not
         EdgeExplorer explorer = graph.createEdgeExplorer();
         EdgeIterator iter = explorer.setBaseNode(node);
-        List<Integer> edgeIds = new ArrayList<>();
+        IntArrayList edgeIds = new IntArrayList();
+        DoubleArrayList penalties = new DoubleArrayList();
         while (iter.next()) {
             edgeIds.add(iter.getOrigEdgeFirst());
             edgeIds.add(iter.getOrigEdgeLast());
+            double penalty = rnd.nextDouble();
+            if (penalty < 0.05)
+                penalty = 0;
+            if (penalty > 0.95)
+                penalty = Double.POSITIVE_INFINITY;
+            penalty *= 40;
+            penalties.add(penalty);
+            penalties.add(penalty);
         }
-        return edgeIds.isEmpty() ? ANY_EDGE : edgeIds.get(rnd.nextInt(edgeIds.size()));
+        // sometimes restrict all but one
+        if (edgeIds.size() > 0 && rnd.nextDouble() < 0.05) {
+            int one = edgeIds.get(rnd.nextInt(edgeIds.size()));
+            return e -> e == one ? 0 : Double.POSITIVE_INFINITY;
+        }
+//        LOGGER.info("restricted edges: {}, penalties: {}", edgeIds, penalties);
+        return e -> {
+            int index = edgeIds.indexOf(e);
+            return index >= 0 ? penalties.get(index) : 0;
+        };
     }
 
 }
