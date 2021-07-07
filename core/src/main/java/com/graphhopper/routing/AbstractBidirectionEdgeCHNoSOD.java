@@ -71,13 +71,16 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
         // node of the shortest path matches the source or target. in this case one of the searches does not contribute
         // anything to the shortest path.
         int oppositeNode = reverse ? from : to;
-        IntToDoubleFunction oppositePenalizer = reverse ? initialEdgePenaltyFrom : initialEdgePenaltyTo;
-        if (entry.adjNode == oppositeNode && (oppositePenalizer == null || Double.isFinite(oppositePenalizer.applyAsDouble(origEdgeId)))) {
-            if (entry.getWeightOfVisitedPath() < bestWeight) {
-                bestFwdEntry = reverse ? new CHEntry(oppositeNode, 0) : entry;
-                bestBwdEntry = reverse ? entry : new CHEntry(oppositeNode, 0);
-                bestWeight = entry.getWeightOfVisitedPath();
-                return;
+        IntToDoubleFunction calcOppositeEdgePenalty = reverse ? calcFromEdgePenalty : calcToEdgePenalty;
+        if (entry.adjNode == oppositeNode) {
+            double penalty = calcOppositeEdgePenalty == null ? 0 : calcOppositeEdgePenalty.applyAsDouble(origEdgeId);
+            if (Double.isFinite(penalty)) {
+                if (entry.getWeightOfVisitedPath() + penalty < bestWeight) {
+                    bestFwdEntry = reverse ? new CHEntry(oppositeNode, 0) : entry;
+                    bestBwdEntry = reverse ? entry : new CHEntry(oppositeNode, 0);
+                    bestWeight = entry.getWeightOfVisitedPath() + penalty;
+                    return;
+                }
             }
         }
 
@@ -126,8 +129,8 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
         if (levelFilterEnabled && !levelEdgeFilter.accept(edge))
             return Double.POSITIVE_INFINITY;
         if (reverse)
-            return penalizeTo ? initialEdgePenaltyTo.applyAsDouble(edge.getOrigEdgeLast()) : 0;
+            return toEdgePenaltyEnabled ? calcToEdgePenalty.applyAsDouble(edge.getOrigEdgeLast()) : 0;
         else
-            return penalizeFrom ? initialEdgePenaltyFrom.applyAsDouble(edge.getOrigEdgeFirst()) : 0;
+            return fromEdgePenaltyEnabled ? calcFromEdgePenalty.applyAsDouble(edge.getOrigEdgeFirst()) : 0;
     }
 }

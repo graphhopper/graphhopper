@@ -173,9 +173,9 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         if (!traversalMode.isEdgeBased() && iter.getEdge() == prevOrNextEdgeId)
             return Double.POSITIVE_INFINITY;
         if (reverse)
-            return penalizeTo ? initialEdgePenaltyTo.applyAsDouble(iter.getOrigEdgeLast()) : 0;
+            return toEdgePenaltyEnabled ? calcToEdgePenalty.applyAsDouble(iter.getOrigEdgeLast()) : 0;
         else
-            return penalizeFrom ? initialEdgePenaltyFrom.applyAsDouble(iter.getOrigEdgeFirst()) : 0;
+            return fromEdgePenaltyEnabled ? calcFromEdgePenalty.applyAsDouble(iter.getOrigEdgeFirst()) : 0;
     }
 
     protected Path createEmptyPath() {

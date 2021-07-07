@@ -48,5 +48,14 @@ public interface BidirRoutingAlgorithm extends RoutingAlgorithm {
         );
     }
 
-    Path calcPath(int from, int to, IntToDoubleFunction initialEdgePenaltyFrom, IntToDoubleFunction initialEdgePenaltyTo);
+    /**
+     * like {@link #calcPath(int, int, int, int)}, but this method allows more fine grained control over the start/target
+     * edges. Note that passing anything except null, even something like `edge -> 0` enforces the route to leave the
+     * from node, even when from==to. Passing null means the route won't be affected by the penalty. The penalty weights
+     * will be included in the resulting path's weight.
+     *
+     * @param calcFromEdgePenalty a penalty function edgeId->penaltyWeight that will be applied to the start edges
+     * @param calcToEdgePenalty   a penalty function edgeId->penaltyWeight that will be applied to the target edges
+     */
+    Path calcPath(int from, int to, IntToDoubleFunction calcFromEdgePenalty, IntToDoubleFunction calcToEdgePenalty);
 }

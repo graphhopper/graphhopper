@@ -22,17 +22,19 @@ import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.util.EdgeIterator;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.PriorityQueue;
 import java.util.function.IntToDoubleFunction;
 
 public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
     protected final TraversalMode traversalMode;
     protected int from;
     protected int to;
-    protected IntToDoubleFunction initialEdgePenaltyFrom;
-    protected IntToDoubleFunction initialEdgePenaltyTo;
-    protected boolean penalizeFrom;
-    protected boolean penalizeTo;
+    protected IntToDoubleFunction calcFromEdgePenalty;
+    protected IntToDoubleFunction calcToEdgePenalty;
+    protected boolean fromEdgePenaltyEnabled;
+    protected boolean toEdgePenaltyEnabled;
     protected IntObjectMap<SPTEntry> bestWeightMapFrom;
     protected IntObjectMap<SPTEntry> bestWeightMapTo;
     protected IntObjectMap<SPTEntry> bestWeightMapOther;
@@ -74,17 +76,17 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
     }
 
     @Override
-    public Path calcPath(int from, int to, IntToDoubleFunction initialEdgePenaltyFrom, IntToDoubleFunction initialEdgePenaltyTo) {
-        if (!traversalMode.isEdgeBased() && (initialEdgePenaltyFrom != null || initialEdgePenaltyTo != null))
+    public Path calcPath(int from, int to, IntToDoubleFunction calcFromEdgePenalty, IntToDoubleFunction calcToEdgePenalty) {
+        if (!traversalMode.isEdgeBased() && (calcFromEdgePenalty != null || calcToEdgePenalty != null))
             // in principle we could also use initial edge weights for node-based routing, but think about P-shaped routes
             // that start in one direction, take some turns to come back to the start location and then continue in
             // another direction than the start direction. this is not possible for node-based. For node-based routing
             // we should rather allow initial node weights to achieve something similar.
             throw new IllegalArgumentException("Routing with initial edge weights is only possible for edge-based graph traversal");
-        this.initialEdgePenaltyFrom = initialEdgePenaltyFrom;
-        this.initialEdgePenaltyTo = initialEdgePenaltyTo;
-        penalizeFrom = initialEdgePenaltyFrom != null;
-        penalizeTo = initialEdgePenaltyTo != null;
+        this.calcFromEdgePenalty = calcFromEdgePenalty;
+        this.calcToEdgePenalty = calcToEdgePenalty;
+        fromEdgePenaltyEnabled = calcFromEdgePenalty != null;
+        toEdgePenaltyEnabled = calcToEdgePenalty != null;
         checkAlreadyRun();
         init(from, 0, to, 0);
         runAlgo();
@@ -121,10 +123,11 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
                 bestWeightMapOther = bestWeightMapFrom;
                 updateBestPath(Double.POSITIVE_INFINITY, currFrom, EdgeIterator.NO_EDGE, to, true);
             }
-            // todo: what if the penalizers are not null, but do not restrict anything either?
-        } else if (from == to && !penalizeFrom && !penalizeTo) {
+        } else if (from == to && !fromEdgePenaltyEnabled && !toEdgePenaltyEnabled) {
             // special handling if start and end are the same and no directions are restricted
             // the resulting weight should be zero
+            // no restrictions means the penalty functions were null! passing a penalty function always means the
+            // path has to leave the source node, even when all penalties are finite or even zero.
             if (currFrom.weight != 0 || currTo.weight != 0) {
                 throw new IllegalStateException("If from=to, the starting weight must be zero for from and to");
             }
@@ -137,8 +140,8 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
         }
         postInitFrom();
         postInitTo();
-        penalizeFrom = false;
-        penalizeTo = false;
+        fromEdgePenaltyEnabled = false;
+        toEdgePenaltyEnabled = false;
     }
 
     protected void postInitFrom() {
@@ -255,7 +258,7 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
 
     void setToDataStructures(AbstractBidirAlgo other) {
         to = other.to;
-        initialEdgePenaltyTo = other.initialEdgePenaltyTo;
+        calcToEdgePenalty = other.calcToEdgePenalty;
         pqOpenSetTo = other.pqOpenSetTo;
         bestWeightMapTo = other.bestWeightMapTo;
         finishedTo = other.finishedTo;
