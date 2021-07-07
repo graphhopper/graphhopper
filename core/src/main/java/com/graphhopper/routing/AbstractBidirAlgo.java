@@ -123,10 +123,11 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
                 bestWeightMapOther = bestWeightMapFrom;
                 updateBestPath(Double.POSITIVE_INFINITY, currFrom, EdgeIterator.NO_EDGE, to, true);
             }
-            // todo: what if the penalizers are not null, but do not restrict anything either?
         } else if (from == to && !fromEdgePenaltyEnabled && !toEdgePenaltyEnabled) {
             // special handling if start and end are the same and no directions are restricted
             // the resulting weight should be zero
+            // no restrictions means the penalty functions were null! passing a penalty function always means the
+            // path has to leave the source node, even when all penalties are finite or even zero.
             if (currFrom.weight != 0 || currTo.weight != 0) {
                 throw new IllegalStateException("If from=to, the starting weight must be zero for from and to");
             }
