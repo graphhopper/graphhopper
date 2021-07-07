@@ -318,7 +318,6 @@ public final class PtRouterImpl implements PtRouter {
                     }
                 }
             }
-            router.postMortemCheck();
 
             List<List<Label.Transition>> paths = new ArrayList<>();
             for (Label discoveredSolution : discoveredSolutions) {

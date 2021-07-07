@@ -277,11 +277,4 @@ public class MultiCriteriaLabelSetting {
         return visitedNodes;
     }
 
-    void postMortemCheck() {
-        IntSummaryStatistics nLabelsStatistics = StreamSupport.stream(fromMap.spliterator(), false)
-                .mapToInt(l -> l.value.size())
-                .summaryStatistics();
-        System.out.println(nLabelsStatistics);
-    }
-
 }
