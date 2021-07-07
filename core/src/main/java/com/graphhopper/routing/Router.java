@@ -413,6 +413,10 @@ public class Router {
         protected void checkRequest() {
             super.checkRequest();
             // todonow: update tests etc. also it has to be edge-based CH, right?
+            // todonow: review this: https://github.com/graphhopper/graphhopper/commit/e8cdc6fb0afa8810fb4074aafee13fc2c0eb46e3
+            //          what about node-based CH and node-based in general? can we do something similar initializing the start/target
+            //          neighbor 'node weights'/spt entries? we could go as far as unpacking all the adjacent shortcuts to figure out
+            //          the neighbor node.
 //            if (!request.getHeadings().isEmpty())
 //                throw new IllegalArgumentException("The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483");
 
