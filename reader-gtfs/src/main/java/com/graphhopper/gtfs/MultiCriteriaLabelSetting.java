@@ -140,11 +140,6 @@ public class MultiCriteriaLabelSetting {
                     long walkTime = label.walkTime + (edgeType == GtfsStorage.EdgeType.HIGHWAY || edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT ? ((reverse ? -1 : 1) * (nextTime - label.currentTime)) : 0);
                     if (walkTime > limitStreetTime)
                         return;
-                    List<Label> sptEntries = fromMap.get(edge.getAdjNode());
-                    if (sptEntries == null) {
-                        sptEntries = new ArrayList<>(1);
-                        fromMap.put(edge.getAdjNode(), sptEntries);
-                    }
                     boolean impossible = label.impossible
                             || explorer.isBlocked(edge)
                             || (!reverse) && edgeType == GtfsStorage.EdgeType.BOARD && label.residualDelay > 0
@@ -169,23 +164,28 @@ public class MultiCriteriaLabelSetting {
                     }
                     if (!reverse && edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK && residualDelay > 0) {
                         Label newImpossibleLabelForDelayedTrip = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, residualDelay, true, label);
-                        insertIfNotDominated(sptEntries, newImpossibleLabelForDelayedTrip);
+                        insertIfNotDominated(newImpossibleLabelForDelayedTrip);
                         nextTime += residualDelay;
                         residualDelay = 0;
                         Label newLabel = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, residualDelay, impossible, label);
-                        insertIfNotDominated(sptEntries, newLabel);
+                        insertIfNotDominated(newLabel);
                     } else {
                         Label newLabel = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, residualDelay, impossible, label);
-                        insertIfNotDominated(sptEntries, newLabel);
+                        insertIfNotDominated(newLabel);
                     }
                 });
                 return true;
             }
         }
 
-        private void insertIfNotDominated(Collection<Label> sptEntries, Label label) {
-            if (isNotDominatedByAnyOf(label, sptEntries)) {
-                if (isNotDominatedByAnyOf(label, targetLabels)) {
+        private void insertIfNotDominated(Label label) {
+            if (isNotDominatedByAnyOf(label, targetLabels)) {
+                List<Label> sptEntries = fromMap.get(label.adjNode);
+                if (sptEntries == null) {
+                    sptEntries = new ArrayList<>(1);
+                    fromMap.put(label.adjNode, sptEntries);
+                }
+                if (isNotDominatedByAnyOf(label, sptEntries)) {
                     removeDominated(label, sptEntries);
                     sptEntries.add(label);
                     fromHeap.add(label);
