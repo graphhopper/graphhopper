@@ -20,7 +20,6 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.ch.CHEntry;
 import com.graphhopper.routing.ch.EdgeBasedCHBidirPathExtractor;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.storage.CHEdgeFilter;
 import com.graphhopper.storage.RoutingCHEdgeIteratorState;
 import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.util.EdgeExplorer;
@@ -28,8 +27,6 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 
 import java.util.function.IntToDoubleFunction;
-
-import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 
 /**
  * @author easbar
@@ -74,7 +71,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
         // node of the shortest path matches the source or target. in this case one of the searches does not contribute
         // anything to the shortest path.
         int oppositeNode = reverse ? from : to;
-        IntToDoubleFunction oppositePenalizer = reverse ? edgePenalizerFrom : edgePenalizerTo;
+        IntToDoubleFunction oppositePenalizer = reverse ? initialEdgePenaltyFrom : initialEdgePenaltyTo;
         if (entry.adjNode == oppositeNode && (oppositePenalizer == null || Double.isFinite(oppositePenalizer.applyAsDouble(origEdgeId)))) {
             if (entry.getWeightOfVisitedPath() < bestWeight) {
                 bestFwdEntry = reverse ? new CHEntry(oppositeNode, 0) : entry;
@@ -129,8 +126,8 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
         if (levelFilterEnabled && !levelEdgeFilter.accept(edge))
             return Double.POSITIVE_INFINITY;
         if (reverse)
-            return penalizeTo ? edgePenalizerTo.applyAsDouble(edge.getOrigEdgeLast()) : 0;
+            return penalizeTo ? initialEdgePenaltyTo.applyAsDouble(edge.getOrigEdgeLast()) : 0;
         else
-            return penalizeFrom ? edgePenalizerFrom.applyAsDouble(edge.getOrigEdgeFirst()) : 0;
+            return penalizeFrom ? initialEdgePenaltyFrom.applyAsDouble(edge.getOrigEdgeFirst()) : 0;
     }
 }

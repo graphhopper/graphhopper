@@ -175,9 +175,9 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
         if (!levelEdgeFilter.accept(edge))
             return Double.POSITIVE_INFINITY;
         if (reverse)
-            return penalizeTo ? edgePenalizerTo.applyAsDouble(edge.getOrigEdgeLast()) : 0;
+            return penalizeTo ? initialEdgePenaltyTo.applyAsDouble(edge.getOrigEdgeLast()) : 0;
         else
-            return penalizeFrom ? edgePenalizerFrom.applyAsDouble(edge.getOrigEdgeFirst()) : 0;
+            return penalizeFrom ? initialEdgePenaltyFrom.applyAsDouble(edge.getOrigEdgeFirst()) : 0;
     }
 
     protected int getOrigEdgeId(RoutingCHEdgeIteratorState edge, boolean reverse) {

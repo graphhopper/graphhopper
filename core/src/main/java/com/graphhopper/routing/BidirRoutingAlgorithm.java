@@ -48,5 +48,5 @@ public interface BidirRoutingAlgorithm extends RoutingAlgorithm {
         );
     }
 
-    Path calcPath(int from, int to, IntToDoubleFunction edgePenalizerFrom, IntToDoubleFunction edgePenalizerTo);
+    Path calcPath(int from, int to, IntToDoubleFunction initialEdgePenaltyFrom, IntToDoubleFunction initialEdgePenaltyTo);
 }

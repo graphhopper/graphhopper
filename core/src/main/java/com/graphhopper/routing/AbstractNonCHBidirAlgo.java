@@ -18,7 +18,6 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntObjectMap;
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -174,9 +173,9 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         if (!traversalMode.isEdgeBased() && iter.getEdge() == prevOrNextEdgeId)
             return Double.POSITIVE_INFINITY;
         if (reverse)
-            return penalizeTo ? edgePenalizerTo.applyAsDouble(iter.getOrigEdgeLast()) : 0;
+            return penalizeTo ? initialEdgePenaltyTo.applyAsDouble(iter.getOrigEdgeLast()) : 0;
         else
-            return penalizeFrom ? edgePenalizerFrom.applyAsDouble(iter.getOrigEdgeFirst()) : 0;
+            return penalizeFrom ? initialEdgePenaltyFrom.applyAsDouble(iter.getOrigEdgeFirst()) : 0;
     }
 
     protected Path createEmptyPath() {
