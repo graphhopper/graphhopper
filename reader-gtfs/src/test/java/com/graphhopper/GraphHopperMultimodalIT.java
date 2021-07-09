@@ -31,10 +31,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.util.Arrays;
 import java.util.List;
 
@@ -239,7 +236,20 @@ public class GraphHopperMultimodalIT {
 
         GHResponse response = graphHopper.route(ghRequest);
 
+        ResponsePath walkSolution = response.getAll().stream().filter(p -> p.getLegs().size() == 1).findFirst().get();
+        assertThat(walkSolution.getRouteWeight()).isEqualTo(legDuration(walkSolution.getLegs().get(0)).toMillis() * 20L);
+
         ResponsePath transitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get();
-        assertThat(transitSolution.getLegs().size()).isEqualTo(3);
+        Instant actualDepartureTime = Instant.ofEpochMilli(transitSolution.getLegs().get(0).getDepartureTime().getTime());
+        assertThat(transitSolution.getRouteWeight()).isEqualTo(
+                Duration.between(ghRequest.getEarliestDepartureTime(), actualDepartureTime).toMillis() +
+                        legDuration(transitSolution.getLegs().get(0)).toMillis() * 20L +
+                        legDuration(transitSolution.getLegs().get(1)).toMillis() +
+                        legDuration(transitSolution.getLegs().get(2)).toMillis() * 20L
+        );
+    }
+
+    private Duration legDuration(Trip.Leg justWalk) {
+        return Duration.between(Instant.ofEpochMilli(justWalk.getDepartureTime().getTime()), Instant.ofEpochMilli(justWalk.getArrivalTime().getTime()));
     }
 }
