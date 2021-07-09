@@ -123,7 +123,7 @@ public class GraphHopperGtfs extends GraphHopper {
                     gtfsReader.buildPtNetwork();
                     allReaders.put(id, gtfsReader);
                 });
-                //interpolateTransfers(allReaders, allTransfers);
+                interpolateTransfers(allReaders, allTransfers);
             } catch (Exception e) {
                 throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
             }
@@ -138,7 +138,7 @@ public class GraphHopperGtfs extends GraphHopper {
 
     private void interpolateTransfers(HashMap<String, GtfsReader> readers, Map<String, Transfers> allTransfers) {
         LOGGER.info("Looking for transfers");
-        final int maxTransferWalkTimeSeconds = ghConfig.getInt("gtfs.max_transfer_interpolation_walk_time_seconds", 120);
+        final int maxTransferWalkTimeSeconds = ghConfig.getInt("gtfs.max_transfer_interpolation_walk_time_seconds", 0);
         GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
         QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, Collections.emptyList());
         FastestWeighting accessEgressWeighting = new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder("foot"));
