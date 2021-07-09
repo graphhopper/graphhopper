@@ -335,10 +335,11 @@ public final class PtRouterImpl implements PtRouter {
                     pp.addAll(0, patchedPathFromStation);
                     paths.add(pp);
                 } else {
-                    List<Label.Transition> pathFromStation = Label.getTransitions(reverseSettledSet.get(pathToDestinationStop.get(pathToDestinationStop.size() - 1).label.adjNode), true, ptEncodedValues, queryGraph, realtimeFeed);
-                    long diff = pathToDestinationStop.get(pathToDestinationStop.size() - 1).label.currentTime - pathFromStation.get(0).label.currentTime;
+                    Label destinationStopLabel = pathToDestinationStop.get(pathToDestinationStop.size() - 1).label;
+                    List<Label.Transition> pathFromStation = Label.getTransitions(reverseSettledSet.get(destinationStopLabel.adjNode), true, ptEncodedValues, queryGraph, realtimeFeed);
+                    long diff = destinationStopLabel.currentTime - pathFromStation.get(0).label.currentTime;
                     List<Label.Transition> patchedPathFromStation = pathFromStation.stream().map(t -> {
-                        return new Label.Transition(new Label(t.label.currentTime + diff, t.label.edge, t.label.adjNode, t.label.nTransfers, t.label.departureTime, t.label.walkTime, t.label.residualDelay, t.label.impossible, null), t.edge);
+                        return new Label.Transition(new Label(t.label.currentTime + diff, t.label.edge, t.label.adjNode, t.label.nTransfers, t.label.departureTime, destinationStopLabel.walkTime + pathFromStation.get(0).label.walkTime, t.label.residualDelay, t.label.impossible, null), t.edge);
                     }).collect(Collectors.toList());
                     List<Label.Transition> pp = new ArrayList<>(pathToDestinationStop);
                     pp.addAll(patchedPathFromStation.subList(1, pathFromStation.size()));
