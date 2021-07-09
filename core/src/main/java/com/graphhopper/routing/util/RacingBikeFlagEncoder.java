@@ -151,17 +151,6 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
     }
 
     @Override
-    boolean isSacScaleAllowed(String sacScale) {
-        // for racing bike it is only allowed if empty
-        return false;
-    }
-
-    @Override
-    public int getVersion() {
-        return 2;
-    }
-
-    @Override
     public String toString() {
         return "racingbike";
     }

@@ -42,11 +42,6 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
         speedTwoDirections = true;
     }
 
-    @Override
-    public int getVersion() {
-        return 3;
-    }
-
     protected void handleSpeed(IntsRef edgeFlags, ReaderWay way, double speed) {
         avgSpeedEnc.setDecimal(true, edgeFlags, speed);
         super.handleSpeed(edgeFlags, way, speed);

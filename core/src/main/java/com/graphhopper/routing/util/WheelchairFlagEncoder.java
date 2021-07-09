@@ -106,11 +106,6 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         speedTwoDirections = true;
     }
 
-    @Override
-    public int getVersion() {
-        return 1;
-    }
-
     /**
      * Avoid some more ways than for pedestrian like hiking trails.
      */

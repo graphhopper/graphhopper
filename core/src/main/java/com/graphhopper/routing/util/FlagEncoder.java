@@ -29,12 +29,6 @@ import com.graphhopper.routing.ev.EncodedValueLookup;
  */
 public interface FlagEncoder extends EncodedValueLookup {
 
-    /**
-     * @return the version of this FlagEncoder to enforce none-compatibility when new attributes are
-     * introduced
-     */
-    int getVersion();
-
     TransportationMode getTransportationMode();
 
     /**
