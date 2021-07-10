@@ -18,10 +18,7 @@
 
 package com.graphhopper;
 
-import com.graphhopper.gtfs.GraphHopperGtfs;
-import com.graphhopper.gtfs.PtRouter;
-import com.graphhopper.gtfs.PtRouterImpl;
-import com.graphhopper.gtfs.Request;
+import com.graphhopper.gtfs.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
@@ -57,7 +54,7 @@ public class GraphHopperMultimodalIT {
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
         locationIndex = graphHopperGtfs.getLocationIndex();
-        graphHopper = PtRouterImpl.createFactory(new TranslationMap().doImport(), graphHopperGtfs, locationIndex, graphHopperGtfs.getGtfsStorage())
+        graphHopper = PtRouterFreeWalkImpl.createFactory(new TranslationMap().doImport(), graphHopperGtfs, locationIndex, graphHopperGtfs.getGtfsStorage())
                 .createWithoutRealtimeFeed();
     }
 

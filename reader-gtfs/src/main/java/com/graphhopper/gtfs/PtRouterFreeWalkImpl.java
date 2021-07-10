@@ -236,28 +236,8 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
             router.setBetaWalkTime(betaWalkTime);
             router.setLimitStreetTime(limitStreetTime);
             Iterator<Label> iterator = router.calcLabels(startNode, initialTime).iterator();
-
-            Label walkSolution = null;
-            long highestWeightForDominationTest = Long.MAX_VALUE;
             while (iterator.hasNext()) {
                 Label label = iterator.next();
-                // For single-criterion or pareto queries, we run to the end.
-                //
-                // For profile queries, we need a limited time window. Limiting the number of solutions is not
-                // enough, as there may not be that many solutions - perhaps only walking - and we would run until the end of the calendar
-                // because the router can't know that a super-fast PT departure isn't going to happen some day.
-                //
-                // Arguably, the number of solutions doesn't even make sense as a parameter, since they are not really
-                // alternatives to choose from, but points in time where the optimal solution changes, which isn't really
-                // a criterion for a PT user to limit their search. Some O/D relations just have more complicated profiles than others.
-                // On the other hand, we may simply want to limit the amount of output that an arbitrarily complex profile
-                // can produce, so maybe we should keep both.
-                //
-                // But no matter what, we always have to run past the highest weight in the open set. If we don't,
-                // the last couple of routes in a profile will be suboptimal while the rest is good.
-                if ((!profileQuery || profileFinished(router, discoveredSolutions, walkSolution)) && router.weight(label) > highestWeightForDominationTest) {
-                    break;
-                }
                 if (label.adjNode == destNode) {
                     if (router.isNotDominatedByAnyOf(label, discoveredSolutions)) {
                         router.removeDominated(label, discoveredSolutions);
@@ -267,21 +247,6 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
                             continue;
                         discoveredSolutions.add(label);
                         discoveredSolutions.sort(comparingLong(s -> Optional.ofNullable(s.departureTime).orElse(0L)));
-                        if (label.nTransfers == 0) {
-                            walkSolution = label;
-                        }
-                        if (profileQuery) {
-                            highestWeightForDominationTest = discoveredSolutions.stream().mapToLong(router::weight).max().orElse(Long.MAX_VALUE);
-                            if (walkSolution != null && discoveredSolutions.size() < limitSolutions) {
-                                // If we have a walk solution, we have it at every point in time in the profile.
-                                // (I can start walking any time I want, unlike with bus departures.)
-                                // Here we virtually add it to the end of the profile, so it acts as a sentinel
-                                // to remind us that we still have to search that far to close the set.
-                                highestWeightForDominationTest = Math.max(highestWeightForDominationTest, router.weight(walkSolution) + maxProfileDuration);
-                            }
-                        } else {
-                            highestWeightForDominationTest = discoveredSolutions.stream().filter(s -> !s.impossible && (ignoreTransfers || s.nTransfers <= 1)).mapToLong(router::weight).min().orElse(Long.MAX_VALUE);
-                        }
                     }
                 }
             }

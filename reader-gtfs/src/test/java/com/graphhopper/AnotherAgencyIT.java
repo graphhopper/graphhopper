@@ -52,7 +52,7 @@ public class AnotherAgencyIT {
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
-        ptRouter = PtRouterImpl.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
+        ptRouter = PtRouterFreeWalkImpl.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
                 .createWithoutRealtimeFeed();
     }
 
@@ -147,7 +147,7 @@ public class AnotherAgencyIT {
         assertEquals(1, route.getAll().size());
         ResponsePath transitSolution = route.getBest();
         Trip.PtLeg firstLeg = ((Trip.PtLeg) transitSolution.getLegs().get(0));
-        Trip.PtLeg secondLeg = ((Trip.PtLeg) transitSolution.getLegs().get(1));
+        Trip.PtLeg secondLeg = ((Trip.PtLeg) transitSolution.getLegs().get((transitSolution.getLegs().size()-1)));
         assertEquals("JUSTICE_COURT,MUSEUM", firstLeg.stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
         assertEquals("EMSI,DADAN", secondLeg.stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
         // TODO: write down 10 min transfer time
