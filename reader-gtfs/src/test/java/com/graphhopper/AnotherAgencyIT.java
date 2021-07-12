@@ -26,10 +26,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.util.Arrays;
 
 import static com.graphhopper.gtfs.GtfsHelper.time;
@@ -126,8 +123,10 @@ public class AnotherAgencyIT {
         ghRequest.setIgnoreTransfers(true);
         ghRequest.setWalkSpeedKmH(0.005); // Prevent walk solution
         ResponsePath route = ptRouter.route(ghRequest).getBest();
-        LocalTime arrivalTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(route.getLegs().get(1).getArrivalTime().getTime()), zoneId).toLocalTime();
-        assertEquals("14:10", arrivalTime.toString());
+        Instant arrivalTime = Instant.ofEpochMilli(route.getLegs().get(1).getArrivalTime().getTime());
+        assertEquals("14:10", LocalDateTime.ofInstant(arrivalTime, zoneId).toLocalTime().toString());
+        assertEquals(15_000_000, Duration.between(ghRequest.getEarliestDepartureTime(), arrivalTime).toMillis());
+        assertEquals(1.5E7, route.getRouteWeight());
     }
 
     @Test

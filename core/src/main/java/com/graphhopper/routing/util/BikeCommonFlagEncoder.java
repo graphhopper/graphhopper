@@ -234,9 +234,6 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
         String sacScale = way.getTag("sac_scale");
         if (sacScale != null) {
-            if ((way.hasTag("highway", "cycleway"))
-                    && (way.hasTag("sac_scale", "hiking")))
-                return EncodingManager.Access.WAY;
             if (!isSacScaleAllowed(sacScale))
                 return EncodingManager.Access.CAN_SKIP;
         }

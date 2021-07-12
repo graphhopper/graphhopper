@@ -78,11 +78,6 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
 
         way.setTag("highway", "path");
         way.setTag("sac_scale", "hiking");
-        assertTrue(encoder.getAccess(way).canSkip());
-
-        way.setTag("highway", "cycleway");
-        way.setTag("sac_scale", "hiking");
-        // but allow this as there is no reason for not allowing it
         assertTrue(encoder.getAccess(way).isWay());
 
         // This looks to be tagging error:

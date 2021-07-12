@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.graphhopper.gtfs.GtfsHelper.time;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -214,6 +215,7 @@ public class GraphHopperGtfsIT {
         );
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 23, 0).atZone(zoneId).toInstant());
         ghRequest.setProfileQuery(true);
+        ghRequest.setMaxProfileDuration(Duration.ofHours(1));
         ghRequest.setIgnoreTransfers(true);
 
         GHResponse response = ptRouter.route(ghRequest);
@@ -381,6 +383,24 @@ public class GraphHopperGtfsIT {
         assertEquals(2, response.getBest().getLegs().size(), "Two legs: pt, pt, but the two pt legs are in one vehicle, so...");
         assertEquals(1, response.getBest().getInstructions().stream().filter(i -> i.getSign() == Instruction.PT_START_TRIP).count(), "Two legs: pt, pt, but the two pt legs are in one vehicle, so...");
         assertEquals(1, response.getBest().getInstructions().stream().filter(i -> i.getSign() == Instruction.PT_END_TRIP).count(), "...and one alighting instruction");
+        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(200);
+    }
+
+    @Test
+    public void testVeryShortProfileQuery() {
+        final double FROM_LAT = 36.868446, FROM_LON = -116.784582; // BEATTY_AIRPORT stop
+        final double TO_LAT = 36.425288, TO_LON = -117.133162; // FUR_CREEK_RES stop
+        Request ghRequest = new Request(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 8, 0).atZone(zoneId).toInstant());
+        ghRequest.setProfileQuery(true);
+        ghRequest.setMaxProfileDuration(Duration.ofSeconds(1));
+        GHResponse response = ptRouter.route(ghRequest);
+        assertEquals(time(1, 20), response.getBest().getTime(), "Expected travel time == scheduled travel time");
+        // This should behave exactly as a not-profile-query, also performance-wise
+        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(200);
     }
 
     @Test
