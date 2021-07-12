@@ -19,6 +19,7 @@
 package com.graphhopper.routing.ev;
 
 public enum NewCountry {
+    MISSING("missing"),
     AFG("Afghanistan"),
     AGO("Angola"),
     AIA("Anguilla"),
@@ -235,8 +236,7 @@ public enum NewCountry {
     YEM("Yemen"),
     ZAF("South Africa"),
     ZMB("Zambia"),
-    ZWE("Zimbabwe"),
-    MISSING("missing");
+    ZWE("Zimbabwe");
 
     public static final String KEY = "new_country";
 
