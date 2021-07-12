@@ -366,6 +366,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
                 countryRule = CountryRule.getCountryRule(country);
             }
         }
+        // todo: probably include country_code here as well and use e.g. in CountryParser
         way.setTag("country_rule", countryRule);
         way.setTag("custom_areas", customAreas);
         IntsRef edgeFlags = encodingManager.handleWayTags(way, acceptWay, relationFlags);
