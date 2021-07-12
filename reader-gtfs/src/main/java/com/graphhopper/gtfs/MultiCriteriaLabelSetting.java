@@ -189,9 +189,21 @@ public class MultiCriteriaLabelSetting {
                     sptEntries = new ArrayList<>(1);
                     fromMap.put(me.adjNode, sptEntries);
                 }
-                List<Label> filteredSptEntries = profileQuery && me.departureTime != null ? sptEntries.stream().filter(they -> they.departureTime == null || they.departureTime >= me.departureTime || they.departureTime >= startTime + maxProfileDuration).collect(Collectors.toList()) : sptEntries;
+                List<Label> filteredSptEntries;
+                List<Label> otherSptEntries;
+                if (profileQuery && me.departureTime != null) {
+                    Map<Boolean, List<Label>> partitionedSptEntries = sptEntries.stream().collect(Collectors.partitioningBy(they -> they.departureTime == null || they.departureTime >= me.departureTime || they.departureTime >= startTime + maxProfileDuration));
+                    filteredSptEntries = new ArrayList<>(partitionedSptEntries.get(true));
+                    otherSptEntries = new ArrayList<>(partitionedSptEntries.get(false));
+                } else {
+                    filteredSptEntries = new ArrayList<>(sptEntries);
+                    otherSptEntries = Collections.emptyList();
+                }
                 if (isNotDominatedByAnyOf(me, filteredSptEntries)) {
                     removeDominated(me, filteredSptEntries);
+                    sptEntries.clear();
+                    sptEntries.addAll(filteredSptEntries);
+                    sptEntries.addAll(otherSptEntries);
                     sptEntries.add(me);
                     fromHeap.add(me);
                 }
