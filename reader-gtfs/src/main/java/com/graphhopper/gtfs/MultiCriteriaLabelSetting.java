@@ -210,7 +210,11 @@ public class MultiCriteriaLabelSetting {
         }
 
         private Map<Boolean, List<Label>> partitionByProfileCriterion(Label me, List<Label> sptEntries) {
-            return sptEntries.stream().collect(Collectors.partitioningBy(they -> they.departureTime != null && (they.departureTime >= me.departureTime || they.departureTime >= startTime + maxProfileDuration)));
+            if (!reverse) {
+                return sptEntries.stream().collect(Collectors.partitioningBy(they -> they.departureTime != null && (they.departureTime >= me.departureTime || they.departureTime >= startTime + maxProfileDuration)));
+            } else {
+                return sptEntries.stream().collect(Collectors.partitioningBy(they -> they.departureTime != null && (they.departureTime <= me.departureTime || they.departureTime <= startTime - maxProfileDuration)));
+            }
         }
     }
 
