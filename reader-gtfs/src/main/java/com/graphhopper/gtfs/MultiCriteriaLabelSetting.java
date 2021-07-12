@@ -182,7 +182,7 @@ public class MultiCriteriaLabelSetting {
         }
 
         private void insertIfNotDominated(Label me) {
-            List<Label> filteredTargetLabels = profileQuery && me.departureTime != null ? targetLabels.stream().filter(they -> they.departureTime == null || they.departureTime >= me.departureTime || they.departureTime >= startTime + maxProfileDuration).collect(Collectors.toList()) : targetLabels;
+            List<Label> filteredTargetLabels = profileQuery && me.departureTime != null ? targetLabels.stream().filter(they -> they.departureTime != null && (they.departureTime >= me.departureTime || they.departureTime >= startTime + maxProfileDuration)).collect(Collectors.toList()) : targetLabels;
             if (isNotDominatedByAnyOf(me, filteredTargetLabels)) {
                 List<Label> sptEntries = fromMap.get(me.adjNode);
                 if (sptEntries == null) {
@@ -192,7 +192,7 @@ public class MultiCriteriaLabelSetting {
                 List<Label> filteredSptEntries;
                 List<Label> otherSptEntries;
                 if (profileQuery && me.departureTime != null) {
-                    Map<Boolean, List<Label>> partitionedSptEntries = sptEntries.stream().collect(Collectors.partitioningBy(they -> they.departureTime == null || they.departureTime >= me.departureTime || they.departureTime >= startTime + maxProfileDuration));
+                    Map<Boolean, List<Label>> partitionedSptEntries = sptEntries.stream().collect(Collectors.partitioningBy(they -> they.departureTime != null && (they.departureTime >= me.departureTime || they.departureTime >= startTime + maxProfileDuration)));
                     filteredSptEntries = new ArrayList<>(partitionedSptEntries.get(true));
                     otherSptEntries = new ArrayList<>(partitionedSptEntries.get(false));
                 } else {
