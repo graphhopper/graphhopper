@@ -19,7 +19,6 @@ package com.graphhopper.gtfs;
 
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
-import com.carrotsearch.hppc.cursors.IntObjectCursor;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.util.EdgeIterator;
 
@@ -182,7 +181,7 @@ public class MultiCriteriaLabelSetting {
         }
 
         private void insertIfNotDominated(Label me) {
-            List<Label> filteredTargetLabels = profileQuery && me.departureTime != null ? targetLabels.stream().filter(they -> they.departureTime != null && (they.departureTime >= me.departureTime || they.departureTime >= startTime + maxProfileDuration)).collect(Collectors.toList()) : targetLabels;
+            List<Label> filteredTargetLabels = profileQuery && me.departureTime != null ? partitionByProfileCriterion(me, targetLabels).get(true) : targetLabels;
             if (isNotDominatedByAnyOf(me, filteredTargetLabels)) {
                 List<Label> sptEntries = fromMap.get(me.adjNode);
                 if (sptEntries == null) {
@@ -192,7 +191,7 @@ public class MultiCriteriaLabelSetting {
                 List<Label> filteredSptEntries;
                 List<Label> otherSptEntries;
                 if (profileQuery && me.departureTime != null) {
-                    Map<Boolean, List<Label>> partitionedSptEntries = sptEntries.stream().collect(Collectors.partitioningBy(they -> they.departureTime != null && (they.departureTime >= me.departureTime || they.departureTime >= startTime + maxProfileDuration)));
+                    Map<Boolean, List<Label>> partitionedSptEntries = partitionByProfileCriterion(me, sptEntries);
                     filteredSptEntries = new ArrayList<>(partitionedSptEntries.get(true));
                     otherSptEntries = new ArrayList<>(partitionedSptEntries.get(false));
                 } else {
@@ -208,6 +207,10 @@ public class MultiCriteriaLabelSetting {
                     fromHeap.add(me);
                 }
             }
+        }
+
+        private Map<Boolean, List<Label>> partitionByProfileCriterion(Label me, List<Label> sptEntries) {
+            return sptEntries.stream().collect(Collectors.partitioningBy(they -> they.departureTime != null && (they.departureTime >= me.departureTime || they.departureTime >= startTime + maxProfileDuration)));
         }
     }
 
