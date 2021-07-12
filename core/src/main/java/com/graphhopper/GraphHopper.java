@@ -64,6 +64,7 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -703,7 +704,7 @@ public class GraphHopper implements GraphHopperAPI {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
         // todo: this is basically what we did before in SpatialRuleLookupBuilder
         return jsonFeatureCollections.stream().flatMap(j -> j.getFeatures().stream())
