@@ -26,6 +26,7 @@ import com.graphhopper.util.EdgeIterator;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -180,17 +181,19 @@ public class MultiCriteriaLabelSetting {
             }
         }
 
-        private void insertIfNotDominated(Label label) {
-            if (isNotDominatedByAnyOf(label, targetLabels)) {
-                List<Label> sptEntries = fromMap.get(label.adjNode);
+        private void insertIfNotDominated(Label me) {
+            List<Label> filteredTargetLabels = profileQuery && me.departureTime != null ? targetLabels.stream().filter(they -> they.departureTime == null || they.departureTime >= me.departureTime || they.departureTime >= startTime + maxProfileDuration).collect(Collectors.toList()) : targetLabels;
+            if (isNotDominatedByAnyOf(me, filteredTargetLabels)) {
+                List<Label> sptEntries = fromMap.get(me.adjNode);
                 if (sptEntries == null) {
                     sptEntries = new ArrayList<>(1);
-                    fromMap.put(label.adjNode, sptEntries);
+                    fromMap.put(me.adjNode, sptEntries);
                 }
-                if (isNotDominatedByAnyOf(label, sptEntries)) {
-                    removeDominated(label, sptEntries);
-                    sptEntries.add(label);
-                    fromHeap.add(label);
+                List<Label> filteredSptEntries = profileQuery && me.departureTime != null ? sptEntries.stream().filter(they -> they.departureTime == null || they.departureTime >= me.departureTime || they.departureTime >= startTime + maxProfileDuration).collect(Collectors.toList()) : sptEntries;
+                if (isNotDominatedByAnyOf(me, filteredSptEntries)) {
+                    removeDominated(me, filteredSptEntries);
+                    sptEntries.add(me);
+                    fromHeap.add(me);
                 }
             }
         }
@@ -219,16 +222,6 @@ public class MultiCriteriaLabelSetting {
         if (weight(me) > weight(they))
             return false;
 
-        if (profileQuery) {
-            if (me.departureTime != null && they.departureTime != null) {
-                if (departureTimeCriterion(me) > departureTimeCriterion(they) && departureTimeCriterion(me) < departureTimeCriterion(they) + maxProfileDuration)
-                    return false;
-            } else {
-                if (travelTimeCriterion(me) > travelTimeCriterion(they))
-                    return false;
-            }
-        }
-
         if (mindTransfers && me.nTransfers > they.nTransfers)
             return false;
         if (me.impossible && !they.impossible)
@@ -236,15 +229,6 @@ public class MultiCriteriaLabelSetting {
 
         if (weight(me) < weight(they))
             return true;
-        if (profileQuery) {
-            if (me.departureTime != null && they.departureTime != null) {
-                if (departureTimeCriterion(me) < departureTimeCriterion(they))
-                    return true;
-            } else {
-                if (travelTimeCriterion(me) < travelTimeCriterion(they))
-                    return true;
-            }
-        }
         if (mindTransfers && me.nTransfers < they.nTransfers)
             return true;
 
@@ -261,14 +245,6 @@ public class MultiCriteriaLabelSetting {
 
     long timeSinceStartTime(Label label) {
         return (reverse ? -1 : 1) * (label.currentTime - startTime);
-    }
-
-    private long travelTimeCriterion(Label label) {
-        if (label.departureTime == null) {
-            return label.walkTime;
-        } else {
-            return (reverse ? -1 : 1) * (label.currentTime - label.departureTime);
-        }
     }
 
     public void setLimitStreetTime(long limitStreetTime) {
