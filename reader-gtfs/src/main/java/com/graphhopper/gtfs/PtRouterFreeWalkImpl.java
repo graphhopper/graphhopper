@@ -241,15 +241,17 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
                 if (label.adjNode == destNode) {
                     if (router.isNotDominatedByAnyOf(label, discoveredSolutions)) {
                         router.removeDominated(label, discoveredSolutions);
-                        List<Label> closedSolutions = discoveredSolutions.stream().filter(s -> router.weight(s) < router.weight(label)).collect(Collectors.toList());
-                        if (closedSolutions.size() >= limitSolutions) continue;
-                        if (profileQuery && label.departureTime != null && (label.departureTime - initialTime.toEpochMilli()) * (arriveBy ? -1L : 1L) > maxProfileDuration && closedSolutions.size() > 0 && closedSolutions.get(closedSolutions.size() - 1).departureTime != null && (closedSolutions.get(closedSolutions.size() - 1).departureTime - initialTime.toEpochMilli()) * (arriveBy ? -1L : 1L) > maxProfileDuration)
-                            continue;
                         discoveredSolutions.add(label);
-                        discoveredSolutions.sort(comparingLong(s -> Optional.ofNullable(s.departureTime).orElse(0L)));
+                        List<Label> closedSolutions = discoveredSolutions.stream().filter(s -> router.weight(s) < router.weight(label)).collect(Collectors.toList());
+                        if (closedSolutions.size() >= limitSolutions) {
+                            discoveredSolutions.clear();
+                            discoveredSolutions.addAll(closedSolutions);
+                            break;
+                        }
                     }
                 }
             }
+            discoveredSolutions.sort(comparingLong(s -> Optional.ofNullable(s.departureTime).orElse(0L)));
 
             List<List<Label.Transition>> paths = new ArrayList<>();
             for (Label discoveredSolution : discoveredSolutions) {
