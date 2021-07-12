@@ -23,7 +23,7 @@ import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.util.TransportationMode;
 
 public class AustriaCountryRule implements CountryRule {
-    public final static GermanyCountryRule RULE = new GermanyCountryRule();
+    public final static AustriaCountryRule RULE = new AustriaCountryRule();
 
     @Override
     public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
