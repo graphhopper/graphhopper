@@ -74,19 +74,34 @@ public class GraphHopperMultimodalIT {
                 36.91260259593356, -116.76149368286134
         );
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 6, 40, 0).atZone(zoneId).toInstant());
+        ghRequest.setBetaWalkTime(2.0);
         ghRequest.setProfileQuery(true);
         ghRequest.setMaxProfileDuration(Duration.ofHours(1));
 
         GHResponse response = graphHopper.route(ghRequest);
-        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(243);
+        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(263);
 
-        ResponsePath firstTransitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get(); // There can be a walk-only trip.
+        ResponsePath firstTransitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get();
         assertThat(firstTransitSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
                 .isEqualTo(LocalTime.parse("06:41:04.833"));
         assertThat(firstTransitSolution.getLegs().get(0).getArrivalTime().toInstant())
                 .isEqualTo(firstTransitSolution.getLegs().get(1).getDepartureTime().toInstant());
         assertThat(firstTransitSolution.getLegs().get(2).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
                 .isEqualTo(LocalTime.parse("06:52:02.633"));
+
+        // I like walking exactly as I like riding a bus (per travel time unit)
+        // Now we get a walk solution which arrives earlier than the transit solutions.
+        // If this wasn't a profile query, they would be dominated and we would only get a walk
+        // solution. But at the exact time where the transit route departs, the transit route is superior,
+        // since it is very slightly faster.
+        ghRequest.setBetaWalkTime(1.0);
+        response = graphHopper.route(ghRequest);
+        ResponsePath walkSolution = response.getAll().stream().filter(p -> p.getLegs().size() == 1).findFirst().get();
+        firstTransitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get();
+        assertThat(arrivalTime(walkSolution.getLegs().get(0))).isBefore(arrivalTime(firstTransitSolution.getLegs().get(firstTransitSolution.getLegs().size()-1)));
+        assertThat(routeDuration(firstTransitSolution)).isLessThanOrEqualTo(routeDuration(walkSolution));
+
+        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(206);
     }
 
     @Test
@@ -131,7 +146,7 @@ public class GraphHopperMultimodalIT {
         assertThat(walkSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
                 .isEqualTo(LocalTime.parse("06:40"));
         // In principle, this would dominate the transit solution, since it's faster, but
-        // by default, walking gets a slight penalty.
+        // walking gets a penalty.
         assertThat(walkSolution.getLegs().get(0).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
                 .isEqualTo(LocalTime.parse("06:51:10.335"));
         assertThat(walkSolution.getLegs().size()).isEqualTo(1);
@@ -240,7 +255,7 @@ public class GraphHopperMultimodalIT {
         assertThat(walkSolution.getRouteWeight()).isEqualTo(legDuration(walkSolution.getLegs().get(0)).toMillis() * 20L);
 
         ResponsePath transitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get();
-        Instant actualDepartureTime = Instant.ofEpochMilli(transitSolution.getLegs().get(0).getDepartureTime().getTime());
+        Instant actualDepartureTime = departureTime(transitSolution.getLegs().get(0));
         assertThat(transitSolution.getRouteWeight()).isEqualTo(
                 Duration.between(ghRequest.getEarliestDepartureTime(), actualDepartureTime).toMillis() +
                         legDuration(transitSolution.getLegs().get(0)).toMillis() * 20L +
@@ -249,7 +264,23 @@ public class GraphHopperMultimodalIT {
         );
     }
 
-    private Duration legDuration(Trip.Leg justWalk) {
-        return Duration.between(Instant.ofEpochMilli(justWalk.getDepartureTime().getTime()), Instant.ofEpochMilli(justWalk.getArrivalTime().getTime()));
+    private Duration legDuration(Trip.Leg leg) {
+        return Duration.between(departureTime(leg), arrivalTime(leg));
     }
+
+    private Duration routeDuration(ResponsePath route) {
+        Trip.Leg firstLeg = route.getLegs().get(0);
+        Trip.Leg lastLeg = route.getLegs().get(route.getLegs().size() - 1);
+        return Duration.between(departureTime(firstLeg), arrivalTime(lastLeg));
+    }
+
+    private Instant departureTime(Trip.Leg firstLeg) {
+        return Instant.ofEpochMilli(firstLeg.getDepartureTime().getTime());
+    }
+
+    private Instant arrivalTime(Trip.Leg leg) {
+        return Instant.ofEpochMilli(leg.getArrivalTime().getTime());
+    }
+
+
 }
