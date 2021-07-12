@@ -239,16 +239,10 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
             while (iterator.hasNext()) {
                 Label label = iterator.next();
                 if (label.adjNode == destNode) {
-                    if (router.isNotDominatedByAnyOf(label, discoveredSolutions)) {
-                        router.removeDominated(label, discoveredSolutions);
                         discoveredSolutions.add(label);
-                        List<Label> closedSolutions = discoveredSolutions.stream().filter(s -> router.weight(s) < router.weight(label)).collect(Collectors.toList());
-                        if (closedSolutions.size() >= limitSolutions) {
-                            discoveredSolutions.clear();
-                            discoveredSolutions.addAll(closedSolutions);
+                        if (discoveredSolutions.size() >= limitSolutions) {
                             break;
                         }
-                    }
                 }
             }
             discoveredSolutions.sort(comparingLong(s -> Optional.ofNullable(s.departureTime).orElse(0L)));
