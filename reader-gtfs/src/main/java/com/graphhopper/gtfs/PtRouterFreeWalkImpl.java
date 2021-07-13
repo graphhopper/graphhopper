@@ -267,14 +267,6 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
             return paths;
         }
 
-        private boolean profileFinished(MultiCriteriaLabelSetting router, List<Label> discoveredSolutions, Label walkSolution) {
-            return discoveredSolutions.size() >= limitSolutions ||
-                    (!discoveredSolutions.isEmpty() && router.timeSinceStartTime(discoveredSolutions.get(discoveredSolutions.size() - 1)) > maxProfileDuration) ||
-                    walkSolution != null;
-            // Imagine we can always add the walk solution again to the end of the list (it can start any time).
-            // In turn, we must also think of this virtual walk solution in the other test (where we check if all labels are closed).
-        }
-
     }
 
 }
