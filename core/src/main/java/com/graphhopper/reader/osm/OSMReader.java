@@ -356,18 +356,24 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         }
 
         List<CustomArea> customAreas = estimatedCenter == null ? emptyList() : customAreaIndex.query(estimatedCenter.lat, estimatedCenter.lon);
+        // special handling for countries: since they are built-in with GraphHopper they are always fed to the
+        // encodingmanager
+        NewCountry country = null;
         CountryRule countryRule = null;
         for (CustomArea customArea : customAreas) {
             Object countryCode = customArea.getProperties().get("ISO3166-1:alpha3");
             if (countryCode != null) {
-                NewCountry country = NewCountry.valueOf(countryCode.toString());
+                country = NewCountry.valueOf(countryCode.toString());
                 if (countryRule != null)
                     LOGGER.warn("Multiple country rules found for way {}", way.getId());
                 countryRule = CountryRule.getCountryRule(country);
             }
         }
-        // todo: probably include country_code here as well and use e.g. in CountryParser
-        way.setTag("country_rule", countryRule);
+        way.setTag("country", country != null ? country : NewCountry.MISSING);
+        if (countryRule != null)
+            way.setTag("country_rule", countryRule);
+
+        // also add all custom areas as artificial tag
         way.setTag("custom_areas", customAreas);
         IntsRef edgeFlags = encodingManager.handleWayTags(way, acceptWay, relationFlags);
         if (edgeFlags.isEmpty())

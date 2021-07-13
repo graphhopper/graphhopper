@@ -19,11 +19,12 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.spatialrules.CustomArea;
+import com.graphhopper.routing.ev.EncodedValue;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.NewCountry;
 import com.graphhopper.storage.IntsRef;
 
-import java.util.Collections;
 import java.util.List;
 
 public class CountryParser implements TagParser {
@@ -35,19 +36,13 @@ public class CountryParser implements TagParser {
 
     @Override
     public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-       registerNewEncodedValue.add(countryEnc);
+        registerNewEncodedValue.add(countryEnc);
     }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
-        List<CustomArea> customAreas = way.getTag("custom_areas", Collections.emptyList());
-        for (CustomArea customArea : customAreas) {
-            Object countryCode = customArea.getProperties().get("ISO3166-1:alpha3");
-            if (countryCode != null) {
-                NewCountry country = NewCountry.valueOf(countryCode.toString());
-                countryEnc.setEnum(false, edgeFlags, country);
-            }
-        }
+        NewCountry country = way.getTag("country", null);
+        countryEnc.setEnum(false, edgeFlags, country);
         return edgeFlags;
     }
 }
