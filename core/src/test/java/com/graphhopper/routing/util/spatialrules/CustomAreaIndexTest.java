@@ -18,16 +18,27 @@
 
 package com.graphhopper.routing.util.spatialrules;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.graphhopper.jackson.Jackson;
+import com.graphhopper.util.JsonFeature;
+import com.graphhopper.util.JsonFeatureCollection;
+import com.graphhopper.util.StopWatch;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class CustomAreaIndexTest {
 
@@ -131,7 +142,41 @@ class CustomAreaIndexTest {
         testQuery(index, 1.5, 1.51, "1");
     }
 
-    private Polygon parsePolygonString(String polygonString) {
+    @Test
+    public void testPerformance() throws IOException {
+        // todo: maybe remove again or move to performance tests or something
+        ObjectMapper objectMapper = Jackson.newObjectMapper();
+        List<CustomArea> customAreas;
+        try (BufferedReader reader = Files.newBufferedReader(Paths.get("files/spatialrules/countries.geojson"))) {
+            JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
+            customAreas = jsonFeatureCollection.getFeatures().stream().map(CustomArea::fromJsonFeature).collect(Collectors.toList());
+        }
+        CustomAreaIndex customAreaIndex = new CustomAreaIndex(customAreas);
+        long seed = 123l;
+        Random rnd = new Random(seed);
+        int count = 100_000;
+        double minLat = 36;
+        double maxLat = 60;
+        double minLon = -14;
+        double maxLon = 33;
+        Map<String, Integer> counts = new HashMap<>();
+        StopWatch sw = new StopWatch().start();
+        for (int i = 0; i < count; i++) {
+            double lat = rnd.nextDouble() * (maxLat - minLat) + minLat;
+            double lon = rnd.nextDouble() * (maxLon - minLon) + minLon;
+            List<CustomArea> areas = customAreaIndex.query(lat, lon);
+            if (areas.size() > 1)
+                fail("multiple hits not expected");
+            else if (areas.isEmpty())
+                counts.merge("none", 0, (old, val) -> old + 1);
+            else
+                counts.merge(areas.get(0).getProperties().get("name_en").toString(), 0, (old, val) -> old + 1);
+        }
+        System.out.println(sw.stop().getTimeString());
+        System.out.println(counts);
+    }
+
+    private static Polygon parsePolygonString(String polygonString) {
         String[] polygonStringArr = polygonString.split("\\],\\[");
         Coordinate[] shell = new Coordinate[polygonStringArr.length + 1];
         for (int i = 0; i < polygonStringArr.length; i++) {
