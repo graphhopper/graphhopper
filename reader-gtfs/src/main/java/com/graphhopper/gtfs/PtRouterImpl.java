@@ -23,10 +23,10 @@ import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
+import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
-import com.graphhopper.routing.util.AccessFilter;
-import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -160,13 +160,14 @@ public final class PtRouterImpl implements PtRouter {
             PointList points = new PointList(2, false);
             List<GHLocation> locations = Arrays.asList(enter, exit);
             for (int i = 0; i < locations.size(); i++) {
-                if (enter instanceof GHPointLocation) {
-                    final Snap closest = findByPoint(((GHPointLocation) locations.get(i)).ghPoint, i);
+                GHLocation location = locations.get(i);
+                if (location instanceof GHPointLocation) {
+                    final Snap closest = findByPoint(((GHPointLocation) location).ghPoint, i);
                     pointSnaps.add(closest);
                     allSnaps.add(closest);
                     points.add(closest.getSnappedPoint());
-                } else if (enter instanceof GHStationLocation) {
-                    final Snap station = findByStationId((GHStationLocation) locations.get(i), i);
+                } else if (location instanceof GHStationLocation) {
+                    final Snap station = findByStationId((GHStationLocation) location, i);
                     allSnaps.add(station);
                     points.add(graphHopperStorage.getNodeAccess().getLat(station.getClosestNode()), graphHopperStorage.getNodeAccess().getLon(station.getClosestNode()));
                 }
@@ -189,7 +190,8 @@ public final class PtRouterImpl implements PtRouter {
         }
 
         private Snap findByPoint(GHPoint point, int indexForErrorMessage) {
-            final EdgeFilter filter = AccessFilter.allEdges(graphHopperStorage.getEncodingManager().getEncoder("foot").getAccessEnc());
+            FlagEncoder footEncoder = graphHopperStorage.getEncodingManager().getEncoder("foot");
+            final EdgeFilter filter = new DefaultSnapFilter(new FastestWeighting(footEncoder), graphHopperStorage.getEncodingManager().getBooleanEncodedValue(Subnetwork.key("foot")));
             Snap source = locationIndex.findClosest(point.lat, point.lon, filter);
             if (!source.isValid()) {
                 throw new PointNotFoundException("Cannot find point: " + point, indexForErrorMessage);

@@ -18,24 +18,28 @@
 
 package com.graphhopper;
 
-import com.graphhopper.gtfs.GraphHopperGtfs;
-import com.graphhopper.gtfs.PtRouter;
-import com.graphhopper.gtfs.PtRouterImpl;
-import com.graphhopper.gtfs.Request;
+import com.graphhopper.config.Profile;
+import com.graphhopper.gtfs.*;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.details.PathDetail;
+import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.time.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
 public class GraphHopperMultimodalIT {
 
@@ -48,10 +52,12 @@ public class GraphHopperMultimodalIT {
     @BeforeAll
     public static void init() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
-        ghConfig.putObject("graph.flag_encoders", "car,foot");
         ghConfig.putObject("datareader.file", "files/beatty.osm");
         ghConfig.putObject("gtfs.file", "files/sample-feed.zip");
         ghConfig.putObject("graph.location", GRAPH_LOC);
+        ghConfig.setProfiles(Arrays.asList(
+                new Profile("foot").setVehicle("foot").setWeighting("fastest"),
+                new Profile("car").setVehicle("car").setWeighting("fastest")));
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
@@ -262,6 +268,31 @@ public class GraphHopperMultimodalIT {
                         legDuration(transitSolution.getLegs().get(1)).toMillis() +
                         legDuration(transitSolution.getLegs().get(2)).toMillis() * 20L
         );
+    }
+
+    @Test
+    public void testSubnetworkRemoval() {
+        Profile foot = graphHopperGtfs.getProfile("foot");
+        BooleanEncodedValue footSub = graphHopperGtfs.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(foot.getName()));
+
+        // Go through all edges on removed foot subnetworks, and check that we can get to our destination station from there
+        List<GHResponse> responses = new ArrayList<>();
+        AllEdgesIterator edges = graphHopperGtfs.getGraphHopperStorage().getAllEdges();
+        while (edges.next()) {
+            if (edges.get(footSub)) {
+                Request ghRequest = new Request(Arrays.asList(
+                        new GHPointLocation(new GHPoint(graphHopperGtfs.getGraphHopperStorage().getNodeAccess().getLat(edges.getBaseNode()), graphHopperGtfs.getGraphHopperStorage().getNodeAccess().getLon(edges.getBaseNode()))),
+                        new GHStationLocation("EMSI")),
+                        LocalDateTime.of(2007, 1, 1, 6, 40, 0).atZone(zoneId).toInstant());
+                ghRequest.setWalkSpeedKmH(50); // Yes, I can walk very fast, 50 km/h. Problem?
+                ghRequest.setBetaWalkTime(20); // But I dislike walking a lot.
+                GHResponse response = graphHopper.route(ghRequest);
+                responses.add(response);
+            }
+        }
+
+        assumeThat(responses).isNotEmpty(); // There is a removed subnetwork -- otherwise there's nothing to check
+        assertThat(responses).allMatch(r -> !r.getAll().isEmpty());
     }
 
     private Duration legDuration(Trip.Leg leg) {
