@@ -18,14 +18,32 @@
 
 package com.graphhopper.routing.util.spatialrules;
 
+import com.graphhopper.util.JsonFeature;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.util.PolygonExtracter;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class CustomArea {
     private final Map<String, Object> properties;
     private final List<Polygon> borders;
+
+    public static CustomArea fromJsonFeature(JsonFeature j) {
+        // todo: this is basically what we did before in SpatialRuleLookupBuilder
+        List<Polygon> borders = new ArrayList<>();
+        for (int i = 0; i < j.getGeometry().getNumGeometries(); i++) {
+            Geometry geometry = j.getGeometry().getGeometryN(i);
+            if (geometry instanceof Polygon) {
+                PolygonExtracter.getPolygons(geometry, borders);
+            } else {
+                throw new IllegalArgumentException("Custom area features must be of type 'Polygon', but was: " + geometry.getClass().getSimpleName());
+            }
+        }
+        return new CustomArea(j.getProperties(), borders);
+    }
 
     public CustomArea(Map<String, Object> properties, List<Polygon> borders) {
         this.properties = properties;

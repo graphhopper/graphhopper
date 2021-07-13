@@ -706,20 +706,8 @@ public class GraphHopper implements GraphHopperAPI {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        // todo: this is basically what we did before in SpatialRuleLookupBuilder
         return jsonFeatureCollections.stream().flatMap(j -> j.getFeatures().stream())
-                .map(j -> {
-                    List<Polygon> borders = new ArrayList<>();
-                    for (int i = 0; i < j.getGeometry().getNumGeometries(); i++) {
-                        Geometry geometry = j.getGeometry().getGeometryN(i);
-                        if (geometry instanceof Polygon) {
-                            PolygonExtracter.getPolygons(geometry, borders);
-                        } else {
-                            throw new IllegalArgumentException("Custom area features must be of type 'Polygon', but was: " + geometry.getClass().getSimpleName());
-                        }
-                    }
-                    return new CustomArea(j.getProperties(), borders);
-                })
+                .map(CustomArea::fromJsonFeature)
                 .collect(Collectors.toList());
     }
 
