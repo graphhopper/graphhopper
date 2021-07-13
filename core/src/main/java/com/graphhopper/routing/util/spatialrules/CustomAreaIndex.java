@@ -23,7 +23,6 @@ import org.locationtech.jts.geom.prep.PreparedGeometry;
 import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
 import org.locationtech.jts.index.strtree.STRtree;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,61 +55,16 @@ public class CustomAreaIndex {
     }
 
     private static class IndexedCustomArea {
-        private static final GeometryFactory FAC = new GeometryFactory();
-        private static final int GRID_SIZE = 10;
-        private static final double COORD_EPSILON = 0.00001;
-
         final CustomArea customArea;
         final PreparedGeometry preparedGeometry;
-        final List<Envelope> filledLines;
 
         IndexedCustomArea(CustomArea customArea, PreparedGeometry preparedGeometry) {
             this.customArea = customArea;
             this.preparedGeometry = preparedGeometry;
-            this.filledLines = findFilledLines(preparedGeometry);
         }
 
         boolean covers(Point point) {
-//             todo: this is clearly slower
-//            return preparedGeometry.getGeometry().intersects(point);
-            // optimization: do a pre check before calling preparedGeometry#intersects
-//            Coordinate coord = point.getCoordinate();
-//            for (Envelope line : filledLines) {
-//                if (line.covers(coord)) {
-//                    return true;
-//                }
-//            }
             return preparedGeometry.intersects(point);
-        }
-
-        private static List<Envelope> findFilledLines(PreparedGeometry prepGeom) {
-            // todo: copied this from SpatialRuleContainer
-            List<Envelope> lines = new ArrayList<>();
-
-            Envelope bbox = prepGeom.getGeometry().getEnvelopeInternal();
-            double tileWidth = bbox.getWidth() / GRID_SIZE;
-            double tileHeight = bbox.getHeight() / GRID_SIZE;
-
-            Envelope tile = new Envelope();
-            Envelope line;
-            for (int row = 0; row < GRID_SIZE; row++) {
-                line = null;
-                for (int column = 0; column < GRID_SIZE; column++) {
-                    double minX = bbox.getMinX() + (column * tileWidth);
-                    double minY = bbox.getMinY() + (row * tileHeight);
-                    tile.init(minX, minX + tileWidth, minY, minY + tileHeight);
-
-                    if (prepGeom.covers(FAC.toGeometry(tile))) {
-                        if (line != null && Math.abs(line.getMaxX() - tile.getMinX()) < COORD_EPSILON) {
-                            line.expandToInclude(tile);
-                        } else {
-                            line = new Envelope(tile);
-                            lines.add(line);
-                        }
-                    }
-                }
-            }
-            return lines;
         }
     }
 
