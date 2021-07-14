@@ -232,7 +232,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         // a single entry.
         environment.jersey().register(new IllegalArgumentExceptionMapper());
 
-        final GraphHopperManaged graphHopperManaged = new GraphHopperManaged(configuration.getGraphHopperConfiguration(), environment.getObjectMapper());
+        final GraphHopperManaged graphHopperManaged = new GraphHopperManaged(configuration.getGraphHopperConfiguration());
         environment.lifecycle().manage(graphHopperManaged);
         final GraphHopper graphHopper = graphHopperManaged.getGraphHopper();
         environment.jersey().register(new AbstractBinder() {

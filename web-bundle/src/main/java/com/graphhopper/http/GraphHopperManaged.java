@@ -18,7 +18,6 @@
 
 package com.graphhopper.http;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.GraphHopper;
@@ -26,24 +25,14 @@ import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.GraphHopperGtfs;
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupHelper;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.util.CustomModel;
-import com.graphhopper.util.JsonFeatureCollection;
-import com.graphhopper.util.shapes.BBox;
 import io.dropwizard.lifecycle.Managed;
-import org.locationtech.jts.geom.Envelope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,33 +42,11 @@ public class GraphHopperManaged implements Managed {
     private final static Logger logger = LoggerFactory.getLogger(GraphHopperManaged.class);
     private final GraphHopper graphHopper;
 
-    public GraphHopperManaged(GraphHopperConfig configuration, ObjectMapper objectMapper) {
-        ObjectMapper localObjectMapper = objectMapper.copy();
-        localObjectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    public GraphHopperManaged(GraphHopperConfig configuration) {
         if (configuration.has("gtfs.file")) {
             graphHopper = new GraphHopperGtfs(configuration);
         } else {
             graphHopper = new GraphHopper();
-        }
-        if (!configuration.getString("spatial_rules.location", "").isEmpty()) {
-            throw new RuntimeException("spatial_rules.location has been deprecated. Please use spatial_rules.borders_directory instead.");
-        }
-        String spatialRuleBordersDirLocation = configuration.getString("spatial_rules.borders_directory", "");
-        if (!spatialRuleBordersDirLocation.isEmpty()) {
-            final Envelope maxBounds = BBox.toEnvelope(BBox.parseBBoxString(configuration.getString("spatial_rules.max_bbox", "-180, 180, -90, 90")));
-            final Path bordersDirectory = Paths.get(spatialRuleBordersDirLocation);
-            List<JsonFeatureCollection> jsonFeatureCollections = new ArrayList<>();
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(bordersDirectory, "*.{geojson,json}")) {
-                for (Path borderFile : stream) {
-                    try (BufferedReader reader = Files.newBufferedReader(borderFile, StandardCharsets.UTF_8)) {
-                        JsonFeatureCollection jsonFeatureCollection = localObjectMapper.readValue(reader, JsonFeatureCollection.class);
-                        jsonFeatureCollections.add(jsonFeatureCollection);
-                    }
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            SpatialRuleLookupHelper.buildAndInjectCountrySpatialRules(graphHopper, maxBounds, jsonFeatureCollections);
         }
 
         String customModelFolder = configuration.getString("custom_model_folder", "");
