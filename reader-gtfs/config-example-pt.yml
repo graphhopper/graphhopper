@@ -2,7 +2,11 @@ graphhopper:
   datareader.file: brandenburg-latest.osm.pbf
   gtfs.file: gtfs-vbb.zip
   graph.location: graphs/brandenburg-with-transit
-  graph.flag_encoders: foot
+
+  profiles:
+    - name: foot
+      vehicle: foot
+      weighting: fastest
 
 server:
   application_connectors:

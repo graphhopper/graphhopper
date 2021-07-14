@@ -23,10 +23,10 @@ import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
+import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
-import com.graphhopper.routing.util.AccessFilter;
-import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -161,13 +161,14 @@ public final class PtRouterImpl implements PtRouter {
             PointList points = new PointList(2, false);
             List<GHLocation> locations = Arrays.asList(enter, exit);
             for (int i = 0; i < locations.size(); i++) {
-                if (enter instanceof GHPointLocation) {
-                    final Snap closest = findByPoint(((GHPointLocation) locations.get(i)).ghPoint, i);
+                GHLocation location = locations.get(i);
+                if (location instanceof GHPointLocation) {
+                    final Snap closest = findByPoint(((GHPointLocation) location).ghPoint, i);
                     pointSnaps.add(closest);
                     allSnaps.add(closest);
                     points.add(closest.getSnappedPoint());
-                } else if (enter instanceof GHStationLocation) {
-                    final Snap station = findByStationId((GHStationLocation) locations.get(i), i);
+                } else if (location instanceof GHStationLocation) {
+                    final Snap station = findByStationId((GHStationLocation) location, i);
                     allSnaps.add(station);
                     points.add(graphHopperStorage.getNodeAccess().getLat(station.getClosestNode()), graphHopperStorage.getNodeAccess().getLon(station.getClosestNode()));
                 }
@@ -190,7 +191,8 @@ public final class PtRouterImpl implements PtRouter {
         }
 
         private Snap findByPoint(GHPoint point, int indexForErrorMessage) {
-            final EdgeFilter filter = AccessFilter.allEdges(graphHopperStorage.getEncodingManager().getEncoder("foot").getAccessEnc());
+            FlagEncoder footEncoder = graphHopperStorage.getEncodingManager().getEncoder("foot");
+            final EdgeFilter filter = new DefaultSnapFilter(new FastestWeighting(footEncoder), graphHopperStorage.getEncodingManager().getBooleanEncodedValue(Subnetwork.key("foot")));
             Snap source = locationIndex.findClosest(point.lat, point.lon, filter);
             if (!source.isValid()) {
                 throw new PointNotFoundException("Cannot find point: " + point, indexForErrorMessage);
@@ -295,12 +297,26 @@ public final class PtRouterImpl implements PtRouter {
                 Label reverseLabel = reverseSettledSet.get(label.adjNode);
                 if (reverseLabel != null) {
                     Label combinedSolution = new Label(label.currentTime - reverseLabel.currentTime + initialTime.toEpochMilli(), -1, label.adjNode, label.nTransfers + reverseLabel.nTransfers, label.departureTime, label.walkTime + reverseLabel.walkTime, 0, label.impossible, null);
-                    if (router.isNotDominatedByAnyOf(combinedSolution, discoveredSolutions)) {
-                        router.removeDominated(combinedSolution, discoveredSolutions);
+                    List<Label> filteredSolutions;
+                    List<Label> otherSolutions;
+                    if (profileQuery && combinedSolution.departureTime != null) {
+                        Map<Boolean, List<Label>> partitionedSptEntries = router.partitionByProfileCriterion(combinedSolution, discoveredSolutions);
+                        filteredSolutions = new ArrayList<>(partitionedSptEntries.get(true));
+                        otherSolutions = new ArrayList<>(partitionedSptEntries.get(false));
+                    } else {
+                        filteredSolutions = new ArrayList<>(discoveredSolutions);
+                        otherSolutions = Collections.emptyList();
+                    }
+                    if (router.isNotDominatedByAnyOf(combinedSolution, filteredSolutions)) {
+                        router.removeDominated(combinedSolution, filteredSolutions);
+                        discoveredSolutions.clear();
+                        discoveredSolutions.addAll(filteredSolutions);
+                        discoveredSolutions.addAll(otherSolutions);
                         List<Label> closedSolutions = discoveredSolutions.stream().filter(s -> router.weight(s) < router.weight(label) + smallestStationLabelWeight).collect(Collectors.toList());
                         if (closedSolutions.size() >= limitSolutions) continue;
-                        if (profileQuery && combinedSolution.departureTime != null && (combinedSolution.departureTime - initialTime.toEpochMilli()) * (arriveBy ? -1L : 1L) > maxProfileDuration && closedSolutions.size() > 0 && closedSolutions.get(closedSolutions.size() - 1).departureTime != null && (closedSolutions.get(closedSolutions.size() - 1).departureTime - initialTime.toEpochMilli()) * (arriveBy ? -1L : 1L) > maxProfileDuration)
+                        if (profileQuery && combinedSolution.departureTime != null && (combinedSolution.departureTime - initialTime.toEpochMilli()) * (arriveBy ? -1L : 1L) > maxProfileDuration && closedSolutions.size() > 0 && closedSolutions.get(closedSolutions.size() - 1).departureTime != null && (closedSolutions.get(closedSolutions.size() - 1).departureTime - initialTime.toEpochMilli()) * (arriveBy ? -1L : 1L) > maxProfileDuration) {
                             continue;
+                        }
                         discoveredSolutions.add(combinedSolution);
                         discoveredSolutions.sort(comparingLong(s -> Optional.ofNullable(s.departureTime).orElse(0L)));
                         originalSolutions.put(combinedSolution, label);
@@ -365,7 +381,7 @@ public final class PtRouterImpl implements PtRouter {
 
         private boolean profileFinished(MultiCriteriaLabelSetting router, List<Label> discoveredSolutions, Label walkSolution) {
             return discoveredSolutions.size() >= limitSolutions ||
-                    (!discoveredSolutions.isEmpty() && router.timeSinceStartTime(discoveredSolutions.get(discoveredSolutions.size() - 1)) > maxProfileDuration) ||
+                    (!discoveredSolutions.isEmpty() && router.departureTimeSinceStartTime(discoveredSolutions.get(discoveredSolutions.size() - 1)) != null && router.departureTimeSinceStartTime(discoveredSolutions.get(discoveredSolutions.size() - 1)) > maxProfileDuration) ||
                     walkSolution != null;
             // Imagine we can always add the walk solution again to the end of the list (it can start any time).
             // In turn, we must also think of this virtual walk solution in the other test (where we check if all labels are closed).

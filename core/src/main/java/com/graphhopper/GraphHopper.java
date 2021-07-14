@@ -457,8 +457,7 @@ public class GraphHopper implements GraphHopperAPI {
         emBuilder.setPreferredLanguage(ghConfig.getString("datareader.preferred_language", ""));
         emBuilder.setDateRangeParser(DateRangeParser.createInstance(ghConfig.getString("datareader.date_range_parser_day", "")));
         setProfiles(ghConfig.getProfiles());
-        // currently we cannot require profiles at this point as GTFS module does not use them
-        encodingManager = buildEncodingManager(ghConfig, false);
+        encodingManager = buildEncodingManager(ghConfig);
 
         if (ghConfig.getString("graph.locktype", "native").equals("simple"))
             lockFactory = new SimpleFSLockFactory();
@@ -504,7 +503,7 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
-    private EncodingManager buildEncodingManager(GraphHopperConfig ghConfig, boolean requireProfilesByName) {
+    private EncodingManager buildEncodingManager(GraphHopperConfig ghConfig) {
         String flagEncodersStr = ghConfig.getString("graph.flag_encoders", "");
         String encodedValueStr = ghConfig.getString("graph.encoded_values", "");
         Map<String, String> flagEncoderMap = new LinkedHashMap<>(), implicitFlagEncoderMap = new HashMap<>();
@@ -516,7 +515,7 @@ public class GraphHopper implements GraphHopperAPI {
                 flagEncoderMap.put(key, encoderStr);
             }
         }
-        if (requireProfilesByName && profilesByName.isEmpty())
+        if (profilesByName.isEmpty())
             throw new IllegalStateException("no profiles exist but assumed to create EncodingManager. E.g. provide them in GraphHopperConfig when calling GraphHopper.init");
         for (Profile profile : profilesByName.values()) {
             emBuilder.add(Subnetwork.create(profile.getName()));
@@ -709,7 +708,7 @@ public class GraphHopper implements GraphHopperAPI {
             StorableProperties properties = new StorableProperties(new GHDirectory(ghLocation, dataAccessType));
             encodingManager = properties.loadExisting()
                     ? EncodingManager.create(emBuilder, encodedValueFactory, flagEncoderFactory, properties)
-                    : buildEncodingManager(new GraphHopperConfig(), true);
+                    : buildEncodingManager(new GraphHopperConfig());
         }
 
         GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);

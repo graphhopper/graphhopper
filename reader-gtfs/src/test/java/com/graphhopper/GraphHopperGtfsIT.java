@@ -18,6 +18,7 @@
 
 package com.graphhopper;
 
+import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
@@ -32,6 +33,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -51,9 +53,11 @@ public class GraphHopperGtfsIT {
     @BeforeAll
     public static void init() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
-        ghConfig.putObject("graph.flag_encoders", "car,foot");
         ghConfig.putObject("graph.location", GRAPH_LOC);
         ghConfig.putObject("gtfs.file", "files/sample-feed.zip");
+        ghConfig.setProfiles(Arrays.asList(
+                new Profile("foot").setVehicle("foot").setWeighting("fastest"),
+                new Profile("car").setVehicle("car").setWeighting("fastest")));
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
@@ -395,9 +399,9 @@ public class GraphHopperGtfsIT {
         ghRequest.setProfileQuery(true);
         ghRequest.setMaxProfileDuration(Duration.ofSeconds(1));
         GHResponse response = ptRouter.route(ghRequest);
-        assertEquals(time(1, 20), response.getBest().getTime(), "Expected travel time == scheduled travel time");
-        // This should behave exactly as a not-profile-query, also performance-wise
-        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(200);
+        assertEquals(time(1, 20), response.getAll().get(0).getTime(), "Expected travel time == scheduled travel time");
+        assertEquals(time(7, 20), response.getAll().get(1).getTime(), "Expected travel time == scheduled travel time");
+        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(903);
     }
 
     @Test

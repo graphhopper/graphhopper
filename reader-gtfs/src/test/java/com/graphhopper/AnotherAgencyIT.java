@@ -18,6 +18,7 @@
 
 package com.graphhopper;
 
+import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
@@ -44,10 +45,12 @@ public class AnotherAgencyIT {
     @BeforeAll
     public static void init() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
-        ghConfig.putObject("graph.flag_encoders", "car,foot");
         ghConfig.putObject("graph.location", GRAPH_LOC);
         ghConfig.putObject("datareader.file", "files/beatty.osm");
         ghConfig.putObject("gtfs.file", "files/sample-feed.zip,files/another-sample-feed.zip");
+        ghConfig.setProfiles(Arrays.asList(
+                new Profile("foot").setVehicle("foot").setWeighting("fastest"),
+                new Profile("car").setVehicle("car").setWeighting("fastest")));
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);

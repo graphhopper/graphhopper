@@ -179,42 +179,42 @@ public class MultiCriteriaLabelSetting {
                 return true;
             }
         }
+    }
 
-        private void insertIfNotDominated(Label me) {
-            List<Label> filteredTargetLabels = profileQuery && me.departureTime != null ? partitionByProfileCriterion(me, targetLabels).get(true) : targetLabels;
-            if (isNotDominatedByAnyOf(me, filteredTargetLabels)) {
-                List<Label> sptEntries = fromMap.get(me.adjNode);
-                if (sptEntries == null) {
-                    sptEntries = new ArrayList<>(1);
-                    fromMap.put(me.adjNode, sptEntries);
-                }
-                List<Label> filteredSptEntries;
-                List<Label> otherSptEntries;
-                if (profileQuery && me.departureTime != null) {
-                    Map<Boolean, List<Label>> partitionedSptEntries = partitionByProfileCriterion(me, sptEntries);
-                    filteredSptEntries = new ArrayList<>(partitionedSptEntries.get(true));
-                    otherSptEntries = new ArrayList<>(partitionedSptEntries.get(false));
-                } else {
-                    filteredSptEntries = new ArrayList<>(sptEntries);
-                    otherSptEntries = Collections.emptyList();
-                }
-                if (isNotDominatedByAnyOf(me, filteredSptEntries)) {
-                    removeDominated(me, filteredSptEntries);
-                    sptEntries.clear();
-                    sptEntries.addAll(filteredSptEntries);
-                    sptEntries.addAll(otherSptEntries);
-                    sptEntries.add(me);
-                    fromHeap.add(me);
-                }
+    void insertIfNotDominated(Label me) {
+        List<Label> filteredTargetLabels = profileQuery && me.departureTime != null ? partitionByProfileCriterion(me, targetLabels).get(true) : targetLabels;
+        if (isNotDominatedByAnyOf(me, filteredTargetLabels)) {
+            List<Label> sptEntries = fromMap.get(me.adjNode);
+            if (sptEntries == null) {
+                sptEntries = new ArrayList<>(1);
+                fromMap.put(me.adjNode, sptEntries);
+            }
+            List<Label> filteredSptEntries;
+            List<Label> otherSptEntries;
+            if (profileQuery && me.departureTime != null) {
+                Map<Boolean, List<Label>> partitionedSptEntries = partitionByProfileCriterion(me, sptEntries);
+                filteredSptEntries = new ArrayList<>(partitionedSptEntries.get(true));
+                otherSptEntries = new ArrayList<>(partitionedSptEntries.get(false));
+            } else {
+                filteredSptEntries = new ArrayList<>(sptEntries);
+                otherSptEntries = Collections.emptyList();
+            }
+            if (isNotDominatedByAnyOf(me, filteredSptEntries)) {
+                removeDominated(me, filteredSptEntries);
+                sptEntries.clear();
+                sptEntries.addAll(filteredSptEntries);
+                sptEntries.addAll(otherSptEntries);
+                sptEntries.add(me);
+                fromHeap.add(me);
             }
         }
+    }
 
-        private Map<Boolean, List<Label>> partitionByProfileCriterion(Label me, List<Label> sptEntries) {
-            if (!reverse) {
-                return sptEntries.stream().collect(Collectors.partitioningBy(they -> they.departureTime != null && (they.departureTime >= me.departureTime || they.departureTime >= startTime + maxProfileDuration)));
-            } else {
-                return sptEntries.stream().collect(Collectors.partitioningBy(they -> they.departureTime != null && (they.departureTime <= me.departureTime || they.departureTime <= startTime - maxProfileDuration)));
-            }
+    Map<Boolean, List<Label>> partitionByProfileCriterion(Label me, List<Label> sptEntries) {
+        if (!reverse) {
+            return sptEntries.stream().collect(Collectors.partitioningBy(they -> they.departureTime != null && (they.departureTime >= me.departureTime || they.departureTime >= startTime + maxProfileDuration)));
+        } else {
+            return sptEntries.stream().collect(Collectors.partitioningBy(they -> they.departureTime != null && (they.departureTime <= me.departureTime || they.departureTime <= startTime - maxProfileDuration)));
         }
     }
 
@@ -264,6 +264,18 @@ public class MultiCriteriaLabelSetting {
 
     long timeSinceStartTime(Label label) {
         return (reverse ? -1 : 1) * (label.currentTime - startTime);
+    }
+
+    Long departureTimeSinceStartTime(Label label) {
+        return label.departureTime != null ? (reverse ? -1 : 1) * (label.departureTime - startTime) : null;
+    }
+
+    private long travelTimeCriterion(Label label) {
+        if (label.departureTime == null) {
+            return label.walkTime;
+        } else {
+            return (reverse ? -1 : 1) * (label.currentTime - label.departureTime);
+        }
     }
 
     public void setLimitStreetTime(long limitStreetTime) {
