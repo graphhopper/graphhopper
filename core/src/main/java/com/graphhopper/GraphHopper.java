@@ -32,7 +32,6 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.lm.LandmarkStorage;
-import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks.PrepareJob;
 import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
@@ -41,9 +40,6 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoderFactory;
 import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
-import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
@@ -101,8 +97,6 @@ public class GraphHopper implements GraphHopperAPI {
     private int maxRegionSearch = 4;
     // for prepare
     private int minNetworkSize = 200;
-    // for LM
-    private final JsonFeatureCollection landmarkSplittingFeatureCollection;
 
     // preparation handlers
     private final LMPreparationHandler lmPreparationHandler = new LMPreparationHandler();
@@ -117,14 +111,6 @@ public class GraphHopper implements GraphHopperAPI {
     private EncodedValueFactory encodedValueFactory = new DefaultEncodedValueFactory();
     private TagParserFactory tagParserFactory = new DefaultTagParserFactory();
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
-
-    public GraphHopper() {
-        this(null);
-    }
-
-    public GraphHopper(JsonFeatureCollection landmarkSplittingFeatureCollection) {
-        this.landmarkSplittingFeatureCollection = landmarkSplittingFeatureCollection;
-    }
 
     public EncodingManager.Builder getEncodingManagerBuilder() {
         return emBuilder;
@@ -1056,23 +1042,6 @@ public class GraphHopper implements GraphHopperAPI {
     protected void loadOrPrepareLM(boolean closeEarly) {
         if (!lmPreparationHandler.isEnabled() || lmPreparationHandler.getPreparations().isEmpty()) {
             return;
-        }
-
-        if (landmarkSplittingFeatureCollection != null && !landmarkSplittingFeatureCollection.getFeatures().isEmpty()) {
-            SpatialRuleLookup ruleLookup = SpatialRuleLookupBuilder.buildIndex(
-                    Collections.singletonList(landmarkSplittingFeatureCollection), "area",
-                    (id, polygons) -> new AbstractSpatialRule(polygons) {
-                        @Override
-                        public String getId() {
-                            return id;
-                        }
-                    });
-            for (PrepareLandmarks prep : getLMPreparationHandler().getPreparations()) {
-                // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
-                if (ruleLookup != null && !ruleLookup.getRules().isEmpty()) {
-                    prep.setSpatialRuleLookup(ruleLookup);
-                }
-            }
         }
 
         for (LMProfile profile : lmPreparationHandler.getLMProfiles()) {
