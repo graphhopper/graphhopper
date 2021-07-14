@@ -18,9 +18,8 @@
 
 package com.graphhopper.routing.util.spatialrules;
 
+import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.graphhopper.jackson.Jackson;
-import com.graphhopper.util.JsonFeature;
 import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.util.StopWatch;
 import org.junit.jupiter.api.Test;
@@ -30,7 +29,6 @@ import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -145,7 +143,9 @@ class CustomAreaIndexTest {
     @Test
     public void testPerformance() throws IOException {
         // todo: maybe remove again or move to performance tests or something
-        ObjectMapper objectMapper = Jackson.newObjectMapper();
+        // todo: should there be some reusable code to create 'the' object mapper?
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JtsModule());
         List<CustomArea> customAreas;
         try (BufferedReader reader = Files.newBufferedReader(Paths.get("files/spatialrules/countries.geojson"))) {
             JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);

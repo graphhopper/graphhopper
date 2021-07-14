@@ -17,11 +17,11 @@
  */
 package com.graphhopper;
 
+import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
@@ -692,13 +692,15 @@ public class GraphHopper implements GraphHopperAPI {
 
     private List<CustomArea> readCustomAreas() {
         // todo: this is basically what we did before in GraphHopperManaged
-        ObjectMapper localObjectMapper = Jackson.newObjectMapper();
+        // todo: this is a bit ugly, we don't have Jackson.newObjectMapper in core (yet).
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JtsModule());
         final Path bordersDirectory = Paths.get(customAreasLocation);
         List<JsonFeatureCollection> jsonFeatureCollections = new ArrayList<>();
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(bordersDirectory, "*.{geojson,json}")) {
             for (Path borderFile : stream) {
                 try (BufferedReader reader = Files.newBufferedReader(borderFile, StandardCharsets.UTF_8)) {
-                    JsonFeatureCollection jsonFeatureCollection = localObjectMapper.readValue(reader, JsonFeatureCollection.class);
+                    JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
                     jsonFeatureCollections.add(jsonFeatureCollection);
                 }
             }
