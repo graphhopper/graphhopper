@@ -402,9 +402,9 @@ public class GraphHopperGtfsIT {
         ghRequest.setProfileQuery(true);
         ghRequest.setMaxProfileDuration(Duration.ofSeconds(1));
         GHResponse response = ptRouter.route(ghRequest);
-        assertEquals(time(1, 20), response.getBest().getTime(), "Expected travel time == scheduled travel time");
-        // This should behave exactly as a not-profile-query, also performance-wise
-        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(200);
+        assertEquals(time(1, 20), response.getAll().get(0).getTime(), "Expected travel time == scheduled travel time");
+        assertEquals(time(7, 20), response.getAll().get(1).getTime(), "Expected travel time == scheduled travel time");
+        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(903);
     }
 
     @Test

@@ -295,12 +295,26 @@ public final class PtRouterImpl implements PtRouter {
                 Label reverseLabel = reverseSettledSet.get(label.adjNode);
                 if (reverseLabel != null) {
                     Label combinedSolution = new Label(label.currentTime - reverseLabel.currentTime + initialTime.toEpochMilli(), -1, label.adjNode, label.nTransfers + reverseLabel.nTransfers, label.departureTime, label.walkTime + reverseLabel.walkTime, 0, label.impossible, null);
-                    if (router.isNotDominatedByAnyOf(combinedSolution, discoveredSolutions)) {
-                        router.removeDominated(combinedSolution, discoveredSolutions);
+                    List<Label> filteredSolutions;
+                    List<Label> otherSolutions;
+                    if (profileQuery && combinedSolution.departureTime != null) {
+                        Map<Boolean, List<Label>> partitionedSptEntries = router.partitionByProfileCriterion(combinedSolution, discoveredSolutions);
+                        filteredSolutions = new ArrayList<>(partitionedSptEntries.get(true));
+                        otherSolutions = new ArrayList<>(partitionedSptEntries.get(false));
+                    } else {
+                        filteredSolutions = new ArrayList<>(discoveredSolutions);
+                        otherSolutions = Collections.emptyList();
+                    }
+                    if (router.isNotDominatedByAnyOf(combinedSolution, filteredSolutions)) {
+                        router.removeDominated(combinedSolution, filteredSolutions);
+                        discoveredSolutions.clear();
+                        discoveredSolutions.addAll(filteredSolutions);
+                        discoveredSolutions.addAll(otherSolutions);
                         List<Label> closedSolutions = discoveredSolutions.stream().filter(s -> router.weight(s) < router.weight(label) + smallestStationLabelWeight).collect(Collectors.toList());
                         if (closedSolutions.size() >= limitSolutions) continue;
-                        if (profileQuery && combinedSolution.departureTime != null && (combinedSolution.departureTime - initialTime.toEpochMilli()) * (arriveBy ? -1L : 1L) > maxProfileDuration && closedSolutions.size() > 0 && closedSolutions.get(closedSolutions.size() - 1).departureTime != null && (closedSolutions.get(closedSolutions.size() - 1).departureTime - initialTime.toEpochMilli()) * (arriveBy ? -1L : 1L) > maxProfileDuration)
+                        if (profileQuery && combinedSolution.departureTime != null && (combinedSolution.departureTime - initialTime.toEpochMilli()) * (arriveBy ? -1L : 1L) > maxProfileDuration && closedSolutions.size() > 0 && closedSolutions.get(closedSolutions.size() - 1).departureTime != null && (closedSolutions.get(closedSolutions.size() - 1).departureTime - initialTime.toEpochMilli()) * (arriveBy ? -1L : 1L) > maxProfileDuration) {
                             continue;
+                        }
                         discoveredSolutions.add(combinedSolution);
                         discoveredSolutions.sort(comparingLong(s -> Optional.ofNullable(s.departureTime).orElse(0L)));
                         originalSolutions.put(combinedSolution, label);
@@ -364,7 +378,7 @@ public final class PtRouterImpl implements PtRouter {
 
         private boolean profileFinished(MultiCriteriaLabelSetting router, List<Label> discoveredSolutions, Label walkSolution) {
             return discoveredSolutions.size() >= limitSolutions ||
-                    (!discoveredSolutions.isEmpty() && router.timeSinceStartTime(discoveredSolutions.get(discoveredSolutions.size() - 1)) > maxProfileDuration) ||
+                    (!discoveredSolutions.isEmpty() && router.departureTimeSinceStartTime(discoveredSolutions.get(discoveredSolutions.size() - 1)) != null && router.departureTimeSinceStartTime(discoveredSolutions.get(discoveredSolutions.size() - 1)) > maxProfileDuration) ||
                     walkSolution != null;
             // Imagine we can always add the walk solution again to the end of the list (it can start any time).
             // In turn, we must also think of this virtual walk solution in the other test (where we check if all labels are closed).

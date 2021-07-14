@@ -107,7 +107,7 @@ public class GraphHopperMultimodalIT {
         assertThat(arrivalTime(walkSolution.getLegs().get(0))).isBefore(arrivalTime(firstTransitSolution.getLegs().get(firstTransitSolution.getLegs().size()-1)));
         assertThat(routeDuration(firstTransitSolution)).isLessThanOrEqualTo(routeDuration(walkSolution));
 
-        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(206);
+        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(271);
     }
 
     @Test
@@ -237,7 +237,7 @@ public class GraphHopperMultimodalIT {
         assertThat(response1.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(142);
         ghRequest.setLimitSolutions(3);
         GHResponse response3 = graphHopper.route(ghRequest);
-        assertThat(response3.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(230);
+        assertThat(response3.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(234);
         assertThat(response1.getAll().get(0).getTime()).isEqualTo(response3.getAll().get(0).getTime());
         ghRequest.setLimitSolutions(5);
         GHResponse response5 = graphHopper.route(ghRequest);
