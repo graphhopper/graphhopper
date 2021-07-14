@@ -26,6 +26,7 @@ import com.graphhopper.util.EdgeIterator;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -177,20 +178,42 @@ public class MultiCriteriaLabelSetting {
                 return true;
             }
         }
+    }
 
-        private void insertIfNotDominated(Label label) {
-            if (isNotDominatedByAnyOf(label, targetLabels)) {
-                List<Label> sptEntries = fromMap.get(label.adjNode);
-                if (sptEntries == null) {
-                    sptEntries = new ArrayList<>(1);
-                    fromMap.put(label.adjNode, sptEntries);
-                }
-                if (isNotDominatedByAnyOf(label, sptEntries)) {
-                    removeDominated(label, sptEntries);
-                    sptEntries.add(label);
-                    fromHeap.add(label);
-                }
+    void insertIfNotDominated(Label me) {
+        List<Label> filteredTargetLabels = profileQuery && me.departureTime != null ? partitionByProfileCriterion(me, targetLabels).get(true) : targetLabels;
+        if (isNotDominatedByAnyOf(me, filteredTargetLabels)) {
+            List<Label> sptEntries = fromMap.get(me.adjNode);
+            if (sptEntries == null) {
+                sptEntries = new ArrayList<>(1);
+                fromMap.put(me.adjNode, sptEntries);
             }
+            List<Label> filteredSptEntries;
+            List<Label> otherSptEntries;
+            if (profileQuery && me.departureTime != null) {
+                Map<Boolean, List<Label>> partitionedSptEntries = partitionByProfileCriterion(me, sptEntries);
+                filteredSptEntries = new ArrayList<>(partitionedSptEntries.get(true));
+                otherSptEntries = new ArrayList<>(partitionedSptEntries.get(false));
+            } else {
+                filteredSptEntries = new ArrayList<>(sptEntries);
+                otherSptEntries = Collections.emptyList();
+            }
+            if (isNotDominatedByAnyOf(me, filteredSptEntries)) {
+                removeDominated(me, filteredSptEntries);
+                sptEntries.clear();
+                sptEntries.addAll(filteredSptEntries);
+                sptEntries.addAll(otherSptEntries);
+                sptEntries.add(me);
+                fromHeap.add(me);
+            }
+        }
+    }
+
+    Map<Boolean, List<Label>> partitionByProfileCriterion(Label me, List<Label> sptEntries) {
+        if (!reverse) {
+            return sptEntries.stream().collect(Collectors.partitioningBy(they -> they.departureTime != null && (they.departureTime >= me.departureTime || they.departureTime >= startTime + maxProfileDuration)));
+        } else {
+            return sptEntries.stream().collect(Collectors.partitioningBy(they -> they.departureTime != null && (they.departureTime <= me.departureTime || they.departureTime <= startTime - maxProfileDuration)));
         }
     }
 
@@ -217,16 +240,6 @@ public class MultiCriteriaLabelSetting {
         if (weight(me) > weight(they))
             return false;
 
-        if (profileQuery) {
-            if (me.departureTime != null && they.departureTime != null) {
-                if (departureTimeCriterion(me) > departureTimeCriterion(they) && departureTimeCriterion(me) < departureTimeCriterion(they) + maxProfileDuration)
-                    return false;
-            } else {
-                if (travelTimeCriterion(me) > travelTimeCriterion(they))
-                    return false;
-            }
-        }
-
         if (mindTransfers && me.nTransfers > they.nTransfers)
             return false;
         if (me.impossible && !they.impossible)
@@ -234,15 +247,6 @@ public class MultiCriteriaLabelSetting {
 
         if (weight(me) < weight(they))
             return true;
-        if (profileQuery) {
-            if (me.departureTime != null && they.departureTime != null) {
-                if (departureTimeCriterion(me) < departureTimeCriterion(they))
-                    return true;
-            } else {
-                if (travelTimeCriterion(me) < travelTimeCriterion(they))
-                    return true;
-            }
-        }
         if (mindTransfers && me.nTransfers < they.nTransfers)
             return true;
 
@@ -259,6 +263,10 @@ public class MultiCriteriaLabelSetting {
 
     long timeSinceStartTime(Label label) {
         return (reverse ? -1 : 1) * (label.currentTime - startTime);
+    }
+
+    Long departureTimeSinceStartTime(Label label) {
+        return label.departureTime != null ? (reverse ? -1 : 1) * (label.departureTime - startTime) : null;
     }
 
     private long travelTimeCriterion(Label label) {

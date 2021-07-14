@@ -18,6 +18,7 @@
 
 package com.graphhopper;
 
+import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
@@ -28,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.time.*;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import static com.graphhopper.gtfs.GtfsHelper.time;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -43,10 +45,12 @@ public class AnotherAgencyIT {
     @BeforeAll
     public static void init() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
-        ghConfig.putObject("graph.flag_encoders", "car,foot");
         ghConfig.putObject("graph.location", GRAPH_LOC);
         ghConfig.putObject("datareader.file", "files/beatty.osm");
         ghConfig.putObject("gtfs.file", "files/sample-feed.zip,files/another-sample-feed.zip");
+        ghConfig.setProfiles(Arrays.asList(
+                new Profile("foot").setVehicle("foot").setWeighting("fastest"),
+                new Profile("car").setVehicle("car").setWeighting("fastest")));
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
@@ -139,14 +143,40 @@ public class AnotherAgencyIT {
                 LocalDateTime.of(2007, 1, 1, 9, 0, 0).atZone(zoneId).toInstant()
         );
         ghRequest.setIgnoreTransfers(true);
-        ghRequest.setWalkSpeedKmH(0.005); // Prevent walk solution
+        ghRequest.setWalkSpeedKmH(0.5); // Prevent walk solution
         GHResponse route = ptRouter.route(ghRequest);
 
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
         ResponsePath transitSolution = route.getBest();
+        Trip.PtLeg firstLeg = ((Trip.PtLeg) transitSolution.getLegs().get(0));
+        Trip.PtLeg secondLeg = ((Trip.PtLeg) transitSolution.getLegs().get(1));
+        assertEquals("JUSTICE_COURT,MUSEUM", firstLeg.stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
+        assertEquals("EMSI,DADAN", secondLeg.stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
+        // TODO: write down 10 min transfer time
+        assertEquals(4500000L, transitSolution.getTime());
+        assertEquals(4500000.0, transitSolution.getRouteWeight());
+
         // TODO: We probably want something like a transfer leg here
         assertEquals(time(1, 15), transitSolution.getTime(), "Expected total travel time == scheduled travel time + wait time");
+    }
+
+    @Test
+    public void testMuseumToEmsi() {
+        Request ghRequest = new Request(
+                Arrays.asList(
+                        new GHStationLocation("MUSEUM"),
+                        new GHStationLocation("EMSI")
+                ),
+                LocalDateTime.of(2007, 1, 1, 9, 0, 0).atZone(zoneId).toInstant()
+        );
+        ghRequest.setWalkSpeedKmH(0.5);
+        ghRequest.setIgnoreTransfers(true);
+        GHResponse route = ptRouter.route(ghRequest);
+        ResponsePath walkRoute = route.getBest();
+        assertEquals(1, walkRoute.getLegs().size());
+        assertEquals(486620, walkRoute.getTime()); // < 10 min, so the transfer in test above works ^^
+        assertFalse(route.hasErrors());
     }
 
 }

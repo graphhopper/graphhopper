@@ -384,15 +384,14 @@ public class GTFSFeed implements Cloneable, Closeable {
 
     /** Create a GTFS feed in a temp file */
     public GTFSFeed () {
-        // calls to this must be first operation in constructor - why, Java?
         this(DBMaker.newTempFileDB()
                 .transactionDisable()
                 .mmapFileEnable()
                 .asyncWriteEnable()
                 .deleteFilesAfterClose()
+                .closeOnJvmShutdown()
                 .compressionEnable()
-                // .cacheSize(1024 * 1024) this bloats memory consumption
-                .make()); // TODO db.close();
+                .make());
     }
 
     /** Create a GTFS feed connected to a particular DB, which will be created if it does not exist. */
