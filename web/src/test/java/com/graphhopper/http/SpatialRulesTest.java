@@ -36,7 +36,7 @@ import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests the DataFlagEncoder with the SpatialRuleLookup enabled
+ * Tests GraphHopper including spatial rules
  *
  * @author Robin Boldt
  */

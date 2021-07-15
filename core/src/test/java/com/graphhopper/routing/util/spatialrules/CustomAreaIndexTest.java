@@ -143,6 +143,7 @@ class CustomAreaIndexTest {
     @Test
     public void testPerformance() throws IOException {
         // todo: maybe remove again or move to performance tests or something
+        // todo: note that there are already similar performance measurements in Measurement!
         // todo: should there be some reusable code to create 'the' object mapper?
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JtsModule());

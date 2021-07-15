@@ -18,6 +18,7 @@
 package com.graphhopper;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
@@ -34,7 +35,6 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.lm.LandmarkStorage;
-import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks.PrepareJob;
 import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
@@ -43,7 +43,9 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoderFactory;
 import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
-import com.graphhopper.routing.util.spatialrules.*;
+import com.graphhopper.routing.util.spatialrules.CustomArea;
+import com.graphhopper.routing.util.spatialrules.CustomAreaIndex;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupHelper;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
@@ -55,9 +57,8 @@ import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.Polygon;
-import org.locationtech.jts.geom.util.PolygonExtracter;
+import com.graphhopper.util.shapes.BBox;
+import org.locationtech.jts.geom.Envelope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,8 +116,6 @@ public class GraphHopper implements GraphHopperAPI {
     private int maxRegionSearch = 4;
     // for prepare
     private int minNetworkSize = 200;
-    // for LM
-    private final JsonFeatureCollection landmarkSplittingFeatureCollection;
 
     // preparation handlers
     private final LMPreparationHandler lmPreparationHandler = new LMPreparationHandler();
@@ -131,14 +130,6 @@ public class GraphHopper implements GraphHopperAPI {
     private EncodedValueFactory encodedValueFactory = new DefaultEncodedValueFactory();
     private TagParserFactory tagParserFactory = new DefaultTagParserFactory();
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
-
-    public GraphHopper() {
-        this(null);
-    }
-
-    public GraphHopper(JsonFeatureCollection landmarkSplittingFeatureCollection) {
-        this.landmarkSplittingFeatureCollection = landmarkSplittingFeatureCollection;
-    }
 
     public EncodingManager.Builder getEncodingManagerBuilder() {
         return emBuilder;
@@ -466,6 +457,13 @@ public class GraphHopper implements GraphHopperAPI {
         sortGraph = ghConfig.getBool("graph.do_sort", sortGraph);
         removeZipped = ghConfig.getBool("graph.remove_zipped", removeZipped);
 
+        if (!ghConfig.getString("spatial_rules.location", "").isEmpty())
+            throw new RuntimeException("spatial_rules.location has been deprecated. Please use spatial_rules.borders_directory instead.");
+
+        String spatialRuleBordersDirLocation = ghConfig.getString("spatial_rules.borders_directory", "");
+        if (!spatialRuleBordersDirLocation.isEmpty())
+            setupCountrySpatialRules(ghConfig, spatialRuleBordersDirLocation);
+
         if (encodingManager != null)
             throw new IllegalStateException("Cannot call init twice. EncodingManager was already initialized.");
 
@@ -517,6 +515,26 @@ public class GraphHopper implements GraphHopperAPI {
         routerConfig.setActiveLandmarkCount(activeLandmarkCount);
 
         return this;
+    }
+
+    private void setupCountrySpatialRules(GraphHopperConfig ghConfig, String spatialRuleBordersDirLocation) {
+        final Envelope maxBounds = BBox.toEnvelope(BBox.parseBBoxString(ghConfig.getString("spatial_rules.max_bbox", "-180, 180, -90, 90")));
+        final Path bordersDirectory = Paths.get(spatialRuleBordersDirLocation);
+        List<JsonFeatureCollection> jsonFeatureCollections = new ArrayList<>();
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(bordersDirectory, "*.{geojson,json}")) {
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.registerModule(new JtsModule());
+            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            for (Path borderFile : stream) {
+                try (BufferedReader reader = Files.newBufferedReader(borderFile, StandardCharsets.UTF_8)) {
+                    JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
+                    jsonFeatureCollections.add(jsonFeatureCollection);
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        SpatialRuleLookupHelper.buildAndInjectCountrySpatialRules(this, maxBounds, jsonFeatureCollections);
     }
 
     private EncodingManager buildEncodingManager(GraphHopperConfig ghConfig) {
@@ -1104,23 +1122,6 @@ public class GraphHopper implements GraphHopperAPI {
     protected void loadOrPrepareLM(boolean closeEarly) {
         if (!lmPreparationHandler.isEnabled() || lmPreparationHandler.getPreparations().isEmpty()) {
             return;
-        }
-
-        if (landmarkSplittingFeatureCollection != null && !landmarkSplittingFeatureCollection.getFeatures().isEmpty()) {
-            SpatialRuleLookup ruleLookup = SpatialRuleLookupBuilder.buildIndex(
-                    Collections.singletonList(landmarkSplittingFeatureCollection), "area",
-                    (id, polygons) -> new AbstractSpatialRule(polygons) {
-                        @Override
-                        public String getId() {
-                            return id;
-                        }
-                    });
-            for (PrepareLandmarks prep : getLMPreparationHandler().getPreparations()) {
-                // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
-                if (ruleLookup != null && !ruleLookup.getRules().isEmpty()) {
-                    prep.setSpatialRuleLookup(ruleLookup);
-                }
-            }
         }
 
         for (LMProfile profile : lmPreparationHandler.getLMProfiles()) {
