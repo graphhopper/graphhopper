@@ -24,23 +24,23 @@ import com.carrotsearch.hppc.IntHashSet;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.AStarBidirection;
-import com.graphhopper.routing.BidirRoutingAlgorithm;
-import com.graphhopper.routing.DijkstraBidirectionRef;
-import com.graphhopper.routing.Path;
+import com.graphhopper.routing.*;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.lm.LMApproximator;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.RoutingCHGraph;
+import com.graphhopper.storage.RoutingCHGraphImpl;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
@@ -53,6 +53,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.graphhopper.util.DistancePlaneProjection.DIST_PLANE;
+import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 
 /**
  * This class matches real world GPX entries to the digital road network stored
@@ -78,6 +79,7 @@ public class MapMatching {
 
     private final Graph graph;
     private final PrepareLandmarks landmarks;
+    private final CHGraph chGraph;
     private final LocationIndexTree locationIndex;
     private double measurementErrorSigma = 50.0;
     private double transitionProbabilityBeta = 2.0;
@@ -118,9 +120,16 @@ public class MapMatching {
 
         // see map-matching/#177: both ch.disable and lm.disable can be used to force Dijkstra which is the better
         // (=faster) choice when the observations are close to each other
-        boolean useDijkstra = disableLM || disableCH;
+//        boolean useDijkstra = disableLM || disableCH;
 
-        if (graphHopper.getLMPreparationHandler().isEnabled() && !useDijkstra) {
+        // todo: shall we ignore CH if profile is not edge-based or should this be an error like for /route?
+        if (graphHopper.getCHPreparationHandler().isEnabled() && profile.isTurnCosts() && !disableCH &&
+                // todo: this is 'soft'. we ignore CH if the profile does not match, while for /route this would be an error
+                graphHopper.getCHPreparationHandler().getCHProfiles().stream().anyMatch(ch -> ch.getProfile().equals(profile.getName()))) {
+            String chName = graphHopper.getCHPreparationHandler().getPreparation(profile.getName()).getCHConfig().getName();
+            chGraph = graphHopper.getGraphHopperStorage().getCHGraph(chName);
+            landmarks = null;
+        } else if (graphHopper.getLMPreparationHandler().isEnabled() && !disableLM) {
             // using LM because u-turn prevention does not work properly with (node-based) CH
             List<String> lmProfileNames = new ArrayList<>();
             PrepareLandmarks lmPreparation = null;
@@ -138,8 +147,10 @@ public class MapMatching {
                         "\navailable LM profiles: " + lmProfileNames);
             }
             landmarks = lmPreparation;
+            chGraph = null;
         } else {
             landmarks = null;
+            chGraph = null;
         }
         graph = graphHopper.getGraphHopperStorage();
         unwrappedWeighting = graphHopper.createWeighting(profile, hints);
@@ -383,7 +394,18 @@ public class MapMatching {
 
     private BidirRoutingAlgorithm createRouter() {
         BidirRoutingAlgorithm router;
-        if (landmarks != null) {
+        if (chGraph != null) {
+            PMap opts = new PMap();
+            RoutingCHGraph g = new QueryRoutingCHGraph(new RoutingCHGraphImpl(chGraph), queryGraph);
+            return new AStarBidirectionEdgeCHNoSOD(g) {
+                @Override
+                protected void initCollections(int size) {
+                    // todo: this and max visited nodes?!
+                    super.initCollections(size);
+                }
+            }
+                    .setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, g.getWeighting(), g.getBaseGraph().getNodeAccess()));
+        } else if (landmarks != null) {
             AStarBidirection algo = new AStarBidirection(queryGraph, weighting, TraversalMode.EDGE_BASED) {
                 @Override
                 protected void initCollections(int size) {
