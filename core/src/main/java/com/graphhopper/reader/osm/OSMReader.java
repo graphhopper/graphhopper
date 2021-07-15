@@ -364,7 +364,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             if (countryCode == null)
                 continue;
             if (country != NewCountry.MISSING)
-                LOGGER.warn("Multiple countries found for way {}", way.getId());
+                LOGGER.warn("Multiple countries found for way {}: {}, {}", way.getId(), country, countryCode);
             country = NewCountry.valueOf(countryCode.toString());
         }
         way.setTag("country", country);
