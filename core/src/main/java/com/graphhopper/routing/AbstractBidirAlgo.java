@@ -78,10 +78,9 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
     @Override
     public Path calcPath(int from, int to, IntToDoubleFunction calcFromEdgePenalty, IntToDoubleFunction calcToEdgePenalty) {
         if (!traversalMode.isEdgeBased() && (calcFromEdgePenalty != null || calcToEdgePenalty != null))
-            // in principle we could also use initial edge weights for node-based routing, but think about P-shaped routes
-            // that start in one direction, take some turns to come back to the start location and then continue in
-            // another direction than the start direction. this is not possible for node-based. For node-based routing
-            // we should rather allow initial node weights to achieve something similar.
+            // in principle we could also use initial weights for node-based routing, but this only makes sense if we
+            // use multiple from/to nodes as well. if we only use initial edge weights with node-based there can be
+            // undesired u-turns at the nodes next to the from/to nodes with CH.
             throw new IllegalArgumentException("Routing with initial edge weights is only possible for edge-based graph traversal");
         this.calcFromEdgePenalty = calcFromEdgePenalty;
         this.calcToEdgePenalty = calcToEdgePenalty;
