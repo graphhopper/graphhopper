@@ -161,9 +161,6 @@ graphhopper:
 
 
   ##### Spatial Rules #####
-  # Spatial Rules require some configuration and only work with the DataFlagEncoder.
-
-
   # Spatial Rules require you to provide Polygons in which the rules are enforced
   # The line below contains the default location for the files which define these borders
   # spatial_rules.borders_directory: core/files/spatialrules

@@ -138,10 +138,6 @@ class InstructionsOutgoingEdges {
 
         for (EdgeIteratorState edge : visibleAlternativeTurns) {
             tmpSpeed = getSpeed(edge);
-            if (tmpSpeed < 1) {
-                // This might happen for the DataFlagEncoder, might create unnecessary turn instructions
-                return false;
-            }
             if (tmpSpeed > maxSurroundingSpeed) {
                 maxSurroundingSpeed = tmpSpeed;
             }
