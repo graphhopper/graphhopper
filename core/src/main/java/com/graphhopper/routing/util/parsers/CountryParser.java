@@ -41,7 +41,7 @@ public class CountryParser implements TagParser {
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
-        NewCountry country = way.getTag("country", null);
+        NewCountry country = way.getTag("country", NewCountry.MISSING);
         countryEnc.setEnum(false, edgeFlags, country);
         return edgeFlags;
     }
