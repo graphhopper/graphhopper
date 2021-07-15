@@ -18,15 +18,55 @@
 
 package com.graphhopper.resources;
 
-import com.graphhopper.gtfs.*;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import javax.inject.Inject;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
+
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.CoordinateList;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.MultiPoint;
+import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
+import org.locationtech.jts.triangulate.ConstraintVertex;
+import org.locationtech.jts.triangulate.DelaunayTriangulationBuilder;
+import org.locationtech.jts.triangulate.quadedge.QuadEdge;
+import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
+import org.locationtech.jts.triangulate.quadedge.Vertex;
+
+import com.graphhopper.gtfs.GraphExplorer;
+import com.graphhopper.gtfs.GtfsStorage;
+import com.graphhopper.gtfs.Label;
+import com.graphhopper.gtfs.MultiCriteriaLabelSetting;
+import com.graphhopper.gtfs.PtEncodedValues;
+import com.graphhopper.gtfs.RealtimeFeed;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.isochrone.algorithm.ReadableTriangulation;
 import com.graphhopper.jackson.ResponsePathSerializer;
+import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.AccessFilter;
+import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
@@ -35,31 +75,16 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.JsonFeature;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
-import org.locationtech.jts.geom.*;
-import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
-import org.locationtech.jts.triangulate.ConstraintVertex;
-import org.locationtech.jts.triangulate.DelaunayTriangulationBuilder;
-import org.locationtech.jts.triangulate.quadedge.QuadEdge;
-import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
-import org.locationtech.jts.triangulate.quadedge.Vertex;
-
-import javax.inject.Inject;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import java.time.Instant;
-import java.util.*;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 @Path("isochrone-pt")
 public class PtIsochroneResource {
 
     private static final double JTS_TOLERANCE = 0.00001;
 
-    private GtfsStorage gtfsStorage;
-    private EncodingManager encodingManager;
-    private GraphHopperStorage graphHopperStorage;
-    private LocationIndex locationIndex;
+    private final GtfsStorage gtfsStorage;
+    private final EncodingManager encodingManager;
+    private final GraphHopperStorage graphHopperStorage;
+    private final LocationIndex locationIndex;
 
     private final Function<Label, Double> z = label -> (double) label.currentTime;
 
@@ -99,16 +124,18 @@ public class PtIsochroneResource {
         double targetZ = initialTime.toEpochMilli() + seconds * 1000;
 
         GeometryFactory geometryFactory = new GeometryFactory();
-        final EdgeFilter filter = AccessFilter.allEdges(graphHopperStorage.getEncodingManager().getEncoder("foot").getAccessEnc());
-        Snap snap = locationIndex.findClosest(source.lat, source.lon, filter);
+        final FlagEncoder footEncoder = encodingManager.getEncoder("foot");
+        final Weighting weighting = new FastestWeighting(footEncoder);
+        final EdgeFilter filter = new DefaultSnapFilter(weighting, encodingManager.getBooleanEncodedValue(Subnetwork.key("foot")));
+        final Snap snap = locationIndex.findClosest(source.lat, source.lon, filter);
         QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, Collections.singletonList(snap));
         if (!snap.isValid()) {
             throw new IllegalArgumentException("Cannot find point: " + source);
         }
 
         PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(encodingManager);
-        GraphExplorer graphExplorer = new GraphExplorer(queryGraph, new FastestWeighting(encodingManager.getEncoder("foot")), ptEncodedValues, gtfsStorage, RealtimeFeed.empty(gtfsStorage), reverseFlow, false, false, 5.0, reverseFlow, blockedRouteTypes);
-        MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, reverseFlow, false, false, 1000000, Collections.emptyList());
+        GraphExplorer graphExplorer = new GraphExplorer(queryGraph, weighting, ptEncodedValues, gtfsStorage, RealtimeFeed.empty(gtfsStorage), reverseFlow, false, false, 5.0, reverseFlow, blockedRouteTypes);
+        MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, reverseFlow, false, false, 0, 1000000, Collections.emptyList());
 
         Map<Coordinate, Double> z1 = new HashMap<>();
         NodeAccess nodeAccess = queryGraph.getNodeAccess();
