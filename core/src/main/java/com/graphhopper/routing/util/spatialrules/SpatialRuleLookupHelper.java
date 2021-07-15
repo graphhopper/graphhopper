@@ -80,15 +80,10 @@ public class SpatialRuleLookupHelper {
                 JSON_ID_FIELD, new CountriesSpatialRuleFactory(), maxBounds);
         logger.info("Set spatial rule lookup with {} rules", index.getRules().size());
         final TagParserFactory oldTPF = graphHopper.getTagParserFactory();
-        graphHopper.setTagParserFactory(new TagParserFactory() {
-
-            @Override
-            public TagParser create(String name, PMap configuration) {
-                if (name.equals(Country.KEY))
-                    return new SpatialRuleParser(index, Country.create());
-
-                return oldTPF.create(name, configuration);
-            }
+        graphHopper.setTagParserFactory((name, configuration) -> {
+            if (name.equals(Country.KEY))
+                return new SpatialRuleParser(index, Country.create());
+            return oldTPF.create(name, configuration);
         });
     }
 }
