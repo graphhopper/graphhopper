@@ -138,9 +138,6 @@ class InstructionsOutgoingEdges {
 
         for (EdgeIteratorState edge : visibleAlternativeTurns) {
             tmpSpeed = getSpeed(edge);
-            if (tmpSpeed < 1) {
-                return false;
-            }
             if (tmpSpeed > maxSurroundingSpeed) {
                 maxSurroundingSpeed = tmpSpeed;
             }
