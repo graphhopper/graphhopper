@@ -273,6 +273,7 @@ public enum NewCountry {
         if (name == null || name.isEmpty())
             return MISSING;
 
+        // todo: check performance, see: https://github.com/graphhopper/graphhopper/pull/2353#discussion_r670261744
         for (NewCountry country : values()) {
             if (country.name.equalsIgnoreCase(name)) {
                 return country;
