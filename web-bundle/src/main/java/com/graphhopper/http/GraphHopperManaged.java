@@ -18,7 +18,6 @@
 
 package com.graphhopper.http;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.GraphHopper;
@@ -26,63 +25,28 @@ import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.GraphHopperGtfs;
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.routing.lm.LandmarkStorage;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupHelper;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.util.CustomModel;
-import com.graphhopper.util.JsonFeatureCollection;
-import com.graphhopper.util.Parameters;
-import com.graphhopper.util.shapes.BBox;
 import io.dropwizard.lifecycle.Managed;
-import org.locationtech.jts.geom.Envelope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.File;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.graphhopper.util.Helper.UTF_CS;
 
 public class GraphHopperManaged implements Managed {
 
     private final static Logger logger = LoggerFactory.getLogger(GraphHopperManaged.class);
     private final GraphHopper graphHopper;
 
-    public GraphHopperManaged(GraphHopperConfig configuration, ObjectMapper objectMapper) {
-        ObjectMapper localObjectMapper = objectMapper.copy();
-        localObjectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        JsonFeatureCollection landmarkSplittingFeatureCollection = loadLandmarkSplittingFeatureCollection(configuration, localObjectMapper);
+    public GraphHopperManaged(GraphHopperConfig configuration) {
         if (configuration.has("gtfs.file")) {
             graphHopper = new GraphHopperGtfs(configuration);
         } else {
-            graphHopper = new GraphHopper(landmarkSplittingFeatureCollection);
-        }
-        if (!configuration.getString("spatial_rules.location", "").isEmpty()) {
-            throw new RuntimeException("spatial_rules.location has been deprecated. Please use spatial_rules.borders_directory instead.");
-        }
-        String spatialRuleBordersDirLocation = configuration.getString("spatial_rules.borders_directory", "");
-        if (!spatialRuleBordersDirLocation.isEmpty()) {
-            final Envelope maxBounds = BBox.toEnvelope(BBox.parseBBoxString(configuration.getString("spatial_rules.max_bbox", "-180, 180, -90, 90")));
-            final Path bordersDirectory = Paths.get(spatialRuleBordersDirLocation);
-            List<JsonFeatureCollection> jsonFeatureCollections = new ArrayList<>();
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(bordersDirectory, "*.{geojson,json}")) {
-                for (Path borderFile : stream) {
-                    try (BufferedReader reader = Files.newBufferedReader(borderFile, StandardCharsets.UTF_8)) {
-                        JsonFeatureCollection jsonFeatureCollection = localObjectMapper.readValue(reader, JsonFeatureCollection.class);
-                        jsonFeatureCollections.add(jsonFeatureCollection);
-                    }
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            SpatialRuleLookupHelper.buildAndInjectCountrySpatialRules(graphHopper, maxBounds, jsonFeatureCollections);
+            graphHopper = new GraphHopper();
         }
 
         String customModelFolder = configuration.getString("custom_model_folder", "");
@@ -90,20 +54,6 @@ public class GraphHopperManaged implements Managed {
         configuration.setProfiles(newProfiles);
 
         graphHopper.init(configuration);
-    }
-
-    public static JsonFeatureCollection loadLandmarkSplittingFeatureCollection(GraphHopperConfig configuration, ObjectMapper localObjectMapper) {
-        String splitAreaLocation = configuration.getString(Parameters.Landmark.PREPARE + "split_area_location", "");
-        try (Reader reader = splitAreaLocation.isEmpty() ?
-                new InputStreamReader(LandmarkStorage.class.getResource("map.geo.json").openStream(), UTF_CS) :
-                new InputStreamReader(new FileInputStream(splitAreaLocation), UTF_CS)) {
-            JsonFeatureCollection result = localObjectMapper.readValue(reader, JsonFeatureCollection.class);
-            logger.info("Loaded landmark splitting collection from " + splitAreaLocation);
-            return result;
-        } catch (IOException e1) {
-            logger.error("Problem while reading border map GeoJSON. Skipping this.", e1);
-            return null;
-        }
     }
 
     public static List<Profile> resolveCustomModelFiles(String customModelFolder, List<Profile> profiles) {
