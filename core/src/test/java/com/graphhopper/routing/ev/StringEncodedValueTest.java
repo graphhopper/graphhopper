@@ -4,7 +4,10 @@ import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -123,6 +126,88 @@ public class StringEncodedValueTest {
             fail("The encoded value should only allow a limited number of values");
         } catch (IllegalStateException e) {
             assertTrue(e.getMessage().startsWith("Maximum number of values reached for"));
+        }
+    }
+    
+    @Test
+    public void testToString() {
+        StringEncodedValue prop = new StringEncodedValue("country", 3);
+        prop.init(new EncodedValue.InitializerConfig());
+        
+        IntsRef ref1 = new IntsRef(1);
+        prop.setString(false, ref1, "che");
+        prop.setString(false, ref1, "aut");
+        prop.setString(false, ref1, "deu");
+        
+        assertTrue(prop.toString().endsWith("|values=che;aut;deu"));
+        
+        StringEncodedValue sameProp = new StringEncodedValue("country", 3);
+        sameProp.init(new EncodedValue.InitializerConfig());
+        
+        IntsRef ref2 = new IntsRef(1);
+        sameProp.setString(false, ref2, "che");
+        sameProp.setString(false, ref2, "aut");
+        sameProp.setString(false, ref2, "deu");
+        
+        assertEquals(prop.toString(), sameProp.toString());
+        
+        StringEncodedValue shuffledProp = new StringEncodedValue("country", 3);
+        shuffledProp.init(new EncodedValue.InitializerConfig());
+        
+        IntsRef ref3 = new IntsRef(1);
+        shuffledProp.setString(false, ref3, "aut");
+        shuffledProp.setString(false, ref3, "che");
+        shuffledProp.setString(false, ref3, "deu");
+        
+        assertNotEquals(prop.toString(), shuffledProp.toString());
+    }
+    
+    @Test
+    public void testIllegalCharacters() {
+        StringEncodedValue prop = new StringEncodedValue("country", 3);
+        prop.init(new EncodedValue.InitializerConfig());
+        
+        IntsRef ref = new IntsRef(1);
+        try {
+            prop.setString(false, ref, "ch;e");
+            fail();
+        } catch (Exception e) {
+        }
+        
+        try {
+            prop.setString(false, ref, "|che");
+            fail();
+        } catch (Exception e) {
+        }
+        
+        try {
+            prop.setString(false, ref, "che,");
+            fail();
+        } catch (Exception e) {
+        }
+        
+        try {
+            prop.setString(false, ref, "=che");
+            fail();
+        } catch (Exception e) {
+        }
+    }
+    
+    @Test
+    public void testNoOverride() {
+        IntEncodedValue prop = new UnsignedIntEncodedValue("custom", 2, false) {
+            @Override
+            protected SortedMap<String, String> getAdditionalProperties() {
+                return new TreeMap<>(Collections.singletonMap("version", "1"));
+            }
+        };
+        prop.init(new EncodedValue.InitializerConfig());
+        
+        try {
+            prop.toString();
+            fail();
+        } catch (Exception e) {
+            assertTrue(e.getMessage().startsWith("Overriding basic properties"));
         }
     }
 }
