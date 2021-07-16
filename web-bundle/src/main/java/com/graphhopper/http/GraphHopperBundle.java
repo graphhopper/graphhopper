@@ -263,7 +263,11 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
             environment.jersey().register(new AbstractBinder() {
                 @Override
                 protected void configure() {
-                    bind(PtRouterFreeWalkImpl.class).to(PtRouter.class);
+                    if (configuration.getGraphHopperConfiguration().getBool("gtfs.free_walk", false)) {
+                        bind(PtRouterFreeWalkImpl.class).to(PtRouter.class);
+                    } else {
+                        bind(PtRouterImpl.class).to(PtRouter.class);
+                    }
                 }
             });
             environment.jersey().register(PtRouteResource.class);
