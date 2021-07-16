@@ -25,6 +25,7 @@ import org.locationtech.jts.geom.Polygon;
 
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.ev.Toll;
 
 /**
  * @author Robin Boldt
@@ -51,6 +52,11 @@ public abstract class AbstractSpatialRule implements SpatialRule {
     @Override
     public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
         return currentRoadAccess;
+    }
+    
+    @Override
+    public Toll getToll(RoadClass roadClass, TransportationMode transport, Toll currentToll) {
+        return currentToll;
     }
     
     public List<Polygon> getBorders() {
