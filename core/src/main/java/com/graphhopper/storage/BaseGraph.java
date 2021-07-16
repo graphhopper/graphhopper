@@ -25,6 +25,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.search.StringIndex;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.ReadableBBox;
 
 import java.util.Collections;
 import java.util.Locale;
@@ -937,6 +938,9 @@ class BaseGraph implements Graph {
             adjNode = baseNodeIsNodeA ? baseGraph.getNodeB(edgePointer) : nodeA;
             reverse = !baseNodeIsNodeA;
             freshFlags = false;
+            towerBBox.minLon = towerBBox.minLat = Double.MAX_VALUE;
+            towerBBox.maxLon = towerBBox.maxLat = -Double.MAX_VALUE;
+            hasBBox = false;
 
             // position to next edge
             nextEdgeId = baseNodeIsNodeA ? baseGraph.getLinkA(edgePointer) : baseGraph.getLinkB(edgePointer);
@@ -1009,10 +1013,13 @@ class BaseGraph implements Graph {
         boolean freshFlags;
         int edgeId = -1;
         private final IntsRef edgeFlags;
+        final BBox towerBBox;
+        boolean hasBBox;
 
         public EdgeIteratorStateImpl(BaseGraph baseGraph) {
             this.baseGraph = baseGraph;
             this.edgeFlags = new IntsRef(baseGraph.intsForFlags);
+            this.towerBBox = BBox.createInverse(false);
         }
 
         /**
@@ -1287,6 +1294,18 @@ class BaseGraph implements Graph {
         @Override
         public PointList fetchWayGeometry(FetchMode mode) {
             return baseGraph.fetchWayGeometry_(edgePointer, reverse, mode, getBaseNode(), getAdjNode());
+        }
+        
+        @Override
+        public ReadableBBox getTowerBBox() {
+            if (!hasBBox) {
+                NodeAccess nodeAccess = baseGraph.getNodeAccess();
+                towerBBox.update(nodeAccess.getLat(getBaseNode()), nodeAccess.getLon(getBaseNode()));
+                towerBBox.update(nodeAccess.getLat(getAdjNode()),  nodeAccess.getLon(getAdjNode()));
+                hasBBox = true;
+            }
+            
+            return towerBBox;
         }
 
         @Override

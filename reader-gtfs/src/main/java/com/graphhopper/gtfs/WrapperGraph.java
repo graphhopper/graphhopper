@@ -36,6 +36,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.ReadableBBox;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -166,6 +167,11 @@ public class WrapperGraph implements Graph {
 
             @Override
             public EdgeIteratorState setWayGeometry(PointList list) {
+                throw new UnsupportedOperationException();
+            }
+            
+            @Override
+            public ReadableBBox getTowerBBox() {
                 throw new UnsupportedOperationException();
             }
 
@@ -417,6 +423,11 @@ public class WrapperGraph implements Graph {
                     public EdgeIteratorState setWayGeometry(PointList list) {
                         current.setWayGeometry(list);
                         return this;
+                    }
+                    
+                    @Override
+                    public ReadableBBox getTowerBBox() {
+                        return current.getTowerBBox();
                     }
 
                     @Override

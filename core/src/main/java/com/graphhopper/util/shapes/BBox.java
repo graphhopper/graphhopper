@@ -38,7 +38,7 @@ import java.util.List;
  *
  * @author Peter Karich
  */
-public class BBox implements Shape, Cloneable {
+public class BBox implements Shape, ReadableBBox {
 
     private final boolean elevation;
     // longitude (theta) = x, latitude (phi) = y, elevation = z
@@ -84,8 +84,39 @@ public class BBox implements Shape, Cloneable {
         }
     }
 
+    @Override
     public boolean hasElevation() {
         return elevation;
+    }
+
+    @Override
+    public double getMinLon() {
+        return minLon;
+    }
+
+    @Override
+    public double getMaxLon() {
+        return maxLon;
+    }
+
+    @Override
+    public double getMinLat() {
+        return minLat;
+    }
+
+    @Override
+    public double getMaxLat() {
+        return maxLat;
+    }
+
+    @Override
+    public double getMinEle() {
+        return minEle;
+    }
+
+    @Override
+    public double getMaxEle() {
+        return maxEle;
     }
 
     public void update(double lat, double lon) {
@@ -120,19 +151,15 @@ public class BBox implements Shape, Cloneable {
 
     }
 
-    /**
-     * Calculates the intersecting BBox between this and the specified BBox
-     *
-     * @return the intersecting BBox or null if not intersecting
-     */
-    public BBox calculateIntersection(BBox bBox) {
+    @Override
+    public BBox calculateIntersection(ReadableBBox bBox) {
         if (!this.intersects(bBox))
             return null;
 
-        double minLon = Math.max(this.minLon, bBox.minLon);
-        double maxLon = Math.min(this.maxLon, bBox.maxLon);
-        double minLat = Math.max(this.minLat, bBox.minLat);
-        double maxLat = Math.min(this.maxLat, bBox.maxLat);
+        double minLon = Math.max(this.minLon, bBox.getMinLon());
+        double maxLon = Math.min(this.maxLon, bBox.getMaxLon());
+        double minLat = Math.max(this.minLat, bBox.getMinLat());
+        double maxLat = Math.min(this.maxLat, bBox.getMaxLat());
 
         return new BBox(minLon, maxLon, minLat, maxLat);
     }
@@ -165,20 +192,14 @@ public class BBox implements Shape, Cloneable {
         return intersects(new RectangleLineIntersector(toEnvelope(this)), pointList);
     }
 
-    /**
-     * This method calculates if this BBox intersects with the specified BBox
-     */
+    @Override
     public boolean intersects(double minLon, double maxLon, double minLat, double maxLat) {
         return this.minLon < maxLon && this.minLat < maxLat && minLon < this.maxLon && minLat < this.maxLat;
     }
 
-    /**
-     * This method calculates if this BBox intersects with the specified BBox
-     */
-    public boolean intersects(BBox o) {
-        // return (o.minLon < minLon && o.maxLon > minLon || o.minLon < maxLon && o.minLon >= minLon)
-        //  && (o.maxLat < maxLat && o.maxLat >= minLat || o.maxLat >= maxLat && o.minLat < maxLat);
-        return this.minLon < o.maxLon && this.minLat < o.maxLat && o.minLon < this.maxLon && o.minLat < this.maxLat;
+    @Override
+    public boolean intersects(ReadableBBox o) {
+        return this.minLon < o.getMaxLon() && this.minLat < o.getMaxLat() && o.getMinLon() < this.maxLon && o.getMinLat() < this.maxLat;
     }
 
     @Override
@@ -186,8 +207,9 @@ public class BBox implements Shape, Cloneable {
         return lat <= maxLat && lat >= minLat && lon <= maxLon && lon >= minLon;
     }
 
-    public boolean contains(BBox b) {
-        return maxLat >= b.maxLat && minLat <= b.minLat && maxLon >= b.maxLon && minLon <= b.minLon;
+    @Override
+    public boolean contains(ReadableBBox b) {
+        return maxLat >= b.getMaxLat() && minLat <= b.getMinLat() && maxLon >= b.getMaxLon() && minLon <= b.getMinLon();
     }
 
     @Override
@@ -229,6 +251,7 @@ public class BBox implements Shape, Cloneable {
         return hash;
     }
 
+    @Override
     public boolean isValid() {
         // second longitude should be bigger than the first
         if (minLon >= maxLon)

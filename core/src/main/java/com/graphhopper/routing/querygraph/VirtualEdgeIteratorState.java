@@ -23,6 +23,8 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PointList;
+import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.ReadableBBox;
 
 /**
  * Creates an edge state decoupled from a graph where nodes, pointList, etc are kept in memory.
@@ -116,6 +118,17 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     @Override
     public EdgeIteratorState setWayGeometry(PointList list) {
         throw new UnsupportedOperationException("Not supported for virtual edge. Set when creating it.");
+    }
+    
+    @Override
+    public ReadableBBox getTowerBBox() {
+        BBox bbox = BBox.createInverse(false);
+        if (pointList.isEmpty())
+            return bbox;
+        bbox.update(pointList.getLat(0), pointList.getLon(0));
+        bbox.update(pointList.getLat(pointList.size()-1), pointList.getLon(pointList.size()-1));
+        
+        return bbox;
     }
 
     @Override

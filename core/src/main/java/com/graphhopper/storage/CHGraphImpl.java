@@ -29,6 +29,8 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.BaseGraph.AllEdgeIterator;
 import com.graphhopper.storage.BaseGraph.EdgeIteratorImpl;
 import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.ReadableBBox;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -827,6 +829,12 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public final EdgeIteratorState setWayGeometry(PointList list) {
             checkShortcut(false, "setWayGeometry");
             return edgeIterable.setWayGeometry(list);
+        }
+        
+        @Override
+        public ReadableBBox getTowerBBox() {
+            checkShortcut(false, "getTowerBBox");
+            return edgeIterable.getTowerBBox();
         }
 
         @Override

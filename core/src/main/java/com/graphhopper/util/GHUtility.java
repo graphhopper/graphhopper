@@ -29,6 +29,8 @@ import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.ReadableBBox;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -836,6 +838,11 @@ public class GHUtility {
         public EdgeIteratorState setWayGeometry(PointList list) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
+        
+        @Override
+        public ReadableBBox getTowerBBox() {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
 
         @Override
         public String getName() {
@@ -1038,12 +1045,5 @@ public class GHUtility {
         public double getEle(int nodeId) {
             throw new UnsupportedOperationException("Not supported.");
         }
-    }
-
-    public static BBox createBBox(EdgeIteratorState edgeState) {
-        PointList towerNodes = edgeState.fetchWayGeometry(FetchMode.TOWER_ONLY);
-        int secondIndex = towerNodes.size() == 1 ? 0 : 1;
-        return BBox.fromPoints(towerNodes.getLat(0), towerNodes.getLon(0),
-                towerNodes.getLat(secondIndex), towerNodes.getLon(secondIndex));
     }
 }
