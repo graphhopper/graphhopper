@@ -43,7 +43,7 @@ function adjustMapSize() {
     instructionInfoMaxHeight -= isNaN(tabHeight)? 0 : tabHeight;
     var routeDescHeight = $(".route_description").height();
     instructionInfoMaxHeight -= isNaN(routeDescHeight)? 0 : routeDescHeight;
-    $(".instructions_info").css("max-height", instructionInfoMaxHeight);
+    $(".instructions_info").css("max-height", Math.max(instructionInfoMaxHeight, 100));
     var width = $(window).width() - $("#input").width() - 10;
     mapDiv.width(width).height(height);
     // somehow this does not work: map.invalidateSize();
@@ -121,6 +121,9 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
             var container = this.getContainer();
             L.DomUtil.setClass(container, full ? 'fullscreen-reverse-btn' : 'fullscreen-btn');
             L.DomUtil.addClass(container, 'leaflet-control');
+            if (full) {
+                L.DomUtil.addClass(container, 'fullsceen');
+            }
         },
         onAdd: function (map) {
             var container = L.DomUtil.create('div', 'fullscreen-btn');
@@ -274,7 +277,11 @@ module.exports.addElevation = function (geoJsonFeature, details, selectedDetail,
 
     // TODO no option to switch to miles yet
     var options = {
-        width: 600,
+        width: Math.min(
+            window.innerWidth - 15, // for mobile
+            window.innerWidth < 768 ? window.innerWidth - 295 : infinity, // for small desktops
+            600 // max width for all devices
+        ),
         height: 280,
         margins: {
             top: 10,
