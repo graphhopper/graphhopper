@@ -32,7 +32,7 @@ public class ImportCommand extends ConfiguredCommand<GraphHopperServerConfigurat
 
     @Override
     protected void run(Bootstrap<GraphHopperServerConfiguration> bootstrap, Namespace namespace, GraphHopperServerConfiguration configuration) {
-        final GraphHopperManaged graphHopper = new GraphHopperManaged(configuration.getGraphHopperConfiguration(), bootstrap.getObjectMapper());
+        final GraphHopperManaged graphHopper = new GraphHopperManaged(configuration.getGraphHopperConfiguration());
         graphHopper.getGraphHopper().importAndClose();
     }
 

@@ -37,7 +37,7 @@ public class Profile {
     private PMap hints = new PMap();
 
     public static void validateProfileName(String profileName) {
-        if (!profileName.matches("^[a-z0-9_]*$")) {
+        if (!profileName.matches("^[a-z0-9_\\-]+$")) {
             throw new IllegalArgumentException("Profile names may only contain lower case letters, numbers and underscores, given: " + profileName);
         }
     }

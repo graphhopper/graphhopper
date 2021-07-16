@@ -161,9 +161,6 @@ graphhopper:
 
 
   ##### Spatial Rules #####
-  # Spatial Rules require some configuration and only work with the DataFlagEncoder.
-
-
   # Spatial Rules require you to provide Polygons in which the rules are enforced
   # The line below contains the default location for the files which define these borders
   # spatial_rules.borders_directory: core/files/spatialrules
@@ -186,7 +183,7 @@ server:
   - type: http
     port: 8990
     bind_host: localhost
-# See https://www.dropwizard.io/1.3.8/docs/manual/configuration.html#logging
+# See https://www.dropwizard.io/en/latest/manual/core.html#logging
 logging:
   appenders:
   - type: file
