@@ -45,6 +45,11 @@ describe('urlTools', function () {
         someObject = urlTools.mergeParamIntoObject({}, "one.two.three", "123");
         expect("123").toEqual(someObject.one.two.three);
 
+        someObject = urlTools.mergeParamIntoObject({}, "__proto__.polluted", "true");
+        expect(undefined).toEqual({}.polluted);
+        someObject = urlTools.mergeParamIntoObject({}, "constructor.prototype.polluted", "true");
+        expect(undefined).toEqual({}.polluted);
+
         var params = urlTools.parseUrl("localhost:8989?pt.test=now&pt.go.test=single&pt.go.further=far&pt.go.further=now");
         expect("now").toEqual(params.pt.test);
         expect("single").toEqual(params.pt.go.test);
