@@ -19,10 +19,7 @@
 package com.graphhopper;
 
 import com.graphhopper.config.Profile;
-import com.graphhopper.gtfs.GraphHopperGtfs;
-import com.graphhopper.gtfs.PtRouter;
-import com.graphhopper.gtfs.PtRouterImpl;
-import com.graphhopper.gtfs.Request;
+import com.graphhopper.gtfs.*;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
 import com.graphhopper.util.TranslationMap;
@@ -76,16 +73,12 @@ public class GraphHopperGtfsIT {
 
     @Test
     public void testRoute1() {
-        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
-        final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        Request ghRequest = new Request(
-                FROM_LAT, FROM_LON,
-                TO_LAT, TO_LON
-        );
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 0, 0, 0).atZone(zoneId).toInstant());
+        Request ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("NADAV"),
+                new GHStationLocation("NANAA")),
+                LocalDateTime.of(2007, 1, 1, 0, 0, 0).atZone(zoneId).toInstant());
         ghRequest.setIgnoreTransfers(true);
         GHResponse route = ptRouter.route(ghRequest);
-
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
         assertEquals(time(6, 49), route.getBest().getTime(), "Expected travel time == scheduled arrival time");
@@ -93,15 +86,11 @@ public class GraphHopperGtfsIT {
 
     @Test
     public void testRoute1DoesNotGoAt654() {
-        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
-        final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        Request ghRequest = new Request(
-                FROM_LAT, FROM_LON,
-                TO_LAT, TO_LON
-        );
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 6, 54).atZone(zoneId).toInstant());
+        Request ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("NADAV"),
+                new GHStationLocation("NANAA")),
+                LocalDateTime.of(2007, 1, 1, 6, 54).atZone(zoneId).toInstant());
         GHResponse route = ptRouter.route(ghRequest);
-
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
         assertEquals(time(0, 25), route.getBest().getTime(), "Expected travel time == scheduled arrival time");
@@ -109,51 +98,36 @@ public class GraphHopperGtfsIT {
 
     @Test
     public void testRoute1GoesAt744() {
-        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
-        final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        Request ghRequest = new Request(
-                FROM_LAT, FROM_LON,
-                TO_LAT, TO_LON
-        );
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 7, 44).atZone(zoneId).toInstant());
+        Request ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("NADAV"),
+                new GHStationLocation("NANAA")),
+                LocalDateTime.of(2007, 1, 1, 7, 44).atZone(zoneId).toInstant());
         ghRequest.setIgnoreTransfers(true);
         ghRequest.setBlockedRouteTypes(1); // Blocking trams shouldn't matter, this is a bus.
-
         GHResponse response = ptRouter.route(ghRequest);
-
         assertEquals(1, response.getAll().size());
         assertEquals(time(0, 5), response.getBest().getTime(), "Expected travel time == scheduled arrival time");
     }
 
     @Test
     public void testNoSolutionIfIDontLikeBusses() {
-        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
-        final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        Request ghRequest = new Request(
-                FROM_LAT, FROM_LON,
-                TO_LAT, TO_LON
-        );
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 7, 44).atZone(zoneId).toInstant());
+        Request ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("NADAV"),
+                new GHStationLocation("NANAA")),
+                LocalDateTime.of(2007, 1, 1, 7, 44).atZone(zoneId).toInstant());
         ghRequest.setBlockedRouteTypes(8);
-
         GHResponse response = ptRouter.route(ghRequest);
-
         assertTrue(response.getAll().isEmpty(), "When I block busses, there is no solution");
     }
 
     @Test
     public void testRoute1ArriveBy() {
-        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
-        final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        Request ghRequest = new Request(
-                FROM_LAT, FROM_LON,
-                TO_LAT, TO_LON
-        );
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 6, 49).atZone(zoneId).toInstant());
+        Request ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("NADAV"),
+                new GHStationLocation("NANAA")),
+                LocalDateTime.of(2007, 1, 1, 6, 49).atZone(zoneId).toInstant());
         ghRequest.setArriveBy(true);
-
         GHResponse route = ptRouter.route(ghRequest);
-
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
         assertEquals(time(0, 5), route.getBest().getTime(), "Expected travel time == scheduled travel time");
@@ -162,34 +136,24 @@ public class GraphHopperGtfsIT {
 
     @Test
     public void testRoute1ArriveBy2() {
-        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
-        final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        Request ghRequest = new Request(
-                FROM_LAT, FROM_LON,
-                TO_LAT, TO_LON
-        );
+        Request ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("NADAV"),
+                new GHStationLocation("NANAA")),
+                LocalDateTime.of(2007, 1, 1, 6, 50).atZone(zoneId).toInstant());
         // Tests that it also works when the query arrival time is not exactly the scheduled arrival time of the solution
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 6, 50).atZone(zoneId).toInstant());
         ghRequest.setArriveBy(true);
-
         GHResponse route = ptRouter.route(ghRequest);
-
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
         assertEquals(time(0, 6), route.getBest().getTime(), "Expected travel time == scheduled travel time");
-
     }
-
 
     @Test
     public void testRoute1ProfileEarliestArrival() {
-        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
-        final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        Request ghRequest = new Request(
-                FROM_LAT, FROM_LON,
-                TO_LAT, TO_LON
-        );
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 6, 0).atZone(zoneId).toInstant());
+        Request ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("NADAV"),
+                new GHStationLocation("NANAA")),
+                LocalDateTime.of(2007, 1, 1, 6, 0).atZone(zoneId).toInstant());
         ghRequest.setProfileQuery(true);
         ghRequest.setIgnoreTransfers(true);
         ghRequest.setLimitSolutions(Integer.MAX_VALUE);
@@ -211,13 +175,10 @@ public class GraphHopperGtfsIT {
 
     @Test
     public void testRoute1ProfileOvernight() {
-        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
-        final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        Request ghRequest = new Request(
-                FROM_LAT, FROM_LON,
-                TO_LAT, TO_LON
-        );
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 23, 0).atZone(zoneId).toInstant());
+        Request ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("NADAV"),
+                new GHStationLocation("NANAA")),
+                LocalDateTime.of(2007, 1, 1, 23, 0).atZone(zoneId).toInstant());
         ghRequest.setProfileQuery(true);
         ghRequest.setMaxProfileDuration(Duration.ofHours(1));
         ghRequest.setIgnoreTransfers(true);
@@ -237,13 +198,10 @@ public class GraphHopperGtfsIT {
 
     @Test
     public void testRoute1ProfileLatestDeparture() {
-        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
-        final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        Request ghRequest = new Request(
-                FROM_LAT, FROM_LON,
-                TO_LAT, TO_LON
-        );
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 13, 0).atZone(zoneId).toInstant());
+        Request ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("NADAV"),
+                new GHStationLocation("NANAA")),
+                LocalDateTime.of(2007, 1, 1, 13, 0).atZone(zoneId).toInstant());
         ghRequest.setArriveBy(true);
         ghRequest.setProfileQuery(true);
         ghRequest.setIgnoreTransfers(true);
@@ -251,7 +209,7 @@ public class GraphHopperGtfsIT {
 
         GHResponse response = ptRouter.route(ghRequest);
         List<LocalTime> actualDepartureTimes = response.getAll().stream()
-                .map(path -> LocalTime.from(((Trip.PtLeg) path.getLegs().get(0)).getDepartureTime().toInstant().atZone(zoneId)))
+                .map(path -> LocalTime.from(path.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId)))
                 .collect(Collectors.toList());
         List<LocalTime> expectedDepartureTimes = Stream.of(
                 "12:44", "12:14", "11:44", "11:14")
@@ -262,34 +220,25 @@ public class GraphHopperGtfsIT {
 
     @Test
     public void testRoute2() {
-        final double FROM_LAT = 36.914894, FROM_LON = -116.76821; // NADAV stop
-        final double TO_LAT = 36.909489, TO_LON = -116.768242; // DADAN stop
-        assertTravelTimeIs(ptRouter, FROM_LAT, FROM_LON, TO_LAT, TO_LON, time(6, 19));
+        assertTravelTimeIs(ptRouter, "NADAV", "DADAN", time(6, 19));
     }
 
     @Test
     public void testRoute3() {
-        final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
-        final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        assertTravelTimeIs(ptRouter, FROM_LAT, FROM_LON, TO_LAT, TO_LON, time(6, 5));
+        assertTravelTimeIs(ptRouter, "STAGECOACH", "NANAA", time(6, 5));
     }
 
     @Test
     public void testRoute4() {
-        final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
-        final double TO_LAT = 36.914894, TO_LON = -116.76821; // NADAV stop
-        assertTravelTimeIs(ptRouter, FROM_LAT, FROM_LON, TO_LAT, TO_LON, time(6, 12));
+        assertTravelTimeIs(ptRouter, "STAGECOACH", "NADAV", time(6, 12));
     }
 
     @Test
     public void testRoute5() {
-        final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
-        final double TO_LAT = 36.88108, TO_LON = -116.81797; // BULLFROG stop
-        Request ghRequest = new Request(
-                FROM_LAT, FROM_LON,
-                TO_LAT, TO_LON
-        );
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 0, 0).atZone(zoneId).toInstant());
+        Request ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("STAGECOACH"),
+                new GHStationLocation("BULLFROG")),
+                LocalDateTime.of(2007, 1, 1, 0, 0).atZone(zoneId).toInstant());
         GHResponse route = ptRouter.route(ghRequest);
 
         assertFalse(route.hasErrors(), route.toString());
@@ -302,13 +251,10 @@ public class GraphHopperGtfsIT {
 
     @Test
     public void testRoute5Arrival() {
-        final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
-        final double TO_LAT = 36.88108, TO_LON = -116.81797; // BULLFROG stop
-        Request ghRequest = new Request(
-                FROM_LAT, FROM_LON,
-                TO_LAT, TO_LON
-        );
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 8, 10).atZone(zoneId).toInstant());
+        Request ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("STAGECOACH"),
+                new GHStationLocation("BULLFROG")),
+                LocalDateTime.of(2007, 1, 1, 8, 10).atZone(zoneId).toInstant());
         ghRequest.setArriveBy(true);
         GHResponse route = ptRouter.route(ghRequest);
 
@@ -321,21 +267,20 @@ public class GraphHopperGtfsIT {
 
     @Test
     public void testRoute6() {
-        final double FROM_LAT = 36.7, FROM_LON = -116.5; // HASNOROUTES stop
-        final double TO_LAT = 36.914894, TO_LON = -116.76821; // NADAV stop
-        assertNoRoute(ptRouter, FROM_LAT, FROM_LON, TO_LAT, TO_LON);
+        Request ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("HASNOROUTES"),
+                new GHStationLocation("NADAV")),
+                LocalDateTime.of(2007, 1, 1, 0, 0).atZone(zoneId).toInstant());
+        GHResponse route = ptRouter.route(ghRequest);
+        assertTrue(route.getAll().isEmpty());
     }
 
     @Test
     public void testRouteWithLaterDepartureTime() {
-        final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
-        final double TO_LAT = 36.914894, TO_LON = -116.76821; // NADAV stop
-        // Missed the bus at 10 by one minute, will have to use the 10:30 one.
-        Request ghRequest = new Request(
-                FROM_LAT, FROM_LON,
-                TO_LAT, TO_LON
-        );
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 10, 1).atZone(zoneId).toInstant());
+        Request ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("STAGECOACH"),
+                new GHStationLocation("NADAV")),
+                LocalDateTime.of(2007, 1, 1, 10, 1).atZone(zoneId).toInstant());
         GHResponse route = ptRouter.route(ghRequest);
 
         assertFalse(route.hasErrors());
@@ -345,42 +290,33 @@ public class GraphHopperGtfsIT {
 
     @Test
     public void testWeekendRouteWorksOnlyOnWeekend() {
-        final double FROM_LAT = 36.868446, FROM_LON = -116.784582; // BEATTY_AIRPORT stop
-        final double TO_LAT = 36.641496, TO_LON = -116.40094; // AMV stop
-        Request ghRequest = new Request(
-                FROM_LAT, FROM_LON,
-                TO_LAT, TO_LON
-        );
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 0, 0).atZone(zoneId).toInstant()); // Monday morning
-
+        Request ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("BEATTY_AIRPORT"),
+                new GHStationLocation("AMV")),
+                LocalDateTime.of(2007, 1, 1, 0, 0).atZone(zoneId).toInstant());
 
         GHResponse route = ptRouter.route(ghRequest);
         assertFalse(route.getAll().isEmpty());
         // On Mondays, there is only a complicated evening trip.
         assertEquals(time(22, 0), route.getBest().getTime(), "Expected travel time == scheduled travel time");
 
-        ghRequest = new Request(
-                FROM_LAT, FROM_LON,
-                TO_LAT, TO_LON
-        );
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 6, 0, 0).atZone(zoneId).toInstant());
+        ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("BEATTY_AIRPORT"),
+                new GHStationLocation("AMV")),
+                LocalDateTime.of(2007, 1, 6, 0, 0).atZone(zoneId).toInstant());
         route = ptRouter.route(ghRequest);
         assertFalse(route.getAll().isEmpty());
         assertEquals(time(9, 0), route.getBest().getTime(), "Expected travel time == scheduled travel time");
         assertEquals("AAMV1", (((Trip.PtLeg) route.getBest().getLegs().get(0)).trip_id), "Using expected trip");
         assertEquals(525, route.getBest().getFare().multiply(BigDecimal.valueOf(100)).intValue(), "Paid expected fare");
-
     }
 
     @Test
     public void testBlockTrips() {
-        final double FROM_LAT = 36.868446, FROM_LON = -116.784582; // BEATTY_AIRPORT stop
-        final double TO_LAT = 36.425288, TO_LON = -117.133162; // FUR_CREEK_RES stop
-        Request ghRequest = new Request(
-                FROM_LAT, FROM_LON,
-                TO_LAT, TO_LON
-        );
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 8, 0).atZone(zoneId).toInstant());
+        Request ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("BEATTY_AIRPORT"),
+                new GHStationLocation("FUR_CREEK_RES")),
+                LocalDateTime.of(2007, 1, 1, 8, 0).atZone(zoneId).toInstant());
         GHResponse response = ptRouter.route(ghRequest);
         assertEquals(1, response.getAll().size(), "Only find one solution. If blocks wouldn't work, there would be two. (There is a slower alternative without transfer.)");
         assertEquals(time(1, 20), response.getBest().getTime(), "Expected travel time == scheduled travel time");
@@ -392,13 +328,10 @@ public class GraphHopperGtfsIT {
 
     @Test
     public void testVeryShortProfileQuery() {
-        final double FROM_LAT = 36.868446, FROM_LON = -116.784582; // BEATTY_AIRPORT stop
-        final double TO_LAT = 36.425288, TO_LON = -117.133162; // FUR_CREEK_RES stop
-        Request ghRequest = new Request(
-                FROM_LAT, FROM_LON,
-                TO_LAT, TO_LON
-        );
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 8, 0).atZone(zoneId).toInstant());
+        Request ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("BEATTY_AIRPORT"),
+                new GHStationLocation("FUR_CREEK_RES")),
+                LocalDateTime.of(2007, 1, 1, 8, 0).atZone(zoneId).toInstant());
         ghRequest.setProfileQuery(true);
         ghRequest.setMaxProfileDuration(Duration.ofSeconds(1));
         GHResponse response = ptRouter.route(ghRequest);
@@ -409,13 +342,10 @@ public class GraphHopperGtfsIT {
 
     @Test
     public void testBlockWithComplicatedValidityIntersections() {
-        final double FROM_LAT = 36.868446, FROM_LON = -116.784582; // BEATTY_AIRPORT stop
-        final double TO_LAT = 36.641496, TO_LON = -116.40094; // AMV stop
-        Request ghRequest = new Request(
-                FROM_LAT, FROM_LON,
-                TO_LAT, TO_LON
-        );
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 18, 0).atZone(zoneId).toInstant());
+        Request ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("BEATTY_AIRPORT"),
+                new GHStationLocation("AMV")),
+                LocalDateTime.of(2007, 1, 1, 18, 0).atZone(zoneId).toInstant());
         GHResponse response = ptRouter.route(ghRequest);
         ResponsePath mondayTrip = response.getBest();
         assertEquals(0, mondayTrip.getNumChanges(), "Monday trip has no transfers");
@@ -443,32 +373,26 @@ public class GraphHopperGtfsIT {
 
     @Test
     public void testTransferRules() {
-        final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
-        final double TO1_LAT = 36.641496, TO1_LON = -116.40094; // AMV stop
-        final double TO2_LAT = 36.88108, TO2_LON = -116.81797; // BULLFROG stop
-
-        Request request = new Request(
-                FROM_LAT, FROM_LON,
-                TO1_LAT, TO1_LON
-        );
-        request.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 6, 7, 30).atZone(zoneId).toInstant());
+        Request request = new Request(Arrays.asList(
+                new GHStationLocation("STAGECOACH"),
+                new GHStationLocation("AMV")),
+                LocalDateTime.of(2007, 1, 6, 7, 30).atZone(zoneId).toInstant());
 
         GHResponse response = ptRouter.route(request);
         assertEquals(time(6, 30), response.getBest().getTime(), "Transfer rule: 11 minutes. Will miss connection, and be there at 14.");
 
-        request = new Request(
-                FROM_LAT, FROM_LON,
-                TO2_LAT, TO2_LON
-        );
-        request.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 6, 7, 30).atZone(zoneId).toInstant());
+        request = new Request(Arrays.asList(
+                new GHStationLocation("STAGECOACH"),
+                new GHStationLocation("BULLFROG")),
+                LocalDateTime.of(2007, 1, 6, 7, 30).atZone(zoneId).toInstant());
 
         response = ptRouter.route(request);
         assertEquals(time(0, 40), response.getBest().getTime(), "Will still be there at 8:10 because there is a route-specific exception for this route.");
 
-        request = new Request(
-                TO2_LAT, TO2_LON,
-                FROM_LAT, FROM_LON
-        );
+        request = new Request(Arrays.asList(
+                new GHStationLocation("BULLFROG"),
+                new GHStationLocation("STAGECOACH")),
+                LocalDateTime.of(2007, 1, 6, 12, 5).atZone(zoneId).toInstant());
         request.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 6, 12, 5).atZone(zoneId).toInstant());
 
         response = ptRouter.route(request);
@@ -476,41 +400,25 @@ public class GraphHopperGtfsIT {
     }
 
 
-    private void assertTravelTimeIs(PtRouter graphHopper, double FROM_LAT, double FROM_LON, double TO_LAT, double TO_LON, int expectedWeight) {
-        Request ghRequest = new Request(
-                FROM_LAT, FROM_LON,
-                TO_LAT, TO_LON
-        );
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 0, 0).atZone(zoneId).toInstant());
+    private void assertTravelTimeIs(PtRouter graphHopper, String from, String to, int expectedWeight) {
+        Request ghRequest = new Request(Arrays.asList(
+                new GHStationLocation(from),
+                new GHStationLocation(to)),
+                LocalDateTime.of(2007, 1, 1, 0, 0).atZone(zoneId).toInstant());
         GHResponse route = graphHopper.route(ghRequest);
-
         assertFalse(route.hasErrors());
         assertFalse(route.getAll().isEmpty());
         assertEquals(expectedWeight, route.getBest().getTime(), "Expected travel time == scheduled travel time");
     }
 
-    private void assertNoRoute(PtRouter graphHopper, double from_lat, double from_lon, double to_lat, double to_lon) {
-        Request ghRequest = new Request(
-                from_lat, from_lon,
-                to_lat, to_lon
-        );
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 0, 0).atZone(zoneId).toInstant());
-
-        GHResponse route = graphHopper.route(ghRequest);
-        assertTrue(route.getAll().isEmpty());
-    }
-
     @Test
     public void testTransferByArrival() {
-        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
-        final double TO_LAT = 36.868446, TO_LON = -116.784582; // BEATTY_AIRPORT stop
-        Request ghRequest = new Request(
-                FROM_LAT, FROM_LON,
-                TO_LAT, TO_LON
-        );
+        Request ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("NADAV"),
+                new GHStationLocation("BEATTY_AIRPORT")),
+                LocalDateTime.of(2007, 1, 1, 7, 20).atZone(zoneId).toInstant());
 
         // I want to be there at 7:20
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 7, 20).atZone(zoneId).toInstant());
         ghRequest.setArriveBy(true);
 
         GHResponse response = ptRouter.route(ghRequest);
@@ -522,11 +430,10 @@ public class GraphHopperGtfsIT {
 
     @Test
     public void testCustomObjectiveFunction() {
-        Request ghRequest = new Request(
-                36.868446, -116.784582,  // BEATTY_AIRPORT stop
-                36.425288, -117.133162       // FUR_CREEK_RES stop
-        );
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 14, 0, 0).atZone(zoneId).toInstant());
+        Request ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("BEATTY_AIRPORT"),
+                new GHStationLocation("FUR_CREEK_RES")),
+                LocalDateTime.of(2007, 1, 1, 14, 0, 0).atZone(zoneId).toInstant());
 
         GHResponse response = ptRouter.route(ghRequest);
 
