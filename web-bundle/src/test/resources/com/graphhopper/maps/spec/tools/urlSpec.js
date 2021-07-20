@@ -46,6 +46,7 @@ describe('urlTools', function () {
         expect("123").toEqual(someObject.one.two.three);
 
         someObject = urlTools.mergeParamIntoObject({}, "__proto__.polluted", "true");
+        expect(undefined).toEqual({}.polluted);
         someObject = urlTools.mergeParamIntoObject({}, "constructor.prototype.polluted", "true");
         expect(undefined).toEqual({}.polluted);
 
