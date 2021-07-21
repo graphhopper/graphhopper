@@ -19,6 +19,7 @@ module.exports = {
         filename: 'index.js',
         path: path.resolve(__dirname, 'dist'),
         library: 'GHCustomModelEditor',
-        libraryTarget: 'umd'
+        libraryTarget: 'umd',
+        chunkFormat: 'array-push'
     }
 };
