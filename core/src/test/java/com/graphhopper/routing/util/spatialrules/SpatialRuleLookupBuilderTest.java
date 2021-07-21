@@ -29,10 +29,7 @@ import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.JsonFeatureCollection;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -42,9 +39,10 @@ import org.locationtech.jts.geom.Polygon;
 
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
+import static com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder.JSON_ID_FIELD;
+import static com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder.reorder;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -199,5 +197,26 @@ public class SpatialRuleLookupBuilderTest {
         livingStreet2.setTag("estimated_center", new GHPoint(-0.005, -0.005));
         e4.setFlags(em.handleWayTags(livingStreet2, map, relFlags));
         assertEquals(MaxSpeed.UNSET_SPEED, e4.get(tmpCarMaxSpeedEnc), .1);
+    }
+
+    @Test
+    public void testReorder() {
+        List<JsonFeatureCollection> allFeatureList = new ArrayList<>();
+        allFeatureList.add(createJsonFeatureCollection("first_country"));
+        allFeatureList.add(createJsonFeatureCollection("sec_country"));
+        allFeatureList.add(createJsonFeatureCollection("3rd_country"));
+
+        List<JsonFeatureCollection> result = reorder(allFeatureList, Arrays.asList("3rd_country", "sec_country"));
+        assertEquals(1, result.size());
+        assertEquals("3rd_country", result.get(0).getFeatures().get(0).getProperties().get(JSON_ID_FIELD));
+        assertEquals("sec_country", result.get(0).getFeatures().get(1).getProperties().get(JSON_ID_FIELD));
+    }
+
+    private static JsonFeatureCollection createJsonFeatureCollection(String key) {
+        JsonFeatureCollection coll = new JsonFeatureCollection();
+        Map<String, Object> map = new HashMap<>();
+        map.put(JSON_ID_FIELD, key);
+        coll.getFeatures().add(new JsonFeature(null, null, null, null, map));
+        return coll;
     }
 }
