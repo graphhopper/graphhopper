@@ -20,7 +20,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.TransportationMode;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleSet;
+import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Arrays;
@@ -57,11 +57,12 @@ public class OSMRoadAccessParser implements TagParser {
             }
         }
 
-        SpatialRuleSet spatialRuleSet = readerWay.getTag("spatial_rule_set", null);
-        if (spatialRuleSet != null && spatialRuleSet != SpatialRuleSet.EMPTY) {
-            RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
-            accessValue = spatialRuleSet.getAccess(roadClass, TransportationMode.CAR, YES);
-        }
+        RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
+        // todo: for spatial rules we got the entire set of rules for this way, but now we throw an error in case
+        //       there are multiple rules for the same way. is this ok?
+        CountryRule countryRule = readerWay.getTag("country_rule", null);
+        if (countryRule != null)
+            accessValue = countryRule.getAccess(roadClass, TransportationMode.CAR, YES);
 
         roadAccessEnc.setEnum(false, edgeFlags, accessValue);
         return edgeFlags;
