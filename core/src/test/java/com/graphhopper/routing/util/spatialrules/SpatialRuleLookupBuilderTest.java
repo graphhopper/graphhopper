@@ -54,10 +54,6 @@ public class SpatialRuleLookupBuilderTest {
     private static final String COUNTRIES_FILE = "../core/files/spatialrules/countries.geojson";
 
     private static SpatialRuleLookup createLookup() throws IOException {
-        return createLookup(new Envelope(-180, 180, -90, 90));
-    }
-
-    private static SpatialRuleLookup createLookup(Envelope maxBounds) throws IOException {
         final FileReader reader = new FileReader(COUNTRIES_FILE);
         List<JsonFeatureCollection> feats = Collections.singletonList(
                 Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class));
