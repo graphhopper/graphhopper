@@ -232,13 +232,14 @@ public final class PtRouterImpl implements PtRouter {
             final GraphExplorer accessEgressGraphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, !arriveBy, true, false, walkSpeedKmH, false, blockedRouteTypes);
             boolean reverse = !arriveBy;
             GtfsStorage.EdgeType edgeType = reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT;
-            MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, ptEncodedValues, reverse, false, false, maxProfileDuration, maxVisitedNodesForRequest, new ArrayList<>());
+            MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, ptEncodedValues, reverse, false, false, maxProfileDuration, new ArrayList<>());
             stationRouter.setBetaWalkTime(betaWalkTime);
             stationRouter.setLimitStreetTime(limitStreetTime);
             Iterator<Label> stationIterator = stationRouter.calcLabels(destNode, initialTime).iterator();
             List<Label> stationLabels = new ArrayList<>();
             while (stationIterator.hasNext()) {
                 Label label = stationIterator.next();
+                visitedNodes++;
                 if (label.adjNode == startNode) {
                     stationLabels.add(label);
                     break;
@@ -246,7 +247,6 @@ public final class PtRouterImpl implements PtRouter {
                     stationLabels.add(label);
                 }
             }
-            visitedNodes += stationRouter.getVisitedNodes();
 
             Map<Integer, Label> reverseSettledSet = new HashMap<>();
             for (Label stationLabel : stationLabels) {
@@ -255,7 +255,7 @@ public final class PtRouterImpl implements PtRouter {
 
             GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, arriveBy, false, true, walkSpeedKmH, false, blockedRouteTypes);
             List<Label> discoveredSolutions = new ArrayList<>();
-            router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, arriveBy, !ignoreTransfers, profileQuery, maxProfileDuration, maxVisitedNodesForRequest, discoveredSolutions);
+            router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, arriveBy, !ignoreTransfers, profileQuery, maxProfileDuration, discoveredSolutions);
             router.setBetaTransfers(betaTransfers);
             router.setBetaWalkTime(betaWalkTime);
             final long smallestStationLabelWalkTime = stationLabels.stream()
@@ -275,6 +275,10 @@ public final class PtRouterImpl implements PtRouter {
             long highestWeightForDominationTest = Long.MAX_VALUE;
             while (iterator.hasNext()) {
                 Label label = iterator.next();
+                visitedNodes++;
+                if (visitedNodes >= maxVisitedNodesForRequest) {
+                    break;
+                }
                 // For single-criterion or pareto queries, we run to the end.
                 //
                 // For profile queries, we need a limited time window. Limiting the number of solutions is not
@@ -363,9 +367,8 @@ public final class PtRouterImpl implements PtRouter {
                 }
             }
 
-            visitedNodes += router.getVisitedNodes();
             response.addDebugInfo("routing:" + stopWatch.stop().getSeconds() + "s");
-            if (discoveredSolutions.isEmpty() && router.getVisitedNodes() >= maxVisitedNodesForRequest) {
+            if (discoveredSolutions.isEmpty() && visitedNodes >= maxVisitedNodesForRequest) {
                 response.addError(new IllegalArgumentException("No path found - maximum number of nodes exceeded: " + maxVisitedNodesForRequest));
             }
             response.getHints().putObject("visited_nodes.sum", visitedNodes);

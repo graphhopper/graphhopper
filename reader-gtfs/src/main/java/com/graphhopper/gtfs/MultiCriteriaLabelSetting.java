@@ -19,7 +19,6 @@ package com.graphhopper.gtfs;
 
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
-import com.carrotsearch.hppc.cursors.IntObjectCursor;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.util.EdgeIterator;
 
@@ -51,19 +50,16 @@ public class MultiCriteriaLabelSetting {
     private final EnumEncodedValue<GtfsStorage.EdgeType> typeEnc;
     private final IntObjectMap<List<Label>> fromMap;
     private final PriorityQueue<Label> fromHeap;
-    private long maxProfileDuration;
-    private final int maxVisitedNodes;
+    private final long maxProfileDuration;
     private final boolean reverse;
     private final boolean mindTransfers;
     private final boolean profileQuery;
-    private int visitedNodes;
     private final GraphExplorer explorer;
     private double betaTransfers;
     private double betaWalkTime = 1.0;
     private long limitStreetTime = Long.MAX_VALUE;
 
-    public MultiCriteriaLabelSetting(GraphExplorer explorer, PtEncodedValues flagEncoder, boolean reverse, boolean mindTransfers, boolean profileQuery, long maxProfileDuration, int maxVisitedNodes, List<Label> solutions) {
-        this.maxVisitedNodes = maxVisitedNodes;
+    public MultiCriteriaLabelSetting(GraphExplorer explorer, PtEncodedValues flagEncoder, boolean reverse, boolean mindTransfers, boolean profileQuery, long maxProfileDuration, List<Label> solutions) {
         this.explorer = explorer;
         this.reverse = reverse;
         this.mindTransfers = mindTransfers;
@@ -84,17 +80,13 @@ public class MultiCriteriaLabelSetting {
 
     public Stream<Label> calcLabels(int from, Instant startTime) {
         this.startTime = startTime.toEpochMilli();
-        return StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from), false)
-                .limit(maxVisitedNodes)
-                .peek(label -> visitedNodes++);
+        return StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from), false);
     }
 
-    // experimental
     void setBetaTransfers(double betaTransfers) {
         this.betaTransfers = betaTransfers;
     }
 
-    // experimental
     void setBetaWalkTime(double betaWalkTime) {
         this.betaWalkTime = betaWalkTime;
     }
@@ -269,20 +261,8 @@ public class MultiCriteriaLabelSetting {
         return label.departureTime != null ? (reverse ? -1 : 1) * (label.departureTime - startTime) : null;
     }
 
-    private long travelTimeCriterion(Label label) {
-        if (label.departureTime == null) {
-            return label.walkTime;
-        } else {
-            return (reverse ? -1 : 1) * (label.currentTime - label.departureTime);
-        }
-    }
-
     public void setLimitStreetTime(long limitStreetTime) {
         this.limitStreetTime = limitStreetTime;
-    }
-
-    int getVisitedNodes() {
-        return visitedNodes;
     }
 
 }

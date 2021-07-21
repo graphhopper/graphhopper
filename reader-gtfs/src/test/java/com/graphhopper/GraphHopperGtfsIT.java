@@ -266,11 +266,22 @@ public class GraphHopperGtfsIT {
     }
 
     @Test
-    public void testRoute6() {
+    public void testRouteFromNowhere() {
         Request ghRequest = new Request(Arrays.asList(
                 new GHStationLocation("HASNOROUTES"),
                 new GHStationLocation("NADAV")),
                 LocalDateTime.of(2007, 1, 1, 0, 0).atZone(zoneId).toInstant());
+        GHResponse route = ptRouter.route(ghRequest);
+        assertTrue(route.getAll().isEmpty());
+    }
+
+    @Test
+    public void testRouteToNowhere() {
+        Request ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("NADAV"),
+                new GHStationLocation("HASNOROUTES")),
+                LocalDateTime.of(2007, 1, 1, 6, 0).atZone(zoneId).toInstant());
+        ghRequest.setIgnoreTransfers(true);
         GHResponse route = ptRouter.route(ghRequest);
         assertTrue(route.getAll().isEmpty());
     }
