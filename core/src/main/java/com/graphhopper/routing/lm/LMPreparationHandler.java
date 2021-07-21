@@ -44,6 +44,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import static com.graphhopper.util.Helper.*;
 
@@ -97,20 +98,9 @@ public class LMPreparationHandler {
         String splitAreaLocation = ghConfig.getString(Landmark.PREPARE + "split_area_location", "");
         JsonFeatureCollection landmarkSplittingFeatureCollection = loadLandmarkSplittingFeatureCollection(splitAreaLocation);
         if (landmarkSplittingFeatureCollection != null && !landmarkSplittingFeatureCollection.getFeatures().isEmpty()) {
-            // for every feature of the feature collection we create an object that can be area-indexed by the feature's
-            // borders
-            List<SplitArea> splitAreas = new ArrayList<>();
-            for (JsonFeature feature : landmarkSplittingFeatureCollection.getFeatures()) {
-                List<Polygon> borders = new ArrayList<>();
-                for (int i = 0; i < feature.getGeometry().getNumGeometries(); i++) {
-                    Geometry geometry = feature.getGeometry().getGeometryN(i);
-                    if (geometry instanceof Polygon)
-                        PolygonExtracter.getPolygons(geometry, borders);
-                    else
-                        throw new IllegalArgumentException(Landmark.PREPARE + "split_area_location features must be of type Polygon, but was: " + geometry.getClass().getSimpleName());
-                }
-                splitAreas.add(new SplitArea(borders));
-            }
+            List<SplitArea> splitAreas = landmarkSplittingFeatureCollection.getFeatures().stream()
+                    .map(SplitArea::fromJsonFeature)
+                    .collect(Collectors.toList());
             areaIndex = new AreaIndex<>(splitAreas);
         }
     }

@@ -19,12 +19,28 @@
 package com.graphhopper.routing.lm;
 
 import com.graphhopper.routing.util.spatialrules.AreaIndex;
+import com.graphhopper.util.JsonFeature;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.util.PolygonExtracter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SplitArea implements AreaIndex.HasBorders {
     private final List<Polygon> borders;
+
+    public static SplitArea fromJsonFeature(JsonFeature j) {
+        List<Polygon> borders = new ArrayList<>();
+        for (int i = 0; i < j.getGeometry().getNumGeometries(); i++) {
+            Geometry geometry = j.getGeometry().getGeometryN(i);
+            if (geometry instanceof Polygon)
+                PolygonExtracter.getPolygons(geometry, borders);
+            else
+                throw new IllegalArgumentException("GeoJson features used to create split areas must be of type 'Polygon', but was: " + geometry.getClass().getSimpleName());
+        }
+        return new SplitArea(borders);
+    }
 
     public SplitArea(List<Polygon> borders) {
         this.borders = borders;
