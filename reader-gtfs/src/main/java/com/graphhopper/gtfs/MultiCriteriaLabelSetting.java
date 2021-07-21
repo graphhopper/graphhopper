@@ -57,6 +57,7 @@ public class MultiCriteriaLabelSetting {
     private final GraphExplorer explorer;
     private double betaTransfers;
     private double betaWalkTime = 1.0;
+    private long limitTripTime = Long.MAX_VALUE;
     private long limitStreetTime = Long.MAX_VALUE;
 
     public MultiCriteriaLabelSetting(GraphExplorer explorer, PtEncodedValues flagEncoder, boolean reverse, boolean mindTransfers, boolean profileQuery, long maxProfileDuration, List<Label> solutions) {
@@ -132,6 +133,8 @@ public class MultiCriteriaLabelSetting {
                     }
                     long walkTime = label.walkTime + (edgeType == GtfsStorage.EdgeType.HIGHWAY || edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT ? ((reverse ? -1 : 1) * (nextTime - label.currentTime)) : 0);
                     if (walkTime > limitStreetTime)
+                        return;
+                    if (Math.abs(nextTime - startTime) > limitTripTime)
                         return;
                     boolean impossible = label.impossible
                             || explorer.isBlocked(edge)
@@ -259,6 +262,10 @@ public class MultiCriteriaLabelSetting {
 
     Long departureTimeSinceStartTime(Label label) {
         return label.departureTime != null ? (reverse ? -1 : 1) * (label.departureTime - startTime) : null;
+    }
+
+    public void setLimitTripTime(long limitTripTime) {
+        this.limitTripTime = limitTripTime;
     }
 
     public void setLimitStreetTime(long limitStreetTime) {

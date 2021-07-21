@@ -129,6 +129,7 @@ public final class PtRouterImpl implements PtRouter {
 
         private final GHResponse response = new GHResponse();
         private final Graph graphWithExtraEdges = new WrapperGraph(graphHopperStorage, extraEdges);
+        private final long limitTripTime;
         private final long limitStreetTime;
         private QueryGraph queryGraph;
         private int visitedNodes;
@@ -149,6 +150,7 @@ public final class PtRouterImpl implements PtRouter {
             translation = translationMap.getWithFallBack(request.getLocale());
             enter = request.getPoints().get(0);
             exit = request.getPoints().get(1);
+            limitTripTime = request.getLimitTripTime() != null ? request.getLimitTripTime().toMillis() : Long.MAX_VALUE;
             limitStreetTime = request.getLimitStreetTime() != null ? request.getLimitStreetTime().toMillis() : Long.MAX_VALUE;
             requestedPathDetails = request.getPathDetails();
         }
@@ -261,6 +263,7 @@ public final class PtRouterImpl implements PtRouter {
             final long smallestStationLabelWalkTime = stationLabels.stream()
                     .mapToLong(l -> l.walkTime).min()
                     .orElse(Long.MAX_VALUE);
+            router.setLimitTripTime(Math.max(0, limitTripTime - smallestStationLabelWalkTime));
             router.setLimitStreetTime(Math.max(0, limitStreetTime - smallestStationLabelWalkTime));
             final long smallestStationLabelWeight;
             if (!stationLabels.isEmpty()) {
