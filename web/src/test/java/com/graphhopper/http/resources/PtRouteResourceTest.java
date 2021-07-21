@@ -51,7 +51,6 @@ public class PtRouteResourceTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "foot").
                 putObject("datareader.file", "../reader-gtfs/files/beatty.osm").
                 putObject("gtfs.file", "../reader-gtfs/files/sample-feed.zip").
                 putObject("graph.location", DIR).
@@ -70,7 +69,7 @@ public class PtRouteResourceTest {
         final Response response = clientTarget(app, "/route")
                 .queryParam("point", "Stop(NADAV)")
                 .queryParam("point", "Stop(NANAA)")
-                .queryParam("vehicle", "pt")
+                .queryParam("profile", "pt")
                 .queryParam("pt.earliest_departure_time", "2007-01-01T08:00:00Z")
                 .request().buildGet().invoke();
         assertEquals(200, response.getStatus());
@@ -83,7 +82,7 @@ public class PtRouteResourceTest {
         final Response response = clientTarget(app, "/route")
                 .queryParam("point", "36.914893,-116.76821") // NADAV stop
                 .queryParam("point", "36.914944,-116.761472") //NANAA stop
-                .queryParam("vehicle", "pt")
+                .queryParam("profile", "pt")
                 .queryParam("pt.earliest_departure_time", "2007-01-01T08:00:00Z")
                 .request().buildGet().invoke();
         assertEquals(200, response.getStatus());
@@ -106,7 +105,7 @@ public class PtRouteResourceTest {
     @Test
     public void testNoPoints() {
         final Response response = clientTarget(app, "/route")
-                .queryParam("vehicle", "pt")
+                .queryParam("profile", "pt")
                 .request().buildGet().invoke();
         assertEquals(400, response.getStatus());
     }
@@ -115,7 +114,7 @@ public class PtRouteResourceTest {
     public void testOnePoint() {
         final Response response = clientTarget(app, "/route")
                 .queryParam("point", "36.914893,-116.76821")
-                .queryParam("vehicle", "pt")
+                .queryParam("profile", "pt")
                 .queryParam("pt.earliest_departure_time", "2007-01-01T08:00:00Z")
                 .request().buildGet().invoke();
         assertEquals(400, response.getStatus());
@@ -127,7 +126,7 @@ public class PtRouteResourceTest {
     public void testBadPoints() {
         final Response response = clientTarget(app, "/route")
                 .queryParam("point", "pups")
-                .queryParam("vehicle", "pt")
+                .queryParam("profile", "pt")
                 .queryParam("pt.earliest_departure_time", "2007-01-01T08:00:00Z")
                 .request().buildGet().invoke();
         assertEquals(400, response.getStatus());
@@ -138,7 +137,7 @@ public class PtRouteResourceTest {
         final Response response = clientTarget(app, "/route")
                 .queryParam("point", "36.914893,-116.76821") // NADAV stop
                 .queryParam("point", "36.914944,-116.761472") //NANAA stop
-                .queryParam("vehicle", "pt")
+                .queryParam("profile", "pt")
                 .request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
@@ -152,7 +151,7 @@ public class PtRouteResourceTest {
         final Response response = clientTarget(app, "/route")
                 .queryParam("point", "36.914893,-116.76821") // NADAV stop
                 .queryParam("point", "36.914944,-116.761472") //NANAA stop
-                .queryParam("vehicle", "pt")
+                .queryParam("profile", "pt")
                 .queryParam("pt.earliest_departure_time", "wurst")
                 .request().buildGet().invoke();
         assertEquals(400, response.getStatus());
