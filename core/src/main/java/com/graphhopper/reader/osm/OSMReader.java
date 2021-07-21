@@ -25,8 +25,12 @@ import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.NewCountry;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.routing.util.parsers.TurnCostParser;
+import com.graphhopper.routing.util.spatialrules.CustomArea;
+import com.graphhopper.routing.util.spatialrules.AreaIndex;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
@@ -39,6 +43,7 @@ import java.io.IOException;
 import java.util.*;
 
 import static com.graphhopper.util.Helper.nf;
+import static java.util.Collections.emptyList;
 
 /**
  * This class parses an OSM xml or pbf file and creates a graph from it. It does so in a two phase
@@ -72,6 +77,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     protected static final int TOWER_NODE = -2;
     private static final Logger LOGGER = LoggerFactory.getLogger(OSMReader.class);
     private final GraphStorage ghStorage;
+    private final AreaIndex<CustomArea> areaIndex;
     private final Graph graph;
     private final NodeAccess nodeAccess;
     private final LongIndexedContainer barrierNodeIds = new LongArrayList();
@@ -110,8 +116,9 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     private final IntsRef tempRelFlags;
     private final TurnCostStorage tcs;
 
-    public OSMReader(GraphHopperStorage ghStorage) {
+    public OSMReader(GraphHopperStorage ghStorage, AreaIndex<CustomArea> areaIndex) {
         this.ghStorage = ghStorage;
+        this.areaIndex = areaIndex;
         this.graph = ghStorage;
         this.nodeAccess = graph.getNodeAccess();
         this.encodingManager = ghStorage.getEncodingManager();
@@ -329,11 +336,13 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         int last = getNodeMap().get(osmNodeIds.get(osmNodeIds.size() - 1));
         double firstLat = getTmpLatitude(first), firstLon = getTmpLongitude(first);
         double lastLat = getTmpLatitude(last), lastLon = getTmpLongitude(last);
+        GHPoint estimatedCenter = null;
         if (!Double.isNaN(firstLat) && !Double.isNaN(firstLon) && !Double.isNaN(lastLat) && !Double.isNaN(lastLon)) {
             double estimatedDist = distCalc.calcDist(firstLat, firstLon, lastLat, lastLon);
             // Add artificial tag for the estimated distance and center
             way.setTag("estimated_distance", estimatedDist);
-            way.setTag("estimated_center", new GHPoint((firstLat + lastLat) / 2, (firstLon + lastLon) / 2));
+            estimatedCenter = new GHPoint((firstLat + lastLat) / 2, (firstLon + lastLon) / 2);
+            way.setTag("estimated_center", estimatedCenter);
         }
 
         if (way.getTag("duration") != null) {
@@ -346,6 +355,26 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             }
         }
 
+        List<CustomArea> customAreas = estimatedCenter == null ? emptyList() : areaIndex.query(estimatedCenter.lat, estimatedCenter.lon);
+        // special handling for countries: since they are built-in with GraphHopper they are always fed to the
+        // encodingmanager
+        NewCountry country = NewCountry.MISSING;
+        for (CustomArea customArea : customAreas) {
+            Object countryCode = customArea.getProperties().get("ISO3166-1:alpha3");
+            if (countryCode == null)
+                continue;
+            if (country != NewCountry.MISSING)
+                LOGGER.warn("Multiple countries found for way {}: {}, {}", way.getId(), country, countryCode);
+            country = NewCountry.valueOf(countryCode.toString());
+        }
+        way.setTag("country", country);
+
+        CountryRule countryRule = CountryRule.getCountryRule(country);
+        if (countryRule != null)
+            way.setTag("country_rule", countryRule);
+
+        // also add all custom areas as artificial tag
+        way.setTag("custom_areas", customAreas);
         IntsRef edgeFlags = encodingManager.handleWayTags(way, acceptWay, relationFlags);
         if (edgeFlags.isEmpty())
             return;

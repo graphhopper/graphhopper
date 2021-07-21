@@ -44,9 +44,7 @@ import com.graphhopper.routing.util.FlagEncoderFactory;
 import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.SpatialRuleParser;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
-import com.graphhopper.routing.util.spatialrules.CountriesSpatialRuleFactory;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
+import com.graphhopper.routing.util.spatialrules.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
@@ -66,6 +64,7 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -79,6 +78,7 @@ import static com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder
 import static com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder.reorder;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.RoundTrip;
+import static java.util.Collections.emptyList;
 
 /**
  * Easy to use access point to configure import and (offline) routing.
@@ -93,6 +93,8 @@ public class GraphHopper implements GraphHopperAPI {
     // utils
     private final TranslationMap trMap = new TranslationMap().doImport();
     boolean removeZipped = true;
+    // for custom areas:
+    private String customAreasLocation = "";
     // for graph:
     private GraphHopperStorage ghStorage;
     private final EncodingManager.Builder emBuilder = new EncodingManager.Builder();
@@ -444,6 +446,8 @@ public class GraphHopper implements GraphHopperAPI {
             graphHopperFolder = pruneFileEnd(osmFile) + "-gh";
         }
 
+        customAreasLocation = ghConfig.getString("custom_areas_folder", "");
+
         // graph
         setGraphHopperLocation(graphHopperFolder);
         defaultSegmentSize = ghConfig.getInt("graph.dataaccess.segment_size", defaultSegmentSize);
@@ -687,8 +691,18 @@ public class GraphHopper implements GraphHopperAPI {
             throw new IllegalStateException("Couldn't load from existing folder: " + ghLocation
                     + " but also cannot use file for DataReader as it wasn't specified!");
 
+        List<CustomArea> customAreas;
+        if (isEmpty(customAreasLocation)) {
+            logger.info("No custom areas are used, custom_areas_folder not given");
+            customAreas = emptyList();
+        } else {
+            logger.info("Creating custom area index, reading custom areas from: '" + customAreasLocation + "'");
+            customAreas = readCustomAreas();
+        }
+        AreaIndex<CustomArea> areaIndex = new AreaIndex<>(customAreas);
+
         logger.info("start creating graph from " + osmFile);
-        OSMReader reader = new OSMReader(ghStorage).setFile(_getOSMFile()).
+        OSMReader reader = new OSMReader(ghStorage, areaIndex).setFile(_getOSMFile()).
                 setElevationProvider(eleProvider).
                 setWorkerThreads(dataReaderWorkerThreads).
                 setWayPointMaxDistance(dataReaderWayPointMaxDistance).
@@ -705,6 +719,28 @@ public class GraphHopper implements GraphHopperAPI {
         ghStorage.getProperties().put("datareader.import.date", f.format(new Date()));
         if (reader.getDataDate() != null)
             ghStorage.getProperties().put("datareader.data.date", f.format(reader.getDataDate()));
+    }
+
+    private List<CustomArea> readCustomAreas() {
+        // todo: this is basically what we did before in GraphHopperManaged
+        // todo: this is a bit ugly, we don't have Jackson.newObjectMapper in core (yet).
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JtsModule());
+        final Path bordersDirectory = Paths.get(customAreasLocation);
+        List<JsonFeatureCollection> jsonFeatureCollections = new ArrayList<>();
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(bordersDirectory, "*.{geojson,json}")) {
+            for (Path borderFile : stream) {
+                try (BufferedReader reader = Files.newBufferedReader(borderFile, StandardCharsets.UTF_8)) {
+                    JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
+                    jsonFeatureCollections.add(jsonFeatureCollection);
+                }
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return jsonFeatureCollections.stream().flatMap(j -> j.getFeatures().stream())
+                .map(CustomArea::fromJsonFeature)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -766,7 +802,7 @@ public class GraphHopper implements GraphHopperAPI {
             initCHPreparationHandler();
             chConfigs = chPreparationHandler.getCHConfigs();
         } else {
-            chConfigs = Collections.emptyList();
+            chConfigs = emptyList();
         }
 
         ghStorage.addCHGraphs(chConfigs);

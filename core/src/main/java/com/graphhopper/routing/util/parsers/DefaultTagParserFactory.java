@@ -77,6 +77,8 @@ public class DefaultTagParserFactory implements TagParserFactory {
         else if (name.equals(Country.KEY))
             throw new IllegalArgumentException("The property spatial_rules.borders_directory is required in the configuration " +
                     "when using 'country' in encoded_values");
+        else if (name.equals(NewCountry.KEY))
+            return new CountryParser();
 
         throw new IllegalArgumentException("DefaultTagParserFactory cannot find: " + name);
     }

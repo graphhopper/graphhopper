@@ -15,57 +15,63 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.spatialrules.countries;
 
-import java.util.List;
+package com.graphhopper.routing.util.countryrules;
 
-import org.locationtech.jts.geom.Polygon;
-
-import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
-import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.TransportationMode;
 
-/**
- * Defines the default rules for Austria roads
- *
- * @author Robin Boldt
- */
-public class AustriaSpatialRule extends AbstractSpatialRule {
+public class AustriaCountryRule implements CountryRule {
+    public final static AustriaCountryRule RULE = new AustriaCountryRule();
 
-    public AustriaSpatialRule(List<Polygon> borders) {
-        super(borders);
+    @Override
+    public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
+        if (!Double.isNaN(currentMaxSpeed) || !transport.isMotorVehicle()) {
+            return currentMaxSpeed;
+        }
+
+        switch (roadClass) {
+            case MOTORWAY:
+                return 130;
+            case TRUNK:
+            case PRIMARY:
+            case SECONDARY:
+            case TERTIARY:
+            case UNCLASSIFIED:
+                return 100;
+            case RESIDENTIAL:
+                return 50;
+            case LIVING_STREET:
+                return 20;
+            default:
+                return Double.NaN;
+        }
     }
-    
+
     @Override
     public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
         if (currentRoadAccess != RoadAccess.YES) {
             return currentRoadAccess;
         }
-        
+
         if (!transport.isMotorVehicle()) {
             return RoadAccess.YES;
         }
-        
-        switch (roadClass) {
-        case LIVING_STREET:
-            return RoadAccess.DESTINATION;
-        case TRACK:
-            return RoadAccess.FORESTRY;
-        case PATH:
-        case BRIDLEWAY:
-        case CYCLEWAY:
-        case FOOTWAY:
-        case PEDESTRIAN:
-            return RoadAccess.NO;
-        default:
-            return RoadAccess.YES;
-        }
-    }
 
-    @Override
-    public String getId() {
-        return Country.AUT.toString();
+        switch (roadClass) {
+            case LIVING_STREET:
+                return RoadAccess.DESTINATION;
+            case TRACK:
+                return RoadAccess.FORESTRY;
+            case PATH:
+            case BRIDLEWAY:
+            case CYCLEWAY:
+            case FOOTWAY:
+            case PEDESTRIAN:
+                return RoadAccess.NO;
+            default:
+                return RoadAccess.YES;
+        }
     }
 }
