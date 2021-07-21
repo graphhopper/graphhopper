@@ -22,15 +22,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.routing.ch.CHPreparationHandler;
-import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
+import com.graphhopper.routing.util.spatialrules.AreaIndex;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.util.JsonFeature;
 import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Landmark;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.util.PolygonExtracter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +67,7 @@ public class LMPreparationHandler {
     private int preparationThreads;
     private ExecutorService threadPool;
     private boolean logDetails = false;
-    private SpatialRuleLookup ruleLookup;
+    private AreaIndex<SplitArea> areaIndex;
 
     public LMPreparationHandler() {
         setPreparationThreads(1);
@@ -95,14 +97,21 @@ public class LMPreparationHandler {
         String splitAreaLocation = ghConfig.getString(Landmark.PREPARE + "split_area_location", "");
         JsonFeatureCollection landmarkSplittingFeatureCollection = loadLandmarkSplittingFeatureCollection(splitAreaLocation);
         if (landmarkSplittingFeatureCollection != null && !landmarkSplittingFeatureCollection.getFeatures().isEmpty()) {
-            ruleLookup = SpatialRuleLookupBuilder.buildIndex(
-                    Collections.singletonList(landmarkSplittingFeatureCollection), "area",
-                    (id, polygons) -> new AbstractSpatialRule(polygons) {
-                        @Override
-                        public String getId() {
-                            return id;
-                        }
-                    });
+            // for every feature of the feature collection we create an object that can be area-indexed by the feature's
+            // borders
+            List<SplitArea> splitAreas = new ArrayList<>();
+            for (JsonFeature feature : landmarkSplittingFeatureCollection.getFeatures()) {
+                List<Polygon> borders = new ArrayList<>();
+                for (int i = 0; i < feature.getGeometry().getNumGeometries(); i++) {
+                    Geometry geometry = feature.getGeometry().getGeometryN(i);
+                    if (geometry instanceof Polygon)
+                        PolygonExtracter.getPolygons(geometry, borders);
+                    else
+                        throw new IllegalArgumentException(Landmark.PREPARE + "split_area_location features must be of type Polygon, but was: " + geometry.getClass().getSimpleName());
+                }
+                splitAreas.add(new SplitArea(borders));
+            }
+            areaIndex = new AreaIndex<>(splitAreas);
         }
     }
 
@@ -212,10 +221,10 @@ public class LMPreparationHandler {
      */
     public boolean loadOrDoWork(final StorableProperties properties, final boolean closeEarly) {
         for (PrepareLandmarks prep : preparations) {
-            // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
-            if (ruleLookup != null && !ruleLookup.getRules().isEmpty()) {
-                prep.setSpatialRuleLookup(ruleLookup);
-            }
+            // using the area index we separate certain areas from each other but we do not change the base graph for this
+            // so that other algorithms still can route between these areas
+            if (areaIndex != null)
+                prep.setAreaIndex(areaIndex);
         }
         ExecutorCompletionService<String> completionService = new ExecutorCompletionService<>(threadPool);
         int counter = 0;

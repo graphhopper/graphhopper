@@ -30,7 +30,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.routing.util.parsers.TurnCostParser;
 import com.graphhopper.routing.util.spatialrules.CustomArea;
-import com.graphhopper.routing.util.spatialrules.CustomAreaIndex;
+import com.graphhopper.routing.util.spatialrules.AreaIndex;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
@@ -77,7 +77,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     protected static final int TOWER_NODE = -2;
     private static final Logger LOGGER = LoggerFactory.getLogger(OSMReader.class);
     private final GraphStorage ghStorage;
-    private final CustomAreaIndex customAreaIndex;
+    private final AreaIndex<CustomArea> areaIndex;
     private final Graph graph;
     private final NodeAccess nodeAccess;
     private final LongIndexedContainer barrierNodeIds = new LongArrayList();
@@ -116,9 +116,9 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     private final IntsRef tempRelFlags;
     private final TurnCostStorage tcs;
 
-    public OSMReader(GraphHopperStorage ghStorage, CustomAreaIndex customAreaIndex) {
+    public OSMReader(GraphHopperStorage ghStorage, AreaIndex<CustomArea> areaIndex) {
         this.ghStorage = ghStorage;
-        this.customAreaIndex = customAreaIndex;
+        this.areaIndex = areaIndex;
         this.graph = ghStorage;
         this.nodeAccess = graph.getNodeAccess();
         this.encodingManager = ghStorage.getEncodingManager();
@@ -355,7 +355,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             }
         }
 
-        List<CustomArea> customAreas = estimatedCenter == null ? emptyList() : customAreaIndex.query(estimatedCenter.lat, estimatedCenter.lon);
+        List<CustomArea> customAreas = estimatedCenter == null ? emptyList() : areaIndex.query(estimatedCenter.lat, estimatedCenter.lon);
         // special handling for countries: since they are built-in with GraphHopper they are always fed to the
         // encodingmanager
         NewCountry country = NewCountry.MISSING;

@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
-class CustomAreaIndexTest {
+class AreaIndexTest {
 
     @Test
     void basic() {
@@ -52,7 +52,7 @@ class CustomAreaIndexTest {
         Polygon border3 = geometryFactory.createPolygon(new Coordinate[]{
                 new Coordinate(9, 9), new Coordinate(10, 9), new Coordinate(10, 10), new Coordinate(9, 10),
                 new Coordinate(9, 9)});
-        CustomAreaIndex index = new CustomAreaIndex(Arrays.asList(
+        AreaIndex<CustomArea> index = new AreaIndex<>(Arrays.asList(
                 createCustomArea("1", border1),
                 createCustomArea("2", border2),
                 createCustomArea("3", border3),
@@ -72,7 +72,7 @@ class CustomAreaIndexTest {
         // Taken from here: https://github.com/johan/world.geo.json/blob/master/countries/DEU.geo.json
         String germanPolygonJson = "[9.921906,54.983104],[9.93958,54.596642],[10.950112,54.363607],[10.939467,54.008693],[11.956252,54.196486],[12.51844,54.470371],[13.647467,54.075511],[14.119686,53.757029],[14.353315,53.248171],[14.074521,52.981263],[14.4376,52.62485],[14.685026,52.089947],[14.607098,51.745188],[15.016996,51.106674],[14.570718,51.002339],[14.307013,51.117268],[14.056228,50.926918],[13.338132,50.733234],[12.966837,50.484076],[12.240111,50.266338],[12.415191,49.969121],[12.521024,49.547415],[13.031329,49.307068],[13.595946,48.877172],[13.243357,48.416115],[12.884103,48.289146],[13.025851,47.637584],[12.932627,47.467646],[12.62076,47.672388],[12.141357,47.703083],[11.426414,47.523766],[10.544504,47.566399],[10.402084,47.302488],[9.896068,47.580197],[9.594226,47.525058],[8.522612,47.830828],[8.317301,47.61358],[7.466759,47.620582],[7.593676,48.333019],[8.099279,49.017784],[6.65823,49.201958],[6.18632,49.463803],[6.242751,49.902226],[6.043073,50.128052],[6.156658,50.803721],[5.988658,51.851616],[6.589397,51.852029],[6.84287,52.22844],[7.092053,53.144043],[6.90514,53.482162],[7.100425,53.693932],[7.936239,53.748296],[8.121706,53.527792],[8.800734,54.020786],[8.572118,54.395646],[8.526229,54.962744],[9.282049,54.830865],[9.921906,54.983104]";
         Polygon germanPolygon = parsePolygonString(germanPolygonJson);
-        CustomAreaIndex index = new CustomAreaIndex(Arrays.asList(createCustomArea("germany", germanPolygon)));
+        AreaIndex<CustomArea> index = new AreaIndex<>(Collections.singletonList(createCustomArea("germany", germanPolygon)));
 
         // Far from the border of Germany, in Germany
         testQuery(index, 48.777106, 9.180769, "germany");
@@ -108,12 +108,12 @@ class CustomAreaIndexTest {
                 new Coordinate(4, 2)});
         {
             Polygon p = gf.createPolygon(shell, new LinearRing[]{hole});
-            CustomAreaIndex index = new CustomAreaIndex(Collections.singletonList(createCustomArea("1", p)));
+            AreaIndex<CustomArea> index = new AreaIndex<>(Collections.singletonList(createCustomArea("1", p)));
             testQuery(index, 3, 5);
         }
         {
             Polygon p = gf.createPolygon(hole);
-            CustomAreaIndex index = new CustomAreaIndex(Collections.singletonList(createCustomArea("2", p)));
+            AreaIndex<CustomArea> index = new AreaIndex<>(Collections.singletonList(createCustomArea("2", p)));
             testQuery(index, 3, 5, "2");
         }
     }
@@ -129,7 +129,7 @@ class CustomAreaIndexTest {
                 new Coordinate(0.5, 1), new Coordinate(1.5, 1), new Coordinate(1.5, 2), new Coordinate(0.5, 2),
                 new Coordinate(0.5, 1)});
 
-        CustomAreaIndex index = new CustomAreaIndex(Arrays.asList(
+        AreaIndex<CustomArea> index = new AreaIndex<>(Arrays.asList(
                 createCustomArea("1", border1),
                 createCustomArea("2", border2)
         ));
@@ -152,8 +152,8 @@ class CustomAreaIndexTest {
             JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
             customAreas = jsonFeatureCollection.getFeatures().stream().map(CustomArea::fromJsonFeature).collect(Collectors.toList());
         }
-        CustomAreaIndex customAreaIndex = new CustomAreaIndex(customAreas);
-        long seed = 123l;
+        AreaIndex<CustomArea> areaIndex = new AreaIndex<>(customAreas);
+        long seed = 123L;
         Random rnd = new Random(seed);
         int count = 100_000;
         double minLat = 36;
@@ -165,7 +165,7 @@ class CustomAreaIndexTest {
         for (int i = 0; i < count; i++) {
             double lat = rnd.nextDouble() * (maxLat - minLat) + minLat;
             double lon = rnd.nextDouble() * (maxLon - minLon) + minLon;
-            List<CustomArea> areas = customAreaIndex.query(lat, lon);
+            List<CustomArea> areas = areaIndex.query(lat, lon);
             if (areas.size() > 1)
                 fail("multiple hits not expected");
             else if (areas.isEmpty())
@@ -178,12 +178,12 @@ class CustomAreaIndexTest {
     }
 
     private static Polygon parsePolygonString(String polygonString) {
-        String[] polygonStringArr = polygonString.split("\\],\\[");
+        String[] polygonStringArr = polygonString.split("],\\[");
         Coordinate[] shell = new Coordinate[polygonStringArr.length + 1];
         for (int i = 0; i < polygonStringArr.length; i++) {
             String temp = polygonStringArr[i];
             temp = temp.replaceAll("\\[", "");
-            temp = temp.replaceAll("\\]", "");
+            temp = temp.replaceAll("]", "");
             String[] coords = temp.split(",");
             shell[i] = new Coordinate(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
         }
@@ -191,7 +191,7 @@ class CustomAreaIndexTest {
         return new GeometryFactory().createPolygon(shell);
     }
 
-    private static void testQuery(CustomAreaIndex index, double lat, double lon, String... ids) {
+    private static void testQuery(AreaIndex<CustomArea> index, double lat, double lon, String... ids) {
         List<CustomArea> result = index.query(lat, lon);
         Set<String> resultIds = result.stream().map(CustomArea::getProperties).map(p -> (String) p.get("id")).collect(Collectors.toSet());
         assertEquals(new HashSet<>(Arrays.asList(ids)), resultIds);

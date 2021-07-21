@@ -16,6 +16,7 @@
  *  limitations under the License.
  */
 
+// todo: eventually move to another package
 package com.graphhopper.routing.util.spatialrules;
 
 import org.locationtech.jts.geom.*;
@@ -26,40 +27,45 @@ import org.locationtech.jts.index.strtree.STRtree;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CustomAreaIndex {
+public class AreaIndex<T extends AreaIndex.HasBorders> {
+
+    public interface HasBorders {
+        List<Polygon> getBorders();
+    }
+
     private final GeometryFactory gf;
     private final STRtree index;
 
-    public CustomAreaIndex(List<CustomArea> customAreas) {
+    public AreaIndex(List<T> areas) {
         gf = new GeometryFactory();
         index = new STRtree();
         PreparedGeometryFactory pgf = new PreparedGeometryFactory();
-        for (CustomArea customArea : customAreas) {
-            for (Polygon border : customArea.getBorders()) {
-                IndexedCustomArea indexedCustomArea = new IndexedCustomArea(customArea, pgf.create(border));
+        for (T area : areas) {
+            for (Polygon border : area.getBorders()) {
+                IndexedCustomArea<T> indexedCustomArea = new IndexedCustomArea<>(area, pgf.create(border));
                 index.insert(border.getEnvelopeInternal(), indexedCustomArea);
             }
         }
         index.build();
     }
 
-    public List<CustomArea> query(double lat, double lon) {
+    public List<T> query(double lat, double lon) {
         Envelope searchEnv = new Envelope(lon, lon, lat, lat);
         @SuppressWarnings("unchecked")
-        List<IndexedCustomArea> result = index.query(searchEnv);
+        List<IndexedCustomArea<T>> result = index.query(searchEnv);
         Point point = gf.createPoint(new Coordinate(lon, lat));
         return result.stream()
                 .filter(c -> c.covers(point))
-                .map(c -> c.customArea)
+                .map(c -> c.area)
                 .collect(Collectors.toList());
     }
 
-    private static class IndexedCustomArea {
-        final CustomArea customArea;
+    private static class IndexedCustomArea<T extends HasBorders> {
+        final T area;
         final PreparedGeometry preparedGeometry;
 
-        IndexedCustomArea(CustomArea customArea, PreparedGeometry preparedGeometry) {
-            this.customArea = customArea;
+        IndexedCustomArea(T area, PreparedGeometry preparedGeometry) {
+            this.area = area;
             this.preparedGeometry = preparedGeometry;
         }
 

@@ -699,10 +699,10 @@ public class GraphHopper implements GraphHopperAPI {
             logger.info("Creating custom area index, reading custom areas from: '" + customAreasLocation + "'");
             customAreas = readCustomAreas();
         }
-        CustomAreaIndex customAreaIndex = new CustomAreaIndex(customAreas);
+        AreaIndex<CustomArea> areaIndex = new AreaIndex<>(customAreas);
 
         logger.info("start creating graph from " + osmFile);
-        OSMReader reader = new OSMReader(ghStorage, customAreaIndex).setFile(_getOSMFile()).
+        OSMReader reader = new OSMReader(ghStorage, areaIndex).setFile(_getOSMFile()).
                 setElevationProvider(eleProvider).
                 setWorkerThreads(dataReaderWorkerThreads).
                 setWayPointMaxDistance(dataReaderWayPointMaxDistance).

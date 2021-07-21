@@ -32,7 +32,7 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.OSMMaxHeightParser;
 import com.graphhopper.routing.util.parsers.OSMMaxWeightParser;
 import com.graphhopper.routing.util.parsers.OSMMaxWidthParser;
-import com.graphhopper.routing.util.spatialrules.CustomAreaIndex;
+import com.graphhopper.routing.util.spatialrules.AreaIndex;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
@@ -451,7 +451,7 @@ public class OSMReaderTest {
     public void testRelation() {
         EncodingManager manager = EncodingManager.create("bike");
         GraphHopperStorage ghStorage = new GraphHopperStorage(new RAMDirectory(), manager, false);
-        OSMReader reader = new OSMReader(ghStorage, new CustomAreaIndex(emptyList()));
+        OSMReader reader = new OSMReader(ghStorage, new AreaIndex<>(emptyList()));
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 1, ""));
         osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 2, ""));
@@ -604,7 +604,7 @@ public class OSMReaderTest {
         lonMap.put(1, 1.0d);
         lonMap.put(2, 1.0d);
 
-        OSMReader osmreader = new OSMReader(ghStorage, new CustomAreaIndex(emptyList())) {
+        OSMReader osmreader = new OSMReader(ghStorage, new AreaIndex<>(emptyList())) {
             // mock data access
             @Override
             double getTmpLatitude(int id) {

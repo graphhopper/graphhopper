@@ -7,7 +7,7 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.util.spatialrules.CustomAreaIndex;
+import com.graphhopper.routing.util.spatialrules.AreaIndex;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -87,7 +87,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
 
         LOGGER.info("Running performance test, max deviation percentage: " + f.maxDeviationPercentage);
         // read osm
-        OSMReader reader = new OSMReader(f.ghStorage, new CustomAreaIndex(emptyList()));
+        OSMReader reader = new OSMReader(f.ghStorage, new AreaIndex<>(emptyList()));
         reader.setFile(new File(OSM_FILE));
         reader.readGraph();
         f.ghStorage.freeze();
