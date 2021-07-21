@@ -17,6 +17,7 @@ import static com.graphhopper.util.Helper.toLowerCase;
 
 public class SpatialRuleLookupBuilder {
 
+    public static final String JSON_ID_FIELD = "ISO3166-1:alpha3";
     private static final Logger logger = LoggerFactory.getLogger(SpatialRuleLookupBuilder.class);
     private static final GeometryFactory FAC = new GeometryFactory();
 
@@ -85,5 +86,32 @@ public class SpatialRuleLookupBuilder {
      */
     public static SpatialRuleLookup buildIndex(List<JsonFeatureCollection> jsonFeatureCollections, String jsonIdField, SpatialRuleFactory spatialRuleFactory) {
         return buildIndex(jsonFeatureCollections, jsonIdField, spatialRuleFactory, new Envelope(-180, 180, -90, 90));
+    }
+
+    /**
+     * This method limits the JsonFeatures to the specified subset
+     */
+    public static List<JsonFeatureCollection> reorder(List<JsonFeatureCollection> jsonFeatureCollections, List<String> subset) {
+        Map<String, JsonFeature> map = new LinkedHashMap<>();
+        for (JsonFeatureCollection featureCollection : jsonFeatureCollections) {
+            for (JsonFeature jsonFeature : featureCollection.getFeatures()) {
+                String id = (String) jsonFeature.getProperty(JSON_ID_FIELD);
+                if (!Helper.isEmpty(id))
+                    map.put(toLowerCase(id), jsonFeature);
+            }
+        }
+        if (map.isEmpty())
+            throw new IllegalArgumentException("Input JsonFeatureCollection cannot be empty. Subset: " + subset + ", original.size:" + jsonFeatureCollections.size());
+
+        List<JsonFeature> newCollection = new ArrayList<>();
+        for (String val : subset) {
+            JsonFeature jsonFeature = map.get(val);
+            if (jsonFeature == null)
+                throw new IllegalArgumentException("SpatialRule does not exist. ID: " + val);
+            newCollection.add(jsonFeature);
+        }
+        JsonFeatureCollection coll = new JsonFeatureCollection();
+        coll.getFeatures().addAll(newCollection);
+        return Arrays.asList(coll);
     }
 }

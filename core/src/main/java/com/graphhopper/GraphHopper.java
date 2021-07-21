@@ -42,8 +42,11 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoderFactory;
 import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
+import com.graphhopper.routing.util.parsers.SpatialRuleParser;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupHelper;
+import com.graphhopper.routing.util.spatialrules.CountriesSpatialRuleFactory;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
@@ -70,7 +73,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
+import static com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder.JSON_ID_FIELD;
+import static com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder.reorder;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.RoundTrip;
 
@@ -525,7 +531,19 @@ public class GraphHopper implements GraphHopperAPI {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        SpatialRuleLookupHelper.buildAndInjectCountrySpatialRules(this, maxBounds, jsonFeatureCollections);
+        List<String> subset = Arrays.stream(Country.values())
+                .filter(c -> c != Country.DEFAULT)
+                .map(Country::toString)
+                .collect(Collectors.toList());
+        final SpatialRuleLookup index = SpatialRuleLookupBuilder.buildIndex(reorder(jsonFeatureCollections, subset),
+                JSON_ID_FIELD, new CountriesSpatialRuleFactory(), maxBounds);
+        logger.info("Set spatial rule lookup with {} rules", index.getRules().size());
+        final TagParserFactory oldTPF = tagParserFactory;
+        tagParserFactory = (name, configuration) -> {
+            if (name.equals(Country.KEY))
+                return new SpatialRuleParser(index, Country.create());
+            return oldTPF.create(name, configuration);
+        };
     }
 
     private EncodingManager buildEncodingManager(GraphHopperConfig ghConfig) {
