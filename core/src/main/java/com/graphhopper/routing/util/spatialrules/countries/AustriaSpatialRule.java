@@ -39,34 +39,6 @@ public class AustriaSpatialRule extends AbstractSpatialRule {
     }
     
     @Override
-    public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
-        if (!Double.isNaN(currentMaxSpeed) || !transport.isMotorVehicle()) {
-            return currentMaxSpeed;
-        }
-        
-        switch (roadClass) {
-        case MOTORWAY:
-            return 130;
-        case TRUNK:
-            return 100;
-        case PRIMARY:
-            return 100;
-        case SECONDARY:
-            return 100;
-        case TERTIARY:
-            return 100;
-        case UNCLASSIFIED:
-            return 100;
-        case RESIDENTIAL:
-            return 50;
-        case LIVING_STREET:
-            return 20;
-        default:
-            return Double.NaN;
-        }
-    }
-    
-    @Override
     public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
         if (currentRoadAccess != RoadAccess.YES) {
             return currentRoadAccess;

@@ -39,40 +39,6 @@ public class GermanySpatialRule extends AbstractSpatialRule {
         super(borders);
     }
 
-    /**
-     * Germany contains roads with no speed limit. For these roads, this method
-     * will return {@link MaxSpeed#UNLIMITED_SIGN_SPEED}.
-     * <p>
-     * Your implementation should be able to handle these cases.
-     */
-    @Override
-    public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
-        if (!Double.isNaN(currentMaxSpeed) || !transport.isMotorVehicle()) {
-            return currentMaxSpeed;
-        }
-        
-        // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
-        switch (roadClass) {
-            case MOTORWAY:
-            case TRUNK:
-                return MaxSpeed.UNLIMITED_SIGN_SPEED;
-            case PRIMARY:
-                return 100;
-            case SECONDARY:
-                return 100;
-            case TERTIARY:
-                return 100;
-            case UNCLASSIFIED:
-                return 100;
-            case RESIDENTIAL:
-                return 100;
-            case LIVING_STREET:
-                return 4;
-            default:
-                return Double.NaN;
-        }
-    }
-    
     @Override
     public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
         if (currentRoadAccess != RoadAccess.YES) {

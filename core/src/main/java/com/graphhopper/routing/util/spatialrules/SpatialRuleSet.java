@@ -45,22 +45,6 @@ public class SpatialRuleSet {
     }
     
     /**
-     * Return the max speed for a certain road class.
-     *
-     * @param roadClass       The highway type, e.g. {@link RoadClass#MOTORWAY}
-     * @param transport       The mode of transportation
-     * @param currentMaxSpeed The current max speed value or {@link Double#NaN} if no value has been set yet
-     * @return the maximum speed value to be used
-     */
-    public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
-        double value = currentMaxSpeed;
-        for (SpatialRule rule : rules) {
-            value = rule.getMaxSpeed(roadClass, transport, value);
-        }
-        return value;
-    }
-
-    /**
      * Returns the {@link RoadAccess} for a certain highway type and transportation mode.
      *
      * @param roadClass          The highway type, e.g. {@link RoadClass#MOTORWAY}

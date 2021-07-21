@@ -44,11 +44,6 @@ public abstract class AbstractSpatialRule implements SpatialRule {
     }
     
     @Override
-    public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
-        return currentMaxSpeed;
-    }
-
-    @Override
     public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
         return currentRoadAccess;
     }

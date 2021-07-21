@@ -500,6 +500,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             int baseNode = allEdgesIterator.getBaseNode();
             areas = areaIndex.query(na.getLat(baseNode), na.getLon(baseNode));
             SplitArea areaBase = areas.isEmpty() ? null : areas.get(0);
+            // todo: what if both areaAdj and areaBase are null?
             if (areaAdj != areaBase) {
                 inaccessible.add(allEdgesIterator.getEdge());
             }

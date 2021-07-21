@@ -36,16 +36,6 @@ import org.locationtech.jts.geom.Polygon;
 public interface SpatialRule {
 
     /**
-     * Return the max speed for a certain road class and transportation mode.
-     *
-     * @param roadClass       The highway type, e.g. {@link RoadClass#MOTORWAY}
-     * @param transport       The mode of transportation
-     * @param currentMaxSpeed The current max speed value or {@link Double#NaN} if no value has been set yet
-     * @return the maximum speed value to be used
-     */
-    double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed);
-    
-    /**
      * Returns the {@link RoadAccess} for a certain highway type and transportation transport.
      *
      * @param roadClass          The highway type, e.g. {@link RoadClass#MOTORWAY}
