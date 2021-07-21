@@ -62,6 +62,7 @@ public class PtRouteResource {
                             @QueryParam("pt.ignore_transfers") Boolean ignoreTransfers,
                             @QueryParam("pt.profile") Boolean profileQuery,
                             @QueryParam("pt.limit_solutions") Integer limitSolutions,
+                            @QueryParam("pt.limit_trip_time") DurationParam limitTripTime,
                             @QueryParam("pt.limit_street_time") DurationParam limitStreetTime) {
         StopWatch stopWatch = new StopWatch().start();
         List<GHLocation> points = requestPoints.stream().map(AbstractParam::get).collect(toList());
@@ -74,6 +75,7 @@ public class PtRouteResource {
         Optional.ofNullable(ignoreTransfers).ifPresent(request::setIgnoreTransfers);
         Optional.ofNullable(localeStr).ifPresent(s -> request.setLocale(Helper.getLocale(s)));
         Optional.ofNullable(limitSolutions).ifPresent(request::setLimitSolutions);
+        Optional.ofNullable(limitTripTime.get()).ifPresent(request::setLimitTripTime);
         Optional.ofNullable(limitStreetTime.get()).ifPresent(request::setLimitStreetTime);
 
         GHResponse route = ptRouter.route(request);

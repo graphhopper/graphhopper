@@ -41,6 +41,7 @@ public class Request {
     private double walkSpeedKmH = 5.0;
     private int blockedRouteTypes;
     private Locale locale = Helper.getLocale("en");
+    private Duration limitTripTime;
     private Duration limitStreetTime;
     private Duration maxProfileDuration = Duration.ofDays(1);
     private List<String> pathDetails = new ArrayList<>();
@@ -146,8 +147,16 @@ public class Request {
         return points;
     }
 
+    public Duration getLimitTripTime() {
+        return this.limitTripTime;
+    }
+
     public Duration getLimitStreetTime() {
         return this.limitStreetTime;
+    }
+
+    public void setLimitTripTime(Duration tripTime) {
+        this.limitTripTime = tripTime;
     }
 
     public void setLimitStreetTime(Duration streetTime) {
