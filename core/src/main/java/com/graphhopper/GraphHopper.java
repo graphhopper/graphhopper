@@ -655,6 +655,7 @@ public class GraphHopper implements GraphHopperAPI {
             throw new IllegalStateException("Couldn't load from existing folder: " + ghLocation
                     + " but also cannot use file for DataReader as it wasn't specified!");
 
+        // todo: read countries from bundle/countries.geojson
         List<CustomArea> customAreas;
         if (isEmpty(customAreasLocation)) {
             logger.info("No custom areas are used, custom_areas.directory not given");

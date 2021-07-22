@@ -30,8 +30,7 @@ import org.locationtech.jts.geom.Polygon;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.InputStreamReader;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -174,7 +173,7 @@ class AreaIndexTest {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JtsModule());
         List<CustomArea> customAreas;
-        try (BufferedReader reader = Files.newBufferedReader(Paths.get("files/spatialrules/countries.geojson"))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(AreaIndexTest.class.getResourceAsStream("/com/graphhopper/countries/countries.geojson")))) {
             JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
             customAreas = jsonFeatureCollection.getFeatures().stream().map(CustomArea::fromJsonFeature).collect(Collectors.toList());
         }
