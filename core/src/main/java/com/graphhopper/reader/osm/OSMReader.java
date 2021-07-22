@@ -375,7 +375,6 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
         // also add all custom areas as artificial tag
         way.setTag("custom_areas", customAreas);
-        // todo: add some tests for handleWayTags etc., c.f. SpatialRuleLookupBuilderTest#testSpatialId
         IntsRef edgeFlags = encodingManager.handleWayTags(way, acceptWay, relationFlags);
         if (edgeFlags.isEmpty())
             return;
