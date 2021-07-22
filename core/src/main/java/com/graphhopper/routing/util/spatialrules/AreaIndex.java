@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 
 public class AreaIndex<T extends AreaIndex.HasBorders> {
 
+    // todo: rename to just 'Area'?
     public interface HasBorders {
         List<Polygon> getBorders();
     }
