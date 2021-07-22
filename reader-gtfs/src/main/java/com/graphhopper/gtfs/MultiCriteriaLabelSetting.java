@@ -56,7 +56,7 @@ public class MultiCriteriaLabelSetting {
     private final boolean profileQuery;
     private final GraphExplorer explorer;
     private double betaTransfers;
-    private double betaWalkTime = 1.0;
+    private double betaStreetTime = 1.0;
     private long limitTripTime = Long.MAX_VALUE;
     private long limitStreetTime = Long.MAX_VALUE;
 
@@ -72,7 +72,7 @@ public class MultiCriteriaLabelSetting {
         queueComparator = Comparator
                 .comparingLong(this::weight)
                 .thenComparingLong(l -> l.nTransfers)
-                .thenComparingLong(l -> l.walkTime)
+                .thenComparingLong(l -> l.streetTime)
                 .thenComparingLong(l -> departureTimeCriterion(l) != null ? departureTimeCriterion(l) : 0)
                 .thenComparingLong(l -> l.impossible ? 1 : 0);
         fromHeap = new PriorityQueue<>(queueComparator);
@@ -88,8 +88,8 @@ public class MultiCriteriaLabelSetting {
         this.betaTransfers = betaTransfers;
     }
 
-    void setBetaWalkTime(double betaWalkTime) {
-        this.betaWalkTime = betaWalkTime;
+    void setBetaStreetTime(double betaWalkTime) {
+        this.betaStreetTime = betaWalkTime;
     }
 
     private class MultiCriteriaLabelSettingSpliterator extends Spliterators.AbstractSpliterator<Label> {
@@ -124,14 +124,14 @@ public class MultiCriteriaLabelSetting {
                     GtfsStorage.EdgeType edgeType = edge.get(typeEnc);
                     if (!reverse && (edgeType == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK || edgeType == GtfsStorage.EdgeType.WAIT)) {
                         if (label.nTransfers == 0) {
-                            firstPtDepartureTime = nextTime - label.walkTime;
+                            firstPtDepartureTime = nextTime - label.streetTime;
                         }
                     } else if (reverse && (edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK || edgeType == GtfsStorage.EdgeType.WAIT_ARRIVAL)) {
                         if (label.nTransfers == 0) {
-                            firstPtDepartureTime = nextTime + label.walkTime;
+                            firstPtDepartureTime = nextTime + label.streetTime;
                         }
                     }
-                    long walkTime = label.walkTime + (edgeType == GtfsStorage.EdgeType.HIGHWAY || edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT ? ((reverse ? -1 : 1) * (nextTime - label.currentTime)) : 0);
+                    long walkTime = label.streetTime + (edgeType == GtfsStorage.EdgeType.HIGHWAY || edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT ? ((reverse ? -1 : 1) * (nextTime - label.currentTime)) : 0);
                     if (walkTime > limitStreetTime)
                         return;
                     if (Math.abs(nextTime - startTime) > limitTripTime)
@@ -253,7 +253,7 @@ public class MultiCriteriaLabelSetting {
     }
 
     long weight(Label label) {
-        return timeSinceStartTime(label) + (long) (label.nTransfers * betaTransfers) + (long) (label.walkTime * (betaWalkTime - 1.0));
+        return timeSinceStartTime(label) + (long) (label.nTransfers * betaTransfers) + (long) (label.streetTime * (betaStreetTime - 1.0));
     }
 
     long timeSinceStartTime(Label label) {

@@ -65,7 +65,7 @@ public class RealtimeIT {
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
-        graphHopperFactory = PtRouterImpl.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage());
+        graphHopperFactory = PtRouterImpl.createFactory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage());
     }
 
     @AfterAll

@@ -63,7 +63,7 @@ public class GraphHopperMultimodalIT {
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
         locationIndex = graphHopperGtfs.getLocationIndex();
-        graphHopper = PtRouterImpl.createFactory(new TranslationMap().doImport(), graphHopperGtfs, locationIndex, graphHopperGtfs.getGtfsStorage())
+        graphHopper = PtRouterImpl.createFactory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs, locationIndex, graphHopperGtfs.getGtfsStorage())
                 .createWithoutRealtimeFeed();
     }
 
@@ -80,7 +80,7 @@ public class GraphHopperMultimodalIT {
                 36.91260259593356, -116.76149368286134
         );
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 6, 40, 0).atZone(zoneId).toInstant());
-        ghRequest.setBetaWalkTime(2.0);
+        ghRequest.setBetaStreetTime(2.0);
         ghRequest.setProfileQuery(true);
         ghRequest.setMaxProfileDuration(Duration.ofHours(1));
 
@@ -100,7 +100,7 @@ public class GraphHopperMultimodalIT {
         // If this wasn't a profile query, they would be dominated and we would only get a walk
         // solution. But at the exact time where the transit route departs, the transit route is superior,
         // since it is very slightly faster.
-        ghRequest.setBetaWalkTime(1.0);
+        ghRequest.setBetaStreetTime(1.0);
         response = graphHopper.route(ghRequest);
         ResponsePath walkSolution = response.getAll().stream().filter(p -> p.getLegs().size() == 1).findFirst().get();
         firstTransitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get();
@@ -117,7 +117,7 @@ public class GraphHopperMultimodalIT {
                 36.91260259593356, -116.76149368286134
         );
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 6, 40, 0).atZone(zoneId).toInstant());
-        ghRequest.setBetaWalkTime(2.0); // I somewhat dislike walking
+        ghRequest.setBetaStreetTime(2.0); // I somewhat dislike walking
         ghRequest.setPathDetails(Arrays.asList("distance"));
 
         GHResponse response = graphHopper.route(ghRequest);
@@ -160,7 +160,7 @@ public class GraphHopperMultimodalIT {
 
         // I like walking exactly as I like riding a bus (per travel time unit)
         // Now, the walk solution dominates, and we get no transit solution.
-        ghRequest.setBetaWalkTime(1.0);
+        ghRequest.setBetaStreetTime(1.0);
         response = graphHopper.route(ghRequest);
         assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(138);
         assertThat(response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst()).isEmpty();
@@ -253,7 +253,7 @@ public class GraphHopperMultimodalIT {
         );
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 6, 40, 0).atZone(zoneId).toInstant());
         ghRequest.setWalkSpeedKmH(50); // Yes, I can walk very fast, 50 km/h. Problem?
-        ghRequest.setBetaWalkTime(20); // But I dislike walking a lot.
+        ghRequest.setBetaStreetTime(20); // But I dislike walking a lot.
 
         GHResponse response = graphHopper.route(ghRequest);
 
@@ -285,7 +285,7 @@ public class GraphHopperMultimodalIT {
                         new GHStationLocation("EMSI")),
                         LocalDateTime.of(2007, 1, 1, 6, 40, 0).atZone(zoneId).toInstant());
                 ghRequest.setWalkSpeedKmH(50); // Yes, I can walk very fast, 50 km/h. Problem?
-                ghRequest.setBetaWalkTime(20); // But I dislike walking a lot.
+                ghRequest.setBetaStreetTime(20); // But I dislike walking a lot.
                 GHResponse response = graphHopper.route(ghRequest);
                 responses.add(response);
             }

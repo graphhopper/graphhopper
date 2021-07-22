@@ -160,15 +160,15 @@ public class GraphHopperGtfs extends GraphHopper {
                                 GtfsStorageI.PlatformDescriptor toPlatformDescriptor = getGtfsStorage().getPlatformDescriptorByEdge().get(edgeIterator.getEdge());
                                 LOGGER.debug(fromPlatformDescriptor + " -> " + toPlatformDescriptor);
                                 if (!toPlatformDescriptor.feed_id.equals(fromPlatformDescriptor.feed_id)) {
-                                    LOGGER.debug(" Different feed. Inserting transfer with " + (int) (label.walkTime / 1000L) + " s.");
+                                    LOGGER.debug(" Different feed. Inserting transfer with " + (int) (label.streetTime / 1000L) + " s.");
                                     GtfsReader toFeedReader = readers.get(toPlatformDescriptor.feed_id);
-                                    toFeedReader.insertTransferEdges(label.adjNode, (int) (label.walkTime / 1000L), toPlatformDescriptor);
+                                    toFeedReader.insertTransferEdges(label.adjNode, (int) (label.streetTime / 1000L), toPlatformDescriptor);
                                 } else {
                                     List<Transfer> transfersToStop = transfers.getTransfersToStop(toPlatformDescriptor.stop_id, routeIdOrNull(toPlatformDescriptor));
                                     if (transfersToStop.stream().noneMatch(t -> t.from_stop_id.equals(fromPlatformDescriptor.stop_id))) {
                                         GtfsReader toFeedReader = readers.get(toPlatformDescriptor.feed_id);
-                                        toFeedReader.insertTransferEdges(label.adjNode, (int) (label.walkTime / 1000L), toPlatformDescriptor);
-                                        LOGGER.debug("  Inserting transfer with " + (int) (label.walkTime / 1000L) + " s.");
+                                        toFeedReader.insertTransferEdges(label.adjNode, (int) (label.streetTime / 1000L), toPlatformDescriptor);
+                                        LOGGER.debug("  Inserting transfer with " + (int) (label.streetTime / 1000L) + " s.");
                                     }
                                 }
                             }

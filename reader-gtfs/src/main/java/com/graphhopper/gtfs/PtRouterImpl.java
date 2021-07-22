@@ -22,15 +22,16 @@ import com.conveyal.gtfs.GTFSFeed;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.DefaultWeightingFactory;
+import com.graphhopper.routing.WeightingFactory;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -50,24 +51,21 @@ import static java.util.Comparator.comparingLong;
 
 public final class PtRouterImpl implements PtRouter {
 
+    private final GraphHopperConfig config;
     private final TranslationMap translationMap;
     private final PtEncodedValues ptEncodedValues;
-    private final Weighting accessEgressWeighting;
-    private final EdgeFilter accessEgressSnapFilter;
     private final GraphHopperStorage graphHopperStorage;
     private final LocationIndex locationIndex;
     private final GtfsStorage gtfsStorage;
     private final RealtimeFeed realtimeFeed;
     private final TripFromLabel tripFromLabel;
+    private final WeightingFactory weightingFactory;
 
     @Inject
-    public PtRouterImpl(TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
+    public PtRouterImpl(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
+        this.config = config;
         this.ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
-        Profile accessEgressProfile = new Profile("foot");
-        accessEgressProfile.setVehicle("foot");
-        accessEgressProfile.setWeighting("fastest");
-        this.accessEgressWeighting = new DefaultWeightingFactory(graphHopperStorage, graphHopperStorage.getEncodingManager()).createWeighting(accessEgressProfile, new PMap(), true);
-        this.accessEgressSnapFilter = new DefaultSnapFilter(new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder(accessEgressProfile.getVehicle())), graphHopperStorage.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(accessEgressProfile.getVehicle())));
+        this.weightingFactory = new DefaultWeightingFactory(graphHopperStorage, graphHopperStorage.getEncodingManager());
         this.translationMap = translationMap;
         this.graphHopperStorage = graphHopperStorage;
         this.locationIndex = locationIndex;
@@ -76,8 +74,8 @@ public final class PtRouterImpl implements PtRouter {
         this.tripFromLabel = new TripFromLabel(this.graphHopperStorage, this.gtfsStorage, this.realtimeFeed, pathDetailsBuilderFactory);
     }
 
-    public static Factory createFactory(TranslationMap translationMap, GraphHopper graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
-        return new Factory(translationMap, graphHopperStorage.getGraphHopperStorage(), locationIndex, gtfsStorage);
+    public static Factory createFactory(GraphHopperConfig config, TranslationMap translationMap, GraphHopper graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
+        return new Factory(config, translationMap, graphHopperStorage.getGraphHopperStorage(), locationIndex, gtfsStorage);
     }
 
     @Override
@@ -86,13 +84,15 @@ public final class PtRouterImpl implements PtRouter {
     }
 
     public static class Factory {
+        private final GraphHopperConfig config;
         private final TranslationMap translationMap;
         private final GraphHopperStorage graphHopperStorage;
         private final LocationIndex locationIndex;
         private final GtfsStorage gtfsStorage;
         private final Map<String, Transfers> transfers;
 
-        private Factory(TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
+        private Factory(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
+            this.config = config;
             this.translationMap = translationMap;
             this.graphHopperStorage = graphHopperStorage;
             this.locationIndex = locationIndex;
@@ -106,11 +106,11 @@ public final class PtRouterImpl implements PtRouter {
         public PtRouter createWith(GtfsRealtime.FeedMessage realtimeFeed) {
             Map<String, GtfsRealtime.FeedMessage> realtimeFeeds = new HashMap<>();
             realtimeFeeds.put("gtfs_0", realtimeFeed);
-            return new PtRouterImpl(translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, this.transfers, realtimeFeeds), new PathDetailsBuilderFactory());
+            return new PtRouterImpl(config, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, this.transfers, realtimeFeeds), new PathDetailsBuilderFactory());
         }
 
         public PtRouter createWithoutRealtimeFeed() {
-            return new PtRouterImpl(translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage), new PathDetailsBuilderFactory());
+            return new PtRouterImpl(config, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage), new PathDetailsBuilderFactory());
         }
     }
 
@@ -123,7 +123,7 @@ public final class PtRouterImpl implements PtRouter {
         private final boolean arriveBy;
         private final boolean ignoreTransfers;
         private final double betaTransfers;
-        private final double betaWalkTime;
+        private final double betaStreetTime;
         private final double walkSpeedKmH;
         private final int blockedRouteTypes;
         private final GHLocation enter;
@@ -140,12 +140,19 @@ public final class PtRouterImpl implements PtRouter {
         private int visitedNodes;
         private MultiCriteriaLabelSetting router;
 
+        private final Profile accessProfile;
+        private final EdgeFilter accessSnapFilter;
+        private final Weighting accessWeighting;
+        private final Profile egressProfile;
+        private final EdgeFilter egressSnapFilter;
+        private final Weighting egressWeighting;
+
         RequestHandler(Request request) {
             maxVisitedNodesForRequest = request.getMaxVisitedNodes();
             profileQuery = request.isProfileQuery();
             ignoreTransfers = Optional.ofNullable(request.getIgnoreTransfers()).orElse(request.isProfileQuery());
             betaTransfers = request.getBetaTransfers();
-            betaWalkTime = request.getBetaWalkTime();
+            betaStreetTime = request.getBetaStreetTime();
             limitSolutions = Optional.ofNullable(request.getLimitSolutions()).orElse(profileQuery ? 50 : ignoreTransfers ? 1 : Integer.MAX_VALUE);
             initialTime = request.getEarliestDepartureTime();
             maxProfileDuration = request.getMaxProfileDuration().toMillis();
@@ -158,6 +165,12 @@ public final class PtRouterImpl implements PtRouter {
             limitTripTime = request.getLimitTripTime() != null ? request.getLimitTripTime().toMillis() : Long.MAX_VALUE;
             limitStreetTime = request.getLimitStreetTime() != null ? request.getLimitStreetTime().toMillis() : Long.MAX_VALUE;
             requestedPathDetails = request.getPathDetails();
+            accessProfile = config.getProfiles().stream().filter(p -> p.getName().equals(request.getAccessProfile())).findFirst().get();
+            accessWeighting = weightingFactory.createWeighting(accessProfile, new PMap(), false);
+            accessSnapFilter = new DefaultSnapFilter(accessWeighting, graphHopperStorage.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(accessProfile.getVehicle())));
+            egressProfile = config.getProfiles().stream().filter(p -> p.getName().equals(request.getEgressProfile())).findFirst().get();
+            egressWeighting = weightingFactory.createWeighting(egressProfile, new PMap(), false);
+            egressSnapFilter = new DefaultSnapFilter(egressWeighting, graphHopperStorage.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(egressProfile.getVehicle())));
         }
 
         GHResponse route() {
@@ -169,7 +182,7 @@ public final class PtRouterImpl implements PtRouter {
             for (int i = 0; i < locations.size(); i++) {
                 GHLocation location = locations.get(i);
                 if (location instanceof GHPointLocation) {
-                    final Snap closest = findByPoint(((GHPointLocation) location).ghPoint, i);
+                    final Snap closest = findByPoint(((GHPointLocation) location).ghPoint, i, i == 0 ? this.accessSnapFilter : this.egressSnapFilter);
                     pointSnaps.add(closest);
                     allSnaps.add(closest);
                     points.add(closest.getSnappedPoint());
@@ -196,8 +209,8 @@ public final class PtRouterImpl implements PtRouter {
             return response;
         }
 
-        private Snap findByPoint(GHPoint point, int indexForErrorMessage) {
-            Snap source = locationIndex.findClosest(point.lat, point.lon, accessEgressSnapFilter);
+        private Snap findByPoint(GHPoint point, int indexForErrorMessage, EdgeFilter snapFilter) {
+            Snap source = locationIndex.findClosest(point.lat, point.lon, snapFilter);
             if (!source.isValid()) {
                 throw new PointNotFoundException("Cannot find point: " + point, indexForErrorMessage);
             }
@@ -207,21 +220,21 @@ public final class PtRouterImpl implements PtRouter {
             return source;
         }
 
-        private Snap findByStationId(GHStationLocation exit, int indexForErrorMessage) {
+        private Snap findByStationId(GHStationLocation station, int indexForErrorMessage) {
             for (Map.Entry<String, GTFSFeed> entry : gtfsStorage.getGtfsFeeds().entrySet()) {
-                final Integer node = gtfsStorage.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(entry.getKey(), exit.stop_id));
+                final Integer node = gtfsStorage.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(entry.getKey(), station.stop_id));
                 if (node != null) {
-                    final Snap station = new Snap(graphHopperStorage.getNodeAccess().getLat(node), graphHopperStorage.getNodeAccess().getLon(node));
-                    station.setClosestNode(node);
-                    return station;
+                    final Snap stationSnap = new Snap(graphHopperStorage.getNodeAccess().getLat(node), graphHopperStorage.getNodeAccess().getLon(node));
+                    stationSnap.setClosestNode(node);
+                    return stationSnap;
                 }
             }
-            throw new PointNotFoundException("Cannot find station: " + exit.stop_id, indexForErrorMessage);
+            throw new PointNotFoundException("Cannot find station: " + station.stop_id, indexForErrorMessage);
         }
 
         private void parseSolutionsAndAddToResponse(List<List<Label.Transition>> solutions, PointList waypoints) {
             for (List<Label.Transition> solution : solutions) {
-                final ResponsePath responsePath = tripFromLabel.createResponsePath(translation, waypoints, queryGraph, accessEgressWeighting, solution, requestedPathDetails);
+                final ResponsePath responsePath = tripFromLabel.createResponsePath(translation, waypoints, queryGraph, accessWeighting, solution, requestedPathDetails);
                 responsePath.setImpossible(solution.stream().anyMatch(t -> t.label.impossible));
                 responsePath.setTime((solution.get(solution.size() - 1).label.currentTime - solution.get(0).label.currentTime));
                 responsePath.setRouteWeight(router.weight(solution.get(solution.size() - 1).label));
@@ -234,11 +247,11 @@ public final class PtRouterImpl implements PtRouter {
 
         private List<List<Label.Transition>> findPaths(int startNode, int destNode) {
             StopWatch stopWatch = new StopWatch().start();
-            final GraphExplorer accessEgressGraphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, !arriveBy, true, false, walkSpeedKmH, false, blockedRouteTypes);
-            boolean reverse = !arriveBy;
-            GtfsStorage.EdgeType edgeType = reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT;
-            MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, ptEncodedValues, reverse, false, false, maxProfileDuration, new ArrayList<>());
-            stationRouter.setBetaWalkTime(betaWalkTime);
+            boolean isEgress = !arriveBy;
+            final GraphExplorer accessEgressGraphExplorer = new GraphExplorer(queryGraph, isEgress ? egressWeighting : accessWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, isEgress, true, false, walkSpeedKmH, false, blockedRouteTypes);
+            GtfsStorage.EdgeType edgeType = isEgress ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT;
+            MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, ptEncodedValues, isEgress, false, false, maxProfileDuration, new ArrayList<>());
+            stationRouter.setBetaStreetTime(betaStreetTime);
             stationRouter.setLimitStreetTime(limitStreetTime);
             Iterator<Label> stationIterator = stationRouter.calcLabels(destNode, initialTime).iterator();
             List<Label> stationLabels = new ArrayList<>();
@@ -258,13 +271,13 @@ public final class PtRouterImpl implements PtRouter {
                 reverseSettledSet.put(stationLabel.adjNode, stationLabel);
             }
 
-            GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, arriveBy, false, true, walkSpeedKmH, false, blockedRouteTypes);
+            GraphExplorer graphExplorer = new GraphExplorer(queryGraph, arriveBy ? egressWeighting : accessWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, arriveBy, false, true, walkSpeedKmH, false, blockedRouteTypes);
             List<Label> discoveredSolutions = new ArrayList<>();
             router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, arriveBy, !ignoreTransfers, profileQuery, maxProfileDuration, discoveredSolutions);
             router.setBetaTransfers(betaTransfers);
-            router.setBetaWalkTime(betaWalkTime);
+            router.setBetaStreetTime(betaStreetTime);
             final long smallestStationLabelWalkTime = stationLabels.stream()
-                    .mapToLong(l -> l.walkTime).min()
+                    .mapToLong(l -> l.streetTime).min()
                     .orElse(Long.MAX_VALUE);
             router.setLimitTripTime(Math.max(0, limitTripTime - smallestStationLabelWalkTime));
             router.setLimitStreetTime(Math.max(0, limitStreetTime - smallestStationLabelWalkTime));
@@ -277,7 +290,7 @@ public final class PtRouterImpl implements PtRouter {
             Iterator<Label> iterator = router.calcLabels(startNode, initialTime).iterator();
             Map<Label, Label> originalSolutions = new HashMap<>();
 
-            Label walkSolution = null;
+            Label accessEgressModeOnlySolution = null;
             long highestWeightForDominationTest = Long.MAX_VALUE;
             while (iterator.hasNext()) {
                 Label label = iterator.next();
@@ -299,12 +312,12 @@ public final class PtRouterImpl implements PtRouter {
                 //
                 // But no matter what, we always have to run past the highest weight in the open set. If we don't,
                 // the last couple of routes in a profile will be suboptimal while the rest is good.
-                if ((!profileQuery || profileFinished(router, discoveredSolutions, walkSolution)) && router.weight(label) + smallestStationLabelWeight > highestWeightForDominationTest) {
+                if ((!profileQuery || profileFinished(router, discoveredSolutions, accessEgressModeOnlySolution)) && router.weight(label) + smallestStationLabelWeight > highestWeightForDominationTest) {
                     break;
                 }
                 Label reverseLabel = reverseSettledSet.get(label.adjNode);
                 if (reverseLabel != null) {
-                    Label combinedSolution = new Label(label.currentTime - reverseLabel.currentTime + initialTime.toEpochMilli(), -1, label.adjNode, label.nTransfers + reverseLabel.nTransfers, label.departureTime, label.walkTime + reverseLabel.walkTime, 0, label.impossible, null);
+                    Label combinedSolution = new Label(label.currentTime - reverseLabel.currentTime + initialTime.toEpochMilli(), -1, label.adjNode, label.nTransfers + reverseLabel.nTransfers, label.departureTime, label.streetTime + reverseLabel.streetTime, 0, label.impossible, null);
                     List<Label> filteredSolutions;
                     List<Label> otherSolutions;
                     if (profileQuery && combinedSolution.departureTime != null) {
@@ -329,16 +342,16 @@ public final class PtRouterImpl implements PtRouter {
                         discoveredSolutions.sort(comparingLong(s -> Optional.ofNullable(s.departureTime).orElse(0L)));
                         originalSolutions.put(combinedSolution, label);
                         if (label.nTransfers == 0 && reverseLabel.nTransfers == 0) {
-                            walkSolution = combinedSolution;
+                            accessEgressModeOnlySolution = combinedSolution;
                         }
                         if (profileQuery) {
                             highestWeightForDominationTest = discoveredSolutions.stream().mapToLong(router::weight).max().orElse(Long.MAX_VALUE);
-                            if (walkSolution != null && discoveredSolutions.size() < limitSolutions) {
+                            if (accessEgressModeOnlySolution != null && discoveredSolutions.size() < limitSolutions) {
                                 // If we have a walk solution, we have it at every point in time in the profile.
                                 // (I can start walking any time I want, unlike with bus departures.)
                                 // Here we virtually add it to the end of the profile, so it acts as a sentinel
                                 // to remind us that we still have to search that far to close the set.
-                                highestWeightForDominationTest = Math.max(highestWeightForDominationTest, router.weight(walkSolution) + maxProfileDuration);
+                                highestWeightForDominationTest = Math.max(highestWeightForDominationTest, router.weight(accessEgressModeOnlySolution) + maxProfileDuration);
                             }
                         } else {
                             highestWeightForDominationTest = discoveredSolutions.stream().filter(s -> !s.impossible && (ignoreTransfers || s.nTransfers <= 1)).mapToLong(router::weight).min().orElse(Long.MAX_VALUE);
@@ -355,7 +368,7 @@ public final class PtRouterImpl implements PtRouter {
                     List<Label.Transition> pathFromStation = Label.getTransitions(reverseSettledSet.get(pathToDestinationStop.get(0).label.adjNode), false, ptEncodedValues, queryGraph, realtimeFeed);
                     long diff = pathToDestinationStop.get(0).label.currentTime - pathFromStation.get(pathFromStation.size() - 1).label.currentTime;
                     List<Label.Transition> patchedPathFromStation = pathFromStation.stream().map(t -> {
-                        return new Label.Transition(new Label(t.label.currentTime + diff, t.label.edge, t.label.adjNode, t.label.nTransfers, t.label.departureTime, t.label.walkTime, t.label.residualDelay, t.label.impossible, null), t.edge);
+                        return new Label.Transition(new Label(t.label.currentTime + diff, t.label.edge, t.label.adjNode, t.label.nTransfers, t.label.departureTime, t.label.streetTime, t.label.residualDelay, t.label.impossible, null), t.edge);
                     }).collect(Collectors.toList());
                     List<Label.Transition> pp = new ArrayList<>(pathToDestinationStop.subList(1, pathToDestinationStop.size()));
                     pp.addAll(0, patchedPathFromStation);
@@ -365,7 +378,7 @@ public final class PtRouterImpl implements PtRouter {
                     List<Label.Transition> pathFromStation = Label.getTransitions(reverseSettledSet.get(destinationStopLabel.adjNode), true, ptEncodedValues, queryGraph, realtimeFeed);
                     long diff = destinationStopLabel.currentTime - pathFromStation.get(0).label.currentTime;
                     List<Label.Transition> patchedPathFromStation = pathFromStation.stream().map(t -> {
-                        return new Label.Transition(new Label(t.label.currentTime + diff, t.label.edge, t.label.adjNode, t.label.nTransfers, t.label.departureTime, destinationStopLabel.walkTime + pathFromStation.get(0).label.walkTime, t.label.residualDelay, t.label.impossible, null), t.edge);
+                        return new Label.Transition(new Label(t.label.currentTime + diff, t.label.edge, t.label.adjNode, t.label.nTransfers, t.label.departureTime, destinationStopLabel.streetTime + pathFromStation.get(0).label.streetTime, t.label.residualDelay, t.label.impossible, null), t.edge);
                     }).collect(Collectors.toList());
                     List<Label.Transition> pp = new ArrayList<>(pathToDestinationStop);
                     pp.addAll(patchedPathFromStation.subList(1, pathFromStation.size()));
