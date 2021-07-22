@@ -36,16 +36,6 @@ import org.locationtech.jts.geom.Polygon;
 public interface SpatialRule {
 
     /**
-     * Returns the {@link RoadAccess} for a certain highway type and transportation transport.
-     *
-     * @param roadClass          The highway type, e.g. {@link RoadClass#MOTORWAY}
-     * @param transport          The mode of transportation
-     * @param currentRoadAccess  The current road access value (default: {@link RoadAccess#YES})
-     * @return the type of access to be used
-     */
-    RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess);
-
-    /**
      * Returns the borders in which the SpatialRule is valid
      */
     List<Polygon> getBorders();

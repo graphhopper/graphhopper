@@ -144,15 +144,7 @@ class AreaIndexTest {
     public void testPerformance() throws IOException {
         // todo: maybe remove again or move to performance tests or something
         // todo: note that there are already similar performance measurements in Measurement!
-        // todo: should there be some reusable code to create 'the' object mapper?
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JtsModule());
-        List<CustomArea> customAreas;
-        try (BufferedReader reader = Files.newBufferedReader(Paths.get("files/spatialrules/countries.geojson"))) {
-            JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
-            customAreas = jsonFeatureCollection.getFeatures().stream().map(CustomArea::fromJsonFeature).collect(Collectors.toList());
-        }
-        AreaIndex<CustomArea> areaIndex = new AreaIndex<>(customAreas);
+        AreaIndex<CustomArea> areaIndex = createCountryIndex();
         long seed = 123L;
         Random rnd = new Random(seed);
         int count = 100_000;
@@ -175,6 +167,29 @@ class AreaIndexTest {
         }
         System.out.println(sw.stop().getTimeString());
         System.out.println(counts);
+    }
+
+    private AreaIndex<CustomArea> createCountryIndex() throws IOException {
+        // todo: should there be some reusable code to create 'the' object mapper?
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JtsModule());
+        List<CustomArea> customAreas;
+        try (BufferedReader reader = Files.newBufferedReader(Paths.get("files/spatialrules/countries.geojson"))) {
+            JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
+            customAreas = jsonFeatureCollection.getFeatures().stream().map(CustomArea::fromJsonFeature).collect(Collectors.toList());
+        }
+        return new AreaIndex<>(customAreas);
+    }
+
+    @Test
+    public void testCountries() throws IOException {
+        AreaIndex<CustomArea> countryIndex = createCountryIndex();
+        // Berlin
+        assertEquals("Deutschland", countryIndex.query(52.5243700, 13.4105300).get(0).getProperties().get("name"));
+        // Paris
+        assertEquals("France", countryIndex.query(48.864716, 2.349014).get(0).getProperties().get("name"));
+        // Austria
+        assertEquals("Österreich", countryIndex.query(48.204484, 16.107888).get(0).getProperties().get("name"));
     }
 
     private static Polygon parsePolygonString(String polygonString) {

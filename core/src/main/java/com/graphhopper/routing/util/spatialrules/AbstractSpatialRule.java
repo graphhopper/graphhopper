@@ -43,11 +43,6 @@ public abstract class AbstractSpatialRule implements SpatialRule {
         this(Collections.singletonList(border));
     }
     
-    @Override
-    public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
-        return currentRoadAccess;
-    }
-    
     public List<Polygon> getBorders() {
         return borders;
     }

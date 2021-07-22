@@ -45,22 +45,6 @@ public class SpatialRuleSet {
     }
     
     /**
-     * Returns the {@link RoadAccess} for a certain highway type and transportation mode.
-     *
-     * @param roadClass          The highway type, e.g. {@link RoadClass#MOTORWAY}
-     * @param transport          The mode of transportation
-     * @param currentRoadAccess  The current road access value (default: {@link RoadAccess#YES})
-     * @return the type of access to be used
-     */
-    public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
-        RoadAccess value = currentRoadAccess;
-        for (SpatialRule rule : rules) {
-            value = rule.getAccess(roadClass, transport, value);
-        }
-        return value;
-    }
-    
-    /**
      * @return the rules in this set
      */
     public List<SpatialRule> getRules() {

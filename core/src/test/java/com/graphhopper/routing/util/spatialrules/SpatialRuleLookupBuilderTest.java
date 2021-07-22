@@ -51,39 +51,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class SpatialRuleLookupBuilderTest {
 
-    private static final String COUNTRIES_FILE = "../core/files/spatialrules/countries.geojson";
-
-    private static SpatialRuleLookup createLookup() throws IOException {
-        final FileReader reader = new FileReader(COUNTRIES_FILE);
-        List<JsonFeatureCollection> feats = Collections.singletonList(
-                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class));
-        return SpatialRuleLookupBuilder.buildIndex(feats, "ISO3166-1:alpha3", new CountriesSpatialRuleFactory());
-    }
-
-    @Test
-    public void testIndex() throws IOException {
-        SpatialRuleLookup spatialRuleLookup = createLookup();
-
-        // Berlin
-        assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRules(52.5243700, 13.4105300).
-                getAccess(RoadClass.TRACK, TransportationMode.CAR, RoadAccess.YES));
-        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRules(52.5243700, 13.4105300).
-                getAccess(RoadClass.PRIMARY, TransportationMode.CAR, RoadAccess.YES));
-
-        // Paris -> empty rule
-        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRules(48.864716, 2.349014).
-                getAccess(RoadClass.TRACK, TransportationMode.CAR, RoadAccess.YES));
-        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRules(48.864716, 2.349014).
-                getAccess(RoadClass.PRIMARY, TransportationMode.CAR, RoadAccess.YES));
-
-        // Austria
-        assertEquals(RoadAccess.FORESTRY, spatialRuleLookup.lookupRules(48.204484, 16.107888).
-                getAccess(RoadClass.TRACK, TransportationMode.CAR, RoadAccess.YES));
-        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRules(48.210033, 16.363449).
-                getAccess(RoadClass.PRIMARY, TransportationMode.CAR, RoadAccess.YES));
-        assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRules(48.210033, 16.363449).
-                getAccess(RoadClass.LIVING_STREET, TransportationMode.CAR, RoadAccess.YES));
-    }
+    public static final String COUNTRIES_FILE = "../core/files/spatialrules/countries.geojson";
 
     @Test
     public void testBounds() throws IOException {

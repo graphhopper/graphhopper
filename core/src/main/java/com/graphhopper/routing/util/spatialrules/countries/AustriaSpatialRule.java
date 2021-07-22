@@ -39,32 +39,6 @@ public class AustriaSpatialRule extends AbstractSpatialRule {
     }
     
     @Override
-    public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
-        if (currentRoadAccess != RoadAccess.YES) {
-            return currentRoadAccess;
-        }
-        
-        if (!transport.isMotorVehicle()) {
-            return RoadAccess.YES;
-        }
-        
-        switch (roadClass) {
-        case LIVING_STREET:
-            return RoadAccess.DESTINATION;
-        case TRACK:
-            return RoadAccess.FORESTRY;
-        case PATH:
-        case BRIDLEWAY:
-        case CYCLEWAY:
-        case FOOTWAY:
-        case PEDESTRIAN:
-            return RoadAccess.NO;
-        default:
-            return RoadAccess.YES;
-        }
-    }
-
-    @Override
     public String getId() {
         return Country.AUT.toString();
     }
