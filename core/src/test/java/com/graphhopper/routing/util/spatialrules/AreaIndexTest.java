@@ -185,11 +185,11 @@ class AreaIndexTest {
     public void testCountries() throws IOException {
         AreaIndex<CustomArea> countryIndex = createCountryIndex();
         // Berlin
-        assertEquals("Deutschland", countryIndex.query(52.5243700, 13.4105300).get(0).getProperties().get("name"));
+        assertEquals("Germany", countryIndex.query(52.5243700, 13.4105300).get(0).getProperties().get("name:en"));
         // Paris
-        assertEquals("France", countryIndex.query(48.864716, 2.349014).get(0).getProperties().get("name"));
+        assertEquals("France", countryIndex.query(48.864716, 2.349014).get(0).getProperties().get("name:en"));
         // Austria
-        assertEquals("Österreich", countryIndex.query(48.204484, 16.107888).get(0).getProperties().get("name"));
+        assertEquals("Austria", countryIndex.query(48.204484, 16.107888).get(0).getProperties().get("name:en"));
     }
 
     private static Polygon parsePolygonString(String polygonString) {
