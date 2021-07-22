@@ -294,13 +294,8 @@ public class EncodingManager implements EncodedValueLookup {
                 _addRelationTagParser(tagParser);
             }
 
-            List<SpatialRuleParser> insertLater = new ArrayList<>();
             for (TagParser tagParser : tagParserSet) {
-                if (SpatialRuleParser.class.isAssignableFrom(tagParser.getClass())) {
-                    insertLater.add((SpatialRuleParser) tagParser);
-                } else {
-                    _addEdgeTagParser(tagParser, false, false);
-                }
+                _addEdgeTagParser(tagParser, false, false);
             }
 
             for (EncodedValue ev : encodedValueMap.values()) {
@@ -320,13 +315,6 @@ public class EncodingManager implements EncodedValueLookup {
             if (!em.hasEncodedValue(RoadAccess.KEY)) {
                 // TODO introduce road_access for different vehicles? But how to create it in DefaultTagParserFactory?
                 _addEdgeTagParser(new OSMRoadAccessParser(), false, false);
-            }
-
-            // ensure that SpatialRuleParsers come after required EncodedValues like max_speed or road_access
-            // TODO can we avoid this hack without complex dependency management?
-            boolean insert = true;
-            for (SpatialRuleParser srp : insertLater) {
-                _addEdgeTagParser(srp, false, insert);
             }
 
             if (dateRangeParser == null)

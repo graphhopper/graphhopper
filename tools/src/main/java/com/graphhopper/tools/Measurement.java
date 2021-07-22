@@ -32,10 +32,8 @@ import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleFactory;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
+import com.graphhopper.routing.util.spatialrules.AreaIndex;
+import com.graphhopper.routing.util.spatialrules.CustomArea;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
@@ -66,6 +64,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
@@ -96,7 +95,7 @@ public class Measurement {
     // Every value is one y-value in a separate diagram with an identical x-value for every Measurement.start call
     void start(PMap args) throws IOException {
         final String graphLocation = args.getString("graph.location", "");
-        final String countryBordersDirectory = args.getString("spatial_rules.borders_directory", "");
+        final String countryBordersDirectory = args.getString("area_borders_directory", "");
         final boolean useJson = args.getBool("measurement.json", false);
         boolean cleanGraph = args.getBool("measurement.clean", false);
         stopOnError = args.getBool("measurement.stop_on_error", false);
@@ -276,7 +275,7 @@ public class Measurement {
                 }
             }
             if (!isEmpty(countryBordersDirectory)) {
-                measureSpatialRuleLookup(countryBordersDirectory, count * 100);
+                measureAreaIndex(countryBordersDirectory, count * 100);
             }
 
         } catch (Exception ex) {
@@ -555,7 +554,7 @@ public class Measurement {
     }
 
 
-    private void measureSpatialRuleLookup(String countryBordersDirectory, int count) {
+    private void measureAreaIndex(String countryBordersDirectory, int count) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JtsModule());
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
@@ -569,18 +568,14 @@ public class Measurement {
                 }
             }
         } catch (IOException e) {
-            logger.error("Failed to load borders.", e);
+            logger.error("Failed to load areas from {}", countryBordersDirectory, e);
             return;
         }
 
-        SpatialRuleFactory rulePerCountryFactory = (id, borders) -> new AbstractSpatialRule(borders) {
-            @Override
-            public String getId() {
-                return id;
-            }
-        };
-
-        final SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(jsonFeatureCollections, "ISO3166-1:alpha3", rulePerCountryFactory);
+        List<CustomArea> areas = jsonFeatureCollections.stream().flatMap(j -> j.getFeatures().stream())
+                .map(CustomArea::fromJsonFeature)
+                .collect(Collectors.toList());
+        AreaIndex<CustomArea> areaIndex = new AreaIndex<>(areas);
 
         // generate random points in central Europe
         final List<GHPoint> randomPoints = new ArrayList<>(count);
@@ -592,10 +587,10 @@ public class Measurement {
 
         MiniPerfTest lookupPerfTest = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
             GHPoint point = randomPoints.get(run);
-            return spatialRuleLookup.lookupRules(point.lat, point.lon).getRules().size();
+            return areaIndex.query(point.lat, point.lon).size();
         });
 
-        print("spatialrulelookup", lookupPerfTest);
+        print("area_index.query", lookupPerfTest);
     }
 
     private void measureRouting(final GraphHopper hopper, final QuerySettings querySettings) {

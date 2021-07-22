@@ -161,6 +161,7 @@ graphhopper:
 
 
   ##### Spatial Rules #####
+  # todo: remove/update
   # Spatial Rules require you to provide Polygons in which the rules are enforced
   # The line below contains the default location for the files which define these borders
   # spatial_rules.borders_directory: core/files/spatialrules

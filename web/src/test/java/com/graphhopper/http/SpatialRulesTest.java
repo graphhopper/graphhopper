@@ -42,6 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class SpatialRulesTest {
+    // todo: update/fix
     private static final String DIR = "./target/north-bayreuth-gh/";
     private static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 

@@ -47,19 +47,27 @@ Read [here](../CONTRIBUTING.md) on how to contribute as a developer and translat
 
 Various topics are explained in more detail separately:
 
- * [Technical overview](./core/technical.md): Technical details about how GraphHopper its calculations are working.
- * [Simple routing](./core/routing.md): Tutorial how to integrate GraphHopper in your Java application (or pick any JVM language)
- * [Create custom weighting](./core/weighting.md): Documentation about how to create a custom weighting class to influence the track calculation.
- * [Import GTFS](../reader-gtfs): Simple steps to get GTFS import and routing done.
- * [LocationIndex](../example/src/main/java/com/graphhopper/example/LocationIndexExample.java): Code about how to get the location index for getting i.e. the nearest edge. 
- * [Hybrid Mode](./core/landmarks.md): Details about speeding up the route calculation via A* and landmarks.
- * [Speed Mode](./core/ch.md): Details about speeding up the route calculations via [Contraction Hierarchies](http://en.wikipedia.org/wiki/Contraction_hierarchies).
- * [Low level API](./core/low-level-api.md): Instructions how to use GraphHopper as a Java library.
- * [Create new FlagEncoder](./core/create-new-flagencoder.md): Documentation to create new routing profiles to influence which ways to favor and how the track-time is calculated.
- * [Spatial Rules](./core/spatial-rules.md): Instruction on how to use and create new SpatialRules. SpatialRules are used to enforce country-specific routing rules.
- * [Turn Restrictions](./core/turn-restrictions.md): Details on how to enable and use turn restrictions.
- * [Isochrone generation in Java](./isochrone/java.md): Instruction on how to create isochrones using the low-level Java API.
- * [Postgis query script](../core/files/postgis)
+* [Technical overview](./core/technical.md): Technical details about how GraphHopper its calculations are working.
+* [Simple routing](./core/routing.md): Tutorial how to integrate GraphHopper in your Java application (or pick any JVM
+  language)
+* [Create custom weighting](./core/weighting.md): Documentation about how to create a custom weighting class to
+  influence the track calculation.
+* [Import GTFS](../reader-gtfs): Simple steps to get GTFS import and routing done.
+* [LocationIndex](../example/src/main/java/com/graphhopper/example/LocationIndexExample.java): Code about how to get the
+  location index for getting i.e. the nearest edge.
+* [Hybrid Mode](./core/landmarks.md): Details about speeding up the route calculation via A* and landmarks.
+* [Speed Mode](./core/ch.md): Details about speeding up the route calculations
+  via [Contraction Hierarchies](http://en.wikipedia.org/wiki/Contraction_hierarchies).
+* [Low level API](./core/low-level-api.md): Instructions how to use GraphHopper as a Java library.
+* [Create new FlagEncoder](./core/create-new-flagencoder.md): Documentation to create new routing profiles to influence
+  which ways to favor and how the track-time is calculated.
+
+* todo: remove/update [Spatial Rules](./core/spatial-rules.md): Instruction on how to use and create new SpatialRules.
+  SpatialRules are used to enforce country-specific routing rules.
+* [Turn Restrictions](./core/turn-restrictions.md): Details on how to enable and use turn restrictions.
+* [Isochrone generation in Java](./isochrone/java.md): Instruction on how to create isochrones using the low-level Java
+  API.
+* [Postgis query script](../core/files/postgis)
 
 
 #### Other links

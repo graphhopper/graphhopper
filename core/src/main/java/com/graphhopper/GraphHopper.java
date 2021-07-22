@@ -18,7 +18,6 @@
 package com.graphhopper;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
@@ -42,9 +41,9 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoderFactory;
 import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
-import com.graphhopper.routing.util.parsers.SpatialRuleParser;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
-import com.graphhopper.routing.util.spatialrules.*;
+import com.graphhopper.routing.util.spatialrules.AreaIndex;
+import com.graphhopper.routing.util.spatialrules.CustomArea;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
@@ -56,8 +55,6 @@ import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
-import com.graphhopper.util.shapes.BBox;
-import org.locationtech.jts.geom.Envelope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,8 +71,6 @@ import java.text.DateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder.JSON_ID_FIELD;
-import static com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder.reorder;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.RoundTrip;
 import static java.util.Collections.emptyList;
@@ -432,7 +427,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (ghConfig.has("routing.lm.disabling_allowed"))
             throw new IllegalArgumentException("The 'routing.lm.disabling_allowed' configuration option is no longer supported");
         if (ghConfig.has("osmreader.osm"))
-            throw new IllegalArgumentException("Instead osmreader.osm use datareader.file, for other changes see CHANGELOG.md");
+            throw new IllegalArgumentException("Instead of osmreader.osm use datareader.file, for other changes see CHANGELOG.md");
 
         String tmpOsmFile = ghConfig.getString("datareader.file", "");
         if (!isEmpty(tmpOsmFile))
@@ -446,7 +441,7 @@ public class GraphHopper implements GraphHopperAPI {
             graphHopperFolder = pruneFileEnd(osmFile) + "-gh";
         }
 
-        customAreasLocation = ghConfig.getString("custom_areas_folder", "");
+        customAreasLocation = ghConfig.getString("custom_areas.directory", "");
 
         // graph
         setGraphHopperLocation(graphHopperFolder);
@@ -459,11 +454,12 @@ public class GraphHopper implements GraphHopperAPI {
         removeZipped = ghConfig.getBool("graph.remove_zipped", removeZipped);
 
         if (!ghConfig.getString("spatial_rules.location", "").isEmpty())
-            throw new RuntimeException("spatial_rules.location has been deprecated. Please use spatial_rules.borders_directory instead.");
-
-        String spatialRuleBordersDirLocation = ghConfig.getString("spatial_rules.borders_directory", "");
-        if (!spatialRuleBordersDirLocation.isEmpty())
-            setupCountrySpatialRules(ghConfig, spatialRuleBordersDirLocation);
+            throw new IllegalArgumentException("spatial_rules.location has been deprecated. Please use custom_areas.directory instead and read the documentation for custom areas.");
+        if (!ghConfig.getString("spatial_rules.borders_directory", "").isEmpty())
+            throw new IllegalArgumentException("spatial_rules.borders_directory has been deprecated. Please use custom_areas.directory instead and read the documentation for custom areas.");
+        // todo: maybe introduce custom_areas.max_bbox if this is needed later
+        if (!ghConfig.getString("spatial_rules.max_bbox", "").isEmpty())
+            throw new IllegalArgumentException("spatial_rules.max_bbox has been deprecated. There is no replacement, all custom areas will be considered.");
 
         if (encodingManager != null)
             throw new IllegalStateException("Cannot call init twice. EncodingManager was already initialized.");
@@ -516,38 +512,6 @@ public class GraphHopper implements GraphHopperAPI {
         routerConfig.setActiveLandmarkCount(activeLandmarkCount);
 
         return this;
-    }
-
-    private void setupCountrySpatialRules(GraphHopperConfig ghConfig, String spatialRuleBordersDirLocation) {
-        final Envelope maxBounds = BBox.toEnvelope(BBox.parseBBoxString(ghConfig.getString("spatial_rules.max_bbox", "-180, 180, -90, 90")));
-        final Path bordersDirectory = Paths.get(spatialRuleBordersDirLocation);
-        List<JsonFeatureCollection> jsonFeatureCollections = new ArrayList<>();
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(bordersDirectory, "*.{geojson,json}")) {
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.registerModule(new JtsModule());
-            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            for (Path borderFile : stream) {
-                try (BufferedReader reader = Files.newBufferedReader(borderFile, StandardCharsets.UTF_8)) {
-                    JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
-                    jsonFeatureCollections.add(jsonFeatureCollection);
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        List<String> subset = Arrays.stream(Country.values())
-                .filter(c -> c != Country.DEFAULT)
-                .map(Country::toString)
-                .collect(Collectors.toList());
-        final SpatialRuleLookup index = SpatialRuleLookupBuilder.buildIndex(reorder(jsonFeatureCollections, subset),
-                JSON_ID_FIELD, new CountriesSpatialRuleFactory(), maxBounds);
-        logger.info("Set spatial rule lookup with {} rules", index.getRules().size());
-        final TagParserFactory oldTPF = tagParserFactory;
-        tagParserFactory = (name, configuration) -> {
-            if (name.equals(Country.KEY))
-                return new SpatialRuleParser(index, Country.create());
-            return oldTPF.create(name, configuration);
-        };
     }
 
     private EncodingManager buildEncodingManager(GraphHopperConfig ghConfig) {
@@ -693,7 +657,7 @@ public class GraphHopper implements GraphHopperAPI {
 
         List<CustomArea> customAreas;
         if (isEmpty(customAreasLocation)) {
-            logger.info("No custom areas are used, custom_areas_folder not given");
+            logger.info("No custom areas are used, custom_areas.directory not given");
             customAreas = emptyList();
         } else {
             logger.info("Creating custom area index, reading custom areas from: '" + customAreasLocation + "'");

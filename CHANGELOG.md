@@ -1,5 +1,6 @@
 ### 4.0 [not yet released]
 
+- todo: custom areas vs. spatial rules
 - flag encoders are no longer versioned (#2355)
 - JSON route response contains now bbox if start and end are identical
 - renamed PriorityCode enums: AVOID_IF_POSSIBLE -> SLIGHT_AVOID, REACH_DEST -> AVOID, AVOID_AT_ALL_COSTS -> AVOID_MORE, WORST -> BAD

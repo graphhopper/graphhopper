@@ -29,7 +29,6 @@ public class DefaultTagParserFactory implements TagParserFactory {
         if (!name.equals(toLowerCase(name)))
             throw new IllegalArgumentException("Use lower case for TagParsers: " + name);
 
-        // for Country (SpatialRuleParser) see SpatialRuleLookupHelper
         if (Roundabout.KEY.equals(name))
             return new OSMRoundaboutParser();
         else if (name.equals(RoadClass.KEY))
