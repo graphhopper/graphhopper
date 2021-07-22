@@ -26,13 +26,9 @@ import com.graphhopper.routing.util.spatialrules.AreaIndex;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.util.JsonFeature;
 import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Landmark;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.Polygon;
-import org.locationtech.jts.geom.util.PolygonExtracter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
