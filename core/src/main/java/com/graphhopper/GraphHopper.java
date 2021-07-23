@@ -717,8 +717,6 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private List<CustomArea> readCustomAreas() {
-        // todo: this is basically what we did before in GraphHopperManaged
-        // todo: this is a bit ugly, we don't have Jackson.newObjectMapper in core (yet).
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JtsModule());
         final Path bordersDirectory = Paths.get(customAreasDirectory);

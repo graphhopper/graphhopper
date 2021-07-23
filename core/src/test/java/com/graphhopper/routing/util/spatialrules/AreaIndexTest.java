@@ -169,7 +169,6 @@ class AreaIndexTest {
     }
 
     private AreaIndex<CustomArea> createCountryIndex() throws IOException {
-        // todo: should there be some reusable code to create 'the' object mapper?
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JtsModule());
         List<CustomArea> customAreas;

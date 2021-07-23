@@ -15,13 +15,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package com.graphhopper.routing.ev;
 
 /**
  * The enum constants correspond to the the ISO3166-1:alpha3 code of the corresponding country
  */
 public enum Country {
+    // values were taken from `countries.geojson`:
+    // ISO3166-1:alpha3(name:en, ISO3166-1:alpha2)
     MISSING("missing", "--"),
     AFG("Afghanistan", "AF"),
     AGO("Angola", "AO"),

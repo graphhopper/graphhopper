@@ -28,10 +28,8 @@ The `countries.geojson` file originates from Openstreetmap and has been download
 
 The GeoJSON was generated with https://www.mapshaper.org/ and can be recreated with these steps:
 
-* download all country boundaries with admin level 2 (download about 1/3 of all countries at once to avoid download
-  limit)
-* import the GeoJSON files as separate layers with the options `detect line intersections`, `snap vertices` and the
-  import option `combine-files`
+* download all country boundaries with admin level 2 (download about 1/3 of all countries at once to avoid download limit)
+* import the GeoJSON files as separate layers with the options `detect line intersections`, `snap vertices` and the import option `combine-files`
 * merge the layers into one using the console command `merge-layers`
 * fix issues in the dataset using the console command `clean`
 * simplify

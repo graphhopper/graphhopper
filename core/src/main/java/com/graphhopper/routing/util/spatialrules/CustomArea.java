@@ -15,7 +15,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package com.graphhopper.routing.util.spatialrules;
 
 import com.graphhopper.util.JsonFeature;
@@ -32,7 +31,6 @@ public class CustomArea implements AreaIndex.HasBorders {
     private final List<Polygon> borders;
 
     public static CustomArea fromJsonFeature(JsonFeature j) {
-        // todo: this is basically what we did before in SpatialRuleLookupBuilder
         List<Polygon> borders = new ArrayList<>();
         for (int i = 0; i < j.getGeometry().getNumGeometries(); i++) {
             Geometry geometry = j.getGeometry().getGeometryN(i);
