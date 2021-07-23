@@ -18,7 +18,7 @@
 
 package com.graphhopper.routing.lm;
 
-import com.graphhopper.routing.util.spatialrules.AreaIndex;
+import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.util.JsonFeature;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Polygon;

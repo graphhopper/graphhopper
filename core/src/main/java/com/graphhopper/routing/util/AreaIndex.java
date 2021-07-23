@@ -17,7 +17,7 @@
  */
 
 // todo: eventually move to another package
-package com.graphhopper.routing.util.spatialrules;
+package com.graphhopper.routing.util;
 
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.geom.prep.PreparedGeometry;

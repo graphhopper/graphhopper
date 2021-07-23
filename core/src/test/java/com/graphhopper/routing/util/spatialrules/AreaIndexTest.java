@@ -20,6 +20,8 @@ package com.graphhopper.routing.util.spatialrules;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.graphhopper.routing.util.AreaIndex;
+import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.util.StopWatch;
 import org.junit.jupiter.api.Test;

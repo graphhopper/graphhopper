@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.spatialrules;
+package com.graphhopper.routing.util;
 
 import com.graphhopper.util.JsonFeature;
 import org.locationtech.jts.geom.Geometry;
