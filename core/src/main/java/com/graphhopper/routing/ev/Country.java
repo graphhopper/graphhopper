@@ -242,7 +242,7 @@ public enum Country {
     ZMB("Zambia", "ZM"),
     ZWE("Zimbabwe", "ZW");
 
-    public static final String KEY = "new_country";
+    public static final String KEY = "country";
 
     private final String name;
     private final String twoLetterCode;
