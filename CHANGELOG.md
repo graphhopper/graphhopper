@@ -1,7 +1,7 @@
 ### 4.0 [not yet released]
 
-- added country encoded value for all countries
-- removed spatial rules, replaced by country rules and custom areas
+- added country encoded value for all countries (#2353)
+- removed spatial rules, replaced by country rules and custom areas (#2353)
 - flag encoders are no longer versioned (#2355)
 - JSON route response contains now bbox if start and end are identical
 - renamed PriorityCode enums: AVOID_IF_POSSIBLE -> SLIGHT_AVOID, REACH_DEST -> AVOID, AVOID_AT_ALL_COSTS -> AVOID_MORE, WORST -> BAD
