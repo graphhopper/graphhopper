@@ -18,7 +18,7 @@
 
 package com.graphhopper.routing.util.countryrules;
 
-import com.graphhopper.routing.ev.NewCountry;
+import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.util.TransportationMode;
@@ -54,7 +54,7 @@ public interface CountryRule {
         return currentRoadAccess;
     }
 
-    static CountryRule getCountryRule(NewCountry country) {
+    static CountryRule getCountryRule(Country country) {
         switch (country) {
             case DEU:
                 return GermanyCountryRule.RULE;

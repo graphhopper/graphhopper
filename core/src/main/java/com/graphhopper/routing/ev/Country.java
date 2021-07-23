@@ -21,7 +21,7 @@ package com.graphhopper.routing.ev;
 /**
  * The enum constants correspond to the the ISO3166-1:alpha3 code of the corresponding country
  */
-public enum NewCountry {
+public enum Country {
     MISSING("missing", "--"),
     AFG("Afghanistan", "AF"),
     AGO("Angola", "AO"),
@@ -246,7 +246,7 @@ public enum NewCountry {
     private final String name;
     private final String twoLetterCode;
 
-    NewCountry(String name, String twoLetterCode) {
+    Country(String name, String twoLetterCode) {
         this.name = name;
         this.twoLetterCode = twoLetterCode;
     }
@@ -265,16 +265,16 @@ public enum NewCountry {
         return twoLetterCode;
     }
 
-    public static EnumEncodedValue<NewCountry> create() {
-        return new EnumEncodedValue<>(NewCountry.KEY, NewCountry.class);
+    public static EnumEncodedValue<Country> create() {
+        return new EnumEncodedValue<>(Country.KEY, Country.class);
     }
 
-    public static NewCountry find(String name) {
+    public static Country find(String name) {
         if (name == null || name.isEmpty())
             return MISSING;
 
         // todo: check performance, see: https://github.com/graphhopper/graphhopper/pull/2353#discussion_r670261744
-        for (NewCountry country : values()) {
+        for (Country country : values()) {
             if (country.name.equalsIgnoreCase(name)) {
                 return country;
             }

@@ -25,7 +25,7 @@ import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.NewCountry;
+import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.routing.util.parsers.TurnCostParser;
@@ -358,14 +358,14 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
         List<CustomArea> customAreas = estimatedCenter == null ? emptyList() : areaIndex.query(estimatedCenter.lat, estimatedCenter.lon);
         // special handling for countries: since they are built-in with GraphHopper they are always fed to the encodingmanager
-        NewCountry country = NewCountry.MISSING;
+        Country country = Country.MISSING;
         for (CustomArea customArea : customAreas) {
             Object countryCode = customArea.getProperties().get("ISO3166-1:alpha3");
             if (countryCode == null)
                 continue;
-            if (country != NewCountry.MISSING)
+            if (country != Country.MISSING)
                 LOGGER.warn("Multiple countries found for way {}: {}, {}", way.getId(), country, countryCode);
-            country = NewCountry.valueOf(countryCode.toString());
+            country = Country.valueOf(countryCode.toString());
         }
         way.setTag("country", country);
 
