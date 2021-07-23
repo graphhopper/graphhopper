@@ -227,7 +227,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         way.setTag("highway", "residential");
         way.setTag("bicycle", "use_sidepath");
         assertEquals(18, encoder.getSpeed(way));
-        assertPriority(PREFER.getValue(), way);
+        assertPriority(REACH_DESTINATION.getValue(), way);
 
         way.clearTags();
         way.setTag("highway", "steps");
