@@ -83,6 +83,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     private final LongIndexedContainer barrierNodeIds = new LongArrayList();
     private final DistanceCalc distCalc = DistanceCalcEarth.DIST_EARTH;
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
+    private boolean countryRulesEnabled = true;
     private boolean smoothElevation = false;
     private double longEdgeSamplingDistance = 0;
     protected long zeroCounter = 0;
@@ -356,8 +357,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         }
 
         List<CustomArea> customAreas = estimatedCenter == null ? emptyList() : areaIndex.query(estimatedCenter.lat, estimatedCenter.lon);
-        // special handling for countries: since they are built-in with GraphHopper they are always fed to the
-        // encodingmanager
+        // special handling for countries: since they are built-in with GraphHopper they are always fed to the encodingmanager
         NewCountry country = NewCountry.MISSING;
         for (CustomArea customArea : customAreas) {
             Object countryCode = customArea.getProperties().get("ISO3166-1:alpha3");
@@ -369,9 +369,11 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         }
         way.setTag("country", country);
 
-        CountryRule countryRule = CountryRule.getCountryRule(country);
-        if (countryRule != null)
-            way.setTag("country_rule", countryRule);
+        if (countryRulesEnabled) {
+            CountryRule countryRule = CountryRule.getCountryRule(country);
+            if (countryRule != null)
+                way.setTag("country_rule", countryRule);
+        }
 
         // also add all custom areas as artificial tag
         way.setTag("custom_areas", customAreas);
@@ -959,6 +961,11 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
     public OSMReader setSmoothElevation(boolean smoothElevation) {
         this.smoothElevation = smoothElevation;
+        return this;
+    }
+
+    public OSMReader setCountryRulesEnabled(boolean countryRulesEnabled) {
+        this.countryRulesEnabled = countryRulesEnabled;
         return this;
     }
 

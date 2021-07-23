@@ -58,10 +58,7 @@ import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -88,8 +85,10 @@ public class GraphHopper implements GraphHopperAPI {
     // utils
     private final TranslationMap trMap = new TranslationMap().doImport();
     boolean removeZipped = true;
+    // for country rules:
+    private boolean countryRulesEnabled = true;
     // for custom areas:
-    private String customAreasLocation = "";
+    private String customAreasDirectory = "";
     // for graph:
     private GraphHopperStorage ghStorage;
     private final EncodingManager.Builder emBuilder = new EncodingManager.Builder();
@@ -416,6 +415,24 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
+    public GraphHopper setCustomAreasDirectory(String customAreasDirectory) {
+        this.customAreasDirectory = customAreasDirectory;
+        return this;
+    }
+
+    public String getCustomAreasDirectory() {
+        return this.customAreasDirectory;
+    }
+
+    public GraphHopper setCountryRulesEnabled(boolean countryRulesEnabled) {
+        this.countryRulesEnabled = countryRulesEnabled;
+        return this;
+    }
+
+    public boolean getCountryRulesEnabled() {
+        return this.countryRulesEnabled;
+    }
+
     /**
      * Reads the configuration from a {@link GraphHopperConfig} object which can be manually filled, or more typically
      * is read from `config.yml`.
@@ -441,7 +458,8 @@ public class GraphHopper implements GraphHopperAPI {
             graphHopperFolder = pruneFileEnd(osmFile) + "-gh";
         }
 
-        customAreasLocation = ghConfig.getString("custom_areas.directory", "");
+        countryRulesEnabled = ghConfig.getBool("country_rules.enabled", countryRulesEnabled);
+        customAreasDirectory = ghConfig.getString("custom_areas.directory", customAreasDirectory);
 
         // graph
         setGraphHopperLocation(graphHopperFolder);
@@ -655,14 +673,12 @@ public class GraphHopper implements GraphHopperAPI {
             throw new IllegalStateException("Couldn't load from existing folder: " + ghLocation
                     + " but also cannot use file for DataReader as it wasn't specified!");
 
-        // todo: read countries from bundle/countries.geojson
-        List<CustomArea> customAreas;
-        if (isEmpty(customAreasLocation)) {
+        List<CustomArea> customAreas = readCountries();
+        if (isEmpty(customAreasDirectory)) {
             logger.info("No custom areas are used, custom_areas.directory not given");
-            customAreas = emptyList();
         } else {
-            logger.info("Creating custom area index, reading custom areas from: '" + customAreasLocation + "'");
-            customAreas = readCustomAreas();
+            logger.info("Creating custom area index, reading custom areas from: '" + customAreasDirectory + "'");
+            customAreas.addAll(readCustomAreas());
         }
         AreaIndex<CustomArea> areaIndex = new AreaIndex<>(customAreas);
 
@@ -673,7 +689,8 @@ public class GraphHopper implements GraphHopperAPI {
                 setWayPointMaxDistance(dataReaderWayPointMaxDistance).
                 setWayPointElevationMaxDistance(routerConfig.getElevationWayPointMaxDistance()).
                 setSmoothElevation(smoothElevation).
-                setLongEdgeSamplingDistance(longEdgeSamplingDistance);
+                setLongEdgeSamplingDistance(longEdgeSamplingDistance).
+                setCountryRulesEnabled(countryRulesEnabled);
         logger.info("using " + ghStorage.toString() + ", memory:" + getMemInfo());
         try {
             reader.readGraph();
@@ -686,12 +703,25 @@ public class GraphHopper implements GraphHopperAPI {
             ghStorage.getProperties().put("datareader.data.date", f.format(reader.getDataDate()));
     }
 
+    private List<CustomArea> readCountries() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JtsModule());
+        try (Reader reader = new InputStreamReader(GraphHopper.class.getResourceAsStream("/com/graphhopper/countries/countries.geojson"), StandardCharsets.UTF_8)) {
+            JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
+            return jsonFeatureCollection.getFeatures().stream()
+                    .map(CustomArea::fromJsonFeature)
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     private List<CustomArea> readCustomAreas() {
         // todo: this is basically what we did before in GraphHopperManaged
         // todo: this is a bit ugly, we don't have Jackson.newObjectMapper in core (yet).
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JtsModule());
-        final Path bordersDirectory = Paths.get(customAreasLocation);
+        final Path bordersDirectory = Paths.get(customAreasDirectory);
         List<JsonFeatureCollection> jsonFeatureCollections = new ArrayList<>();
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(bordersDirectory, "*.{geojson,json}")) {
             for (Path borderFile : stream) {

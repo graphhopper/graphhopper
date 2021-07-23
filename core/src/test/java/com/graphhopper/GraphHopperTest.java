@@ -1126,6 +1126,7 @@ public class GraphHopperTest {
     }
 
     @Disabled
+    @Test
     public void testSkadiElevationProvider() {
         final String profile = "profile";
         final String vehicle = "foot";
@@ -2288,5 +2289,40 @@ public class GraphHopperTest {
         if (snap.isValid()) {
             assertTrue(snap.getQueryDistance() < 3_000);
         }
+    }
+
+    @Test
+    public void germanyCountryRuleAvoidsTracks() {
+        final String profile = "profile";
+
+        // first we try without country rules
+        GraphHopper hopper = new GraphHopper()
+                .setProfiles(new Profile(profile).setVehicle("car").setWeighting("fastest"))
+                .setCountryRulesEnabled(false)
+                .setGraphHopperLocation(GH_LOCATION)
+                .setOSMFile(BAYREUTH);
+        hopper.importOrLoad();
+        GHRequest request = new GHRequest(50.010373, 11.51792, 50.005146, 11.516633);
+        request.setProfile(profile);
+        GHResponse response = hopper.route(request);
+        assertFalse(response.hasErrors());
+        double distance = response.getBest().getDistance();
+        // The route takes a shortcut through the forest
+        assertEquals(1447, distance, 1);
+
+        // this time we leave country rules enabled (the default)
+        hopper.clean();
+        hopper = new GraphHopper()
+                .setProfiles(new Profile(profile).setVehicle("car").setWeighting("fastest"))
+                .setGraphHopperLocation(GH_LOCATION)
+                .setOSMFile(BAYREUTH);
+        hopper.importOrLoad();
+        request = new GHRequest(50.010373, 11.51792, 50.005146, 11.516633);
+        request.setProfile(profile);
+        response = hopper.route(request);
+        assertFalse(response.hasErrors());
+        distance = response.getBest().getDistance();
+        // since GermanyCountryRule avoids TRACK roads the route will now be much longer as it goes around the forest
+        assertEquals(4186, distance, 1);
     }
 }
