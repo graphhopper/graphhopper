@@ -63,6 +63,7 @@ import java.text.DateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.graphhopper.util.GHUtility.readCountries;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.RoundTrip;
 import static java.util.Collections.emptyList;
@@ -697,19 +698,6 @@ public class GraphHopper implements GraphHopperAPI {
         ghStorage.getProperties().put("datareader.import.date", f.format(new Date()));
         if (reader.getDataDate() != null)
             ghStorage.getProperties().put("datareader.data.date", f.format(reader.getDataDate()));
-    }
-
-    private List<CustomArea> readCountries() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JtsModule());
-        try (Reader reader = new InputStreamReader(GraphHopper.class.getResourceAsStream("/com/graphhopper/countries/countries.geojson"), StandardCharsets.UTF_8)) {
-            JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
-            return jsonFeatureCollection.getFeatures().stream()
-                    .map(CustomArea::fromJsonFeature)
-                    .collect(Collectors.toList());
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 
     private List<CustomArea> readCustomAreas() {

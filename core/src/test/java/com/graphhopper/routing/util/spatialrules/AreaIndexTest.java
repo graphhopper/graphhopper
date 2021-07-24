@@ -18,11 +18,8 @@
 
 package com.graphhopper.routing.util.spatialrules;
 
-import com.bedatadriven.jackson.datatype.jts.JtsModule;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CustomArea;
-import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.util.StopWatch;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -31,12 +28,11 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.graphhopper.util.GHUtility.readCountries;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -172,19 +168,12 @@ class AreaIndexTest {
         System.out.println(counts);
     }
 
-    private AreaIndex<CustomArea> createCountryIndex() throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JtsModule());
-        List<CustomArea> customAreas;
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(AreaIndexTest.class.getResourceAsStream("/com/graphhopper/countries/countries.geojson")))) {
-            JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
-            customAreas = jsonFeatureCollection.getFeatures().stream().map(CustomArea::fromJsonFeature).collect(Collectors.toList());
-        }
-        return new AreaIndex<>(customAreas);
+    private AreaIndex<CustomArea> createCountryIndex() {
+        return new AreaIndex<>(readCountries());
     }
 
     @Test
-    public void testCountries() throws IOException {
+    public void testCountries() {
         AreaIndex<CustomArea> countryIndex = createCountryIndex();
         // Berlin
         assertEquals("Germany", countryIndex.query(52.5243700, 13.4105300).get(0).getProperties().get("name:en"));
