@@ -23,20 +23,20 @@ import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
+import com.graphhopper.config.Profile;
+import com.graphhopper.routing.DefaultWeightingFactory;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.DefaultSnapFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.Translation;
-import com.graphhopper.util.TranslationMap;
+import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
@@ -53,6 +53,7 @@ public final class PtRouterImpl implements PtRouter {
     private final TranslationMap translationMap;
     private final PtEncodedValues ptEncodedValues;
     private final Weighting accessEgressWeighting;
+    private final EdgeFilter accessEgressSnapFilter;
     private final GraphHopperStorage graphHopperStorage;
     private final LocationIndex locationIndex;
     private final GtfsStorage gtfsStorage;
@@ -62,7 +63,11 @@ public final class PtRouterImpl implements PtRouter {
     @Inject
     public PtRouterImpl(TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
         this.ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
-        this.accessEgressWeighting = new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder("foot"));
+        Profile accessEgressProfile = new Profile("foot");
+        accessEgressProfile.setVehicle("foot");
+        accessEgressProfile.setWeighting("fastest");
+        this.accessEgressWeighting = new DefaultWeightingFactory(graphHopperStorage, graphHopperStorage.getEncodingManager()).createWeighting(accessEgressProfile, new PMap(), true);
+        this.accessEgressSnapFilter = new DefaultSnapFilter(new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder(accessEgressProfile.getVehicle())), graphHopperStorage.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(accessEgressProfile.getVehicle())));
         this.translationMap = translationMap;
         this.graphHopperStorage = graphHopperStorage;
         this.locationIndex = locationIndex;
@@ -192,9 +197,7 @@ public final class PtRouterImpl implements PtRouter {
         }
 
         private Snap findByPoint(GHPoint point, int indexForErrorMessage) {
-            FlagEncoder footEncoder = graphHopperStorage.getEncodingManager().getEncoder("foot");
-            final EdgeFilter filter = new DefaultSnapFilter(new FastestWeighting(footEncoder), graphHopperStorage.getEncodingManager().getBooleanEncodedValue(Subnetwork.key("foot")));
-            Snap source = locationIndex.findClosest(point.lat, point.lon, filter);
+            Snap source = locationIndex.findClosest(point.lat, point.lon, accessEgressSnapFilter);
             if (!source.isValid()) {
                 throw new PointNotFoundException("Cannot find point: " + point, indexForErrorMessage);
             }

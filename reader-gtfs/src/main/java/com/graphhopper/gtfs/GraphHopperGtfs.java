@@ -25,17 +25,14 @@ import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.AccessFilter;
-import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PointList;
+import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -141,9 +138,9 @@ public class GraphHopperGtfs extends GraphHopper {
         final int maxTransferWalkTimeSeconds = ghConfig.getInt("gtfs.max_transfer_interpolation_walk_time_seconds", 120);
         GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
         QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, Collections.emptyList());
-        FastestWeighting accessEgressWeighting = new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder("foot"));
+        Weighting transferWeighting = createWeighting(getProfile("foot"), new PMap());
         PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
-        final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, getGtfsStorage(), RealtimeFeed.empty(getGtfsStorage()), true, true, false, 5.0, false, 0);
+        final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, transferWeighting, ptEncodedValues, getGtfsStorage(), RealtimeFeed.empty(getGtfsStorage()), true, true, false, 5.0, false, 0);
         getGtfsStorage().getStationNodes().values().stream().distinct().forEach(stationNode -> {
             MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, true, false, false, 0, new ArrayList<>());
             router.setLimitStreetTime(Duration.ofSeconds(maxTransferWalkTimeSeconds).toMillis());
@@ -194,7 +191,7 @@ public class GraphHopperGtfs extends GraphHopper {
         GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
         RealtimeFeed realtimeFeed = RealtimeFeed.empty(getGtfsStorage());
         PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
-        FastestWeighting accessEgressWeighting = new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder("foot"));
+        Weighting transferWeighting = createWeighting(getProfile("foot"), new PMap());
         return gtfsFeed.transfers.entrySet()
                 .parallelStream()
                 .filter(e -> e.getValue().transfer_type == 0)
@@ -211,7 +208,7 @@ public class GraphHopperGtfs extends GraphHopper {
                     points.add(graphHopperStorage.getNodeAccess().getLat(tonode), graphHopperStorage.getNodeAccess().getLon(tonode));
 
                     QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, Collections.emptyList());
-                    final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, getGtfsStorage(), realtimeFeed, false, true, false, 5.0, false, 0);
+                    final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, transferWeighting, ptEncodedValues, getGtfsStorage(), realtimeFeed, false, true, false, 5.0, false, 0);
 
                     MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, false, false, false, 0, new ArrayList<>());
                     Iterator<Label> iterator = router.calcLabels(fromnode, Instant.ofEpochMilli(0)).iterator();
