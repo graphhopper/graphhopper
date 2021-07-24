@@ -139,40 +139,6 @@ class AreaIndexTest {
     }
 
     @Test
-    @Disabled("todonow")
-    public void testPerformance() throws IOException {
-        // todo: maybe remove again or move to performance tests or something
-        // todo: note that there are already similar performance measurements in Measurement!
-        AreaIndex<CustomArea> areaIndex = createCountryIndex();
-        long seed = 123L;
-        Random rnd = new Random(seed);
-        int count = 100_000;
-        double minLat = 36;
-        double maxLat = 60;
-        double minLon = -14;
-        double maxLon = 33;
-        Map<String, Integer> counts = new HashMap<>();
-        StopWatch sw = new StopWatch().start();
-        for (int i = 0; i < count; i++) {
-            double lat = rnd.nextDouble() * (maxLat - minLat) + minLat;
-            double lon = rnd.nextDouble() * (maxLon - minLon) + minLon;
-            List<CustomArea> areas = areaIndex.query(lat, lon);
-            if (areas.size() > 1)
-                fail("multiple hits not expected");
-            else if (areas.isEmpty())
-                counts.merge("none", 0, (old, val) -> old + 1);
-            else
-                counts.merge(areas.get(0).getProperties().get("name_en").toString(), 0, (old, val) -> old + 1);
-        }
-        System.out.println(sw.stop().getTimeString());
-        System.out.println(counts);
-    }
-
-    private AreaIndex<CustomArea> createCountryIndex() {
-        return new AreaIndex<>(readCountries());
-    }
-
-    @Test
     public void testCountries() {
         AreaIndex<CustomArea> countryIndex = createCountryIndex();
         // Berlin
@@ -181,6 +147,10 @@ class AreaIndexTest {
         assertEquals("France", countryIndex.query(48.864716, 2.349014).get(0).getProperties().get("name:en"));
         // Austria
         assertEquals("Austria", countryIndex.query(48.204484, 16.107888).get(0).getProperties().get("name:en"));
+    }
+
+    private AreaIndex<CustomArea> createCountryIndex() {
+        return new AreaIndex<>(readCountries());
     }
 
     private static Polygon parsePolygonString(String polygonString) {

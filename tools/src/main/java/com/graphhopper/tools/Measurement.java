@@ -17,9 +17,7 @@
  */
 package com.graphhopper.tools;
 
-import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.carrotsearch.hppc.IntArrayList;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.*;
@@ -32,8 +30,6 @@ import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.util.AreaIndex;
-import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
@@ -48,24 +44,20 @@ import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
+import static com.graphhopper.util.GHUtility.readCountries;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
 import static com.graphhopper.util.Parameters.Routing.BLOCK_AREA;
@@ -95,7 +87,6 @@ public class Measurement {
     // Every value is one y-value in a separate diagram with an identical x-value for every Measurement.start call
     void start(PMap args) throws IOException {
         final String graphLocation = args.getString("graph.location", "");
-        final String countryBordersDirectory = args.getString("area_borders_directory", "");
         final boolean useJson = args.getBool("measurement.json", false);
         boolean cleanGraph = args.getBool("measurement.clean", false);
         stopOnError = args.getBool("measurement.stop_on_error", false);
@@ -274,9 +265,7 @@ public class Measurement {
                             withPoints(100).edgeBased().sod().withInstructions().simplify().pathDetails());
                 }
             }
-            if (!isEmpty(countryBordersDirectory)) {
-                measureAreaIndex(countryBordersDirectory, count * 100);
-            }
+            measureCountryAreaIndex(count);
 
         } catch (Exception ex) {
             logger.error("Problem while measuring " + graphLocation, ex);
@@ -553,43 +542,24 @@ public class Measurement {
         return result;
     }
 
-
-    private void measureAreaIndex(String countryBordersDirectory, int count) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JtsModule());
-        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-
-        List<JsonFeatureCollection> jsonFeatureCollections = new ArrayList<>();
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(countryBordersDirectory), "*.{geojson,json}")) {
-            for (Path borderFile : stream) {
-                try (BufferedReader reader = Files.newBufferedReader(borderFile, StandardCharsets.UTF_8)) {
-                    JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
-                    jsonFeatureCollections.add(jsonFeatureCollection);
-                }
-            }
-        } catch (IOException e) {
-            logger.error("Failed to load areas from {}", countryBordersDirectory, e);
-            return;
-        }
-
-        List<CustomArea> areas = jsonFeatureCollections.stream().flatMap(j -> j.getFeatures().stream())
-                .map(CustomArea::fromJsonFeature)
-                .collect(Collectors.toList());
-        AreaIndex<CustomArea> areaIndex = new AreaIndex<>(areas);
-
-        // generate random points in central Europe
+    private void measureCountryAreaIndex(int count) {
+        AreaIndex<CustomArea> countryIndex = new AreaIndex<>(readCountries());
+        Random rnd = new Random(seed);
+        // generate random points in Europe
         final List<GHPoint> randomPoints = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
-            double lat = 46d + Math.random() * 7d;
-            double lon = 6d + Math.random() * 21d;
+            double lat = 36d + rnd.nextDouble() * 24d;
+            double lon = -14d + rnd.nextDouble() * 47d;
             randomPoints.add(new GHPoint(lat, lon));
         }
-
         MiniPerfTest lookupPerfTest = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
-            GHPoint point = randomPoints.get(run);
-            return areaIndex.query(point.lat, point.lon).size();
+            int checksum = 0;
+            for (int i = 0; i < 100; i++) {
+                GHPoint point = randomPoints.get(rnd.nextInt(randomPoints.size()));
+                checksum += countryIndex.query(point.lat, point.lon).size();
+            }
+            return checksum;
         });
-
         print("area_index.query", lookupPerfTest);
     }
 
