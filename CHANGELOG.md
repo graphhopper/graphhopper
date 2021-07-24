@@ -1,5 +1,6 @@
 ### 4.0 [not yet released]
 
+- removed api module and moved it into web-api, no more Jackson MixIns (#2356)
 - flag encoders are no longer versioned (#2355)
 - JSON route response contains now bbox if start and end are identical
 - renamed PriorityCode enums: AVOID_IF_POSSIBLE -> SLIGHT_AVOID, REACH_DEST -> AVOID, AVOID_AT_ALL_COSTS -> AVOID_MORE, WORST -> BAD
