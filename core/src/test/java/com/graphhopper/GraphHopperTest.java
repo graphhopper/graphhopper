@@ -2295,7 +2295,7 @@ public class GraphHopperTest {
     public void germanyCountryRuleAvoidsTracks() {
         final String profile = "profile";
 
-        // first we try without country rules
+        // first we try without country rules (the default)
         GraphHopper hopper = new GraphHopper()
                 .setProfiles(new Profile(profile).setVehicle("car").setWeighting("fastest"))
                 .setCountryRulesEnabled(false)
@@ -2310,11 +2310,12 @@ public class GraphHopperTest {
         // The route takes a shortcut through the forest
         assertEquals(1447, distance, 1);
 
-        // this time we leave country rules enabled (the default)
+        // this time we enable country rules
         hopper.clean();
         hopper = new GraphHopper()
                 .setProfiles(new Profile(profile).setVehicle("car").setWeighting("fastest"))
                 .setGraphHopperLocation(GH_LOCATION)
+                .setCountryRulesEnabled(true)
                 .setOSMFile(BAYREUTH);
         hopper.importOrLoad();
         request = new GHRequest(50.010373, 11.51792, 50.005146, 11.516633);

@@ -929,6 +929,7 @@ public class OSMReaderTest {
         EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
         GraphHopperStorage graph = new GraphBuilder(em).build();
         OSMReader reader = new OSMReader(graph);
+        reader.setCountryRulesEnabled(true);
         reader.setAreaIndex(createCountryIndex());
         // there are two edges, both with highway=track, one in Berlin, one in Paris
         reader.setFile(new File(getClass().getResource("test-osm11.xml").getFile()));
