@@ -77,7 +77,6 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     protected static final int TOWER_NODE = -2;
     private static final Logger LOGGER = LoggerFactory.getLogger(OSMReader.class);
     private final GraphStorage ghStorage;
-    private final AreaIndex<CustomArea> areaIndex;
     private final Graph graph;
     private final NodeAccess nodeAccess;
     private final LongIndexedContainer barrierNodeIds = new LongArrayList();
@@ -111,15 +110,15 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     private int nextPillarId = 0;
     // negative but increasing to avoid clash with custom created OSM files
     private long newUniqueOsmId = -Long.MAX_VALUE;
+    private AreaIndex<CustomArea> areaIndex;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private File osmFile;
     private Date osmDataDate;
     private final IntsRef tempRelFlags;
     private final TurnCostStorage tcs;
 
-    public OSMReader(GraphHopperStorage ghStorage, AreaIndex<CustomArea> areaIndex) {
+    public OSMReader(GraphHopperStorage ghStorage) {
         this.ghStorage = ghStorage;
-        this.areaIndex = areaIndex;
         this.graph = ghStorage;
         this.nodeAccess = graph.getNodeAccess();
         this.encodingManager = ghStorage.getEncodingManager();
@@ -356,7 +355,9 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             }
         }
 
-        List<CustomArea> customAreas = estimatedCenter == null ? emptyList() : areaIndex.query(estimatedCenter.lat, estimatedCenter.lon);
+        List<CustomArea> customAreas = estimatedCenter == null || areaIndex == null
+                ? emptyList()
+                : areaIndex.query(estimatedCenter.lat, estimatedCenter.lon);
         // special handling for countries: since they are built-in with GraphHopper they are always fed to the encodingmanager
         Country country = Country.MISSING;
         for (CustomArea customArea : customAreas) {
@@ -946,6 +947,11 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     void putRelFlagsMap(long osmId, IntsRef relFlags) {
         long relFlagsAsLong = ((long) relFlags.ints[1] << 32) | (relFlags.ints[0] & 0xFFFFFFFFL);
         osmWayIdToRouteWeightMap.put(osmId, relFlagsAsLong);
+    }
+
+    public OSMReader setAreaIndex(AreaIndex<CustomArea> areaIndex) {
+        this.areaIndex = areaIndex;
+        return this;
     }
 
     public OSMReader setWayPointMaxDistance(double maxDist) {
