@@ -18,39 +18,21 @@
 
 package com.graphhopper.routing.util.countryrules;
 
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.util.TransportationMode;
 
+/**
+ * GraphHopper uses country rules to adjust the routing behavior based on the country an edge is located in
+ */
 public interface CountryRule {
-    // todo: improve signature, make more generic
-
-    /**
-     * todo: so far simply copied these javadocs from SpatialRule
-     * Return the max speed for a certain road class.
-     *
-     * @param roadClass       The highway type, e.g. {@link RoadClass#MOTORWAY}
-     * @param transport       The mode of transportation
-     * @param currentMaxSpeed The current max speed value or {@link Double#NaN} if no value has been set yet
-     * @return the maximum speed value to be used
-     */
-    default double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
+    default double getMaxSpeed(ReaderWay readerWay, TransportationMode transportationMode, double currentMaxSpeed) {
         return currentMaxSpeed;
     }
 
-    // todo: improve signature, make more generic
-
-    /**
-     * todo: so far simply copied these javadocs from SpatialRule
-     * Returns the {@link RoadAccess} for a certain highway type and transportation mode.
-     *
-     * @param roadClass         The highway type, e.g. {@link RoadClass#MOTORWAY}
-     * @param transport         The mode of transportation
-     * @param currentRoadAccess The current road access value (default: {@link RoadAccess#YES})
-     * @return the type of access to be used
-     */
-    default RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
+    default RoadAccess getAccess(ReaderWay readerWay, TransportationMode transportationMode, RoadAccess currentRoadAccess) {
         return currentRoadAccess;
     }
 

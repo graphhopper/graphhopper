@@ -18,6 +18,7 @@
 
 package com.graphhopper.routing.util.countryrules;
 
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
@@ -36,11 +37,11 @@ public class GermanyCountryRule implements CountryRule {
      * Your implementation should be able to handle these cases.
      */
     @Override
-    public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
-        if (!Double.isNaN(currentMaxSpeed) || !transport.isMotorVehicle()) {
+    public double getMaxSpeed(ReaderWay readerWay, TransportationMode transportationMode, double currentMaxSpeed) {
+        if (!Double.isNaN(currentMaxSpeed) || !transportationMode.isMotorVehicle())
             return currentMaxSpeed;
-        }
 
+        RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
         // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
         switch (roadClass) {
             case MOTORWAY:
@@ -60,15 +61,12 @@ public class GermanyCountryRule implements CountryRule {
     }
 
     @Override
-    public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
-        if (currentRoadAccess != RoadAccess.YES) {
+    public RoadAccess getAccess(ReaderWay readerWay, TransportationMode transportationMode, RoadAccess currentRoadAccess) {
+        if (currentRoadAccess != RoadAccess.YES)
             return currentRoadAccess;
-        }
-
-        if (!transport.isMotorVehicle()) {
+        if (!transportationMode.isMotorVehicle())
             return RoadAccess.YES;
-        }
-
+        RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
         switch (roadClass) {
             case TRACK:
                 return RoadAccess.DESTINATION;

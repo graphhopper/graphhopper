@@ -57,10 +57,9 @@ public class OSMRoadAccessParser implements TagParser {
             }
         }
 
-        RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
         CountryRule countryRule = readerWay.getTag("country_rule", null);
         if (countryRule != null)
-            accessValue = countryRule.getAccess(roadClass, TransportationMode.CAR, YES);
+            accessValue = countryRule.getAccess(readerWay, TransportationMode.CAR, YES);
 
         roadAccessEnc.setEnum(false, edgeFlags, accessValue);
         return edgeFlags;

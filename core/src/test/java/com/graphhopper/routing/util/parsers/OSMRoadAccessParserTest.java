@@ -52,7 +52,7 @@ class OSMRoadAccessParserTest {
         way.setTag("highway", "track");
         way.setTag("country_rule", new CountryRule() {
             @Override
-            public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
+            public RoadAccess getAccess(ReaderWay readerWay, TransportationMode transportationMode, RoadAccess currentRoadAccess) {
                 return RoadAccess.DESTINATION;
             }
         });

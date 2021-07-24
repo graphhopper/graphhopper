@@ -50,7 +50,7 @@ class OSMMaxSpeedParserTest {
         way.setTag("highway", "living_street");
         way.setTag("country_rule", new CountryRule() {
             @Override
-            public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
+            public double getMaxSpeed(ReaderWay readerWay, TransportationMode transportationMode, double currentMaxSpeed) {
                 return 5;
             }
         });

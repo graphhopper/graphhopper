@@ -52,10 +52,9 @@ public class OSMMaxSpeedParser implements TagParser {
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
         double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
 
-        RoadClass roadClass = RoadClass.find(way.getTag("highway", ""));
         CountryRule countryRule = way.getTag("country_rule", null);
         if (countryRule != null)
-            maxSpeed = countryRule.getMaxSpeed(roadClass, TransportationMode.CAR, maxSpeed);
+            maxSpeed = countryRule.getMaxSpeed(way, TransportationMode.CAR, maxSpeed);
 
         double fwdSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:forward"));
         if (!isValidSpeed(fwdSpeed) && isValidSpeed(maxSpeed))
