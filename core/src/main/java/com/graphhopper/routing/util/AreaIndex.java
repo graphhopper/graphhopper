@@ -16,7 +16,6 @@
  *  limitations under the License.
  */
 
-// todo: eventually move to another package
 package com.graphhopper.routing.util;
 
 import org.locationtech.jts.geom.*;
