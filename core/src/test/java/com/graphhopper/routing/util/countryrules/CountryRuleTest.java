@@ -17,8 +17,8 @@
  */
 package com.graphhopper.routing.util.countryrules;
 
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.RoadAccess;
-import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.util.TransportationMode;
 import org.junit.jupiter.api.Test;
 
@@ -29,27 +29,22 @@ class CountryRuleTest {
     @Test
     void germany() {
         GermanyCountryRule rule = new GermanyCountryRule();
-        assertEquals(RoadAccess.DESTINATION, rule.getAccess(RoadClass.TRACK, TransportationMode.CAR, RoadAccess.YES));
-        assertEquals(RoadAccess.YES, rule.getAccess(RoadClass.PRIMARY, TransportationMode.CAR, RoadAccess.YES));
+        assertEquals(RoadAccess.DESTINATION, rule.getAccess(createReaderWay("track"), TransportationMode.CAR, RoadAccess.YES));
+        assertEquals(RoadAccess.YES, rule.getAccess(createReaderWay("primary"), TransportationMode.CAR, RoadAccess.YES));
     }
 
     @Test
     void austria() {
         AustriaCountryRule rule = new AustriaCountryRule();
-        assertEquals(RoadAccess.FORESTRY, rule.getAccess(RoadClass.TRACK, TransportationMode.CAR, RoadAccess.YES));
-        assertEquals(RoadAccess.YES, rule.getAccess(RoadClass.PRIMARY, TransportationMode.CAR, RoadAccess.YES));
-        assertEquals(RoadAccess.DESTINATION, rule.getAccess(RoadClass.LIVING_STREET, TransportationMode.CAR, RoadAccess.YES));
+        assertEquals(RoadAccess.FORESTRY, rule.getAccess(createReaderWay("track"), TransportationMode.CAR, RoadAccess.YES));
+        assertEquals(RoadAccess.YES, rule.getAccess(createReaderWay("primary"), TransportationMode.CAR, RoadAccess.YES));
+        assertEquals(RoadAccess.DESTINATION, rule.getAccess(createReaderWay("living_street"), TransportationMode.CAR, RoadAccess.YES));
     }
 
-    @Test
-    void todo() {
-        // todo: maybe add some tests that test country rules in combination with OSMReader? we can then also test
-        //       countries without rules, like this test that used to be in SpatialRuleLookupBuilderTest:
-        // Paris -> empty rule
-//        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRules(48.864716, 2.349014).
-//                getAccess(RoadClass.TRACK, TransportationMode.CAR, RoadAccess.YES));
-//        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRules(48.864716, 2.349014).
-//                getAccess(RoadClass.PRIMARY, TransportationMode.CAR, RoadAccess.YES));
+    private ReaderWay createReaderWay(String highway) {
+        ReaderWay readerWay = new ReaderWay(123L);
+        readerWay.setTag("highway", highway);
+        return readerWay;
     }
 
 }

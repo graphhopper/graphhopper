@@ -17,7 +17,9 @@
  */
 package com.graphhopper.reader.osm;
 
+import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.carrotsearch.hppc.LongIndexedContainer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
@@ -42,8 +44,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -915,6 +921,37 @@ public class OSMReaderTest {
                 .setPathDetails(Collections.singletonList(Toll.KEY)));
         Throwable ex = response.getErrors().get(0);
         assertTrue(ex.getMessage().contains("You requested the details [toll]"), ex.getMessage());
+    }
+
+    @Test
+    public void testCountries() throws IOException {
+        EncodingManager em = EncodingManager.create("car");
+        EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
+        GraphHopperStorage graph = new GraphBuilder(em).build();
+        OSMReader reader = new OSMReader(graph);
+        reader.setAreaIndex(createCountryIndex());
+        // there are two edges, both with highway=track, one in Berlin, one in Paris
+        reader.setFile(new File(getClass().getResource("test-osm11.xml").getFile()));
+        reader.readGraph();
+        EdgeIteratorState edgeBerlin = graph.getEdgeIteratorState(0, Integer.MIN_VALUE);
+        EdgeIteratorState edgeParis = graph.getEdgeIteratorState(1, Integer.MIN_VALUE);
+        assertEquals("berlin", edgeBerlin.getName());
+        assertEquals("paris", edgeParis.getName());
+        // for Berlin there is GermanyCountryRule which changes RoadAccess for Tracks
+        assertEquals(RoadAccess.DESTINATION, edgeBerlin.get(roadAccessEnc));
+        // for Paris there is no such rule, we just get the default RoadAccess.YES
+        assertEquals(RoadAccess.YES, edgeParis.get(roadAccessEnc));
+    }
+
+    private AreaIndex<CustomArea> createCountryIndex() throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JtsModule());
+        List<CustomArea> customAreas;
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(OSMReaderTest.class.getResourceAsStream("/com/graphhopper/countries/countries.geojson")))) {
+            JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
+            customAreas = jsonFeatureCollection.getFeatures().stream().map(CustomArea::fromJsonFeature).collect(Collectors.toList());
+        }
+        return new AreaIndex<>(customAreas);
     }
 
     class GraphHopperFacade extends GraphHopper {
