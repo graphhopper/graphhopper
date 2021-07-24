@@ -82,7 +82,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     private final LongIndexedContainer barrierNodeIds = new LongArrayList();
     private final DistanceCalc distCalc = DistanceCalcEarth.DIST_EARTH;
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
-    private boolean countryRulesEnabled = true;
+    private boolean countryRulesEnabled = false;
     private boolean smoothElevation = false;
     private double longEdgeSamplingDistance = 0;
     protected long zeroCounter = 0;

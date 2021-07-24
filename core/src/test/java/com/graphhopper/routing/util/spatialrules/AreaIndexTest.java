@@ -24,6 +24,7 @@ import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.util.StopWatch;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -142,6 +143,7 @@ class AreaIndexTest {
     }
 
     @Test
+    @Disabled("todonow")
     public void testPerformance() throws IOException {
         // todo: maybe remove again or move to performance tests or something
         // todo: note that there are already similar performance measurements in Measurement!

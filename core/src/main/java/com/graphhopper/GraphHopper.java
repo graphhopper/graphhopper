@@ -81,7 +81,7 @@ public class GraphHopper implements GraphHopperAPI {
     private final TranslationMap trMap = new TranslationMap().doImport();
     boolean removeZipped = true;
     // for country rules:
-    private boolean countryRulesEnabled = true;
+    private boolean countryRulesEnabled = false;
     // for custom areas:
     private String customAreasDirectory = "";
     // for graph:
