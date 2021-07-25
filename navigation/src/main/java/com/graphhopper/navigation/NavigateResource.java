@@ -17,10 +17,7 @@
  */
 package com.graphhopper.navigation;
 
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopperAPI;
-import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.*;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
@@ -58,12 +55,12 @@ public class NavigateResource {
 
     private static final Logger logger = LoggerFactory.getLogger(NavigateResource.class);
 
-    private final GraphHopperAPI graphHopper;
+    private final GraphHopper graphHopper;
     private final TranslationMap translationMap;
     private final Map<String, String> resolverMap;
 
     @Inject
-    public NavigateResource(GraphHopperAPI graphHopper, TranslationMap translationMap, GraphHopperConfig config) {
+    public NavigateResource(GraphHopper graphHopper, TranslationMap translationMap, GraphHopperConfig config) {
         this.graphHopper = graphHopper;
         resolverMap = config.asPMap().getObject("profiles_mapbox", new HashMap<>());
         if (resolverMap.isEmpty()) {
