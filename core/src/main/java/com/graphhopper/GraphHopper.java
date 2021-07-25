@@ -72,9 +72,8 @@ import static java.util.Collections.emptyList;
  * Easy to use access point to configure import and (offline) routing.
  *
  * @author Peter Karich
- * @see GraphHopperAPI
  */
-public class GraphHopper implements GraphHopperAPI {
+public class GraphHopper {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final Map<String, Profile> profilesByName = new LinkedHashMap<>();
     private final String fileLockName = "gh.lock";
@@ -1004,7 +1003,6 @@ public class GraphHopper implements GraphHopperAPI {
         return new DefaultWeightingFactory(ghStorage, getEncodingManager());
     }
 
-    @Override
     public GHResponse route(GHRequest request) {
         return createRouter().route(request);
     }
