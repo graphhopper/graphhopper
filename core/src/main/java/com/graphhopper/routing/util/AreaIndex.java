@@ -54,7 +54,7 @@ public class AreaIndex<T extends AreaIndex.Area> {
         List<IndexedCustomArea<T>> result = index.query(searchEnv);
         Point point = gf.createPoint(new Coordinate(lon, lat));
         return result.stream()
-                .filter(c -> c.covers(point))
+                .filter(c -> c.intersects(point))
                 .map(c -> c.area)
                 .collect(Collectors.toList());
     }
@@ -68,7 +68,7 @@ public class AreaIndex<T extends AreaIndex.Area> {
             this.preparedGeometry = preparedGeometry;
         }
 
-        boolean covers(Point point) {
+        boolean intersects(Point point) {
             return preparedGeometry.intersects(point);
         }
     }
