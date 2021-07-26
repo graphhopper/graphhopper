@@ -269,18 +269,4 @@ public enum Country {
     public static EnumEncodedValue<Country> create() {
         return new EnumEncodedValue<>(Country.KEY, Country.class);
     }
-
-    public static Country find(String name) {
-        if (name == null || name.isEmpty())
-            return MISSING;
-
-        // todo: check performance, see: https://github.com/graphhopper/graphhopper/pull/2353#discussion_r670261744
-        for (Country country : values()) {
-            if (country.name.equalsIgnoreCase(name)) {
-                return country;
-            }
-        }
-
-        return MISSING;
-    }
 }
