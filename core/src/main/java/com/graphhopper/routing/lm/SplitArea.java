@@ -27,7 +27,7 @@ import org.locationtech.jts.geom.util.PolygonExtracter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SplitArea implements AreaIndex.HasBorders {
+public class SplitArea implements AreaIndex.Area {
     private final List<Polygon> borders;
 
     public static SplitArea fromJsonFeature(JsonFeature j) {

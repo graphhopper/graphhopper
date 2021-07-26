@@ -26,10 +26,9 @@ import org.locationtech.jts.index.strtree.STRtree;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class AreaIndex<T extends AreaIndex.HasBorders> {
+public class AreaIndex<T extends AreaIndex.Area> {
 
-    // todo: rename to just 'Area'?
-    public interface HasBorders {
+    public interface Area {
         List<Polygon> getBorders();
     }
 
@@ -60,7 +59,7 @@ public class AreaIndex<T extends AreaIndex.HasBorders> {
                 .collect(Collectors.toList());
     }
 
-    private static class IndexedCustomArea<T extends HasBorders> {
+    private static class IndexedCustomArea<T extends Area> {
         final T area;
         final PreparedGeometry preparedGeometry;
 

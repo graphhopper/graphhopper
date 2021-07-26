@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class CustomArea implements AreaIndex.HasBorders {
+public class CustomArea implements AreaIndex.Area {
     private final Map<String, Object> properties;
     private final List<Polygon> borders;
 
