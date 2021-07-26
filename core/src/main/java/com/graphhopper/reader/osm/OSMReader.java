@@ -501,7 +501,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             if (eleString != null)
                 ele = Double.parseDouble(eleString);
         }
-        if (ele == Double.NaN) {
+        if (Double.isNaN(ele)) {
             ele = eleProvider.getEle(lat, lon);
         }
         if (nodeType == TOWER_NODE) {
