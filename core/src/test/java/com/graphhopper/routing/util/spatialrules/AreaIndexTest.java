@@ -57,7 +57,6 @@ class AreaIndexTest {
                 createCustomArea("4", border2, border3)));
         testQuery(index, 0, 0);
         testQuery(index, 1.5, 1.5, "1");
-        // todo: is it somehow necessary that coordinates right on the border are included?
         testQuery(index, 1.00001, 1.00001, "1");
         testQuery(index, 1.5, 1.00001, "1");
         testQuery(index, 1.00001, 1.5, "1");
