@@ -554,7 +554,7 @@ public class Measurement {
         }
         MiniPerfTest lookupPerfTest = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
             int checksum = 0;
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < 1_000; i++) {
                 GHPoint point = randomPoints.get(rnd.nextInt(randomPoints.size()));
                 checksum += countryIndex.query(point.lat, point.lon).size();
             }
