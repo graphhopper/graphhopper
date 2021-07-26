@@ -37,6 +37,7 @@ import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks.PrepareJob;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
 import com.graphhopper.routing.weighting.Weighting;
@@ -81,7 +82,7 @@ public class GraphHopper {
     private final TranslationMap trMap = new TranslationMap().doImport();
     boolean removeZipped = true;
     // for country rules:
-    private boolean countryRulesEnabled = false;
+    private CountryRuleFactory countryRuleFactory = null;
     // for custom areas:
     private String customAreasDirectory = "";
     // for graph:
@@ -419,13 +420,16 @@ public class GraphHopper {
         return this.customAreasDirectory;
     }
 
-    public GraphHopper setCountryRulesEnabled(boolean countryRulesEnabled) {
-        this.countryRulesEnabled = countryRulesEnabled;
+    /**
+     * Sets the factory used to create country rules. Use `null` to disable country rules
+     */
+    public GraphHopper setCountryRuleFactory(CountryRuleFactory countryRuleFactory) {
+        this.countryRuleFactory = countryRuleFactory;
         return this;
     }
 
-    public boolean getCountryRulesEnabled() {
-        return this.countryRulesEnabled;
+    public CountryRuleFactory getCountryRuleFactory() {
+        return this.countryRuleFactory;
     }
 
     /**
@@ -453,7 +457,10 @@ public class GraphHopper {
             graphHopperFolder = pruneFileEnd(osmFile) + "-gh";
         }
 
-        countryRulesEnabled = ghConfig.getBool("country_rules.enabled", countryRulesEnabled);
+        if (ghConfig.has("country_rules.enabled")) {
+            boolean countryRulesEnabled = ghConfig.getBool("country_rules.enabled", false);
+            countryRuleFactory = countryRulesEnabled ? new CountryRuleFactory() : null;
+        }
         customAreasDirectory = ghConfig.getString("custom_areas.directory", customAreasDirectory);
 
         // graph
@@ -686,7 +693,7 @@ public class GraphHopper {
                 setWayPointElevationMaxDistance(routerConfig.getElevationWayPointMaxDistance()).
                 setSmoothElevation(smoothElevation).
                 setLongEdgeSamplingDistance(longEdgeSamplingDistance).
-                setCountryRulesEnabled(countryRulesEnabled);
+                setCountryRuleFactory(countryRuleFactory);
         logger.info("using " + ghStorage.toString() + ", memory:" + getMemInfo());
         try {
             reader.readGraph();

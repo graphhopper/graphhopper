@@ -18,21 +18,18 @@
 
 package com.graphhopper.routing.util.countryrules;
 
-import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.Country;
-import com.graphhopper.routing.ev.RoadAccess;
-import com.graphhopper.routing.ev.RoadClass;
-import com.graphhopper.routing.util.TransportationMode;
 
-/**
- * GraphHopper uses country rules to adjust the routing behavior based on the country an edge is located in
- */
-public interface CountryRule {
-    default double getMaxSpeed(ReaderWay readerWay, TransportationMode transportationMode, double currentMaxSpeed) {
-        return currentMaxSpeed;
-    }
+public class CountryRuleFactory {
 
-    default RoadAccess getAccess(ReaderWay readerWay, TransportationMode transportationMode, RoadAccess currentRoadAccess) {
-        return currentRoadAccess;
+    public CountryRule getCountryRule(Country country) {
+        switch (country) {
+            case DEU:
+                return GermanyCountryRule.RULE;
+            case AUT:
+                return AustriaCountryRule.RULE;
+            default:
+                return null;
+        }
     }
 }

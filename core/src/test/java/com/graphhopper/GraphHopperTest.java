@@ -27,6 +27,7 @@ import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.SkadiProvider;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
 import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
 import com.graphhopper.routing.weighting.Weighting;
@@ -2298,7 +2299,7 @@ public class GraphHopperTest {
         // first we try without country rules (the default)
         GraphHopper hopper = new GraphHopper()
                 .setProfiles(new Profile(profile).setVehicle("car").setWeighting("fastest"))
-                .setCountryRulesEnabled(false)
+                .setCountryRuleFactory(null)
                 .setGraphHopperLocation(GH_LOCATION)
                 .setOSMFile(BAYREUTH);
         hopper.importOrLoad();
@@ -2315,7 +2316,7 @@ public class GraphHopperTest {
         hopper = new GraphHopper()
                 .setProfiles(new Profile(profile).setVehicle("car").setWeighting("fastest"))
                 .setGraphHopperLocation(GH_LOCATION)
-                .setCountryRulesEnabled(true)
+                .setCountryRuleFactory(new CountryRuleFactory())
                 .setOSMFile(BAYREUTH);
         hopper.importOrLoad();
         request = new GHRequest(50.010373, 11.51792, 50.005146, 11.516633);

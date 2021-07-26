@@ -26,11 +26,12 @@ import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Country;
+import com.graphhopper.routing.util.AreaIndex;
+import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.countryrules.CountryRule;
+import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.TurnCostParser;
-import com.graphhopper.routing.util.CustomArea;
-import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
@@ -82,7 +83,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     private final LongIndexedContainer barrierNodeIds = new LongArrayList();
     private final DistanceCalc distCalc = DistanceCalcEarth.DIST_EARTH;
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
-    private boolean countryRulesEnabled = false;
+    private CountryRuleFactory countryRuleFactory = null;
     private boolean smoothElevation = false;
     private double longEdgeSamplingDistance = 0;
     protected long zeroCounter = 0;
@@ -370,8 +371,8 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         }
         way.setTag("country", country);
 
-        if (countryRulesEnabled) {
-            CountryRule countryRule = CountryRule.getCountryRule(country);
+        if (countryRuleFactory != null) {
+            CountryRule countryRule = countryRuleFactory.getCountryRule(country);
             if (countryRule != null)
                 way.setTag("country_rule", countryRule);
         }
@@ -970,8 +971,8 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         return this;
     }
 
-    public OSMReader setCountryRulesEnabled(boolean countryRulesEnabled) {
-        this.countryRulesEnabled = countryRulesEnabled;
+    public OSMReader setCountryRuleFactory(CountryRuleFactory countryRuleFactory) {
+        this.countryRuleFactory = countryRuleFactory;
         return this;
     }
 

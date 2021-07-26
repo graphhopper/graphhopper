@@ -29,6 +29,7 @@ import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.OSMMaxHeightParser;
 import com.graphhopper.routing.util.parsers.OSMMaxWeightParser;
 import com.graphhopper.routing.util.parsers.OSMMaxWidthParser;
@@ -925,7 +926,7 @@ public class OSMReaderTest {
         EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
         GraphHopperStorage graph = new GraphBuilder(em).build();
         OSMReader reader = new OSMReader(graph);
-        reader.setCountryRulesEnabled(true);
+        reader.setCountryRuleFactory(new CountryRuleFactory());
         reader.setAreaIndex(createCountryIndex());
         // there are two edges, both with highway=track, one in Berlin, one in Paris
         reader.setFile(new File(getClass().getResource("test-osm11.xml").getFile()));
