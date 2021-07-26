@@ -124,6 +124,7 @@ public class GraphHopper {
     private double dataReaderWayPointMaxDistance = 1;
     private int dataReaderWorkerThreads = 2;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
+    private String readElevationFromTag = null;
     private FlagEncoderFactory flagEncoderFactory = new DefaultFlagEncoderFactory();
     private EncodedValueFactory encodedValueFactory = new DefaultEncodedValueFactory();
     private TagParserFactory tagParserFactory = new DefaultTagParserFactory();
@@ -480,6 +481,10 @@ public class GraphHopper {
         setElevationWayPointMaxDistance(ghConfig.getDouble("graph.elevation.way_point_max_distance", Double.MAX_VALUE));
         ElevationProvider elevationProvider = createElevationProvider(ghConfig);
         setElevationProvider(elevationProvider);
+        readElevationFromTag = ghConfig.getString("graph.elevation.read_from_tag", null);
+        if (readElevationFromTag != null) {
+            setElevation(true);
+        }
 
         if (longEdgeSamplingDistance < Double.MAX_VALUE && !elevationProvider.getInterpolate())
             logger.warn("Long edge sampling enabled, but bilinear interpolation disabled. See #1953");
@@ -689,6 +694,7 @@ public class GraphHopper {
         logger.info("start creating graph from " + osmFile);
         OSMReader reader = new OSMReader(ghStorage).setFile(_getOSMFile()).
                 setElevationProvider(eleProvider).
+                setReadElevationFromTag(readElevationFromTag).
                 setWorkerThreads(dataReaderWorkerThreads).
                 setWayPointMaxDistance(dataReaderWayPointMaxDistance).
                 setWayPointElevationMaxDistance(routerConfig.getElevationWayPointMaxDistance()).

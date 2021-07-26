@@ -109,6 +109,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     private Date osmDataDate;
     private final IntsRef tempRelFlags;
     private final TurnCostStorage tcs;
+    private String readElevationFromTag = null;
 
     public OSMReader(GraphHopperStorage ghStorage) {
         this.ghStorage = ghStorage;
@@ -494,7 +495,15 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
         double lat = node.getLat();
         double lon = node.getLon();
-        double ele = eleProvider.getEle(lat, lon);
+        double ele = Double.NaN;
+        if (readElevationFromTag != null) {
+            String eleString = node.getTag(readElevationFromTag);
+            if (eleString != null)
+                ele = Double.parseDouble(eleString);
+        }
+        if (ele == Double.NaN) {
+            ele = eleProvider.getEle(lat, lon);
+        }
         if (nodeType == TOWER_NODE) {
             addTowerNode(node.getId(), lat, lon, ele);
         } else if (nodeType == PILLAR_NODE) {
@@ -956,6 +965,11 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
     public OSMReader setFile(File osmFile) {
         this.osmFile = osmFile;
+        return this;
+    }
+
+    public OSMReader setReadElevationFromTag(String tag) {
+        this.readElevationFromTag = tag;
         return this;
     }
 
