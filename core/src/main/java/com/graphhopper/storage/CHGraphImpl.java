@@ -19,11 +19,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.ch.NodeOrderingProvider;
 import com.graphhopper.routing.ch.PrepareEncoder;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.IntEncodedValue;
-import com.graphhopper.routing.ev.StringEncodedValue;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.BaseGraph.AllEdgeIterator;
@@ -45,10 +41,10 @@ import static com.graphhopper.util.Helper.nf;
  */
 public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     private static final Logger LOGGER = LoggerFactory.getLogger(CHGraphImpl.class);
-    private static final double WEIGHT_FACTOR = 1000f;
-    // 2 bits for access, 29 bits for weight (See #1544 on how to improve this to 30 bits)
-    private static final int MAX_WEIGHT_31 = (Integer.MAX_VALUE >> 2) << 2;
-    private static final double MAX_WEIGHT = (Integer.MAX_VALUE >> 2) / WEIGHT_FACTOR;
+    private static final double WEIGHT_FACTOR = 1000;
+    // 2 bits for access | 30 bits for weight
+    private static final int WEIGHT_INT_INFINITY = Integer.MAX_VALUE >> 1;
+    private static final double MAX_WEIGHT = (Integer.MAX_VALUE >> 1) / WEIGHT_FACTOR;
     private static final double MIN_WEIGHT = 1 / WEIGHT_FACTOR;
     final DataAccess shortcuts;
     final DataAccess nodesCH;
@@ -157,7 +153,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
     void setAccessAndWeight(long edgePointer, int accessFlags, double weight) {
         int weightFlags = weightToWeightFlags(edgePointer, weight);
-        setShortcutFlags(edgePointer, weightFlags | accessFlags);
+        setShortcutFlags(edgePointer, (weightFlags << 2) | accessFlags);
     }
 
     int weightToWeightFlags(long edgePointer, double weight) {
@@ -176,20 +172,21 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                     " nodeB " + nodeAccess.getLat(getNodeB(edgePointer)) + "," + nodeAccess.getLon(getNodeB(edgePointer)));
             weight = MIN_WEIGHT;
         }
-        if (weight > MAX_WEIGHT)
-            weightInt = MAX_WEIGHT_31;
+        if (weight >= MAX_WEIGHT)
+            weightInt = WEIGHT_INT_INFINITY;
         else
-            weightInt = ((int) Math.round(weight * WEIGHT_FACTOR)) << 2;
+            weightInt = (int) Math.round(weight * WEIGHT_FACTOR);
         return weightInt;
     }
 
     double getShortcutWeight(long edgePointer) {
-        // no need for reverseFlags call (shortcut has identical weight if both dies) and also no need for 64bit
-        long flags32bit = getShortcutFlags(edgePointer);
-        double weight = (flags32bit >>> 2) / WEIGHT_FACTOR;
-        if (weight >= MAX_WEIGHT)
+        int weightInt = getShortcutFlags(edgePointer) >>> 2;
+        if (weightInt == WEIGHT_INT_INFINITY)
             return Double.POSITIVE_INFINITY;
 
+        double weight = weightInt / WEIGHT_FACTOR;
+        if (weight >= MAX_WEIGHT)
+            throw new IllegalArgumentException("too large shortcut weight " + weight + " should get infinity marker bits " + WEIGHT_INT_INFINITY);
         return weight;
     }
 
@@ -936,31 +933,31 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             checkShortcut(false, "set(EnumEncodedValue<T>, T, T)");
             return edgeIterable.set(property, fwd, bwd);
         }
-        
+
         @Override
         public String get(StringEncodedValue property) {
             checkShortcut(false, "get(StringEncodedValue)");
             return edgeIterable.get(property);
         }
-        
+
         @Override
         public EdgeIteratorState set(StringEncodedValue property, String value) {
             checkShortcut(false, "set(StringEncodedValue, String)");
             return edgeIterable.set(property, value);
         }
-        
+
         @Override
         public String getReverse(StringEncodedValue property) {
             checkShortcut(false, "getReverse(StringEncodedValue)");
             return edgeIterable.getReverse(property);
         }
-        
+
         @Override
         public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
             checkShortcut(false, "setReverse(StringEncodedValue, String)");
             return edgeIterable.setReverse(property, value);
         }
-        
+
         @Override
         public EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd) {
             checkShortcut(false, "set(StringEncodedValue, String, String)");
