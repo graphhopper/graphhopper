@@ -58,6 +58,4 @@ public interface CHEdgeIteratorState extends EdgeIteratorState {
      * Sets the weight calculated from Weighting.calcWeight, only applicable if isShortcut is true.
      */
     CHEdgeIteratorState setWeight(double weight);
-
-    void setFlagsAndWeight(int flags, double weight);
 }

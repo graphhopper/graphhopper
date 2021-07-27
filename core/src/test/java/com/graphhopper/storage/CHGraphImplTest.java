@@ -27,17 +27,17 @@ class CHGraphImplTest {
         CHGraphImpl g = (CHGraphImpl) graph.getCHGraph();
         g.shortcut(0, 0, 0, 10, 0, 1);
 
-        g.setShortcutWeight(0, (Integer.MAX_VALUE >> 2) / 1000d + 1000);
-        assertEquals((Integer.MAX_VALUE >> 2) / 1000d + 1000, g.getShortcutWeight(0));
+        g.setShortcutWeight(0, Integer.MAX_VALUE / 1000d + 1000);
+        assertEquals(Integer.MAX_VALUE / 1000d + 1000, g.getShortcutWeight(0));
 
-        g.setShortcutWeight(0, (Integer.MAX_VALUE >> 1) / 1000d - 0.001);
-        assertEquals((Integer.MAX_VALUE >> 1) / 1000d - 0.001, g.getShortcutWeight(0), 0.001);
+        g.setShortcutWeight(0, ((long) Integer.MAX_VALUE << 1) / 1000d - 0.001);
+        assertEquals(((long) Integer.MAX_VALUE << 1) / 1000d - 0.001, g.getShortcutWeight(0), 0.001);
 
-        g.setShortcutWeight(0, (Integer.MAX_VALUE >> 1) / 1000d);
+        g.setShortcutWeight(0, ((long) Integer.MAX_VALUE << 1) / 1000d);
         assertTrue(Double.isInfinite(g.getShortcutWeight(0)));
-        g.setShortcutWeight(0, (Integer.MAX_VALUE >> 1) / 1000d + 1);
+        g.setShortcutWeight(0, ((long) Integer.MAX_VALUE << 1) / 1000d + 1);
         assertTrue(Double.isInfinite(g.getShortcutWeight(0)));
-        g.setShortcutWeight(0, (Integer.MAX_VALUE >> 1) / 1000d + 100);
+        g.setShortcutWeight(0, ((long) Integer.MAX_VALUE << 1) / 1000d + 100);
         assertTrue(Double.isInfinite(g.getShortcutWeight(0)));
     }
 }

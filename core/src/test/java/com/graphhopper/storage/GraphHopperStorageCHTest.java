@@ -34,7 +34,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.graphhopper.routing.ch.NodeBasedNodeContractorTest.SC_ACCESS;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -179,21 +178,6 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         assertEquals(100.123, sc1.getWeight(), 1e-3);
         sc1.setWeight(Double.MAX_VALUE);
         assertTrue(Double.isInfinite(sc1.getWeight()));
-
-        sc1.setFlagsAndWeight(flags, 100.123);
-        assertEquals(100.123, sc1.getWeight(), 1e-3);
-        assertTrue(sc1.get(SC_ACCESS));
-        assertTrue(sc1.getReverse(SC_ACCESS));
-
-        flags = PrepareEncoder.getScBwdDir();
-        sc1.setFlagsAndWeight(flags, 100.123);
-        assertEquals(100.123, sc1.getWeight(), 1e-3);
-        assertFalse(sc1.get(SC_ACCESS));
-        assertTrue(sc1.getReverse(SC_ACCESS));
-
-        // check min weight
-        sc1.setFlagsAndWeight(flags, 1e-5);
-        assertEquals(1e-3, sc1.getWeight(), 1e-10);
     }
 
     @Test
@@ -202,20 +186,23 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         EncodingManager em = EncodingManager.create(customEncoder);
         FastestWeighting weighting = new FastestWeighting(customEncoder);
         GraphHopperStorage ghStorage = new GraphBuilder(em).setCHConfigs(CHConfig.nodeBased("p1", weighting)).create();
-        ghStorage.edge(0, 2);
+        ghStorage.edge(0, 3);
         ghStorage.freeze();
 
         CHGraph lg = ghStorage.getCHGraph();
         setIdentityLevels(lg);
         int sc1 = lg.shortcut(0, 1, PrepareEncoder.getScFwdDir(), 100.123, NO_EDGE, NO_EDGE);
-
+        assertEquals(1, lg.getEdgeIteratorState(sc1, 1).getAdjNode());
+        assertEquals(0, lg.getEdgeIteratorState(sc1, 1).getBaseNode());
         assertEquals(100.123, lg.getEdgeIteratorState(sc1, 1).getWeight(), 1e-3);
         assertEquals(100.123, lg.getEdgeIteratorState(sc1, 0).getWeight(), 1e-3);
         assertEquals(100.123, GHUtility.getEdge(lg, 0, 1).getWeight(), 1e-3);
 
-        int sc2 = lg.shortcut(0, 1, PrepareEncoder.getScDirMask(), 1.011011, NO_EDGE, NO_EDGE);
-        assertEquals(1.011011, lg.getEdgeIteratorState(sc2, 0).getWeight(), 1e-3);
-        assertEquals(1.011011, lg.getEdgeIteratorState(sc2, 1).getWeight(), 1e-3);
+        int sc2 = lg.shortcut(2, 3, PrepareEncoder.getScDirMask(), 1.011011, NO_EDGE, NO_EDGE);
+        assertEquals(3, lg.getEdgeIteratorState(sc2, 3).getAdjNode());
+        assertEquals(2, lg.getEdgeIteratorState(sc2, 3).getBaseNode());
+        assertEquals(1.011011, lg.getEdgeIteratorState(sc2, 2).getWeight(), 1e-3);
+        assertEquals(1.011011, lg.getEdgeIteratorState(sc2, 3).getWeight(), 1e-3);
     }
 
     @Test

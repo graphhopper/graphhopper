@@ -42,9 +42,8 @@ import static com.graphhopper.util.Helper.nf;
 public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     private static final Logger LOGGER = LoggerFactory.getLogger(CHGraphImpl.class);
     private static final double WEIGHT_FACTOR = 1000;
-    // 2 bits for access | 30 bits for weight
-    private static final int WEIGHT_INT_INFINITY = Integer.MAX_VALUE >> 1;
-    private static final double MAX_WEIGHT = (Integer.MAX_VALUE >> 1) / WEIGHT_FACTOR;
+    private static final long WEIGHT_LONG_INFINITY = ((long) Integer.MAX_VALUE) << 1;
+    private static final double WEIGHT_INFINITY = WEIGHT_LONG_INFINITY / WEIGHT_FACTOR;
     private static final double MIN_WEIGHT = 1 / WEIGHT_FACTOR;
     final DataAccess shortcuts;
     final DataAccess nodesCH;
@@ -129,34 +128,18 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         // we do not register the edge at node b which should be the higher level node (so no need to 'see' the lower
         // level node a)
         int shortcutId = nextShortcutId();
-        writeShortcut(shortcutId, a, b);
+
+        writeShortcut(shortcutId, a, b, accessFlags);
+
         // we keep track of the last shortcut for each node (-1 if there are no shortcuts)
         setEdgeRef(a, shortcutId);
         long edgePointer = toPointer(shortcutId);
-        setAccessAndWeight(edgePointer, accessFlags & scDirMask, weight);
+        setShortcutWeight(edgePointer, weight);
         setSkippedEdges(edgePointer, skippedEdge1, skippedEdge2);
         return shortcutId;
     }
 
-    void setShortcutFlags(long edgePointer, int flags) {
-        shortcuts.setInt(edgePointer + S_WEIGHT, flags);
-    }
-
-    int getShortcutFlags(long edgePointer) {
-        return shortcuts.getInt(edgePointer + S_WEIGHT);
-    }
-
     void setShortcutWeight(long edgePointer, double weight) {
-        int accessFlags = getShortcutFlags(edgePointer) & scDirMask;
-        setAccessAndWeight(edgePointer, accessFlags, weight);
-    }
-
-    void setAccessAndWeight(long edgePointer, int accessFlags, double weight) {
-        int weightFlags = weightToWeightFlags(edgePointer, weight);
-        setShortcutFlags(edgePointer, (weightFlags << 2) | accessFlags);
-    }
-
-    int weightToWeightFlags(long edgePointer, double weight) {
         if (weight < 0)
             throw new IllegalArgumentException("weight cannot be negative but was " + weight);
 
@@ -172,21 +155,23 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                     " nodeB " + nodeAccess.getLat(getNodeB(edgePointer)) + "," + nodeAccess.getLon(getNodeB(edgePointer)));
             weight = MIN_WEIGHT;
         }
-        if (weight >= MAX_WEIGHT)
-            weightInt = WEIGHT_INT_INFINITY;
+        if (weight >= WEIGHT_INFINITY)
+            weightInt = (int) WEIGHT_LONG_INFINITY; // negative
         else
             weightInt = (int) Math.round(weight * WEIGHT_FACTOR);
-        return weightInt;
+
+        shortcuts.setInt(edgePointer + S_WEIGHT, weightInt);
     }
 
     double getShortcutWeight(long edgePointer) {
-        int weightInt = getShortcutFlags(edgePointer) >>> 2;
-        if (weightInt == WEIGHT_INT_INFINITY)
+        // might be negative after converting into long -> we need to remove this sign via "& 0xFFFFFFFF". The L is necessary or prepend 8 zeros.
+        long weightLong = (long) shortcuts.getInt(edgePointer + S_WEIGHT) & 0xFFFFFFFFL;
+        if (weightLong == WEIGHT_LONG_INFINITY)
             return Double.POSITIVE_INFINITY;
 
-        double weight = weightInt / WEIGHT_FACTOR;
-        if (weight >= MAX_WEIGHT)
-            throw new IllegalArgumentException("too large shortcut weight " + weight + " should get infinity marker bits " + WEIGHT_INT_INFINITY);
+        double weight = weightLong / WEIGHT_FACTOR;
+        if (weight >= WEIGHT_INFINITY)
+            throw new IllegalArgumentException("too large shortcut weight " + weight + " should get infinity marker bits " + WEIGHT_LONG_INFINITY);
         return weight;
     }
 
@@ -326,13 +311,14 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     /**
      * Writes plain edge information to the edges index
      */
-    private long writeShortcut(int edgeId, int nodeA, int nodeB) {
+    private long writeShortcut(int edgeId, int nodeA, int nodeB, int accessFlags) {
         if (!EdgeIterator.Edge.isValid(edgeId))
             throw new IllegalStateException("Cannot write edge with illegal ID:" + edgeId + "; nodeA:" + nodeA + ", nodeB:" + nodeB);
 
         long edgePointer = toPointer(edgeId);
-        shortcuts.setInt(edgePointer + E_NODEA, nodeA);
-        shortcuts.setInt(edgePointer + E_NODEB, nodeB);
+        // TODO PERF store node as negative int if access is set and add 1 to make it working with nodeId == 0
+        shortcuts.setInt(edgePointer + E_NODEA, nodeA << 1 | accessFlags & PrepareEncoder.getScFwdDir());
+        shortcuts.setInt(edgePointer + E_NODEB, nodeB << 1 | (accessFlags & PrepareEncoder.getScBwdDir()) >> 1);
         return edgePointer;
     }
 
@@ -464,7 +450,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                     i,
                     getNodeA(edgePointer),
                     getNodeB(edgePointer),
-                    getShortcutFlags(edgePointer),
+                    getShortcutWeight(edgePointer),
                     shortcuts.getInt(edgePointer + S_SKIP_EDGE1),
                     shortcuts.getInt(edgePointer + S_SKIP_EDGE2));
             if (chConfig.isEdgeBased()) {
@@ -480,11 +466,11 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     private int getNodeA(long edgePointer) {
-        return shortcuts.getInt(edgePointer + E_NODEA);
+        return shortcuts.getInt(edgePointer + E_NODEA) >>> 1;
     }
 
     private int getNodeB(long edgePointer) {
-        return shortcuts.getInt(edgePointer + E_NODEB);
+        return shortcuts.getInt(edgePointer + E_NODEB) >>> 1;
     }
 
     public NodeOrderingProvider getNodeOrderingProvider() {
@@ -620,7 +606,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         boolean reverse = false;
         boolean freshFlags;
         int edgeId = -1;
-        private int chFlags;
 
         private CHEdgeIteratorStateImpl(BaseGraph.EdgeIteratorStateImpl edgeIterable) {
             this.edgeIterable = edgeIterable;
@@ -747,13 +732,13 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         @Override
         public boolean getFwdAccess() {
             checkShortcut(true, "getFwdAccess");
-            return (getShortcutFlags() & (reverse ? PrepareEncoder.getScBwdDir() : PrepareEncoder.getScFwdDir())) != 0;
+            return (shortcuts.getInt(edgePointer + (reverse ? E_NODEB : E_NODEA)) & 0x1) != 0;
         }
 
         @Override
         public boolean getBwdAccess() {
             checkShortcut(true, "getBwdAccess");
-            return (getShortcutFlags() & (reverse ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir())) != 0;
+            return (shortcuts.getInt(edgePointer + (reverse ? E_NODEA : E_NODEB)) & 0x1) != 0;
         }
 
         @Override
@@ -778,14 +763,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             checkShortcut(true, "setWeight");
             CHGraphImpl.this.setShortcutWeight(edgePointer, weight);
             return this;
-        }
-
-        @Override
-        public void setFlagsAndWeight(int flags, double weight) {
-            checkShortcut(true, "setFlagsAndWeight");
-            CHGraphImpl.this.setAccessAndWeight(edgePointer, flags, weight);
-            chFlags = flags;
-            freshFlags = true;
         }
 
         @Override
@@ -968,14 +945,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public EdgeIteratorState detach(boolean reverseArg) {
             checkShortcut(false, "detach(boolean)");
             return edgeIterable.detach(reverseArg);
-        }
-
-        int getShortcutFlags() {
-            if (!freshFlags) {
-                chFlags = CHGraphImpl.this.getShortcutFlags(edgePointer);
-                freshFlags = true;
-            }
-            return chFlags;
         }
     }
 }
