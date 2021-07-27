@@ -15,15 +15,21 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.spatialrules;
 
-import java.util.List;
+package com.graphhopper.routing.util.countryrules;
 
-import org.locationtech.jts.geom.Polygon;
+import com.graphhopper.routing.ev.Country;
 
-public interface SpatialRuleFactory {
-    
-    SpatialRule createSpatialRule(String id, final List<Polygon> borders);
-    
-    static SpatialRuleFactory EMPTY = (id, borders) -> null;
+public class CountryRuleFactory {
+
+    public CountryRule getCountryRule(Country country) {
+        switch (country) {
+            case DEU:
+                return GermanyCountryRule.RULE;
+            case AUT:
+                return AustriaCountryRule.RULE;
+            default:
+                return null;
+        }
+    }
 }

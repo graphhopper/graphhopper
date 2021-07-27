@@ -18,7 +18,6 @@
 package com.graphhopper;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
@@ -37,16 +36,10 @@ import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks.PrepareJob;
-import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoderFactory;
+import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
-import com.graphhopper.routing.util.parsers.SpatialRuleParser;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
-import com.graphhopper.routing.util.spatialrules.CountriesSpatialRuleFactory;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
@@ -58,14 +51,10 @@ import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
-import com.graphhopper.util.shapes.BBox;
-import org.locationtech.jts.geom.Envelope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -75,10 +64,10 @@ import java.text.DateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder.JSON_ID_FIELD;
-import static com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder.reorder;
+import static com.graphhopper.util.GHUtility.readCountries;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.RoundTrip;
+import static java.util.Collections.emptyList;
 
 /**
  * Easy to use access point to configure import and (offline) routing.
@@ -92,6 +81,10 @@ public class GraphHopper {
     // utils
     private final TranslationMap trMap = new TranslationMap().doImport();
     boolean removeZipped = true;
+    // for country rules:
+    private CountryRuleFactory countryRuleFactory = null;
+    // for custom areas:
+    private String customAreasDirectory = "";
     // for graph:
     private GraphHopperStorage ghStorage;
     private final EncodingManager.Builder emBuilder = new EncodingManager.Builder();
@@ -418,6 +411,27 @@ public class GraphHopper {
         return this;
     }
 
+    public GraphHopper setCustomAreasDirectory(String customAreasDirectory) {
+        this.customAreasDirectory = customAreasDirectory;
+        return this;
+    }
+
+    public String getCustomAreasDirectory() {
+        return this.customAreasDirectory;
+    }
+
+    /**
+     * Sets the factory used to create country rules. Use `null` to disable country rules
+     */
+    public GraphHopper setCountryRuleFactory(CountryRuleFactory countryRuleFactory) {
+        this.countryRuleFactory = countryRuleFactory;
+        return this;
+    }
+
+    public CountryRuleFactory getCountryRuleFactory() {
+        return this.countryRuleFactory;
+    }
+
     /**
      * Reads the configuration from a {@link GraphHopperConfig} object which can be manually filled, or more typically
      * is read from `config.yml`.
@@ -429,7 +443,7 @@ public class GraphHopper {
         if (ghConfig.has("routing.lm.disabling_allowed"))
             throw new IllegalArgumentException("The 'routing.lm.disabling_allowed' configuration option is no longer supported");
         if (ghConfig.has("osmreader.osm"))
-            throw new IllegalArgumentException("Instead osmreader.osm use datareader.file, for other changes see CHANGELOG.md");
+            throw new IllegalArgumentException("Instead of osmreader.osm use datareader.file, for other changes see CHANGELOG.md");
 
         String tmpOsmFile = ghConfig.getString("datareader.file", "");
         if (!isEmpty(tmpOsmFile))
@@ -443,6 +457,12 @@ public class GraphHopper {
             graphHopperFolder = pruneFileEnd(osmFile) + "-gh";
         }
 
+        if (ghConfig.has("country_rules.enabled")) {
+            boolean countryRulesEnabled = ghConfig.getBool("country_rules.enabled", false);
+            countryRuleFactory = countryRulesEnabled ? new CountryRuleFactory() : null;
+        }
+        customAreasDirectory = ghConfig.getString("custom_areas.directory", customAreasDirectory);
+
         // graph
         setGraphHopperLocation(graphHopperFolder);
         defaultSegmentSize = ghConfig.getInt("graph.dataaccess.segment_size", defaultSegmentSize);
@@ -454,11 +474,12 @@ public class GraphHopper {
         removeZipped = ghConfig.getBool("graph.remove_zipped", removeZipped);
 
         if (!ghConfig.getString("spatial_rules.location", "").isEmpty())
-            throw new RuntimeException("spatial_rules.location has been deprecated. Please use spatial_rules.borders_directory instead.");
-
-        String spatialRuleBordersDirLocation = ghConfig.getString("spatial_rules.borders_directory", "");
-        if (!spatialRuleBordersDirLocation.isEmpty())
-            setupCountrySpatialRules(ghConfig, spatialRuleBordersDirLocation);
+            throw new IllegalArgumentException("spatial_rules.location has been deprecated. Please use custom_areas.directory instead and read the documentation for custom areas.");
+        if (!ghConfig.getString("spatial_rules.borders_directory", "").isEmpty())
+            throw new IllegalArgumentException("spatial_rules.borders_directory has been deprecated. Please use custom_areas.directory instead and read the documentation for custom areas.");
+        // todo: maybe introduce custom_areas.max_bbox if this is needed later
+        if (!ghConfig.getString("spatial_rules.max_bbox", "").isEmpty())
+            throw new IllegalArgumentException("spatial_rules.max_bbox has been deprecated. There is no replacement, all custom areas will be considered.");
 
         if (encodingManager != null)
             throw new IllegalStateException("Cannot call init twice. EncodingManager was already initialized.");
@@ -511,38 +532,6 @@ public class GraphHopper {
         routerConfig.setActiveLandmarkCount(activeLandmarkCount);
 
         return this;
-    }
-
-    private void setupCountrySpatialRules(GraphHopperConfig ghConfig, String spatialRuleBordersDirLocation) {
-        final Envelope maxBounds = BBox.toEnvelope(BBox.parseBBoxString(ghConfig.getString("spatial_rules.max_bbox", "-180, 180, -90, 90")));
-        final Path bordersDirectory = Paths.get(spatialRuleBordersDirLocation);
-        List<JsonFeatureCollection> jsonFeatureCollections = new ArrayList<>();
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(bordersDirectory, "*.{geojson,json}")) {
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.registerModule(new JtsModule());
-            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            for (Path borderFile : stream) {
-                try (BufferedReader reader = Files.newBufferedReader(borderFile, StandardCharsets.UTF_8)) {
-                    JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
-                    jsonFeatureCollections.add(jsonFeatureCollection);
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        List<String> subset = Arrays.stream(Country.values())
-                .filter(c -> c != Country.DEFAULT)
-                .map(Country::toString)
-                .collect(Collectors.toList());
-        final SpatialRuleLookup index = SpatialRuleLookupBuilder.buildIndex(reorder(jsonFeatureCollections, subset),
-                JSON_ID_FIELD, new CountriesSpatialRuleFactory(), maxBounds);
-        logger.info("Set spatial rule lookup with {} rules", index.getRules().size());
-        final TagParserFactory oldTPF = tagParserFactory;
-        tagParserFactory = (name, configuration) -> {
-            if (name.equals(Country.KEY))
-                return new SpatialRuleParser(index, Country.create());
-            return oldTPF.create(name, configuration);
-        };
     }
 
     private EncodingManager buildEncodingManager(GraphHopperConfig ghConfig) {
@@ -686,14 +675,25 @@ public class GraphHopper {
             throw new IllegalStateException("Couldn't load from existing folder: " + ghLocation
                     + " but also cannot use file for DataReader as it wasn't specified!");
 
+        List<CustomArea> customAreas = readCountries();
+        if (isEmpty(customAreasDirectory)) {
+            logger.info("No custom areas are used, custom_areas.directory not given");
+        } else {
+            logger.info("Creating custom area index, reading custom areas from: '" + customAreasDirectory + "'");
+            customAreas.addAll(readCustomAreas());
+        }
+        AreaIndex<CustomArea> areaIndex = new AreaIndex<>(customAreas);
+
         logger.info("start creating graph from " + osmFile);
         OSMReader reader = new OSMReader(ghStorage).setFile(_getOSMFile()).
+                setAreaIndex(areaIndex).
                 setElevationProvider(eleProvider).
                 setWorkerThreads(dataReaderWorkerThreads).
                 setWayPointMaxDistance(dataReaderWayPointMaxDistance).
                 setWayPointElevationMaxDistance(routerConfig.getElevationWayPointMaxDistance()).
                 setSmoothElevation(smoothElevation).
-                setLongEdgeSamplingDistance(longEdgeSamplingDistance);
+                setLongEdgeSamplingDistance(longEdgeSamplingDistance).
+                setCountryRuleFactory(countryRuleFactory);
         logger.info("using " + ghStorage.toString() + ", memory:" + getMemInfo());
         try {
             reader.readGraph();
@@ -704,6 +704,26 @@ public class GraphHopper {
         ghStorage.getProperties().put("datareader.import.date", f.format(new Date()));
         if (reader.getDataDate() != null)
             ghStorage.getProperties().put("datareader.data.date", f.format(reader.getDataDate()));
+    }
+
+    private List<CustomArea> readCustomAreas() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JtsModule());
+        final Path bordersDirectory = Paths.get(customAreasDirectory);
+        List<JsonFeatureCollection> jsonFeatureCollections = new ArrayList<>();
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(bordersDirectory, "*.{geojson,json}")) {
+            for (Path borderFile : stream) {
+                try (BufferedReader reader = Files.newBufferedReader(borderFile, StandardCharsets.UTF_8)) {
+                    JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
+                    jsonFeatureCollections.add(jsonFeatureCollection);
+                }
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return jsonFeatureCollections.stream().flatMap(j -> j.getFeatures().stream())
+                .map(CustomArea::fromJsonFeature)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -765,7 +785,7 @@ public class GraphHopper {
             initCHPreparationHandler();
             chConfigs = chPreparationHandler.getCHConfigs();
         } else {
-            chConfigs = Collections.emptyList();
+            chConfigs = emptyList();
         }
 
         ghStorage.addCHGraphs(chConfigs);

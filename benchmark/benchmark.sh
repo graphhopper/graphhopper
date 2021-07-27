@@ -1,6 +1,6 @@
 #!/bin/bash
 # usage:
-# benchmark/benchmark.sh <data_dir> <results_dir> <small_osm_map_path> <big_osm_map_path> <use_measurement_time_as_ref_time> <spatial_rule_borders_dir>
+# benchmark/benchmark.sh <data_dir> <results_dir> <small_osm_map_path> <big_osm_map_path> <use_measurement_time_as_ref_time>
 #
 # where:
 # <data_dir> = base directory used to store results
@@ -8,7 +8,6 @@
 # <small_osm_map_path> = path to osm map the measurement is run on for slow measurements
 # <big_osm_map_path> = path to osm map the measurement is run on for fast measurements
 # <use_measurement_time_as_ref_time> = true/false, false by default, meaning the git commit time will be used as reference
-# <spatial_rule_borders_dir> = base directory to load borders of spatial rules from
 
 # make this script exit if a command fails, a variable is missing etc.
 set -euo pipefail
@@ -20,7 +19,6 @@ defaultSingleResultsDir=measurements/results/$(date '+%d-%m-%Y-%s%N')/
 defaultSmallMap=core/files/andorra.osm.pbf
 defaultBigMap=core/files/andorra.osm.pbf
 defaultUseMeasurementTimeAsRefTime=false
-defaultBordersDirectory=core/files/spatialrules
 
 # this is the directory where we read/write data from/to
 DATA_DIR=${1:-$defaultDataDir}
@@ -30,7 +28,6 @@ SINGLE_RESULTS_DIR=${2:-$defaultSingleResultsDir}
 SMALL_OSM_MAP=${3:-$defaultSmallMap}
 BIG_OSM_MAP=${4:-$defaultBigMap}
 USE_MEASUREMENT_TIME_AS_REF_TIME=${5:-$defaultUseMeasurementTimeAsRefTime}
-BORDERS_DIRECTORY=${6:-$defaultBordersDirectory}
 
 # create directories
 mkdir -p ${DATA_DIR}
@@ -59,7 +56,6 @@ measurement.lm=false \
 "graph.flag_encoders=car|turn_costs=true" \
 graph.location=${TMP_DIR}measurement-small-gh \
 prepare.min_network_size=10000 \
-spatial_rules.borders_directory=${BORDERS_DIRECTORY} \
 measurement.json=true \
 measurement.count=5000 \
 measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME} \
@@ -87,7 +83,6 @@ measurement.lm.edge_based=true \
 "graph.flag_encoders=car|turn_costs=true" \
 graph.location=${TMP_DIR}measurement-big-gh \
 prepare.min_network_size=10000 \
-spatial_rules.borders_directory=${BORDERS_DIRECTORY} \
 measurement.json=true \
 measurement.count=5000 \
 measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME} \
@@ -118,7 +113,6 @@ measurement.lm.edge_based=false \
 "graph.flag_encoders=car|turn_costs=true" \
 graph.location=${TMP_DIR}measurement-big-little-custom-gh \
 prepare.min_network_size=10000 \
-spatial_rules.borders_directory=${BORDERS_DIRECTORY} \
 measurement.json=true \
 measurement.count=5000 \
 measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME} \
@@ -149,7 +143,6 @@ measurement.lm.edge_based=false \
 "graph.flag_encoders=car|turn_costs=true" \
 graph.location=${TMP_DIR}measurement-big-very-custom-gh \
 prepare.min_network_size=10000 \
-spatial_rules.borders_directory=${BORDERS_DIRECTORY} \
 measurement.json=true \
 measurement.count=5000 \
 measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME} \
