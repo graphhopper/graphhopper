@@ -635,6 +635,24 @@ public class OSMReaderTest {
         assertEquals(11119.5, d, 1e-1);
     }
 
+
+    @Test
+    public void testReadEleFromOSMNode() {
+        GraphHopper hopper = new GraphHopperFacade("test-osm-node-elevation.xml");
+        ElevationProvider provider = ElevationProvider.NOOP;
+        hopper.setElevationProvider(provider);
+        hopper.setReadElevationFromTag("my_elevation");
+        hopper.importOrLoad();
+
+        Graph graph = hopper.getGraphHopperStorage();
+        int n10 = AbstractGraphStorageTester.getIdOf(graph, 51.2492152);
+        int n30 = AbstractGraphStorageTester.getIdOf(graph, 51.2);
+
+        EdgeIteratorState edge = GHUtility.getEdge(graph, n10, n30);
+        assertEquals(Helper.createPointList3D(51.24921503475044, 9.431716451757769, 42.0, 51.3, 9.42, 25.0, 51.2, 9.4, 66.0),
+                edge.fetchWayGeometry(FetchMode.ALL));
+    }
+
     @Test
     public void testReadEleFromDataProvider() {
         GraphHopper hopper = new GraphHopperFacade("test-osm5.xml");

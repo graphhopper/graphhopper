@@ -153,6 +153,12 @@ public class GraphHopper {
         return this;
     }
 
+    public GraphHopper setReadElevationFromTag(String tag) {
+        this.readElevationFromTag = tag;
+        this.setElevation(tag != null);
+        return this;
+    }
+
     /**
      * Threads for data reading.
      */
