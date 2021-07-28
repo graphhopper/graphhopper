@@ -49,7 +49,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     private static final double MIN_WEIGHT = 1 / WEIGHT_FACTOR;
     final DataAccess shortcuts;
     final DataAccess nodesCH;
-    final int scDirMask = PrepareEncoder.getScDirMask();
     private final CHConfig chConfig;
     private final BaseGraph baseGraph;
     // CH node memory layout, there are as many entries has baseGraph.nodeCount
