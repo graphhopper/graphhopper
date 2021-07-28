@@ -99,7 +99,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     final void checkNodeId(int nodeId) {
-        assert nodeId < baseGraph.getNodes() : "node " + nodeId + " is invalid. Not in [0," + baseGraph.getNodes() + ")";
+        if (nodeId >= baseGraph.getNodes() || nodeId < 0)
+            throw new IllegalArgumentException("node " + nodeId + " is invalid. Not in [0," + baseGraph.getNodes() + ")");
     }
 
     @Override
@@ -318,7 +319,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             throw new IllegalStateException("Cannot write edge with illegal ID:" + edgeId + "; nodeA:" + nodeA + ", nodeB:" + nodeB);
 
         long edgePointer = toPointer(edgeId);
-        // TODO PERF store node as negative int if access is set and add 1 to make it working with nodeId == 0
         shortcuts.setInt(edgePointer + E_NODEA, nodeA << 1 | accessFlags & PrepareEncoder.getScFwdDir());
         shortcuts.setInt(edgePointer + E_NODEB, nodeB << 1 | (accessFlags & PrepareEncoder.getScBwdDir()) >> 1);
         return edgePointer;
