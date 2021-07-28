@@ -42,9 +42,9 @@ import static com.graphhopper.util.Helper.nf;
 public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     private static final Logger LOGGER = LoggerFactory.getLogger(CHGraphImpl.class);
     private static final double WEIGHT_FACTOR = 1000;
-    // we store (double) weights as integers (rounded to three decimal digits according to WEIGHT_FACTOR). this is the maximum integer value we can store
+    // we store double weights as integers (rounded to three decimal digits according to WEIGHT_FACTOR). this is the maximum integer value we can store
     private static final long MAX_STORED_INTEGER_WEIGHT = ((long) Integer.MAX_VALUE) << 1;
-    // the maximum (double) weight we can store. if this is exceeded the shortcut will gain infinite weight, potentially yielding connection-not-found errors
+    // the maximum double weight we can store. if this is exceeded the shortcut will gain infinite weight, potentially yielding connection-not-found errors
     private static final double MAX_WEIGHT = MAX_STORED_INTEGER_WEIGHT / WEIGHT_FACTOR;
     private static final double MIN_WEIGHT = 1 / WEIGHT_FACTOR;
     final DataAccess shortcuts;
@@ -158,8 +158,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                     " nodeB " + nodeAccess.getLat(getNodeB(edgePointer)) + "," + nodeAccess.getLon(getNodeB(edgePointer)));
             weight = MIN_WEIGHT;
         }
-        if (weight >= WEIGHT_INFINITY)
-            weightInt = (int) WEIGHT_LONG_INFINITY; // negative
+        if (weight >= MAX_WEIGHT)
+            weightInt = (int) MAX_STORED_INTEGER_WEIGHT; // negative
         else
             weightInt = (int) Math.round(weight * WEIGHT_FACTOR);
 
@@ -169,12 +169,12 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     double getShortcutWeight(long edgePointer) {
         // might be negative after converting into long -> we need to remove this sign via "& 0xFFFFFFFF". The L is necessary or prepend 8 zeros.
         long weightLong = (long) shortcuts.getInt(edgePointer + S_WEIGHT) & 0xFFFFFFFFL;
-        if (weightLong == WEIGHT_LONG_INFINITY)
+        if (weightLong == MAX_STORED_INTEGER_WEIGHT)
             return Double.POSITIVE_INFINITY;
 
         double weight = weightLong / WEIGHT_FACTOR;
-        if (weight >= WEIGHT_INFINITY)
-            throw new IllegalArgumentException("too large shortcut weight " + weight + " should get infinity marker bits " + WEIGHT_LONG_INFINITY);
+        if (weight >= MAX_WEIGHT)
+            throw new IllegalArgumentException("too large shortcut weight " + weight + " should get infinity marker bits " + MAX_STORED_INTEGER_WEIGHT);
         return weight;
     }
 
