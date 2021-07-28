@@ -42,8 +42,10 @@ import static com.graphhopper.util.Helper.nf;
 public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     private static final Logger LOGGER = LoggerFactory.getLogger(CHGraphImpl.class);
     private static final double WEIGHT_FACTOR = 1000;
-    private static final long WEIGHT_LONG_INFINITY = ((long) Integer.MAX_VALUE) << 1;
-    private static final double WEIGHT_INFINITY = WEIGHT_LONG_INFINITY / WEIGHT_FACTOR;
+    // we store (double) weights as integers (rounded to three decimal digits according to WEIGHT_FACTOR). this is the maximum integer value we can store
+    private static final long MAX_STORED_INTEGER_WEIGHT = ((long) Integer.MAX_VALUE) << 1;
+    // the maximum (double) weight we can store. if this is exceeded the shortcut will gain infinite weight, potentially yielding connection-not-found errors
+    private static final double MAX_WEIGHT = MAX_STORED_INTEGER_WEIGHT / WEIGHT_FACTOR;
     private static final double MIN_WEIGHT = 1 / WEIGHT_FACTOR;
     final DataAccess shortcuts;
     final DataAccess nodesCH;
