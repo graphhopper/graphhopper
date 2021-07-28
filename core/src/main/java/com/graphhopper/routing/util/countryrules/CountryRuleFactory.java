@@ -16,19 +16,20 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.jackson;
+package com.graphhopper.routing.util.countryrules;
 
-import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.graphhopper.util.PMap;
+import com.graphhopper.routing.ev.Country;
 
-/**
- * @see GHRequestMixIn
- */
-public interface ProfileMixIn {
-    @JsonAnySetter
-    void putHint(String key, Object value);
+public class CountryRuleFactory {
 
-    @JsonIgnore
-    PMap getHints();
+    public CountryRule getCountryRule(Country country) {
+        switch (country) {
+            case DEU:
+                return GermanyCountryRule.RULE;
+            case AUT:
+                return AustriaCountryRule.RULE;
+            default:
+                return null;
+        }
+    }
 }

@@ -30,7 +30,6 @@ import org.locationtech.jts.geom.Envelope;
 public class GraphHopperModule extends SimpleModule {
 
     public GraphHopperModule() {
-        setMixInAnnotation(GHRequest.class, GHRequestMixIn.class);
         addDeserializer(Statement.class, new StatementDeserializer());
         addSerializer(Statement.class, new StatementSerializer());
         addDeserializer(GHResponse.class, new GHResponseDeserializer());

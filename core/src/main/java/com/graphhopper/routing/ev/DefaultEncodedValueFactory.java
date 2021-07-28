@@ -30,7 +30,6 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
         if (name.isEmpty())
             throw new IllegalArgumentException("To load EncodedValue a name is required. " + string);
 
-        // creating the Country EV is done while SpatialRuleIndex is created and not here
         if (Roundabout.KEY.equals(name)) {
             enc = Roundabout.create();
         } else if (GetOffBike.KEY.equals(name)) {

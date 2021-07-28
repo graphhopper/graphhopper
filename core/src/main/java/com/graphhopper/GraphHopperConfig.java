@@ -18,6 +18,8 @@
 
 package com.graphhopper;
 
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
@@ -67,6 +69,7 @@ public class GraphHopperConfig {
         return chProfiles;
     }
 
+    @JsonProperty("profiles_ch")
     public GraphHopperConfig setCHProfiles(List<CHProfile> chProfiles) {
         this.chProfiles = chProfiles;
         return this;
@@ -76,11 +79,15 @@ public class GraphHopperConfig {
         return lmProfiles;
     }
 
+    @JsonProperty("profiles_lm")
     public GraphHopperConfig setLMProfiles(List<LMProfile> lmProfiles) {
         this.lmProfiles = lmProfiles;
         return this;
     }
 
+    // We can add explicit configuration properties to GraphHopperConfig (for example to allow lists or nested objects),
+    // everything else is stored in a HashMap
+    @JsonAnySetter
     public GraphHopperConfig putObject(String key, Object value) {
         map.putObject(key, value);
         return this;

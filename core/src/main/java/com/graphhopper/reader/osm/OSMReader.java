@@ -25,7 +25,12 @@ import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.Country;
+import com.graphhopper.routing.util.AreaIndex;
+import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.countryrules.CountryRule;
+import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.TurnCostParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
@@ -39,6 +44,7 @@ import java.io.IOException;
 import java.util.*;
 
 import static com.graphhopper.util.Helper.nf;
+import static java.util.Collections.emptyList;
 
 /**
  * This class parses an OSM xml or pbf file and creates a graph from it. It does so in a two phase
@@ -77,6 +83,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     private final LongIndexedContainer barrierNodeIds = new LongArrayList();
     private final DistanceCalc distCalc = DistanceCalcEarth.DIST_EARTH;
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
+    private CountryRuleFactory countryRuleFactory = null;
     private boolean smoothElevation = false;
     private double longEdgeSamplingDistance = 0;
     protected long zeroCounter = 0;
@@ -104,6 +111,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     private int nextPillarId = 0;
     // negative but increasing to avoid clash with custom created OSM files
     private long newUniqueOsmId = -Long.MAX_VALUE;
+    private AreaIndex<CustomArea> areaIndex;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private File osmFile;
     private Date osmDataDate;
@@ -329,11 +337,13 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         int last = getNodeMap().get(osmNodeIds.get(osmNodeIds.size() - 1));
         double firstLat = getTmpLatitude(first), firstLon = getTmpLongitude(first);
         double lastLat = getTmpLatitude(last), lastLon = getTmpLongitude(last);
+        GHPoint estimatedCenter = null;
         if (!Double.isNaN(firstLat) && !Double.isNaN(firstLon) && !Double.isNaN(lastLat) && !Double.isNaN(lastLon)) {
             double estimatedDist = distCalc.calcDist(firstLat, firstLon, lastLat, lastLon);
             // Add artificial tag for the estimated distance and center
             way.setTag("estimated_distance", estimatedDist);
-            way.setTag("estimated_center", new GHPoint((firstLat + lastLat) / 2, (firstLon + lastLon) / 2));
+            estimatedCenter = new GHPoint((firstLat + lastLat) / 2, (firstLon + lastLon) / 2);
+            way.setTag("estimated_center", estimatedCenter);
         }
 
         if (way.getTag("duration") != null) {
@@ -346,6 +356,29 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             }
         }
 
+        List<CustomArea> customAreas = estimatedCenter == null || areaIndex == null
+                ? emptyList()
+                : areaIndex.query(estimatedCenter.lat, estimatedCenter.lon);
+        // special handling for countries: since they are built-in with GraphHopper they are always fed to the encodingmanager
+        Country country = Country.MISSING;
+        for (CustomArea customArea : customAreas) {
+            Object countryCode = customArea.getProperties().get("ISO3166-1:alpha3");
+            if (countryCode == null)
+                continue;
+            if (country != Country.MISSING)
+                LOGGER.warn("Multiple countries found for way {}: {}, {}", way.getId(), country, countryCode);
+            country = Country.valueOf(countryCode.toString());
+        }
+        way.setTag("country", country);
+
+        if (countryRuleFactory != null) {
+            CountryRule countryRule = countryRuleFactory.getCountryRule(country);
+            if (countryRule != null)
+                way.setTag("country_rule", countryRule);
+        }
+
+        // also add all custom areas as artificial tag
+        way.setTag("custom_areas", customAreas);
         IntsRef edgeFlags = encodingManager.handleWayTags(way, acceptWay, relationFlags);
         if (edgeFlags.isEmpty())
             return;
@@ -917,6 +950,11 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         osmWayIdToRouteWeightMap.put(osmId, relFlagsAsLong);
     }
 
+    public OSMReader setAreaIndex(AreaIndex<CustomArea> areaIndex) {
+        this.areaIndex = areaIndex;
+        return this;
+    }
+
     public OSMReader setWayPointMaxDistance(double maxDist) {
         doSimplify = maxDist > 0;
         simplifyAlgo.setMaxDistance(maxDist);
@@ -930,6 +968,11 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
     public OSMReader setSmoothElevation(boolean smoothElevation) {
         this.smoothElevation = smoothElevation;
+        return this;
+    }
+
+    public OSMReader setCountryRuleFactory(CountryRuleFactory countryRuleFactory) {
+        this.countryRuleFactory = countryRuleFactory;
         return this;
     }
 
