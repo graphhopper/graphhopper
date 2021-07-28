@@ -1,6 +1,7 @@
-import { DateInput, Select, TextInput, TimeInput } from "../components/Inputs.js";
+import {DateInput, Select, TextInput, TimeInput} from "../components/Inputs.js";
 import Point from "../../data/Point.js";
 import {TimeOption} from "../../data/Query.js";
+
 export default (({
                      search,
                      onSearchChange
@@ -10,20 +11,6 @@ export default (({
         onSearchChange: onSearchChange
     });
 });
-const options = [{
-    value: TimeOption.DEPARTURE,
-    label: "Departure at"
-}, {
-    value: TimeOption.ARRIVAL,
-    label: "Arrival at"
-}];
-const trueFalse = [{
-    value: "true",
-    label: "true"
-}, {
-    value: "false",
-    label: "false"
-}];
 const SearchActionType = {
     FROM: "SearchActionType_FROM",
     TO: "SearchActionType_TO",
@@ -62,7 +49,13 @@ class SearchInput extends React.Component {
         }, React.createElement(Select, {
             value: this.props.search.timeOption,
             label: "Time",
-            options: options,
+            options: [{
+                value: TimeOption.DEPARTURE,
+                label: "Departure at"
+            }, {
+                value: TimeOption.ARRIVAL,
+                label: "Arrival at"
+            }],
             onChange: this.onChange,
             actionType: SearchActionType.TIME_OPTION
         }), this.props.search.timeOption != TimeOption.NOW ? React.createElement("div", {
@@ -84,11 +77,18 @@ class SearchInput extends React.Component {
             "div",
             null,
             React.createElement(Select, {
-                value: this.props.search.rangeQuery,
-                label: "Range query",
-                options: trueFalse,
+                value: this.props.search.accessProfile,
+                label: "Access profile",
+                options: this.accessEgressProfileOptions(),
                 onChange: this.handleInputChange,
-                actionType: "rangeQuery"
+                actionType: "accessProfile"
+            }),
+            React.createElement(Select, {
+                value: this.props.search.egressProfile,
+                label: "Egress profile",
+                options: this.accessEgressProfileOptions(),
+                onChange: this.handleInputChange,
+                actionType: "egressProfile"
             }),
             React.createElement(
                 TextInput,
@@ -111,11 +111,30 @@ class SearchInput extends React.Component {
             React.createElement(Select, {
                 value: this.props.search.ignoreTransfers,
                 label: "Ignore # transfers as criterion",
-                options: trueFalse,
+                options: [{
+                    value: "true",
+                    label: "true"
+                }, {
+                    value: "false",
+                    label: "false"
+                }],
                 onChange: this.handleInputChange,
                 actionType: "ignoreTransfers"
             })
         ) : ""));
+    }
+
+    accessEgressProfileOptions() {
+        return this.props.search.info.profiles
+            .filter(function (profile) {
+                return profile.name != "pt";
+            })
+            .map(function (profile) {
+                return {
+                    value: profile.name,
+                    label: profile.name
+                }
+            });
     }
 
     handleInputChange(action) {
