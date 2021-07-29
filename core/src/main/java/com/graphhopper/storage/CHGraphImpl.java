@@ -173,7 +173,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         double weight = weightLong / WEIGHT_FACTOR;
         if (weight >= MAX_WEIGHT)
-            throw new IllegalArgumentException("too large shortcut weight " + weight + " should get infinity marker bits " + MAX_STORED_INTEGER_WEIGHT);
+            throw new IllegalArgumentException("too large shortcut weight " + weight + " should get infinity marker bits "
+                    + MAX_STORED_INTEGER_WEIGHT + " at edge pointer: " + edgePointer);
         return weight;
     }
 
