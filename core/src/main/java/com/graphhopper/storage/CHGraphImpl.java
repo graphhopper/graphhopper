@@ -59,6 +59,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     private int shortcutEntryBytes;
     private int shortcutCount = 0;
     private boolean isReadyForContraction;
+    // some shortcuts exceed the maximum storable weight and we count them here
+    private int numShortcutsExceedingWeight;
 
     CHGraphImpl(CHConfig chConfig, Directory dir, final BaseGraph baseGraph, int segmentSize) {
         if (chConfig.getWeighting() == null)
@@ -157,9 +159,10 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                     " nodeB " + nodeAccess.getLat(getNodeB(edgePointer)) + "," + nodeAccess.getLon(getNodeB(edgePointer)));
             weight = MIN_WEIGHT;
         }
-        if (weight >= MAX_WEIGHT)
+        if (weight >= MAX_WEIGHT) {
             weightInt = (int) MAX_STORED_INTEGER_WEIGHT; // negative
-        else
+            numShortcutsExceedingWeight++;
+        } else
             weightInt = (int) Math.round(weight * WEIGHT_FACTOR);
 
         shortcuts.setInt(edgePointer + S_WEIGHT, weightInt);
@@ -344,16 +347,16 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         nodesCH.setHeader(0 * 4, isReadyForContraction ? 1 : 0);
     }
 
-    protected int loadEdgesHeader() {
+    void loadEdgesHeader() {
         shortcutCount = shortcuts.getHeader(0 * 4);
         shortcutEntryBytes = shortcuts.getHeader(1 * 4);
-        return 3;
+        numShortcutsExceedingWeight = shortcuts.getHeader(2 * 4);
     }
 
-    int setEdgesHeader() {
+    void setEdgesHeader() {
         shortcuts.setHeader(0 * 4, shortcutCount);
         shortcuts.setHeader(1 * 4, shortcutEntryBytes);
-        return 3;
+        shortcuts.setHeader(2 * 4, numShortcutsExceedingWeight);
     }
 
     @Override
@@ -428,6 +431,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         return "CHGraph|" + chConfig.getName() + "|" + chConfig.getTraversalMode();
     }
 
+    @Override
     public void debugPrint() {
         final int printMax = 100;
         System.out.println("nodesCH:");
@@ -466,6 +470,11 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         if (shortcutCount > printMax) {
             System.out.printf(Locale.ROOT, " ... %d more shortcut edges\n", shortcutCount - printMax);
         }
+    }
+
+    @Override
+    public int getNumShortcutsExceedingWeight() {
+        return numShortcutsExceedingWeight;
     }
 
     private int getNodeA(long edgePointer) {

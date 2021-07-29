@@ -133,6 +133,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
 
     private void logFinalGraphStats() {
         int edgeCount = chGraph.getOriginalEdges();
+        logger.info("shortcuts that exceed maximum weight: {}", chGraph.getNumShortcutsExceedingWeight());
         logger.info("took: {}s, graph now - num edges: {}, num nodes: {}, num shortcuts: {}",
                 (int) allSW.getSeconds(), nf(edgeCount), nf(nodes), nf(chGraph.getEdges() - edgeCount));
     }
