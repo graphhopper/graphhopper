@@ -166,7 +166,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     double getShortcutWeight(long edgePointer) {
-        // might be negative after converting into long -> we need to remove this sign via "& 0xFFFFFFFF". The L is necessary or prepend 8 zeros.
+        // If the value is too large (> Integer.MAX_VALUE) the `int` is negative. Converted to `long` the JVM fills the
+        // high bits with 1's which we remove via "& 0xFFFFFFFFL" to get the unsigned value. (The L is necessary or prepend 8 zeros.)
         long weightLong = (long) shortcuts.getInt(edgePointer + S_WEIGHT) & 0xFFFFFFFFL;
         if (weightLong == MAX_STORED_INTEGER_WEIGHT)
             return Double.POSITIVE_INFINITY;
