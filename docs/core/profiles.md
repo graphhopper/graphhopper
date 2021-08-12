@@ -75,7 +75,7 @@ profiles:
       "speed": [
         {
           "if": "road_class == MOTORWAY",
-          "multiply_by": 80
+          "multiply_by": 0.8
         }
       ]               
     }
