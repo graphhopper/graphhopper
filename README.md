@@ -23,7 +23,7 @@ We even have [good first issues](https://github.com/graphhopper/graphhopper/issu
 
 To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read through our documentation and install the GraphHopper Web Service locally.
 
- * 3.x: [documentation](https://github.com/graphhopper/graphhopper/blob/3.x/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-3.0.jar), [announcement](https://www.graphhopper.com/blog/2021/05/18/graphhopper-routing-engine-3-0-released/)
+ * 3.x: [documentation](https://github.com/graphhopper/graphhopper/blob/3.x/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-3.2.jar), [announcement](https://www.graphhopper.com/blog/2021/05/18/graphhopper-routing-engine-3-0-released/)
  * unstable master: [documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)
 
 <details><summary>Click to see older releases</summary>
@@ -45,7 +45,7 @@ To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read 
 To install the [GraphHopper Maps](https://graphhopper.com/maps/) UI and the web service locally you [need a JVM](https://adoptopenjdk.net/) (>= Java 8) and do:
 
 ```bash
-wget https://graphhopper.com/public/releases/graphhopper-web-3.0.jar https://raw.githubusercontent.com/graphhopper/graphhopper/3.x/config-example.yml http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
+wget https://graphhopper.com/public/releases/graphhopper-web-3.2.jar https://raw.githubusercontent.com/graphhopper/graphhopper/3.x/config-example.yml http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
 java -Ddw.graphhopper.datareader.file=berlin-latest.osm.pbf -jar *.jar server config-example.yml
 ```
 
@@ -207,7 +207,8 @@ Here is a list of the more detailed features:
  * Can apply [real time changes to edge weights](https://graphhopper.com/blog/2015/04/08/visualize-and-handle-traffic-information-with-graphhopper-in-real-time-for-cologne-germany-koln/) (flexible and hybrid mode only)
  * [Alternative routes](https://discuss.graphhopper.com/t/alternative-routes/424)
  * [Turn costs and restrictions](./docs/core/turn-restrictions.md)
- * Country specific routing via SpatialRules
+ * Country specific routing via country rules
+ * Allows customizing routing behavior using custom areas  
  * The core uses only a few dependencies (hppc, jts, janino and slf4j)
  * Scales from small indoor-sized to world-wide-sized graphs
  * Finds nearest point on street e.g. to get elevation or 'snap to road' or being used as spatial index (see [#1485](https://github.com/graphhopper/graphhopper/pull/1485))

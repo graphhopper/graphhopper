@@ -16,19 +16,23 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.jackson;
+package com.graphhopper.routing.util.countryrules;
 
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
+import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.Country;
+import com.graphhopper.routing.ev.RoadAccess;
+import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.util.TransportationMode;
 
-public class GraphHopperConfigModule extends SimpleModule {
-
-    public GraphHopperConfigModule() {
-        setMixInAnnotation(Profile.class, ProfileMixIn.class);
-        setMixInAnnotation(LMProfile.class, LMProfileMixIn.class);
-        setMixInAnnotation(GraphHopperConfig.class, GraphHopperConfigMixIn.class);
+/**
+ * GraphHopper uses country rules to adjust the routing behavior based on the country an edge is located in
+ */
+public interface CountryRule {
+    default double getMaxSpeed(ReaderWay readerWay, TransportationMode transportationMode, double currentMaxSpeed) {
+        return currentMaxSpeed;
     }
 
+    default RoadAccess getAccess(ReaderWay readerWay, TransportationMode transportationMode, RoadAccess currentRoadAccess) {
+        return currentRoadAccess;
+    }
 }

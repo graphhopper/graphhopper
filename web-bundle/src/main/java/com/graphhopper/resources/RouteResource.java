@@ -19,7 +19,7 @@ package com.graphhopper.resources;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopperAPI;
+import com.graphhopper.GraphHopper;
 import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.http.GHPointParam;
 import com.graphhopper.jackson.MultiException;
@@ -56,12 +56,12 @@ public class RouteResource {
 
     private static final Logger logger = LoggerFactory.getLogger(RouteResource.class);
 
-    private final GraphHopperAPI graphHopper;
+    private final GraphHopper graphHopper;
     private final ProfileResolver profileResolver;
     private final Boolean hasElevation;
 
     @Inject
-    public RouteResource(GraphHopperAPI graphHopper, ProfileResolver profileResolver, @Named("hasElevation") Boolean hasElevation) {
+    public RouteResource(GraphHopper graphHopper, ProfileResolver profileResolver, @Named("hasElevation") Boolean hasElevation) {
         this.graphHopper = graphHopper;
         this.profileResolver = profileResolver;
         this.hasElevation = hasElevation;

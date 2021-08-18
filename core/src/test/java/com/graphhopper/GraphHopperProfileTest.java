@@ -23,7 +23,6 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.jackson.ProfileMixIn;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import org.junit.jupiter.api.Test;
 
@@ -38,8 +37,7 @@ public class GraphHopperProfileTest {
 
     @Test
     public void deserialize() throws IOException {
-        ObjectMapper objectMapper = Jackson.newObjectMapper()
-                .addMixIn(Profile.class, ProfileMixIn.class);
+        ObjectMapper objectMapper = Jackson.newObjectMapper();
         String json = "{\"name\":\"my_car\",\"vehicle\":\"car\",\"weighting\":\"fastest\",\"turn_costs\":true,\"foo\":\"bar\",\"baz\":\"buzz\"}";
         Profile profile = objectMapper.readValue(json, Profile.class);
         assertEquals("my_car", profile.getName());

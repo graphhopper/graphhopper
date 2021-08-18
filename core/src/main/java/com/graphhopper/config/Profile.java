@@ -18,6 +18,8 @@
 
 package com.graphhopper.config;
 
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
@@ -87,10 +89,12 @@ public class Profile {
         return this;
     }
 
+    @JsonIgnore
     public PMap getHints() {
         return hints;
     }
 
+    @JsonAnySetter
     public Profile putHint(String key, Object value) {
         this.hints.putObject(key, value);
         return this;

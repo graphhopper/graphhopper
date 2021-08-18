@@ -50,20 +50,17 @@ public class MultiCriteriaLabelSetting {
     private final EnumEncodedValue<GtfsStorage.EdgeType> typeEnc;
     private final IntObjectMap<List<Label>> fromMap;
     private final PriorityQueue<Label> fromHeap;
-    private long maxProfileDuration;
-    private final int maxRelaxedNodes;
+    private final long maxProfileDuration;
     private final boolean reverse;
     private final boolean mindTransfers;
     private final boolean profileQuery;
-    private int relaxedNodes;
-    private int exploredNodes;
     private final GraphExplorer explorer;
     private double betaTransfers;
-    private double betaWalkTime = 1.0;
+    private double betaStreetTime = 1.0;
+    private long limitTripTime = Long.MAX_VALUE;
     private long limitStreetTime = Long.MAX_VALUE;
 
-    public MultiCriteriaLabelSetting(GraphExplorer explorer, PtEncodedValues flagEncoder, boolean reverse, boolean mindTransfers, boolean profileQuery, long maxProfileDuration, int maxRelaxedNodes, List<Label> solutions) {
-        this.maxRelaxedNodes = maxRelaxedNodes;
+    public MultiCriteriaLabelSetting(GraphExplorer explorer, PtEncodedValues flagEncoder, boolean reverse, boolean mindTransfers, boolean profileQuery, long maxProfileDuration, List<Label> solutions) {
         this.explorer = explorer;
         this.reverse = reverse;
         this.mindTransfers = mindTransfers;
@@ -75,7 +72,7 @@ public class MultiCriteriaLabelSetting {
         queueComparator = Comparator
                 .comparingLong(this::weight)
                 .thenComparingLong(l -> l.nTransfers)
-                .thenComparingLong(l -> l.walkTime)
+                .thenComparingLong(l -> l.streetTime)
                 .thenComparingLong(l -> departureTimeCriterion(l) != null ? departureTimeCriterion(l) : 0)
                 .thenComparingLong(l -> l.impossible ? 1 : 0);
         fromHeap = new PriorityQueue<>(queueComparator);
@@ -84,19 +81,15 @@ public class MultiCriteriaLabelSetting {
 
     public Stream<Label> calcLabels(int from, Instant startTime) {
         this.startTime = startTime.toEpochMilli();
-        return StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from), false)
-                //.limit(maxVisitedNodes)
-                .peek(label -> relaxedNodes++);
+        return StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from), false);
     }
 
-    // experimental
     void setBetaTransfers(double betaTransfers) {
         this.betaTransfers = betaTransfers;
     }
 
-    // experimental
-    void setBetaWalkTime(double betaWalkTime) {
-        this.betaWalkTime = betaWalkTime;
+    void setBetaStreetTime(double betaWalkTime) {
+        this.betaStreetTime = betaWalkTime;
     }
 
     private class MultiCriteriaLabelSettingSpliterator extends Spliterators.AbstractSpliterator<Label> {
@@ -120,7 +113,6 @@ public class MultiCriteriaLabelSetting {
                 Label label = fromHeap.poll();
                 action.accept(label);
                 explorer.exploreEdgesAround(label).forEach(edge -> {
-                    exploredNodes++;
                     long nextTime;
                     if (reverse) {
                         nextTime = label.currentTime - explorer.calcTravelTimeMillis(edge, label.currentTime);
@@ -132,15 +124,17 @@ public class MultiCriteriaLabelSetting {
                     GtfsStorage.EdgeType edgeType = edge.get(typeEnc);
                     if (!reverse && (edgeType == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK || edgeType == GtfsStorage.EdgeType.WAIT)) {
                         if (label.nTransfers == 0) {
-                            firstPtDepartureTime = nextTime - label.walkTime;
+                            firstPtDepartureTime = nextTime - label.streetTime;
                         }
                     } else if (reverse && (edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK || edgeType == GtfsStorage.EdgeType.WAIT_ARRIVAL)) {
                         if (label.nTransfers == 0) {
-                            firstPtDepartureTime = nextTime + label.walkTime;
+                            firstPtDepartureTime = nextTime + label.streetTime;
                         }
                     }
-                    long walkTime = label.walkTime + (edgeType == GtfsStorage.EdgeType.HIGHWAY || edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT ? ((reverse ? -1 : 1) * (nextTime - label.currentTime)) : 0);
+                    long walkTime = label.streetTime + (edgeType == GtfsStorage.EdgeType.HIGHWAY || edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT ? ((reverse ? -1 : 1) * (nextTime - label.currentTime)) : 0);
                     if (walkTime > limitStreetTime)
+                        return;
+                    if (Math.abs(nextTime - startTime) > limitTripTime)
                         return;
                     boolean impossible = label.impossible
                             || explorer.isBlocked(edge)
@@ -259,7 +253,7 @@ public class MultiCriteriaLabelSetting {
     }
 
     long weight(Label label) {
-        return timeSinceStartTime(label) + (long) (label.nTransfers * betaTransfers) + (long) (label.walkTime * (betaWalkTime - 1.0));
+        return timeSinceStartTime(label) + (long) (label.nTransfers * betaTransfers) + (long) (label.streetTime * (betaStreetTime - 1.0));
     }
 
     long timeSinceStartTime(Label label) {
@@ -270,24 +264,12 @@ public class MultiCriteriaLabelSetting {
         return label.departureTime != null ? (reverse ? -1 : 1) * (label.departureTime - startTime) : null;
     }
 
-    private long travelTimeCriterion(Label label) {
-        if (label.departureTime == null) {
-            return label.walkTime;
-        } else {
-            return (reverse ? -1 : 1) * (label.currentTime - label.departureTime);
-        }
+    public void setLimitTripTime(long limitTripTime) {
+        this.limitTripTime = limitTripTime;
     }
 
     public void setLimitStreetTime(long limitStreetTime) {
         this.limitStreetTime = limitStreetTime;
-    }
-
-    int getRelaxedNodes() {
-        return relaxedNodes;
-    }
-
-    int getExploredNodes() {
-        return exploredNodes;
     }
 
 }

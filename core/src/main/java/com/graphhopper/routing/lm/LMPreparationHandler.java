@@ -22,9 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.routing.ch.CHPreparationHandler;
-import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
+import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.LocationIndex;
@@ -42,6 +40,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import static com.graphhopper.util.Helper.*;
 
@@ -65,7 +64,7 @@ public class LMPreparationHandler {
     private int preparationThreads;
     private ExecutorService threadPool;
     private boolean logDetails = false;
-    private SpatialRuleLookup ruleLookup;
+    private AreaIndex<SplitArea> areaIndex;
 
     public LMPreparationHandler() {
         setPreparationThreads(1);
@@ -95,14 +94,10 @@ public class LMPreparationHandler {
         String splitAreaLocation = ghConfig.getString(Landmark.PREPARE + "split_area_location", "");
         JsonFeatureCollection landmarkSplittingFeatureCollection = loadLandmarkSplittingFeatureCollection(splitAreaLocation);
         if (landmarkSplittingFeatureCollection != null && !landmarkSplittingFeatureCollection.getFeatures().isEmpty()) {
-            ruleLookup = SpatialRuleLookupBuilder.buildIndex(
-                    Collections.singletonList(landmarkSplittingFeatureCollection), "area",
-                    (id, polygons) -> new AbstractSpatialRule(polygons) {
-                        @Override
-                        public String getId() {
-                            return id;
-                        }
-                    });
+            List<SplitArea> splitAreas = landmarkSplittingFeatureCollection.getFeatures().stream()
+                    .map(SplitArea::fromJsonFeature)
+                    .collect(Collectors.toList());
+            areaIndex = new AreaIndex<>(splitAreas);
         }
     }
 
@@ -212,10 +207,10 @@ public class LMPreparationHandler {
      */
     public boolean loadOrDoWork(final StorableProperties properties, final boolean closeEarly) {
         for (PrepareLandmarks prep : preparations) {
-            // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
-            if (ruleLookup != null && !ruleLookup.getRules().isEmpty()) {
-                prep.setSpatialRuleLookup(ruleLookup);
-            }
+            // using the area index we separate certain areas from each other but we do not change the base graph for this
+            // so that other algorithms still can route between these areas
+            if (areaIndex != null)
+                prep.setAreaIndex(areaIndex);
         }
         ExecutorCompletionService<String> completionService = new ExecutorCompletionService<>(threadPool);
         int counter = 0;

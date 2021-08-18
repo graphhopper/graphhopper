@@ -62,7 +62,10 @@ public class PtRouteResource {
                             @QueryParam("pt.ignore_transfers") Boolean ignoreTransfers,
                             @QueryParam("pt.profile") Boolean profileQuery,
                             @QueryParam("pt.limit_solutions") Integer limitSolutions,
-                            @QueryParam("pt.limit_street_time") DurationParam limitStreetTime) {
+                            @QueryParam("pt.limit_trip_time") DurationParam limitTripTime,
+                            @QueryParam("pt.limit_street_time") DurationParam limitStreetTime,
+                            @QueryParam("pt.access_profile") String accessProfile,
+                            @QueryParam("pt.egress_profile") String egressProfile) {
         StopWatch stopWatch = new StopWatch().start();
         List<GHLocation> points = requestPoints.stream().map(AbstractParam::get).collect(toList());
         Instant departureTime = departureTimeParam.get();
@@ -74,7 +77,10 @@ public class PtRouteResource {
         Optional.ofNullable(ignoreTransfers).ifPresent(request::setIgnoreTransfers);
         Optional.ofNullable(localeStr).ifPresent(s -> request.setLocale(Helper.getLocale(s)));
         Optional.ofNullable(limitSolutions).ifPresent(request::setLimitSolutions);
+        Optional.ofNullable(limitTripTime.get()).ifPresent(request::setLimitTripTime);
         Optional.ofNullable(limitStreetTime.get()).ifPresent(request::setLimitStreetTime);
+        Optional.ofNullable(accessProfile).ifPresent(request::setAccessProfile);
+        Optional.ofNullable(egressProfile).ifPresent(request::setEgressProfile);
 
         GHResponse route = ptRouter.route(request);
         return ResponsePathSerializer.jsonObject(route, true, true, false, false, stopWatch.stop().getMillis());

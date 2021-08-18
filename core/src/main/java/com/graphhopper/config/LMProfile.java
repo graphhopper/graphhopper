@@ -18,6 +18,8 @@
 
 package com.graphhopper.config;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import static com.graphhopper.config.Profile.validateProfileName;
 
 /**
@@ -68,6 +70,7 @@ public class LMProfile {
         return maximumLMWeight;
     }
 
+    @JsonProperty("maximum_lm_weight")
     public LMProfile setMaximumLMWeight(double maximumLMWeight) {
         if (usesOtherPreparation())
             throw new IllegalArgumentException("Using non-default maximum_lm_weight and preparation_profile at the same time is not allowed");

@@ -20,42 +20,28 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.IntEncodedValue;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleSet;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.Country;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.List;
 
-/**
- * This parser stores the spatialId in the edgeFlags based on previously defined areas.
- */
-public class SpatialRuleParser implements TagParser {
+public class CountryParser implements TagParser {
+    private final EnumEncodedValue<Country> countryEnc;
 
-    private final IntEncodedValue spatialRuleEnc;
-    private SpatialRuleLookup spatialRuleLookup;
-
-    public SpatialRuleParser(SpatialRuleLookup spatialRuleLookup, IntEncodedValue spatialRuleEnc) {
-        this.spatialRuleLookup = spatialRuleLookup;
-        if (spatialRuleEnc == null)
-            throw new IllegalStateException("SpatialRuleLookup was not initialized before building the EncodingManager");
-        this.spatialRuleEnc = spatialRuleEnc;
+    public CountryParser() {
+        this.countryEnc = Country.create();
     }
 
     @Override
     public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(spatialRuleEnc);
+        registerNewEncodedValue.add(countryEnc);
     }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
-        GHPoint estimatedCenter = way.getTag("estimated_center", null);
-        if (estimatedCenter != null) {
-            SpatialRuleSet ruleSet = spatialRuleLookup.lookupRules(estimatedCenter.lat, estimatedCenter.lon);
-            way.setTag("spatial_rule_set", ruleSet);
-            spatialRuleEnc.setInt(false, edgeFlags, ruleSet.getSpatialId());
-        }
+        Country country = way.getTag("country", Country.MISSING);
+        countryEnc.setEnum(false, edgeFlags, country);
         return edgeFlags;
     }
 }

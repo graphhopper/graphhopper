@@ -38,7 +38,6 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.details.PathDetailsFromEdges;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -72,8 +71,13 @@ class TripFromLabel {
         this.pathDetailsBuilderFactory = pathDetailsBuilderFactory;
     }
 
-    ResponsePath createResponsePath(Translation tr, PointList waypoints, Graph queryGraph, Weighting accessEgressWeighting, List<Label.Transition> solution, List<String> requestedPathDetails) {
-        final List<Trip.Leg> legs = buildLegs(tr, queryGraph, accessEgressWeighting, solution, requestedPathDetails);
+    ResponsePath createResponsePath(Translation tr, PointList waypoints, Graph queryGraph, Weighting accessWeighting, Weighting egressWeighting, List<Label.Transition> solution, List<String> requestedPathDetails) {
+        final List<List<Label.Transition>> partitions = parsePathToPartitions(solution);
+
+        final List<Trip.Leg> legs = new ArrayList<>();
+        for (int i = 0; i < partitions.size(); i++) {
+            legs.addAll(parsePartitionToLegs(partitions.get(i), queryGraph, i == partitions.size() - 1 ? egressWeighting : accessWeighting, tr, requestedPathDetails));
+        }
 
         if (legs.size() > 1 && legs.get(0) instanceof Trip.WalkLeg) {
             final Trip.WalkLeg accessLeg = (Trip.WalkLeg) legs.get(0);
@@ -177,11 +181,6 @@ class TripFromLabel {
             pathDetail.setLast(p.getLast() + previousPointsCount);
             return pathDetail;
         }).collect(Collectors.toList()));
-    }
-
-    private List<Trip.Leg> buildLegs(Translation tr, Graph queryGraph, Weighting weighting, List<Label.Transition> path, List<String> requestedPathDetails) {
-        final List<List<Label.Transition>> partitions = parsePathToPartitions(path);
-        return partitions.stream().flatMap(partition -> parsePartitionToLegs(partition, queryGraph, weighting, tr, requestedPathDetails).stream()).collect(Collectors.toList());
     }
 
     private List<List<Label.Transition>> parsePathToPartitions(List<Label.Transition> path) {

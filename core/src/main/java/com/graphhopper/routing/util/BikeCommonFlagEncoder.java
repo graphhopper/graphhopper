@@ -472,12 +472,13 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             weightToPrioMap.put(100d, PREFER.getValue());
         }
 
+        if (way.hasTag("bicycle", "use_sidepath")) {
+            weightToPrioMap.put(100d, REACH_DESTINATION.getValue());
+        }
+
         if (pushingSectionsHighways.contains(highway)
                 || "parking_aisle".equals(service)) {
             int pushingSectionPrio = SLIGHT_AVOID.getValue();
-            if (way.hasTag("bicycle", "use_sidepath")) {
-                pushingSectionPrio = PREFER.getValue();
-            }
             if (way.hasTag("bicycle", "yes") || way.hasTag("bicycle", "permissive"))
                 pushingSectionPrio = PREFER.getValue();
             if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official"))

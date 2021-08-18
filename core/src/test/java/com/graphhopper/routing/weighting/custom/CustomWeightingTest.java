@@ -213,14 +213,28 @@ class CustomWeightingTest {
     }
 
     @Test
-    public void testArea() throws Exception {
+    public void testRoadClass() throws Exception {
         EdgeIteratorState primary = graph.edge(0, 1).setDistance(10).
                 set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80).set(accessEnc, true, true);
         EdgeIteratorState secondary = graph.edge(1, 2).setDistance(10).
-                set(roadClassEnc, SECONDARY).set(avSpeedEnc, 70).set(accessEnc, true, true);
-
+                set(roadClassEnc, SECONDARY).set(avSpeedEnc, 80).set(accessEnc, true, true);
         CustomModel vehicleModel = new CustomModel();
-        vehicleModel.addToPriority(If("road_class == PRIMARY", MULTIPLY, 1.0));
+        vehicleModel.addToPriority(If("road_class == PRIMARY", MULTIPLY, 0.5));
+        assertEquals(1.6, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
+        assertEquals(1.15, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
+    }
+
+    @Test
+    public void testArea() throws Exception {
+        EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(10).
+                set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80).set(accessEnc, true, true);
+        EdgeIteratorState edge2 = graph.edge(2, 3).setDistance(10).
+                set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80).set(accessEnc, true, true);
+        graph.getNodeAccess().setNode(0, 50.0120, 11.582);
+        graph.getNodeAccess().setNode(1, 50.0125, 11.585);
+        graph.getNodeAccess().setNode(2, 40.0, 8.0);
+        graph.getNodeAccess().setNode(3, 40.1, 8.1);
+        CustomModel vehicleModel = new CustomModel();
         vehicleModel.addToPriority(If("in_custom1", MULTIPLY, 0.5));
 
         ObjectMapper om = new ObjectMapper().registerModule(new JtsModule());
@@ -228,8 +242,9 @@ class CustomWeightingTest {
                 "[[[11.5818,50.0126], [11.5818,50.0119], [11.5861,50.0119], [11.5861,50.0126], [11.5818,50.0126]]] }}", JsonFeature.class);
         vehicleModel.getAreas().put("custom1", json);
 
-        assertEquals(1.15, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
-        assertEquals(1.21, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
+        // edge1 is located within the area custom1, edge2 is not
+        assertEquals(1.6, createWeighting(vehicleModel).calcEdgeWeight(edge1, false), 0.01);
+        assertEquals(1.15, createWeighting(vehicleModel).calcEdgeWeight(edge2, false), 0.01);
     }
 
     @Test

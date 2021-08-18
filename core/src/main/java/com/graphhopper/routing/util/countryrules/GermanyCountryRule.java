@@ -15,55 +15,42 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.spatialrules.countries;
 
-import java.util.List;
+package com.graphhopper.routing.util.countryrules;
 
-import org.locationtech.jts.geom.Polygon;
-
-import com.graphhopper.routing.ev.Country;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
-import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.TransportationMode;
 
 /**
- * Defines the default rules for German roads
- *
  * @author Robin Boldt
  */
-public class GermanySpatialRule extends AbstractSpatialRule {
-    
-    public GermanySpatialRule(List<Polygon> borders) {
-        super(borders);
-    }
+public class GermanyCountryRule implements CountryRule {
+    public final static GermanyCountryRule RULE = new GermanyCountryRule();
 
     /**
-     * Germany contains roads with no speed limit. For these roads, this method
+     * In Germany there are roads without a speed limit. For these roads, this method
      * will return {@link MaxSpeed#UNLIMITED_SIGN_SPEED}.
      * <p>
      * Your implementation should be able to handle these cases.
      */
     @Override
-    public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
-        if (!Double.isNaN(currentMaxSpeed) || !transport.isMotorVehicle()) {
+    public double getMaxSpeed(ReaderWay readerWay, TransportationMode transportationMode, double currentMaxSpeed) {
+        if (!Double.isNaN(currentMaxSpeed) || !transportationMode.isMotorVehicle())
             return currentMaxSpeed;
-        }
-        
+
+        RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
         // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
         switch (roadClass) {
             case MOTORWAY:
             case TRUNK:
                 return MaxSpeed.UNLIMITED_SIGN_SPEED;
             case PRIMARY:
-                return 100;
             case SECONDARY:
-                return 100;
             case TERTIARY:
-                return 100;
             case UNCLASSIFIED:
-                return 100;
             case RESIDENTIAL:
                 return 100;
             case LIVING_STREET:
@@ -72,33 +59,25 @@ public class GermanySpatialRule extends AbstractSpatialRule {
                 return Double.NaN;
         }
     }
-    
+
     @Override
-    public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
-        if (currentRoadAccess != RoadAccess.YES) {
+    public RoadAccess getAccess(ReaderWay readerWay, TransportationMode transportationMode, RoadAccess currentRoadAccess) {
+        if (currentRoadAccess != RoadAccess.YES)
             return currentRoadAccess;
-        }
-        
-        if (!transport.isMotorVehicle()) {
+        if (!transportationMode.isMotorVehicle())
             return RoadAccess.YES;
-        }
-
+        RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
         switch (roadClass) {
-        case TRACK:
-            return RoadAccess.DESTINATION;
-        case PATH:
-        case BRIDLEWAY:
-        case CYCLEWAY:
-        case FOOTWAY:
-        case PEDESTRIAN:
-            return RoadAccess.NO;
-        default:
-            return RoadAccess.YES;
+            case TRACK:
+                return RoadAccess.DESTINATION;
+            case PATH:
+            case BRIDLEWAY:
+            case CYCLEWAY:
+            case FOOTWAY:
+            case PEDESTRIAN:
+                return RoadAccess.NO;
+            default:
+                return RoadAccess.YES;
         }
-    }
-
-    @Override
-    public String getId() {
-        return Country.DEU.toString();
     }
 }

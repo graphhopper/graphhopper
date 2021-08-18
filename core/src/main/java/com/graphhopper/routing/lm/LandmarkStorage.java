@@ -34,9 +34,7 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleSet;
+import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
@@ -94,7 +92,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     private int minimumNodes;
     private final SubnetworkStorage subnetworkStorage;
     private List<LandmarkSuggestion> landmarkSuggestions = Collections.emptyList();
-    private SpatialRuleLookup ruleLookup;
+    private AreaIndex<SplitArea> areaIndex;
     private boolean logDetails = false;
     /**
      * 'to' and 'from' fit into 32 bit => 16 bit for each of them => 65536
@@ -254,12 +252,12 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         // Exclude edges that we previously marked in PrepareRoutingSubnetworks to avoid problems like "connection not found".
         final BooleanEncodedValue edgeInSubnetworkEnc = graph.getEncodingManager().getBooleanEncodedValue(snKey);
         final IntHashSet blockedEdges;
-        // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other
-        // algorithms still can route through these regions. This is done to increase the density of landmarks for an
-        // area like Europe+Asia, which improves the query speed.
-        if (ruleLookup != null && !ruleLookup.getRules().isEmpty()) {
+        // We use the areaIndex to split certain areas from each other but do not permanently change the base graph
+        // so that other algorithms still can route through these regions. This is done to increase the density of
+        // landmarks for an area like Europe+Asia, which improves the query speed.
+        if (areaIndex != null) {
             StopWatch sw = new StopWatch().start();
-            blockedEdges = findBorderEdgeIds(ruleLookup);
+            blockedEdges = findBorderEdgeIds(areaIndex);
             if (logDetails)
                 LOGGER.info("Made " + blockedEdges.size() + " edges inaccessible. Calculated country cut in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
         } else {
@@ -307,7 +305,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                     if (logDetails) {
                         GHPoint p = createPoint(graph, nextStartNode);
                         LOGGER.info("start node: " + nextStartNode + " (" + p + ") subnetwork " + index + ", subnetwork size: " + subnetworkIds.size()
-                                + ", " + Helper.getMemInfo() + ((ruleLookup == null) ? "" : " area:" + ruleLookup.lookupRules(p.lat, p.lon).getRules()));
+                                + ", " + Helper.getMemInfo() + ((areaIndex == null) ? "" : " area:" + areaIndex.query(p.lat, p.lon)));
                     }
 
                     if (createLandmarksForSubnetwork(nextStartNode, subnetworks, accessFilter))
@@ -483,26 +481,26 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
      * This method specifies the polygons which should be used to split the world wide area to improve performance and
      * quality in this scenario.
      */
-    public void setSpatialRuleLookup(SpatialRuleLookup ruleLookup) {
-        this.ruleLookup = ruleLookup;
+    public void setAreaIndex(AreaIndex<SplitArea> areaIndex) {
+        this.areaIndex = areaIndex;
     }
 
     /**
      * This method makes edges crossing the specified border inaccessible to split a bigger area into smaller subnetworks.
      * This is important for the world wide use case to limit the maximum distance and also to detect unreasonable routes faster.
      */
-    protected IntHashSet findBorderEdgeIds(SpatialRuleLookup ruleLookup) {
+    protected IntHashSet findBorderEdgeIds(AreaIndex<SplitArea> areaIndex) {
         AllEdgesIterator allEdgesIterator = graph.getAllEdges();
         IntHashSet inaccessible = new IntHashSet();
         while (allEdgesIterator.next()) {
             int adjNode = allEdgesIterator.getAdjNode();
-            SpatialRuleSet set = ruleLookup.lookupRules(na.getLat(adjNode), na.getLon(adjNode));
-            SpatialRule ruleAdj = set.getRules().isEmpty() ? null : set.getRules().get(0);
+            List<SplitArea> areas = areaIndex.query(na.getLat(adjNode), na.getLon(adjNode));
+            SplitArea areaAdj = areas.isEmpty() ? null : areas.get(0);
 
             int baseNode = allEdgesIterator.getBaseNode();
-            set = ruleLookup.lookupRules(na.getLat(baseNode), na.getLon(baseNode));
-            SpatialRule ruleBase = set.getRules().isEmpty() ? null : set.getRules().get(0);
-            if (ruleAdj != ruleBase) {
+            areas = areaIndex.query(na.getLat(baseNode), na.getLon(baseNode));
+            SplitArea areaBase = areas.isEmpty() ? null : areas.get(0);
+            if (areaAdj != areaBase) {
                 inaccessible.add(allEdgesIterator.getEdge());
             }
         }

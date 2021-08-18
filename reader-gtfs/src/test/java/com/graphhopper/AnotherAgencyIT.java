@@ -55,7 +55,7 @@ public class AnotherAgencyIT {
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
-        ptRouter = PtRouterFreeWalkImpl.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
+        ptRouter = PtRouterFreeWalkImpl.createFactory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
                 .createWithoutRealtimeFeed();
     }
 

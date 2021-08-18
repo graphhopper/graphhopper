@@ -17,6 +17,8 @@
  */
 package com.graphhopper;
 
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -214,6 +216,8 @@ public class GHRequest {
      *
      * @see #setPointHints(List)
      */
+    // a good trick to serialize unknown properties into the HintsMap
+    @JsonAnySetter
     public GHRequest putHint(String fieldName, Object value) {
         this.hints.putObject(fieldName, value);
         return this;
@@ -246,6 +250,7 @@ public class GHRequest {
         return snapPreventions;
     }
 
+    @JsonProperty("details")
     public GHRequest setPathDetails(List<String> pathDetails) {
         this.pathDetails = pathDetails;
         return this;
