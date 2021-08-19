@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.time.*;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.graphhopper.gtfs.GtfsHelper.time;
@@ -149,8 +150,9 @@ public class AnotherAgencyIT {
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
         ResponsePath transitSolution = route.getBest();
-        Trip.PtLeg firstLeg = ((Trip.PtLeg) transitSolution.getLegs().get(0));
-        Trip.PtLeg secondLeg = ((Trip.PtLeg) transitSolution.getLegs().get(1));
+        List<Trip.Leg> ptLegs = transitSolution.getLegs().stream().filter(l -> l instanceof Trip.PtLeg).collect(Collectors.toList());
+        Trip.PtLeg firstLeg = ((Trip.PtLeg) ptLegs.get(0));
+        Trip.PtLeg secondLeg = ((Trip.PtLeg) ptLegs.get(1));
         assertEquals("JUSTICE_COURT,MUSEUM", firstLeg.stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
         assertEquals("EMSI,DADAN", secondLeg.stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
         // TODO: write down 10 min transfer time

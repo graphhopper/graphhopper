@@ -53,8 +53,10 @@ public final class GraphExplorer {
     private final boolean ignoreValidities;
     private final IntEncodedValue validityEnc;
     private final int blockedRouteTypes;
+    private final Graph graph;
 
     public GraphExplorer(Graph graph, Weighting accessEgressWeighting, PtEncodedValues flagEncoder, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, boolean walkOnly, boolean ptOnly, double walkSpeedKmh, boolean ignoreValidities, int blockedRouteTypes) {
+        this.graph = graph;
         this.accessEgressWeighting = accessEgressWeighting;
         this.accessEnc = accessEgressWeighting.getFlagEncoder().getAccessEnc();
         this.ignoreValidities = ignoreValidities;
@@ -127,10 +129,21 @@ public final class GraphExplorer {
                     if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT) && (blockedRouteTypes & (1 << edgeIterator.get(validityEnc))) != 0) {
                         continue;
                     }
+                    if (edgeType == GtfsStorage.EdgeType.ENTER_PT && justExitedPt(label)) {
+                        continue;
+                    }
                     action.accept(edgeIterator);
                     return true;
                 }
                 return false;
+            }
+
+            private boolean justExitedPt(Label label) {
+                if (label.edge == -1)
+                    return false;
+                EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorState(label.edge, label.adjNode);
+                GtfsStorage.EdgeType edgeType = edgeIteratorState.get(typeEnc);
+                return edgeType == GtfsStorage.EdgeType.EXIT_PT;
             }
 
             private EdgeIteratorState findEnterEdge() {

@@ -20,10 +20,7 @@ package com.graphhopper;
 
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.config.Profile;
-import com.graphhopper.gtfs.GraphHopperGtfs;
-import com.graphhopper.gtfs.PtRouter;
-import com.graphhopper.gtfs.PtRouterImpl;
-import com.graphhopper.gtfs.Request;
+import com.graphhopper.gtfs.*;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import org.junit.jupiter.api.AfterAll;

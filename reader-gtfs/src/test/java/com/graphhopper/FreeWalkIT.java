@@ -27,17 +27,21 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.graphhopper.gtfs.GtfsHelper.time;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-public class ExtendedRouteTypeIT {
+public class FreeWalkIT {
 
-    private static final String GRAPH_LOC = "target/ExtendedRouteType";
+    private static final String GRAPH_LOC = "target/FreeWalkIT";
     private static PtRouter ptRouter;
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
     private static GraphHopperGtfs graphHopperGtfs;
@@ -46,7 +50,13 @@ public class ExtendedRouteTypeIT {
     public static void init() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
         ghConfig.putObject("graph.location", GRAPH_LOC);
-        ghConfig.putObject("gtfs.file", "files/another-sample-feed-extended-route-type.zip");
+        ghConfig.putObject("datareader.file", "files/beatty.osm");
+        ghConfig.putObject("gtfs.file", "files/sample-feed.zip,files/another-sample-feed.zip");
+        ghConfig.putObject("gtfs.max_transfer_interpolation_walk_time_seconds", 0);
+        // TODO: This setting vv is currently "dead", as in production it switches to PtRouterFreeWalkImpl, but
+        // TODO: here it is instantiated directly. Refactor by having only one Router but two Solvers, similar
+        // TODO: to the street router.
+        ghConfig.putObject("gtfs.free_walk", true);
         ghConfig.setProfiles(Arrays.asList(
                 new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                 new Profile("car").setVehicle("car").setWeighting("fastest")));
@@ -54,7 +64,7 @@ public class ExtendedRouteTypeIT {
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
-        ptRouter = PtRouterImpl.createFactory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
+        ptRouter = PtRouterFreeWalkImpl.createFactory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
                 .createWithoutRealtimeFeed();
     }
 
@@ -64,20 +74,32 @@ public class ExtendedRouteTypeIT {
     }
 
     @Test
-    public void testRoute1() {
-        final double FROM_LAT = 36.9010208, FROM_LON = -116.7659466;
-        final double TO_LAT = 36.9059371, TO_LON = -116.7618071;
+    public void testWalkTransferBetweenFeeds() {
         Request ghRequest = new Request(
-                FROM_LAT, FROM_LON,
-                TO_LAT, TO_LON
+                Arrays.asList(
+                        new GHStationLocation("JUSTICE_COURT"),
+                        new GHStationLocation("DADAN")
+                ),
+                LocalDateTime.of(2007, 1, 1, 9, 0, 0).atZone(zoneId).toInstant()
         );
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 9, 0, 0).atZone(zoneId).toInstant());
         ghRequest.setIgnoreTransfers(true);
+        ghRequest.setWalkSpeedKmH(0.5); // Prevent walk solution
         GHResponse route = ptRouter.route(ghRequest);
 
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
-        assertEquals(time(1, 0), route.getBest().getTime(), 0.1, "Expected travel time == scheduled arrival time");
+        ResponsePath transitSolution = route.getBest();
+        Trip.PtLeg firstLeg = ((Trip.PtLeg) transitSolution.getLegs().get(0));
+        Trip.WalkLeg transferLeg = ((Trip.WalkLeg) transitSolution.getLegs().get(1));
+        Trip.PtLeg secondLeg = ((Trip.PtLeg) transitSolution.getLegs().get(2));
+        assertEquals("JUSTICE_COURT,MUSEUM", firstLeg.stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
+        assertEquals("EMSI,DADAN", secondLeg.stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
+        assertEquals(LocalDateTime.parse("2007-01-01T10:00:00").atZone(zoneId).toInstant(), transferLeg.getDepartureTime().toInstant());
+        assertEquals(LocalDateTime.parse("2007-01-01T10:08:06.620").atZone(zoneId).toInstant(), transferLeg.getArrivalTime().toInstant());
+
+        assertEquals(4500000L, transitSolution.getTime());
+        assertEquals(4500000.0, transitSolution.getRouteWeight());
+        assertEquals(time(1, 15), transitSolution.getTime(), "Expected total travel time == scheduled travel time + wait time");
     }
 
 }

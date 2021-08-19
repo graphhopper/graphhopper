@@ -23,10 +23,7 @@ import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.gtfs.GraphHopperGtfs;
-import com.graphhopper.gtfs.GtfsStorage;
-import com.graphhopper.gtfs.PtRouter;
-import com.graphhopper.gtfs.PtRouterImpl;
+import com.graphhopper.gtfs.*;
 import com.graphhopper.http.health.GraphHopperHealthCheck;
 import com.graphhopper.isochrone.algorithm.JTSTriangulator;
 import com.graphhopper.isochrone.algorithm.Triangulator;
@@ -262,7 +259,11 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
             environment.jersey().register(new AbstractBinder() {
                 @Override
                 protected void configure() {
-                    bind(PtRouterImpl.class).to(PtRouter.class);
+                    if (configuration.getGraphHopperConfiguration().getBool("gtfs.free_walk", false)) {
+                        bind(PtRouterFreeWalkImpl.class).to(PtRouter.class);
+                    } else {
+                        bind(PtRouterImpl.class).to(PtRouter.class);
+                    }
                 }
             });
             environment.jersey().register(PtRouteResource.class);
