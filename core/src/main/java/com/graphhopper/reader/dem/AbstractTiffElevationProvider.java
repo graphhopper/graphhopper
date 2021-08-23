@@ -32,7 +32,7 @@ import java.util.Map;
  *
  * @author Robin Boldt
  */
-public abstract class AbstractTiffElevationProvider extends AbstractElevationProvider {
+public abstract class AbstractTiffElevationProvider extends TileBasedElevationProvider {
     private final Map<String, HeightTile> cacheData = new HashMap<>();
     final double precision = 1e7;
 

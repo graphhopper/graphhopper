@@ -570,22 +570,10 @@ public class GraphHopper {
         if (ghConfig.has("graph.elevation.calcmean"))
             throw new IllegalArgumentException("graph.elevation.calcmean is deprecated, use graph.elevation.interpolate");
 
-        boolean interpolate = ghConfig.has("graph.elevation.interpolate")
-                ? "bilinear".equals(ghConfig.getString("graph.elevation.interpolate", "none"))
-                : ghConfig.getBool("graph.elevation.calc_mean", false);
-
         String cacheDirStr = ghConfig.getString("graph.elevation.cache_dir", "");
         if (cacheDirStr.isEmpty() && ghConfig.has("graph.elevation.cachedir"))
             throw new IllegalArgumentException("use graph.elevation.cache_dir not cachedir in configuration");
 
-        String baseURL = ghConfig.getString("graph.elevation.base_url", "");
-        if (baseURL.isEmpty() && ghConfig.has("graph.elevation.baseurl"))
-            throw new IllegalArgumentException("use graph.elevation.base_url not baseurl in configuration");
-
-        boolean removeTempElevationFiles = ghConfig.getBool("graph.elevation.cgiar.clear", true);
-        removeTempElevationFiles = ghConfig.getBool("graph.elevation.clear", removeTempElevationFiles);
-
-        DAType elevationDAType = DAType.fromString(ghConfig.getString("graph.elevation.dataaccess", "MMAP"));
         ElevationProvider elevationProvider = ElevationProvider.NOOP;
         if (eleProviderStr.equalsIgnoreCase("srtm")) {
             elevationProvider = new SRTMProvider(cacheDirStr);
@@ -601,11 +589,29 @@ public class GraphHopper {
             elevationProvider = new SkadiProvider(cacheDirStr);
         }
 
-        elevationProvider.setAutoRemoveTemporaryFiles(removeTempElevationFiles);
-        elevationProvider.setInterpolate(interpolate);
-        if (!baseURL.isEmpty())
-            elevationProvider.setBaseURL(baseURL);
-        elevationProvider.setDAType(elevationDAType);
+        if (elevationProvider instanceof TileBasedElevationProvider) {
+            TileBasedElevationProvider provider = (TileBasedElevationProvider) elevationProvider;
+
+            String baseURL = ghConfig.getString("graph.elevation.base_url", "");
+            if (baseURL.isEmpty() && ghConfig.has("graph.elevation.baseurl"))
+                throw new IllegalArgumentException("use graph.elevation.base_url not baseurl in configuration");
+
+            DAType elevationDAType = DAType.fromString(ghConfig.getString("graph.elevation.dataaccess", "MMAP"));
+
+            boolean interpolate = ghConfig.has("graph.elevation.interpolate")
+            ? "bilinear".equals(ghConfig.getString("graph.elevation.interpolate", "none"))
+            : ghConfig.getBool("graph.elevation.calc_mean", false);
+
+            boolean removeTempElevationFiles = ghConfig.getBool("graph.elevation.cgiar.clear", true);
+            removeTempElevationFiles = ghConfig.getBool("graph.elevation.clear", removeTempElevationFiles);
+
+            provider
+                .setAutoRemoveTemporaryFiles(removeTempElevationFiles)
+                .setInterpolate(interpolate)
+                .setDAType(elevationDAType);
+            if (!baseURL.isEmpty())
+                provider.setBaseURL(baseURL);
+        }
         return elevationProvider;
     }
 
