@@ -527,7 +527,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
         double lat = node.getLat();
         double lon = node.getLon();
-        double ele = eleProvider.getEle(lat, lon);
+        double ele = eleProvider.getEle(node);
         if (nodeType == TOWER_NODE) {
             addTowerNode(node.getId(), lat, lon, ele);
         } else if (nodeType == PILLAR_NODE) {

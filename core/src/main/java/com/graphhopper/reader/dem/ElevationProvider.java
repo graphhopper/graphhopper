@@ -17,6 +17,7 @@
  */
 package com.graphhopper.reader.dem;
 
+import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.storage.DAType;
 
 /**
@@ -61,6 +62,14 @@ public interface ElevationProvider {
      * @return returns the height in meters or Double.NaN if invalid
      */
     double getEle(double lat, double lon);
+
+    /**
+     * @param node Node to read
+     * @return returns the height in meters or Double.NaN if invalid
+     */
+    default double getEle(ReaderNode node) {
+        return getEle(node.getLat(), node.getLon());
+    }
 
     /**
      * Specifies the service URL where to download the elevation data. An empty string should set it
