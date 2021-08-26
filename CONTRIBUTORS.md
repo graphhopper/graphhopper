@@ -30,6 +30,7 @@ Here is an overview:
  * fbonzon, several UI improvements like #615
  * florent-morel, improvements regarding fords, #320
  * fredao, translations
+ * gberaudo, improvements regarding elevation
  * GProbo, fixes like #2241
  * HarelM, improvements regarding elevation
  * HelgeKrueger, modularization of javascript, #590
