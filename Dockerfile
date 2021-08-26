@@ -4,9 +4,9 @@ ARG APP_NAME
 
 ARG ENVIRONMENT
 
-RUN apt-get update -y && apt-get install -y python python-pip
+RUN apt-get update -y && apt-get install -y python python3-pip
 RUN pip install --upgrade awscli s3cmd python-magic
-RUN apt-get remove -y --purge python-pip
+RUN apt-get remove -y --purge python3-pip
 
 ADD . /${APP_NAME}
 
