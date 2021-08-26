@@ -164,7 +164,7 @@ if [[ "$ACTION" = "web" ]]; then
     fi
     exit $?
   else
-    exec "$JAVA" -javaagent:newrelic.jar -Dnewrelic.environment=${RUN_ENV} $JAVA_OPTS -Dgraphhopper.datareader.file="./osrm_location.osm.pbf" -Dgraphhopper.graph.location="./osrm_location.osm-gh" \
+    exec "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="./osrm_location.osm.pbf" -Dgraphhopper.graph.location="./osrm_location.osm-gh" \
                  $GH_WEB_OPTS -jar "$JAR" server $CONFIG
     # foreground => we never reach this here
   fi
