@@ -268,6 +268,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
             });
             environment.jersey().register(PtRouteResource.class);
             environment.jersey().register(PtIsochroneResource.class);
+            environment.jersey().register(PtMVTResource.class);
             environment.jersey().register(PtRedirectFilter.class);
         }
         environment.jersey().register(SPTResource.class);

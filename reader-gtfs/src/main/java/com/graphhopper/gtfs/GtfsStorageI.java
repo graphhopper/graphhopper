@@ -31,8 +31,8 @@ import java.util.Objects;
 public interface GtfsStorageI {
 
     abstract class PlatformDescriptor implements Serializable {
-        String feed_id;
-        String stop_id;
+        public String feed_id;
+        public String stop_id;
 
         public static PlatformDescriptor route(String feed_id, String stop_id, String route_id) {
             RoutePlatform routePlatform = new RoutePlatform();

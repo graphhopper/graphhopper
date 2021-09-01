@@ -1,5 +1,4 @@
 import {DateInput, Select, TextInput, TimeInput} from "../components/Inputs.js";
-import Point from "../../data/Point.js";
 import {TimeOption} from "../../data/Query.js";
 
 export default (({
@@ -35,12 +34,12 @@ class SearchInput extends React.Component {
         }, React.createElement("div", {
             className: "locationInput"
         }, React.createElement(TextInput, {
-            value: this.props.search.from != null ? this.props.search.from.toString() : "",
+            value: this.props.search.from != null ? [this.props.search.from.lat,this.props.search.from.lng].toString() : "",
             label: "From",
             actionType: SearchActionType.FROM,
             onChange: this.onChange
         }), React.createElement(TextInput, {
-            value: this.props.search.to != null ? this.props.search.to.toString() : "",
+            value: this.props.search.to != null ? [this.props.search.to.lat,this.props.search.to.lng].toString() : "",
             label: "To",
             actionType: SearchActionType.TO,
             onChange: this.onChange
@@ -147,13 +146,13 @@ class SearchInput extends React.Component {
         switch (action.type) {
             case SearchActionType.FROM:
                 this.props.onSearchChange({
-                    from: Point.create(action.value)
+                    from: this.createFromString(action.value)
                 });
                 break;
 
             case SearchActionType.TO:
                 this.props.onSearchChange({
-                    to: Point.create(action.value)
+                    to: this.createFromString(action.value)
                 });
                 break;
 
@@ -193,6 +192,15 @@ class SearchInput extends React.Component {
             default:
                 break;
         }
+    }
+
+    createFromString(coord) {
+        let split = coord.split(",");
+        let map = split.map(value => {
+            let number = Number.parseFloat(value);
+            return Number.isNaN(number) ? 0 : number;
+        });
+        return new mapboxgl.LngLat(map[1],map[0]);
     }
 
 }
