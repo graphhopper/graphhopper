@@ -28,9 +28,9 @@ import com.graphhopper.storage.DAType;
 public class MultiSourceElevationProvider extends TileBasedElevationProvider {
 
     // Usually a high resolution provider in the SRTM area
-    private TileBasedElevationProvider srtmProvider;
+    private final TileBasedElevationProvider srtmProvider;
     // The fallback provider that provides elevation data globally
-    private TileBasedElevationProvider globalProvider;
+    private final TileBasedElevationProvider globalProvider;
 
     public MultiSourceElevationProvider(TileBasedElevationProvider srtmProvider, TileBasedElevationProvider globalProvider) {
         super(srtmProvider.cacheDir.getAbsolutePath());
@@ -58,8 +58,8 @@ public class MultiSourceElevationProvider extends TileBasedElevationProvider {
     /**
      * For the MultiSourceElevationProvider you have to specify the base URL separated by a ';'.
      * The first for cgiar, the second for gmted.
-     *
      */
+    @Override
     public MultiSourceElevationProvider setBaseURL(String baseURL) {
         String[] urls = baseURL.split(";");
         if (urls.length != 2) {
@@ -70,20 +70,14 @@ public class MultiSourceElevationProvider extends TileBasedElevationProvider {
         return this;
     }
 
-    /**
-     * Set to true if you have a small area and need high speed access. Default is DAType.MMAP
-     */
+    @Override
     public MultiSourceElevationProvider setDAType(DAType daType) {
         srtmProvider.setDAType(daType);
         globalProvider.setDAType(daType);
         return this;
     }
 
-    /**
-     * Configuration option to use bilinear interpolation to find the elevation at a point from the
-     * surrounding elevation points. Has only an effect if called before the first getEle call.
-     * Turned off by default.
-     */
+    @Override
     public MultiSourceElevationProvider setInterpolate(boolean interpolate) {
         srtmProvider.setInterpolate(interpolate);
         globalProvider.setInterpolate(interpolate);
@@ -91,8 +85,8 @@ public class MultiSourceElevationProvider extends TileBasedElevationProvider {
     }
 
     @Override
-    public boolean getInterpolate() {
-        return srtmProvider.getInterpolate() && globalProvider.getInterpolate();
+    public boolean canInterpolate() {
+        return srtmProvider.canInterpolate() && globalProvider.canInterpolate();
     }
 
     @Override
@@ -101,11 +95,7 @@ public class MultiSourceElevationProvider extends TileBasedElevationProvider {
         globalProvider.release();
     }
 
-    /**
-     * Creating temporary files can take a long time as we need to unpack them as well as to fill
-     * our DataAccess object, so this option can be used to disable the default clear mechanism via
-     * specifying 'false'.
-     */
+    @Override
     public MultiSourceElevationProvider setAutoRemoveTemporaryFiles(boolean autoRemoveTemporary) {
         srtmProvider.setAutoRemoveTemporaryFiles(autoRemoveTemporary);
         globalProvider.setAutoRemoveTemporaryFiles(autoRemoveTemporary);

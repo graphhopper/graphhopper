@@ -1,5 +1,6 @@
 ### 4.0 [not yet released]
 
+- more flexible ElevationProvider interface, support providing elevation via node tags (#2374, #23281)
 - added country encoded value for all countries (#2353)
 - removed spatial rules, replaced by country rules and custom areas (#2353)
 - removed api module and moved it into web-api, no more Jackson MixIns (#2372)
@@ -14,7 +15,6 @@
 - PointList#getSize() -> PointList#size()
 - migrated tests from junit 4 to 5 (#2324)
 - barriers do no longer block by default for car; remove block_barriers config option (see discussion in #2340)
-- ElevationProvider setters relative to file operations have been moved to TileBasedElevationProvider. ElevationProviders now accept an OSM node (#2381)
 
 ### 3.0 [17 May 2021]
 

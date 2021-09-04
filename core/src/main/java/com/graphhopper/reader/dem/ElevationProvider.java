@@ -34,7 +34,7 @@ public interface ElevationProvider {
         }
 
         @Override
-        public boolean getInterpolate() {
+        public boolean canInterpolate() {
             return false;
         }
     };
@@ -55,7 +55,7 @@ public interface ElevationProvider {
     /**
      * Returns true if bilinear interpolation is enabled.
      */
-    boolean getInterpolate();
+    boolean canInterpolate();
 
     /**
      * Release resources.

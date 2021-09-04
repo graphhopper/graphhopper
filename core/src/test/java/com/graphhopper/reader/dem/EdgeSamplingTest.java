@@ -14,11 +14,18 @@ public class EdgeSamplingTest {
         }
 
         @Override
-        public void release() {}
+        public void release() {
+        }
+
         @Override
-        String getFileName(double lat, double lon) { return ""; }
+        String getFileName(double lat, double lon) {
+            return "";
+        }
+
         @Override
-        String getDownloadURL(double lat, double lon) { return ""; }
+        String getDownloadURL(double lat, double lon) {
+            return "";
+        }
     };
 
     private double round(double d) {

@@ -65,14 +65,13 @@ public abstract class TileBasedElevationProvider implements ElevationProvider {
     }
 
     @Override
-    public boolean getInterpolate() {
+    public boolean canInterpolate() {
         return this.interpolate;
     }
 
     void setSleep(long sleep) {
         this.sleep = sleep;
     }
-
 
     /**
      * Specifies the service URL where to download the elevation data. An empty string should set it
@@ -93,7 +92,6 @@ public abstract class TileBasedElevationProvider implements ElevationProvider {
         this.daType = daType;
         return this;
     }
-
 
     /**
      * Creating temporary files can take a long time as we need to unpack them as well as to fill

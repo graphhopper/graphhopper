@@ -54,7 +54,10 @@ import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -502,7 +505,7 @@ public class GraphHopper {
         ElevationProvider elevationProvider = createElevationProvider(ghConfig);
         setElevationProvider(elevationProvider);
 
-        if (longEdgeSamplingDistance < Double.MAX_VALUE && !elevationProvider.getInterpolate())
+        if (longEdgeSamplingDistance < Double.MAX_VALUE && !elevationProvider.canInterpolate())
             logger.warn("Long edge sampling enabled, but bilinear interpolation disabled. See #1953");
 
         // optimizable prepare
@@ -599,16 +602,16 @@ public class GraphHopper {
             DAType elevationDAType = DAType.fromString(ghConfig.getString("graph.elevation.dataaccess", "MMAP"));
 
             boolean interpolate = ghConfig.has("graph.elevation.interpolate")
-            ? "bilinear".equals(ghConfig.getString("graph.elevation.interpolate", "none"))
-            : ghConfig.getBool("graph.elevation.calc_mean", false);
+                    ? "bilinear".equals(ghConfig.getString("graph.elevation.interpolate", "none"))
+                    : ghConfig.getBool("graph.elevation.calc_mean", false);
 
             boolean removeTempElevationFiles = ghConfig.getBool("graph.elevation.cgiar.clear", true);
             removeTempElevationFiles = ghConfig.getBool("graph.elevation.clear", removeTempElevationFiles);
 
             provider
-                .setAutoRemoveTemporaryFiles(removeTempElevationFiles)
-                .setInterpolate(interpolate)
-                .setDAType(elevationDAType);
+                    .setAutoRemoveTemporaryFiles(removeTempElevationFiles)
+                    .setInterpolate(interpolate)
+                    .setDAType(elevationDAType);
             if (!baseURL.isEmpty())
                 provider.setBaseURL(baseURL);
         }
