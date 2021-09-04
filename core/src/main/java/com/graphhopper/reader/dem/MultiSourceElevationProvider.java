@@ -103,16 +103,6 @@ public class MultiSourceElevationProvider extends TileBasedElevationProvider {
     }
 
     @Override
-    String getFileName(double lat, double lon) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    String getDownloadURL(double lat, double lon) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public String toString() {
         return "multi";
     }

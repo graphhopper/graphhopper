@@ -86,6 +86,16 @@ public abstract class AbstractTiffElevationProvider extends TileBasedElevationPr
      */
     abstract String getFileNameOfLocalFile(double lat, double lon);
 
+    /**
+     * Return the local file name without file ending, has to be lower case, because DataAccess only supports lower case names.
+     */
+    abstract String getFileName(double lat, double lon);
+
+    /**
+     * Returns the complete URL to download the file
+     */
+    abstract String getDownloadURL(double lat, double lon);
+
     @Override
     public double getEle(double lat, double lon) {
         // Return fast, if there is no data available

@@ -7,25 +7,21 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class EdgeSamplingTest {
-    private final ElevationProvider elevation = new TileBasedElevationProvider("") {
+    private final ElevationProvider elevation = new ElevationProvider() {
         @Override
         public double getEle(double lat, double lon) {
             return 10;
         }
 
         @Override
+        public boolean canInterpolate() {
+            return false;
+        }
+
+        @Override
         public void release() {
         }
 
-        @Override
-        String getFileName(double lat, double lon) {
-            return "";
-        }
-
-        @Override
-        String getDownloadURL(double lat, double lon) {
-            return "";
-        }
     };
 
     private double round(double d) {

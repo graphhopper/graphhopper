@@ -121,13 +121,4 @@ public abstract class TileBasedElevationProvider implements ElevationProvider {
         return dir = new GHDirectory(cacheDir.getAbsolutePath(), daType);
     }
 
-    /**
-     * Return the local file name without file ending, has to be lower case, because DataAccess only supports lower case names.
-     */
-    abstract String getFileName(double lat, double lon);
-
-    /**
-     * Returns the complete URL to download the file
-     */
-    abstract String getDownloadURL(double lat, double lon);
 }
