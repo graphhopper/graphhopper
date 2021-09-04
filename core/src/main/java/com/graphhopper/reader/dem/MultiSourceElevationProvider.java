@@ -25,14 +25,15 @@ import com.graphhopper.storage.DAType;
  *
  * @author Robin Boldt
  */
-public class MultiSourceElevationProvider implements ElevationProvider {
+public class MultiSourceElevationProvider extends TileBasedElevationProvider {
 
     // Usually a high resolution provider in the SRTM area
-    private ElevationProvider srtmProvider;
+    private TileBasedElevationProvider srtmProvider;
     // The fallback provider that provides elevation data globally
-    private ElevationProvider globalProvider;
+    private TileBasedElevationProvider globalProvider;
 
-    public MultiSourceElevationProvider(ElevationProvider srtmProvider, ElevationProvider globalProvider) {
+    public MultiSourceElevationProvider(TileBasedElevationProvider srtmProvider, TileBasedElevationProvider globalProvider) {
+        super(srtmProvider.cacheDir.getAbsolutePath());
         this.srtmProvider = srtmProvider;
         this.globalProvider = globalProvider;
     }
@@ -57,9 +58,9 @@ public class MultiSourceElevationProvider implements ElevationProvider {
     /**
      * For the MultiSourceElevationProvider you have to specify the base URL separated by a ';'.
      * The first for cgiar, the second for gmted.
+     *
      */
-    @Override
-    public ElevationProvider setBaseURL(String baseURL) {
+    public MultiSourceElevationProvider setBaseURL(String baseURL) {
         String[] urls = baseURL.split(";");
         if (urls.length != 2) {
             throw new IllegalArgumentException("The base url must consist of two urls separated by a ';'. The first for cgiar, the second for gmted");
@@ -69,17 +70,24 @@ public class MultiSourceElevationProvider implements ElevationProvider {
         return this;
     }
 
-    @Override
-    public ElevationProvider setDAType(DAType daType) {
+    /**
+     * Set to true if you have a small area and need high speed access. Default is DAType.MMAP
+     */
+    public MultiSourceElevationProvider setDAType(DAType daType) {
         srtmProvider.setDAType(daType);
         globalProvider.setDAType(daType);
         return this;
     }
 
-    @Override
-    public void setInterpolate(boolean interpolate) {
+    /**
+     * Configuration option to use bilinear interpolation to find the elevation at a point from the
+     * surrounding elevation points. Has only an effect if called before the first getEle call.
+     * Turned off by default.
+     */
+    public MultiSourceElevationProvider setInterpolate(boolean interpolate) {
         srtmProvider.setInterpolate(interpolate);
         globalProvider.setInterpolate(interpolate);
+        return this;
     }
 
     @Override
@@ -93,10 +101,25 @@ public class MultiSourceElevationProvider implements ElevationProvider {
         globalProvider.release();
     }
 
-    @Override
-    public void setAutoRemoveTemporaryFiles(boolean autoRemoveTemporary) {
+    /**
+     * Creating temporary files can take a long time as we need to unpack them as well as to fill
+     * our DataAccess object, so this option can be used to disable the default clear mechanism via
+     * specifying 'false'.
+     */
+    public MultiSourceElevationProvider setAutoRemoveTemporaryFiles(boolean autoRemoveTemporary) {
         srtmProvider.setAutoRemoveTemporaryFiles(autoRemoveTemporary);
         globalProvider.setAutoRemoveTemporaryFiles(autoRemoveTemporary);
+        return this;
+    }
+
+    @Override
+    String getFileName(double lat, double lon) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    String getDownloadURL(double lat, double lon) {
+        throw new UnsupportedOperationException();
     }
 
     @Override

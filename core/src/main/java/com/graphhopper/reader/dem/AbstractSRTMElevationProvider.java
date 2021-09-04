@@ -33,7 +33,7 @@ import java.net.SocketTimeoutException;
  *
  * @author Robin Boldt
  */
-public abstract class AbstractSRTMElevationProvider extends AbstractElevationProvider {
+public abstract class AbstractSRTMElevationProvider extends TileBasedElevationProvider {
 
     private static final BitUtil BIT_UTIL = BitUtil.BIG;
     private final int DEFAULT_WIDTH;

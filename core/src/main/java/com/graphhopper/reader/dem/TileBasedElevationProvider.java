@@ -28,11 +28,11 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Provides basic methods that are usually used in an ElevationProvider.
+ * Provides basic methods that are usually used in an ElevationProvider using tiles from files.
  *
  * @author Robin Boldt
  */
-public abstract class AbstractElevationProvider implements ElevationProvider {
+public abstract class TileBasedElevationProvider implements ElevationProvider {
     final Logger logger = LoggerFactory.getLogger(getClass());
     Downloader downloader;
     final File cacheDir;
@@ -43,7 +43,7 @@ public abstract class AbstractElevationProvider implements ElevationProvider {
     boolean autoRemoveTemporary = true;
     long sleep = 2000;
 
-    protected AbstractElevationProvider(String cacheDirString) {
+    protected TileBasedElevationProvider(String cacheDirString) {
         File cacheDir = new File(cacheDirString);
         if (cacheDir.exists() && !cacheDir.isDirectory())
             throw new IllegalArgumentException("Cache path has to be a directory");
@@ -54,9 +54,14 @@ public abstract class AbstractElevationProvider implements ElevationProvider {
         }
     }
 
-    @Override
-    public void setInterpolate(boolean interpolate) {
+    /**
+     * Configuration option to use bilinear interpolation to find the elevation at a point from the
+     * surrounding elevation points. Has only an effect if called before the first getEle call.
+     * Turned off by default.
+     */
+    public TileBasedElevationProvider setInterpolate(boolean interpolate) {
         this.interpolate = interpolate;
+        return this;
     }
 
     @Override
@@ -68,21 +73,12 @@ public abstract class AbstractElevationProvider implements ElevationProvider {
         this.sleep = sleep;
     }
 
-    @Override
-    public void setAutoRemoveTemporaryFiles(boolean autoRemoveTemporary) {
-        this.autoRemoveTemporary = autoRemoveTemporary;
-    }
 
-    public void setDownloader(Downloader downloader) {
-        this.downloader = downloader;
-    }
-
-    protected File getCacheDir() {
-        return cacheDir;
-    }
-
-    @Override
-    public ElevationProvider setBaseURL(String baseUrl) {
+    /**
+     * Specifies the service URL where to download the elevation data. An empty string should set it
+     * to the default URL. Default is a provider-dependent URL which should work out of the box.
+     */
+    public TileBasedElevationProvider setBaseURL(String baseUrl) {
         if (baseUrl == null || baseUrl.isEmpty())
             throw new IllegalArgumentException("baseUrl cannot be empty");
 
@@ -90,12 +86,33 @@ public abstract class AbstractElevationProvider implements ElevationProvider {
         return this;
     }
 
-    @Override
-    public ElevationProvider setDAType(DAType daType) {
+    /**
+     * Set to true if you have a small area and need high speed access. Default is DAType.MMAP
+     */
+    public TileBasedElevationProvider setDAType(DAType daType) {
         this.daType = daType;
         return this;
     }
 
+
+    /**
+     * Creating temporary files can take a long time as we need to unpack them as well as to fill
+     * our DataAccess object, so this option can be used to disable the default clear mechanism via
+     * specifying 'false'.
+     */
+    public TileBasedElevationProvider setAutoRemoveTemporaryFiles(boolean autoRemoveTemporary) {
+        this.autoRemoveTemporary = autoRemoveTemporary;
+        return this;
+    }
+
+    public TileBasedElevationProvider setDownloader(Downloader downloader) {
+        this.downloader = downloader;
+        return this;
+    }
+
+    protected File getCacheDir() {
+        return cacheDir;
+    }
 
     protected Directory getDirectory() {
         if (dir != null)
@@ -115,5 +132,4 @@ public abstract class AbstractElevationProvider implements ElevationProvider {
      * Returns the complete URL to download the file
      */
     abstract String getDownloadURL(double lat, double lon);
-
 }

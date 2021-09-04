@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class EdgeSamplingTest {
-    private final ElevationProvider elevation = new AbstractElevationProvider("") {
+    private final ElevationProvider elevation = new TileBasedElevationProvider("") {
         @Override
         public double getEle(double lat, double lon) {
             return 10;

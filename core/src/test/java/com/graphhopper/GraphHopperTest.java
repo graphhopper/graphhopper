@@ -22,7 +22,6 @@ import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.json.Statement;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.SkadiProvider;
 import com.graphhopper.routing.ev.Subnetwork;
@@ -1095,7 +1094,7 @@ public class GraphHopperTest {
                 setProfiles(new Profile("profile").setVehicle(vehicle).setWeighting(weighting)).
                 setLongEdgeSamplingDistance(30);
 
-        ElevationProvider elevationProvider = new SRTMProvider(DIR);
+        SRTMProvider elevationProvider = new SRTMProvider(DIR);
         elevationProvider.setInterpolate(true);
         hopper.setElevationProvider(elevationProvider);
         hopper.importOrLoad();

@@ -14,6 +14,7 @@
 - PointList#getSize() -> PointList#size()
 - migrated tests from junit 4 to 5 (#2324)
 - barriers do no longer block by default for car; remove block_barriers config option (see discussion in #2340)
+- ElevationProvider setters relative to file operations have been moved to TileBasedElevationProvider. ElevationProviders now accept an OSM node (#2381)
 
 ### 3.0 [17 May 2021]
 
