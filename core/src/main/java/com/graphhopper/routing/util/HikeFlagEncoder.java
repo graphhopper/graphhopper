@@ -24,7 +24,7 @@ import com.graphhopper.util.*;
 
 import java.util.TreeMap;
 
-import static com.graphhopper.routing.profiles.RouteNetwork.*;
+import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**

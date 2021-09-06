@@ -21,15 +21,15 @@ import com.carrotsearch.hppc.LongIndexedContainer;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.GraphHopperIT;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.GraphHopperTest;
+import com.graphhopper.config.Profile;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.OSMMaxHeightParser;
 import com.graphhopper.routing.util.parsers.OSMMaxWeightParser;
@@ -205,7 +205,9 @@ public class OSMReaderTest {
 
     @Test
     public void testOneWay() {
-        GraphHopper hopper = new GraphHopperFacade(file2).importOrLoad();
+        GraphHopper hopper = new GraphHopperFacade(file2)
+                .setMinNetworkSize(0)
+                .importOrLoad();
         GraphHopperStorage graph = hopper.getGraphHopperStorage();
 
         assertEquals("2014-01-02T01:10:14Z", graph.getProperties().get("datareader.data.date"));
@@ -306,7 +308,9 @@ public class OSMReaderTest {
 
     @Test
     public void testFoot() {
-        GraphHopper hopper = new GraphHopperFacade(file3).importOrLoad();
+        GraphHopper hopper = new GraphHopperFacade(file3)
+                .setMinNetworkSize(0)
+                .importOrLoad();
         Graph graph = hopper.getGraphHopperStorage();
 
         int n10 = AbstractGraphStorageTester.getIdOf(graph, 11.1);
@@ -354,7 +358,7 @@ public class OSMReaderTest {
     @Test
     public void testBarriers() {
         GraphHopper hopper = new GraphHopperFacade(fileBarriers).
-                setMinNetworkSize(0, 0).
+                setMinNetworkSize(0).
                 importOrLoad();
 
         Graph graph = hopper.getGraphHopperStorage();
@@ -440,7 +444,7 @@ public class OSMReaderTest {
     @Test
     public void testBarriersOnTowerNodes() {
         GraphHopper hopper = new GraphHopperFacade(fileBarriers).
-                setMinNetworkSize(0, 0).
+                setMinNetworkSize(0).
                 importOrLoad();
         Graph graph = hopper.getGraphHopperStorage();
         assertEquals(8, graph.getNodes());
@@ -564,7 +568,7 @@ public class OSMReaderTest {
         hopper.setEncodingManager(new EncodingManager.Builder().
                 add(new OSMMaxWidthParser()).add(new OSMMaxHeightParser()).add(new OSMMaxWeightParser()).
                 add(encoder).build());
-        hopper.setProfiles(new ProfileConfig("car").setVehicle("car").setWeighting("fastest"));
+        hopper.setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"));
         hopper.importOrLoad();
 
         DecimalEncodedValue widthEnc = hopper.getEncodingManager().getDecimalEncodedValue(MaxWidth.KEY);
@@ -678,7 +682,7 @@ public class OSMReaderTest {
     public void testReadEleFromDataProvider() {
         GraphHopper hopper = new GraphHopperFacade("test-osm5.xml");
         // get N10E046.hgt.zip
-        ElevationProvider provider = new SRTMProvider(GraphHopperIT.DIR);
+        ElevationProvider provider = new SRTMProvider(GraphHopperTest.DIR);
         hopper.setElevationProvider(provider);
         hopper.importOrLoad();
 
@@ -715,9 +719,9 @@ public class OSMReaderTest {
                 setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
                 setGraphHopperLocation(dir).setEncodingManager(manager).
                 setProfiles(
-                        new ProfileConfig("bike").setVehicle("bike").setWeighting("fastest"),
-                        new ProfileConfig("car").setVehicle("car").setWeighting("fastest"),
-                        new ProfileConfig("truck").setVehicle("truck").setWeighting("fastest")
+                        new Profile("bike").setVehicle("bike").setWeighting("fastest"),
+                        new Profile("car").setVehicle("car").setWeighting("fastest"),
+                        new Profile("truck").setVehicle("truck").setWeighting("fastest")
                 ).
                 importOrLoad();
 
@@ -753,6 +757,7 @@ public class OSMReaderTest {
     public void testConditionalTurnRestriction() {
         String fileConditionalTurnRestrictions = "test-conditional-turn-restrictions.xml";
         GraphHopper hopper = new GraphHopperFacade(fileConditionalTurnRestrictions, true, "").
+                setMinNetworkSize(0).
                 importOrLoad();
 
         Graph graph = hopper.getGraphHopperStorage();
@@ -880,7 +885,9 @@ public class OSMReaderTest {
 
     @Test
     public void testDataDateWithinPBF() {
-        GraphHopper hopper = new GraphHopperFacade("test-osm6.pbf").importOrLoad();
+        GraphHopper hopper = new GraphHopperFacade("test-osm6.pbf")
+                .setMinNetworkSize(0)
+                .importOrLoad();
         GraphHopperStorage graph = hopper.getGraphHopperStorage();
 
         assertEquals("2014-01-02T00:10:14Z", graph.getProperties().get("datareader.data.date"));
@@ -908,8 +915,8 @@ public class OSMReaderTest {
                 .setDataReaderFile(getClass().getResource(file7).getFile())
                 .setEncodingManager(EncodingManager.create("car,motorcycle"))
                 .setProfiles(
-                        new ProfileConfig("profile1").setVehicle("car").setWeighting("fastest"),
-                        new ProfileConfig("profile2").setVehicle("motorcycle").setWeighting("curvature")
+                        new Profile("profile1").setVehicle("car").setWeighting("fastest"),
+                        new Profile("profile2").setVehicle("motorcycle").setWeighting("curvature")
                 )
                 .setGraphHopperLocation(dir);
         hopper.importOrLoad();
@@ -935,7 +942,8 @@ public class OSMReaderTest {
                 }
             }
         }.setEncodingManager(EncodingManager.create("car,bike")).
-                setProfiles(new ProfileConfig("profile").setVehicle("car").setWeighting("fastest")).
+                setProfiles(new Profile("profile").setVehicle("car").setWeighting("fastest")).
+                setMinNetworkSize(0).
                 setGraphHopperLocation(dir).
                 importOrLoad();
 
@@ -976,9 +984,9 @@ public class OSMReaderTest {
             setEncodingManager(new EncodingManager.Builder().add(footEncoder).add(carEncoder).add(bikeEncoder).
                     setPreferredLanguage(prefLang).build());
             setProfiles(
-                    new ProfileConfig("foot").setVehicle("foot").setWeighting("fastest"),
-                    new ProfileConfig("car").setVehicle("car").setWeighting("fastest"),
-                    new ProfileConfig("bike").setVehicle("bike").setWeighting("fastest")
+                    new Profile("foot").setVehicle("foot").setWeighting("fastest"),
+                    new Profile("car").setVehicle("car").setWeighting("fastest"),
+                    new Profile("bike").setVehicle("bike").setWeighting("fastest")
             );
             carAccessEnc = carEncoder.getAccessEnc();
         }

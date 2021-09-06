@@ -18,7 +18,7 @@
 
 package com.graphhopper.reader.gtfs;
 
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 
 public class PtEncodedValues {

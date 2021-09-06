@@ -84,7 +84,7 @@ public class StopWatch {
             str += name + " ";
         }
 
-        return str + "time:" + getSeconds();
+        return str + "time:" + getSeconds() + "s";
     }
 
     private boolean notStarted() {

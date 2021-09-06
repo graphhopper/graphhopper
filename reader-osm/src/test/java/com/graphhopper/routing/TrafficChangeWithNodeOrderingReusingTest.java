@@ -9,8 +9,8 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.CHEdgeIteratorState;
@@ -44,9 +44,9 @@ public class TrafficChangeWithNodeOrderingReusingTest {
     private static final String OSM_FILE = "../local/maps/berlin-latest.osm.pbf";
 
     private final GraphHopperStorage ghStorage;
-    private int maxDeviationPercentage;
-    private final CHProfile baseProfile;
-    private final CHProfile trafficProfile;
+    private final int maxDeviationPercentage;
+    private final CHConfig baseCHConfig;
+    private final CHConfig trafficCHConfig;
 
     @Parameters(name = "maxDeviationPercentage = {0}")
     public static Object[] data() {
@@ -57,9 +57,9 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         this.maxDeviationPercentage = maxDeviationPercentage;
         FlagEncoder encoder = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(encoder);
-        baseProfile = CHProfile.nodeBased(new FastestWeighting(encoder));
-        trafficProfile = CHProfile.nodeBased(new RandomDeviationWeighting(baseProfile.getWeighting(), maxDeviationPercentage));
-        ghStorage = new GraphBuilder(em).setCHProfiles(baseProfile, trafficProfile).build();
+        baseCHConfig = CHConfig.nodeBased("base", new FastestWeighting(encoder));
+        trafficCHConfig = CHConfig.nodeBased("traffic", new RandomDeviationWeighting(baseCHConfig.getWeighting(), maxDeviationPercentage));
+        ghStorage = new GraphBuilder(em).setCHConfigs(baseCHConfig, trafficCHConfig).build();
     }
 
     @Test
@@ -75,19 +75,19 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         ghStorage.freeze();
 
         // create CH
-        PrepareContractionHierarchies basePch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, baseProfile);
+        PrepareContractionHierarchies basePch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, baseCHConfig);
         basePch.doWork();
-        CHGraph baseCHGraph = ghStorage.getCHGraph(baseProfile);
+        CHGraph baseCHGraph = ghStorage.getCHGraph(baseCHConfig);
 
         // check correctness & performance
         checkCorrectness(ghStorage, baseCHGraph, basePch, seed, 100);
         runPerformanceTest(ghStorage, baseCHGraph, basePch, seed, numQueries);
 
         // now we re-use the contraction order from the previous contraction and re-run it with the traffic weighting
-        PrepareContractionHierarchies trafficPch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, trafficProfile)
+        PrepareContractionHierarchies trafficPch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, trafficCHConfig)
                 .useFixedNodeOrdering(baseCHGraph.getNodeOrderingProvider());
         trafficPch.doWork();
-        CHGraph trafficCHGraph = ghStorage.getCHGraph(trafficProfile);
+        CHGraph trafficCHGraph = ghStorage.getCHGraph(trafficCHConfig);
 
         // check correctness & performance
         checkCorrectness(ghStorage, trafficCHGraph, trafficPch, seed, 100);

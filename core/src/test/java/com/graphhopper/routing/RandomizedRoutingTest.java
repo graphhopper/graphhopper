@@ -23,7 +23,7 @@ import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.lm.LMProfile;
+import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.PerfectApproximator;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -66,8 +66,8 @@ public class RandomizedRoutingTest {
     private final TraversalMode traversalMode;
     private Directory dir;
     private GraphHopperStorage graph;
-    private List<CHProfile> chProfiles;
-    private LMProfile lmProfile;
+    private List<CHConfig> chConfigs;
+    private LMConfig lmConfig;
     private CHGraph chGraph;
     private FlagEncoder encoder;
     private TurnCostStorage turnCostStorage;
@@ -127,26 +127,26 @@ public class RandomizedRoutingTest {
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager)
-                .setCHProfileStrings("car|fastest|node", "car|fastest|edge")
+                .setCHConfigStrings("p1|car|fastest|node", "p2|car|fastest|edge")
                 .setDir(dir)
                 .create();
         turnCostStorage = graph.getTurnCostStorage();
-        chProfiles = graph.getCHProfiles();
+        chConfigs = graph.getCHConfigs();
         // important: for LM preparation we need to use a weighting without turn costs #1960
-        lmProfile = new LMProfile(chProfiles.get(0).getWeighting());
-        weighting = traversalMode.isEdgeBased() ? chProfiles.get(1).getWeighting() : chProfiles.get(0).getWeighting();
+        lmConfig = new LMConfig("config", chConfigs.get(0).getWeighting());
+        weighting = traversalMode.isEdgeBased() ? chConfigs.get(1).getWeighting() : chConfigs.get(0).getWeighting();
     }
 
     private void preProcessGraph() {
         graph.freeze();
         if (prepareCH) {
-            CHProfile chProfile = !traversalMode.isEdgeBased() ? chProfiles.get(0) : chProfiles.get(1);
-            pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
+            CHConfig chConfig = !traversalMode.isEdgeBased() ? chConfigs.get(0) : chConfigs.get(1);
+            pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
             pch.doWork();
-            chGraph = graph.getCHGraph(chProfile);
+            chGraph = graph.getCHGraph(chConfig);
         }
         if (prepareLM) {
-            lm = new PrepareLandmarks(dir, graph, lmProfile, 16);
+            lm = new PrepareLandmarks(dir, graph, lmConfig, 16);
             lm.setMaximumWeight(10000);
             lm.doWork();
         }
@@ -235,8 +235,8 @@ public class RandomizedRoutingTest {
             List<QueryResult> chQueryResults = findQueryResults(index, points);
             List<QueryResult> queryResults = findQueryResults(index, points);
 
-            QueryGraph chQueryGraph = QueryGraph.lookup(prepareCH ? chGraph : graph, chQueryResults);
-            QueryGraph queryGraph = QueryGraph.lookup(graph, queryResults);
+            QueryGraph chQueryGraph = QueryGraph.create(prepareCH ? chGraph : graph, chQueryResults);
+            QueryGraph queryGraph = QueryGraph.create(graph, queryResults);
 
             int source = queryResults.get(0).getClosestNode();
             int target = queryResults.get(1).getClosestNode();

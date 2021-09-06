@@ -52,7 +52,7 @@ public class JsonFeatureCollectionTest {
             HashMap<String, Object> properties = new HashMap<>();
             properties.put("prop0", "value0");
             jsonFeature.setProperties(properties);
-            jsonFeature.setGeometry(geometryFactory.createPoint(new Coordinate(102.0,0.5)));
+            jsonFeature.setGeometry(geometryFactory.createPoint(new Coordinate(102.0, 0.5)));
             jsonFeatureCollection.getFeatures().add(jsonFeature);
         }
         {

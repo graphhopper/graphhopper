@@ -32,14 +32,14 @@ public class PrepareCHGraph {
     private final Weighting weighting;
 
     public static PrepareCHGraph nodeBased(CHGraph chGraph, Weighting weighting) {
-        if (chGraph.getCHProfile().isEdgeBased()) {
+        if (chGraph.getCHConfig().isEdgeBased()) {
             throw new IllegalArgumentException("Expected node-based CHGraph, but was edge-based");
         }
         return new PrepareCHGraph(chGraph, weighting);
     }
 
     public static PrepareCHGraph edgeBased(CHGraph chGraph, Weighting weighting) {
-        if (!chGraph.getCHProfile().isEdgeBased()) {
+        if (!chGraph.getCHConfig().isEdgeBased()) {
             throw new IllegalArgumentException("Expected edge-based CHGraph, but was node-based");
         }
         return new PrepareCHGraph(chGraph, weighting);

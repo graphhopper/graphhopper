@@ -18,8 +18,8 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.TurnCost;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -44,8 +44,8 @@ public class AlternativeRouteEdgeCHTest {
     public GraphHopperStorage createTestGraph(EncodingManager tmpEM) {
         final GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), tmpEM, false, true);
         TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(carFE, graph.getTurnCostStorage());
-        CHProfile chProfile = CHProfile.edgeBased(new FastestWeighting(carFE, turnCostProvider));
-        graph.addCHGraph(chProfile);
+        CHConfig chConfig = CHConfig.edgeBased("profile", new FastestWeighting(carFE, turnCostProvider));
+        graph.addCHGraph(chConfig);
         graph.create(1000);
 
         /*
@@ -87,7 +87,7 @@ public class AlternativeRouteEdgeCHTest {
 
         graph.freeze();
 
-        PrepareContractionHierarchies contractionHierarchies = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
+        PrepareContractionHierarchies contractionHierarchies = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
         contractionHierarchies.doWork();
         return graph;
     }

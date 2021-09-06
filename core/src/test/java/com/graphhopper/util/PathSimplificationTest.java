@@ -17,12 +17,11 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.profiles.Roundabout;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -144,10 +143,10 @@ public class PathSimplificationTest {
         Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
                 Arrays.asList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
 
-        PathWrapper pathWrapper = new PathWrapper();
-        pathWrapper.setInstructions(wayList);
-        pathWrapper.addPathDetails(details);
-        pathWrapper.setPoints(p.calcPoints());
+        ResponsePath responsePath = new ResponsePath();
+        responsePath.setInstructions(wayList);
+        responsePath.addPathDetails(details);
+        responsePath.setPoints(p.calcPoints());
 
         int numberOfPoints = p.calcPoints().size();
 
@@ -155,19 +154,19 @@ public class PathSimplificationTest {
         // Do not simplify anything
         douglasPeucker.setMaxDistance(0);
 
-        PathSimplification.simplify(pathWrapper, douglasPeucker, true);
+        PathSimplification.simplify(responsePath, douglasPeucker, true);
 
-        assertEquals(numberOfPoints, pathWrapper.getPoints().size());
+        assertEquals(numberOfPoints, responsePath.getPoints().size());
 
-        pathWrapper = new PathWrapper();
-        pathWrapper.setInstructions(wayList);
-        pathWrapper.addPathDetails(details);
-        pathWrapper.setPoints(p.calcPoints());
+        responsePath = new ResponsePath();
+        responsePath.setInstructions(wayList);
+        responsePath.addPathDetails(details);
+        responsePath.setPoints(p.calcPoints());
 
         douglasPeucker.setMaxDistance(100000000);
-        PathSimplification.simplify(pathWrapper, douglasPeucker, true);
+        PathSimplification.simplify(responsePath, douglasPeucker, true);
 
-        assertTrue(numberOfPoints > pathWrapper.getPoints().size());
+        assertTrue(numberOfPoints > responsePath.getPoints().size());
     }
 
     @Test

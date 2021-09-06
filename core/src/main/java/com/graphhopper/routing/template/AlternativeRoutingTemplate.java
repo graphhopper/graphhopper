@@ -19,14 +19,13 @@ package com.graphhopper.routing.template;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
+import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.Parameters.Routing;
@@ -75,14 +74,14 @@ final public class AlternativeRoutingTemplate extends ViaRoutingTemplate {
 
         // if alternative route calculation was done then create the responses from single paths        
         PointList wpList = getWaypoints();
-        altResponse.setWaypoints(wpList);
-        ghResponse.add(altResponse);
-        pathMerger.doWork(altResponse, Collections.singletonList(pathList.get(0)), lookup, tr);
+        responsePath.setWaypoints(wpList);
+        ghResponse.add(responsePath);
+        pathMerger.doWork(responsePath, Collections.singletonList(pathList.get(0)), lookup, tr);
         for (int index = 1; index < pathList.size(); index++) {
-            PathWrapper tmpAltRsp = new PathWrapper();
-            tmpAltRsp.setWaypoints(wpList);
-            ghResponse.add(tmpAltRsp);
-            pathMerger.doWork(tmpAltRsp, Collections.singletonList(pathList.get(index)), lookup, tr);
+            ResponsePath p = new ResponsePath();
+            p.setWaypoints(wpList);
+            ghResponse.add(p);
+            pathMerger.doWork(p, Collections.singletonList(pathList.get(index)), lookup, tr);
         }
     }
 }

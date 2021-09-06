@@ -17,7 +17,7 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.util.details.PathDetail;
 
 import java.util.ArrayList;
@@ -64,12 +64,12 @@ public class PathSimplification {
     /**
      * Convenience method used to obtain the partitions from a calculated path with details and instructions
      */
-    public static PointList simplify(PathWrapper pathWrapper, DouglasPeucker douglasPeucker, boolean enableInstructions) {
-        final PointList pointList = pathWrapper.getPoints();
+    public static PointList simplify(ResponsePath responsePath, DouglasPeucker douglasPeucker, boolean enableInstructions) {
+        final PointList pointList = responsePath.getPoints();
         List<Partition> partitions = new ArrayList<>();
         // todo: maybe this code can be simplified if path details and instructions would be merged, see #1121
         if (enableInstructions) {
-            final InstructionList instructions = pathWrapper.getInstructions();
+            final InstructionList instructions = responsePath.getInstructions();
             partitions.add(new Partition() {
                 @Override
                 public int size() {
@@ -97,7 +97,7 @@ public class PathSimplification {
             });
         }
 
-        for (final Map.Entry<String, List<PathDetail>> entry : pathWrapper.getPathDetails().entrySet()) {
+        for (final Map.Entry<String, List<PathDetail>> entry : responsePath.getPathDetails().entrySet()) {
             // If the pointList only contains one point, PathDetails have to be empty because 1 point => 0 edges
             final List<PathDetail> detail = entry.getValue();
             if (detail.isEmpty() && pointList.size() > 1)
@@ -123,10 +123,10 @@ public class PathSimplification {
             });
         }
 
-        simplify(pathWrapper.getPoints(), partitions, douglasPeucker);
-        assertConsistencyOfPathDetails(pathWrapper.getPathDetails());
+        simplify(responsePath.getPoints(), partitions, douglasPeucker);
+        assertConsistencyOfPathDetails(responsePath.getPathDetails());
         if (enableInstructions)
-            assertConsistencyOfInstructions(pathWrapper.getInstructions(), pathWrapper.getPoints().size());
+            assertConsistencyOfInstructions(responsePath.getInstructions(), responsePath.getPoints().size());
         return pointList;
     }
 

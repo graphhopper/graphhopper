@@ -32,12 +32,12 @@ var GHRequest = function (host, api_key) {
     this.route = new GHRoute(new GHInput(), new GHInput());
     this.from = this.route.first();
     this.to = this.route.last();
-    this.features = {};
+    this.profiles = []
 
     this.do_zoom = true;
     this.useMiles = false;
     this.dataType = "json";
-    this.api_params = {"locale": "en", "vehicle": "car", "weighting": "fastest", "key": api_key, "pt": {}};
+    this.api_params = {"locale": "en", "key": api_key, "pt": {}};
 
     // register events
     this.route.addListener('route.add', function (evt) {
@@ -78,7 +78,8 @@ GHRequest.prototype.init = function (params) {
     if ('use_miles' in params)
         this.useMiles = params.use_miles;
 
-    this.initVehicle(this.api_params.vehicle);
+    if (!this.api_params.profile)
+        this.api_params.profile = this.profiles[0].profile_name
 
     if (params.q) {
         var qStr = params.q;
@@ -118,20 +119,16 @@ GHRequest.prototype.getEarliestDepartureTime = function () {
     return undefined;
 };
 
-GHRequest.prototype.initVehicle = function (vehicle) {
-    this.api_params.vehicle = vehicle;
-    if(this.api_params.elevation !== false) {
-        var featureSet = this.features[vehicle];
-        this.api_params.elevation = featureSet && featureSet.elevation;
-    }
-    this.hasTCSupport();
+GHRequest.prototype.setProfile = function (profileName) {
+    this.api_params.profile = profileName;
 };
 
-GHRequest.prototype.hasTCSupport = function() {
-   if(this.api_params.turn_costs !== false) {
-      var featureSet = this.features[this.api_params.vehicle];
-      this.api_params.turn_costs = featureSet && featureSet.turn_costs;
-   }
+GHRequest.prototype.getProfile = function () {
+    return this.api_params.profile;
+};
+
+GHRequest.prototype.setElevation = function (elevation) {
+    this.api_params.elevation = elevation;
 };
 
 GHRequest.prototype.hasElevation = function () {
@@ -139,12 +136,38 @@ GHRequest.prototype.hasElevation = function () {
 };
 
 GHRequest.prototype.getVehicle = function () {
-    return this.api_params.vehicle;
+    var profileName = this.api_params.profile;
+    var profile = this.profiles.find(function(p) { return p.profile_name === profileName; });
+    if (!profile)
+        return "";
+    else
+        return profile.vehicle;
 };
 
 GHRequest.prototype.isPublicTransit = function () {
-    return this.getVehicle() === "pt";
+    // legacy support: we might have set vehicle=pt instead of pt
+    return this.getProfile() === "pt" || this.getVehicle() === "pt";;
 };
+
+GHRequest.prototype.removeProfileParameterIfLegacyRequest = function() {
+     // we still allow using legacy parameters to support older urls pasted from somewhere, but when they are used
+     // we may not add the profile parameter to the url
+     if (
+            this.api_params["vehicle"] ||
+            this.api_params["weighting"] ||
+            this.api_params["turn_costs"] ||
+            this.api_params["edge_based"]
+        ) {
+            delete this.api_params.profile;
+        }
+}
+
+GHRequest.prototype.removeLegacyParameters = function() {
+     delete this.api_params["vehicle"];
+     delete this.api_params["weighting"];
+     delete this.api_params["turn_costs"];
+     delete this.api_params["edge_based"];
+}
 
 GHRequest.prototype.createGeocodeURL = function (host, prevIndex) {
     var tmpHost = this.host;
@@ -232,6 +255,10 @@ GHRequest.prototype.doRequest = function (url, callback) {
     $.ajax({
         timeout: 30000,
         url: url,
+        beforeSend: function(request) {
+            request.setRequestHeader("gh-client", "web-ui")
+            request.setRequestHeader("gh-client-version", "1.0")
+        },
         success: function (json) {
             if (json.paths) {
                 for (var i = 0; i < json.paths.length; i++) {

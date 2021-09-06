@@ -19,7 +19,7 @@
 package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
@@ -34,7 +34,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static com.graphhopper.http.util.TestUtils.clientTarget;
@@ -52,8 +51,10 @@ public class SPTResourceTest {
                 putObject("graph.encoded_values", "max_speed,road_class").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", DIR).
-                // use turn costs to make sure this is not a problem
-                        setProfiles(Collections.singletonList(new ProfileConfig("car").setVehicle("car").setWeighting("fastest").setTurnCosts(true)));
+                setProfiles(Arrays.asList(
+                        new Profile("car_without_turncosts").setVehicle("car").setWeighting("fastest"),
+                        new Profile("car_with_turncosts").setVehicle("car").setWeighting("fastest").setTurnCosts(true)
+                ));
         return config;
     }
 
@@ -65,7 +66,7 @@ public class SPTResourceTest {
 
     @Test
     public void requestSPT() {
-        Response rsp = clientTarget(app, "/spt?point=42.531073,1.573792&time_limit=300").request().buildGet().invoke();
+        Response rsp = clientTarget(app, "/spt?profile=car_without_turncosts&point=42.531073,1.573792&time_limit=300").request().buildGet().invoke();
         String rspCsvString = rsp.readEntity(String.class);
         String[] lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);
@@ -77,7 +78,7 @@ public class SPTResourceTest {
         assertEquals(118, Integer.parseInt(row[2]) / 1000, 1);
         assertEquals(2263, Integer.parseInt(row[3]), 1);
 
-        rsp = clientTarget(app, "/spt?point=42.531073,1.573792&columns=prev_time").request().buildGet().invoke();
+        rsp = clientTarget(app, "/spt?profile=car_without_turncosts&point=42.531073,1.573792&columns=prev_time").request().buildGet().invoke();
         rspCsvString = rsp.readEntity(String.class);
         lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);
@@ -90,8 +91,20 @@ public class SPTResourceTest {
     }
 
     @Test
+    public void requestSPTEdgeBased() {
+        Response rsp = clientTarget(app, "/spt?profile=car_with_turncosts&point=42.531073,1.573792&time_limit=300&columns=prev_node_id,edge_id,node_id,time,distance").request().buildGet().invoke();
+        String rspCsvString = rsp.readEntity(String.class);
+        String[] lines = rspCsvString.split("\n");
+        assertTrue(lines.length > 500);
+        assertEquals("prev_node_id,edge_id,node_id,time,distance", lines[0]);
+        assertEquals("-1,-1,1884,0,0", lines[1]);
+        assertEquals("1884,2274,1324,3817,74", lines[2]);
+        assertEquals("1884,2272,263,13496,262", lines[3]);
+    }
+
+    @Test
     public void requestDetails() {
-        Response rsp = clientTarget(app, "/spt?point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed").request().buildGet().invoke();
+        Response rsp = clientTarget(app, "/spt?profile=car_without_turncosts&point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed").request().buildGet().invoke();
         String rspCsvString = rsp.readEntity(String.class);
         String[] lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);
@@ -112,6 +125,19 @@ public class SPTResourceTest {
         Response rsp = clientTarget(app, "/spt").request().buildGet().invoke();
         assertEquals(400, rsp.getStatus());
         JsonNode json = rsp.readEntity(JsonNode.class);
-        assertTrue(json.get("message").toString().contains("You need to specify a point at which the shortest path tree is centered"), json.toString());
+        assertTrue(json.get("message").toString().contains("query param point must not be null"), json.toString());
+    }
+
+    @Test
+    public void profileWithLegacyParametersNotAllowed() {
+        assertNotAllowed("&profile=fast_car&weighting=fastest", "Since you are using the 'profile' parameter, do not use the 'weighting' parameter. You used 'weighting=fastest'");
+        assertNotAllowed("&profile=fast_car&vehicle=car", "Since you are using the 'profile' parameter, do not use the 'vehicle' parameter. You used 'vehicle=car'");
+    }
+
+    private void assertNotAllowed(String hint, String error) {
+        Response rsp = clientTarget(app, "/spt?point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed" + hint).request().buildGet().invoke();
+        assertEquals(400, rsp.getStatus());
+        JsonNode json = rsp.readEntity(JsonNode.class);
+        assertTrue(json.get("message").toString().contains(error), json.toString());
     }
 }

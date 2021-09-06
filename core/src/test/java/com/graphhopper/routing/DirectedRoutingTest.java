@@ -21,7 +21,7 @@ package com.graphhopper.routing;
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.lm.LMProfile;
+import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
@@ -68,8 +68,8 @@ public class DirectedRoutingTest {
     private final boolean prepareLM;
     private Directory dir;
     private GraphHopperStorage graph;
-    private CHProfile chProfile;
-    private LMProfile lmProfile;
+    private CHConfig chConfig;
+    private LMConfig lmConfig;
     private CHGraph chGraph;
     private FlagEncoder encoder;
     private TurnCostStorage turnCostStorage;
@@ -122,10 +122,10 @@ public class DirectedRoutingTest {
         graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).build();
         turnCostStorage = graph.getTurnCostStorage();
         weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts));
-        chProfile = CHProfile.edgeBased(weighting);
+        chConfig = CHConfig.edgeBased("p1", weighting);
         // important: for LM preparation we need to use a weighting without turn costs #1960
-        lmProfile = new LMProfile(new FastestWeighting(encoder));
-        graph.addCHGraph(chProfile);
+        lmConfig = new LMConfig("c2", new FastestWeighting(encoder));
+        graph.addCHGraph(chConfig);
         graph.create(1000);
     }
 
@@ -135,12 +135,12 @@ public class DirectedRoutingTest {
             return;
         }
         if (prepareCH) {
-            pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
+            pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
             pch.doWork();
-            chGraph = graph.getCHGraph(chProfile);
+            chGraph = graph.getCHGraph(chConfig);
         }
         if (prepareLM) {
-            lm = new PrepareLandmarks(dir, graph, lmProfile, 16);
+            lm = new PrepareLandmarks(dir, graph, lmConfig, 16);
             lm.setMaximumWeight(1000);
             lm.doWork();
         }
@@ -169,7 +169,6 @@ public class DirectedRoutingTest {
     @Repeat(times = 10)
     public void randomGraph() {
         final long seed = System.nanoTime();
-        System.out.println("random Graph seed: " + seed);
         final int numQueries = 50;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, 0.8);
@@ -188,7 +187,7 @@ public class DirectedRoutingTest {
             Path path = createAlgo()
                     .calcPath(source, target, sourceOutEdge, targetInEdge);
             // do not check nodes, because there can be ambiguity when there are zero weight loops
-            strictViolations.addAll(comparePaths(refPath, path, source, target, false));
+            strictViolations.addAll(comparePaths(refPath, path, source, target, false, seed));
         }
         // sometimes there are multiple best paths with different distance/time, if this happens too often something
         // is wrong and we fail
@@ -196,7 +195,7 @@ public class DirectedRoutingTest {
             for (String strictViolation : strictViolations) {
                 System.out.println("strict violation: " + strictViolation);
             }
-            fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries);
+            fail("Too many strict violations, with seed: " + seed + " - " + strictViolations.size() + " / " + numQueries);
         }
     }
 
@@ -207,7 +206,6 @@ public class DirectedRoutingTest {
     @Repeat(times = 10)
     public void randomGraph_withQueryGraph() {
         final long seed = System.nanoTime();
-        System.out.println("randomGraph_withQueryGraph seed: " + seed);
         final int numQueries = 50;
 
         // we may not use an offset when query graph is involved, otherwise traveling via virtual edges will not be
@@ -227,8 +225,8 @@ public class DirectedRoutingTest {
             List<QueryResult> chQueryResults = findQueryResults(index, points);
             List<QueryResult> queryResults = findQueryResults(index, points);
 
-            QueryGraph chQueryGraph = QueryGraph.lookup(prepareCH ? chGraph : graph, chQueryResults);
-            QueryGraph queryGraph = QueryGraph.lookup(graph, queryResults);
+            QueryGraph chQueryGraph = QueryGraph.create(prepareCH ? chGraph : graph, chQueryResults);
+            QueryGraph queryGraph = QueryGraph.create(graph, queryResults);
 
             int source = queryResults.get(0).getClosestNode();
             int target = queryResults.get(1).getClosestNode();
@@ -245,12 +243,12 @@ public class DirectedRoutingTest {
                     .calcPath(source, target, chSourceOutEdge, chTargetInEdge);
 
             // do not check nodes, because there can be ambiguity when there are zero weight loops
-            strictViolations.addAll(comparePaths(refPath, path, source, target, false));
+            strictViolations.addAll(comparePaths(refPath, path, source, target, false, seed));
         }
         // sometimes there are multiple best paths with different distance/time, if this happens too often something
         // is wrong and we fail
         if (strictViolations.size() > Math.max(1, 0.05 * numQueries)) {
-            fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries);
+            fail("Too many strict violations, with seed: " + seed + " - " + strictViolations.size() + " / " + numQueries);
         }
     }
 
@@ -262,14 +260,14 @@ public class DirectedRoutingTest {
         return result;
     }
 
-    private List<String> comparePaths(Path refPath, Path path, int source, int target, boolean checkNodes) {
+    private List<String> comparePaths(Path refPath, Path path, int source, int target, boolean checkNodes, long seed) {
         List<String> strictViolations = new ArrayList<>();
         double refWeight = refPath.getWeight();
         double weight = path.getWeight();
         if (Math.abs(refWeight - weight) > 1.e-2) {
             System.out.println("expected: " + refPath.calcNodes());
             System.out.println("given:    " + path.calcNodes());
-            fail("wrong weight: " + source + "->" + target + ", expected: " + refWeight + ", given: " + weight);
+            fail("wrong weight: " + source + "->" + target + ", expected: " + refWeight + ", given: " + weight + ", seed: " + seed);
         }
         if (Math.abs(path.getDistance() - refPath.getDistance()) > 1.e-1) {
             strictViolations.add("wrong distance " + source + "->" + target + ", expected: " + refPath.getDistance() + ", given: " + path.getDistance());

@@ -20,6 +20,7 @@ debug.sh
 /web/src/main/resources/assets/js/main.js
 /web/src/main/resources/assets/js/config/options_prod.js
 /web/dependency-reduced-pom.xml
+/web/node
 *.pbf
 !/reader-osm/src/test/resources/com/graphhopper/reader/osm/*.pbf
 *.dem

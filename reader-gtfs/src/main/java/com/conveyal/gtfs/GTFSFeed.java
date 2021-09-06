@@ -357,12 +357,15 @@ public class GTFSFeed implements Cloneable, Closeable {
     }
 
     private static DB constructDB(File file) {
-        return DBMaker.newFileDB(file)
+        DBMaker<?> dbMaker = DBMaker.newFileDB(file)
                 .transactionDisable()
                 .mmapFileEnable()
                 .asyncWriteEnable()
-                .compressionEnable()
-                .make();
+                .compressionEnable();
+        if (file.exists()) {
+            dbMaker.readOnly();
+        }
+        return dbMaker.make();
     }
 
     private GTFSFeed (DB db) {

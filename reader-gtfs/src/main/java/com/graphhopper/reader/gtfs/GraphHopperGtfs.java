@@ -103,10 +103,19 @@ public class GraphHopperGtfs extends GraphHopperOSM {
 
     @Override
     protected LocationIndex createLocationIndex(Directory dir) {
-        if (getGraphHopperStorage().getNodes() > 0) {
-            return new LocationIndexTree(getGraphHopperStorage(), new RAMDirectory()).prepareIndex();
+        LocationIndexTree tmpIndex = new LocationIndexTree(getGraphHopperStorage(), dir);
+        if (tmpIndex.loadExisting()) {
+            return tmpIndex;
         } else {
-            return new EmptyLocationIndex();
+            if (getGraphHopperStorage().getNodes() > 0) {
+                LocationIndexTree locationIndexTree = new LocationIndexTree(getGraphHopperStorage(), new RAMDirectory());
+                if (!locationIndexTree.loadExisting()) {
+                    locationIndexTree.prepareIndex();
+                }
+                return locationIndexTree;
+            } else {
+                return new EmptyLocationIndex();
+            }
         }
     }
 
@@ -120,6 +129,7 @@ public class GraphHopperGtfs extends GraphHopperOSM {
     protected void importPublicTransit() {
         gtfsStorage = new GtfsStorage(getGraphHopperStorage().getDirectory());
         if (!getGtfsStorage().loadExisting()) {
+            ensureWriteAccess();
             getGtfsStorage().create();
             GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
             int idx = 0;
@@ -131,9 +141,16 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                     throw new RuntimeException(e);
                 }
             }
+
+            //When set a transfer edge will be created between stops connected to same OSM node. This is to keep previous behavior before
+            //this commit https://github.com/graphhopper/graphhopper/commit/31ae1e1534849099f24e45d53c96340a7c6a5197.
+            boolean createTransferStopsConnectSameOsmNode = ghConfig.has("gtfs.create_transfers_stops_same_osm_node") &&
+                                                            ghConfig.getBool("gtfs.create_transfers_stops_same_osm_node", false);
+
             LocationIndex streetNetworkIndex = getLocationIndex();
             getGtfsStorage().getGtfsFeeds().forEach((id, gtfsFeed) -> {
                 GtfsReader gtfsReader = new GtfsReader(id, graphHopperStorage, graphHopperStorage.getEncodingManager(), getGtfsStorage(), streetNetworkIndex);
+                gtfsReader.setCreateTransferStopsConnectSameOsmNode(createTransferStopsConnectSameOsmNode);
                 gtfsReader.connectStopsToStreetNetwork();
                 getType0TransferWithTimes(gtfsFeed)
                         .forEach(t -> {
@@ -148,7 +165,8 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                 }
             });
             streetNetworkIndex.close();
-            LocationIndex locationIndex = createLocationIndex(graphHopperStorage.getDirectory());
+            LocationIndexTree locationIndex = new LocationIndexTree(getGraphHopperStorage(), getGraphHopperStorage().getDirectory());
+            locationIndex.prepareIndex();
             setLocationIndex(locationIndex);
         }
     }
@@ -173,7 +191,7 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                     tostation.setClosestNode(tonode);
                     points.add(graphHopperStorage.getNodeAccess().getLat(tonode), graphHopperStorage.getNodeAccess().getLon(tonode));
 
-                    QueryGraph queryGraph = QueryGraph.lookup(graphHopperStorage, Collections.emptyList());
+                    QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, Collections.emptyList());
                     final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, getGtfsStorage(), realtimeFeed, false, true, 5.0, false);
 
                     MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, false, false, false, false, Integer.MAX_VALUE, new ArrayList<>());

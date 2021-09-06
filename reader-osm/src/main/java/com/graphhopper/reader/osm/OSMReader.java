@@ -23,7 +23,7 @@ import com.graphhopper.coll.*;
 import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.parsers.TurnCostParser;
 import com.graphhopper.storage.*;
@@ -158,6 +158,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
      * compact graph data structure.
      */
     void preProcess(File osmFile) {
+        LOGGER.info("Starting to process OSM file: '" + osmFile + "'");
         try (OSMInput in = openOsmInputFile(osmFile)) {
             long tmpWayCounter = 1;
             long tmpRelationCounter = 1;

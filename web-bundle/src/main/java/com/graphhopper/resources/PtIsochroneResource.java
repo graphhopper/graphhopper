@@ -98,7 +98,7 @@ public class PtIsochroneResource {
         GeometryFactory geometryFactory = new GeometryFactory();
         final EdgeFilter filter = DefaultEdgeFilter.allEdges(graphHopperStorage.getEncodingManager().getEncoder("foot"));
         QueryResult queryResult = locationIndex.findClosest(source.lat, source.lon, filter);
-        QueryGraph queryGraph = QueryGraph.lookup(graphHopperStorage, Collections.singletonList(queryResult));
+        QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, Collections.singletonList(queryResult));
         if (!queryResult.isValid()) {
             throw new IllegalArgumentException("Cannot find point: " + source);
         }

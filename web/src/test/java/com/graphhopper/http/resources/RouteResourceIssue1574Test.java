@@ -18,8 +18,8 @@
 package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.config.CHProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
@@ -53,14 +53,13 @@ public class RouteResourceIssue1574Test {
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "car").
                 putObject("prepare.min_network_size", 0).
-                putObject("prepare.min_one_way_network_size", 12).
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", DIR)
                 .setProfiles(Collections.singletonList(
-                        new ProfileConfig("car_profile").setVehicle("car").setWeighting("fastest")
+                        new Profile("car_profile").setVehicle("car").setWeighting("fastest")
                 ))
                 .setCHProfiles(Collections.singletonList(
-                        new CHProfileConfig("car_profile")
+                        new CHProfile("car_profile")
                 ));
         return config;
     }
@@ -73,7 +72,8 @@ public class RouteResourceIssue1574Test {
 
     @Test
     public void testStallOnDemandBug_issue1574() {
-        final Response response = clientTarget(app, "/route?point=42.486984,1.493152&point=42.481863,1.491297&point=42.49697,1.501265&vehicle=car&weighting=fastest&stall_on_demand=true").request().buildGet().invoke();
+        final Response response = clientTarget(app, "/route?profile=car_profile&" +
+                "point=42.486984,1.493152&point=42.481863,1.491297&point=42.49697,1.501265&stall_on_demand=true").request().buildGet().invoke();
         JsonNode json = response.readEntity(JsonNode.class);
         assertFalse(json.has("message"), "there should be no error, but: " + json.get("message"));
         System.out.println(json);

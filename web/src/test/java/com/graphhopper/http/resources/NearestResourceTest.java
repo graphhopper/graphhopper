@@ -17,7 +17,7 @@
  */
 package com.graphhopper.http.resources;
 
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
@@ -35,8 +35,8 @@ import java.io.File;
 import java.util.Collections;
 
 import static com.graphhopper.http.util.TestUtils.clientTarget;
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author svantulden
@@ -52,7 +52,7 @@ public class NearestResourceTest {
                 putObject("graph.flag_encoders", "car").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", dir).
-                setProfiles(Collections.singletonList(new ProfileConfig("car").setVehicle("car").setWeighting("fastest")));
+                setProfiles(Collections.singletonList(new Profile("car").setVehicle("car").setWeighting("fastest")));
         return config;
     }
 
@@ -65,8 +65,8 @@ public class NearestResourceTest {
     @Test
     public void testBasicNearestQuery() {
         final Response response = clientTarget(app, "/nearest?point=42.554851,1.536198").request().buildGet().invoke();
-        assertThat("HTTP status", response.getStatus(), is(200));
+        assertEquals(200, response.getStatus(), "HTTP status");
         NearestResource.Response json = response.readEntity(NearestResource.Response.class);
-        assertThat("nearest point", json.coordinates, is(new double[]{1.5363742288086868, 42.55483907636756}));
+        assertArrayEquals(new double[]{1.5363742288086868, 42.55483907636756}, json.coordinates, "nearest point");
     }
 }

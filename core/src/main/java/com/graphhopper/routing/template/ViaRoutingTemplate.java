@@ -19,18 +19,17 @@ package com.graphhopper.routing.template;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.RoadClass;
-import com.graphhopper.routing.profiles.RoadEnvironment;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.NameSimilarityEdgeFilter;
 import com.graphhopper.routing.util.SnapPreventionEdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
@@ -57,7 +56,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
     protected final GHResponse ghResponse;
     // result from route
     protected List<Path> pathList;
-    protected final PathWrapper altResponse = new PathWrapper();
+    protected final ResponsePath responsePath = new ResponsePath();
     private final EnumEncodedValue<RoadClass> roadClassEnc;
     private final EnumEncodedValue<RoadEnvironment> roadEnvEnc;
 
@@ -114,13 +113,13 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             }
         }
 
-        final boolean forceCurbsides = ghRequest.getHints().getBool(Routing.FORCE_CURBSIDE, true);
         QueryResult fromQResult = queryResults.get(0);
         StopWatch sw;
         for (int placeIndex = 1; placeIndex < pointsCount; placeIndex++) {
             if (placeIndex == 1) {
                 // enforce start direction
-                queryGraph.enforceHeading(fromQResult.getClosestNode(), ghRequest.getFavoredHeading(0), false);
+                double initialHeading = ghRequest.getHeadings().isEmpty() ? Double.NaN : ghRequest.getHeadings().get(0);
+                queryGraph.enforceHeading(fromQResult.getClosestNode(), initialHeading, false);
             } else if (viaTurnPenalty) {
                 // enforce straight start after via stop
                 Path prevRoute = pathList.get(placeIndex - 2);
@@ -133,7 +132,8 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             QueryResult toQResult = queryResults.get(placeIndex);
 
             // enforce end direction
-            queryGraph.enforceHeading(toQResult.getClosestNode(), ghRequest.getFavoredHeading(placeIndex), true);
+            double heading = ghRequest.getPoints().size() == ghRequest.getHeadings().size() ? ghRequest.getHeadings().get(placeIndex) : Double.NaN;
+            queryGraph.enforceHeading(toQResult.getClosestNode(), heading, true);
 
             sw = new StopWatch().start();
             RoutingAlgorithm algo = algoFactory.createAlgo(queryGraph, algoOpts);
@@ -154,6 +154,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
                 final String toCurbside = ghRequest.getCurbsides().get(placeIndex);
                 int sourceOutEdge = DirectionResolverResult.getOutEdge(directions.get(placeIndex - 1), fromCurbside);
                 int targetInEdge = DirectionResolverResult.getInEdge(directions.get(placeIndex), toCurbside);
+                final boolean forceCurbsides = ghRequest.getHints().getBool(Routing.FORCE_CURBSIDE, true);
                 sourceOutEdge = ignoreThrowOrAcceptImpossibleCurbsides(sourceOutEdge, placeIndex - 1, forceCurbsides);
                 targetInEdge = ignoreThrowOrAcceptImpossibleCurbsides(targetInEdge, placeIndex, forceCurbsides);
 
@@ -182,17 +183,18 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             if (tmpPathList.isEmpty())
                 throw new IllegalStateException("At least one path has to be returned for " + fromQResult + " -> " + toQResult);
 
-            int idx = 0;
-            for (Path path : tmpPathList) {
+            // todo: can tmpPathList ever have more than one path here? and would it even be correct to add them all
+            // to pathList then?
+            for (int i = 0; i < tmpPathList.size(); i++) {
+                Path path = tmpPathList.get(i);
                 if (path.getTime() < 0)
-                    throw new RuntimeException("Time was negative " + path.getTime() + " for index " + idx + ". Please report as bug and include:" + ghRequest);
+                    throw new RuntimeException("Time was negative " + path.getTime() + " for index " + i + ". Please report as bug and include:" + ghRequest);
 
                 pathList.add(path);
                 debug += ", " + path.getDebugInfo();
-                idx++;
             }
 
-            altResponse.addDebugInfo(debug);
+            responsePath.addDebugInfo(debug);
 
             // reset all direction enforcements in queryGraph to avoid influencing next path
             queryGraph.clearUnfavoredStatus();
@@ -201,7 +203,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
                 throw new IllegalArgumentException("No path found due to maximum nodes exceeded " + algoOpts.getMaxVisitedNodes());
 
             visitedNodesSum += algo.getVisitedNodes();
-            altResponse.addDebugInfo("visited nodes sum: " + visitedNodesSum);
+            responsePath.addDebugInfo("visited nodes sum: " + visitedNodesSum);
             fromQResult = toQResult;
         }
 
@@ -231,9 +233,9 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
         if (ghRequest.getPoints().size() - 1 != pathList.size())
             throw new RuntimeException("There should be exactly one more points than paths. points:" + ghRequest.getPoints().size() + ", paths:" + pathList.size());
 
-        altResponse.setWaypoints(getWaypoints());
-        ghResponse.add(altResponse);
-        pathMerger.doWork(altResponse, pathList, lookup, tr);
+        responsePath.setWaypoints(getWaypoints());
+        ghResponse.add(responsePath);
+        pathMerger.doWork(responsePath, pathList, lookup, tr);
     }
 
 }

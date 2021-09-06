@@ -20,21 +20,25 @@ package com.graphhopper.tools;
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.*;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
-import com.graphhopper.config.CHProfileConfig;
-import com.graphhopper.config.LMProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.LMProfile;
+import com.graphhopper.config.Profile;
+import com.graphhopper.jackson.Jackson;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder.SpatialRuleFactory;
+import com.graphhopper.routing.weighting.custom.CustomProfile;
+import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.*;
@@ -43,7 +47,6 @@ import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
-import org.locationtech.jts.geom.Polygon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,7 +71,10 @@ import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static com.graphhopper.util.Parameters.Routing.BLOCK_AREA;
 
 /**
+ * Used to run performance benchmarks for routing and other functionalities of GraphHopper
+ *
  * @author Peter Karich
+ * @author easbar
  */
 public class Measurement {
     private static final Logger logger = LoggerFactory.getLogger(Measurement.class);
@@ -76,7 +82,6 @@ public class Measurement {
     private long seed;
     private int maxNode;
     private String vehicle;
-    private String weighting = "fastest";
 
     public static void main(String[] strs) throws IOException {
         PMap args = PMap.read(strs);
@@ -113,6 +118,7 @@ public class Measurement {
         seed = args.getLong("measurement.seed", 123);
         put("measurement.gitinfo", args.getString("measurement.gitinfo", ""));
         int count = args.getInt("measurement.count", 5000);
+        put("measurement.name", args.getString("measurement.name", "no_name"));
         put("measurement.map", args.getString("datareader.file", "unknown"));
         String blockAreaStr = args.getString("measurement.block_area", "");
         final boolean useMeasurementTimeAsRefTime = args.getBool("measurement.use_measurement_time_as_ref_time", false);
@@ -128,32 +134,42 @@ public class Measurement {
                 // note that we measure the total time of all (possibly edge&node) CH preparations
                 put(Parameters.CH.PREPARE + "time", sw.stop().getMillis());
                 int edges = getGraphHopperStorage().getEdges();
-                if (!getCHPreparationHandler().getNodeBasedCHProfiles().isEmpty()) {
-                    CHProfile chProfile = getCHPreparationHandler().getNodeBasedCHProfiles().get(0);
-                    int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(chProfile).getEdges();
+                if (!getCHPreparationHandler().getNodeBasedCHConfigs().isEmpty()) {
+                    CHConfig chConfig = getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
+                    int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(chConfig).getEdges();
                     put(Parameters.CH.PREPARE + "node.shortcuts", edgesAndShortcuts - edges);
-                    put(Parameters.CH.PREPARE + "node.time", getCHPreparationHandler().getPreparation(chProfile).getTotalPrepareTime());
+                    put(Parameters.CH.PREPARE + "node.time", getCHPreparationHandler().getPreparation(chConfig).getTotalPrepareTime());
                 }
-                if (!getCHPreparationHandler().getEdgeBasedCHProfiles().isEmpty()) {
-                    CHProfile chProfile = getCHPreparationHandler().getEdgeBasedCHProfiles().get(0);
-                    int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(chProfile).getEdges();
+                if (!getCHPreparationHandler().getEdgeBasedCHConfigs().isEmpty()) {
+                    CHConfig chConfig = getCHPreparationHandler().getEdgeBasedCHConfigs().get(0);
+                    int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(chConfig).getEdges();
                     put(Parameters.CH.PREPARE + "edge.shortcuts", edgesAndShortcuts - edges);
-                    put(Parameters.CH.PREPARE + "edge.time", getCHPreparationHandler().getPreparation(chProfile).getTotalPrepareTime());
+                    put(Parameters.CH.PREPARE + "edge.time", getCHPreparationHandler().getPreparation(chConfig).getTotalPrepareTime());
                 }
             }
 
             @Override
             protected void loadOrPrepareLM(boolean closeEarly) {
-                StopWatch sw = new StopWatch().start();
                 super.loadOrPrepareLM(closeEarly);
-                put(Landmark.PREPARE + "time", sw.stop().getMillis());
+                for (PrepareLandmarks plm : getLMPreparationHandler().getPreparations()) {
+                    put(Landmark.PREPARE + "time", plm.getTotalPrepareTime());
+                }
+            }
+
+            @Override
+            protected void cleanUp() {
+                StopWatch sw = new StopWatch().start();
+                super.cleanUp();
+                put("graph.subnetwork_removal_time_ms", sw.stop().getMillis());
             }
 
             @Override
             protected DataReader importData() throws IOException {
                 StopWatch sw = new StopWatch().start();
                 DataReader dr = super.importData();
-                put("graph.import_time", sw.stop().getSeconds());
+                sw.stop();
+                put("graph.import_time", sw.getSeconds());
+                put("graph.import_time_ms", sw.getMillis());
                 return dr;
             }
         };
@@ -180,14 +196,15 @@ public class Measurement {
         StopWatch sw = new StopWatch().start();
         try {
             maxNode = g.getNodes();
-            boolean isCH = false;
-            boolean isLM = false;
+
             final boolean runSlow = args.getBool("measurement.run_slow_routing", true);
             GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
-            printMiscUnitPerfTests(g, isCH, encoder, count * 100, allowedEdges);
+            printMiscUnitPerfTests(g, false, encoder, count * 100, allowedEdges);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
 
             if (runSlow) {
+                boolean isCH = false;
+                boolean isLM = false;
                 printTimeOfRouteQuery(hopper, new QuerySettings("routing", count / 20, isCH, isLM).
                         withInstructions());
                 if (encoder.supportsTurnCosts())
@@ -200,31 +217,32 @@ public class Measurement {
 
             if (hopper.getLMPreparationHandler().isEnabled()) {
                 System.gc();
-                isLM = true;
-                for (int activeLMCount : Arrays.asList(4, 8, 12, 16)) {
+                boolean isCH = false;
+                boolean isLM = true;
+                Helper.parseList(args.getString("measurement.lm.active_counts", "[4,8,12,16]")).stream()
+                        .mapToInt(Integer::parseInt).forEach(activeLMCount -> {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount, count / 4, isCH, isLM).
                             withInstructions().activeLandmarks(activeLMCount));
-                    if (encoder.supportsTurnCosts()) {
+                    if (args.getBool("measurement.lm.edge_based", encoder.supportsTurnCosts())) {
                         printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", count / 4, isCH, isLM).
                                 withInstructions().activeLandmarks(activeLMCount).edgeBased());
                     }
-                }
+                });
 
-                final int blockAreaActiveLMCount = 8;
+                final int activeLMCount = 8;
                 if (!blockAreaStr.isEmpty())
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + blockAreaActiveLMCount + "_block_area", count / 4, isCH, isLM).
-                            withInstructions().activeLandmarks(blockAreaActiveLMCount).blockArea(blockAreaStr));
-                // compareRouting(hopper, count / 5);
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_block_area", count / 4, isCH, isLM).
+                            withInstructions().activeLandmarks(activeLMCount).blockArea(blockAreaStr));
             }
 
             if (hopper.getCHPreparationHandler().isEnabled()) {
-                isCH = true;
-                isLM = false;
+                boolean isCH = true;
+                boolean isLM = false;
 //                compareCHWithAndWithoutSOD(hopper, count/5);
                 System.gc();
-                if (!hopper.getCHPreparationHandler().getNodeBasedCHProfiles().isEmpty()) {
-                    CHProfile chProfile = hopper.getCHPreparationHandler().getNodeBasedCHProfiles().get(0);
-                    CHGraph lg = g.getCHGraph(chProfile);
+                if (!hopper.getCHPreparationHandler().getNodeBasedCHConfigs().isEmpty()) {
+                    CHConfig chConfig = hopper.getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
+                    CHGraph lg = g.getCHGraph(chConfig);
                     fillAllowedEdges(lg.getAllEdges(), allowedEdges);
                     printMiscUnitPerfTests(lg, isCH, encoder, count * 100, allowedEdges);
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH", count, isCH, isLM).
@@ -240,7 +258,7 @@ public class Measurement {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_full", count, isCH, isLM).
                             withInstructions().withPointHints().sod().simplify());
                 }
-                if (!hopper.getCHPreparationHandler().getEdgeBasedCHProfiles().isEmpty()) {
+                if (!hopper.getCHPreparationHandler().getEdgeBasedCHConfigs().isEmpty()) {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge", count, isCH, isLM).
                             edgeBased().withInstructions());
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_no_instr", count, isCH, isLM).
@@ -285,29 +303,40 @@ public class Measurement {
         }
         vehicle = tmpEncoders.get(0).toString();
         boolean turnCosts = tmpEncoders.get(0).supportsTurnCosts();
-        weighting = args.getString("measurement.weighting", weighting);
+        String weighting = args.getString("measurement.weighting", "fastest");
         boolean useCHEdge = args.getBool("measurement.ch.edge", true);
         boolean useCHNode = args.getBool("measurement.ch.node", true);
         boolean useLM = args.getBool("measurement.lm", true);
-        List<ProfileConfig> profiles = new ArrayList<>();
-        profiles.add(new ProfileConfig("profile_no_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(false));
-        if (turnCosts) {
-            profiles.add(new ProfileConfig("profile_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true));
+        String customModelFile = args.getString("measurement.custom_model_file", "");
+        List<Profile> profiles = new ArrayList<>();
+        if (!customModelFile.isEmpty()) {
+            if (!weighting.equals(CustomWeighting.NAME))
+                throw new IllegalArgumentException("To make use of a custom model you need to set measurement.weighting to 'custom'");
+            // use custom profile(s) as specified in the given custom model file
+            CustomModel customModel = loadCustomModel(customModelFile);
+            profiles.add(new CustomProfile("profile_no_tc").setCustomModel(customModel).setVehicle(vehicle).setTurnCosts(false));
+            if (turnCosts)
+                profiles.add(new CustomProfile("profile_tc").setCustomModel(customModel).setVehicle(vehicle).setTurnCosts(true));
+        } else {
+            // use standard profiles
+            profiles.add(new Profile("profile_no_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(false));
+            if (turnCosts)
+                profiles.add(new Profile("profile_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true));
         }
         ghConfig.setProfiles(profiles);
 
-        List<CHProfileConfig> chProfiles = new ArrayList<>();
+        List<CHProfile> chProfiles = new ArrayList<>();
         if (useCHNode)
-            chProfiles.add(new CHProfileConfig("profile_no_tc"));
+            chProfiles.add(new CHProfile("profile_no_tc"));
         if (useCHEdge)
-            chProfiles.add(new CHProfileConfig("profile_tc"));
+            chProfiles.add(new CHProfile("profile_tc"));
         ghConfig.setCHProfiles(chProfiles);
-        List<LMProfileConfig> lmProfiles = new ArrayList<>();
+        List<LMProfile> lmProfiles = new ArrayList<>();
         if (useLM) {
-            lmProfiles.add(new LMProfileConfig("profile_no_tc"));
+            lmProfiles.add(new LMProfile("profile_no_tc"));
             if (turnCosts)
                 // no need for a second LM preparation, we can do cross queries here
-                lmProfiles.add(new LMProfileConfig("profile_tc").setPreparationProfile("profile_no_tc"));
+                lmProfiles.add(new LMProfile("profile_tc").setPreparationProfile("profile_no_tc"));
         }
         ghConfig.setLMProfiles(lmProfiles);
         return ghConfig;
@@ -499,16 +528,10 @@ public class Measurement {
             return;
         }
 
-        SpatialRuleFactory rulePerCountryFactory = new SpatialRuleFactory() {
-
+        SpatialRuleFactory rulePerCountryFactory = (id, borders) -> new AbstractSpatialRule(borders) {
             @Override
-            public SpatialRule createSpatialRule(final String id, final List<Polygon> borders) {
-                return new AbstractSpatialRule(borders) {
-                    @Override
-                    public String getId() {
-                        return id;
-                    }
-                };
+            public String getId() {
+                return id;
             }
         };
 
@@ -725,7 +748,7 @@ public class Measurement {
                     return 0;
                 }
 
-                PathWrapper arsp = rsp.getBest();
+                ResponsePath responsePath = rsp.getBest();
                 if (!warmup) {
                     long visitedNodes = rsp.getHints().getLong("visited_nodes.sum", 0);
                     visitedNodesSum.addAndGet(visitedNodes);
@@ -733,7 +756,7 @@ public class Measurement {
                         maxVisitedNodes.set(visitedNodes);
                     }
 
-                    long dist = (long) arsp.getDistance();
+                    long dist = (long) responsePath.getDistance();
                     distSum.addAndGet(dist);
 
                     airDistSum.addAndGet((long) distCalc.calcDist(fromLat, fromLon, toLat, toLon));
@@ -748,7 +771,7 @@ public class Measurement {
                         altCount.addAndGet(rsp.getAll().size());
                 }
 
-                return arsp.getPoints().getSize();
+                return responsePath.getPoints().getSize();
             }
         }.setIterations(querySettings.count).start();
 
@@ -816,6 +839,15 @@ public class Measurement {
                     .writeValue(file, result);
         } catch (IOException e) {
             logger.error("Problem while storing json in: " + jsonLocation, e);
+        }
+    }
+
+    private CustomModel loadCustomModel(String customModelLocation) {
+        ObjectMapper yamlOM = Jackson.initObjectMapper(new ObjectMapper(new YAMLFactory()));
+        try {
+            return yamlOM.readValue(new File(customModelLocation), CustomModel.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot load custom_model from " + customModelLocation, e);
         }
     }
 

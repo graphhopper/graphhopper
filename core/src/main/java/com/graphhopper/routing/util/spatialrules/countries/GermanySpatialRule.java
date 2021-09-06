@@ -21,10 +21,10 @@ import java.util.List;
 
 import org.locationtech.jts.geom.Polygon;
 
-import com.graphhopper.routing.profiles.Country;
-import com.graphhopper.routing.profiles.MaxSpeed;
-import com.graphhopper.routing.profiles.RoadAccess;
-import com.graphhopper.routing.profiles.RoadClass;
+import com.graphhopper.routing.ev.Country;
+import com.graphhopper.routing.ev.MaxSpeed;
+import com.graphhopper.routing.ev.RoadAccess;
+import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
 

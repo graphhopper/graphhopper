@@ -41,12 +41,13 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
     private static final Logger LOGGER = LoggerFactory.getLogger(PrepareLandmarks.class);
     private final Graph graph;
     private final LandmarkStorage lms;
-    private final LMProfile lmProfile;
+    private final LMConfig lmConfig;
+    private long totalPrepareTime;
 
-    public PrepareLandmarks(Directory dir, GraphHopperStorage graph, LMProfile lmProfile, int landmarks) {
+    public PrepareLandmarks(Directory dir, GraphHopperStorage graph, LMConfig lmConfig, int landmarks) {
         this.graph = graph;
-        this.lmProfile = lmProfile;
-        lms = new LandmarkStorage(graph, dir, lmProfile, landmarks);
+        this.lmConfig = lmConfig;
+        lms = new LandmarkStorage(graph, dir, lmConfig, landmarks);
     }
 
     /**
@@ -103,8 +104,8 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
         return lms.getSubnetworksWithLandmarks();
     }
 
-    public LMProfile getLMProfile() {
-        return lmProfile;
+    public LMConfig getLMConfig() {
+        return lmConfig;
     }
 
     public boolean loadExisting() {
@@ -122,6 +123,11 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
         LOGGER.info("Calculated landmarks for " + (lms.getSubnetworksWithLandmarks() - 1) + " subnetworks, took:" + sw.stop().getSeconds() + " => "
                 + lms.getLandmarksAsGeoJSON() + ", stored weights:" + lms.getLandmarkCount()
                 + ", nodes:" + graph.getNodes() + ", " + Helper.getMemInfo());
+        totalPrepareTime = sw.getMillis();
+    }
+
+    public long getTotalPrepareTime() {
+        return totalPrepareTime;
     }
 
     /**
