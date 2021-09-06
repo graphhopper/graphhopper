@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Locale;
 import java.util.Random;
+import java.util.function.IntPredicate;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
 import static com.graphhopper.util.Helper.getMemInfo;
@@ -66,6 +67,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     private NodeContractor nodeContractor;
     private final int nodes;
     private NodeOrderingProvider nodeOrderingProvider;
+    private IntPredicate contractNodeFilter = node -> true;
     private int maxLevel;
     // nodes with highest priority come last
     private MinHeapWithUpdate sortedNodes;
@@ -116,6 +118,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
                             " must be equal to number of nodes in graph (" + nodes + ").");
         }
         this.nodeOrderingProvider = nodeOrderingProvider;
+        return this;
+    }
+
+    /**
+     * Use this to not contract certain nodes. By default all nodes will be contracted.
+     * Only use this if you know what you are doing.
+     */
+    public PrepareContractionHierarchies setContractNodeFilter(IntPredicate contractNodeFilter) {
+        this.contractNodeFilter = contractNodeFilter;
         return this;
     }
 
@@ -195,7 +206,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         periodicUpdateSW.start();
         sortedNodes.clear();
         for (int node = 0; node < nodes; node++) {
-            if (isContracted(node))
+            if (!shouldGetContracted(node) || isContracted(node))
                 continue;
             float priority = calculatePriority(node);
             sortedNodes.push(node, priority);
@@ -205,11 +216,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
 
     private void contractNodesUsingHeuristicNodeOrdering() {
         StopWatch sw = new StopWatch().start();
-        logger.info("Building initial queue of nodes to be contracted: {} nodes, {}", nodes, getMemInfo());
+        logger.info("Building initial queue of nodes to be contracted: {} total nodes, {}", nodes, getMemInfo());
         // note that we update the priorities before preparing the node contractor. this does not make much sense,
         // but has always been like that and changing it would possibly require retuning the contraction parameters
         updatePrioritiesOfRemainingNodes();
-        logger.info("Finished building queue, took: {}s, {}", sw.stop().getSeconds(), getMemInfo());
+        logger.info("Finished building queue, {} nodes will be contracted, took: {}s, {}", sortedNodes.size(), sw.stop().getSeconds(), getMemInfo());
         nodeContractor.prepareContraction();
         final int initSize = sortedNodes.size();
         int level = 0;
@@ -280,6 +291,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
             // there might be multiple edges going to the same neighbor nodes -> only calculate priority once per node
             for (IntCursor neighbor : neighbors) {
                 int nn = neighbor.value;
+                if (!shouldGetContracted(nn))
+                    continue;
                 if (neighborUpdate && rand.nextInt(100) < params.getNeighborUpdatePercentage()) {
                     neighborUpdateSW.start();
                     float priority = calculatePriority(nn);
@@ -318,6 +331,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         for (int i = 0; i < nodesToContract; ++i) {
             stopIfInterrupted();
             int node = nodeOrderingProvider.getNodeIdForLevel(i);
+            if (!shouldGetContracted(node))
+                continue;
             contractNode(node, i);
             if (i % logSize == 0) {
                 stopWatch.stop();
@@ -346,6 +361,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
 
     private boolean isContracted(int node) {
         return chStore.getLevel(chStore.toNodePointer(node)) != maxLevel;
+    }
+
+    private boolean shouldGetContracted(int node) {
+        return contractNodeFilter.test(node);
     }
 
     private void logHeuristicStats(int updateCounter) {
