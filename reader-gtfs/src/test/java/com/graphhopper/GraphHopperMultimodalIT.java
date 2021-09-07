@@ -321,6 +321,7 @@ public class GraphHopperMultimodalIT {
     public void testAccessEgressCH() {
         CHConfig chConfig = CHConfig.nodeBased("uwe", new FastestWeighting(graphHopperGtfs.getEncodingManager().getEncoder("foot")));
         PrepareContractionHierarchies prepareContractionHierarchies = PrepareContractionHierarchies.fromGraphHopperStorage(graphHopperGtfs.getGraphHopperStorage(), chConfig);
+        prepareContractionHierarchies.setContractNodeFilter(n -> graphHopperGtfs.getGtfsStorage().getStationNodes().containsValue(n));
         prepareContractionHierarchies.doWork();
     }
 
