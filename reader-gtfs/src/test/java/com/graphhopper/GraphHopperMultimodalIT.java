@@ -20,9 +20,13 @@ package com.graphhopper;
 
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
+import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.ch.PrepareContractionHierarchiesTest;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
@@ -313,5 +317,11 @@ public class GraphHopperMultimodalIT {
         return Instant.ofEpochMilli(leg.getArrivalTime().getTime());
     }
 
+    @Test
+    public void testAccessEgressCH() {
+        CHConfig chConfig = CHConfig.nodeBased("uwe", new FastestWeighting(graphHopperGtfs.getEncodingManager().getEncoder("foot")));
+        PrepareContractionHierarchies prepareContractionHierarchies = PrepareContractionHierarchies.fromGraphHopperStorage(graphHopperGtfs.getGraphHopperStorage(), chConfig);
+        prepareContractionHierarchies.doWork();
+    }
 
 }
