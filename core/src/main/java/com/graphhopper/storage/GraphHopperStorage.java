@@ -65,22 +65,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         this.dir = dir;
         this.properties = new StorableProperties(dir);
         this.segmentSize = segmentSize;
-        InternalGraphEventListener listener = new InternalGraphEventListener() {
-            @Override
-            public void initStorage() {
-                for (CHGraphImpl cg : chGraphs) {
-                    cg.initStorage();
-                }
-            }
-
-            @Override
-            public void freeze() {
-                for (CHGraphImpl cg : chGraphs) {
-                    cg._prepareForContraction();
-                }
-            }
-        };
-        baseGraph = new BaseGraph(dir, encodingManager, withElevation, listener, withTurnCosts, segmentSize);
+        baseGraph = new BaseGraph(dir, encodingManager, withElevation, withTurnCosts, segmentSize);
         chGraphs = new ArrayList<>();
     }
 
@@ -325,6 +310,10 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     public synchronized void freeze() {
         if (!baseGraph.isFrozen())
             baseGraph.freeze();
+
+        for (CHGraphImpl cg : chGraphs) {
+            cg._prepareForContraction();
+        }
     }
 
     boolean isFrozen() {
