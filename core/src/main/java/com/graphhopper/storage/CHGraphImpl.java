@@ -312,8 +312,10 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             return;
         long maxCapacity = ((long) getNodes()) * nodeCHEntryBytes;
         nodesCH.ensureCapacity(maxCapacity);
-        // todo: are these good values and does it matter? and can the capacity be too large?
-        double expectedShortcuts = baseGraph.getEdges() * (chConfig.isEdgeBased() ? 2.5 : 0.7);
+        // we use a rather small value here. this might result in more allocations later, but they should
+        // not matter that much. if we expect a too large value the shortcuts DataAccess will end up
+        // larger than needed, because we do not do something like trimToSize in the end.
+        double expectedShortcuts = 0.3 * baseGraph.getEdges();
         shortcuts.ensureCapacity((long) expectedShortcuts * shortcutEntryBytes);
         isReadyForContraction = true;
         // copy normal edge refs into ch edge refs
@@ -392,11 +394,11 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
     @Override
     public CHGraph create(long bytes) {
-        // creating the DataAccess here makes no sense, because nodesCH has to have a certain size that we only know
-        // in prepareForContraction(). the size of shortcuts is unknown and should be approximated when the number of
-        // base graph edges can be determined -> also in prepareForContraction()
-        // Anyway, we have to create the DataAccess here, because otherwise we get an error when calling loadExisting()
-        // later, see #2384
+        // creating the DataAccess here does not make much sense, because nodesCH has to have a certain size that we
+        // only know in prepareForContraction(). also the size of shortcuts is unknown and if anything it should be
+        // approximated when the number of base graph edges can be determined -> also in prepareForContraction()
+        // Anyway, we have to create the DataAccess here, because otherwise we get an error when calling flush() and
+        // loadExisting() later, see #2384
         nodesCH.create(0);
         shortcuts.create(0);
         return this;
