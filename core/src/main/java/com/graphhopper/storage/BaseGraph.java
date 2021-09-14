@@ -64,7 +64,6 @@ class BaseGraph implements Graph {
     // as we use integer index in 'egdes' area => 'geometry' area is limited to 4GB (we use pos&neg values!)
     private final DataAccess wayGeometry;
     private final Directory dir;
-    private final InternalGraphEventListener listener;
     /**
      * interval [0,n)
      */
@@ -91,7 +90,7 @@ class BaseGraph implements Graph {
     private boolean frozen = false;
 
     public BaseGraph(Directory dir, final EncodingManager encodingManager, boolean withElevation,
-                     InternalGraphEventListener listener, boolean withTurnCosts, int segmentSize) {
+                     boolean withTurnCosts, int segmentSize) {
         this.dir = dir;
         this.encodingManager = encodingManager;
         this.intsForFlags = encodingManager.getIntsForFlags();
@@ -100,7 +99,6 @@ class BaseGraph implements Graph {
         this.stringIndex = new StringIndex(dir);
         this.nodes = dir.find("nodes", DAType.getPreferredInt(dir.getDefaultType()));
         this.edges = dir.find("edges", DAType.getPreferredInt(dir.getDefaultType()));
-        this.listener = listener;
         this.bounds = BBox.createInverse(withElevation);
         this.nodeAccess = new GHNodeAccess(this, withElevation);
         if (withTurnCosts) {
@@ -262,7 +260,6 @@ class BaseGraph implements Graph {
             N_TC = -1;
 
         initNodeAndEdgeEntrySize();
-        listener.initStorage();
         initialized = true;
     }
 
@@ -356,16 +353,10 @@ class BaseGraph implements Graph {
             throw new IllegalStateException("base graph already frozen");
 
         frozen = true;
-        listener.freeze();
     }
 
     synchronized boolean isFrozen() {
         return frozen;
-    }
-
-    public void checkFreeze() {
-        if (isFrozen())
-            throw new IllegalStateException("Cannot add edge or node after baseGraph.freeze was called");
     }
 
     void create(long initSize) {

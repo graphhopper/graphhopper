@@ -74,6 +74,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             nodesCH.setSegmentSize(segmentSize);
             shortcuts.setSegmentSize(segmentSize);
         }
+        initStorage();
     }
 
     @Override
@@ -83,12 +84,14 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
     @Override
     public boolean isShortcut(int edgeId) {
-        assert baseGraph.isFrozen() : "level graph not yet frozen";
+        assert isReadyForContraction : "Need to call prepareForContraction first";
         return edgeId >= baseGraph.edgeCount;
     }
 
     @Override
     public final void setLevel(int nodeIndex, int level) {
+        if (!isReadyForContraction)
+            throw new IllegalStateException("Cannot set CH levels before calling prepareForContraction() ");
         checkNodeId(nodeIndex);
         nodesCH.setInt((long) nodeIndex * nodeCHEntryBytes + N_LEVEL, level);
     }
@@ -106,8 +109,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
     @Override
     public int shortcut(int a, int b, int accessFlags, double weight, int skippedEdge1, int skippedEdge2) {
-        if (!baseGraph.isFrozen())
-            throw new IllegalStateException("Cannot create shortcut if graph is not yet frozen");
+        if (!isReadyForContraction)
+            throw new IllegalStateException("Cannot create shortcut before prepareForContraction was called");
         checkNodeId(a);
         checkNodeId(b);
         // shortcuts must be inserted ordered by increasing level of node a
@@ -309,23 +312,27 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             return;
         long maxCapacity = ((long) getNodes()) * nodeCHEntryBytes;
         nodesCH.ensureCapacity(maxCapacity);
+        // we use a rather small value here. this might result in more allocations later, but they should
+        // not matter that much. if we expect a too large value the shortcuts DataAccess will end up
+        // larger than needed, because we do not do something like trimToSize in the end.
+        double expectedShortcuts = 0.3 * baseGraph.getEdges();
+        shortcuts.ensureCapacity((long) expectedShortcuts * shortcutEntryBytes);
+        isReadyForContraction = true;
         // copy normal edge refs into ch edge refs
         for (int node = 0; node < getNodes(); node++)
             setEdgeRef(node, baseGraph.getEdgeRef(node));
-        isReadyForContraction = true;
     }
 
     /**
      * Writes plain edge information to the edges index
      */
-    private long writeShortcut(int edgeId, int nodeA, int nodeB, int accessFlags) {
+    private void writeShortcut(int edgeId, int nodeA, int nodeB, int accessFlags) {
         if (!EdgeIterator.Edge.isValid(edgeId))
             throw new IllegalStateException("Cannot write edge with illegal ID:" + edgeId + "; nodeA:" + nodeA + ", nodeB:" + nodeB);
 
         long edgePointer = toPointer(edgeId);
         shortcuts.setInt(edgePointer + E_NODEA, nodeA << 1 | accessFlags & PrepareEncoder.getScFwdDir());
         shortcuts.setInt(edgePointer + E_NODEB, nodeB << 1 | (accessFlags & PrepareEncoder.getScBwdDir()) >> 1);
-        return edgePointer;
     }
 
     String toDetailsString() {
@@ -364,12 +371,12 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         return baseGraph;
     }
 
-    void initStorage() {
+    private void initStorage() {
         // shortcuts
         E_NODEA = 0;
         E_NODEB = E_NODEA + 4;
         S_WEIGHT = E_NODEB + 4;
-        S_SKIP_EDGE1 = S_WEIGHT + +4;
+        S_SKIP_EDGE1 = S_WEIGHT + 4;
         S_SKIP_EDGE2 = S_SKIP_EDGE1 + 4;
         if (chConfig.isEdgeBased()) {
             S_ORIG_FIRST = S_SKIP_EDGE2 + 4;
@@ -387,8 +394,13 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
     @Override
     public CHGraph create(long bytes) {
-        nodesCH.create(bytes);
-        shortcuts.create(bytes);
+        // creating the DataAccess here does not make much sense, because nodesCH has to have a certain size that we
+        // only know in prepareForContraction(). also the size of shortcuts is unknown and if anything it should be
+        // approximated when the number of base graph edges can be determined -> also in prepareForContraction()
+        // Anyway, we have to create the DataAccess here, because otherwise we get an error when calling flush() and
+        // loadExisting() later, see #2384
+        nodesCH.create(0);
+        shortcuts.create(0);
         return this;
     }
 
@@ -508,7 +520,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         public final CHEdgeIterator setBaseNode(int baseNode) {
-            assert baseIterator.baseGraph.isFrozen() : "Traversing CHGraph is only possible if BaseGraph is frozen";
+            assert isReadyForContraction : "Traversing CHGraph is only possible after prepareForContraction";
 
             baseIterator.nextEdgeId = baseIterator.edgeId = baseGraph.getEdgeRef(baseNode);
             baseIterator.baseNode = baseNode;
@@ -607,6 +619,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     private void setEdgeRef(int nodeId, int edgeId) {
+        if (!isReadyForContraction)
+            throw new IllegalStateException("Cannot set CH levels before calling prepareForContraction() ");
         nodesCH.setInt((long) nodeId * nodeCHEntryBytes + N_CH_REF, edgeId);
     }
 

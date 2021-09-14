@@ -134,6 +134,7 @@ public class DijkstraBidirectionCHTest {
         }
         GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(9, 0).setDistance(1));
         GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(3, 9).setDistance(200));
+        graph.freeze();
         CHGraph chGraph = graph.getCHGraph();
 
         // explicitly set the node levels equal to the node ids
@@ -141,7 +142,6 @@ public class DijkstraBidirectionCHTest {
         for (int i = 0; i < 10; ++i) {
             chGraph.setLevel(i, i);
         }
-        graph.freeze();
         RoutingCHGraph routingCHGraph = graph.getRoutingCHGraph(chGraph.getCHConfig().getName());
         RoutingAlgorithm algo = createCHAlgo(routingCHGraph, true);
         Path p = algo.calcPath(1, 0);
@@ -187,12 +187,11 @@ public class DijkstraBidirectionCHTest {
         edge.set(avSpeedEnc, speed, revSpeed);
 
         GHUtility.setSpeed(encoder.getMaxSpeed() / 2, true, true, encoder, graph.edge(1, 2).setDistance(1));
-
+        graph.freeze();
         CHGraph chGraph = graph.getCHGraph();
         for (int i = 0; i < 3; ++i) {
             chGraph.setLevel(i, i);
         }
-        graph.freeze();
         RoutingCHGraph routingCHGraph = graph.getRoutingCHGraph(chGraph.getCHConfig().getName());
         RoutingAlgorithm algo = createCHAlgo(routingCHGraph, true);
         Path p = algo.calcPath(from, to);
