@@ -138,46 +138,50 @@ class NodeBasedNodeContractor implements NodeContractor {
      */
     private void insertShortcuts(int node) {
         shortcuts.clear();
-        {
-            PrepareGraphEdgeIterator iter = outEdgeExplorer.setBaseNode(node);
-            while (iter.next()) {
-                if (!iter.isShortcut())
-                    continue;
-                shortcuts.add(new Shortcut(iter.getPrepareEdge(), -1, node, iter.getAdjNode(), iter.getSkipped1(), iter.getSkipped2(), PrepareEncoder.getScFwdDir(), iter.getWeight()));
-            }
-        }
-        {
-            PrepareGraphEdgeIterator iter = inEdgeExplorer.setBaseNode(node);
-            while (iter.next()) {
-                if (!iter.isShortcut())
-                    continue;
-
-                int skippedEdge1 = iter.getSkipped2();
-                int skippedEdge2 = iter.getSkipped1();
-                // we check if this shortcut already exists (with the same weight) for the other direction and if so we can use
-                // it for both ways instead of adding another one
-                boolean bidir = false;
-                for (Shortcut sc : shortcuts) {
-                    if (sc.to == iter.getAdjNode() && Double.doubleToLongBits(sc.weight) == Double.doubleToLongBits(iter.getWeight())) {
-                        // todonow: can we not just compare skippedEdges?
-                        if (chBuilder.getShortcutForPrepareEdge(sc.skippedEdge1) == chBuilder.getShortcutForPrepareEdge(skippedEdge1) && chBuilder.getShortcutForPrepareEdge(sc.skippedEdge2) == chBuilder.getShortcutForPrepareEdge(skippedEdge2)) {
-                            if (sc.flags == PrepareEncoder.getScFwdDir()) {
-                                sc.flags = PrepareEncoder.getScDirMask();
-                                sc.prepareEdgeBwd = iter.getPrepareEdge();
-                                bidir = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                if (!bidir) {
-                    shortcuts.add(new Shortcut(-1, iter.getPrepareEdge(), node, iter.getAdjNode(), skippedEdge1, skippedEdge2, PrepareEncoder.getScBwdDir(), iter.getWeight()));
-                }
-            }
-        }
+        insertOutShortcuts(node);
+        insertInShortcuts(node);
         for (Shortcut sc : shortcuts)
             chBuilder.addShortcutNodeBased(sc.from, sc.to, sc.flags, sc.weight, sc.skippedEdge1, sc.skippedEdge2, sc.prepareEdgeFwd, sc.prepareEdgeBwd);
         addedShortcutsCount += shortcuts.size();
+    }
+
+    private void insertOutShortcuts(int node) {
+        PrepareGraphEdgeIterator iter = outEdgeExplorer.setBaseNode(node);
+        while (iter.next()) {
+            if (!iter.isShortcut())
+                continue;
+            shortcuts.add(new Shortcut(iter.getPrepareEdge(), -1, node, iter.getAdjNode(), iter.getSkipped1(), iter.getSkipped2(), PrepareEncoder.getScFwdDir(), iter.getWeight()));
+        }
+    }
+
+    private void insertInShortcuts(int node) {
+        PrepareGraphEdgeIterator iter = inEdgeExplorer.setBaseNode(node);
+        while (iter.next()) {
+            if (!iter.isShortcut())
+                continue;
+
+            int skippedEdge1 = iter.getSkipped2();
+            int skippedEdge2 = iter.getSkipped1();
+            // we check if this shortcut already exists (with the same weight) for the other direction and if so we can use
+            // it for both ways instead of adding another one
+            boolean bidir = false;
+            for (Shortcut sc : shortcuts) {
+                if (sc.to == iter.getAdjNode()
+                        && Double.doubleToLongBits(sc.weight) == Double.doubleToLongBits(iter.getWeight())
+                        // todonow: can we not just compare skippedEdges?
+                        && chBuilder.getShortcutForPrepareEdge(sc.skippedEdge1) == chBuilder.getShortcutForPrepareEdge(skippedEdge1)
+                        && chBuilder.getShortcutForPrepareEdge(sc.skippedEdge2) == chBuilder.getShortcutForPrepareEdge(skippedEdge2)
+                        && sc.flags == PrepareEncoder.getScFwdDir()) {
+                    sc.flags = PrepareEncoder.getScDirMask();
+                    sc.prepareEdgeBwd = iter.getPrepareEdge();
+                    bidir = true;
+                    break;
+                }
+            }
+            if (!bidir) {
+                shortcuts.add(new Shortcut(-1, iter.getPrepareEdge(), node, iter.getAdjNode(), skippedEdge1, skippedEdge2, PrepareEncoder.getScBwdDir(), iter.getWeight()));
+            }
+        }
     }
 
     @Override

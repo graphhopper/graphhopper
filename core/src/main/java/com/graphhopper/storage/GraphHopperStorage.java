@@ -127,6 +127,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
      * @return the (only) {@link CHConfig}, or error if there are none or multiple ones
      */
     public CHConfig getCHConfig() {
+        // todonow: there is no need to expose CHConfig. The RoutingCHGraphs already keep a reference to their weighting.
         return getCHEntry().chConfig;
     }
 

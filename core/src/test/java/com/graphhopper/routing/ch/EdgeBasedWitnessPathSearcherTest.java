@@ -49,7 +49,7 @@ public class EdgeBasedWitnessPathSearcherTest {
                 .setCHConfigStrings("p|car|shortest|edge")
                 .create();
         chStore = graph.getCHStore();
-        weighting = graph.getCHConfig().getWeighting();
+        weighting = graph.getRoutingCHGraph().getWeighting();
     }
 
     @Test
