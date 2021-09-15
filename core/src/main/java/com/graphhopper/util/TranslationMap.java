@@ -69,7 +69,11 @@ public class TranslationMap {
         try {
             for (String locale : LOCALES) {
                 TranslationHashMap trMap = new TranslationHashMap(getLocale(locale));
-                trMap.doImport(TranslationMap.class.getResourceAsStream(locale + ".txt"));
+                InputStream stream = TranslationMap.class.getResourceAsStream(locale + ".txt");
+                if (stream == null) {
+                    stream = TranslationMap.class.getResourceAsStream("/" + locale + ".txt");
+                }
+                trMap.doImport(stream);
                 add(trMap);
             }
             postImportHook();
