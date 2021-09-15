@@ -25,10 +25,9 @@ import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.CHStorage;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RoutingCHGraphImpl;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -57,7 +56,7 @@ public class CHQueryWithTurnCostsTest {
         private final FlagEncoder encoder = new CarFlagEncoder(5, 5, maxCost).setSpeedTwoDirections(true);
         private final EncodingManager encodingManager = EncodingManager.create(encoder);
         private final GraphHopperStorage graph;
-        private final CHGraph chGraph;
+        private final CHStorage store;
         private final String algoString;
 
         public Fixture(String algoString) {
@@ -65,7 +64,7 @@ public class CHQueryWithTurnCostsTest {
             graph = new GraphBuilder(encodingManager)
                     .setCHConfigStrings("profile|car|shortest|edge")
                     .create();
-            chGraph = graph.getCHGraph();
+            store = graph.getCHStore();
         }
 
         @Override
@@ -75,18 +74,19 @@ public class CHQueryWithTurnCostsTest {
 
         private AbstractBidirectionEdgeCHNoSOD createAlgo() {
             return "astar".equals(algoString) ?
-                    new AStarBidirectionEdgeCHNoSOD(new RoutingCHGraphImpl(chGraph)) :
-                    new DijkstraBidirectionEdgeCHNoSOD(new RoutingCHGraphImpl(chGraph));
+                    new AStarBidirectionEdgeCHNoSOD(graph.getRoutingCHGraph()) :
+                    new DijkstraBidirectionEdgeCHNoSOD(graph.getRoutingCHGraph());
         }
 
         private void addShortcut(int from, int to, int firstOrigEdge, int lastOrigEdge, int skipped1, int skipped2, double weight, boolean reverse) {
             int flags = reverse ? PrepareEncoder.getScBwdDir() : PrepareEncoder.getScFwdDir();
-            chGraph.shortcutEdgeBased(from, to, flags, weight, skipped1, skipped2, firstOrigEdge, lastOrigEdge);
+            store.shortcutEdgeBased(from, to, flags, weight, skipped1, skipped2, firstOrigEdge, lastOrigEdge);
+            store.setEdgeRef(store.toNodePointer(from), graph.getEdges() + store.getShortcuts() - 1);
         }
 
         private void setLevelEqualToNodeIdForAllNodes() {
-            for (int node = 0; node < chGraph.getNodes(); ++node) {
-                chGraph.setLevel(node, node);
+            for (int node = 0; node < store.getNodes(); ++node) {
+                store.setLevel(store.toNodePointer(node), node);
             }
         }
 

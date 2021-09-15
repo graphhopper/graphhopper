@@ -20,25 +20,62 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.CHEdgeIteratorState;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 
 public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorState {
-    private final EdgeIteratorState edgeState;
+    final CHStorage store;
+    final BaseGraph baseGraph;
+    final BaseGraph.EdgeIteratorStateImpl baseEdgeState;
     private final Weighting weighting;
     private final BooleanEncodedValue accessEnc;
+    long edgePointer = -1;
+    int edgeId = -1;
+    int baseNode;
+    int adjNode;
+    boolean reverse = false;
+    boolean freshFlags;
 
-    public RoutingCHEdgeIteratorStateImpl(EdgeIteratorState edgeState, Weighting weighting) {
-        this.edgeState = edgeState;
+    public RoutingCHEdgeIteratorStateImpl(CHStorage store, BaseGraph baseGraph, BaseGraph.EdgeIteratorStateImpl baseEdgeState, Weighting weighting) {
+        this.store = store;
+        this.baseGraph = baseGraph;
+        this.baseEdgeState = baseEdgeState;
         this.weighting = weighting;
         this.accessEnc = weighting.getFlagEncoder().getAccessEnc();
     }
 
+    boolean init(int edgeId, int expectedAdjNode) {
+        if (edgeId < baseGraph.edgeCount) {
+            boolean b = baseEdgeState.init(edgeId, expectedAdjNode);
+            this.edgeId = baseEdgeState.edgeId;
+            return b;
+        } else {
+            if (!EdgeIterator.Edge.isValid(edgeId))
+                throw new IllegalArgumentException("fetching the edge requires a valid edgeId but was " + edgeId);
+            this.edgeId = edgeId;
+            edgePointer = store.toShortcutPointer(edgeId - baseGraph.edgeCount);
+            baseNode = store.getNodeA(edgePointer);
+            adjNode = store.getNodeB(edgePointer);
+            freshFlags = false;
+
+            if (expectedAdjNode == adjNode || expectedAdjNode == Integer.MIN_VALUE) {
+                reverse = false;
+                return true;
+            } else if (expectedAdjNode == baseNode) {
+                reverse = true;
+                baseNode = adjNode;
+                adjNode = expectedAdjNode;
+                return true;
+            }
+            return false;
+        }
+    }
+
     @Override
     public int getEdge() {
-        return edgeState().getEdge();
+        return isShortcut() ? edgeId : edgeState().getEdge();
     }
 
     @Override
@@ -48,46 +85,64 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
 
     @Override
     public int getOrigEdgeFirst() {
-        return edgeState().getOrigEdgeFirst();
+        if (!isShortcut() || !store.isEdgeBased())
+            return getEdge();
+        return store.getOrigEdgeFirst(edgePointer);
     }
 
     @Override
     public int getOrigEdgeLast() {
-        return edgeState().getOrigEdgeLast();
+        if (!isShortcut() || !store.isEdgeBased())
+            return getEdge();
+        return store.getOrigEdgeLast(edgePointer);
     }
 
     @Override
     public int getBaseNode() {
-        return edgeState().getBaseNode();
+        return isShortcut() ? baseNode : edgeState().getBaseNode();
     }
 
     @Override
     public int getAdjNode() {
-        return edgeState().getAdjNode();
+        return isShortcut() ? adjNode : edgeState().getAdjNode();
     }
 
     @Override
     public boolean isShortcut() {
-        return (edgeState() instanceof CHEdgeIteratorState) && ((CHEdgeIteratorState) edgeState()).isShortcut();
+        return edgeId >= baseGraph.edgeCount;
     }
 
     @Override
     public int getSkippedEdge1() {
-        return ((CHEdgeIteratorState) edgeState()).getSkippedEdge1();
+        checkShortcut(true, "getSkippedEdge1");
+        return store.getSkippedEdge1(edgePointer);
     }
 
     @Override
     public int getSkippedEdge2() {
-        return ((CHEdgeIteratorState) edgeState()).getSkippedEdge2();
+        checkShortcut(true, "getSkippedEdge2");
+        return store.getSkippedEdge2(edgePointer);
     }
 
     @Override
     public double getWeight(boolean reverse) {
         if (isShortcut()) {
-            return ((CHEdgeIteratorState) edgeState()).getWeight();
+            return store.getWeight(edgePointer);
         } else {
             return getOrigEdgeWeight(reverse, true);
         }
+    }
+
+    @Override
+    public boolean getFwdAccess() {
+        checkShortcut(true, "getFwdAccess");
+        return reverse ? store.getBwdAccess(edgePointer) : store.getFwdAccess(edgePointer);
+    }
+
+    @Override
+    public boolean getBwdAccess() {
+        checkShortcut(true, "getBwdAccess");
+        return reverse ? store.getFwdAccess(edgePointer) : store.getBwdAccess(edgePointer);
     }
 
     /**
@@ -118,6 +173,14 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
 
     EdgeIteratorState edgeState() {
         // use this only via this getter method as it might have been overwritten
-        return edgeState;
+        return baseEdgeState;
+    }
+
+    void checkShortcut(boolean shouldBeShortcut, String methodName) {
+        if (isShortcut()) {
+            if (!shouldBeShortcut)
+                throw new IllegalStateException("Cannot call " + methodName + " on shortcut " + getEdge());
+        } else if (shouldBeShortcut)
+            throw new IllegalStateException("Method " + methodName + " only for shortcuts " + getEdge());
     }
 }

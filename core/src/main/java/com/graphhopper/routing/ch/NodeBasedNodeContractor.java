@@ -18,9 +18,12 @@
 package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntContainer;
+import com.graphhopper.storage.CHBuilder;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.StopWatch;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import static com.graphhopper.routing.ch.CHParameters.EDGE_DIFFERENCE_WEIGHT;
@@ -30,7 +33,9 @@ import static com.graphhopper.util.Helper.nf;
 class NodeBasedNodeContractor implements NodeContractor {
     private final CHPreparationGraph prepareGraph;
     private final Params params = new Params();
-    private ShortcutHandler shortcutHandler;
+    // todonow: maybe use a set to prevent duplicates instead?
+    private List<Shortcut> shortcuts = new ArrayList<>();
+    private CHBuilder chBuilder;
     private PrepareGraphEdgeExplorer inEdgeExplorer;
     private PrepareGraphEdgeExplorer outEdgeExplorer;
     private PrepareGraphEdgeExplorer existingShortcutExplorer;
@@ -45,10 +50,10 @@ class NodeBasedNodeContractor implements NodeContractor {
     private int originalEdgesCount;
     private int shortcutsCount;
 
-    NodeBasedNodeContractor(CHPreparationGraph prepareGraph, ShortcutHandler shortcutHandler, PMap pMap) {
+    NodeBasedNodeContractor(CHPreparationGraph prepareGraph, CHBuilder chBuilder, PMap pMap) {
         this.prepareGraph = prepareGraph;
         extractParams(pMap);
-        this.shortcutHandler = shortcutHandler;
+        this.chBuilder = chBuilder;
     }
 
     private void extractParams(PMap pMap) {
@@ -77,7 +82,8 @@ class NodeBasedNodeContractor implements NodeContractor {
     @Override
     public void close() {
         prepareGraph.close();
-        shortcutHandler = null;
+        shortcuts = null;
+        chBuilder = null;
         inEdgeExplorer = null;
         outEdgeExplorer = null;
         existingShortcutExplorer = null;
@@ -131,13 +137,13 @@ class NodeBasedNodeContractor implements NodeContractor {
      * with them.
      */
     private void insertShortcuts(int node) {
-        shortcutHandler.startContractingNode();
+        shortcuts.clear();
         {
             PrepareGraphEdgeIterator iter = outEdgeExplorer.setBaseNode(node);
             while (iter.next()) {
                 if (!iter.isShortcut())
                     continue;
-                shortcutHandler.addOutShortcut(iter.getPrepareEdge(), node, iter.getAdjNode(), iter.getSkipped1(), iter.getSkipped2(), iter.getWeight());
+                shortcuts.add(new Shortcut(iter.getPrepareEdge(), -1, node, iter.getAdjNode(), iter.getSkipped1(), iter.getSkipped2(), PrepareEncoder.getScFwdDir(), iter.getWeight()));
             }
         }
         {
@@ -145,15 +151,38 @@ class NodeBasedNodeContractor implements NodeContractor {
             while (iter.next()) {
                 if (!iter.isShortcut())
                     continue;
-                shortcutHandler.addInShortcut(iter.getPrepareEdge(), node, iter.getAdjNode(), iter.getSkipped2(), iter.getSkipped1(), iter.getWeight());
+
+                int skippedEdge1 = iter.getSkipped2();
+                int skippedEdge2 = iter.getSkipped1();
+                // we check if this shortcut already exists (with the same weight) for the other direction and if so we can use
+                // it for both ways instead of adding another one
+                boolean bidir = false;
+                for (Shortcut sc : shortcuts) {
+                    if (sc.to == iter.getAdjNode() && Double.doubleToLongBits(sc.weight) == Double.doubleToLongBits(iter.getWeight())) {
+                        // todonow: can we not just compare skippedEdges?
+                        if (chBuilder.getShortcutForPrepareEdge(sc.skippedEdge1) == chBuilder.getShortcutForPrepareEdge(skippedEdge1) && chBuilder.getShortcutForPrepareEdge(sc.skippedEdge2) == chBuilder.getShortcutForPrepareEdge(skippedEdge2)) {
+                            if (sc.flags == PrepareEncoder.getScFwdDir()) {
+                                sc.flags = PrepareEncoder.getScDirMask();
+                                sc.prepareEdgeBwd = iter.getPrepareEdge();
+                                bidir = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!bidir) {
+                    shortcuts.add(new Shortcut(-1, iter.getPrepareEdge(), node, iter.getAdjNode(), skippedEdge1, skippedEdge2, PrepareEncoder.getScBwdDir(), iter.getWeight()));
+                }
             }
         }
-        addedShortcutsCount += shortcutHandler.finishContractingNode();
+        for (Shortcut sc : shortcuts)
+            chBuilder.addShortcutNodeBased(sc.from, sc.to, sc.flags, sc.weight, sc.skippedEdge1, sc.skippedEdge2, sc.prepareEdgeFwd, sc.prepareEdgeBwd);
+        addedShortcutsCount += shortcuts.size();
     }
 
     @Override
     public void finishContraction() {
-        shortcutHandler.finishContraction();
+        chBuilder.buildCH();
     }
 
     @Override
@@ -286,36 +315,37 @@ class NodeBasedNodeContractor implements NodeContractor {
         private float originalEdgesCountWeight = 1;
     }
 
-    /**
-     * This handler is called on every shortcut that this contractor finds necessary to add for the contracted node.
-     */
-    public interface ShortcutHandler {
-        /**
-         * Use this hook for any kind of initialization to be done before a node is contracted
-         */
-        void startContractingNode();
+    private static class Shortcut {
+        int prepareEdgeFwd;
+        int prepareEdgeBwd;
+        int from;
+        int to;
+        int skippedEdge1;
+        int skippedEdge2;
+        double weight;
+        int flags;
 
-        /**
-         * This method is called for every shortcut outgoing from the contracted node and found by the contractor
-         */
-        void addOutShortcut(int prepareEdge, int node, int adjNode, int skipped1, int skipped2, double weight);
+        public Shortcut(int prepareEdgeFwd, int prepareEdgeBwd, int from, int to, int skippedEdge1, int skippedEdge2, int flags, double weight) {
+            this.prepareEdgeFwd = prepareEdgeFwd;
+            this.prepareEdgeBwd = prepareEdgeBwd;
+            this.from = from;
+            this.to = to;
+            this.skippedEdge1 = skippedEdge1;
+            this.skippedEdge2 = skippedEdge2;
+            this.flags = flags;
+            this.weight = weight;
+        }
 
-        /**
-         * This method is called for every shortcut incoming to the contracted node and found by the contractor.
-         * Incoming shortcuts are added only *after* all outgoing ones were add.
-         */
-        void addInShortcut(int prepareEdge, int node, int adjNode, int skipped1, int skipped2, double weight);
+        @Override
+        public String toString() {
+            String str;
+            if (flags == PrepareEncoder.getScDirMask())
+                str = from + "<->";
+            else
+                str = from + "->";
 
-        /**
-         * Use this hook for any kind of post-processing after the node is contracted
-         *
-         * @return the actual number of shortcuts that were added to the graph for this node
-         */
-        int finishContractingNode();
-
-        /**
-         * This method is called at the very end of the graph contraction (after the last node was contracted)
-         */
-        void finishContraction();
+            return str + to + ", weight:" + weight + " (" + skippedEdge1 + "," + skippedEdge2 + ")";
+        }
     }
+
 }

@@ -18,7 +18,7 @@
 
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.util.CHEdgeIteratorState;
+import com.graphhopper.storage.RoutingCHEdgeIteratorState;
 
 public class ShortcutFilter {
     public final boolean fwd;
@@ -41,7 +41,7 @@ public class ShortcutFilter {
         return new ShortcutFilter(true, true);
     }
 
-    public boolean accept(CHEdgeIteratorState edgeState) {
+    public boolean accept(RoutingCHEdgeIteratorState edgeState) {
         // c.f. comment in AccessFilter
         if (edgeState.getBaseNode() == edgeState.getAdjNode()) {
             return edgeState.getFwdAccess() || edgeState.getBwdAccess();

@@ -26,10 +26,6 @@ public interface RoutingCHGraph {
 
     int getEdges();
 
-    int getOtherNode(int chEdge, int node);
-
-    boolean isAdjacentToNode(int chEdge, int node);
-
     RoutingCHEdgeExplorer createInEdgeExplorer();
 
     RoutingCHEdgeExplorer createOutEdgeExplorer();

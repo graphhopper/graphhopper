@@ -47,7 +47,7 @@ class QueryRoutingCHGraphTest {
     private FastestWeighting weighting;
     private GraphHopperStorage graph;
     private NodeAccess na;
-    private CHGraph chGraph;
+    private CHStorage chStore;
     private RoutingCHGraph routingCHGraph;
 
     @BeforeEach
@@ -59,7 +59,7 @@ class QueryRoutingCHGraphTest {
         graph.addCHGraph(CHConfig.edgeBased("x", weighting));
         graph.create(100);
         na = graph.getNodeAccess();
-        chGraph = graph.getCHGraph("x");
+        chStore = graph.getCHStore("x");
         routingCHGraph = graph.getRoutingCHGraph("x");
     }
 
@@ -104,10 +104,11 @@ class QueryRoutingCHGraphTest {
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(10));
         graph.freeze();
         assertEquals(2, graph.getEdges());
-        setIdentityLevels(chGraph);
-        chGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1);
+        setIdentityLevels(chStore);
+        chStore.shortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1, 0, 1);
+        chStore.setEdgeRef(chStore.toNodePointer(0), 2);
 
-        QueryGraph queryGraph = QueryGraph.create(graph, Collections.<Snap>emptyList());
+        QueryGraph queryGraph = QueryGraph.create(graph, Collections.emptyList());
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
 
         assertEquals(3, queryCHGraph.getNodes());
@@ -116,6 +117,7 @@ class QueryRoutingCHGraphTest {
         assertNodesConnected(queryCHGraph, 0, 1, true);
         assertNodesConnected(queryCHGraph, 1, 2, true);
         // the shortcut 0-2 is not visible from node 2
+        // todonow
 //        assertNodesConnected(queryCHGraph, 0, 2, false);
 
         RoutingCHEdgeIterator outIter = queryCHGraph.createOutEdgeExplorer().setBaseNode(0);
@@ -204,8 +206,9 @@ class QueryRoutingCHGraphTest {
         addEdge(graph, 1, 2);
         graph.freeze();
         assertEquals(2, graph.getEdges());
-        setIdentityLevels(chGraph);
-        chGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1);
+        setIdentityLevels(chStore);
+        chStore.shortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1, 0, 1);
+        chStore.setEdgeRef(chStore.toNodePointer(0), 2);
 
         Snap snap = new Snap(50.00, 10.05);
         snap.setClosestEdge(edge);
@@ -268,8 +271,9 @@ class QueryRoutingCHGraphTest {
         EdgeIteratorState edge = addEdge(graph, 0, 1);
         addEdge(graph, 1, 2);
         graph.freeze();
-        setIdentityLevels(chGraph);
-        chGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1);
+        setIdentityLevels(chStore);
+        chStore.shortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1, 0, 1);
+        chStore.setEdgeRef(chStore.toNodePointer(0), 2);
 
         Snap snap = new Snap(50.00, 10.05);
         snap.setClosestEdge(edge);
@@ -304,8 +308,8 @@ class QueryRoutingCHGraphTest {
         na.setNode(1, 50.00, 10.10);
         EdgeIteratorState edge = addEdge(graph, 0, 1);
         graph.freeze();
-        chGraph.setLevel(0, 5);
-        chGraph.setLevel(1, 7);
+        setLevel(0, 5);
+        setLevel(1, 7);
 
         Snap snap = new Snap(50.00, 10.05);
         snap.setClosestEdge(edge);
@@ -318,6 +322,10 @@ class QueryRoutingCHGraphTest {
         assertEquals(5, queryCHGraph.getLevel(0));
         assertEquals(7, queryCHGraph.getLevel(1));
         assertEquals(Integer.MAX_VALUE, queryCHGraph.getLevel(2));
+    }
+
+    private void setLevel(int node, int level) {
+        chStore.setLevel(chStore.toNodePointer(node), level);
     }
 
     @Test
@@ -333,8 +341,9 @@ class QueryRoutingCHGraphTest {
                 .set(encoder.getAverageSpeedEnc(), 90, 30);
         addEdge(graph, 1, 2);
         graph.freeze();
-        setIdentityLevels(chGraph);
-        chGraph.shortcut(0, 2, PrepareEncoder.getScDirMask(), 20, 0, 1);
+        setIdentityLevels(chStore);
+        chStore.shortcutEdgeBased(0, 2, PrepareEncoder.getScDirMask(), 20, 0, 1, 0, 1);
+        chStore.setEdgeRef(chStore.toNodePointer(0), 2);
 
         // without query graph
         RoutingCHEdgeIterator iter = routingCHGraph.createOutEdgeExplorer().setBaseNode(0);
@@ -503,8 +512,8 @@ class QueryRoutingCHGraphTest {
         DecimalEncodedValue turnCostEnc = encodingManager.getDecimalEncodedValue(TurnCost.key(encoder.toString()));
         graph.getTurnCostStorage().set(turnCostEnc, 0, 1, 1, 5);
         graph.freeze();
-        setIdentityLevels(chGraph);
-        chGraph.shortcut(0, 2, PrepareEncoder.getScDirMask(), 20, 0, 1);
+        setIdentityLevels(chStore);
+        chStore.shortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1, 0, 1);
 
         // without virtual nodes
         assertEquals(5, routingCHGraph.getTurnWeight(0, 1, 1));
@@ -545,9 +554,9 @@ class QueryRoutingCHGraphTest {
         assertEquals(5, queryCHGraph.getTurnWeight(expectedEdge31, 1, expectedEdge14));
     }
 
-    public static void setIdentityLevels(CHGraph chGraph) {
-        for (int i = 0; i < chGraph.getNodes(); i++) {
-            chGraph.setLevel(i, i);
+    public static void setIdentityLevels(CHStorage store) {
+        for (int i = 0; i < store.getNodes(); i++) {
+            store.setLevel(store.toNodePointer(i), i);
         }
     }
 
@@ -622,10 +631,20 @@ class QueryRoutingCHGraphTest {
     }
 
     private void assertEdgeAtNodes(RoutingCHGraph graph, int shortcut, int p, int q) {
-        assertEquals(p, graph.getOtherNode(shortcut, q));
-        assertEquals(q, graph.getOtherNode(shortcut, p));
-        assertTrue(graph.isAdjacentToNode(shortcut, p));
-        assertTrue(graph.isAdjacentToNode(shortcut, q));
+        boolean fails = true;
+        {
+            RoutingCHEdgeIterator iter = graph.createOutEdgeExplorer().setBaseNode(p);
+            while (iter.next())
+                if (iter.getAdjNode() == q && iter.getEdge() == shortcut)
+                    fails = false;
+        }
+        {
+            RoutingCHEdgeIterator iter = graph.createInEdgeExplorer().setBaseNode(q);
+            while (iter.next())
+                if (iter.getAdjNode() == p && iter.getEdge() == shortcut)
+                    fails = false;
+        }
+        assertFalse(fails);
     }
 
     private void assertEnd(RoutingCHEdgeIterator outIter) {

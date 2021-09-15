@@ -74,22 +74,6 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
     }
 
     @Override
-    public int getOtherNode(int chEdge, int node) {
-        if (isVirtualEdge(chEdge))
-            return getVirtualEdgeState(chEdge, node).getBaseNode();
-        return routingCHGraph.getOtherNode(chEdge, node);
-    }
-
-    @Override
-    public boolean isAdjacentToNode(int chEdge, int node) {
-        if (isVirtualEdge(chEdge)) {
-            VirtualEdgeIteratorState virtualEdge = getVirtualEdgeState(chEdge, node);
-            return virtualEdge.getBaseNode() == node || virtualEdge.getAdjNode() == node;
-        }
-        return routingCHGraph.isAdjacentToNode(chEdge, node);
-    }
-
-    @Override
     public RoutingCHEdgeExplorer createInEdgeExplorer() {
         return createEdgeExplorer(routingCHGraph.createInEdgeExplorer(), virtualInEdgesAtRealNodes);
     }
@@ -332,6 +316,18 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         }
 
         @Override
+        public boolean getFwdAccess() {
+            // todonow! should this method even exist?
+            return false;
+        }
+
+        @Override
+        public boolean getBwdAccess() {
+            // todonow!
+            return false;
+        }
+
+        @Override
         public String toString() {
             return "virtual: " + edge + ": " + baseNode + "->" + adjNode + ", orig: " + origEdge + ", weightFwd: " + Helper.round2(weightFwd) + ", weightBwd: " + Helper.round2(weightBwd);
         }
@@ -405,6 +401,16 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         @Override
         public double getWeight(boolean reverse) {
             return getCurrent().getWeight(reverse);
+        }
+
+        @Override
+        public boolean getFwdAccess() {
+            return getCurrent().getFwdAccess();
+        }
+
+        @Override
+        public boolean getBwdAccess() {
+            return getCurrent().getBwdAccess();
         }
 
         @Override

@@ -61,4 +61,8 @@ public interface RoutingCHEdgeIteratorState {
     int getSkippedEdge2();
 
     double getWeight(boolean reverse);
+
+    boolean getFwdAccess();
+
+    boolean getBwdAccess();
 }

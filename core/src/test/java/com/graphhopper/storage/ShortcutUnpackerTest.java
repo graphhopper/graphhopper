@@ -29,7 +29,7 @@ public class ShortcutUnpackerTest {
         private final EncodingManager encodingManager;
         private final FlagEncoder encoder;
         private final GraphHopperStorage graph;
-        private final CHGraph chGraph;
+        private final CHStorage chStore;
         private final RoutingCHGraph routingCHGraph;
 
         Fixture(boolean edgeBased) {
@@ -39,7 +39,7 @@ public class ShortcutUnpackerTest {
             graph = new GraphBuilder(encodingManager)
                     .setCHConfigStrings("profile|car|fastest|" + (edgeBased ? "edge" : "node"))
                     .create();
-            chGraph = graph.getCHGraph();
+            chStore = graph.getCHStore();
             routingCHGraph = graph.getRoutingCHGraph("profile");
         }
 
@@ -50,7 +50,7 @@ public class ShortcutUnpackerTest {
 
         private void setCHLevels(int... order) {
             for (int i = 0; i < order.length; i++) {
-                chGraph.setLevel(order[i], i);
+                chStore.setLevel(chStore.toNodePointer(order[i]), i);
             }
         }
 
@@ -75,9 +75,9 @@ public class ShortcutUnpackerTest {
             double weight = 1;
             int flags = reverse ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir();
             if (edgeBased) {
-                chGraph.shortcutEdgeBased(baseNode, adjNode, flags, weight, skip1, skip2, origFirst, origLast);
+                chStore.shortcutEdgeBased(baseNode, adjNode, flags, weight, skip1, skip2, origFirst, origLast);
             } else {
-                chGraph.shortcut(baseNode, adjNode, flags, weight, skip1, skip2);
+                chStore.shortcutNodeBased(baseNode, adjNode, flags, weight, skip1, skip2);
             }
         }
     }
@@ -112,6 +112,7 @@ public class ShortcutUnpackerTest {
         f.shortcut(2, 0, 0, 1, 0, 1, true);
         f.shortcut(2, 6, 6, 7, 2, 5, false);
         f.shortcut(0, 6, 8, 9, 0, 5, false);
+        // we do not set edge refs here. this is ok as long as we do not use the edge explorers
 
         {
             // unpack the shortcut 0->6, traverse original edges in 'forward' order (from node 0 to 6)

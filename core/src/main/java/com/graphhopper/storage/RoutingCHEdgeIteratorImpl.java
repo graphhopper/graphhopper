@@ -19,46 +19,52 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.ch.ShortcutFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.CHEdgeIteratorState;
-import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
 public class RoutingCHEdgeIteratorImpl extends RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeExplorer, RoutingCHEdgeIterator {
-    private final EdgeExplorer edgeExplorer;
+    private final BaseGraph.EdgeIteratorImpl baseIterator;
     private final ShortcutFilter shortcutFilter;
-    private EdgeIterator edgeIterator;
+    private EdgeIterator baseEdgeIterator;
+    private int nextEdgeId;
 
-    public static RoutingCHEdgeIteratorImpl inEdges(EdgeExplorer edgeExplorer, Weighting weighting) {
-        return new RoutingCHEdgeIteratorImpl(edgeExplorer, weighting, ShortcutFilter.inEdges());
+    public static RoutingCHEdgeIteratorImpl inEdges(CHStorage chStore, BaseGraph baseGraph, Weighting weighting) {
+        return new RoutingCHEdgeIteratorImpl(chStore, baseGraph, weighting, ShortcutFilter.inEdges());
     }
 
-    public static RoutingCHEdgeIteratorImpl outEdges(EdgeExplorer edgeExplorer, Weighting weighting) {
-        return new RoutingCHEdgeIteratorImpl(edgeExplorer, weighting, ShortcutFilter.outEdges());
+    public static RoutingCHEdgeIteratorImpl outEdges(CHStorage chStore, BaseGraph baseGraph, Weighting weighting) {
+        return new RoutingCHEdgeIteratorImpl(chStore, baseGraph, weighting, ShortcutFilter.outEdges());
     }
 
-    public RoutingCHEdgeIteratorImpl(EdgeExplorer edgeExplorer, Weighting weighting, ShortcutFilter shortcutFilter) {
-        super(null, weighting);
-        this.edgeExplorer = edgeExplorer;
+    public RoutingCHEdgeIteratorImpl(CHStorage chStore, BaseGraph baseGraph, Weighting weighting, ShortcutFilter shortcutFilter) {
+        super(chStore, baseGraph, new BaseGraph.EdgeIteratorImpl(baseGraph, EdgeFilter.ALL_EDGES), weighting);
+        this.baseIterator = (BaseGraph.EdgeIteratorImpl) super.baseEdgeState;
         this.shortcutFilter = shortcutFilter;
     }
 
     @Override
     EdgeIteratorState edgeState() {
-        return edgeIterator;
+        return baseEdgeIterator;
     }
 
     @Override
     public RoutingCHEdgeIterator setBaseNode(int baseNode) {
-        edgeIterator = edgeExplorer.setBaseNode(baseNode);
+        assert baseGraph.isFrozen();
+
+        baseIterator.nextEdgeId = baseIterator.edgeId = baseGraph.getEdgeRef(baseNode);
+        baseIterator.baseNode = baseNode;
+
+        nextEdgeId = edgeId = store.getEdgeRef(store.toNodePointer(baseNode));
+        baseEdgeIterator = baseIterator;
         return this;
     }
 
     @Override
     public boolean next() {
         while (true) {
-            boolean hasNext = edgeIterator.next();
+            boolean hasNext = goToNext();
             if (!hasNext) {
                 return false;
             } else if (hasAccess()) {
@@ -67,17 +73,47 @@ public class RoutingCHEdgeIteratorImpl extends RoutingCHEdgeIteratorStateImpl im
         }
     }
 
+    private boolean goToNext() {
+        // todo: note that it would be more efficient to separate in/out edges, especially for edge-based where we
+        //       do not use bidirectional shortcuts
+        while (true) {
+            if (!EdgeIterator.Edge.isValid(nextEdgeId) || nextEdgeId < baseGraph.edgeCount)
+                break;
+            edgeId = nextEdgeId;
+            edgePointer = store.toShortcutPointer(edgeId - baseGraph.edgeCount);
+            baseNode = store.getNodeA(edgePointer);
+            adjNode = store.getNodeB(edgePointer);
+            nextEdgeId = edgeId - 1;
+            if (nextEdgeId < baseGraph.edgeCount || store.getNodeA(store.toShortcutPointer(nextEdgeId - baseGraph.edgeCount)) != baseNode)
+                nextEdgeId = baseIterator.edgeId;
+            reverse = false;
+            freshFlags = false;
+            if (baseIterator.filter.accept(baseEdgeIterator))
+                return true;
+        }
+
+        while (true) {
+            if (!EdgeIterator.Edge.isValid(baseIterator.nextEdgeId))
+                return false;
+            baseIterator.goToNext();
+            // we update edgeId even when iterating base edges
+            edgeId = baseIterator.edgeId;
+            if (baseIterator.filter.accept(baseEdgeIterator))
+                return true;
+        }
+    }
+
     @Override
     public String toString() {
-        return edgeIterator.toString();
+        return baseEdgeIterator.toString();
     }
 
     private boolean hasAccess() {
         if (isShortcut()) {
-            return shortcutFilter.accept((CHEdgeIteratorState) edgeIterator);
+            return shortcutFilter.accept(this);
         } else {
             // c.f. comment in AccessFilter
-            if (edgeIterator.getBaseNode() == edgeIterator.getAdjNode()) {
+            if (baseEdgeIterator.getBaseNode() == baseEdgeIterator.getAdjNode()) {
                 return finiteWeight(false) || finiteWeight(true);
             }
             return shortcutFilter.fwd && finiteWeight(false) || shortcutFilter.bwd && finiteWeight(true);
