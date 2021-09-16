@@ -112,7 +112,6 @@ public class ShortcutUnpackerTest {
         f.shortcut(2, 0, 0, 1, 0, 1, true);
         f.shortcut(2, 6, 6, 7, 2, 5, false);
         f.shortcut(0, 6, 8, 9, 0, 5, false);
-        // we do not set edge refs here. this is ok as long as we do not use the edge explorers
 
         {
             // unpack the shortcut 0->6, traverse original edges in 'forward' order (from node 0 to 6)

@@ -294,7 +294,7 @@ public class PrepareContractionHierarchiesTest {
         prepare.doWork();
         RoutingCHEdgeExplorer outExplorer = routingCHGraph.createOutEdgeExplorer();
         RoutingCHEdgeExplorer inExplorer = routingCHGraph.createInEdgeExplorer();
-        // shortcuts (and edges) leading to or coming from lower level nodes should not be visible
+        // shortcuts leading to or coming from lower level nodes are not visible
         // so far we still receive base graph edges leading to or coming from lower level nodes though
         assertEquals(IntArrayList.from(7, 2, 1), getAdjs(outExplorer.setBaseNode(6)));
         assertEquals(IntArrayList.from(8, 0, 3), getAdjs(inExplorer.setBaseNode(6)));

@@ -118,7 +118,6 @@ class QueryRoutingCHGraphTest {
         assertNodesConnected(queryCHGraph, 0, 1, true);
         assertNodesConnected(queryCHGraph, 1, 2, true);
         // the shortcut 0-2 is not visible from node 2
-        // todonow
 //        assertNodesConnected(queryCHGraph, 0, 2, false);
 
         RoutingCHEdgeIterator outIter = queryCHGraph.createOutEdgeExplorer().setBaseNode(0);

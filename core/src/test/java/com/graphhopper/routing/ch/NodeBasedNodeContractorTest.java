@@ -20,9 +20,6 @@ package com.graphhopper.routing.ch;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.DijkstraBidirectionCH;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -121,14 +118,14 @@ public class NodeBasedNodeContractorTest {
         //       \      |
         //        --<----
 
-        RoutingCHGraph rg = graph.getRoutingCHGraph();
+        RoutingCHGraph lg = graph.getRoutingCHGraph();
         checkShortcuts(
                 expectedShortcut(4, 1, iter3to4, iter1to3, true, true),
                 expectedShortcut(4, 6, iter8to4, iter6to8, false, true),
                 expectedShortcut(4, 6, iter4to5, iter5to6, true, false),
                 // there should be two different shortcuts for both directions!
-                expectedShortcut(1, 6, rg.getEdgeIteratorState(8, 4), rg.getEdgeIteratorState(7, 6), true, false),
-                expectedShortcut(1, 6, rg.getEdgeIteratorState(8, 1), rg.getEdgeIteratorState(9, 4), false, true)
+                expectedShortcut(1, 6, lg.getEdgeIteratorState(8, 4), lg.getEdgeIteratorState(7, 6), true, false),
+                expectedShortcut(1, 6, lg.getEdgeIteratorState(8, 1), lg.getEdgeIteratorState(9, 4), false, true)
         );
     }
 
@@ -385,7 +382,7 @@ public class NodeBasedNodeContractorTest {
     }
 
     private double getWeight(EdgeIteratorState edge) {
-            return weighting.calcEdgeWeight(edge, false);
+        return weighting.calcEdgeWeight(edge, false);
     }
 
     private Set<Shortcut> setOf(Shortcut... shortcuts) {

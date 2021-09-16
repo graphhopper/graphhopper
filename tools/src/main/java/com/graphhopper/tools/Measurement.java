@@ -229,7 +229,7 @@ public class Measurement {
                 if (!hopper.getCHPreparationHandler().getNodeBasedCHConfigs().isEmpty()) {
                     CHConfig chConfig = hopper.getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
                     RoutingCHGraph lg = g.getRoutingCHGraph(chConfig.getName());
-                    measureGraphTraversalCH(lg, encoder, count * 100);
+                    measureGraphTraversalCH(lg, count * 100);
                     gcAndWait();
                     measureRouting(hopper, new QuerySettings("routingCH", count, isCH, isLM).
                             withInstructions().sod());
@@ -463,37 +463,11 @@ public class Measurement {
         print("unit_tests.get_edge_state", miniPerf);
     }
 
-    private void measureGraphTraversalCH(final RoutingCHGraph lg, final FlagEncoder encoder, int count) {
+    private void measureGraphTraversalCH(final RoutingCHGraph lg, int count) {
         final Random rand = new Random(seed);
-        final RoutingCHEdgeExplorer chExplorer = lg.createOutEdgeExplorer();
-        MiniPerfTest miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
-            int nodeId = rand.nextInt(maxNode);
-            RoutingCHEdgeIterator iter = chExplorer.setBaseNode(nodeId);
-            while (iter.next()) {
-                if (iter.isShortcut())
-                    nodeId += (int) iter.getWeight(false);
-            }
-            return nodeId;
-        });
-        print("unit_testsCH.get_weight", miniPerf);
-
-        final RoutingCHEdgeExplorer outExplorer = lg.createOutEdgeExplorer();
-        miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
-            int nodeId = rand.nextInt(maxNode);
-            return GHUtility.count(outExplorer.setBaseNode(nodeId));
-        });
-        print("unit_testsCH.out_edge_state_next", miniPerf);
-
-        final RoutingCHEdgeExplorer allExplorer = lg.createInEdgeExplorer();
-        miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
-            int nodeId = rand.nextInt(maxNode);
-            return GHUtility.count(allExplorer.setBaseNode(nodeId));
-        });
-        print("unit_testsCH.in_edge_state_next", miniPerf);
-
         final int maxEdgesId = lg.getEdges();
-        miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
-                int edgeId = rand.nextInt(maxEdgesId);
+        MiniPerfTest miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
+            int edgeId = rand.nextInt(maxEdgesId);
             return lg.getEdgeIteratorState(edgeId, Integer.MIN_VALUE).getEdge();
         });
         print("unit_testsCH.get_edge_state", miniPerf);
