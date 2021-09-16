@@ -24,13 +24,17 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
     private final BaseGraph baseGraph;
     private final CHStorage chStorage;
     private final Weighting weighting;
+    private final int baseEdges;
 
     public RoutingCHGraphImpl(BaseGraph baseGraph, CHStorage chStorage, Weighting weighting) {
         if (weighting.hasTurnCosts() && !chStorage.isEdgeBased())
             throw new IllegalArgumentException("Weighting has turn costs, but CHStorage is node-based");
+        if (chStorage.getNodes() < 0)
+            throw new IllegalStateException("CHStorage was not initialized");
         this.baseGraph = baseGraph;
         this.chStorage = chStorage;
         this.weighting = weighting;
+        baseEdges = baseGraph.getEdges();
     }
 
     @Override
@@ -40,7 +44,7 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
 
     @Override
     public int getEdges() {
-        return baseGraph.getEdges() + chStorage.getShortcuts();
+        return baseEdges + chStorage.getShortcuts();
     }
 
     @Override
@@ -55,7 +59,7 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
 
     @Override
     public RoutingCHEdgeIteratorState getEdgeIteratorState(int chEdge, int adjNode) {
-        if (chEdge >= baseGraph.getEdges()) {
+        if (chEdge >= baseEdges) {
             if (chEdge >= getEdges())
                 throw new IllegalStateException("chEdge " + chEdge + " out of bounds");
         } else if (!baseGraph.isInBounds(chEdge))
