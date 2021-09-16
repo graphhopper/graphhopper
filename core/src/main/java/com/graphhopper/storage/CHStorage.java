@@ -114,7 +114,6 @@ public class CHStorage {
      * todo: we could also trim down the shortcuts DataAccess when we are done adding shortcuts
      */
     public void init(int nodes, int expectedShortcuts) {
-        // todonow: should we enforce init was called whereever the initialization is needed?
         if (nodeCount >= 0)
             throw new IllegalStateException("CHStorage can only be initialized once");
         if (nodes < 0)
