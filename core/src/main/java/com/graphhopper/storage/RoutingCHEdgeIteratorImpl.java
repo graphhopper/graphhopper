@@ -18,70 +18,83 @@
 
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.ch.ShortcutFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.CHEdgeIteratorState;
-import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
 public class RoutingCHEdgeIteratorImpl extends RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeExplorer, RoutingCHEdgeIterator {
-    private final EdgeExplorer edgeExplorer;
-    private final ShortcutFilter shortcutFilter;
-    private EdgeIterator edgeIterator;
+    private final BaseGraph.EdgeIteratorImpl baseIterator;
+    private final boolean outgoing;
+    private final boolean incoming;
+    private int nextEdgeId;
 
-    public static RoutingCHEdgeIteratorImpl inEdges(EdgeExplorer edgeExplorer, Weighting weighting) {
-        return new RoutingCHEdgeIteratorImpl(edgeExplorer, weighting, ShortcutFilter.inEdges());
+    public static RoutingCHEdgeIteratorImpl outEdges(CHStorage chStore, BaseGraph baseGraph, Weighting weighting) {
+        return new RoutingCHEdgeIteratorImpl(chStore, baseGraph, weighting, true, false);
     }
 
-    public static RoutingCHEdgeIteratorImpl outEdges(EdgeExplorer edgeExplorer, Weighting weighting) {
-        return new RoutingCHEdgeIteratorImpl(edgeExplorer, weighting, ShortcutFilter.outEdges());
+    public static RoutingCHEdgeIteratorImpl inEdges(CHStorage chStore, BaseGraph baseGraph, Weighting weighting) {
+        return new RoutingCHEdgeIteratorImpl(chStore, baseGraph, weighting, false, true);
     }
 
-    public RoutingCHEdgeIteratorImpl(EdgeExplorer edgeExplorer, Weighting weighting, ShortcutFilter shortcutFilter) {
-        super(null, weighting);
-        this.edgeExplorer = edgeExplorer;
-        this.shortcutFilter = shortcutFilter;
+    public RoutingCHEdgeIteratorImpl(CHStorage chStore, BaseGraph baseGraph, Weighting weighting, boolean outgoing, boolean incoming) {
+        super(chStore, baseGraph, new BaseGraph.EdgeIteratorImpl(baseGraph, EdgeFilter.ALL_EDGES), weighting);
+        this.baseIterator = (BaseGraph.EdgeIteratorImpl) super.baseEdgeState;
+        this.outgoing = outgoing;
+        this.incoming = incoming;
     }
 
     @Override
     EdgeIteratorState edgeState() {
-        return edgeIterator;
+        return baseIterator;
     }
 
     @Override
     public RoutingCHEdgeIterator setBaseNode(int baseNode) {
-        edgeIterator = edgeExplorer.setBaseNode(baseNode);
+        assert baseGraph.isFrozen();
+        baseIterator.setBaseNode(baseNode);
+        int lastShortcut = store.getLastShortcut(store.toNodePointer(baseNode));
+        nextEdgeId = edgeId = lastShortcut < 0 ? baseIterator.edgeId : baseGraph.edgeCount + lastShortcut;
         return this;
     }
 
     @Override
     public boolean next() {
-        while (true) {
-            boolean hasNext = edgeIterator.next();
-            if (!hasNext) {
-                return false;
-            } else if (hasAccess()) {
+        // we first traverse shortcuts (in decreasing order) and when we are done we use the base iterator to traverse
+        // the base edges as well. shortcuts are filtered using shortcutFilter, but base edges are only filtered by
+        // access/finite weight.
+        while (nextEdgeId >= baseGraph.edgeCount) {
+            shortcutPointer = store.toShortcutPointer(nextEdgeId - baseGraph.edgeCount);
+            baseNode = store.getNodeA(shortcutPointer);
+            adjNode = store.getNodeB(shortcutPointer);
+            edgeId = nextEdgeId;
+            nextEdgeId--;
+            if (nextEdgeId < baseGraph.edgeCount || store.getNodeA(store.toShortcutPointer(nextEdgeId - baseGraph.edgeCount)) != baseNode)
+                nextEdgeId = baseIterator.edgeId;
+            // todo: note that it would be more efficient (but cost more memory) to separate in/out edges,
+            //       especially for edge-based where we do not use bidirectional shortcuts
+            // c.f. comment in AccessFilter
+            if ((baseNode == adjNode && (store.getFwdAccess(shortcutPointer) || store.getBwdAccess(shortcutPointer))) ||
+                    (outgoing && store.getFwdAccess(shortcutPointer) || incoming && store.getBwdAccess(shortcutPointer)))
                 return true;
-            }
         }
+
+        // similar to baseIterator.next(), but we apply our own filter and set edgeId
+        while (EdgeIterator.Edge.isValid(baseIterator.nextEdgeId)) {
+            baseIterator.goToNext();
+            // we update edgeId even when iterating base edges. is it faster to do this also for base/adjNode?
+            edgeId = baseIterator.edgeId;
+            // c.f. comment in AccessFilter
+            if ((baseIterator.getBaseNode() == baseIterator.getAdjNode() && (finiteWeight(false) || finiteWeight(true))) ||
+                    (outgoing && finiteWeight(false) || incoming && finiteWeight(true)))
+                return true;
+        }
+        return false;
     }
 
     @Override
     public String toString() {
-        return edgeIterator.toString();
-    }
-
-    private boolean hasAccess() {
-        if (isShortcut()) {
-            return shortcutFilter.accept((CHEdgeIteratorState) edgeIterator);
-        } else {
-            // c.f. comment in AccessFilter
-            if (edgeIterator.getBaseNode() == edgeIterator.getAdjNode()) {
-                return finiteWeight(false) || finiteWeight(true);
-            }
-            return shortcutFilter.fwd && finiteWeight(false) || shortcutFilter.bwd && finiteWeight(true);
-        }
+        return baseIterator.toString();
     }
 
     private boolean finiteWeight(boolean reverse) {

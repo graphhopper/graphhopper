@@ -25,10 +25,13 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * This class manages all storage related methods and delegates the calls to the associated graphs.
@@ -41,12 +44,13 @@ import java.util.List;
  * @see GraphBuilder to create a (CH)Graph easier
  */
 public final class GraphHopperStorage implements GraphStorage, Graph {
+    private static final Logger LOGGER = LoggerFactory.getLogger(GraphHopperStorage.class);
     private final Directory dir;
     private final EncodingManager encodingManager;
     private final StorableProperties properties;
     private final BaseGraph baseGraph;
     // same flush order etc
-    private final Collection<CHGraphImpl> chGraphs;
+    private final Collection<CHEntry> chEntries;
     private final int segmentSize;
 
     public GraphHopperStorage(Directory dir, EncodingManager encodingManager, boolean withElevation) {
@@ -66,19 +70,31 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         this.properties = new StorableProperties(dir);
         this.segmentSize = segmentSize;
         baseGraph = new BaseGraph(dir, encodingManager, withElevation, withTurnCosts, segmentSize);
-        chGraphs = new ArrayList<>();
+        chEntries = new ArrayList<>();
     }
 
     /**
-     * Adds a {@link CHGraph} for the given {@link CHConfig}. You need to call this method before calling {@link #create(long)}
+     * Adds a {@link CHStorage} for the given {@link CHConfig}. You need to call this method before calling {@link #create(long)}
      * or {@link #loadExisting()}.
      */
     public GraphHopperStorage addCHGraph(CHConfig chConfig) {
         baseGraph.checkNotInitialized();
-        if (getCHConfigs().contains(chConfig)) {
-            throw new IllegalArgumentException("For the given CH profile a CHGraph already exists: '" + chConfig.getName() + "'");
-        }
-        chGraphs.add(new CHGraphImpl(chConfig, dir, baseGraph, segmentSize));
+        if (getCHConfigs().contains(chConfig))
+            throw new IllegalArgumentException("For the given CH profile a CHStorage already exists: '" + chConfig.getName() + "'");
+        if (chConfig.getWeighting() == null)
+            throw new IllegalStateException("Weighting for CHConfig must not be null");
+
+        CHStorage store = new CHStorage(dir, chConfig.getName(), segmentSize, chConfig.isEdgeBased());
+        store.setLowShortcutWeightConsumer(s -> {
+            // we just log these to find mapping errors
+            NodeAccess nodeAccess = baseGraph.getNodeAccess();
+            LOGGER.warn("Setting weights smaller than " + s.minWeight + " is not allowed. " +
+                    "You passed: " + s.weight + " for the shortcut " +
+                    " nodeA (" + nodeAccess.getLat(s.nodeA) + "," + nodeAccess.getLon(s.nodeA) +
+                    " nodeB " + nodeAccess.getLat(s.nodeB) + "," + nodeAccess.getLon(s.nodeB));
+        });
+
+        chEntries.add(new CHEntry(chConfig, store, new RoutingCHGraphImpl(baseGraph, store, chConfig.getWeighting())));
         return this;
     }
 
@@ -93,55 +109,79 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     }
 
     /**
-     * If possible use {@link #getRoutingCHGraph(String)} instead, as CHGraph will be removed at some point.
+     * @return the (only) {@link CHStorage}, or error if there are none or multiple ones
      */
-    public CHGraph getCHGraph() {
-        if (chGraphs.isEmpty()) {
-            throw new IllegalStateException("There is no CHGraph");
-        } else if (chGraphs.size() > 1) {
-            throw new IllegalStateException("There are multiple CHGraphs, use getCHGraph(CHConfig) to retrieve a specific one");
-        } else {
-            return chGraphs.iterator().next();
-        }
+    public CHStorage getCHStore() {
+        return getCHEntry().chStore;
     }
 
     /**
-     * @return the {@link CHGraph} for the specified profile name, or null if it does not exist
+     * @return the {@link CHStorage} for the specified profile name, or null if it does not exist
      */
-    public CHGraph getCHGraph(String chGraphName) {
-        for (CHGraphImpl cg : chGraphs) {
-            if (cg.getCHConfig().getName().equals(chGraphName))
+    public CHStorage getCHStore(String chName) {
+        CHEntry chEntry = getCHEntry(chName);
+        return chEntry == null ? null : chEntry.chStore;
+    }
+
+    /**
+     * @return the (only) {@link CHConfig}, or error if there are none or multiple ones
+     */
+    public CHConfig getCHConfig() {
+        // todo: there is no need to expose CHConfig. The RoutingCHGraphs already keep a reference to their weighting.
+        return getCHEntry().chConfig;
+    }
+
+    /**
+     * @return the {@link CHConfig} for the specified profile name, or null if it does not exist
+     */
+    public CHConfig getCHConfig(String chName) {
+        CHEntry chEntry = getCHEntry(chName);
+        return chEntry == null ? null : chEntry.chConfig;
+    }
+
+    /**
+     * @return the (only) {@link RoutingCHGraph}, or error if there are none or multiple ones
+     */
+    public RoutingCHGraph getRoutingCHGraph() {
+        return getCHEntry().chGraph;
+    }
+
+    /**
+     * @return the {@link RoutingCHGraph} for the specified profile name, or null if it does not exist
+     */
+    public RoutingCHGraph getRoutingCHGraph(String chName) {
+        CHEntry chEntry = getCHEntry(chName);
+        return chEntry == null ? null : chEntry.chGraph;
+    }
+
+    private CHEntry getCHEntry() {
+        if (chEntries.isEmpty()) {
+            throw new IllegalStateException("There are no CHs");
+        } else if (chEntries.size() > 1) {
+            throw new IllegalStateException("There are multiple CHs, use get...(name) to retrieve a specific one");
+        } else {
+            return chEntries.iterator().next();
+        }
+    }
+
+    public CHEntry getCHEntry(String chName) {
+        for (CHEntry cg : chEntries) {
+            if (cg.chConfig.getName().equals(chName))
                 return cg;
         }
         return null;
     }
 
-    public RoutingCHGraph getRoutingCHGraph() {
-        return new RoutingCHGraphImpl(getCHGraph());
-    }
-
-    public RoutingCHGraph getRoutingCHGraph(String chGraphName) {
-        CHGraph chGraph = getCHGraph(chGraphName);
-        return chGraph == null ? null : new RoutingCHGraphImpl(chGraph);
-    }
-
     public List<String> getCHGraphNames() {
-        List<String> result = new ArrayList<>();
-        for (CHGraphImpl cg : chGraphs)
-            result.add(cg.getCHConfig().getName());
-        return result;
+        return chEntries.stream().map(ch -> ch.chConfig.getName()).collect(Collectors.toList());
     }
 
     public boolean isCHPossible() {
-        return !chGraphs.isEmpty();
+        return !chEntries.isEmpty();
     }
 
     public List<CHConfig> getCHConfigs() {
-        List<CHConfig> result = new ArrayList<>(chGraphs.size());
-        for (CHGraphImpl chGraph : chGraphs) {
-            result.add(chGraph.getCHConfig());
-        }
-        return result;
+        return chEntries.stream().map(c -> c.chConfig).collect(Collectors.toList());
     }
 
     public List<CHConfig> getCHConfigs(boolean edgeBased) {
@@ -185,9 +225,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
         baseGraph.create(initSize);
 
-        for (CHGraphImpl cg : chGraphs) {
-            cg.create(byteCount);
-        }
+        chEntries.forEach(ch -> ch.chStore.create());
 
         List<CHConfig> chConfigs = getCHConfigs();
         List<String> chProfileNames = new ArrayList<>(chConfigs.size());
@@ -240,10 +278,10 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
             checkIfConfiguredAndLoadedWeightingsCompatible();
 
-            for (CHGraphImpl cg : chGraphs) {
-                if (!cg.loadExisting())
+            chEntries.forEach(cg -> {
+                if (!cg.chStore.loadExisting())
                     throw new IllegalStateException("Cannot load " + cg);
-            }
+            });
 
             return true;
         }
@@ -268,11 +306,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
     @Override
     public void flush() {
-        for (CHGraphImpl cg : chGraphs) {
-            if (!cg.isClosed())
-                cg.flush();
-        }
-
+        chEntries.stream().map(ch -> ch.chStore).filter(s -> !s.isClosed()).forEach(CHStorage::flush);
         baseGraph.flush();
         properties.flush();
     }
@@ -281,11 +315,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     public void close() {
         properties.close();
         baseGraph.close();
-
-        for (CHGraphImpl cg : chGraphs) {
-            if (!cg.isClosed())
-                cg.close();
-        }
+        chEntries.stream().map(ch -> ch.chStore).filter(s -> !s.isClosed()).forEach(CHStorage::close);
     }
 
     @Override
@@ -296,11 +326,8 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     @Override
     public long getCapacity() {
         long cnt = baseGraph.getCapacity() + properties.getCapacity();
-
-        for (CHGraphImpl cg : chGraphs) {
-            cnt += cg.getCapacity();
-        }
-        return cnt;
+        long cgs = chEntries.stream().mapToLong(ch -> ch.chStore.getCapacity()).sum();
+        return cnt + cgs;
     }
 
     /**
@@ -308,23 +335,27 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
      * ch graphs on top to initialize themselves
      */
     public synchronized void freeze() {
-        if (!baseGraph.isFrozen())
-            baseGraph.freeze();
-
-        for (CHGraphImpl cg : chGraphs) {
-            cg._prepareForContraction();
-        }
+        if (isFrozen())
+            return;
+        baseGraph.freeze();
+        chEntries.forEach(ch -> {
+            // we use a rather small value here. this might result in more allocations later, but they should
+            // not matter that much. if we expect a too large value the shortcuts DataAccess will end up
+            // larger than needed, because we do not do something like trimToSize in the end.
+            double expectedShortcuts = 0.3 * baseGraph.getEdges();
+            ch.chStore.init(baseGraph.getNodes(), (int) expectedShortcuts);
+        });
     }
 
-    boolean isFrozen() {
+    public boolean isFrozen() {
         return baseGraph.isFrozen();
     }
 
     @Override
     public String toDetailsString() {
         String str = baseGraph.toDetailsString();
-        for (CHGraphImpl cg : chGraphs) {
-            str += ", " + cg.toDetailsString();
+        for (CHEntry ch : chEntries) {
+            str += ", " + ch.chStore.toDetailsString();
         }
 
         return str;
@@ -424,5 +455,17 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
      */
     public void flushAndCloseEarly() {
         baseGraph.flushAndCloseGeometryAndNameStorage();
+    }
+
+    private static class CHEntry {
+        CHConfig chConfig;
+        CHStorage chStore;
+        RoutingCHGraphImpl chGraph;
+
+        public CHEntry(CHConfig chConfig, CHStorage chStore, RoutingCHGraphImpl chGraph) {
+            this.chConfig = chConfig;
+            this.chStore = chStore;
+            this.chGraph = chGraph;
+        }
     }
 }

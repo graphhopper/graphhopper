@@ -24,10 +24,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHConfig;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.Test;
 
@@ -39,7 +36,8 @@ class NodeBasedWitnessPathSearcherTest {
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
     private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHConfigs(CHConfig.nodeBased("profile", weighting)).create();
-    private final CHGraph lg = graph.getCHGraph();
+    private final CHStorage store = graph.getCHStore();
+    private final CHStorageBuilder chBuilder = new CHStorageBuilder(store);
 
     @Test
     public void testShortestPathSkipNode() {
@@ -116,9 +114,6 @@ class NodeBasedWitnessPathSearcherTest {
     }
 
     private void setMaxLevelOnAllNodes() {
-        int nodes = lg.getNodes();
-        for (int node = 0; node < nodes; node++) {
-            lg.setLevel(node, nodes);
-        }
+        chBuilder.setLevelForAllNodes(store.getNodes());
     }
 }

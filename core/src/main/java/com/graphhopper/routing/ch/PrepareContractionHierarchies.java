@@ -53,7 +53,8 @@ import static com.graphhopper.util.Helper.nf;
 public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final CHConfig chConfig;
-    private final CHGraph chGraph;
+    private final CHStorage chStore;
+    private final CHStorageBuilder chBuilder;
     private final Random rand = new Random(123);
     private final StopWatch allSW = new StopWatch();
     private final StopWatch periodicUpdateSW = new StopWatch();
@@ -61,7 +62,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     private final StopWatch neighborUpdateSW = new StopWatch();
     private final StopWatch contractionSW = new StopWatch();
     private final Params params;
-    private final Graph graph;
+    private final GraphHopperStorage graph;
     private NodeContractor nodeContractor;
     private final int nodes;
     private NodeOrderingProvider nodeOrderingProvider;
@@ -77,14 +78,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
 
     private PrepareContractionHierarchies(GraphHopperStorage ghStorage, CHConfig chConfig) {
         graph = ghStorage;
-        chGraph = ghStorage.getCHGraph(chConfig.getName());
-        if (chGraph == null)
+        chStore = ghStorage.getCHStore(chConfig.getName());
+        if (chStore == null)
             throw new IllegalArgumentException("There is no CH graph '" + chConfig.getName() + "', existing: " + ghStorage.getCHGraphNames());
+        chBuilder = new CHStorageBuilder(chStore);
         this.chConfig = chConfig;
         params = Params.forTraversalMode(chConfig.getTraversalMode());
-        nodes = chGraph.getNodes();
+        nodes = ghStorage.getNodes();
         if (chConfig.getTraversalMode().isEdgeBased()) {
-            TurnCostStorage turnCostStorage = chGraph.getBaseGraph().getTurnCostStorage();
+            TurnCostStorage turnCostStorage = ghStorage.getTurnCostStorage();
             if (turnCostStorage == null) {
                 throw new IllegalArgumentException("For edge-based CH you need a turn cost storage");
             }
@@ -118,11 +120,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
 
     @Override
     public void doSpecificWork() {
-        if (!chGraph.isReadyForContraction()) {
-            throw new IllegalStateException("Given CHGraph has not been frozen yet");
+        if (!graph.isFrozen()) {
+            throw new IllegalStateException("Given GraphHopperStorage has not been frozen yet");
         }
-        if (chGraph.getEdges() > chGraph.getOriginalEdges()) {
-            throw new IllegalStateException("Given CHGraph has been contracted already");
+        if (chStore.getShortcuts() > 0) {
+            throw new IllegalStateException("Given CHStore already contains shortcuts");
         }
         allSW.start();
         initFromGraph();
@@ -132,10 +134,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     }
 
     private void logFinalGraphStats() {
-        int edgeCount = chGraph.getOriginalEdges();
-        logger.info("shortcuts that exceed maximum weight: {}", chGraph.getNumShortcutsExceedingWeight());
+        logger.info("shortcuts that exceed maximum weight: {}", chStore.getNumShortcutsExceedingWeight());
         logger.info("took: {}s, graph now - num edges: {}, num nodes: {}, num shortcuts: {}",
-                (int) allSW.getSeconds(), nf(edgeCount), nf(nodes), nf(chGraph.getEdges() - edgeCount));
+                (int) allSW.getSeconds(), nf(graph.getEdges()), nf(nodes), nf(chStore.getShortcuts()));
     }
 
     private void runGraphContraction() {
@@ -160,20 +161,18 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         // declare variables final and would not need all these close() methods...
         CHPreparationGraph prepareGraph;
         if (chConfig.getTraversalMode().isEdgeBased()) {
-            TurnCostStorage turnCostStorage = chGraph.getBaseGraph().getTurnCostStorage();
+            TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
             if (turnCostStorage == null) {
                 throw new IllegalArgumentException("For edge-based CH you need a turn cost storage");
             }
             logger.info("Creating CH prepare graph, {}", getMemInfo());
             CHPreparationGraph.TurnCostFunction turnCostFunction = CHPreparationGraph.buildTurnCostFunctionFromTurnCostStorage(graph, chConfig.getWeighting());
             prepareGraph = CHPreparationGraph.edgeBased(graph.getNodes(), graph.getEdges(), turnCostFunction);
-            EdgeBasedNodeContractor.ShortcutHandler shortcutInserter = new EdgeBasedShortcutInserter(chGraph);
-            nodeContractor = new EdgeBasedNodeContractor(prepareGraph, shortcutInserter, pMap);
+            nodeContractor = new EdgeBasedNodeContractor(prepareGraph, chBuilder, pMap);
         } else {
             logger.info("Creating CH prepare graph, {}", getMemInfo());
             prepareGraph = CHPreparationGraph.nodeBased(graph.getNodes(), graph.getEdges());
-            NodeBasedNodeContractor.ShortcutHandler shortcutInserter = new NodeBasedShortcutInserter(chGraph);
-            nodeContractor = new NodeBasedNodeContractor(prepareGraph, shortcutInserter, pMap);
+            nodeContractor = new NodeBasedNodeContractor(prepareGraph, chBuilder, pMap);
         }
         maxLevel = nodes;
         // we need a memory-efficient priority queue with an efficient update method
@@ -188,9 +187,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     }
 
     private void setMaxLevelOnAllNodes() {
-        for (int node = 0; node < nodes; node++) {
-            chGraph.setLevel(node, maxLevel);
-        }
+        chBuilder.setLevelForAllNodes(maxLevel);
     }
 
     private void updatePrioritiesOfRemainingNodes() {
@@ -340,14 +337,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         if (isContracted(node))
             throw new IllegalArgumentException("Node " + node + " was contracted already");
         contractionSW.start();
-        chGraph.setLevel(node, level);
+        chBuilder.setLevel(node, level);
         IntContainer neighbors = nodeContractor.contractNode(node);
         contractionSW.stop();
         return neighbors;
     }
 
     private boolean isContracted(int node) {
-        return chGraph.getLevel(node) != maxLevel;
+        return chStore.getLevel(chStore.toNodePointer(node)) != maxLevel;
     }
 
     private void logHeuristicStats(int updateCounter) {
@@ -439,9 +436,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     }
 
     void close() {
-        CHGraphImpl cg = (CHGraphImpl) chGraph;
-        cg.flush();
-        cg.close();
+        chStore.flush();
+        chStore.close();
     }
 
     private static class Params {

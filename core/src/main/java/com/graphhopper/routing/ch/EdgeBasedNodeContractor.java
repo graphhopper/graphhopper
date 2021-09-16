@@ -19,6 +19,7 @@ package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntCursor;
+import com.graphhopper.storage.CHStorageBuilder;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
@@ -49,7 +50,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
     private PrepareGraphEdgeExplorer existingShortcutExplorer;
     private PrepareGraphOrigEdgeExplorer sourceNodeOrigInEdgeExplorer;
     private PrepareGraphOrigEdgeExplorer targetNodeOrigOutEdgeExplorer;
-    private ShortcutHandler shortcutHandler;
+    private CHStorageBuilder chBuilder;
     private final Params params = new Params();
     private final PMap pMap;
     private final StopWatch dijkstraSW = new StopWatch();
@@ -77,9 +78,9 @@ class EdgeBasedNodeContractor implements NodeContractor {
     // counters used for performance analysis
     private int numPolledEdges;
 
-    public EdgeBasedNodeContractor(CHPreparationGraph prepareGraph, ShortcutHandler shortcutHandler, PMap pMap) {
+    public EdgeBasedNodeContractor(CHPreparationGraph prepareGraph, CHStorageBuilder chBuilder, PMap pMap) {
         this.prepareGraph = prepareGraph;
-        this.shortcutHandler = shortcutHandler;
+        this.chBuilder = chBuilder;
         this.pMap = pMap;
         extractParams(pMap);
     }
@@ -148,7 +149,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
 
     @Override
     public void finishContraction() {
-        shortcutHandler.finishContraction();
+        chBuilder.replaceSkippedEdges(prepareGraph::getShortcutForPrepareEdge);
     }
 
     @Override
@@ -259,31 +260,41 @@ class EdgeBasedNodeContractor implements NodeContractor {
      * with them.
      */
     private void insertShortcuts(int node) {
-        shortcutHandler.startContractingNode();
-        {
-            PrepareGraphEdgeIterator iter = outEdgeExplorer.setBaseNode(node);
-            while (iter.next()) {
-                if (!iter.isShortcut())
-                    continue;
-                shortcutHandler.addShortcut(iter.getPrepareEdge(), node, iter.getAdjNode(),
-                        GHUtility.getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()), GHUtility.getEdgeFromEdgeKey(iter.getOrigEdgeKeyLast()),
-                        iter.getSkipped1(), iter.getSkipped2(), iter.getWeight(), false);
-            }
+        insertOutShortcuts(node);
+        insertInShortcuts(node);
+    }
+
+    private void insertOutShortcuts(int node) {
+        PrepareGraphEdgeIterator iter = outEdgeExplorer.setBaseNode(node);
+        while (iter.next()) {
+            if (!iter.isShortcut())
+                continue;
+            int shortcut = chBuilder.addShortcutEdgeBased(node, iter.getAdjNode(),
+                    PrepareEncoder.getScFwdDir(), iter.getWeight(),
+                    iter.getSkipped1(), iter.getSkipped2(),
+                    GHUtility.getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()),
+                    GHUtility.getEdgeFromEdgeKey(iter.getOrigEdgeKeyLast()));
+            prepareGraph.setShortcutForPrepareEdge(iter.getPrepareEdge(), prepareGraph.getOriginalEdges() + shortcut);
+            addedShortcutsCount++;
         }
-        {
-            PrepareGraphEdgeIterator iter = inEdgeExplorer.setBaseNode(node);
-            while (iter.next()) {
-                if (!iter.isShortcut())
-                    continue;
-                // we added loops using the outEdgeExplorer already above
-                if (iter.getAdjNode() == node)
-                    continue;
-                shortcutHandler.addShortcut(iter.getPrepareEdge(), node, iter.getAdjNode(),
-                        GHUtility.getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()), GHUtility.getEdgeFromEdgeKey(iter.getOrigEdgeKeyLast()),
-                        iter.getSkipped1(), iter.getSkipped2(), iter.getWeight(), true);
-            }
+    }
+
+    private void insertInShortcuts(int node) {
+        PrepareGraphEdgeIterator iter = inEdgeExplorer.setBaseNode(node);
+        while (iter.next()) {
+            if (!iter.isShortcut())
+                continue;
+            // we added loops already using the outEdgeExplorer
+            if (iter.getAdjNode() == node)
+                continue;
+            int shortcut = chBuilder.addShortcutEdgeBased(node, iter.getAdjNode(),
+                    PrepareEncoder.getScBwdDir(), iter.getWeight(),
+                    iter.getSkipped1(), iter.getSkipped2(),
+                    GHUtility.getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()),
+                    GHUtility.getEdgeFromEdgeKey(iter.getOrigEdgeKeyLast()));
+            prepareGraph.setShortcutForPrepareEdge(iter.getPrepareEdge(), prepareGraph.getOriginalEdges() + shortcut);
+            addedShortcutsCount++;
         }
-        addedShortcutsCount += shortcutHandler.finishContractingNode();
     }
 
     private void countPreviousEdges(int node) {
@@ -389,7 +400,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
         existingShortcutExplorer = null;
         sourceNodeOrigInEdgeExplorer = null;
         targetNodeOrigOutEdgeExplorer = null;
-        shortcutHandler = null;
+        chBuilder = null;
         witnessPathSearcher.close();
         sourceNodes.release();
         targetNodes.release();
@@ -445,30 +456,4 @@ class EdgeBasedNodeContractor implements NodeContractor {
         }
     }
 
-    /**
-     * This handler is called on every shortcut that this contractor finds necessary to add for the contracted node.
-     */
-    public interface ShortcutHandler {
-        /**
-         * Use this hook for any kind of initialization to be done before a node is contracted
-         */
-        void startContractingNode();
-
-        /**
-         * This method is called for every shortcut found by the contractor
-         */
-        void addShortcut(int prepareEdge, int from, int to, int origEdgeFirst, int origEdgeLast, int skipped1, int skipped2, double weight, boolean reverse);
-
-        /**
-         * Use this hook for any kind of post-processing after the node is contracted
-         *
-         * @return the actual number of shortcuts that were added to the graph
-         */
-        int finishContractingNode();
-
-        /**
-         * This method is called at the very end of the graph contraction (after the last node was contracted)
-         */
-        void finishContraction();
-    }
 }

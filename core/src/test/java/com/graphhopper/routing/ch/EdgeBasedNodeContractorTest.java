@@ -18,17 +18,12 @@
 
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.TurnCost;
-import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHConfig;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
@@ -50,10 +45,11 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class EdgeBasedNodeContractorTest {
     private final int maxCost = 10;
-    private CHGraph chGraph;
     private CarFlagEncoder encoder;
     private GraphHopperStorage graph;
     private Weighting weighting;
+    private CHStorage chStore;
+    private CHStorageBuilder chBuilder;
 
     private List<CHConfig> chConfigs;
 
@@ -72,8 +68,9 @@ public class EdgeBasedNodeContractorTest {
                 )
                 .create();
         chConfigs = graph.getCHConfigs();
-        chGraph = graph.getCHGraph(chConfigs.get(0).getName());
-        weighting = chGraph.getCHConfig().getWeighting();
+        chStore = graph.getCHStore(chConfigs.get(0).getName());
+        chBuilder = new CHStorageBuilder(chStore);
+        weighting = graph.getRoutingCHGraph(chConfigs.get(0).getName()).getWeighting();
     }
 
     @Test
@@ -1121,8 +1118,9 @@ public class EdgeBasedNodeContractorTest {
 
     @Test
     public void testFindPath_finiteUTurnCost() {
-        chGraph = graph.getCHGraph(chConfigs.get(1).getName());
-        weighting = chGraph.getCHConfig().getWeighting();
+        chStore = graph.getCHStore(chConfigs.get(1).getName());
+        chBuilder = new CHStorageBuilder(chStore);
+        weighting = graph.getRoutingCHGraph(chConfigs.get(1).getName()).getWeighting();
         // turning to 1 at node 3 when coming from 0 is forbidden, but taking the full loop 3-4-2-3 is very
         // expensive, so the best solution is to go straight to 4 and take a u-turn there
         //   1
@@ -1359,14 +1357,14 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private void contractNode(NodeContractor nodeContractor, int node, int level) {
-        chGraph.setLevel(node, level);
+        chBuilder.setLevel(node, level);
         nodeContractor.contractNode(node);
     }
 
     private void contractAllNodesInOrder() {
         EdgeBasedNodeContractor nodeContractor = createNodeContractor();
         for (int node = 0; node < graph.getNodes(); ++node) {
-            chGraph.setLevel(node, node);
+            chBuilder.setLevel(node, node);
             nodeContractor.contractNode(node);
         }
         nodeContractor.finishContraction();
@@ -1379,7 +1377,7 @@ public class EdgeBasedNodeContractorTest {
     private void contractNodes(int... nodes) {
         EdgeBasedNodeContractor nodeContractor = createNodeContractor();
         for (int i = 0; i < nodes.length; ++i) {
-            chGraph.setLevel(nodes[i], i);
+            chBuilder.setLevel(nodes[i], i);
             nodeContractor.contractNode(nodes[i]);
         }
         nodeContractor.finishContraction();
@@ -1389,8 +1387,7 @@ public class EdgeBasedNodeContractorTest {
         CHPreparationGraph.TurnCostFunction turnCostFunction = CHPreparationGraph.buildTurnCostFunctionFromTurnCostStorage(graph, weighting);
         CHPreparationGraph prepareGraph = CHPreparationGraph.edgeBased(graph.getNodes(), graph.getEdges(), turnCostFunction);
         CHPreparationGraph.buildFromGraph(prepareGraph, graph, weighting);
-        EdgeBasedNodeContractor.ShortcutHandler shortcutInserter = new EdgeBasedShortcutInserter(chGraph);
-        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(prepareGraph, shortcutInserter, new PMap());
+        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(prepareGraph, chBuilder, new PMap());
         nodeContractor.initFromGraph();
         return nodeContractor;
     }
@@ -1453,16 +1450,15 @@ public class EdgeBasedNodeContractorTest {
 
     private Set<Shortcut> getCurrentShortcuts() {
         Set<Shortcut> shortcuts = new HashSet<>();
-        AllCHEdgesIterator iter = chGraph.getAllEdges();
-        while (iter.next()) {
-            if (iter.isShortcut()) {
-                BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-                shortcuts.add(new Shortcut(
-                        iter.getBaseNode(), iter.getAdjNode(),
-                        iter.getOrigEdgeFirst(), iter.getOrigEdgeLast(), iter.getSkippedEdge1(), iter.getSkippedEdge2(), iter.getWeight(),
-                        iter.get(accessEnc), iter.getReverse(accessEnc)
-                ));
-            }
+        for (int i = 0; i < chStore.getShortcuts(); i++) {
+            long ptr = chStore.toShortcutPointer(i);
+            shortcuts.add(new Shortcut(
+                    chStore.getNodeA(ptr), chStore.getNodeB(ptr),
+                    chStore.getOrigEdgeFirst(ptr), chStore.getOrigEdgeLast(ptr),
+                    chStore.getSkippedEdge1(ptr), chStore.getSkippedEdge2(ptr),
+                    chStore.getWeight(ptr),
+                    chStore.getFwdAccess(ptr), chStore.getBwdAccess(ptr)
+            ));
         }
         return shortcuts;
     }
@@ -1472,10 +1468,7 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private void setMaxLevelOnAllNodes() {
-        int nodes = chGraph.getNodes();
-        for (int node = 0; node < nodes; node++) {
-            chGraph.setLevel(node, nodes);
-        }
+        chBuilder.setLevelForAllNodes(chStore.getNodes());
     }
 
     private static class Shortcut {

@@ -74,22 +74,6 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
     }
 
     @Override
-    public int getOtherNode(int chEdge, int node) {
-        if (isVirtualEdge(chEdge))
-            return getVirtualEdgeState(chEdge, node).getBaseNode();
-        return routingCHGraph.getOtherNode(chEdge, node);
-    }
-
-    @Override
-    public boolean isAdjacentToNode(int chEdge, int node) {
-        if (isVirtualEdge(chEdge)) {
-            VirtualEdgeIteratorState virtualEdge = getVirtualEdgeState(chEdge, node);
-            return virtualEdge.getBaseNode() == node || virtualEdge.getAdjNode() == node;
-        }
-        return routingCHGraph.isAdjacentToNode(chEdge, node);
-    }
-
-    @Override
     public RoutingCHEdgeExplorer createInEdgeExplorer() {
         return createEdgeExplorer(routingCHGraph.createInEdgeExplorer(), virtualInEdgesAtRealNodes);
     }

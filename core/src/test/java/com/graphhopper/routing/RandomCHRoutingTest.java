@@ -58,7 +58,7 @@ public class RandomCHRoutingTest {
             graph = new GraphBuilder(encodingManager)
                     .setCHConfigStrings("p|car|fastest|" + (traversalMode.isEdgeBased() ? "edge" : "node") + "|" + uTurnCosts)
                     .create();
-            chConfig = graph.getCHGraph().getCHConfig();
+            chConfig = graph.getCHConfig();
             weighting = chConfig.getWeighting();
         }
 

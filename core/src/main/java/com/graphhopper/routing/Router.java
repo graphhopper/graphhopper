@@ -71,7 +71,7 @@ public class Router {
     public Router(GraphHopperStorage ghStorage, LocationIndex locationIndex,
                   Map<String, Profile> profilesByName, PathDetailsBuilderFactory pathDetailsBuilderFactory,
                   TranslationMap translationMap, RouterConfig routerConfig, WeightingFactory weightingFactory,
-                  Map<String, CHGraph> chGraphs, Map<String, LandmarkStorage> landmarks) {
+                  Map<String, RoutingCHGraph> chGraphs, Map<String, LandmarkStorage> landmarks) {
         this.ghStorage = ghStorage;
         this.encodingManager = ghStorage.getEncodingManager();
         this.locationIndex = locationIndex;
@@ -80,10 +80,7 @@ public class Router {
         this.translationMap = translationMap;
         this.routerConfig = routerConfig;
         this.weightingFactory = weightingFactory;
-        this.chGraphs = new LinkedHashMap<>(chGraphs.size());
-        for (Map.Entry<String, CHGraph> e : chGraphs.entrySet()) {
-            this.chGraphs.put(e.getKey(), new RoutingCHGraphImpl(e.getValue()));
-        }
+        this.chGraphs = chGraphs;
         this.landmarks = landmarks;
         // note that his is not the same as !ghStorage.getCHConfigs().isEmpty(), because the GHStorage might have some
         // CHGraphs that were not built yet (and possibly no CH profiles were configured).

@@ -26,12 +26,15 @@ public interface RoutingCHGraph {
 
     int getEdges();
 
-    int getOtherNode(int chEdge, int node);
-
-    boolean isAdjacentToNode(int chEdge, int node);
-
+    /**
+     * Traverses the base edges and shortcuts at a given node. This will only include shortcuts coming from higher
+     * level nodes, but *all* base edges with finite weight.
+     */
     RoutingCHEdgeExplorer createInEdgeExplorer();
 
+    /**
+     * @see #createInEdgeExplorer(), but here the shortcuts/edges are going out of the given node.
+     */
     RoutingCHEdgeExplorer createOutEdgeExplorer();
 
     RoutingCHEdgeIteratorState getEdgeIteratorState(int chEdge, int adjNode);
