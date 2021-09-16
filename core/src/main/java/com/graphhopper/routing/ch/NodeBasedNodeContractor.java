@@ -33,7 +33,7 @@ import static com.graphhopper.util.Helper.nf;
 class NodeBasedNodeContractor implements NodeContractor {
     private final CHPreparationGraph prepareGraph;
     private final Params params = new Params();
-    // todonow: maybe use a set to prevent duplicates instead?
+    // todo: maybe use a set to prevent duplicates instead?
     private List<Shortcut> shortcuts = new ArrayList<>();
     private CHStorageBuilder chBuilder;
     private PrepareGraphEdgeExplorer inEdgeExplorer;
@@ -179,7 +179,7 @@ class NodeBasedNodeContractor implements NodeContractor {
             for (Shortcut sc : shortcuts) {
                 if (sc.to == iter.getAdjNode()
                         && Double.doubleToLongBits(sc.weight) == Double.doubleToLongBits(iter.getWeight())
-                        // todonow: can we not just compare skippedEdges?
+                        // todo: can we not just compare skippedEdges?
                         && prepareGraph.getShortcutForPrepareEdge(sc.skippedEdge1) == prepareGraph.getShortcutForPrepareEdge(skippedEdge1)
                         && prepareGraph.getShortcutForPrepareEdge(sc.skippedEdge2) == prepareGraph.getShortcutForPrepareEdge(skippedEdge2)
                         && sc.flags == PrepareEncoder.getScFwdDir()) {

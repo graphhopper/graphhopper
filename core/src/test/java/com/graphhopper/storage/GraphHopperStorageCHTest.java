@@ -202,8 +202,6 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         assertEquals(0, lg.getEdgeIteratorState(sc1, 1).getBaseNode());
         assertEquals(100.123, lg.getEdgeIteratorState(sc1, 1).getWeight(false), 1e-3);
         assertEquals(100.123, lg.getEdgeIteratorState(sc1, 0).getWeight(false), 1e-3);
-        // todonow
-//        assertEquals(100.123, GHUtility.getEdge(rg.createOutEdgeExplorer().setBaseNode(0), 1).getWeight(false), 1e-3);
 
         int sc2 = ghStorage.getEdges() + chBuilder.addShortcutNodeBased(2, 3, PrepareEncoder.getScDirMask(), 1.011011, NO_EDGE, NO_EDGE);
         assertEquals(3, lg.getEdgeIteratorState(sc2, 3).getAdjNode());

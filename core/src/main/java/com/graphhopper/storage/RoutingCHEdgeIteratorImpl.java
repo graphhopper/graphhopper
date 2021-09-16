@@ -69,7 +69,6 @@ public class RoutingCHEdgeIteratorImpl extends RoutingCHEdgeIteratorStateImpl im
             adjNode = store.getNodeB(shortcutPointer);
             edgeId = nextEdgeId;
             nextEdgeId--;
-            reverse = false;
             if (nextEdgeId < baseGraph.edgeCount || store.getNodeA(store.toShortcutPointer(nextEdgeId - baseGraph.edgeCount)) != baseNode)
                 nextEdgeId = baseIterator.edgeId;
             // todo: note that it would be more efficient (but cost more memory) to separate in/out edges,

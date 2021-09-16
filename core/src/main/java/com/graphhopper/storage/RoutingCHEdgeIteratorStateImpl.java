@@ -35,8 +35,6 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
     int adjNode;
     final BaseGraph.EdgeIteratorStateImpl baseEdgeState;
     long shortcutPointer = -1;
-    // todonow: get rid of reverse?
-    boolean reverse = false;
 
     public RoutingCHEdgeIteratorStateImpl(CHStorage store, BaseGraph baseGraph, BaseGraph.EdgeIteratorStateImpl baseEdgeState, Weighting weighting) {
         this.store = store;
@@ -56,10 +54,8 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
             adjNode = store.getNodeB(shortcutPointer);
 
             if (expectedAdjNode == adjNode || expectedAdjNode == Integer.MIN_VALUE) {
-                reverse = false;
                 return true;
             } else if (expectedAdjNode == baseNode) {
-                reverse = true;
                 baseNode = adjNode;
                 adjNode = expectedAdjNode;
                 return true;
