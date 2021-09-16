@@ -29,8 +29,6 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
     public RoutingCHGraphImpl(BaseGraph baseGraph, CHStorage chStorage, Weighting weighting) {
         if (weighting.hasTurnCosts() && !chStorage.isEdgeBased())
             throw new IllegalArgumentException("Weighting has turn costs, but CHStorage is node-based");
-        if (chStorage.getNodes() < 0)
-            throw new IllegalStateException("CHStorage was not initialized");
         this.baseGraph = baseGraph;
         this.chStorage = chStorage;
         this.weighting = weighting;
