@@ -73,14 +73,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     private int checkCounter;
 
     public static PrepareContractionHierarchies fromGraphHopperStorage(GraphHopperStorage ghStorage, CHConfig chConfig) {
-        return new PrepareContractionHierarchies(ghStorage, chConfig);
-    }
-
-    private PrepareContractionHierarchies(GraphHopperStorage ghStorage, CHConfig chConfig) {
-        graph = ghStorage;
-        chStore = ghStorage.getCHStore(chConfig.getName());
+        CHStorage chStore = ghStorage.getCHStore(chConfig.getName());
         if (chStore == null)
             throw new IllegalArgumentException("There is no CH graph '" + chConfig.getName() + "', existing: " + ghStorage.getCHGraphNames());
+        return new PrepareContractionHierarchies(ghStorage, chConfig, chStore);
+    }
+
+    public PrepareContractionHierarchies(GraphHopperStorage ghStorage, CHConfig chConfig, CHStorage chStore) {
+        graph = ghStorage;
+        this.chStore = chStore;
         chBuilder = new CHStorageBuilder(chStore);
         this.chConfig = chConfig;
         params = Params.forTraversalMode(chConfig.getTraversalMode());

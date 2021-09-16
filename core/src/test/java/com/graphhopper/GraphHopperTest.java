@@ -17,6 +17,7 @@
  */
 package com.graphhopper;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
@@ -24,14 +25,19 @@ import com.graphhopper.json.Statement;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.SkadiProvider;
+import com.graphhopper.routing.BidirRoutingAlgorithm;
+import com.graphhopper.routing.Path;
+import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
+import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
 import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
@@ -2325,5 +2331,33 @@ public class GraphHopperTest {
         distance = response.getBest().getDistance();
         // since GermanyCountryRule avoids TRACK roads the route will now be much longer as it goes around the forest
         assertEquals(4186, distance, 1);
+    }
+
+    @Test
+    void ch_without_ghstorage() {
+        FlagEncoder encoder = new CarFlagEncoder();
+        EncodingManager encodingManager = EncodingManager.create(encoder);
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
+        graph.edge(0, 1).setDistance(100).set(encoder.getAccessEnc(), true, true).set(encoder.getAverageSpeedEnc(), 60);
+        graph.edge(1, 2).setDistance(100).set(encoder.getAccessEnc(), true, true).set(encoder.getAverageSpeedEnc(), 60);
+        graph.edge(2, 3).setDistance(100).set(encoder.getAccessEnc(), true, true).set(encoder.getAverageSpeedEnc(), 60);
+        graph.freeze();
+
+        GHDirectory dir = new GHDirectory("mydir", DAType.RAM_INT_STORE);
+        CHStorage chStorage = new CHStorage(dir, "car", -1, false);
+        chStorage.create();
+        chStorage.init(graph.getNodes(), 42);
+
+        FastestWeighting weighting = new FastestWeighting(encoder);
+        CHConfig chConfig = CHConfig.nodeBased("abc", weighting);
+        PrepareContractionHierarchies pch = new PrepareContractionHierarchies(graph, chConfig, chStorage);
+        pch.doWork();
+
+        RoutingCHGraph rg = RoutingCHGraphImpl.create(graph, chStorage, weighting);
+        BidirRoutingAlgorithm algo = new CHRoutingAlgorithmFactory(rg).createAlgo(new PMap());
+        Path path = algo.calcPath(0, 3);
+        assertTrue(path.isFound());
+        assertEquals(300, path.getDistance());
+        assertEquals(IntArrayList.from(0, 1, 2, 3), path.calcNodes());
     }
 }
