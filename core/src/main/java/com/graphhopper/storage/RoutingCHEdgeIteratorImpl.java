@@ -51,9 +51,10 @@ public class RoutingCHEdgeIteratorImpl extends RoutingCHEdgeIteratorStateImpl im
 
     @Override
     public RoutingCHEdgeIterator setBaseNode(int baseNode) {
+        assert baseGraph.isFrozen();
         baseIterator.setBaseNode(baseNode);
         int lastShortcut = store.getLastShortcut(store.toNodePointer(baseNode));
-        nextEdgeId = edgeId = lastShortcut < 0 ? baseIterator.edgeId : baseEdges + lastShortcut;
+        nextEdgeId = edgeId = lastShortcut < 0 ? baseIterator.edgeId : baseGraph.edgeCount + lastShortcut;
         return this;
     }
 
@@ -62,13 +63,13 @@ public class RoutingCHEdgeIteratorImpl extends RoutingCHEdgeIteratorStateImpl im
         // we first traverse shortcuts (in decreasing order) and when we are done we use the base iterator to traverse
         // the base edges as well. shortcuts are filtered using shortcutFilter, but base edges are only filtered by
         // access/finite weight.
-        while (nextEdgeId >= baseEdges) {
-            shortcutPointer = store.toShortcutPointer(nextEdgeId - baseEdges);
+        while (nextEdgeId >= baseGraph.edgeCount) {
+            shortcutPointer = store.toShortcutPointer(nextEdgeId - baseGraph.edgeCount);
             baseNode = store.getNodeA(shortcutPointer);
             adjNode = store.getNodeB(shortcutPointer);
             edgeId = nextEdgeId;
             nextEdgeId--;
-            if (nextEdgeId < baseEdges || store.getNodeA(store.toShortcutPointer(nextEdgeId - baseEdges)) != baseNode)
+            if (nextEdgeId < baseGraph.edgeCount || store.getNodeA(store.toShortcutPointer(nextEdgeId - baseGraph.edgeCount)) != baseNode)
                 nextEdgeId = baseIterator.edgeId;
             // todo: note that it would be more efficient (but cost more memory) to separate in/out edges,
             //       especially for edge-based where we do not use bidirectional shortcuts

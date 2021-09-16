@@ -27,7 +27,7 @@ import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 
 public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorState {
     final CHStorage store;
-    final int baseEdges;
+    final BaseGraph baseGraph;
     private final Weighting weighting;
     private final BooleanEncodedValue accessEnc;
     int edgeId = -1;
@@ -37,9 +37,8 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
     long shortcutPointer = -1;
 
     public RoutingCHEdgeIteratorStateImpl(CHStorage store, BaseGraph baseGraph, BaseGraph.EdgeIteratorStateImpl baseEdgeState, Weighting weighting) {
-        assert baseGraph.isFrozen();
         this.store = store;
-        this.baseEdges = baseGraph.getEdges();
+        this.baseGraph = baseGraph;
         this.baseEdgeState = baseEdgeState;
         this.weighting = weighting;
         this.accessEnc = weighting.getFlagEncoder().getAccessEnc();
@@ -50,7 +49,7 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
             throw new IllegalArgumentException("Invalid edge: " + edge);
         edgeId = edge;
         if (isShortcut()) {
-            shortcutPointer = store.toShortcutPointer(edge - baseEdges);
+            shortcutPointer = store.toShortcutPointer(edge - baseGraph.edgeCount);
             baseNode = store.getNodeA(shortcutPointer);
             adjNode = store.getNodeB(shortcutPointer);
 
@@ -104,7 +103,7 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
 
     @Override
     public boolean isShortcut() {
-        return edgeId >= baseEdges;
+        return edgeId >= baseGraph.edgeCount;
     }
 
     @Override
