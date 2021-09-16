@@ -553,22 +553,6 @@ public class GHUtility {
     }
 
     /**
-     * @see #getEdge(Graph, int, int)
-     */
-    public static RoutingCHEdgeIteratorState getEdge(RoutingCHEdgeIterator iter, int adj) {
-        RoutingCHEdgeIteratorState result = null;
-        while (iter.next())
-            if (iter.getAdjNode() == adj) {
-                if (result != null)
-                    throw new IllegalArgumentException("There are multiple edges between " + iter.getBaseNode() + " and " + adj);
-                result = iter;
-            }
-        if (result == null)
-            throw new IllegalStateException("There should be an edge");
-        return result;
-    }
-
-    /**
      * @return the number of edges with the given adj node
      */
     public static int count(EdgeIterator iterator, int adj) {

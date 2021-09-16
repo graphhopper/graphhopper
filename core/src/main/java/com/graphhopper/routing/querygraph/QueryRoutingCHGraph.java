@@ -316,18 +316,6 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         }
 
         @Override
-        public boolean getFwdAccess() {
-            // todonow! should this method even exist?
-            return false;
-        }
-
-        @Override
-        public boolean getBwdAccess() {
-            // todonow!
-            return false;
-        }
-
-        @Override
         public String toString() {
             return "virtual: " + edge + ": " + baseNode + "->" + adjNode + ", orig: " + origEdge + ", weightFwd: " + Helper.round2(weightFwd) + ", weightBwd: " + Helper.round2(weightBwd);
         }
@@ -401,16 +389,6 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         @Override
         public double getWeight(boolean reverse) {
             return getCurrent().getWeight(reverse);
-        }
-
-        @Override
-        public boolean getFwdAccess() {
-            return getCurrent().getFwdAccess();
-        }
-
-        @Override
-        public boolean getBwdAccess() {
-            return getCurrent().getBwdAccess();
         }
 
         @Override

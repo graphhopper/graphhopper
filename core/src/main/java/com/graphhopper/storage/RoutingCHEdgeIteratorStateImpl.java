@@ -50,9 +50,7 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
         if (!EdgeIterator.Edge.isValid(edge))
             throw new IllegalArgumentException("Invalid edge: " + edge);
         edgeId = edge;
-        if (!isShortcut()) {
-            return baseEdgeState.init(edge, expectedAdjNode);
-        } else {
+        if (isShortcut()) {
             shortcutPointer = store.toShortcutPointer(edge - baseGraph.edgeCount);
             baseNode = store.getNodeA(shortcutPointer);
             adjNode = store.getNodeB(shortcutPointer);
@@ -67,14 +65,15 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
                 return true;
             }
             return false;
+        } else {
+            return baseEdgeState.init(edge, expectedAdjNode);
         }
     }
 
     @Override
     public int getEdge() {
-        // todonow: we should either not maintain edgeId for base edges or if we do we can just return it here.
-        // same with baseNode/adjNode
-        return isShortcut() ? edgeId : edgeState().getEdge();
+        // we maintain this even for base edges, maybe try if not maintaining it is faster
+        return edgeId;
     }
 
     @Override
@@ -130,18 +129,6 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
         } else {
             return getOrigEdgeWeight(reverse, true);
         }
-    }
-
-    @Override
-    public boolean getFwdAccess() {
-        checkShortcut(true, "getFwdAccess");
-        return reverse ? store.getBwdAccess(shortcutPointer) : store.getFwdAccess(shortcutPointer);
-    }
-
-    @Override
-    public boolean getBwdAccess() {
-        checkShortcut(true, "getBwdAccess");
-        return reverse ? store.getFwdAccess(shortcutPointer) : store.getBwdAccess(shortcutPointer);
     }
 
     /**

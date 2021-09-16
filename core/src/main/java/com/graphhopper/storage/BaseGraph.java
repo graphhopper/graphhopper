@@ -910,14 +910,12 @@ class BaseGraph implements Graph {
 
         @Override
         public final boolean next() {
-            while (true) {
-                if (!EdgeIterator.Edge.isValid(nextEdgeId))
-                    return false;
+            while (EdgeIterator.Edge.isValid(nextEdgeId)) {
                 goToNext();
-                if (filter.accept(this)) {
+                if (filter.accept(this))
                     return true;
-                }
             }
+            return false;
         }
 
         void goToNext() {
