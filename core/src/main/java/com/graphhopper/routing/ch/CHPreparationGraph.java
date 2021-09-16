@@ -47,6 +47,7 @@ public class CHPreparationGraph {
     // objects for every node (one for outgoing edges and one for incoming edges).
     private PrepareEdge[] prepareEdgesOut;
     private PrepareEdge[] prepareEdgesIn;
+    private IntArrayList shortcutsByPrepareEdges;
     // todo: maybe we can get rid of this
     private int[] degrees;
     private IntSet neighborSet;
@@ -75,6 +76,7 @@ public class CHPreparationGraph {
         this.edgeBased = edgeBased;
         prepareEdgesOut = new PrepareEdge[nodes];
         prepareEdgesIn = new PrepareEdge[nodes];
+        shortcutsByPrepareEdges = new IntArrayList();
         degrees = new int[nodes];
         origGraphBuilder = edgeBased ? new OrigGraph.Builder() : null;
         neighborSet = new IntHashSet();
@@ -207,6 +209,20 @@ public class CHPreparationGraph {
         ready = true;
     }
 
+    public void setShortcutForPrepareEdge(int prepareEdge, int shortcut) {
+        int index = prepareEdge - edges;
+        if (index >= shortcutsByPrepareEdges.size())
+            shortcutsByPrepareEdges.resize(index + 1);
+        shortcutsByPrepareEdges.set(index, shortcut);
+    }
+
+    public int getShortcutForPrepareEdge(int prepareEdge) {
+        if (prepareEdge < edges)
+            return prepareEdge;
+        int index = prepareEdge - edges;
+        return shortcutsByPrepareEdges.get(index);
+    }
+
     public PrepareGraphEdgeExplorer createOutEdgeExplorer() {
         checkReady();
         return new PrepareGraphEdgeExplorerImpl(prepareEdgesOut, false);
@@ -317,6 +333,7 @@ public class CHPreparationGraph {
         checkReady();
         prepareEdgesOut = null;
         prepareEdgesIn = null;
+        shortcutsByPrepareEdges = null;
         degrees = null;
         neighborSet = null;
         if (edgeBased)

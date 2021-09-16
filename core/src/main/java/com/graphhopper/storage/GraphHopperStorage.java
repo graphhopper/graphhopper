@@ -306,17 +306,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
     @Override
     public void flush() {
-        chEntries.forEach(ch -> {
-            if (!ch.chStore.isClosed()) {
-                // todonow: very ugly, but
-                // otherwise the problem here is that chStore flushes nodes=0 to disk because no init() was called, but in
-                // fact there might be some nodes...
-                if (!isFrozen())
-                    ch.chStore.init(baseGraph.getNodes(), 0);
-                ch.chStore.flush();
-            }
-        });
-
+        chEntries.stream().map(ch -> ch.chStore).filter(s -> !s.isClosed()).forEach(CHStorage::flush);
         baseGraph.flush();
         properties.flush();
     }
@@ -325,11 +315,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     public void close() {
         properties.close();
         baseGraph.close();
-
-        chEntries.forEach(cg -> {
-            if (!cg.chStore.isClosed())
-                cg.chStore.close();
-        });
+        chEntries.stream().map(ch -> ch.chStore).filter(s -> !s.isClosed()).forEach(CHStorage::close);
     }
 
     @Override
@@ -353,12 +339,15 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
             return;
         baseGraph.freeze();
         chEntries.forEach(ch -> {
+            // we use a rather small value here. this might result in more allocations later, but they should
+            // not matter that much. if we expect a too large value the shortcuts DataAccess will end up
+            // larger than needed, because we do not do something like trimToSize in the end.
             double expectedShortcuts = 0.3 * baseGraph.getEdges();
             ch.chStore.init(baseGraph.getNodes(), (int) expectedShortcuts);
             // copy normal edge refs into ch edge refs
             for (int node = 0; node < baseGraph.getNodes(); node++) {
                 long nodePointer = ch.chStore.toNodePointer(node);
-                ch.chStore.setEdgeRef(nodePointer, baseGraph.getEdgeRef(node));
+                ch.chStore.setLastShortcut(nodePointer, baseGraph.getEdgeRef(node));
             }
         });
     }

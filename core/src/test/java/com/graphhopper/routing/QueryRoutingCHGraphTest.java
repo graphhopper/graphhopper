@@ -106,7 +106,7 @@ class QueryRoutingCHGraphTest {
         assertEquals(2, graph.getEdges());
         setIdentityLevels(chStore);
         chStore.shortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1, 0, 1);
-        chStore.setEdgeRef(chStore.toNodePointer(0), 2);
+        chStore.setLastShortcut(chStore.toNodePointer(0), 2);
 
         QueryGraph queryGraph = QueryGraph.create(graph, Collections.emptyList());
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
@@ -208,7 +208,7 @@ class QueryRoutingCHGraphTest {
         assertEquals(2, graph.getEdges());
         setIdentityLevels(chStore);
         chStore.shortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1, 0, 1);
-        chStore.setEdgeRef(chStore.toNodePointer(0), 2);
+        chStore.setLastShortcut(chStore.toNodePointer(0), 2);
 
         Snap snap = new Snap(50.00, 10.05);
         snap.setClosestEdge(edge);
@@ -273,7 +273,7 @@ class QueryRoutingCHGraphTest {
         graph.freeze();
         setIdentityLevels(chStore);
         chStore.shortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1, 0, 1);
-        chStore.setEdgeRef(chStore.toNodePointer(0), 2);
+        chStore.setLastShortcut(chStore.toNodePointer(0), 2);
 
         Snap snap = new Snap(50.00, 10.05);
         snap.setClosestEdge(edge);
@@ -343,7 +343,7 @@ class QueryRoutingCHGraphTest {
         graph.freeze();
         setIdentityLevels(chStore);
         chStore.shortcutEdgeBased(0, 2, PrepareEncoder.getScDirMask(), 20, 0, 1, 0, 1);
-        chStore.setEdgeRef(chStore.toNodePointer(0), 2);
+        chStore.setLastShortcut(chStore.toNodePointer(0), 2);
 
         // without query graph
         RoutingCHEdgeIterator iter = routingCHGraph.createOutEdgeExplorer().setBaseNode(0);

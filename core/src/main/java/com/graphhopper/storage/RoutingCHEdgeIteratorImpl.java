@@ -56,7 +56,7 @@ public class RoutingCHEdgeIteratorImpl extends RoutingCHEdgeIteratorStateImpl im
         baseIterator.nextEdgeId = baseIterator.edgeId = baseGraph.getEdgeRef(baseNode);
         baseIterator.baseNode = baseNode;
 
-        nextEdgeId = edgeId = store.getEdgeRef(store.toNodePointer(baseNode));
+        nextEdgeId = edgeId = store.getLastShortcut(store.toNodePointer(baseNode));
         baseEdgeIterator = baseIterator;
         return this;
     }

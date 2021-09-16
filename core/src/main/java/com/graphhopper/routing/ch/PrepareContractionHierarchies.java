@@ -166,12 +166,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
             logger.info("Creating CH prepare graph, {}", getMemInfo());
             CHPreparationGraph.TurnCostFunction turnCostFunction = CHPreparationGraph.buildTurnCostFunctionFromTurnCostStorage(graph, chConfig.getWeighting());
             prepareGraph = CHPreparationGraph.edgeBased(graph.getNodes(), graph.getEdges(), turnCostFunction);
-            CHBuilder chBuilder = new CHBuilder(chStore, graph.getEdges());
+            CHStorageBuilder chBuilder = new CHStorageBuilder(chStore, graph.getEdges());
             nodeContractor = new EdgeBasedNodeContractor(prepareGraph, chBuilder, pMap);
         } else {
             logger.info("Creating CH prepare graph, {}", getMemInfo());
             prepareGraph = CHPreparationGraph.nodeBased(graph.getNodes(), graph.getEdges());
-            CHBuilder chBuilder = new CHBuilder(chStore, graph.getEdges());
+            CHStorageBuilder chBuilder = new CHStorageBuilder(chStore, graph.getEdges());
             nodeContractor = new NodeBasedNodeContractor(prepareGraph, chBuilder, pMap);
         }
         maxLevel = nodes;

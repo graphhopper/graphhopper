@@ -161,7 +161,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
     private void shortcut(GraphHopperStorage graph, CHStorage store, int nodeA, int nodeB, int accessFlags, double weight, int skip1, int skip2) {
         store.shortcutNodeBased(nodeA, nodeB, accessFlags, weight, skip1, skip2);
-        store.setEdgeRef(store.toNodePointer(nodeA), graph.getEdges() + store.getShortcuts() - 1);
+        store.setLastShortcut(store.toNodePointer(nodeA), graph.getEdges() + store.getShortcuts() - 1);
     }
 
     @Test

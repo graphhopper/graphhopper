@@ -18,7 +18,7 @@
 package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntContainer;
-import com.graphhopper.storage.CHBuilder;
+import com.graphhopper.storage.CHStorageBuilder;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.StopWatch;
 
@@ -35,7 +35,7 @@ class NodeBasedNodeContractor implements NodeContractor {
     private final Params params = new Params();
     // todonow: maybe use a set to prevent duplicates instead?
     private List<Shortcut> shortcuts = new ArrayList<>();
-    private CHBuilder chBuilder;
+    private CHStorageBuilder chBuilder;
     private PrepareGraphEdgeExplorer inEdgeExplorer;
     private PrepareGraphEdgeExplorer outEdgeExplorer;
     private PrepareGraphEdgeExplorer existingShortcutExplorer;
@@ -50,7 +50,7 @@ class NodeBasedNodeContractor implements NodeContractor {
     private int originalEdgesCount;
     private int shortcutsCount;
 
-    NodeBasedNodeContractor(CHPreparationGraph prepareGraph, CHBuilder chBuilder, PMap pMap) {
+    NodeBasedNodeContractor(CHPreparationGraph prepareGraph, CHStorageBuilder chBuilder, PMap pMap) {
         this.prepareGraph = prepareGraph;
         extractParams(pMap);
         this.chBuilder = chBuilder;
@@ -140,8 +140,18 @@ class NodeBasedNodeContractor implements NodeContractor {
         shortcuts.clear();
         insertOutShortcuts(node);
         insertInShortcuts(node);
-        for (Shortcut sc : shortcuts)
-            chBuilder.addShortcutNodeBased(sc.from, sc.to, sc.flags, sc.weight, sc.skippedEdge1, sc.skippedEdge2, sc.prepareEdgeFwd, sc.prepareEdgeBwd);
+        int origEdges = prepareGraph.getOriginalEdges();
+        for (Shortcut sc : shortcuts) {
+            int shortcut = chBuilder.addShortcutNodeBased(sc.from, sc.to, sc.flags, sc.weight, sc.skippedEdge1, sc.skippedEdge2);
+            if (sc.flags == PrepareEncoder.getScFwdDir()) {
+                prepareGraph.setShortcutForPrepareEdge(sc.prepareEdgeFwd, origEdges + shortcut);
+            } else if (sc.flags == PrepareEncoder.getScBwdDir()) {
+                prepareGraph.setShortcutForPrepareEdge(sc.prepareEdgeBwd, origEdges + shortcut);
+            } else {
+                prepareGraph.setShortcutForPrepareEdge(sc.prepareEdgeFwd, origEdges + shortcut);
+                prepareGraph.setShortcutForPrepareEdge(sc.prepareEdgeBwd, origEdges + shortcut);
+            }
+        }
         addedShortcutsCount += shortcuts.size();
     }
 
@@ -150,7 +160,8 @@ class NodeBasedNodeContractor implements NodeContractor {
         while (iter.next()) {
             if (!iter.isShortcut())
                 continue;
-            shortcuts.add(new Shortcut(iter.getPrepareEdge(), -1, node, iter.getAdjNode(), iter.getSkipped1(), iter.getSkipped2(), PrepareEncoder.getScFwdDir(), iter.getWeight()));
+            shortcuts.add(new Shortcut(iter.getPrepareEdge(), -1, node, iter.getAdjNode(), iter.getSkipped1(),
+                    iter.getSkipped2(), PrepareEncoder.getScFwdDir(), iter.getWeight()));
         }
     }
 
@@ -169,8 +180,8 @@ class NodeBasedNodeContractor implements NodeContractor {
                 if (sc.to == iter.getAdjNode()
                         && Double.doubleToLongBits(sc.weight) == Double.doubleToLongBits(iter.getWeight())
                         // todonow: can we not just compare skippedEdges?
-                        && chBuilder.getShortcutForPrepareEdge(sc.skippedEdge1) == chBuilder.getShortcutForPrepareEdge(skippedEdge1)
-                        && chBuilder.getShortcutForPrepareEdge(sc.skippedEdge2) == chBuilder.getShortcutForPrepareEdge(skippedEdge2)
+                        && prepareGraph.getShortcutForPrepareEdge(sc.skippedEdge1) == prepareGraph.getShortcutForPrepareEdge(skippedEdge1)
+                        && prepareGraph.getShortcutForPrepareEdge(sc.skippedEdge2) == prepareGraph.getShortcutForPrepareEdge(skippedEdge2)
                         && sc.flags == PrepareEncoder.getScFwdDir()) {
                     sc.flags = PrepareEncoder.getScDirMask();
                     sc.prepareEdgeBwd = iter.getPrepareEdge();
@@ -186,7 +197,9 @@ class NodeBasedNodeContractor implements NodeContractor {
 
     @Override
     public void finishContraction() {
-        chBuilder.buildCH();
+        // during contraction the skip1/2 edges of shortcuts refer to the prepare edge-ids *not* the final shortcut
+        // ids (because they are not known before the insertion) -> we need to re-map these ids here
+        chBuilder.replaceSkippedEdges(prepareGraph::getShortcutForPrepareEdge);
     }
 
     @Override

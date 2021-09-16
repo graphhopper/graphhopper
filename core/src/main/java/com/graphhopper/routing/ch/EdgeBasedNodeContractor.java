@@ -19,7 +19,7 @@ package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntCursor;
-import com.graphhopper.storage.CHBuilder;
+import com.graphhopper.storage.CHStorageBuilder;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
@@ -50,7 +50,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
     private PrepareGraphEdgeExplorer existingShortcutExplorer;
     private PrepareGraphOrigEdgeExplorer sourceNodeOrigInEdgeExplorer;
     private PrepareGraphOrigEdgeExplorer targetNodeOrigOutEdgeExplorer;
-    private CHBuilder chBuilder;
+    private CHStorageBuilder chBuilder;
     private final Params params = new Params();
     private final PMap pMap;
     private final StopWatch dijkstraSW = new StopWatch();
@@ -78,7 +78,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
     // counters used for performance analysis
     private int numPolledEdges;
 
-    public EdgeBasedNodeContractor(CHPreparationGraph prepareGraph, CHBuilder chBuilder, PMap pMap) {
+    public EdgeBasedNodeContractor(CHPreparationGraph prepareGraph, CHStorageBuilder chBuilder, PMap pMap) {
         this.prepareGraph = prepareGraph;
         this.chBuilder = chBuilder;
         this.pMap = pMap;
@@ -149,7 +149,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
 
     @Override
     public void finishContraction() {
-        chBuilder.buildCH();
+        chBuilder.replaceSkippedEdges(prepareGraph::getShortcutForPrepareEdge);
     }
 
     @Override
@@ -260,30 +260,40 @@ class EdgeBasedNodeContractor implements NodeContractor {
      * with them.
      */
     private void insertShortcuts(int node) {
-        {
-            PrepareGraphEdgeIterator iter = outEdgeExplorer.setBaseNode(node);
-            while (iter.next()) {
-                if (!iter.isShortcut())
-                    continue;
-                chBuilder.addShortcutEdgeBased(node, iter.getAdjNode(), PrepareEncoder.getScFwdDir(), iter.getWeight(),
-                        iter.getSkipped1(), iter.getSkipped2(), GHUtility.getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()),
-                        GHUtility.getEdgeFromEdgeKey(iter.getOrigEdgeKeyLast()), iter.getPrepareEdge(), iter.getPrepareEdge());
-                addedShortcutsCount++;
-            }
+        insertOutShortcuts(node);
+        insertInShortcuts(node);
+    }
+
+    private void insertOutShortcuts(int node) {
+        PrepareGraphEdgeIterator iter = outEdgeExplorer.setBaseNode(node);
+        while (iter.next()) {
+            if (!iter.isShortcut())
+                continue;
+            int shortcut = chBuilder.addShortcutEdgeBased(node, iter.getAdjNode(),
+                    PrepareEncoder.getScFwdDir(), iter.getWeight(),
+                    iter.getSkipped1(), iter.getSkipped2(),
+                    GHUtility.getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()),
+                    GHUtility.getEdgeFromEdgeKey(iter.getOrigEdgeKeyLast()));
+            prepareGraph.setShortcutForPrepareEdge(iter.getPrepareEdge(), prepareGraph.getOriginalEdges() + shortcut);
+            addedShortcutsCount++;
         }
-        {
-            PrepareGraphEdgeIterator iter = inEdgeExplorer.setBaseNode(node);
-            while (iter.next()) {
-                if (!iter.isShortcut())
-                    continue;
-                // we added loops using the outEdgeExplorer already above
-                if (iter.getAdjNode() == node)
-                    continue;
-                chBuilder.addShortcutEdgeBased(node, iter.getAdjNode(), PrepareEncoder.getScBwdDir(), iter.getWeight(),
-                        iter.getSkipped1(), iter.getSkipped2(), GHUtility.getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()),
-                        GHUtility.getEdgeFromEdgeKey(iter.getOrigEdgeKeyLast()), iter.getPrepareEdge(), iter.getPrepareEdge());
-                addedShortcutsCount++;
-            }
+    }
+
+    private void insertInShortcuts(int node) {
+        PrepareGraphEdgeIterator iter = inEdgeExplorer.setBaseNode(node);
+        while (iter.next()) {
+            if (!iter.isShortcut())
+                continue;
+            // we added loops already using the outEdgeExplorer
+            if (iter.getAdjNode() == node)
+                continue;
+            int shortcut = chBuilder.addShortcutEdgeBased(node, iter.getAdjNode(),
+                    PrepareEncoder.getScBwdDir(), iter.getWeight(),
+                    iter.getSkipped1(), iter.getSkipped2(),
+                    GHUtility.getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()),
+                    GHUtility.getEdgeFromEdgeKey(iter.getOrigEdgeKeyLast()));
+            prepareGraph.setShortcutForPrepareEdge(iter.getPrepareEdge(), prepareGraph.getOriginalEdges() + shortcut);
+            addedShortcutsCount++;
         }
     }
 

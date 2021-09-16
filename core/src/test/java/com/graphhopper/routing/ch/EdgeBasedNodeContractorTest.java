@@ -18,7 +18,6 @@
 
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
@@ -1385,7 +1384,7 @@ public class EdgeBasedNodeContractorTest {
         CHPreparationGraph.TurnCostFunction turnCostFunction = CHPreparationGraph.buildTurnCostFunctionFromTurnCostStorage(graph, weighting);
         CHPreparationGraph prepareGraph = CHPreparationGraph.edgeBased(graph.getNodes(), graph.getEdges(), turnCostFunction);
         CHPreparationGraph.buildFromGraph(prepareGraph, graph, weighting);
-        CHBuilder chBuilder = new CHBuilder(chStore, graph.getEdges());
+        CHStorageBuilder chBuilder = new CHStorageBuilder(chStore, graph.getEdges());
         EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(prepareGraph, chBuilder, new PMap());
         nodeContractor.initFromGraph();
         return nodeContractor;

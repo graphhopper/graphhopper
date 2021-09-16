@@ -40,7 +40,7 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
 
     @Override
     public int getEdges() {
-        return baseGraph.getEdges() + chStorage.shortcutCount;
+        return baseGraph.getEdges() + chStorage.getShortcuts();
     }
 
     @Override
@@ -56,7 +56,7 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
     @Override
     public RoutingCHEdgeIteratorState getEdgeIteratorState(int chEdge, int adjNode) {
         if (chEdge >= baseGraph.edgeCount) {
-            if (chEdge >= baseGraph.edgeCount + chStorage.shortcutCount)
+            if (chEdge >= baseGraph.edgeCount + chStorage.getShortcuts())
                 throw new IllegalStateException("chEdge " + chEdge + " out of bounds");
         } else if (!baseGraph.isInBounds(chEdge))
             throw new IllegalStateException("edgeId " + chEdge + " out of bounds");

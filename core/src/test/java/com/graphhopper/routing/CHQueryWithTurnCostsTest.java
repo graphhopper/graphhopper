@@ -81,7 +81,7 @@ public class CHQueryWithTurnCostsTest {
         private void addShortcut(int from, int to, int firstOrigEdge, int lastOrigEdge, int skipped1, int skipped2, double weight, boolean reverse) {
             int flags = reverse ? PrepareEncoder.getScBwdDir() : PrepareEncoder.getScFwdDir();
             store.shortcutEdgeBased(from, to, flags, weight, skipped1, skipped2, firstOrigEdge, lastOrigEdge);
-            store.setEdgeRef(store.toNodePointer(from), graph.getEdges() + store.getShortcuts() - 1);
+            store.setLastShortcut(store.toNodePointer(from), graph.getEdges() + store.getShortcuts() - 1);
         }
 
         private void setLevelEqualToNodeIdForAllNodes() {

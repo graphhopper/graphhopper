@@ -46,9 +46,9 @@ public class AccessFilterTest {
         graph.freeze();
         // add loop shortcut in 'fwd' direction
         CHStorage chStore = graph.getCHStore();
-        chStore.shortcutNodeBased(0, 0, PrepareEncoder.getScFwdDir(), 5, 0, 2);
+        chStore.shortcutEdgeBased(0, 0, PrepareEncoder.getScFwdDir(), 5, 0, 2, 0, 2);
         // todonow: this should probably happen automaticall somehow?
-        chStore.setEdgeRef(chStore.toNodePointer(0), 3);
+        chStore.setLastShortcut(chStore.toNodePointer(0), 3);
 //        for (int i = 0; i < 2; i++)
 //            chStore.setLevel(chStore.toNodePointer(i), i);
         RoutingCHEdgeExplorer outExplorer = chGraph.createOutEdgeExplorer();

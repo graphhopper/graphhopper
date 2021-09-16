@@ -44,20 +44,17 @@ public class CHStorage {
     private final DataAccess shortcuts;
     private final int S_NODEA, S_NODEB, S_WEIGHT, S_SKIP_EDGE1, S_SKIP_EDGE2, S_ORIG_FIRST, S_ORIG_LAST;
     private int shortcutEntryBytes;
-    // todonow: make private?
-    int shortcutCount = 0;
+    private int shortcutCount = 0;
 
     // nodes
     private final DataAccess nodesCH;
-    private final int N_LEVEL, N_CH_REF;
+    private final int N_LEVEL, N_LAST_SC;
     private int nodeCHEntryBytes;
-    // todonow: make private
-    int nodeCount = 0;
+    private int nodeCount = -1;
 
     private boolean edgeBased;
     // some shortcuts exceed the maximum storable weight and we count them here
-    // todonow: make private?
-    int numShortcutsExceedingWeight;
+    private int numShortcutsExceedingWeight;
 
     // use this to report shortcuts with too small weights
     private Consumer<LowWeightShortcut> lowShortcutWeightConsumer;
@@ -70,7 +67,7 @@ public class CHStorage {
             nodesCH.setSegmentSize(segmentSize);
             shortcuts.setSegmentSize(segmentSize);
         }
-        // shortcuts are store consecutively using this layout (the last two entries only exist for edge-based)
+        // shortcuts are stored consecutively using this layout (the last two entries only exist for edge-based):
         // NODEA | NODEB | WEIGHT | SKIP_EDGE1 | SKIP_EDGE2 | S_ORIG_FIRST | S_ORIG_LAST
         S_NODEA = 0;
         S_NODEB = S_NODEA + 4;
@@ -81,11 +78,11 @@ public class CHStorage {
         S_ORIG_LAST = S_ORIG_FIRST + (edgeBased ? 4 : 0);
         shortcutEntryBytes = S_ORIG_LAST + 4;
 
-        // node/levels are store consecutively using this layout
-        // LEVEL | CH_REF
+        // nodes/levels are stored consecutively using this layout:
+        // LEVEL | N_LAST_SC
         N_LEVEL = 0;
-        N_CH_REF = N_LEVEL + 4;
-        nodeCHEntryBytes = N_CH_REF + 4;
+        N_LAST_SC = N_LEVEL + 4;
+        nodeCHEntryBytes = N_LAST_SC + 4;
     }
 
     /**
@@ -95,10 +92,12 @@ public class CHStorage {
         this.lowShortcutWeightConsumer = lowWeightShortcutConsumer;
     }
 
+    /**
+     * Creates a new storage. Alternatively we could load an existing one using {@link #loadExisting()}}.
+     */
     public void create() {
-        // todo: get rid of this
-        // We have to create the DataAccess here, because otherwise we get an error when calling loadExisting()
-        // later, see #2384
+        // We have to create the DataAccess here before we flush it. Otherwise we get an error when calling
+        // loadExisting() later, see #2384
         nodesCH.create(0);
         shortcuts.create(0);
     }
@@ -110,30 +109,70 @@ public class CHStorage {
      * todo: we could also trim down the shortcuts DataAccess when we are done adding shortcuts
      */
     public void init(int nodes, int expectedShortcuts) {
+        if (nodeCount >= 0)
+            throw new IllegalStateException("CHStorage can only be initialized once");
+        if (nodes < 0)
+            throw new IllegalStateException("CHStorage must be initialized with a positive number of nodes");
         nodesCH.ensureCapacity((long) nodes * nodeCHEntryBytes);
         nodeCount = nodes;
         shortcuts.ensureCapacity((long) expectedShortcuts * shortcutEntryBytes);
+    }
+
+    public void flush() {
+        // nodes
+        nodesCH.setHeader(0, nodeCount);
+        nodesCH.setHeader(4, nodeCHEntryBytes);
+        nodesCH.flush();
+
+        // shortcuts
+        shortcuts.setHeader(0, shortcutCount);
+        shortcuts.setHeader(4, shortcutEntryBytes);
+        shortcuts.setHeader(8, numShortcutsExceedingWeight);
+        shortcuts.setHeader(12, edgeBased ? 1 : 0);
+        shortcuts.flush();
+    }
+
+    public boolean loadExisting() {
+        if (!nodesCH.loadExisting() || !shortcuts.loadExisting())
+            return false;
+
+        // nodes
+        nodeCount = nodesCH.getHeader(0);
+        nodeCHEntryBytes = nodesCH.getHeader(4);
+
+        // shortcuts
+        shortcutCount = shortcuts.getHeader(0);
+        shortcutEntryBytes = shortcuts.getHeader(4);
+        numShortcutsExceedingWeight = shortcuts.getHeader(8);
+        edgeBased = shortcuts.getHeader(12) == 1;
+
+        return true;
+    }
+
+    public void close() {
+        nodesCH.close();
+        shortcuts.close();
     }
 
     /**
      * Adds a shortcut to the storage. Shortcuts are stored in the same order they are added. The underlying DataAccess
      * object grows automatically when adding more shortcuts.
      */
-    public void shortcutNodeBased(int nodeA, int nodeB, int accessFlags, double weight, int skip1, int skip2) {
-        // todo
-//        if (edgeBased)
-//            throw new IllegalArgumentException("Cannot add node-based shortcuts to edge-based CH");
-        shortcut(nodeA, nodeB, accessFlags, weight, skip1, skip2);
+    public int shortcutNodeBased(int nodeA, int nodeB, int accessFlags, double weight, int skip1, int skip2) {
+        if (edgeBased)
+            throw new IllegalArgumentException("Cannot add node-based shortcuts to edge-based CH");
+        return shortcut(nodeA, nodeB, accessFlags, weight, skip1, skip2);
     }
 
-    public void shortcutEdgeBased(int nodeA, int nodeB, int accessFlags, double weight, int skip1, int skip2, int origFirst, int origLast) {
+    public int shortcutEdgeBased(int nodeA, int nodeB, int accessFlags, double weight, int skip1, int skip2, int origFirst, int origLast) {
         if (!edgeBased)
             throw new IllegalArgumentException("Cannot add edge-based shortcuts to node-based CH");
-        long shortcutPointer = shortcut(nodeA, nodeB, accessFlags, weight, skip1, skip2);
-        setOrigEdges(shortcutPointer, origFirst, origLast);
+        int shortcut = shortcut(nodeA, nodeB, accessFlags, weight, skip1, skip2);
+        setOrigEdges(toShortcutPointer(shortcut), origFirst, origLast);
+        return shortcut;
     }
 
-    private long shortcut(int nodeA, int nodeB, int accessFlags, double weight, int skip1, int skip2) {
+    private int shortcut(int nodeA, int nodeB, int accessFlags, double weight, int skip1, int skip2) {
         if (shortcutCount == Integer.MAX_VALUE)
             throw new IllegalStateException("Maximum shortcut count exceeded: " + shortcutCount);
         if (lowShortcutWeightConsumer != null && weight < MIN_WEIGHT)
@@ -145,9 +184,12 @@ public class CHStorage {
         setNodesAB(shortcutPointer, nodeA, nodeB, accessFlags);
         setWeightInt(shortcutPointer, weightInt);
         setSkippedEdges(shortcutPointer, skip1, skip2);
-        return shortcutPointer;
+        return shortcutCount - 1;
     }
 
+    /**
+     * The number of nodes of this storage.
+     */
     public int getNodes() {
         return nodeCount;
     }
@@ -171,9 +213,7 @@ public class CHStorage {
      * To use the shortcut getters/setters you need to convert shortcut IDs to an shortcutPointer first
      */
     public long toShortcutPointer(int shortcut) {
-        // todo: in some cases it might be justified to check shortcut < shortcutCount, but maybe we want the new pointer
-        //       to create another shortcut so we can only check <=.. what did we do before?
-//        assert shortcut < shortcutCount : "shortcut " + shortcut + " not in bounds [0, " + shortcutCount + "[";
+        assert shortcut < shortcutCount : "shortcut " + shortcut + " not in bounds [0, " + shortcutCount + "[";
         return (long) shortcut * shortcutEntryBytes;
     }
 
@@ -181,13 +221,12 @@ public class CHStorage {
         return edgeBased;
     }
 
-    public int getEdgeRef(long nodePointer) {
-        return nodesCH.getInt(nodePointer + N_CH_REF);
+    public int getLastShortcut(long nodePointer) {
+        return nodesCH.getInt(nodePointer + N_LAST_SC);
     }
 
-    // todonow: this should not be used very often, check usages!!
-    public void setEdgeRef(long nodePointer, int edgeId) {
-        nodesCH.setInt(nodePointer + N_CH_REF, edgeId);
+    public void setLastShortcut(long nodePointer, int shortcut) {
+        nodesCH.setInt(nodePointer + N_LAST_SC, shortcut);
     }
 
     public int getLevel(long nodePointer) {
@@ -274,50 +313,14 @@ public class CHStorage {
         return NodeOrderingProvider.fromArray(nodeOrdering);
     }
 
-    public void flush() {
-        // nodes
-        nodesCH.setHeader(0, nodeCount);
-        nodesCH.setHeader(4, nodeCHEntryBytes);
-        nodesCH.flush();
-
-        // shortcuts
-        shortcuts.setHeader(0, shortcutCount);
-        shortcuts.setHeader(4, shortcutEntryBytes);
-        shortcuts.setHeader(8, numShortcutsExceedingWeight);
-        shortcuts.setHeader(12, edgeBased ? 1 : 0);
-        shortcuts.flush();
-    }
-
-    public boolean loadExisting() {
-        if (!nodesCH.loadExisting() || !shortcuts.loadExisting())
-            return false;
-
-        // nodes
-        nodeCount = nodesCH.getHeader(0);
-        nodeCHEntryBytes = nodesCH.getHeader(4);
-
-        // shortcuts
-        shortcutCount = shortcuts.getHeader(0);
-        shortcutEntryBytes = shortcuts.getHeader(4);
-        numShortcutsExceedingWeight = shortcuts.getHeader(8);
-        edgeBased = shortcuts.getHeader(12) == 1;
-
-        return true;
-    }
-
-    public void close() {
-        nodesCH.close();
-        shortcuts.close();
-    }
-
     public void debugPrint() {
         final int printMax = 100;
         System.out.println("nodesCH:");
         String formatNodes = "%12s | %12s | %12s \n";
-        System.out.format(Locale.ROOT, formatNodes, "#", "N_CH_REF", "N_LEVEL");
+        System.out.format(Locale.ROOT, formatNodes, "#", "N_LAST_SC", "N_LEVEL");
         for (int i = 0; i < Math.min(nodeCount, printMax); ++i) {
             long ptr = toNodePointer(i);
-            System.out.format(Locale.ROOT, formatNodes, i, getEdgeRef(ptr), getLevel(ptr));
+            System.out.format(Locale.ROOT, formatNodes, i, getLastShortcut(ptr), getLevel(ptr));
         }
         if (nodeCount > printMax) {
             System.out.format(Locale.ROOT, " ... %d more nodes", nodeCount - printMax);
