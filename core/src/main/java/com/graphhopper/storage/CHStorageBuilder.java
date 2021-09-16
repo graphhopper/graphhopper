@@ -29,11 +29,26 @@ import java.util.function.IntUnaryOperator;
  */
 public class CHStorageBuilder {
     private final CHStorage storage;
-    private final int origEdges;
 
-    public CHStorageBuilder(CHStorage chStorage, int origEdges) {
+    public CHStorageBuilder(CHStorage chStorage) {
+        // todo: currently we create a GraphHopperStorage which creates a CHStorage for us, but really we should rather
+        // be able to create a GraphHopperStorage and build a CHStorage on top. So if anything CHStorageBuilder should
+        // create CHStorage, not receive it here.
         this.storage = chStorage;
-        this.origEdges = origEdges;
+    }
+
+    public void setLevel(int node, int level) {
+        storage.setLevel(storage.toNodePointer(node), level);
+    }
+
+    public void setLevelForAllNodes(int level) {
+        for (int node = 0; node < storage.getNodes(); node++)
+            setLevel(node, level);
+    }
+
+    public void setIdentityLevels() {
+        for (int node = 0; node < storage.getNodes(); node++)
+            setLevel(node, node);
     }
 
     public int addShortcutNodeBased(int a, int b, int accessFlags, double weight, int skippedEdge1, int skippedEdge2) {
@@ -93,13 +108,12 @@ public class CHStorageBuilder {
     }
 
     private void setLastShortcut(int node, int shortcut) {
-        storage.setLastShortcut(storage.toNodePointer(node), origEdges + shortcut);
+        storage.setLastShortcut(storage.toNodePointer(node), shortcut);
     }
 
     private int getLevel(int node) {
         checkNodeId(node);
-        long nodePointer = storage.toNodePointer(node);
-        return storage.getLevel(nodePointer);
+        return storage.getLevel(storage.toNodePointer(node));
     }
 
     private void checkNodeId(int node) {

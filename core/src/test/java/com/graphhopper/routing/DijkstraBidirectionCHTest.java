@@ -139,9 +139,7 @@ public class DijkstraBidirectionCHTest {
 
         // explicitly set the node levels equal to the node ids
         // the graph contraction with this ordering yields no shortcuts
-        for (int i = 0; i < 10; ++i) {
-            store.setLevel(store.toNodePointer(i), i);
-        }
+        new CHStorageBuilder(store).setIdentityLevels();
         RoutingCHGraph routingCHGraph = graph.getRoutingCHGraph();
         RoutingAlgorithm algo = createCHAlgo(routingCHGraph, true);
         Path p = algo.calcPath(1, 0);
@@ -189,9 +187,7 @@ public class DijkstraBidirectionCHTest {
         GHUtility.setSpeed(encoder.getMaxSpeed() / 2, true, true, encoder, graph.edge(1, 2).setDistance(1));
         graph.freeze();
         CHStorage chStore = graph.getCHStore();
-        for (int i = 0; i < 3; ++i) {
-            chStore.setLevel(chStore.toNodePointer(i), i);
-        }
+        new CHStorageBuilder(chStore).setIdentityLevels();
         RoutingCHGraph routingCHGraph = graph.getRoutingCHGraph();
         RoutingAlgorithm algo = createCHAlgo(routingCHGraph, true);
         Path p = algo.calcPath(from, to);

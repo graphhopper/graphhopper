@@ -47,6 +47,11 @@ public class CHPreparationGraph {
     // objects for every node (one for outgoing edges and one for incoming edges).
     private PrepareEdge[] prepareEdgesOut;
     private PrepareEdge[] prepareEdgesIn;
+    // todo: it should be possible to store the 'skipped node' for each shortcut instead of storing the shortcut for
+    //       each prepare edge. but this is a bit tricky for edge-based, because of our bidir shortcuts for node-based,
+    //       and because basegraph has multi-edges. the advantage of storing the skipped node is that we could just write
+    //       it to one of the skipped edges fields temporarily, so we would not need this array and save memory during
+    //       the preparation.
     private IntArrayList shortcutsByPrepareEdges;
     // todo: maybe we can get rid of this
     private int[] degrees;

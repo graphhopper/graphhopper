@@ -27,7 +27,6 @@ import com.graphhopper.util.EdgeIteratorState;
 public class RoutingCHEdgeIteratorImpl extends RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeExplorer, RoutingCHEdgeIterator {
     private final BaseGraph.EdgeIteratorImpl baseIterator;
     private final ShortcutFilter shortcutFilter;
-    private EdgeIterator baseEdgeIterator;
     private int nextEdgeId;
 
     public static RoutingCHEdgeIteratorImpl inEdges(CHStorage chStore, BaseGraph baseGraph, Weighting weighting) {
@@ -46,18 +45,19 @@ public class RoutingCHEdgeIteratorImpl extends RoutingCHEdgeIteratorStateImpl im
 
     @Override
     EdgeIteratorState edgeState() {
-        return baseEdgeIterator;
+        return baseIterator;
     }
 
     @Override
     public RoutingCHEdgeIterator setBaseNode(int baseNode) {
         assert baseGraph.isFrozen();
-
+        // todonow: just?
+        //       baseIterator.setBaseNode(baseNode);
         baseIterator.nextEdgeId = baseIterator.edgeId = baseGraph.getEdgeRef(baseNode);
         baseIterator.baseNode = baseNode;
 
-        nextEdgeId = edgeId = store.getLastShortcut(store.toNodePointer(baseNode));
-        baseEdgeIterator = baseIterator;
+        int lastShortcut = store.getLastShortcut(store.toNodePointer(baseNode));
+        nextEdgeId = edgeId = lastShortcut < 0 ? baseIterator.edgeId : baseGraph.edgeCount + lastShortcut;
         return this;
     }
 
@@ -76,36 +76,35 @@ public class RoutingCHEdgeIteratorImpl extends RoutingCHEdgeIteratorStateImpl im
     private boolean goToNext() {
         // todo: note that it would be more efficient to separate in/out edges, especially for edge-based where we
         //       do not use bidirectional shortcuts
-        while (true) {
-            if (!EdgeIterator.Edge.isValid(nextEdgeId) || nextEdgeId < baseGraph.edgeCount)
-                break;
+        while (EdgeIterator.Edge.isValid(nextEdgeId) && nextEdgeId >= baseGraph.edgeCount) {
             edgeId = nextEdgeId;
-            edgePointer = store.toShortcutPointer(edgeId - baseGraph.edgeCount);
-            baseNode = store.getNodeA(edgePointer);
-            adjNode = store.getNodeB(edgePointer);
+            shortcutPointer = store.toShortcutPointer(edgeId - baseGraph.edgeCount);
+            baseNode = store.getNodeA(shortcutPointer);
+            adjNode = store.getNodeB(shortcutPointer);
             nextEdgeId = edgeId - 1;
+            reverse = false;
             if (nextEdgeId < baseGraph.edgeCount || store.getNodeA(store.toShortcutPointer(nextEdgeId - baseGraph.edgeCount)) != baseNode)
                 nextEdgeId = baseIterator.edgeId;
-            reverse = false;
-            freshFlags = false;
-            if (baseIterator.filter.accept(baseEdgeIterator))
-                return true;
+            // todonow: since we do not filter anything here just remove while loop. or should we filter anything here?
+            return true;
         }
 
+        // todonow: just?
+        //       baseIterator.next();
         while (true) {
             if (!EdgeIterator.Edge.isValid(baseIterator.nextEdgeId))
                 return false;
             baseIterator.goToNext();
             // we update edgeId even when iterating base edges
             edgeId = baseIterator.edgeId;
-            if (baseIterator.filter.accept(baseEdgeIterator))
-                return true;
+            // todonow: since we do not filter anything here just remove while loop. or should we filter anything here?
+            return true;
         }
     }
 
     @Override
     public String toString() {
-        return baseEdgeIterator.toString();
+        return baseIterator.toString();
     }
 
     private boolean hasAccess() {
@@ -113,7 +112,7 @@ public class RoutingCHEdgeIteratorImpl extends RoutingCHEdgeIteratorStateImpl im
             return shortcutFilter.accept(this);
         } else {
             // c.f. comment in AccessFilter
-            if (baseEdgeIterator.getBaseNode() == baseEdgeIterator.getAdjNode()) {
+            if (baseIterator.getBaseNode() == baseIterator.getAdjNode()) {
                 return finiteWeight(false) || finiteWeight(true);
             }
             return shortcutFilter.fwd && finiteWeight(false) || shortcutFilter.bwd && finiteWeight(true);

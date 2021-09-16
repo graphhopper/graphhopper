@@ -62,6 +62,7 @@ public interface RoutingCHEdgeIteratorState {
 
     double getWeight(boolean reverse);
 
+    // todonow: why do we have getFwd/BwdAccess(), but getWeight(reverse)?
     boolean getFwdAccess();
 
     boolean getBwdAccess();

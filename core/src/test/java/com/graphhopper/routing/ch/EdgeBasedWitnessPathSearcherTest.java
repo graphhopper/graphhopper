@@ -23,6 +23,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHStorage;
+import com.graphhopper.storage.CHStorageBuilder;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIterator;
@@ -38,6 +39,7 @@ public class EdgeBasedWitnessPathSearcherTest {
 
     private GraphHopperStorage graph;
     private CHStorage chStore;
+    private CHStorageBuilder chBuilder;
     private Weighting weighting;
     private FlagEncoder encoder;
 
@@ -49,6 +51,7 @@ public class EdgeBasedWitnessPathSearcherTest {
                 .setCHConfigStrings("p|car|shortest|edge")
                 .create();
         chStore = graph.getCHStore();
+        chBuilder = new CHStorageBuilder(chStore);
         weighting = graph.getRoutingCHGraph().getWeighting();
     }
 
@@ -134,10 +137,7 @@ public class EdgeBasedWitnessPathSearcherTest {
     }
 
     private void setMaxLevelOnAllNodes() {
-        int nodes = chStore.getNodes();
-        for (int node = 0; node < nodes; node++) {
-            chStore.setLevel(chStore.toNodePointer(node), nodes);
-        }
+        chBuilder.setLevelForAllNodes(chStore.getNodes());
     }
 
     private void assertFinderResult(PrepareCHEntry expected, PrepareCHEntry result) {

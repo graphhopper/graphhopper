@@ -947,7 +947,7 @@ public class GraphHopper {
 
         if (sortGraph) {
             if (ghStorage.isCHPossible() && isCHPrepared())
-                throw new IllegalArgumentException("Sorting a prepared CHGraphImpl is not possible yet. See #12");
+                throw new IllegalArgumentException("Sorting a prepared CH is not possible yet. See #12");
 
             GraphHopperStorage newGraph = GHUtility.newStorage(ghStorage);
             GHUtility.sortDFS(ghStorage, newGraph);

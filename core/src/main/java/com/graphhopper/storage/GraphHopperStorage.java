@@ -344,11 +344,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
             // larger than needed, because we do not do something like trimToSize in the end.
             double expectedShortcuts = 0.3 * baseGraph.getEdges();
             ch.chStore.init(baseGraph.getNodes(), (int) expectedShortcuts);
-            // copy normal edge refs into ch edge refs
-            for (int node = 0; node < baseGraph.getNodes(); node++) {
-                long nodePointer = ch.chStore.toNodePointer(node);
-                ch.chStore.setLastShortcut(nodePointer, baseGraph.getEdgeRef(node));
-            }
         });
     }
 

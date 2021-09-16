@@ -46,27 +46,20 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class NodeBasedNodeContractorTest {
-    // TODO integrate this into CHGraphImpl somehow
-    public final static BooleanEncodedValue SC_ACCESS = new SimpleBooleanEncodedValue("sc_access", true);
-
-    static {
-        SC_ACCESS.init(new EncodedValue.InitializerConfig());
-    }
-
     private final CarFlagEncoder encoder = new CarFlagEncoder();
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
     private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHConfigs(CHConfig.nodeBased("profile", weighting)).create();
     private final CHStorage store = graph.getCHStore();
+    private final CHStorageBuilder chBuilder = new CHStorageBuilder(store);
 
     private NodeContractor createNodeContractor() {
-        return createNodeContractor(graph);
+        return createNodeContractor(graph, chBuilder);
     }
 
-    private NodeContractor createNodeContractor(GraphHopperStorage g) {
+    private NodeContractor createNodeContractor(GraphHopperStorage g, CHStorageBuilder chBuilder) {
         CHPreparationGraph prepareGraph = CHPreparationGraph.nodeBased(g.getNodes(), g.getEdges());
         CHPreparationGraph.buildFromGraph(prepareGraph, g, g.getRoutingCHGraph().getWeighting());
-        CHStorageBuilder chBuilder = new CHStorageBuilder(g.getCHStore(), g.getEdges());
         NodeContractor nodeContractor = new NodeBasedNodeContractor(prepareGraph, chBuilder, new PMap());
         nodeContractor.initFromGraph();
         nodeContractor.prepareContraction();
@@ -288,7 +281,7 @@ public class NodeBasedNodeContractorTest {
         setMaxLevelOnAllNodes(graph.getCHStore());
 
         // perform CH contraction
-        contractInOrder(graph, 1, 3, 2, 0, 4);
+        contractInOrder(graph, new CHStorageBuilder(graph.getCHStore()), 1, 3, 2, 0, 4);
 
         // first we compare dijkstra with CH to make sure they produce the same results
         int from = 0;
@@ -321,23 +314,24 @@ public class NodeBasedNodeContractorTest {
 
         graph.freeze();
         setMaxLevelOnAllNodes(graph.getCHStore());
-        NodeContractor nodeContractor = createNodeContractor(graph);
+        NodeContractor nodeContractor = createNodeContractor(graph, new CHStorageBuilder(graph.getCHStore()));
         nodeContractor.contractNode(0);
         nodeContractor.contractNode(3);
         checkNoShortcuts(graph.getCHStore());
     }
 
     private void contractInOrder(int... nodeIds) {
-        contractInOrder(graph, nodeIds);
+        contractInOrder(graph, chBuilder, nodeIds);
     }
 
-    private void contractInOrder(GraphHopperStorage g, int... nodeIds) {
+    private void contractInOrder(GraphHopperStorage g, CHStorageBuilder chBuilder, int... nodeIds) {
         setMaxLevelOnAllNodes();
-        NodeContractor nodeContractor = createNodeContractor(g);
+        NodeContractor nodeContractor = createNodeContractor(g, chBuilder);
         CHStorage store = g.getCHStore();
+        CHStorageBuilder b = new CHStorageBuilder(store);
         int level = 0;
         for (int n : nodeIds) {
-            store.setLevel(store.toNodePointer(n), level);
+            b.setLevel(n, level);
             nodeContractor.contractNode(n);
             level++;
         }
@@ -403,10 +397,7 @@ public class NodeBasedNodeContractorTest {
     }
 
     private void setMaxLevelOnAllNodes(CHStorage store) {
-        int nodes = store.getNodes();
-        for (int node = 0; node < nodes; node++) {
-            store.setLevel(store.toNodePointer(node), nodes);
-        }
+        new CHStorageBuilder(store).setLevelForAllNodes(store.getNodes());
     }
 
     private static class Shortcut {

@@ -49,6 +49,7 @@ public class EdgeBasedNodeContractorTest {
     private GraphHopperStorage graph;
     private Weighting weighting;
     private CHStorage chStore;
+    private CHStorageBuilder chBuilder;
 
     private List<CHConfig> chConfigs;
 
@@ -68,6 +69,7 @@ public class EdgeBasedNodeContractorTest {
                 .create();
         chConfigs = graph.getCHConfigs();
         chStore = graph.getCHStore(chConfigs.get(0).getName());
+        chBuilder = new CHStorageBuilder(chStore);
         weighting = graph.getRoutingCHGraph(chConfigs.get(0).getName()).getWeighting();
     }
 
@@ -1117,6 +1119,7 @@ public class EdgeBasedNodeContractorTest {
     @Test
     public void testFindPath_finiteUTurnCost() {
         chStore = graph.getCHStore(chConfigs.get(1).getName());
+        chBuilder = new CHStorageBuilder(chStore);
         weighting = graph.getRoutingCHGraph(chConfigs.get(1).getName()).getWeighting();
         // turning to 1 at node 3 when coming from 0 is forbidden, but taking the full loop 3-4-2-3 is very
         // expensive, so the best solution is to go straight to 4 and take a u-turn there
@@ -1354,14 +1357,14 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private void contractNode(NodeContractor nodeContractor, int node, int level) {
-        chStore.setLevel(chStore.toNodePointer(node), level);
+        chBuilder.setLevel(node, level);
         nodeContractor.contractNode(node);
     }
 
     private void contractAllNodesInOrder() {
         EdgeBasedNodeContractor nodeContractor = createNodeContractor();
         for (int node = 0; node < graph.getNodes(); ++node) {
-            chStore.setLevel(chStore.toNodePointer(node), node);
+            chBuilder.setLevel(node, node);
             nodeContractor.contractNode(node);
         }
         nodeContractor.finishContraction();
@@ -1374,7 +1377,7 @@ public class EdgeBasedNodeContractorTest {
     private void contractNodes(int... nodes) {
         EdgeBasedNodeContractor nodeContractor = createNodeContractor();
         for (int i = 0; i < nodes.length; ++i) {
-            chStore.setLevel(chStore.toNodePointer(nodes[i]), i);
+            chBuilder.setLevel(nodes[i], i);
             nodeContractor.contractNode(nodes[i]);
         }
         nodeContractor.finishContraction();
@@ -1384,7 +1387,6 @@ public class EdgeBasedNodeContractorTest {
         CHPreparationGraph.TurnCostFunction turnCostFunction = CHPreparationGraph.buildTurnCostFunctionFromTurnCostStorage(graph, weighting);
         CHPreparationGraph prepareGraph = CHPreparationGraph.edgeBased(graph.getNodes(), graph.getEdges(), turnCostFunction);
         CHPreparationGraph.buildFromGraph(prepareGraph, graph, weighting);
-        CHStorageBuilder chBuilder = new CHStorageBuilder(chStore, graph.getEdges());
         EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(prepareGraph, chBuilder, new PMap());
         nodeContractor.initFromGraph();
         return nodeContractor;
@@ -1466,10 +1468,7 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private void setMaxLevelOnAllNodes() {
-        int nodes = chStore.getNodes();
-        for (int node = 0; node < nodes; node++) {
-            chStore.setLevel(chStore.toNodePointer(node), nodes);
-        }
+        chBuilder.setLevelForAllNodes(chStore.getNodes());
     }
 
     private static class Shortcut {

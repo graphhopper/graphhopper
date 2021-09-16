@@ -111,16 +111,17 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     public void testPrios() {
         graph = createGHStorage();
         CHStorage g = getCHStore(graph);
+        CHStorageBuilder b = new CHStorageBuilder(g);
         graph.getNodeAccess().ensureNode(30);
         graph.freeze();
 
-        assertEquals(0, g.getLevel(10));
+        assertEquals(0, g.getLevel(g.toNodePointer(10)));
 
-        g.setLevel(10, 100);
-        assertEquals(100, g.getLevel(10));
+        b.setLevel(10, 100);
+        assertEquals(100, g.getLevel(g.toNodePointer(10)));
 
-        g.setLevel(30, 100);
-        assertEquals(100, g.getLevel(30));
+        b.setLevel(30, 100);
+        assertEquals(100, g.getLevel(g.toNodePointer(30)));
     }
 
     @Test
@@ -134,10 +135,11 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         graph.freeze();
 
         CHStorage store = getCHStore(graph);
-        setIdentityLevels(store);
-        shortcut(graph, store, 0, 1, PrepareEncoder.getScBwdDir(), 0, 12, 13);
-        shortcut(graph, store, 1, 2, PrepareEncoder.getScDirMask(), 0, 10, 11);
-        shortcut(graph, store, 1, 3, PrepareEncoder.getScBwdDir(), 0, 14, 15);
+        CHStorageBuilder chBuilder = new CHStorageBuilder(store);
+        chBuilder.setIdentityLevels();
+        chBuilder.addShortcutNodeBased(0, 1, PrepareEncoder.getScBwdDir(), 0, 12, 13);
+        chBuilder.addShortcutNodeBased(1, 2, PrepareEncoder.getScDirMask(), 0, 10, 11);
+        chBuilder.addShortcutNodeBased(1, 3, PrepareEncoder.getScBwdDir(), 0, 14, 15);
 
         RoutingCHGraph lg = getRoutingCHGraph(graph);
         RoutingCHEdgeExplorer chOutExplorer = lg.createOutEdgeExplorer();
@@ -159,15 +161,9 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         assertEquals(1, GHUtility.count(chInExplorer.setBaseNode(0)));
     }
 
-    private void shortcut(GraphHopperStorage graph, CHStorage store, int nodeA, int nodeB, int accessFlags, double weight, int skip1, int skip2) {
-        store.shortcutNodeBased(nodeA, nodeB, accessFlags, weight, skip1, skip2);
-        store.setLastShortcut(store.toNodePointer(nodeA), graph.getEdges() + store.getShortcuts() - 1);
-    }
-
     @Test
     public void testGetWeight() {
         graph = createGHStorage();
-        CHStorage g = getCHStore(graph);
         EdgeIteratorState edge1 = graph.edge(0, 1);
         EdgeIteratorState edge2 = graph.edge(1, 2);
         graph.freeze();
@@ -175,10 +171,12 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         assertFalse(lg.getEdgeIteratorState(edge1.getEdge(), Integer.MIN_VALUE).isShortcut());
         assertFalse(lg.getEdgeIteratorState(edge2.getEdge(), Integer.MIN_VALUE).isShortcut());
 
-        setIdentityLevels(g);
+        CHStorage g = getCHStore(graph);
+        CHStorageBuilder chBuilder = new CHStorageBuilder(g);
+        chBuilder.setIdentityLevels();
         // only remove edges
         int flags = PrepareEncoder.getScDirMask();
-        shortcut(graph, g, 0, 1, flags, 5, NO_EDGE, NO_EDGE);
+        chBuilder.addShortcutNodeBased(0, 1, flags, 5, NO_EDGE, NO_EDGE);
         RoutingCHEdgeIteratorState sc1 = lg.getEdgeIteratorState(2, 1);
         assertEquals(0, sc1.getBaseNode());
         assertEquals(1, sc1.getAdjNode());
@@ -195,10 +193,11 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         ghStorage.edge(0, 3);
         ghStorage.freeze();
 
-        CHStorage lg = ghStorage.getCHStore();
-        setIdentityLevels(lg);
-        shortcut(ghStorage, lg, 0, 1, PrepareEncoder.getScFwdDir(), 100.123, NO_EDGE, NO_EDGE);
-        int sc1 = lg.getShortcuts() + ghStorage.getEdges() - 1;
+        CHStorage chStore = ghStorage.getCHStore();
+        CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
+        chBuilder.setIdentityLevels();
+        chBuilder.addShortcutNodeBased(0, 1, PrepareEncoder.getScFwdDir(), 100.123, NO_EDGE, NO_EDGE);
+        int sc1 = chStore.getShortcuts() + ghStorage.getEdges() - 1;
         RoutingCHGraph rg = ghStorage.getRoutingCHGraph();
         assertEquals(1, rg.getEdgeIteratorState(sc1, 1).getAdjNode());
         assertEquals(0, rg.getEdgeIteratorState(sc1, 1).getBaseNode());
@@ -207,8 +206,8 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         // todonow
 //        assertEquals(100.123, GHUtility.getEdge(rg.createOutEdgeExplorer().setBaseNode(0), 1).getWeight(false), 1e-3);
 
-        shortcut(ghStorage, lg, 2, 3, PrepareEncoder.getScDirMask(), 1.011011, NO_EDGE, NO_EDGE);
-        int sc2 = lg.getShortcuts() + ghStorage.getEdges() - 1;
+        chBuilder.addShortcutNodeBased(2, 3, PrepareEncoder.getScDirMask(), 1.011011, NO_EDGE, NO_EDGE);
+        int sc2 = chStore.getShortcuts() + ghStorage.getEdges() - 1;
         assertEquals(3, rg.getEdgeIteratorState(sc2, 3).getAdjNode());
         assertEquals(2, rg.getEdgeIteratorState(sc2, 3).getBaseNode());
         assertEquals(1.011011, rg.getEdgeIteratorState(sc2, 2).getWeight(false), 1e-3);
@@ -218,18 +217,19 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     @Test
     public void weightExact() {
         graph = createGHStorage();
-        CHStorage chGraph = getCHStore(graph);
+        CHStorage chStore = getCHStore(graph);
         GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(0, 1).setDistance(1));
         GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(1, 2).setDistance(1));
         graph.freeze();
-        setIdentityLevels(chGraph);
+        CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
+        chBuilder.setIdentityLevels();
 
         // we just make up some weights, they do not really have to be related to our previous edges.
         // 1.004+1.006 = 2.09999999999. we make sure this does not become 2.09 instead of 2.10 (due to truncation)
         double x1 = 1.004;
         double x2 = 1.006;
         RoutingCHGraph rg = getRoutingCHGraph(graph);
-        shortcut(graph, chGraph, 0, 2, PrepareEncoder.getScFwdDir(), x1 + x2, 0, 1);
+        chBuilder.addShortcutNodeBased(0, 2, PrepareEncoder.getScFwdDir(), x1 + x2, 0, 1);
         RoutingCHEdgeIteratorState sc = rg.getEdgeIteratorState(2, 2);
         assertEquals(2.01, sc.getWeight(false), 1.e-6);
     }
@@ -247,7 +247,8 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         graph.edge(8, 9);
         graph.freeze();
         CHStorage store = getCHStore(graph);
-        setIdentityLevels(store);
+        CHStorageBuilder chBuilder = new CHStorageBuilder(store);
+        chBuilder.setIdentityLevels();
 
         RoutingCHGraph chGraph = getRoutingCHGraph(graph);
 
@@ -255,7 +256,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         // routing ch graph does not see edges without access
         assertEquals(0, GHUtility.count(chGraph.createInEdgeExplorer().setBaseNode(1)));
 
-        shortcut(graph, store, 2, 3, PrepareEncoder.getScDirMask(), 10, NO_EDGE, NO_EDGE);
+        chBuilder.addShortcutNodeBased(2, 3, PrepareEncoder.getScDirMask(), 10, NO_EDGE, NO_EDGE);
 
         // should be identical to results before we added shortcut
         assertEquals(1, GHUtility.count(graph.createEdgeExplorer().setBaseNode(1)));
@@ -287,8 +288,9 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         graph.freeze();
 
         CHStorage store = getCHStore(graph);
-        setIdentityLevels(store);
-        shortcut(graph, store, 1, 4, PrepareEncoder.getScFwdDir(), 3, NO_EDGE, NO_EDGE);
+        CHStorageBuilder chBuilder = new CHStorageBuilder(store);
+        chBuilder.setIdentityLevels();
+        chBuilder.addShortcutNodeBased(1, 4, PrepareEncoder.getScFwdDir(), 3, NO_EDGE, NO_EDGE);
 
         RoutingCHGraph lg = getRoutingCHGraph(graph);
         RoutingCHEdgeExplorer exp = lg.createOutEdgeExplorer();
@@ -303,13 +305,14 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         final EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 4).setDistance(10));
         graph.freeze();
 
-        CHStorage lg = getCHStore(graph);
-        setIdentityLevels(lg);
-        shortcut(graph, lg, 1, 4, PrepareEncoder.getScDirMask(), 10, NO_EDGE, NO_EDGE);
+        CHStorage chStore = getCHStore(graph);
+        CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
+        chBuilder.setIdentityLevels();
+        chBuilder.addShortcutNodeBased(1, 4, PrepareEncoder.getScDirMask(), 10, NO_EDGE, NO_EDGE);
 
-        lg.setSkippedEdges(lg.toShortcutPointer(0), edge1.getEdge(), edge2.getEdge());
-        assertEquals(edge1.getEdge(), lg.getSkippedEdge1(lg.toShortcutPointer(0)));
-        assertEquals(edge2.getEdge(), lg.getSkippedEdge2(lg.toShortcutPointer(0)));
+        chStore.setSkippedEdges(chStore.toShortcutPointer(0), edge1.getEdge(), edge2.getEdge());
+        assertEquals(edge1.getEdge(), chStore.getSkippedEdge1(chStore.toShortcutPointer(0)));
+        assertEquals(edge2.getEdge(), chStore.getSkippedEdge2(chStore.toShortcutPointer(0)));
     }
 
     @Test
@@ -319,11 +322,12 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         final EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 4).setDistance(10));
         graph.freeze();
 
-        CHStorage lg = getCHStore(graph);
-        setIdentityLevels(lg);
-        shortcut(graph, lg, 1, 4, PrepareEncoder.getScDirMask(), 10, edge1.getEdge(), edge2.getEdge());
-        assertEquals(edge1.getEdge(), lg.getSkippedEdge1(lg.toShortcutPointer(0)));
-        assertEquals(edge2.getEdge(), lg.getSkippedEdge2(lg.toShortcutPointer(0)));
+        CHStorage chStore = getCHStore(graph);
+        CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
+        chBuilder.setIdentityLevels();
+        chBuilder.addShortcutNodeBased(1, 4, PrepareEncoder.getScDirMask(), 10, edge1.getEdge(), edge2.getEdge());
+        assertEquals(edge1.getEdge(), chStore.getSkippedEdge1(chStore.toShortcutPointer(0)));
+        assertEquals(edge2.getEdge(), chStore.getSkippedEdge2(chStore.toShortcutPointer(0)));
     }
 
     @Test
@@ -332,7 +336,8 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(0, 1).setDistance(1));
         GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(1, 2).setDistance(1));
         graph.freeze();
-        assertThrows(IllegalArgumentException.class, () -> addShortcut(getCHStore(graph), 0, 2, true, 0, 1, 0, 1));
+        CHStorageBuilder chBuilder = new CHStorageBuilder(getCHStore(graph));
+        assertThrows(IllegalArgumentException.class, () -> chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 10, 0, 1, 0, 1));
     }
 
     @Test
@@ -342,11 +347,12 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(0, 1).setDistance(1));
         GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(1, 2).setDistance(3));
         graph.freeze();
-        CHStorage lg = getCHStore(this.graph);
-        setIdentityLevels(lg);
-        addShortcut(lg, 0, 2, true, 0, 1, 0, 1);
-        assertEquals(0, lg.getOrigEdgeFirst(lg.toShortcutPointer(0)));
-        assertEquals(1, lg.getOrigEdgeLast(lg.toShortcutPointer(0)));
+        CHStorage chStore = getCHStore(this.graph);
+        CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
+        chBuilder.setIdentityLevels();
+        chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 10, 0, 1, 0, 1);
+        assertEquals(0, chStore.getOrigEdgeFirst(chStore.toShortcutPointer(0)));
+        assertEquals(1, chStore.getOrigEdgeLast(chStore.toShortcutPointer(0)));
     }
 
     @Test
@@ -356,8 +362,9 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(1, 2).setDistance(1));
         graph.freeze();
         CHStorage store = getCHStore(graph);
-        setIdentityLevels(store);
-        addShortcut(store, 0, 2, true, 0, 1, 0, 1);
+        CHStorageBuilder chBuilder = new CHStorageBuilder(store);
+        chBuilder.setIdentityLevels();
+        chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 10, 0, 1, 0, 1);
 
         RoutingCHGraph lg = getRoutingCHGraph(graph);
 
@@ -382,11 +389,6 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         assertEquals(1, sc20.getSkippedEdge2());
         assertEquals(0, sc20.getOrigEdgeFirst());
         assertEquals(1, sc20.getOrigEdgeLast());
-    }
-
-    private void addShortcut(CHStorage chGraph, int from, int to, boolean fwd, int firstOrigEdge, int lastOrigEdge,
-                             int skipEdge1, int skipEdge2) {
-        chGraph.shortcutEdgeBased(from, to, fwd ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir(), 0, skipEdge1, skipEdge2, firstOrigEdge, lastOrigEdge);
     }
 
     @Test
@@ -532,12 +534,6 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
             assertNotSame(storage.getRoutingCHGraph("a"), storage.getRoutingCHGraph("b"));
             assertNotSame(storage.getRoutingCHGraph("b"), storage.getRoutingCHGraph("c"));
             assertNotSame(storage.getRoutingCHGraph("a"), storage.getRoutingCHGraph("c"));
-        }
-    }
-
-    public static void setIdentityLevels(CHStorage chStorage) {
-        for (int i = 0; i < chStorage.getNodes(); i++) {
-            chStorage.setLevel(chStorage.toNodePointer(i), i);
         }
     }
 

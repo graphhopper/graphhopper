@@ -54,6 +54,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final CHConfig chConfig;
     private final CHStorage chStore;
+    private final CHStorageBuilder chBuilder;
     private final Random rand = new Random(123);
     private final StopWatch allSW = new StopWatch();
     private final StopWatch periodicUpdateSW = new StopWatch();
@@ -80,6 +81,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         chStore = ghStorage.getCHStore(chConfig.getName());
         if (chStore == null)
             throw new IllegalArgumentException("There is no CH graph '" + chConfig.getName() + "', existing: " + ghStorage.getCHGraphNames());
+        chBuilder = new CHStorageBuilder(chStore);
         this.chConfig = chConfig;
         params = Params.forTraversalMode(chConfig.getTraversalMode());
         nodes = ghStorage.getNodes();
@@ -166,12 +168,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
             logger.info("Creating CH prepare graph, {}", getMemInfo());
             CHPreparationGraph.TurnCostFunction turnCostFunction = CHPreparationGraph.buildTurnCostFunctionFromTurnCostStorage(graph, chConfig.getWeighting());
             prepareGraph = CHPreparationGraph.edgeBased(graph.getNodes(), graph.getEdges(), turnCostFunction);
-            CHStorageBuilder chBuilder = new CHStorageBuilder(chStore, graph.getEdges());
             nodeContractor = new EdgeBasedNodeContractor(prepareGraph, chBuilder, pMap);
         } else {
             logger.info("Creating CH prepare graph, {}", getMemInfo());
             prepareGraph = CHPreparationGraph.nodeBased(graph.getNodes(), graph.getEdges());
-            CHStorageBuilder chBuilder = new CHStorageBuilder(chStore, graph.getEdges());
             nodeContractor = new NodeBasedNodeContractor(prepareGraph, chBuilder, pMap);
         }
         maxLevel = nodes;
@@ -187,9 +187,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     }
 
     private void setMaxLevelOnAllNodes() {
-        for (int node = 0; node < nodes; node++) {
-            chStore.setLevel(chStore.toNodePointer(node), maxLevel);
-        }
+        chBuilder.setLevelForAllNodes(maxLevel);
     }
 
     private void updatePrioritiesOfRemainingNodes() {
@@ -339,7 +337,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         if (isContracted(node))
             throw new IllegalArgumentException("Node " + node + " was contracted already");
         contractionSW.start();
-        chStore.setLevel(chStore.toNodePointer(node), level);
+        chBuilder.setLevel(node, level);
         IntContainer neighbors = nodeContractor.contractNode(node);
         contractionSW.stop();
         return neighbors;

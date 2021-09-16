@@ -30,6 +30,11 @@ import static com.graphhopper.util.Helper.nf;
 /**
  * DataAccess-based storage for CH shortcuts. Stores shortcuts and CH levels sequentially using two DataAccess objects
  * and gives read/write access to the different shortcut and node fields.
+ * <p>
+ * This can be seen as an extension to a base graph: We assign a CH level to each nodes and add additional edges to
+ * the graph ('shortcuts'). The shortcuts need to be ordered in a certain way, but this is not enforced here.
+ *
+ * @see CHStorageBuilder to build a valid storage that can be used for routing
  */
 public class CHStorage {
     // we store double weights as integers (rounded to three decimal digits)
@@ -109,6 +114,7 @@ public class CHStorage {
      * todo: we could also trim down the shortcuts DataAccess when we are done adding shortcuts
      */
     public void init(int nodes, int expectedShortcuts) {
+        // todonow: should we enforce init was called whereever the initialization is needed?
         if (nodeCount >= 0)
             throw new IllegalStateException("CHStorage can only be initialized once");
         if (nodes < 0)
@@ -116,6 +122,8 @@ public class CHStorage {
         nodesCH.ensureCapacity((long) nodes * nodeCHEntryBytes);
         nodeCount = nodes;
         shortcuts.ensureCapacity((long) expectedShortcuts * shortcutEntryBytes);
+        for (int node = 0; node < nodes; node++)
+            setLastShortcut(toNodePointer(node), -1);
     }
 
     public void flush() {
