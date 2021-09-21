@@ -49,15 +49,11 @@ class NodeBasedWitnessPathSearcherTest {
 
         setMaxLevelOnAllNodes();
 
-        algo.ignoreNode(3);
-        algo.setWeightLimit(100);
-        int nodeEntry = algo.findEndNode(4, 2);
-        assertTrue(algo.getWeight(nodeEntry) > normalDist);
-
-        algo.clear();
-        algo.setMaxVisitedNodes(1);
-        nodeEntry = algo.findEndNode(4, 2);
-        assertEquals(-1, nodeEntry);
+        algo.init(4, 3);
+        double w = algo.findUpperBoundShortestPathWeight(2, 100, Integer.MAX_VALUE);
+        assertTrue(w > normalDist);
+        algo.init(4, 3);
+        assertEquals(Double.MAX_VALUE, algo.findUpperBoundShortestPathWeight(2, 100, 1));
     }
 
     @Test
@@ -71,13 +67,9 @@ class NodeBasedWitnessPathSearcherTest {
 
         setMaxLevelOnAllNodes();
 
-        algo.ignoreNode(3);
-        algo.setWeightLimit(10);
-        int nodeEntry = algo.findEndNode(4, 2);
-        assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
-
-        nodeEntry = algo.findEndNode(4, 1);
-        assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
+        algo.init(4, 3);
+        assertEquals(4, algo.findUpperBoundShortestPathWeight(2, 10, Integer.MAX_VALUE));
+        assertEquals(4, algo.findUpperBoundShortestPathWeight(1, 10, Integer.MAX_VALUE));
     }
 
     @Test
@@ -88,12 +80,13 @@ class NodeBasedWitnessPathSearcherTest {
         NodeBasedWitnessPathSearcher algo = new NodeBasedWitnessPathSearcher(prepareGraph);
 
         setMaxLevelOnAllNodes();
-
-        algo.ignoreNode(0);
-        algo.setWeightLimit(2);
-        int endNode = algo.findEndNode(4, 1);
-        // did not reach endNode
-        assertNotEquals(1, endNode);
+        algo.init(4, 0);
+        assertEquals(Double.MAX_VALUE, algo.findUpperBoundShortestPathWeight(1, 2, Integer.MAX_VALUE));
+//        algo.ignoreNode(0);
+//        algo.setWeightLimit(2);
+//        int endNode = algo.findEndNode(4, 1);
+//         did not reach endNode
+//        assertNotEquals(1, endNode);
     }
 
     private void createExampleGraph() {

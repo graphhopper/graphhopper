@@ -18,6 +18,7 @@
 package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.apache.commons.collections.IntFloatBinaryHeap;
 import com.graphhopper.routing.DijkstraOneToMany;
 import com.graphhopper.util.Helper;
@@ -33,17 +34,13 @@ import java.util.Arrays;
  * witness paths (e.g. we do not need to find the actual path).
  */
 public class NodeBasedWitnessPathSearcher {
-    private static final int NOT_FOUND = -1;
-    private PrepareGraphEdgeExplorer outEdgeExplorer;
+    private final PrepareGraphEdgeExplorer outEdgeExplorer;
+    private final double[] weights;
     private final IntArrayList changedNodes;
-    private int maxVisitedNodes = Integer.MAX_VALUE;
-    protected double[] weights;
-    private IntFloatBinaryHeap heap;
+    private final IntFloatBinaryHeap heap;
+    private int startNode = -1;
     private int ignoreNode = -1;
-    private int visitedNodes;
-    private boolean doClear = true;
-    private int currNode, to;
-    private double weightLimit = Double.MAX_VALUE;
+    private int settledNodes;
 
     public NodeBasedWitnessPathSearcher(CHPreparationGraph graph) {
         outEdgeExplorer = graph.createOutEdgeExplorer();
@@ -55,117 +52,72 @@ public class NodeBasedWitnessPathSearcher {
         changedNodes = new IntArrayList();
     }
 
+    public void init(int startNode, int ignoreNode) {
+        this.startNode = startNode;
+        this.ignoreNode = ignoreNode;
+        for (IntCursor c : changedNodes)
+            weights[c.value] = Double.MAX_VALUE;
+        changedNodes.elementsCount = 0;
+        // todo
+//        int vn = changedNodes.size();
+//        for (int i = 0; i < vn; i++) {
+//            int n = changedNodes.get(i);
+//            weights[n] = Double.MAX_VALUE;
+//        }
+        heap.clear();
+        weights[startNode] = 0;
+        changedNodes.add(startNode);
+        heap.insert(0, startNode);
+    }
+
     /**
-     * Call clear if you have a different start node and need to clear the cache.
+     * Runs a Dijkstra search from the startNode given in init() to the given targetNode and returns an upper bound
+     * for the shortest path weight. The ignoreNode given in init() will be excluded from the search.
+     * <p>
+     * However, the search will stop as soon as *any* path from start to target has been found such that
+     * the weight is below or equal to the accepted weight.
+     *
+     * @param targetNode
+     * @param acceptedWeight
+     * @param maxSettledNodes
+     * @return
      */
-    public NodeBasedWitnessPathSearcher clear() {
-        doClear = true;
-        return this;
-    }
+    public double findUpperBoundShortestPathWeight(int targetNode, double acceptedWeight, int maxSettledNodes) {
+        int visitedNodes = 0;
+        while (!heap.isEmpty() && visitedNodes < maxSettledNodes && heap.peekKey() <= acceptedWeight) {
+            if (weights[targetNode] <= acceptedWeight)
+                // we found *a* path to the target node (not necessarily the shortest), and the weight is acceptable, so we stop
+                return weights[targetNode];
 
-    public double getWeight(int endNode) {
-        return weights[endNode];
-    }
-
-    public int findEndNode(int from, int to) {
-        if (weights.length < 2)
-            return NOT_FOUND;
-
-        this.to = to;
-        if (doClear) {
-            doClear = false;
-            int vn = changedNodes.size();
-            for (int i = 0; i < vn; i++) {
-                int n = changedNodes.get(i);
-                weights[n] = Double.MAX_VALUE;
-            }
-
-            heap.clear();
-
-            // changedNodes.clear();
-            changedNodes.elementsCount = 0;
-
-            currNode = from;
-            weights[currNode] = 0;
-            changedNodes.add(currNode);
-        } else {
-            // Cached! Re-use existing data structures
-            if (weights[to] != Double.MAX_VALUE && weights[to] <= weights[currNode])
-                return to;
-
-            if (heap.isEmpty() || isMaxVisitedNodesExceeded())
-                return NOT_FOUND;
-
-            currNode = heap.poll();
-        }
-
-        visitedNodes = 0;
-
-        // we call 'finished' before heap.peekElement but this would add unnecessary overhead for this special case so we do it outside of the loop
-        if (finished()) {
-            // then we need a small workaround for special cases see #707
-            if (heap.isEmpty())
-                doClear = true;
-            return currNode;
-        }
-
-        while (true) {
-            visitedNodes++;
-            PrepareGraphEdgeIterator iter = outEdgeExplorer.setBaseNode(currNode);
+            int node = heap.poll();
+            PrepareGraphEdgeIterator iter = outEdgeExplorer.setBaseNode(node);
             while (iter.next()) {
                 int adjNode = iter.getAdjNode();
-                if (!accept(iter))
+                if (adjNode == ignoreNode)
                     continue;
 
-                double tmpWeight = iter.getWeight() + weights[currNode];
-                if (Double.isInfinite(tmpWeight))
+                double weight = weights[node] + iter.getWeight();
+                if (Double.isInfinite(weight))
                     continue;
 
-                double w = weights[adjNode];
-                if (w == Double.MAX_VALUE) {
-                    weights[adjNode] = tmpWeight;
-                    heap.insert(tmpWeight, adjNode);
+                double adjWeight = weights[adjNode];
+                if (adjWeight == Double.MAX_VALUE) {
+                    weights[adjNode] = weight;
+                    heap.insert(weight, adjNode);
                     changedNodes.add(adjNode);
-                } else if (w > tmpWeight) {
-                    weights[adjNode] = tmpWeight;
-                    heap.update(tmpWeight, adjNode);
-                    changedNodes.add(adjNode);
+                } else if (weight < adjWeight) {
+                    weights[adjNode] = weight;
+                    heap.update(weight, adjNode);
                 }
             }
 
-            if (heap.isEmpty() || isMaxVisitedNodesExceeded() || isWeightLimitExceeded())
-                return NOT_FOUND;
-
-            // calling just peek and not poll is important if the next query is cached
-            currNode = heap.peekElement();
-            if (finished())
-                return currNode;
-
-            heap.poll();
+            visitedNodes++;
+            if (node == targetNode)
+                // we have settled the target node, we now know the exact weight of the shortest path and return
+                return weights[node];
         }
-    }
 
-    public boolean finished() {
-        return currNode == to;
-    }
-
-    public void setWeightLimit(double weightLimit) {
-        this.weightLimit = weightLimit;
-    }
-
-    protected boolean isWeightLimitExceeded() {
-        return weights[currNode] > weightLimit;
-    }
-
-    public void close() {
-        outEdgeExplorer = null;
-        changedNodes.release();
-        weights = null;
-        heap = null;
-    }
-
-    public int getVisitedNodes() {
-        return visitedNodes;
+        return weights[targetNode];
     }
 
     /**
@@ -177,21 +129,5 @@ public class NodeBasedWitnessPathSearcher {
                 + changedNodes.buffer.length * 4L
                 + heap.getCapacity() * (4L + 4L)) / Helper.MB
                 + "MB";
-    }
-
-    public void setMaxVisitedNodes(int numberOfNodes) {
-        this.maxVisitedNodes = numberOfNodes;
-    }
-
-    public void ignoreNode(int node) {
-        ignoreNode = node;
-    }
-
-    private boolean accept(PrepareGraphEdgeIterator iter) {
-        return ignoreNode < 0 || iter.getAdjNode() != ignoreNode;
-    }
-
-    private boolean isMaxVisitedNodesExceeded() {
-        return maxVisitedNodes < getVisitedNodes();
     }
 }
