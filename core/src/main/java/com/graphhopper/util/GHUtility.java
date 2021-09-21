@@ -931,57 +931,6 @@ public class GHUtility {
 
     }
 
-    /**
-     * This node access can be used in tests to mock specific iterator behaviour via overloading
-     * certain methods.
-     */
-    public static class DisabledNodeAccess implements NodeAccess {
-
-        @Override
-        public int getTurnCostIndex(int nodeId) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public void setTurnCostIndex(int nodeId, int additionalValue) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public boolean is3D() {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public int getDimension() {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public void ensureNode(int nodeId) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public void setNode(int nodeId, double lat, double lon, double ele) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        public double getLat(int nodeId) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public double getLon(int nodeId) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public double getEle(int nodeId) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-    }
-
     public static BBox createBBox(EdgeIteratorState edgeState) {
         PointList towerNodes = edgeState.fetchWayGeometry(FetchMode.TOWER_ONLY);
         int secondIndex = towerNodes.size() == 1 ? 0 : 1;
