@@ -20,88 +20,78 @@ package com.graphhopper.routing.ch;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.apache.commons.collections.IntFloatBinaryHeap;
-import com.graphhopper.routing.DijkstraOneToMany;
 import com.graphhopper.util.Helper;
 
 import java.util.Arrays;
 
 /**
- * Used to find witness paths during node-based CH preparation. Essentially this is like {@link DijkstraOneToMany},
- * i.e. its a Dijkstra search that allows re-using the shortest path tree for different searches with the same origin
- * node and uses large int/double arrays instead of hash maps to store the shortest path tree (higher memory consumption,
- * but faster query times -> better for CH preparation). Main reason we use this instead of {@link DijkstraOneToMany}
- * is that we can use this implementation with a {@link CHPreparationGraph} and we are only interested in checking for
- * witness paths (e.g. we do not need to find the actual path).
+ * Used to perform witness searches during node-based CH preparation. Witness searches at node B determine if there is a
+ * path between two neighbor nodes A and C when we exclude B and check if this path is shorter than or equal to A-B-C.
  */
 public class NodeBasedWitnessPathSearcher {
     private final PrepareGraphEdgeExplorer outEdgeExplorer;
     private final double[] weights;
     private final IntArrayList changedNodes;
     private final IntFloatBinaryHeap heap;
-    private int startNode = -1;
     private int ignoreNode = -1;
-    private int settledNodes;
+    private int settledNodes = 0;
 
     public NodeBasedWitnessPathSearcher(CHPreparationGraph graph) {
         outEdgeExplorer = graph.createOutEdgeExplorer();
-
         weights = new double[graph.getNodes()];
-        Arrays.fill(weights, Double.MAX_VALUE);
-
+        Arrays.fill(weights, Double.POSITIVE_INFINITY);
         heap = new IntFloatBinaryHeap(1000);
         changedNodes = new IntArrayList();
     }
 
+    /**
+     * Sets up a search for given start node and an ignored node. The shortest path tree will be re-used for different
+     * target nodes until this method is called again.
+     */
     public void init(int startNode, int ignoreNode) {
-        this.startNode = startNode;
+        reset();
         this.ignoreNode = ignoreNode;
-        for (IntCursor c : changedNodes)
-            weights[c.value] = Double.MAX_VALUE;
-        changedNodes.elementsCount = 0;
-        // todo
-//        int vn = changedNodes.size();
-//        for (int i = 0; i < vn; i++) {
-//            int n = changedNodes.get(i);
-//            weights[n] = Double.MAX_VALUE;
-//        }
-        heap.clear();
         weights[startNode] = 0;
         changedNodes.add(startNode);
         heap.insert(0, startNode);
     }
 
     /**
-     * Runs a Dijkstra search from the startNode given in init() to the given targetNode and returns an upper bound
-     * for the shortest path weight. The ignoreNode given in init() will be excluded from the search.
-     * <p>
-     * However, the search will stop as soon as *any* path from start to target has been found such that
-     * the weight is below or equal to the accepted weight.
+     * Runs or continues a Dijkstra search starting at the startNode and ignoring the ignoreNode given in init().
+     * If the shortest path is found we return its weight. However, this method also returns early if any path was
+     * found for which the weight is below or equal to the given acceptedWeight, or the given maximum number of settled
+     * nodes is exceeded. In these cases the returned weight can be larger than the actual weight of the shortest path.
+     * In any case we get an upper bound for the real shortest path weight.
      *
-     * @param targetNode
-     * @param acceptedWeight
-     * @param maxSettledNodes
-     * @return
+     * @param targetNode      the target of the search. if this node is settled we return the weight of the shortest path
+     * @param acceptedWeight  once we find a path with weight smaller than or equal to this we return the weight. the
+     *                        returned weight might be larger than the weight of the real shortest path. if there is
+     *                        no path with weight smaller than or equal to this we stop the search and return the best
+     *                        path we found.
+     * @param maxSettledNodes once the number of settled nodes exceeds this number we return the currently found best
+     *                        weight path. in this case we might not have found a path at all.
+     * @return the weight of the found path or {@link Double#POSITIVE_INFINITY} if no path was found
      */
-    public double findUpperBoundShortestPathWeight(int targetNode, double acceptedWeight, int maxSettledNodes) {
-        int visitedNodes = 0;
-        while (!heap.isEmpty() && visitedNodes < maxSettledNodes && heap.peekKey() <= acceptedWeight) {
+    public double findUpperBound(int targetNode, double acceptedWeight, int maxSettledNodes) {
+        // todo: for historic reasons we count the number of settled nodes for each call of this method
+        //       *not* the total number of settled nodes since starting the search (which corresponds
+        //       to the size of the settled part of the shortest path tree). it's probably worthwhile
+        //       to change this in the future.
+        while (!heap.isEmpty() && settledNodes < maxSettledNodes && heap.peekKey() <= acceptedWeight) {
             if (weights[targetNode] <= acceptedWeight)
                 // we found *a* path to the target node (not necessarily the shortest), and the weight is acceptable, so we stop
                 return weights[targetNode];
-
             int node = heap.poll();
             PrepareGraphEdgeIterator iter = outEdgeExplorer.setBaseNode(node);
             while (iter.next()) {
                 int adjNode = iter.getAdjNode();
                 if (adjNode == ignoreNode)
                     continue;
-
                 double weight = weights[node] + iter.getWeight();
                 if (Double.isInfinite(weight))
                     continue;
-
                 double adjWeight = weights[adjNode];
-                if (adjWeight == Double.MAX_VALUE) {
+                if (adjWeight == Double.POSITIVE_INFINITY) {
                     weights[adjNode] = weight;
                     heap.insert(weight, adjNode);
                     changedNodes.add(adjNode);
@@ -110,8 +100,7 @@ public class NodeBasedWitnessPathSearcher {
                     heap.update(weight, adjNode);
                 }
             }
-
-            visitedNodes++;
+            settledNodes++;
             if (node == targetNode)
                 // we have settled the target node, we now know the exact weight of the shortest path and return
                 return weights[node];
@@ -120,14 +109,26 @@ public class NodeBasedWitnessPathSearcher {
         return weights[targetNode];
     }
 
+    public int getSettledNodes() {
+        return settledNodes;
+    }
+
+    private void reset() {
+        for (IntCursor c : changedNodes)
+            weights[c.value] = Double.POSITIVE_INFINITY;
+        changedNodes.elementsCount = 0;
+        heap.clear();
+        ignoreNode = -1;
+        settledNodes = 0;
+    }
+
     /**
-     * List currently used memory in MB (approximately)
+     * @return currently used memory in MB (approximately)
      */
     public String getMemoryUsageAsString() {
-        long len = weights.length;
-        return ((8L + 4L + 4L) * len
+        return (8L * weights.length
                 + changedNodes.buffer.length * 4L
-                + heap.getCapacity() * (4L + 4L)) / Helper.MB
-                + "MB";
+                + heap.getMemoryUsage()
+        ) / Helper.MB + "MB";
     }
 }

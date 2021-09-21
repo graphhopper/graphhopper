@@ -249,7 +249,7 @@ class NodeBasedNodeContractor implements NodeContractor {
 
                 dijkstraSW.start();
                 dijkstraCount++;
-                double maxWeight = witnessPathSearcher.findUpperBoundShortestPathWeight(toNode, existingDirectWeight, maxVisitedNodes);
+                double maxWeight = witnessPathSearcher.findUpperBound(toNode, existingDirectWeight, maxVisitedNodes);
                 dijkstraSW.stop();
 
                 if (maxWeight <= existingDirectWeight)
