@@ -87,7 +87,7 @@ class NodeBasedNodeContractor implements NodeContractor {
         inEdgeExplorer = null;
         outEdgeExplorer = null;
         existingShortcutExplorer = null;
-        witnessPathSearcher.close();
+        witnessPathSearcher = null;
     }
 
     /**
@@ -232,8 +232,7 @@ class NodeBasedNodeContractor implements NodeContractor {
             }
             // collect outgoing nodes (goal-nodes) only once
             PrepareGraphEdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(node);
-            // force fresh maps etc as this cannot be determined by from node alone (e.g. same from node but different avoidNode)
-            witnessPathSearcher.clear();
+            witnessPathSearcher.init(fromNode, node);
             degree++;
             while (outgoingEdges.next()) {
                 int toNode = outgoingEdges.getAdjNode();
@@ -248,17 +247,12 @@ class NodeBasedNodeContractor implements NodeContractor {
                 if (Double.isInfinite(existingDirectWeight))
                     continue;
 
-                witnessPathSearcher.setWeightLimit(existingDirectWeight);
-                witnessPathSearcher.setMaxVisitedNodes(maxVisitedNodes);
-                witnessPathSearcher.ignoreNode(node);
-
                 dijkstraSW.start();
                 dijkstraCount++;
-                int endNode = witnessPathSearcher.findEndNode(fromNode, toNode);
+                double maxWeight = witnessPathSearcher.findUpperBound(toNode, existingDirectWeight, maxVisitedNodes);
                 dijkstraSW.stop();
 
-                // compare end node as the limit could force dijkstra to finish earlier
-                if (endNode == toNode && witnessPathSearcher.getWeight(endNode) <= existingDirectWeight)
+                if (maxWeight <= existingDirectWeight)
                     // FOUND witness path, so do not add shortcut
                     continue;
 
