@@ -1,5 +1,6 @@
 ### 4.0 [not yet released]
 
+- faster node-based CH preparation (~20%), (#2390)
 - more flexible ElevationProvider interface, support providing elevation via node tags (#2374, #23281)
 - added country encoded value for all countries (#2353)
 - removed spatial rules, replaced by country rules and custom areas (#2353)
