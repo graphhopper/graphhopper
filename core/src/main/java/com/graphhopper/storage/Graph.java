@@ -115,13 +115,6 @@ public interface Graph {
     }
 
     /**
-     * Copy this Graph into the specified Graph g.
-     *
-     * @return the specified Graph g
-     */
-    Graph copyTo(Graph g);
-
-    /**
      * @return the {@link TurnCostStorage} or null if not supported
      */
     TurnCostStorage getTurnCostStorage();

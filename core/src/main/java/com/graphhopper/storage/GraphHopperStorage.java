@@ -426,11 +426,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     }
 
     @Override
-    public Graph copyTo(Graph g) {
-        return baseGraph.copyTo(g);
-    }
-
-    @Override
     public TurnCostStorage getTurnCostStorage() {
         return baseGraph.getTurnCostStorage();
     }

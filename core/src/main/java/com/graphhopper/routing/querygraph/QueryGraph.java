@@ -277,11 +277,6 @@ public class QueryGraph implements Graph {
     }
 
     @Override
-    public Graph copyTo(Graph g) {
-        throw exc();
-    }
-
-    @Override
     public TurnCostStorage getTurnCostStorage() {
         return turnCostStorage;
     }

@@ -396,33 +396,6 @@ public class GHUtility {
         return toSortedGraph;
     }
 
-    /**
-     * @return the specified toGraph which is now filled with data from fromGraph
-     */
-    // TODO very similar to createSortedGraph -> use a 'int map(int)' interface
-    public static Graph copyTo(Graph fromGraph, Graph toGraph) {
-        if (fromGraph.getTurnCostStorage() != null) {
-            throw new IllegalArgumentException("Copying a graph is currently not supported in the presence of turn costs");
-        }
-        AllEdgesIterator eIter = fromGraph.getAllEdges();
-        while (eIter.next()) {
-            int base = eIter.getBaseNode();
-            int adj = eIter.getAdjNode();
-            toGraph.edge(base, adj).copyPropertiesFrom(eIter);
-        }
-
-        NodeAccess fna = fromGraph.getNodeAccess();
-        NodeAccess tna = toGraph.getNodeAccess();
-        int nodes = fromGraph.getNodes();
-        for (int node = 0; node < nodes; node++) {
-            if (tna.is3D())
-                tna.setNode(node, fna.getLat(node), fna.getLon(node), fna.getEle(node));
-            else
-                tna.setNode(node, fna.getLat(node), fna.getLon(node));
-        }
-        return toGraph;
-    }
-
     static Directory guessDirectory(GraphStorage store) {
         if (store.getDirectory() instanceof MMapDirectory) {
             throw new IllegalStateException("not supported yet: mmap will overwrite existing storage at the same location");

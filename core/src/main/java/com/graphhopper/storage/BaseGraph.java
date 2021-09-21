@@ -628,54 +628,6 @@ class BaseGraph implements Graph {
     }
 
     @Override
-    public Graph copyTo(Graph g) {
-        initialized = true;
-        if (g.getClass().equals(getClass())) {
-            _copyTo((BaseGraph) g);
-            return g;
-        } else {
-            return GHUtility.copyTo(this, g);
-        }
-    }
-
-    void _copyTo(BaseGraph clonedG) {
-        if (clonedG.edgeEntryBytes != edgeEntryBytes)
-            throw new IllegalStateException("edgeEntryBytes cannot be different for cloned graph. "
-                    + "Cloned: " + clonedG.edgeEntryBytes + " vs " + edgeEntryBytes);
-
-        if (clonedG.nodeEntryBytes != nodeEntryBytes)
-            throw new IllegalStateException("nodeEntryBytes cannot be different for cloned graph. "
-                    + "Cloned: " + clonedG.nodeEntryBytes + " vs " + nodeEntryBytes);
-
-        if (clonedG.nodeAccess.getDimension() != nodeAccess.getDimension())
-            throw new IllegalStateException("dimension cannot be different for cloned graph. "
-                    + "Cloned: " + clonedG.nodeAccess.getDimension() + " vs " + nodeAccess.getDimension());
-
-        // nodes
-        setNodesHeader();
-        nodes.copyTo(clonedG.nodes);
-        clonedG.loadNodesHeader();
-
-        // edges
-        setEdgesHeader();
-        edges.copyTo(clonedG.edges);
-        clonedG.loadEdgesHeader();
-
-        // name
-        stringIndex.copyTo(clonedG.stringIndex);
-
-        // geometry
-        setWayGeometryHeader();
-        wayGeometry.copyTo(clonedG.wayGeometry);
-        clonedG.loadWayGeometryHeader();
-
-        // turn cost storage
-        if (supportsTurnCosts()) {
-            turnCostStorage.copyTo(clonedG.turnCostStorage);
-        }
-    }
-
-    @Override
     public TurnCostStorage getTurnCostStorage() {
         return turnCostStorage;
     }

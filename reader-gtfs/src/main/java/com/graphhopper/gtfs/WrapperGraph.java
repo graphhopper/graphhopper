@@ -612,11 +612,6 @@ public class WrapperGraph implements Graph {
     }
 
     @Override
-    public Graph copyTo(Graph g) {
-        throw new RuntimeException();
-    }
-
-    @Override
     public TurnCostStorage getTurnCostStorage() {
         return mainGraph.getTurnCostStorage();
     }
