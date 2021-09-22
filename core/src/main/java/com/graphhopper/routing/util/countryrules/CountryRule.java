@@ -35,4 +35,8 @@ public interface CountryRule {
     default RoadAccess getAccess(ReaderWay readerWay, TransportationMode transportationMode, RoadAccess currentRoadAccess) {
         return currentRoadAccess;
     }
+
+    default boolean getOffBike( ReaderWay readerWay, boolean currentGetOffBike) {
+        return currentGetOffBike;
+    }
 }

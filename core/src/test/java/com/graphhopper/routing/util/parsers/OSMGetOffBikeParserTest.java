@@ -7,6 +7,7 @@ import com.graphhopper.routing.ev.GetOffBike;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.Test;
 
@@ -81,7 +82,7 @@ public class OSMGetOffBikeParserTest {
         way = new ReaderWay(1);
         way.setTag("highway", "path");
         way.setTag("surface", "concrete");
-        assertTrue(isGetOffBike(way));
+        assertFalse(isGetOffBike(way));
         way.setTag("bicycle", "yes");
         assertFalse(isGetOffBike(way));
         way.setTag("bicycle", "designated");
@@ -97,8 +98,23 @@ public class OSMGetOffBikeParserTest {
 
         way = new ReaderWay(1);
         way.setTag("highway", "path");
+        assertFalse(isGetOffBike(way));
+        way.setTag("country_rule", new CountryRule() {
+            @Override
+            public boolean getOffBike(ReaderWay readerWay, boolean currentGetOffBike) {
+                return true;
+            }
+        });
+        assertTrue(isGetOffBike(way));
+        way.setTag("bicycle", "yes");
+        assertFalse(isGetOffBike(way));
+
+        way = new ReaderWay(1);
+        way.setTag("highway", "path");
         way.setTag("foot", "designated");
         assertTrue(isGetOffBike(way));
+        way.setTag("bicycle", "designated");
+        assertFalse(isGetOffBike(way));
     }
 
     private RoadClass getRoadClass(ReaderWay way) {
