@@ -153,20 +153,6 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
         assertEquals(12, na.getTurnCostIndex(4000));
     }
 
-    @Test
-    @Override
-    public void testClone() {
-        // todo: implement graph copying in the presence of turn costs
-        assertThrows(IllegalArgumentException.class, super::testClone);
-    }
-
-    @Test
-    @Override
-    public void testCopyTo() {
-        // todo: implement graph coyping in the presence of turn costs
-        assertThrows(IllegalArgumentException.class, super::testCopyTo);
-    }
-
     private double getTurnCost(EdgeIteratorState fromEdge, int viaNode, EdgeIteratorState toEdge) {
         return graph.getTurnCostStorage().get(((EncodedValueLookup) encodingManager).getDecimalEncodedValue(TurnCost.key("car")), toEdge.getEdge(), viaNode, fromEdge.getEdge());
     }

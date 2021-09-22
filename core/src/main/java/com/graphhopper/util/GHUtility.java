@@ -396,33 +396,6 @@ public class GHUtility {
         return toSortedGraph;
     }
 
-    /**
-     * @return the specified toGraph which is now filled with data from fromGraph
-     */
-    // TODO very similar to createSortedGraph -> use a 'int map(int)' interface
-    public static Graph copyTo(Graph fromGraph, Graph toGraph) {
-        if (fromGraph.getTurnCostStorage() != null) {
-            throw new IllegalArgumentException("Copying a graph is currently not supported in the presence of turn costs");
-        }
-        AllEdgesIterator eIter = fromGraph.getAllEdges();
-        while (eIter.next()) {
-            int base = eIter.getBaseNode();
-            int adj = eIter.getAdjNode();
-            toGraph.edge(base, adj).copyPropertiesFrom(eIter);
-        }
-
-        NodeAccess fna = fromGraph.getNodeAccess();
-        NodeAccess tna = toGraph.getNodeAccess();
-        int nodes = fromGraph.getNodes();
-        for (int node = 0; node < nodes; node++) {
-            if (tna.is3D())
-                tna.setNode(node, fna.getLat(node), fna.getLon(node), fna.getEle(node));
-            else
-                tna.setNode(node, fna.getLat(node), fna.getLon(node));
-        }
-        return toGraph;
-    }
-
     static Directory guessDirectory(GraphStorage store) {
         if (store.getDirectory() instanceof MMapDirectory) {
             throw new IllegalStateException("not supported yet: mmap will overwrite existing storage at the same location");
@@ -956,57 +929,6 @@ public class GHUtility {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
-    }
-
-    /**
-     * This node access can be used in tests to mock specific iterator behaviour via overloading
-     * certain methods.
-     */
-    public static class DisabledNodeAccess implements NodeAccess {
-
-        @Override
-        public int getTurnCostIndex(int nodeId) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public void setTurnCostIndex(int nodeId, int additionalValue) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public boolean is3D() {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public int getDimension() {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public void ensureNode(int nodeId) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public void setNode(int nodeId, double lat, double lon, double ele) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        public double getLat(int nodeId) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public double getLon(int nodeId) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public double getEle(int nodeId) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
     }
 
     public static BBox createBBox(EdgeIteratorState edgeState) {

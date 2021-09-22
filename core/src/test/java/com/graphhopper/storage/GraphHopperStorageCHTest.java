@@ -75,20 +75,6 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     }
 
     @Test
-    @Override
-    public void testClone() {
-        // todo: implement graph copying in the presence of turn costs
-        assertThrows(IllegalArgumentException.class, super::testClone);
-    }
-
-    @Test
-    @Override
-    public void testCopyTo() {
-        // todo: implement graph copying in the presence of turn costs
-        assertThrows(IllegalArgumentException.class, super::testCopyTo);
-    }
-
-    @Test
     public void testCannotBeLoadedWithNormalGraphHopperStorageClass() {
         graph = newGHStorage(false, false);
         graph.flush();

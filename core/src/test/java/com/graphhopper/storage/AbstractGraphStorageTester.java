@@ -259,26 +259,6 @@ public abstract class AbstractGraphStorageTester {
     }
 
     @Test
-    public void testClone() {
-        graph = createGHStorage();
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 2).setDistance(10));
-        NodeAccess na = graph.getNodeAccess();
-        na.setNode(0, 12, 23);
-        na.setNode(1, 8, 13);
-        na.setNode(2, 2, 10);
-        na.setNode(3, 5, 9);
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 3).setDistance(10));
-
-        Graph cloneGraph = graph.copyTo(AbstractGraphStorageTester.this.createGHStorage(locationParent + "/clone", false));
-        assertEquals(graph.getNodes(), cloneGraph.getNodes());
-        assertEquals(getCountOut(1), count(cloneGraph.createEdgeExplorer(carOutFilter).setBaseNode(1)));
-        GHUtility.setSpeed(60, true, true, carEncoder, cloneGraph.edge(1, 4).setDistance(10));
-        assertEquals(3, count(cloneGraph.createEdgeExplorer(carOutFilter).setBaseNode(1)));
-        assertEquals(graph.getBounds(), cloneGraph.getBounds());
-        Helper.close((Closeable) cloneGraph);
-    }
-
-    @Test
     public void testCopyProperties() {
         graph = createGHStorage();
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(1, 3).setDistance(10)).setName("testing").setWayGeometry(Helper.createPointList(1, 2));
@@ -308,21 +288,6 @@ public abstract class AbstractGraphStorageTester {
 
         graph = createGHStorage();
         assertEquals(0, graph.getNodes());
-    }
-
-    @Test
-    public void testCopyTo() {
-        graph = createGHStorage();
-        initExampleGraph(graph);
-        GraphHopperStorage gs = GraphBuilder.start(encodingManager).setSegmentSize(8000).create();
-        graph.copyTo(gs);
-        checkExampleGraph(gs);
-
-        Helper.close(graph);
-        graph = createGHStorage();
-        gs.copyTo(graph);
-        checkExampleGraph(graph);
-        Helper.close(graph);
     }
 
     @Test
