@@ -69,7 +69,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         this.dir = dir;
         this.properties = new StorableProperties(dir);
         this.segmentSize = segmentSize;
-        baseGraph = new BaseGraph(dir, encodingManager, withElevation, withTurnCosts, segmentSize);
+        baseGraph = new BaseGraph(dir, encodingManager.getIntsForFlags(), withElevation, withTurnCosts, segmentSize);
         chEntries = new ArrayList<>();
     }
 
