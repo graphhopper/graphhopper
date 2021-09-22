@@ -58,7 +58,6 @@ class BaseGraph implements Graph {
     // can be null if turn costs are not supported
     final TurnCostStorage turnCostStorage;
     final BitUtil bitUtil;
-    final EncodingManager encodingManager;
     private final int intsForFlags;
     // length | nodeA | nextNode | ... | nodeB
     // as we use integer index in 'egdes' area => 'geometry' area is limited to 4GB (we use pos&neg values!)
@@ -89,11 +88,9 @@ class BaseGraph implements Graph {
     private long maxGeoRef;
     private boolean frozen = false;
 
-    public BaseGraph(Directory dir, final EncodingManager encodingManager, boolean withElevation,
-                     boolean withTurnCosts, int segmentSize) {
+    public BaseGraph(Directory dir, int intsForFlags, boolean withElevation, boolean withTurnCosts, int segmentSize) {
         this.dir = dir;
-        this.encodingManager = encodingManager;
-        this.intsForFlags = encodingManager.getIntsForFlags();
+        this.intsForFlags = intsForFlags;
         this.bitUtil = BitUtil.get(dir.getByteOrder());
         this.wayGeometry = dir.find("geometry");
         this.stringIndex = new StringIndex(dir);
@@ -175,51 +172,45 @@ class BaseGraph implements Graph {
             throw new IllegalStateException("The graph has not yet been initialized.");
     }
 
-    protected int loadNodesHeader() {
-        nodeEntryBytes = nodes.getHeader(1 * 4);
-        nodeCount = nodes.getHeader(2 * 4);
-        bounds.minLon = Helper.intToDegree(nodes.getHeader(3 * 4));
-        bounds.maxLon = Helper.intToDegree(nodes.getHeader(4 * 4));
-        bounds.minLat = Helper.intToDegree(nodes.getHeader(5 * 4));
-        bounds.maxLat = Helper.intToDegree(nodes.getHeader(6 * 4));
+    private void loadNodesHeader() {
+        nodeEntryBytes = nodes.getHeader(0 * 4);
+        nodeCount = nodes.getHeader(1 * 4);
+        bounds.minLon = Helper.intToDegree(nodes.getHeader(2 * 4));
+        bounds.maxLon = Helper.intToDegree(nodes.getHeader(3 * 4));
+        bounds.minLat = Helper.intToDegree(nodes.getHeader(4 * 4));
+        bounds.maxLat = Helper.intToDegree(nodes.getHeader(5 * 4));
 
         if (bounds.hasElevation()) {
-            bounds.minEle = Helper.intToEle(nodes.getHeader(7 * 4));
-            bounds.maxEle = Helper.intToEle(nodes.getHeader(8 * 4));
+            bounds.minEle = Helper.intToEle(nodes.getHeader(6 * 4));
+            bounds.maxEle = Helper.intToEle(nodes.getHeader(7 * 4));
         }
 
-        frozen = nodes.getHeader(9 * 4) == 1;
-        return 10;
+        frozen = nodes.getHeader(8 * 4) == 1;
     }
 
-    protected int setNodesHeader() {
-        nodes.setHeader(1 * 4, nodeEntryBytes);
-        nodes.setHeader(2 * 4, nodeCount);
-        nodes.setHeader(3 * 4, Helper.degreeToInt(bounds.minLon));
-        nodes.setHeader(4 * 4, Helper.degreeToInt(bounds.maxLon));
-        nodes.setHeader(5 * 4, Helper.degreeToInt(bounds.minLat));
-        nodes.setHeader(6 * 4, Helper.degreeToInt(bounds.maxLat));
+    private void setNodesHeader() {
+        nodes.setHeader(0 * 4, nodeEntryBytes);
+        nodes.setHeader(1 * 4, nodeCount);
+        nodes.setHeader(2 * 4, Helper.degreeToInt(bounds.minLon));
+        nodes.setHeader(3 * 4, Helper.degreeToInt(bounds.maxLon));
+        nodes.setHeader(4 * 4, Helper.degreeToInt(bounds.minLat));
+        nodes.setHeader(5 * 4, Helper.degreeToInt(bounds.maxLat));
         if (bounds.hasElevation()) {
-            nodes.setHeader(7 * 4, Helper.eleToInt(bounds.minEle));
-            nodes.setHeader(8 * 4, Helper.eleToInt(bounds.maxEle));
+            nodes.setHeader(6 * 4, Helper.eleToInt(bounds.minEle));
+            nodes.setHeader(7 * 4, Helper.eleToInt(bounds.maxEle));
         }
 
-        nodes.setHeader(9 * 4, isFrozen() ? 1 : 0);
-        return 10;
+        nodes.setHeader(8 * 4, isFrozen() ? 1 : 0);
     }
 
-    protected int loadEdgesHeader() {
+    protected void loadEdgesHeader() {
         edgeEntryBytes = edges.getHeader(0 * 4);
         edgeCount = edges.getHeader(1 * 4);
-        return 5;
     }
 
-    protected int setEdgesHeader() {
+    protected void setEdgesHeader() {
         edges.setHeader(0, edgeEntryBytes);
         edges.setHeader(1 * 4, edgeCount);
-        edges.setHeader(2 * 4, encodingManager.hashCode());
-        edges.setHeader(3 * 4, supportsTurnCosts() ? turnCostStorage.hashCode() : -1);
-        return 5;
     }
 
     protected int loadWayGeometryHeader() {
