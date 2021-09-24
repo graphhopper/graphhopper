@@ -108,7 +108,7 @@ public class IsochroneResource {
             throw new IllegalArgumentException("Point not found:" + point);
         QueryGraph queryGraph = QueryGraph.create(graph, snap);
         TraversalMode traversalMode = profile.isTurnCosts() ? EDGE_BASED : NODE_BASED;
-        ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow, traversalMode);
+        ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, queryGraph.wrapWeighting(weighting), reverseFlow, traversalMode);
 
         double limit;
         if (weightLimit.get() > 0) {
