@@ -20,7 +20,6 @@ package com.graphhopper.storage;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.search.StringIndex;
 import com.graphhopper.util.*;
@@ -148,12 +147,6 @@ class BaseGraph implements Graph {
 
     private boolean isAdjacentToNode(int node, long edgePointer) {
         return getNodeA(edgePointer) == node || getNodeB(edgePointer) == node;
-    }
-
-    private static boolean isTestingEnabled() {
-        boolean enableIfAssert = false;
-        assert (enableIfAssert = true) : true;
-        return enableIfAssert;
     }
 
     @Override
