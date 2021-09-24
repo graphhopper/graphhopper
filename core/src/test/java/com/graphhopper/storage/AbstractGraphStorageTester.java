@@ -402,19 +402,12 @@ public abstract class AbstractGraphStorageTester {
     @Test
     public void testCheckFirstNode() {
         graph = createGHStorage();
-
+        // no nodes added yet
+        assertThrows(IllegalArgumentException.class, () -> getCountAll(1));
+        graph.getNodeAccess().setNode(1, 0, 0);
         assertEquals(0, getCountAll(1));
         GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 1).setDistance(12));
         assertEquals(1, getCountAll(1));
-    }
-
-    public boolean containsLatitude(Graph g, EdgeIterator iter, double latitude) {
-        NodeAccess na = g.getNodeAccess();
-        while (iter.next()) {
-            if (Math.abs(na.getLat(iter.getAdjNode()) - latitude) < 1e-4)
-                return true;
-        }
-        return false;
     }
 
     @Test

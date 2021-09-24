@@ -112,12 +112,12 @@ class BaseGraph implements Graph {
         return edgeId < edgeCount && edgeId >= 0;
     }
 
-    private void setEdgeRef(long nodeId, int edgeId) {
-        nodes.setInt(nodeId * nodeEntryBytes + N_EDGE_REF, edgeId);
+    private void setEdgeRef(int nodeId, int edgeId) {
+        nodes.setInt(toNodePointer(nodeId) + N_EDGE_REF, edgeId);
     }
 
-    int getEdgeRef(long nodeId) {
-        return nodes.getInt(nodeId * nodeEntryBytes + N_EDGE_REF);
+    int getEdgeRef(int nodeId) {
+        return nodes.getInt(toNodePointer(nodeId) + N_EDGE_REF);
     }
 
     private int getNodeA(long edgePointer) {
@@ -137,8 +137,14 @@ class BaseGraph implements Graph {
     }
 
     private long toPointer(int edgeId) {
-        assert isInBounds(edgeId) : "edgeId " + edgeId + " not in bounds [0," + edgeCount + ")";
+        if (!isInBounds(edgeId)) throw new AssertionError("edgeId " + edgeId + " not in bounds [0," + edgeCount + "[");
         return (long) edgeId * edgeEntryBytes;
+    }
+
+    long toNodePointer(int nodeId) {
+        if (nodeId < 0 || nodeId >= nodeCount)
+            throw new IllegalArgumentException("Illegal node: " + nodeId + ", must be in [0," + nodeCount + "[");
+        return (long) nodeId * nodeEntryBytes;
     }
 
     private int getOtherNode(int nodeThis, long edgePointer) {
