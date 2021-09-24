@@ -24,6 +24,8 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.search.StringIndex;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.Polygon;
+import com.graphhopper.util.shapes.Shape;
 
 import java.util.Collections;
 import java.util.Locale;
@@ -1221,7 +1223,7 @@ class BaseGraph implements Graph {
         }
         
         @Override
-        public boolean intersectsTowerBBox(BBox bbox) {
+        public boolean intersects(Shape shape) {
             if (!hasBBox) {
                 NodeAccess nodeAccess = baseGraph.getNodeAccess();
                 towerBBox.update(nodeAccess.getLat(getBaseNode()), nodeAccess.getLon(getBaseNode()));
@@ -1229,7 +1231,15 @@ class BaseGraph implements Graph {
                 hasBBox = true;
             }
             
-            return towerBBox.intersects(bbox);
+            if (!towerBBox.intersects(shape.getBounds())) {
+                return false;
+            }
+            
+            if (shape instanceof Polygon && ((Polygon) shape).isRectangle()) {
+                return true;
+            }
+            
+            return shape.intersects(fetchWayGeometry(FetchMode.ALL).makeImmutable());
         }
 
         @Override

@@ -28,7 +28,7 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.Shape;
 
 import java.util.List;
 
@@ -99,8 +99,8 @@ class VirtualEdgeIterator implements EdgeIterator {
     }
     
     @Override
-    public boolean intersectsTowerBBox(BBox bbox) {
-        return getCurrentEdge().intersectsTowerBBox(bbox);
+    public boolean intersects(Shape shape) {
+        return getCurrentEdge().intersects(shape);
     }
 
     @Override

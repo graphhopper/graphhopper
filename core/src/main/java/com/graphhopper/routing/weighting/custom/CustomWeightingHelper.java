@@ -22,7 +22,6 @@ import java.util.Map;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.JsonFeature;
 import com.graphhopper.util.shapes.Polygon;
 
@@ -66,10 +65,6 @@ public class CustomWeightingHelper {
     }
 
     public static boolean in(Polygon p, EdgeIteratorState edge) {
-        if (!edge.intersectsTowerBBox(p.getBounds()))
-            return false;
-        if (p.isRectangle())
-            return true;
-        return p.intersects(edge.fetchWayGeometry(FetchMode.ALL).makeImmutable());
+        return edge.intersects(p);
     }
 }

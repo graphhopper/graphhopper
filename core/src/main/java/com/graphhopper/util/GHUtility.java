@@ -30,6 +30,8 @@ import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.Shape;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -780,7 +782,7 @@ public class GHUtility {
         }
         
         @Override
-        public boolean intersectsTowerBBox(BBox bbox) {
+        public boolean intersects(Shape shape) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 

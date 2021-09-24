@@ -209,7 +209,6 @@ public class GraphEdgeIdFinder {
          * @return true if the specified edgeState is part of this BlockArea
          */
         public final boolean intersects(EdgeIteratorState edgeState) {
-            PointList pointList = null;
             for (int shapeIdx = 0; shapeIdx < blockedShapes.size(); shapeIdx++) {
                 GHIntHashSet blockedEdges = edgesList.get(shapeIdx);
                 // blockedEdges acts as cache that is only useful when filled and for non-virtual edges
@@ -220,14 +219,8 @@ public class GraphEdgeIdFinder {
                 }
 
                 Shape shape = blockedShapes.get(shapeIdx);
-                if (edgeState.intersectsTowerBBox(shape.getBounds())) {
-                    if (shape instanceof Polygon && ((Polygon) shape).isRectangle())
-                        return true;
-                    if (pointList == null)
-                        pointList = edgeState.fetchWayGeometry(FetchMode.ALL).makeImmutable();
-                    if (shape.intersects(pointList))
-                        return true;
-                }
+                if (edgeState.intersects(shape))
+                    return true;
             }
             return false;
         }
