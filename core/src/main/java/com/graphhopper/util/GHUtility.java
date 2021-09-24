@@ -778,6 +778,11 @@ public class GHUtility {
         public EdgeIteratorState setWayGeometry(PointList list) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
+        
+        @Override
+        public boolean intersectsTowerBBox(BBox bbox) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
 
         @Override
         public String getName() {

@@ -168,6 +168,11 @@ public class WrapperGraph implements Graph {
             public EdgeIteratorState setWayGeometry(PointList list) {
                 throw new UnsupportedOperationException();
             }
+            
+            @Override
+            public boolean intersectsTowerBBox(BBox bbox) {
+                throw new UnsupportedOperationException();
+            }
 
             @Override
             public double getDistance() {
@@ -417,6 +422,11 @@ public class WrapperGraph implements Graph {
                     public EdgeIteratorState setWayGeometry(PointList list) {
                         current.setWayGeometry(list);
                         return this;
+                    }
+
+                    @Override
+                    public boolean intersectsTowerBBox(BBox bbox) {
+                        return current.intersectsTowerBBox(bbox);
                     }
 
                     @Override
