@@ -17,7 +17,7 @@ import java.util.List;
 public class OSMGetOffBikeParser implements TagParser {
 
     private final HashSet<String> pushBikeHighwayTags = new HashSet<>();
-    private final List<String> accepted = Arrays.asList("designated", "yes");
+    private final List<String> accepted = Arrays.asList("designated", "yes", "official", "permissive");
     private final BooleanEncodedValue offBikeEnc;
 
     public OSMGetOffBikeParser() {

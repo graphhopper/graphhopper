@@ -50,6 +50,10 @@ public class OSMGetOffBikeParserTest {
         assertFalse(isGetOffBike(way));
         way.setTag("bicycle", "designated");
         assertFalse(isGetOffBike(way));
+        way.setTag("bicycle", "official");
+        assertFalse(isGetOffBike(way));
+        way.setTag("bicycle", "permissive");
+        assertFalse(isGetOffBike(way));
 
         way = new ReaderWay(1);
         way.setTag("railway", "platform");
@@ -78,10 +82,23 @@ public class OSMGetOffBikeParserTest {
         way.setTag("highway", "path");
         way.setTag("surface", "concrete");
         assertTrue(isGetOffBike(way));
+        way.setTag("bicycle", "yes");
+        assertFalse(isGetOffBike(way));
+        way.setTag("bicycle", "designated");
+        assertFalse(isGetOffBike(way));
+        way.setTag("bicycle", "official");
+        assertFalse(isGetOffBike(way));
+        way.setTag("bicycle", "permissive");
+        assertFalse(isGetOffBike(way));
 
         way = new ReaderWay(1);
         way.setTag("highway", "track");
         assertFalse(isGetOffBike(way));
+
+        way = new ReaderWay(1);
+        way.setTag("highway", "path");
+        way.setTag("foot", "designated");
+        assertTrue(isGetOffBike(way));
     }
 
     private RoadClass getRoadClass(ReaderWay way) {
