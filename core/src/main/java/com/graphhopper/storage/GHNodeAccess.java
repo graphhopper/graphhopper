@@ -42,7 +42,7 @@ class GHNodeAccess implements NodeAccess {
     @Override
     public final void setNode(int nodeId, double lat, double lon, double ele) {
         baseGraph.ensureNodeIndex(nodeId);
-        long tmp = (long) nodeId * baseGraph.nodeEntryBytes;
+        long tmp = baseGraph.toNodePointer(nodeId);
         baseGraph.nodes.setInt(tmp + baseGraph.N_LAT, Helper.degreeToInt(lat));
         baseGraph.nodes.setInt(tmp + baseGraph.N_LON, Helper.degreeToInt(lon));
 
@@ -58,12 +58,12 @@ class GHNodeAccess implements NodeAccess {
 
     @Override
     public final double getLat(int nodeId) {
-        return Helper.intToDegree(baseGraph.nodes.getInt((long) nodeId * baseGraph.nodeEntryBytes + baseGraph.N_LAT));
+        return Helper.intToDegree(baseGraph.nodes.getInt(baseGraph.toNodePointer(nodeId) + baseGraph.N_LAT));
     }
 
     @Override
     public final double getLon(int nodeId) {
-        return Helper.intToDegree(baseGraph.nodes.getInt((long) nodeId * baseGraph.nodeEntryBytes + baseGraph.N_LON));
+        return Helper.intToDegree(baseGraph.nodes.getInt(baseGraph.toNodePointer(nodeId) + baseGraph.N_LON));
     }
 
     @Override
@@ -71,13 +71,13 @@ class GHNodeAccess implements NodeAccess {
         if (!elevation)
             throw new IllegalStateException("Cannot access elevation - 3D is not enabled");
 
-        return Helper.intToEle(baseGraph.nodes.getInt((long) nodeId * baseGraph.nodeEntryBytes + baseGraph.N_ELE));
+        return Helper.intToEle(baseGraph.nodes.getInt(baseGraph.toNodePointer(nodeId) + baseGraph.N_ELE));
     }
 
     public final void setTurnCostIndex(int index, int turnCostIndex) {
         if (baseGraph.supportsTurnCosts()) {
             baseGraph.ensureNodeIndex(index);
-            long tmp = (long) index * baseGraph.nodeEntryBytes;
+            long tmp = baseGraph.toNodePointer(index);
             baseGraph.nodes.setInt(tmp + baseGraph.N_TC, turnCostIndex);
         } else {
             throw new AssertionError("This graph does not support turn costs");
@@ -87,7 +87,7 @@ class GHNodeAccess implements NodeAccess {
     @Override
     public final int getTurnCostIndex(int index) {
         if (baseGraph.supportsTurnCosts())
-            return baseGraph.nodes.getInt((long) index * baseGraph.nodeEntryBytes + baseGraph.N_TC);
+            return baseGraph.nodes.getInt(baseGraph.toNodePointer(index) + baseGraph.N_TC);
         else
             throw new AssertionError("This graph does not support turn costs");
     }
