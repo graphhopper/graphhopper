@@ -55,11 +55,6 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
 
     @Override
     public RoutingCHEdgeIteratorState getEdgeIteratorState(int chEdge, int adjNode) {
-        if (chEdge >= baseGraph.getEdges()) {
-            if (chEdge >= getEdges())
-                throw new IllegalStateException("chEdge " + chEdge + " out of bounds");
-        } else if (!baseGraph.isInBounds(chEdge))
-            throw new IllegalStateException("edgeId " + chEdge + " out of bounds");
         RoutingCHEdgeIteratorStateImpl edgeState =
                 new RoutingCHEdgeIteratorStateImpl(chStorage, baseGraph, new BaseGraph.EdgeIteratorStateImpl(baseGraph), weighting);
         if (edgeState.init(chEdge, adjNode))

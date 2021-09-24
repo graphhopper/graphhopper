@@ -338,6 +338,14 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     }
 
     @Test
+    public void outOfBounds() {
+        graph = newGHStorage(false, true);
+        graph.freeze();
+        RoutingCHGraph lg = getRoutingCHGraph(graph);
+        assertThrows(IllegalArgumentException.class, () -> lg.getEdgeIteratorState(0, Integer.MIN_VALUE));
+    }
+
+    @Test
     public void testGetEdgeIterator() {
         graph = newGHStorage(false, true);
         GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(0, 1).setDistance(1));

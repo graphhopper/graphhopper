@@ -330,4 +330,11 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         assertEquals(edgeId, edge.getEdge());
         assertEquals(key, edge.getEdgeKey());
     }
+
+    @Test
+    public void outOfBounds() {
+        GraphHopperStorage graph = createGHStorage();
+        assertThrows(IllegalArgumentException.class, () -> graph.getEdgeIteratorState(0, Integer.MIN_VALUE));
+    }
+
 }
