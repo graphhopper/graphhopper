@@ -210,7 +210,6 @@ public class GraphEdgeIdFinder {
          */
         public final boolean intersects(EdgeIteratorState edgeState) {
             PointList pointList = null;
-            BBox bbox = null;
             for (int shapeIdx = 0; shapeIdx < blockedShapes.size(); shapeIdx++) {
                 GHIntHashSet blockedEdges = edgesList.get(shapeIdx);
                 // blockedEdges acts as cache that is only useful when filled and for non-virtual edges
@@ -220,12 +219,8 @@ public class GraphEdgeIdFinder {
                     continue;
                 }
 
-                // compromise: avoid expensive fetch of pillar nodes, which isn't yet fast for being used in Weighting.calc
-                if (bbox == null)
-                    bbox = GHUtility.createBBox(edgeState);
-
                 Shape shape = blockedShapes.get(shapeIdx);
-                if (shape.getBounds().intersects(bbox)) {
+                if (edgeState.intersectsTowerBBox(shape.getBounds())) {
                     if (shape instanceof Polygon && ((Polygon) shape).isRectangle())
                         return true;
                     if (pointList == null)

@@ -17,16 +17,14 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
+import java.util.Map;
+
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
-import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.JsonFeature;
-import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
-
-import java.util.Map;
 
 /**
  * This class is for internal usage only. It is subclassed by Janino, then special expressions are injected into init,
@@ -68,11 +66,10 @@ public class CustomWeightingHelper {
     }
 
     public static boolean in(Polygon p, EdgeIteratorState edge) {
-        BBox bbox = GHUtility.createBBox(edge);
-        if (!p.getBounds().intersects(bbox))
+        if (!edge.intersectsTowerBBox(p.getBounds()))
             return false;
         if (p.isRectangle())
             return true;
-        return p.intersects(edge.fetchWayGeometry(FetchMode.ALL).makeImmutable()); // TODO PERF: cache bbox and edge wayGeometry for multiple area
+        return p.intersects(edge.fetchWayGeometry(FetchMode.ALL).makeImmutable());
     }
 }
