@@ -133,13 +133,13 @@ class BaseGraph implements Graph {
 
     long toNodePointer(int node) {
         if (node < 0 || node >= nodeCount)
-            throw new IllegalArgumentException("node: " + node + ", must be in [0," + nodeCount + "[");
+            throw new IllegalArgumentException("node: " + node + " out of bounds [0," + nodeCount + "[");
         return (long) node * nodeEntryBytes;
     }
 
     private long toEdgePointer(int edge) {
         if (edge < 0 || edge >= edgeCount)
-            throw new IllegalArgumentException("edge " + edge + " not in bounds [0," + edgeCount + "[");
+            throw new IllegalArgumentException("edge: " + edge + " out of bounds [0," + edgeCount + "[");
         return (long) edge * edgeEntryBytes;
     }
 
@@ -951,7 +951,7 @@ class BaseGraph implements Graph {
          */
         final boolean init(int edgeId, int expectedAdjNode) {
             if (edgeId < 0 || edgeId >= baseGraph.edgeCount)
-                throw new IllegalArgumentException("edge must be in bounds: [0," + baseGraph.edgeCount + "[");
+                throw new IllegalArgumentException("edge: " + edgeId + " out of bounds: [0," + baseGraph.edgeCount + "[");
             this.edgeId = edgeId;
             edgePointer = baseGraph.toEdgePointer(edgeId);
             baseNode = baseGraph.getNodeA(edgePointer);
