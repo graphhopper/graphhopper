@@ -348,8 +348,8 @@ class QueryRoutingCHGraphTest {
         assertEquals(20, iter.getWeight(false), 1.e-6);
         assertEquals(20, iter.getWeight(true), 1.e-6);
         assertNextEdge(iter, 0, 1, 0);
-        assertEquals(285.8984, iter.getWeight(false), 1.e-6);
-        assertEquals(857.6952, iter.getWeight(true), 1.e-6);
+        assertEquals(285.89888, iter.getWeight(false), 1.e-6);
+        assertEquals(857.69664, iter.getWeight(true), 1.e-6);
         assertEnd(iter);
 
         // for incoming edges its the same
@@ -358,8 +358,8 @@ class QueryRoutingCHGraphTest {
         assertEquals(20, iter.getWeight(false), 1.e-6);
         assertEquals(20, iter.getWeight(true), 1.e-6);
         assertNextEdge(iter, 0, 1, 0);
-        assertEquals(285.8984, iter.getWeight(false), 1.e-6);
-        assertEquals(857.6952, iter.getWeight(true), 1.e-6);
+        assertEquals(285.89888, iter.getWeight(false), 1.e-6);
+        assertEquals(857.69664, iter.getWeight(true), 1.e-6);
         assertEnd(iter);
 
         // now including virtual edges
@@ -397,8 +397,8 @@ class QueryRoutingCHGraphTest {
         assertEquals(428.8483, iter.getWeight(false), 1.e-4);
         assertEquals(142.9494, iter.getWeight(true), 1.e-4);
         assertNextEdge(iter, 3, 1, 3);
-        assertEquals(142.9489, iter.getWeight(false), 1.e-4);
-        assertEquals(428.8469, iter.getWeight(true), 1.e-4);
+        assertEquals(142.9494, iter.getWeight(false), 1.e-4);
+        assertEquals(428.8483, iter.getWeight(true), 1.e-4);
         assertEnd(iter);
 
         iter = queryCHGraph.createInEdgeExplorer().setBaseNode(3);
@@ -406,8 +406,8 @@ class QueryRoutingCHGraphTest {
         assertEquals(428.8483, iter.getWeight(false), 1.e-4);
         assertEquals(142.9494, iter.getWeight(true), 1.e-4);
         assertNextEdge(iter, 3, 1, 3);
-        assertEquals(142.9489, iter.getWeight(false), 1.e-4);
-        assertEquals(428.8469, iter.getWeight(true), 1.e-4);
+        assertEquals(142.9494, iter.getWeight(false), 1.e-4);
+        assertEquals(428.8483, iter.getWeight(true), 1.e-4);
         assertEnd(iter);
 
         // getting a single edge
@@ -439,21 +439,21 @@ class QueryRoutingCHGraphTest {
         // 0->1
         RoutingCHEdgeIterator iter = routingCHGraph.createOutEdgeExplorer().setBaseNode(0);
         assertNextEdge(iter, 0, 1, 0);
-        assertEquals(428.8476, iter.getWeight(false), 1.e-4);
+        assertEquals(428.8483, iter.getWeight(false), 1.e-4);
         assertEquals(Double.POSITIVE_INFINITY, iter.getWeight(true));
         assertEnd(iter);
 
         iter = routingCHGraph.createInEdgeExplorer().setBaseNode(1);
         assertNextEdge(iter, 1, 0, 0);
         assertEquals(Double.POSITIVE_INFINITY, iter.getWeight(false));
-        assertEquals(428.8476, iter.getWeight(true), 1.e-4);
+        assertEquals(428.8483, iter.getWeight(true), 1.e-4);
         assertEnd(iter);
 
         // single edges
-        assertEquals(428.8476, routingCHGraph.getEdgeIteratorState(0, 1).getWeight(false), 1.e-4);
+        assertEquals(428.8483, routingCHGraph.getEdgeIteratorState(0, 1).getWeight(false), 1.e-4);
         assertEquals(Double.POSITIVE_INFINITY, routingCHGraph.getEdgeIteratorState(0, 1).getWeight(true));
         assertEquals(Double.POSITIVE_INFINITY, routingCHGraph.getEdgeIteratorState(0, 0).getWeight(false));
-        assertEquals(428.8476, routingCHGraph.getEdgeIteratorState(0, 0).getWeight(true), 1.e-4);
+        assertEquals(428.8483, routingCHGraph.getEdgeIteratorState(0, 0).getWeight(true), 1.e-4);
 
         // with query graph
         // 0-x->1
@@ -476,7 +476,7 @@ class QueryRoutingCHGraphTest {
         iter = queryCHGraph.createInEdgeExplorer().setBaseNode(1);
         assertNextEdge(iter, 1, 2, 2);
         assertEquals(Double.POSITIVE_INFINITY, iter.getWeight(false));
-        assertEquals(214.4234, iter.getWeight(true), 1.e-4);
+        assertEquals(214.4241, iter.getWeight(true), 1.e-4);
         assertEnd(iter);
 
         // at virtual node
@@ -485,7 +485,7 @@ class QueryRoutingCHGraphTest {
         assertEquals(Double.POSITIVE_INFINITY, iter.getWeight(false));
         assertEquals(214.4241, iter.getWeight(true), 1.e-4);
         assertNextEdge(iter, 2, 1, 2);
-        assertEquals(214.4234, iter.getWeight(false), 1.e-4);
+        assertEquals(214.4241, iter.getWeight(false), 1.e-4);
         assertEquals(Double.POSITIVE_INFINITY, iter.getWeight(true));
         assertEnd(iter);
 

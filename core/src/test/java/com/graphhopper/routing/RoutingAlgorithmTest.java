@@ -281,12 +281,12 @@ public class RoutingAlgorithmTest {
         Path p1 = f.calcPath(graph, f.defaultWeighting, 0, 3);
         assertEquals(nodes(0, 1, 5, 2, 3), p1.calcNodes());
         assertEquals(402.3, p1.getDistance(), .1, p1.toString());
-        assertEquals(144823, p1.getTime(), p1.toString());
+        assertEquals(144829, p1.getTime(), p1.toString());
 
         Path p2 = f.calcPath(graph, fastestWeighting, 0, 3);
         assertEquals(nodes(0, 4, 6, 7, 5, 3), p2.calcNodes());
         assertEquals(1261.7, p2.getDistance(), 0.1, p2.toString());
-        assertEquals(111442, p2.getTime(), p2.toString());
+        assertEquals(111439, p2.getTime(), p2.toString());
     }
 
     // 0-1-2-3
@@ -802,12 +802,12 @@ public class RoutingAlgorithmTest {
         // 0-7 to 4-3
         Path p = f.calcPath(graph, new GHPoint(0.0009, 0), new GHPoint(0.001, 0.001105));
         assertEquals(nodes(10, 7, 6, 8, 3, 9), p.calcNodes(), p.toString());
-        assertEquals(324.11, p.getDistance(), 0.01, p.toString());
+        assertEquals(324.12, p.getDistance(), 0.01, p.toString());
 
         // 0-1 to 2-3
         p = f.calcPath(graph, new GHPoint(0.001, 0.0001), new GHPoint(0.010, 0.0011));
         assertEquals(nodes(0, 7, 6, 8, 3, 9), p.calcNodes(), p.toString());
-        assertEquals(1335.35, p.getDistance(), 0.01, p.toString());
+        assertEquals(1335.38, p.getDistance(), 0.01, p.toString());
     }
 
     @ParameterizedTest

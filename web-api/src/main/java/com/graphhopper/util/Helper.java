@@ -34,8 +34,8 @@ public class Helper {
     public static final Charset UTF_CS = Charset.forName("UTF-8");
     public static final TimeZone UTC = TimeZone.getTimeZone("UTC");
     public static final long MB = 1L << 20;
-    // +- 180 and +-90 => let use use 400
-    private static final float DEGREE_FACTOR = Integer.MAX_VALUE / 400f;
+    // we keep the first seven decimal places of lat/lon coordinates. this corresponds to ~1cm precision ('pointing to waldo on a page')
+    private static final float DEGREE_FACTOR = 10_000_000;
     // milli meter is a bit extreme but we have integers
     private static final float ELE_FACTOR = 1000f;
 

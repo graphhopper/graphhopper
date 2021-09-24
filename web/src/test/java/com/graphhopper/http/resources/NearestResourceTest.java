@@ -67,6 +67,6 @@ public class NearestResourceTest {
         final Response response = clientTarget(app, "/nearest?point=42.554851,1.536198").request().buildGet().invoke();
         assertEquals(200, response.getStatus(), "HTTP status");
         NearestResource.Response json = response.readEntity(NearestResource.Response.class);
-        assertArrayEquals(new double[]{1.5363742288086868, 42.55483907636756}, json.coordinates, "nearest point");
+        assertArrayEquals(new double[]{1.5363743623376815, 42.554839049600155}, json.coordinates, "nearest point");
     }
 }
