@@ -150,11 +150,13 @@ public class RouteResourceClientHCTest {
         ResponsePath path = paths.get(0);
         isBetween(31, 37, path.getPoints().size());
         isBetween(1670, 1710, path.getDistance());
+        System.out.println("alt0: " + path.getDistance());
         assertEquals("Vial de la Uniò", path.getDescription().get(0));
 
         path = paths.get(1);
         isBetween(26, 31, path.getPoints().size());
         isBetween(1740, 1790, path.getDistance());
+        System.out.println("alt1: " + path.getDistance());
         assertEquals("Carrer Doctor Vilanova", path.getDescription().get(0));
     }
 
