@@ -148,14 +148,14 @@ public class RouteResourceClientHCTest {
         assertEquals(2, paths.size());
 
         ResponsePath path = paths.get(0);
-        isBetween(31, 37, path.getPoints().size());
-        isBetween(1670, 1710, path.getDistance());
-        assertTrue("Avinguda Carlemany".contains(path.getDescription().get(0)), "expected: " + path.getDescription().get(0));
+        assertEquals(35, path.getPoints().size());
+        assertEquals(1689, path.getDistance(), 1);
+        assertTrue(path.getInstructions().toString().contains("Avinguda de Tarragona"), path.getInstructions().toString());
 
         path = paths.get(1);
-        isBetween(26, 31, path.getPoints().size());
-        isBetween(1740, 1790, path.getDistance());
-        assertTrue("Carrer Doctor Vilanova".contains(path.getDescription().get(0)), "expected: " + path.getDescription().get(0));
+        assertEquals(30, path.getPoints().size());
+        assertEquals(1759, path.getDistance(), 1);
+        assertTrue(path.getInstructions().toString().contains("Avinguda Prat de la Creu"), path.getInstructions().toString());
     }
 
     @ParameterizedTest

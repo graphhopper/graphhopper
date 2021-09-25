@@ -177,7 +177,7 @@ public class AnotherAgencyIT {
         GHResponse route = ptRouter.route(ghRequest);
         ResponsePath walkRoute = route.getBest();
         assertEquals(1, walkRoute.getLegs().size());
-        assertEquals(486620, walkRoute.getTime()); // < 10 min, so the transfer in test above works ^^
+        assertEquals(486660, walkRoute.getTime()); // < 10 min, so the transfer in test above works ^^
         assertFalse(route.hasErrors());
     }
 

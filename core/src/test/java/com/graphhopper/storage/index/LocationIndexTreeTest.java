@@ -141,7 +141,7 @@ public class LocationIndexTreeTest {
         Graph graph = createTestGraph2();
         LocationIndexTree index = (LocationIndexTree) createIndexNoPrepare(graph, 500).prepareIndex();
         final IntArrayList edges = new IntArrayList();
-        BBox bbox = new BBox(11.57314, 11.57614, 49.94553, 49.94853);
+        BBox bbox = new BBox(11.57114, 11.57814, 49.94553, 49.94853);
         index.query(bbox, edges::add);
         // Also all edges (see testgraph2.jpg)
         assertEquals(edges.size(), graph.getEdges());

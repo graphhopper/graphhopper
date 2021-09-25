@@ -435,12 +435,12 @@ public class GraphHopperOSMTest {
         GHResponse grsp = instance.route(new GHRequest(11.1, 50, 11.3, 51).setProfile(profile1));
         assertFalse(grsp.hasErrors(), grsp.getErrors().toString());
         ResponsePath rsp = grsp.getBest();
-        assertEquals(3, rsp.getPoints().size());
+        assertEquals(2, rsp.getPoints().size());
         // => found A and D
         assertEquals(50, rsp.getPoints().getLon(0), 1e-3);
         assertEquals(11.1, rsp.getPoints().getLat(0), 1e-3);
-        assertEquals(51, rsp.getPoints().getLon(2), 1e-3);
-        assertEquals(11.3, rsp.getPoints().getLat(2), 1e-3);
+        assertEquals(51, rsp.getPoints().getLon(1), 1e-3);
+        assertEquals(11.3, rsp.getPoints().getLat(1), 1e-3);
 
         // A to D not allowed for foot. But the location index will choose a node close to D accessible to FOOT
         grsp = instance.route(new GHRequest(11.1, 50, 11.3, 51).setProfile(profile2));

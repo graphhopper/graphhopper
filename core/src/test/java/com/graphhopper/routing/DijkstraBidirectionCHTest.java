@@ -69,8 +69,8 @@ public class DijkstraBidirectionCHTest {
         // use base graph for solving normal Dijkstra
         Path p1 = new RoutingAlgorithmFactorySimple().createAlgo(ghStorage, weighting, new AlgorithmOptions()).calcPath(0, 3);
         assertEquals(IntArrayList.from(0, 1, 5, 2, 3), p1.calcNodes());
-        assertEquals(402.29, p1.getDistance(), 1e-2, p1.toString());
-        assertEquals(144823, p1.getTime(), p1.toString());
+        assertEquals(402.30, p1.getDistance(), 1e-2, p1.toString());
+        assertEquals(144829, p1.getTime(), p1.toString());
     }
 
     @Test

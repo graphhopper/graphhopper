@@ -334,7 +334,7 @@ public class PrepareContractionHierarchiesTest {
         // we will fine-tune the edge-speeds such that without the fix node 4 will be stalled and node 5 will not get
         // discovered. consequently, no path will be found, because only the forward search runs (from 0 to 7 the
         // shortest path is strictly upward). node 4 is only stalled when node 2 gets stalled before, which in turn will
-        // happen due to the the virtual node between 3 and 1.
+        // happen due to the virtual node between 3 and 1.
         //
         // start 0 - 3 - x - 1 - 2
         //             \         |
@@ -360,7 +360,7 @@ public class PrepareContractionHierarchiesTest {
         // at node 2 coming from 3. this happens because due to the virtual node x between 3 and 1, the weight of the
         // spt entry at 2 is different to the sum of the weights of the spt entry at node 3 and the shortcut edge. this
         // is due to different floating point rounding arithmetic of shortcuts and virtual edges on the query graph.
-        edge31.set(carEncoder.getAverageSpeedEnc(), 22, 22);
+        edge31.set(carEncoder.getAverageSpeedEnc(), 12, 12);
 
         // just stalling node 2 alone would not lead to connection not found, because the shortcut 3-4 still finds node
         // 4. however, we can choose the weight of edge 2-4 such that node 4 also gets stalled via node 2.

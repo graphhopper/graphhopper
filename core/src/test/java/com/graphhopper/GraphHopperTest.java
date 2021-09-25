@@ -195,14 +195,23 @@ public class GraphHopperTest {
         request.addPoint(new GHPoint(43.729584, 7.410965));
         request.addPoint(new GHPoint(43.732499, 7.426758));
         request.getHints().putObject("instructions", true);
+        // no simplification
+        hopper.getRouterConfig().setSimplifyResponse(false);
         GHResponse routeRsp = hopper.route(request);
-        int withInstructionsPoints = routeRsp.getBest().getPoints().size();
+        assertEquals(10, routeRsp.getBest().getInstructions().size());
+        assertEquals(43, routeRsp.getBest().getPoints().size());
 
+        // with simplification
+        hopper.getRouterConfig().setSimplifyResponse(true);
+        routeRsp = hopper.route(request);
+        assertEquals(10, routeRsp.getBest().getInstructions().size());
+        assertEquals(39, routeRsp.getBest().getPoints().size());
+
+        // no instructions
         request.getHints().putObject("instructions", false);
         routeRsp = hopper.route(request);
-
-        assertTrue(withInstructionsPoints >= routeRsp.getBest().getPoints().size(), "there should not be more points if instructions are disabled due to simplify but was " + withInstructionsPoints + " vs " + routeRsp.getBest().getPoints().size()
-        );
+        // the path is still simplified
+        assertEquals(41, routeRsp.getBest().getPoints().size());
     }
 
     @Test
@@ -286,7 +295,7 @@ public class GraphHopperTest {
         hopper.importOrLoad();
 
         // same query as in testMonacoWithInstructions
-        // visited nodes >700 for flexible, <120 for CH or LM
+        // visited nodes >700 for flexible, <125 for CH or LM
 
         if (ch) {
             GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
@@ -298,7 +307,7 @@ public class GraphHopperTest {
             ResponsePath bestPath = rsp.getBest();
             long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
             assertNotEquals(sum, 0);
-            assertTrue(sum < 120, "Too many nodes visited " + sum);
+            assertTrue(sum < 125, "Too many nodes visited " + sum);
             assertEquals(3535, bestPath.getDistance(), 1);
             assertEquals(115, bestPath.getPoints().size());
         }
@@ -314,7 +323,7 @@ public class GraphHopperTest {
             ResponsePath bestPath = rsp.getBest();
             long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
             assertNotEquals(sum, 0);
-            assertTrue(sum < 120, "Too many nodes visited " + sum);
+            assertTrue(sum < 125, "Too many nodes visited " + sum);
             assertEquals(3535, bestPath.getDistance(), 1);
             assertEquals(115, bestPath.getPoints().size());
         }
@@ -982,18 +991,26 @@ public class GraphHopperTest {
 
         String str = res.getPoints().toString();
 
-        assertEquals("(43.73068455771767,7.421283689825812,62.0), (43.73067957305937,7.421382123709815,66.0), " +
-                        "(43.73109792316924,7.421546222751131,45.0), (43.73129908884985,7.421589994913116,45.0), " +
-                        "(43.731327028527716,7.421414533736137,45.0), (43.73125047381037,7.421366291225693,45.0), " +
-                        "(43.73128213877862,7.421115579183003,52.0), (43.731362232521825,7.421145381506057,52.0), " +
-                        "(43.731371359483255,7.421123216028286,52.0), (43.731485725897976,7.42117332118392,52.0), " +
-                        "(43.731575132867135,7.420868778695214,52.0), (43.73160605277731,7.420824820268709,52.0), " +
-                        "(43.7316401391843,7.420850152243305,52.0), (43.731674039326776,7.421050014072285,52.0), " +
-                        "(43.731627473197,7.4214635213046565,45.0)",
-                str.substring(0, 661));
-
-        assertEquals("(43.727778875703635,7.418772930326453,11.0), (43.72768239068275,7.419007064826944,11.0), (43.727679637988224,7.419198521975086,11.0)",
-                str.substring(str.length() - 132));
+        assertEquals("(43.730684662577524,7.421283725164733,62.0), (43.7306797,7.4213823,66.0), " +
+                "(43.731098,7.4215463,45.0), (43.7312991,7.42159,45.0), (43.7313271,7.4214147,45.0), " +
+                "(43.7312506,7.4213664,45.0), (43.7312822,7.4211156,52.0), (43.7313624,7.4211455,52.0), " +
+                "(43.7313714,7.4211233,52.0), (43.7314858,7.4211734,52.0), (43.7315753,7.4208688,52.0), " +
+                "(43.7316061,7.4208249,52.0), (43.7316404,7.4208503,52.0), (43.7316741,7.4210502,52.0), " +
+                "(43.7316276,7.4214636,45.0), (43.7316391,7.4215065,45.0), (43.7316664,7.4214904,45.0), " +
+                "(43.7317185,7.4211861,52.0), (43.7319676,7.4206159,19.0), (43.732038,7.4203936,20.0), " +
+                "(43.7322266,7.4196414,26.0), (43.7323236,7.4192656,26.0), (43.7323374,7.4190461,26.0), " +
+                "(43.7323875,7.4189195,26.0), (43.731974,7.4181688,29.0), (43.7316421,7.4173042,23.0), " +
+                "(43.7315686,7.4170356,31.0), (43.7314269,7.4166815,31.0), (43.7312401,7.4163184,49.0), " +
+                "(43.7308286,7.4157613,29.399999618530273), (43.730662,7.4155599,22.0), " +
+                "(43.7303643,7.4151193,51.0), (43.729579,7.4137274,40.0), (43.7295167,7.4137244,40.0), " +
+                "(43.7294669,7.4137725,40.0), (43.7285987,7.4149068,23.0), (43.7285167,7.4149272,22.0), " +
+                "(43.7283974,7.4148646,22.0), (43.7285619,7.4151365,23.0), (43.7285774,7.4152444,23.0), " +
+                "(43.7285763,7.4159759,21.0), (43.7285238,7.4161982,20.0), (43.7284592,7.4163655,18.0), " +
+                "(43.7281669,7.4168192,18.0), (43.7281442,7.4169449,18.0), (43.7281684,7.4172435,14.0), " +
+                "(43.7282784,7.4179606,14.0), (43.7282757,7.418175,11.0), (43.7282319,7.4183683,11.0), " +
+                "(43.7281482,7.4185473,11.0), (43.7280654,7.4186535,11.0), (43.7279259,7.418748,11.0), " +
+                "(43.727779,7.4187731,11.0), (43.7276825,7.4190072,11.0), " +
+                "(43.72767974015672,7.419198523220426,11.0)", str);
 
         assertEquals(84, res.getAscend(), 1e-1);
         assertEquals(135, res.getDescend(), 1e-1);
@@ -1366,7 +1383,7 @@ public class GraphHopperTest {
         long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
         assertNotEquals(sum, 0);
         assertTrue(sum < 120, "Too many nodes visited " + sum);
-        assertEquals(3437.0, bestPath.getDistance(), .1);
+        assertEquals(3437.1, bestPath.getDistance(), .1);
         assertEquals(85, bestPath.getPoints().size());
 
         hopper.close();
@@ -1407,7 +1424,7 @@ public class GraphHopperTest {
         ResponsePath res = rsp.getBest();
         assertEquals(1.49, rsp.getBest().getDistance() / 1000f, .01);
         assertEquals(19, rsp.getBest().getTime() / 1000f / 60, 1);
-        assertEquals(67, res.getPoints().size());
+        assertEquals(66, res.getPoints().size());
     }
 
     @Test
@@ -1768,9 +1785,9 @@ public class GraphHopperTest {
         assertEquals(1995.38, pathLM.getDistance(), 0.1);
         assertEquals(1995.38, path.getDistance(), 0.1);
 
-        assertEquals(149494, pathCH.getTime());
-        assertEquals(149494, pathLM.getTime());
-        assertEquals(149494, path.getTime());
+        assertEquals(149497, pathCH.getTime());
+        assertEquals(149497, pathLM.getTime());
+        assertEquals(149497, path.getTime());
     }
 
     @Test
@@ -1787,7 +1804,7 @@ public class GraphHopperTest {
                         new Profile(profile2).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true),
                         new Profile(profile1).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(false)
                 ).
-                        setStoreOnFlush(true);
+                setStoreOnFlush(true);
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);

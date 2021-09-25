@@ -287,10 +287,10 @@ public class RouteResourceTest {
         assertTrue(pathDetails.containsKey("edge_id"));
         assertTrue(pathDetails.containsKey("time"));
         List<PathDetail> averageSpeedList = pathDetails.get("average_speed");
-        assertEquals(14, averageSpeedList.size());
+        assertEquals(13, averageSpeedList.size());
         assertEquals(30.0, averageSpeedList.get(0).getValue());
         assertEquals(14, averageSpeedList.get(0).getLength());
-        assertEquals(60.1, averageSpeedList.get(1).getValue());
+        assertEquals(60.0, averageSpeedList.get(1).getValue());
         assertEquals(5, averageSpeedList.get(1).getLength());
 
         List<PathDetail> edgeIdDetails = pathDetails.get("edge_id");
@@ -346,7 +346,7 @@ public class RouteResourceTest {
         JsonNode averageSpeed = details.get("average_speed");
         assertEquals(30.0, averageSpeed.get(0).get(2).asDouble(), .1);
         assertEquals(14, averageSpeed.get(0).get(1).asInt(), .1);
-        assertEquals(60.1, averageSpeed.get(1).get(2).asDouble(), .1);
+        assertEquals(60.0, averageSpeed.get(1).get(2).asDouble(), .1);
         assertEquals(19, averageSpeed.get(1).get(1).asInt());
         assertTrue(details.has("edge_id"));
         JsonNode edgeIds = details.get("edge_id");
