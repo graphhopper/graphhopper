@@ -212,12 +212,6 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
         turnCosts.ensureCapacity(((long) nodeIndex + 4) * BYTES_PER_ENTRY);
     }
 
-    public TurnCostStorage copyTo(TurnCostStorage turnCostStorage) {
-        turnCosts.copyTo(turnCostStorage.turnCosts);
-        turnCostStorage.turnCostsCount = turnCostsCount;
-        return turnCostStorage;
-    }
-
     @Override
     public boolean isClosed() {
         return turnCosts.isClosed();
@@ -255,7 +249,7 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
     private class Itr implements TurnRelationIterator {
         private int viaNode = -1;
         private int turnCostIndex = -1;
-        private IntsRef intsRef = TurnCost.createFlags();
+        private final IntsRef intsRef = TurnCost.createFlags();
 
         private long turnCostPtr() {
             return (long) turnCostIndex * BYTES_PER_ENTRY;

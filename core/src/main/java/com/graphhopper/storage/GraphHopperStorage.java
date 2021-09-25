@@ -320,7 +320,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
     @Override
     public boolean isClosed() {
-        return baseGraph.nodes.isClosed();
+        return baseGraph.isClosed();
     }
 
     @Override

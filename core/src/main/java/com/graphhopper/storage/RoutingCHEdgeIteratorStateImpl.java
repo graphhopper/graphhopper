@@ -45,11 +45,11 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
     }
 
     boolean init(int edge, int expectedAdjNode) {
-        if (edge < 0 || edge >= baseGraph.edgeCount + store.getShortcuts())
-            throw new IllegalArgumentException("edge must be in bounds: [0," + (baseGraph.edgeCount + store.getShortcuts()) + "[");
+        if (edge < 0 || edge >= baseGraph.getEdges() + store.getShortcuts())
+            throw new IllegalArgumentException("edge must be in bounds: [0," + (baseGraph.getEdges() + store.getShortcuts()) + "[");
         edgeId = edge;
         if (isShortcut()) {
-            shortcutPointer = store.toShortcutPointer(edge - baseGraph.edgeCount);
+            shortcutPointer = store.toShortcutPointer(edge - baseGraph.getEdges());
             baseNode = store.getNodeA(shortcutPointer);
             adjNode = store.getNodeB(shortcutPointer);
 
@@ -103,7 +103,7 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
 
     @Override
     public boolean isShortcut() {
-        return edgeId >= baseGraph.edgeCount;
+        return edgeId >= baseGraph.getEdges();
     }
 
     @Override
