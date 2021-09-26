@@ -77,7 +77,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     // tower node is <= -3
     protected static final int TOWER_NODE = -2;
     private static final Logger LOGGER = LoggerFactory.getLogger(OSMReader.class);
-    private final GraphStorage ghStorage;
+    private final GraphHopperStorage ghStorage;
     private final Graph graph;
     private final NodeAccess nodeAccess;
     private final LongIndexedContainer barrierNodeIds = new LongArrayList();

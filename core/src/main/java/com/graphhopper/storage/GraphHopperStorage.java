@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
  * @author Peter Karich
  * @see GraphBuilder to create a (CH)Graph easier
  */
-public final class GraphHopperStorage implements GraphStorage, Graph {
+public final class GraphHopperStorage implements Storable<GraphHopperStorage>, Graph {
     private static final Logger LOGGER = LoggerFactory.getLogger(GraphHopperStorage.class);
     private final Directory dir;
     private final EncodingManager encodingManager;
@@ -198,7 +198,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     /**
      * @return the directory where this graph is stored.
      */
-    @Override
     public Directory getDirectory() {
         return dir;
     }
@@ -236,12 +235,10 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         return this;
     }
 
-    @Override
     public EncodingManager getEncodingManager() {
         return encodingManager;
     }
 
-    @Override
     public StorableProperties getProperties() {
         return properties;
     }
@@ -351,7 +348,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         return baseGraph.isFrozen();
     }
 
-    @Override
     public String toDetailsString() {
         String str = baseGraph.toDetailsString();
         for (CHEntry ch : chEntries) {
