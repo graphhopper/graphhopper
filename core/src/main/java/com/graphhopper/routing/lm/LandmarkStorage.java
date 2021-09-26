@@ -59,7 +59,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author Peter Karich
  */
-public class LandmarkStorage implements Storable<LandmarkStorage> {
+public class LandmarkStorage {
 
     // Short.MAX_VALUE = 2^15-1 but we have unsigned short so we need 2^16-1
     private static final int SHORT_INFINITY = Short.MAX_VALUE * 2 + 1;
@@ -676,7 +676,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         return "{ \"type\": \"FeatureCollection\", \"features\": [" + str + "]}";
     }
 
-    @Override
     public boolean loadExisting() {
         if (isInitialized())
             throw new IllegalStateException("Cannot call PrepareLandmarks.loadExisting if already initialized");
@@ -710,29 +709,20 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         return false;
     }
 
-    @Override
-    public LandmarkStorage create(long byteCount) {
-        throw new IllegalStateException("Do not call LandmarkStore.create directly");
-    }
-
-    @Override
     public void flush() {
         landmarkWeightDA.flush();
         subnetworkStorage.flush();
     }
 
-    @Override
     public void close() {
         landmarkWeightDA.close();
         subnetworkStorage.close();
     }
 
-    @Override
     public boolean isClosed() {
         return landmarkWeightDA.isClosed();
     }
 
-    @Override
     public long getCapacity() {
         return landmarkWeightDA.getCapacity() + subnetworkStorage.getCapacity();
     }

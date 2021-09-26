@@ -20,7 +20,6 @@ package com.graphhopper.routing.subnetwork;
 import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.Storable;
 
 /**
  * This class handles storage of subnetwork ids for every node. Useful to pick the correct set of
@@ -28,7 +27,7 @@ import com.graphhopper.storage.Storable;
  *
  * @author Peter Karich
  */
-public class SubnetworkStorage implements Storable<SubnetworkStorage> {
+public class SubnetworkStorage {
     private final DataAccess da;
 
     public SubnetworkStorage(Directory dir, String postfix) {
@@ -55,35 +54,28 @@ public class SubnetworkStorage implements Storable<SubnetworkStorage> {
         da.setByte(nodeId, (byte) subnetwork);
     }
 
-    @Override
-
     public boolean loadExisting() {
         return da.loadExisting();
     }
 
-    @Override
     public SubnetworkStorage create(long byteCount) {
         da.create(2000);
         da.ensureCapacity(byteCount);
         return this;
     }
 
-    @Override
     public void flush() {
         da.flush();
     }
 
-    @Override
     public void close() {
         da.close();
     }
 
-    @Override
     public boolean isClosed() {
         return da.isClosed();
     }
 
-    @Override
     public long getCapacity() {
         return da.getCapacity();
     }
