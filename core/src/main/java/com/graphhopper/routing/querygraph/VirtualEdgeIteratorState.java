@@ -124,7 +124,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
         if (pointList.isEmpty())
             return false;
         
-        return shape.intersects(pointList);
+        return shape.intersects(pointList.clone(false).makeImmutable());
     }
 
     @Override
