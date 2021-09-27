@@ -18,25 +18,6 @@
 
 package com.graphhopper.storage;
 
-public interface NewDataAccess {
-
-    static NewDataAccess load(String path, NewDAType daType) {
-        switch (daType) {
-            case RAM:
-                return NewRAMDataAccess.load(path);
-            case MMAP:
-                return NewMMapDataAccess.load(path, false);
-            default:
-                throw new IllegalArgumentException("Unknown DAType");
-        }
-    }
-
-    boolean ensureCapacity(long bytes);
-
-    void setInt(long bytePos, int value);
-
-    int getInt(long bytePos);
-
-    void flush();
-
+public enum NewDAType {
+    RAM, MMAP
 }
