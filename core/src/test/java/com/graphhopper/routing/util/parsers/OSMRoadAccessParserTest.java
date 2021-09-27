@@ -19,6 +19,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
@@ -51,6 +52,11 @@ class OSMRoadAccessParserTest {
         ReaderWay way = new ReaderWay(27L);
         way.setTag("highway", "track");
         way.setTag("country_rule", new CountryRule() {
+            @Override
+            public Country getCountry() {
+                return Country.MISSING;
+            }
+            
             @Override
             public RoadAccess getAccess(ReaderWay readerWay, TransportationMode transportationMode, RoadAccess currentRoadAccess) {
                 return RoadAccess.DESTINATION;

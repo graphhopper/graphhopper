@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.routing.ev.RoadClass;
@@ -49,6 +50,11 @@ class OSMMaxSpeedParserTest {
         ReaderWay way = new ReaderWay(29L);
         way.setTag("highway", "living_street");
         way.setTag("country_rule", new CountryRule() {
+            @Override
+            public Country getCountry() {
+                return Country.MISSING;
+            }
+            
             @Override
             public double getMaxSpeed(ReaderWay readerWay, TransportationMode transportationMode, double currentMaxSpeed) {
                 return 5;

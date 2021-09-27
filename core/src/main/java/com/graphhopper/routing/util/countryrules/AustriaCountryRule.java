@@ -19,12 +19,18 @@
 package com.graphhopper.routing.util.countryrules;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.util.TransportationMode;
 
 public class AustriaCountryRule implements CountryRule {
     public final static AustriaCountryRule RULE = new AustriaCountryRule();
+    
+    @Override
+    public Country getCountry() {
+        return Country.AUT;
+    }
 
     @Override
     public double getMaxSpeed(ReaderWay readerWay, TransportationMode transportationMode, double currentMaxSpeed) {
