@@ -23,7 +23,6 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Shape;
 
 /**
@@ -124,11 +123,8 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     public boolean intersects(Shape shape) {
         if (pointList.isEmpty())
             return false;
-        BBox towerBBox = BBox.createInverse(false);
-        towerBBox.update(pointList.getLat(0), pointList.getLon(0));
-        towerBBox.update(pointList.getLat(pointList.size()-1), pointList.getLon(pointList.size()-1));
         
-        return towerBBox.intersects(shape.getBounds());
+        return shape.intersects(pointList);
     }
 
     @Override
