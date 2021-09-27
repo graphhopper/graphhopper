@@ -107,6 +107,11 @@ public class NewMMapDataAccess implements NewDataAccess {
         return mapSegments(bytes);
     }
 
+    @Override
+    public void flush() {
+        NewMMapDataAccess.flush(this);
+    }
+
     private boolean mapSegments(long byteCount) {
         long capacity = (long) segments.size() * bytesPerSegment;
         long newBytes = byteCount - capacity;
@@ -188,7 +193,6 @@ public class NewMMapDataAccess implements NewDataAccess {
 
     @Override
     public void setInt(long bytePos, int value) {
-// begin c&p (except segments[][] vs. list)
         int segment = getSegment(bytePos);
         int offset = getOffset(bytePos);
         // todonow: synchronized?
@@ -200,7 +204,6 @@ public class NewMMapDataAccess implements NewDataAccess {
                     segments.get(segment + 1).put(offset + i - bytesPerSegment, bitUtil.getByte(value, i));
         else
             segments.get(segment).putInt(offset, value);
-        // end c&p
     }
 
     @Override
@@ -219,7 +222,6 @@ public class NewMMapDataAccess implements NewDataAccess {
             return segments.get(segment).getInt(offset);
     }
 
-    // begin c&p
     private int getSegment(long bytePos) {
         return (int) bytePos >>> log2bytesPerSegment;
     }
@@ -237,5 +239,4 @@ public class NewMMapDataAccess implements NewDataAccess {
             throw new IllegalArgumentException("x must be < 0, got: " + x);
         return 31 - Integer.numberOfLeadingZeros(x);
     }
-    // end c&p
 }

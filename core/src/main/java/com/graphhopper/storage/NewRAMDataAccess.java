@@ -26,10 +26,10 @@ import java.io.RandomAccessFile;
 import java.io.UncheckedIOException;
 import java.nio.ByteOrder;
 import java.util.Arrays;
-import java.util.Optional;
 
 public class NewRAMDataAccess implements NewDataAccess {
     private static final String GH_FILE_MARKER = "GH";
+    private final String path;
     private final BitUtil bitUtil;
     private byte[][] segments;
     private final int bytesPerSegment;
@@ -39,14 +39,14 @@ public class NewRAMDataAccess implements NewDataAccess {
 
     public NewRAMDataAccess() {
         // ~1MB per segment is the default
-        this(1 << 20);
+        this("", 1 << 20);
     }
 
-    public NewRAMDataAccess(int bytesPerSegment) {
-        this(new byte[0][], bytesPerSegment);
+    public NewRAMDataAccess(String path, int bytesPerSegment) {
+        this(new byte[0][], path, bytesPerSegment);
     }
 
-    private NewRAMDataAccess(byte[][] segments, int bytesPerSegment) {
+    private NewRAMDataAccess(byte[][] segments, String path, int bytesPerSegment) {
         if (bytesPerSegment < 2)
             throw new IllegalArgumentException("bytesPerSegment must be >= 2");
         if (!isPowerOfTwo(bytesPerSegment))
@@ -54,6 +54,7 @@ public class NewRAMDataAccess implements NewDataAccess {
         for (byte[] segment : segments)
             if (segment.length != bytesPerSegment)
                 throw new IllegalArgumentException("found segment with invalid length: " + segment.length + ", expected: " + bytesPerSegment);
+        this.path = path;
         bitUtil = BitUtil.get(ByteOrder.BIG_ENDIAN);
         this.segments = segments;
         this.bytesPerSegment = bytesPerSegment;
@@ -79,21 +80,21 @@ public class NewRAMDataAccess implements NewDataAccess {
                     throw new IllegalStateException("segment " + s + " is empty, path: " + path);
                 segments[s] = bytes;
             }
-            return new NewRAMDataAccess(segments, bytesPerSegment);
+            return new NewRAMDataAccess(segments, path, bytesPerSegment);
         } catch (IOException e) {
             throw new UncheckedIOException("Problem while loading " + path, e);
         }
     }
 
-    public static void flush(NewRAMDataAccess da, String path) {
-        try (RandomAccessFile raf = new RandomAccessFile(path, "rw")) {
+    public static void flush(NewRAMDataAccess da) {
+        try (RandomAccessFile raf = new RandomAccessFile(da.path, "rw")) {
             raf.writeUTF(GH_FILE_MARKER);
             raf.writeInt(da.segments.length);
             raf.writeInt(da.bytesPerSegment);
             for (byte[] segment : da.segments)
                 raf.write(segment);
         } catch (IOException e) {
-            throw new UncheckedIOException("Couldn't store bytes to " + path, e);
+            throw new UncheckedIOException("Couldn't store bytes to " + da.path, e);
         }
     }
 
@@ -148,8 +149,9 @@ public class NewRAMDataAccess implements NewDataAccess {
             return bitUtil.toInt(segments[segment], offset);
     }
 
-    public void flush(String path) {
-        NewRAMDataAccess.flush(this, path);
+    @Override
+    public void flush() {
+        NewRAMDataAccess.flush(this);
     }
 
     private int getSegment(long bytePos) {

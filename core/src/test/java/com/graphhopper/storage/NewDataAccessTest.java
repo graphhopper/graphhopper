@@ -20,6 +20,9 @@ package com.graphhopper.storage;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -30,11 +33,15 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 interface NewDataAccessTest {
 
-    NewDataAccess create(int bytesPerSegment);
+    String getDefaultPath();
 
-    void flush(NewDataAccess da);
+    NewDataAccess create(String path, int bytesPerSegment);
 
-    NewDataAccess load();
+    NewDataAccess load(String path);
+
+    default NewDataAccess create(int bytesPerSegment) {
+        return create(getDefaultPath(), bytesPerSegment);
+    }
 
     @Test
     default void illegalBytesPerSegment() {
@@ -84,14 +91,15 @@ interface NewDataAccessTest {
     }
 
     @Test
-    default void flushAndLoad() {
-        NewDataAccess da = create(16);
+    default void flushAndLoad(@TempDir Path path) {
+        String pathStr = path.resolve("da_test_file").toAbsolutePath().toString();
+        NewDataAccess da = create(pathStr, 16);
         da.ensureCapacity(40);
         for (int i = 0; i < 10; i++)
             da.setInt(4 * i, i * 10_000_000);
-        flush(da);
+        da.flush();
 
-        da = load();
+        da = load(pathStr);
         assertNotNull(da);
         for (int i = 0; i < 10; i++)
             assertEquals(i * 10_000_000, da.getInt(4 * i));

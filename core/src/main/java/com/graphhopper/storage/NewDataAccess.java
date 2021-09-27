@@ -26,4 +26,6 @@ public interface NewDataAccess {
 
     int getInt(long bytePos);
 
+    void flush();
+
 }

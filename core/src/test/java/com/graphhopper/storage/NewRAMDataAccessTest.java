@@ -33,17 +33,17 @@ class NewRAMDataAccessTest implements NewDataAccessTest {
     }
 
     @Override
-    public NewDataAccess create(int bytesPerSegment) {
-        return new NewRAMDataAccess(bytesPerSegment);
+    public String getDefaultPath() {
+        return path;
     }
 
     @Override
-    public void flush(NewDataAccess da) {
-        NewRAMDataAccess.flush((NewRAMDataAccess) da, path);
+    public NewDataAccess create(String path, int bytesPerSegment) {
+        return new NewRAMDataAccess(path, bytesPerSegment);
     }
 
     @Override
-    public NewDataAccess load() {
+    public NewDataAccess load(String path) {
         return NewRAMDataAccess.load(path);
     }
 }

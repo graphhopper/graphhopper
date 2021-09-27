@@ -33,17 +33,17 @@ public class NewMMapDataAccessTest implements NewDataAccessTest {
     }
 
     @Override
-    public NewDataAccess create(int bytesPerSegment) {
+    public String getDefaultPath() {
+        return path;
+    }
+
+    @Override
+    public NewDataAccess create(String path, int bytesPerSegment) {
         return new NewMMapDataAccess(path, bytesPerSegment, false);
     }
 
     @Override
-    public void flush(NewDataAccess da) {
-        NewMMapDataAccess.flush((NewMMapDataAccess) da);
-    }
-
-    @Override
-    public NewDataAccess load() {
+    public NewDataAccess load(String path) {
         return NewMMapDataAccess.load(path, false);
     }
 }
