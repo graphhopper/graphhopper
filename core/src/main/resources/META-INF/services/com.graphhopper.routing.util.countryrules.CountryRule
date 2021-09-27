@@ -1,0 +1,2 @@
+com.graphhopper.routing.util.countryrules.AustriaCountryRule
+com.graphhopper.routing.util.countryrules.GermanyCountryRule

@@ -29,7 +29,6 @@ import com.graphhopper.routing.util.TransportationMode;
  * @author Robin Boldt
  */
 public class GermanyCountryRule implements CountryRule {
-    public final static GermanyCountryRule RULE = new GermanyCountryRule();
     
     @Override
     public Country getCountry() {
