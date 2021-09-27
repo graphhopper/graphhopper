@@ -44,7 +44,39 @@ public class NewMMapDataAccess implements NewDataAccess {
     private final int log2bytesPerSegment;
     private final int offsetDivisor;
 
-    public NewMMapDataAccess(String path, int bytesPerSegment, boolean readOnly) {
+    public static class Builder {
+        private String path = "";
+        private ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
+        // ~1MB per segment is the default
+        private int bytesPerSegment = 1 << 20;
+        private boolean readOnly = false;
+
+        Builder setPath(String path) {
+            this.path = path;
+            return this;
+        }
+
+        Builder setByteOrder(ByteOrder byteOrder) {
+            this.byteOrder = byteOrder;
+            return this;
+        }
+
+        Builder setBytesPerSegment(int bytesPerSegment) {
+            this.bytesPerSegment = bytesPerSegment;
+            return this;
+        }
+
+        Builder setReadOnly(boolean readOnly) {
+            this.readOnly = readOnly;
+            return this;
+        }
+
+        NewMMapDataAccess build() {
+            return new NewMMapDataAccess(path, byteOrder, bytesPerSegment, readOnly);
+        }
+    }
+
+    private NewMMapDataAccess(String path, ByteOrder byteOrder, int bytesPerSegment, boolean readOnly) {
         if (bytesPerSegment < 2)
             throw new IllegalArgumentException("bytesPerSegment must be >= 2");
         if (!isPowerOfTwo(bytesPerSegment))
@@ -56,7 +88,7 @@ public class NewMMapDataAccess implements NewDataAccess {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        byteOrder = ByteOrder.BIG_ENDIAN;
+        this.byteOrder = byteOrder;
         segments = new ArrayList<>();
         bitUtil = BitUtil.get(byteOrder);
         this.bytesPerSegment = bytesPerSegment;
@@ -70,16 +102,18 @@ public class NewMMapDataAccess implements NewDataAccess {
             return null;
         int numSegments;
         int bytesPerSegment;
+        ByteOrder byteOrder;
         try (RandomAccessFile raf = new RandomAccessFile(path, "r")) {
             String fileMarker = raf.readUTF();
             if (!GH_FILE_MARKER.equals(fileMarker))
                 throw new IllegalArgumentException("Not a GraphHopper file, expected 'GH' file marker, but was " + fileMarker);
             numSegments = raf.readInt();
             bytesPerSegment = raf.readInt();
+            byteOrder = raf.readInt() == 1 ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN;
         } catch (IOException e) {
             throw new UncheckedIOException("Problem while loading " + path, e);
         }
-        NewMMapDataAccess da = new NewMMapDataAccess(path, bytesPerSegment, readOnly);
+        NewMMapDataAccess da = new NewMMapDataAccess(path, byteOrder, bytesPerSegment, readOnly);
         da.mapSegments((long) numSegments * bytesPerSegment);
         return da;
     }
@@ -92,6 +126,7 @@ public class NewMMapDataAccess implements NewDataAccess {
             da.raFile.writeUTF(GH_FILE_MARKER);
             da.raFile.writeInt(da.segments.size());
             da.raFile.writeInt(da.bytesPerSegment);
+            da.raFile.writeInt(da.byteOrder == ByteOrder.BIG_ENDIAN ? 1 : 0);
 
             // this could be necessary too
             // http://stackoverflow.com/q/14011398/194609

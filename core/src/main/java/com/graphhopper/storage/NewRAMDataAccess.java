@@ -30,6 +30,7 @@ import java.util.Arrays;
 public class NewRAMDataAccess implements NewDataAccess {
     private static final String GH_FILE_MARKER = "GH";
     private final String path;
+    private final ByteOrder byteOrder;
     private final BitUtil bitUtil;
     private byte[][] segments;
     private final int bytesPerSegment;
@@ -37,16 +38,33 @@ public class NewRAMDataAccess implements NewDataAccess {
     private final int log2bytesPerSegment;
     private final int offsetDivisor;
 
-    public NewRAMDataAccess() {
+    public static class Builder {
+        private String path = "";
+        private ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
         // ~1MB per segment is the default
-        this("", 1 << 20);
+        private int bytesPerSegment = 1 << 20;
+
+        Builder setPath(String path) {
+            this.path = path;
+            return this;
+        }
+
+        Builder setByteOrder(ByteOrder byteOrder) {
+            this.byteOrder = byteOrder;
+            return this;
+        }
+
+        Builder setBytesPerSegment(int bytesPerSegment) {
+            this.bytesPerSegment = bytesPerSegment;
+            return this;
+        }
+
+        NewRAMDataAccess build() {
+            return new NewRAMDataAccess(new byte[0][], path, byteOrder, bytesPerSegment);
+        }
     }
 
-    public NewRAMDataAccess(String path, int bytesPerSegment) {
-        this(new byte[0][], path, bytesPerSegment);
-    }
-
-    private NewRAMDataAccess(byte[][] segments, String path, int bytesPerSegment) {
+    private NewRAMDataAccess(byte[][] segments, String path, ByteOrder byteOrder, int bytesPerSegment) {
         if (bytesPerSegment < 2)
             throw new IllegalArgumentException("bytesPerSegment must be >= 2");
         if (!isPowerOfTwo(bytesPerSegment))
@@ -55,7 +73,8 @@ public class NewRAMDataAccess implements NewDataAccess {
             if (segment.length != bytesPerSegment)
                 throw new IllegalArgumentException("found segment with invalid length: " + segment.length + ", expected: " + bytesPerSegment);
         this.path = path;
-        bitUtil = BitUtil.get(ByteOrder.BIG_ENDIAN);
+        this.byteOrder = byteOrder;
+        bitUtil = BitUtil.get(byteOrder);
         this.segments = segments;
         this.bytesPerSegment = bytesPerSegment;
         this.log2bytesPerSegment = log2(bytesPerSegment);
@@ -72,6 +91,7 @@ public class NewRAMDataAccess implements NewDataAccess {
                 throw new IllegalArgumentException("Not a GraphHopper file, expected 'GH' file marker, but was " + fileMarker);
             int numSegments = raf.readInt();
             int bytesPerSegment = raf.readInt();
+            ByteOrder byteOrder = raf.readInt() == 1 ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN;
 
             byte[][] segments = new byte[numSegments][];
             for (int s = 0; s < numSegments; s++) {
@@ -80,17 +100,20 @@ public class NewRAMDataAccess implements NewDataAccess {
                     throw new IllegalStateException("segment " + s + " is empty, path: " + path);
                 segments[s] = bytes;
             }
-            return new NewRAMDataAccess(segments, path, bytesPerSegment);
+            return new NewRAMDataAccess(segments, path, byteOrder, bytesPerSegment);
         } catch (IOException e) {
             throw new UncheckedIOException("Problem while loading " + path, e);
         }
     }
 
     public static void flush(NewRAMDataAccess da) {
+        if (da.path.trim().isEmpty())
+            throw new IllegalStateException("Cannot flush RAM DataAccess, because it's path is empty");
         try (RandomAccessFile raf = new RandomAccessFile(da.path, "rw")) {
             raf.writeUTF(GH_FILE_MARKER);
             raf.writeInt(da.segments.length);
             raf.writeInt(da.bytesPerSegment);
+            raf.writeInt(da.byteOrder == ByteOrder.BIG_ENDIAN ? 1 : 0);
             for (byte[] segment : da.segments)
                 raf.write(segment);
         } catch (IOException e) {

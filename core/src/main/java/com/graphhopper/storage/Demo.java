@@ -48,7 +48,7 @@ public class Demo {
     public static void main(String[] args) {
         // for RAM using a file path is not so intuitive, but we want to flush the data to disk later anyway and this
         // way it's the same as we need for mmap
-        NewDataAccess da = new NewRAMDataAccess("my_dummy_path", 64);
+        NewDataAccess da = new NewRAMDataAccess.Builder().setPath("my_dummy_path").build();
         DummyGraph g = new DummyGraph(da);
         g.addNode(1, 16);
         g.flush();
@@ -59,7 +59,7 @@ public class Demo {
         System.out.println(g.getVal(1));
 
         // now do it the other way around
-        da = new NewMMapDataAccess("my_dummy_path", 64, false);
+        da = new NewMMapDataAccess.Builder().setPath("my_dummy_path").build();
         g = new DummyGraph(da);
         g.addNode(1, 16);
         g.flush();

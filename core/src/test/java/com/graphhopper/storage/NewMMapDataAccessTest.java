@@ -39,7 +39,7 @@ public class NewMMapDataAccessTest implements NewDataAccessTest {
 
     @Override
     public NewDataAccess create(String path, int bytesPerSegment) {
-        return new NewMMapDataAccess(path, bytesPerSegment, false);
+        return new NewMMapDataAccess.Builder().setPath(path).setBytesPerSegment(bytesPerSegment).build();
     }
 
     @Override

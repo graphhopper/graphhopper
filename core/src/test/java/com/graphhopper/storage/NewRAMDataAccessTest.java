@@ -39,7 +39,7 @@ class NewRAMDataAccessTest implements NewDataAccessTest {
 
     @Override
     public NewDataAccess create(String path, int bytesPerSegment) {
-        return new NewRAMDataAccess(path, bytesPerSegment);
+        return new NewRAMDataAccess.Builder().setPath(path).setBytesPerSegment(bytesPerSegment).build();
     }
 
     @Override
