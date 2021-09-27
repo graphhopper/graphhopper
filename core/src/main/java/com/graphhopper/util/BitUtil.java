@@ -48,6 +48,18 @@ public abstract class BitUtil {
             return BitUtil.LITTLE;
     }
 
+    public abstract byte getByte(short value, int pos);
+
+    public abstract byte getByte(int value, int pos);
+
+    public abstract byte getByte(long value, int pos);
+
+    public abstract short getShort(byte b0, byte b1);
+
+    public abstract int getInt(byte b0, byte b1, byte b2, byte b3);
+
+    public abstract long getLong(byte b0, byte b1, byte b2, byte b3, byte b4, byte b5, byte b6, byte b7);
+
     public final double toDouble(byte[] bytes) {
         return toDouble(bytes, 0);
     }

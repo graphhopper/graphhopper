@@ -27,6 +27,30 @@ public class BitUtilLittle extends BitUtil {
     BitUtilLittle() {
     }
 
+    public byte getByte(short value, int pos) {
+        return (byte) (value >>> (8 * pos));
+    }
+
+    public byte getByte(int value, int pos) {
+        return (byte) (value >>> (8 * pos));
+    }
+
+    public byte getByte(long value, int pos) {
+        return (byte) (value >>> (8 * pos));
+    }
+
+    public short getShort(byte b0, byte b1) {
+        return (short) ((b1 & 0xFF) << 8 | (b0 & 0xFF));
+    }
+
+    public int getInt(byte b0, byte b1, byte b2, byte b3) {
+        return (b3 & 0xFF) << 24 | (b2 & 0xFF) << 16 | (b1 & 0xFF) << 8 | (b0 & 0xFF);
+    }
+
+    public long getLong(byte b0, byte b1, byte b2, byte b3, byte b4, byte b5, byte b6, byte b7) {
+        return (long) getInt(b7, b6, b5, b4) << 32 | (getInt(b3, b2, b1, b0) & 0xFFFFFFFFL);
+    }
+
     @Override
     public final short toShort(byte[] b, int offset) {
         return (short) ((b[offset + 1] & 0xFF) << 8 | (b[offset] & 0xFF));
