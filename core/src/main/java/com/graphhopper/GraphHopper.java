@@ -87,7 +87,7 @@ public class GraphHopper implements GraphHopperAPI {
     private final Map<String, Profile> profilesByName = new LinkedHashMap<>();
     private final String fileLockName = "gh.lock";
     // utils
-    private final TranslationMap trMap = new TranslationMap().doImport();
+    private TranslationMap trMap;
     boolean removeZipped = true;
     // for graph:
     private GraphHopperStorage ghStorage;
@@ -221,6 +221,14 @@ public class GraphHopper implements GraphHopperAPI {
     public GraphHopper forMobile() {
         setSimplifyResponse(false);
         return setMemoryMapped();
+    }
+
+    /**
+     * Sets translation map. Could be used in case if it should be loaded from custom location.
+     */
+    public GraphHopper setTranslationMap(TranslationMap trMap) {
+        this.trMap = trMap;
+        return this;
     }
 
     /**
@@ -461,6 +469,9 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     public TranslationMap getTranslationMap() {
+        if (this.trMap == null) {
+            this.trMap = new TranslationMap().doImport();
+        }
         return trMap;
     }
 
@@ -1132,7 +1143,7 @@ public class GraphHopper implements GraphHopperAPI {
             if (!request.getHeadings().isEmpty())
                 pathMerger.setFavoredHeading(request.getHeadings().get(0));
 
-            routingTemplate.finish(pathMerger, trMap.getWithFallBack(request.getLocale()));
+            routingTemplate.finish(pathMerger, getTranslationMap().getWithFallBack(request.getLocale()));
             return altPaths;
         } catch (IllegalArgumentException ex) {
             ghRsp.addError(ex);
