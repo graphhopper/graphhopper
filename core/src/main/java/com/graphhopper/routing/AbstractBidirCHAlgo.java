@@ -22,7 +22,9 @@ import com.graphhopper.routing.ch.NodeBasedCHBidirPathExtractor;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.*;
 
+import java.util.HashSet;
 import java.util.PriorityQueue;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
@@ -42,6 +44,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
     protected RoutingCHEdgeExplorer outEdgeExplorer;
     protected CHEdgeFilter levelEdgeFilter;
     private Supplier<BidirPathExtractor> pathExtractorSupplier;
+    private Set<SPTEntry> modified = new HashSet<>();
 
     public AbstractBidirCHAlgo(RoutingCHGraph graph, TraversalMode tMode) {
         super(tMode);
@@ -170,6 +173,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
     private void fillEdges(SPTEntry currEdge, PriorityQueue<SPTEntry> prioQueue,
                            IntObjectMap<SPTEntry> bestWeightMap, RoutingCHEdgeExplorer explorer, boolean reverse) {
         RoutingCHEdgeIterator iter = explorer.setBaseNode(currEdge.adjNode);
+        modified.clear();
         while (iter.next()) {
             if (!accept(iter, currEdge, reverse))
                 continue;
@@ -186,9 +190,8 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
                 bestWeightMap.put(traversalId, entry);
                 prioQueue.add(entry);
             } else if (entry.getWeightOfVisitedPath() > weight) {
-                prioQueue.remove(entry);
                 updateEntry(entry, iter.getEdge(), iter.getAdjNode(), origEdgeId, weight, currEdge, reverse);
-                prioQueue.add(entry);
+                modified.add(entry);
             } else
                 continue;
 
@@ -197,6 +200,8 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
                 updateBestPath(Double.POSITIVE_INFINITY, entry, origEdgeId, traversalId, reverse);
             }
         }
+        prioQueue.removeAll(modified);
+        prioQueue.addAll(modified);
     }
 
     protected double calcWeight(RoutingCHEdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
