@@ -28,6 +28,7 @@ import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -43,7 +44,7 @@ import java.util.stream.Collectors;
  * @author Peter Karich
  * @see GraphBuilder to create a (CH)Graph easier
  */
-public final class GraphHopperStorage implements GraphStorage, Graph {
+public final class GraphHopperStorage implements Graph, Closeable {
     private static final Logger LOGGER = LoggerFactory.getLogger(GraphHopperStorage.class);
     private final Directory dir;
     private final EncodingManager encodingManager;
@@ -198,7 +199,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     /**
      * @return the directory where this graph is stored.
      */
-    @Override
     public Directory getDirectory() {
         return dir;
     }
@@ -206,7 +206,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     /**
      * After configuring this storage you need to create it explicitly.
      */
-    @Override
     public GraphHopperStorage create(long byteCount) {
         baseGraph.checkNotInitialized();
         if (encodingManager == null)
@@ -236,17 +235,14 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         return this;
     }
 
-    @Override
     public EncodingManager getEncodingManager() {
         return encodingManager;
     }
 
-    @Override
     public StorableProperties getProperties() {
         return properties;
     }
 
-    @Override
     public boolean loadExisting() {
         baseGraph.checkNotInitialized();
         if (properties.loadExisting()) {
@@ -304,7 +300,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         }
     }
 
-    @Override
     public void flush() {
         chEntries.stream().map(ch -> ch.chStore).filter(s -> !s.isClosed()).forEach(CHStorage::flush);
         baseGraph.flush();
@@ -318,12 +313,10 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         chEntries.stream().map(ch -> ch.chStore).filter(s -> !s.isClosed()).forEach(CHStorage::close);
     }
 
-    @Override
     public boolean isClosed() {
         return baseGraph.isClosed();
     }
 
-    @Override
     public long getCapacity() {
         long cnt = baseGraph.getCapacity() + properties.getCapacity();
         long cgs = chEntries.stream().mapToLong(ch -> ch.chStore.getCapacity()).sum();
@@ -351,7 +344,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         return baseGraph.isFrozen();
     }
 
-    @Override
     public String toDetailsString() {
         String str = baseGraph.toDetailsString();
         for (CHEntry ch : chEntries) {

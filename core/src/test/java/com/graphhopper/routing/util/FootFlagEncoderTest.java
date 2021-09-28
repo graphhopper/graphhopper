@@ -371,6 +371,11 @@ public class FootFlagEncoderTest {
         node.setTag("locked", "yes");
         // barrier!
         assertTrue(footEncoder.handleNodeTags(node) > 0);
+
+        node.clearTags();
+        node.setTag("barrier", "yes");
+        node.setTag("access", "no");
+        assertTrue(footEncoder.handleNodeTags(node) > 0);
     }
 
     @Test

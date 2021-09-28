@@ -396,7 +396,7 @@ public class GHUtility {
         return toSortedGraph;
     }
 
-    static Directory guessDirectory(GraphStorage store) {
+    static Directory guessDirectory(GraphHopperStorage store) {
         if (store.getDirectory() instanceof MMapDirectory) {
             throw new IllegalStateException("not supported yet: mmap will overwrite existing storage at the same location");
         }
