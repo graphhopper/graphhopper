@@ -33,10 +33,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.ArrayUtil;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.*;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -227,7 +224,7 @@ public class RandomizedRoutingTest {
          * A--C
          * \-B|
          * where A-C is the same distance as A-B-C. In this case the shortest path is not well defined in terms of nodes.
-         * This method check if two node-paths are equal with the exception of such an edge.
+         * This method checks if two node-paths are equal except for such an edge.
          */
         private boolean pathsEqualExceptOneEdge(IntIndexedContainer p1, IntIndexedContainer p2) {
             if (p1.equals(p2))
@@ -253,9 +250,9 @@ public class RandomizedRoutingTest {
             assert shorterPath.get(b) != longerPath.get(b);
             if (shorterPath.get(b) != longerPath.get(c))
                 return false;
-            double distABC = getDist(longerPath.get(a), longerPath.get(b)) + getDist(longerPath.get(b), longerPath.get(c));
+            double distABC = getMinDist(longerPath.get(a), longerPath.get(b)) + getMinDist(longerPath.get(b), longerPath.get(c));
 
-            double distAC = getDist(shorterPath.get(a), longerPath.get(c));
+            double distAC = getMinDist(shorterPath.get(a), longerPath.get(c));
             if (Math.abs(distABC - distAC) > 0.1)
                 return false;
             LOGGER.info("Distance " + shorterPath.get(a) + "-" + longerPath.get(c) + " is the same as distance " +
@@ -264,10 +261,14 @@ public class RandomizedRoutingTest {
             return true;
         }
 
-        private double getDist(int p, int q) {
-            EdgeIteratorState edge = GHUtility.getEdge(graph, p, q);
-            if (edge == null) return Double.POSITIVE_INFINITY;
-            return edge.getDistance();
+        private double getMinDist(int p, int q) {
+            EdgeExplorer explorer = graph.createEdgeExplorer();
+            EdgeIterator iter = explorer.setBaseNode(p);
+            double distance = Double.MAX_VALUE;
+            while (iter.next())
+                if (iter.getAdjNode() == q)
+                    distance = Math.min(distance, iter.getDistance());
+            return distance;
         }
 
     }
