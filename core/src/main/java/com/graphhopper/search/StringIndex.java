@@ -336,8 +336,4 @@ public class StringIndex {
         return vals.getCapacity() + keys.getCapacity();
     }
 
-    public void copyTo(StringIndex stringIndex) {
-        keys.copyTo(stringIndex.keys);
-        vals.copyTo(stringIndex.vals);
-    }
 }

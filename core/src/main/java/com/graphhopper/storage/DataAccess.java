@@ -129,11 +129,6 @@ public interface DataAccess extends Closeable {
     boolean ensureCapacity(long bytes);
 
     /**
-     * Copies the content from this object into the specified one.
-     */
-    DataAccess copyTo(DataAccess da);
-
-    /**
      * @return the size of one segment in bytes
      */
     int getSegmentSize();

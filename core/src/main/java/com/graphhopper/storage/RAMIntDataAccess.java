@@ -55,25 +55,6 @@ class RAMIntDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public DataAccess copyTo(DataAccess da) {
-        if (da instanceof RAMIntDataAccess) {
-            copyHeader(da);
-            RAMIntDataAccess rda = (RAMIntDataAccess) da;
-            // TODO PERFORMANCE we could reuse rda segments!
-            rda.segments = new int[segments.length][];
-            for (int i = 0; i < segments.length; i++) {
-                int[] area = segments[i];
-                rda.segments[i] = Arrays.copyOf(area, area.length);
-            }
-            rda.setSegmentSize(segmentSizeInBytes);
-            // leave id, store and close unchanged
-            return da;
-        } else {
-            return super.copyTo(da);
-        }
-    }
-
-    @Override
     public RAMIntDataAccess create(long bytes) {
         if (segments.length > 0)
             throw new IllegalThreadStateException("already created");

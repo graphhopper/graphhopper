@@ -122,37 +122,6 @@ public abstract class AbstractDataAccess implements DataAccess {
     }
 
     @Override
-    public DataAccess copyTo(DataAccess da) {
-        copyHeader(da);
-        da.ensureCapacity(getCapacity());
-        long cap = getCapacity();
-        // currently get/setBytes does not support copying more bytes then segmentSize
-        int segSize = Math.min(da.getSegmentSize(), getSegmentSize());
-        byte[] bytes = new byte[segSize];
-        boolean externalIntBased = ((AbstractDataAccess) da).isIntBased();
-        for (long bytePos = 0; bytePos < cap; bytePos += segSize) {
-            // read
-            if (isIntBased()) {
-                for (int offset = 0; offset < segSize; offset += 4) {
-                    bitUtil.fromInt(bytes, getInt(bytePos + offset), offset);
-                }
-            } else {
-                getBytes(bytePos, bytes, segSize);
-            }
-
-            // write
-            if (externalIntBased) {
-                for (int offset = 0; offset < segSize; offset += 4) {
-                    da.setInt(bytePos + offset, bitUtil.toInt(bytes, offset));
-                }
-            } else {
-                da.setBytes(bytePos, bytes, segSize);
-            }
-        }
-        return da;
-    }
-
-    @Override
     public DataAccess setSegmentSize(int bytes) {
         if (bytes > 0) {
             // segment size should be a power of 2

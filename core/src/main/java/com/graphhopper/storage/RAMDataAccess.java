@@ -53,25 +53,6 @@ public class RAMDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public DataAccess copyTo(DataAccess da) {
-        if (da instanceof RAMDataAccess) {
-            copyHeader(da);
-            RAMDataAccess rda = (RAMDataAccess) da;
-            // TODO PERFORMANCE we could reuse rda segments!
-            rda.segments = new byte[segments.length][];
-            for (int i = 0; i < segments.length; i++) {
-                byte[] area = segments[i];
-                rda.segments[i] = Arrays.copyOf(area, area.length);
-            }
-            rda.setSegmentSize(segmentSizeInBytes);
-            // leave id, store and close unchanged
-            return da;
-        } else {
-            return super.copyTo(da);
-        }
-    }
-
-    @Override
     public RAMDataAccess create(long bytes) {
         if (segments.length > 0)
             throw new IllegalThreadStateException("already created");

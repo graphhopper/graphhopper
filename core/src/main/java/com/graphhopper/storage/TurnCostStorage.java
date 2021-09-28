@@ -207,12 +207,6 @@ public class TurnCostStorage {
         turnCosts.ensureCapacity(((long) nodeIndex + 4) * BYTES_PER_ENTRY);
     }
 
-    public TurnCostStorage copyTo(TurnCostStorage turnCostStorage) {
-        turnCosts.copyTo(turnCostStorage.turnCosts);
-        turnCostStorage.turnCostsCount = turnCostsCount;
-        return turnCostStorage;
-    }
-
     public boolean isClosed() {
         return turnCosts.isClosed();
     }

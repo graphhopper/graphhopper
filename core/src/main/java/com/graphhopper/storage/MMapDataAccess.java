@@ -180,16 +180,6 @@ public final class MMapDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public DataAccess copyTo(DataAccess da) {
-        // if(da instanceof MMapDataAccess) {
-        // TODO PERFORMANCE make copying into mmap a lot faster via bytebuffer
-        // also copying into RAMDataAccess could be faster via bytebuffer
-        // is a flush necessary then?
-        // }
-        return super.copyTo(da);
-    }
-
-    @Override
     public boolean ensureCapacity(long bytes) {
         return mapIt(HEADER_OFFSET, bytes);
     }
