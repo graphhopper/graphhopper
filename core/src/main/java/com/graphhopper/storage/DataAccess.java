@@ -17,18 +17,15 @@
  */
 package com.graphhopper.storage;
 
+import java.io.Closeable;
+
 /**
- * Abstraction of the underlying data structure with a unique id and location. To ensure that the id
- * is unique use a Directory.attach or findAttach, if you don't need uniqueness call
- * Directory.create. Current implementations are RAM and memory mapped access.
- * <p>
  * Life cycle: (1) object creation, (2) configuration (e.g. segment size), (3) create or
  * loadExisting, (4) usage and calling ensureCapacity if necessary, (5) close
- * <p>
  *
  * @author Peter Karich
  */
-public interface DataAccess extends Storable<DataAccess> {
+public interface DataAccess extends Closeable {
     /**
      * The logical identification of this object.
      */
@@ -93,8 +90,33 @@ public interface DataAccess extends Storable<DataAccess> {
      * The first time you use a DataAccess object after configuring it you need to call this method.
      * After that first call you have to use ensureCapacity to ensure that enough space is reserved.
      */
-    @Override
     DataAccess create(long bytes);
+
+    /**
+     * This method makes sure that the underlying data is written to the storage. Keep in mind that
+     * a disc normally has an IO cache so that flush() is (less) probably not save against power
+     * loses.
+     */
+    void flush();
+
+    /**
+     * This method makes sure that the underlying used resources are released. WARNING: it does NOT
+     * flush on close!
+     */
+    @Override
+    void close();
+
+    boolean isClosed();
+
+    /**
+     * @return true if successfully loaded from persistent storage.
+     */
+    boolean loadExisting();
+
+    /**
+     * @return the allocated storage size in bytes
+     */
+    long getCapacity();
 
     /**
      * Ensures that the capacity of this object is at least the specified bytes. The first time you

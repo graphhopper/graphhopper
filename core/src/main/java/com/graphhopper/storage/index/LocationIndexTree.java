@@ -115,12 +115,6 @@ public class LocationIndexTree implements LocationIndex {
         return this;
     }
 
-    @Override
-    public LocationIndexTree create(long size) {
-        throw new UnsupportedOperationException("Not supported. Use prepareIndex instead.");
-    }
-
-    @Override
     public boolean loadExisting() {
         // Clone this defensively -- In case something funny happens and things get added to the Graph after
         // this index is built. Reason is that the expected structure of the index is a function of the bbox, so we
@@ -146,7 +140,6 @@ public class LocationIndexTree implements LocationIndex {
         return true;
     }
 
-    @Override
     public void flush() {
         lineIntIndex.flush();
     }
@@ -229,17 +222,14 @@ public class LocationIndexTree implements LocationIndex {
         return graph.getNodes() ^ graph.getAllEdges().length();
     }
 
-    @Override
     public void close() {
         lineIntIndex.close();
     }
 
-    @Override
     public boolean isClosed() {
         return lineIntIndex.isClosed();
     }
 
-    @Override
     public long getCapacity() {
         return lineIntIndex.getCapacity();
     }

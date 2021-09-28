@@ -33,7 +33,7 @@ import static com.graphhopper.util.Helper.*;
  *
  * @author Peter Karich
  */
-public class StorableProperties implements Storable<StorableProperties> {
+public class StorableProperties {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StorableProperties.class);
 
@@ -46,7 +46,6 @@ public class StorableProperties implements Storable<StorableProperties> {
         da.setSegmentSize(1 << 15);
     }
 
-    @Override
     public synchronized boolean loadExisting() {
         if (!da.loadExisting())
             return false;
@@ -62,7 +61,6 @@ public class StorableProperties implements Storable<StorableProperties> {
         }
     }
 
-    @Override
     public synchronized void flush() {
         try {
             StringWriter sw = new StringWriter();
@@ -113,23 +111,19 @@ public class StorableProperties implements Storable<StorableProperties> {
         return ret;
     }
 
-    @Override
     public synchronized void close() {
         da.close();
     }
 
-    @Override
     public synchronized boolean isClosed() {
         return da.isClosed();
     }
 
-    @Override
     public synchronized StorableProperties create(long size) {
         da.create(size);
         return this;
     }
 
-    @Override
     public synchronized long getCapacity() {
         return da.getCapacity();
     }

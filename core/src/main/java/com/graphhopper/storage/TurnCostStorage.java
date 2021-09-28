@@ -35,7 +35,7 @@ import com.graphhopper.util.EdgeIterator;
  * @author Peter Karich
  * @author Michael Zilske
  */
-public class TurnCostStorage implements Storable<TurnCostStorage> {
+public class TurnCostStorage {
     static final int NO_TURN_ENTRY = -1;
     private static final int EMPTY_FLAGS = 0;
     // we store each turn cost entry in the format |from_edge|to_edge|flags|next|. each entry has 4 bytes -> 16 bytes total
@@ -58,30 +58,25 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
         turnCosts.setSegmentSize(bytes);
     }
 
-    @Override
     public TurnCostStorage create(long initBytes) {
         turnCosts.create(initBytes);
         return this;
     }
 
-    @Override
     public void flush() {
         turnCosts.setHeader(0, BYTES_PER_ENTRY);
         turnCosts.setHeader(1 * 4, turnCostsCount);
         turnCosts.flush();
     }
 
-    @Override
     public void close() {
         turnCosts.close();
     }
 
-    @Override
     public long getCapacity() {
         return turnCosts.getCapacity();
     }
 
-    @Override
     public boolean loadExisting() {
         if (!turnCosts.loadExisting())
             return false;
@@ -218,7 +213,6 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
         return turnCostStorage;
     }
 
-    @Override
     public boolean isClosed() {
         return turnCosts.isClosed();
     }

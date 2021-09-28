@@ -19,7 +19,6 @@ package com.graphhopper.search;
 
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.Storable;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Helper;
 
@@ -28,7 +27,7 @@ import java.util.*;
 /**
  * @author Peter Karich
  */
-public class StringIndex implements Storable<StringIndex> {
+public class StringIndex {
     private static final long EMPTY_POINTER = 0, START_POINTER = 1;
     // Store the key index in 2 bytes. Use negative values for marking the value as duplicate.
     static final int MAX_UNIQUE_KEYS = (1 << 15);
@@ -70,7 +69,6 @@ public class StringIndex implements Storable<StringIndex> {
         };
     }
 
-    @Override
     public StringIndex create(long initBytes) {
         keys.create(initBytes);
         vals.create(initBytes);
@@ -80,7 +78,6 @@ public class StringIndex implements Storable<StringIndex> {
         return this;
     }
 
-    @Override
     public boolean loadExisting() {
         if (vals.loadExisting()) {
             if (!keys.loadExisting())
@@ -301,7 +298,6 @@ public class StringIndex implements Storable<StringIndex> {
         return bytes;
     }
 
-    @Override
     public void flush() {
         keys.ensureCapacity(2);
         keys.setShort(0, (short) keysInMem.size());
@@ -322,13 +318,11 @@ public class StringIndex implements Storable<StringIndex> {
         vals.flush();
     }
 
-    @Override
     public void close() {
         keys.close();
         vals.close();
     }
 
-    @Override
     public boolean isClosed() {
         return vals.isClosed() && keys.isClosed();
     }
@@ -338,7 +332,6 @@ public class StringIndex implements Storable<StringIndex> {
         vals.setSegmentSize(segments);
     }
 
-    @Override
     public long getCapacity() {
         return vals.getCapacity() + keys.getCapacity();
     }
