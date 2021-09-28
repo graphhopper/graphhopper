@@ -87,7 +87,7 @@ public class GraphHopper implements GraphHopperAPI {
     private final Map<String, Profile> profilesByName = new LinkedHashMap<>();
     private final String fileLockName = "gh.lock";
     // utils
-    private final TranslationMap trMap = new TranslationMap().doImport();
+    private final TranslationMap trMap;
     boolean removeZipped = true;
     // for graph:
     private GraphHopperStorage ghStorage;
@@ -125,6 +125,11 @@ public class GraphHopper implements GraphHopperAPI {
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
     public GraphHopper() {
+        trMap = new TranslationMap().doImport();
+    }
+
+    public GraphHopper(TranslationMap trMap) {
+        this.trMap = trMap;
     }
 
     /**
