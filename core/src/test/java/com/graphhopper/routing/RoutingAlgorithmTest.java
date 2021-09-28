@@ -20,8 +20,8 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -1004,16 +1004,20 @@ public class RoutingAlgorithmTest {
      * Creates a GH storage supporting the given weightings for CH
      */
     private GraphHopperStorage createGHStorage(boolean is3D, Weighting... weightings) {
-        CHProfile[] chProfiles = new CHProfile[weightings.length];
+        CHConfig[] chConfigs = new CHConfig[weightings.length];
         for (int i = 0; i < weightings.length; i++) {
-            chProfiles[i] = new CHProfile(weightings[i], traversalMode.isEdgeBased());
+            chConfigs[i] = new CHConfig(getCHGraphName(weightings[i]), weightings[i], traversalMode.isEdgeBased());
         }
         return new GraphBuilder(encodingManager).set3D(is3D)
-                .setCHProfiles(chProfiles)
+                .setCHConfigs(chConfigs)
                 // this test should never include turn costs, but we have to set it to true to be able to
                 // run edge-based algorithms
                 .withTurnCosts(traversalMode.isEdgeBased())
                 .create();
+    }
+
+    private static String getCHGraphName(Weighting weighting) {
+        return weighting.getName() + "_" + weighting.getFlagEncoder().toString();
     }
 
     private Path calcPath(GraphHopperStorage ghStorage, int from, int to) {
@@ -1087,7 +1091,7 @@ public class RoutingAlgorithmTest {
 
         @Override
         public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, QueryResult from, QueryResult to) {
-            QueryGraph queryGraph = QueryGraph.lookup(graph, from, to);
+            QueryGraph queryGraph = QueryGraph.create(graph, from, to);
             RoutingAlgorithm algo = createAlgo(queryGraph, weighting, traversalMode);
             algo.setMaxVisitedNodes(maxVisitedNodes);
             return algo.calcPath(from.getClosestNode(), to.getClosestNode());
@@ -1159,9 +1163,9 @@ public class RoutingAlgorithmTest {
     private static abstract class CHCalculator implements PathCalculator {
         @Override
         public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, int from, int to) {
-            CHProfile chProfile = new CHProfile(weighting, traversalMode.isEdgeBased());
-            PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
-            CHGraph chGraph = graph.getCHGraph(chProfile);
+            CHConfig chConfig = new CHConfig(getCHGraphName(weighting), weighting, traversalMode.isEdgeBased());
+            PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
+            CHGraph chGraph = graph.getCHGraph(chConfig);
             if (chGraph.getEdges() == chGraph.getOriginalEdges()) {
                 graph.freeze();
                 pch.doWork();
@@ -1185,14 +1189,14 @@ public class RoutingAlgorithmTest {
 
         @Override
         public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, QueryResult from, QueryResult to) {
-            CHProfile chProfile = new CHProfile(weighting, traversalMode.isEdgeBased());
-            PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
-            CHGraph chGraph = graph.getCHGraph(chProfile);
+            CHConfig chConfig = new CHConfig(getCHGraphName(weighting), weighting, traversalMode.isEdgeBased());
+            PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
+            CHGraph chGraph = graph.getCHGraph(chConfig);
             if (chGraph.getEdges() == chGraph.getOriginalEdges()) {
                 graph.freeze();
                 pch.doWork();
             }
-            QueryGraph queryGraph = QueryGraph.lookup(chGraph, from, to);
+            QueryGraph queryGraph = QueryGraph.create(chGraph, from, to);
             RoutingAlgorithmFactory algoFactory = pch.getRoutingAlgorithmFactory();
             AlgorithmOptions opts = AlgorithmOptions.start()
                     .algorithm(getAlgorithm())

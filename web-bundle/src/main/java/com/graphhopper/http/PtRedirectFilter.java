@@ -29,10 +29,16 @@ public class PtRedirectFilter implements ContainerRequestFilter {
     public void filter(ContainerRequestContext requestContext) {
         if (shouldRedirect(requestContext)) {
             if (requestContext.getUriInfo().getPath().equals("route")) {
-                URI forwardURI = requestContext.getUriInfo().getRequestUriBuilder().replacePath("/route-pt").replaceQueryParam("vehicle").build();
+                URI forwardURI = requestContext.getUriInfo().getRequestUriBuilder().replacePath("/route-pt")
+                        .replaceQueryParam("vehicle")
+                        .replaceQueryParam("profile")
+                        .build();
                 requestContext.setRequestUri(forwardURI);
             } else if (requestContext.getUriInfo().getPath().equals("isochrone")) {
-                URI forwardURI = requestContext.getUriInfo().getRequestUriBuilder().replacePath("/isochrone-pt").replaceQueryParam("vehicle").build();
+                URI forwardURI = requestContext.getUriInfo().getRequestUriBuilder().replacePath("/isochrone-pt")
+                        .replaceQueryParam("vehicle")
+                        .replaceQueryParam("profile")
+                        .build();
                 requestContext.setRequestUri(forwardURI);
             }
         }
@@ -40,6 +46,7 @@ public class PtRedirectFilter implements ContainerRequestFilter {
 
     private boolean shouldRedirect(ContainerRequestContext requestContext) {
         String maybeVehicle = requestContext.getUriInfo().getQueryParameters().getFirst("vehicle");
-        return maybeVehicle != null && maybeVehicle.equals("pt");
+        String maybeProfile = requestContext.getUriInfo().getQueryParameters().getFirst("profile");
+        return "pt".equals(maybeVehicle) || "pt".equals(maybeProfile);
     }
 }

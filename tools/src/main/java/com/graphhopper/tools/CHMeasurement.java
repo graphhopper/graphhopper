@@ -21,9 +21,9 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.config.CHProfileConfig;
-import com.graphhopper.config.LMProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.LMProfile;
+import com.graphhopper.config.Profile;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.lm.LMPreparationHandler;
@@ -93,21 +93,21 @@ public class CHMeasurement {
         if (withTurnCosts) {
             ghConfig.putObject("graph.flag_encoders", "car|turn_costs=true");
             ghConfig.setProfiles(Collections.singletonList(
-                    new ProfileConfig(profile).setVehicle("car").setWeighting("fastest").setTurnCosts(true)
+                    new Profile(profile).setVehicle("car").setWeighting("fastest").setTurnCosts(true)
             ));
             ghConfig.setCHProfiles(Collections.singletonList(
-                    new CHProfileConfig(profile)
+                    new CHProfile(profile)
             ));
             if (landmarks > 0) {
                 ghConfig.setLMProfiles(Collections.singletonList(
-                        new LMProfileConfig(profile)
+                        new LMProfile(profile)
                 ));
                 ghConfig.putObject("prepare.lm.landmarks", landmarks);
             }
         } else {
             ghConfig.putObject("graph.flag_encoders", "car");
             ghConfig.setProfiles(Collections.singletonList(
-                    new ProfileConfig(profile).setVehicle("car").setWeighting("fastest").setTurnCosts(false)
+                    new Profile(profile).setVehicle("car").setWeighting("fastest").setTurnCosts(false)
             ));
         }
         CHPreparationHandler chHandler = graphHopper.getCHPreparationHandler();

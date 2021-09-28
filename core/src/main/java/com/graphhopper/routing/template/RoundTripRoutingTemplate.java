@@ -19,12 +19,12 @@ package com.graphhopper.routing.template;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
+import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.tour.MultiPointTour;
@@ -74,7 +74,7 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
             throw new IllegalArgumentException("For round trip calculation exactly one point is required");
         final double distanceInMeter = ghRequest.getHints().getDouble(RoundTrip.DISTANCE, 10000);
         final long seed = ghRequest.getHints().getLong(RoundTrip.SEED, 0L);
-        double initialHeading = ghRequest.getFavoredHeading(0);
+        double initialHeading = ghRequest.getHeadings().isEmpty() ? Double.NaN : ghRequest.getHeadings().get(0);
         final int roundTripPointCount = Math.min(20, ghRequest.getHints().getInt(RoundTrip.POINTS, 2 + (int) (distanceInMeter / 50000)));
         final GHPoint start = points.get(0);
 
@@ -150,10 +150,10 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
 
     @Override
     public void finish(PathMerger pathMerger, Translation tr) {
-        PathWrapper altResponse = new PathWrapper();
-        altResponse.setWaypoints(getWaypoints());
-        ghResponse.add(altResponse);
-        pathMerger.doWork(altResponse, pathList, lookup, tr);
+        ResponsePath responsePath = new ResponsePath();
+        responsePath.setWaypoints(getWaypoints());
+        ghResponse.add(responsePath);
+        pathMerger.doWork(responsePath, pathList, lookup, tr);
     }
 
     private QueryResult generateValidPoint(GHPoint from, double distanceInMeters, double heading,

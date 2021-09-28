@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GHResponse;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 
 import java.io.IOException;
 
@@ -33,8 +33,8 @@ public class GHResponseDeserializer extends JsonDeserializer<GHResponse> {
         GHResponse ghResponse = new GHResponse();
         JsonNode treeNode = p.readValueAsTree();
         for (JsonNode path : treeNode.get("paths")) {
-            PathWrapper pathWrapper = ((ObjectMapper) p.getCodec()).convertValue(path, PathWrapper.class);
-            ghResponse.add(pathWrapper);
+            ResponsePath responsePath = ((ObjectMapper) p.getCodec()).convertValue(path, ResponsePath.class);
+            ghResponse.add(responsePath);
         }
         return ghResponse;
     }

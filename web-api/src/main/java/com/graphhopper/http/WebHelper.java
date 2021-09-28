@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 
@@ -153,7 +153,7 @@ public class WebHelper {
     public static ObjectNode jsonResponsePutInfo(ObjectNode json, float took) {
         final ObjectNode info = json.putObject("info");
         info.putPOJO("copyrights", COPYRIGHTS);
-        info.put("took", Math.round(took * 1000));
+        info.put("took", Math.round(took));
         return json;
     }
 
@@ -162,32 +162,32 @@ public class WebHelper {
         json.putPOJO("hints", ghRsp.getHints().toMap());
         jsonResponsePutInfo(json, took);
         ArrayNode jsonPathList = json.putArray("paths");
-        for (PathWrapper ar : ghRsp.getAll()) {
+        for (ResponsePath p : ghRsp.getAll()) {
             ObjectNode jsonPath = jsonPathList.addObject();
-            jsonPath.put("distance", Helper.round(ar.getDistance(), 3));
-            jsonPath.put("weight", Helper.round6(ar.getRouteWeight()));
-            jsonPath.put("time", ar.getTime());
-            jsonPath.put("transfers", ar.getNumChanges());
-            if (!ar.getDescription().isEmpty()) {
-                jsonPath.putPOJO("description", ar.getDescription());
+            jsonPath.put("distance", Helper.round(p.getDistance(), 3));
+            jsonPath.put("weight", Helper.round6(p.getRouteWeight()));
+            jsonPath.put("time", p.getTime());
+            jsonPath.put("transfers", p.getNumChanges());
+            if (!p.getDescription().isEmpty()) {
+                jsonPath.putPOJO("description", p.getDescription());
             }
             if (calcPoints) {
                 jsonPath.put("points_encoded", pointsEncoded);
-                if (ar.getPoints().getSize() >= 2) {
-                    jsonPath.putPOJO("bbox", ar.calcBBox2D());
+                if (p.getPoints().getSize() >= 2) {
+                    jsonPath.putPOJO("bbox", p.calcBBox2D());
                 }
-                jsonPath.putPOJO("points", pointsEncoded ? encodePolyline(ar.getPoints(), enableElevation) : ar.getPoints().toLineString(enableElevation));
+                jsonPath.putPOJO("points", pointsEncoded ? encodePolyline(p.getPoints(), enableElevation) : p.getPoints().toLineString(enableElevation));
                 if (enableInstructions) {
-                    jsonPath.putPOJO("instructions", ar.getInstructions());
+                    jsonPath.putPOJO("instructions", p.getInstructions());
                 }
-                jsonPath.putPOJO("legs", ar.getLegs());
-                jsonPath.putPOJO("details", ar.getPathDetails());
-                jsonPath.put("ascend", ar.getAscend());
-                jsonPath.put("descend", ar.getDescend());
+                jsonPath.putPOJO("legs", p.getLegs());
+                jsonPath.putPOJO("details", p.getPathDetails());
+                jsonPath.put("ascend", p.getAscend());
+                jsonPath.put("descend", p.getDescend());
             }
-            jsonPath.putPOJO("snapped_waypoints", pointsEncoded ? encodePolyline(ar.getWaypoints(), enableElevation) : ar.getWaypoints().toLineString(enableElevation));
-            if (ar.getFare() != null) {
-                jsonPath.put("fare", NumberFormat.getCurrencyInstance(Locale.ROOT).format(ar.getFare()));
+            jsonPath.putPOJO("snapped_waypoints", pointsEncoded ? encodePolyline(p.getWaypoints(), enableElevation) : p.getWaypoints().toLineString(enableElevation));
+            if (p.getFare() != null) {
+                jsonPath.put("fare", NumberFormat.getCurrencyInstance(Locale.ROOT).format(p.getFare()));
             }
         }
         return json;

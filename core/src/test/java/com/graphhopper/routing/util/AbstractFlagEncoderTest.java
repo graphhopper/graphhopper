@@ -17,32 +17,31 @@
  */
 package com.graphhopper.routing.util;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static com.graphhopper.routing.util.AbstractFlagEncoder.parseSpeed;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Peter Karich
  */
 public class AbstractFlagEncoderTest {
     @Test
-    public void testAcceptsCar() {
-        CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 0);
-        assertEquals(40, encoder.parseSpeed("40 km/h"), 1e-3);
-        assertEquals(40, encoder.parseSpeed("40km/h"), 1e-3);
-        assertEquals(40, encoder.parseSpeed("40kmh"), 1e-3);
-        assertEquals(64.374, encoder.parseSpeed("40mph"), 1e-3);
-        assertEquals(48.28, encoder.parseSpeed("30 mph"), 1e-3);
-        assertEquals(-1, encoder.parseSpeed(null), 1e-3);
-        assertEquals(18.52, encoder.parseSpeed("10 knots"), 1e-3);
-        assertEquals(19, encoder.parseSpeed("19 kph"), 1e-3);
-        assertEquals(19, encoder.parseSpeed("19kph"), 1e-3);
+    public void testParseSpeed() {
+        assertEquals(40, parseSpeed("40 km/h"), 1e-3);
+        assertEquals(40, parseSpeed("40km/h"), 1e-3);
+        assertEquals(40, parseSpeed("40kmh"), 1e-3);
+        assertEquals(64.374, parseSpeed("40mph"), 1e-3);
+        assertEquals(48.28, parseSpeed("30 mph"), 1e-3);
+        assertEquals(-1, parseSpeed(null), 1e-3);
+        assertEquals(18.52, parseSpeed("10 knots"), 1e-3);
+        assertEquals(19, parseSpeed("19 kph"), 1e-3);
+        assertEquals(19, parseSpeed("19kph"), 1e-3);
 
-        assertEquals(50, encoder.parseSpeed("RO:urban"), 1e-3);
+        assertEquals(50, parseSpeed("RO:urban"), 1e-3);
 
-        assertEquals(80, encoder.parseSpeed("RU:rural"), 1e-3);
+        assertEquals(80, parseSpeed("RU:rural"), 1e-3);
 
-        assertEquals(6, encoder.parseSpeed("walk"), 1e-3);
+        assertEquals(6, parseSpeed("walk"), 1e-3);
     }
-
 }

@@ -20,8 +20,7 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.BidirPathExtractor;
 import com.graphhopper.storage.RoutingCHGraph;
-import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.storage.ShortcutUnpacker;
+import com.graphhopper.routing.SPTEntry;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 

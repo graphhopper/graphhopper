@@ -28,7 +28,6 @@ public class Car4WDFlagEncoder extends CarFlagEncoder {
 
     public Car4WDFlagEncoder(PMap properties) {
         super(properties);
-
         trackTypeSpeedMap.put("grade4", 5); // ... some hard or compressed materials
         trackTypeSpeedMap.put("grade5", 5); // ... no hard materials. soil/sand/grass
     }

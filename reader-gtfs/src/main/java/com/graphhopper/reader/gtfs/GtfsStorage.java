@@ -122,7 +122,15 @@ public class GtfsStorage implements GtfsStorageI {
 		this.data = DBMaker.newFileDB(file).transactionDisable().mmapFileEnable().readOnly().make();
 		init();
 		for (String gtfsFeedId : this.gtfsFeedIds) {
-			GTFSFeed feed = new GTFSFeed(new File(dir.getLocation() + "/" + gtfsFeedId));
+			File dbFile = new File(dir.getLocation() + "/" + gtfsFeedId);
+
+			if (!dbFile.exists()) {
+				throw new RuntimeException(String.format("The mapping of the gtfsFeeds in the transit_schedule DB does not reflect the files in %s. "
+								+ "dbFile %s is missing.",
+						dir.getLocation(), dbFile.getName()));
+			}
+
+			GTFSFeed feed = new GTFSFeed(dbFile);
 			this.gtfsFeeds.put(gtfsFeedId, feed);
 			this.transfers.put(gtfsFeedId, new Transfers(feed));
 		}

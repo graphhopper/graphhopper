@@ -18,7 +18,6 @@
 package com.graphhopper.http.util;
 
 import io.dropwizard.Configuration;
-import io.dropwizard.testing.junit.DropwizardAppRule;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 
 import javax.ws.rs.client.WebTarget;
@@ -28,7 +27,6 @@ import javax.ws.rs.client.WebTarget;
  */
 public class TestUtils {
     private TestUtils() {
-
     }
 
     public static WebTarget clientTarget(DropwizardAppExtension<? extends Configuration> app, String path) {
@@ -37,16 +35,6 @@ public class TestUtils {
     }
 
     public static String clientUrl(DropwizardAppExtension<? extends Configuration> app, String path) {
-        path = prefixPathWithSlash(path);
-        return "http://localhost:" + app.getLocalPort() + path;
-    }
-
-    public static WebTarget clientTarget(DropwizardAppRule<? extends Configuration> app, String path) {
-        path = prefixPathWithSlash(path);
-        return app.client().target(clientUrl(app, path));
-    }
-
-    public static String clientUrl(DropwizardAppRule<? extends Configuration> app, String path) {
         path = prefixPathWithSlash(path);
         return "http://localhost:" + app.getLocalPort() + path;
     }

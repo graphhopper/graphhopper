@@ -31,6 +31,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -186,12 +187,13 @@ public class GraphHopperGtfsIT {
         ghRequest.setProfileQuery(true);
         ghRequest.setIgnoreTransfers(true);
         ghRequest.setLimitSolutions(Integer.MAX_VALUE);
+        ghRequest.setMaxProfileDuration(Duration.ofHours(4));
 
         GHResponse response = ptRouteResource.route(ghRequest);
         List<LocalTime> actualDepartureTimes = response.getAll().stream()
                 .map(path -> LocalTime.from(path.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId)))
                 .collect(Collectors.toList());
-        // If profile time window is 4 hours (default), then we should get these answers, not more and not less:
+        // If profile time window is 4 hours, then we should get these answers, not more and not less:
         // At 10:00 (end of profile time window), the departure at 10:04 is optimal.
         // This is hairy, it's easy to confuse this and 09:54 becomes the last option.
         List<LocalTime> expectedDepartureTimes = Stream.of(
@@ -390,7 +392,7 @@ public class GraphHopperGtfsIT {
         );
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 18, 0).atZone(zoneId).toInstant());
         GHResponse response = ptRouteResource.route(ghRequest);
-        PathWrapper mondayTrip = response.getBest();
+        ResponsePath mondayTrip = response.getBest();
         assertEquals("Monday trip has no transfers", 0, mondayTrip.getNumChanges());
         assertEquals("Monday trip has 3 legs", 3, mondayTrip.getLegs().size());
         assertEquals("FUNNY_BLOCK_AB1", (((Trip.PtLeg) mondayTrip.getLegs().get(0)).trip_id));
@@ -399,7 +401,7 @@ public class GraphHopperGtfsIT {
 
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 7, 18, 0).atZone(zoneId).toInstant());
         response = ptRouteResource.route(ghRequest);
-        PathWrapper sundayTrip = response.getBest();
+        ResponsePath sundayTrip = response.getBest();
         assertEquals("Sunday trip has no transfers", 0, sundayTrip.getNumChanges());
         assertEquals("Sunday trip has 2 legs", 2, sundayTrip.getLegs().size());
         assertEquals("FUNNY_BLOCK_AB1", (((Trip.PtLeg) sundayTrip.getLegs().get(0)).trip_id));
@@ -500,8 +502,8 @@ public class GraphHopperGtfsIT {
 
         GHResponse response = ptRouteResource.route(ghRequest);
 
-        PathWrapper solutionWithTransfer = response.getAll().get(0);
-        PathWrapper solutionWithoutTransfer = response.getAll().get(1);
+        ResponsePath solutionWithTransfer = response.getAll().get(0);
+        ResponsePath solutionWithoutTransfer = response.getAll().get(1);
 
         Assume.assumeTrue("First solution has one transfer", solutionWithTransfer.getNumChanges() == 1);
         Assume.assumeTrue("Second solution has no transfers", solutionWithoutTransfer.getNumChanges() == 0);

@@ -20,8 +20,8 @@ package com.graphhopper.http.resources;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.PathWrapper;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.ResponsePath;
+import com.graphhopper.config.Profile;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.Helper;
@@ -49,7 +49,7 @@ public class GpxTravelTimeConsistencyTest {
         Helper.removeDir(new File(graphFileFoot));
         hopper = new GraphHopperOSM().
                 setOSMFile(osmFile).
-                setProfiles(new ProfileConfig("profile").setVehicle("foot").setWeighting("fastest")).
+                setProfiles(new Profile("profile").setVehicle("foot").setWeighting("fastest")).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(graphFileFoot).
                 setEncodingManager(EncodingManager.create("foot")).
@@ -62,13 +62,13 @@ public class GpxTravelTimeConsistencyTest {
         GHPoint routeEnd = new GHPoint(43.74958, 7.436566);
         GHRequest request = new GHRequest(routeStart, routeEnd);
         request.setProfile("profile");
-        PathWrapper path = hopper.route(request).getBest();
+        ResponsePath path = hopper.route(request).getBest();
         List<GPXEntry> gpxList = GpxFromInstructions.createGPXList(path.getInstructions());
         for (GPXEntry entry : gpxList) {
             if (entry.getTime() != null) {
                 GHRequest requestForWaypoint = new GHRequest(routeStart, entry.getPoint());
                 requestForWaypoint.setProfile("profile");
-                PathWrapper partialPath = hopper.route(requestForWaypoint).getBest();
+                ResponsePath partialPath = hopper.route(requestForWaypoint).getBest();
                 assertEquals(partialPath.getTime(), entry.getTime().longValue(), "GPXListEntry timeStamp is expected to be the same as route duration.");
             }
         }

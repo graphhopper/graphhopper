@@ -13,6 +13,9 @@ Turn restrictions are crucial for correct vehicle navigation and help to avoid f
 
 Turn restrictions have to be enabled on a vehicle basis. To enable it for one vehicle add
 `|turn_costs=true` in the config, for example: `graph.flag_encoders=car|turn_costs=true`.
+Or when using the Java API directly you can either create the encoding manager like `EncodingManager.create("car|turn_costs=true")` or
+`new EncodingManager.Builder().add(new CarFlagEncoder(5, 5, 1)` where the last parameter of `CarFlagEncoder` represents
+the maximum turn costs (a value of 1 means the turn can either be legal or forbidden).
 Turn restrictions are not available for every vehicle as they have low relevance
 for some vehicles like `foot`. 
 To enable turn restrictions when using the 'speed mode' additional graph preparation is required, because turn restrictions

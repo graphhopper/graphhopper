@@ -18,7 +18,7 @@ const CreateQuery = (baseUrl, search) => {
     }
     url.searchParams.set("pt.limit_solutions", search.limitSolutions);
     url.searchParams.set("locale", "en-US");
-    url.searchParams.set("vehicle", "pt");
+    url.searchParams.set("profile", "pt");
     url.searchParams.set("pt.profile", true);
     return url.toString();
 };

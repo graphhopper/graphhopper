@@ -17,8 +17,8 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.RoadAccess;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.util.EdgeIteratorState;
@@ -88,7 +88,6 @@ public class FastestWeighting extends AbstractWeighting {
             return Double.POSITIVE_INFINITY;
 
         double time = edgeState.getDistance() / speed * SPEED_CONV;
-
         if (roadAccessEnc != null) {
             RoadAccess access = edgeState.get(roadAccessEnc);
             if (access == RoadAccess.DESTINATION)

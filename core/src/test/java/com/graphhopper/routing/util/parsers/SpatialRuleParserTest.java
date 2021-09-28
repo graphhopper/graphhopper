@@ -1,6 +1,6 @@
 package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.routing.profiles.Country;
+import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.util.EncodingManager;
 import org.junit.Test;
 

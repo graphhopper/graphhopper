@@ -17,7 +17,7 @@
  */
 package com.graphhopper.util.details;
 
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
 
 public class DecimalDetails extends AbstractPathDetailsBuilder {

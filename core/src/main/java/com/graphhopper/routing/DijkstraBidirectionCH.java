@@ -21,7 +21,6 @@ import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.storage.RoutingCHEdgeExplorer;
 import com.graphhopper.storage.RoutingCHEdgeIterator;
 import com.graphhopper.storage.RoutingCHGraph;
-import com.graphhopper.storage.SPTEntry;
 
 /**
  * Uses a very simple version of stall-on-demand (SOD) for CH queries to prevent exploring nodes that can not be part

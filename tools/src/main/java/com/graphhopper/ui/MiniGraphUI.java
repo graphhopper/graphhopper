@@ -22,14 +22,14 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
-import com.graphhopper.config.CHProfileConfig;
-import com.graphhopper.config.LMProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.LMProfile;
+import com.graphhopper.config.Profile;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -98,12 +98,12 @@ public class MiniGraphUI {
         encoder = hopper.getEncodingManager().getEncoder("car");
         avSpeedEnc = encoder.getAverageSpeedEnc();
         accessEnc = encoder.getAccessEnc();
-        ProfileConfig profile = hopper.getProfiles().iterator().next();
+        Profile profile = hopper.getProfiles().iterator().next();
         boolean ch = true;
         if (ch) {
-            CHProfile chProfile = hopper.getCHPreparationHandler().getNodeBasedCHProfiles().get(0);
-            weighting = chProfile.getWeighting();
-            routingGraph = hopper.getGraphHopperStorage().getCHGraph(chProfile);
+            CHConfig chConfig = hopper.getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
+            weighting = chConfig.getWeighting();
+            routingGraph = hopper.getGraphHopperStorage().getCHGraph(chConfig);
 
             boolean disableCH = false;
             boolean disableLM = true;
@@ -331,7 +331,7 @@ public class MiniGraphUI {
                     return;
 
                 makeTransparent(g2);
-                QueryGraph qGraph = QueryGraph.lookup(routingGraph, fromRes, toRes);
+                QueryGraph qGraph = QueryGraph.create(routingGraph, fromRes, toRes);
                 RoutingAlgorithm algo = algoFactory.createAlgo(qGraph, algoOpts);
                 if (algo instanceof DebugAlgo) {
                     ((DebugAlgo) algo).setGraphics2D(g2);
@@ -389,15 +389,15 @@ public class MiniGraphUI {
         PMap args = PMap.read(strs);
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
         ghConfig.setProfiles(Arrays.asList(
-                new ProfileConfig("profile")
+                new Profile("profile")
                         .setVehicle("car")
                         .setWeighting("fastest")
         ));
         ghConfig.setCHProfiles(Arrays.asList(
-                new CHProfileConfig("profile")
+                new CHProfile("profile")
         ));
         ghConfig.setLMProfiles(Arrays.asList(
-                new LMProfileConfig("profile")
+                new LMProfile("profile")
         ));
         GraphHopper hopper = new GraphHopperOSM().init(ghConfig).importOrLoad();
         boolean debug = args.getBool("minigraphui.debug", false);

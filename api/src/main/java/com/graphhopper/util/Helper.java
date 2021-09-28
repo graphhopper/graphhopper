@@ -492,4 +492,37 @@ public class Helper {
         }
         return sb.toString();
     }
+
+    /**
+     * parses a string like [a,b,c]
+     */
+    public static List<String> parseList(String listStr) {
+        String trimmed = listStr.trim();
+        if (trimmed.length() < 2)
+            return Collections.emptyList();
+        String[] items = trimmed.substring(1, trimmed.length() - 1).split(",");
+        List<String> result = new ArrayList<>();
+        for (String item : items) {
+            String s = item.trim();
+            if (!s.isEmpty()) {
+                result.add(s);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Produces a static hashcode for a string that is platform independent and still compatible to the default
+     * of openjdk. Do not use for performance critical applications.
+     *
+     * @see String#hashCode()
+     */
+    public static int staticHashCode(String str) {
+        int len = str.length();
+        int val = 0;
+        for (int idx = 0; idx < len; ++idx) {
+            val = 31 * val + str.charAt(idx);
+        }
+        return val;
+    }
 }
