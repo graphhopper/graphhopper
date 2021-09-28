@@ -55,7 +55,9 @@ Here is an overview:
  * njanakiev, fixes like #1560
  * NopMap, massive improvements regarding OSM, parsing and encoding, route relations
  * ocampana, initial implementation for instructions
+ * oflebbe, work on iOS port and issues like #2060
  * oschlueter, fixes like #1185
+ * OlKir, improvements regarding iOS
  * otbutz, added multiple EncodedValues
  * PGWelch, shapefile reader #874
  * rajanski, script to do routing via PostGIS
