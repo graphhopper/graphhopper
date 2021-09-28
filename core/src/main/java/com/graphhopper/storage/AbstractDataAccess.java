@@ -143,38 +143,6 @@ public abstract class AbstractDataAccess implements DataAccess {
         return getFullName();
     }
 
-    @Override
-    public void rename(String newName) {
-        File file = new File(location + name);
-        if (file.exists()) {
-            try {
-                if (!file.renameTo(new File(location + newName))) {
-                    throw new IllegalStateException("Couldn't rename this " + getType() + " object to " + newName);
-                }
-                name = newName;
-            } catch (Exception ex) {
-                throw new IllegalStateException("Couldn't rename this " + getType() + " object!", ex);
-            }
-        } else {
-            throw new IllegalStateException("File does not exist!? " + getFullName()
-                    + " Make sure that you flushed before renaming. Otherwise it could make problems"
-                    + " for memory mapped DataAccess objects");
-        }
-    }
-
-    protected boolean checkBeforeRename(String newName) {
-        if (Helper.isEmpty(newName))
-            throw new IllegalArgumentException("newName mustn't be empty!");
-
-        if (newName.equals(name))
-            return false;
-
-        if (isStoring() && new File(location + newName).exists())
-            throw new IllegalArgumentException("file newName already exists!");
-
-        return true;
-    }
-
     public boolean isStoring() {
         return true;
     }

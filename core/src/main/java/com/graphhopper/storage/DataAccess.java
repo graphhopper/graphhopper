@@ -32,15 +32,6 @@ public interface DataAccess extends Closeable {
     String getName();
 
     /**
-     * Renames the underlying DataAccess object. (Flushing shouldn't be necessary before or
-     * afterwards)
-     * <p>
-     *
-     * @throws IllegalStateException if a rename is not possible
-     */
-    void rename(String newName);
-
-    /**
      * Set 4 bytes at position 'bytePos' to the specified value
      */
     void setInt(long bytePos, int value);

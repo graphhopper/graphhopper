@@ -484,20 +484,6 @@ public final class MMapDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public void rename(String newName) {
-        if (!checkBeforeRename(newName)) {
-            return;
-        }
-        close();
-
-        super.rename(newName);
-        // 'reopen' with newName
-        raFile = null;
-        closed = false;
-        loadExisting();
-    }
-
-    @Override
     public DAType getType() {
         return DAType.MMAP;
     }

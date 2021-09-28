@@ -182,38 +182,6 @@ public abstract class DataAccessTest {
     }
 
     @Test
-    public void testRenameNoFlush() {
-        DataAccess da = createDataAccess(name);
-        da.create(100);
-        da.setInt(17 * 4, 17);
-        try {
-            da.rename(name + "wow");
-            assertTrue(false);
-        } catch (Exception ex) {
-        }
-        da.close();
-    }
-
-    @Test
-    public void testRenameFlush() {
-        DataAccess da = createDataAccess(name);
-        da.create(100);
-        da.setInt(17 * 4, 17);
-        da.flush();
-        assertTrue(new File(directory + name).exists());
-        da.rename(name + "wow");
-        assertFalse(new File(directory + name).exists());
-        assertTrue(new File(directory + name + "wow").exists());
-        assertEquals(17, da.getInt(17 * 4));
-        da.close();
-
-        da = createDataAccess(name + "wow");
-        assertTrue(da.loadExisting());
-        assertEquals(17, da.getInt(17 * 4));
-        da.close();
-    }
-
-    @Test
     public void testSet_GetBytes() {
         DataAccess da = createDataAccess(name);
         da.create(300);

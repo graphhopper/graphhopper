@@ -271,19 +271,6 @@ class RAMIntDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public void rename(String newName) {
-        if (!checkBeforeRename(newName)) {
-            return;
-        }
-        if (store) {
-            super.rename(newName);
-        }
-
-        // in every case set the name
-        name = newName;
-    }
-
-    @Override
     protected boolean isIntBased() {
         return true;
     }
