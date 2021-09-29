@@ -26,7 +26,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.Closeable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -117,7 +116,7 @@ public abstract class AbstractGraphStorageTester {
     public void testSetTooBigDistance_435() {
         graph = createGHStorage();
 
-        double maxDist = BaseGraph.MAX_DIST;
+        double maxDist = BaseGraphNodesAndEdges.MAX_DIST;
         EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 1).setDistance(maxDist));
         assertEquals(maxDist, edge1.getDistance(), 1);
 

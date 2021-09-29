@@ -243,7 +243,7 @@ public class TurnCostStorage {
     private class Itr implements TurnRelationIterator {
         private int viaNode = -1;
         private int turnCostIndex = -1;
-        private IntsRef intsRef = TurnCost.createFlags();
+        private final IntsRef intsRef = TurnCost.createFlags();
 
         private long turnCostPtr() {
             return (long) turnCostIndex * BYTES_PER_ENTRY;

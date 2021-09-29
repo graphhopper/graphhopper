@@ -31,7 +31,7 @@ import static com.graphhopper.util.Helper.nf;
  * DataAccess-based storage for CH shortcuts. Stores shortcuts and CH levels sequentially using two DataAccess objects
  * and gives read/write access to the different shortcut and node fields.
  * <p>
- * This can be seen as an extension to a base graph: We assign a CH level to each nodes and add additional edges to
+ * This can be seen as an extension to a base graph: We assign a CH level to each node and add additional edges to
  * the graph ('shortcuts'). The shortcuts need to be ordered in a certain way, but this is not enforced here.
  *
  * @see CHStorageBuilder to build a valid storage that can be used for routing
@@ -58,7 +58,7 @@ public class CHStorage {
     private int nodeCount = -1;
 
     private boolean edgeBased;
-    // some shortcuts exceed the maximum storable weight and we count them here
+    // some shortcuts exceed the maximum storable weight, and we count them here
     private int numShortcutsExceedingWeight;
 
     // use this to report shortcuts with too small weights
