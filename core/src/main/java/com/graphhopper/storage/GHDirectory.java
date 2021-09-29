@@ -19,7 +19,6 @@ package com.graphhopper.storage;
 
 import java.io.File;
 import java.nio.ByteOrder;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -56,12 +55,12 @@ public class GHDirectory implements Directory {
     }
 
     @Override
-    public DataAccess find(String name) {
-        return find(name, defaultType);
+    public DataAccess create(String name) {
+        return create(name, defaultType);
     }
 
     @Override
-    public DataAccess find(String name, DAType type) {
+    public DataAccess create(String name, DAType type) {
         if (!name.equals(toLowerCase(name)))
             throw new IllegalArgumentException("Since 0.7 DataAccess objects does no longer accept upper case names");
 

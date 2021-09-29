@@ -50,15 +50,15 @@ public abstract class AbstractDirectoryTester {
     @Test
     public void testNoDuplicates() {
         Directory dir = createDir();
-        DataAccess da1 = dir.find("testing");
-        assertThrows(IllegalStateException.class, () -> dir.find("testing"));
+        DataAccess da1 = dir.create("testing");
+        assertThrows(IllegalStateException.class, () -> dir.create("testing"));
         da1.close();
     }
 
     @Test
     public void testNoErrorForDACreate() {
         Directory dir = createDir();
-        da = dir.find("testing");
+        da = dir.create("testing");
         da.create(100);
         da.flush();
     }

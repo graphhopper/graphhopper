@@ -43,9 +43,9 @@ public interface Directory {
      * Tries to find the object with that name if not existent it creates one and associates the
      * location with it. A name is unique in one Directory.
      */
-    DataAccess find(String name);
+    DataAccess create(String name);
 
-    DataAccess find(String name, DAType type);
+    DataAccess create(String name, DAType type);
 
     /**
      * Removes the specified object from the directory.

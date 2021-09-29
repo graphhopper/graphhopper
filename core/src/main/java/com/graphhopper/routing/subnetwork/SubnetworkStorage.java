@@ -32,7 +32,7 @@ public class SubnetworkStorage {
 
     public SubnetworkStorage(Directory dir, String postfix) {
         DAType type = dir.getDefaultType();
-        da = dir.find("subnetwork_" + postfix, type.isMMap() ? DAType.MMAP : (type.isStoring() ? DAType.RAM_STORE : DAType.RAM));
+        da = dir.create("subnetwork_" + postfix, type.isMMap() ? DAType.MMAP : (type.isStoring() ? DAType.RAM_STORE : DAType.RAM));
     }
 
     /**
