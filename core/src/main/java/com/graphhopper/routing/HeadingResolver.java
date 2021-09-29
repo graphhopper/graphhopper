@@ -21,10 +21,11 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.GHPoint;
 
 public class HeadingResolver {
     private final EdgeExplorer edgeExplorer;
-    private double toleranceRad = deg2Rad(100);
+    private double toleranceRad = Math.toRadians(100);
 
     public HeadingResolver(Graph graph) {
         this.edgeExplorer = graph.createEdgeExplorer();
@@ -60,15 +61,45 @@ public class HeadingResolver {
     }
 
     /**
+     * This method returns true if the specified heading is parallel to the specified edgeState (antiparallel isn't tested).
+     * Note that only the road segments near the specified pointNearHeading are checked for parallelism (<20m) and that
+     * a angle difference of 30° is accepted.
+     */
+    public static boolean isHeadingNearlyParallel(EdgeIteratorState edgeState, double heading, GHPoint pointNearHeading) {
+        DistanceCalc calcDist = DistanceCalcEarth.DIST_EARTH;
+        double xAxisAngle = AngleCalc.ANGLE_CALC.convertAzimuth2xaxisAngle(heading);
+        PointList points = edgeState.fetchWayGeometry(FetchMode.ALL);
+        int closestPoint = -1;
+        // TODO should we use the same default like for gpx_accuracy which is 40m?
+        double closestDistance = 20; // skip road segments that are too far away from pointNearHeading
+        double angleDifference = 30;
+        for (int i = 1; i < points.size(); i++) {
+            double fromLat = points.getLat(i - 1), fromLon = points.getLon(i - 1);
+            double toLat = points.getLat(i), toLon = points.getLon(i);
+            double distance = calcDist.validEdgeDistance(pointNearHeading.lat, pointNearHeading.lon, fromLat, fromLon, toLat, toLon)
+                    ? calcDist.calcDenormalizedDist(calcDist.calcNormalizedEdgeDistance(pointNearHeading.lat, pointNearHeading.lon, fromLat, fromLon, toLat, toLon))
+                    : calcDist.calcDist(fromLat, fromLon, pointNearHeading.lat, pointNearHeading.lon);
+
+            if (distance <= closestDistance) {
+                closestDistance = distance;
+                closestPoint = i;
+            }
+        }
+        if (closestPoint >= 0) {
+            double fromLat = points.getLat(closestPoint - 1), fromLon = points.getLon(closestPoint - 1);
+            double toLat = points.getLat(closestPoint), toLon = points.getLon(closestPoint);
+            double orientation = AngleCalc.ANGLE_CALC.calcOrientation(fromLat, fromLon, toLat, toLon);
+            orientation = AngleCalc.ANGLE_CALC.alignOrientation(xAxisAngle, orientation);
+            return Math.abs(orientation - xAxisAngle) < Math.toRadians(angleDifference);
+        }
+        return false;
+    }
+
+    /**
      * Sets the tolerance for {@link #getEdgesWithDifferentHeading} in degrees.
      */
     public HeadingResolver setTolerance(double tolerance) {
-        this.toleranceRad = deg2Rad(tolerance);
+        this.toleranceRad = Math.toRadians(tolerance);
         return this;
     }
-
-    private static double deg2Rad(double deg) {
-        return Math.toRadians(deg);
-    }
-
 }
