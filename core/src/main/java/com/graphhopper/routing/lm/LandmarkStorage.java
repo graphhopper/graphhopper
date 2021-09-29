@@ -760,6 +760,13 @@ public class LandmarkStorage {
     }
 
     /**
+     * For testing only
+     */
+    DataAccess _getInternalDA() {
+        return landmarkWeightDA;
+    }
+
+    /**
      * This class is used to calculate landmark location (equally distributed).
      * It derives from DijkstraBidirectionRef, but is only used as forward or backward search.
      */

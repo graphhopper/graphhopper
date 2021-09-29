@@ -125,7 +125,8 @@ public class GraphHopperGtfs extends GraphHopper {
                 throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
             }
             streetNetworkIndex.close();
-            LocationIndexTree locationIndex = new LocationIndexTree(getGraphHopperStorage(), getGraphHopperStorage().getDirectory());
+            // we have to set an explicit location index name, because the default one is already taken
+            LocationIndexTree locationIndex = new LocationIndexTree(getGraphHopperStorage(), getGraphHopperStorage().getDirectory(), "location_index_pt");
             PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(getEncodingManager());
             EnumEncodedValue<GtfsStorage.EdgeType> typeEnc = ptEncodedValues.getTypeEnc();
             locationIndex.prepareIndex(edgeState -> edgeState.get(typeEnc) == GtfsStorage.EdgeType.HIGHWAY);

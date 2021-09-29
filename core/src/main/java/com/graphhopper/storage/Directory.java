@@ -67,10 +67,5 @@ public interface Directory {
      */
     void close();
 
-    /**
-     * Returns all created directories.
-     */
-    Collection<DataAccess> getAll();
-
     Directory create();
 }

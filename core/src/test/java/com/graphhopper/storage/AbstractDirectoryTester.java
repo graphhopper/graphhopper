@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author Peter Karich
@@ -51,10 +51,8 @@ public abstract class AbstractDirectoryTester {
     public void testNoDuplicates() {
         Directory dir = createDir();
         DataAccess da1 = dir.find("testing");
-        DataAccess da2 = dir.find("testing");
-        assertSame(da1, da2);
+        assertThrows(IllegalStateException.class, () -> dir.find("testing"));
         da1.close();
-        da2.close();
     }
 
     @Test
