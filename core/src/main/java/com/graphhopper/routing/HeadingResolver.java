@@ -70,9 +70,8 @@ public class HeadingResolver {
         double xAxisAngle = AngleCalc.ANGLE_CALC.convertAzimuth2xaxisAngle(heading);
         PointList points = edgeState.fetchWayGeometry(FetchMode.ALL);
         int closestPoint = -1;
-        // TODO should we use the same default like for gpx_accuracy which is 40m?
         double closestDistance = 20; // skip road segments that are too far away from pointNearHeading
-        double angleDifference = 30;
+        double angleDifference = 30; // include nearly parallel roads too (orientation can deviate +-30°)
         for (int i = 1; i < points.size(); i++) {
             double fromLat = points.getLat(i - 1), fromLon = points.getLon(i - 1);
             double toLat = points.getLat(i), toLon = points.getLon(i);
