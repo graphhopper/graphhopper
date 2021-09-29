@@ -22,9 +22,7 @@ import com.graphhopper.routing.ch.NodeBasedCHBidirPathExtractor;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.*;
 
-import java.util.HashSet;
-import java.util.PriorityQueue;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Supplier;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
@@ -44,7 +42,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
     protected RoutingCHEdgeExplorer outEdgeExplorer;
     protected CHEdgeFilter levelEdgeFilter;
     private Supplier<BidirPathExtractor> pathExtractorSupplier;
-    private Set<SPTEntry> modified = new HashSet<>();
+    private List<SPTEntry> modified = new ArrayList<>();
 
     public AbstractBidirCHAlgo(RoutingCHGraph graph, TraversalMode tMode) {
         super(tMode);
