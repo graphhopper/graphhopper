@@ -160,7 +160,7 @@ public class Router {
     }
 
     private void checkHeadings(GHRequest request) {
-        if (!request.getHeadings().isEmpty() && request.getHeadings().size() != request.getPoints().size())
+        if (request.getHeadings().size() > 1 && request.getHeadings().size() != request.getPoints().size())
             throw new IllegalArgumentException("The number of 'heading' parameters must be zero, one "
                     + "or equal to the number of points (" + request.getPoints().size() + ")");
         for (int i = 0; i < request.getHeadings().size(); i++)

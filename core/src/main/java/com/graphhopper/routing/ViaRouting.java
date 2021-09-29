@@ -70,7 +70,7 @@ public class ViaRouting {
         for (int placeIndex = 0; placeIndex < points.size(); placeIndex++) {
             GHPoint point = points.get(placeIndex);
             Snap snap = null;
-            if (!headings.isEmpty() && !Double.isNaN(headings.get(placeIndex))) {
+            if (placeIndex < headings.size() && !Double.isNaN(headings.get(placeIndex))) {
                 if (!pointHints.isEmpty() && !Helper.isEmpty(pointHints.get(placeIndex)))
                     throw new IllegalArgumentException("Cannot specify heading and point_hint at the same time. " +
                             "Make sure you specify either an empty point_hint (String) or a NaN heading (double) for point " + placeIndex);

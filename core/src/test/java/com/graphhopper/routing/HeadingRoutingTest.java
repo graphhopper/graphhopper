@@ -186,7 +186,7 @@ class HeadingRoutingTest {
         // same start + end but heading=0, parallel to 3-8-7
         req = new GHRequest().
                 setPoints(Arrays.asList(start, end)).
-                setHeadings(Arrays.asList(0., Double.NaN)).
+                setHeadings(Arrays.asList(0.)).
                 setProfile("profile").
                 setPathDetails(Collections.singletonList("edge_key"));
         req.putHint(Parameters.Routing.PASS_THROUGH, true);
