@@ -69,8 +69,8 @@ public class DijkstraBidirectionCHTest {
         // use base graph for solving normal Dijkstra
         Path p1 = new RoutingAlgorithmFactorySimple().createAlgo(ghStorage, weighting, new AlgorithmOptions()).calcPath(0, 3);
         assertEquals(IntArrayList.from(0, 1, 5, 2, 3), p1.calcNodes());
-        assertEquals(402.29, p1.getDistance(), 1e-2, p1.toString());
-        assertEquals(144823, p1.getTime(), p1.toString());
+        assertEquals(402.30, p1.getDistance(), 1e-2, p1.toString());
+        assertEquals(144829, p1.getTime(), p1.toString());
     }
 
     @Test
@@ -135,14 +135,12 @@ public class DijkstraBidirectionCHTest {
         GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(9, 0).setDistance(1));
         GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(3, 9).setDistance(200));
         graph.freeze();
-        CHGraph chGraph = graph.getCHGraph();
+        CHStorage store = graph.getCHStore();
 
         // explicitly set the node levels equal to the node ids
         // the graph contraction with this ordering yields no shortcuts
-        for (int i = 0; i < 10; ++i) {
-            chGraph.setLevel(i, i);
-        }
-        RoutingCHGraph routingCHGraph = graph.getRoutingCHGraph(chGraph.getCHConfig().getName());
+        new CHStorageBuilder(store).setIdentityLevels();
+        RoutingCHGraph routingCHGraph = graph.getRoutingCHGraph();
         RoutingAlgorithm algo = createCHAlgo(routingCHGraph, true);
         Path p = algo.calcPath(1, 0);
         // node 3 will be stalled and nodes 4-7 won't be explored --> we visit 7 nodes
@@ -188,11 +186,9 @@ public class DijkstraBidirectionCHTest {
 
         GHUtility.setSpeed(encoder.getMaxSpeed() / 2, true, true, encoder, graph.edge(1, 2).setDistance(1));
         graph.freeze();
-        CHGraph chGraph = graph.getCHGraph();
-        for (int i = 0; i < 3; ++i) {
-            chGraph.setLevel(i, i);
-        }
-        RoutingCHGraph routingCHGraph = graph.getRoutingCHGraph(chGraph.getCHConfig().getName());
+        CHStorage chStore = graph.getCHStore();
+        new CHStorageBuilder(chStore).setIdentityLevels();
+        RoutingCHGraph routingCHGraph = graph.getRoutingCHGraph();
         RoutingAlgorithm algo = createCHAlgo(routingCHGraph, true);
         Path p = algo.calcPath(from, to);
         assertEquals(3, p.getDistance(), 1.e-3);

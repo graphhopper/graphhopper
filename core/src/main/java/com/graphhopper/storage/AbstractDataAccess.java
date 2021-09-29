@@ -122,37 +122,6 @@ public abstract class AbstractDataAccess implements DataAccess {
     }
 
     @Override
-    public DataAccess copyTo(DataAccess da) {
-        copyHeader(da);
-        da.ensureCapacity(getCapacity());
-        long cap = getCapacity();
-        // currently get/setBytes does not support copying more bytes then segmentSize
-        int segSize = Math.min(da.getSegmentSize(), getSegmentSize());
-        byte[] bytes = new byte[segSize];
-        boolean externalIntBased = ((AbstractDataAccess) da).isIntBased();
-        for (long bytePos = 0; bytePos < cap; bytePos += segSize) {
-            // read
-            if (isIntBased()) {
-                for (int offset = 0; offset < segSize; offset += 4) {
-                    bitUtil.fromInt(bytes, getInt(bytePos + offset), offset);
-                }
-            } else {
-                getBytes(bytePos, bytes, segSize);
-            }
-
-            // write
-            if (externalIntBased) {
-                for (int offset = 0; offset < segSize; offset += 4) {
-                    da.setInt(bytePos + offset, bitUtil.toInt(bytes, offset));
-                }
-            } else {
-                da.setBytes(bytePos, bytes, segSize);
-            }
-        }
-        return da;
-    }
-
-    @Override
     public DataAccess setSegmentSize(int bytes) {
         if (bytes > 0) {
             // segment size should be a power of 2
@@ -172,38 +141,6 @@ public abstract class AbstractDataAccess implements DataAccess {
     @Override
     public String toString() {
         return getFullName();
-    }
-
-    @Override
-    public void rename(String newName) {
-        File file = new File(location + name);
-        if (file.exists()) {
-            try {
-                if (!file.renameTo(new File(location + newName))) {
-                    throw new IllegalStateException("Couldn't rename this " + getType() + " object to " + newName);
-                }
-                name = newName;
-            } catch (Exception ex) {
-                throw new IllegalStateException("Couldn't rename this " + getType() + " object!", ex);
-            }
-        } else {
-            throw new IllegalStateException("File does not exist!? " + getFullName()
-                    + " Make sure that you flushed before renaming. Otherwise it could make problems"
-                    + " for memory mapped DataAccess objects");
-        }
-    }
-
-    protected boolean checkBeforeRename(String newName) {
-        if (Helper.isEmpty(newName))
-            throw new IllegalArgumentException("newName mustn't be empty!");
-
-        if (newName.equals(name))
-            return false;
-
-        if (isStoring() && new File(location + newName).exists())
-            throw new IllegalArgumentException("file newName already exists!");
-
-        return true;
     }
 
     public boolean isStoring() {

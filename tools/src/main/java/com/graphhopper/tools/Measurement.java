@@ -129,13 +129,13 @@ public class Measurement {
                 int edges = getGraphHopperStorage().getEdges();
                 if (!getCHPreparationHandler().getNodeBasedCHConfigs().isEmpty()) {
                     CHConfig chConfig = getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
-                    int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(chConfig.getName()).getEdges();
+                    int edgesAndShortcuts = getGraphHopperStorage().getRoutingCHGraph(chConfig.getName()).getEdges();
                     put(Parameters.CH.PREPARE + "node.shortcuts", edgesAndShortcuts - edges);
                     put(Parameters.CH.PREPARE + "node.time", getCHPreparationHandler().getPreparation(chConfig).getTotalPrepareTime());
                 }
                 if (!getCHPreparationHandler().getEdgeBasedCHConfigs().isEmpty()) {
                     CHConfig chConfig = getCHPreparationHandler().getEdgeBasedCHConfigs().get(0);
-                    int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(chConfig.getName()).getEdges();
+                    int edgesAndShortcuts = getGraphHopperStorage().getRoutingCHGraph(chConfig.getName()).getEdges();
                     put(Parameters.CH.PREPARE + "edge.shortcuts", edgesAndShortcuts - edges);
                     put(Parameters.CH.PREPARE + "edge.time", getCHPreparationHandler().getPreparation(chConfig).getTotalPrepareTime());
                 }
@@ -228,8 +228,8 @@ public class Measurement {
                 gcAndWait();
                 if (!hopper.getCHPreparationHandler().getNodeBasedCHConfigs().isEmpty()) {
                     CHConfig chConfig = hopper.getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
-                    CHGraph lg = g.getCHGraph(chConfig.getName());
-                    measureGraphTraversalCH(lg, encoder, count * 100);
+                    RoutingCHGraph lg = g.getRoutingCHGraph(chConfig.getName());
+                    measureGraphTraversalCH(lg, count * 100);
                     gcAndWait();
                     measureRouting(hopper, new QuerySettings("routingCH", count, isCH, isLM).
                             withInstructions().sod());
@@ -463,48 +463,16 @@ public class Measurement {
         print("unit_tests.get_edge_state", miniPerf);
     }
 
-    private void measureGraphTraversalCH(final CHGraph lg, final FlagEncoder encoder, int count) {
+    private void measureGraphTraversalCH(final RoutingCHGraph lg, int count) {
         final Random rand = new Random(seed);
-        final CHEdgeExplorer chExplorer = lg.createEdgeExplorer();
+        final int maxEdgesId = lg.getEdges();
         MiniPerfTest miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
-            int nodeId = rand.nextInt(maxNode);
-            CHEdgeIterator iter = chExplorer.setBaseNode(nodeId);
-            while (iter.next()) {
-                if (iter.isShortcut())
-                    nodeId += (int) iter.getWeight();
-            }
-            return nodeId;
-        });
-        print("unit_testsCH.get_weight", miniPerf);
-
-        EdgeFilter outFilter = AccessFilter.outEdges(encoder.getAccessEnc());
-        final CHEdgeExplorer outExplorer = lg.createEdgeExplorer(outFilter);
-        miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
-            int nodeId = rand.nextInt(maxNode);
-            return GHUtility.count(outExplorer.setBaseNode(nodeId));
-        });
-        print("unit_testsCH.out_edge_state_next", miniPerf);
-
-        final CHEdgeExplorer allExplorer = lg.createEdgeExplorer();
-        miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
-            int nodeId = rand.nextInt(maxNode);
-            return GHUtility.count(allExplorer.setBaseNode(nodeId));
-        });
-        print("unit_testsCH.all_edge_state_next", miniPerf);
-
-        final int maxEdgesId = lg.getAllEdges().length();
-        GHBitSet allowedEdges = getValidEdges(lg);
-        miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
-            while (true) {
-                int edgeId = rand.nextInt(maxEdgesId);
-                if (allowedEdges.contains(edgeId))
-                    return lg.getEdgeIteratorState(edgeId, Integer.MIN_VALUE).getEdge();
-            }
+            int edgeId = rand.nextInt(maxEdgesId);
+            return lg.getEdgeIteratorState(edgeId, Integer.MIN_VALUE).getEdge();
         });
         print("unit_testsCH.get_edge_state", miniPerf);
 
-        RoutingCHGraphImpl routingCHGraph = new RoutingCHGraphImpl(lg);
-        final RoutingCHEdgeExplorer chOutEdgeExplorer = routingCHGraph.createOutEdgeExplorer();
+        final RoutingCHEdgeExplorer chOutEdgeExplorer = lg.createOutEdgeExplorer();
         miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
             int nodeId = rand.nextInt(maxNode);
             RoutingCHEdgeIterator iter = chOutEdgeExplorer.setBaseNode(nodeId);
@@ -527,14 +495,6 @@ public class Measurement {
     }
 
     private GHBitSet getValidEdges(Graph g) {
-        final GHBitSet result = new GHBitSetImpl(g.getAllEdges().length());
-        AllEdgesIterator iter = g.getAllEdges();
-        while (iter.next())
-            result.add(iter.getEdge());
-        return result;
-    }
-
-    private GHBitSet getValidEdges(CHGraph g) {
         final GHBitSet result = new GHBitSetImpl(g.getAllEdges().length());
         AllEdgesIterator iter = g.getAllEdges();
         while (iter.next())

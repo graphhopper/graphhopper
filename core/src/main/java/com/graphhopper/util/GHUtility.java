@@ -23,7 +23,6 @@ import com.carrotsearch.hppc.IntIndexedContainer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
-import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
@@ -104,12 +103,29 @@ public class GHUtility {
         return counter;
     }
 
+    public static int count(RoutingCHEdgeIterator iter) {
+        int counter = 0;
+        while (iter.next()) {
+            counter++;
+        }
+        return counter;
+    }
+
     public static Set<Integer> asSet(int... values) {
         Set<Integer> s = new HashSet<>();
         for (int v : values) {
             s.add(v);
         }
         return s;
+    }
+
+    public static Set<Integer> getNeighbors(RoutingCHEdgeIterator iter) {
+        // make iteration order over set static => linked
+        Set<Integer> list = new LinkedHashSet<>();
+        while (iter.next()) {
+            list.add(iter.getAdjNode());
+        }
+        return list;
     }
 
     public static Set<Integer> getNeighbors(EdgeIterator iter) {
@@ -127,18 +143,6 @@ public class GHUtility {
             list.add(iter.getEdge());
         }
         return list;
-    }
-
-    public static void printEdgeInfo(final Graph g, FlagEncoder encoder) {
-        System.out.println("-- Graph nodes:" + g.getNodes() + " edges:" + g.getEdges() + " ---");
-        AllEdgesIterator iter = g.getAllEdges();
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        while (iter.next()) {
-            String prefix = (iter instanceof AllCHEdgesIterator && ((AllCHEdgesIterator) iter).isShortcut()) ? "sc" : "  ";
-            String fwdStr = iter.get(accessEnc) ? "fwd" : "   ";
-            String bwdStr = iter.getReverse(accessEnc) ? "bwd" : "   ";
-            System.out.println(prefix + " " + iter + " " + fwdStr + " " + bwdStr + " " + iter.getDistance());
-        }
     }
 
     public static void printGraphForUnitTest(Graph g, FlagEncoder encoder) {
@@ -300,47 +304,6 @@ public class GHUtility {
         return min + rnd.nextDouble() * (max - min);
     }
 
-    public static void printInfo(final Graph g, int startNode, final int counts, final EdgeFilter filter) {
-        new BreadthFirstSearch() {
-            int counter = 0;
-
-            @Override
-            protected GHBitSet createBitSet() {
-                return new GHTBitSet();
-            }
-
-            @Override
-            protected boolean goFurther(int nodeId) {
-                System.out.println(getNodeInfo(g, nodeId, filter));
-                return counter++ <= counts;
-            }
-        }.start(g.createEdgeExplorer(), startNode);
-    }
-
-    public static String getNodeInfo(CHGraph g, int nodeId, EdgeFilter filter) {
-        CHEdgeExplorer ex = g.createEdgeExplorer(filter);
-        CHEdgeIterator iter = ex.setBaseNode(nodeId);
-        NodeAccess na = g.getBaseGraph().getNodeAccess();
-        String str = nodeId + ":" + na.getLat(nodeId) + "," + na.getLon(nodeId) + "\n";
-        while (iter.next()) {
-            str += "  ->" + iter.getAdjNode() + "(" + iter.getSkippedEdge1() + "," + iter.getSkippedEdge2() + ") "
-                    + iter.getEdge() + " \t" + BitUtil.BIG.toBitString(iter.getFlags().ints[0], 8) + "\n";
-        }
-        return str;
-    }
-
-    public static String getNodeInfo(Graph g, int nodeId, EdgeFilter filter) {
-        EdgeIterator iter = g.createEdgeExplorer(filter).setBaseNode(nodeId);
-        NodeAccess na = g.getNodeAccess();
-        String str = nodeId + ":" + na.getLat(nodeId) + "," + na.getLon(nodeId) + "\n";
-        while (iter.next()) {
-            str += "  ->" + iter.getAdjNode() + " (" + iter.getDistance() + ") pillars:"
-                    + iter.fetchWayGeometry(FetchMode.PILLAR_ONLY).size() + ", edgeId:" + iter.getEdge()
-                    + "\t" + BitUtil.BIG.toBitString(iter.getFlags().ints[0], 8) + "\n";
-        }
-        return str;
-    }
-
     public static Graph shuffle(Graph g, Graph sortedGraph) {
         if (g.getTurnCostStorage() != null)
             throw new IllegalArgumentException("Shuffling the graph is currently not supported in the presence of turn costs");
@@ -433,34 +396,7 @@ public class GHUtility {
         return toSortedGraph;
     }
 
-    /**
-     * @return the specified toGraph which is now filled with data from fromGraph
-     */
-    // TODO very similar to createSortedGraph -> use a 'int map(int)' interface
-    public static Graph copyTo(Graph fromGraph, Graph toGraph) {
-        if (fromGraph.getTurnCostStorage() != null) {
-            throw new IllegalArgumentException("Copying a graph is currently not supported in the presence of turn costs");
-        }
-        AllEdgesIterator eIter = fromGraph.getAllEdges();
-        while (eIter.next()) {
-            int base = eIter.getBaseNode();
-            int adj = eIter.getAdjNode();
-            toGraph.edge(base, adj).copyPropertiesFrom(eIter);
-        }
-
-        NodeAccess fna = fromGraph.getNodeAccess();
-        NodeAccess tna = toGraph.getNodeAccess();
-        int nodes = fromGraph.getNodes();
-        for (int node = 0; node < nodes; node++) {
-            if (tna.is3D())
-                tna.setNode(node, fna.getLat(node), fna.getLon(node), fna.getEle(node));
-            else
-                tna.setNode(node, fna.getLat(node), fna.getLon(node));
-        }
-        return toGraph;
-    }
-
-    static Directory guessDirectory(GraphStorage store) {
+    static Directory guessDirectory(GraphHopperStorage store) {
         if (store.getDirectory() instanceof MMapDirectory) {
             throw new IllegalStateException("not supported yet: mmap will overwrite existing storage at the same location");
         }
@@ -582,24 +518,6 @@ public class GHUtility {
         else if (count == 0)
             return null;
         EdgeIterator iter = explorer.setBaseNode(base);
-        while (iter.next()) {
-            if (iter.getAdjNode() == adj)
-                return iter;
-        }
-        throw new IllegalStateException("There should be an edge");
-    }
-
-    /**
-     * @see #getEdge(Graph, int, int)
-     */
-    public static CHEdgeIteratorState getEdge(CHGraph graph, int base, int adj) {
-        CHEdgeExplorer explorer = graph.createEdgeExplorer();
-        int count = count(explorer.setBaseNode(base), adj);
-        if (count > 1)
-            throw new IllegalArgumentException("There are multiple edges between nodes " + base + " and " + adj);
-        else if (count == 0)
-            return null;
-        CHEdgeIterator iter = explorer.setBaseNode(base);
         while (iter.next()) {
             if (iter.getAdjNode() == adj)
                 return iter;
@@ -1011,57 +929,6 @@ public class GHUtility {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
-    }
-
-    /**
-     * This node access can be used in tests to mock specific iterator behaviour via overloading
-     * certain methods.
-     */
-    public static class DisabledNodeAccess implements NodeAccess {
-
-        @Override
-        public int getTurnCostIndex(int nodeId) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public void setTurnCostIndex(int nodeId, int additionalValue) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public boolean is3D() {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public int getDimension() {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public void ensureNode(int nodeId) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public void setNode(int nodeId, double lat, double lon, double ele) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        public double getLat(int nodeId) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public double getLon(int nodeId) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public double getEle(int nodeId) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
     }
 
     public static BBox createBBox(EdgeIteratorState edgeState) {

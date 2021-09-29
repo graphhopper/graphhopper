@@ -153,33 +153,6 @@ public abstract class DataAccessTest {
     }
 
     @Test
-    public void testCopy() {
-        DataAccess da1 = createDataAccess(name);
-        da1.create(1001 * 4);
-        da1.setHeader(4, 12);
-        da1.setInt(1 * 4, 1);
-        da1.setInt(123 * 4, 321);
-        da1.setInt(1000 * 4, 1111);
-
-        DataAccess da2 = createDataAccess(name + "2");
-        da2.create(10);
-        da1.copyTo(da2);
-        assertEquals(12, da2.getHeader(4));
-        assertEquals(1, da2.getInt(1 * 4));
-        assertEquals(321, da2.getInt(123 * 4));
-        assertEquals(1111, da2.getInt(1000 * 4));
-
-        da2.setInt(1 * 4, 2);
-        assertEquals(2, da2.getInt(1 * 4));
-        da2.flush();
-        da1.flush();
-        // make sure they are independent!
-        assertEquals(1, da1.getInt(1 * 4));
-        da1.close();
-        da2.close();
-    }
-
-    @Test
     public void testSegments() {
         DataAccess da = createDataAccess(name);
         da.setSegmentSize(128);
@@ -205,38 +178,6 @@ public abstract class DataAccessTest {
         DataAccess da = createDataAccess(name);
         da.setSegmentSize(20);
         assertEquals(128, da.getSegmentSize());
-        da.close();
-    }
-
-    @Test
-    public void testRenameNoFlush() {
-        DataAccess da = createDataAccess(name);
-        da.create(100);
-        da.setInt(17 * 4, 17);
-        try {
-            da.rename(name + "wow");
-            assertTrue(false);
-        } catch (Exception ex) {
-        }
-        da.close();
-    }
-
-    @Test
-    public void testRenameFlush() {
-        DataAccess da = createDataAccess(name);
-        da.create(100);
-        da.setInt(17 * 4, 17);
-        da.flush();
-        assertTrue(new File(directory + name).exists());
-        da.rename(name + "wow");
-        assertFalse(new File(directory + name).exists());
-        assertTrue(new File(directory + name + "wow").exists());
-        assertEquals(17, da.getInt(17 * 4));
-        da.close();
-
-        da = createDataAccess(name + "wow");
-        assertTrue(da.loadExisting());
-        assertEquals(17, da.getInt(17 * 4));
         da.close();
     }
 

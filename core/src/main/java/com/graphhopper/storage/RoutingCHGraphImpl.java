@@ -19,61 +19,53 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.EdgeIteratorState;
 
 public class RoutingCHGraphImpl implements RoutingCHGraph {
-    private final Graph baseGraph;
-    private final CHGraph chGraph;
+    private final BaseGraph baseGraph;
+    private final CHStorage chStorage;
     private final Weighting weighting;
 
-    public RoutingCHGraphImpl(CHGraph chGraph) {
-        Weighting weighting = chGraph.getCHConfig().getWeighting();
-        if (weighting.hasTurnCosts() && !chGraph.getCHConfig().isEdgeBased())
-            throw new IllegalArgumentException("Weighting has turn costs, but CHGraph is node-based");
-        this.chGraph = chGraph;
-        this.baseGraph = chGraph.getBaseGraph();
+    public RoutingCHGraphImpl(BaseGraph baseGraph, CHStorage chStorage, Weighting weighting) {
+        if (weighting.hasTurnCosts() && !chStorage.isEdgeBased())
+            throw new IllegalArgumentException("Weighting has turn costs, but CHStorage is node-based");
+        this.baseGraph = baseGraph;
+        this.chStorage = chStorage;
         this.weighting = weighting;
     }
 
     @Override
     public int getNodes() {
-        return chGraph.getNodes();
+        return baseGraph.getNodes();
     }
 
     @Override
     public int getEdges() {
-        return chGraph.getEdges();
-    }
-
-    @Override
-    public int getOtherNode(int chEdge, int node) {
-        return chGraph.getOtherNode(chEdge, node);
-    }
-
-    @Override
-    public boolean isAdjacentToNode(int chEdge, int node) {
-        return chGraph.isAdjacentToNode(chEdge, node);
+        return baseGraph.getEdges() + chStorage.getShortcuts();
     }
 
     @Override
     public RoutingCHEdgeExplorer createInEdgeExplorer() {
-        return RoutingCHEdgeIteratorImpl.inEdges(chGraph.createEdgeExplorer(), weighting);
+        return RoutingCHEdgeIteratorImpl.inEdges(chStorage, baseGraph, weighting);
     }
 
     @Override
     public RoutingCHEdgeExplorer createOutEdgeExplorer() {
-        return RoutingCHEdgeIteratorImpl.outEdges(chGraph.createEdgeExplorer(), weighting);
+        return RoutingCHEdgeIteratorImpl.outEdges(chStorage, baseGraph, weighting);
     }
 
     @Override
     public RoutingCHEdgeIteratorState getEdgeIteratorState(int chEdge, int adjNode) {
-        EdgeIteratorState edgeState = chGraph.getEdgeIteratorState(chEdge, adjNode);
-        return edgeState == null ? null : new RoutingCHEdgeIteratorStateImpl(edgeState, weighting);
+        RoutingCHEdgeIteratorStateImpl edgeState =
+                new RoutingCHEdgeIteratorStateImpl(chStorage, baseGraph, new BaseGraph.EdgeIteratorStateImpl(baseGraph), weighting);
+        if (edgeState.init(chEdge, adjNode))
+            return edgeState;
+        // if edgeId exists, but adjacent nodes do not match
+        return null;
     }
 
     @Override
     public int getLevel(int node) {
-        return chGraph.getLevel(node);
+        return chStorage.getLevel(chStorage.toNodePointer(node));
     }
 
     @Override
@@ -93,7 +85,7 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
 
     @Override
     public boolean isEdgeBased() {
-        return chGraph.getCHConfig().isEdgeBased();
+        return chStorage.isEdgeBased();
     }
 
     @Override

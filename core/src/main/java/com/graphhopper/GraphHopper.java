@@ -947,7 +947,7 @@ public class GraphHopper {
 
         if (sortGraph) {
             if (ghStorage.isCHPossible() && isCHPrepared())
-                throw new IllegalArgumentException("Sorting a prepared CHGraph is not possible yet. See #12");
+                throw new IllegalArgumentException("Sorting a prepared CH is not possible yet. See #12");
 
             GraphHopperStorage newGraph = GHUtility.newStorage(ghStorage);
             GHUtility.sortDFS(ghStorage, newGraph);
@@ -1031,10 +1031,10 @@ public class GraphHopper {
         if (locationIndex == null)
             throw new IllegalStateException("Location index not initialized");
 
-        Map<String, CHGraph> chGraphs = new LinkedHashMap<>();
+        Map<String, RoutingCHGraph> chGraphs = new LinkedHashMap<>();
         for (CHProfile chProfile : chPreparationHandler.getCHProfiles()) {
             String chGraphName = chPreparationHandler.getPreparation(chProfile.getProfile()).getCHConfig().getName();
-            chGraphs.put(chProfile.getProfile(), ghStorage.getCHGraph(chGraphName));
+            chGraphs.put(chProfile.getProfile(), ghStorage.getRoutingCHGraph(chGraphName));
         }
         Map<String, LandmarkStorage> landmarks = new LinkedHashMap<>();
         for (LMProfile lmp : lmPreparationHandler.getLMProfiles()) {
@@ -1050,7 +1050,7 @@ public class GraphHopper {
 
     protected Router doCreateRouter(GraphHopperStorage ghStorage, LocationIndex locationIndex, Map<String, Profile> profilesByName,
                                     PathDetailsBuilderFactory pathBuilderFactory, TranslationMap trMap, RouterConfig routerConfig,
-                                    WeightingFactory weightingFactory, Map<String, CHGraph> chGraphs, Map<String, LandmarkStorage> landmarks) {
+                                    WeightingFactory weightingFactory, Map<String, RoutingCHGraph> chGraphs, Map<String, LandmarkStorage> landmarks) {
         return new Router(ghStorage, locationIndex, profilesByName, pathBuilderFactory,
                 trMap, routerConfig, weightingFactory, chGraphs, landmarks
         );

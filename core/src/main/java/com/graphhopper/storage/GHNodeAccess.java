@@ -17,8 +17,6 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.Helper;
-
 /**
  * A helper class for GraphHopperStorage for its node access.
  * <p>
@@ -26,59 +24,55 @@ import com.graphhopper.util.Helper;
  * @author Peter Karich
  */
 class GHNodeAccess implements NodeAccess {
-    private final BaseGraph baseGraph;
-    private final boolean elevation;
+    private final BaseGraphNodesAndEdges store;
 
-    public GHNodeAccess(BaseGraph baseGraph, boolean withElevation) {
-        this.baseGraph = baseGraph;
-        this.elevation = withElevation;
+    public GHNodeAccess(BaseGraphNodesAndEdges store) {
+        this.store = store;
     }
 
     @Override
     public void ensureNode(int nodeId) {
-        baseGraph.ensureNodeIndex(nodeId);
+        store.ensureNodeCapacity(nodeId);
     }
 
     @Override
     public final void setNode(int nodeId, double lat, double lon, double ele) {
-        baseGraph.ensureNodeIndex(nodeId);
-        long tmp = (long) nodeId * baseGraph.nodeEntryBytes;
-        baseGraph.nodes.setInt(tmp + baseGraph.N_LAT, Helper.degreeToInt(lat));
-        baseGraph.nodes.setInt(tmp + baseGraph.N_LON, Helper.degreeToInt(lon));
+        store.ensureNodeCapacity(nodeId);
+        store.setLat(store.toNodePointer(nodeId), lat);
+        store.setLon(store.toNodePointer(nodeId), lon);
 
-        if (is3D()) {
+        if (store.withElevation()) {
             // meter precision is sufficient for now
-            baseGraph.nodes.setInt(tmp + baseGraph.N_ELE, Helper.eleToInt(ele));
-            baseGraph.bounds.update(lat, lon, ele);
-
+            store.setEle(store.toNodePointer(nodeId), ele);
+            store.bounds.update(lat, lon, ele);
         } else {
-            baseGraph.bounds.update(lat, lon);
+            store.bounds.update(lat, lon);
         }
     }
 
     @Override
     public final double getLat(int nodeId) {
-        return Helper.intToDegree(baseGraph.nodes.getInt((long) nodeId * baseGraph.nodeEntryBytes + baseGraph.N_LAT));
+        return store.getLat(store.toNodePointer(nodeId));
     }
 
     @Override
     public final double getLon(int nodeId) {
-        return Helper.intToDegree(baseGraph.nodes.getInt((long) nodeId * baseGraph.nodeEntryBytes + baseGraph.N_LON));
+        return store.getLon(store.toNodePointer(nodeId));
     }
 
     @Override
     public final double getEle(int nodeId) {
-        if (!elevation)
-            throw new IllegalStateException("Cannot access elevation - 3D is not enabled");
-
-        return Helper.intToEle(baseGraph.nodes.getInt((long) nodeId * baseGraph.nodeEntryBytes + baseGraph.N_ELE));
+        if (!store.withElevation())
+            throw new IllegalStateException("elevation is disabled");
+        return store.getEle(store.toNodePointer(nodeId));
     }
 
+    @Override
     public final void setTurnCostIndex(int index, int turnCostIndex) {
-        if (baseGraph.supportsTurnCosts()) {
-            baseGraph.ensureNodeIndex(index);
-            long tmp = (long) index * baseGraph.nodeEntryBytes;
-            baseGraph.nodes.setInt(tmp + baseGraph.N_TC, turnCostIndex);
+        if (store.withTurnCosts()) {
+            // todo: remove ensure?
+            store.ensureNodeCapacity(index);
+            store.setTurnCostRef(store.toNodePointer(index), turnCostIndex);
         } else {
             throw new AssertionError("This graph does not support turn costs");
         }
@@ -86,21 +80,19 @@ class GHNodeAccess implements NodeAccess {
 
     @Override
     public final int getTurnCostIndex(int index) {
-        if (baseGraph.supportsTurnCosts())
-            return baseGraph.nodes.getInt((long) index * baseGraph.nodeEntryBytes + baseGraph.N_TC);
+        if (store.withTurnCosts())
+            return store.getTurnCostRef(store.toNodePointer(index));
         else
             throw new AssertionError("This graph does not support turn costs");
     }
 
     @Override
     public final boolean is3D() {
-        return elevation;
+        return store.withElevation();
     }
 
     @Override
     public int getDimension() {
-        if (elevation)
-            return 3;
-        return 2;
+        return store.withElevation() ? 3 : 2;
     }
 }

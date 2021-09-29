@@ -73,7 +73,7 @@ public class NearestResourceWithEleTest {
         double lon = point.get(0).asDouble();
         double lat = point.get(1).asDouble();
         double ele = point.get(2).asDouble();
-        assertTrue(lat == 43.73070006215647 && lon == 7.421392181993846 && ele == 66.0, "nearest point wasn't correct: lat=" + lat + ", lon=" + lon + ", ele=" + ele);
+        assertTrue(lat == 43.7307001 && lon == 7.4213923 && ele == 66.0, "nearest point wasn't correct: lat=" + lat + ", lon=" + lon + ", ele=" + ele);
     }
 
     @Test
@@ -84,7 +84,7 @@ public class NearestResourceWithEleTest {
         assertEquals(2, point.size(), "returned point is not 2D: " + point);
         double lon = point.get(0).asDouble();
         double lat = point.get(1).asDouble();
-        assertTrue(lat == 43.73070006215647 && lon == 7.421392181993846, "nearest point wasn't correct: lat=" + lat + ", lon=" + lon);
+        assertTrue(lat == 43.7307001 && lon == 7.4213923, "nearest point wasn't correct: lat=" + lat + ", lon=" + lon);
 
         // Default elevation is false        
         json = clientTarget(app, "/nearest?point=43.730864,7.420771").request().buildGet().invoke().readEntity(JsonNode.class);
@@ -93,6 +93,6 @@ public class NearestResourceWithEleTest {
         assertEquals(2, point.size(), "returned point is not 2D: " + point);
         lon = point.get(0).asDouble();
         lat = point.get(1).asDouble();
-        assertTrue(lat == 43.73070006215647 && lon == 7.421392181993846, "nearest point wasn't correct: lat=" + lat + ", lon=" + lon);
+        assertTrue(lat == 43.7307001 && lon == 7.4213923, "nearest point wasn't correct: lat=" + lat + ", lon=" + lon);
     }
 }

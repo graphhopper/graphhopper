@@ -123,58 +123,6 @@ public class GHUtilityTest {
     }
 
     @Test
-    public void testCopyWithSelfRef() {
-        Graph g = initUnsorted(createGraph(), carEncoder);
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 0).setDistance(11));
-
-        Graph g2 = new GraphBuilder(encodingManager).create();
-        GHUtility.copyTo(g, g2);
-
-        assertEquals(g.getEdges(), g2.getEdges());
-    }
-
-    @Test
-    public void testCopy() {
-        Graph g = initUnsorted(createGraph(), carEncoder);
-        EdgeIteratorState edgeState = GHUtility.setSpeed(60, true, true, carEncoder, g.edge(6, 5).setDistance(11));
-        edgeState.setWayGeometry(Helper.createPointList(12, 10, -1, 3));
-
-        GraphHopperStorage newStore = new GraphBuilder(encodingManager).setCHConfigs(CHConfig.nodeBased("p2", new FastestWeighting(carEncoder))).create();
-        Graph lg = new GraphBuilder(encodingManager).create();
-        GHUtility.copyTo(g, lg);
-        newStore.freeze();
-
-        edgeState = GHUtility.getEdge(lg, 5, 6);
-        assertEquals(Helper.createPointList(-1, 3, 12, 10), edgeState.fetchWayGeometry(FetchMode.PILLAR_ONLY));
-
-        NodeAccess na = lg.getNodeAccess();
-        assertEquals(0, na.getLat(0), 1e-6);
-        assertEquals(1, na.getLon(0), 1e-6);
-        assertEquals(2.5, na.getLat(1), 1e-6);
-        assertEquals(4.5, na.getLon(1), 1e-6);
-        assertEquals(9, lg.getNodes());
-        EdgeIterator iter = lg.createEdgeExplorer().setBaseNode(8);
-        iter.next();
-        assertEquals(2.05, iter.getDistance(), 1e-6);
-        assertTrue(iter.getReverse(accessEnc));
-        assertTrue(iter.get(accessEnc));
-        iter.next();
-        assertEquals(0.5, iter.getDistance(), 1e-6);
-        assertTrue(iter.getReverse(accessEnc));
-        assertTrue(iter.get(accessEnc));
-
-        iter = lg.createEdgeExplorer().setBaseNode(7);
-        iter.next();
-        assertEquals(.7, iter.getDistance(), 1e-6);
-
-        iter.next();
-        assertEquals(2.1, iter.getDistance(), 1e-6);
-        assertFalse(iter.getReverse(accessEnc));
-        assertTrue(iter.get(accessEnc));
-        assertFalse(iter.next());
-    }
-
-    @Test
     public void testEdgeStuff() {
         assertEquals(6, GHUtility.createEdgeKey(1, 2, 3, false));
         assertEquals(7, GHUtility.createEdgeKey(2, 1, 3, false));

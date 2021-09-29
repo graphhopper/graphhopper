@@ -296,6 +296,7 @@ public class InstructionListTest {
     @Test
     public void testEmptyList() {
         Graph g = new GraphBuilder(carManager).create();
+        g.getNodeAccess().setNode(1, 0, 0);
         ShortestWeighting weighting = new ShortestWeighting(carEncoder);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(0, 1);
         InstructionList il = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);

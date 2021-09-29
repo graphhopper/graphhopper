@@ -110,7 +110,7 @@ public class SPTResource {
         QueryGraph queryGraph = QueryGraph.create(graph, snap);
         NodeAccess nodeAccess = queryGraph.getNodeAccess();
         TraversalMode traversalMode = profile.isTurnCosts() ? EDGE_BASED : NODE_BASED;
-        ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow, traversalMode);
+        ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, queryGraph.wrapWeighting(weighting), reverseFlow, traversalMode);
 
         if (distanceInMeter.get() > 0) {
             shortestPathTree.setDistanceLimit(distanceInMeter.get());

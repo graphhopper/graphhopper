@@ -47,7 +47,8 @@ class QueryRoutingCHGraphTest {
     private FastestWeighting weighting;
     private GraphHopperStorage graph;
     private NodeAccess na;
-    private CHGraph chGraph;
+    private CHStorage chStore;
+    private CHStorageBuilder chBuilder;
     private RoutingCHGraph routingCHGraph;
 
     @BeforeEach
@@ -59,7 +60,8 @@ class QueryRoutingCHGraphTest {
         graph.addCHGraph(CHConfig.edgeBased("x", weighting));
         graph.create(100);
         na = graph.getNodeAccess();
-        chGraph = graph.getCHGraph("x");
+        chStore = graph.getCHStore("x");
+        chBuilder = new CHStorageBuilder(chStore);
         routingCHGraph = graph.getRoutingCHGraph("x");
     }
 
@@ -104,10 +106,10 @@ class QueryRoutingCHGraphTest {
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(10));
         graph.freeze();
         assertEquals(2, graph.getEdges());
-        setIdentityLevels(chGraph);
-        chGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1);
+        chBuilder.setIdentityLevels();
+        chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1, 0, 1);
 
-        QueryGraph queryGraph = QueryGraph.create(graph, Collections.<Snap>emptyList());
+        QueryGraph queryGraph = QueryGraph.create(graph, Collections.emptyList());
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
 
         assertEquals(3, queryCHGraph.getNodes());
@@ -204,8 +206,8 @@ class QueryRoutingCHGraphTest {
         addEdge(graph, 1, 2);
         graph.freeze();
         assertEquals(2, graph.getEdges());
-        setIdentityLevels(chGraph);
-        chGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1);
+        chBuilder.setIdentityLevels();
+        chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1, 0, 1);
 
         Snap snap = new Snap(50.00, 10.05);
         snap.setClosestEdge(edge);
@@ -268,8 +270,8 @@ class QueryRoutingCHGraphTest {
         EdgeIteratorState edge = addEdge(graph, 0, 1);
         addEdge(graph, 1, 2);
         graph.freeze();
-        setIdentityLevels(chGraph);
-        chGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1);
+        chBuilder.setIdentityLevels();
+        chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1, 0, 1);
 
         Snap snap = new Snap(50.00, 10.05);
         snap.setClosestEdge(edge);
@@ -304,8 +306,8 @@ class QueryRoutingCHGraphTest {
         na.setNode(1, 50.00, 10.10);
         EdgeIteratorState edge = addEdge(graph, 0, 1);
         graph.freeze();
-        chGraph.setLevel(0, 5);
-        chGraph.setLevel(1, 7);
+        setLevel(0, 5);
+        setLevel(1, 7);
 
         Snap snap = new Snap(50.00, 10.05);
         snap.setClosestEdge(edge);
@@ -318,6 +320,10 @@ class QueryRoutingCHGraphTest {
         assertEquals(5, queryCHGraph.getLevel(0));
         assertEquals(7, queryCHGraph.getLevel(1));
         assertEquals(Integer.MAX_VALUE, queryCHGraph.getLevel(2));
+    }
+
+    private void setLevel(int node, int level) {
+        chBuilder.setLevel(node, level);
     }
 
     @Test
@@ -333,8 +339,8 @@ class QueryRoutingCHGraphTest {
                 .set(encoder.getAverageSpeedEnc(), 90, 30);
         addEdge(graph, 1, 2);
         graph.freeze();
-        setIdentityLevels(chGraph);
-        chGraph.shortcut(0, 2, PrepareEncoder.getScDirMask(), 20, 0, 1);
+        chBuilder.setIdentityLevels();
+        chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScDirMask(), 20, 0, 1, 0, 1);
 
         // without query graph
         RoutingCHEdgeIterator iter = routingCHGraph.createOutEdgeExplorer().setBaseNode(0);
@@ -342,8 +348,8 @@ class QueryRoutingCHGraphTest {
         assertEquals(20, iter.getWeight(false), 1.e-6);
         assertEquals(20, iter.getWeight(true), 1.e-6);
         assertNextEdge(iter, 0, 1, 0);
-        assertEquals(285.8984, iter.getWeight(false), 1.e-6);
-        assertEquals(857.6952, iter.getWeight(true), 1.e-6);
+        assertEquals(285.89888, iter.getWeight(false), 1.e-6);
+        assertEquals(857.69664, iter.getWeight(true), 1.e-6);
         assertEnd(iter);
 
         // for incoming edges its the same
@@ -352,8 +358,8 @@ class QueryRoutingCHGraphTest {
         assertEquals(20, iter.getWeight(false), 1.e-6);
         assertEquals(20, iter.getWeight(true), 1.e-6);
         assertNextEdge(iter, 0, 1, 0);
-        assertEquals(285.8984, iter.getWeight(false), 1.e-6);
-        assertEquals(857.6952, iter.getWeight(true), 1.e-6);
+        assertEquals(285.89888, iter.getWeight(false), 1.e-6);
+        assertEquals(857.69664, iter.getWeight(true), 1.e-6);
         assertEnd(iter);
 
         // now including virtual edges
@@ -391,8 +397,8 @@ class QueryRoutingCHGraphTest {
         assertEquals(428.8483, iter.getWeight(false), 1.e-4);
         assertEquals(142.9494, iter.getWeight(true), 1.e-4);
         assertNextEdge(iter, 3, 1, 3);
-        assertEquals(142.9489, iter.getWeight(false), 1.e-4);
-        assertEquals(428.8469, iter.getWeight(true), 1.e-4);
+        assertEquals(142.9494, iter.getWeight(false), 1.e-4);
+        assertEquals(428.8483, iter.getWeight(true), 1.e-4);
         assertEnd(iter);
 
         iter = queryCHGraph.createInEdgeExplorer().setBaseNode(3);
@@ -400,8 +406,8 @@ class QueryRoutingCHGraphTest {
         assertEquals(428.8483, iter.getWeight(false), 1.e-4);
         assertEquals(142.9494, iter.getWeight(true), 1.e-4);
         assertNextEdge(iter, 3, 1, 3);
-        assertEquals(142.9489, iter.getWeight(false), 1.e-4);
-        assertEquals(428.8469, iter.getWeight(true), 1.e-4);
+        assertEquals(142.9494, iter.getWeight(false), 1.e-4);
+        assertEquals(428.8483, iter.getWeight(true), 1.e-4);
         assertEnd(iter);
 
         // getting a single edge
@@ -433,21 +439,21 @@ class QueryRoutingCHGraphTest {
         // 0->1
         RoutingCHEdgeIterator iter = routingCHGraph.createOutEdgeExplorer().setBaseNode(0);
         assertNextEdge(iter, 0, 1, 0);
-        assertEquals(428.8476, iter.getWeight(false), 1.e-4);
+        assertEquals(428.8483, iter.getWeight(false), 1.e-4);
         assertEquals(Double.POSITIVE_INFINITY, iter.getWeight(true));
         assertEnd(iter);
 
         iter = routingCHGraph.createInEdgeExplorer().setBaseNode(1);
         assertNextEdge(iter, 1, 0, 0);
         assertEquals(Double.POSITIVE_INFINITY, iter.getWeight(false));
-        assertEquals(428.8476, iter.getWeight(true), 1.e-4);
+        assertEquals(428.8483, iter.getWeight(true), 1.e-4);
         assertEnd(iter);
 
         // single edges
-        assertEquals(428.8476, routingCHGraph.getEdgeIteratorState(0, 1).getWeight(false), 1.e-4);
+        assertEquals(428.8483, routingCHGraph.getEdgeIteratorState(0, 1).getWeight(false), 1.e-4);
         assertEquals(Double.POSITIVE_INFINITY, routingCHGraph.getEdgeIteratorState(0, 1).getWeight(true));
         assertEquals(Double.POSITIVE_INFINITY, routingCHGraph.getEdgeIteratorState(0, 0).getWeight(false));
-        assertEquals(428.8476, routingCHGraph.getEdgeIteratorState(0, 0).getWeight(true), 1.e-4);
+        assertEquals(428.8483, routingCHGraph.getEdgeIteratorState(0, 0).getWeight(true), 1.e-4);
 
         // with query graph
         // 0-x->1
@@ -470,7 +476,7 @@ class QueryRoutingCHGraphTest {
         iter = queryCHGraph.createInEdgeExplorer().setBaseNode(1);
         assertNextEdge(iter, 1, 2, 2);
         assertEquals(Double.POSITIVE_INFINITY, iter.getWeight(false));
-        assertEquals(214.4234, iter.getWeight(true), 1.e-4);
+        assertEquals(214.4241, iter.getWeight(true), 1.e-4);
         assertEnd(iter);
 
         // at virtual node
@@ -479,7 +485,7 @@ class QueryRoutingCHGraphTest {
         assertEquals(Double.POSITIVE_INFINITY, iter.getWeight(false));
         assertEquals(214.4241, iter.getWeight(true), 1.e-4);
         assertNextEdge(iter, 2, 1, 2);
-        assertEquals(214.4234, iter.getWeight(false), 1.e-4);
+        assertEquals(214.4241, iter.getWeight(false), 1.e-4);
         assertEquals(Double.POSITIVE_INFINITY, iter.getWeight(true));
         assertEnd(iter);
 
@@ -503,8 +509,8 @@ class QueryRoutingCHGraphTest {
         DecimalEncodedValue turnCostEnc = encodingManager.getDecimalEncodedValue(TurnCost.key(encoder.toString()));
         graph.getTurnCostStorage().set(turnCostEnc, 0, 1, 1, 5);
         graph.freeze();
-        setIdentityLevels(chGraph);
-        chGraph.shortcut(0, 2, PrepareEncoder.getScDirMask(), 20, 0, 1);
+        chBuilder.setIdentityLevels();
+        chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1, 0, 1);
 
         // without virtual nodes
         assertEquals(5, routingCHGraph.getTurnWeight(0, 1, 1));
@@ -543,12 +549,6 @@ class QueryRoutingCHGraphTest {
 
         // check the turn weight between these edges
         assertEquals(5, queryCHGraph.getTurnWeight(expectedEdge31, 1, expectedEdge14));
-    }
-
-    public static void setIdentityLevels(CHGraph chGraph) {
-        for (int i = 0; i < chGraph.getNodes(); i++) {
-            chGraph.setLevel(i, i);
-        }
     }
 
     private void assertGetEdgeIteratorState(RoutingCHGraph graph, int base, int adj, int origEdge) {
@@ -622,10 +622,20 @@ class QueryRoutingCHGraphTest {
     }
 
     private void assertEdgeAtNodes(RoutingCHGraph graph, int shortcut, int p, int q) {
-        assertEquals(p, graph.getOtherNode(shortcut, q));
-        assertEquals(q, graph.getOtherNode(shortcut, p));
-        assertTrue(graph.isAdjacentToNode(shortcut, p));
-        assertTrue(graph.isAdjacentToNode(shortcut, q));
+        boolean fails = true;
+        {
+            RoutingCHEdgeIterator iter = graph.createOutEdgeExplorer().setBaseNode(p);
+            while (iter.next())
+                if (iter.getAdjNode() == q && iter.getEdge() == shortcut)
+                    fails = false;
+        }
+        {
+            RoutingCHEdgeIterator iter = graph.createInEdgeExplorer().setBaseNode(q);
+            while (iter.next())
+                if (iter.getAdjNode() == p && iter.getEdge() == shortcut)
+                    fails = false;
+        }
+        assertFalse(fails);
     }
 
     private void assertEnd(RoutingCHEdgeIterator outIter) {

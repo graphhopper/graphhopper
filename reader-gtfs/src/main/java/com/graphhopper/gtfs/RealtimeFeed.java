@@ -213,11 +213,6 @@ public class RealtimeFeed {
             }
 
             @Override
-            public Graph copyTo(Graph g) {
-                return null;
-            }
-
-            @Override
             public TurnCostStorage getTurnCostStorage() {
                 throw new RuntimeException();
             }

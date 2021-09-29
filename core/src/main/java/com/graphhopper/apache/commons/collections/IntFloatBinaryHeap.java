@@ -182,4 +182,8 @@ public class IntFloatBinaryHeap {
     public long getCapacity() {
         return elements.length;
     }
+
+    public long getMemoryUsage() {
+        return elements.length * 4L + keys.length * 4L;
+    }
 }

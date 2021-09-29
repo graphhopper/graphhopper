@@ -10,8 +10,10 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
-import com.graphhopper.util.CHEdgeIteratorState;
+import com.graphhopper.storage.CHConfig;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.MiniPerfTest;
 import com.graphhopper.util.PMap;
@@ -93,7 +95,6 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         // create CH
         PrepareContractionHierarchies basePch = PrepareContractionHierarchies.fromGraphHopperStorage(f.ghStorage, f.baseCHConfig);
         basePch.doWork();
-        CHGraph baseCHGraph = f.ghStorage.getCHGraph(f.baseCHConfig.getName());
 
         // check correctness & performance
         checkCorrectness(f.ghStorage, f.baseCHConfig, seed, 100);
@@ -101,7 +102,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
 
         // now we re-use the contraction order from the previous contraction and re-run it with the traffic weighting
         PrepareContractionHierarchies trafficPch = PrepareContractionHierarchies.fromGraphHopperStorage(f.ghStorage, f.trafficCHConfig)
-                .useFixedNodeOrdering(baseCHGraph.getNodeOrderingProvider());
+                .useFixedNodeOrdering(f.ghStorage.getCHStore(f.baseCHConfig.getName()).getNodeOrderingProvider());
         trafficPch.doWork();
 
         // check correctness & performance
@@ -205,12 +206,6 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         @Override
         public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
             double baseWeight = baseWeighting.calcEdgeWeight(edgeState, reverse);
-            if (edgeState instanceof CHEdgeIteratorState) {
-                // important! we must not change weights of shortcuts (the deviations are already included in their weight)
-                if (((CHEdgeIteratorState) edgeState).isShortcut()) {
-                    return baseWeight;
-                }
-            }
             if (Double.isInfinite(baseWeight)) {
                 // we are not touching this, might happen when speed is 0 ?
                 return baseWeight;

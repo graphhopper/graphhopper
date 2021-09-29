@@ -29,7 +29,7 @@ public class ShortcutUnpackerTest {
         private final EncodingManager encodingManager;
         private final FlagEncoder encoder;
         private final GraphHopperStorage graph;
-        private final CHGraph chGraph;
+        private final CHStorageBuilder chBuilder;
         private final RoutingCHGraph routingCHGraph;
 
         Fixture(boolean edgeBased) {
@@ -39,7 +39,7 @@ public class ShortcutUnpackerTest {
             graph = new GraphBuilder(encodingManager)
                     .setCHConfigStrings("profile|car|fastest|" + (edgeBased ? "edge" : "node"))
                     .create();
-            chGraph = graph.getCHGraph();
+            chBuilder = new CHStorageBuilder(graph.getCHStore());
             routingCHGraph = graph.getRoutingCHGraph("profile");
         }
 
@@ -50,7 +50,7 @@ public class ShortcutUnpackerTest {
 
         private void setCHLevels(int... order) {
             for (int i = 0; i < order.length; i++) {
-                chGraph.setLevel(order[i], i);
+                chBuilder.setLevel(order[i], i);
             }
         }
 
@@ -75,9 +75,9 @@ public class ShortcutUnpackerTest {
             double weight = 1;
             int flags = reverse ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir();
             if (edgeBased) {
-                chGraph.shortcutEdgeBased(baseNode, adjNode, flags, weight, skip1, skip2, origFirst, origLast);
+                chBuilder.addShortcutEdgeBased(baseNode, adjNode, flags, weight, skip1, skip2, origFirst, origLast);
             } else {
-                chGraph.shortcut(baseNode, adjNode, flags, weight, skip1, skip2);
+                chBuilder.addShortcutNodeBased(baseNode, adjNode, flags, weight, skip1, skip2);
             }
         }
     }

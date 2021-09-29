@@ -566,7 +566,7 @@ public class CarFlagEncoderTest {
         // barrier!
         assertTrue(encoder.handleNodeTags(node) > 0);
 
-        CarFlagEncoder tmpEncoder = new CarFlagEncoder(new PMap("block_barriers=false"));
+        CarFlagEncoder tmpEncoder = new CarFlagEncoder();
         EncodingManager.create(tmpEncoder);
 
         // Test if cattle_grid is not blocking

@@ -18,107 +18,90 @@
 
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.Dijkstra;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.ShortestWeighting;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHConfig;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class NodeBasedWitnessPathSearcherTest {
 
-    private final CarFlagEncoder encoder = new CarFlagEncoder();
-    private final EncodingManager encodingManager = EncodingManager.create(encoder);
-    private final Weighting weighting = new ShortestWeighting(encoder);
-    private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHConfigs(CHConfig.nodeBased("profile", weighting)).create();
-    private final CHGraph lg = graph.getCHGraph();
-
     @Test
-    public void testShortestPathSkipNode() {
-        createExampleGraph();
-        CHPreparationGraph prepareGraph = CHPreparationGraph.nodeBased(graph.getNodes(), graph.getEdges());
-        CHPreparationGraph.buildFromGraph(prepareGraph, graph, weighting);
-        final double normalDist = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(4, 2).getDistance();
-        NodeBasedWitnessPathSearcher algo = new NodeBasedWitnessPathSearcher(prepareGraph);
-
-        setMaxLevelOnAllNodes();
-
-        algo.ignoreNode(3);
-        algo.setWeightLimit(100);
-        int nodeEntry = algo.findEndNode(4, 2);
-        assertTrue(algo.getWeight(nodeEntry) > normalDist);
-
-        algo.clear();
-        algo.setMaxVisitedNodes(1);
-        nodeEntry = algo.findEndNode(4, 2);
-        assertEquals(-1, nodeEntry);
+    void ignoreNode() {
+        //  /- 3 -\
+        // 0 - 1 - 2
+        CHPreparationGraph p = CHPreparationGraph.nodeBased(5, 10);
+        p.addEdge(0, 1, 0, 10, 10);
+        p.addEdge(1, 2, 1, 10, 10);
+        p.addEdge(0, 3, 2, 9, 9);
+        p.addEdge(3, 2, 3, 9, 9);
+        p.prepareForContraction();
+        NodeBasedWitnessPathSearcher algo = new NodeBasedWitnessPathSearcher(p);
+        // just use 1 as ignore node and make sure the witness 0-3-2 is found.
+        algo.init(0, 1);
+        assertEquals(18, algo.findUpperBound(2, 100, Integer.MAX_VALUE));
+        // if we ignore 3 instead we get the longer path
+        algo.init(0, 3);
+        assertEquals(20, algo.findUpperBound(2, 100, Integer.MAX_VALUE));
+        assertEquals(2, algo.getSettledNodes());
     }
 
     @Test
-    public void testShortestPathSkipNode2() {
-        createExampleGraph();
-        CHPreparationGraph prepareGraph = CHPreparationGraph.nodeBased(graph.getNodes(), graph.getEdges());
-        CHPreparationGraph.buildFromGraph(prepareGraph, graph, weighting);
-        final double normalDist = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(4, 2).getDistance();
-        assertEquals(3, normalDist, 1e-5);
-        NodeBasedWitnessPathSearcher algo = new NodeBasedWitnessPathSearcher(prepareGraph);
+    void acceptedWeight() {
+        //  /-----------\
+        // 0 - 1 - ... - 5
+        CHPreparationGraph p = CHPreparationGraph.nodeBased(10, 10);
+        p.addEdge(0, 5, 0, 10, 10);
+        for (int i = 0; i < 5; i++)
+            p.addEdge(i, i + 1, i + 1, 1, 1);
+        p.prepareForContraction();
+        NodeBasedWitnessPathSearcher algo = new NodeBasedWitnessPathSearcher(p);
+        algo.init(0, -1);
+        // here we set acceptable weight to 100, so even the suboptimal path 0-5 is 'good enough' for us and the search
+        // stops as soon as 0-5 has been discovered
+        assertEquals(10, algo.findUpperBound(5, 100, Integer.MAX_VALUE));
+        assertEquals(1, algo.getSettledNodes());
+        // .. repeating this over and over does not change continue the search
+        assertEquals(10, algo.findUpperBound(5, 100, Integer.MAX_VALUE));
+        assertEquals(10, algo.findUpperBound(5, 100, Integer.MAX_VALUE));
+        assertEquals(10, algo.findUpperBound(5, 100, Integer.MAX_VALUE));
+        assertEquals(1, algo.getSettledNodes());
 
-        setMaxLevelOnAllNodes();
-
-        algo.ignoreNode(3);
-        algo.setWeightLimit(10);
-        int nodeEntry = algo.findEndNode(4, 2);
-        assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
-
-        nodeEntry = algo.findEndNode(4, 1);
-        assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
+        // if we lower our requirement we enforce a longer search and find the actual shortest path
+        algo.init(0, -1);
+        assertEquals(5, algo.findUpperBound(5, 8, Integer.MAX_VALUE));
+        // if we lower it further (below the shortest path weight) we might not find the shortest path and get the
+        // sup optimal weight again. however, we know for sure that there is no path with weight <= 1.
+        algo.init(0, -1);
+        assertEquals(10, algo.findUpperBound(5, 1, Integer.MAX_VALUE));
+        assertEquals(2, algo.getSettledNodes());
     }
 
     @Test
-    public void testShortestPathLimit() {
-        createExampleGraph();
-        CHPreparationGraph prepareGraph = CHPreparationGraph.nodeBased(graph.getNodes(), graph.getEdges());
-        CHPreparationGraph.buildFromGraph(prepareGraph, graph, weighting);
-        NodeBasedWitnessPathSearcher algo = new NodeBasedWitnessPathSearcher(prepareGraph);
-
-        setMaxLevelOnAllNodes();
-
-        algo.ignoreNode(0);
-        algo.setWeightLimit(2);
-        int endNode = algo.findEndNode(4, 1);
-        // did not reach endNode
-        assertNotEquals(1, endNode);
+    void settledNodes() {
+        //  /-----------\
+        // 0 - 1 - ... - 5
+        CHPreparationGraph p = CHPreparationGraph.nodeBased(10, 10);
+        p.addEdge(0, 5, 0, 10, 10);
+        for (int i = 0; i < 5; i++)
+            p.addEdge(i, i + 1, i + 1, 1, 1);
+        p.prepareForContraction();
+        NodeBasedWitnessPathSearcher algo = new NodeBasedWitnessPathSearcher(p);
+        algo.init(0, -1);
+        assertEquals(5, algo.findUpperBound(5, 5, Integer.MAX_VALUE));
+        assertEquals(5, algo.getSettledNodes());
+        algo.init(0, -1);
+        assertEquals(10, algo.findUpperBound(5, 5, 2));
+        assertEquals(2, algo.getSettledNodes());
+        algo.init(0, -1);
+        assertEquals(Double.POSITIVE_INFINITY, algo.findUpperBound(5, 5, 0));
+        assertEquals(0, algo.getSettledNodes());
+        // repeating the search does not change the number of settled nodes
+        algo.init(0, -1);
+        assertEquals(10, algo.findUpperBound(5, 5, 2));
+        assertEquals(2, algo.getSettledNodes());
+        assertEquals(10, algo.findUpperBound(5, 5, 2));
+        assertEquals(10, algo.findUpperBound(5, 5, 2));
+        assertEquals(10, algo.findUpperBound(5, 5, 2));
+        assertEquals(2, algo.getSettledNodes());
     }
 
-    private void createExampleGraph() {
-        //5-1-----2
-        //   \ __/|
-        //    0   |
-        //   /    |
-        //  4-----3
-        //
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 4).setDistance(3));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(3));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 3).setDistance(2));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 1).setDistance(2));
-        graph.freeze();
-    }
-
-    private void setMaxLevelOnAllNodes() {
-        int nodes = lg.getNodes();
-        for (int node = 0; node < nodes; node++) {
-            lg.setLevel(node, nodes);
-        }
-    }
 }
