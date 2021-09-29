@@ -42,7 +42,7 @@ import static com.graphhopper.util.Helper.nf;
  */
 class BaseGraph implements Graph {
     private final static String STRING_IDX_NAME_KEY = "name";
-    final BaseGraphStorage store;
+    final BaseGraphNodesAndEdges store;
     final NodeAccess nodeAccess;
     final StringIndex stringIndex;
     // can be null if turn costs are not supported
@@ -60,7 +60,7 @@ class BaseGraph implements Graph {
         this.bitUtil = BitUtil.get(dir.getByteOrder());
         this.wayGeometry = dir.find("geometry");
         this.stringIndex = new StringIndex(dir);
-        this.store = new BaseGraphStorage(dir, intsForFlags, withElevation, withTurnCosts, segmentSize);
+        this.store = new BaseGraphNodesAndEdges(dir, intsForFlags, withElevation, withTurnCosts, segmentSize);
         this.nodeAccess = new GHNodeAccess(store);
         if (withTurnCosts) {
             turnCostStorage = new TurnCostStorage(this, dir.find("turn_costs"));
@@ -578,7 +578,7 @@ class BaseGraph implements Graph {
 
     static class EdgeIteratorStateImpl implements EdgeIteratorState {
         final BaseGraph baseGraph;
-        final BaseGraphStorage store;
+        final BaseGraphNodesAndEdges store;
         long edgePointer = -1;
         int baseNode;
         int adjNode;

@@ -24,9 +24,9 @@ package com.graphhopper.storage;
  * @author Peter Karich
  */
 class GHNodeAccess implements NodeAccess {
-    private final BaseGraphStorage store;
+    private final BaseGraphNodesAndEdges store;
 
-    public GHNodeAccess(BaseGraphStorage store) {
+    public GHNodeAccess(BaseGraphNodesAndEdges store) {
         this.store = store;
     }
 
