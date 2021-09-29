@@ -28,7 +28,7 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 
-import java.util.PriorityQueue;
+import java.util.*;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 
@@ -45,6 +45,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
     protected final Weighting weighting;
     protected EdgeExplorer edgeExplorer;
     protected EdgeFilter additionalEdgeFilter;
+    private List<SPTEntry> modified = new ArrayList<>();
 
     public AbstractNonCHBidirAlgo(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(tMode);
@@ -144,6 +145,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
     }
 
     private void fillEdges(SPTEntry currEdge, PriorityQueue<SPTEntry> prioQueue, IntObjectMap<SPTEntry> bestWeightMap, boolean reverse) {
+        modified.clear();
         EdgeIterator iter = edgeExplorer.setBaseNode(currEdge.adjNode);
         while (iter.next()) {
             if (!accept(iter, currEdge.edge))
@@ -160,9 +162,8 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
                 bestWeightMap.put(traversalId, entry);
                 prioQueue.add(entry);
             } else if (entry.getWeightOfVisitedPath() > weight) {
-                prioQueue.remove(entry);
                 updateEntry(entry, iter, weight, currEdge, reverse);
-                prioQueue.add(entry);
+                modified.add(entry);
             } else
                 continue;
 
@@ -174,6 +175,8 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
                 updateBestPath(edgeWeight, entry, EdgeIterator.NO_EDGE, traversalId, reverse);
             }
         }
+        prioQueue.removeAll(modified);
+        prioQueue.addAll(modified);
     }
 
     protected void updateEntry(SPTEntry entry, EdgeIteratorState edge, double weight, SPTEntry parent, boolean reverse) {
