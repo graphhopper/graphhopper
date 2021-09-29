@@ -183,7 +183,7 @@ class HeadingRoutingTest {
         assertFalse(response.hasErrors());
         assertArrayEquals(new int[]{8, 3, 2}, calcNodes(graph, response.getAll().get(0)));
 
-        // same start + end but different heading...
+        // same start + end but heading=0, parallel to 3-8-7
         req = new GHRequest().
                 setPoints(Arrays.asList(start, end)).
                 setHeadings(Arrays.asList(0., Double.NaN)).
@@ -194,6 +194,7 @@ class HeadingRoutingTest {
         assertFalse(response.hasErrors());
         assertArrayEquals(new int[]{8, 3, 2}, calcNodes(graph, response.getAll().get(0)));
 
+        // heading=90 parallel to 1->5
         req = new GHRequest().
                 setPoints(Arrays.asList(start, end)).
                 setHeadings(Arrays.asList(90., Double.NaN)).
@@ -205,7 +206,7 @@ class HeadingRoutingTest {
         assertArrayEquals(new int[]{1, 5, 4, 3, 2}, calcNodes(graph, response.getAll().get(0)));
 
         for (double angle = 0; angle < 360; angle += 10) {
-            // Ignore angles close to the (start) heading. All other angles should NOT match the edge 1->5 and fallback to "no heading"
+            // Ignore angles nearly parallel to 1->5. I.e. it should fallback to results with 8-3.. or 3-8..
             if (angle >= 60 && angle <= 120) continue;
 
             req = new GHRequest().
