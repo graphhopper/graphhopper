@@ -168,8 +168,8 @@ class HeadingRoutingTest {
     public void testHeadingWithSnapFilter() {
         GraphHopperStorage graph = createSquareGraphWithTunnel();
         Router router = createRouter(graph);
-        // Start at 8
-        GHPoint start = new GHPoint(0.001, 0.001);
+        // Start at 8 (slightly north to make it independent on some edge ordering and always use 8-3 or 3-8 as fallback)
+        GHPoint start = new GHPoint(0.0011, 0.001);
         // End at middle of edge 2-3
         GHPoint end = new GHPoint(0.002, 0.0005);
 
