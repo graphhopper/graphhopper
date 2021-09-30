@@ -18,12 +18,6 @@ public class HeadingEdgeFilter implements EdgeFilter {
 
     @Override
     public boolean accept(EdgeIteratorState edgeState) {
-        if (directedEdgeFilter.accept(edgeState) && HeadingResolver.isHeadingNearlyParallel(edgeState, heading, pointNearHeading))
-            return true;
-
-        // now test heading against reversed edge
-        if (!directedEdgeFilter.accept(edgeState = edgeState.detach(true)))
-            return false;
-        return HeadingResolver.isHeadingNearlyParallel(edgeState, heading, pointNearHeading);
+        return HeadingResolver.isHeadingNearlyParallel(edgeState, directedEdgeFilter, heading, pointNearHeading);
     }
 }

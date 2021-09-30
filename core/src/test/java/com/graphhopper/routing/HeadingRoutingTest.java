@@ -225,6 +225,36 @@ class HeadingRoutingTest {
     }
 
     @Test
+    public void testHeadingWithSnapFilter2() {
+        GraphHopperStorage graph = createSquareGraphWithTunnel();
+        Router router = createRouter(graph);
+        // Start at 8 (slightly east to snap to edge 1->5 per default)
+        GHPoint start = new GHPoint(0.001, 0.0011);
+        // End at middle of edge 2-3
+        GHPoint end = new GHPoint(0.002, 0.0005);
+
+        GHRequest req = new GHRequest().
+                setPoints(Arrays.asList(start, end)).
+                setProfile("profile").
+                setHeadings(Arrays.asList(0.)).
+                setPathDetails(Collections.singletonList("edge_key"));
+        req.putHint(Parameters.Routing.PASS_THROUGH, true);
+        GHResponse response = router.route(req);
+        assertFalse(response.hasErrors());
+        assertArrayEquals(new int[]{8, 3, 2}, calcNodes(graph, response.getAll().get(0)));
+
+        req = new GHRequest().
+                setPoints(Arrays.asList(start, end)).
+                setProfile("profile").
+                setHeadings(Arrays.asList(180.)).
+                setPathDetails(Collections.singletonList("edge_key"));
+        req.putHint(Parameters.Routing.PASS_THROUGH, true);
+        response = router.route(req);
+        assertFalse(response.hasErrors());
+        assertArrayEquals(new int[]{8, 3, 2}, calcNodes(graph, response.getAll().get(0)));
+    }
+
+    @Test
     public void headingTest6() {
         // Test if snaps at tower nodes are ignored
         GraphHopperStorage graph = createSquareGraph();
