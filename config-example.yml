@@ -164,9 +164,9 @@ graphhopper:
   # custom_areas.directory: path/to/custom_areas
 
   ##### Country Rules #####
-  # GraphHopper applies country-specific routing rules (enabled by default) during import.
-  # Use this flag to disable these rules (you need to repeat the import for changes to take effect)
-  # country_rules.enable: false
+  # GraphHopper applies country-specific routing rules during import (not enabled by default).
+  # You need to redo the import for change to take effect.
+  # country_rules.enabled: true
 
 # Dropwizard server configuration
 server:
