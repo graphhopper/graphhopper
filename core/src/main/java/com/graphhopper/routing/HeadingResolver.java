@@ -64,7 +64,6 @@ public class HeadingResolver {
     /**
      * Calculates the heading (in degrees) of the given edge in fwd direction near the given point. If the point is
      * too far away from the edge (according to a hard-coded limit) it returns Double.NaN.
-     * point is too far away from the edge.
      */
     public static double getHeadingOfGeometryNearPoint(EdgeIteratorState edgeState, GHPoint point) {
         final double maxDistance = 20;
