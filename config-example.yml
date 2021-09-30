@@ -165,7 +165,7 @@ graphhopper:
 
   ##### Country Rules #####
   # GraphHopper applies country-specific routing rules during import (not enabled by default).
-  # You need to redo the import for change to take effect.
+  # You need to redo the import for changes to take effect.
   # country_rules.enabled: true
 
 # Dropwizard server configuration
