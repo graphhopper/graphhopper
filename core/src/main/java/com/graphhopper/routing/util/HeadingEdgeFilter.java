@@ -24,7 +24,7 @@ public class HeadingEdgeFilter implements EdgeFilter {
             // this edge is too far away. we do not accept it.
             return false;
         // the edge is not directed. we accept the edge if either of the two directions roughly has the right heading
-        return directedEdgeFilter.accept(edgeState) && Math.abs(headingOfEdge - heading) < tolerance ||
-                directedEdgeFilter.accept(edgeState.detach(true)) && Math.abs((headingOfEdge + 180) % 360 - heading) < tolerance;
+        return Math.abs(headingOfEdge - heading) < tolerance && directedEdgeFilter.accept(edgeState) ||
+                Math.abs((headingOfEdge + 180) % 360 - heading) < tolerance && directedEdgeFilter.accept(edgeState.detach(true));
     }
 }
