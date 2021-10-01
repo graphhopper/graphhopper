@@ -62,40 +62,6 @@ public class HeadingResolver {
     }
 
     /**
-     * Calculates the heading (in degrees) of the given edge in fwd direction near the given point. If the point is
-     * too far away from the edge (according to a hard-coded limit) it returns Double.NaN.
-     */
-    public static double getHeadingOfGeometryNearPoint(EdgeIteratorState edgeState, GHPoint point) {
-        final double maxDistance = 20;
-        final DistanceCalc calcDist = DistanceCalcEarth.DIST_EARTH;
-        double closestDistance = Double.POSITIVE_INFINITY;
-        PointList points = edgeState.fetchWayGeometry(FetchMode.ALL);
-        int closestPoint = -1;
-        for (int i = 1; i < points.size(); i++) {
-            double fromLat = points.getLat(i - 1), fromLon = points.getLon(i - 1);
-            double toLat = points.getLat(i), toLon = points.getLon(i);
-            double distance = calcDist.validEdgeDistance(point.lat, point.lon, fromLat, fromLon, toLat, toLon)
-                    ? calcDist.calcDenormalizedDist(calcDist.calcNormalizedEdgeDistance(point.lat, point.lon, fromLat, fromLon, toLat, toLon))
-                    : calcDist.calcDist(fromLat, fromLon, point.lat, point.lon);
-            if (i == points.size() - 1)
-                distance = Math.min(distance, calcDist.calcDist(toLat, toLon, point.lat, point.lon));
-            if (distance > maxDistance)
-                continue;
-            if (distance < closestDistance) {
-                closestDistance = distance;
-                closestPoint = i;
-            }
-        }
-        if (closestPoint < 0)
-            return Double.NaN;
-
-        double fromLat = points.getLat(closestPoint - 1), fromLon = points.getLon(closestPoint - 1);
-        double toLat = points.getLat(closestPoint), toLon = points.getLon(closestPoint);
-        // calcOrientation returns value relative to East, but heading is relative to North
-        return (Math.toDegrees(AngleCalc.ANGLE_CALC.calcOrientation(fromLat, fromLon, toLat, toLon)) + 90) % 360;
-    }
-
-    /**
      * Sets the tolerance for {@link #getEdgesWithDifferentHeading} in degrees.
      */
     public HeadingResolver setTolerance(double tolerance) {
