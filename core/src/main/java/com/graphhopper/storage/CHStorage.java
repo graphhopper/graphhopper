@@ -66,8 +66,8 @@ public class CHStorage {
 
     public CHStorage(Directory dir, String name, int segmentSize, boolean edgeBased) {
         this.edgeBased = edgeBased;
-        this.nodesCH = dir.find("nodes_ch_" + name, DAType.getPreferredInt(dir.getDefaultType()));
-        this.shortcuts = dir.find("shortcuts_" + name, DAType.getPreferredInt(dir.getDefaultType()));
+        this.nodesCH = dir.create("nodes_ch_" + name, DAType.getPreferredInt(dir.getDefaultType()));
+        this.shortcuts = dir.create("shortcuts_" + name, DAType.getPreferredInt(dir.getDefaultType()));
         if (segmentSize >= 0) {
             nodesCH.setSegmentSize(segmentSize);
             shortcuts.setSegmentSize(segmentSize);

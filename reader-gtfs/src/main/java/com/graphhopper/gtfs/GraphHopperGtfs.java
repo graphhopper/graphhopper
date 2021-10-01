@@ -37,6 +37,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -66,16 +68,15 @@ public class GraphHopperGtfs extends GraphHopper {
 
     @Override
     protected LocationIndex createLocationIndex(Directory dir) {
-        LocationIndexTree tmpIndex = new LocationIndexTree(getGraphHopperStorage(), dir);
-        if (tmpIndex.loadExisting()) {
-            return tmpIndex;
-        } else {
-            LocationIndexTree locationIndexTree = new LocationIndexTree(getGraphHopperStorage(), new RAMDirectory());
-            if (!locationIndexTree.loadExisting()) {
-                locationIndexTree.prepareIndex();
-            }
-            return locationIndexTree;
+        // if the location index was already created (we are 'loading') we use it. but we must not create the location
+        // index object in case the index does not exist yet, because we only can create it once. we are not ready yet,
+        // because first we need to import PT.
+        if (Files.exists(Paths.get(getGraphHopperLocation()).resolve("location_index"))) {
+            LocationIndexTree index = new LocationIndexTree(getGraphHopperStorage(), dir);
+            index.loadExisting();
+            return index;
         }
+        return null;
     }
 
     static class TransferWithTime {
@@ -91,7 +92,9 @@ public class GraphHopperGtfs extends GraphHopper {
             ensureWriteAccess();
             getGtfsStorage().create();
             GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
-            LocationIndex streetNetworkIndex = getLocationIndex();
+            // temporary location index for the street network that we only use during import
+            LocationIndexTree streetNetworkIndex = new LocationIndexTree(getGraphHopperStorage(), new RAMDirectory());
+            streetNetworkIndex.prepareIndex();
             try {
                 int idx = 0;
                 List<String> gtfsFiles = ghConfig.has("gtfs.file") ? Arrays.asList(ghConfig.getString("gtfs.file", "").split(",")) : Collections.emptyList();
@@ -125,6 +128,7 @@ public class GraphHopperGtfs extends GraphHopper {
                 throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
             }
             streetNetworkIndex.close();
+            // now we build the final location index
             LocationIndexTree locationIndex = new LocationIndexTree(getGraphHopperStorage(), getGraphHopperStorage().getDirectory());
             PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(getEncodingManager());
             EnumEncodedValue<GtfsStorage.EdgeType> typeEnc = ptEncodedValues.getTypeEnc();

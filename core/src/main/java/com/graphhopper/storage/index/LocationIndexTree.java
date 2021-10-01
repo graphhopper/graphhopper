@@ -76,6 +76,18 @@ public class LocationIndexTree implements LocationIndex {
         this.graph = g;
         this.nodeAccess = g.getNodeAccess();
         this.directory = dir;
+
+        // Clone this defensively -- In case something funny happens and things get added to the Graph after
+        // this index is built. Reason is that the expected structure of the index is a function of the bbox, so we
+        // need it to be immutable.
+        BBox bounds = graph.getBounds().clone();
+
+        // I want to be able to create a location index for the empty graph without error, but for that
+        // I need valid bounds so that the initialization logic works.
+        if (!bounds.isValid())
+            bounds = new BBox(-10.0, 10.0, -10.0, 10.0);
+
+        lineIntIndex = new LineIntIndex(bounds, directory, "location_index");
     }
 
     public int getMinResolutionInMeter() {
@@ -116,18 +128,6 @@ public class LocationIndexTree implements LocationIndex {
     }
 
     public boolean loadExisting() {
-        // Clone this defensively -- In case something funny happens and things get added to the Graph after
-        // this index is built. Reason is that the expected structure of the index is a function of the bbox, so we
-        // need it to be immutable.
-        BBox bounds = graph.getBounds().clone();
-
-        // I want to be able to create a location index for the empty graph without error, but for that
-        // I need valid bounds so that the initialization logic works.
-        if (!bounds.isValid())
-            bounds = new BBox(-10.0,10.0,-10.0,10.0);
-
-        lineIntIndex = new LineIntIndex(bounds, directory, "location_index");
-
         if (!lineIntIndex.loadExisting())
             return false;
 
@@ -166,7 +166,6 @@ public class LocationIndexTree implements LocationIndex {
 
         InMemConstructionIndex inMemConstructionIndex = prepareInMemConstructionIndex(bounds, edgeFilter);
 
-        lineIntIndex = new LineIntIndex(bounds, directory, "location_index");
         lineIntIndex.setMinResolutionInMeter(minResolutionInMeter);
         lineIntIndex.store(inMemConstructionIndex);
         lineIntIndex.setChecksum(checksum());

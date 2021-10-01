@@ -61,8 +61,8 @@ class BaseGraphNodesAndEdges {
     private boolean frozen;
 
     public BaseGraphNodesAndEdges(Directory dir, int intsForFlags, boolean withElevation, boolean withTurnCosts, int segmentSize) {
-        nodes = dir.find("nodes", DAType.getPreferredInt(dir.getDefaultType()));
-        edges = dir.find("edges", DAType.getPreferredInt(dir.getDefaultType()));
+        nodes = dir.create("nodes", DAType.getPreferredInt(dir.getDefaultType()));
+        edges = dir.create("edges", DAType.getPreferredInt(dir.getDefaultType()));
         if (segmentSize >= 0) {
             nodes.setSegmentSize(segmentSize);
             edges.setSegmentSize(segmentSize);

@@ -102,7 +102,7 @@ public abstract class AbstractSRTMElevationProvider extends TileBasedElevationPr
             if (fileName == null)
                 return 0;
 
-            DataAccess heights = getDirectory().find("dem" + intKey);
+            DataAccess heights = getDirectory().create("dem" + intKey);
             boolean loadExisting = false;
             try {
                 loadExisting = heights.loadExisting();

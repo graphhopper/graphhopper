@@ -41,7 +41,7 @@ public class StorableProperties {
     private final DataAccess da;
 
     public StorableProperties(Directory dir) {
-        this.da = dir.find("properties");
+        this.da = dir.create("properties");
         // reduce size
         da.setSegmentSize(1 << 15);
     }

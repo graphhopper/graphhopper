@@ -24,7 +24,7 @@ import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FiniteWeightFilter;
+import com.graphhopper.routing.util.HeadingEdgeFilter;
 import com.graphhopper.routing.util.NameSimilarityEdgeFilter;
 import com.graphhopper.routing.util.SnapPreventionEdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
@@ -54,27 +54,36 @@ public class ViaRouting {
     /**
      * @throws MultiplePointsNotFoundException in case one or more points could not be resolved
      */
-    public static List<Snap> lookup(EncodedValueLookup lookup, List<GHPoint> points, EdgeFilter edgeFilter, LocationIndex locationIndex, List<String> snapPreventions, List<String> pointHints) {
+    public static List<Snap> lookup(EncodedValueLookup lookup, List<GHPoint> points, EdgeFilter snapFilter,
+                                    LocationIndex locationIndex, List<String> snapPreventions, List<String> pointHints,
+                                    EdgeFilter directedSnapFilter, List<Double> headings) {
         if (points.size() < 2)
             throw new IllegalArgumentException("At least 2 points have to be specified, but was:" + points.size());
 
         final EnumEncodedValue<RoadClass> roadClassEnc = lookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         final EnumEncodedValue<RoadEnvironment> roadEnvEnc = lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         EdgeFilter strictEdgeFilter = snapPreventions.isEmpty()
-                ? edgeFilter
-                : new SnapPreventionEdgeFilter(edgeFilter, roadClassEnc, roadEnvEnc, snapPreventions);
+                ? snapFilter
+                : new SnapPreventionEdgeFilter(snapFilter, roadClassEnc, roadEnvEnc, snapPreventions);
         List<Snap> snaps = new ArrayList<>(points.size());
         IntArrayList pointsNotFound = new IntArrayList();
         for (int placeIndex = 0; placeIndex < points.size(); placeIndex++) {
             GHPoint point = points.get(placeIndex);
             Snap snap = null;
-            if (!pointHints.isEmpty())
+            if (placeIndex < headings.size() && !Double.isNaN(headings.get(placeIndex))) {
+                if (!pointHints.isEmpty() && !Helper.isEmpty(pointHints.get(placeIndex)))
+                    throw new IllegalArgumentException("Cannot specify heading and point_hint at the same time. " +
+                            "Make sure you specify either an empty point_hint (String) or a NaN heading (double) for point " + placeIndex);
+                snap = locationIndex.findClosest(point.lat, point.lon, new HeadingEdgeFilter(directedSnapFilter, headings.get(placeIndex), point));
+            } else if (!pointHints.isEmpty()) {
                 snap = locationIndex.findClosest(point.lat, point.lon, new NameSimilarityEdgeFilter(strictEdgeFilter,
                         pointHints.get(placeIndex), point, 100));
-            else if (!snapPreventions.isEmpty())
+            } else if (!snapPreventions.isEmpty()) {
                 snap = locationIndex.findClosest(point.lat, point.lon, strictEdgeFilter);
+            }
+
             if (snap == null || !snap.isValid())
-                snap = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
+                snap = locationIndex.findClosest(point.lat, point.lon, snapFilter);
             if (!snap.isValid())
                 pointsNotFound.add(placeIndex);
 

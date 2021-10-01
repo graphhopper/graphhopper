@@ -19,12 +19,14 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.GHPoint;
 
 public class HeadingResolver {
     private final EdgeExplorer edgeExplorer;
-    private double toleranceRad = deg2Rad(100);
+    private double toleranceRad = Math.toRadians(100);
 
     public HeadingResolver(Graph graph) {
         this.edgeExplorer = graph.createEdgeExplorer();
@@ -63,12 +65,7 @@ public class HeadingResolver {
      * Sets the tolerance for {@link #getEdgesWithDifferentHeading} in degrees.
      */
     public HeadingResolver setTolerance(double tolerance) {
-        this.toleranceRad = deg2Rad(tolerance);
+        this.toleranceRad = Math.toRadians(tolerance);
         return this;
     }
-
-    private static double deg2Rad(double deg) {
-        return Math.toRadians(deg);
-    }
-
 }
