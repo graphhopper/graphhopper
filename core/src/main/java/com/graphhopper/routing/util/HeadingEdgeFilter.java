@@ -18,6 +18,13 @@ public class HeadingEdgeFilter implements EdgeFilter {
 
     @Override
     public boolean accept(EdgeIteratorState edgeState) {
-        return HeadingResolver.isHeadingNearlyParallel(edgeState, directedEdgeFilter, heading, pointNearHeading);
+        final double tolerance = 30;
+        double headingOfEdge = HeadingResolver.getHeadingOfGeometryNearPoint(edgeState, pointNearHeading);
+        if (Double.isNaN(headingOfEdge))
+            // this edge is too far away. we do not accept it.
+            return false;
+        // the edge is not directed. we accept the edge if either of the two directions roughly has the right heading
+        return Math.abs(headingOfEdge - heading) < tolerance && directedEdgeFilter.accept(edgeState) ||
+                Math.abs((headingOfEdge + 180) % 360 - heading) < tolerance && directedEdgeFilter.accept(edgeState.detach(true));
     }
 }

@@ -62,55 +62,37 @@ public class HeadingResolver {
     }
 
     /**
-     * This method returns true if the specified heading is parallel to the specified edgeState (antiparallel isn't tested).
-     * Note that only the road segments near the specified pointNearHeading are checked for parallelism (<20m) and that
-     * a angle difference of 30° is accepted.
+     * Calculates the heading (in degrees) of the given edge in fwd direction near the given point. If the point is
+     * too far away from the edge (according to a hard-coded limit) it returns Double.NaN.
      */
-    public static boolean isHeadingNearlyParallel(EdgeIteratorState edgeState, EdgeFilter directedEdgeFilter, double heading, GHPoint pointNearHeading) {
-        boolean parallel = true, antiparallel = false;
-        if (!directedEdgeFilter.accept(edgeState)) {
-            parallel = false;
-            if (directedEdgeFilter.accept(edgeState.detach(true)))
-                antiparallel = true;
-        }
-        if (!parallel && !antiparallel) return false;
-        DistanceCalc calcDist = DistanceCalcEarth.DIST_EARTH;
-        double xAxisAngle = AngleCalc.ANGLE_CALC.convertAzimuth2xaxisAngle(heading);
+    public static double getHeadingOfGeometryNearPoint(EdgeIteratorState edgeState, GHPoint point) {
+        final double maxDistance = 20;
+        final DistanceCalc calcDist = DistanceCalcEarth.DIST_EARTH;
+        double closestDistance = Double.POSITIVE_INFINITY;
         PointList points = edgeState.fetchWayGeometry(FetchMode.ALL);
         int closestPoint = -1;
-        double closestDistance = 20; // skip road segments that are too far away from pointNearHeading
-        double angleDifference = 30; // include nearly parallel roads too (orientation can deviate +-30°)
         for (int i = 1; i < points.size(); i++) {
             double fromLat = points.getLat(i - 1), fromLon = points.getLon(i - 1);
             double toLat = points.getLat(i), toLon = points.getLon(i);
-            double distance = calcDist.validEdgeDistance(pointNearHeading.lat, pointNearHeading.lon, fromLat, fromLon, toLat, toLon)
-                    ? calcDist.calcDenormalizedDist(calcDist.calcNormalizedEdgeDistance(pointNearHeading.lat, pointNearHeading.lon, fromLat, fromLon, toLat, toLon))
-                    : calcDist.calcDist(fromLat, fromLon, pointNearHeading.lat, pointNearHeading.lon);
+            double distance = calcDist.validEdgeDistance(point.lat, point.lon, fromLat, fromLon, toLat, toLon)
+                    ? calcDist.calcDenormalizedDist(calcDist.calcNormalizedEdgeDistance(point.lat, point.lon, fromLat, fromLon, toLat, toLon))
+                    : calcDist.calcDist(fromLat, fromLon, point.lat, point.lon);
             if (i == points.size() - 1)
-                distance = Math.min(distance, calcDist.calcDist(toLat, toLon, pointNearHeading.lat, pointNearHeading.lon));
-
-            if (distance <= closestDistance) {
+                distance = Math.min(distance, calcDist.calcDist(toLat, toLon, point.lat, point.lon));
+            if (distance > maxDistance)
+                continue;
+            if (distance < closestDistance) {
                 closestDistance = distance;
                 closestPoint = i;
             }
         }
-        if (closestPoint >= 0) {
-            double fromLat = points.getLat(closestPoint - 1), fromLon = points.getLon(closestPoint - 1);
-            double toLat = points.getLat(closestPoint), toLon = points.getLon(closestPoint);
-            double orientation = parallel
-                    ? AngleCalc.ANGLE_CALC.calcOrientation(fromLat, fromLon, toLat, toLon)
-                    : AngleCalc.ANGLE_CALC.calcOrientation(toLat, toLon, fromLat, fromLon);
-            orientation = AngleCalc.ANGLE_CALC.alignOrientation(xAxisAngle, orientation);
-            if (Math.abs(orientation - xAxisAngle) < Math.toRadians(angleDifference))
-                return true;
+        if (closestPoint < 0)
+            return Double.NaN;
 
-            if (parallel && directedEdgeFilter.accept(edgeState.detach(true))) {
-                orientation = AngleCalc.ANGLE_CALC.calcOrientation(toLat, toLon, fromLat, fromLon);
-                orientation = AngleCalc.ANGLE_CALC.alignOrientation(xAxisAngle, orientation);
-                return Math.abs(orientation - xAxisAngle) < Math.toRadians(angleDifference);
-            }
-        }
-        return false;
+        double fromLat = points.getLat(closestPoint - 1), fromLon = points.getLon(closestPoint - 1);
+        double toLat = points.getLat(closestPoint), toLon = points.getLon(closestPoint);
+        // calcOrientation returns value relative to East, but heading is relative to North
+        return (Math.toDegrees(AngleCalc.ANGLE_CALC.calcOrientation(fromLat, fromLon, toLat, toLon)) + 90) % 360;
     }
 
     /**
