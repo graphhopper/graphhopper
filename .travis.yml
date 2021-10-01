@@ -13,9 +13,9 @@ matrix:
   include:
     - jdk: openjdk8
     - env: JDK='OpenJDK 17'
-      install: . ./install-jdk.sh -F 17 -C --url 'https://api.adoptopenjdk.net/v3/binary/latest/17/ga/linux/x64/jdk/hotspot/normal/adoptopenjdk'
+      install: . ./install-jdk.sh -F 17 -C
     - env: JDK='OpenJDK 18'
-      install: . ./install-jdk.sh -F 18 -C --url 'https://api.adoptopenjdk.net/v3/binary/latest/18/ea/linux/x64/jdk/hotspot/normal/adoptopenjdk'
+      install: . ./install-jdk.sh -F ea -C
 
 # avoid default dependency command for maven, 'true' means 'return true' and continue
 install: true
