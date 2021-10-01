@@ -230,7 +230,7 @@ public class GraphHopperTest {
         request.addPoint(new GHPoint(43.743887, 7.431151));
         request.addPoint(new GHPoint(43.744007, 7.431076));
         //Force initial U-Turn
-        request.setHeadings(Arrays.asList(200., Double.NaN));
+        request.setHeadings(Arrays.asList(200.));
 
         request.setAlgorithm(ASTAR).setProfile(profile);
         GHResponse rsp = hopper.route(request);
