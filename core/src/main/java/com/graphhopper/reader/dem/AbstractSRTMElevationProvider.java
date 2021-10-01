@@ -119,8 +119,8 @@ public abstract class AbstractSRTMElevationProvider extends TileBasedElevationPr
                     demProvider.setHeights(heights);
                     demProvider.setSeaLevel(true);
                     // use small size on disc and in-memory
-                    heights.create(10)
-                            .flush();
+                    heights.setSegmentSize(100).create(10).
+                            flush();
                     return 0;
                 }
             }
