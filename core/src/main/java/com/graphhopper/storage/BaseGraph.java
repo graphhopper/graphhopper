@@ -58,12 +58,12 @@ class BaseGraph implements Graph {
     public BaseGraph(Directory dir, int intsForFlags, boolean withElevation, boolean withTurnCosts, int segmentSize) {
         this.dir = dir;
         this.bitUtil = BitUtil.get(dir.getByteOrder());
-        this.wayGeometry = dir.find("geometry");
+        this.wayGeometry = dir.create("geometry");
         this.stringIndex = new StringIndex(dir);
         this.store = new BaseGraphNodesAndEdges(dir, intsForFlags, withElevation, withTurnCosts, segmentSize);
         this.nodeAccess = new GHNodeAccess(store);
         if (withTurnCosts) {
-            turnCostStorage = new TurnCostStorage(this, dir.find("turn_costs"));
+            turnCostStorage = new TurnCostStorage(this, dir.create("turn_costs"));
             if (segmentSize >= 0)
                 turnCostStorage.setSegmentSize(segmentSize);
         } else {

@@ -59,7 +59,7 @@ public class OSMIDMapTest {
 
     @Test
     public void testBinSearch() {
-        DataAccess da = new RAMDirectory().find("");
+        DataAccess da = new RAMDirectory().create("");
         da.create(100);
 
         da.setInt(0 * 4, 1);

@@ -117,7 +117,7 @@ public abstract class AbstractTiffElevationProvider extends TileBasedElevationPr
             demProvider.setInterpolate(interpolate);
 
             cacheData.put(name, demProvider);
-            DataAccess heights = getDirectory().find(name + ".gh");
+            DataAccess heights = getDirectory().create(name + ".gh");
             demProvider.setHeights(heights);
             boolean loadExisting = false;
             try {

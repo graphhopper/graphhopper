@@ -677,6 +677,7 @@ public abstract class AbstractGraphStorageTester {
         assertEquals(Integer.MAX_VALUE / 3, edge.getFlags().ints[0]);
         graph.close();
 
+        dir = new RAMDirectory();
         graph = new GraphHopperStorage(dir, manager, false).create(defaultSize);
 
         DecimalEncodedValue avSpeed0Enc = manager.getDecimalEncodedValue(getKey("car0", "average_speed"));

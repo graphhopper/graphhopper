@@ -49,7 +49,7 @@ public class LineIntIndex {
 
     public LineIntIndex(BBox bBox, Directory dir, String name) {
         this.bounds = bBox;
-        this.dataAccess = dir.find(name, DAType.getPreferredInt(dir.getDefaultType()));
+        this.dataAccess = dir.create(name, DAType.getPreferredInt(dir.getDefaultType()));
     }
 
     public boolean loadExisting() {

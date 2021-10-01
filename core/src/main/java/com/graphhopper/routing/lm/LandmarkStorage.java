@@ -132,7 +132,7 @@ public class LandmarkStorage {
         // use the node based traversal as this is a smaller weight approximation and will still produce correct results
         // In this sense its even 'better' to use node-based.
         this.traversalMode = TraversalMode.NODE_BASED;
-        this.landmarkWeightDA = dir.find("landmarks_" + lmConfig.getName());
+        this.landmarkWeightDA = dir.create("landmarks_" + lmConfig.getName());
 
         this.landmarks = landmarks;
         // one short per landmark and two directions => 2*2 byte
@@ -757,6 +757,13 @@ public class LandmarkStorage {
             }
         }
         return explorer;
+    }
+
+    /**
+     * For testing only
+     */
+    DataAccess _getInternalDA() {
+        return landmarkWeightDA;
     }
 
     /**
