@@ -25,7 +25,7 @@ public class HeadingEdgeFilter implements EdgeFilter {
         if (Double.isNaN(headingOfEdge))
             // this edge is too far away. we do not accept it.
             return false;
-        // the edge is not directed. we accept the edge if either of the two directions roughly has the right heading
+        // we accept the edge if either of the two directions roughly has the right heading
         return Math.abs(headingOfEdge - heading) < tolerance && directedEdgeFilter.accept(edgeState) ||
                 Math.abs((headingOfEdge + 180) % 360 - heading) < tolerance && directedEdgeFilter.accept(edgeState.detach(true));
     }
@@ -34,7 +34,7 @@ public class HeadingEdgeFilter implements EdgeFilter {
      * Calculates the heading (in degrees) of the given edge in fwd direction near the given point. If the point is
      * too far away from the edge (according to the maxDistance parameter) it returns Double.NaN.
      */
-    public static double getHeadingOfGeometryNearPoint(EdgeIteratorState edgeState, GHPoint point, double maxDistance) {
+    static double getHeadingOfGeometryNearPoint(EdgeIteratorState edgeState, GHPoint point, double maxDistance) {
         final DistanceCalc calcDist = DistanceCalcEarth.DIST_EARTH;
         double closestDistance = Double.POSITIVE_INFINITY;
         PointList points = edgeState.fetchWayGeometry(FetchMode.ALL);
