@@ -24,6 +24,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.lm.LMRoutingAlgorithmFactory;
@@ -165,12 +166,12 @@ public class Router {
     }
 
     private void checkPointHints(GHRequest request) {
-        if (request.getPointHints().size() > 0 && request.getPointHints().size() != request.getPoints().size())
+        if (!request.getPointHints().isEmpty() && request.getPointHints().size() != request.getPoints().size())
             throw new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass exactly one hint for every point, empty hints will be ignored");
     }
 
     private void checkCurbsides(GHRequest request) {
-        if (request.getCurbsides().size() > 0 && request.getCurbsides().size() != request.getPoints().size())
+        if (!request.getCurbsides().isEmpty() && request.getCurbsides().size() != request.getPoints().size())
             throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
     }
 
@@ -196,7 +197,7 @@ public class Router {
         StopWatch sw = new StopWatch().start();
         double startHeading = request.getHeadings().isEmpty() ? Double.NaN : request.getHeadings().get(0);
         RoundTripRouting.Params params = new RoundTripRouting.Params(request.getHints(), startHeading, routerConfig.getMaxRoundTripRetries());
-        List<Snap> snaps = RoundTripRouting.lookup(request.getPoints(), solver.getSnapFilter(), locationIndex, params);
+        List<Snap> snaps = RoundTripRouting.lookup(request.getPoints(), solver.createSnapFilter(), locationIndex, params);
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
 
         QueryGraph queryGraph = QueryGraph.create(ghStorage, snaps);
@@ -216,7 +217,8 @@ public class Router {
             throw new IllegalArgumentException("Currently alternative routes work only with start and end point. You tried to use: " + request.getPoints().size() + " points");
         GHResponse ghRsp = new GHResponse();
         StopWatch sw = new StopWatch().start();
-        List<Snap> snaps = ViaRouting.lookup(encodingManager, request.getPoints(), solver.getSnapFilter(), locationIndex, request.getSnapPreventions(), request.getPointHints());
+        List<Snap> snaps = ViaRouting.lookup(encodingManager, request.getPoints(), solver.createSnapFilter(), locationIndex,
+                request.getSnapPreventions(), request.getPointHints(), solver.createDirectedSnapFilter(), request.getHeadings());
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
         QueryGraph queryGraph = QueryGraph.create(ghStorage, snaps);
         PathCalculator pathCalculator = solver.createPathCalculator(queryGraph);
@@ -246,7 +248,8 @@ public class Router {
     protected GHResponse routeVia(GHRequest request, Solver solver) {
         GHResponse ghRsp = new GHResponse();
         StopWatch sw = new StopWatch().start();
-        List<Snap> snaps = ViaRouting.lookup(encodingManager, request.getPoints(), solver.getSnapFilter(), locationIndex, request.getSnapPreventions(), request.getPointHints());
+        List<Snap> snaps = ViaRouting.lookup(encodingManager, request.getPoints(), solver.createSnapFilter(), locationIndex,
+                request.getSnapPreventions(), request.getPointHints(), solver.createDirectedSnapFilter(), request.getHeadings());
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
         // (base) query graph used to resolve headings, curbsides etc. this is not necessarily the same thing as
         // the (possibly implementation specific) query graph used by PathCalculator
@@ -254,7 +257,8 @@ public class Router {
         PathCalculator pathCalculator = solver.createPathCalculator(queryGraph);
         boolean passThrough = getPassThrough(request.getHints());
         boolean forceCurbsides = getForceCurbsides(request.getHints());
-        ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, snaps, solver.weighting, pathCalculator, request.getCurbsides(), forceCurbsides, request.getHeadings(), passThrough);
+        ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, snaps, solver.weighting,
+                pathCalculator, request.getCurbsides(), forceCurbsides, request.getHeadings(), passThrough);
 
         if (request.getPoints().size() != result.paths.size() + 1)
             throw new RuntimeException("There should be exactly one more point than paths. points:" + request.getPoints().size() + ", paths:" + result.paths.size());
@@ -377,8 +381,13 @@ public class Router {
 
         protected abstract Weighting createWeighting();
 
-        protected EdgeFilter getSnapFilter() {
+        protected EdgeFilter createSnapFilter() {
             return new DefaultSnapFilter(weighting, lookup.getBooleanEncodedValue(Subnetwork.key(profile.getName())));
+        }
+
+        protected EdgeFilter createDirectedSnapFilter() {
+            BooleanEncodedValue inSubnetworkEnc = lookup.getBooleanEncodedValue(Subnetwork.key(profile.getName()));
+            return edgeState -> !edgeState.get(inSubnetworkEnc) && Double.isFinite(weighting.calcEdgeWeightWithAccess(edgeState, false));
         }
 
         protected abstract PathCalculator createPathCalculator(QueryGraph queryGraph);
