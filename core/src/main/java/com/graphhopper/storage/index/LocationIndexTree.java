@@ -73,10 +73,6 @@ public class LocationIndexTree implements LocationIndex {
      * @param g the graph for which this index should do the lookup based on latitude,longitude.
      */
     public LocationIndexTree(Graph g, Directory dir) {
-        this(g, dir, "location_index");
-    }
-
-    public LocationIndexTree(Graph g, Directory dir, String dataAccessName) {
         this.graph = g;
         this.nodeAccess = g.getNodeAccess();
         this.directory = dir;
@@ -91,7 +87,7 @@ public class LocationIndexTree implements LocationIndex {
         if (!bounds.isValid())
             bounds = new BBox(-10.0, 10.0, -10.0, 10.0);
 
-        lineIntIndex = new LineIntIndex(bounds, directory, dataAccessName);
+        lineIntIndex = new LineIntIndex(bounds, directory, "location_index");
     }
 
     public int getMinResolutionInMeter() {
