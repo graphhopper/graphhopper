@@ -460,10 +460,7 @@ public class GraphHopper {
             graphHopperFolder = pruneFileEnd(osmFile) + "-gh";
         }
 
-        if (ghConfig.has("country_rules.enabled")) {
-            boolean countryRulesEnabled = ghConfig.getBool("country_rules.enabled", false);
-            countryRuleFactory = countryRulesEnabled ? new CountryRuleFactory() : null;
-        }
+        countryRuleFactory = ghConfig.getBool("country_rules.enabled", false) ? new CountryRuleFactory() : null;
         customAreasDirectory = ghConfig.getString("custom_areas.directory", customAreasDirectory);
 
         // graph
