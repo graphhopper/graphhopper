@@ -91,7 +91,7 @@ public class CGIARProviderTest {
 
         // file not found
         assertTrue(file.exists());
-        assertEquals(1048767, file.length());
+        assertEquals(1048676, file.length());
 
         instance.setDownloader(new Downloader("test GH") {
             @Override
