@@ -71,7 +71,7 @@ class CHStorageTest {
     @Test
     public void testLargeNodeA() {
         int nodeA = Integer.MAX_VALUE;
-        RAMIntDataAccess access = new RAMIntDataAccess("", "", false, ByteOrder.LITTLE_ENDIAN);
+        RAMIntDataAccess access = new RAMIntDataAccess("", "", false, ByteOrder.LITTLE_ENDIAN, -1);
         access.create(1000);
         access.setInt(0, nodeA << 1 | 1 & PrepareEncoder.getScFwdDir());
         assertTrue(access.getInt(0) < 0);

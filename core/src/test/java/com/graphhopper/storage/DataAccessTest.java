@@ -37,7 +37,11 @@ public abstract class DataAccessTest {
     protected String directory;
     protected String name = "dataacess";
 
-    public abstract DataAccess createDataAccess(String location);
+    public DataAccess createDataAccess(String location) {
+        return createDataAccess(location, 128);
+    }
+
+    public abstract DataAccess createDataAccess(String location, int segmentSize);
 
     @BeforeEach
     public void setUp() {
@@ -89,11 +93,10 @@ public abstract class DataAccessTest {
     public void testExceptionIfNoEnsureCapacityWasCalled() {
         DataAccess da = createDataAccess(name);
         assertFalse(da.loadExisting());
-        // throw some undefined exception if no ensureCapacity was called
         try {
             da.setInt(2 * 4, 321);
-            assertTrue(false);
-        } catch (Exception ex) {
+            fail();
+        } catch (Throwable t) {
         }
     }
 
@@ -154,8 +157,7 @@ public abstract class DataAccessTest {
 
     @Test
     public void testSegments() {
-        DataAccess da = createDataAccess(name);
-        da.setSegmentSize(128);
+        DataAccess da = createDataAccess(name, 128);
         da.create(10);
         assertEquals(1, da.getSegments());
         da.ensureCapacity(500);
@@ -175,8 +177,7 @@ public abstract class DataAccessTest {
 
     @Test
     public void testSegmentSize() {
-        DataAccess da = createDataAccess(name);
-        da.setSegmentSize(20);
+        DataAccess da = createDataAccess(name, 20);
         assertEquals(128, da.getSegmentSize());
         da.close();
     }

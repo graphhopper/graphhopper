@@ -56,11 +56,6 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     }
 
     @Test
-    public void testNoCreateCalled() {
-        assertThrows(Throwable.class, () -> GraphBuilder.start(encodingManager).build().edge(0, 1));
-    }
-
-    @Test
     public void testSave_and_fileFormat() {
         graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true).create(defaultSize);
         NodeAccess na = graph.getNodeAccess();
