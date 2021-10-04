@@ -41,9 +41,9 @@ public class StorableProperties {
     private final DataAccess da;
 
     public StorableProperties(Directory dir) {
-        this.da = dir.create("properties");
         // reduce size
-        da.setSegmentSize(1 << 15);
+        int segmentSize = 1 << 15;
+        this.da = dir.create("properties", segmentSize);
     }
 
     public synchronized boolean loadExisting() {

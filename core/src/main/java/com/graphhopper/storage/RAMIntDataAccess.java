@@ -36,8 +36,8 @@ class RAMIntDataAccess extends AbstractDataAccess {
     private boolean store;
     private int segmentSizeIntsPower;
 
-    RAMIntDataAccess(String name, String location, boolean store, ByteOrder order) {
-        super(name, location, order);
+    RAMIntDataAccess(String name, String location, boolean store, ByteOrder order, int segmentSize) {
+        super(name, location, order, segmentSize);
         this.store = store;
     }
 
@@ -59,7 +59,6 @@ class RAMIntDataAccess extends AbstractDataAccess {
         if (segments.length > 0)
             throw new IllegalThreadStateException("already created");
 
-        setSegmentSize(segmentSizeInBytes);
         ensureCapacity(Math.max(10 * 4, bytes));
         return this;
     }
@@ -173,7 +172,7 @@ class RAMIntDataAccess extends AbstractDataAccess {
 
     @Override
     public final void setInt(long bytePos, int value) {
-        assert segmentSizeIntsPower > 0 : "call create or loadExisting before usage!";
+        assert segments.length > 0 : "call create or loadExisting before usage!";
         bytePos >>>= 2;
         int bufferIndex = (int) (bytePos >>> segmentSizeIntsPower);
         int index = (int) (bytePos & indexDivisor);
@@ -182,7 +181,7 @@ class RAMIntDataAccess extends AbstractDataAccess {
 
     @Override
     public final int getInt(long bytePos) {
-        assert segmentSizeIntsPower > 0 : "call create or loadExisting before usage!";
+        assert segments.length > 0 : "call create or loadExisting before usage!";
         bytePos >>>= 2;
         int bufferIndex = (int) (bytePos >>> segmentSizeIntsPower);
         int index = (int) (bytePos & indexDivisor);
@@ -191,7 +190,7 @@ class RAMIntDataAccess extends AbstractDataAccess {
 
     @Override
     public final void setShort(long bytePos, short value) {
-        assert segmentSizeIntsPower > 0 : "call create or loadExisting before usage!";
+        assert segments.length > 0 : "call create or loadExisting before usage!";
         if (bytePos % 4 != 0 && bytePos % 4 != 2)
             throw new IllegalMonitorStateException("bytePos of wrong multiple for RAMInt " + bytePos);
 
@@ -207,7 +206,7 @@ class RAMIntDataAccess extends AbstractDataAccess {
 
     @Override
     public final short getShort(long bytePos) {
-        assert segmentSizeIntsPower > 0 : "call create or loadExisting before usage!";
+        assert segments.length > 0 : "call create or loadExisting before usage!";
         if (bytePos % 4 != 0 && bytePos % 4 != 2)
             throw new IllegalMonitorStateException("bytePos of wrong multiple for RAMInt " + bytePos);
 
@@ -258,7 +257,7 @@ class RAMIntDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public DataAccess setSegmentSize(int bytes) {
+    DataAccess setSegmentSize(int bytes) {
         super.setSegmentSize(bytes);
         segmentSizeIntsPower = (int) (Math.log(segmentSizeInBytes / 4) / Math.log(2));
         indexDivisor = segmentSizeInBytes / 4 - 1;

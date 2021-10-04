@@ -60,7 +60,17 @@ public class GHDirectory implements Directory {
     }
 
     @Override
+    public DataAccess create(String name, int segmentSize) {
+        return create(name, defaultType, segmentSize);
+    }
+
+    @Override
     public DataAccess create(String name, DAType type) {
+        return create(name, type, -1);
+    }
+
+    @Override
+    public DataAccess create(String name, DAType type, int segmentSize) {
         if (!name.equals(toLowerCase(name)))
             throw new IllegalArgumentException("Since 0.7 DataAccess objects does no longer accept upper case names");
 
@@ -73,15 +83,15 @@ public class GHDirectory implements Directory {
         if (type.isInMemory()) {
             if (type.isInteg()) {
                 if (type.isStoring())
-                    da = new RAMIntDataAccess(name, location, true, byteOrder);
+                    da = new RAMIntDataAccess(name, location, true, byteOrder, segmentSize);
                 else
-                    da = new RAMIntDataAccess(name, location, false, byteOrder);
+                    da = new RAMIntDataAccess(name, location, false, byteOrder, segmentSize);
             } else if (type.isStoring())
-                da = new RAMDataAccess(name, location, true, byteOrder);
+                da = new RAMDataAccess(name, location, true, byteOrder, segmentSize);
             else
-                da = new RAMDataAccess(name, location, false, byteOrder);
+                da = new RAMDataAccess(name, location, false, byteOrder, segmentSize);
         } else if (type.isMMap()) {
-            da = new MMapDataAccess(name, location, byteOrder, type.isAllowWrites());
+            da = new MMapDataAccess(name, location, byteOrder, type.isAllowWrites(), segmentSize);
         } else {
             throw new IllegalArgumentException("DAType not supported " + type);
         }

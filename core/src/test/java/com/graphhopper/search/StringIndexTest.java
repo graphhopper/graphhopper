@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class StringIndexTest {
 
     private StringIndex create() {
-        return new StringIndex(new RAMDirectory()).create(1000);
+        return new StringIndex(new RAMDirectory(), 1000, -1).create(1000);
     }
 
     Map<String, String> createMap(String... strings) {
@@ -164,12 +164,12 @@ public class StringIndexTest {
         String location = "./target/stringindex-store";
         Helper.removeDir(new File(location));
 
-        StringIndex index = new StringIndex(new RAMDirectory(location, true).create()).create(1000);
+        StringIndex index = new StringIndex(new RAMDirectory(location, true).create(), 1000, -1).create(1000);
         long pointer = index.add(createMap("", "test"));
         index.flush();
         index.close();
 
-        index = new StringIndex(new RAMDirectory(location, true));
+        index = new StringIndex(new RAMDirectory(location, true), 1000, -1);
         assertTrue(index.loadExisting());
         assertEquals("test", index.get(pointer, ""));
         // make sure bytePointer is correctly set after loadExisting
@@ -185,7 +185,7 @@ public class StringIndexTest {
         String location = "./target/stringindex-store";
         Helper.removeDir(new File(location));
 
-        StringIndex index = new StringIndex(new RAMDirectory(location, true).create()).create(1000);
+        StringIndex index = new StringIndex(new RAMDirectory(location, true).create(), 1000, -1).create(1000);
         long pointerA = index.add(createMap("c", "test value"));
         assertEquals(2, index.getKeys().size());
         long pointerB = index.add(createMap("a", "value", "b", "another value"));
@@ -194,7 +194,7 @@ public class StringIndexTest {
         index.flush();
         index.close();
 
-        index = new StringIndex(new RAMDirectory(location, true));
+        index = new StringIndex(new RAMDirectory(location, true), 1000, -1);
         assertTrue(index.loadExisting());
         assertEquals("[, c, a, b]", index.getKeys().toString());
         assertEquals("test value", index.get(pointerA, "c"));

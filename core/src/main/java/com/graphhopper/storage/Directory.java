@@ -40,12 +40,19 @@ public interface Directory {
     ByteOrder getByteOrder();
 
     /**
-     * Tries to find the object with that name if not existent it creates one and associates the
-     * location with it. A name is unique in one Directory.
+     * Creates a new DataAccess object with the given name in the location of this Directory. Each name can only
+     * be used once.
      */
     DataAccess create(String name);
 
+    /**
+     * @param segmentSize segment size in bytes or -1 to use the default of the corresponding DataAccess implementation
+     */
+    DataAccess create(String name, int segmentSize);
+
     DataAccess create(String name, DAType type);
+
+    DataAccess create(String name, DAType type, int segmentSize);
 
     /**
      * Removes the specified object from the directory.

@@ -37,14 +37,14 @@ public abstract class AbstractDataAccess implements DataAccess {
     protected final ByteOrder byteOrder;
     protected final BitUtil bitUtil;
     private final String location;
-    protected int header[] = new int[(HEADER_OFFSET - 20) / 4];
+    protected int[] header = new int[(HEADER_OFFSET - 20) / 4];
     protected String name;
-    protected int segmentSizeInBytes = SEGMENT_SIZE_DEFAULT;
+    protected int segmentSizeInBytes;
     protected int segmentSizePower;
     protected int indexDivisor;
     protected boolean closed = false;
 
-    public AbstractDataAccess(String name, String location, ByteOrder order) {
+    public AbstractDataAccess(String name, String location, ByteOrder order, int segmentSize) {
         byteOrder = order;
         bitUtil = BitUtil.get(order);
         this.name = name;
@@ -52,6 +52,9 @@ public abstract class AbstractDataAccess implements DataAccess {
             throw new IllegalArgumentException("Create DataAccess object via its corresponding Directory!");
 
         this.location = location;
+        if (segmentSize < 0)
+            segmentSize = SEGMENT_SIZE_DEFAULT;
+        setSegmentSize(segmentSize);
     }
 
     @Override
@@ -121,8 +124,7 @@ public abstract class AbstractDataAccess implements DataAccess {
         }
     }
 
-    @Override
-    public DataAccess setSegmentSize(int bytes) {
+    DataAccess setSegmentSize(int bytes) {
         if (bytes > 0) {
             // segment size should be a power of 2
             int tmp = (int) (Math.log(bytes) / Math.log(2));
