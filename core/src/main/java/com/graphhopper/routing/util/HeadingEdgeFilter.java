@@ -62,7 +62,6 @@ public class HeadingEdgeFilter implements EdgeFilter {
 
         double fromLat = points.getLat(closestPoint - 1), fromLon = points.getLon(closestPoint - 1);
         double toLat = points.getLat(closestPoint), toLon = points.getLon(closestPoint);
-        // calcOrientation returns value relative to East, but heading is relative to North
-        return (Math.toDegrees(AngleCalc.ANGLE_CALC.calcOrientation(fromLat, fromLon, toLat, toLon)) + 90) % 360;
+        return AngleCalc.ANGLE_CALC.calcAzimuth(fromLat, fromLon, toLat, toLon);
     }
 }

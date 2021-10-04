@@ -18,18 +18,28 @@
 
 package com.graphhopper.routing.util.countryrules;
 
+
+import static com.graphhopper.routing.ev.Country.*;
+
+import java.util.EnumMap;
+import java.util.Map;
+
 import com.graphhopper.routing.ev.Country;
 
 public class CountryRuleFactory {
+    
+    private final Map<Country, CountryRule> rules = new EnumMap<>(Country.class);
+    
+    public CountryRuleFactory() {
+        rules.put(AUT, new AustriaCountryRule());
+        rules.put(DEU, new GermanyCountryRule());
+    }
 
     public CountryRule getCountryRule(Country country) {
-        switch (country) {
-            case DEU:
-                return GermanyCountryRule.RULE;
-            case AUT:
-                return AustriaCountryRule.RULE;
-            default:
-                return null;
-        }
+        return rules.get(country);
+    }
+    
+    public Map<Country, CountryRule> getCountryToRuleMap() {
+        return rules;
     }
 }
