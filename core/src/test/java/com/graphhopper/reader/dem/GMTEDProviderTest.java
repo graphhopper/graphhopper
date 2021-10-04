@@ -96,9 +96,9 @@ public class GMTEDProviderTest {
         });
         assertEquals(0, instance.getEle(46, -20), 1);
 
-        // file not found => small!
+        // file not found
         assertTrue(file.exists());
-        assertEquals(228, file.length());
+        assertEquals(1048676, file.length());
 
         instance.setDownloader(new Downloader("test GH") {
             @Override
