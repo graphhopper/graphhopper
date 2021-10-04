@@ -28,7 +28,6 @@ import com.graphhopper.routing.util.TransportationMode;
  * @author Robin Boldt
  */
 public class GermanyCountryRule implements CountryRule {
-    public final static GermanyCountryRule RULE = new GermanyCountryRule();
 
     /**
      * In Germany there are roads without a speed limit. For these roads, this method

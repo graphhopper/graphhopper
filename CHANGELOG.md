@@ -1,5 +1,7 @@
 ### 5.0 [not yet released]
 
+- consider heading when snapping coordinates to the road network, this is especially important for navigation (#2411)
+
 ### 4.0 [29 Sep 2021]
 
 - faster node-based CH preparation (~20%), (#2390)
