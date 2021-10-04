@@ -238,12 +238,12 @@ public class GraphHopperTest {
         assertFalse(rsp.hasErrors());
         ResponsePath res = rsp.getBest();
         InstructionList il = res.getInstructions();
-        assertEquals(3, il.size());
+        assertEquals(4, il.size());
 
         // Initial U-turn
-        assertEquals("make a U-turn onto Avenue Princesse Grace", il.get(0).getTurnDescription(tr));
-        // Second U-turn to get to destination
         assertEquals("make a U-turn onto Avenue Princesse Grace", il.get(1).getTurnDescription(tr));
+        // Second U-turn to get to destination
+        assertEquals("make a U-turn onto Avenue Princesse Grace", il.get(2).getTurnDescription(tr));
     }
 
     private void testImportCloseAndLoad(boolean ch, boolean lm, boolean sort, boolean custom) {
