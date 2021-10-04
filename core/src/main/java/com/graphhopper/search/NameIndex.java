@@ -145,7 +145,8 @@ public class NameIndex implements Storable<NameIndex> {
         return names.getCapacity();
     }
 
-    public void copyTo(NameIndex nameIndex) {
-        names.copyTo(nameIndex.names);
-    }
+    // TODO ORS: probably not required anymore, verify
+//    public void copyTo(NameIndex nameIndex) {
+//        names.copyTo(nameIndex.names);
+//    }
 }

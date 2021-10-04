@@ -25,11 +25,12 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.*;
+import com.graphhopper.routing.DefaultWeightingFactory;
+import com.graphhopper.routing.Router;
+import com.graphhopper.routing.RouterConfig;
 import com.graphhopper.routing.WeightingFactory;
 import com.graphhopper.routing.calt.CaltPreparationHandler;
 import com.graphhopper.routing.ch.CHPreparationHandler;
-import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMPreparationHandler;
@@ -40,6 +41,7 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
+import com.graphhopper.routing.weighting.TimeDependentAccessWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
@@ -51,14 +53,12 @@ import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
-import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import us.dustinj.timezonemap.TimeZoneMap;
 
 import java.io.BufferedReader;
-import us.dustinj.timezonemap.TimeZoneMap;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -70,14 +70,11 @@ import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.concurrent.locks.Lock;
 
 import static com.graphhopper.util.GHUtility.readCountries;
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.RoundTrip;
 import static java.util.Collections.emptyList;
-import static com.graphhopper.util.Parameters.Algorithms.*;
 
 /**
  * Easy to use access point to configure import and (offline) routing.
