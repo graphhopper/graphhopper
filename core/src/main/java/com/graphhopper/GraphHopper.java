@@ -25,10 +25,7 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.DefaultWeightingFactory;
-import com.graphhopper.routing.Router;
-import com.graphhopper.routing.RouterConfig;
-import com.graphhopper.routing.WeightingFactory;
+import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.lm.LMConfig;
@@ -100,8 +97,7 @@ public class GraphHopper {
     private LockFactory lockFactory = new NativeFSLockFactory();
     private boolean allowWrites = true;
     private boolean fullyLoaded = false;
-    private boolean smoothElevation = false;
-    private double longEdgeSamplingDistance = Double.MAX_VALUE;
+    private final OSMReaderConfig osmReaderConfig = new OSMReaderConfig();
     // for routing
     private final RouterConfig routerConfig = new RouterConfig();
     // for index
@@ -117,8 +113,6 @@ public class GraphHopper {
 
     // for data reader
     private String osmFile;
-    private double dataReaderWayPointMaxDistance = 1;
-    private int dataReaderWorkerThreads = 2;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private FlagEncoderFactory flagEncoderFactory = new DefaultFlagEncoderFactory();
     private EncodedValueFactory encodedValueFactory = new DefaultEncodedValueFactory();
@@ -145,29 +139,6 @@ public class GraphHopper {
         else
             setElevation(true);
         this.eleProvider = eleProvider;
-        return this;
-    }
-
-    /**
-     * Threads for data reading.
-     */
-    protected int getWorkerThreads() {
-        return dataReaderWorkerThreads;
-    }
-
-    /**
-     * Return maximum distance (in meter) to reduce points via douglas peucker while OSM import.
-     */
-    protected double getWayPointMaxDistance() {
-        return dataReaderWayPointMaxDistance;
-    }
-
-    /**
-     * This parameter specifies how to reduce points via douglas peucker while OSM import. Higher
-     * value means more details, unit is meter. Default is 1. Disable via 0.
-     */
-    public GraphHopper setWayPointMaxDistance(double wayPointMaxDistance) {
-        this.dataReaderWayPointMaxDistance = wayPointMaxDistance;
         return this;
     }
 
@@ -280,22 +251,6 @@ public class GraphHopper {
      */
     public GraphHopper setElevation(boolean includeElevation) {
         this.elevation = includeElevation;
-        return this;
-    }
-
-    /**
-     * Sets the distance distance between elevation samples on long edges
-     */
-    public GraphHopper setLongEdgeSamplingDistance(double longEdgeSamplingDistance) {
-        this.longEdgeSamplingDistance = longEdgeSamplingDistance;
-        return this;
-    }
-
-    /**
-     * Sets the max elevation discrepancy between way points and the simplified polyline in meters
-     */
-    public GraphHopper setElevationWayPointMaxDistance(double elevationWayPointMaxDistance) {
-        this.routerConfig.setElevationWayPointMaxDistance(elevationWayPointMaxDistance);
         return this;
     }
 
@@ -496,13 +451,14 @@ public class GraphHopper {
             lockFactory = new NativeFSLockFactory();
 
         // elevation
-        this.smoothElevation = ghConfig.getBool("graph.elevation.smoothing", false);
-        this.longEdgeSamplingDistance = ghConfig.getDouble("graph.elevation.long_edge_sampling_distance", Double.MAX_VALUE);
-        setElevationWayPointMaxDistance(ghConfig.getDouble("graph.elevation.way_point_max_distance", Double.MAX_VALUE));
+        osmReaderConfig.setSmoothElevation(ghConfig.getBool("graph.elevation.smoothing", osmReaderConfig.isSmoothElevation()));
+        osmReaderConfig.setLongEdgeSamplingDistance(ghConfig.getDouble("graph.elevation.long_edge_sampling_distance", osmReaderConfig.getLongEdgeSamplingDistance()));
+        osmReaderConfig.setElevationMaxWayPointDistance(ghConfig.getDouble("graph.elevation.way_point_max_distance", osmReaderConfig.getElevationMaxWayPointDistance()));
+        routerConfig.setElevationWayPointMaxDistance(ghConfig.getDouble("graph.elevation.way_point_max_distance", routerConfig.getElevationWayPointMaxDistance()));
         ElevationProvider elevationProvider = createElevationProvider(ghConfig);
         setElevationProvider(elevationProvider);
 
-        if (longEdgeSamplingDistance < Double.MAX_VALUE && !elevationProvider.canInterpolate())
+        if (osmReaderConfig.getLongEdgeSamplingDistance() < Double.MAX_VALUE && !elevationProvider.canInterpolate())
             logger.warn("Long edge sampling enabled, but bilinear interpolation disabled. See #1953");
 
         // optimizable prepare
@@ -513,9 +469,8 @@ public class GraphHopper {
         lmPreparationHandler.init(ghConfig);
 
         // osm import
-        dataReaderWayPointMaxDistance = ghConfig.getDouble(Routing.INIT_WAY_POINT_MAX_DISTANCE, dataReaderWayPointMaxDistance);
-
-        dataReaderWorkerThreads = ghConfig.getInt("datareader.worker_threads", dataReaderWorkerThreads);
+        osmReaderConfig.setMaxWayPointDistance(ghConfig.getDouble(Routing.INIT_WAY_POINT_MAX_DISTANCE, osmReaderConfig.getMaxWayPointDistance()));
+        osmReaderConfig.setWorkerThreads(ghConfig.getInt("datareader.worker_threads", osmReaderConfig.getWorkerThreads()));
 
         // index
         preciseIndexResolution = ghConfig.getInt("index.high_resolution", preciseIndexResolution);
@@ -691,14 +646,9 @@ public class GraphHopper {
         AreaIndex<CustomArea> areaIndex = new AreaIndex<>(customAreas);
 
         logger.info("start creating graph from " + osmFile);
-        OSMReader reader = new OSMReader(ghStorage).setFile(_getOSMFile()).
+        OSMReader reader = new OSMReader(ghStorage, osmReaderConfig).setFile(_getOSMFile()).
                 setAreaIndex(areaIndex).
                 setElevationProvider(eleProvider).
-                setWorkerThreads(dataReaderWorkerThreads).
-                setWayPointMaxDistance(dataReaderWayPointMaxDistance).
-                setWayPointElevationMaxDistance(routerConfig.getElevationWayPointMaxDistance()).
-                setSmoothElevation(smoothElevation).
-                setLongEdgeSamplingDistance(longEdgeSamplingDistance).
                 setCountryRuleFactory(countryRuleFactory);
         logger.info("using " + ghStorage.toString() + ", memory:" + getMemInfo());
         try {
@@ -1219,5 +1169,9 @@ public class GraphHopper {
 
     public RouterConfig getRouterConfig() {
         return routerConfig;
+    }
+
+    public OSMReaderConfig getReaderConfig() {
+        return osmReaderConfig;
     }
 }

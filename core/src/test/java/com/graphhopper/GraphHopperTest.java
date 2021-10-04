@@ -1107,8 +1107,10 @@ public class GraphHopperTest {
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
                 setStoreOnFlush(true).
-                setElevationWayPointMaxDistance(1).
-                setProfiles(new Profile("profile").setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile("profile").setVehicle(vehicle).setWeighting(weighting));
+        hopper.getRouterConfig().setElevationWayPointMaxDistance(1.);
+        hopper.getReaderConfig().
+                setElevationMaxWayPointDistance(1.).
                 setLongEdgeSamplingDistance(30);
 
         SRTMProvider elevationProvider = new SRTMProvider(DIR);

@@ -24,6 +24,7 @@ import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;
+import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.util.AreaIndex;
@@ -78,19 +79,17 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     protected static final int TOWER_NODE = -2;
     private static final Logger LOGGER = LoggerFactory.getLogger(OSMReader.class);
     private final GraphHopperStorage ghStorage;
+    private final OSMReaderConfig config;
     private final Graph graph;
     private final NodeAccess nodeAccess;
     private final LongIndexedContainer barrierNodeIds = new LongArrayList();
     private final DistanceCalc distCalc = DistanceCalcEarth.DIST_EARTH;
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
     private CountryRuleFactory countryRuleFactory = null;
-    private boolean smoothElevation = false;
-    private double longEdgeSamplingDistance = 0;
     protected long zeroCounter = 0;
     protected PillarInfo pillarInfo;
     private long locations;
     private final EncodingManager encodingManager;
-    private int workerThreads = 2;
     // Choosing the best Map<Long, Integer> is hard. We need a memory efficient and fast solution for big data sets!
     //
     // very slow: new SparseLongLongArray
@@ -106,7 +105,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     // stores osm way ids used by relations to identify which edge ids needs to be mapped later
     private GHLongHashSet osmWayIdSet = new GHLongHashSet();
     private IntLongMap edgeIdToOsmWayIdMap;
-    private boolean doSimplify = true;
+    private final boolean doSimplify;
     private int nextTowerId = 0;
     private int nextPillarId = 0;
     // negative but increasing to avoid clash with custom created OSM files
@@ -118,11 +117,16 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     private final IntsRef tempRelFlags;
     private final TurnCostStorage tcs;
 
-    public OSMReader(GraphHopperStorage ghStorage) {
+    public OSMReader(GraphHopperStorage ghStorage, OSMReaderConfig config) {
         this.ghStorage = ghStorage;
+        this.config = config;
         this.graph = ghStorage;
         this.nodeAccess = graph.getNodeAccess();
         this.encodingManager = ghStorage.getEncodingManager();
+
+        doSimplify = config.getMaxWayPointDistance() > 0;
+        simplifyAlgo.setMaxDistance(config.getMaxWayPointDistance());
+        simplifyAlgo.setElevationMaxDistance(config.getElevationMaxWayPointDistance());
 
         osmNodeIdToInternalNodeMap = new GHLongIntBTree(200);
         osmNodeIdToNodeFlagsMap = new GHLongLongHashMap(200, .5f);
@@ -308,7 +312,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     }
 
     protected OSMInput openOsmInputFile(File osmFile) throws XMLStreamException, IOException {
-        return new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
+        return new OSMInputFile(osmFile).setWorkerThreads(config.getWorkerThreads()).open();
     }
 
     /**
@@ -708,12 +712,12 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             throw new AssertionError("Dimension does not match for pointList vs. nodeAccess " + pointList.getDimension() + " <-> " + nodeAccess.getDimension());
 
         // Smooth the elevation before calculating the distance because the distance will be incorrect if calculated afterwards
-        if (this.smoothElevation)
+        if (config.isSmoothElevation())
             pointList = GraphElevationSmoothing.smoothElevation(pointList);
 
         // sample points along long edges
-        if (this.longEdgeSamplingDistance < Double.MAX_VALUE && pointList.is3D())
-            pointList = EdgeSampling.sample(pointList, longEdgeSamplingDistance, distCalc, eleProvider);
+        if (config.getLongEdgeSamplingDistance() < Double.MAX_VALUE && pointList.is3D())
+            pointList = EdgeSampling.sample(pointList, config.getLongEdgeSamplingDistance(), distCalc, eleProvider);
 
         if (doSimplify && pointList.size() > 2)
             simplifyAlgo.simplify(pointList);
@@ -955,34 +959,8 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         return this;
     }
 
-    public OSMReader setWayPointMaxDistance(double maxDist) {
-        doSimplify = maxDist > 0;
-        simplifyAlgo.setMaxDistance(maxDist);
-        return this;
-    }
-
-    public OSMReader setWayPointElevationMaxDistance(double elevationWayPointMaxDistance) {
-        simplifyAlgo.setElevationMaxDistance(elevationWayPointMaxDistance);
-        return this;
-    }
-
-    public OSMReader setSmoothElevation(boolean smoothElevation) {
-        this.smoothElevation = smoothElevation;
-        return this;
-    }
-
     public OSMReader setCountryRuleFactory(CountryRuleFactory countryRuleFactory) {
         this.countryRuleFactory = countryRuleFactory;
-        return this;
-    }
-
-    public OSMReader setLongEdgeSamplingDistance(double longEdgeSamplingDistance) {
-        this.longEdgeSamplingDistance = longEdgeSamplingDistance;
-        return this;
-    }
-
-    public OSMReader setWorkerThreads(int numOfWorkers) {
-        this.workerThreads = numOfWorkers;
         return this;
     }
 

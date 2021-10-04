@@ -87,7 +87,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
 
         LOGGER.info("Running performance test, max deviation percentage: " + f.maxDeviationPercentage);
         // read osm
-        OSMReader reader = new OSMReader(f.ghStorage);
+        OSMReader reader = new OSMReader(f.ghStorage, new OSMReaderConfig());
         reader.setFile(new File(OSM_FILE));
         reader.readGraph();
         f.ghStorage.freeze();
