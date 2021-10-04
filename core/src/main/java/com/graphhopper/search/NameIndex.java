@@ -46,13 +46,11 @@ public class NameIndex implements Storable<NameIndex> {
         names = dir.find(filename);
     }
 
-    @Override
     public NameIndex create(long initBytes) {
         names.create(initBytes);
         return this;
     }
 
-    @Override
     public boolean loadExisting() {
         if (names.loadExisting()) {
             bytePointer = BitUtil.LITTLE.combineIntsToLong(names.getHeader(0), names.getHeader(4));
@@ -123,7 +121,6 @@ public class NameIndex implements Storable<NameIndex> {
         return new String(bytes, Helper.UTF_CS);
     }
 
-    @Override
     public void flush() {
         names.setHeader(0, BitUtil.LITTLE.getIntLow(bytePointer));
         names.setHeader(4, BitUtil.LITTLE.getIntHigh(bytePointer));
@@ -144,7 +141,6 @@ public class NameIndex implements Storable<NameIndex> {
         names.setSegmentSize(segments);
     }
 
-    @Override
     public long getCapacity() {
         return names.getCapacity();
     }

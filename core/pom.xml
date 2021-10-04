@@ -115,15 +115,14 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-api</artifactId>
-            <version>${project.parent.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
             <groupId>us.dustinj.timezonemap</groupId>
             <artifactId>timezonemap</artifactId>
             <version>3.2</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>

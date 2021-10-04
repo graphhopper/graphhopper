@@ -56,4 +56,8 @@ public interface RoutingCHGraph {
     boolean isEdgeBased();
 
     Weighting getWeighting();
+
+    // ORS-GH MOD START: TD CALT
+    int shortcutCore(int a, int b, int accessFlags, double weight, int skippedEdge1, int skippedEdge2, long time);
+    // ORS-GH MOD END
 }

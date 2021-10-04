@@ -227,31 +227,31 @@ public final class GraphHopperStorage implements Graph, Closeable {
     // ORS-GH MOD START
     // CALT
     // TODO ORS: should calt provide its own classes instead of modifying ch?
-    public CHGraphImpl getCoreGraph(Weighting weighting) {
-        if (chGraphs.isEmpty())
+    public RoutingCHGraphImpl getCoreGraph(Weighting weighting) {
+        if (chEntries.isEmpty())
             throw new IllegalStateException("Cannot find graph implementation");
-        Iterator<CHGraphImpl> iterator = chGraphs.iterator();
+        Iterator<CHEntry> iterator = chEntries.iterator();
         while(iterator.hasNext()){
-            CHGraphImpl cg = iterator.next();
-             if(cg.getCHConfig().getType() == "core"
-                     && cg.getCHConfig().getWeighting().getName() == weighting.getName()
-                     && cg.getCHConfig().getWeighting().getFlagEncoder().toString() == weighting.getFlagEncoder().toString()) {
-                 return cg;
+            CHEntry cg = iterator.next();
+             if(cg.chConfig.getType() == "core"
+                     && cg.chConfig.getWeighting().getName() == weighting.getName()
+                     && cg.chConfig.getWeighting().getFlagEncoder().toString() == weighting.getFlagEncoder().toString()) {
+                 return cg.chGraph;
              }
         }
         throw new IllegalStateException("No core graph was found");
     }
 
-    public CHGraphImpl getIsochroneGraph(Weighting weighting) {
-        if (chGraphs.isEmpty())
+    public RoutingCHGraphImpl getIsochroneGraph(Weighting weighting) {
+        if (chEntries.isEmpty())
             throw new IllegalStateException("Cannot find graph implementation");
-        Iterator<CHGraphImpl> iterator = chGraphs.iterator();
+        Iterator<CHEntry> iterator = chEntries.iterator();
         while(iterator.hasNext()){
-            CHGraphImpl cg = iterator.next();
-            if(cg.getCHConfig().getType() == "isocore"
-                    && cg.getCHConfig().getWeighting().getName() == weighting.getName()
-                    && cg.getCHConfig().getWeighting().getFlagEncoder().toString() == weighting.getFlagEncoder().toString())
-                return cg;
+            CHEntry cg = iterator.next();
+            if(cg.chConfig.getType() == "isocore"
+                    && cg.chConfig.getWeighting().getName() == weighting.getName()
+                    && cg.chConfig.getWeighting().getFlagEncoder().toString() == weighting.getFlagEncoder().toString())
+                return cg.chGraph;
         }
         throw new IllegalStateException("No isochrone graph was found");
     }
@@ -478,9 +478,9 @@ public final class GraphHopperStorage implements Graph, Closeable {
     // ORS-GH MOD START
     // CALT
     public int getCoreNodes() {
-        for (CHGraphImpl cg : chGraphs) {
-            if (cg.getCoreNodes() == -1) continue;
-            return cg.getCoreNodes();
+        for (CHEntry cg : chEntries) {
+            if (cg.chGraph.getCoreNodes() == -1) continue;
+            return cg.chGraph.getCoreNodes();
         }
         throw new IllegalStateException("No prepared core graph was found");
     }

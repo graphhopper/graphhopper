@@ -18,7 +18,6 @@ public class ExtendedStorageSequence  implements Storable<ExtendedStorageSequenc
         return extensions;
     }
 
-    @Override
     public ExtendedStorageSequence create(long initSize) {
         for (int i = 0; i < numExtensions; i++) {
             extensions[i].create(initSize);
@@ -27,7 +26,6 @@ public class ExtendedStorageSequence  implements Storable<ExtendedStorageSequenc
         return this;
     }
 
-    @Override
     public boolean loadExisting() {
         boolean result = true;
         for (int i = 0; i < numExtensions; i++) {
@@ -40,7 +38,6 @@ public class ExtendedStorageSequence  implements Storable<ExtendedStorageSequenc
         return result;
     }
 
-    @Override
     public void flush() {
         for (int i = 0; i < numExtensions; i++) {
             extensions[i].flush();
@@ -54,7 +51,6 @@ public class ExtendedStorageSequence  implements Storable<ExtendedStorageSequenc
         }
     }
 
-    @Override
     public long getCapacity() {
         long capacity = 0;
 
