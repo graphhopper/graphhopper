@@ -63,6 +63,9 @@ public class InfoResource {
 
             public String name;
             public String vehicle;
+    // TODO: check if these are still needed
+//            public boolean elevation;
+//            public boolean time_dependent = true;
         }
 
         public Envelope bbox;

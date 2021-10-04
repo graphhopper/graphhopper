@@ -19,7 +19,9 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.coll.GHIntObjectHashMap;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 
 import java.util.Collections;
@@ -51,6 +53,15 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
     int visitedCountFrom;
     int visitedCountTo;
     private boolean alreadyRun;
+    // ORS-GH MOD START
+    // Modification by Andrzej Oles: ALT patch https://github.com/GIScience/graphhopper/issues/21
+    protected double approximatorOffset = 0.0;
+    // ORS-GH MOD END
+    // ORS-GH MOD START - new field
+    protected EdgeFilter additionalEdgeFilter;
+    // ORS-GH MOS END
+
+
 
     public AbstractBidirAlgo(TraversalMode traversalMode) {
         this.traversalMode = traversalMode;
@@ -93,6 +104,23 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
         runAlgo();
         return extractPath();
     }
+
+    // ORS-GH MOD START: additional method for TD routing
+    @Override
+    public Path calcPath(int from, int to, long at) {
+        // TODO ORS: implement cleanly
+        throw new RuntimeException("Dummy implementation to make ORS-GH compile");
+    }
+    // ORS-GH-MOD END
+
+    // ORS-GH MOD START: additional method for TD routing
+    @Override
+    public List<Path> calcPaths(int from, int to, long at) {
+        // TODO ORS: implement cleanly
+        throw new RuntimeException("Dummy implementation to make ORS-GH compile");
+    }
+    // ORS-GH-MOD END
+
 
     void init(int from, double fromWeight, int to, double toWeight) {
         initFrom(from, fromWeight);
@@ -163,7 +191,11 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
         if (finishedFrom || finishedTo)
             return true;
 
-        return currFrom.weight + currTo.weight >= bestWeight;
+        // ORS-GH MOD START
+        // Modification by Andrzej Oles: ALT patch https://github.com/GIScience/graphhopper/issues/21
+        //return currFrom.weight + currTo.weight >= bestWeight;
+        return currFrom.weight + currTo.weight - approximatorOffset >= bestWeight;
+        // ORS-GH MOD END
     }
 
     abstract boolean fillEdgesFrom();
@@ -264,6 +296,14 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
     public void setMaxVisitedNodes(int numberOfNodes) {
         this.maxVisitedNodes = numberOfNodes;
     }
+
+    // ORS-GH MOD START - additional method
+    @Override
+    public RoutingAlgorithm setEdgeFilter(EdgeFilter additionalEdgeFilter) {
+        this.additionalEdgeFilter = additionalEdgeFilter;
+        return this;
+    }
+    // ORS-GH MOD END
 
     protected void checkAlreadyRun() {
         if (alreadyRun)

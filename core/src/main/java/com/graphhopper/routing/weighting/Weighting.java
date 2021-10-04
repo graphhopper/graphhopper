@@ -19,6 +19,7 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.SpeedCalculator;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
@@ -26,6 +27,7 @@ import com.graphhopper.util.EdgeIteratorState;
  * <p>
  *
  * @author Peter Karich
+ * @author Andrzej Oles
  */
 public interface Weighting {
     int INFINITE_U_TURN_COSTS = -1;
@@ -51,11 +53,21 @@ public interface Weighting {
      */
     double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse);
 
+    // ORS-GH MOD START - additional method
+    // needed for time-dependent routing
+    double calcEdgeWeight(EdgeIteratorState edge, boolean reverse, long edgeEnterTime);
+    // ORS-GH MOD END
+
     /**
      * This method calculates the time taken (in milli seconds) to travel along the specified edgeState.
      * It is typically used for post-processing and on only a few thousand edges.
      */
     long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse);
+
+    // ORS-GH MOD START - additional method
+    // needed for time dependent routing
+    long calcEdgeMillis(EdgeIteratorState edge, boolean reverse, long edgeEnterTime);
+    // ORS-GH MOD END
 
     double calcTurnWeight(int inEdge, int viaNode, int outEdge);
 
@@ -79,5 +91,12 @@ public interface Weighting {
         }
         return calcEdgeWeight(edgeState, reverse);
     }
+    // ORS-GH MOD START - additional methods
+    boolean isTimeDependent();
+
+    SpeedCalculator getSpeedCalculator();
+
+    void setSpeedCalculator(SpeedCalculator speedCalculator);
+    // ORS-GH MOD END
 
 }

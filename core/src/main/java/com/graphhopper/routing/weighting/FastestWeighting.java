@@ -104,14 +104,20 @@ public class FastestWeighting extends AbstractWeighting {
     }
 
     @Override
-    public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
+    // ORS-GH MOD START
+    //public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
+    public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse, long edgeEnterTime) {
+    // ORS-GH MOD END
         // TODO move this to AbstractWeighting? see #485
         long time = 0;
         boolean unfavoredEdge = edgeState.get(EdgeIteratorState.UNFAVORED_EDGE);
         if (unfavoredEdge)
             time += headingPenaltyMillis;
 
-        return time + super.calcEdgeMillis(edgeState, reverse);
+        // ORS-GH MOD START
+        //return time + super.calcEdgeMillis(edgeState, reverse);
+        return time + super.calcEdgeMillis(edgeState, reverse, edgeEnterTime);
+        // ORS-GH MOD END
     }
 
     static double checkBounds(String key, double val, double from, double to) {
@@ -120,6 +126,13 @@ public class FastestWeighting extends AbstractWeighting {
 
         return val;
     }
+
+    // ORS-GH MOD START - additional method for TD routing
+    @Override
+    public boolean isTimeDependent() {
+        return speedCalculator.isTimeDependent();
+    }
+    // ORS-GH MOD END
 
     @Override
     public String getName() {

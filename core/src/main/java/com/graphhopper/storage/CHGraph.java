@@ -67,6 +67,10 @@ public interface CHGraph {
      */
     int shortcutEdgeBased(int a, int b, int accessFlags, double weight, int skippedEdge1, int skippedEdge2, int origFirst, int origLast);
 
+    // ORS-GH MOD START: TD CALT
+    int shortcutCore(int a, int b, int accessFlags, double weight, int skippedEdge1, int skippedEdge2, long time);
+    // ORS-GH MOD END
+
     CHEdgeIteratorState getEdgeIteratorState(int edgeId, int endNode);
 
     CHEdgeExplorer createEdgeExplorer();

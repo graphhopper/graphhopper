@@ -19,12 +19,10 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
+import com.graphhopper.coll.GHLongArrayList;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
-import com.graphhopper.util.PointList;
+import com.graphhopper.util.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,13 +36,20 @@ import java.util.List;
  * @author Ottavio Campana
  * @author jan soe
  * @author easbar
+ * @author Andrzej Oles
  */
 public class Path {
     final Graph graph;
     private final NodeAccess nodeAccess;
     private double weight = Double.MAX_VALUE;
-    private double distance;
+    // ORS-GH MOD START: private -> protected
+    // TODO ORS: how to avoid this change?
+    protected double distance;
+    // ORS-GH MOD END
     private long time;
+    // ORS-GH MOD START: new field
+    protected GHLongArrayList times = new GHLongArrayList();
+    // ORS-GH MOD END
     private IntArrayList edgeIds = new IntArrayList();
     private int fromNode = -1;
     private int endNode = -1;
@@ -155,6 +160,9 @@ public class Path {
 
     public Path addTime(long time) {
         this.time += time;
+        // ORS-GH MOD START
+        times.add(time);
+        // ORS-GH MOD END
         return this;
     }
 

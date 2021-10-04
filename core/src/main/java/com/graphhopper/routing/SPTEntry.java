@@ -27,12 +27,20 @@ import com.graphhopper.util.EdgeIterator;
  */
 public class SPTEntry implements Cloneable, Comparable<SPTEntry> {
     public int edge;
+    // ORS-GH MOD START
+    // add field
+    public int originalEdge;
+    // ORS-GH MOD END
     public int adjNode;
     public double weight;
+    public long time; // ORS-GH MOD additional field
     public SPTEntry parent;
 
     public SPTEntry(int edgeId, int adjNode, double weight) {
         this.edge = edgeId;
+        // ORS-GH MOD START
+        this.originalEdge = edgeId;
+        // ORS-GH MOD END
         this.adjNode = adjNode;
         this.weight = weight;
     }

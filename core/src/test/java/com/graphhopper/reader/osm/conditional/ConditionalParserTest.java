@@ -17,7 +17,6 @@
  */
 package com.graphhopper.reader.osm.conditional;
 
-import org.junit.Before;
 import org.junit.Test;
 
 import java.text.ParseException;
@@ -52,23 +51,23 @@ public class ConditionalParserTest extends CalendarBasedTest {
     @Test
     public void testParseConditional() throws ParseException {
         String str = "no @ (2015 Sep 1-2015 Sep 30)";
-        assertFalse(createParser(getCalendar(2015, Calendar.AUGUST, 31)).checkCondition(str));
-        assertTrue(createParser(getCalendar(2015, Calendar.SEPTEMBER, 30)).checkCondition(str));
+        assertFalse(createParser(getCalendar(2015, Calendar.AUGUST, 31)).checkCondition(str).isCheckPassed());
+        assertTrue(createParser(getCalendar(2015, Calendar.SEPTEMBER, 30)).checkCondition(str).isCheckPassed());
     }
 
     @Test
     public void testParseAllowingCondition() throws ParseException {
         assertFalse(createParser(getCalendar(2015, Calendar.JANUARY, 12)).
-                checkCondition("yes @ (2015 Sep 1-2015 Sep 30)"));
+                checkCondition("yes @ (2015 Sep 1-2015 Sep 30)").isCheckPassed());
     }
 
     @Test
     public void testParsingOfLeading0() throws ParseException {
         assertTrue(createParser(getCalendar(2015, Calendar.DECEMBER, 2)).
-                checkCondition("no @ (01.11. - 31.03.)"));
+                checkCondition("no @ (01.11. - 31.03.)").isCheckPassed());
 
         assertTrue(createParser(getCalendar(2015, Calendar.DECEMBER, 2)).
-                checkCondition("no @ (01.11 - 31.03)"));
+                checkCondition("no @ (01.11 - 31.03)").isCheckPassed());
     }
 
     @Test
@@ -82,48 +81,48 @@ public class ConditionalParserTest extends CalendarBasedTest {
         set.add("no");
         ConditionalParser instance = new ConditionalParser(set).
                 setConditionalValueParser(ConditionalParser.createNumberParser("weight", 11));
-        assertTrue(instance.checkCondition("no @weight>10"));
+        assertTrue(instance.checkCondition("no @weight>10").isCheckPassed());
         instance.setConditionalValueParser(ConditionalParser.createNumberParser("weight", 10));
-        assertFalse(instance.checkCondition("no @weight>10"));
+        assertFalse(instance.checkCondition("no @weight>10").isCheckPassed());
         instance.setConditionalValueParser(ConditionalParser.createNumberParser("weight", 9));
-        assertFalse(instance.checkCondition("no @weight>10"));
+        assertFalse(instance.checkCondition("no @weight>10").isCheckPassed());
 
         instance.setConditionalValueParser(ConditionalParser.createNumberParser("weight", 11));
-        assertFalse(instance.checkCondition("no @ weight < 10"));
+        assertFalse(instance.checkCondition("no @ weight < 10").isCheckPassed());
         instance.setConditionalValueParser(ConditionalParser.createNumberParser("weight", 10));
-        assertFalse(instance.checkCondition("no @ weight < 10"));
+        assertFalse(instance.checkCondition("no @ weight < 10").isCheckPassed());
         instance.setConditionalValueParser(ConditionalParser.createNumberParser("weight", 9));
-        assertTrue(instance.checkCondition("no @ weight < 10"));
+        assertTrue(instance.checkCondition("no @ weight < 10").isCheckPassed());
 
         // equals is ignored for now (not that bad for weight)
         instance.setConditionalValueParser(ConditionalParser.createNumberParser("weight", 11));
-        assertFalse(instance.checkCondition("no @ weight <= 10"));
+        assertFalse(instance.checkCondition("no @ weight <= 10").isCheckPassed());
         instance.setConditionalValueParser(ConditionalParser.createNumberParser("weight", 10));
-        assertFalse(instance.checkCondition("no @ weight <= 10"));
+        assertFalse(instance.checkCondition("no @ weight <= 10").isCheckPassed());
         instance.setConditionalValueParser(ConditionalParser.createNumberParser("weight", 9));
-        assertTrue(instance.checkCondition("no @ weight <= 10"));
+        assertTrue(instance.checkCondition("no @ weight <= 10").isCheckPassed());
 
         instance.setConditionalValueParser(ConditionalParser.createNumberParser("weight", 11));
-        assertFalse(instance.checkCondition("no @ weight<=10"));
+        assertFalse(instance.checkCondition("no @ weight<=10").isCheckPassed());
         instance.setConditionalValueParser(ConditionalParser.createNumberParser("weight", 10));
-        assertFalse(instance.checkCondition("no @ weight<=10"));
+        assertFalse(instance.checkCondition("no @ weight<=10").isCheckPassed());
         instance.setConditionalValueParser(ConditionalParser.createNumberParser("weight", 9));
-        assertTrue(instance.checkCondition("no @ weight<=10"));
+        assertTrue(instance.checkCondition("no @ weight<=10").isCheckPassed());
 
         instance.setConditionalValueParser(ConditionalParser.createNumberParser("height", 1));
-        assertFalse(instance.checkCondition("no @ height > 2"));
+        assertFalse(instance.checkCondition("no @ height > 2").isCheckPassed());
         instance.setConditionalValueParser(ConditionalParser.createNumberParser("height", 2));
-        assertFalse(instance.checkCondition("no @ height > 2"));
+        assertFalse(instance.checkCondition("no @ height > 2").isCheckPassed());
         instance.setConditionalValueParser(ConditionalParser.createNumberParser("height", 3));
-        assertTrue(instance.checkCondition("no @ height > 2"));
+        assertTrue(instance.checkCondition("no @ height > 2").isCheckPassed());
 
         // unit is allowed according to wiki
         instance.setConditionalValueParser(ConditionalParser.createNumberParser("height", 1));
-        assertFalse(instance.checkCondition("no @ height > 2t"));
+        assertFalse(instance.checkCondition("no @ height > 2t").isCheckPassed());
         instance.setConditionalValueParser(ConditionalParser.createNumberParser("height", 2));
-        assertFalse(instance.checkCondition("no @ height > 2t"));
+        assertFalse(instance.checkCondition("no @ height > 2t").isCheckPassed());
         instance.setConditionalValueParser(ConditionalParser.createNumberParser("height", 3));
-        assertTrue(instance.checkCondition("no @ height > 2t"));
+        assertTrue(instance.checkCondition("no @ height > 2t").isCheckPassed());
     }
 
     @Test

@@ -18,6 +18,11 @@ public class CHConfig {
     private final String chGraphName;
     private final Weighting weighting;
     private final boolean edgeBased;
+    // ORS-GH MOD START
+    // CALT add member variable
+    public static final String TYPE_CORE = "core";
+    private String type = "ch";  // Either "ch" or "core"
+    // ORS-GH MOD END
 
     public static CHConfig nodeBased(String chGraphName, Weighting weighting) {
         return new CHConfig(chGraphName, weighting, false);
@@ -45,6 +50,12 @@ public class CHConfig {
     public TraversalMode getTraversalMode() {
         return edgeBased ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
     }
+
+    // ORS-GH MOD START
+    public String getType() {
+        return type;
+    }
+    // ORS-GH MOD END
 
     public String toFileName() {
         return chGraphName;

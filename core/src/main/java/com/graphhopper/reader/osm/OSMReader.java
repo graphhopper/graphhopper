@@ -25,7 +25,9 @@ import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.parsers.TurnCostParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
@@ -63,6 +65,7 @@ import static com.graphhopper.util.Helper.nf;
  * <p>
  *
  * @author Peter Karich
+ * @author Andrzej Oles
  */
 public class OSMReader implements TurnCostParser.ExternalInternalMap {
     protected static final int EMPTY_NODE = -1;
@@ -110,6 +113,15 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     private final IntsRef tempRelFlags;
     private final TurnCostStorage tcs;
 
+    // ORS-GH MOD - Add variable for identifying which tags from nodes should be stored on their containing ways
+    private Set<String> nodeTagsToStore = new HashSet<>();
+    // ORS-GH MOD - Add variable for storing tags obtained from nodes
+    private GHLongObjectHashMap<Map<String, Object>> osmNodeTagValues;
+
+    protected void initNodeTagsToStore(HashSet<String> nodeTagsToStore) {
+        nodeTagsToStore.addAll(nodeTagsToStore);
+    }
+
     public OSMReader(GraphHopperStorage ghStorage) {
         this.ghStorage = ghStorage;
         this.graph = ghStorage;
@@ -126,6 +138,22 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
         tcs = graph.getTurnCostStorage();
     }
+
+    // ORS-GH MOD START - Method for getting the recorded tags for a node
+    public Map<String, Object> getStoredTagsForNode(long nodeId) {
+        if (osmNodeTagValues.containsKey(nodeId)) {
+            return osmNodeTagValues.get(nodeId);
+        } else {
+            return new HashMap<>();
+        }
+    }
+    // ORS-GH MOD END
+
+    // ORS-GH MOD START - Method for identifying if a node has tas stored for it
+    public boolean nodeHasTagsStored(long nodeId) {
+        return osmNodeTagValues.containsKey(nodeId);
+    }
+    // ORS-GH MOD END
 
     public void readGraph() throws IOException {
         if (encodingManager == null)
@@ -400,14 +428,101 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
                 createdEdges.addAll(addOSMWay(partNodeIds, edgeFlags, wayOsmId));
             }
         } else {
+            // ORS-GH MOD START - code injection point
+            if (!onCreateEdges(way, osmNodeIds, edgeFlags, createdEdges)) {
+            // ORS-GH MOD END
             // no barriers - simply add the whole way
             createdEdges.addAll(addOSMWay(way.getNodes(), edgeFlags, wayOsmId));
+        }
         }
 
         for (EdgeIteratorState edge : createdEdges) {
             encodingManager.applyWayTags(way, edge);
         }
+
+        // ORS-GH MOD START - code injection point
+        applyNodeTagsToWay(way);
+        // ORS-GH MOD END
+        // ORS-GH MOD START - code injection point
+        onProcessWay(way);
+        // ORS-GH MOD END
+        // ORS-GH MOD START - apply individual processing to each edge
+        for (EdgeIteratorState edge : createdEdges) {
+            onProcessEdge(way, edge);
+        }
+        // store conditionals
+        storeConditionalAccess(acceptWay, createdEdges);
+        storeConditionalSpeed(edgeFlags, createdEdges);
+        // ORS-GH MOD END
     }
+
+    // ORS-GH MOD START - additional methods
+    protected void storeConditionalAccess(EncodingManager.AcceptWay acceptWay, List<EdgeIteratorState> createdEdges) {
+        if (acceptWay.hasConditional()) {
+            for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
+                String encoderName = encoder.toString();
+                if (acceptWay.getAccess(encoderName).isConditional() && encodingManager.hasEncodedValue(EncodingManager.getKey(encoderName, ConditionalEdges.ACCESS))) {
+                    String value = ((AbstractFlagEncoder) encoder).getConditionalTagInspector().getTagValue();
+                    ((GraphHopperStorage) ghStorage).getConditionalAccess(encoderName).addEdges(createdEdges, value);
+                }
+            }
+        }
+    }
+
+    protected void storeConditionalSpeed(IntsRef edgeFlags, List<EdgeIteratorState> createdEdges) {
+        for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
+            String encoderName = EncodingManager.getKey(encoder, ConditionalEdges.SPEED);
+
+            if (encodingManager.hasEncodedValue(encoderName) && encodingManager.getBooleanEncodedValue(encoderName).getBool(false, edgeFlags)) {
+                ConditionalSpeedInspector conditionalSpeedInspector = ((AbstractFlagEncoder) encoder).getConditionalSpeedInspector();
+
+                if (conditionalSpeedInspector.hasLazyEvaluatedConditions()) {
+                    String value = conditionalSpeedInspector.getTagValue();
+                    ((GraphHopperStorage) ghStorage).getConditionalSpeed(encoder).addEdges(createdEdges, value);
+                }
+            }
+        }
+    }
+    // ORS-GH MOD END
+
+    // ORS-GH MOD START - Move the distance calculation to a separate method so it can be cleanly overridden
+    protected void recordWayDistance(ReaderWay way, LongArrayList osmNodeIds) {
+        int first = getNodeMap().get(osmNodeIds.get(0));
+        int last = getNodeMap().get(osmNodeIds.get(osmNodeIds.size() - 1));
+        double firstLat = getTmpLatitude(first), firstLon = getTmpLongitude(first);
+        double lastLat = getTmpLatitude(last), lastLon = getTmpLongitude(last);
+        if (!Double.isNaN(firstLat) && !Double.isNaN(firstLon) && !Double.isNaN(lastLat) && !Double.isNaN(lastLon)) {
+            double estimatedDist = distCalc.calcDist(firstLat, firstLon, lastLat, lastLon);
+            // Add artificial tag for the estimated distance and center
+            way.setTag("estimated_distance", estimatedDist);
+            way.setTag("estimated_center", new GHPoint((firstLat + lastLat) / 2, (firstLon + lastLon) / 2));
+        }
+    }
+    // ORS-GH MOD END
+
+    // ORS-GH MOD START - code injection method
+    protected void onProcessWay(ReaderWay way){
+
+    }
+    // ORS-MOD END
+
+    // ORS-GH MOD START - code injection method
+    protected void applyNodeTagsToWay(ReaderWay way) {
+
+    }
+    // ORS-GH MOD END
+
+    // ORS-GH MOD START - code injection method
+    protected void onProcessEdge(ReaderWay way, EdgeIteratorState edge) {
+
+    }
+    // ORS-GH MOD END
+
+    // ORS-GH MOD START - code injection method
+    protected boolean onCreateEdges(ReaderWay way, LongArrayList osmNodeIds, IntsRef wayFlags, List<EdgeIteratorState> createdEdges) {
+        return false;
+    }
+    // ORS-GH MOD END
 
     protected void processRelation(ReaderRelation relation) {
         if (tcs != null && relation.hasTag("type", "restriction"))
@@ -442,7 +557,8 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     }
 
     // TODO remove this ugly stuff via better preprocessing phase! E.g. putting every tags etc into a helper file!
-    double getTmpLatitude(int id) {
+    // ORS-GH MOD - expose method for inheritance in ORS
+    protected double getTmpLatitude(int id) {
         if (id == EMPTY_NODE)
             return Double.NaN;
         if (id < TOWER_NODE) {
@@ -458,7 +574,8 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             return Double.NaN;
     }
 
-    double getTmpLongitude(int id) {
+    // ORS-GH MOD - expose method for inheritance in ORS
+    protected double getTmpLongitude(int id) {
         if (id == EMPTY_NODE)
             return Double.NaN;
         if (id < TOWER_NODE) {
@@ -475,6 +592,9 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     }
 
     protected void processNode(ReaderNode node) {
+        // ORS-GH MOD START - code injection point
+        node = onProcessNode(node);
+        // ORS-GH MOD END
         addNode(node);
 
         // analyze node tags for barriers
@@ -486,6 +606,19 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
         locations++;
     }
+
+    // ORS-GH MOD START - code injection method
+    /**
+     *
+     * Holder method to be overridden so that processing on nodes can be performed
+     * @param node      The node to be processed
+     *
+     * @return  A ReaderNode object (generally the object that was passed in)
+     */
+    protected ReaderNode onProcessNode(ReaderNode node) {
+        return node;
+    }
+    // ORS-GH MOD END
 
     boolean addNode(ReaderNode node) {
         int nodeType = getNodeMap().get(node.getId());
@@ -499,6 +632,21 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             addTowerNode(node.getId(), lat, lon, ele);
         } else if (nodeType == PILLAR_NODE) {
             pillarInfo.setNode(nextPillarId, lat, lon, ele);
+            // ORS-GH MOD START - Store tags from the node so that they can be accessed later
+            Iterator<Map.Entry<String, Object>> it = node.getTags().entrySet().iterator();
+            Map<String, Object> temp = new HashMap<>();
+            while (it.hasNext()) {
+                Map.Entry<String, Object> pairs = it.next();
+                String key = pairs.getKey();
+                if(!nodeTagsToStore.contains(key)) {
+                    continue;
+                }
+                temp.put(key, pairs.getValue());
+            }
+            if(!temp.isEmpty()){
+                osmNodeTagValues.put(node.getId(), temp);
+            }
+            // ORS-GH MOD END
             getNodeMap().put(node.getId(), nextPillarId + 3);
             nextPillarId++;
         }
@@ -758,9 +906,14 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         double lon = pillarInfo.getLon(tmpNode);
         double ele = pillarInfo.getEle(tmpNode);
         if (lat == Double.MAX_VALUE || lon == Double.MAX_VALUE)
-            throw new RuntimeException("Conversion pillarNode to towerNode already happened!? "
+            // ORS-GH MOD START - Make it so the system doesn't completely fail if the conversion doesn't work properly
+            // If the conversion has already happened or we just cant find the pillar node, then don't kill the system,
+            // just try and get the tower node. If that fails, then kill the system
+            tmpNode = getNodeMap().get(osmId);
+            if (tmpNode == EMPTY_NODE || tmpNode < 0)
+            // ORS-GH MOD END
+                throw new RuntimeException("Conversion pillarNode to towerNode already happened!? "
                     + "osmId:" + osmId + " pillarIndex:" + tmpNode);
-
         if (convertToTowerNode) {
             // convert pillarNode type to towerNode, make pillar values invalid
             pillarInfo.setNode(tmpNode, Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
@@ -769,7 +922,6 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             pointList.add(lat, lon, ele);
         else
             pointList.add(lat, lon);
-
         return tmpNode;
     }
 
@@ -777,7 +929,12 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         printInfo("way");
         pillarInfo.clear();
         encodingManager.releaseParsers();
-        eleProvider.release();
+        // ORS-GH MOD START
+        // MARQ24: DO NOT CLEAR THE CACHE of the ELEVATION PROVIDERS - since the data will be reused
+        // the provider data will be cleared only after the last VehicleProfile have completed
+        // the work...
+        //eleProvider.release();
+        // ORS-GH MOD END
         osmNodeIdToInternalNodeMap = null;
         osmNodeIdToNodeFlagsMap = null;
         osmWayIdToRouteWeightMap = null;
@@ -893,9 +1050,11 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     /**
      * Maps OSM IDs (long) to internal node IDs (int)
      */
-    protected LongIntMap getNodeMap() {
+    // ORS-GH MOD - change access level from protected to public
+    public LongIntMap getNodeMap() {
         return osmNodeIdToInternalNodeMap;
     }
+    // ORS-GH END
 
     protected LongLongMap getNodeFlagsMap() {
         return osmNodeIdToNodeFlagsMap;
@@ -973,6 +1132,43 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     public Date getDataDate() {
         return osmDataDate;
     }
+
+    // ORS-GH MOD START - Method for getting to the node access object
+    protected NodeAccess getNodeAccess() {
+        return this.nodeAccess;
+    }
+    // ORS-GH MOD END
+
+    // ORS-GH MOD START - additional method
+    // See https://github.com/GIScience/openrouteservice/issues/725
+    public void enforce2D() {
+        distCalc.enforce2D();
+    }
+
+    /**
+     * @deprecated use enforce2D instead.
+     */
+    @Deprecated // TODO ORS (minor): remove after upgrade
+    public void setCalcDistance3D(boolean use3D) {
+        if (!use3D) {
+            enforce2D();
+        }
+    }
+    // ORS-GH MOD END
+
+    // ORS-GH MOD START - additional method used in OrsOsmReader()
+    protected DistanceCalc getDistanceCalc() {
+       return distCalc;
+    }
+
+    /**
+     * @deprecated use getDistanceCalc() instead
+     */
+    @Deprecated // TODO ORS (minor): remove this after upgrade
+    protected DistanceCalc getDistanceCalc(boolean use3D) {
+        return getDistanceCalc();
+    }
+    // ORS-GH MOD END
 
     @Override
     public String toString() {

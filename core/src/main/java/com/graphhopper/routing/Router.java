@@ -61,6 +61,9 @@ public class Router {
     private final TranslationMap translationMap;
     private final RouterConfig routerConfig;
     private final WeightingFactory weightingFactory;
+    // ORS GH-MOD START: way to inject additional edgeFilters to router
+    private EdgeFilterFactory edgeFilterFactory;
+    // ORS GH-MOD END
     // todo: these should not be necessary anymore as soon as GraphHopperStorage (or something that replaces) it acts
     // like a 'graph database'
     private final Map<String, RoutingCHGraph> chGraphs;
@@ -190,7 +193,12 @@ public class Router {
         } else if (lmEnabled && !disableLM) {
             return new LMSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, ghStorage, locationIndex, landmarks);
         } else {
-            return new FlexSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, ghStorage, locationIndex);
+            // ORS GH-MOD START: way to inject additional edgeFilters to router
+            // return new FlexSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, ghStorage, locationIndex);
+            FlexSolver solver = new FlexSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, ghStorage, locationIndex);
+            solver.setEdgeFilterFactory(edgeFilterFactory);
+            return solver;
+            // ORS GH-MOD END
         }
     }
 
@@ -201,6 +209,9 @@ public class Router {
         RoundTripRouting.Params params = new RoundTripRouting.Params(request.getHints(), startHeading, routerConfig.getMaxRoundTripRetries());
         List<Snap> snaps = RoundTripRouting.lookup(request.getPoints(), solver.getSnapFilter(), locationIndex, params);
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
+        // ORS-GH MOD START - additional code
+        checkMaxSearchDistances(request, ghRsp, snaps);
+        // ORS-GH MOD END
 
         QueryGraph queryGraph = QueryGraph.create(ghStorage, snaps);
         FlexiblePathCalculator pathCalculator = solver.createPathCalculator(queryGraph);
@@ -214,6 +225,21 @@ public class Router {
         return ghRsp;
     }
 
+    // ORS-GH MOD START - additional method
+    private void checkMaxSearchDistances(GHRequest request, GHResponse ghRsp, List<Snap> snaps) {
+        double[] radiuses = request.getMaxSearchDistances();
+        List<GHPoint> points = request.getPoints();
+        if (points.size() == snaps.size()) {
+            for (int placeIndex = 0; placeIndex < points.size(); placeIndex++) {
+                Snap qr = snaps.get(placeIndex);
+                if ((radiuses != null) && qr.isValid() && (qr.getQueryDistance() > radiuses[placeIndex]) && (radiuses[placeIndex] != -1.0)) {
+                    ghRsp.addError(new PointNotFoundException("Cannot find point " + placeIndex + ": " + points.get(placeIndex) + " within a radius of " + radiuses[placeIndex] + " meters.", placeIndex));
+                }
+            }
+        }
+    }
+    // ORS-GH MOD END
+
     protected GHResponse routeAlt(GHRequest request, Solver solver) {
         if (request.getPoints().size() > 2)
             throw new IllegalArgumentException("Currently alternative routes work only with start and end point. You tried to use: " + request.getPoints().size() + " points");
@@ -221,6 +247,9 @@ public class Router {
         StopWatch sw = new StopWatch().start();
         List<Snap> snaps = ViaRouting.lookup(encodingManager, request.getPoints(), solver.getSnapFilter(), locationIndex, request.getSnapPreventions(), request.getPointHints());
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
+        // ORS-GH MOD START - additional code
+        checkMaxSearchDistances(request, ghRsp, snaps);
+        // ORS-GH MOD END
         QueryGraph queryGraph = QueryGraph.create(ghStorage, snaps);
         PathCalculator pathCalculator = solver.createPathCalculator(queryGraph);
         boolean passThrough = getPassThrough(request.getHints());
@@ -251,6 +280,9 @@ public class Router {
         StopWatch sw = new StopWatch().start();
         List<Snap> snaps = ViaRouting.lookup(encodingManager, request.getPoints(), solver.getSnapFilter(), locationIndex, request.getSnapPreventions(), request.getPointHints());
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
+        // ORS-GH MOD START - additional code
+        checkMaxSearchDistances(request, ghRsp, snaps);
+        // ORS-GH MOD END
         // (base) query graph used to resolve headings, curbsides etc. this is not necessarily the same thing as
         // the (possibly implementation specific) query graph used by PathCalculator
         QueryGraph queryGraph = QueryGraph.create(ghStorage, snaps);
@@ -285,6 +317,9 @@ public class Router {
                 setDouglasPeucker(peucker).
                 setEnableInstructions(enableInstructions).
                 setPathDetailsBuilders(pathDetailsBuilderFactory, request.getPathDetails()).
+                // ORS MOD START - TODO ORS: where to get ppList from?
+                // setPathProcessor(ppList.toArray(new PathProcessor[]{})).
+                // ORS MOD END
                 setSimplifyResponse(routerConfig.isSimplifyResponse() && wayPointMaxDistance > 0);
 
         if (!request.getHeadings().isEmpty())
@@ -321,6 +356,12 @@ public class Router {
         return hints.getBool(FORCE_CURBSIDE, true);
     }
 
+    // ORS GH-MOD START: way to inject additional edgeFilters to router
+    public void setEdgeFilterFactory(EdgeFilterFactory edgeFilterFactory) {
+        this.edgeFilterFactory = edgeFilterFactory;
+    }
+    // ORS GH-MOD END
+
     public static abstract class Solver {
         protected final GHRequest request;
         private final Map<String, Profile> profilesByName;
@@ -328,6 +369,9 @@ public class Router {
         protected Profile profile;
         protected Weighting weighting;
         protected final EncodedValueLookup lookup;
+        // ORS GH-MOD START: way to inject additional edgeFilters to router
+        protected EdgeFilterFactory edgeFilterFactory;
+        // ORS GH-MOD END
 
         public Solver(GHRequest request, Map<String, Profile> profilesByName, RouterConfig routerConfig, EncodedValueLookup lookup) {
             this.request = request;
@@ -399,6 +443,12 @@ public class Router {
         int getMaxVisitedNodes(PMap hints) {
             return hints.getInt(Parameters.Routing.MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes());
         }
+
+        // ORS GH-MOD START: way to inject additional edgeFilters to router
+        public void setEdgeFilterFactory(EdgeFilterFactory edgeFilterFactory) {
+            this.edgeFilterFactory = edgeFilterFactory;
+        }
+        // ORS GH-MOD END
     }
 
     private static class CHSolver extends Solver {
@@ -494,6 +544,13 @@ public class Router {
         @Override
         protected FlexiblePathCalculator createPathCalculator(QueryGraph queryGraph) {
             RoutingAlgorithmFactory algorithmFactory = new RoutingAlgorithmFactorySimple();
+            // ORS-GH MOD START: initialize edgeFilter
+            if (edgeFilterFactory != null) {
+                AlgorithmOptions algoOpts = getAlgoOpts();
+                algoOpts.setEdgeFilter(edgeFilterFactory.createEdgeFilter(request.getAdditionalHints(), weighting.getFlagEncoder(), ghStorage));
+                return new FlexiblePathCalculator(queryGraph, algorithmFactory, weighting, algoOpts);
+            }
+            // ORS MOD END
             return new FlexiblePathCalculator(queryGraph, algorithmFactory, weighting, getAlgoOpts());
         }
 

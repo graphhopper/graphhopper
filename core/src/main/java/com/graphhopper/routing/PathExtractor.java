@@ -23,7 +23,10 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
 
 public class PathExtractor {
-    private final Graph graph;
+    // ORS-GH MOD START: private -> protected
+    // TODO ORS: how to avoid this modification?
+    protected final Graph graph;
+    // ORS-GH MOD END
     private final Weighting weighting;
     protected final Path path;
 
@@ -50,7 +53,9 @@ public class PathExtractor {
         return path;
     }
 
-    private void extractPath(SPTEntry sptEntry) {
+    // ORS-GH MOD START: private -> protected
+    protected void extractPath(SPTEntry sptEntry) {
+    // ORS-GH MOD END
         SPTEntry currEdge = followParentsUntilRoot(sptEntry);
         ArrayUtil.reverse(path.getEdges());
         path.setFromNode(currEdge.adjNode);

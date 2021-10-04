@@ -20,15 +20,20 @@ package com.graphhopper.storage;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
+import us.dustinj.timezonemap.TimeZoneMap;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+// ORS-GH MOD START - additional imports
+import java.util.Iterator;
+// ORS-GH MOD END
 
 /**
  * This class manages all storage related methods and delegates the calls to the associated graphs.
@@ -45,6 +50,39 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     private final EncodingManager encodingManager;
     private final StorableProperties properties;
     private final BaseGraph baseGraph;
+
+    // ORS-GH MOD START
+    private ConditionalEdges conditionalAccess;
+    private ConditionalEdges conditionalSpeed;
+
+    public ConditionalEdgesMap getConditionalAccess(FlagEncoder encoder) {
+        return getConditionalAccess(encoder.toString());
+    }
+
+    public ConditionalEdgesMap getConditionalAccess(String encoderName) {
+        return conditionalAccess.getConditionalEdgesMap(encoderName);
+    }
+
+    public ConditionalEdgesMap getConditionalSpeed(FlagEncoder encoder) {
+        return getConditionalSpeed(encoder.toString());
+    }
+
+    public ConditionalEdgesMap getConditionalSpeed(String encoderName) {
+        return conditionalSpeed.getConditionalEdgesMap(encoderName);
+    }
+
+    // FIXME: temporal solution until an external storage for time zones is introduced.
+    private TimeZoneMap timeZoneMap;
+
+    public TimeZoneMap getTimeZoneMap() {
+        return timeZoneMap;
+    }
+
+    public void setTimeZoneMap(TimeZoneMap timeZoneMap) {
+        this.timeZoneMap = timeZoneMap;
+    }
+    // ORS-GH MOD END
+
     // same flush order etc
     private final Collection<CHGraphImpl> chGraphs;
     private final int segmentSize;
@@ -80,6 +118,17 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
                 }
             }
         };
+
+        // ORS-GH MOD START - additional storages
+        if (encodingManager.hasConditionalAccess()) {
+            this.conditionalAccess = new ConditionalEdges(encodingManager, ConditionalEdges.ACCESS, dir);
+        }
+
+        if (encodingManager.hasConditionalSpeed()) {
+            this.conditionalSpeed = new ConditionalEdges(encodingManager, ConditionalEdges.SPEED, dir);
+        }
+        // ORS-GH MOD END
+
         baseGraph = new BaseGraph(dir, encodingManager, withElevation, listener, withTurnCosts, segmentSize);
         chGraphs = new ArrayList<>();
     }
@@ -147,6 +196,39 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         return result;
     }
 
+    // ORS-GH MOD START
+    // CALT
+    // TODO ORS: should calt provide its own classes instead of modifying ch?
+    public CHGraphImpl getCoreGraph(Weighting weighting) {
+        if (chGraphs.isEmpty())
+            throw new IllegalStateException("Cannot find graph implementation");
+        Iterator<CHGraphImpl> iterator = chGraphs.iterator();
+        while(iterator.hasNext()){
+            CHGraphImpl cg = iterator.next();
+             if(cg.getCHConfig().getType() == "core"
+                     && cg.getCHConfig().getWeighting().getName() == weighting.getName()
+                     && cg.getCHConfig().getWeighting().getFlagEncoder().toString() == weighting.getFlagEncoder().toString()) {
+                 return cg;
+             }
+        }
+        throw new IllegalStateException("No core graph was found");
+    }
+
+    public CHGraphImpl getIsochroneGraph(Weighting weighting) {
+        if (chGraphs.isEmpty())
+            throw new IllegalStateException("Cannot find graph implementation");
+        Iterator<CHGraphImpl> iterator = chGraphs.iterator();
+        while(iterator.hasNext()){
+            CHGraphImpl cg = iterator.next();
+            if(cg.getCHConfig().getType() == "isocore"
+                    && cg.getCHConfig().getWeighting().getName() == weighting.getName()
+                    && cg.getCHConfig().getWeighting().getFlagEncoder().toString() == weighting.getFlagEncoder().toString())
+                return cg;
+        }
+        throw new IllegalStateException("No isochrone graph was found");
+    }
+    // ORS-GH MOD END
+
     public boolean isCHPossible() {
         return !chGraphs.isEmpty();
     }
@@ -199,6 +281,16 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         properties.putCurrentVersions();
 
         baseGraph.create(initSize);
+
+        // ORS-GH MOD START - create conditional storages
+        // TODO ORS: Find out byteCount to create these
+        if (conditionalAccess != null) {
+            conditionalAccess.create(initSize);
+        }
+        if (conditionalSpeed != null) {
+            conditionalSpeed.create(initSize);
+        }
+        // ORS-GH MOD END
 
         for (CHGraphImpl cg : chGraphs) {
             cg.create(byteCount);
@@ -297,6 +389,15 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         properties.close();
         baseGraph.close();
 
+        // ORS-GH MOD START - additional code
+        if (conditionalAccess != null) {
+            conditionalAccess.close();
+        }
+        if (conditionalSpeed != null) {
+            conditionalSpeed.close();
+        }
+        // ORS-GH MOD END
+
         for (CHGraphImpl cg : chGraphs) {
             if (!cg.isClosed())
                 cg.close();
@@ -364,6 +465,17 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     public int getNodes() {
         return baseGraph.getNodes();
     }
+
+    // ORS-GH MOD START
+    // CALT
+    public int getCoreNodes() {
+        for (CHGraphImpl cg : chGraphs) {
+            if (cg.getCoreNodes() == -1) continue;
+            return cg.getCoreNodes();
+        }
+        throw new IllegalStateException("No prepared core graph was found");
+    }
+    // ORS-GH MOD END
 
     @Override
     public int getEdges() {

@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
@@ -39,7 +40,9 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     protected final EdgeExplorer edgeExplorer;
     protected int maxVisitedNodes = Integer.MAX_VALUE;
     private boolean alreadyRun;
-
+    // ORS-GH MOD START - new field
+    protected EdgeFilter additionalEdgeFilter;
+    // ORS-GH MOS END
     /**
      * @param graph         specifies the graph where this algorithm will run on
      * @param weighting     set the used weight calculation (e.g. fastest, shortest).
@@ -60,10 +63,21 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
         this.maxVisitedNodes = numberOfNodes;
     }
 
+    // ORS-GH MOD START - additional method for passing additionalEdgeFilter to any algo
+    public RoutingAlgorithm setEdgeFilter(EdgeFilter additionalEdgeFilter) {
+        this.additionalEdgeFilter = additionalEdgeFilter;
+        return this;
+    }
+    // ORS-GH MOD END
+
     protected boolean accept(EdgeIteratorState iter, int prevOrNextEdgeId) {
         // for edge-based traversal we leave it for TurnWeighting to decide whether or not a u-turn is acceptable,
         // but for node-based traversal we exclude such a turn for performance reasons already here
-        return traversalMode.isEdgeBased() || iter.getEdge() != prevOrNextEdgeId;
+        // ORS-GH MOD START - apply additional filters
+        // return traversalMode.isEdgeBased() || iter.getEdge() != prevOrNextEdgeId;
+        if (!traversalMode.isEdgeBased() && iter.getEdge() == prevOrNextEdgeId)
+            return false;
+        return additionalEdgeFilter == null || additionalEdgeFilter.accept(iter);
     }
 
     protected void checkAlreadyRun() {
@@ -91,10 +105,23 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
      */
     protected abstract Path extractPath();
 
+    // ORS-GH MOD START - additional method
+    @Override
+    public Path calcPath(int from, int to, long at) {
+        return calcPath(from, to);
+    }
+    // ORS-GH MOD END
+
     @Override
     public List<Path> calcPaths(int from, int to) {
         return Collections.singletonList(calcPath(from, to));
     }
+
+    // ORS-GH MOD START - additional method
+    public List<Path> calcPaths(int from, int to, long at) {
+        return Collections.singletonList(calcPath(from, to, at));
+    }
+    // ORS-GH MOD END
 
     protected Path createEmptyPath() {
         return new Path(graph);

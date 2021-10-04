@@ -24,10 +24,7 @@ import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.routing.ev.StringEncodedValue;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
-import com.graphhopper.util.PointList;
+import com.graphhopper.util.*;
 
 import java.util.List;
 
@@ -295,4 +292,17 @@ class VirtualEdgeIterator implements EdgeIterator {
     public List<EdgeIteratorState> getEdges() {
         return edges;
     }
+
+    // ORS-GH MOD START: TD CALT
+    public CHEdgeIteratorState setTime(long time) {
+        throw new UnsupportedOperationException("Not supported.");
+    }
+
+    // TODO ORS (minor): how to deal with @Override; is this still needed?
+    public long getTime() {
+        // will be called only from PreparationWeighting and if isShortcut is true
+        return ((CHEdgeIteratorState) getCurrentEdge()).getTime();
+    }
+    // ORS-GH MOD END
+
 }

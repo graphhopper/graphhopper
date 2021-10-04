@@ -605,12 +605,14 @@ public class OSMReaderTest {
         OSMReader osmreader = new OSMReader(ghStorage) {
             // mock data access
             @Override
-            double getTmpLatitude(int id) {
+            // ORS-GH MOD - change access level due to change in superclass
+            protected double getTmpLatitude(int id) {
                 return latMap.get(id);
             }
 
             @Override
-            double getTmpLongitude(int id) {
+            // ORS-GH MOD - change access level due to change in superclass
+            protected double getTmpLongitude(int id) {
                 return lonMap.get(id);
             }
 

@@ -19,7 +19,9 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.util.DefaultSpeedCalculator;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.SpeedCalculator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 
@@ -33,6 +35,9 @@ public abstract class AbstractWeighting implements Weighting {
     protected final DecimalEncodedValue avSpeedEnc;
     protected final BooleanEncodedValue accessEnc;
     private final TurnCostProvider turnCostProvider;
+    // ORS-GH MOD START - additional field
+    protected SpeedCalculator speedCalculator;
+    // ORS-GH MOD END
 
     protected AbstractWeighting(FlagEncoder encoder) {
         this(encoder, NO_TURN_COST_PROVIDER);
@@ -48,7 +53,18 @@ public abstract class AbstractWeighting implements Weighting {
         avSpeedEnc = encoder.getAverageSpeedEnc();
         accessEnc = encoder.getAccessEnc();
         this.turnCostProvider = turnCostProvider;
+        // ORS-GH MOD START
+        speedCalculator = new DefaultSpeedCalculator(encoder);
+        // ORS_GH MOD END
     }
+
+    // ORS-gh MOD - additional method
+    // needed for time-dependent routing
+    @Override
+    public double calcEdgeWeight(EdgeIteratorState edge, boolean reverse, long edgeEnterTime) {
+        return calcEdgeWeight(edge, reverse);
+    }
+    // ORS-GH MOD END
 
     /**
      * In most cases subclasses should only override this method to change the edge-weight. The turn cost handling
@@ -56,8 +72,17 @@ public abstract class AbstractWeighting implements Weighting {
      */
     public abstract double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse);
 
+    // ORS-GH MOD START - modifications for time-dependent routing
+    // ORS-GH MOD - mimic old method signature
     @Override
     public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
+        return calcEdgeMillis(edgeState, reverse, -1);
+    }
+
+    // ORS-GH MOD - add parameter to method signature
+    // GH orig: public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
+    public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse, long edgeEnterTime) {
+        // ORS-GH MOD END
         // special case for loop edges: since they do not have a meaningful direction we always need to read them in
         // forward direction
         if (edgeState.getBaseNode() == edgeState.getAdjNode()) {
@@ -70,7 +95,10 @@ public abstract class AbstractWeighting implements Weighting {
                     + edgeState.fetchWayGeometry(FetchMode.ALL) + ", dist: " + edgeState.getDistance() + " "
                     + "Reverse:" + reverse + ", fwd:" + edgeState.get(accessEnc) + ", bwd:" + edgeState.getReverse(accessEnc) + ", fwd-speed: " + edgeState.get(avSpeedEnc) + ", bwd-speed: " + edgeState.getReverse(avSpeedEnc));
 
-        double speed = reverse ? edgeState.getReverse(avSpeedEnc) : edgeState.get(avSpeedEnc);
+        // ORS-GH MOD START
+        //double speed = reverse ? edgeState.getReverse(avSpeedEnc) : edgeState.get(avSpeedEnc);
+        double speed = speedCalculator.getSpeed(edgeState, reverse, edgeEnterTime);
+        // ORS-GH MOD END
         if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)
             throw new IllegalStateException("Invalid speed stored in edge! " + speed);
         if (speed == 0)
@@ -127,4 +155,21 @@ public abstract class AbstractWeighting implements Weighting {
     public String toString() {
         return getName() + "|" + flagEncoder;
     }
+
+    // ORS-GH MOD START - additional methods
+    @Override
+    public boolean isTimeDependent() {
+        return false;
+    }
+
+    @Override
+    public SpeedCalculator getSpeedCalculator() {
+        return speedCalculator;
+    }
+
+    @Override
+    public void setSpeedCalculator(SpeedCalculator speedCalculator) {
+        this.speedCalculator = speedCalculator;
+    }
+    // ORS-GH MOD END
 }

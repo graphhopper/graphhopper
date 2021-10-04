@@ -42,6 +42,16 @@ public class DistanceCalcEarth implements DistanceCalc {
     public final static double METERS_PER_DEGREE = C / 360.0;
     public static final DistanceCalc DIST_EARTH = new DistanceCalcEarth();
 
+    // ORS-GH MOD START - allow enforcing 2D calculations
+    // See https://github.com/GIScience/openrouteservice/issues/725
+    private boolean enforce2Dcalculation = false;
+
+    @Override
+    public void enforce2D() {
+        this.enforce2Dcalculation = true;
+    }
+    // ORS-GH MOD END
+    
     /**
      * Calculates distance of (from, to) in meter.
      * <p>
@@ -324,7 +334,10 @@ public class DistanceCalcEarth implements DistanceCalc {
         double dist = 0;
         for (int i = 0; i < pointList.size(); i++) {
             if (i > 0) {
-                if (pointList.is3D())
+                // ORS-GH MOD START - permit enforcing 2D calculation
+                //if (pointList.is3D()) 
+                if (pointList.is3D() && !enforce2Dcalculation)
+                    // ORS-GH MOD END
                     dist += calcDist3D(prevLat, prevLon, prevEle, pointList.getLat(i), pointList.getLon(i), pointList.getEle(i));
                 else
                     dist += calcDist(prevLat, prevLon, pointList.getLat(i), pointList.getLon(i));

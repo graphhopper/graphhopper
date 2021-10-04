@@ -21,6 +21,7 @@ package com.graphhopper.routing.weighting;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.SpeedCalculator;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -34,6 +35,10 @@ public class QueryGraphWeighting implements Weighting {
     private final int firstVirtualNodeId;
     private final int firstVirtualEdgeId;
     private final IntArrayList closestEdges;
+    // ORS-GH MOD START - additional field
+    protected SpeedCalculator speedCalculator;
+    // ORS-GH MOD END
+
 
     public QueryGraphWeighting(Weighting weighting, int firstVirtualNodeId, int firstVirtualEdgeId, IntArrayList closestEdges) {
         this.weighting = weighting;
@@ -50,6 +55,11 @@ public class QueryGraphWeighting implements Weighting {
     @Override
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
         return weighting.calcEdgeWeight(edgeState, reverse);
+    }
+
+    @Override
+    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse, long edgeEntryTime) {
+        return weighting.calcEdgeWeight(edgeState, reverse, edgeEntryTime);
     }
 
     @Override
@@ -89,6 +99,11 @@ public class QueryGraphWeighting implements Weighting {
     }
 
     @Override
+    public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse, long edgeEntryTime) {
+        return weighting.calcEdgeMillis(edgeState, reverse, edgeEntryTime);
+    }
+
+    @Override
     public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
         // todo: here we do not allow calculating turn weights that aren't turn times, also see #1590
         return (long) (1000 * calcTurnWeight(inEdge, viaNode, outEdge));
@@ -125,4 +140,21 @@ public class QueryGraphWeighting implements Weighting {
     private boolean isVirtualEdge(int edge) {
         return edge >= firstVirtualEdgeId;
     }
+
+    // ORS-GH MOD START - additional methods
+    @Override
+    public boolean isTimeDependent() {
+        return weighting.isTimeDependent();
+    }
+
+    @Override
+    public SpeedCalculator getSpeedCalculator() {
+        return speedCalculator;
+    }
+
+    @Override
+    public void setSpeedCalculator(SpeedCalculator speedCalculator) {
+        this.speedCalculator = speedCalculator;
+    }
+    // ORS-GH MOD END
 }

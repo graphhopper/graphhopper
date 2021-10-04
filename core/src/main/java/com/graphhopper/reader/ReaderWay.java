@@ -26,11 +26,26 @@ import com.carrotsearch.hppc.LongArrayList;
  * @author Nop
  */
 public class ReaderWay extends ReaderElement {
-    protected final LongArrayList nodes = new LongArrayList(5);
-
+    // ORS-GH MOD START
+    // TODO ORS (minor): provide a reason for this change (see also PbfBlobDecoder)
+    // ORG CODE
+    /*protected final LongArrayList nodes = new LongArrayList(5);
     public ReaderWay(long id) {
         super(id, WAY);
+    }*/
+    // ORG CODE END
+
+    protected final LongArrayList nodes;
+
+    public ReaderWay(long id) {
+        this(id, 5);
     }
+
+    public ReaderWay(long id, int size) {
+        super(id, WAY);
+        nodes = new LongArrayList(size);
+    }
+    // ORS-GH MOD END
 
     public LongArrayList getNodes() {
         return nodes;

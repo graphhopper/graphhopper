@@ -43,6 +43,18 @@
             <artifactId>dropwizard-testing</artifactId>
             <scope>test</scope>
         </dependency>
+<!-- TODO: need to check if these two are required -->
+        <dependency>
+            <groupId>ch.poole</groupId>
+            <artifactId>ConditionalRestrictionParser</artifactId>
+            <version>${crparser.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.poole</groupId>
+            <artifactId>OpeningHoursParser</artifactId>
+            <version>${ohparser.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-library</artifactId>

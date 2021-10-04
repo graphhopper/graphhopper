@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntObjectMap;
+import com.graphhopper.routing.querygraph.EdgeIteratorStateHelper;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
@@ -157,6 +158,9 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
             SPTEntry entry = bestWeightMap.get(traversalId);
             if (entry == null) {
                 entry = createEntry(iter, weight, currEdge, reverse);
+                // ORS-GH MOD START - store original edgeId
+                entry.originalEdge = EdgeIteratorStateHelper.getOriginalEdge(iter);
+                // ORS-GH MOD END
                 bestWeightMap.put(traversalId, entry);
                 prioQueue.add(entry);
             } else if (entry.getWeightOfVisitedPath() > weight) {

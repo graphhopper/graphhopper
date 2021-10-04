@@ -46,6 +46,18 @@ public abstract class ReaderElement {
         properties = new HashMap<>(propertyMapSize);
     }
 
+    // ORS-GH MOD START
+    // Modification by Maxim Rylov: A new method has been added.
+    public boolean hasTag(String key) {
+        return properties.containsKey(key);
+    }
+
+    // Modification by Maxim Rylov: A new method has been added.
+    public Iterator<Entry<String, Object>> getProperties() {
+        return properties.entrySet().iterator();
+    }
+    // ORS-GH MOD END
+
     public long getId() {
         return id;
     }
@@ -64,7 +76,11 @@ public abstract class ReaderElement {
         return tagTxt.toString();
     }
 
-    protected Map<String, Object> getTags() {
+    // ORS-GH MOD START - change access level
+    // Used in OSMReader mod to get node tags when processing edge edge
+    //protected Map<String, Object> getTags()
+    public Map<String, Object> getTags() {
+    // ORS-GH MOD END
         return properties;
     }
 

@@ -20,6 +20,15 @@ public class PbfFieldDecoder {
     private long coordLongitudeOffset;
     private int dateGranularity;
 
+    // ORS-GH MOD START
+    // Modification by Maxim Rylov: Added a new class variable.
+    private byte[] fieldsToSkip;
+    // Modification by Maxim Rylov: Added a new method.
+    public boolean skip(int rawString) {
+        return fieldsToSkip[rawString] == 1;
+    }
+    // ORS-GH MOD END
+
     /**
      * Creates a new instance.
      * <p>
@@ -34,8 +43,19 @@ public class PbfFieldDecoder {
 
         Osmformat.StringTable stringTable = primitiveBlock.getStringtable();
         strings = new String[stringTable.getSCount()];
+        // ORS-GH MOD START
+        fieldsToSkip = new byte[stringTable.getSCount()];
+        // ORS-GH MOD END
         for (int i = 0; i < strings.length; i++) {
             strings[i] = stringTable.getS(i).toStringUtf8();
+            // ORS-GH MOD START
+            if ("".equals(strings[i]) || "created_by".equals(strings[i]) || strings[i].startsWith("TMC") || strings[i].startsWith("addr:")) {
+                fieldsToSkip[i] = 1;
+            }else {
+                fieldsToSkip[i] = 0;
+            }
+            // ORS-GH MOD END
+
         }
     }
 

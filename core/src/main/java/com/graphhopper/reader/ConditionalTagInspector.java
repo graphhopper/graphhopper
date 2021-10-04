@@ -20,7 +20,7 @@ package com.graphhopper.reader;
 /**
  * @author Peter Karich
  */
-public interface ConditionalTagInspector {
+public interface ConditionalTagInspector extends ConditionalInspector {
     boolean isRestrictedWayConditionallyPermitted(ReaderWay way);
 
     boolean isPermittedWayConditionallyRestricted(ReaderWay way);

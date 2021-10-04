@@ -37,12 +37,15 @@ import java.util.PriorityQueue;
  * @author Peter Karich
  */
 public class AStar extends AbstractRoutingAlgorithm {
-    private GHIntObjectHashMap<AStarEntry> fromMap;
-    private PriorityQueue<AStarEntry> fromHeap;
-    private AStarEntry currEdge;
-    private int visitedNodes;
-    private int to = -1;
-    private WeightApproximator weightApprox;
+    // ORS-GH MOD START - change access level from private to protected
+    // TODO ORS (minor): how to avoid this change?
+    protected GHIntObjectHashMap<AStarEntry> fromMap;
+    protected PriorityQueue<AStarEntry> fromHeap;
+    protected AStarEntry currEdge;
+    protected int visitedNodes;
+    protected int to = -1;
+    protected WeightApproximator weightApprox;
+    // ORS-GH MOD END
 
     public AStar(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);

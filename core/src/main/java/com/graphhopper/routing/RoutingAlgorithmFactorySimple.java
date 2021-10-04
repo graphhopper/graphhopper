@@ -17,6 +17,9 @@
  */
 package com.graphhopper.routing;
 
+// ORS-GH MOD START
+import com.graphhopper.routing.util.EdgeFilter;
+// ORS-GH MOD END
 import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
@@ -35,6 +38,7 @@ import static com.graphhopper.util.Parameters.Algorithms.AltRoute.*;
  * <p>
  *
  * @author Peter Karich
+ * @author Andrzej Oles
  */
 public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory {
     @Override
@@ -60,7 +64,14 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory {
             AStar aStar = new AStar(g, weighting, opts.getTraversalMode());
             aStar.setApproximation(getApproximation(ASTAR, opts.getHints(), w, g.getNodeAccess()));
             ra = aStar;
-
+        // ORS-GH MOD START -- new code
+        } else if (TD_ASTAR.equalsIgnoreCase(algoStr)) {
+            TDAStar tda = new TDAStar(g, weighting, opts.getTraversalMode());
+            tda.setApproximation(getApproximation(ASTAR, opts.getHints(), w, g.getNodeAccess()));
+            if (opts.getHints().has("arrival"))
+                tda.reverse();
+            ra = tda;
+        // ORS-GH MOD END
         } else if (ALT_ROUTE.equalsIgnoreCase(algoStr)) {
             AlternativeRoute altRouteAlgo = new AlternativeRoute(g, weighting, opts.getTraversalMode());
             altRouteAlgo.setMaxPaths(opts.getHints().getInt(MAX_PATHS, 2));
@@ -75,6 +86,10 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory {
         }
 
         ra.setMaxVisitedNodes(opts.getMaxVisitedNodes());
+
+        // ORS-GH MOD START: pass edgeFilter to algorithm
+        ra.setEdgeFilter(opts.getEdgeFilter());
+        // ORS-GH MOD END
         return ra;
     }
 

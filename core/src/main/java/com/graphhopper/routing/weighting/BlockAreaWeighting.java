@@ -24,6 +24,16 @@ public class BlockAreaWeighting extends AbstractAdjustedWeighting {
         return superWeighting.calcEdgeWeight(edgeState, reverse);
     }
 
+    // ORS-GH MOD START - additional method for time dependent routing;
+    @Override
+    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse, long edgeEnterTime) {
+        if (blockArea.intersects(edgeState))
+            return Double.POSITIVE_INFINITY;
+
+        return superWeighting.calcEdgeWeight(edgeState, reverse, edgeEnterTime);
+    }
+    // ORS-GH MOD END
+
     @Override
     public String getName() {
         return "block_area";

@@ -60,4 +60,10 @@ public interface CHEdgeIteratorState extends EdgeIteratorState {
     CHEdgeIteratorState setWeight(double weight);
 
     void setFlagsAndWeight(int flags, double weight);
+
+    // ORS-GH MOD START: TD CALT
+    CHEdgeIteratorState setTime(long time);
+
+    long getTime();
+    // ORS-GH MOD END
 }
