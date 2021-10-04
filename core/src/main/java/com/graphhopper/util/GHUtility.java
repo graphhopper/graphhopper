@@ -24,7 +24,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.querygraph.EdgeIteratorStateHelper;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.QueryGraphWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -52,6 +54,14 @@ import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
  */
 public class GHUtility {
     private static final Logger LOGGER = LoggerFactory.getLogger(GHUtility.class);
+    // ORS-GH MOD START
+    // TODO ORS (minor): clean up this quick work around
+    // corrected turn restrictions for virtual edges have to be turned off if not in ORS due to failing tests
+    private static boolean inORS = false;
+    public void setInORS(boolean inORS) {
+        this.inORS = inORS;
+    }
+    // ORS-GH MOD END
 
     /**
      * This method could throw an exception if problems like index out of bounds etc
@@ -651,6 +661,12 @@ public class GHUtility {
     }
 
     public static double calcWeightWithTurnWeightWithAccess(Weighting weighting, EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+// ORS-GH MOD START - overloaded method with additional argument for TD routing
+        return calcWeightWithTurnWeightWithAccess(weighting, edgeState, reverse, prevOrNextEdgeId, -1);
+    }
+
+    public static double calcWeightWithTurnWeightWithAccess(Weighting weighting, EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId, long edgeEnterTime) {
+
         BooleanEncodedValue accessEnc = weighting.getFlagEncoder().getAccessEnc();
         if (edgeState.getBaseNode() == edgeState.getAdjNode()) {
             if (!edgeState.get(accessEnc) && !edgeState.getReverse(accessEnc))
@@ -658,7 +674,8 @@ public class GHUtility {
         } else if ((!reverse && !edgeState.get(accessEnc)) || (reverse && !edgeState.getReverse(accessEnc))) {
             return Double.POSITIVE_INFINITY;
         }
-        return calcWeightWithTurnWeight(weighting, edgeState, reverse, prevOrNextEdgeId);
+        return calcWeightWithTurnWeight(weighting, edgeState, reverse, prevOrNextEdgeId, edgeEnterTime);
+// ORS-GH MOD END
     }
 
     /**
@@ -669,11 +686,27 @@ public class GHUtility {
      *                         has to be the next edgeId in the direction from start to end.
      */
     public static double calcWeightWithTurnWeight(Weighting weighting, EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-        final double edgeWeight = weighting.calcEdgeWeight(edgeState, reverse);
+// ORS-GH MOD START - overloaded method with additional argument for TD routing
+        return calcWeightWithTurnWeight(weighting, edgeState, reverse, prevOrNextEdgeId, -1);
+    }
+
+    public static double calcWeightWithTurnWeight(Weighting weighting, EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId, long edgeEnterTime) {
+        final double edgeWeight = weighting.calcEdgeWeight(edgeState, reverse, edgeEnterTime);
+// ORS-GH MOD END
         if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId)) {
             return edgeWeight;
         }
+        // ORS-GH MOD START - correct turn cost for vitual edges
+        // TODO ORS (minor): This mod should not be necessary, as it is handled in QueryGraphWeighting.
+        //           Therefore, the mod is disabled but kept for reference; remove after upgrade is done.
         final int origEdgeId = reverse ? edgeState.getOrigEdgeLast() : edgeState.getOrigEdgeFirst();
+        //final int origEdgeId;
+        //if (inORS) {
+        //    origEdgeId = EdgeIteratorStateHelper.getOriginalEdge(edgeState);
+        //} else {
+        //    origEdgeId = reverse ? edgeState.getOrigEdgeLast() : edgeState.getOrigEdgeFirst();
+        //}
+        // ORS-GH MOD END
         double turnWeight = reverse
                 ? weighting.calcTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
                 : weighting.calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
@@ -936,5 +969,67 @@ public class GHUtility {
         int secondIndex = towerNodes.size() == 1 ? 0 : 1;
         return BBox.fromPoints(towerNodes.getLat(0), towerNodes.getLon(0),
                 towerNodes.getLat(secondIndex), towerNodes.getLon(secondIndex));
+    }
+
+    // TODO ORS: class removed upstream!
+    /**
+     * This node access can be used in tests to mock specific iterator behaviour via overloading
+     * certain methods.
+     */
+    public static class DisabledNodeAccess implements NodeAccess {
+
+        @Override
+        public int getTurnCostIndex(int nodeId) {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public void setTurnCostIndex(int nodeId, int additionalValue) {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public boolean is3D() {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public int getDimension() {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public void ensureNode(int nodeId) {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public void setNode(int nodeId, double lat, double lon, double ele) {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        public double getLat(int nodeId) {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public double getLon(int nodeId) {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public double getEle(int nodeId) {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        // ORS-GH MOD START: TD CALT
+        public CHEdgeIteratorState setTime(long time) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        public long getTime() {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+        // ORS-GH MOD END
     }
 }

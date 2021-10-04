@@ -18,6 +18,7 @@
 package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.SpeedCalculator;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
@@ -49,6 +50,18 @@ public abstract class AbstractAdjustedWeighting implements Weighting {
         return superWeighting.calcEdgeMillis(edgeState, reverse);
     }
 
+    // ORS-GH MOD START - additional methods
+    @Override
+    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse, long edgeEnterTime) {
+        return superWeighting.calcEdgeWeight(edgeState, reverse, edgeEnterTime);
+    }
+
+    @Override
+    public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse, long edgeEnterTime) {
+        return superWeighting.calcEdgeMillis(edgeState, reverse, edgeEnterTime);
+    }
+    // ORS-GH MOD END
+
     @Override
     public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
         return superWeighting.calcTurnWeight(inEdge, viaNode, outEdge);
@@ -76,4 +89,21 @@ public abstract class AbstractAdjustedWeighting implements Weighting {
     public String toString() {
         return getName() + "|" + superWeighting.toString();
     }
+
+    // ORS-GH MOD START - additional methods
+    @Override
+    public boolean isTimeDependent() {
+        return superWeighting.isTimeDependent();
+    }
+
+    @Override
+    public SpeedCalculator getSpeedCalculator() {
+        return superWeighting.getSpeedCalculator();
+    }
+
+    @Override
+    public void setSpeedCalculator(SpeedCalculator speedCalculator) {
+        superWeighting.setSpeedCalculator(speedCalculator);
+    }
+    // ORS-GH MOD END
 }

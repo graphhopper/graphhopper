@@ -154,7 +154,9 @@ GHRequest.prototype.getVehicle = function () {
 
 GHRequest.prototype.isPublicTransit = function () {
     // legacy support: we might have set vehicle=pt instead of pt
-    return this.getProfile() === "pt" || this.getVehicle() === "pt";;
+//    return this.getProfile() === "pt" || this.getVehicle() === "pt";;
+    // TODO: is this correct?
+    return this.features[this.getVehicle()].time_dependent;
 };
 
 GHRequest.prototype.removeProfileParameterIfLegacyRequest = function() {

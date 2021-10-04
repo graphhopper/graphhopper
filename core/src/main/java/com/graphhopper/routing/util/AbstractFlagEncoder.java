@@ -17,16 +17,20 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.ConditionalSpeedInspector;
 import com.graphhopper.reader.ConditionalTagInspector;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
+import com.graphhopper.reader.osm.conditional.ConditionalParser;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
 
 import java.util.*;
 
@@ -37,6 +41,7 @@ import java.util.*;
  *
  * @author Peter Karich
  * @author Nop
+ * @author Andrzej Oles
  * @see EncodingManager
  */
 public abstract class AbstractFlagEncoder implements FlagEncoder {
@@ -64,6 +69,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected EncodedValueLookup encodedValueLookup;
     private ConditionalTagInspector conditionalTagInspector;
     protected FerrySpeedCalculator ferrySpeedCalc;
+    // ORS-GH MOD START - new field
+    private ConditionalSpeedInspector conditionalSpeedInspector;
+    // ORS-GH MOD END
 
     /**
      * @param speedBits    specify the number of bits used for speed
@@ -126,6 +134,16 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     public ConditionalTagInspector getConditionalTagInspector() {
         return conditionalTagInspector;
     }
+
+    // ORS-GH MOD START - additional method
+    public ConditionalSpeedInspector getConditionalSpeedInspector() {
+        return conditionalSpeedInspector;
+    }
+
+    public void setConditionalSpeedInspector(ConditionalSpeedInspector conditionalSpeedInspector) {
+        this.conditionalSpeedInspector = conditionalSpeedInspector;
+    }
+    // ORS-GH MOD END
 
     /**
      * Defines bits used for edge flags used for access, speed etc.
@@ -265,6 +283,25 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         }
     }
 
+    // ORS GH MOD start
+    // ORS GH MOD switch from package-private to public for package-external flag encoders and some weightings
+    @Deprecated // TODO ORS: method removed from GH3.0
+    public double getSpeed(IntsRef edgeFlags) {
+        return getSpeed(false, edgeFlags);
+    }
+
+    // ORS GH MOD switch from package-private to public for package-external flag encoders and some weightings
+    @Deprecated // TODO ORS: method removed from GH3.0
+    public double getSpeed(boolean reverse, IntsRef edgeFlags) {
+        // ORS orig: double speedVal = speedEncoder.getDecimal(reverse, edgeFlags);
+        double speedVal = avgSpeedEnc.getDecimal(reverse, edgeFlags); // TODO ORS: temporary hack to make it compile
+        if (speedVal < 0)
+            throw new IllegalStateException("Speed was negative!? " + speedVal);
+
+        return speedVal;
+    }
+    // ORS GH MOD end
+
     /**
      * @param way   needed to retrieve tags
      * @param speed speed guessed e.g. from the road type or other tags
@@ -279,6 +316,71 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         }
         return speed;
     }
+
+    // ORS-GH MOD START - additional methods for conditional speeds
+    protected double applyConditionalSpeed(String value, double speed) {
+        double maxSpeed = parseSpeed(value);
+        // We obey speed limits
+        if (maxSpeed >= 0) {
+            // We assume that the average speed is 90% of the allowed maximum
+            return maxSpeed * 0.9;
+        }
+        return speed;
+    }
+
+    /**
+     * @return the speed in km/h
+     */
+    public static double parseSpeed(String str) {
+        if (Helper.isEmpty(str))
+            return -1;
+
+        // on some German autobahns and a very few other places
+        if ("none".equals(str))
+            return MaxSpeed.UNLIMITED_SIGN_SPEED;
+
+        if (str.endsWith(":rural") || str.endsWith(":trunk"))
+            return 80;
+
+        if (str.endsWith(":urban"))
+            return 50;
+
+        if (str.equals("walk") || str.endsWith(":living_street"))
+            return 6;
+
+        try {
+            int val;
+            // see https://en.wikipedia.org/wiki/Knot_%28unit%29#Definitions
+            int mpInteger = str.indexOf("mp");
+            if (mpInteger > 0) {
+                str = str.substring(0, mpInteger).trim();
+                val = Integer.parseInt(str);
+                return val * DistanceCalcEarth.KM_MILE;
+            }
+
+            int knotInteger = str.indexOf("knots");
+            if (knotInteger > 0) {
+                str = str.substring(0, knotInteger).trim();
+                val = Integer.parseInt(str);
+                return val * 1.852;
+            }
+
+            int kmInteger = str.indexOf("km");
+            if (kmInteger > 0) {
+                str = str.substring(0, kmInteger).trim();
+            } else {
+                kmInteger = str.indexOf("kph");
+                if (kmInteger > 0) {
+                    str = str.substring(0, kmInteger).trim();
+                }
+            }
+
+            return Integer.parseInt(str);
+        } catch (Exception ex) {
+            return -1;
+        }
+    }
+    // ORS-GH MOD END
 
     protected String getPropertiesString() {
         return "speed_factor=" + speedFactor + "|speed_bits=" + speedBits + "|turn_costs=" + (maxTurnCosts > 0);
@@ -341,4 +443,28 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     public final List<String> getRestrictions() {
         return restrictions;
     }
+
+    // ORS-GH MOD START - additional methods to handle conditional restrictions
+    public EncodingManager.Access isRestrictedWayConditionallyPermitted(ReaderWay way) {
+        return isRestrictedWayConditionallyPermitted(way, EncodingManager.Access.WAY);
+    }
+
+    public EncodingManager.Access isRestrictedWayConditionallyPermitted(ReaderWay way, EncodingManager.Access accept) {
+        return getConditionalAccess(way, accept, true);
+    }
+
+    public EncodingManager.Access isPermittedWayConditionallyRestricted(ReaderWay way) {
+        return getConditionalAccess(way, EncodingManager.Access.WAY, false);
+    }
+
+    private EncodingManager.Access getConditionalAccess(ReaderWay way, EncodingManager.Access accept, boolean permissive) {
+        ConditionalTagInspector conditionalTagInspector = getConditionalTagInspector();
+        boolean access = permissive ? conditionalTagInspector.isRestrictedWayConditionallyPermitted(way) :
+                !conditionalTagInspector.isPermittedWayConditionallyRestricted(way);
+        if (conditionalTagInspector.hasLazyEvaluatedConditions())
+            return access ? EncodingManager.Access.PERMITTED : EncodingManager.Access.RESTRICTED;
+        else
+            return access ? accept : EncodingManager.Access.CAN_SKIP;
+    }
+    // ORS-GH MOD END
 }

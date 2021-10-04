@@ -55,6 +55,17 @@ public class AvoidEdgesWeighting extends AbstractAdjustedWeighting {
         return weight;
     }
 
+    // ORS-GH MOD - additional method
+    // needed for time-dependent routing
+    @Override
+    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse, long edgeEnterTime) {
+        double weight = superWeighting.calcEdgeWeight(edgeState, reverse, edgeEnterTime);
+        if (avoidedEdges.contains(edgeState.getEdge()))
+            return weight * edgePenaltyFactor;
+
+        return weight;
+    }
+
     @Override
     public String getName() {
         return "avoid_edges";

@@ -116,6 +116,10 @@ public class PbfBlobDecoder implements Runnable {
          */
     }
 
+    // ORS-GH MOD START Modification by Maxim Rylov: entityTags object moved to class members. this allows avoiding unneeded allocations.
+    private Map<String, String> entityTags = null;
+    // ORS-GH MOD END
+
     private Map<String, String> buildTags(List<Integer> keys, List<Integer> values, PbfFieldDecoder fieldDecoder) {
 
         // Ensure parallel lists are of equal size.
@@ -126,16 +130,43 @@ public class PbfBlobDecoder implements Runnable {
             }
         }
 
+        // ORS-GH MOD START
+        if (entityTags == null) {
+            entityTags = new HashMap<String, String>(keys.size());
+        }else {
+            entityTags.clear();
+        }
+        // ORS-GH MOD END
+
+
         Iterator<Integer> keyIterator = keys.iterator();
         Iterator<Integer> valueIterator = values.iterator();
         if (keyIterator.hasNext()) {
-            Map<String, String> tags = new HashMap<>(keys.size());
+            // ORS-GH MOD START
+            // ORG CODE START
+            /*
+            Map<String, String> tags = new HashMap<String, String>(keys.size());
             while (keyIterator.hasNext()) {
                 String key = fieldDecoder.decodeString(keyIterator.next());
                 String value = fieldDecoder.decodeString(valueIterator.next());
                 tags.put(key, value);
             }
             return tags;
+            */
+            // ORG CODE END
+            int keyId = 1;  // ORS TODO: What's the matter of keeping keyID outside the loop?
+            while (keyIterator.hasNext()) {
+                keyId = keyIterator.next();
+                if (!fieldDecoder.skip(keyId)) {
+                    String key = fieldDecoder.decodeString(keyId);
+                    String value = fieldDecoder.decodeString(valueIterator.next());
+                    entityTags.put(key, value);
+                } else {
+                    valueIterator.next();
+                }
+            }
+            return entityTags;
+            // ORS-GH MOD END
         }
         return null;
     }
@@ -215,7 +246,12 @@ public class PbfBlobDecoder implements Runnable {
             // Build the tags. The key and value string indexes are sequential
             // in the same PBF array. Each set of tags is delimited by an index
             // with a value of 0.
-            Map<String, String> tags = null;
+
+            // ORS-GH MOD START
+            //Map<String, String> tags = null;
+            Map<String, String> tags = entityTags;
+            // ORS-GH MOD END
+
             while (keysValuesIterator.hasNext()) {
                 int keyIndex = keysValuesIterator.next();
                 if (keyIndex == 0) {
@@ -234,7 +270,13 @@ public class PbfBlobDecoder implements Runnable {
                     tags = new HashMap<>(Math.max(3, 2 * (nodes.getKeysValsList().size() / 2) / idList.size()));
                 }
 
+                // ORS-GH MOD START
+                if (!fieldDecoder.skip(keyIndex)) {
+                // ORS-GH MOD END
                 tags.put(fieldDecoder.decodeString(keyIndex), fieldDecoder.decodeString(valueIndex));
+                // ORS-GH MOD START
+                }
+                // ORS-GH MOD END
             }
 
             ReaderNode node = new ReaderNode(nodeId, fieldDecoder.decodeLatitude(latitude), fieldDecoder.decodeLongitude(longitude));
@@ -248,7 +290,11 @@ public class PbfBlobDecoder implements Runnable {
     private void processWays(List<Osmformat.Way> ways, PbfFieldDecoder fieldDecoder) {
         for (Osmformat.Way way : ways) {
             Map<String, String> tags = buildTags(way.getKeysList(), way.getValsList(), fieldDecoder);
-            ReaderWay osmWay = new ReaderWay(way.getId());
+            // ORS-GH MOD START
+            //ReaderWay osmWay = new ReaderWay(way.getId());
+            // TODO ORS (minor): provide a reason for this change or remove it
+            ReaderWay osmWay = new ReaderWay(way.getId(), way.getRefsList().size()); // Modification by Maxim Rylov:  Make use of a constructor with capacity parameter.
+            // ORS-GH MOD END
             osmWay.setTags(tags);
 
             // Build up the list of way nodes for the way. The node ids are

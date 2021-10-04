@@ -58,6 +58,13 @@ public class BalancedWeightApproximator {
         return uniDirApproximatorForward;
     }
 
+    // ORS-GH MOD START
+    // CALT - add method
+    public WeightApproximator getReverseApproximation() {
+        return uniDirApproximatorReverse;
+    }
+    // ORS-GH MOD END
+
     public void setFromTo(int from, int to) {
         uniDirApproximatorReverse.setTo(from);
         uniDirApproximatorForward.setTo(to);

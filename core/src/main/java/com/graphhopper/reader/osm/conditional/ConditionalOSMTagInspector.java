@@ -29,6 +29,7 @@ import java.util.*;
  * <p>
  *
  * @author Robin Boldt
+ * @author Andrzej Oles
  */
 public class ConditionalOSMTagInspector implements ConditionalTagInspector {
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -36,6 +37,18 @@ public class ConditionalOSMTagInspector implements ConditionalTagInspector {
     private final ConditionalParser permitParser, restrictiveParser;
     // enabling by default makes noise but could improve OSM data
     private boolean enabledLogs;
+
+    // ORS-GH MOD START - additional fields
+    private String tagValue;
+    private boolean isLazyEvaluated;
+    // ORS-GH MOD END
+
+    // ORS-GH MOD START - additional method
+    @Override
+    public String getTagValue() {
+        return tagValue;
+    }
+    // ORS-GH MOD END
 
     public ConditionalOSMTagInspector(Calendar value, List<String> tagsToCheck,
                                       Set<String> restrictiveValues, Set<String> permittedValues) {
@@ -68,35 +81,56 @@ public class ConditionalOSMTagInspector implements ConditionalTagInspector {
 
     @Override
     public boolean isRestrictedWayConditionallyPermitted(ReaderWay way) {
-        return applies(way, true);
+        return applies(way, permitParser); // ORS-GH MOD - change signature
     }
 
     @Override
     public boolean isPermittedWayConditionallyRestricted(ReaderWay way) {
-        return applies(way, false);
+        return applies(way, restrictiveParser); // ORS-GH MOD - change signature
     }
 
-    protected boolean applies(ReaderWay way, boolean checkPermissiveValues) {
+    // ORS-GH MOD START - additional method
+    @Override
+    public boolean hasLazyEvaluatedConditions() {
+        return isLazyEvaluated;
+    }
+    // ORS-GH MOD END
+
+// ORS-GH MOD START - change signature
+// protected boolean applies(ReaderWay way, boolean checkPermissiveValues) {
+protected boolean applies(ReaderWay way, ConditionalParser parser) {
+        isLazyEvaluated = false;
+// ORS-GH MOD END
         for (int index = 0; index < tagsToCheck.size(); index++) {
             String tagToCheck = tagsToCheck.get(index);
-            String val = way.getTag(tagToCheck);
-            if (val == null || val.isEmpty())
+            // ORS-GH MOD START - move local variable into field
+            tagValue = way.getTag(tagToCheck);
+            // ORS-GH MOD END
+            if (tagValue == null || tagValue.isEmpty())
                 continue;
 
             try {
-                if (checkPermissiveValues) {
-                    if (permitParser.checkCondition(val))
-                        return true;
-                } else {
-                    if (restrictiveParser.checkCondition(val))
-                        return true;
-                }
-
+                // ORS-GH MOD START
+                // GH orig:
+                //if (checkPermissiveValues) {
+                //    if (permitParser.checkCondition(val))
+                //        return true;
+                //} else {
+                //    if (restrictiveParser.checkCondition(val))
+                //        return true;
+                //}
+                ConditionalParser.Result result = parser.checkCondition(tagValue);
+                isLazyEvaluated = result.isLazyEvaluated();
+                tagValue = result.getRestrictions();
+                // allow the check result to be false but still have unevaluated conditions
+                if (result.isCheckPassed() || isLazyEvaluated)
+                    return result.isCheckPassed();
+                // ORS-GH MOD END
             } catch (Exception e) {
                 if (enabledLogs) {
                     // log only if no date ala 21:00 as currently date and numbers do not support time precise restrictions
-                    if (!val.contains(":"))
-                        logger.warn("for way " + way.getId() + " could not parse the conditional value '" + val + "' of tag '" + tagToCheck + "'. Exception:" + e.getMessage());
+                    if (!tagValue.contains(":"))
+                        logger.warn("for way " + way.getId() + " could not parse the conditional value '" + tagValue + "' of tag '" + tagToCheck + "'. Exception:" + e.getMessage());
                 }
             }
         }

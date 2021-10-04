@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.weighting.PriorityWeighting;
+import com.graphhopper.storage.ConditionalEdges;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 
@@ -35,6 +36,7 @@ import static com.graphhopper.routing.util.PriorityCode.*;
  * @author Peter Karich
  * @author Nop
  * @author ratrun
+ * @author Andrzej Oles
  */
 abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
@@ -60,6 +62,8 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
     // This is the specific bicycle class
     private String classBicycleKey;
+
+    private BooleanEncodedValue conditionalEncoder;
 
     protected BikeCommonFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
         super(speedBits, speedFactor, maxTurnCosts);
@@ -195,6 +199,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
         registerNewEncodedValue.add(avgSpeedEnc = new UnsignedDecimalEncodedValue(getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
         registerNewEncodedValue.add(priorityEnc = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 4, PriorityCode.getFactor(1), false));
+        registerNewEncodedValue.add(conditionalEncoder = new SimpleBooleanEncodedValue(getKey(prefix, ConditionalEdges.ACCESS), false));
 
         bikeRouteEnc = getEnumEncodedValue(RouteNetwork.key("bike"), RouteNetwork.class);
         smoothnessEnc = getEnumEncodedValue(Smoothness.KEY, Smoothness.class);
@@ -242,7 +247,10 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         if (way.hasTag("bicycle", intendedValues) ||
                 way.hasTag("bicycle", "dismount") ||
                 way.hasTag("highway", "cycleway"))
-            return EncodingManager.Access.WAY;
+            // ORS-GH MOD START - change return value
+            //return EncodingManager.Access.WAY;
+            return isPermittedWayConditionallyRestricted(way);
+            // ORS-GH MOD END
 
         // accept only if explicitly tagged for bike usage
         if ("motorway".equals(highwayValue) || "motorway_link".equals(highwayValue) || "bridleway".equals(highwayValue))
@@ -308,6 +316,10 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
                         PUSHING_SECTION_SPEED : Math.round(smoothnessSpeedFactor * wayTypeSpeed);
             }
             handleSpeed(edgeFlags, way, wayTypeSpeed);
+	    // ORS-GH MOD START - additional condition
+            if (access.isConditional())
+                conditionalEncoder.setBool(false, edgeFlags, true);
+            // ORS-GH MOD END
         } else {
             double ferrySpeed = ferrySpeedCalc.getSpeed(way);
             handleSpeed(edgeFlags, way, ferrySpeed);

@@ -127,4 +127,7 @@ public interface DistanceCalc {
 
     double calcDistance(PointList pointList);
 
+    // ORS-GH MOD START - additional method; permit enforcing 2D caclulations
+    void enforce2D();
+    // ORS-GH MOD END
 }

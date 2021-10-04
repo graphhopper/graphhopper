@@ -210,4 +210,11 @@ public class LMApproximator implements WeightApproximator {
     public String toString() {
         return "landmarks";
     }
+
+    // ORS-GH MOD START
+    // Modification by Andrzej Oles: ALT patch https://github.com/GIScience/graphhopper/issues/21
+    public double getFactor() {
+        return factor;
+    }
+    // ORS-GH MOD END
 }

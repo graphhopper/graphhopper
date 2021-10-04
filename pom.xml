@@ -35,6 +35,13 @@
         <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.alignMultilineTryResources>true</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.alignMultilineTryResources>
     </properties>
 
+    <!-- ORS: remove? repositories>
+        <repository><id>simonpoole</id>
+            <name>OpeningHoursParser Repository</name>
+            <url>https://dl.bintray.com/simonpoole/osm</url>
+        </repository>
+    </repositories-->
+
     <scm>
         <connection>scm:git:git@github.com:graphhopper/graphhopper.git</connection>
         <developerConnection>scm:git:git@github.com:graphhopper/graphhopper.git</developerConnection>
@@ -69,17 +76,19 @@
     </issueManagement>
 
     <modules>
+        <!-- ORS-GH MOD START - remove unused modules -->
         <module>core</module>
-        <module>reader-gtfs</module>
-        <module>tools</module>
-        <module>hmm-lib</module>
-        <module>map-matching</module>
-        <module>web-bundle</module>
+        <!-- ORS-GH MOD<module>reader-gtfs</module> -->
+        <!-- ORS-GH MOD<module>tools</module> -->
+        <!-- ORS-GH MOD<module>hmm-lib</module> -->
+        <!-- ORS-GH MOD<module>map-matching</module> -->
+        <!-- ORS-GH MOD<module>web-bundle</module> -->
         <module>web-api</module>
-        <module>web</module>
-        <module>client-hc</module>
-        <module>navigation</module>
-        <module>example</module>
+        <!-- ORS-GH MOD<module>web</module> -->
+        <!-- ORS-GH MOD<module>client-hc</module> -->
+        <!-- ORS-GH MOD<module>navigation</module> -->
+        <!-- ORS-GH MOD<module>example</module> -->
+        <!-- ORS-GH MOD END -->
     </modules>
     <dependencyManagement>
         <dependencies>

@@ -27,6 +27,8 @@ android/libs/graphhopper-*-android.jar
 !/core/src/test/resources/com/graphhopper/reader/osm/*.pbf
 *.dem
 *.log
+core/TODO*.txt
+core/files/dem*
 /logs
 srtmprovider/
 cgiarprovider/

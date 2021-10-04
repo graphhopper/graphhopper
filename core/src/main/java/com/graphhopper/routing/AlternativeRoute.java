@@ -22,6 +22,7 @@ import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -77,6 +78,11 @@ public class AlternativeRoute implements RoutingAlgorithm {
     private double minPlateauFactor = 0.2;
     private int maxPaths = 2;
     private WeightApproximator weightApproximator;
+
+    // ORS-GH MOD START - additional field
+    // TODO ORS (minor): provide a reason for this change
+    private EdgeFilter additionalEdgeFilter;
+    // ORS-GH MOD END
 
     public AlternativeRoute(Graph graph, Weighting weighting, TraversalMode traversalMode) {
         if (weighting.hasTurnCosts() && !traversalMode.isEdgeBased())
@@ -173,6 +179,10 @@ public class AlternativeRoute implements RoutingAlgorithm {
         if (weightApproximator != null) {
             altBidirDijktra.setApproximation(weightApproximator);
         }
+        // ORS-GH MOD START
+        // ORS TODO: provide a reason for this change
+        altBidirDijktra.setEdgeFilter(additionalEdgeFilter);
+        // ORS-GH MOD END
 
         Path bestPath = altBidirDijktra.searchBest(from, to);
         visitedNodes = altBidirDijktra.getVisitedNodes();
@@ -186,6 +196,13 @@ public class AlternativeRoute implements RoutingAlgorithm {
         return calcPaths(from, to).get(0);
     }
 
+    // ORS-GH MOD START - additional method
+    @Override
+    public Path calcPath(int from, int to, long at) {
+        return calcPath(from, to);
+    }
+    // ORS-GH MOD END
+
     @Override
     public List<Path> calcPaths(int from, int to) {
         List<AlternativeInfo> alts = calcAlternatives(from, to);
@@ -196,6 +213,13 @@ public class AlternativeRoute implements RoutingAlgorithm {
         return paths;
     }
 
+    // ORS-GH MOD START - additional method
+    @Override
+    public List<Path> calcPaths(int from, int to, long at) {
+        return calcPaths(from, to);
+    }
+    // ORS-GH MOD END
+
     @Override
     public String getName() {
         return Parameters.Algorithms.ALT_ROUTE;
@@ -205,6 +229,14 @@ public class AlternativeRoute implements RoutingAlgorithm {
     public int getVisitedNodes() {
         return visitedNodes;
     }
+
+    // ORS-GH MOD START
+    // ORS TODO: provide a reason for this change
+    public RoutingAlgorithm setEdgeFilter(EdgeFilter additionalEdgeFilter) {
+        this.additionalEdgeFilter = additionalEdgeFilter;
+        return this;
+    }
+    // ORS-GH MOD END
 
     public static class AlternativeInfo {
         private final double sortBy;

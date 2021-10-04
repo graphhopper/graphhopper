@@ -21,6 +21,7 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.util.PathProcessor;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
@@ -61,6 +62,21 @@ public class PathMerger {
         this.graph = graph;
         this.weighting = weighting;
     }
+
+    // ORS-GH MOD START
+    // TODO ORS (minor): provide reason for this addition
+    protected PathProcessor[] pathProcessor = {PathProcessor.DEFAULT};
+
+    public PathMerger setPathProcessor(PathProcessor[] pathProcessor) {
+        this.pathProcessor = pathProcessor;
+        return this;
+    }
+
+    private int ppIndex = 0;
+    public void setPathProcessorIndex(int newIndex) {
+        ppIndex = newIndex;
+    }
+    // ORS MOD END
 
     public PathMerger setCalcPoints(boolean calcPoints) {
         this.calcPoints = calcPoints;
@@ -110,7 +126,12 @@ public class PathMerger {
             fullDistance += path.getDistance();
             fullWeight += path.getWeight();
             if (enableInstructions) {
-                InstructionList il = InstructionsFromEdges.calcInstructions(path, graph, weighting, evLookup, tr);
+                // ORS-GH MOD START
+                // TODO ORS (major): integrate or re-implement pathprocessor
+                // GH orig: InstructionList il = InstructionsFromEdges.calcInstructions(path, graph, weighting, evLookup, tr);
+                // ORS orig: InstructionList il = path.calcInstructions(roundaboutEnc, tr, pathProcessor[ppIndex]);
+                InstructionList il = InstructionsFromEdges.calcInstructions(path, graph, weighting, evLookup, tr/*TODO ORS:, pathProcessor[ppIndex]*/);
+                // ORS-GH MOD END
 
                 if (!il.isEmpty()) {
                     fullInstructions.addAll(il);
@@ -143,6 +164,9 @@ public class PathMerger {
         }
 
         if (!fullPoints.isEmpty()) {
+            // ORS-GH MOD START
+            fullPoints = pathProcessor[ppIndex].processPoints(fullPoints);
+            // ORS-GH MOD END
             responsePath.addDebugInfo("simplify (" + origPoints + "->" + fullPoints.size() + ")");
             if (fullPoints.is3D)
                 calcAscendDescend(responsePath, fullPoints);

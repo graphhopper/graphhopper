@@ -24,6 +24,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.*;
+import com.graphhopper.storage.ConditionalEdges;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.StorableProperties;
@@ -44,6 +45,7 @@ import static com.graphhopper.util.Helper.toLowerCase;
  *
  * @author Peter Karich
  * @author Nop
+ * @author Andrzej Oles
  */
 public class EncodingManager implements EncodedValueLookup {
     private static final Pattern WAY_NAME_PATTERN = Pattern.compile("; *");
@@ -490,6 +492,7 @@ public class EncodingManager implements EncodedValueLookup {
         private Map<String, Access> accessMap;
         boolean hasAccepted = false;
         boolean isFerry = false;
+        boolean hasConditional = false; // ORS-GH MOD - additional field
 
         public AcceptWay() {
             this.accessMap = new HashMap<>(5);
@@ -509,6 +512,10 @@ public class EncodingManager implements EncodedValueLookup {
                 hasAccepted = true;
             if (access == Access.FERRY)
                 isFerry = true;
+            // ORS-GH MOD START - additional condition
+            if (access.isConditional())
+                hasConditional = true;
+            // ORS-GH MOD END
             return this;
         }
 
@@ -529,10 +536,20 @@ public class EncodingManager implements EncodedValueLookup {
         public boolean isFerry() {
             return isFerry;
         }
+
+        // ORS-GH MOD START - additional methods
+        public Access getAccess(String key) {
+            return accessMap.get(key);
+        }
+
+        public boolean hasConditional () {
+            return hasConditional;
+        }
+        // ORS-GH MOD END
     }
 
     public enum Access {
-        WAY, FERRY, OTHER, CAN_SKIP;
+        WAY, FERRY, OTHER, CAN_SKIP, PERMITTED, RESTRICTED; // ORS-GH MOD - additional values
 
         public boolean isFerry() {
             return this.ordinal() == FERRY.ordinal();
@@ -549,6 +566,20 @@ public class EncodingManager implements EncodedValueLookup {
         public boolean canSkip() {
             return this.ordinal() == CAN_SKIP.ordinal();
         }
+
+        // ORS-GH MOD START - additional methods
+        public boolean isPermitted() {
+            return this.ordinal() == PERMITTED.ordinal();
+        }
+
+        public boolean isRestricted() {
+            return this.ordinal() == RESTRICTED.ordinal();
+        }
+
+        public boolean isConditional() {
+            return isRestricted() || isPermitted();
+        }
+        // ORS-GH MOD END
     }
 
     public IntsRef handleRelationTags(ReaderRelation relation, IntsRef relFlags) {
@@ -700,6 +731,24 @@ public class EncodingManager implements EncodedValueLookup {
         }
         return false;
     }
+
+    // ORS-GH MOD START - additional methods
+    public boolean hasConditionalAccess() {
+        for (FlagEncoder encoder : edgeEncoders) {
+            if (hasEncodedValue(getKey(encoder, ConditionalEdges.ACCESS)))
+                return true;
+        }
+        return false;
+    }
+
+    public boolean hasConditionalSpeed() {
+        for (FlagEncoder encoder : edgeEncoders) {
+            if (hasEncodedValue(getKey(encoder, ConditionalEdges.SPEED)))
+                return true;
+        }
+        return false;
+    }
+    // ORS-GH MOD END
 
     public List<BooleanEncodedValue> getAccessEncFromNodeFlags(long importNodeFlags) {
         List<BooleanEncodedValue> list = new ArrayList<>(edgeEncoders.size());

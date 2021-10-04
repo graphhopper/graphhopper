@@ -17,9 +17,11 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.coll.GHLongArrayList;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.PathProcessor;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -28,12 +30,17 @@ import com.graphhopper.util.shapes.GHPoint;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 
+// ORS-GH MOD START - additional imports
+import com.graphhopper.routing.util.PathProcessor;
+// ORS-GH MOD END
+
 /**
  * This class calculates instructions from the edges in a Path.
  *
  * @author Peter Karich
  * @author Robin Boldt
  * @author jan soe
+ * @author Andrzej Oles
  */
 public class InstructionsFromEdges implements Path.EdgeVisitor {
 
@@ -83,9 +90,23 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private String prevInstructionName;
 
     private static final int MAX_U_TURN_DISTANCE = 35;
+    protected GHLongArrayList times; // ORS-GH MOD - additional field
+    // ORS-GH MOD - additional field
+    // TODO ORS: is this still needed?
+    private PathProcessor mPathProcessor = PathProcessor.DEFAULT;
 
+    // ORS-GH MOD - wrapper mimicking old signature
     public InstructionsFromEdges(Graph graph, Weighting weighting, EncodedValueLookup evLookup,
                                  InstructionList ways) {
+        this(graph, weighting, evLookup, ways, null);
+    }
+
+    // ORS-GH MOD - change signature to permit time dependent routing
+    //public InstructionsFromEdges(Graph graph, Weighting weighting, EncodedValueLookup evLookup,
+    //                             InstructionList ways) {
+    public InstructionsFromEdges(Graph graph, Weighting weighting, EncodedValueLookup evLookup,
+                                 InstructionList ways, GHLongArrayList times) {
+    // ORS-GH MOD END
         this.encoder = weighting.getFlagEncoder();
         this.weighting = weighting;
         this.accessEnc = evLookup.getBooleanEncodedValue(getKey(encoder.toString(), "access"));
@@ -100,6 +121,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevName = null;
         outEdgeExplorer = graph.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc()));
         crossingExplorer = graph.createEdgeExplorer(AccessFilter.allEdges(encoder.getAccessEnc()));
+        this.times = times; // ORS-GH MOD - fill additional field
     }
 
     /**
@@ -111,7 +133,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             if (path.getEdgeCount() == 0) {
                 ways.add(new FinishInstruction(graph.getNodeAccess(), path.getEndNode()));
             } else {
-                path.forEveryEdge(new InstructionsFromEdges(graph, weighting, evLookup, ways));
+                // ORS-GH MOD - additional parameter
+                path.forEveryEdge(new InstructionsFromEdges(graph, weighting, evLookup, ways, path.times));
             }
         }
         return ways;
@@ -288,7 +311,10 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             prevName = name;
         }
 
-        updatePointsAndInstruction(edge, wayGeo);
+        // ORS-GH MOD START - additional parameter
+        long time = times.get(index);
+        updatePointsAndInstruction(edge, wayGeo, time);
+        // ORS-GH MOD END
 
         if (wayGeo.size() <= 2) {
             doublePrevLat = prevLat;
@@ -304,6 +330,10 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevLat = adjLat;
         prevLon = adjLon;
         prevEdge = edge;
+
+        // ORS-GH MOD START
+        mPathProcessor.processPathEdge(edge, wayGeo);
+        // ORS-GH MOD END
     }
 
     @Override
@@ -433,7 +463,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         return Instruction.IGNORE;
     }
 
-    private void updatePointsAndInstruction(EdgeIteratorState edge, PointList pl) {
+    // ORS-GH MOD - additional parameter
+    private void updatePointsAndInstruction(EdgeIteratorState edge, PointList pl, long time) {
         // skip adjNode
         int len = pl.size() - 1;
         for (int i = 0; i < len; i++) {

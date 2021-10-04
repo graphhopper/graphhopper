@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
@@ -81,4 +82,86 @@ public class AlgorithmOptions {
         return algorithm + ", " + traversalMode;
     }
 
+    // TODO: Builder has been removed, need to see how to integrate changes
+//    /**
+//     * This method clones the specified AlgorithmOption object with the possibility for further
+//     * changes.
+//     */
+//    public static Builder start(AlgorithmOptions opts) {
+//        Builder b = new Builder();
+//        if (opts.algorithm != null)
+//            b.algorithm(opts.getAlgorithm());
+//        if (opts.traversalMode != null)
+//            b.traversalMode(opts.getTraversalMode());
+//        if (opts.weighting != null)
+//            b.weighting(opts.getWeighting());
+//        if (opts.maxVisitedNodes >= 0)
+//            b.maxVisitedNodes(opts.maxVisitedNodes);
+//        if (!opts.hints.isEmpty())
+//            b.hints(opts.hints);
+//        if (opts.edgeFilter != null)
+//            b.edgeFilter(opts.edgeFilter);
+//        return b;
+//    }
+//
+//    public static class Builder {
+//        private AlgorithmOptions opts = new AlgorithmOptions();
+//        private boolean buildCalled;
+//
+//        public Builder traversalMode(TraversalMode traversalMode) {
+//            if (traversalMode == null)
+//                throw new IllegalArgumentException("null as traversal mode is not allowed");
+//
+//            this.opts.traversalMode = traversalMode;
+//            return this;
+//        }
+//
+//        public Builder weighting(Weighting weighting) {
+//            this.opts.weighting = weighting;
+//            return this;
+//        }
+//
+//        /**
+//         * For possible values see {@link Parameters.Algorithms}
+//         */
+//        public Builder algorithm(String algorithm) {
+//            this.opts.algorithm = algorithm;
+//            return this;
+//        }
+//
+//        public Builder maxVisitedNodes(int maxVisitedNodes) {
+//            this.opts.maxVisitedNodes = maxVisitedNodes;
+//            return this;
+//        }
+//
+//        public Builder hints(PMap hints) {
+//            this.opts.hints.put(hints);
+//            return this;
+//        }
+//
+//        public Builder edgeFilter(EdgeFilter edgeFilter) {
+//            this.opts.edgeFilter = edgeFilter;
+//            return this;
+//        }
+//
+//        public AlgorithmOptions build() {
+//            if (buildCalled)
+//                throw new IllegalStateException("Cannot call AlgorithmOptions.Builder.build() twice");
+//
+//            buildCalled = true;
+//            return opts;
+//        }
+//    }
+//
+    // ORS-GH MOD START: handle additional edgeFilter to pass to algo
+    protected EdgeFilter edgeFilter;
+
+    public EdgeFilter getEdgeFilter() {
+        return edgeFilter;
+    }
+
+    public void setEdgeFilter(EdgeFilter edgeFilter) {
+        this.edgeFilter = edgeFilter;
+    }
+    // ORS-GH MOD END
 }

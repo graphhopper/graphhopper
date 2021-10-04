@@ -28,6 +28,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+// ORS-GH MOD START
+// further imports
+import com.graphhopper.util.PMap;
+// ORS-GH MOD END
+
 /**
  * Request object to perform routing with GraphHopper.
  *
@@ -48,6 +53,11 @@ public class GHRequest {
     private String algo = "";
     private Locale locale = Locale.US;
     private CustomModel customModel;
+
+    // ORS-GH MOD START
+    // add class member
+    private double[] maxSearchDistances;
+    // ORS-GH MOD END
 
     public GHRequest() {
         this(5);
@@ -281,4 +291,24 @@ public class GHRequest {
 
         return res;
     }
+
+    // ORS-GH MOD START
+    private PMap additionalHints;
+    public void  setAdditionalHints (PMap hints) {
+        this.additionalHints = hints;
+    }
+    public PMap getAdditionalHints() {
+        return this.additionalHints;
+    }
+
+    // Modification by Maxim Rylov: Added getMaxSearchDistances method.
+    public double[] getMaxSearchDistances() {
+        return maxSearchDistances;
+    }
+
+    // Modification by Maxim Rylov: Added setMaxSearchDistances method.
+    public void setMaxSearchDistance(double[] distances) {
+        maxSearchDistances = distances;
+    }
+    // ORS-GH MOD END
 }

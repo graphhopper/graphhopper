@@ -1,0 +1,4 @@
+- [ ] I have clearly marked my changes with comments '// ORS-GH MOD START' and '// ORS-GH MOD END'
+- [ ] I have written a short in-line comment for code changes explaining why the change is required
+- [ ] I have tested the latest version of **openrouteservice** `development` branch against the .jar build of this PR
+- [ ] I have adjusted failing tests in **openrouteservice** API tests

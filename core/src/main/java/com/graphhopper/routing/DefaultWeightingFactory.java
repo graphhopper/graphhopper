@@ -19,12 +19,14 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.config.Profile;
+import com.graphhopper.routing.util.ConditionalSpeedCalculator;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.*;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
+import com.graphhopper.storage.ConditionalEdges;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.PMap;
@@ -64,6 +66,19 @@ public class DefaultWeightingFactory implements WeightingFactory {
         } else {
             turnCostProvider = NO_TURN_COST_PROVIDER;
         }
+        // TODO ORS: check what to do here
+        // ORS-GH MOD START
+//        TraversalMode tMode = encoder.supports(TurnWeighting.class) ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
+//        if (hints.has(Routing.EDGE_BASED))
+//            tMode = hints.getBool(Routing.EDGE_BASED, false) ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
+//
+//        if (tMode.isEdgeBased() && !encoder.supports(TurnWeighting.class)) {
+//            throw new IllegalArgumentException("You need a turn cost extension to make use of edge_based=true, e.g. use car|turn_costs=true");
+//        }
+//        if (weightingFactory != null) {
+//            return weightingFactory.createWeighting(hints, encoder, ghStorage);
+//        }
+//// ORS-GH MOD END
 
         String weightingStr = toLowerCase(profile.getWeighting());
         if (weightingStr.isEmpty())
@@ -94,6 +109,13 @@ public class DefaultWeightingFactory implements WeightingFactory {
         } else if ("short_fastest".equalsIgnoreCase(weightingStr)) {
             weighting = new ShortFastestWeighting(encoder, hints, turnCostProvider);
         }
+        // ORS-GH MOD START - add support for time-dependent routing
+        else if ("td_fastest".equalsIgnoreCase(weightingStr)) {
+            weighting = new FastestWeighting(encoder, hints);
+            if (encodingManager.hasEncodedValue(EncodingManager.getKey(encoder, ConditionalEdges.SPEED)))
+                weighting.setSpeedCalculator(new ConditionalSpeedCalculator(weighting.getSpeedCalculator(), ghStorage, encoder));
+        }
+        // ORS-GH MOD END
 
         if (weighting == null)
             throw new IllegalArgumentException("Weighting '" + weightingStr + "' not supported");

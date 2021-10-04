@@ -37,6 +37,10 @@ public class Parameters {
          */
         public static final String DIJKSTRA = "dijkstra";
         /**
+         * Unidirectional time-dependent Dijkstra
+         */
+        public static final String TD_DIJKSTRA = "td_dijkstra";
+        /**
          * one to many Dijkstra (not yet for edge based #394, not yet for CH)
          */
         public static final String DIJKSTRA_ONE_TO_MANY = "dijkstra_one_to_many";
@@ -44,6 +48,10 @@ public class Parameters {
          * Unidirectional A* (not for CH)
          */
         public static final String ASTAR = "astar";
+        /**
+         * Unidirectional time-dependent A* (not for CH)
+         */
+        public static final String TD_ASTAR = "td_astar";
         /**
          * Bidirectional A*
          */
@@ -131,6 +139,10 @@ public class Parameters {
          * a rectangle lat1,lon1,lat2,lon2
          */
         public static final String BLOCK_AREA = "block_area";
+        /**
+         * time-dependent routing requires compatible algorithm and weighting
+         */
+        public static final String TIME_DEPENDENT = "time_dependent";
     }
 
     /**
