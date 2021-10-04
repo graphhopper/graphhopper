@@ -85,14 +85,18 @@ public class TranslationMap {
         if (!locale.getCountry().isEmpty() && !translations.containsKey(tr.getLanguage()))
             translations.put(tr.getLanguage(), tr);
 
-        // Map old Java 'standard' to latest, Java is a bit ugly here: http://stackoverflow.com/q/13974169/194609
-        // Hebrew
-        if ("iw".equals(locale.getLanguage()))
-            translations.put("he", tr);
+        // Hebrew locale was "iw" in old JDKs but is now he
+        // required in old JDKs:
+        if ("iw".equals(locale.getLanguage())) translations.put("he", tr);
+        // required since jdk17 to still provide translation for "iw":
+        if ("he".equals(locale.getLanguage())) translations.put("iw", tr);
 
-        // Indonesia
-        if ("in".equals(locale.getLanguage()))
-            translations.put("id", tr);
+        // Indonesia locale was "in_ID" in old JDKs but is now id_ID
+        // required in old JDKs:
+        if ("in".equals(locale.getLanguage())) translations.put("id", tr);
+        // required since jdk17 to still provide translation for "in":
+        if ("id".equals(locale.getLanguage())) translations.put("in", tr);
+        // Indian locales are: en-IN and hi-IN and are not overwritten by that
     }
 
     /**
