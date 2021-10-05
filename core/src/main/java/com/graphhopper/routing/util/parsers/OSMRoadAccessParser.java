@@ -59,7 +59,7 @@ public class OSMRoadAccessParser implements TagParser {
 
         CountryRule countryRule = readerWay.getTag("country_rule", null);
         if (countryRule != null)
-            accessValue = countryRule.getAccess(readerWay, TransportationMode.CAR, YES);
+            accessValue = countryRule.getAccess(readerWay, TransportationMode.CAR, accessValue);
 
         roadAccessEnc.setEnum(false, edgeFlags, accessValue);
         return edgeFlags;
