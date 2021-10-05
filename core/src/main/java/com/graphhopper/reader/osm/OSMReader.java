@@ -622,16 +622,38 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
                 if (tmpNode < TOWER_NODE) {
                     // TOWER node
                     tmpNode = -tmpNode - 3;
-                    pointList.add(nodeAccess, tmpNode);
 
-                    if (i == 0)
+                    if (i == 0) {
                         firstNode = tmpNode;
-                    if (i == osmNodeIds.size() - 1) {
+                        pointList.add(nodeAccess, tmpNode);
+                    } else if (i == osmNodeIds.size() - 1) {
                         if (firstNode < 0)
                             throw new IllegalStateException("firstNode < 0");
-                        addEdge(firstNode, tmpNode, pointList, flags, way);
+                        if (tmpNode == firstNode) {
+                            // this whole segment is a loop. we split it into two regular edges using an artificial
+                            // extra node
+                            // loop detected. See #1525 and #1533. Insert last OSM ID as tower node. Do this for all loops so that users can manipulate loops later arbitrarily.
+                            long lastOsmNodeId = osmNodeIds.get(i - 1);
+                            int lastGHNodeId = getNodeMap().get(lastOsmNodeId);
+                            if (lastGHNodeId < TOWER_NODE) {
+                                // ... unless this is not working like that. in this case we simply stop and reject all remaining edges
+                                LOGGER.warn("Pillar node " + lastOsmNodeId + " is already a tower node and used in loop, see #1533. " +
+                                        "Fix mapping for way " + way.getId() + ", nodes:" + osmNodeIds);
+                                break;
+                            }
+                            int extraNode = -handlePillarNode(lastGHNodeId, lastOsmNodeId, pointList, true) - 3;
+                            addEdge(firstNode, extraNode, pointList, flags, way);
+                            pointList.clear();
+                            pointList.add(nodeAccess, extraNode);
+                            pointList.add(nodeAccess, tmpNode);
+                            addEdge(extraNode, tmpNode, pointList, flags, way);
+                        } else {
+                            pointList.add(nodeAccess, tmpNode);
+                            addEdge(firstNode, tmpNode, pointList, flags, way);
+                        }
+                    } else {
+                        throw new IllegalStateException("hmm");
                     }
-                    // todo: handle loops
                 }
             }
         } catch (RuntimeException ex) {

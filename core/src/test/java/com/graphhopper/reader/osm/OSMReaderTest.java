@@ -383,7 +383,6 @@ public class OSMReaderTest {
     }
 
     @Test
-    @Disabled
     public void avoidsLoopEdges_1525() {
         // loops in OSM should be avoided by adding additional tower node (see #1525, #1531)
         //     C - D
@@ -411,27 +410,16 @@ public class OSMReaderTest {
     }
 
     @Test
-    @Disabled
     public void avoidsLoopEdgesIdenticalLatLon_1533() {
         checkLoop(new GraphHopperFacade("test-avoid-loops2.xml").importOrLoad());
     }
 
     @Test
-    @Disabled
     public void avoidsLoopEdgesIdenticalNodeIds_1533() {
-        // We can handle the following case with the proper result:
+        // BDCBB
         checkLoop(new GraphHopperFacade("test-avoid-loops3.xml").importOrLoad());
-        // We cannot handle the following case, i.e. no loop is created. so we only check that there are no loops
-        GraphHopper hopper = new GraphHopperFacade("test-avoid-loops4.xml").importOrLoad();
-        GraphHopperStorage graph = hopper.getGraphHopperStorage();
-        AllEdgesIterator iter = graph.getAllEdges();
-        assertEquals(2, iter.length());
-        while (iter.next()) {
-            assertTrue(iter.getAdjNode() != iter.getBaseNode(), "found a loop");
-        }
-        int nodeB = AbstractGraphStorageTester.getIdOf(graph, 12);
-        assertTrue(nodeB > -1, "could not find OSM node B");
-        assertEquals(2, GHUtility.count(graph.createEdgeExplorer().setBaseNode(nodeB)));
+        // BBCDB
+        checkLoop(new GraphHopperFacade("test-avoid-loops4.xml").importOrLoad());
     }
 
     @Test

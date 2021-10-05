@@ -88,7 +88,6 @@ public class GraphHopperTest {
         Helper.removeDir(new File(GH_LOCATION));
     }
 
-    @Disabled
     @ParameterizedTest
     @CsvSource({
             DIJKSTRA + ",false,505",
@@ -1540,7 +1539,6 @@ public class GraphHopperTest {
     }
 
     @Test
-    @Disabled
     public void testCrossQuery() {
         final String profile1 = "p1";
         final String profile2 = "p2";
