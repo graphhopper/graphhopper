@@ -345,14 +345,13 @@ public class OSMReaderTest {
     }
 
     @Test
-    @Disabled
     public void testBarriers() {
         GraphHopper hopper = new GraphHopperFacade(fileBarriers).
                 setMinNetworkSize(0).
                 importOrLoad();
 
         Graph graph = hopper.getGraphHopperStorage();
-        assertEquals(8, graph.getNodes());
+        assertEquals(7, graph.getNodes());
 
         int n10 = AbstractGraphStorageTester.getIdOf(graph, 51);
         int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
@@ -423,24 +422,32 @@ public class OSMReaderTest {
     }
 
     @Test
-    @Disabled
     public void testBarriersOnTowerNodes() {
         GraphHopper hopper = new GraphHopperFacade(fileBarriers).
                 setMinNetworkSize(0).
                 importOrLoad();
         Graph graph = hopper.getGraphHopperStorage();
-        assertEquals(8, graph.getNodes());
+        // 10-20-30 produces three edges: 10-20, 20-2x, 2x-30, the second one is a barrier edge
+        assertEquals(7, graph.getEdges());
+        assertEquals(7, graph.getNodes());
 
         int n60 = AbstractGraphStorageTester.getIdOf(graph, 56);
-        int newId = 5;
-        assertEquals(GHUtility.asSet(newId), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n60)));
+        // node 50 is included, because the barrier on the junction is ignored
+        int n50 = AbstractGraphStorageTester.getIdOf(graph, 55);
+        int n30 = AbstractGraphStorageTester.getIdOf(graph, 53);
+        int n80 = AbstractGraphStorageTester.getIdOf(graph, 58);
+        assertEquals(GHUtility.asSet(n50), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n60)));
 
         EdgeIterator iter = carOutExplorer.setBaseNode(n60);
         assertTrue(iter.next());
-        assertEquals(newId, iter.getAdjNode());
+        assertEquals(n50, iter.getAdjNode());
         assertFalse(iter.next());
 
-        iter = carOutExplorer.setBaseNode(newId);
+        iter = carOutExplorer.setBaseNode(n50);
+        assertTrue(iter.next());
+        assertEquals(n30, iter.getAdjNode());
+        assertTrue(iter.next());
+        assertEquals(n80, iter.getAdjNode());
         assertTrue(iter.next());
         assertEquals(n60, iter.getAdjNode());
         assertFalse(iter.next());

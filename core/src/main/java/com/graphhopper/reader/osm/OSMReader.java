@@ -604,6 +604,11 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     void handleSegment(final LongIndexedContainer osmNodeIds, final IntsRef flags, final ReaderWay way) {
         if (osmNodeIds.size() < 2)
             throw new IllegalArgumentException("Segment size must be >= 2");
+        if (osmNodeIds.size() == 2 && osmNodeIds.get(0) == osmNodeIds.get(osmNodeIds.size() - 1)) {
+            // this is just a plain loop that connects an osm node to itself -> ignore this
+            LOGGER.warn("Loop in OSM way " + way.getId() + ", duplicate node: " + osmNodeIds.get(0));
+            return;
+        }
         final PointList pointList = new PointList(osmNodeIds.size(), nodeAccess.is3D());
         int firstNode = -1;
         try {
@@ -631,15 +636,11 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
                             throw new IllegalStateException("firstNode < 0");
                         if (tmpNode == firstNode) {
                             // this whole segment is a loop. we split it into two regular edges using an artificial
-                            // extra node
-                            // loop detected. See #1525 and #1533. Insert last OSM ID as tower node. Do this for all loops so that users can manipulate loops later arbitrarily.
+                            // extra node. see #1525, #1533
                             long lastOsmNodeId = osmNodeIds.get(i - 1);
                             int lastGHNodeId = getNodeMap().get(lastOsmNodeId);
                             if (lastGHNodeId < TOWER_NODE) {
-                                // ... unless this is not working like that. in this case we simply stop and reject all remaining edges
-                                LOGGER.warn("Pillar node " + lastOsmNodeId + " is already a tower node and used in loop, see #1533. " +
-                                        "Fix mapping for way " + way.getId() + ", nodes:" + osmNodeIds);
-                                break;
+                                throw new IllegalStateException("Segment not properly split at tower nodes, for way: " + way.getId());
                             }
                             int extraNode = -handlePillarNode(lastGHNodeId, lastOsmNodeId, pointList, true) - 3;
                             addEdge(firstNode, extraNode, pointList, flags, way);
@@ -652,7 +653,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
                             addEdge(firstNode, tmpNode, pointList, flags, way);
                         }
                     } else {
-                        throw new IllegalStateException("hmm");
+                        throw new IllegalStateException("Segment not properly split at tower nodes, for way: " + way.getId());
                     }
                 }
             }
