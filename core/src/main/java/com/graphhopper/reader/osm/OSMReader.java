@@ -56,7 +56,7 @@ import static java.util.Collections.emptyList;
  * {@link #osmNodeIdToInternalNodeMap} returns EMPTY.
  * <p>
  * 1. b) Reads relations from OSM file. In case that the relation is a route relation, it stores
- * specific relation attributes required for routing into {@link #osmWayIdToRouteWeightMap} for all the ways
+ * specific relation attributes required for routing into {@link #osmWayIdToRelationFlagsMap} for all the ways
  * of the relation.
  * <p>
  * 2.a) Reads nodes from OSM file and stores lat+lon information either into the intermediate
@@ -101,7 +101,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     // remember how many times a node was used to identify tower nodes
     private LongIntMap osmNodeIdToInternalNodeMap;
     private GHLongLongHashMap osmNodeIdToNodeFlagsMap;
-    private GHLongLongHashMap osmWayIdToRouteWeightMap;
+    private GHLongLongHashMap osmWayIdToRelationFlagsMap;
     // stores osm way ids used by relations to identify which edge ids needs to be mapped later
     private GHLongHashSet osmWayIdSet = new GHLongHashSet();
     private IntLongMap edgeIdToOsmWayIdMap;
@@ -130,7 +130,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
         osmNodeIdToInternalNodeMap = new GHLongIntBTree(200);
         osmNodeIdToNodeFlagsMap = new GHLongLongHashMap(200, .5f);
-        osmWayIdToRouteWeightMap = new GHLongLongHashMap(200, .5f);
+        osmWayIdToRelationFlagsMap = new GHLongLongHashMap(200, .5f);
         pillarInfo = new PillarInfo(nodeAccess.is3D(), ghStorage.getDirectory());
         tempRelFlags = encodingManager.createRelationFlags();
         if (tempRelFlags.length != 2)
@@ -332,8 +332,6 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         if (!encodingManager.acceptWay(way, acceptWay))
             return;
 
-        IntsRef relationFlags = getRelFlagsMap(way.getId());
-
         // TODO move this after we have created the edge and know the coordinates => encodingManager.applyWayTags
         LongArrayList osmNodeIds = way.getNodes();
         // Estimate length of ways containing a route tag e.g. for ferry speed calculation
@@ -383,6 +381,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
         // also add all custom areas as artificial tag
         way.setTag("custom_areas", customAreas);
+        IntsRef relationFlags = getRelFlagsMap(way.getId());
         IntsRef edgeFlags = encodingManager.handleWayTags(way, acceptWay, relationFlags);
         if (edgeFlags.isEmpty())
             return;
@@ -529,17 +528,18 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         if (nodeType == EMPTY_NODE)
             return false;
 
-        double lat = node.getLat();
-        double lon = node.getLon();
-        double ele = eleProvider.getEle(node);
         if (nodeType == TOWER_NODE) {
-            addTowerNode(node.getId(), lat, lon, ele);
+            addTowerNode(node.getId(), node.getLat(), node.getLon(), eleProvider.getEle(node));
         } else if (nodeType == PILLAR_NODE) {
-            pillarInfo.setNode(nextPillarId, lat, lon, ele);
-            getNodeMap().put(node.getId(), nextPillarId + 3);
-            nextPillarId++;
+            addPillarNode(node.getId(), node.getLat(), node.getLon(), eleProvider.getEle(node));
         }
         return true;
+    }
+
+    private void addPillarNode(long osmId, double lat, double lon, double ele) {
+        pillarInfo.setNode(nextPillarId, lat, lon, ele);
+        getNodeMap().put(osmId, nextPillarId + 3);
+        nextPillarId++;
     }
 
     /**
@@ -817,7 +817,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         eleProvider.release();
         osmNodeIdToInternalNodeMap = null;
         osmNodeIdToNodeFlagsMap = null;
-        osmWayIdToRouteWeightMap = null;
+        osmWayIdToRelationFlagsMap = null;
         osmWayIdSet = null;
         edgeIdToOsmWayIdMap = null;
     }
@@ -830,19 +830,23 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         int graphIndex = getNodeMap().get(nodeId);
         if (graphIndex < TOWER_NODE) {
             graphIndex = -graphIndex - 3;
-            newNode = new ReaderNode(createNewNodeId(), nodeAccess.getLat(graphIndex), nodeAccess.getLon(graphIndex));
-        } else {
+            newNode = new ReaderNode(createArtificialOSMNodeId(), nodeAccess.getLat(graphIndex), nodeAccess.getLon(graphIndex));
+        } else if (graphIndex > -TOWER_NODE) {
             graphIndex = graphIndex - 3;
-            newNode = new ReaderNode(createNewNodeId(), pillarInfo.getLat(graphIndex), pillarInfo.getLon(graphIndex));
+            newNode = new ReaderNode(createArtificialOSMNodeId(), pillarInfo.getLat(graphIndex), pillarInfo.getLon(graphIndex));
+        } else {
+            throw new IllegalStateException("Cannot add barrier nodes for osm node ids that do not appear in ways or nodes");
         }
 
-        final long id = newNode.getId();
-        prepareHighwayNode(id);
-        addNode(newNode);
-        return id;
+        final long osmId = newNode.getId();
+        if (getNodeMap().get(osmId) != -1)
+            throw new IllegalStateException("Artificial osm node id already exists: " + osmId);
+        getNodeMap().put(osmId, PILLAR_NODE);
+        addPillarNode(osmId, newNode.getLat(), newNode.getLon(), eleProvider.getEle(newNode));
+        return osmId;
     }
 
-    private long createNewNodeId() {
+    private long createArtificialOSMNodeId() {
         return newUniqueOsmId++;
     }
 
@@ -939,11 +943,11 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     }
 
     int getRelFlagsMapSize() {
-        return osmWayIdToRouteWeightMap.size();
+        return osmWayIdToRelationFlagsMap.size();
     }
 
     IntsRef getRelFlagsMap(long osmId) {
-        long relFlagsAsLong = osmWayIdToRouteWeightMap.get(osmId);
+        long relFlagsAsLong = osmWayIdToRelationFlagsMap.get(osmId);
         tempRelFlags.ints[0] = (int) relFlagsAsLong;
         tempRelFlags.ints[1] = (int) (relFlagsAsLong >> 32);
         return tempRelFlags;
@@ -951,7 +955,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
     void putRelFlagsMap(long osmId, IntsRef relFlags) {
         long relFlagsAsLong = ((long) relFlags.ints[1] << 32) | (relFlags.ints[0] & 0xFFFFFFFFL);
-        osmWayIdToRouteWeightMap.put(osmId, relFlagsAsLong);
+        osmWayIdToRelationFlagsMap.put(osmId, relFlagsAsLong);
     }
 
     public OSMReader setAreaIndex(AreaIndex<CustomArea> areaIndex) {
