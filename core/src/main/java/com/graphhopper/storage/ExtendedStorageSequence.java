@@ -7,15 +7,15 @@ import java.util.ArrayList;
 // TODO ORS: reimplement without using the old Storable interface
 public class ExtendedStorageSequence  implements Storable<ExtendedStorageSequence> {
 
-    private Storable[] extensions;
+    private GraphExtension[] extensions;
     private int numExtensions;
 
-    public ExtendedStorageSequence(ArrayList<Storable<Object>> seq) {
+    public ExtendedStorageSequence(ArrayList<GraphExtension> seq) {
         numExtensions = seq.size();
-        extensions = seq.toArray(new Storable[numExtensions]);
+        extensions = seq.toArray(new GraphExtension[numExtensions]);
     }
 
-    public Storable<Object>[] getExtensions() {
+    public GraphExtension[] getExtensions() {
         return extensions;
     }
 

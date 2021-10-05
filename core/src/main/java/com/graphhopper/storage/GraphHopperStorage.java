@@ -56,7 +56,13 @@ public final class GraphHopperStorage implements Graph, Closeable {
     private final StorableProperties properties;
     private final BaseGraph baseGraph;
 
-    // ORS-GH MOD START
+    // ORS-GH MOD START - additional code
+    private ExtendedStorageSequence graphExtensions;
+
+    public ExtendedStorageSequence getExtensions() {
+        return graphExtensions;
+    }
+
     private ConditionalEdges conditionalAccess;
     private ConditionalEdges conditionalSpeed;
 

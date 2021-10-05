@@ -38,6 +38,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Ignore;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -903,7 +904,7 @@ public class RoutingAlgorithmTest {
         }
     }
 
-    @Ignore // TODO ORS: fails for unknown reason, investigate
+    @Disabled // TODO ORS: fails for unknown reason, investigate
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testTwoWeightsPerEdge2(Fixture f) {

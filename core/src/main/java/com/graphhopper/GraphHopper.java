@@ -1012,10 +1012,11 @@ public class GraphHopper {
             interpolateBridgesTunnelsAndFerries();
         }
 
+        // TODO ORS: TimeZoneMap.forRegion hangs for more than 15 minutes
         // ORS-GH MOD START
         // needed for TD routing
-        BBox bb = ghStorage.getBounds();
-        ghStorage.setTimeZoneMap(TimeZoneMap.forRegion(bb.minLat, bb.minLon, bb.maxLat, bb.maxLon));
+        //BBox bb = ghStorage.getBounds();
+        //ghStorage.setTimeZoneMap(TimeZoneMap.forRegion(bb.minLat, bb.minLon, bb.maxLat, bb.maxLon));
         // ORS-GH MOD END
 
         initLocationIndex();
