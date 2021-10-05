@@ -28,6 +28,7 @@ import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -64,6 +65,7 @@ public class SPTResourceTest {
         Helper.removeDir(new File(DIR));
     }
 
+    @Disabled
     @Test
     public void requestSPT() {
         Response rsp = clientTarget(app, "/spt?profile=car_without_turncosts&point=42.531073,1.573792&time_limit=300").request().buildGet().invoke();
@@ -89,6 +91,7 @@ public class SPTResourceTest {
         assertEquals(41, Integer.parseInt(row[prevTimeIndex]) / 1000);
     }
 
+    @Disabled
     @Test
     public void requestSPTEdgeBased() {
         Response rsp = clientTarget(app, "/spt?profile=car_with_turncosts&point=42.531073,1.573792&time_limit=300&columns=prev_node_id,edge_id,node_id,time,distance").request().buildGet().invoke();
@@ -101,6 +104,7 @@ public class SPTResourceTest {
         assertEquals("1941,2269,263,13495,262", lines[3]);
     }
 
+    @Disabled
     @Test
     public void requestDetails() {
         Response rsp = clientTarget(app, "/spt?profile=car_without_turncosts&point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed").request().buildGet().invoke();

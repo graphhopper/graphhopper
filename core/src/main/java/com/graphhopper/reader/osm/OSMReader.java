@@ -18,6 +18,7 @@
 package com.graphhopper.reader.osm;
 
 import com.carrotsearch.hppc.*;
+import com.carrotsearch.hppc.cursors.LongCursor;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.coll.*;
 import com.graphhopper.reader.*;
@@ -42,7 +43,10 @@ import org.slf4j.LoggerFactory;
 import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 import static com.graphhopper.util.Helper.nf;
 import static java.util.Collections.emptyList;
@@ -82,7 +86,6 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     private final OSMReaderConfig config;
     private final Graph graph;
     private final NodeAccess nodeAccess;
-    private final LongIndexedContainer barrierNodeIds = new LongArrayList();
     private final DistanceCalc distCalc = DistanceCalcEarth.DIST_EARTH;
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
     private CountryRuleFactory countryRuleFactory = null;
@@ -326,8 +329,6 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         if (!way.hasTags())
             return;
 
-        long wayOsmId = way.getId();
-
         EncodingManager.AcceptWay acceptWay = new EncodingManager.AcceptWay();
         if (!encodingManager.acceptWay(way, acceptWay))
             return;
@@ -340,63 +341,61 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             return;
 
         LongArrayList osmNodeIds = way.getNodes();
-        List<EdgeIteratorState> createdEdges = new ArrayList<>();
-        // look for barriers along the way
-        final int size = osmNodeIds.size();
-        int lastBarrier = -1;
-        for (int i = 0; i < size; i++) {
-            long nodeId = osmNodeIds.get(i);
-            long nodeFlags = getNodeFlagsMap().get(nodeId);
-            // barrier was spotted and the way is passable for that mode of travel
-            if (nodeFlags > 0) {
-                if (isOnePassable(encodingManager.getAccessEncFromNodeFlags(nodeFlags), edgeFlags)) {
-                    // remove barrier to avoid duplicates
-                    getNodeFlagsMap().put(nodeId, 0);
-
-                    // create shadow node copy for zero length edge
-                    long newNodeId = addBarrierNode(nodeId);
-                    if (i > 0) {
-                        // start at beginning of array if there was no previous barrier
-                        if (lastBarrier < 0)
-                            lastBarrier = 0;
-
-                        // add way up to barrier shadow node                        
-                        int length = i - lastBarrier + 1;
-                        LongArrayList partNodeIds = new LongArrayList();
-                        partNodeIds.add(osmNodeIds.buffer, lastBarrier, length);
-                        partNodeIds.set(length - 1, newNodeId);
-                        createdEdges.addAll(addOSMWay(partNodeIds, edgeFlags, wayOsmId));
-
-                        // create zero length edge for barrier
-                        createdEdges.addAll(addBarrierEdge(newNodeId, nodeId, edgeFlags, nodeFlags, wayOsmId));
-                    } else {
-                        // run edge from real first node to shadow node
-                        createdEdges.addAll(addBarrierEdge(nodeId, newNodeId, edgeFlags, nodeFlags, wayOsmId));
-
-                        // exchange first node for created barrier node
-                        osmNodeIds.set(0, newNodeId);
-                    }
-                    // remember barrier for processing the way behind it
-                    lastBarrier = i;
+        LongArrayList segment = new LongArrayList();
+        for (LongCursor osmNodeId : osmNodeIds) {
+            final long nodeFlags = getNodeFlagsMap().get(osmNodeId.value);
+            final int id = getNodeMap().get(osmNodeId.value);
+            final boolean isBarrier = nodeFlags > 0;
+            if (id >= TOWER_NODE && id <= -TOWER_NODE) {
+                // this node is missing, so we ignore it. however, we split edges when we encounter a missing node.
+                // for example an OSM way might lead out of the area for which nodes are available and back into it,
+                // and we do not want to connect the exit/entry points using a straight line
+                if (segment.size() > 1) {
+                    handleSegment(segment, edgeFlags, way);
+                    segment = new LongArrayList();
                 }
+            } else if (id < TOWER_NODE) {
+                // this is a junction -> we split the way here
+                if (isBarrier)
+                    LOGGER.warn("OSM node {} is a barrier node at a junction, the barrier will be ignored", osmNodeId.value);
+                if (!segment.isEmpty()) {
+                    segment.add(osmNodeId.value);
+                    handleSegment(segment, edgeFlags, way);
+                    segment = new LongArrayList();
+                }
+                // we include this node also for the *next* segment
+                segment.add(osmNodeId.value);
+            } else if (isBarrier && isOnePassable(encodingManager.getAccessEncFromNodeFlags(nodeFlags), edgeFlags)) {
+                // todonow: what if !isOnePassble?? -> so far this was ok, because in this case the entire way is not accessible
+                long extraNode = addBarrierNode(osmNodeId.value);
+                // a pillar node that is a barrier
+                if (!segment.isEmpty()) {
+                    // the segment up to the barrier
+                    segment.add(osmNodeId.value);
+                    handleSegment(segment, edgeFlags, way);
+                    // barrier segment
+                    segment = new LongArrayList();
+                    segment.add(osmNodeId.value);
+                    segment.add(extraNode);
+                    IntsRef barrierEdgeFlags = IntsRef.deepCopyOf(edgeFlags);
+                    // clear blocked directions from flags
+                    for (BooleanEncodedValue accessEnc : encodingManager.getAccessEncFromNodeFlags(nodeFlags)) {
+                        accessEnc.setBool(false, barrierEdgeFlags, false);
+                        accessEnc.setBool(true, barrierEdgeFlags, false);
+                    }
+                    handleSegment(segment, barrierEdgeFlags, way);
+                    segment = new LongArrayList();
+                }
+                // we include the extra node also for the *next* segment
+                segment.add(extraNode);
+            } else {
+                // just a pillar node -> add it to the current segment
+                segment.add(osmNodeId.value);
             }
         }
-
-        // just add remainder of way to graph if barrier was not the last node
-        if (lastBarrier >= 0) {
-            if (lastBarrier < size - 1) {
-                LongArrayList partNodeIds = new LongArrayList();
-                partNodeIds.add(osmNodeIds.buffer, lastBarrier, size - lastBarrier);
-                createdEdges.addAll(addOSMWay(partNodeIds, edgeFlags, wayOsmId));
-            }
-        } else {
-            // no barriers - simply add the whole way
-            createdEdges.addAll(addOSMWay(way.getNodes(), edgeFlags, wayOsmId));
-        }
-
-        for (EdgeIteratorState edge : createdEdges) {
-            encodingManager.applyWayTags(way, edge);
-        }
+        // the last segment might end at the end of the way
+        if (segment.size() > 1)
+            handleSegment(segment, edgeFlags, way);
     }
 
     private void setArtificialWayTags(ReaderWay way) {
@@ -602,115 +601,46 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     /**
      * This method creates from an OSM way (via the osm ids) one or more edges in the graph.
      */
-    Collection<EdgeIteratorState> addOSMWay(final LongIndexedContainer osmNodeIds, final IntsRef flags, final long wayOsmId) {
+    void handleSegment(final LongIndexedContainer osmNodeIds, final IntsRef flags, final ReaderWay way) {
+        if (osmNodeIds.size() < 2)
+            throw new IllegalArgumentException("Segment size must be >= 2");
         final PointList pointList = new PointList(osmNodeIds.size(), nodeAccess.is3D());
-        final List<EdgeIteratorState> newEdges = new ArrayList<>(5);
         int firstNode = -1;
-        int lastInBoundsPillarNode = -1;
         try {
-            // #2221: ways might include nodes at the beginning or end that do not exist -> skip them
-            int firstExisting = -1;
-            int lastExisting = -1;
-            for (int i = 0; i < osmNodeIds.size(); ++i) {
-                final long tmpNode = getNodeMap().get(osmNodeIds.get(i));
-                if (tmpNode > -TOWER_NODE || tmpNode < TOWER_NODE) {
-                    firstExisting = i;
-                    break;
-                }
-            }
-            for (int i = osmNodeIds.size() - 1; i >= 0; --i) {
-                final long tmpNode = getNodeMap().get(osmNodeIds.get(i));
-                if (tmpNode > -TOWER_NODE || tmpNode < TOWER_NODE) {
-                    lastExisting = i;
-                    break;
-                }
-            }
-            if (firstExisting < 0) {
-                assert lastExisting < 0;
-                return newEdges;
-            }
-            for (int i = firstExisting; i <= lastExisting; i++) {
+            for (int i = 0; i < osmNodeIds.size(); i++) {
                 final long osmNodeId = osmNodeIds.get(i);
                 int tmpNode = getNodeMap().get(osmNodeId);
-                if (tmpNode == EMPTY_NODE)
-                    continue;
-
-                // skip osmIds with no associated pillar or tower id (e.g. !OSMReader.isBounds)
-                if (tmpNode == TOWER_NODE)
-                    continue;
-
-                if (tmpNode == PILLAR_NODE) {
-                    // In some cases no node information is saved for the specified osmId.
-                    // ie. a way references a <node> which does not exist in the current file.
-                    // => if the node before was a pillar node then convert into to tower node (as it is also end-standing).
-                    if (!pointList.isEmpty() && lastInBoundsPillarNode > -TOWER_NODE) {
-                        // transform the pillar node to a tower node
-                        tmpNode = lastInBoundsPillarNode;
-                        tmpNode = handlePillarNode(tmpNode, osmNodeId, null, true);
-                        tmpNode = -tmpNode - 3;
-                        if (pointList.size() > 1 && firstNode >= 0) {
-                            // TOWER node
-                            newEdges.add(addEdge(firstNode, tmpNode, pointList, flags, wayOsmId));
-                            pointList.clear();
-                            pointList.add(nodeAccess, tmpNode);
-                        }
-                        firstNode = tmpNode;
-                        lastInBoundsPillarNode = -1;
-                    }
-                    continue;
-                }
-
-                if (tmpNode <= -TOWER_NODE && tmpNode >= TOWER_NODE)
-                    throw new AssertionError("Mapped index not in correct bounds " + tmpNode + ", " + osmNodeId);
+                if (tmpNode >= TOWER_NODE && tmpNode <= -TOWER_NODE)
+                    throw new IllegalArgumentException("There should be no missing nodes in handleSegment");
 
                 if (tmpNode > -TOWER_NODE) {
-                    boolean convertToTowerNode = i == firstExisting || i == lastExisting;
-                    if (!convertToTowerNode) {
-                        lastInBoundsPillarNode = tmpNode;
-                    }
-
-                    // PILLAR node, but convert to towerNode if end-standing
+                    // PILLAR node -> convert to towerNode if it is the first or last
+                    boolean convertToTowerNode = i == 0 || i == osmNodeIds.size() - 1;
                     tmpNode = handlePillarNode(tmpNode, osmNodeId, pointList, convertToTowerNode);
                 }
 
                 if (tmpNode < TOWER_NODE) {
                     // TOWER node
                     tmpNode = -tmpNode - 3;
-
-                    if (firstNode >= 0 && firstNode == tmpNode) {
-                        // loop detected. See #1525 and #1533. Insert last OSM ID as tower node. Do this for all loops so that users can manipulate loops later arbitrarily.
-                        long lastOsmNodeId = osmNodeIds.get(i - 1);
-                        int lastGHNodeId = getNodeMap().get(lastOsmNodeId);
-                        if (lastGHNodeId < TOWER_NODE) {
-                            LOGGER.warn("Pillar node " + lastOsmNodeId + " is already a tower node and used in loop, see #1533. " +
-                                    "Fix mapping for way " + wayOsmId + ", nodes:" + osmNodeIds);
-                            break;
-                        }
-
-                        int newEndNode = -handlePillarNode(lastGHNodeId, lastOsmNodeId, pointList, true) - 3;
-                        newEdges.add(addEdge(firstNode, newEndNode, pointList, flags, wayOsmId));
-                        pointList.clear();
-                        pointList.add(nodeAccess, newEndNode);
-                        firstNode = newEndNode;
-                    }
-
                     pointList.add(nodeAccess, tmpNode);
-                    if (firstNode >= 0) {
-                        newEdges.add(addEdge(firstNode, tmpNode, pointList, flags, wayOsmId));
-                        pointList.clear();
-                        pointList.add(nodeAccess, tmpNode);
+
+                    if (i == 0)
+                        firstNode = tmpNode;
+                    if (i == osmNodeIds.size() - 1) {
+                        if (firstNode < 0)
+                            throw new IllegalStateException("firstNode < 0");
+                        addEdge(firstNode, tmpNode, pointList, flags, way);
                     }
-                    firstNode = tmpNode;
+                    // todo: handle loops
                 }
             }
         } catch (RuntimeException ex) {
             LOGGER.error("Couldn't properly add edge with osm ids:" + osmNodeIds, ex);
             throw ex;
         }
-        return newEdges;
     }
 
-    EdgeIteratorState addEdge(int fromIndex, int toIndex, PointList pointList, IntsRef flags, long wayOsmId) {
+    void addEdge(int fromIndex, int toIndex, PointList pointList, IntsRef flags, ReaderWay way) {
         // sanity checks
         if (fromIndex < 0 || toIndex < 0)
             throw new AssertionError("to or from index is invalid for this edge " + fromIndex + "->" + toIndex + ", points:" + pointList);
@@ -719,7 +649,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
         // Smooth the elevation before calculating the distance because the distance will be incorrect if calculated afterwards
         if (config.isSmoothElevation())
-            pointList = GraphElevationSmoothing.smoothElevation(pointList);
+            GraphElevationSmoothing.smoothElevation(pointList);
 
         // sample points along long edges
         if (config.getLongEdgeSamplingDistance() < Double.MAX_VALUE && pointList.is3D())
@@ -739,14 +669,14 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
         double maxDistance = (Integer.MAX_VALUE - 1) / 1000d;
         if (Double.isNaN(towerNodeDistance)) {
-            LOGGER.warn("Bug in OSM or GraphHopper. Illegal tower node distance " + towerNodeDistance + " reset to 1m, osm way " + wayOsmId);
+            LOGGER.warn("Bug in OSM or GraphHopper. Illegal tower node distance " + towerNodeDistance + " reset to 1m, osm way " + way.getId());
             towerNodeDistance = 1;
         }
 
         if (Double.isInfinite(towerNodeDistance) || towerNodeDistance > maxDistance) {
             // Too large is very rare and often the wrong tagging. See #435 
             // so we can avoid the complexity of splitting the way for now (new towernodes would be required, splitting up geometry etc)
-            LOGGER.warn("Bug in OSM or GraphHopper. Too big tower node distance " + towerNodeDistance + " reset to large value, osm way " + wayOsmId);
+            LOGGER.warn("Bug in OSM or GraphHopper. Too big tower node distance " + towerNodeDistance + " reset to large value, osm way " + way.getId());
             towerNodeDistance = maxDistance;
         }
 
@@ -760,10 +690,10 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             checkCoordinates(toIndex, pointList.get(pointList.size() - 1));
             iter.setWayGeometry(pointList.shallowCopy(1, pointList.size() - 1, false));
         }
+        encodingManager.applyWayTags(way, iter);
 
         checkDistance(iter);
-        storeOsmWayID(iter.getEdge(), wayOsmId);
-        return iter;
+        storeOsmWayID(iter.getEdge(), way.getId());
     }
 
     private void checkCoordinates(int nodeIndex, GHPoint point) {
@@ -854,23 +784,6 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
     private long createArtificialOSMNodeId() {
         return newUniqueOsmId++;
-    }
-
-    /**
-     * Add a zero length edge with reduced routing options to the graph.
-     */
-    Collection<EdgeIteratorState> addBarrierEdge(long fromId, long toId, IntsRef inEdgeFlags, long nodeFlags, long wayOsmId) {
-        IntsRef edgeFlags = IntsRef.deepCopyOf(inEdgeFlags);
-        // clear blocked directions from flags
-        for (BooleanEncodedValue accessEnc : encodingManager.getAccessEncFromNodeFlags(nodeFlags)) {
-            accessEnc.setBool(false, edgeFlags, false);
-            accessEnc.setBool(true, edgeFlags, false);
-        }
-        // add edge
-        barrierNodeIds.clear();
-        barrierNodeIds.add(fromId);
-        barrierNodeIds.add(toId);
-        return addOSMWay(barrierNodeIds, edgeFlags, wayOsmId);
     }
 
     /**
