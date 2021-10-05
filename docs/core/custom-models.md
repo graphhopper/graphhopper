@@ -70,7 +70,7 @@ encoded values are the following (some of their possible values are given in bra
 - road_access: (DESTINATION, DELIVERY, PRIVATE, NO, ...)
 - surface: (PAVED, DIRT, SAND, GRAVEL, ...)
 - smoothness: (EXCELLENT, GOOD, INTERMEDIATE, ...)
-- toll: (NO, ALL, HGV)
+- toll: (MISSING, NO, HGV, ALL)
 
 To learn about all available encoded values you can query the `/info` endpoint.
 
