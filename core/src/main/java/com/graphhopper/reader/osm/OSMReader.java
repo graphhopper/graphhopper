@@ -326,8 +326,6 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         if (!way.hasTags())
             return;
 
-        long wayOsmId = way.getId();
-
         EncodingManager.AcceptWay acceptWay = new EncodingManager.AcceptWay();
         if (!encodingManager.acceptWay(way, acceptWay))
             return;
@@ -340,7 +338,6 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             return;
 
         LongArrayList osmNodeIds = way.getNodes();
-        List<EdgeIteratorState> createdEdges = new ArrayList<>();
         // look for barriers along the way
         final int size = osmNodeIds.size();
         int lastBarrier = -1;
@@ -365,13 +362,13 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
                         LongArrayList partNodeIds = new LongArrayList();
                         partNodeIds.add(osmNodeIds.buffer, lastBarrier, length);
                         partNodeIds.set(length - 1, newNodeId);
-                        createdEdges.addAll(addOSMWay(partNodeIds, edgeFlags, wayOsmId));
+                        addOSMWay(partNodeIds, edgeFlags, way);
 
                         // create zero length edge for barrier
-                        createdEdges.addAll(addBarrierEdge(newNodeId, nodeId, edgeFlags, nodeFlags, wayOsmId));
+                        addBarrierEdge(newNodeId, nodeId, edgeFlags, nodeFlags, way);
                     } else {
                         // run edge from real first node to shadow node
-                        createdEdges.addAll(addBarrierEdge(nodeId, newNodeId, edgeFlags, nodeFlags, wayOsmId));
+                        addBarrierEdge(nodeId, newNodeId, edgeFlags, nodeFlags, way);
 
                         // exchange first node for created barrier node
                         osmNodeIds.set(0, newNodeId);
@@ -387,15 +384,11 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             if (lastBarrier < size - 1) {
                 LongArrayList partNodeIds = new LongArrayList();
                 partNodeIds.add(osmNodeIds.buffer, lastBarrier, size - lastBarrier);
-                createdEdges.addAll(addOSMWay(partNodeIds, edgeFlags, wayOsmId));
+                addOSMWay(partNodeIds, edgeFlags, way);
             }
         } else {
             // no barriers - simply add the whole way
-            createdEdges.addAll(addOSMWay(way.getNodes(), edgeFlags, wayOsmId));
-        }
-
-        for (EdgeIteratorState edge : createdEdges) {
-            encodingManager.applyWayTags(way, edge);
+            addOSMWay(way.getNodes(), edgeFlags, way);
         }
     }
 
@@ -602,9 +595,8 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     /**
      * This method creates from an OSM way (via the osm ids) one or more edges in the graph.
      */
-    Collection<EdgeIteratorState> addOSMWay(final LongIndexedContainer osmNodeIds, final IntsRef flags, final long wayOsmId) {
+    void addOSMWay(final LongIndexedContainer osmNodeIds, final IntsRef flags, final ReaderWay way) {
         final PointList pointList = new PointList(osmNodeIds.size(), nodeAccess.is3D());
-        final List<EdgeIteratorState> newEdges = new ArrayList<>(5);
         int firstNode = -1;
         int lastInBoundsPillarNode = -1;
         try {
@@ -627,7 +619,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             }
             if (firstExisting < 0) {
                 assert lastExisting < 0;
-                return newEdges;
+                return;
             }
             for (int i = firstExisting; i <= lastExisting; i++) {
                 final long osmNodeId = osmNodeIds.get(i);
@@ -650,7 +642,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
                         tmpNode = -tmpNode - 3;
                         if (pointList.size() > 1 && firstNode >= 0) {
                             // TOWER node
-                            newEdges.add(addEdge(firstNode, tmpNode, pointList, flags, wayOsmId));
+                            addEdge(firstNode, tmpNode, pointList, flags, way);
                             pointList.clear();
                             pointList.add(nodeAccess, tmpNode);
                         }
@@ -683,12 +675,12 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
                         int lastGHNodeId = getNodeMap().get(lastOsmNodeId);
                         if (lastGHNodeId < TOWER_NODE) {
                             LOGGER.warn("Pillar node " + lastOsmNodeId + " is already a tower node and used in loop, see #1533. " +
-                                    "Fix mapping for way " + wayOsmId + ", nodes:" + osmNodeIds);
+                                    "Fix mapping for way " + way.getId() + ", nodes:" + osmNodeIds);
                             break;
                         }
 
                         int newEndNode = -handlePillarNode(lastGHNodeId, lastOsmNodeId, pointList, true) - 3;
-                        newEdges.add(addEdge(firstNode, newEndNode, pointList, flags, wayOsmId));
+                        addEdge(firstNode, newEndNode, pointList, flags, way);
                         pointList.clear();
                         pointList.add(nodeAccess, newEndNode);
                         firstNode = newEndNode;
@@ -696,7 +688,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
                     pointList.add(nodeAccess, tmpNode);
                     if (firstNode >= 0) {
-                        newEdges.add(addEdge(firstNode, tmpNode, pointList, flags, wayOsmId));
+                        addEdge(firstNode, tmpNode, pointList, flags, way);
                         pointList.clear();
                         pointList.add(nodeAccess, tmpNode);
                     }
@@ -707,10 +699,9 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             LOGGER.error("Couldn't properly add edge with osm ids:" + osmNodeIds, ex);
             throw ex;
         }
-        return newEdges;
     }
 
-    EdgeIteratorState addEdge(int fromIndex, int toIndex, PointList pointList, IntsRef flags, long wayOsmId) {
+    void addEdge(int fromIndex, int toIndex, PointList pointList, IntsRef flags, ReaderWay way) {
         // sanity checks
         if (fromIndex < 0 || toIndex < 0)
             throw new AssertionError("to or from index is invalid for this edge " + fromIndex + "->" + toIndex + ", points:" + pointList);
@@ -719,7 +710,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
         // Smooth the elevation before calculating the distance because the distance will be incorrect if calculated afterwards
         if (config.isSmoothElevation())
-            pointList = GraphElevationSmoothing.smoothElevation(pointList);
+            GraphElevationSmoothing.smoothElevation(pointList);
 
         // sample points along long edges
         if (config.getLongEdgeSamplingDistance() < Double.MAX_VALUE && pointList.is3D())
@@ -739,14 +730,14 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
         double maxDistance = (Integer.MAX_VALUE - 1) / 1000d;
         if (Double.isNaN(towerNodeDistance)) {
-            LOGGER.warn("Bug in OSM or GraphHopper. Illegal tower node distance " + towerNodeDistance + " reset to 1m, osm way " + wayOsmId);
+            LOGGER.warn("Bug in OSM or GraphHopper. Illegal tower node distance " + towerNodeDistance + " reset to 1m, osm way " + way.getId());
             towerNodeDistance = 1;
         }
 
         if (Double.isInfinite(towerNodeDistance) || towerNodeDistance > maxDistance) {
             // Too large is very rare and often the wrong tagging. See #435 
             // so we can avoid the complexity of splitting the way for now (new towernodes would be required, splitting up geometry etc)
-            LOGGER.warn("Bug in OSM or GraphHopper. Too big tower node distance " + towerNodeDistance + " reset to large value, osm way " + wayOsmId);
+            LOGGER.warn("Bug in OSM or GraphHopper. Too big tower node distance " + towerNodeDistance + " reset to large value, osm way " + way.getId());
             towerNodeDistance = maxDistance;
         }
 
@@ -760,10 +751,10 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             checkCoordinates(toIndex, pointList.get(pointList.size() - 1));
             iter.setWayGeometry(pointList.shallowCopy(1, pointList.size() - 1, false));
         }
+        encodingManager.applyWayTags(way, iter);
 
         checkDistance(iter);
-        storeOsmWayID(iter.getEdge(), wayOsmId);
-        return iter;
+        storeOsmWayID(iter.getEdge(), way.getId());
     }
 
     private void checkCoordinates(int nodeIndex, GHPoint point) {
@@ -859,7 +850,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     /**
      * Add a zero length edge with reduced routing options to the graph.
      */
-    Collection<EdgeIteratorState> addBarrierEdge(long fromId, long toId, IntsRef inEdgeFlags, long nodeFlags, long wayOsmId) {
+    void addBarrierEdge(long fromId, long toId, IntsRef inEdgeFlags, long nodeFlags, ReaderWay way) {
         IntsRef edgeFlags = IntsRef.deepCopyOf(inEdgeFlags);
         // clear blocked directions from flags
         for (BooleanEncodedValue accessEnc : encodingManager.getAccessEncFromNodeFlags(nodeFlags)) {
@@ -870,7 +861,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         barrierNodeIds.clear();
         barrierNodeIds.add(fromId);
         barrierNodeIds.add(toId);
-        return addOSMWay(barrierNodeIds, edgeFlags, wayOsmId);
+        addOSMWay(barrierNodeIds, edgeFlags, way);
     }
 
     /**
