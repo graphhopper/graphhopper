@@ -1,6 +1,7 @@
 ### 5.0 [not yet released]
 
 - consider heading when snapping coordinates to the road network, this is especially important for navigation (#2411)
+- added Toll.MISSING; custom models must be adapted to check for explicit toll values e.g `toll != NO` -> `toll == HGV || toll == ALL` (#2164)
 
 ### 4.0 [29 Sep 2021]
 
