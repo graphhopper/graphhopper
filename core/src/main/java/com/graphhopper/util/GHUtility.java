@@ -58,8 +58,8 @@ public class GHUtility {
     // TODO ORS (minor): clean up this quick work around
     // corrected turn restrictions for virtual edges have to be turned off if not in ORS due to failing tests
     private static boolean inORS = false;
-    public void setInORS(boolean inORS) {
-        this.inORS = inORS;
+    public static void setInORS(boolean inORS) {
+        GHUtility.inORS = inORS;
     }
     // ORS-GH MOD END
 
