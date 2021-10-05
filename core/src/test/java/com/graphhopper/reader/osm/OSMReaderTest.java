@@ -46,7 +46,10 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.graphhopper.util.GHUtility.readCountries;
 import static org.junit.jupiter.api.Assertions.*;
@@ -619,8 +622,7 @@ public class OSMReaderTest {
             }
 
             @Override
-            Collection<EdgeIteratorState> addOSMWay(LongIndexedContainer osmNodeIds, IntsRef wayFlags, long osmId) {
-                return Collections.emptyList();
+            void addOSMWay(LongIndexedContainer osmNodeIds, IntsRef wayFlags, ReaderWay way) {
             }
         };
 
