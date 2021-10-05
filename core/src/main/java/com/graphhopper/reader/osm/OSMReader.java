@@ -332,60 +332,14 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         if (!encodingManager.acceptWay(way, acceptWay))
             return;
 
-        // TODO move this after we have created the edge and know the coordinates => encodingManager.applyWayTags
-        LongArrayList osmNodeIds = way.getNodes();
-        // Estimate length of ways containing a route tag e.g. for ferry speed calculation
-        int first = getNodeMap().get(osmNodeIds.get(0));
-        int last = getNodeMap().get(osmNodeIds.get(osmNodeIds.size() - 1));
-        double firstLat = getTmpLatitude(first), firstLon = getTmpLongitude(first);
-        double lastLat = getTmpLatitude(last), lastLon = getTmpLongitude(last);
-        GHPoint estimatedCenter = null;
-        if (!Double.isNaN(firstLat) && !Double.isNaN(firstLon) && !Double.isNaN(lastLat) && !Double.isNaN(lastLon)) {
-            double estimatedDist = distCalc.calcDist(firstLat, firstLon, lastLat, lastLon);
-            // Add artificial tag for the estimated distance and center
-            way.setTag("estimated_distance", estimatedDist);
-            estimatedCenter = new GHPoint((firstLat + lastLat) / 2, (firstLon + lastLon) / 2);
-            way.setTag("estimated_center", estimatedCenter);
-        }
+        setArtificialWayTags(way);
 
-        if (way.getTag("duration") != null) {
-            try {
-                long dur = OSMReaderUtility.parseDuration(way.getTag("duration"));
-                // Provide the duration value in seconds in an artificial graphhopper specific tag:
-                way.setTag("duration:seconds", Long.toString(dur));
-            } catch (Exception ex) {
-                LOGGER.warn("Parsing error in way with OSMID=" + way.getId() + " : " + ex.getMessage());
-            }
-        }
-
-        List<CustomArea> customAreas = estimatedCenter == null || areaIndex == null
-                ? emptyList()
-                : areaIndex.query(estimatedCenter.lat, estimatedCenter.lon);
-        // special handling for countries: since they are built-in with GraphHopper they are always fed to the encodingmanager
-        Country country = Country.MISSING;
-        for (CustomArea customArea : customAreas) {
-            Object countryCode = customArea.getProperties().get("ISO3166-1:alpha3");
-            if (countryCode == null)
-                continue;
-            if (country != Country.MISSING)
-                LOGGER.warn("Multiple countries found for way {}: {}, {}", way.getId(), country, countryCode);
-            country = Country.valueOf(countryCode.toString());
-        }
-        way.setTag("country", country);
-
-        if (countryRuleFactory != null) {
-            CountryRule countryRule = countryRuleFactory.getCountryRule(country);
-            if (countryRule != null)
-                way.setTag("country_rule", countryRule);
-        }
-
-        // also add all custom areas as artificial tag
-        way.setTag("custom_areas", customAreas);
         IntsRef relationFlags = getRelFlagsMap(way.getId());
         IntsRef edgeFlags = encodingManager.handleWayTags(way, acceptWay, relationFlags);
         if (edgeFlags.isEmpty())
             return;
 
+        LongArrayList osmNodeIds = way.getNodes();
         List<EdgeIteratorState> createdEdges = new ArrayList<>();
         // look for barriers along the way
         final int size = osmNodeIds.size();
@@ -443,6 +397,58 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         for (EdgeIteratorState edge : createdEdges) {
             encodingManager.applyWayTags(way, edge);
         }
+    }
+
+    private void setArtificialWayTags(ReaderWay way) {
+        // TODO move this after we have created the edge and know the coordinates => encodingManager.applyWayTags
+        LongArrayList osmNodeIds = way.getNodes();
+        // Estimate length of ways containing a route tag e.g. for ferry speed calculation
+        int first = getNodeMap().get(osmNodeIds.get(0));
+        int last = getNodeMap().get(osmNodeIds.get(osmNodeIds.size() - 1));
+        double firstLat = getTmpLatitude(first), firstLon = getTmpLongitude(first);
+        double lastLat = getTmpLatitude(last), lastLon = getTmpLongitude(last);
+        GHPoint estimatedCenter = null;
+        if (!Double.isNaN(firstLat) && !Double.isNaN(firstLon) && !Double.isNaN(lastLat) && !Double.isNaN(lastLon)) {
+            double estimatedDist = distCalc.calcDist(firstLat, firstLon, lastLat, lastLon);
+            // Add artificial tag for the estimated distance and center
+            way.setTag("estimated_distance", estimatedDist);
+            estimatedCenter = new GHPoint((firstLat + lastLat) / 2, (firstLon + lastLon) / 2);
+            way.setTag("estimated_center", estimatedCenter);
+        }
+
+        if (way.getTag("duration") != null) {
+            try {
+                long dur = OSMReaderUtility.parseDuration(way.getTag("duration"));
+                // Provide the duration value in seconds in an artificial graphhopper specific tag:
+                way.setTag("duration:seconds", Long.toString(dur));
+            } catch (Exception ex) {
+                LOGGER.warn("Parsing error in way with OSMID=" + way.getId() + " : " + ex.getMessage());
+            }
+        }
+
+        List<CustomArea> customAreas = estimatedCenter == null || areaIndex == null
+                ? emptyList()
+                : areaIndex.query(estimatedCenter.lat, estimatedCenter.lon);
+        // special handling for countries: since they are built-in with GraphHopper they are always fed to the encodingmanager
+        Country country = Country.MISSING;
+        for (CustomArea customArea : customAreas) {
+            Object countryCode = customArea.getProperties().get("ISO3166-1:alpha3");
+            if (countryCode == null)
+                continue;
+            if (country != Country.MISSING)
+                LOGGER.warn("Multiple countries found for way {}: {}, {}", way.getId(), country, countryCode);
+            country = Country.valueOf(countryCode.toString());
+        }
+        way.setTag("country", country);
+
+        if (countryRuleFactory != null) {
+            CountryRule countryRule = countryRuleFactory.getCountryRule(country);
+            if (countryRule != null)
+                way.setTag("country_rule", countryRule);
+        }
+
+        // also add all custom areas as artificial tag
+        way.setTag("custom_areas", customAreas);
     }
 
     protected void processRelation(ReaderRelation relation) {
