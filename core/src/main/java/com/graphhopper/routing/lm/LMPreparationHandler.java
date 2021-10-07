@@ -291,7 +291,7 @@ public class LMPreparationHandler {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JtsModule());
         try (Reader reader = splitAreaLocation.isEmpty() ?
-                new InputStreamReader(LandmarkStorage.class.getResource("map.geo.json").openStream(), UTF_CS) :
+                new InputStreamReader(LandmarkStorage.class.getResourceAsStream("map.geo.json"), UTF_CS) :
                 new InputStreamReader(new FileInputStream(splitAreaLocation), UTF_CS)) {
             JsonFeatureCollection result = objectMapper.readValue(reader, JsonFeatureCollection.class);
             LOGGER.info("Loaded landmark splitting collection from " + splitAreaLocation);
