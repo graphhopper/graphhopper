@@ -294,7 +294,11 @@ public class LMPreparationHandler {
                 new InputStreamReader(LandmarkStorage.class.getResourceAsStream("map.geo.json"), UTF_CS) :
                 new InputStreamReader(new FileInputStream(splitAreaLocation), UTF_CS)) {
             JsonFeatureCollection result = objectMapper.readValue(reader, JsonFeatureCollection.class);
-            LOGGER.info("Loaded landmark splitting collection from " + splitAreaLocation);
+            if (splitAreaLocation.isEmpty()) {
+                LOGGER.info("Loaded built-in landmark splitting collection");
+            } else {
+                LOGGER.info("Loaded landmark splitting collection from {}", splitAreaLocation);
+            }
             return result;
         } catch (IOException e) {
             LOGGER.error("Problem while reading border map GeoJSON. Skipping this.", e);
