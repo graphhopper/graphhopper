@@ -50,7 +50,7 @@ import static com.graphhopper.util.Helper.*;
  * @author Peter Karich
  */
 public class LMPreparationHandler {
-    private final Logger LOGGER = LoggerFactory.getLogger(LMPreparationHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LMPreparationHandler.class);
     private int landmarkCount = 16;
 
     private final List<PrepareLandmarks> preparations = new ArrayList<>();
