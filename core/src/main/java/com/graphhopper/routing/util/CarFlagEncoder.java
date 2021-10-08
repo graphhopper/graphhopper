@@ -96,6 +96,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         blockByDefaultBarriers.add("sump_buster");
 
         badSurfaceSpeedMap.add("cobblestone");
+        badSurfaceSpeedMap.add("unhewn_cobblestone");
         badSurfaceSpeedMap.add("grass_paver");
         badSurfaceSpeedMap.add("gravel");
         badSurfaceSpeedMap.add("sand");
