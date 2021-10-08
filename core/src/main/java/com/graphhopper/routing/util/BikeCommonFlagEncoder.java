@@ -112,7 +112,8 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
         setSurfaceSpeed("paved", 18);
         setSurfaceSpeed("asphalt", 18);
-        setSurfaceSpeed("cobblestone", 8);
+        setSurfaceSpeed("unhewn_cobblestone", 4);
+        setSurfaceSpeed("cobblestone", 10);
         setSurfaceSpeed("cobblestone:flattened", 10);
         setSurfaceSpeed("sett", 10);
         setSurfaceSpeed("concrete", 18);

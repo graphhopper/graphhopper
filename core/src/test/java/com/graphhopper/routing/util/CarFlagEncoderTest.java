@@ -340,6 +340,13 @@ public class CarFlagEncoderTest {
         assertEquals(30, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
 
         way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("surface", "unhewn_cobblestone");
+        allowed = encoder.getAccess(way);
+        edgeFlags = encoder.handleWayTags(em.createEdgeFlags(), way, allowed);
+        assertEquals(30, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
+
+        way.clearTags();
         way.setTag("highway", "track");
         allowed = encoder.getAccess(way);
         edgeFlags = encoder.handleWayTags(em.createEdgeFlags(), way, allowed);

@@ -87,6 +87,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         excludeHighwayTags.add("steps");
         excludeHighwayTags.add("track");
 
+        excludeSurfaces.add("unhewn_cobblestone");
         excludeSurfaces.add("cobblestone");
         excludeSurfaces.add("gravel");
         excludeSurfaces.add("sand");

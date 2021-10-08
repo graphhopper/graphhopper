@@ -48,7 +48,7 @@ Here is an overview:
  * kodonnell, adding support for CH and other algorithms (#60) and penalizing inner-link U-turns (#88)
  * legraina, improved docker for dockerhub
  * lmar, improved instructions
- * matkoniecz, tweaking documentation
+ * Mateusz Konieczny (matkoniecz), tweaking documentation and minor fixes
  * manueltimita, fixes like #1651
  * mathstpierre, fixes like #1753
  * michalmac, fixes like #1467

@@ -62,6 +62,7 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
 
         setSurfaceSpeed("paved", 20);
         setSurfaceSpeed("asphalt", 20);
+        setSurfaceSpeed("unhewn_cobblestone", PUSHING_SECTION_SPEED);
         setSurfaceSpeed("cobblestone", 10);
         setSurfaceSpeed("cobblestone:flattened", 10);
         setSurfaceSpeed("sett", 10);
