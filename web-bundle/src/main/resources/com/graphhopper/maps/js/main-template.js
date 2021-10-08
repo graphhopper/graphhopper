@@ -302,7 +302,7 @@ $(document).ready(function (e) {
                 checkInput();
             }, function (err) {
                 console.log(err);
-                $('#error').html('GraphHopper API offline? <a href="http://graphhopper.com/maps/">Refresh</a>' + '<br/>Status: ' + err.statusText + '<br/>' + host);
+                $('#error').html('GraphHopper API offline? <a href="#" onclick="location.reload();event.preventDefault();">Refresh</a>' + '<br/>Status: ' + err.statusText + '<br/>' + host);
 
                 bounds = {
                     "minLon": -180,
