@@ -22,6 +22,8 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Locale;
 
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
@@ -391,5 +393,9 @@ class BaseGraphNodesAndEdges {
         return "edges: " + nf(edgeCount) + "(" + edges.getCapacity() / Helper.MB + "MB), "
                 + "nodes: " + nf(nodeCount) + "(" + nodes.getCapacity() / Helper.MB + "MB), "
                 + "bounds: " + bounds;
+    }
+
+    public Collection<DataAccess> getDataAccessList() {
+        return Arrays.asList(nodes, edges);
     }
 }

@@ -27,7 +27,6 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
@@ -97,7 +96,7 @@ public class LandmarkStorageTest {
         Directory dir = new RAMDirectory();
         LandmarkStorage lms = new LandmarkStorage(graph, dir, new LMConfig("c1", new FastestWeighting(encoder)), 4).
                 setMaximumWeight(LandmarkStorage.PRECISION);
-        lms._getInternalDA().create(2000);
+        lms.getDataAccess().create(2000);
         // 2^16=65536, use -1 for infinity and -2 for maximum
         lms.setWeight(0, 65536);
         // reached maximum value but do not reset to 0 instead use 2^16-2
@@ -107,7 +106,7 @@ public class LandmarkStorageTest {
         lms.setWeight(0, 79999);
         assertEquals(65534, lms.getFromWeight(0, 0));
 
-        lms._getInternalDA().setInt(0, Integer.MAX_VALUE);
+        lms.getDataAccess().setInt(0, Integer.MAX_VALUE);
         assertTrue(lms.isInfinity(0));
         // for infinity return much bigger value
         // assertEquals(Integer.MAX_VALUE, lms.getFromWeight(0, 0));

@@ -301,4 +301,10 @@ public class LMPreparationHandler {
             return null;
         }
     }
+
+    public void loadMMap(int lmPercentage) {
+        for (PrepareLandmarks p : preparations) {
+            p.loadMMap(lmPercentage);
+        }
+    }
 }

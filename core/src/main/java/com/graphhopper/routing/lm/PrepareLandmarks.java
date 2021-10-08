@@ -23,6 +23,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.MMapDataAccess;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
@@ -142,5 +143,9 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
      */
     void close() {
         this.lms.close();
+    }
+
+    public void loadMMap(int lmPercentage) {
+        if (lms.getDataAccess() instanceof MMapDataAccess) ((MMapDataAccess) lms.getDataAccess()).load(lmPercentage);
     }
 }

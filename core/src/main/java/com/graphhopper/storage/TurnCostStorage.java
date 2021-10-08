@@ -212,6 +212,10 @@ public class TurnCostStorage {
         return "turn_cost";
     }
 
+    public DataAccess getDataAccess() {
+        return turnCosts;
+    }
+
     // TODO: Maybe some of the stuff above could now be re-implemented in a simpler way with some of the stuff below.
     // For now, I just wanted to iterate over all entries.
 

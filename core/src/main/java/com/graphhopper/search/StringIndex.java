@@ -318,6 +318,10 @@ public class StringIndex {
         vals.close();
     }
 
+    public Collection<DataAccess> getDataAccessList() {
+        return Arrays.asList(keys, vals);
+    }
+
     public boolean isClosed() {
         return vals.isClosed() && keys.isClosed();
     }

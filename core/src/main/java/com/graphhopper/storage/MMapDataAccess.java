@@ -308,6 +308,19 @@ public final class MMapDataAccess extends AbstractDataAccess {
         }
     }
 
+    /**
+     * Load memory mapped files into physical memory.
+     */
+    public void load(int percentage) {
+        if (percentage < 0 || percentage > 1)
+            throw new IllegalArgumentException("Percentage for MMapDataAccess.load for " + getName() + " must be in [0,100] but was " + percentage);
+        int max = Math.round(segments.size() * percentage / 100f);
+        for (int i = 0; i < max; i++) {
+            MappedByteBuffer bb = segments.get(i);
+            if (!bb.isLoaded()) bb.load();
+        }
+    }
+
     @Override
     public void close() {
         super.close();

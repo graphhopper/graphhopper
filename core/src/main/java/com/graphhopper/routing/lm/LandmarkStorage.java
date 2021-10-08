@@ -30,11 +30,7 @@ import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.subnetwork.SubnetworkStorage;
 import com.graphhopper.routing.subnetwork.TarjanSCC;
 import com.graphhopper.routing.subnetwork.TarjanSCC.ConnectedComponents;
-import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.util.AreaIndex;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
@@ -759,10 +755,7 @@ public class LandmarkStorage {
         return explorer;
     }
 
-    /**
-     * For testing only
-     */
-    DataAccess _getInternalDA() {
+    DataAccess getDataAccess() {
         return landmarkWeightDA;
     }
 

@@ -22,6 +22,8 @@ import com.graphhopper.routing.ch.NodeOrderingProvider;
 import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.util.Helper;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Locale;
 import java.util.function.Consumer;
 
@@ -359,6 +361,10 @@ public class CHStorage {
 
     public long getCapacity() {
         return nodesCH.getCapacity() + shortcuts.getCapacity();
+    }
+
+    Collection<DataAccess> getDataAccessList() {
+        return Arrays.asList(nodesCH, shortcuts);
     }
 
     public int getNumShortcutsExceedingWeight() {

@@ -87,6 +87,7 @@ public class GraphHopper {
     private String customAreasDirectory = "";
     // for graph:
     private GraphHopperStorage ghStorage;
+    private MMapLoadConfig mmapLoadConfig = new MMapLoadConfig();
     private final EncodingManager.Builder emBuilder = new EncodingManager.Builder();
     private EncodingManager encodingManager;
     private int defaultSegmentSize = -1;
@@ -486,6 +487,13 @@ public class GraphHopper {
                     + " should be less or equal to landmark count of " + lmPreparationHandler.getLandmarks());
         routerConfig.setActiveLandmarkCount(activeLandmarkCount);
 
+        // only relevant if MMAP is used
+        mmapLoadConfig = new MMapLoadConfig(
+                ghConfig.getInt("graph.dataaccess.base.load", mmapLoadConfig.getBaseGraphPercentage()),
+                ghConfig.getInt("graph.dataaccess.index.load", mmapLoadConfig.getIndexPercentage()),
+                ghConfig.getInt("graph.dataaccess.ch.load", mmapLoadConfig.getCHPercentage()),
+                ghConfig.getInt("graph.dataaccess.lm.load", mmapLoadConfig.getLMPercentage()));
+
         return this;
     }
 
@@ -764,6 +772,8 @@ public class GraphHopper {
                 return false;
 
             postProcessing(false);
+            ghStorage.loadMMap(mmapLoadConfig);
+            lmPreparationHandler.loadMMap(mmapLoadConfig.getLMPercentage());
             setFullyLoaded();
             return true;
         } finally {

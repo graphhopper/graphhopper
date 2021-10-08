@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -442,6 +443,19 @@ public final class GraphHopperStorage implements Graph, Closeable {
      */
     public void flushAndCloseEarly() {
         baseGraph.flushAndCloseGeometryAndNameStorage();
+    }
+
+    public void loadMMap(MMapLoadConfig config) {
+        loadMMap(baseGraph.getDataAccessList(), config.baseGraphPercentage);
+        for (CHEntry entry : chEntries) {
+            loadMMap(entry.chStore.getDataAccessList(), config.chPercentage);
+        }
+    }
+
+    void loadMMap(Collection<DataAccess> das, int percentage) {
+        for (DataAccess da : das)
+            if (da instanceof MMapDataAccess)
+                ((MMapDataAccess) da).load(percentage);
     }
 
     private static class CHEntry {

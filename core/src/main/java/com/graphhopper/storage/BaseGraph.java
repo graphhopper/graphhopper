@@ -25,6 +25,8 @@ import com.graphhopper.search.StringIndex;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 
 import static com.graphhopper.util.Helper.nf;
@@ -465,6 +467,16 @@ class BaseGraph implements Graph {
 
     public boolean isClosed() {
         return store.isClosed();
+    }
+
+    public Collection<DataAccess> getDataAccessList() {
+        Collection<DataAccess> daList = new ArrayList<>();
+        daList.addAll(stringIndex.getDataAccessList());
+        daList.addAll(store.getDataAccessList());
+        if (turnCostStorage != null)
+            daList.add(turnCostStorage.getDataAccess());
+        daList.add(wayGeometry);
+        return daList;
     }
 
     protected static class EdgeIteratorImpl extends EdgeIteratorStateImpl implements EdgeExplorer, EdgeIterator {
