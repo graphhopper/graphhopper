@@ -4,8 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 // ORS-GH MOD - additional class
-// TODO ORS: reimplement without using the old Storable interface
-public class ExtendedStorageSequence  implements Storable<ExtendedStorageSequence> {
+public class ExtendedStorageSequence  implements GraphExtension {
 
     private GraphExtension[] extensions;
     private int numExtensions;
