@@ -455,29 +455,26 @@ public class OSMReaderTest {
     @Test
     public void testRelation() {
         EncodingManager manager = EncodingManager.create("bike");
-        GraphHopperStorage ghStorage = new GraphHopperStorage(new RAMDirectory(), manager, false);
-        OSMReader reader = new OSMReader(ghStorage, new OSMReaderConfig());
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 1, ""));
         osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 2, ""));
 
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        reader.prepareWaysWithRelationInfo(osmRel);
 
-        IntsRef flags = IntsRef.deepCopyOf(reader.getRelFlagsMap(1));
+        IntsRef flags = manager.createRelationFlags();
+        manager.handleRelationTags(osmRel, flags);
         assertFalse(flags.isEmpty());
 
         // unchanged network
-        reader.prepareWaysWithRelationInfo(osmRel);
-        IntsRef flags2 = reader.getRelFlagsMap(1);
-        assertEquals(flags, flags2);
+        IntsRef before = IntsRef.deepCopyOf(flags);
+        manager.handleRelationTags(osmRel, flags);
+        assertEquals(before, flags);
 
         // overwrite network
         osmRel.setTag("network", "ncn");
-        reader.prepareWaysWithRelationInfo(osmRel);
-        IntsRef flags3 = reader.getRelFlagsMap(1);
-        assertNotEquals(flags, flags3);
+        manager.handleRelationTags(osmRel, flags);
+        assertNotEquals(before, flags);
     }
 
     @Test

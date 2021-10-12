@@ -64,8 +64,13 @@ public abstract class ReaderElement {
         return tagTxt.toString();
     }
 
-    protected Map<String, Object> getTags() {
+    public Map<String, Object> getTags() {
         return properties;
+    }
+
+    public void _setTags(Map<String, Object> properties) {
+        properties.clear();
+        properties.putAll(properties);
     }
 
     public void setTags(Map<String, String> newTags) {
