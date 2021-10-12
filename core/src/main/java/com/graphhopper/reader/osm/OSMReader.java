@@ -42,7 +42,10 @@ import org.slf4j.LoggerFactory;
 import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 import static com.graphhopper.util.Helper.nf;
 import static java.util.Collections.emptyList;
@@ -263,15 +266,11 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         long relationStart = -1;
         long counter = 1;
         try (OSMInput in = openOsmInputFile(osmFile)) {
-            LongIntMap nodeFilter = getNodeMap();
-
             ReaderElement item;
             while ((item = in.getNext()) != null) {
                 switch (item.getType()) {
                     case ReaderElement.NODE:
-                        if (nodeFilter.get(item.getId()) != EMPTY_NODE) {
-                            processNode((ReaderNode) item);
-                        }
+                        processNode((ReaderNode) item);
                         break;
 
                     case ReaderElement.WAY:
@@ -510,7 +509,14 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     }
 
     protected void processNode(ReaderNode node) {
-        addNode(node);
+        int nodeType = getNodeMap().get(node.getId());
+        if (nodeType == EMPTY_NODE) {
+            return;
+        } else if (nodeType == TOWER_NODE) {
+            addTowerNode(node.getId(), node.getLat(), node.getLon(), eleProvider.getEle(node));
+        } else if (nodeType == PILLAR_NODE) {
+            addPillarNode(node.getId(), node.getLat(), node.getLon(), eleProvider.getEle(node));
+        }
 
         // analyze node tags for barriers
         if (node.hasTags()) {
@@ -520,19 +526,6 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         }
 
         locations++;
-    }
-
-    boolean addNode(ReaderNode node) {
-        int nodeType = getNodeMap().get(node.getId());
-        if (nodeType == EMPTY_NODE)
-            return false;
-
-        if (nodeType == TOWER_NODE) {
-            addTowerNode(node.getId(), node.getLat(), node.getLon(), eleProvider.getEle(node));
-        } else if (nodeType == PILLAR_NODE) {
-            addPillarNode(node.getId(), node.getLat(), node.getLon(), eleProvider.getEle(node));
-        }
-        return true;
     }
 
     private void addPillarNode(long osmId, double lat, double lon, double ele) {
