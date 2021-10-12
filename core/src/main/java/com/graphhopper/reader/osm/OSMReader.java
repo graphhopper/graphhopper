@@ -405,7 +405,6 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             // Add artificial tag for the estimated distance and center
             way.setTag("estimated_distance", estimatedDist);
             estimatedCenter = new GHPoint((firstLat + lastLat) / 2, (firstLon + lastLon) / 2);
-            way.setTag("estimated_center", estimatedCenter);
         }
 
         if (way.getTag("duration") != null) {

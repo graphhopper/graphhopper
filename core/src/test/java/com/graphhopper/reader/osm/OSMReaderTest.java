@@ -597,7 +597,7 @@ public class OSMReaderTest {
     }
 
     @Test
-    public void testEstimatedCenter() {
+    public void testEstimatedDistance() {
         final CarFlagEncoder encoder = new CarFlagEncoder();
         EncodingManager manager = EncodingManager.create(encoder);
         GraphHopperStorage ghStorage = newGraph(dir, manager, false, false);
@@ -634,9 +634,6 @@ public class OSMReaderTest {
         osmreader.getNodeMap().put(2, 2);
         osmreader.processWay(way);
 
-        GHPoint p = way.getTag("estimated_center", null);
-        assertEquals(1.15, p.lat, 1e-3);
-        assertEquals(1.0, p.lon, 1e-3);
         Double d = way.getTag("estimated_distance", null);
         assertEquals(11119.5, d, 1e-1);
     }
