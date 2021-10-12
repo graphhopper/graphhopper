@@ -1,6 +1,7 @@
 ### 5.0 [not yet released]
 
 - consider heading when snapping coordinates to the road network, this is especially important for navigation (#2411)
+- OSMReader no longer sets the artificial 'estimated_center' tag and processNode also receives EMPTY_NODEs (971d686)
 
 ### 4.0 [29 Sep 2021]
 
