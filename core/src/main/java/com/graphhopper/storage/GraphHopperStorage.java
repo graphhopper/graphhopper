@@ -127,6 +127,12 @@ public final class GraphHopperStorage implements Graph, Closeable {
         chEntries = new ArrayList<>();
     }
 
+    // ORS-GH MOD START: additional method
+    public void setExtendedStorages(ExtendedStorageSequence seq) {
+        this.graphExtensions = seq;
+    }
+    // ORS-GH MOD END
+
     /**
      * Adds a {@link CHStorage} for the given {@link CHConfig}. You need to call this method before calling {@link #create(long)}
      * or {@link #loadExisting()}.
