@@ -67,7 +67,7 @@ public class GraphHopperGtfs extends GraphHopper {
     }
 
     @Override
-    protected LocationIndex createLocationIndex(Directory dir) {
+    protected LocationIndexTree createLocationIndex(Directory dir) {
         // if the location index was already created (we are 'loading') we use it. but we must not create the location
         // index object in case the index does not exist yet, because we only can create it once. we are not ready yet,
         // because first we need to import PT.

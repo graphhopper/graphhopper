@@ -22,6 +22,7 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.MMapDataAccess;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -52,7 +53,6 @@ import static com.graphhopper.util.DistancePlaneProjection.DIST_PLANE;
  * @author Peter Karich
  */
 public class LocationIndexTree implements LocationIndex {
-    private final Directory directory;
     private final Graph graph;
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final NodeAccess nodeAccess;
@@ -75,7 +75,6 @@ public class LocationIndexTree implements LocationIndex {
     public LocationIndexTree(Graph g, Directory dir) {
         this.graph = g;
         this.nodeAccess = g.getNodeAccess();
-        this.directory = dir;
 
         // Clone this defensively -- In case something funny happens and things get added to the Graph after
         // this index is built. Reason is that the expected structure of the index is a function of the bbox, so we
@@ -87,7 +86,7 @@ public class LocationIndexTree implements LocationIndex {
         if (!bounds.isValid())
             bounds = new BBox(-10.0, 10.0, -10.0, 10.0);
 
-        lineIntIndex = new LineIntIndex(bounds, directory, "location_index");
+        lineIntIndex = new LineIntIndex(bounds, dir, "location_index");
     }
 
     public int getMinResolutionInMeter() {
@@ -140,6 +139,11 @@ public class LocationIndexTree implements LocationIndex {
         return true;
     }
 
+    public void loadMMap(int percentage) {
+        if (lineIntIndex.dataAccess instanceof MMapDataAccess)
+            ((MMapDataAccess) lineIntIndex.dataAccess).load(percentage);
+    }
+
     public void flush() {
         lineIntIndex.flush();
     }
@@ -162,7 +166,7 @@ public class LocationIndexTree implements LocationIndex {
         // I want to be able to create a location index for the empty graph without error, but for that
         // I need valid bounds so that the initialization logic works.
         if (!bounds.isValid())
-            bounds = new BBox(-10.0,10.0,-10.0,10.0);
+            bounds = new BBox(-10.0, 10.0, -10.0, 10.0);
 
         InMemConstructionIndex inMemConstructionIndex = prepareInMemConstructionIndex(bounds, edgeFilter);
 

@@ -102,7 +102,7 @@ public class GraphHopper {
     // for routing
     private final RouterConfig routerConfig = new RouterConfig();
     // for index
-    private LocationIndex locationIndex;
+    private LocationIndexTree locationIndex;
     private int preciseIndexResolution = 300;
     private int maxRegionSearch = 4;
     // for prepare
@@ -317,7 +317,7 @@ public class GraphHopper {
         return locationIndex;
     }
 
-    protected void setLocationIndex(LocationIndex locationIndex) {
+    protected void setLocationIndex(LocationIndexTree locationIndex) {
         this.locationIndex = locationIndex;
     }
 
@@ -773,6 +773,7 @@ public class GraphHopper {
 
             postProcessing(false);
             ghStorage.loadMMap(mmapLoadConfig);
+            locationIndex.loadMMap(mmapLoadConfig.getIndexPercentage());
             lmPreparationHandler.loadMMap(mmapLoadConfig.getLMPercentage());
             setFullyLoaded();
             return true;
@@ -1013,7 +1014,7 @@ public class GraphHopper {
         );
     }
 
-    protected LocationIndex createLocationIndex(Directory dir) {
+    protected LocationIndexTree createLocationIndex(Directory dir) {
         LocationIndexTree tmpIndex = new LocationIndexTree(ghStorage, dir);
         tmpIndex.setResolution(preciseIndexResolution);
         tmpIndex.setMaxRegionSearch(maxRegionSearch);
