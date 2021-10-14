@@ -253,6 +253,8 @@ public class OSMReaderTest {
         Graph graph = hopper.getGraphHopperStorage();
 
         assertEquals(2, graph.getNodes());
+        // the missing node is ignored, but the separated nodes are still connected
+        assertEquals(1, graph.getEdges());
         int n10 = AbstractGraphStorageTester.getIdOf(graph, 51.2492152);
         int n30 = AbstractGraphStorageTester.getIdOf(graph, 51.2);
 
