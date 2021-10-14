@@ -381,6 +381,27 @@ public class OSMReaderTest {
     }
 
     @Test
+    public void testBarrierBetweenWays() {
+        GraphHopper hopper = new GraphHopperFacade("test-barriers2.xml").
+                setMinNetworkSize(0).
+                importOrLoad();
+
+        Graph graph = hopper.getGraphHopperStorage();
+        // there are seven ways, but there should also be five barrier edges
+        // note that because of the extra edge at the loop way we do not split the loop
+        assertEquals(12, graph.getEdges());
+        int loops = 0;
+        AllEdgesIterator iter = graph.getAllEdges();
+        while (iter.next()) {
+            // there are 'loop' edges, but only between different nodes
+            assertNotEquals(iter.getBaseNode(), iter.getAdjNode());
+            if (graph.getNodeAccess().getLat(iter.getBaseNode()) == graph.getNodeAccess().getLat(iter.getAdjNode()))
+                loops++;
+        }
+        assertEquals(5 + 1, loops);
+    }
+
+    @Test
     public void avoidsLoopEdges_1525() {
         // loops in OSM should be avoided by adding additional tower node (see #1525, #1531)
         //     C - D
