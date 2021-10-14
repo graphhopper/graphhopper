@@ -823,19 +823,8 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
      * Add a zero length edge with reduced routing options to the graph.
      */
     void addBarrierEdge(long fromId, long toId, IntsRef edgeFlags, Map<String, Object> nodeTags, ReaderWay way) {
-        // we temporarily create a reader node, but to determine the node flags just the tags should be enough
-        ReaderNode readerNode = new ReaderNode(0, 0, 0);
-        readerNode._setTags(nodeTags);
-        long nodeFlags = encodingManager.handleNodeTags(readerNode);
-        // barrier was spotted and the way is passable for that mode of travel
-        if (nodeFlags > 0) {
-            edgeFlags = IntsRef.deepCopyOf(edgeFlags);
-            // clear blocked directions from flags
-            for (BooleanEncodedValue accessEnc : encodingManager.getAccessEncFromNodeFlags(nodeFlags)) {
-                accessEnc.setBool(false, edgeFlags, false);
-                accessEnc.setBool(true, edgeFlags, false);
-            }
-        }
+        // update edge flags to block access depending on the node tags
+        edgeFlags = encodingManager.handleNodeTags(nodeTags, IntsRef.deepCopyOf(edgeFlags));
         // add edge
         barrierNodeIds.clear();
         barrierNodeIds.add(fromId);
