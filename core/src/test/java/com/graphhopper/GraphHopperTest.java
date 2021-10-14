@@ -90,12 +90,12 @@ public class GraphHopperTest {
 
     @ParameterizedTest
     @CsvSource({
-            DIJKSTRA + ",false,505",
-            ASTAR + ",false,438",
-            DIJKSTRA_BI + ",false,224",
-            ASTAR_BI + ",false,180",
-            ASTAR_BI + ",true,41",
-            DIJKSTRA_BI + ",true,41"
+            DIJKSTRA + ",false,511",
+            ASTAR + ",false,444",
+            DIJKSTRA_BI + ",false,228",
+            ASTAR_BI + ",false,184",
+            ASTAR_BI + ",true,36",
+            DIJKSTRA_BI + ",true,30"
     })
     public void testMonacoDifferentAlgorithms(String algo, boolean withCH, int expectedVisitedNodes) {
         final String vehicle = "car";
@@ -142,7 +142,7 @@ public class GraphHopperTest {
                 setAlgorithm(ASTAR).setProfile(profile));
 
         // identify the number of counts to compare with CH foot route
-        assertEquals(700, rsp.getHints().getLong("visited_nodes.sum", 0));
+        assertEquals(706, rsp.getHints().getLong("visited_nodes.sum", 0));
 
         ResponsePath res = rsp.getBest();
         assertEquals(3437.1, res.getDistance(), .1);
@@ -1566,17 +1566,17 @@ public class GraphHopperTest {
         hopper.importOrLoad();
 
         // flex
-        testCrossQueryAssert(profile1, hopper, 528.3, 160, true);
-        testCrossQueryAssert(profile2, hopper, 635.8, 158, true);
-        testCrossQueryAssert(profile3, hopper, 815.2, 154, true);
+        testCrossQueryAssert(profile1, hopper, 528.3, 166, true);
+        testCrossQueryAssert(profile2, hopper, 635.8, 160, true);
+        testCrossQueryAssert(profile3, hopper, 815.2, 158, true);
 
         // LM (should be the same as flex, but with less visited nodes!)
         testCrossQueryAssert(profile1, hopper, 528.3, 74, false);
-        testCrossQueryAssert(profile2, hopper, 635.8, 82, false);
+        testCrossQueryAssert(profile2, hopper, 635.8, 124, false);
         // this is actually interesting: the number of visited nodes *increases* once again (while it strictly decreases
         // with rising distance factor for flex): cross-querying 'works', but performs *worse*, because the landmarks
         // were not customized for the weighting in use. Creating a separate LM preparation for profile3 yields 74
-        testCrossQueryAssert(profile3, hopper, 815.2, 148, false);
+        testCrossQueryAssert(profile3, hopper, 815.2, 162, false);
     }
 
     private void testCrossQueryAssert(String profile, GraphHopper hopper, double expectedWeight, int expectedVisitedNodes, boolean disableLM) {
