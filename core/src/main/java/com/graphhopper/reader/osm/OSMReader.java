@@ -341,44 +341,34 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             return;
 
         LongArrayList osmNodeIds = way.getNodes();
-        // look for barriers along the way
         final int size = osmNodeIds.size();
         int lastBarrier = -1;
         for (int i = 0; i < size; i++) {
             long nodeId = osmNodeIds.get(i);
             int nodeTagIndex = nodeTagIndicesByOsmNodeID.get(nodeId);
-            long nodeFlags = 0;
             if (nodeTagIndex >= 0) {
-                Map<String, Object> tags = nodeTags.get(nodeTagIndex);
-                // we create a dummy reader node, but to determine the node flags just the tags should be enough
-                ReaderNode readerNode = new ReaderNode(nodeId, 0, 0);
-                readerNode._setTags(tags);
-                nodeFlags = encodingManager.handleNodeTags(readerNode);
-            }
-            // barrier was spotted and the way is passable for that mode of travel
-            if (nodeFlags > 0) {
-                // create shadow node copy for zero length edge
-                long newNodeId = addBarrierNode(nodeId);
+                // this node is a barrier. we will add an extra edge to block access
+                // create an extra node for the barrier edge
+                long extraNodeId = addBarrierNode(nodeId);
                 if (i > 0) {
                     // start at beginning of array if there was no previous barrier
                     if (lastBarrier < 0)
                         lastBarrier = 0;
 
-                    // add way up to barrier shadow node
+                    // add way up to the new extra node
                     int length = i - lastBarrier + 1;
                     LongArrayList partNodeIds = new LongArrayList();
                     partNodeIds.add(osmNodeIds.buffer, lastBarrier, length);
-                    partNodeIds.set(length - 1, newNodeId);
+                    partNodeIds.set(length - 1, extraNodeId);
                     addOSMWay(partNodeIds, edgeFlags, way);
 
-                    // create zero length edge for barrier
-                    addBarrierEdge(newNodeId, nodeId, edgeFlags, nodeFlags, way);
+                    // create zero length barrier edge
+                    addBarrierEdge(extraNodeId, nodeId, edgeFlags, nodeTags.get(nodeTagIndex), way);
                 } else {
-                    // run edge from real first node to shadow node
-                    addBarrierEdge(nodeId, newNodeId, edgeFlags, nodeFlags, way);
-
+                    // make sure the extra node is not at the beginning of the edge
+                    addBarrierEdge(nodeId, extraNodeId, edgeFlags, nodeTags.get(nodeTagIndex), way);
                     // exchange first node for created barrier node
-                    osmNodeIds.set(0, newNodeId);
+                    osmNodeIds.set(0, extraNodeId);
                 }
                 // remember barrier for processing the way behind it
                 lastBarrier = i;
@@ -832,12 +822,19 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     /**
      * Add a zero length edge with reduced routing options to the graph.
      */
-    void addBarrierEdge(long fromId, long toId, IntsRef inEdgeFlags, long nodeFlags, ReaderWay way) {
-        IntsRef edgeFlags = IntsRef.deepCopyOf(inEdgeFlags);
-        // clear blocked directions from flags
-        for (BooleanEncodedValue accessEnc : encodingManager.getAccessEncFromNodeFlags(nodeFlags)) {
-            accessEnc.setBool(false, edgeFlags, false);
-            accessEnc.setBool(true, edgeFlags, false);
+    void addBarrierEdge(long fromId, long toId, IntsRef edgeFlags, Map<String, Object> nodeTags, ReaderWay way) {
+        // we temporarily create a reader node, but to determine the node flags just the tags should be enough
+        ReaderNode readerNode = new ReaderNode(0, 0, 0);
+        readerNode._setTags(nodeTags);
+        long nodeFlags = encodingManager.handleNodeTags(readerNode);
+        // barrier was spotted and the way is passable for that mode of travel
+        if (nodeFlags > 0) {
+            edgeFlags = IntsRef.deepCopyOf(edgeFlags);
+            // clear blocked directions from flags
+            for (BooleanEncodedValue accessEnc : encodingManager.getAccessEncFromNodeFlags(nodeFlags)) {
+                accessEnc.setBool(false, edgeFlags, false);
+                accessEnc.setBool(true, edgeFlags, false);
+            }
         }
         // add edge
         barrierNodeIds.clear();
@@ -882,7 +879,8 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         return osmTurnRelations;
     }
 
-    OSMTurnRelation createTurnRelation(ReaderRelation relation, String restrictionType, String vehicleTypeRestricted, List<String> vehicleTypesExcept) {
+    OSMTurnRelation createTurnRelation(ReaderRelation relation, String restrictionType, String
+            vehicleTypeRestricted, List<String> vehicleTypesExcept) {
         OSMTurnRelation.Type type = OSMTurnRelation.Type.getRestrictionType(restrictionType);
         if (type != OSMTurnRelation.Type.UNSUPPORTED) {
             long fromWayID = -1;
