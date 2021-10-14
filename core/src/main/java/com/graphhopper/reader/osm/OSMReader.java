@@ -375,6 +375,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
                 // ignore this barrier node from now. for example a barrier can be connecting two ways (appear in both
                 // ways) and we only want to add a barrier edge once (but we want to add one).
+                nodeTagIndicesByOsmNodeID.put(nodeId, -1);
                 nodeTags.set(nodeTagIndex, emptyMap());
             }
         }
