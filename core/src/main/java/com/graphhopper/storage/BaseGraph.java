@@ -92,12 +92,18 @@ class BaseGraph implements Graph {
     }
 
     private void loadWayGeometryHeader() {
-        maxGeoRef = bitUtil.combineIntsToLong(wayGeometry.getHeader(0), wayGeometry.getHeader(4));
+        int geometryVersion = wayGeometry.getHeader(0);
+        GHUtility.checkDAVersion(wayGeometry.getName(), Constants.VERSION_GEOMETRY, geometryVersion);
+        maxGeoRef = bitUtil.combineIntsToLong(
+                wayGeometry.getHeader(4),
+                wayGeometry.getHeader(8)
+        );
     }
 
     private void setWayGeometryHeader() {
-        wayGeometry.setHeader(0, bitUtil.getIntLow(maxGeoRef));
-        wayGeometry.setHeader(4, bitUtil.getIntHigh(maxGeoRef));
+        wayGeometry.setHeader(0, Constants.VERSION_GEOMETRY);
+        wayGeometry.setHeader(4, bitUtil.getIntLow(maxGeoRef));
+        wayGeometry.setHeader(8, bitUtil.getIntHigh(maxGeoRef));
     }
 
     private void setInitialized() {
