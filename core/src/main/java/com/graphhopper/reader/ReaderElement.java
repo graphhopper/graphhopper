@@ -69,8 +69,8 @@ public abstract class ReaderElement {
     }
 
     public void _setTags(Map<String, Object> properties) {
-        properties.clear();
-        properties.putAll(properties);
+        this.properties.clear();
+        this.properties.putAll(properties);
     }
 
     public void setTags(Map<String, String> newTags) {

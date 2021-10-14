@@ -48,6 +48,7 @@ import java.util.*;
 
 import static com.graphhopper.util.Helper.nf;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 
 /**
  * This class parses an OSM xml or pbf file and creates a graph from it. It does so in a two phase
