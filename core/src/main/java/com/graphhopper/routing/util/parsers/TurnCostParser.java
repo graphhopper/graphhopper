@@ -37,7 +37,7 @@ public interface TurnCostParser {
 
     /**
      * This map associates the internal GraphHopper nodes IDs with external IDs (OSM) and similarly for the edge IDs
-     * required to write the turn costs.
+     * required to write the turn costs. Returns -1 if there is no entry for the given OSM ID.
      */
     interface ExternalInternalMap {
         int getInternalNodeIdOfOsmNode(long nodeOsmId);
