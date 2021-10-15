@@ -425,6 +425,7 @@ public class GraphHopper {
 
         dataAccessDefaultType = DAType.fromString(ghConfig.getString("graph.dataaccess", "RAM_STORE"));
         for (Map.Entry<String, Object> entry : ghConfig.asPMap().toMap().entrySet()) {
+            if (entry.getKey().equals("graph.dataaccess.segment_size")) continue;
             if (entry.getKey().startsWith("graph.dataaccess."))
                 dataAccessConfig.put(entry.getKey().substring("graph.dataaccess.".length()), entry.getValue().toString());
         }
