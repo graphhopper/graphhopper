@@ -426,7 +426,7 @@ public class GraphHopper {
         dataAccessDefaultType = DAType.fromString(ghConfig.getString("graph.dataaccess", "RAM_STORE"));
         for (Map.Entry<String, Object> entry : ghConfig.asPMap().toMap().entrySet()) {
             if (entry.getKey().startsWith("graph.dataaccess."))
-                dataAccessConfig.put(entry.getKey().substring("graph.dataaccess.".length()), entry.getKey());
+                dataAccessConfig.put(entry.getKey().substring("graph.dataaccess.".length()), entry.getValue().toString());
         }
 
         sortGraph = ghConfig.getBool("graph.do_sort", sortGraph);
