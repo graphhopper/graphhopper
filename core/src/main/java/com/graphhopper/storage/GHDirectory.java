@@ -53,6 +53,11 @@ public class GHDirectory implements Directory {
             throw new RuntimeException("file '" + dir + "' exists but is not a directory");
     }
 
+    /**
+     * Configure the DAType (specified by the value) of a single DataAccess object (specified by the key). For "MMAP" you
+     * can append a percentage like ";<int>" e.g. "MMAP;20". This preloads the DataAccess into physical memory of the
+     * specified percentage.
+     */
     public void configure(Map<String, String> config) {
         for (Entry entry : convert(config)) {
             defaultTypes.put(entry.name, entry.type);
