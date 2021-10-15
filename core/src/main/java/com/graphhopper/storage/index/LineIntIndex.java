@@ -21,7 +21,6 @@ package com.graphhopper.storage.index;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntHashSet;
 import com.graphhopper.geohash.SpatialKeyAlgo;
-import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.util.Helper;
@@ -49,7 +48,7 @@ public class LineIntIndex {
 
     public LineIntIndex(BBox bBox, Directory dir, String name) {
         this.bounds = bBox;
-        this.dataAccess = dir.create(name, DAType.getPreferredInt(dir.getDefaultType()));
+        this.dataAccess = dir.create(name, dir.getDefaultType(name, true));
     }
 
     public boolean loadExisting() {
@@ -180,9 +179,9 @@ public class LineIntIndex {
     }
 
     private void query(int intPointer, BBox queryBBox,
-                     double minLat, double minLon,
-                     double deltaLatPerDepth, double deltaLonPerDepth,
-                     LocationIndex.Visitor function, int depth) {
+                       double minLat, double minLon,
+                       double deltaLatPerDepth, double deltaLonPerDepth,
+                       LocationIndex.Visitor function, int depth) {
         long pointer = (long) intPointer * 4;
         if (depth == entries.length) {
             int nextIntPointer = dataAccess.getInt(pointer);
@@ -225,11 +224,11 @@ public class LineIntIndex {
 
     /**
      * This method collects edge ids from the neighborhood of a point and puts them into foundEntries.
-     *
+     * <p>
      * If it is called with iteration = 0, it just looks in the tile the query point is in.
      * If it is called with iteration = 0,1,2,.., it will look in additional tiles further and further
      * from the start tile. (In a square that grows by one pixel in all four directions per iteration).
-     *
+     * <p>
      * See discussion at issue #221.
      * <p>
      */

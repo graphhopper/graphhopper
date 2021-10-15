@@ -88,15 +88,6 @@ public class DAType {
     }
 
     /**
-     * This method returns RAM_INT if the specified type is in-memory.
-     */
-    public static DAType getPreferredInt(DAType type) {
-        if (type.isInMemory())
-            return type.isStoring() ? RAM_INT_STORE : RAM_INT;
-        return type;
-    }
-
-    /**
      * Memory mapped or purely in memory? default is HEAP
      */
     MemRef getMemRef() {

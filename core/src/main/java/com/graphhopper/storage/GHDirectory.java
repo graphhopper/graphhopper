@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.graphhopper.storage.DAType.RAM_INT;
+import static com.graphhopper.storage.DAType.RAM_INT_STORE;
 import static com.graphhopper.util.Helper.*;
 
 /**
@@ -72,13 +74,13 @@ public class GHDirectory implements Directory {
             e.name = kv.getKey();
             String[] values = kv.getValue().split(";");
             if (values.length == 0)
-                throw new IllegalArgumentException("DataAccess " + kv.getKey() + " has incorrect value");
-            e.type = DAType.fromString(values[0]);
+                throw new IllegalArgumentException("DataAccess " + kv.getKey() + " has an empty value");
+            e.type = DAType.fromString(values[0].trim());
             if (values.length > 1)
                 try {
-                    e.preload = Integer.parseInt(values[2]);
+                    e.preload = Integer.parseInt(values[1]);
                 } catch (NumberFormatException ex) {
-                    throw new IllegalArgumentException("DataAccess " + kv.getKey() + " has preload value. Use e.g. MMAP;20");
+                    throw new IllegalArgumentException("DataAccess " + kv.getKey() + " has an incorrect preload value. Use e.g. MMAP;20");
                 }
 
             result.add(e);
@@ -90,7 +92,7 @@ public class GHDirectory implements Directory {
         for (Map.Entry<String, Integer> entry : mmapPreloads.entrySet()) {
             DataAccess da = map.get(entry.getKey());
             if (da == null)
-                throw new IllegalArgumentException("Cannot preload DataAccess " + da.getName() + ". Does not exist. Existing: " + map.keySet());
+                throw new IllegalArgumentException("Cannot preload DataAccess " + entry.getKey() + ". Does not exist. Existing: " + map.keySet());
             if (!(da instanceof MMapDataAccess))
                 throw new IllegalArgumentException("Can only preload MMapDataAccess " + da.getName() + ". But was " + da.getType());
             ((MMapDataAccess) da).load(entry.getValue());
@@ -189,6 +191,16 @@ public class GHDirectory implements Directory {
     @Override
     public DAType getDefaultType() {
         return typeFallback;
+    }
+
+    /**
+     * This method returns RAM_INT if the specified type is in-memory.
+     */
+    public DAType getDefaultType(String dataAccess, boolean preferInts) {
+        DAType type = defaultTypes.getOrDefault(dataAccess, typeFallback);
+        if (preferInts && type.isInMemory())
+            return type.isStoring() ? RAM_INT_STORE : RAM_INT;
+        return type;
     }
 
     public boolean isStoring() {
