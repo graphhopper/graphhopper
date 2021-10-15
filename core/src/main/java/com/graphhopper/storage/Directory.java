@@ -58,6 +58,9 @@ public interface Directory {
      */
     void remove(DataAccess da);
 
+    /**
+     * @return the default type of a newly created DataAccess object
+     */
     DAType getDefaultType();
 
     DAType getDefaultType(String dataAccess, boolean preferInts);
