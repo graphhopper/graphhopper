@@ -421,15 +421,11 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     private void addEncoder(AbstractFlagEncoder encoder) {
-        int encoderCount = edgeEncoders.size();
-
         encoder.setEncodedValueLookup(this);
         List<EncodedValue> list = new ArrayList<>();
-        encoder.createEncodedValues(list, encoder.toString(), encoderCount);
-        for (EncodedValue ev : list) {
+        encoder.createEncodedValues(list, encoder.toString());
+        for (EncodedValue ev : list)
             addEncodedValue(ev, true);
-        }
-
         edgeEncoders.add(encoder);
     }
 
@@ -649,15 +645,22 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     /**
-     * Analyze tags on osm node. Store node tags (barriers etc) for later usage while parsing way.
+     * Updates the given edge flags based on node tags
      */
-    public long handleNodeTags(ReaderNode node) {
-        long flags = 0;
+    public IntsRef handleNodeTags(Map<String, Object> nodeTags, IntsRef edgeFlags) {
         for (AbstractFlagEncoder encoder : edgeEncoders) {
-            flags |= encoder.handleNodeTags(node);
+            // todo: not sure yet: should we pass the reader node (because it includes the coordinates), or just the tag?
+            // for now we just create a dummy reader node, because our encoders do not make use of the coordinates anyway
+            ReaderNode readerNode = new ReaderNode(0, 0, 0);
+            readerNode._setTags(nodeTags);
+            // block access for all encoders that treat this node as a barrier
+            if (encoder.handleNodeTags(readerNode)) {
+                BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+                accessEnc.setBool(false, edgeFlags, false);
+                accessEnc.setBool(true, edgeFlags, false);
+            }
         }
-
-        return flags;
+        return edgeFlags;
     }
 
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
@@ -699,16 +702,6 @@ public class EncodingManager implements EncodedValueLookup {
                 return true;
         }
         return false;
-    }
-
-    public List<BooleanEncodedValue> getAccessEncFromNodeFlags(long importNodeFlags) {
-        List<BooleanEncodedValue> list = new ArrayList<>(edgeEncoders.size());
-        for (int i = 0; i < edgeEncoders.size(); i++) {
-            FlagEncoder encoder = edgeEncoders.get(i);
-            if (((1L << i) & importNodeFlags) != 0)
-                list.add(encoder.getAccessEnc());
-        }
-        return list;
     }
 
     @Override

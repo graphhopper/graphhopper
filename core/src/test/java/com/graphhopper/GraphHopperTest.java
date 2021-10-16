@@ -90,12 +90,12 @@ public class GraphHopperTest {
 
     @ParameterizedTest
     @CsvSource({
-            DIJKSTRA + ",false,505",
-            ASTAR + ",false,438",
-            DIJKSTRA_BI + ",false,224",
-            ASTAR_BI + ",false,180",
-            ASTAR_BI + ",true,41",
-            DIJKSTRA_BI + ",true,41"
+            DIJKSTRA + ",false,511",
+            ASTAR + ",false,444",
+            DIJKSTRA_BI + ",false,228",
+            ASTAR_BI + ",false,184",
+            ASTAR_BI + ",true,36",
+            DIJKSTRA_BI + ",true,30"
     })
     public void testMonacoDifferentAlgorithms(String algo, boolean withCH, int expectedVisitedNodes) {
         final String vehicle = "car";
@@ -142,7 +142,7 @@ public class GraphHopperTest {
                 setAlgorithm(ASTAR).setProfile(profile));
 
         // identify the number of counts to compare with CH foot route
-        assertEquals(700, rsp.getHints().getLong("visited_nodes.sum", 0));
+        assertEquals(706, rsp.getHints().getLong("visited_nodes.sum", 0));
 
         ResponsePath res = rsp.getBest();
         assertEquals(3437.1, res.getDistance(), .1);
@@ -1566,17 +1566,17 @@ public class GraphHopperTest {
         hopper.importOrLoad();
 
         // flex
-        testCrossQueryAssert(profile1, hopper, 528.3, 160, true);
-        testCrossQueryAssert(profile2, hopper, 635.8, 158, true);
-        testCrossQueryAssert(profile3, hopper, 815.2, 154, true);
+        testCrossQueryAssert(profile1, hopper, 528.3, 166, true);
+        testCrossQueryAssert(profile2, hopper, 635.8, 160, true);
+        testCrossQueryAssert(profile3, hopper, 815.2, 158, true);
 
         // LM (should be the same as flex, but with less visited nodes!)
         testCrossQueryAssert(profile1, hopper, 528.3, 74, false);
-        testCrossQueryAssert(profile2, hopper, 635.8, 82, false);
+        testCrossQueryAssert(profile2, hopper, 635.8, 124, false);
         // this is actually interesting: the number of visited nodes *increases* once again (while it strictly decreases
         // with rising distance factor for flex): cross-querying 'works', but performs *worse*, because the landmarks
         // were not customized for the weighting in use. Creating a separate LM preparation for profile3 yields 74
-        testCrossQueryAssert(profile3, hopper, 815.2, 148, false);
+        testCrossQueryAssert(profile3, hopper, 815.2, 162, false);
     }
 
     private void testCrossQueryAssert(String profile, GraphHopper hopper, double expectedWeight, int expectedVisitedNodes, boolean disableLM) {
@@ -2354,25 +2354,29 @@ public class GraphHopperTest {
         {
             // these are bollards that are located right on a junction. this should never happen according to OSM mapping
             // rules, but it still does. the problem with such barriers is that we can only block one direction and it
-            // is unclear which one is right
+            // is unclear which one is right. therefore we simply ignore such barriers.
 
-            // here the barrier node actually disconnects a dead-end road that should rather be connected!
+            // here the barrier node actually disconnected a dead-end road that should rather be connected before we
+            // started ignoring barriers at junctions.
             GHResponse carRsp = hopper.route(new GHRequest(51.327121, 12.572396, 51.327173, 12.574038).setProfile("car"));
-            assertTrue(carRsp.hasErrors() && carRsp.getErrors().toString().contains("Connection between locations not found"), carRsp.getErrors().toString());
+            assertEquals(124, carRsp.getBest().getDistance(), 1);
             GHResponse bikeRsp = hopper.route(new GHRequest(51.327121, 12.572396, 51.327173, 12.574038).setProfile("bike"));
             assertEquals(124, bikeRsp.getBest().getDistance(), 1);
 
-            // Here the barrier node prevents us from travelling straight along Pufendorfstraße. Entering Pufendorfstraße
-            // from 'An der Streuobstwiese' is allowed though, but this seems wrong. We probably add a wrong barrier
-            // edge here (the mapping was fixed in newer OSM versions, so the barrier is no longer at the junction)
+            // Here the barrier could prevent us from travelling straight along Pufendorfstraße. But it could also
+            // prevent us from turning from Pufendorfstraße onto 'An der Streuobstwiese' (or vice versa). What should
+            // be allowed depends on whether the barrier is before or behind the junction. And since we can't tell
+            // we just ignore this barrier. Note that the mapping was fixed in newer OSM versions, so the barrier is no
+            // longer at the junction
             carRsp = hopper.route(new GHRequest(51.344134, 12.317986, 51.344231, 12.317482).setProfile("car"));
-            assertEquals(393, carRsp.getBest().getDistance(), 1);
+            assertEquals(36, carRsp.getBest().getDistance(), 1);
             bikeRsp = hopper.route(new GHRequest(51.344134, 12.317986, 51.344231, 12.317482).setProfile("bike"));
             assertEquals(36, bikeRsp.getBest().getDistance(), 1);
 
-            // Here we have to go all the way around, but not sure if this is the intended effect of this bollard node
+            // Here we'd have to go all the way around, but the bollard node could also mean that continuing on Adenauerallee
+            // is fine, and we just cannot enter the little path. Since we cannot tell we just ignore this barrier.
             carRsp = hopper.route(new GHRequest(51.355455, 12.40202, 51.355318, 12.401741).setProfile("car"));
-            assertEquals(1217, carRsp.getBest().getDistance(), 1);
+            assertEquals(24, carRsp.getBest().getDistance(), 1);
             bikeRsp = hopper.route(new GHRequest(51.355455, 12.40202, 51.355318, 12.401741).setProfile("bike"));
             assertEquals(24, bikeRsp.getBest().getDistance(), 1);
         }

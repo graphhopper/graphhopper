@@ -17,14 +17,12 @@
  */
 package com.graphhopper.reader.osm;
 
-import com.carrotsearch.hppc.LongIndexedContainer;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperTest;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.ReaderRelation;
-import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.OSMReaderConfig;
@@ -39,7 +37,6 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
-import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,9 +44,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static com.graphhopper.util.GHUtility.readCountries;
 import static org.junit.jupiter.api.Assertions.*;
@@ -352,7 +347,9 @@ public class OSMReaderTest {
                 importOrLoad();
 
         Graph graph = hopper.getGraphHopperStorage();
-        assertEquals(8, graph.getNodes());
+        // we ignore the barrier at node 50, but not the one at node
+        assertEquals(7, graph.getNodes());
+        assertEquals(7, graph.getEdges());
 
         int n10 = AbstractGraphStorageTester.getIdOf(graph, 51);
         int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
@@ -389,9 +386,9 @@ public class OSMReaderTest {
                 importOrLoad();
 
         Graph graph = hopper.getGraphHopperStorage();
-        // there are seven ways, but there should also be five barrier edges
-        // note that because of the extra edge at the loop way we do not split the loop
-        assertEquals(12, graph.getEdges());
+        // there are seven ways, but there should also be six barrier edges
+        // we first split the loop way into two parts, and then we split the barrier node => 3 edges total
+        assertEquals(7 + 6, graph.getEdges());
         int loops = 0;
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
@@ -400,7 +397,7 @@ public class OSMReaderTest {
             if (graph.getNodeAccess().getLat(iter.getBaseNode()) == graph.getNodeAccess().getLat(iter.getAdjNode()))
                 loops++;
         }
-        assertEquals(5 + 1, loops);
+        assertEquals(5, loops);
     }
 
     @Test
@@ -437,19 +434,10 @@ public class OSMReaderTest {
 
     @Test
     public void avoidsLoopEdgesIdenticalNodeIds_1533() {
-        // We can handle the following case with the proper result:
+        // BDCBB
         checkLoop(new GraphHopperFacade("test-avoid-loops3.xml").importOrLoad());
-        // We cannot handle the following case, i.e. no loop is created. so we only check that there are no loops
-        GraphHopper hopper = new GraphHopperFacade("test-avoid-loops4.xml").importOrLoad();
-        GraphHopperStorage graph = hopper.getGraphHopperStorage();
-        AllEdgesIterator iter = graph.getAllEdges();
-        assertEquals(2, iter.length());
-        while (iter.next()) {
-            assertTrue(iter.getAdjNode() != iter.getBaseNode(), "found a loop");
-        }
-        int nodeB = AbstractGraphStorageTester.getIdOf(graph, 12);
-        assertTrue(nodeB > -1, "could not find OSM node B");
-        assertEquals(2, GHUtility.count(graph.createEdgeExplorer().setBaseNode(nodeB)));
+        // BBCDB
+        checkLoop(new GraphHopperFacade("test-avoid-loops4.xml").importOrLoad());
     }
 
     @Test
@@ -458,49 +446,49 @@ public class OSMReaderTest {
                 setMinNetworkSize(0).
                 importOrLoad();
         Graph graph = hopper.getGraphHopperStorage();
-        assertEquals(8, graph.getNodes());
+        // we ignore the barrier at node 50
+        // 10-20-30 produces three edges: 10-20, 20-2x, 2x-30, the second one is a barrier edge
+        assertEquals(7, graph.getNodes());
+        assertEquals(7, graph.getEdges());
 
         int n60 = AbstractGraphStorageTester.getIdOf(graph, 56);
-        int newId = 5;
-        assertEquals(GHUtility.asSet(newId), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n60)));
+        int n50 = AbstractGraphStorageTester.getIdOf(graph, 55);
+        int n30 = AbstractGraphStorageTester.getIdOf(graph, 53);
+        int n80 = AbstractGraphStorageTester.getIdOf(graph, 58);
+        assertEquals(GHUtility.asSet(n50), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n60)));
 
         EdgeIterator iter = carOutExplorer.setBaseNode(n60);
         assertTrue(iter.next());
-        assertEquals(newId, iter.getAdjNode());
+        assertEquals(n50, iter.getAdjNode());
         assertFalse(iter.next());
 
-        iter = carOutExplorer.setBaseNode(newId);
-        assertTrue(iter.next());
-        assertEquals(n60, iter.getAdjNode());
-        assertFalse(iter.next());
+        assertTrue(GHUtility.getNeighbors(carOutExplorer.setBaseNode(n30)).contains(n50));
+        assertEquals(GHUtility.asSet(n30, n80, n60), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n50)));
     }
 
     @Test
     public void testRelation() {
         EncodingManager manager = EncodingManager.create("bike");
-        GraphHopperStorage ghStorage = new GraphHopperStorage(new RAMDirectory(), manager, false);
-        OSMReader reader = new OSMReader(ghStorage, new OSMReaderConfig());
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 1, ""));
         osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 2, ""));
 
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        reader.prepareWaysWithRelationInfo(osmRel);
 
-        IntsRef flags = IntsRef.deepCopyOf(reader.getRelFlagsMap(1));
+        IntsRef flags = manager.createRelationFlags();
+        manager.handleRelationTags(osmRel, flags);
         assertFalse(flags.isEmpty());
 
         // unchanged network
-        reader.prepareWaysWithRelationInfo(osmRel);
-        IntsRef flags2 = reader.getRelFlagsMap(1);
-        assertEquals(flags, flags2);
+        IntsRef before = IntsRef.deepCopyOf(flags);
+        manager.handleRelationTags(osmRel, flags);
+        assertEquals(before, flags);
 
         // overwrite network
         osmRel.setTag("network", "ncn");
-        reader.prepareWaysWithRelationInfo(osmRel);
-        IntsRef flags3 = reader.getRelFlagsMap(1);
-        assertNotEquals(flags, flags3);
+        manager.handleRelationTags(osmRel, flags);
+        assertNotEquals(before, flags);
     }
 
     @Test
@@ -619,47 +607,47 @@ public class OSMReaderTest {
         assertEquals(17.5, edge_cd.get(weightEnc), 1e-5);
     }
 
-    @Test
-    public void testEstimatedDistance() {
-        final CarFlagEncoder encoder = new CarFlagEncoder();
-        EncodingManager manager = EncodingManager.create(encoder);
-        GraphHopperStorage ghStorage = newGraph(dir, manager, false, false);
-        final Map<Integer, Double> latMap = new HashMap<>();
-        final Map<Integer, Double> lonMap = new HashMap<>();
-        latMap.put(1, 1.1d);
-        latMap.put(2, 1.2d);
-
-        lonMap.put(1, 1.0d);
-        lonMap.put(2, 1.0d);
-
-        OSMReader osmreader = new OSMReader(ghStorage, new OSMReaderConfig()) {
-            // mock data access
-            @Override
-            double getTmpLatitude(int id) {
-                return latMap.get(id);
-            }
-
-            @Override
-            double getTmpLongitude(int id) {
-                return lonMap.get(id);
-            }
-
-            @Override
-            void addOSMWay(LongIndexedContainer osmNodeIds, IntsRef wayFlags, ReaderWay way) {
-            }
-        };
-
-        ReaderWay way = new ReaderWay(1L);
-        way.getNodes().add(1);
-        way.getNodes().add(2);
-        way.setTag("highway", "motorway");
-        osmreader.getNodeMap().put(1, 1);
-        osmreader.getNodeMap().put(2, 2);
-        osmreader.processWay(way);
-
-        Double d = way.getTag("estimated_distance", null);
-        assertEquals(11119.5, d, 1e-1);
-    }
+//    @Test
+//    public void testEstimatedDistance() {
+//        final CarFlagEncoder encoder = new CarFlagEncoder();
+//        EncodingManager manager = EncodingManager.create(encoder);
+//        GraphHopperStorage ghStorage = newGraph(dir, manager, false, false);
+//        final Map<Integer, Double> latMap = new HashMap<>();
+//        final Map<Integer, Double> lonMap = new HashMap<>();
+//        latMap.put(1, 1.1d);
+//        latMap.put(2, 1.2d);
+//
+//        lonMap.put(1, 1.0d);
+//        lonMap.put(2, 1.0d);
+//
+//        OSMReader osmreader = new OSMReader(ghStorage, new OSMReaderConfig()) {
+//             mock data access
+//            @Override
+//            double getTmpLatitude(int id) {
+//                return latMap.get(id);
+//            }
+//
+//            @Override
+//            double getTmpLongitude(int id) {
+//                return lonMap.get(id);
+//            }
+//
+//            @Override
+//            void handleSegment(LongArrayList segment, ReaderWay way, Map<String, Object> nodeTags) {
+//            }
+//        };
+//
+//        ReaderWay way = new ReaderWay(1L);
+//        way.getNodes().add(1);
+//        way.getNodes().add(2);
+//        way.setTag("highway", "motorway");
+//        osmreader.getNodeMap().put(1, 1);
+//        osmreader.getNodeMap().put(2, 2);
+//        osmreader.processWay(way);
+//
+//        Double d = way.getTag("estimated_distance", null);
+//        assertEquals(11119.5, d, 1e-1);
+//    }
 
     @Test
     public void testReadEleFromDataProvider() {
