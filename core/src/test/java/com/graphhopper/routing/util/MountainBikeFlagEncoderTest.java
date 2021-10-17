@@ -195,21 +195,21 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "kissing_gate");
         // No barrier!
-        assertFalse(encoder.handleNodeTags(node));
+        assertFalse(encoder.isBarrier(node));
 
         // kissing_gate with bicycle tag = no
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "kissing_gate");
         node.setTag("bicycle", "no");
         // barrier!
-        assertTrue(encoder.handleNodeTags(node));
+        assertTrue(encoder.isBarrier(node));
 
         // kissing_gate with bicycle tag
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "kissing_gate");
         node.setTag("bicycle", "yes");
         // No barrier!
-        assertFalse(encoder.handleNodeTags(node));
+        assertFalse(encoder.isBarrier(node));
     }
 
 }

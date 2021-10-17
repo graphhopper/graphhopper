@@ -151,12 +151,12 @@ public class CarFlagEncoderTest {
         // Node and way are initially blocking
         assertTrue(encoder.isBlockFords());
         assertTrue(encoder.getAccess(way).canSkip());
-        assertTrue(encoder.handleNodeTags(node));
+        assertTrue(encoder.isBarrier(node));
 
         CarFlagEncoder tmpEncoder = new CarFlagEncoder(new PMap("block_fords=false"));
         EncodingManager.create(tmpEncoder);
         assertTrue(tmpEncoder.getAccess(way).isWay());
-        assertFalse(tmpEncoder.handleNodeTags(node));
+        assertFalse(tmpEncoder.isBarrier(node));
     }
 
     @Test
@@ -539,13 +539,13 @@ public class CarFlagEncoderTest {
         node.setTag("barrier", "lift_gate");
         node.setTag("access", "yes");
         // no barrier!
-        assertFalse(encoder.handleNodeTags(node));
+        assertFalse(encoder.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "lift_gate");
         node.setTag("bicycle", "yes");
         // no barrier!
-        assertFalse(encoder.handleNodeTags(node));
+        assertFalse(encoder.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "lift_gate");
@@ -559,12 +559,12 @@ public class CarFlagEncoderTest {
         node.setTag("access", "no");
         node.setTag("motorcar", "yes");
         // no barrier!
-        assertFalse(encoder.handleNodeTags(node));
+        assertFalse(encoder.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "bollard");
         // barrier!
-        assertTrue(encoder.handleNodeTags(node));
+        assertTrue(encoder.isBarrier(node));
 
         CarFlagEncoder tmpEncoder = new CarFlagEncoder();
         EncodingManager.create(tmpEncoder);
@@ -572,7 +572,7 @@ public class CarFlagEncoderTest {
         // Test if cattle_grid is not blocking
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "cattle_grid");
-        assertFalse(tmpEncoder.handleNodeTags(node));
+        assertFalse(tmpEncoder.isBarrier(node));
     }
 
     @Test
@@ -580,11 +580,11 @@ public class CarFlagEncoderTest {
         // by default allow access through the gate for bike & foot!
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "chain");
-        assertFalse(encoder.handleNodeTags(node));
+        assertFalse(encoder.isBarrier(node));
         node.setTag("motor_vehicle", "no");
-        assertTrue(encoder.handleNodeTags(node));
+        assertTrue(encoder.isBarrier(node));
         node.setTag("motor_vehicle", "yes");
-        assertFalse(encoder.handleNodeTags(node));
+        assertFalse(encoder.isBarrier(node));
     }
 
     @Test

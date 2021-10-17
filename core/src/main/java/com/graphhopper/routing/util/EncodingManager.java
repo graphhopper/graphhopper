@@ -651,7 +651,7 @@ public class EncodingManager implements EncodedValueLookup {
         long flags = 0;
         for (int i = 0, edgeEncodersSize = edgeEncoders.size(); i < edgeEncodersSize; i++) {
             AbstractFlagEncoder encoder = edgeEncoders.get(i);
-            flags |= (encoder.handleNodeTags(node) ? 1L << i : 0);
+            flags |= (encoder.isBarrier(node) ? 1L << i : 0);
         }
 
         return flags;
