@@ -25,8 +25,10 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PointAccess;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
@@ -67,7 +69,6 @@ import static java.util.Collections.emptyMap;
 public class WaySegmentParser {
     private static final Logger LOGGER = LoggerFactory.getLogger(WaySegmentParser.class);
 
-    private final GraphHopperStorage graph;
     private final ElevationProvider eleProvider;
     private final Predicate<ReaderWay> wayFilter;
     private final Predicate<ReaderNode> splitNodeFilter;
@@ -80,22 +81,10 @@ public class WaySegmentParser {
     private final OSMNodeData nodeData;
     private Date timestamp;
 
-    /**
-     * todonow: probably better move javadocs to setters of builder
-     *
-     * @param wayFilter            return false for OSM ways that should be ignored and true otherwise
-     * @param splitNodeFilter      return true if the given OSM node should be duplicated to create an artificial edge
-     * @param wayPreprocessor      callback function that is called for each accepted OSM way during the first pass
-     * @param relationPreprocessor callback function that receives OSM relations during the first pass
-     * @param relationProcessor    callback function that receives OSM relations during the second pass
-     * @param edgeHandler          callback function that is called for each edge (way segment)
-     * @param workerThreads        the number of threads used for the low level reading of the OSM file
-     */
-    private WaySegmentParser(GraphHopperStorage graph, ElevationProvider eleProvider,
+    private WaySegmentParser(PointAccess nodeAccess, Directory directory, ElevationProvider eleProvider,
                              Predicate<ReaderWay> wayFilter, Predicate<ReaderNode> splitNodeFilter, WayPreprocessor wayPreprocessor,
                              Consumer<ReaderRelation> relationPreprocessor, RelationProcessor relationProcessor,
                              EdgeHandler edgeHandler, int workerThreads) {
-        this.graph = graph;
         this.eleProvider = eleProvider;
         this.wayFilter = wayFilter;
         this.splitNodeFilter = splitNodeFilter;
@@ -105,7 +94,7 @@ public class WaySegmentParser {
         this.edgeHandler = edgeHandler;
         this.workerThreads = workerThreads;
 
-        this.nodeData = new OSMNodeData(graph.getNodeAccess(), graph.getDirectory());
+        this.nodeData = new OSMNodeData(nodeAccess, directory);
     }
 
     /**
@@ -123,9 +112,6 @@ public class WaySegmentParser {
         long nodes = nodeData.getNodeCount();
 
         LOGGER.info("Creating graph. Node count (pillar+tower): " + nodes + ", " + Helper.getMemInfo());
-        // todonow: get rid of graph field. creating the graph with the right size seems like an optimization with
-        // with little benefits
-        graph.create(Math.max(nodes / 50, 100));
 
         LOGGER.info("pass2 - start");
         StopWatch sw2 = new StopWatch().start();
@@ -432,7 +418,8 @@ public class WaySegmentParser {
     }
 
     public static class Builder {
-        private final GraphHopperStorage graph;
+        private final PointAccess nodeAccess;
+        private Directory directory = new RAMDirectory();
         private ElevationProvider elevationProvider = ElevationProvider.NOOP;
         private Predicate<ReaderWay> wayFilter = way -> true;
         private Predicate<ReaderNode> splitNodeFilter = node -> false;
@@ -446,45 +433,81 @@ public class WaySegmentParser {
                 System.out.println("edge " + from + "->" + to + " (" + pointList.size() + " points)");
         private int workerThreads = 2;
 
-        public Builder(GraphHopperStorage graph) {
-            this.graph = graph;
+        /**
+         * @param nodeAccess used to store tower node coordinates while parsing the ways
+         */
+        public Builder(PointAccess nodeAccess) {
+            // instead of requiring a PointAccess here we could also just use some temporary in-memory storage by default
+            this.nodeAccess = nodeAccess;
         }
 
+        /**
+         * @param directory the directory to be used to store temporary data
+         */
+        public Builder setDirectory(Directory directory) {
+            this.directory = directory;
+            return this;
+        }
+
+        /**
+         * @param elevationProvider used to determine the elevation of an OSM node
+         */
         public Builder setElevationProvider(ElevationProvider elevationProvider) {
             this.elevationProvider = elevationProvider;
             return this;
         }
 
+        /**
+         * @param wayFilter return true for OSM ways that should be considered and false otherwise
+         */
         public Builder setWayFilter(Predicate<ReaderWay> wayFilter) {
             this.wayFilter = wayFilter;
             return this;
         }
 
+        /**
+         * @param splitNodeFilter return true if the given OSM node should be duplicated to create an artificial edge
+         */
         public Builder setSplitNodeFilter(Predicate<ReaderNode> splitNodeFilter) {
             this.splitNodeFilter = splitNodeFilter;
             return this;
         }
 
+        /**
+         * @param wayPreprocessor callback function that is called for each accepted OSM way during the first pass
+         */
         public Builder setWayPreprocessor(WayPreprocessor wayPreprocessor) {
             this.wayPreprocessor = wayPreprocessor;
             return this;
         }
 
+        /**
+         * @param relationPreprocessor callback function that receives OSM relations during the first pass
+         */
         public Builder setRelationPreprocessor(Consumer<ReaderRelation> relationPreprocessor) {
             this.relationPreprocessor = relationPreprocessor;
             return this;
         }
 
+        /**
+         * @param relationProcessor callback function that receives OSM relations during the second pass
+         */
         public Builder setRelationProcessor(RelationProcessor relationProcessor) {
             this.relationProcessor = relationProcessor;
             return this;
         }
 
+        /**
+         * @param edgeHandler callback function that is called for each edge (way segment)
+         */
         public Builder setEdgeHandler(EdgeHandler edgeHandler) {
             this.edgeHandler = edgeHandler;
             return this;
         }
 
+        /**
+         * @param workerThreads the number of threads used for the low level reading of the OSM file
+         */
         public Builder setWorkerThreads(int workerThreads) {
             this.workerThreads = workerThreads;
             return this;
@@ -492,7 +515,7 @@ public class WaySegmentParser {
 
         public WaySegmentParser build() {
             return new WaySegmentParser(
-                    graph, elevationProvider, wayFilter, splitNodeFilter, wayPreprocessor, relationPreprocessor, relationProcessor,
+                    nodeAccess, directory, elevationProvider, wayFilter, splitNodeFilter, wayPreprocessor, relationPreprocessor, relationProcessor,
                     edgeHandler, workerThreads
             );
         }
