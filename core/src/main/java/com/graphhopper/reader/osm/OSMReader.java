@@ -353,36 +353,35 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             long nodeFlags = getNodeFlagsMap().get(nodeId);
             // barrier was spotted and the way is passable for that mode of travel
             if (nodeFlags > 0) {
-                if (isOnePassable(encodingManager.getAccessEncFromNodeFlags(nodeFlags), edgeFlags)) {
-                    // remove barrier to avoid duplicates
-                    getNodeFlagsMap().put(nodeId, 0);
+                // create shadow node copy for zero length edge
+                long newNodeId = addBarrierNode(nodeId);
+                if (i > 0) {
+                    // start at beginning of array if there was no previous barrier
+                    if (lastBarrier < 0)
+                        lastBarrier = 0;
 
-                    // create shadow node copy for zero length edge
-                    long newNodeId = addBarrierNode(nodeId);
-                    if (i > 0) {
-                        // start at beginning of array if there was no previous barrier
-                        if (lastBarrier < 0)
-                            lastBarrier = 0;
+                    // add way up to barrier shadow node
+                    int length = i - lastBarrier + 1;
+                    LongArrayList partNodeIds = new LongArrayList();
+                    partNodeIds.add(osmNodeIds.buffer, lastBarrier, length);
+                    partNodeIds.set(length - 1, newNodeId);
+                    addOSMWay(partNodeIds, edgeFlags, way);
 
-                        // add way up to barrier shadow node                        
-                        int length = i - lastBarrier + 1;
-                        LongArrayList partNodeIds = new LongArrayList();
-                        partNodeIds.add(osmNodeIds.buffer, lastBarrier, length);
-                        partNodeIds.set(length - 1, newNodeId);
-                        addOSMWay(partNodeIds, edgeFlags, way);
+                    // create zero length edge for barrier
+                    addBarrierEdge(newNodeId, nodeId, edgeFlags, nodeFlags, way);
+                } else {
+                    // run edge from real first node to shadow node
+                    addBarrierEdge(nodeId, newNodeId, edgeFlags, nodeFlags, way);
 
-                        // create zero length edge for barrier
-                        addBarrierEdge(newNodeId, nodeId, edgeFlags, nodeFlags, way);
-                    } else {
-                        // run edge from real first node to shadow node
-                        addBarrierEdge(nodeId, newNodeId, edgeFlags, nodeFlags, way);
-
-                        // exchange first node for created barrier node
-                        osmNodeIds.set(0, newNodeId);
-                    }
-                    // remember barrier for processing the way behind it
-                    lastBarrier = i;
+                    // exchange first node for created barrier node
+                    osmNodeIds.set(0, newNodeId);
                 }
+                // remember barrier for processing the way behind it
+                lastBarrier = i;
+
+                // ignore this barrier node from now. for example a barrier can be connecting two ways (appear in both
+                // ways) and we only want to add a barrier edge once (but we want to add one).
+                getNodeFlagsMap().put(nodeId, 0);
             }
         }
 
@@ -540,18 +539,6 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         pillarInfo.setNode(nextPillarId, lat, lon, ele);
         getNodeMap().put(osmId, nextPillarId + 3);
         nextPillarId++;
-    }
-
-    /**
-     * The nodeFlags store the encoders to check for accessibility in edgeFlags. E.g. if nodeFlags==3, then the
-     * accessibility of the first two encoders will be check in edgeFlags
-     */
-    private static boolean isOnePassable(List<BooleanEncodedValue> checkEncoders, IntsRef edgeFlags) {
-        for (BooleanEncodedValue accessEnc : checkEncoders) {
-            if (accessEnc.getBool(false, edgeFlags) || accessEnc.getBool(true, edgeFlags))
-                return true;
-        }
-        return false;
     }
 
     void prepareWaysWithRelationInfo(ReaderRelation osmRelation) {
