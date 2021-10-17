@@ -156,9 +156,9 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
      * Define the place of the speedBits in the edge flags for car.
      */
     @Override
-    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix, int index) {
+    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix) {
         // first two bits are reserved for route handling in superclass
-        super.createEncodedValues(registerNewEncodedValue, prefix, index);
+        super.createEncodedValues(registerNewEncodedValue, prefix);
         registerNewEncodedValue.add(avgSpeedEnc = new UnsignedDecimalEncodedValue(EncodingManager.getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
     }
 

@@ -343,39 +343,39 @@ public class FootFlagEncoderTest {
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         // no barrier!
-        assertEquals(0, footEncoder.handleNodeTags(node));
+        assertFalse(footEncoder.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "yes");
         // no barrier!
-        assertEquals(0, footEncoder.handleNodeTags(node));
+        assertFalse(footEncoder.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "no");
         // barrier!
-        assertTrue(footEncoder.handleNodeTags(node) > 0);
+        assertTrue(footEncoder.isBarrier(node));
 
         node.setTag("bicycle", "yes");
         // no barrier!?
-        // assertTrue(footEncoder.handleNodeTags(node) == 0);
+        // assertTrue(footEncoder.handleNodeTags(node) == false);
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "no");
         node.setTag("foot", "yes");
         // no barrier!
-        assertEquals(0, footEncoder.handleNodeTags(node));
+        assertFalse(footEncoder.isBarrier(node));
 
         node.setTag("locked", "yes");
         // barrier!
-        assertTrue(footEncoder.handleNodeTags(node) > 0);
+        assertTrue(footEncoder.isBarrier(node));
 
         node.clearTags();
         node.setTag("barrier", "yes");
         node.setTag("access", "no");
-        assertTrue(footEncoder.handleNodeTags(node) > 0);
+        assertTrue(footEncoder.isBarrier(node));
     }
 
     @Test
@@ -383,9 +383,9 @@ public class FootFlagEncoderTest {
         // by default allow access through the gate for bike & foot!
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "chain");
-        assertEquals(0, footEncoder.handleNodeTags(node));
+        assertFalse(footEncoder.isBarrier(node));
         node.setTag("foot", "no");
-        assertTrue(footEncoder.handleNodeTags(node) > 0);
+        assertTrue(footEncoder.isBarrier(node));
     }
 
     @Test
@@ -393,26 +393,26 @@ public class FootFlagEncoderTest {
         // by default do not block access due to fords!
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("ford", "no");
-        assertEquals(0, footEncoder.handleNodeTags(node));
+        assertFalse(footEncoder.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("ford", "yes");
         // no barrier!
-        assertEquals(0, footEncoder.handleNodeTags(node));
+        assertFalse(footEncoder.isBarrier(node));
 
         // barrier!
         node.setTag("foot", "no");
-        assertTrue(footEncoder.handleNodeTags(node) > 0);
+        assertTrue(footEncoder.isBarrier(node));
 
         FootFlagEncoder tmpEncoder = new FootFlagEncoder(new PMap("block_fords=true"));
         EncodingManager.create(tmpEncoder);
         node = new ReaderNode(1, -1, -1);
         node.setTag("ford", "no");
-        assertEquals(0, tmpEncoder.handleNodeTags(node));
+        assertFalse(tmpEncoder.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("ford", "yes");
-        assertTrue(tmpEncoder.handleNodeTags(node) != 0);
+        assertTrue(tmpEncoder.isBarrier(node));
     }
 
     @Test
@@ -423,36 +423,36 @@ public class FootFlagEncoderTest {
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         // potential barriers are no barrier by default
-        assertEquals(0, tmpFootEncoder.handleNodeTags(node));
+        assertFalse(tmpFootEncoder.isBarrier(node));
         node.setTag("access", "no");
-        assertTrue(tmpFootEncoder.handleNodeTags(node) > 0);
+        assertTrue(tmpFootEncoder.isBarrier(node));
 
         // absolute barriers always block
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "fence");
-        assertTrue(tmpFootEncoder.handleNodeTags(node) > 0);
+        assertTrue(tmpFootEncoder.isBarrier(node));
         node.setTag("barrier", "fence");
         node.setTag("access", "yes");
-        assertFalse(tmpFootEncoder.handleNodeTags(node) > 0);
+        assertFalse(tmpFootEncoder.isBarrier(node));
 
         // pass potential barriers per default (if no other access tag exists)
         tmpFootEncoder = new FootFlagEncoder();
         EncodingManager.create(tmpFootEncoder);
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
-        assertFalse(tmpFootEncoder.handleNodeTags(node) > 0);
+        assertFalse(tmpFootEncoder.isBarrier(node));
         node.setTag("access", "yes");
-        assertEquals(0, tmpFootEncoder.handleNodeTags(node));
+        assertFalse(tmpFootEncoder.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "fence");
-        assertTrue(tmpFootEncoder.handleNodeTags(node) > 0);
+        assertTrue(tmpFootEncoder.isBarrier(node));
 
         // don't block potential barriers: barrier:cattle_grid should not block here
         tmpFootEncoder = new FootFlagEncoder();
         EncodingManager.create(tmpFootEncoder);
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "cattle_grid");
-        assertEquals(0, tmpFootEncoder.handleNodeTags(node));
+        assertFalse(tmpFootEncoder.isBarrier(node));
     }
 }
