@@ -8,7 +8,7 @@
 ### 4.0 [29 Sep 2021]
 
 - faster node-based CH preparation (~20%), (#2390)
-- more flexible ElevationProvider interface, support providing elevation via node tags (#2374, #23281)
+- more flexible ElevationProvider interface, support providing elevation via node tags (#2374, #2381)
 - added country encoded value for all countries (#2353)
 - bike improvements (#2357, #2371, #2389)
 - improved handling of barriers (#2345, #2340, #2406)
