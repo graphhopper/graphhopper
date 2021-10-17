@@ -607,48 +607,6 @@ public class OSMReaderTest {
         assertEquals(17.5, edge_cd.get(weightEnc), 1e-5);
     }
 
-//    @Test
-//    public void testEstimatedDistance() {
-//        final CarFlagEncoder encoder = new CarFlagEncoder();
-//        EncodingManager manager = EncodingManager.create(encoder);
-//        GraphHopperStorage ghStorage = newGraph(dir, manager, false, false);
-//        final Map<Integer, Double> latMap = new HashMap<>();
-//        final Map<Integer, Double> lonMap = new HashMap<>();
-//        latMap.put(1, 1.1d);
-//        latMap.put(2, 1.2d);
-//
-//        lonMap.put(1, 1.0d);
-//        lonMap.put(2, 1.0d);
-//
-//        OSMReader osmreader = new OSMReader(ghStorage, new OSMReaderConfig()) {
-//             mock data access
-//            @Override
-//            double getTmpLatitude(int id) {
-//                return latMap.get(id);
-//            }
-//
-//            @Override
-//            double getTmpLongitude(int id) {
-//                return lonMap.get(id);
-//            }
-//
-//            @Override
-//            void handleSegment(LongArrayList segment, ReaderWay way, Map<String, Object> nodeTags) {
-//            }
-//        };
-//
-//        ReaderWay way = new ReaderWay(1L);
-//        way.getNodes().add(1);
-//        way.getNodes().add(2);
-//        way.setTag("highway", "motorway");
-//        osmreader.getNodeMap().put(1, 1);
-//        osmreader.getNodeMap().put(2, 2);
-//        osmreader.processWay(way);
-//
-//        Double d = way.getTag("estimated_distance", null);
-//        assertEquals(11119.5, d, 1e-1);
-//    }
-
     @Test
     public void testReadEleFromDataProvider() {
         GraphHopper hopper = new GraphHopperFacade("test-osm5.xml");

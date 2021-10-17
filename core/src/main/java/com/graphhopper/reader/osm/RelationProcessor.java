@@ -18,7 +18,6 @@
 
 package com.graphhopper.reader.osm;
 
-import com.carrotsearch.hppc.procedures.LongIntProcedure;
 import com.graphhopper.reader.ReaderRelation;
 
 import java.util.function.LongToIntFunction;

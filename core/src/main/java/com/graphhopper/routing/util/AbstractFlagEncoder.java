@@ -154,11 +154,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     public abstract EncodingManager.Access getAccess(ReaderWay way);
 
     /**
-     * Parse tags on nodes. Node tags can add to speed (like traffic_signals) where the value is
-     * strict negative or blocks access (like a barrier), then the value is strictly positive. This
-     * method is called in the second parsing step.
-     *
-     * @return encoded values or 0 if not blocking or no value stored
+     * @return true if the given OSM node blocks access for this vehicle, false otherwise
      */
     public boolean isBarrier(ReaderNode node) {
         boolean blockByDefault = node.hasTag("barrier", blockByDefaultBarriers);
