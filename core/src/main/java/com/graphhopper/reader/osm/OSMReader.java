@@ -94,6 +94,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     protected long zeroCounter = 0;
     protected PillarInfo pillarInfo;
     private long locations;
+    private long ignoredBarrierNodes;
     private final EncodingManager encodingManager;
     // Choosing the best Map<Long, Integer> is hard. We need a memory efficient and fast solution for big data sets!
     //
@@ -525,9 +526,10 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         if (node.hasTags()) {
             long nodeFlags = encodingManager.handleNodeTags(node);
             if (nodeFlags != 0)
-                if (nodeType == JUNCTION_NODE)
+                if (nodeType == JUNCTION_NODE) {
                     LOGGER.debug("OSM node {} at {},{} is a barrier node at a junction, the barrier will be ignored", node.getId(), Helper.round(node.getLat(), 7), Helper.round(node.getLon(), 7));
-                else
+                    ignoredBarrierNodes++;
+                } else
                     getNodeFlagsMap().put(node.getId(), nodeFlags);
         }
 
@@ -966,6 +968,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
     private void printInfo(String str) {
         LOGGER.info("finished " + str + " processing." + " nodes: " + graph.getNodes()
+                + ", ignored barrier nodes at junctions: " + nf(ignoredBarrierNodes)
                 + ", osmIdMap.size:" + getNodeMap().getSize() + ", osmIdMap:" + getNodeMap().getMemoryUsage() + "MB"
                 + ", nodeFlagsMap.size:" + getNodeFlagsMap().size() + ", relFlagsMap.size:" + getRelFlagsMapSize()
                 + ", zeroCounter:" + zeroCounter
