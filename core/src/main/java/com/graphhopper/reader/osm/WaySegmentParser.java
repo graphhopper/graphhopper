@@ -81,6 +81,8 @@ public class WaySegmentParser {
     private Date timestamp;
 
     /**
+     * todonow: probably better move javadocs to setters of builder
+     *
      * @param wayFilter            return false for OSM ways that should be ignored and true otherwise
      * @param splitNodeFilter      return true if the given OSM node should be duplicated to create an artificial edge
      * @param wayPreprocessor      callback function that is called for each accepted OSM way during the first pass
@@ -89,10 +91,10 @@ public class WaySegmentParser {
      * @param edgeHandler          callback function that is called for each edge (way segment)
      * @param workerThreads        the number of threads used for the low level reading of the OSM file
      */
-    public WaySegmentParser(GraphHopperStorage graph, ElevationProvider eleProvider,
-                            Predicate<ReaderWay> wayFilter, Predicate<ReaderNode> splitNodeFilter, WayPreprocessor wayPreprocessor,
-                            Consumer<ReaderRelation> relationPreprocessor, RelationProcessor relationProcessor,
-                            EdgeHandler edgeHandler, int workerThreads) {
+    private WaySegmentParser(GraphHopperStorage graph, ElevationProvider eleProvider,
+                             Predicate<ReaderWay> wayFilter, Predicate<ReaderNode> splitNodeFilter, WayPreprocessor wayPreprocessor,
+                             Consumer<ReaderRelation> relationPreprocessor, RelationProcessor relationProcessor,
+                             EdgeHandler edgeHandler, int workerThreads) {
         this.graph = graph;
         this.eleProvider = eleProvider;
         this.wayFilter = wayFilter;
@@ -121,6 +123,8 @@ public class WaySegmentParser {
         long nodes = nodeData.getNodeCount();
 
         LOGGER.info("Creating graph. Node count (pillar+tower): " + nodes + ", " + Helper.getMemInfo());
+        // todonow: get rid of graph field. creating the graph with the right size seems like an optimization with
+        // with little benefits
         graph.create(Math.max(nodes / 50, 100));
 
         LOGGER.info("pass2 - start");
@@ -128,7 +132,7 @@ public class WaySegmentParser {
         readOSM(osmFile, new Pass2Handler());
         LOGGER.info("pass2 - finished, took: {}", sw2.stop().getTimeString());
 
-        release();
+        nodeData.release();
 
         LOGGER.info("Finished reading OSM file." +
                 " pass1: " + (int) sw1.getSeconds() + "s, " +
@@ -410,10 +414,6 @@ public class WaySegmentParser {
         }
     }
 
-    void release() {
-        nodeData.release();
-    }
-
     private void readOSM(File file, ReaderElementHandler handler) {
         try (OSMInput osmInput = openOsmInputFile(file)) {
             ReaderElement elem;
@@ -429,6 +429,73 @@ public class WaySegmentParser {
 
     protected OSMInput openOsmInputFile(File osmFile) throws XMLStreamException, IOException {
         return new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
+    }
+
+    public static class Builder {
+        private final GraphHopperStorage graph;
+        private ElevationProvider elevationProvider = ElevationProvider.NOOP;
+        private Predicate<ReaderWay> wayFilter = way -> true;
+        private Predicate<ReaderNode> splitNodeFilter = node -> false;
+        private WayPreprocessor wayPreprocessor = (first, last, way) -> {
+        };
+        private Consumer<ReaderRelation> relationPreprocessor = relation -> {
+        };
+        private RelationProcessor relationProcessor = (relation, map) -> {
+        };
+        private EdgeHandler edgeHandler = (from, to, pointList, way, nodeTags) ->
+                System.out.println("edge " + from + "->" + to + " (" + pointList.size() + " points)");
+        private int workerThreads = 2;
+
+        public Builder(GraphHopperStorage graph) {
+            this.graph = graph;
+        }
+
+        public Builder setElevationProvider(ElevationProvider elevationProvider) {
+            this.elevationProvider = elevationProvider;
+            return this;
+        }
+
+        public Builder setWayFilter(Predicate<ReaderWay> wayFilter) {
+            this.wayFilter = wayFilter;
+            return this;
+        }
+
+        public Builder setSplitNodeFilter(Predicate<ReaderNode> splitNodeFilter) {
+            this.splitNodeFilter = splitNodeFilter;
+            return this;
+        }
+
+        public Builder setWayPreprocessor(WayPreprocessor wayPreprocessor) {
+            this.wayPreprocessor = wayPreprocessor;
+            return this;
+        }
+
+        public Builder setRelationPreprocessor(Consumer<ReaderRelation> relationPreprocessor) {
+            this.relationPreprocessor = relationPreprocessor;
+            return this;
+        }
+
+        public Builder setRelationProcessor(RelationProcessor relationProcessor) {
+            this.relationProcessor = relationProcessor;
+            return this;
+        }
+
+        public Builder setEdgeHandler(EdgeHandler edgeHandler) {
+            this.edgeHandler = edgeHandler;
+            return this;
+        }
+
+        public Builder setWorkerThreads(int workerThreads) {
+            this.workerThreads = workerThreads;
+            return this;
+        }
+
+        public WaySegmentParser build() {
+            return new WaySegmentParser(
+                    graph, elevationProvider, wayFilter, splitNodeFilter, wayPreprocessor, relationPreprocessor, relationProcessor,
+                    edgeHandler, workerThreads
+            );
+        }
     }
 
 }

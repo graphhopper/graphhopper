@@ -136,9 +136,16 @@ public class OSMReader {
         if (!osmFile.exists())
             throw new IllegalStateException("Your specified OSM file does not exist:" + osmFile.getAbsolutePath());
 
-        WaySegmentParser waySegmentParser = new WaySegmentParser(ghStorage, eleProvider, this::acceptWay,
-                this::isBarrierNode, this::preprocessWay, this::preprocessRelations, this::processRelation,
-                this::addEdge, config.getWorkerThreads());
+        WaySegmentParser waySegmentParser = new WaySegmentParser.Builder(ghStorage)
+                .setElevationProvider(eleProvider)
+                .setWayFilter(this::acceptWay)
+                .setSplitNodeFilter(this::isBarrierNode)
+                .setWayPreprocessor(this::preprocessWay)
+                .setRelationPreprocessor(this::preprocessRelations)
+                .setRelationProcessor(this::processRelation)
+                .setEdgeHandler(this::addEdge)
+                .setWorkerThreads(config.getWorkerThreads())
+                .build();
         waySegmentParser.readOSM(osmFile);
         osmDataDate = waySegmentParser.getTimeStamp();
         if (ghStorage.getNodes() == 0)
