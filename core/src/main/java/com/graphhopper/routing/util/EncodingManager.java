@@ -421,15 +421,11 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     private void addEncoder(AbstractFlagEncoder encoder) {
-        int encoderCount = edgeEncoders.size();
-
         encoder.setEncodedValueLookup(this);
         List<EncodedValue> list = new ArrayList<>();
-        encoder.createEncodedValues(list, encoder.toString(), encoderCount);
-        for (EncodedValue ev : list) {
+        encoder.createEncodedValues(list, encoder.toString());
+        for (EncodedValue ev : list)
             addEncodedValue(ev, true);
-        }
-
         edgeEncoders.add(encoder);
     }
 
@@ -653,8 +649,9 @@ public class EncodingManager implements EncodedValueLookup {
      */
     public long handleNodeTags(ReaderNode node) {
         long flags = 0;
-        for (AbstractFlagEncoder encoder : edgeEncoders) {
-            flags |= encoder.handleNodeTags(node);
+        for (int i = 0, edgeEncodersSize = edgeEncoders.size(); i < edgeEncodersSize; i++) {
+            AbstractFlagEncoder encoder = edgeEncoders.get(i);
+            flags |= (encoder.isBarrier(node) ? 1L << i : 0);
         }
 
         return flags;
