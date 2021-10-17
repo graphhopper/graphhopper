@@ -18,7 +18,6 @@
 
 package com.graphhopper.reader.osm;
 
-import com.carrotsearch.hppc.LongArrayList;
 import com.carrotsearch.hppc.LongIndexedContainer;
 import com.carrotsearch.hppc.cursors.LongCursor;
 import com.graphhopper.reader.ReaderElement;
@@ -38,7 +37,9 @@ import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -262,27 +263,30 @@ public class WaySegmentParser {
         }
 
         private void splitWayAtJunctionsAndEmptySections(ReaderWay way) {
-            LongArrayList segment = new LongArrayList();
-            for (LongCursor node : way.getNodes()) {
-                int id = nodeData.getId(node.value);
-                if (!nodeData.isNodeId(id)) {
+            List<SegmentNode> fullSegment = new ArrayList<>();
+            for (LongCursor node : way.getNodes())
+                fullSegment.add(new SegmentNode(node.value, nodeData.getId(node.value)));
+
+            List<SegmentNode> segment = new ArrayList<>();
+            for (SegmentNode node : fullSegment) {
+                if (!nodeData.isNodeId(node.id)) {
                     // this node exists in ways, but not in nodes. we ignore it, but we split the way when we encounter
                     // such a missing node. for example an OSM way might lead out of an area where nodes are available and
                     // back into it. we do not want to connect the exit/entry points using a straight line. this usually
                     // should only happen for OSM extracts
                     if (segment.size() > 1) {
                         splitLoopSegments(segment, way);
-                        segment = new LongArrayList();
+                        segment = new ArrayList<>();
                     }
-                } else if (nodeData.isTowerNode(id)) {
+                } else if (nodeData.isTowerNode(node.id)) {
                     if (!segment.isEmpty()) {
-                        segment.add(node.value);
+                        segment.add(node);
                         splitLoopSegments(segment, way);
-                        segment = new LongArrayList();
+                        segment = new ArrayList<>();
                     }
-                    segment.add(node.value);
+                    segment.add(node);
                 } else {
-                    segment.add(node.value);
+                    segment.add(node);
                 }
             }
             // the last segment might end at the end of the way
@@ -290,79 +294,79 @@ public class WaySegmentParser {
                 splitLoopSegments(segment, way);
         }
 
-        private void splitLoopSegments(LongArrayList segment, ReaderWay way) {
+        private void splitLoopSegments(List<SegmentNode> segment, ReaderWay way) {
             if (segment.size() < 2)
                 throw new IllegalStateException("Segment size must be >= 2, but was: " + segment.size());
 
-            boolean isLoop = segment.get(0) == segment.get(segment.size() - 1);
+            boolean isLoop = segment.get(0).osmNodeId == segment.get(segment.size() - 1).osmNodeId;
             if (segment.size() == 2 && isLoop) {
-                LOGGER.warn("Loop in OSM way: {}, will be ignored, duplicate node: {}", way.getId(), segment.get(0));
+                LOGGER.warn("Loop in OSM way: {}, will be ignored, duplicate node: {}", way.getId(), segment.get(0).osmNodeId);
             } else if (isLoop) {
                 // split into two segments
-                LongArrayList segment1 = new LongArrayList(segment.size() - 1);
-                segment1.add(segment.buffer, 0, segment.size() - 1);
-                splitSegmentAtSplitNodes(segment1, way);
-                LongArrayList segment2 = new LongArrayList(segment.size());
-                segment2.add(segment.buffer, segment.size() - 2, 2);
-                splitSegmentAtSplitNodes(segment2, way);
+                splitSegmentAtSplitNodes(segment.subList(0, segment.size() - 1), way);
+                splitSegmentAtSplitNodes(segment.subList(segment.size() - 2, segment.size()), way);
             } else {
                 splitSegmentAtSplitNodes(segment, way);
             }
         }
 
-        private void splitSegmentAtSplitNodes(LongArrayList parentSegment, ReaderWay way) {
-            LongArrayList segment = new LongArrayList();
-            for (LongCursor node : parentSegment) {
-                Map<String, Object> nodeTags = nodeData.getTags(node.value);
+        private void splitSegmentAtSplitNodes(List<SegmentNode> parentSegment, ReaderWay way) {
+            List<SegmentNode> segment = new ArrayList<>();
+            for (int i = 0; i < parentSegment.size(); i++) {
+                SegmentNode node = parentSegment.get(i);
+                Map<String, Object> nodeTags = nodeData.getTags(node.osmNodeId);
 //             todonow: currently we interpret existing node tags as barrier nodes, but need to change this!
                 if (!nodeTags.isEmpty()) {
-                    // this node is a barrier. we will copy this node and add an extra edge
-                    long barrierFrom = node.value;
-                    long barrierTo = nodeData.addCopyOfNode(barrierFrom);
-                    if (node.index == parentSegment.size() - 1) {
+                    // this node is a barrier. we will copy it and add an extra edge
+                    SegmentNode barrierFrom = node;
+                    SegmentNode barrierTo = nodeData.addCopyOfNode(node.osmNodeId);
+                    if (i == parentSegment.size() - 1) {
                         // make sure the barrier node is always on the inside of the segment
-                        long tmp = barrierFrom;
+                        SegmentNode tmp = barrierFrom;
                         barrierFrom = barrierTo;
                         barrierTo = tmp;
                     }
                     if (!segment.isEmpty()) {
                         segment.add(barrierFrom);
                         handleSegment(segment, way, emptyMap());
-                        segment = new LongArrayList();
+                        segment = new ArrayList<>();
                     }
                     segment.add(barrierFrom);
                     segment.add(barrierTo);
                     handleSegment(segment, way, nodeTags);
-                    segment = new LongArrayList();
+                    segment = new ArrayList<>();
                     segment.add(barrierTo);
 
                     // ignore this barrier node from now. for example a barrier can be connecting two ways (appear in both
                     // ways) and we only want to add a barrier edge once (but we want to add one).
-                    nodeData.removeTags(node.value);
+                    nodeData.removeTags(node.osmNodeId);
                 } else {
-                    segment.add(node.value);
+                    segment.add(node);
                 }
             }
             if (segment.size() > 1)
                 handleSegment(segment, way, emptyMap());
         }
 
-        void handleSegment(LongArrayList segment, ReaderWay way, Map<String, Object> nodeTags) {
+        void handleSegment(List<SegmentNode> segment, ReaderWay way, Map<String, Object> nodeTags) {
             final PointList pointList = new PointList(segment.size(), nodeData.is3D());
             int from = -1;
             int to = -1;
-            for (LongCursor node : segment) {
-                int id = nodeData.getId(node.value);
+            for (int i = 0; i < segment.size(); i++) {
+                SegmentNode node = segment.get(i);
+                int id = node.id;
                 if (!nodeData.isNodeId(id))
-                    throw new IllegalStateException("Invalid id for node: " + node.value + " when handling segment " + segment + " for way: " + way.getId());
+                    throw new IllegalStateException("Invalid id for node: " + node.osmNodeId + " when handling segment " + segment + " for way: " + way.getId());
 
-                if (nodeData.isPillarNode(id) && (node.index == 0 || node.index == segment.size() - 1))
+                if (nodeData.isPillarNode(id) && (i == 0 || i == segment.size() - 1)) {
                     // todonow: can we simplify the code here a bit and do not pass the osm id here?
-                    id = nodeData.convertPillarToTowerNode(id, node.value);
+                    id = nodeData.convertPillarToTowerNode(id, node.osmNodeId);
+                    node.id = id;
+                }
 
-                if (node.index == 0)
+                if (i == 0)
                     from = nodeData.idToTowerNode(id);
-                else if (node.index == segment.size() - 1)
+                else if (i == segment.size() - 1)
                     to = nodeData.idToTowerNode(id);
                 else if (nodeData.isTowerNode(id))
                     throw new IllegalStateException("Tower nodes should only appear at the end of segments, way: " + way.getId());

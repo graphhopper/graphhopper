@@ -175,17 +175,17 @@ class OSMNodeData {
     /**
      * Creates a copy of the coordinates stored for the given OSM node ID
      *
-     * @return the (artificial) OSM node ID created for the copied node
+     * @return the (artificial) OSM node ID created for the copied node and the associated ID
      */
-    long addCopyOfNode(long osmNodeId) {
+    SegmentNode addCopyOfNode(long osmNodeId) {
         GHPoint3D point = getCoordinates(osmNodeId);
         if (point == null)
             throw new IllegalStateException("Cannot copy node : " + osmNodeId + ", because it is missing");
-        final long osmId = nextArtificialOSMNodeId++;
-        if (idsByOsmNodeIds.put(osmId, INTERMEDIATE_NODE) != EMPTY_NODE)
-            throw new IllegalStateException("Artificial osm node id already exists: " + osmId);
-        addPillarNode(osmId, point.getLat(), point.getLon(), point.getEle());
-        return osmId;
+        final long newOsmId = nextArtificialOSMNodeId++;
+        if (idsByOsmNodeIds.put(newOsmId, INTERMEDIATE_NODE) != EMPTY_NODE)
+            throw new IllegalStateException("Artificial osm node id already exists: " + newOsmId);
+        int id = addPillarNode(newOsmId, point.getLat(), point.getLon(), point.getEle());
+        return new SegmentNode(newOsmId, id);
     }
 
     int convertPillarToTowerNode(int id, long osmNodeId) {

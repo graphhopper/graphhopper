@@ -193,7 +193,7 @@ public class OSMReader {
         GHPoint estimatedCenter = null;
         if (!Double.isNaN(firstLat) && !Double.isNaN(firstLon) && !Double.isNaN(lastLat) && !Double.isNaN(lastLon)) {
             double estimatedDist = distCalc.calcDist(firstLat, firstLon, lastLat, lastLon);
-            // Add artificial tag for the estimated distance and center
+            // Add artificial tag for the estimated distance
             way.setTag("estimated_distance", estimatedDist);
             estimatedCenter = new GHPoint((firstLat + lastLat) / 2, (firstLon + lastLon) / 2);
         }
