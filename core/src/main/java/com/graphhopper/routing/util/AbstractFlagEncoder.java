@@ -160,7 +160,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      *
      * @return encoded values or 0 if not blocking or no value stored
      */
-    public boolean handleNodeTags(ReaderNode node) {
+    public boolean isBarrier(ReaderNode node) {
         boolean blockByDefault = node.hasTag("barrier", blockByDefaultBarriers);
         if (blockByDefault || node.hasTag("barrier", passByDefaultBarriers)) {
             boolean locked = node.hasTag("locked", "yes");
