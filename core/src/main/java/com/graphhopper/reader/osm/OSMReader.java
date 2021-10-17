@@ -288,7 +288,7 @@ public class OSMReader {
             towerNodeDistance = maxDistance;
         }
 
-IntsRef edgeFlags = (IntsRef) way.getTags().get("gh:flags");
+        IntsRef edgeFlags = (IntsRef) way.getTags().get("gh:flags");
         if (edgeFlags.isEmpty())
             return;
 
