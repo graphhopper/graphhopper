@@ -131,8 +131,8 @@ public class WaySegmentParser {
         release();
 
         LOGGER.info("Finished reading OSM file." +
-                " pass1: " + (int) sw1.getSeconds() + "s" +
-                " pass2: " + (int) sw2.getSeconds() + "s" +
+                " pass1: " + (int) sw1.getSeconds() + "s, " +
+                " pass2: " + (int) sw2.getSeconds() + "s, " +
                 " total: " + (int) (sw1.getSeconds() + sw2.getSeconds()) + "s");
     }
 
@@ -397,8 +397,8 @@ public class WaySegmentParser {
 
         @Override
         public void onFinish() {
-            LOGGER.info("pass2 - way nodes: {}, with tags: {}, ignored barriers at junctions: {}",
-                    nf(acceptedNodes), nf(nodeData.getTaggedNodeCount()), nf(ignoredSplitNodes));
+            LOGGER.info("pass2 - finished, processed ways: {}, way nodes: {}, with tags: {}, ignored barriers at junctions: {}",
+                    nf(wayCounter), nf(acceptedNodes), nf(nodeData.getTaggedNodeCount()), nf(ignoredSplitNodes));
         }
 
         public int getInternalNodeIdOfOSMNode(long nodeOsmId) {
