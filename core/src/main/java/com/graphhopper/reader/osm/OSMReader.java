@@ -288,16 +288,7 @@ public class OSMReader {
             towerNodeDistance = maxDistance;
         }
 
-        IntsRef relationFlags = encodingManager.createRelationFlags();
-        List<ReaderRelation> relations = osmRelationsByWayID.getOrDefault(way.getId(), emptyList());
-        for (ReaderRelation relation : relations)
-            relationFlags = encodingManager.handleRelationTags(relation, relationFlags);
-
-        EncodingManager.AcceptWay acceptWay = new EncodingManager.AcceptWay();
-        if (!encodingManager.acceptWay(way, acceptWay))
-            throw new IllegalStateException("unaccepted way: " + way.getId());
-
-        IntsRef edgeFlags = encodingManager.handleWayTags(way, acceptWay, relationFlags);
+IntsRef edgeFlags = (IntsRef) way.getTags().get("gh:flags");
         if (edgeFlags.isEmpty())
             return;
 
@@ -342,6 +333,17 @@ public class OSMReader {
 
     private void preprocessWay(GHPoint first, GHPoint last, ReaderWay way) {
         setArtificialWayTags(first, last, way);
+        IntsRef relationFlags = encodingManager.createRelationFlags();
+        List<ReaderRelation> relations = osmRelationsByWayID.getOrDefault(way.getId(), emptyList());
+        for (ReaderRelation relation : relations)
+            relationFlags = encodingManager.handleRelationTags(relation, relationFlags);
+
+        EncodingManager.AcceptWay acceptWay = new EncodingManager.AcceptWay();
+        if (!encodingManager.acceptWay(way, acceptWay))
+            throw new IllegalStateException("unaccepted way: " + way.getId());
+
+        IntsRef edgeFlags = encodingManager.handleWayTags(way, acceptWay, relationFlags);
+        way.setTag("gh:flags", edgeFlags);
     }
 
     /**
