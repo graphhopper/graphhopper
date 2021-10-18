@@ -36,32 +36,8 @@ import static org.junit.jupiter.api.Assertions.*;
 public class EncodingManagerTest {
 
     @Test
-    public void testCompatibility() {
-        EncodingManager manager = EncodingManager.create("car,bike,foot");
-        BikeFlagEncoder bike = (BikeFlagEncoder) manager.getEncoder("bike");
-        CarFlagEncoder car = (CarFlagEncoder) manager.getEncoder("car");
-        FootFlagEncoder foot = (FootFlagEncoder) manager.getEncoder("foot");
-        assertNotEquals(car, bike);
-        assertNotEquals(car, foot);
-        assertNotEquals(car.hashCode(), bike.hashCode());
-        assertNotEquals(car.hashCode(), foot.hashCode());
-
-        FootFlagEncoder foot2 = new FootFlagEncoder();
-        EncodingManager.create(foot2);
-        assertNotEquals(foot, foot2);
-        assertNotEquals(foot.hashCode(), foot2.hashCode());
-
-        FootFlagEncoder foot3 = new FootFlagEncoder();
-        EncodingManager.create(foot3);
-        assertEquals(foot3, foot2);
-        assertEquals(foot3.hashCode(), foot2.hashCode());
-
-        try {
-            EncodingManager.create("car,car");
-            fail("there should have been an exception, do not allow duplicate flag encoders");
-        } catch (Exception ex) {
-            // ok
-        }
+    public void duplicateNamesNotAllowed() {
+        assertThrows(IllegalArgumentException.class, () -> EncodingManager.create("car,car"));
     }
 
     @Test
