@@ -31,13 +31,13 @@ import java.util.Arrays;
  * @author Peter Karich
  */
 public class GHLongIntBTree implements LongIntMap {
+    private final static Logger logger = LoggerFactory.getLogger(GHLongIntBTree.class);
     private final int noNumberValue = -1;
-    private Logger logger = LoggerFactory.getLogger(getClass());
+    private final int maxLeafEntries;
+    private final int initLeafSize;
+    private final int splitIndex;
+    private final float factor;
     private long size;
-    private int maxLeafEntries;
-    private int initLeafSize;
-    private int splitIndex;
-    private float factor;
     private int height;
     private BTreeEntry root;
 
@@ -64,8 +64,7 @@ public class GHLongIntBTree implements LongIntMap {
         clear();
     }
 
-    // LATER: see OSMIDMap for a version where we use DataAccess
-    static int binarySearch(long keys[], int start, int len, long key) {
+    static int binarySearch(long[] keys, int start, int len, long key) {
         int high = start + len, low = start - 1, guess;
         while (high - low > 1) {
             // use >>> for average or we could get an integer overflow.
@@ -184,9 +183,9 @@ public class GHLongIntBTree implements LongIntMap {
 
     class BTreeEntry {
         int entrySize;
-        long keys[];
-        int values[];
-        BTreeEntry children[];
+        long[] keys;
+        int[] values;
+        BTreeEntry[] children;
         boolean isLeaf;
 
         public BTreeEntry(int tmpSize, boolean leaf) {
