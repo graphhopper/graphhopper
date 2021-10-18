@@ -36,6 +36,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
@@ -50,7 +51,7 @@ import static com.graphhopper.util.Helper.*;
  * @author Peter Karich
  */
 public class LMPreparationHandler {
-    private final Logger LOGGER = LoggerFactory.getLogger(LMPreparationHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LMPreparationHandler.class);
     private int landmarkCount = 16;
 
     private final List<PrepareLandmarks> preparations = new ArrayList<>();
@@ -290,11 +291,16 @@ public class LMPreparationHandler {
     private JsonFeatureCollection loadLandmarkSplittingFeatureCollection(String splitAreaLocation) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JtsModule());
+        URL builtinSplittingFile = LandmarkStorage.class.getResource("map.geo.json");
         try (Reader reader = splitAreaLocation.isEmpty() ?
-                new InputStreamReader(LandmarkStorage.class.getResource("map.geo.json").openStream(), UTF_CS) :
+                new InputStreamReader(builtinSplittingFile.openStream(), UTF_CS) :
                 new InputStreamReader(new FileInputStream(splitAreaLocation), UTF_CS)) {
             JsonFeatureCollection result = objectMapper.readValue(reader, JsonFeatureCollection.class);
-            LOGGER.info("Loaded landmark splitting collection from " + splitAreaLocation);
+            if (splitAreaLocation.isEmpty()) {
+                LOGGER.info("Loaded built-in landmark splitting collection from {}", builtinSplittingFile);
+            } else {
+                LOGGER.info("Loaded landmark splitting collection from {}", splitAreaLocation);
+            }
             return result;
         } catch (IOException e) {
             LOGGER.error("Problem while reading border map GeoJSON. Skipping this.", e);
