@@ -372,7 +372,7 @@ public class OSMReader {
                 }
             }
             // we remove the members because all we really want to keep are the tags
-            relation.getMembers().clear();
+            relation.setMembers(null);
         }
 
         if (relation.hasTag("type", "restriction")) {

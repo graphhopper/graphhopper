@@ -46,6 +46,10 @@ public class ReaderRelation extends ReaderElement {
         return members;
     }
 
+    public void setMembers(List<Member> members) {
+        this.members = members;
+    }
+
     public boolean isMetaRelation() {
         if (members != null)
             for (Member member : members) {
