@@ -36,6 +36,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
@@ -290,12 +291,13 @@ public class LMPreparationHandler {
     private JsonFeatureCollection loadLandmarkSplittingFeatureCollection(String splitAreaLocation) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JtsModule());
+        URL builtinSplittingFile = LandmarkStorage.class.getResource("map.geo.json");
         try (Reader reader = splitAreaLocation.isEmpty() ?
-                new InputStreamReader(LandmarkStorage.class.getResourceAsStream("map.geo.json"), UTF_CS) :
+                new InputStreamReader(builtinSplittingFile.openStream(), UTF_CS) :
                 new InputStreamReader(new FileInputStream(splitAreaLocation), UTF_CS)) {
             JsonFeatureCollection result = objectMapper.readValue(reader, JsonFeatureCollection.class);
             if (splitAreaLocation.isEmpty()) {
-                LOGGER.info("Loaded built-in landmark splitting collection");
+                LOGGER.info("Loaded built-in landmark splitting collection from {}", builtinSplittingFile);
             } else {
                 LOGGER.info("Loaded landmark splitting collection from {}", splitAreaLocation);
             }
