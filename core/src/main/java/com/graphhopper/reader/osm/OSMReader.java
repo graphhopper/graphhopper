@@ -553,7 +553,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             }
         }
         // we remove the members because all we really want to keep are the tags
-        relation.getMembers().clear();
+        relation.setMembers(null);
     }
 
     int addTowerNode(long osmId, double lat, double lon, double ele) {
