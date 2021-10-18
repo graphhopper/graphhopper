@@ -2354,25 +2354,29 @@ public class GraphHopperTest {
         {
             // these are bollards that are located right on a junction. this should never happen according to OSM mapping
             // rules, but it still does. the problem with such barriers is that we can only block one direction and it
-            // is unclear which one is right
+            // is unclear which one is right. therefore we simply ignore such barriers.
 
-            // here the barrier node actually disconnects a dead-end road that should rather be connected!
+            // here the barrier node actually disconnected a dead-end road that should rather be connected before we
+            // started ignoring barriers at junctions.
             GHResponse carRsp = hopper.route(new GHRequest(51.327121, 12.572396, 51.327173, 12.574038).setProfile("car"));
-            assertTrue(carRsp.hasErrors() && carRsp.getErrors().toString().contains("Connection between locations not found"), carRsp.getErrors().toString());
+            assertEquals(124, carRsp.getBest().getDistance(), 1);
             GHResponse bikeRsp = hopper.route(new GHRequest(51.327121, 12.572396, 51.327173, 12.574038).setProfile("bike"));
             assertEquals(124, bikeRsp.getBest().getDistance(), 1);
 
-            // Here the barrier node prevents us from travelling straight along Pufendorfstraße. Entering Pufendorfstraße
-            // from 'An der Streuobstwiese' is allowed though, but this seems wrong. We probably add a wrong barrier
-            // edge here (the mapping was fixed in newer OSM versions, so the barrier is no longer at the junction)
+            // Here the barrier could prevent us from travelling straight along Pufendorfstraße. But it could also
+            // prevent us from turning from Pufendorfstraße onto 'An der Streuobstwiese' (or vice versa). What should
+            // be allowed depends on whether the barrier is before or behind the junction. And since we can't tell
+            // we just ignore this barrier. Note that the mapping was fixed in newer OSM versions, so the barrier is no
+            // longer at the junction
             carRsp = hopper.route(new GHRequest(51.344134, 12.317986, 51.344231, 12.317482).setProfile("car"));
-            assertEquals(393, carRsp.getBest().getDistance(), 1);
+            assertEquals(36, carRsp.getBest().getDistance(), 1);
             bikeRsp = hopper.route(new GHRequest(51.344134, 12.317986, 51.344231, 12.317482).setProfile("bike"));
             assertEquals(36, bikeRsp.getBest().getDistance(), 1);
 
-            // Here we have to go all the way around, but not sure if this is the intended effect of this bollard node
+            // Here we'd have to go all the way around, but the bollard node could also mean that continuing on Adenauerallee
+            // is fine, and we just cannot enter the little path. Since we cannot tell we just ignore this barrier.
             carRsp = hopper.route(new GHRequest(51.355455, 12.40202, 51.355318, 12.401741).setProfile("car"));
-            assertEquals(1217, carRsp.getBest().getDistance(), 1);
+            assertEquals(24, carRsp.getBest().getDistance(), 1);
             bikeRsp = hopper.route(new GHRequest(51.355455, 12.40202, 51.355318, 12.401741).setProfile("bike"));
             assertEquals(24, bikeRsp.getBest().getDistance(), 1);
         }

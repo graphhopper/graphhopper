@@ -39,7 +39,6 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
-import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -352,7 +351,9 @@ public class OSMReaderTest {
                 importOrLoad();
 
         Graph graph = hopper.getGraphHopperStorage();
-        assertEquals(8, graph.getNodes());
+        // we ignore the barrier at node 50
+        assertEquals(7, graph.getNodes());
+        assertEquals(7, graph.getEdges());
 
         int n10 = AbstractGraphStorageTester.getIdOf(graph, 51);
         int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
@@ -458,21 +459,24 @@ public class OSMReaderTest {
                 setMinNetworkSize(0).
                 importOrLoad();
         Graph graph = hopper.getGraphHopperStorage();
-        assertEquals(8, graph.getNodes());
+        // we ignore the barrier at node 50
+        // 10-20-30 produces three edges: 10-20, 20-2x, 2x-30, the second one is a barrier edge
+        assertEquals(7, graph.getNodes());
+        assertEquals(7, graph.getEdges());
 
         int n60 = AbstractGraphStorageTester.getIdOf(graph, 56);
-        int newId = 5;
-        assertEquals(GHUtility.asSet(newId), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n60)));
+        int n50 = AbstractGraphStorageTester.getIdOf(graph, 55);
+        int n30 = AbstractGraphStorageTester.getIdOf(graph, 53);
+        int n80 = AbstractGraphStorageTester.getIdOf(graph, 58);
+        assertEquals(GHUtility.asSet(n50), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n60)));
 
         EdgeIterator iter = carOutExplorer.setBaseNode(n60);
         assertTrue(iter.next());
-        assertEquals(newId, iter.getAdjNode());
+        assertEquals(n50, iter.getAdjNode());
         assertFalse(iter.next());
 
-        iter = carOutExplorer.setBaseNode(newId);
-        assertTrue(iter.next());
-        assertEquals(n60, iter.getAdjNode());
-        assertFalse(iter.next());
+        assertTrue(GHUtility.getNeighbors(carOutExplorer.setBaseNode(n30)).contains(n50));
+        assertEquals(GHUtility.asSet(n30, n80, n60), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n50)));
     }
 
     @Test
