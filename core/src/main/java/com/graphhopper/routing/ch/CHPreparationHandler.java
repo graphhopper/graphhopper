@@ -41,7 +41,7 @@ import static com.graphhopper.util.Helper.getMemInfo;
  * @author easbar
  */
 public class CHPreparationHandler {
-    private final Logger LOGGER = LoggerFactory.getLogger(getClass());
+    private static final Logger LOGGER = LoggerFactory.getLogger(CHPreparationHandler.class);
     private final List<PrepareContractionHierarchies> preparations = new ArrayList<>();
     // we first add the profiles and later read them to create the config objects (because they require
     // the actual Weightings)
@@ -128,10 +128,6 @@ public class CHPreparationHandler {
         return this;
     }
 
-    /**
-     * Enables the use of contraction hierarchies to reduce query times.
-     * "fastest|u_turn_costs=30 or your own weight-calculation type.
-     */
     public CHPreparationHandler setCHProfiles(Collection<CHProfile> chProfiles) {
         this.chProfiles.clear();
         this.chProfiles.addAll(chProfiles);
@@ -146,23 +142,19 @@ public class CHPreparationHandler {
         return preparations;
     }
 
-    public PrepareContractionHierarchies getPreparation(String profile) {
+    public PrepareContractionHierarchies getPreparation(String chGraphName) {
         if (preparations.isEmpty())
             throw new IllegalStateException("No CH preparations added yet");
         List<String> profileNames = new ArrayList<>(preparations.size());
         for (PrepareContractionHierarchies preparation : preparations) {
             profileNames.add(preparation.getCHConfig().getName());
-            if (preparation.getCHConfig().getName().equalsIgnoreCase(profile)) {
+            if (preparation.getCHConfig().getName().equalsIgnoreCase(chGraphName)) {
                 return preparation;
             }
         }
-        throw new IllegalArgumentException("Cannot find CH preparation for the requested profile: '" + profile + "'" +
+        throw new IllegalArgumentException("Cannot find CH preparation for the requested profile: '" + chGraphName + "'" +
                 "\nYou can try disabling CH using " + CH.DISABLE + "=true" +
                 "\navailable CH profiles: " + profileNames);
-    }
-
-    public PrepareContractionHierarchies getPreparation(CHConfig chConfig) {
-        return getPreparation(chConfig.getName());
     }
 
     public int getPreparationThreads() {
