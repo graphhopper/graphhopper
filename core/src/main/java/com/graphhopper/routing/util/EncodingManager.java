@@ -654,7 +654,7 @@ public class EncodingManager implements EncodedValueLookup {
             ReaderNode readerNode = new ReaderNode(0, 0, 0);
             readerNode._setTags(nodeTags);
             // block access for all encoders that treat this node as a barrier
-            if (encoder.handleNodeTags(readerNode)) {
+            if (encoder.isBarrier(readerNode)) {
                 BooleanEncodedValue accessEnc = encoder.getAccessEnc();
                 accessEnc.setBool(false, edgeFlags, false);
                 accessEnc.setBool(true, edgeFlags, false);

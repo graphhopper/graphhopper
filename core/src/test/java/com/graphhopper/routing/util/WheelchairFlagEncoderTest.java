@@ -361,19 +361,19 @@ public class WheelchairFlagEncoderTest {
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         // no barrier!
-        assertFalse(wheelchairEncoder.handleNodeTags(node));
+        assertFalse(wheelchairEncoder.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "yes");
         // no barrier!
-        assertFalse(wheelchairEncoder.handleNodeTags(node));
+        assertFalse(wheelchairEncoder.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "no");
         // barrier!
-        assertTrue(wheelchairEncoder.handleNodeTags(node));
+        assertTrue(wheelchairEncoder.isBarrier(node));
 
         node.setTag("bicycle", "yes");
         // no barrier!?
@@ -384,11 +384,11 @@ public class WheelchairFlagEncoderTest {
         node.setTag("access", "no");
         node.setTag("foot", "yes");
         // no barrier!
-        assertFalse(wheelchairEncoder.handleNodeTags(node));
+        assertFalse(wheelchairEncoder.isBarrier(node));
 
         node.setTag("locked", "yes");
         // barrier!
-        assertTrue(wheelchairEncoder.handleNodeTags(node));
+        assertTrue(wheelchairEncoder.isBarrier(node));
     }
 
     @Test
@@ -399,39 +399,39 @@ public class WheelchairFlagEncoderTest {
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         // passByDefaultBarriers are no barrier by default
-        assertFalse(tmpWheelchairEncoder.handleNodeTags(node));
+        assertFalse(tmpWheelchairEncoder.isBarrier(node));
         node.setTag("access", "no");
-        assertTrue(tmpWheelchairEncoder.handleNodeTags(node));
+        assertTrue(tmpWheelchairEncoder.isBarrier(node));
 
         // these barriers block
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "fence");
-        assertTrue(tmpWheelchairEncoder.handleNodeTags(node));
+        assertTrue(tmpWheelchairEncoder.isBarrier(node));
         node.setTag("barrier", "wall");
-        assertTrue(tmpWheelchairEncoder.handleNodeTags(node));
+        assertTrue(tmpWheelchairEncoder.isBarrier(node));
         node.setTag("barrier", "handrail");
-        assertTrue(tmpWheelchairEncoder.handleNodeTags(node));
+        assertTrue(tmpWheelchairEncoder.isBarrier(node));
         node.setTag("barrier", "turnstile");
-        assertTrue(tmpWheelchairEncoder.handleNodeTags(node));
+        assertTrue(tmpWheelchairEncoder.isBarrier(node));
         // Explictly allowed access is allowed
         node.setTag("barrier", "fence");
         node.setTag("access", "yes");
-        assertFalse(tmpWheelchairEncoder.handleNodeTags(node));
+        assertFalse(tmpWheelchairEncoder.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "yes");
-        assertFalse(tmpWheelchairEncoder.handleNodeTags(node));
+        assertFalse(tmpWheelchairEncoder.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "kerb");
-        assertFalse(tmpWheelchairEncoder.handleNodeTags(node));
+        assertFalse(tmpWheelchairEncoder.isBarrier(node));
         node.setTag("wheelchair", "yes");
-        assertFalse(tmpWheelchairEncoder.handleNodeTags(node));
+        assertFalse(tmpWheelchairEncoder.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "fence");
-        assertTrue(tmpWheelchairEncoder.handleNodeTags(node));
+        assertTrue(tmpWheelchairEncoder.isBarrier(node));
     }
 
     @Test

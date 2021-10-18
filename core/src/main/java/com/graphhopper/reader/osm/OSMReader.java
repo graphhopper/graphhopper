@@ -27,7 +27,6 @@ import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;
 import com.graphhopper.routing.OSMReaderConfig;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CustomArea;
@@ -93,6 +92,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     protected long zeroCounter = 0;
     protected PillarInfo pillarInfo;
     private long locations;
+    private long ignoredBarrierNodes;
     private final EncodingManager encodingManager;
     // Choosing the best Map<Long, Integer> is hard. We need a memory efficient and fast solution for big data sets!
     //
@@ -517,9 +517,10 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
         // we keep node tags for barrier nodes
         if (node.getTags().containsKey("barrier")) {
-            if (nodeType == JUNCTION_NODE)
+            if (nodeType == JUNCTION_NODE) {
                 LOGGER.debug("OSM node {} at {},{} is a barrier node at a junction, the barrier will be ignored", node.getId(), Helper.round(node.getLat(), 7), Helper.round(node.getLon(), 7));
-            else {
+                ignoredBarrierNodes++;
+            } else {
                 int tagIndex = nodeTagIndicesByOsmNodeID.get(node.getId());
                 if (tagIndex == -1) {
                     nodeTagIndicesByOsmNodeID.put(node.getId(), nodeTags.size());
@@ -933,6 +934,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
     private void printInfo(String str) {
         LOGGER.info("finished " + str + " processing." + " nodes: " + graph.getNodes()
+                + ", ignored barrier nodes at junctions: " + nf(ignoredBarrierNodes)
                 + ", osmIdMap.size:" + getNodeMap().getSize() + ", osmIdMap:" + getNodeMap().getMemoryUsage() + "MB"
                 + ", nodeTags.size:" + nodeTags.size() + ", relationsMap.size:" + osmRelationsByWayID.size()
                 + ", zeroCounter:" + zeroCounter
