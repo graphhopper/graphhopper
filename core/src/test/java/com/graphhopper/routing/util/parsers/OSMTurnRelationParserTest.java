@@ -37,7 +37,7 @@ public class OSMTurnRelationParserTest {
 
             @Override
             public int getInternalNodeIdOfOsmNode(long nodeOsmId) {
-                return osmNodeToInternal.get(nodeOsmId);
+                return osmNodeToInternal.getOrDefault(nodeOsmId, -1);
             }
 
             @Override

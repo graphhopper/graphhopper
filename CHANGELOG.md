@@ -1,12 +1,15 @@
 ### 5.0 [not yet released]
 
+- barrier nodes at junctions are now ignored (#2433)
+- AbstractFlagEncoder#handleNodeTags was replaced by AbstractFlagEncoder#isBarrier (#2434)
 - consider heading when snapping coordinates to the road network, this is especially important for navigation (#2411)
+- OSMReader no longer sets the artificial 'estimated_center' tag and processNode also receives EMPTY_NODEs (971d686)
 - added Toll.MISSING; custom models must be adapted to check for explicit toll values e.g `toll != NO` -> `toll == HGV || toll == ALL` (#2164)
 
 ### 4.0 [29 Sep 2021]
 
 - faster node-based CH preparation (~20%), (#2390)
-- more flexible ElevationProvider interface, support providing elevation via node tags (#2374, #23281)
+- more flexible ElevationProvider interface, support providing elevation via node tags (#2374, #2381)
 - added country encoded value for all countries (#2353)
 - bike improvements (#2357, #2371, #2389)
 - improved handling of barriers (#2345, #2340, #2406)

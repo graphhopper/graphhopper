@@ -131,13 +131,13 @@ public class Measurement {
                     CHConfig chConfig = getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
                     int edgesAndShortcuts = getGraphHopperStorage().getRoutingCHGraph(chConfig.getName()).getEdges();
                     put(Parameters.CH.PREPARE + "node.shortcuts", edgesAndShortcuts - edges);
-                    put(Parameters.CH.PREPARE + "node.time", getCHPreparationHandler().getPreparation(chConfig).getTotalPrepareTime());
+                    put(Parameters.CH.PREPARE + "node.time", getCHPreparationHandler().getPreparation(chConfig.getName()).getTotalPrepareTime());
                 }
                 if (!getCHPreparationHandler().getEdgeBasedCHConfigs().isEmpty()) {
                     CHConfig chConfig = getCHPreparationHandler().getEdgeBasedCHConfigs().get(0);
                     int edgesAndShortcuts = getGraphHopperStorage().getRoutingCHGraph(chConfig.getName()).getEdges();
                     put(Parameters.CH.PREPARE + "edge.shortcuts", edgesAndShortcuts - edges);
-                    put(Parameters.CH.PREPARE + "edge.time", getCHPreparationHandler().getPreparation(chConfig).getTotalPrepareTime());
+                    put(Parameters.CH.PREPARE + "edge.time", getCHPreparationHandler().getPreparation(chConfig.getName()).getTotalPrepareTime());
                 }
             }
 
