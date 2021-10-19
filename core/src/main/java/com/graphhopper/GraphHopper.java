@@ -75,7 +75,7 @@ import static java.util.Collections.emptyList;
  * @author Peter Karich
  */
 public class GraphHopper {
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private static final Logger logger = LoggerFactory.getLogger(GraphHopper.class);
     private final Map<String, Profile> profilesByName = new LinkedHashMap<>();
     private final String fileLockName = "gh.lock";
     // utils
@@ -623,12 +623,25 @@ public class GraphHopper {
             ensureWriteAccess();
             importOSM();
             cleanUp();
+            postImport();
             postProcessing(closeEarly);
             flush();
         } finally {
             if (lock != null)
                 lock.release();
         }
+    }
+
+    protected void postImport() {
+        if (sortGraph) {
+            GraphHopperStorage newGraph = GHUtility.newStorage(ghStorage);
+            GHUtility.sortDFS(ghStorage, newGraph);
+            logger.info("graph sorted (" + getMemInfo() + ")");
+            ghStorage = newGraph;
+        }
+
+        if (hasElevation())
+            interpolateBridgesTunnelsAndFerries();
     }
 
     protected void importOSM() {
@@ -877,35 +890,11 @@ public class GraphHopper {
     }
 
     /**
-     * Does the preparation and creates the location index
-     */
-    public final void postProcessing() {
-        postProcessing(false);
-    }
-
-    /**
-     * Does the preparation and creates the location index
+     * Runs both after the import and when loading an existing Graph
      *
      * @param closeEarly release resources as early as possible
      */
     protected void postProcessing(boolean closeEarly) {
-        // Later: move this into the GraphStorage.optimize method
-        // Or: Doing it after preparation to optimize shortcuts too. But not possible yet #12
-
-        if (sortGraph) {
-            if (ghStorage.isCHPossible() && isCHPrepared())
-                throw new IllegalArgumentException("Sorting a prepared CH is not possible yet. See #12");
-
-            GraphHopperStorage newGraph = GHUtility.newStorage(ghStorage);
-            GHUtility.sortDFS(ghStorage, newGraph);
-            logger.info("graph sorted (" + getMemInfo() + ")");
-            ghStorage = newGraph;
-        }
-
-        if (!hasInterpolated() && hasElevation()) {
-            interpolateBridgesTunnelsAndFerries();
-        }
-
         initLocationIndex();
 
         importPublicTransit();
@@ -930,12 +919,6 @@ public class GraphHopper {
     protected void importPublicTransit() {
     }
 
-    private static final String INTERPOLATION_KEY = "prepare.elevation_interpolation.done";
-
-    private boolean hasInterpolated() {
-        return "true".equals(ghStorage.getProperties().get(INTERPOLATION_KEY));
-    }
-
     void interpolateBridgesTunnelsAndFerries() {
         if (ghStorage.getEncodingManager().hasEncodedValue(RoadEnvironment.KEY)) {
             EnumEncodedValue<RoadEnvironment> roadEnvEnc = ghStorage.getEncodingManager().getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
@@ -949,7 +932,6 @@ public class GraphHopper {
             // See #2098 for mor information
             sw = new StopWatch().start();
             new EdgeElevationInterpolator(ghStorage, roadEnvEnc, RoadEnvironment.FERRY).execute();
-            ghStorage.getProperties().put(INTERPOLATION_KEY, true);
             logger.info("Bridge interpolation " + (int) bridge + "s, " + "tunnel interpolation " + (int) tunnel + "s, ferry interpolation " + (int) sw.stop().getSeconds() + "s");
         }
     }

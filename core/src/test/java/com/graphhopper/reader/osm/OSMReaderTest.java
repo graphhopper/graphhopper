@@ -82,10 +82,6 @@ public class OSMReaderTest {
         Helper.removeDir(new File(dir));
     }
 
-    GraphHopperStorage newGraph(String directory, EncodingManager encodingManager, boolean is3D, boolean turnRestrictionsImport) {
-        return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager, is3D, turnRestrictionsImport);
-    }
-
     @Test
     public void testMain() {
         GraphHopper hopper = new GraphHopperFacade(file1).importOrLoad();
@@ -627,7 +623,7 @@ public class OSMReaderTest {
     public void testEstimatedDistance() {
         final CarFlagEncoder encoder = new CarFlagEncoder();
         EncodingManager manager = EncodingManager.create(encoder);
-        GraphHopperStorage ghStorage = newGraph(dir, manager, false, false);
+        GraphHopperStorage ghStorage = new GraphHopperStorage(new RAMDirectory(dir, false), manager, false, false);
         final Map<Integer, Double> latMap = new HashMap<>();
         final Map<Integer, Double> lonMap = new HashMap<>();
         latMap.put(1, 1.1d);
@@ -1003,8 +999,7 @@ public class OSMReaderTest {
 
         @Override
         protected void importOSM() {
-            GraphHopperStorage tmpGraph = newGraph(dir, getEncodingManager(), hasElevation(),
-                    getEncodingManager().needsTurnCostsSupport());
+            GraphHopperStorage tmpGraph = new GraphHopperStorage(new RAMDirectory(dir, false), getEncodingManager(), hasElevation(), getEncodingManager().needsTurnCostsSupport());
             setGraphHopperStorage(tmpGraph);
             super.importOSM();
             carAccessEnc = carEncoder.getAccessEnc();
