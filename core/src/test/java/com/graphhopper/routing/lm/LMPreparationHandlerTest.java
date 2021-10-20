@@ -12,7 +12,9 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -36,10 +38,11 @@ public class LMPreparationHandlerTest {
         );
         FlagEncoder car = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(car);
-        handler
-                .addLMConfig(new LMConfig("conf1", new FastestWeighting(car)))
-                .addLMConfig(new LMConfig("conf2", new ShortestWeighting(car)));
-        handler.createPreparations(new GraphHopperStorage(new RAMDirectory(), em, false), null);
+        List<LMConfig> lmConfigs = Arrays.asList(
+                new LMConfig("conf1", new FastestWeighting(car)),
+                new LMConfig("conf2", new ShortestWeighting(car))
+        );
+        handler.createPreparations(lmConfigs, new GraphHopperStorage(new RAMDirectory(), em, false), null);
         assertEquals(1, handler.getPreparations().get(0).getLandmarkStorage().getFactor(), .1);
         assertEquals(0.3, handler.getPreparations().get(1).getLandmarkStorage().getFactor(), .1);
     }

@@ -67,7 +67,6 @@ import java.util.stream.Collectors;
 import static com.graphhopper.util.GHUtility.readCountries;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.RoundTrip;
-import static java.util.Collections.emptyList;
 
 /**
  * Easy to use access point to configure import and (offline) routing.
@@ -746,18 +745,11 @@ public class GraphHopper {
         ghStorage = new GraphHopperStorage(dir, encodingManager, hasElevation(), encodingManager.needsTurnCostsSupport(), defaultSegmentSize);
         checkProfilesConsistency();
 
-        if (lmPreparationHandler.isEnabled())
-            initLMPreparationHandler();
-
-        List<CHConfig> chConfigs;
+        // todo: move this after base graph loading/import, just like for LM. there is no real reason we have to setup CH before
         if (chPreparationHandler.isEnabled()) {
-            initCHPreparationHandler();
-            chConfigs = chPreparationHandler.getCHConfigs();
-        } else {
-            chConfigs = emptyList();
+            List<CHConfig> chConfigs = createCHConfigs(chPreparationHandler.getCHProfiles());
+            ghStorage.addCHGraphs(chConfigs);
         }
-
-        ghStorage.addCHGraphs(chConfigs);
 
         if (!new File(graphHopperFolder).exists())
             return false;
@@ -852,30 +844,26 @@ public class GraphHopper {
         return chPreparationHandler;
     }
 
-    private void initCHPreparationHandler() {
-        if (chPreparationHandler.hasCHConfigs()) {
-            return;
-        }
-
-        for (CHProfile chProfile : chPreparationHandler.getCHProfiles()) {
+    private List<CHConfig> createCHConfigs(List<CHProfile> chProfiles) {
+        List<CHConfig> chConfigs = new ArrayList<>();
+        for (CHProfile chProfile : chProfiles) {
             Profile profile = profilesByName.get(chProfile.getProfile());
             if (profile.isTurnCosts()) {
-                chPreparationHandler.addCHConfig(CHConfig.edgeBased(profile.getName(), createWeighting(profile, new PMap())));
+                chConfigs.add(CHConfig.edgeBased(profile.getName(), createWeighting(profile, new PMap())));
             } else {
-                chPreparationHandler.addCHConfig(CHConfig.nodeBased(profile.getName(), createWeighting(profile, new PMap())));
+                chConfigs.add(CHConfig.nodeBased(profile.getName(), createWeighting(profile, new PMap())));
             }
         }
+        return chConfigs;
     }
 
     public final LMPreparationHandler getLMPreparationHandler() {
         return lmPreparationHandler;
     }
 
-    private void initLMPreparationHandler() {
-        if (lmPreparationHandler.hasLMProfiles())
-            return;
-
-        for (LMProfile lmProfile : lmPreparationHandler.getLMProfiles()) {
+    private List<LMConfig> createLMConfigs(List<LMProfile> lmProfiles) {
+        List<LMConfig> lmConfigs = new ArrayList<>();
+        for (LMProfile lmProfile : lmProfiles) {
             if (lmProfile.usesOtherPreparation())
                 continue;
             Profile profile = profilesByName.get(lmProfile.getProfile());
@@ -885,8 +873,9 @@ public class GraphHopper {
             // Running the preparation without turn costs is also useful to allow e.g. changing the u_turn_costs per
             // request (we have to use the minimum weight settings (= no turn costs) for the preparation)
             Weighting weighting = createWeighting(profile, new PMap(), true);
-            lmPreparationHandler.addLMConfig(new LMConfig(profile.getName(), weighting));
+            lmConfigs.add(new LMConfig(profile.getName(), weighting));
         }
+        return lmConfigs;
     }
 
     /**
@@ -896,12 +885,10 @@ public class GraphHopper {
      */
     protected void postProcessing(boolean closeEarly) {
         initLocationIndex();
-
         importPublicTransit();
 
         if (lmPreparationHandler.isEnabled())
-            lmPreparationHandler.createPreparations(ghStorage, locationIndex);
-        loadOrPrepareLM(closeEarly);
+            loadOrPrepareLM(closeEarly);
 
         if (chPreparationHandler.isEnabled())
             chPreparationHandler.createPreparations(ghStorage);
@@ -1053,10 +1040,6 @@ public class GraphHopper {
      * For landmarks it is required to always call this method: either it creates the landmark data or it loads it.
      */
     protected void loadOrPrepareLM(boolean closeEarly) {
-        if (!lmPreparationHandler.isEnabled() || lmPreparationHandler.getPreparations().isEmpty()) {
-            return;
-        }
-
         for (LMProfile profile : lmPreparationHandler.getLMProfiles()) {
             if (!getProfileVersion(profile.getProfile()).isEmpty()
                     && !getProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
@@ -1064,7 +1047,8 @@ public class GraphHopper {
         }
         ensureWriteAccess();
         ghStorage.freeze();
-        if (lmPreparationHandler.loadOrDoWork(ghStorage.getProperties(), closeEarly)) {
+        List<LMConfig> lmConfigs = createLMConfigs(lmPreparationHandler.getLMProfiles());
+        if (lmPreparationHandler.loadOrDoWork(lmConfigs, ghStorage, locationIndex, closeEarly)) {
             ghStorage.getProperties().put(Landmark.PREPARE + "done", true);
             for (LMProfile profile : lmPreparationHandler.getLMProfiles()) {
                 // potentially overwrite existing keys from CH

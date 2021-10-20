@@ -127,17 +127,15 @@ public class Measurement {
                 // note that we measure the total time of all (possibly edge&node) CH preparations
                 put(Parameters.CH.PREPARE + "time", sw.stop().getMillis());
                 int edges = getGraphHopperStorage().getEdges();
-                if (!getCHPreparationHandler().getNodeBasedCHConfigs().isEmpty()) {
-                    CHConfig chConfig = getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
-                    int edgesAndShortcuts = getGraphHopperStorage().getRoutingCHGraph(chConfig.getName()).getEdges();
+                if (getGraphHopperStorage().getRoutingCHGraph("profile_no_tc") != null) {
+                    int edgesAndShortcuts = getGraphHopperStorage().getRoutingCHGraph("profile_no_tc").getEdges();
                     put(Parameters.CH.PREPARE + "node.shortcuts", edgesAndShortcuts - edges);
-                    put(Parameters.CH.PREPARE + "node.time", getCHPreparationHandler().getPreparation(chConfig.getName()).getTotalPrepareTime());
+                    put(Parameters.CH.PREPARE + "node.time", getCHPreparationHandler().getPreparation("profile_no_tc").getTotalPrepareTime());
                 }
-                if (!getCHPreparationHandler().getEdgeBasedCHConfigs().isEmpty()) {
-                    CHConfig chConfig = getCHPreparationHandler().getEdgeBasedCHConfigs().get(0);
-                    int edgesAndShortcuts = getGraphHopperStorage().getRoutingCHGraph(chConfig.getName()).getEdges();
+                if (getGraphHopperStorage().getRoutingCHGraph("profile_tc") != null) {
+                    int edgesAndShortcuts = getGraphHopperStorage().getRoutingCHGraph("profile_tc").getEdges();
                     put(Parameters.CH.PREPARE + "edge.shortcuts", edgesAndShortcuts - edges);
-                    put(Parameters.CH.PREPARE + "edge.time", getCHPreparationHandler().getPreparation(chConfig.getName()).getTotalPrepareTime());
+                    put(Parameters.CH.PREPARE + "edge.time", getCHPreparationHandler().getPreparation("profile_tc").getTotalPrepareTime());
                 }
             }
 
@@ -226,10 +224,9 @@ public class Measurement {
                 boolean isCH = true;
                 boolean isLM = false;
                 gcAndWait();
-                if (!hopper.getCHPreparationHandler().getNodeBasedCHConfigs().isEmpty()) {
-                    CHConfig chConfig = hopper.getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
-                    RoutingCHGraph lg = g.getRoutingCHGraph(chConfig.getName());
-                    measureGraphTraversalCH(lg, count * 100);
+                RoutingCHGraph nodeBasedCH = g.getRoutingCHGraph("profile_no_tc");
+                if (nodeBasedCH != null) {
+                    measureGraphTraversalCH(nodeBasedCH, count * 100);
                     gcAndWait();
                     measureRouting(hopper, new QuerySettings("routingCH", count, isCH, isLM).
                             withInstructions().sod());
@@ -249,7 +246,8 @@ public class Measurement {
                     measureRouting(hopper, new QuerySettings("routingCH_via_100_full", count / 100, isCH, isLM).
                             withPoints(100).sod().withInstructions().simplify().pathDetails());
                 }
-                if (!hopper.getCHPreparationHandler().getEdgeBasedCHConfigs().isEmpty()) {
+                RoutingCHGraph edgeBasedCH = g.getRoutingCHGraph("profile_tc");
+                if (edgeBasedCH != null) {
                     measureRouting(hopper, new QuerySettings("routingCH_edge", count, isCH, isLM).
                             edgeBased().withInstructions());
                     measureRouting(hopper, new QuerySettings("routingCH_edge_alt", count / 10, isCH, isLM).

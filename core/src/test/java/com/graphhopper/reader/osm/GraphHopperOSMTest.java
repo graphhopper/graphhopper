@@ -848,22 +848,10 @@ public class GraphHopperOSMTest {
         CHConfig simpleTruckConfig = CHConfig.nodeBased("simple_truck", fwSimpleTruck);
         CHConfig truckConfig = CHConfig.nodeBased("truck", fwTruck);
         GraphHopperStorage storage = new GraphBuilder(em).setCHConfigs(Arrays.asList(simpleTruckConfig, truckConfig)).build();
-        chHandler.addCHConfig(simpleTruckConfig);
-        chHandler.addCHConfig(truckConfig);
-        chHandler.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, simpleTruckConfig));
-        chHandler.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, truckConfig));
+        chHandler.createPreparations(storage);
 
         assertEquals("fastest|truck", chHandler.getPreparation("truck").getCHConfig().getWeighting().toString());
         assertEquals("fastest|simple_truck", chHandler.getPreparation("simple_truck").getCHConfig().getWeighting().toString());
-
-        // make sure weighting cannot be mixed
-        chHandler.addCHConfig(truckConfig);
-        chHandler.addCHConfig(simpleTruckConfig);
-        try {
-            chHandler.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, simpleTruckConfig));
-            fail();
-        } catch (Exception ex) {
-        }
     }
 
     @Test
