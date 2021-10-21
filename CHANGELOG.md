@@ -1,5 +1,6 @@
 ### 5.0 [not yet released]
 
+- use GraphHopper#setGraphHopperLocation before calling load() instead of GraphHopper#load(graphHopperLocation) (#2437)
 - barrier nodes at junctions are now ignored (#2433)
 - AbstractFlagEncoder#handleNodeTags was replaced by AbstractFlagEncoder#isBarrier (#2434)
 - consider heading when snapping coordinates to the road network, this is especially important for navigation (#2411)
