@@ -124,7 +124,7 @@ public class GraphHopper {
 
     public EncodingManager getEncodingManager() {
         if (encodingManager == null)
-            throw new IllegalStateException("EncodingManager not yet build");
+            throw new IllegalStateException("EncodingManager not yet built");
         return encodingManager;
     }
 
@@ -394,6 +394,7 @@ public class GraphHopper {
      * is read from `config.yml`.
      */
     public GraphHopper init(GraphHopperConfig ghConfig) {
+        ensureNotLoaded();
         // disabling_allowed config options were removed for GH 3.0
         if (ghConfig.has("routing.ch.disabling_allowed"))
             throw new IllegalArgumentException("The 'routing.ch.disabling_allowed' configuration option is no longer supported");
@@ -413,12 +414,11 @@ public class GraphHopper {
 
             graphHopperFolder = pruneFileEnd(osmFile) + "-gh";
         }
+        ghLocation = graphHopperFolder;
 
         countryRuleFactory = ghConfig.getBool("country_rules.enabled", false) ? new CountryRuleFactory() : null;
         customAreasDirectory = ghConfig.getString("custom_areas.directory", customAreasDirectory);
 
-        // graph
-        setGraphHopperLocation(graphHopperFolder);
         defaultSegmentSize = ghConfig.getInt("graph.dataaccess.segment_size", defaultSegmentSize);
 
         String graphDATypeStr = ghConfig.getString("graph.dataaccess", "RAM_STORE");
@@ -437,7 +437,6 @@ public class GraphHopper {
 
         if (encodingManager != null)
             throw new IllegalStateException("Cannot call init twice. EncodingManager was already initialized.");
-
         emBuilder.setEnableInstructions(ghConfig.getBool("datareader.instructions", true));
         emBuilder.setPreferredLanguage(ghConfig.getString("datareader.preferred_language", ""));
         emBuilder.setDateRangeParser(DateRangeParser.createInstance(ghConfig.getString("datareader.date_range_parser_day", "")));
@@ -489,10 +488,12 @@ public class GraphHopper {
     }
 
     private EncodingManager buildEncodingManager(GraphHopperConfig ghConfig) {
+        if (profilesByName.isEmpty())
+            throw new IllegalStateException("no profiles exist but assumed to create EncodingManager. E.g. provide them in GraphHopperConfig when calling GraphHopper.init");
+
         String flagEncodersStr = ghConfig.getString("graph.flag_encoders", "");
-        String encodedValueStr = ghConfig.getString("graph.encoded_values", "");
-        Map<String, String> flagEncoderMap = new LinkedHashMap<>(), implicitFlagEncoderMap = new HashMap<>();
-        for (String encoderStr : Arrays.asList(flagEncodersStr.split(","))) {
+        Map<String, String> flagEncoderMap = new LinkedHashMap<>();
+        for (String encoderStr : flagEncodersStr.split(",")) {
             String key = encoderStr.split("\\|")[0];
             if (!key.isEmpty()) {
                 if (flagEncoderMap.containsKey(key))
@@ -500,8 +501,7 @@ public class GraphHopper {
                 flagEncoderMap.put(key, encoderStr);
             }
         }
-        if (profilesByName.isEmpty())
-            throw new IllegalStateException("no profiles exist but assumed to create EncodingManager. E.g. provide them in GraphHopperConfig when calling GraphHopper.init");
+        Map<String, String> implicitFlagEncoderMap = new HashMap<>();
         for (Profile profile : profilesByName.values()) {
             emBuilder.add(Subnetwork.create(profile.getName()));
             if (!flagEncoderMap.containsKey(profile.getVehicle())
@@ -510,7 +510,9 @@ public class GraphHopper {
                 implicitFlagEncoderMap.put(profile.getVehicle(), profile.getVehicle() + (profile.isTurnCosts() ? "|turn_costs=true" : ""));
         }
         flagEncoderMap.putAll(implicitFlagEncoderMap);
-        flagEncoderMap.values().stream().forEach(s -> emBuilder.addIfAbsent(flagEncoderFactory, s));
+        flagEncoderMap.values().forEach(s -> emBuilder.addIfAbsent(flagEncoderFactory, s));
+
+        String encodedValueStr = ghConfig.getString("graph.encoded_values", "");
         for (String tpStr : encodedValueStr.split(",")) {
             if (!tpStr.isEmpty()) emBuilder.addIfAbsent(tagParserFactory, tpStr);
         }
@@ -608,7 +610,6 @@ public class GraphHopper {
      * Creates the graph from OSM data.
      */
     private void process(boolean closeEarly) {
-        setGraphHopperLocation(ghLocation);
         GHLock lock = null;
         try {
             if (ghStorage == null)
@@ -712,7 +713,6 @@ public class GraphHopper {
             throw new IllegalStateException("graph is already successfully loaded");
 
         File tmpFileOrFolder = new File(ghLocation);
-
         if (!tmpFileOrFolder.isDirectory() && tmpFileOrFolder.exists()) {
             throw new IllegalArgumentException("GraphHopperLocation cannot be an existing file. Has to be either non-existing or a folder.");
         } else {
@@ -726,8 +726,6 @@ public class GraphHopper {
                 }
             }
         }
-
-        setGraphHopperLocation(ghLocation);
 
         if (!allowWrites && dataAccessType.isMMap())
             dataAccessType = DAType.MMAP_RO;
