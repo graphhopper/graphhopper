@@ -581,9 +581,9 @@ public class GraphHopper {
      * disc which is usually a lot faster.
      */
     public GraphHopper importOrLoad() {
-        if (!load(ghLocation)) {
+        if (!load()) {
             printInfo();
-            process(ghLocation, false);
+            process(false);
         } else {
             printInfo();
         }
@@ -594,9 +594,9 @@ public class GraphHopper {
      * Imports and processes data, storing it to disk when complete.
      */
     public void importAndClose() {
-        if (!load(ghLocation)) {
+        if (!load()) {
             printInfo();
-            process(ghLocation, true);
+            process(true);
         } else {
             printInfo();
             logger.info("Graph already imported into " + ghLocation);
@@ -607,17 +607,17 @@ public class GraphHopper {
     /**
      * Creates the graph from OSM data.
      */
-    private void process(String graphHopperLocation, boolean closeEarly) {
-        setGraphHopperLocation(graphHopperLocation);
+    private void process(boolean closeEarly) {
+        setGraphHopperLocation(ghLocation);
         GHLock lock = null;
         try {
             if (ghStorage == null)
                 throw new IllegalStateException("GraphHopperStorage must be initialized before starting the import");
             if (ghStorage.getDirectory().getDefaultType().isStoring()) {
-                lockFactory.setLockDir(new File(graphHopperLocation));
+                lockFactory.setLockDir(new File(ghLocation));
                 lock = lockFactory.create(fileLockName, true);
                 if (!lock.tryLock())
-                    throw new RuntimeException("To avoid multiple writers we need to obtain a write lock but it failed. In " + graphHopperLocation, lock.getObtainFailedReason());
+                    throw new RuntimeException("To avoid multiple writers we need to obtain a write lock but it failed. In " + ghLocation, lock.getObtainFailedReason());
             }
             ensureWriteAccess();
             importOSM();
@@ -702,35 +702,32 @@ public class GraphHopper {
     }
 
     /**
-     * Opens existing graph folder.
-     *
-     * @param graphHopperFolder is the folder containing graphhopper files. Can be a compressed file
-     *                          too ala folder-content.ghz.
+     * Load from existing graph folder.
      */
-    public boolean load(String graphHopperFolder) {
-        if (isEmpty(graphHopperFolder))
+    public boolean load() {
+        if (isEmpty(ghLocation))
             throw new IllegalStateException("GraphHopperLocation is not specified. Call setGraphHopperLocation or init before");
 
         if (fullyLoaded)
             throw new IllegalStateException("graph is already successfully loaded");
 
-        File tmpFileOrFolder = new File(graphHopperFolder);
+        File tmpFileOrFolder = new File(ghLocation);
 
         if (!tmpFileOrFolder.isDirectory() && tmpFileOrFolder.exists()) {
             throw new IllegalArgumentException("GraphHopperLocation cannot be an existing file. Has to be either non-existing or a folder.");
         } else {
-            File compressed = new File(graphHopperFolder + ".ghz");
+            File compressed = new File(ghLocation + ".ghz");
             if (compressed.exists() && !compressed.isDirectory()) {
                 try {
-                    new Unzipper().unzip(compressed.getAbsolutePath(), graphHopperFolder, removeZipped);
+                    new Unzipper().unzip(compressed.getAbsolutePath(), ghLocation, removeZipped);
                 } catch (IOException ex) {
                     throw new RuntimeException("Couldn't extract file " + compressed.getAbsolutePath()
-                            + " to " + graphHopperFolder, ex);
+                            + " to " + ghLocation, ex);
                 }
             }
         }
 
-        setGraphHopperLocation(graphHopperFolder);
+        setGraphHopperLocation(ghLocation);
 
         if (!allowWrites && dataAccessType.isMMap())
             dataAccessType = DAType.MMAP_RO;
@@ -751,7 +748,7 @@ public class GraphHopper {
             ghStorage.addCHGraphs(chConfigs);
         }
 
-        if (!new File(graphHopperFolder).exists())
+        if (!new File(ghLocation).exists())
             return false;
 
         GHLock lock = null;
