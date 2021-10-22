@@ -78,10 +78,6 @@ public class OSMReaderTest {
         Helper.removeDir(new File(dir));
     }
 
-    GraphHopperStorage newGraph(String directory, EncodingManager encodingManager, boolean is3D, boolean turnRestrictionsImport) {
-        return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager, is3D, turnRestrictionsImport);
-    }
-
     @Test
     public void testMain() {
         GraphHopper hopper = new GraphHopperFacade(file1).importOrLoad();
@@ -945,8 +941,7 @@ public class OSMReaderTest {
 
         @Override
         protected void importOSM() {
-            GraphHopperStorage tmpGraph = newGraph(dir, getEncodingManager(), hasElevation(),
-                    getEncodingManager().needsTurnCostsSupport());
+            GraphHopperStorage tmpGraph = new GraphHopperStorage(new RAMDirectory(dir, false), getEncodingManager(), hasElevation(), getEncodingManager().needsTurnCostsSupport());
             setGraphHopperStorage(tmpGraph);
             super.importOSM();
             carAccessEnc = carEncoder.getAccessEnc();
