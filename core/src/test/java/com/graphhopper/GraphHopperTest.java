@@ -2263,8 +2263,9 @@ public class GraphHopperTest {
                 }
             }.
                     setProfiles(new Profile("profile")).
-                    setElevation(true);
-            hopper.load(GH_LOCATION);
+                    setElevation(true).
+                    setGraphHopperLocation(GH_LOCATION);
+            hopper.load();
         }
         assertEquals(1, counter.get());
     }
