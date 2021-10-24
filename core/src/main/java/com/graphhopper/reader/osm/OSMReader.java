@@ -18,10 +18,9 @@
 package com.graphhopper.reader.osm;
 
 import com.carrotsearch.hppc.IntLongMap;
-import com.carrotsearch.hppc.LongObjectMap;
-import com.carrotsearch.hppc.LongObjectScatterMap;
 import com.graphhopper.coll.GHIntLongHashMap;
 import com.graphhopper.coll.GHLongHashSet;
+import com.graphhopper.coll.GHLongLongHashMap;
 import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
@@ -75,10 +74,11 @@ public class OSMReader {
     private File osmFile;
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
 
+    private final IntsRef tempRelFlags;
     private Date osmDataDate;
     private long zeroCounter = 0;
 
-    private LongObjectMap<List<ReaderRelation>> osmRelationsByWayID = new LongObjectScatterMap<>();
+    private GHLongLongHashMap osmWayIdToRelationFlagsMap = new GHLongLongHashMap(200, .5f);
     // stores osm way ids used by relations to identify which edge ids needs to be mapped later
     private GHLongHashSet osmWayIdSet = new GHLongHashSet();
     private IntLongMap edgeIdToOsmWayIdMap;
@@ -92,6 +92,10 @@ public class OSMReader {
         simplifyAlgo.setMaxDistance(config.getMaxWayPointDistance());
         simplifyAlgo.setElevationMaxDistance(config.getElevationMaxWayPointDistance());
         turnCostStorage = ghStorage.getTurnCostStorage();
+
+        tempRelFlags = encodingManager.createRelationFlags();
+        if (tempRelFlags.length != 2)
+            throw new IllegalArgumentException("Cannot use relation flags with != 2 integers");
     }
 
     /**
@@ -342,15 +346,11 @@ public class OSMReader {
 
     private void preprocessWay(GHPoint first, GHPoint last, ReaderWay way) {
         setArtificialWayTags(first, last, way);
-        IntsRef relationFlags = encodingManager.createRelationFlags();
-        List<ReaderRelation> relations = osmRelationsByWayID.getOrDefault(way.getId(), emptyList());
-        for (ReaderRelation relation : relations)
-            relationFlags = encodingManager.handleRelationTags(relation, relationFlags);
-
         EncodingManager.AcceptWay acceptWay = new EncodingManager.AcceptWay();
         if (!encodingManager.acceptWay(way, acceptWay))
             throw new IllegalStateException("unaccepted way: " + way.getId());
 
+        IntsRef relationFlags = getRelFlagsMap(way.getId());
         IntsRef edgeFlags = encodingManager.handleWayTags(way, acceptWay, relationFlags);
         way.setTag("gh:flags", edgeFlags);
     }
@@ -362,14 +362,11 @@ public class OSMReader {
         if (!relation.isMetaRelation() && relation.hasTag("type", "route")) {
             // we keep track of all route relations, so they are available when we create edges later
             for (ReaderRelation.Member member : relation.getMembers()) {
-                if (member.getType() == ReaderRelation.Member.WAY) {
-                    List<ReaderRelation> relations = osmRelationsByWayID.get(member.getRef());
-                    if (relations == null) {
-                        relations = new ArrayList<>();
-                        osmRelationsByWayID.put(member.getRef(), relations);
-                    }
-                    relations.add(relation);
-                }
+                if (member.getType() != ReaderRelation.Member.WAY)
+                    continue;
+                IntsRef oldRelationFlags = getRelFlagsMap(member.getRef());
+                IntsRef newRelationFlags = encodingManager.handleRelationTags(relation, oldRelationFlags);
+                putRelFlagsMap(member.getRef(), newRelationFlags);
             }
             // we remove the members because all we really want to keep are the tags
             relation.setMembers(null);
@@ -493,9 +490,21 @@ public class OSMReader {
         // todonow: not a fan
         encodingManager.releaseParsers();
         eleProvider.release();
-        osmRelationsByWayID = null;
+        osmWayIdToRelationFlagsMap = null;
         osmWayIdSet = null;
         edgeIdToOsmWayIdMap = null;
+    }
+
+    IntsRef getRelFlagsMap(long osmId) {
+        long relFlagsAsLong = osmWayIdToRelationFlagsMap.get(osmId);
+        tempRelFlags.ints[0] = (int) relFlagsAsLong;
+        tempRelFlags.ints[1] = (int) (relFlagsAsLong >> 32);
+        return tempRelFlags;
+    }
+
+    void putRelFlagsMap(long osmId, IntsRef relFlags) {
+        long relFlagsAsLong = ((long) relFlags.ints[1] << 32) | (relFlags.ints[0] & 0xFFFFFFFFL);
+        osmWayIdToRelationFlagsMap.put(osmId, relFlagsAsLong);
     }
 
     @Override
