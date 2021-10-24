@@ -17,11 +17,11 @@
  */
 package com.graphhopper.reader.osm;
 
-import com.carrotsearch.hppc.*;
-import com.graphhopper.coll.GHIntLongHashMap;
-import com.graphhopper.coll.GHLongHashSet;
-import com.graphhopper.coll.GHLongIntBTree;
-import com.graphhopper.coll.LongIntMap;
+import com.carrotsearch.hppc.IntLongMap;
+import com.carrotsearch.hppc.LongArrayList;
+import com.carrotsearch.hppc.LongIndexedContainer;
+import com.carrotsearch.hppc.LongSet;
+import com.graphhopper.coll.*;
 import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
@@ -104,7 +104,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     // smaller memory overhead for bigger data sets because of avoiding a "rehash"
     // remember how many times a node was used to identify tower nodes
     private LongIntMap osmNodeIdToInternalNodeMap;
-    private LongObjectMap<List<ReaderRelation>> osmRelationsByWayID = new LongObjectScatterMap<>();
+    private GHLongLongHashMap osmWayIdToRelationFlagsMap;
     private List<Map<String, Object>> nodeTags = new ArrayList<>();
     private LongIntMap nodeTagIndicesByOsmNodeID = new GHLongIntBTree(200);
     // stores osm way ids used by relations to identify which edge ids needs to be mapped later
@@ -119,6 +119,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private File osmFile;
     private Date osmDataDate;
+    private final IntsRef tempRelFlags;
     private final TurnCostStorage tcs;
 
     public OSMReader(GraphHopperStorage ghStorage, OSMReaderConfig config) {
@@ -133,7 +134,11 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         simplifyAlgo.setElevationMaxDistance(config.getElevationMaxWayPointDistance());
 
         osmNodeIdToInternalNodeMap = new GHLongIntBTree(200);
+        osmWayIdToRelationFlagsMap = new GHLongLongHashMap(200, .5f);
         pillarInfo = new PillarInfo(nodeAccess.is3D(), ghStorage.getDirectory());
+        tempRelFlags = encodingManager.createRelationFlags();
+        if (tempRelFlags.length != 2)
+            throw new IllegalArgumentException("Cannot use relation flags with != 2 integers");
         tcs = graph.getTurnCostStorage();
     }
 
@@ -201,7 +206,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
                     }
 
                     if (++tmpRelationCounter % 100_000 == 0) {
-                        LOGGER.info(nf(tmpRelationCounter) + " (preprocess), osmWayMap:" + nf(osmRelationsByWayID.size())
+                        LOGGER.info(nf(tmpRelationCounter) + " (preprocess), osmWayMap:" + nf(getRelFlagsMapSize())
                                 + ", " + Helper.getMemInfo());
                     }
                 } else if (item.isType(ReaderElement.FILEHEADER)) {
@@ -331,11 +336,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
         setArtificialWayTags(way);
 
-        IntsRef relationFlags = encodingManager.createRelationFlags();
-        List<ReaderRelation> relations = osmRelationsByWayID.getOrDefault(way.getId(), emptyList());
-        for (ReaderRelation relation : relations)
-            relationFlags = encodingManager.handleRelationTags(relation, relationFlags);
-
+        IntsRef relationFlags = getRelFlagsMap(way.getId());
         IntsRef edgeFlags = encodingManager.handleWayTags(way, acceptWay, relationFlags);
         if (edgeFlags.isEmpty())
             return;
@@ -541,19 +542,13 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     }
 
     void prepareWaysWithRelationInfo(ReaderRelation relation) {
-        // we keep track of all route relations, so they are available when we create edges later
         for (ReaderRelation.Member member : relation.getMembers()) {
-            if (member.getType() == ReaderRelation.Member.WAY) {
-                List<ReaderRelation> relations = osmRelationsByWayID.get(member.getRef());
-                if (relations == null) {
-                    relations = new ArrayList<>();
-                    osmRelationsByWayID.put(member.getRef(), relations);
-                }
-                relations.add(relation);
-            }
+            if (member.getType() != ReaderRelation.Member.WAY)
+                continue;
+            IntsRef oldRelationFlags = getRelFlagsMap(member.getRef());
+            IntsRef newRelationFlags = encodingManager.handleRelationTags(relation, oldRelationFlags);
+            putRelFlagsMap(member.getRef(), newRelationFlags);
         }
-        // we remove the members because all we really want to keep are the tags
-        relation.setMembers(null);
     }
 
     int addTowerNode(long osmId, double lat, double lon, double ele) {
@@ -788,7 +783,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         osmNodeIdToInternalNodeMap = null;
         nodeTags = null;
         nodeTagIndicesByOsmNodeID = null;
-        osmRelationsByWayID = null;
+        osmWayIdToRelationFlagsMap = null;
         osmWayIdSet = null;
         edgeIdToOsmWayIdMap = null;
     }
@@ -906,6 +901,22 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         return osmNodeIdToInternalNodeMap;
     }
 
+    int getRelFlagsMapSize() {
+        return osmWayIdToRelationFlagsMap.size();
+    }
+
+    IntsRef getRelFlagsMap(long osmId) {
+        long relFlagsAsLong = osmWayIdToRelationFlagsMap.get(osmId);
+        tempRelFlags.ints[0] = (int) relFlagsAsLong;
+        tempRelFlags.ints[1] = (int) (relFlagsAsLong >> 32);
+        return tempRelFlags;
+    }
+
+    void putRelFlagsMap(long osmId, IntsRef relFlags) {
+        long relFlagsAsLong = ((long) relFlags.ints[1] << 32) | (relFlags.ints[0] & 0xFFFFFFFFL);
+        osmWayIdToRelationFlagsMap.put(osmId, relFlagsAsLong);
+    }
+
     public OSMReader setAreaIndex(AreaIndex<CustomArea> areaIndex) {
         this.areaIndex = areaIndex;
         return this;
@@ -936,7 +947,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         LOGGER.info("finished " + str + " processing." + " nodes: " + graph.getNodes()
                 + ", ignored barrier nodes at junctions: " + nf(ignoredBarrierNodes)
                 + ", osmIdMap.size:" + getNodeMap().getSize() + ", osmIdMap:" + getNodeMap().getMemoryUsage() + "MB"
-                + ", nodeTags.size:" + nodeTags.size() + ", relationsMap.size:" + osmRelationsByWayID.size()
+                + ", nodeTags.size:" + nodeTags.size() + ", relationsMap.size:" + getRelFlagsMapSize()
                 + ", zeroCounter:" + zeroCounter
                 + " " + Helper.getMemInfo());
     }
