@@ -194,7 +194,8 @@ public class GHDirectory implements Directory {
     }
 
     /**
-     * This method returns RAM_INT if the specified type is in-memory.
+     * This method returns the default DAType of the specified DataAccess (as string). If preferInts is true then this
+     * method returns e.g. RAM_INT if the type of the specified DataAccess is RAM.
      */
     public DAType getDefaultType(String dataAccess, boolean preferInts) {
         DAType type = defaultTypes.getOrDefault(dataAccess, typeFallback);
