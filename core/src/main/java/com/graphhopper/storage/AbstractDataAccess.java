@@ -20,7 +20,6 @@ package com.graphhopper.storage;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Helper;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteOrder;
@@ -34,8 +33,8 @@ public abstract class AbstractDataAccess implements DataAccess {
     protected static final int HEADER_OFFSET = 20 * 4 + 20;
     protected static final byte[] EMPTY = new byte[1024];
     private static final int SEGMENT_SIZE_DEFAULT = 1 << 20;
-    protected final ByteOrder byteOrder;
-    protected final BitUtil bitUtil;
+    protected ByteOrder byteOrder;
+    protected BitUtil bitUtil;
     private final String location;
     protected int[] header = new int[(HEADER_OFFSET - 20) / 4];
     protected String name;
@@ -45,8 +44,7 @@ public abstract class AbstractDataAccess implements DataAccess {
     protected boolean closed = false;
 
     public AbstractDataAccess(String name, String location, ByteOrder order, int segmentSize) {
-        byteOrder = order;
-        bitUtil = BitUtil.get(order);
+        setByteOrder(order);
         this.name = name;
         if (!Helper.isEmpty(location) && !location.endsWith("/"))
             throw new IllegalArgumentException("Create DataAccess object via its corresponding Directory!");
@@ -91,11 +89,12 @@ public abstract class AbstractDataAccess implements DataAccess {
     /**
      * Writes some internal data into the beginning of the specified file.
      */
-    protected void writeHeader(RandomAccessFile file, long length, int segmentSize) throws IOException {
+    protected void writeHeader(RandomAccessFile file, long length) throws IOException {
         file.seek(0);
         file.writeUTF("GH");
         file.writeLong(length);
-        file.writeInt(segmentSize);
+        file.writeInt(segmentSizeInBytes);
+        file.writeInt(byteOrderToInt(byteOrder));
         for (int i = 0; i < header.length; i++) {
             file.writeInt(header[i]);
         }
@@ -112,6 +111,7 @@ public abstract class AbstractDataAccess implements DataAccess {
 
         long bytes = raFile.readLong();
         setSegmentSize(raFile.readInt());
+        setByteOrder(intToByteOrder(raFile.readInt()));
         for (int i = 0; i < header.length; i++) {
             header[i] = raFile.readInt();
         }
@@ -124,7 +124,7 @@ public abstract class AbstractDataAccess implements DataAccess {
         }
     }
 
-    DataAccess setSegmentSize(int bytes) {
+    void setSegmentSize(int bytes) {
         if (bytes > 0) {
             // segment size should be a power of 2
             int tmp = (int) (Math.log(bytes) / Math.log(2));
@@ -132,7 +132,11 @@ public abstract class AbstractDataAccess implements DataAccess {
         }
         segmentSizePower = (int) (Math.log(segmentSizeInBytes) / Math.log(2));
         indexDivisor = segmentSizeInBytes - 1;
-        return this;
+    }
+
+    private void setByteOrder(ByteOrder byteOrder) {
+        this.byteOrder = byteOrder;
+        bitUtil = BitUtil.get(byteOrder);
     }
 
     @Override
@@ -151,5 +155,23 @@ public abstract class AbstractDataAccess implements DataAccess {
 
     protected boolean isIntBased() {
         return false;
+    }
+
+    private static int byteOrderToInt(ByteOrder byteOrder) {
+        if (byteOrder == ByteOrder.LITTLE_ENDIAN)
+            return 0;
+        else if (byteOrder == ByteOrder.BIG_ENDIAN)
+            return 1;
+        else
+            throw new IllegalStateException("Unknown byte order: " + byteOrder);
+    }
+
+    private static ByteOrder intToByteOrder(int byteOrderInt) {
+        if (byteOrderInt == 0)
+            return ByteOrder.LITTLE_ENDIAN;
+        else if (byteOrderInt == 1)
+            return ByteOrder.BIG_ENDIAN;
+        else
+            throw new IllegalStateException("Unknown byte order: " + byteOrderInt);
     }
 }

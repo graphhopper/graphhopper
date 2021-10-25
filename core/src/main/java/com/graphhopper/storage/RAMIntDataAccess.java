@@ -123,7 +123,7 @@ class RAMIntDataAccess extends AbstractDataAccess {
                 segments = new int[segmentCount][];
                 for (int s = 0; s < segmentCount; s++) {
                     int read = raFile.read(bytes) / 4;
-                    int area[] = new int[read];
+                    int[] area = new int[read];
                     for (int j = 0; j < read; j++) {
                         area[j] = bitUtil.toInt(bytes, j * 4);
                     }
@@ -150,11 +150,11 @@ class RAMIntDataAccess extends AbstractDataAccess {
             RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw");
             try {
                 long len = getCapacity();
-                writeHeader(raFile, len, segmentSizeInBytes);
+                writeHeader(raFile, len);
                 raFile.seek(HEADER_OFFSET);
                 // raFile.writeInt() <- too slow, so copy into byte array
                 for (int s = 0; s < segments.length; s++) {
-                    int area[] = segments[s];
+                    int[] area = segments[s];
                     int intLen = area.length;
                     byte[] byteArea = new byte[intLen * 4];
                     for (int i = 0; i < intLen; i++) {
@@ -257,11 +257,10 @@ class RAMIntDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    DataAccess setSegmentSize(int bytes) {
+    void setSegmentSize(int bytes) {
         super.setSegmentSize(bytes);
         segmentSizeIntsPower = (int) (Math.log(segmentSizeInBytes / 4) / Math.log(2));
         indexDivisor = segmentSizeInBytes / 4 - 1;
-        return this;
     }
 
     boolean releaseSegment(int segNumber) {

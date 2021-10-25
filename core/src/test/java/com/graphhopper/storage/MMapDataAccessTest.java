@@ -19,6 +19,8 @@ package com.graphhopper.storage;
 
 import org.junit.jupiter.api.Test;
 
+import java.nio.ByteOrder;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -26,8 +28,8 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class MMapDataAccessTest extends DataAccessTest {
     @Override
-    public DataAccess createDataAccess(String name, int segmentSize) {
-        return new MMapDataAccess(name, directory, defaultOrder, true, segmentSize);
+    public DataAccess createDataAccess(String name, int segmentSize, ByteOrder byteOrder) {
+        return new MMapDataAccess(name, directory, byteOrder, true, segmentSize);
     }
 
     @Test

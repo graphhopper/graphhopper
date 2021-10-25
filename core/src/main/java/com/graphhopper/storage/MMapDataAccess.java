@@ -297,7 +297,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
             for (MappedByteBuffer bb : segments) {
                 bb.force();
             }
-            writeHeader(raFile, raFile.length(), segmentSizeInBytes);
+            writeHeader(raFile, raFile.length());
 
             // this could be necessary too
             // http://stackoverflow.com/q/14011398/194609

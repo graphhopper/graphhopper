@@ -37,11 +37,15 @@ public abstract class DataAccessTest {
     protected String directory;
     protected String name = "dataacess";
 
-    public DataAccess createDataAccess(String location) {
+    public final DataAccess createDataAccess(String location) {
         return createDataAccess(location, 128);
     }
 
-    public abstract DataAccess createDataAccess(String location, int segmentSize);
+    public final DataAccess createDataAccess(String location, int segmentSize) {
+        return createDataAccess(location, segmentSize, defaultOrder);
+    }
+
+    public abstract DataAccess createDataAccess(String location, int segmentSize, ByteOrder byteOrder);
 
     @BeforeEach
     public void setUp() {
@@ -178,7 +182,37 @@ public abstract class DataAccessTest {
     @Test
     public void testSegmentSize() {
         DataAccess da = createDataAccess(name, 20);
+        da.create(10);
+        // a minimum segment size is applied
         assertEquals(128, da.getSegmentSize());
+        da.flush();
+        da.close();
+
+        da = createDataAccess(name, 256);
+        da.loadExisting();
+        // we chose a different segment size, but it is ignored
+        assertEquals(128, da.getSegmentSize());
+        da.close();
+    }
+
+    @Test
+    public void testByteOrder() {
+        DataAccess da = createDataAccess(name, 128, ByteOrder.LITTLE_ENDIAN);
+        da.create(10);
+        da.setInt(0, 10);
+        da.flush();
+        da.close();
+
+        // load and check
+        da = createDataAccess(name, 128, ByteOrder.LITTLE_ENDIAN);
+        da.loadExisting();
+        assertEquals(10, da.getInt(0));
+        da.close();
+
+        // now use a different byte order (this only works because we **ignore** the given byte order)
+        da = createDataAccess(name, 128, ByteOrder.BIG_ENDIAN);
+        da.loadExisting();
+        assertEquals(10, da.getInt(0));
         da.close();
     }
 

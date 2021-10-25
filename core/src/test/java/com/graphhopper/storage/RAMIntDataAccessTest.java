@@ -17,13 +17,15 @@
  */
 package com.graphhopper.storage;
 
+import java.nio.ByteOrder;
+
 /**
  * @author Peter Karich
  */
 public class RAMIntDataAccessTest extends DataAccessTest {
     @Override
-    public DataAccess createDataAccess(String name, int segmentSize) {
-        return new RAMIntDataAccess(name, directory, true, defaultOrder, segmentSize);
+    public DataAccess createDataAccess(String name, int segmentSize, ByteOrder byteOrder) {
+        return new RAMIntDataAccess(name, directory, true, byteOrder, segmentSize);
     }
 
     @Override
