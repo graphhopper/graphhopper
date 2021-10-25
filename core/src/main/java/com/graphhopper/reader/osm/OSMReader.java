@@ -17,15 +17,16 @@
  */
 package com.graphhopper.reader.osm;
 
-import com.carrotsearch.hppc.*;
-import com.graphhopper.coll.LongIntMap;
+import com.carrotsearch.hppc.IntLongMap;
+import com.carrotsearch.hppc.LongArrayList;
+import com.carrotsearch.hppc.LongIndexedContainer;
+import com.carrotsearch.hppc.LongSet;
 import com.graphhopper.coll.*;
 import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;
 import com.graphhopper.routing.OSMReaderConfig;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CustomArea;
@@ -42,13 +43,11 @@ import org.slf4j.LoggerFactory;
 import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import static com.graphhopper.util.Helper.nf;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 
 /**
  * This class parses an OSM xml or pbf file and creates a graph from it. It does so in a two phase
@@ -58,9 +57,8 @@ import static java.util.Collections.emptyList;
  * node occurs once it is a pillar node and if more it is a tower node, otherwise
  * {@link #osmNodeIdToInternalNodeMap} returns EMPTY.
  * <p>
- * 1. b) Reads relations from OSM file. In case that the relation is a route relation, it stores
- * specific relation attributes required for routing into {@link #osmWayIdToRelationFlagsMap} for all the ways
- * of the relation.
+ * 1. b) Reads relations from OSM file. We keep all route relations for each way ID. We also keep the way IDs for
+ * all restriction relations, so later we know which edge IDs we need to keep to create turn relation entries
  * <p>
  * 2.a) Reads nodes from OSM file and stores lat+lon information either into the intermediate
  * data structure for the pillar nodes (pillarLats/pillarLons) or, if a tower node, directly into the
@@ -106,8 +104,9 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     // smaller memory overhead for bigger data sets because of avoiding a "rehash"
     // remember how many times a node was used to identify tower nodes
     private LongIntMap osmNodeIdToInternalNodeMap;
-    private GHLongLongHashMap osmNodeIdToNodeFlagsMap;
     private GHLongLongHashMap osmWayIdToRelationFlagsMap;
+    private List<Map<String, Object>> nodeTags = new ArrayList<>();
+    private LongIntMap nodeTagIndicesByOsmNodeID = new GHLongIntBTree(200);
     // stores osm way ids used by relations to identify which edge ids needs to be mapped later
     private GHLongHashSet osmWayIdSet = new GHLongHashSet();
     private IntLongMap edgeIdToOsmWayIdMap;
@@ -135,13 +134,11 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         simplifyAlgo.setElevationMaxDistance(config.getElevationMaxWayPointDistance());
 
         osmNodeIdToInternalNodeMap = new GHLongIntBTree(200);
-        osmNodeIdToNodeFlagsMap = new GHLongLongHashMap(200, .5f);
         osmWayIdToRelationFlagsMap = new GHLongLongHashMap(200, .5f);
         pillarInfo = new PillarInfo(nodeAccess.is3D(), ghStorage.getDirectory());
         tempRelFlags = encodingManager.createRelationFlags();
         if (tempRelFlags.length != 2)
             throw new IllegalArgumentException("Cannot use relation flags with != 2 integers");
-
         tcs = graph.getTurnCostStorage();
     }
 
@@ -345,43 +342,42 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             return;
 
         LongArrayList osmNodeIds = way.getNodes();
-        // look for barriers along the way
         final int size = osmNodeIds.size();
         int lastBarrier = -1;
         for (int i = 0; i < size; i++) {
             long nodeId = osmNodeIds.get(i);
-            long nodeFlags = getNodeFlagsMap().get(nodeId);
-            // barrier was spotted and the way is passable for that mode of travel
-            if (nodeFlags > 0) {
-                // create shadow node copy for zero length edge
-                long newNodeId = addBarrierNode(nodeId);
+            int nodeTagIndex = nodeTagIndicesByOsmNodeID.get(nodeId);
+            if (nodeTagIndex >= 0) {
+                // this node is a barrier. we will add an extra edge to block access
+                // create an extra node for the barrier edge
+                long extraNodeId = addBarrierNode(nodeId);
                 if (i > 0) {
                     // start at beginning of array if there was no previous barrier
                     if (lastBarrier < 0)
                         lastBarrier = 0;
 
-                    // add way up to barrier shadow node
+                    // add way up to the new extra node
                     int length = i - lastBarrier + 1;
                     LongArrayList partNodeIds = new LongArrayList();
                     partNodeIds.add(osmNodeIds.buffer, lastBarrier, length);
-                    partNodeIds.set(length - 1, newNodeId);
+                    partNodeIds.set(length - 1, extraNodeId);
                     addOSMWay(partNodeIds, edgeFlags, way);
 
-                    // create zero length edge for barrier
-                    addBarrierEdge(newNodeId, nodeId, edgeFlags, nodeFlags, way);
+                    // create zero length barrier edge
+                    addBarrierEdge(extraNodeId, nodeId, edgeFlags, nodeTags.get(nodeTagIndex), way);
                 } else {
-                    // run edge from real first node to shadow node
-                    addBarrierEdge(nodeId, newNodeId, edgeFlags, nodeFlags, way);
-
+                    // make sure the extra node is not at the beginning of the edge
+                    addBarrierEdge(nodeId, extraNodeId, edgeFlags, nodeTags.get(nodeTagIndex), way);
                     // exchange first node for created barrier node
-                    osmNodeIds.set(0, newNodeId);
+                    osmNodeIds.set(0, extraNodeId);
                 }
                 // remember barrier for processing the way behind it
                 lastBarrier = i;
 
                 // ignore this barrier node from now. for example a barrier can be connecting two ways (appear in both
                 // ways) and we only want to add a barrier edge once (but we want to add one).
-                getNodeFlagsMap().put(nodeId, 0);
+                nodeTagIndicesByOsmNodeID.put(nodeId, -1);
+                nodeTags.set(nodeTagIndex, emptyMap());
             }
         }
 
@@ -513,23 +509,27 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
     protected void processNode(ReaderNode node) {
         int nodeType = getNodeMap().get(node.getId());
-        if (nodeType == EMPTY_NODE) {
+        if (nodeType == EMPTY_NODE)
             return;
-        } else if (nodeType == JUNCTION_NODE || nodeType == CONNECTION_NODE) {
+        else if (nodeType == JUNCTION_NODE || nodeType == CONNECTION_NODE)
             addTowerNode(node.getId(), node.getLat(), node.getLon(), eleProvider.getEle(node));
-        } else if (nodeType == INTERMEDIATE_NODE || nodeType == END_NODE) {
+        else if (nodeType == INTERMEDIATE_NODE || nodeType == END_NODE)
             addPillarNode(node.getId(), node.getLat(), node.getLon(), eleProvider.getEle(node));
-        }
 
-        // analyze node tags for barriers
-        if (node.hasTags()) {
-            long nodeFlags = encodingManager.handleNodeTags(node);
-            if (nodeFlags != 0)
-                if (nodeType == JUNCTION_NODE) {
-                    LOGGER.debug("OSM node {} at {},{} is a barrier node at a junction, the barrier will be ignored", node.getId(), Helper.round(node.getLat(), 7), Helper.round(node.getLon(), 7));
-                    ignoredBarrierNodes++;
-                } else
-                    getNodeFlagsMap().put(node.getId(), nodeFlags);
+        // we keep node tags for barrier nodes
+        if (node.getTags().containsKey("barrier")) {
+            if (nodeType == JUNCTION_NODE) {
+                LOGGER.debug("OSM node {} at {},{} is a barrier node at a junction, the barrier will be ignored", node.getId(), Helper.round(node.getLat(), 7), Helper.round(node.getLon(), 7));
+                ignoredBarrierNodes++;
+            } else {
+                int tagIndex = nodeTagIndicesByOsmNodeID.get(node.getId());
+                if (tagIndex == -1) {
+                    nodeTagIndicesByOsmNodeID.put(node.getId(), nodeTags.size());
+                    nodeTags.add(node.getTags());
+                } else {
+                    throw new IllegalStateException("Duplicate node OSM ID: " + node.getId());
+                }
+            }
         }
 
         locations++;
@@ -541,17 +541,13 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         nextPillarId++;
     }
 
-    void prepareWaysWithRelationInfo(ReaderRelation osmRelation) {
-        for (ReaderRelation.Member member : osmRelation.getMembers()) {
+    void prepareWaysWithRelationInfo(ReaderRelation relation) {
+        for (ReaderRelation.Member member : relation.getMembers()) {
             if (member.getType() != ReaderRelation.Member.WAY)
                 continue;
-
-            long osmId = member.getRef();
-            IntsRef oldRelationFlags = getRelFlagsMap(osmId);
-
-            // Check if our new relation data is better compared to the last one
-            IntsRef newRelationFlags = encodingManager.handleRelationTags(osmRelation, oldRelationFlags);
-            putRelFlagsMap(osmId, newRelationFlags);
+            IntsRef oldRelationFlags = getRelFlagsMap(member.getRef());
+            IntsRef newRelationFlags = encodingManager.handleRelationTags(relation, oldRelationFlags);
+            putRelFlagsMap(member.getRef(), newRelationFlags);
         }
     }
 
@@ -785,7 +781,8 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         encodingManager.releaseParsers();
         eleProvider.release();
         osmNodeIdToInternalNodeMap = null;
-        osmNodeIdToNodeFlagsMap = null;
+        nodeTags = null;
+        nodeTagIndicesByOsmNodeID = null;
         osmWayIdToRelationFlagsMap = null;
         osmWayIdSet = null;
         edgeIdToOsmWayIdMap = null;
@@ -822,13 +819,9 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     /**
      * Add a zero length edge with reduced routing options to the graph.
      */
-    void addBarrierEdge(long fromId, long toId, IntsRef inEdgeFlags, long nodeFlags, ReaderWay way) {
-        IntsRef edgeFlags = IntsRef.deepCopyOf(inEdgeFlags);
-        // clear blocked directions from flags
-        for (BooleanEncodedValue accessEnc : encodingManager.getAccessEncFromNodeFlags(nodeFlags)) {
-            accessEnc.setBool(false, edgeFlags, false);
-            accessEnc.setBool(true, edgeFlags, false);
-        }
+    void addBarrierEdge(long fromId, long toId, IntsRef edgeFlags, Map<String, Object> nodeTags, ReaderWay way) {
+        // update edge flags to block access depending on the node tags
+        edgeFlags = encodingManager.handleNodeTags(nodeTags, IntsRef.deepCopyOf(edgeFlags));
         // add edge
         barrierNodeIds.clear();
         barrierNodeIds.add(fromId);
@@ -872,7 +865,8 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         return osmTurnRelations;
     }
 
-    OSMTurnRelation createTurnRelation(ReaderRelation relation, String restrictionType, String vehicleTypeRestricted, List<String> vehicleTypesExcept) {
+    OSMTurnRelation createTurnRelation(ReaderRelation relation, String restrictionType, String
+            vehicleTypeRestricted, List<String> vehicleTypesExcept) {
         OSMTurnRelation.Type type = OSMTurnRelation.Type.getRestrictionType(restrictionType);
         if (type != OSMTurnRelation.Type.UNSUPPORTED) {
             long fromWayID = -1;
@@ -905,10 +899,6 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
      */
     protected LongIntMap getNodeMap() {
         return osmNodeIdToInternalNodeMap;
-    }
-
-    protected LongLongMap getNodeFlagsMap() {
-        return osmNodeIdToNodeFlagsMap;
     }
 
     int getRelFlagsMapSize() {
@@ -957,7 +947,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         LOGGER.info("finished " + str + " processing." + " nodes: " + graph.getNodes()
                 + ", ignored barrier nodes at junctions: " + nf(ignoredBarrierNodes)
                 + ", osmIdMap.size:" + getNodeMap().getSize() + ", osmIdMap:" + getNodeMap().getMemoryUsage() + "MB"
-                + ", nodeFlagsMap.size:" + getNodeFlagsMap().size() + ", relFlagsMap.size:" + getRelFlagsMapSize()
+                + ", nodeTags.size:" + nodeTags.size() + ", relationsMap.size:" + getRelFlagsMapSize()
                 + ", zeroCounter:" + zeroCounter
                 + " " + Helper.getMemInfo());
     }
