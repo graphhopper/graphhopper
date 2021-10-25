@@ -368,8 +368,6 @@ public class OSMReader {
                 IntsRef newRelationFlags = encodingManager.handleRelationTags(relation, oldRelationFlags);
                 putRelFlagsMap(member.getRef(), newRelationFlags);
             }
-            // we remove the members because all we really want to keep are the tags
-            relation.setMembers(null);
         }
 
         if (relation.hasTag("type", "restriction")) {

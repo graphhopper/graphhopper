@@ -37,13 +37,13 @@ public abstract class ReaderElement {
     private final Map<String, Object> properties;
 
     protected ReaderElement(long id, int type) {
-        this(id, type, 4);
+        this(id, type, new HashMap<>(4));
     }
 
-    protected ReaderElement(long id, int type, int propertyMapSize) {
+    protected ReaderElement(long id, int type, Map<String, Object> properties) {
         this.id = id;
         this.type = type;
-        properties = new HashMap<>(propertyMapSize);
+        this.properties = properties;
     }
 
     public long getId() {
@@ -66,11 +66,6 @@ public abstract class ReaderElement {
 
     public Map<String, Object> getTags() {
         return properties;
-    }
-
-    public void _setTags(Map<String, Object> properties) {
-        this.properties.clear();
-        this.properties.putAll(properties);
     }
 
     public void setTags(Map<String, String> newTags) {
