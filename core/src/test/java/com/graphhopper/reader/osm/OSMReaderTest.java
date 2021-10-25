@@ -347,7 +347,7 @@ public class OSMReaderTest {
                 importOrLoad();
 
         Graph graph = hopper.getGraphHopperStorage();
-        // we ignore the barrier at node 50, but not the one at node
+        // we ignore the barrier at node 50, but not the one at node 20
         assertEquals(7, graph.getNodes());
         assertEquals(7, graph.getEdges());
 
