@@ -649,10 +649,8 @@ public class EncodingManager implements EncodedValueLookup {
      */
     public IntsRef handleNodeTags(Map<String, Object> nodeTags, IntsRef edgeFlags) {
         for (AbstractFlagEncoder encoder : edgeEncoders) {
-            // todo: not sure yet: should we pass the reader node (because it includes the coordinates), or just the tag?
             // for now we just create a dummy reader node, because our encoders do not make use of the coordinates anyway
-            ReaderNode readerNode = new ReaderNode(0, 0, 0);
-            readerNode._setTags(nodeTags);
+            ReaderNode readerNode = new ReaderNode(0, 0, 0, nodeTags);
             // block access for all encoders that treat this node as a barrier
             if (encoder.isBarrier(readerNode)) {
                 BooleanEncodedValue accessEnc = encoder.getAccessEnc();
