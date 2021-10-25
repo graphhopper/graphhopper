@@ -733,7 +733,7 @@ public class GraphHopper {
         }
 
         if (!allowWrites && dataAccessDefaultType.isMMap())
-            dataAccessType = DAType.MMAP_RO;
+            dataAccessDefaultType = DAType.MMAP_RO;
         if (encodingManager == null) {
             StorableProperties properties = new StorableProperties(new GHDirectory(ghLocation, dataAccessDefaultType));
             encodingManager = properties.loadExisting()
