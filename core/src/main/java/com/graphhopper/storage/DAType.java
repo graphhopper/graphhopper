@@ -92,7 +92,7 @@ public class DAType {
      */
     public static DAType getPreferredInt(DAType type) {
         if (type.isInMemory())
-            return type.isStoring() ? RAM_INT_STORE : RAM_INT;
+            return type.isStoring() ? RAM_STORE : RAM;
         return type;
     }
 
