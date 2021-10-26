@@ -120,7 +120,7 @@ Here is a complete request example for a POST /route query in berlin that includ
   "custom_model": {
     "speed": [
       {
-        "if": true,
+        "if": "true",
         "limit_to": 100
       }
     ],
