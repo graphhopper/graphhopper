@@ -33,8 +33,8 @@ public abstract class AbstractDataAccess implements DataAccess {
     protected static final int HEADER_OFFSET = 20 * 4 + 20;
     protected static final byte[] EMPTY = new byte[1024];
     private static final int SEGMENT_SIZE_DEFAULT = 1 << 20;
-    protected final ByteOrder byteOrder;
-    protected final BitUtil bitUtil;
+    protected final ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
+    protected final BitUtil bitUtil = BitUtil.LITTLE;
     private final String location;
     protected int[] header = new int[(HEADER_OFFSET - 20) / 4];
     protected String name;
@@ -43,9 +43,7 @@ public abstract class AbstractDataAccess implements DataAccess {
     protected int indexDivisor;
     protected boolean closed = false;
 
-    public AbstractDataAccess(String name, String location, ByteOrder order, int segmentSize) {
-        byteOrder = order;
-        bitUtil = BitUtil.get(order);
+    public AbstractDataAccess(String name, String location, int segmentSize) {
         this.name = name;
         if (!Helper.isEmpty(location) && !location.endsWith("/"))
             throw new IllegalArgumentException("Create DataAccess object via its corresponding Directory!");

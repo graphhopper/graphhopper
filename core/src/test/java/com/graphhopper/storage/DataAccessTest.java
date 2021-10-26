@@ -24,7 +24,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.nio.ByteOrder;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -33,7 +32,6 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public abstract class DataAccessTest {
     private final File folder = new File("./target/tmp/da");
-    protected ByteOrder defaultOrder = ByteOrder.LITTLE_ENDIAN;
     protected String directory;
     protected String name = "dataacess";
 
@@ -196,15 +194,15 @@ public abstract class DataAccessTest {
         DataAccess da = createDataAccess(name);
         da.create(300);
         assertEquals(128, da.getSegmentSize());
-        byte[] bytes = BitUtil.BIG.fromInt(Integer.MAX_VALUE / 3);
+        byte[] bytes = BitUtil.LITTLE.fromInt(Integer.MAX_VALUE / 3);
         da.setBytes(8, bytes, bytes.length);
         bytes = new byte[4];
         da.getBytes(8, bytes, bytes.length);
-        assertEquals(Integer.MAX_VALUE / 3, BitUtil.BIG.toInt(bytes));
+        assertEquals(Integer.MAX_VALUE / 3, BitUtil.LITTLE.toInt(bytes));
 
         da.setBytes(127, bytes, bytes.length);
         da.getBytes(127, bytes, bytes.length);
-        assertEquals(Integer.MAX_VALUE / 3, BitUtil.BIG.toInt(bytes));
+        assertEquals(Integer.MAX_VALUE / 3, BitUtil.LITTLE.toInt(bytes));
 
         da.close();
 
