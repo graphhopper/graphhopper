@@ -633,7 +633,7 @@ public class OSMReaderTest {
             }
 
             @Override
-            void handleSegment(LongArrayList segment, ReaderWay way, IntsRef edgeFlags, Map<String, Object> nodeTags) {
+            void handleSegment(List<SegmentNode> segment, ReaderWay way, IntsRef edgeFlags, Map<String, Object> nodeTags) {
             }
         };
 
