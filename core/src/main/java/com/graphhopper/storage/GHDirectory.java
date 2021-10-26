@@ -18,7 +18,6 @@
 package com.graphhopper.storage;
 
 import java.io.File;
-import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,7 +31,6 @@ import static com.graphhopper.util.Helper.*;
 public class GHDirectory implements Directory {
     protected final String location;
     private final DAType defaultType;
-    private final ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
     protected Map<String, DataAccess> map = new HashMap<>();
 
     public GHDirectory(String _location, DAType defaultType) {
@@ -47,11 +45,6 @@ public class GHDirectory implements Directory {
         File dir = new File(location);
         if (dir.exists() && !dir.isDirectory())
             throw new RuntimeException("file '" + dir + "' exists but is not a directory");
-    }
-
-    @Override
-    public ByteOrder getByteOrder() {
-        return byteOrder;
     }
 
     @Override
@@ -83,15 +76,15 @@ public class GHDirectory implements Directory {
         if (type.isInMemory()) {
             if (type.isInteg()) {
                 if (type.isStoring())
-                    da = new RAMIntDataAccess(name, location, true, byteOrder, segmentSize);
+                    da = new RAMIntDataAccess(name, location, true, segmentSize);
                 else
-                    da = new RAMIntDataAccess(name, location, false, byteOrder, segmentSize);
+                    da = new RAMIntDataAccess(name, location, false, segmentSize);
             } else if (type.isStoring())
-                da = new RAMDataAccess(name, location, true, byteOrder, segmentSize);
+                da = new RAMDataAccess(name, location, true, segmentSize);
             else
-                da = new RAMDataAccess(name, location, false, byteOrder, segmentSize);
+                da = new RAMDataAccess(name, location, false, segmentSize);
         } else if (type.isMMap()) {
-            da = new MMapDataAccess(name, location, byteOrder, type.isAllowWrites(), segmentSize);
+            da = new MMapDataAccess(name, location, type.isAllowWrites(), segmentSize);
         } else {
             throw new IllegalArgumentException("DAType not supported " + type);
         }
