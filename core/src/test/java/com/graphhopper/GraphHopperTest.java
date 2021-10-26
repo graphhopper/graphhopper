@@ -60,6 +60,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static com.graphhopper.util.Parameters.Curbsides.*;
 import static com.graphhopper.util.Parameters.Routing.U_TURN_COSTS;
+import static com.graphhopper.util.TestUtil.assertPointsEqual;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -1016,8 +1017,8 @@ public class GraphHopperTest {
         assertEquals(135, res.getDescend(), 1e-1);
 
         assertEquals(55, res.getPoints().size());
-        assertEquals(new GHPoint3D(43.73068455771767, 7.421283689825812, 62.0), res.getPoints().get(0));
-        assertEquals(new GHPoint3D(43.727679637988224, 7.419198521975086, 11.0), res.getPoints().get(res.getPoints().size() - 1));
+        assertPointsEqual(new GHPoint3D(43.73068455771767, 7.421283689825812, 62.0), res.getPoints().get(0));
+        assertPointsEqual(new GHPoint3D(43.727679637988224, 7.419198521975086, 11.0), res.getPoints().get(res.getPoints().size() - 1));
 
         assertEquals(62, res.getPoints().get(0).getEle(), 1e-2);
         assertEquals(66, res.getPoints().get(1).getEle(), 1e-2);
@@ -1136,8 +1137,8 @@ public class GraphHopperTest {
         assertEquals(67.4, arsp.getDescend(), 1e-1);
 
         assertEquals(60, arsp.getPoints().size());
-        assertEquals(new GHPoint3D(43.73068455771767, 7.421283689825812, 55.82900047302246), arsp.getPoints().get(0));
-        assertEquals(new GHPoint3D(43.727679637988224, 7.419198521975086, 12.274499893188477), arsp.getPoints().get(arsp.getPoints().size() - 1));
+        assertPointsEqual(new GHPoint3D(43.73068455771767, 7.421283689825812, 55.82900047302246), arsp.getPoints().get(0));
+        assertPointsEqual(new GHPoint3D(43.727679637988224, 7.419198521975086, 12.274499893188477), arsp.getPoints().get(arsp.getPoints().size() - 1));
 
         assertEquals(55.83, arsp.getPoints().get(0).getEle(), 1e-2);
         assertEquals(57.78, arsp.getPoints().get(1).getEle(), 1e-2);

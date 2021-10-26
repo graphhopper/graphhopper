@@ -52,6 +52,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
+import static com.graphhopper.util.TestUtil.assertPointsEqual;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -392,9 +393,9 @@ public class GraphHopperOSMTest {
                 setAlgorithm(DIJKSTRA_BI)).getBest();
         assertFalse(rsp.hasErrors());
         assertEquals(3, rsp.getPoints().size());
-        assertEquals(new GHPoint(51.24921503475044, 9.431716451757769), rsp.getPoints().get(0));
-        assertEquals(new GHPoint(52.0, 9.0), rsp.getPoints().get(1));
-        assertEquals(new GHPoint(51.199999850988384, 9.39999970197677), rsp.getPoints().get(2));
+        assertPointsEqual(new GHPoint(51.24921503475044, 9.431716451757769), rsp.getPoints().get(0));
+        assertPointsEqual(new GHPoint(52.0, 9.0), rsp.getPoints().get(1));
+        assertPointsEqual(new GHPoint(51.199999850988384, 9.39999970197677), rsp.getPoints().get(2));
 
         GHRequest req = new GHRequest(51.2492152, 9.4317166, 51.2, 9.4);
         req.setProfile(profile);

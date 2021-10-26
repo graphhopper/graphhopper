@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 
+import static com.graphhopper.util.TestUtil.assertPointsEqual;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -114,16 +115,16 @@ public class LocationIndexTreeTest {
         // query directly the tower node
         Snap res = index.findClosest(-0.4, 0.9, EdgeFilter.ALL_EDGES);
         assertTrue(res.isValid());
-        assertEquals(new GHPoint(-0.4, 0.9), res.getSnappedPoint());
+        assertPointsEqual(new GHPoint(-0.4, 0.9), res.getSnappedPoint());
         res = index.findClosest(-0.6, 1.6, EdgeFilter.ALL_EDGES);
         assertTrue(res.isValid());
-        assertEquals(new GHPoint(-0.6, 1.6), res.getSnappedPoint());
+        assertPointsEqual(new GHPoint(-0.6, 1.6), res.getSnappedPoint());
 
         // query the edge (1,3). The edge (0,4) has 27674 as distance
         res = index.findClosest(-0.2, 0.3, EdgeFilter.ALL_EDGES);
         assertTrue(res.isValid());
         assertEquals(26936, res.getQueryDistance(), 1);
-        assertEquals(new GHPoint(-0.441624, 0.317259), res.getSnappedPoint());
+        assertPointsEqual(new GHPoint(-0.441624, 0.317259), res.getSnappedPoint());
     }
 
     @Test

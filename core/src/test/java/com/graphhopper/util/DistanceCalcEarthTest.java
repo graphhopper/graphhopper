@@ -20,6 +20,7 @@ package com.graphhopper.util;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
 
+import static com.graphhopper.util.TestUtil.assertPointsEqual;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -222,9 +223,9 @@ public class DistanceCalcEarthTest {
         assertEquals(168.213, dist.calcDenormalizedDist(dist.calcNormalizedEdgeDistance(queryLat, queryLon, lat17, lon17, lat18, lon18)), 1e-3);
 
         // 16_17
-        assertEquals(new GHPoint(42.567048, 1.6019), dist.calcCrossingPointToEdge(queryLat, queryLon, lat16, lon16, lat17, lon17));
+        assertPointsEqual(new GHPoint(42.567048, 1.6019), dist.calcCrossingPointToEdge(queryLat, queryLon, lat16, lon16, lat17, lon17));
         // 17_18
-        // assertEquals(new GHPoint(42.566945,1.602062), dist.calcCrossingPointToEdge(queryLat, queryLon, lat17, lon17, lat18, lon18));
+        // assertPointsEqual(new GHPoint(42.566945, 1.602062), dist.calcCrossingPointToEdge(queryLat, queryLon, lat17, lon17, lat18, lon18));
     }
 
     @Test
@@ -238,7 +239,7 @@ public class DistanceCalcEarthTest {
         assertEquals(60.88, distCalc.calcDenormalizedDist(distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
                 tmpLat, tmpLon, wayLat, wayLon)), .1);
 
-        assertEquals(new GHPoint(55.81863, 37.594626), distCalc.calcCrossingPointToEdge(queryLat, queryLon,
+        assertPointsEqual(new GHPoint(55.81863, 37.594626), distCalc.calcCrossingPointToEdge(queryLat, queryLon,
                 tmpLat, tmpLon, wayLat, wayLon));
     }
 

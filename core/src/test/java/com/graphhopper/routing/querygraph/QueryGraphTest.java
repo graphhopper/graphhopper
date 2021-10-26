@@ -44,6 +44,7 @@ import java.util.List;
 import static com.graphhopper.storage.index.Snap.Position.*;
 import static com.graphhopper.util.EdgeIteratorState.UNFAVORED_EDGE;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
+import static com.graphhopper.util.TestUtil.assertPointsEqual;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -93,18 +94,18 @@ public class QueryGraphTest {
 
         Snap res = createLocationResult(1, -1, iter, 0, TOWER);
         QueryGraph queryGraph0 = lookup(res);
-        assertEquals(new GHPoint(0, 0), res.getSnappedPoint());
+        assertPointsEqual(new GHPoint(0, 0), res.getSnappedPoint());
 
         // b)
         res = createLocationResult(1, -1, iter, 1, TOWER);
         QueryGraph queryGraph1 = lookup(res);
-        assertEquals(new GHPoint(1, 0), res.getSnappedPoint());
+        assertPointsEqual(new GHPoint(1, 0), res.getSnappedPoint());
         // c)
         iter = expl.setBaseNode(1);
         iter.next();
         res = createLocationResult(1.2, 2.7, iter, 0, TOWER);
         QueryGraph queryGraph2 = lookup(res);
-        assertEquals(new GHPoint(1, 2.5), res.getSnappedPoint());
+        assertPointsEqual(new GHPoint(1, 2.5), res.getSnappedPoint());
 
         // node number stays
         assertEquals(3, queryGraph2.getNodes());
@@ -114,14 +115,14 @@ public class QueryGraphTest {
         iter.next();
         res = createLocationResult(2, 1.5, iter, 1, PILLAR);
         QueryGraph queryGraph3 = lookup(res);
-        assertEquals(new GHPoint(1.5, 1.5), res.getSnappedPoint());
+        assertPointsEqual(new GHPoint(1.5, 1.5), res.getSnappedPoint());
         assertEquals(3, res.getClosestNode());
         assertEquals(3, getPoints(queryGraph3, 0, 3).size());
         assertEquals(2, getPoints(queryGraph3, 3, 1).size());
 
         res = createLocationResult(2, 1.7, iter, 1, PILLAR);
         QueryGraph queryGraph4 = lookup(res);
-        assertEquals(new GHPoint(1.5, 1.5), res.getSnappedPoint());
+        assertPointsEqual(new GHPoint(1.5, 1.5), res.getSnappedPoint());
         assertEquals(3, res.getClosestNode());
         assertEquals(3, getPoints(queryGraph4, 0, 3).size());
         assertEquals(2, getPoints(queryGraph4, 3, 1).size());
@@ -129,7 +130,7 @@ public class QueryGraphTest {
         // snap to edge which has pillar nodes        
         res = createLocationResult(1.5, 2, iter, 0, EDGE);
         QueryGraph queryGraph5 = lookup(res);
-        assertEquals(new GHPoint(1.300019, 1.899962), res.getSnappedPoint());
+        assertPointsEqual(new GHPoint(1.300019, 1.899962), res.getSnappedPoint());
         assertEquals(3, res.getClosestNode());
         assertEquals(4, getPoints(queryGraph5, 0, 3).size());
         assertEquals(2, getPoints(queryGraph5, 3, 1).size());
@@ -139,7 +140,7 @@ public class QueryGraphTest {
         iter.next();
         res = createLocationResult(0.5, 0.1, iter, 0, EDGE);
         QueryGraph queryGraph6 = lookup(res);
-        assertEquals(new GHPoint(0.5, 0), res.getSnappedPoint());
+        assertPointsEqual(new GHPoint(0.5, 0), res.getSnappedPoint());
         assertEquals(3, res.getClosestNode());
         assertEquals(2, getPoints(queryGraph6, 0, 3).size());
         assertEquals(2, getPoints(queryGraph6, 3, 2).size());
@@ -199,13 +200,13 @@ public class QueryGraphTest {
         iter.next();
         Snap res1 = createLocationResult(2, 1.7, iter, 1, PILLAR);
         QueryGraph queryGraph = lookup(res1);
-        assertEquals(new GHPoint(1.5, 1.5), res1.getSnappedPoint());
+        assertPointsEqual(new GHPoint(1.5, 1.5), res1.getSnappedPoint());
         assertEquals(3, res1.getClosestNode());
         assertEquals(3, getPoints(queryGraph, 0, 3).size());
         PointList pl = getPoints(queryGraph, 3, 1);
         assertEquals(2, pl.size());
-        assertEquals(new GHPoint(1.5, 1.5), pl.get(0));
-        assertEquals(new GHPoint(1, 2.5), pl.get(1));
+        assertPointsEqual(new GHPoint(1.5, 1.5), pl.get(0));
+        assertPointsEqual(new GHPoint(1, 2.5), pl.get(1));
 
         EdgeIteratorState edge = GHUtility.getEdge(queryGraph, 3, 1);
         assertNotNull(queryGraph.getEdgeIteratorState(edge.getEdge(), 3));
@@ -222,9 +223,9 @@ public class QueryGraphTest {
         Snap res2 = createLocationResult(1.5, 2, iter, 0, EDGE);
         queryGraph = lookup(Arrays.asList(res1, res2));
         assertEquals(4, res2.getClosestNode());
-        assertEquals(new GHPoint(1.300019, 1.899962), res2.getSnappedPoint());
+        assertPointsEqual(new GHPoint(1.300019, 1.899962), res2.getSnappedPoint());
         assertEquals(3, res1.getClosestNode());
-        assertEquals(new GHPoint(1.5, 1.5), res1.getSnappedPoint());
+        assertPointsEqual(new GHPoint(1.5, 1.5), res1.getSnappedPoint());
 
         assertEquals(3, getPoints(queryGraph, 3, 0).size());
         assertEquals(2, getPoints(queryGraph, 3, 4).size());
@@ -245,9 +246,9 @@ public class QueryGraphTest {
         Snap res2 = createLocationResult(0.1, 0.9, edge, 0, EDGE);
         QueryGraph queryGraph = lookup(Arrays.asList(res2, res1));
         assertEquals(2, res1.getClosestNode());
-        assertEquals(new GHPoint(0, 0.1), res1.getSnappedPoint());
+        assertPointsEqual(new GHPoint(0, 0.1), res1.getSnappedPoint());
         assertEquals(3, res2.getClosestNode());
-        assertEquals(new GHPoint(0, 0.9), res2.getSnappedPoint());
+        assertPointsEqual(new GHPoint(0, 0.9), res2.getSnappedPoint());
 
         assertEquals(2, getPoints(queryGraph, 0, 2).size());
         assertEquals(2, getPoints(queryGraph, 2, 3).size());
@@ -370,8 +371,8 @@ public class QueryGraphTest {
         iter = GHUtility.getEdge(g, 1, 0);
         Snap res2 = createLocationResult(1.5, 2, iter, 0, EDGE);
         QueryGraph queryGraph = lookup(Arrays.asList(res1, res2));
-        assertEquals(new GHPoint(0.5, 0), res1.getSnappedPoint());
-        assertEquals(new GHPoint(1.300019, 1.899962), res2.getSnappedPoint());
+        assertPointsEqual(new GHPoint(0.5, 0), res1.getSnappedPoint());
+        assertPointsEqual(new GHPoint(1.300019, 1.899962), res2.getSnappedPoint());
         assertNotNull(GHUtility.getEdge(queryGraph, 0, 4));
         assertNotNull(GHUtility.getEdge(queryGraph, 0, 3));
     }
@@ -384,8 +385,8 @@ public class QueryGraphTest {
         Snap res1 = createLocationResult(0.5, 0, edgeState, 0, EDGE);
         Snap res2 = createLocationResult(0.5, 0, edgeState, 0, EDGE);
         lookup(Arrays.asList(res1, res2));
-        assertEquals(new GHPoint(0.5, 0), res1.getSnappedPoint());
-        assertEquals(new GHPoint(0.5, 0), res2.getSnappedPoint());
+        assertPointsEqual(new GHPoint(0.5, 0), res1.getSnappedPoint());
+        assertPointsEqual(new GHPoint(0.5, 0), res2.getSnappedPoint());
         assertEquals(3, res1.getClosestNode());
         assertEquals(3, res2.getClosestNode());
 
@@ -691,7 +692,7 @@ public class QueryGraphTest {
         Snap res = createLocationResult(2, 1.5, iter, 1, PILLAR);
         QueryGraph queryGraph = lookup(res);
 
-        assertEquals(new GHPoint(1.5, 1.5), res.getSnappedPoint());
+        assertPointsEqual(new GHPoint(1.5, 1.5), res.getSnappedPoint());
         assertEquals(3, res.getClosestNode());
 
         EdgeExplorer qGraphExplorer = queryGraph.createEdgeExplorer();
