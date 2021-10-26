@@ -27,10 +27,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -40,7 +37,8 @@ import java.util.List;
 import static com.graphhopper.routing.DirectionResolverResult.unrestricted;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.Helper.createPointList;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * This test simulates incoming lat/lon coordinates that get snapped to graph edges (using {@link QueryGraph}) and the
@@ -253,6 +251,27 @@ public class DirectionResolverOnQueryGraphTest {
         init();
         checkResult(0.1, 0.1, restricted(edge(0, 2), edge(2, 1), edge(1, 2), edge(2, 0)));
         checkResult(0.9, 0.9, restricted(edge(0, 2), edge(2, 1), edge(1, 2), edge(2, 0)));
+    }
+
+    @Test
+    public void virtualNodeVeryCloseToTowerNode() {
+        FlagEncoder encoder = new CarFlagEncoder();
+        Graph graph = new GraphBuilder(EncodingManager.create(encoder)).set3D(true).create();
+        NodeAccess na = graph.getNodeAccess();
+        // todonow: need eighth digit, otherwise the seventh is still not preserved (despite #2393)
+        na.setNode(0, 39.23489461, -84.3766447, 260.311);
+        na.setNode(1, 39.23544301, -84.376595, 260.694);
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance(61.13);
+        Snap snap = new Snap(39.235443, -84.37659500000001);
+        snap.setQueryDistance(1.2239298292801523E-9);
+        snap.setSnappedPosition(Snap.Position.EDGE);
+        snap.setClosestEdge(edge);
+        snap.setWayIndex(0);
+        snap.setClosestNode(1);
+        snap.calcSnappedPoint(new DistancePlaneProjection());
+        QueryGraph queryGraph = QueryGraph.create(graph, snap);
+        assertEquals(2, snap.getClosestNode());
+        new DirectionResolver(queryGraph, (e, revers) -> true).resolveDirections(snap.getClosestNode(), snap.getQueryPoint());
     }
 
     private void addNode(int nodeId, double lat, double lon) {
