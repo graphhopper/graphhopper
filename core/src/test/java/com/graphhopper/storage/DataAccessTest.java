@@ -178,6 +178,15 @@ public abstract class DataAccessTest {
     @Test
     public void testSegmentSize() {
         DataAccess da = createDataAccess(name, 20);
+        da.create(10);
+        // a minimum segment size is applied
+        assertEquals(128, da.getSegmentSize());
+        da.flush();
+        da.close();
+
+        da = createDataAccess(name, 256);
+        da.loadExisting();
+        // we chose a different segment size, but it is ignored
         assertEquals(128, da.getSegmentSize());
         da.close();
     }

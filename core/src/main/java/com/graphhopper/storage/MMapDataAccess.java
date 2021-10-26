@@ -61,7 +61,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
 
     private final boolean allowWrites;
     private RandomAccessFile raFile;
-    private List<MappedByteBuffer> segments = new ArrayList<>();
+    private final List<MappedByteBuffer> segments = new ArrayList<>();
 
     MMapDataAccess(String name, String location, ByteOrder order, boolean allowWrites, int segmentSize) {
         super(name, location, order, segmentSize);

@@ -20,7 +20,6 @@ package com.graphhopper.storage;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Helper;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteOrder;

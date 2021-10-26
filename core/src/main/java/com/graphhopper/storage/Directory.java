@@ -18,7 +18,6 @@
 package com.graphhopper.storage;
 
 import java.nio.ByteOrder;
-import java.util.Collection;
 
 /**
  * Maintains a collection of DataAccess objects stored at the same location. One GraphStorage per
