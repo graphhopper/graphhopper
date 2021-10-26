@@ -17,9 +17,6 @@
  */
 package com.graphhopper.storage;
 
-import java.nio.ByteOrder;
-import java.util.Collection;
-
 /**
  * Maintains a collection of DataAccess objects stored at the same location. One GraphStorage per
  * Directory as we need one to maintain one DataAccess object for nodes, edges and location2id
@@ -33,11 +30,6 @@ public interface Directory {
      * @return an id or location in the local filesystem.
      */
     String getLocation();
-
-    /**
-     * @return the order in which the data is stored
-     */
-    ByteOrder getByteOrder();
 
     /**
      * Creates a new DataAccess object with the given name in the location of this Directory. Each name can only

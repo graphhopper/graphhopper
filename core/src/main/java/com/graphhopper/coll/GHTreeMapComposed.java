@@ -31,7 +31,7 @@ import java.util.TreeMap;
  */
 public class GHTreeMapComposed {
     private static final Integer NOT_EMPTY = -3;
-    private final BitUtil bitUtil = BitUtil.BIG;
+    private final BitUtil bitUtil = BitUtil.LITTLE;
     private final TreeMap<Long, Integer> map;
 
     public GHTreeMapComposed() {
