@@ -18,7 +18,9 @@
 package com.graphhopper.storage.index;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.routing.DirectionResolver;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
@@ -612,5 +614,31 @@ public class LocationIndexTreeTest {
         FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
         assertEquals(2, idx.findClosest(1, -1, AccessFilter.allEdges(footEncoder.getAccessEnc())).getClosestNode());
         Helper.close((Closeable) g);
+    }
+
+    @Test
+    public void closeToTowerNode() {
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).set3D(true).create();
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 51.985500, 19.254000, 500);
+        na.setNode(1, 51.986000, 19.255000, 600);
+        DistancePlaneProjection distCalc = new DistancePlaneProjection();
+        graph.edge(1, 0).setDistance(distCalc.calcDist(na.getLat(0), na.getLon(0), na.getLat(1), na.getLon(1)));
+        // this works (node 0 is the **base** node)
+//        graph.edge(0, 1).setDistance(distCalc.calcDist(na.getLat(0), na.getLon(0), na.getLat(1), na.getLon(1)));
+
+        LocationIndexTree index = new LocationIndexTree(graph, graph.getDirectory());
+        index.prepareIndex();
+
+        GHPoint queryPoint = new GHPoint(51.9855003, 19.2540003);
+        double distFromTower = distCalc.calcDist(queryPoint.lat, queryPoint.lon, na.getLat(0), na.getLon(0));
+        assertTrue(distFromTower < 0.1);
+        Snap snap = index.findClosest(queryPoint.lat, queryPoint.lon, EdgeFilter.ALL_EDGES);
+        assertEquals(Snap.Position.TOWER, snap.getSnappedPosition());
+
+        // if we set the broken GHPoint#hashCode to just return 0 (and comment out the assertEquals above) this reproduces #2443
+        // there can be cases where we even get the error **with** the broken hashCode implementation, but life is too short to find such a case here :)
+        QueryGraph queryGraph = QueryGraph.create(graph, snap);
+        new DirectionResolver(queryGraph, (e, reverse) -> true).resolveDirections(snap.getClosestNode(), queryPoint);
     }
 }
