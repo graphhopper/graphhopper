@@ -163,7 +163,11 @@ class QueryOverlayBuilder {
                     GHPoint3D currSnapped = res.getSnappedPoint();
 
                     // no new virtual nodes if exactly the same snapped point
-                    if (prevPoint.equals(currSnapped)) {
+                    boolean pointsEqual = NumHelper.equalsEps(prevPoint.lat, currSnapped.lat)
+                            && NumHelper.equalsEps(prevPoint.lon, currSnapped.lon)
+                            && ((Double.isNaN(prevPoint.ele) && Double.isNaN(currSnapped.ele) || NumHelper.equalsEps(prevPoint.ele, currSnapped.ele)));
+
+                    if (pointsEqual) {
                         res.setClosestNode(prevNodeId);
                         continue;
                     }

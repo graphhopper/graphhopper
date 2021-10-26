@@ -84,23 +84,6 @@ public class GHPoint {
     }
 
     @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 83 * hash + (int) (Double.doubleToLongBits(this.lat) ^ (Double.doubleToLongBits(this.lat) >>> 32));
-        hash = 83 * hash + (int) (Double.doubleToLongBits(this.lon) ^ (Double.doubleToLongBits(this.lon) >>> 32));
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null)
-            return false;
-
-        @SuppressWarnings("unchecked") final GHPoint other = (GHPoint) obj;
-        return NumHelper.equalsEps(lat, other.lat) && NumHelper.equalsEps(lon, other.lon);
-    }
-
-    @Override
     public String toString() {
         return lat + "," + lon;
     }
