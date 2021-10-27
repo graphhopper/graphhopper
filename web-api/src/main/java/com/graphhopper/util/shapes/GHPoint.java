@@ -17,7 +17,6 @@
  */
 package com.graphhopper.util.shapes;
 
-import com.graphhopper.util.NumHelper;
 import org.locationtech.jts.geom.Point;
 
 import java.util.Locale;
