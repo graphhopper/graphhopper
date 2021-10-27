@@ -1050,8 +1050,14 @@ public class GraphHopperTest {
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
 
-        GHResponse rsp = hopper.route(new GHRequest(43.74056471749763, 7.4299266210693755,
-                43.73790260334179, 7.427984089259056).setAlgorithm(ASTAR)
+        GHPoint from = new GHPoint(43.7405647, 7.4299266);
+        GHPoint to = new GHPoint(43.7378990, 7.4279780);
+
+        // make sure we hit tower nodes, because all we really want is test the elevation interpolation
+        assertEquals(Snap.Position.TOWER, hopper.getLocationIndex().findClosest(from.lat, from.lon, EdgeFilter.ALL_EDGES).getSnappedPosition());
+        assertEquals(Snap.Position.TOWER, hopper.getLocationIndex().findClosest(to.lat, to.lon, EdgeFilter.ALL_EDGES).getSnappedPosition());
+
+        GHResponse rsp = hopper.route(new GHRequest(from, to)
                 .setProfile(profile));
         ResponsePath res = rsp.getBest();
         PointList pointList = res.getPoints();
@@ -1059,21 +1065,21 @@ public class GraphHopperTest {
         assertTrue(pointList.is3D());
 
         if (withTunnelInterpolation) {
-            assertEquals(351.1, res.getDistance(), .1);
+            assertEquals(351.8, res.getDistance(), .1);
             assertEquals(17, pointList.getEle(0), .1);
             assertEquals(19.04, pointList.getEle(1), .1);
             assertEquals(21.67, pointList.getEle(2), .1);
             assertEquals(25.03, pointList.getEle(3), .1);
             assertEquals(28.65, pointList.getEle(4), .1);
-            assertEquals(31.32, pointList.getEle(5), .1);
+            assertEquals(34.00, pointList.getEle(5), .1);
         } else {
-            assertEquals(356.8, res.getDistance(), .1);
+            assertEquals(358.3, res.getDistance(), .1);
             assertEquals(17.0, pointList.getEle(0), .1);
             assertEquals(23.0, pointList.getEle(1), .1);
             assertEquals(23.0, pointList.getEle(2), .1);
             assertEquals(41.0, pointList.getEle(3), .1);
             assertEquals(19.0, pointList.getEle(4), .1);
-            assertEquals(26.5, pointList.getEle(5), .1);
+            assertEquals(34.0, pointList.getEle(5), .1);
         }
     }
 
