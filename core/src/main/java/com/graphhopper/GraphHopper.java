@@ -422,11 +422,11 @@ public class GraphHopper {
 
         defaultSegmentSize = ghConfig.getInt("graph.dataaccess.segment_size", defaultSegmentSize);
 
-        dataAccessDefaultType = DAType.fromString(ghConfig.getString("graph.dataaccess", "RAM_STORE"));
+        String daTypeString = ghConfig.getString("graph.dataaccess.default_type", ghConfig.getString("graph.dataaccess", "RAM_STORE"));
+        dataAccessDefaultType = DAType.fromString(daTypeString);
         for (Map.Entry<String, Object> entry : ghConfig.asPMap().toMap().entrySet()) {
-            if (entry.getKey().equals("graph.dataaccess.segment_size")) continue;
-            if (entry.getKey().startsWith("graph.dataaccess."))
-                dataAccessConfig.put(entry.getKey().substring("graph.dataaccess.".length()), entry.getValue().toString());
+            if (entry.getKey().startsWith("graph.dataaccess.type."))
+                dataAccessConfig.put(entry.getKey().substring("graph.dataaccess.type.".length()), entry.getValue().toString());
         }
 
         sortGraph = ghConfig.getBool("graph.do_sort", sortGraph);
