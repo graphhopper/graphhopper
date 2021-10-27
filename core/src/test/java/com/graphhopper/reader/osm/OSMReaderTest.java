@@ -17,7 +17,7 @@
  */
 package com.graphhopper.reader.osm;
 
-import com.carrotsearch.hppc.LongIndexedContainer;
+import com.carrotsearch.hppc.LongArrayList;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
@@ -386,9 +386,9 @@ public class OSMReaderTest {
                 importOrLoad();
 
         Graph graph = hopper.getGraphHopperStorage();
-        // there are seven ways, but there should also be five barrier edges
-        // note that because of the extra edge at the loop way we do not split the loop
-        assertEquals(12, graph.getEdges());
+        // there are seven ways, but there should also be six barrier edges
+        // we first split the loop way into two parts, and then we split the barrier node => 3 edges total
+        assertEquals(7 + 6, graph.getEdges());
         int loops = 0;
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
@@ -397,7 +397,7 @@ public class OSMReaderTest {
             if (graph.getNodeAccess().getLat(iter.getBaseNode()) == graph.getNodeAccess().getLat(iter.getAdjNode()))
                 loops++;
         }
-        assertEquals(5 + 1, loops);
+        assertEquals(5, loops);
     }
 
     @Test
@@ -434,19 +434,10 @@ public class OSMReaderTest {
 
     @Test
     public void avoidsLoopEdgesIdenticalNodeIds_1533() {
-        // We can handle the following case with the proper result:
+        // BDCBB
         checkLoop(new GraphHopperFacade("test-avoid-loops3.xml").importOrLoad());
-        // We cannot handle the following case, i.e. no loop is created. so we only check that there are no loops
-        GraphHopper hopper = new GraphHopperFacade("test-avoid-loops4.xml").importOrLoad();
-        GraphHopperStorage graph = hopper.getGraphHopperStorage();
-        AllEdgesIterator iter = graph.getAllEdges();
-        assertEquals(2, iter.length());
-        while (iter.next()) {
-            assertTrue(iter.getAdjNode() != iter.getBaseNode(), "found a loop");
-        }
-        int nodeB = AbstractGraphStorageTester.getIdOf(graph, 12);
-        assertTrue(nodeB > -1, "could not find OSM node B");
-        assertEquals(2, GHUtility.count(graph.createEdgeExplorer().setBaseNode(nodeB)));
+        // BBCDB
+        checkLoop(new GraphHopperFacade("test-avoid-loops4.xml").importOrLoad());
     }
 
     @Test
@@ -642,7 +633,7 @@ public class OSMReaderTest {
             }
 
             @Override
-            void addOSMWay(LongIndexedContainer osmNodeIds, IntsRef wayFlags, ReaderWay way) {
+            void handleSegment(List<SegmentNode> segment, ReaderWay way, IntsRef edgeFlags, Map<String, Object> nodeTags) {
             }
         };
 
