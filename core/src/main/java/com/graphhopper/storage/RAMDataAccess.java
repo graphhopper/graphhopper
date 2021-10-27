@@ -20,7 +20,6 @@ package com.graphhopper.storage;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.ByteOrder;
 import java.util.Arrays;
 
 /**
@@ -34,8 +33,8 @@ public class RAMDataAccess extends AbstractDataAccess {
     private byte[][] segments = new byte[0][];
     private boolean store;
 
-    RAMDataAccess(String name, String location, boolean store, ByteOrder order, int segmentSize) {
-        super(name, location, order, segmentSize);
+    RAMDataAccess(String name, String location, boolean store, int segmentSize) {
+        super(name, location, segmentSize);
         this.store = store;
     }
 
@@ -105,14 +104,13 @@ public class RAMDataAccess extends AbstractDataAccess {
             return false;
 
         try {
-            RandomAccessFile raFile = new RandomAccessFile(getFullName(), "r");
-            try {
+            try (RandomAccessFile raFile = new RandomAccessFile(getFullName(), "r")) {
                 long byteCount = readHeader(raFile) - HEADER_OFFSET;
                 if (byteCount < 0)
                     return false;
 
                 raFile.seek(HEADER_OFFSET);
-                // raFile.readInt() <- too slow                
+                // raFile.readInt() <- too slow
                 int segmentCount = (int) (byteCount / segmentSizeInBytes);
                 if (byteCount % segmentSizeInBytes != 0)
                     segmentCount++;
@@ -127,8 +125,6 @@ public class RAMDataAccess extends AbstractDataAccess {
                     segments[s] = bytes;
                 }
                 return true;
-            } finally {
-                raFile.close();
             }
         } catch (IOException ex) {
             throw new RuntimeException("Problem while loading " + getFullName(), ex);
@@ -144,18 +140,15 @@ public class RAMDataAccess extends AbstractDataAccess {
             return;
 
         try {
-            RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw");
-            try {
+            try (RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw")) {
                 long len = getCapacity();
                 writeHeader(raFile, len, segmentSizeInBytes);
                 raFile.seek(HEADER_OFFSET);
                 // raFile.writeInt() <- too slow, so copy into byte array
                 for (int s = 0; s < segments.length; s++) {
-                    byte area[] = segments[s];
+                    byte[] area = segments[s];
                     raFile.write(area);
                 }
-            } finally {
-                raFile.close();
             }
         } catch (Exception ex) {
             throw new RuntimeException("Couldn't store bytes to " + toString(), ex);
