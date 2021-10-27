@@ -4,7 +4,6 @@ import com.graphhopper.routing.ch.PrepareEncoder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.nio.ByteOrder;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -71,7 +70,7 @@ class CHStorageTest {
     @Test
     public void testLargeNodeA() {
         int nodeA = Integer.MAX_VALUE;
-        RAMIntDataAccess access = new RAMIntDataAccess("", "", false, ByteOrder.LITTLE_ENDIAN, -1);
+        RAMIntDataAccess access = new RAMIntDataAccess("", "", false, -1);
         access.create(1000);
         access.setInt(0, nodeA << 1 | 1 & PrepareEncoder.getScFwdDir());
         assertTrue(access.getInt(0) < 0);

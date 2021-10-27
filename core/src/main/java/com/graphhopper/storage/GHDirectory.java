@@ -18,7 +18,6 @@
 package com.graphhopper.storage;
 
 import java.io.File;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,12 +33,11 @@ import static com.graphhopper.util.Helper.*;
  * @author Peter Karich
  */
 public class GHDirectory implements Directory {
-    private final String location;
-    private final ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
-    private final Map<String, DataAccess> map = new HashMap<>();
+    protected final String location;
     private final Map<String, DAType> defaultTypes = new HashMap<>();
     private final DAType typeFallback;
     private final Map<String, Integer> mmapPreloads = new HashMap<>();
+    protected Map<String, DataAccess> map = new HashMap<>();
 
     public GHDirectory(String _location, DAType defaultType) {
         this.typeFallback = defaultType;
@@ -106,11 +104,6 @@ public class GHDirectory implements Directory {
     }
 
     @Override
-    public ByteOrder getByteOrder() {
-        return byteOrder;
-    }
-
-    @Override
     public DataAccess create(String name) {
         return create(name, defaultTypes.getOrDefault(name, typeFallback));
     }
@@ -139,15 +132,15 @@ public class GHDirectory implements Directory {
         if (type.isInMemory()) {
             if (type.isInteg()) {
                 if (type.isStoring())
-                    da = new RAMIntDataAccess(name, location, true, byteOrder, segmentSize);
+                    da = new RAMIntDataAccess(name, location, true, segmentSize);
                 else
-                    da = new RAMIntDataAccess(name, location, false, byteOrder, segmentSize);
+                    da = new RAMIntDataAccess(name, location, false, segmentSize);
             } else if (type.isStoring())
-                da = new RAMDataAccess(name, location, true, byteOrder, segmentSize);
+                da = new RAMDataAccess(name, location, true, segmentSize);
             else
-                da = new RAMDataAccess(name, location, false, byteOrder, segmentSize);
+                da = new RAMDataAccess(name, location, false, segmentSize);
         } else if (type.isMMap()) {
-            da = new MMapDataAccess(name, location, byteOrder, type.isAllowWrites(), segmentSize);
+            da = new MMapDataAccess(name, location, type.isAllowWrites(), segmentSize);
         } else {
             throw new IllegalArgumentException("DAType not supported " + type);
         }
