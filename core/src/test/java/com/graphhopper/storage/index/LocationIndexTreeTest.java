@@ -29,10 +29,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.Closeable;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -640,5 +637,24 @@ public class LocationIndexTreeTest {
         assertTrue(distFromTower < 0.1);
         Snap snap = index.findClosest(queryPoint.lat, queryPoint.lon, EdgeFilter.ALL_EDGES);
         assertEquals(Snap.Position.TOWER, snap.getSnappedPosition());
+    }
+
+    @Test
+    public void queryBehindLastTowerNode() {
+        // 0 - 1
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 51.985000, 19.254000);
+        na.setNode(1, 51.986000, 19.255000);
+        DistancePlaneProjection distCalc = new DistancePlaneProjection();
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance(distCalc.calcDist(na.getLat(0), na.getLon(0), na.getLat(1), na.getLon(1)));
+        LocationIndexTree index = new LocationIndexTree(graph, graph.getDirectory());
+        index.prepareIndex();
+
+        List<String> output = new ArrayList<>();
+        index.traverseEdge(51.986100, 19.255100, edge, (node, normedDist, wayIndex, pos) -> {
+            output.add(node + ", " + Math.round(distCalc.calcDenormalizedDist(normedDist)) + ", " + wayIndex + ", " + pos);
+        });
+        assertEquals(Collections.singletonList("1, 13, 1, TOWER"), output);
     }
 }
