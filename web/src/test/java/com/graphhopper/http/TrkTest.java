@@ -21,7 +21,9 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.jackson.Gpx;
 import com.graphhopper.matching.Observation;
+import com.graphhopper.util.NumHelper;
 import com.graphhopper.util.shapes.GHPoint;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -35,15 +37,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class TrkTest {
 
-    private XmlMapper xmlMapper = new XmlMapper();
+    private final XmlMapper xmlMapper = new XmlMapper();
 
     @Test
     public void test1() throws IOException {
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/test1.gpx"), Gpx.class);
         List<Observation> gpxEntries = GpxConversions.getEntries(gpx.trk.get(0));
         assertEquals(264, gpxEntries.size());
-        assertEquals(new Observation(new GHPoint(51.377719, 12.338217)), gpxEntries.get(0));
-        assertEquals(new Observation(new GHPoint(51.371482, 12.363795)), gpxEntries.get(50));
+        assertPointsEqual(new GHPoint(51.377719, 12.338217), gpxEntries.get(0).getPoint());
+        assertPointsEqual(new GHPoint(51.371482, 12.363795), gpxEntries.get(50).getPoint());
     }
 
     @Test
@@ -78,6 +80,11 @@ public class TrkTest {
     public void testNoTrkpt() throws IOException {
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/no_trkpt.gpx"), Gpx.class);
         assertTrue(GpxConversions.getEntries(gpx.trk.get(0)).isEmpty());
+    }
+
+    public static void assertPointsEqual(GHPoint p, GHPoint q) {
+        assertTrue(NumHelper.equalsEps(p.lat, q.lat) && NumHelper.equalsEps(p.lon, q.lon),
+                "Points not equal: " + p + " vs. " + q);
     }
 
 }

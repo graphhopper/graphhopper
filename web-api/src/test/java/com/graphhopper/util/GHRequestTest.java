@@ -27,6 +27,7 @@ import java.util.List;
 
 import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Peter Karich
@@ -78,8 +79,14 @@ public class GHRequestTest {
         compareFavoredHeadings(instance, emptyList());
     }
 
-    private void comparePoints(GHRequest request, List<GHPoint> points) {
-        assertEquals(points, request.getPoints(), "Points do not match");
+    private static void comparePoints(GHRequest request, List<GHPoint> points) {
+        assertEquals(request.getPoints().size(), points.size());
+        for (int i = 0; i < request.getPoints().size(); i++) {
+            assertTrue(
+                    NumHelper.equalsEps(points.get(i).lat, request.getPoints().get(i).lat) &&
+                            NumHelper.equalsEps(points.get(i).lon, request.getPoints().get(i).lon)
+            );
+        }
     }
 
     private void compareFavoredHeadings(GHRequest request, List<Double> expected) {
