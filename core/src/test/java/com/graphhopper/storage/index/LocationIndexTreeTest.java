@@ -640,21 +640,36 @@ public class LocationIndexTreeTest {
     }
 
     @Test
-    public void queryBehindLastTowerNode() {
-        // 0 - 1
+    public void queryBehindBeforeOrBehindLastTowerNode() {
+        // 0 -x- 1
         GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 51.985000, 19.254000);
         na.setNode(1, 51.986000, 19.255000);
         DistancePlaneProjection distCalc = new DistancePlaneProjection();
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(distCalc.calcDist(na.getLat(0), na.getLon(0), na.getLat(1), na.getLon(1)));
+        edge.setWayGeometry(Helper.createPointList(51.985500, 19.254500));
         LocationIndexTree index = new LocationIndexTree(graph, graph.getDirectory());
         index.prepareIndex();
+        {
+            // snap before last tower node
+            List<String> output = new ArrayList<>();
+            index.traverseEdge(51.985700, 19.254700, edge, (node, normedDist, wayIndex, pos) ->
+                    output.add(node + ", " + Math.round(distCalc.calcDenormalizedDist(normedDist)) + ", " + wayIndex + ", " + pos));
+            assertEquals(Arrays.asList(
+                    "1, 39, 2, TOWER",
+                    "1, 26, 1, PILLAR",
+                    "1, 0, 1, EDGE"), output);
+        }
 
-        List<String> output = new ArrayList<>();
-        index.traverseEdge(51.986100, 19.255100, edge, (node, normedDist, wayIndex, pos) -> {
-            output.add(node + ", " + Math.round(distCalc.calcDenormalizedDist(normedDist)) + ", " + wayIndex + ", " + pos);
-        });
-        assertEquals(Collections.singletonList("1, 13, 1, TOWER"), output);
+        {
+            // snap behind last tower node
+            List<String> output = new ArrayList<>();
+            index.traverseEdge(51.986100, 19.255100, edge, (node, normedDist, wayIndex, pos) ->
+                    output.add(node + ", " + Math.round(distCalc.calcDenormalizedDist(normedDist)) + ", " + wayIndex + ", " + pos));
+            assertEquals(Arrays.asList(
+                    "1, 13, 2, TOWER",
+                    "1, 78, 1, PILLAR"), output);
+        }
     }
 }

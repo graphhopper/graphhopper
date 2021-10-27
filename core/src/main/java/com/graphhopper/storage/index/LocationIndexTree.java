@@ -362,9 +362,11 @@ public class LocationIndexTree implements LocationIndex {
             if (DIST_PLANE.validEdgeDistance(queryLat, queryLon, lastLat, lastLon, lat, lon)) {
                 closestDist = DIST_PLANE.calcNormalizedEdgeDistance(queryLat, queryLon, lastLat, lastLon, lat, lon);
                 edgeCheck.check(closestTowerNode, closestDist, indexInFullPointList - 1, Snap.Position.EDGE);
-            } else {
+            } else if (i < len - 1) {
                 closestDist = DIST_PLANE.calcNormalizedDist(queryLat, queryLon, lat, lon);
                 edgeCheck.check(closestTowerNode, closestDist, indexInFullPointList, Snap.Position.PILLAR);
+            } else {
+                // we snapped onto the last tower node, but we already handled this before so do nothing
             }
             if (closestDist <= equalNormedDelta)
                 return;
