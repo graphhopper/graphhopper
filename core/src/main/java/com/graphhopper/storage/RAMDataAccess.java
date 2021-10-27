@@ -20,7 +20,6 @@ package com.graphhopper.storage;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.ByteOrder;
 import java.util.Arrays;
 
 /**
@@ -34,8 +33,8 @@ public class RAMDataAccess extends AbstractDataAccess {
     private byte[][] segments = new byte[0][];
     private boolean store;
 
-    RAMDataAccess(String name, String location, boolean store, ByteOrder order, int segmentSize) {
-        super(name, location, order, segmentSize);
+    RAMDataAccess(String name, String location, boolean store, int segmentSize) {
+        super(name, location, segmentSize);
         this.store = store;
     }
 

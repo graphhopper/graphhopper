@@ -29,7 +29,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.security.AccessController;
@@ -63,8 +62,8 @@ public final class MMapDataAccess extends AbstractDataAccess {
     private RandomAccessFile raFile;
     private final List<MappedByteBuffer> segments = new ArrayList<>();
 
-    MMapDataAccess(String name, String location, ByteOrder order, boolean allowWrites, int segmentSize) {
-        super(name, location, order, segmentSize);
+    MMapDataAccess(String name, String location, boolean allowWrites, int segmentSize) {
+        super(name, location, segmentSize);
         this.allowWrites = allowWrites;
     }
 

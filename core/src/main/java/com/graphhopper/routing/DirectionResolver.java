@@ -79,7 +79,7 @@ public class DirectionResolver {
         if (adjacentEdges.numLoops > 0) {
             return DirectionResolverResult.unrestricted();
         }
-        GHPoint snappedPoint = new GHPoint(nodeAccess.getLat(node), nodeAccess.getLon(node));
+        Point snappedPoint = new Point(nodeAccess.getLat(node), nodeAccess.getLon(node));
         if (adjacentEdges.nextPoints.contains(snappedPoint)) {
             // this might happen if a pillar node of an adjacent edge has the same coordinates as the snapped point,
             // but this should be prevented by the map import already
@@ -87,7 +87,7 @@ public class DirectionResolver {
         }
         // we can classify the different cases by the number of different next points!
         if (adjacentEdges.nextPoints.size() == 1) {
-            GHPoint neighbor = adjacentEdges.nextPoints.iterator().next();
+            Point neighbor = adjacentEdges.nextPoints.iterator().next();
             List<Edge> inEdges = adjacentEdges.getInEdges(neighbor);
             List<Edge> outEdges = adjacentEdges.getOutEdges(neighbor);
             assert inEdges.size() > 0 && outEdges.size() > 0 : "if there is only one next point there has to be an in edge and an out edge connected with it";
@@ -100,9 +100,9 @@ public class DirectionResolver {
             // side are treated equally and for both cases we use the only possible edge ids.
             return DirectionResolverResult.restricted(inEdges.get(0).edgeId, outEdges.get(0).edgeId, inEdges.get(0).edgeId, outEdges.get(0).edgeId);
         } else if (adjacentEdges.nextPoints.size() == 2) {
-            Iterator<GHPoint> iter = adjacentEdges.nextPoints.iterator();
-            GHPoint p1 = iter.next();
-            GHPoint p2 = iter.next();
+            Iterator<Point> iter = adjacentEdges.nextPoints.iterator();
+            Point p1 = iter.next();
+            Point p2 = iter.next();
             List<Edge> in1 = adjacentEdges.getInEdges(p1);
             List<Edge> in2 = adjacentEdges.getInEdges(p2);
             List<Edge> out1 = adjacentEdges.getOutEdges(p1);
@@ -116,12 +116,13 @@ public class DirectionResolver {
             if (in1.size() + out1.size() == 0 || in2.size() + out2.size() == 0) {
                 throw new IllegalStateException("there has to be at least one in or one out edge for each of the two next points");
             }
+            Point locationPoint = new Point(location.lat, location.lon);
             if (in1.isEmpty() || out2.isEmpty()) {
-                return resolveDirections(snappedPoint, location, in2.get(0), out1.get(0));
+                return resolveDirections(snappedPoint, locationPoint, in2.get(0), out1.get(0));
             } else if (in2.isEmpty() || out1.isEmpty()) {
-                return resolveDirections(snappedPoint, location, in1.get(0), out2.get(0));
+                return resolveDirections(snappedPoint, locationPoint, in1.get(0), out2.get(0));
             } else {
-                return resolveDirections(snappedPoint, location, in1.get(0), out2.get(0), in2.get(0).edgeId, out1.get(0).edgeId);
+                return resolveDirections(snappedPoint, locationPoint, in1.get(0), out2.get(0), in2.get(0).edgeId, out1.get(0).edgeId);
             }
         } else {
             // we snapped to a junction, in this case we do not apply restrictions
@@ -131,7 +132,7 @@ public class DirectionResolver {
         }
     }
 
-    private DirectionResolverResult resolveDirections(GHPoint snappedPoint, GHPoint queryPoint, Edge inEdge, Edge outEdge) {
+    private DirectionResolverResult resolveDirections(Point snappedPoint, Point queryPoint, Edge inEdge, Edge outEdge) {
         boolean rightLane = isOnRightLane(queryPoint, snappedPoint, inEdge.nextPoint, outEdge.nextPoint);
         if (rightLane) {
             return DirectionResolverResult.onlyRight(inEdge.edgeId, outEdge.edgeId);
@@ -140,9 +141,9 @@ public class DirectionResolver {
         }
     }
 
-    private DirectionResolverResult resolveDirections(GHPoint snappedPoint, GHPoint queryPoint, Edge inEdge, Edge outEdge, int altInEdge, int altOutEdge) {
-        GHPoint inPoint = inEdge.nextPoint;
-        GHPoint outPoint = outEdge.nextPoint;
+    private DirectionResolverResult resolveDirections(Point snappedPoint, Point queryPoint, Edge inEdge, Edge outEdge, int altInEdge, int altOutEdge) {
+        Point inPoint = inEdge.nextPoint;
+        Point outPoint = outEdge.nextPoint;
         boolean rightLane = isOnRightLane(queryPoint, snappedPoint, inPoint, outPoint);
         if (rightLane) {
             return DirectionResolverResult.restricted(inEdge.edgeId, outEdge.edgeId, altInEdge, altOutEdge);
@@ -151,7 +152,7 @@ public class DirectionResolver {
         }
     }
 
-    private boolean isOnRightLane(GHPoint queryPoint, GHPoint snappedPoint, GHPoint inPoint, GHPoint outPoint) {
+    private boolean isOnRightLane(Point queryPoint, Point snappedPoint, Point inPoint, Point outPoint) {
         double qX = diffLon(snappedPoint, queryPoint);
         double qY = diffLat(snappedPoint, queryPoint);
         double iX = diffLon(snappedPoint, inPoint);
@@ -161,11 +162,11 @@ public class DirectionResolver {
         return !AngleCalc.ANGLE_CALC.isClockwise(iX, iY, oX, oY, qX, qY);
     }
 
-    private double diffLon(GHPoint p, GHPoint q) {
+    private double diffLon(Point p, Point q) {
         return q.lon - p.lon;
     }
 
-    private double diffLat(GHPoint p, GHPoint q) {
+    private double diffLat(Point p, Point q) {
         return q.lat - p.lat;
     }
 
@@ -196,7 +197,7 @@ public class DirectionResolver {
                 nextPointLat = geometry.getLat(2);
                 nextPointLon = geometry.getLon(2);
             }
-            GHPoint nextPoint = new GHPoint(nextPointLat, nextPointLon);
+            Point nextPoint = new Point(nextPointLat, nextPointLon);
             Edge edge = new Edge(iter.getEdge(), iter.getAdjNode(), nextPoint);
             adjacentEdges.addEdge(edge, isIn, isOut);
         }
@@ -204,9 +205,9 @@ public class DirectionResolver {
     }
 
     private static class AdjacentEdges {
-        private final Map<GHPoint, List<Edge>> inEdgesByNextPoint = new HashMap<>(2);
-        private final Map<GHPoint, List<Edge>> outEdgesByNextPoint = new HashMap<>(2);
-        final Set<GHPoint> nextPoints = new HashSet<>(2);
+        private final Map<Point, List<Edge>> inEdgesByNextPoint = new HashMap<>(2);
+        private final Map<Point, List<Edge>> outEdgesByNextPoint = new HashMap<>(2);
+        final Set<Point> nextPoints = new HashSet<>(2);
         int numLoops;
         int numNonLoops;
 
@@ -220,14 +221,14 @@ public class DirectionResolver {
             addNextPoint(edge);
         }
 
-        List<Edge> getInEdges(GHPoint p) {
+        List<Edge> getInEdges(Point p) {
             List<Edge> result = inEdgesByNextPoint.get(p);
-            return result == null ? Collections.<Edge>emptyList() : result;
+            return result == null ? Collections.emptyList() : result;
         }
 
-        List<Edge> getOutEdges(GHPoint p) {
+        List<Edge> getOutEdges(Point p) {
             List<Edge> result = outEdgesByNextPoint.get(p);
-            return result == null ? Collections.<Edge>emptyList() : result;
+            return result == null ? Collections.emptyList() : result;
         }
 
         boolean hasInEdges() {
@@ -250,7 +251,7 @@ public class DirectionResolver {
             nextPoints.add(edge.nextPoint);
         }
 
-        private void addEdge(Map<GHPoint, List<Edge>> edgesByNextPoint, Edge edge) {
+        private static void addEdge(Map<Point, List<Edge>> edgesByNextPoint, Edge edge) {
             List<Edge> edges = edgesByNextPoint.get(edge.nextPoint);
             if (edges == null) {
                 edges = new ArrayList<>(2);
@@ -262,6 +263,36 @@ public class DirectionResolver {
         }
     }
 
+    private static class Point {
+        final double lat;
+        final double lon;
+
+        Point(double lat, double lon) {
+            this.lat = lat;
+            this.lon = lon;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Point other = (Point) o;
+            return NumHelper.equalsEps(lat, other.lat) && NumHelper.equalsEps(lon, other.lon);
+        }
+
+        @Override
+        public int hashCode() {
+            // it does not matter, because we only use maps with very few elements. not using GHPoint because of it's
+            // broken hashCode implementation (#2445) and there is no good reason need to depend on it either
+            return 0;
+        }
+
+        @Override
+        public String toString() {
+            return lat + ", " + lon;
+        }
+    }
+
     private static class Edge {
         final int edgeId;
         final int adjNode;
@@ -269,9 +300,9 @@ public class DirectionResolver {
          * the next point of this edge, not necessarily the point corresponding to adjNode, but often this is the
          * next pillar (!) node.
          */
-        final GHPoint nextPoint;
+        final Point nextPoint;
 
-        Edge(int edgeId, int adjNode, GHPoint nextPoint) {
+        Edge(int edgeId, int adjNode, Point nextPoint) {
             this.edgeId = edgeId;
             this.adjNode = adjNode;
             this.nextPoint = nextPoint;
