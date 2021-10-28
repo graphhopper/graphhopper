@@ -121,7 +121,7 @@ public abstract class AbstractDataAccess implements DataAccess {
         }
     }
 
-    DataAccess setSegmentSize(int bytes) {
+    void setSegmentSize(int bytes) {
         if (bytes > 0) {
             // segment size should be a power of 2
             int tmp = (int) (Math.log(bytes) / Math.log(2));
@@ -129,7 +129,6 @@ public abstract class AbstractDataAccess implements DataAccess {
         }
         segmentSizePower = (int) (Math.log(segmentSizeInBytes) / Math.log(2));
         indexDivisor = segmentSizeInBytes - 1;
-        return this;
     }
 
     @Override

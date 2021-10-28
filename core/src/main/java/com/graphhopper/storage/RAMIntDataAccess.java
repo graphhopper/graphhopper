@@ -35,6 +35,12 @@ class RAMIntDataAccess extends AbstractDataAccess {
     private boolean store;
     private int segmentSizeIntsPower;
 
+    public static RAMIntDataAccess loadFromDisk(String location, String name) {
+        // byte order and segment size do not matter, because they will be overwritten anyway
+        RAMIntDataAccess da = new RAMIntDataAccess(name, location, true, 16);
+        return da.loadExisting() ? da : null;
+    }
+
     RAMIntDataAccess(String name, String location, boolean store, int segmentSize) {
         super(name, location, segmentSize);
         this.store = store;
@@ -250,11 +256,10 @@ class RAMIntDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    DataAccess setSegmentSize(int bytes) {
+    void setSegmentSize(int bytes) {
         super.setSegmentSize(bytes);
         segmentSizeIntsPower = (int) (Math.log(segmentSizeInBytes / 4) / Math.log(2));
         indexDivisor = segmentSizeInBytes / 4 - 1;
-        return this;
     }
 
     boolean releaseSegment(int segNumber) {

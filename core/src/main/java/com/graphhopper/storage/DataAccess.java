@@ -17,7 +17,7 @@
  */
 package com.graphhopper.storage;
 
-import java.io.Closeable;
+import java.io.*;
 
 /**
  * Life cycle: (1) object creation, (2) configuration (e.g. segment size), (3) create or
@@ -133,4 +133,21 @@ public interface DataAccess extends Closeable {
      * @return the data access type of this object.
      */
     DAType getType();
+
+    static boolean doesExist(String path) {
+        File file = new File(path);
+        if (!file.exists())
+            return false;
+        try (RandomAccessFile raf = new RandomAccessFile(path, "r")) {
+            final String watermark = "GH";
+            if (raf.readUnsignedShort() != 2)
+                throw new IllegalArgumentException("Not a GraphHopper file: " + path);
+            raf.seek(0);
+            if (!watermark.equals(raf.readUTF()))
+                throw new IllegalArgumentException("Not a GraphHopper file: " + path);
+            return true;
+        } catch (IOException e) {
+            throw new UncheckedIOException("Problem when reading file: " + path, e);
+        }
+    }
 }

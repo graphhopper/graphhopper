@@ -62,6 +62,12 @@ public final class MMapDataAccess extends AbstractDataAccess {
     private RandomAccessFile raFile;
     private final List<MappedByteBuffer> segments = new ArrayList<>();
 
+    public static MMapDataAccess loadFromDisk(String location, String name, boolean allowWrites) {
+        // the segment size does not matter, because it will be overwritten anyway
+        MMapDataAccess da = new MMapDataAccess(name, location, allowWrites, 16);
+        return da.loadExisting() ? da : null;
+    }
+
     MMapDataAccess(String name, String location, boolean allowWrites, int segmentSize) {
         super(name, location, segmentSize);
         this.allowWrites = allowWrites;

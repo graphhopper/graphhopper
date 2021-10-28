@@ -33,6 +33,12 @@ public class RAMDataAccess extends AbstractDataAccess {
     private byte[][] segments = new byte[0][];
     private boolean store;
 
+    public static RAMDataAccess loadFromDisk(String name, String location) {
+        // the segment size do not matter, because it will be overwritten anyway
+        RAMDataAccess da = new RAMDataAccess(name, location, true, 16);
+        return da.loadExisting() ? da : null;
+    }
+
     RAMDataAccess(String name, String location, boolean store, int segmentSize) {
         super(name, location, segmentSize);
         this.store = store;

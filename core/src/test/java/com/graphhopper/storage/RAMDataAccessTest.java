@@ -17,6 +17,10 @@
  */
 package com.graphhopper.storage;
 
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
 /**
  * @author Peter Karich
  */
@@ -24,5 +28,19 @@ public class RAMDataAccessTest extends DataAccessTest {
     @Override
     public DataAccess createDataAccess(String name, int segmentSize) {
         return new RAMDataAccess(name, directory, true, segmentSize);
+    }
+
+    @Test
+    void loadFromDisk() {
+        DataAccess da = createDataAccess(name);
+        da.create(100);
+        da.setInt(3, 10);
+        da.flush();
+        da.close();
+
+        assertNull(RAMDataAccess.loadFromDisk("404", directory));
+        da = RAMDataAccess.loadFromDisk(name, directory);
+        assertNotNull(da);
+        assertEquals(10, da.getInt(3));
     }
 }
