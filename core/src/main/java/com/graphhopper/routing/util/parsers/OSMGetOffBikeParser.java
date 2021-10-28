@@ -5,6 +5,7 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.GetOffBike;
+import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Arrays;
@@ -22,7 +23,7 @@ public class OSMGetOffBikeParser implements TagParser {
 
     public OSMGetOffBikeParser() {
         // steps -> special handling
-        this(GetOffBike.create(), Arrays.asList("path", "footway", "pedestrian", "platform"));
+        this(GetOffBike.create(), Arrays.asList("footway", "pedestrian", "platform"));
     }
 
     public OSMGetOffBikeParser(BooleanEncodedValue enc, List<String> pushBikeTags) {
@@ -38,10 +39,22 @@ public class OSMGetOffBikeParser implements TagParser {
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
         String highway = way.getTag("highway");
+        boolean dismountBike = false;
         if (!way.hasTag("bicycle", accepted) && (pushBikeHighwayTags.contains(highway) || way.hasTag("railway", "platform"))
                 || "steps".equals(highway) || way.hasTag("bicycle", "dismount")) {
+                    dismountBike = true;
+        }
+        if (way.hasTag("foot", "designated") && "path".equals(highway) && !way.hasTag("bicycle", accepted)) {
+            dismountBike = true;
+        }
+        CountryRule countryRule = way.getTag("country_rule", null);
+        if (!way.hasTag("bicycle", accepted) && (countryRule != null)) {
+            dismountBike = countryRule.getOffBike(way, dismountBike);
+        }
+        if (dismountBike) {
             offBikeEnc.setBool(false, edgeFlags, true);
         }
+
         return edgeFlags;
     }
 }

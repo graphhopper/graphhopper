@@ -71,4 +71,12 @@ public class AustriaCountryRule implements CountryRule {
                 return RoadAccess.YES;
         }
     }
+
+    @Override
+    public boolean getOffBike(ReaderWay readerWay, boolean currentOffBike) {
+        if (currentOffBike == true)
+            return currentOffBike;
+        RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", "path"));
+        return (roadClass == RoadClass.PATH);
+    }
 }
