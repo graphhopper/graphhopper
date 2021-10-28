@@ -44,6 +44,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.LongToIntFunction;
 import java.util.function.Predicate;
 
 import static com.graphhopper.reader.osm.OSMNodeData.*;
@@ -521,4 +522,51 @@ public class WaySegmentParser {
         }
     }
 
+    private interface ReaderElementHandler {
+        default void handleElement(ReaderElement elem) throws ParseException {
+            switch (elem.getType()) {
+                case ReaderElement.NODE:
+                    handleNode((ReaderNode) elem);
+                    break;
+                case ReaderElement.WAY:
+                    handleWay((ReaderWay) elem);
+                    break;
+                case ReaderElement.RELATION:
+                    handleRelation((ReaderRelation) elem);
+                    break;
+                case ReaderElement.FILEHEADER:
+                    handleFileHeader((OSMFileHeader) elem);
+                    break;
+                default:
+                    throw new IllegalStateException("Unknown reader element type: " + elem.getType());
+            }
+        }
+
+        default void handleNode(ReaderNode node) {
+        }
+
+        default void handleWay(ReaderWay way) {
+        }
+
+        default void handleRelation(ReaderRelation relation) {
+        }
+
+        default void handleFileHeader(OSMFileHeader fileHeader) throws ParseException {
+        }
+
+        default void onFinish() {
+        }
+    }
+
+    public interface EdgeHandler {
+        void handleEdge(int from, int to, PointList pointList, ReaderWay way, Map<String, Object> nodeTags);
+    }
+
+    public interface RelationProcessor {
+        void processRelation(ReaderRelation relation, LongToIntFunction getNodeIdForOSMNodeId);
+    }
+
+    public interface WayPreprocessor {
+        void preprocessWay(GHPoint first, GHPoint last, ReaderWay way);
+    }
 }
