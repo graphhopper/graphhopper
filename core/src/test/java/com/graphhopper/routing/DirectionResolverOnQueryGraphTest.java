@@ -27,10 +27,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -40,7 +37,8 @@ import java.util.List;
 import static com.graphhopper.routing.DirectionResolverResult.unrestricted;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.Helper.createPointList;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * This test simulates incoming lat/lon coordinates that get snapped to graph edges (using {@link QueryGraph}) and the
@@ -253,6 +251,43 @@ public class DirectionResolverOnQueryGraphTest {
         init();
         checkResult(0.1, 0.1, restricted(edge(0, 2), edge(2, 1), edge(1, 2), edge(2, 0)));
         checkResult(0.9, 0.9, restricted(edge(0, 2), edge(2, 1), edge(1, 2), edge(2, 0)));
+    }
+
+    @Test
+    public void closeToTowerNode_issue2443() {
+        // 0x-1
+        addNode(0, 51.986000, 19.255000);
+        addNode(1, 51.985500, 19.254000);
+        DistancePlaneProjection distCalc = new DistancePlaneProjection();
+        addEdge(0, 1, true).setDistance(distCalc.calcDist(na.getLat(0), na.getLon(0), na.getLat(1), na.getLon(1)));
+        init();
+
+        double lat = 51.9855003;
+        double lon = 19.2540003;
+        Snap snap = snapCoordinate(lat, lon);
+        queryGraph = QueryGraph.create(graph, snap);
+        DirectionResolver resolver = new DirectionResolver(queryGraph, this::isAccessible);
+        DirectionResolverResult result = resolver.resolveDirections(snap.getClosestNode(), snap.getQueryPoint());
+        assertEquals(0, result.getInEdgeRight());
+        assertEquals(0, result.getOutEdgeRight());
+        assertEquals(0, result.getInEdgeLeft());
+        assertEquals(0, result.getOutEdgeRight());
+    }
+
+    @Test
+    public void unblockedBarrierEdge_issue2443() {
+        // 0---1-2
+        addNode(0, 51.9860, 19.2550);
+        addNode(1, 51.9861, 19.2551);
+        addNode(2, 51.9861, 19.2551);
+        DistancePlaneProjection distCalc = new DistancePlaneProjection();
+        addEdge(0, 1, true).setDistance(distCalc.calcDist(na.getLat(0), na.getLon(0), na.getLat(1), na.getLon(1)));
+        // a barrier edge connects two different nodes (it is not a loop), but they have the same coordinates (distance is 0)
+        // barrier edges **can** be accessible, for example they could be blocked only for certain vehicles
+        addEdge(1, 2, true).setDistance(0);
+        init();
+        // currently we just use unrestricted when we snap to a barrier edge node, see #2447
+        assertUnrestricted(51.9861, 19.2551);
     }
 
     private void addNode(int nodeId, double lat, double lon) {

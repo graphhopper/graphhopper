@@ -67,7 +67,7 @@ public class DirectionResolver {
      */
     public DirectionResolverResult resolveDirections(int node, GHPoint location) {
         AdjacentEdges adjacentEdges = calcAdjEdges(node);
-        if (adjacentEdges.numNonLoops == 0) {
+        if (adjacentEdges.numStandardEdges == 0) {
             return DirectionResolverResult.impossible();
         }
         if (!adjacentEdges.hasInEdges() || !adjacentEdges.hasOutEdges()) {
@@ -79,11 +79,16 @@ public class DirectionResolver {
         if (adjacentEdges.numLoops > 0) {
             return DirectionResolverResult.unrestricted();
         }
+        if (adjacentEdges.numZeroDistanceEdges > 0) {
+            // if we snap to a tower node that is adjacent to a barrier edge we apply no restrictions. this is the
+            // easiest thing to do, but maybe we need a more sophisticated handling of this case in the future.
+            return DirectionResolverResult.unrestricted();
+        }
         Point snappedPoint = new Point(nodeAccess.getLat(node), nodeAccess.getLon(node));
         if (adjacentEdges.nextPoints.contains(snappedPoint)) {
             // this might happen if a pillar node of an adjacent edge has the same coordinates as the snapped point,
             // but this should be prevented by the map import already
-            throw new IllegalArgumentException("Pillar node of adjacent edge matches snapped point, this should not happen");
+            throw new IllegalStateException("Pillar node of adjacent edge matches snapped point, this should not happen");
         }
         // we can classify the different cases by the number of different next points!
         if (adjacentEdges.nextPoints.size() == 1) {
@@ -127,7 +132,7 @@ public class DirectionResolver {
         } else {
             // we snapped to a junction, in this case we do not apply restrictions
             // note: TOWER and PILLAR mostly occur when location is near the end of a dead end street or a sharp
-            // curve, like switchbacks in the mountains of andorra
+            // curve, like switchbacks in the mountains of Andorra
             return DirectionResolverResult.unrestricted();
         }
     }
@@ -176,30 +181,41 @@ public class DirectionResolver {
         while (iter.next()) {
             boolean isIn = isAccessible.test(iter, true);
             boolean isOut = isAccessible.test(iter, false);
-            if (!isIn && !isOut) {
+            if (!isIn && !isOut)
                 continue;
-            }
-            if (iter.getBaseNode() == iter.getAdjNode()) {
-                adjacentEdges.numLoops++;
-            } else {
-                adjacentEdges.numNonLoops++;
-            }
             // we are interested in the coordinates of the next point on this edge, it could be the adj tower node
             // but also a pillar node
             final PointList geometry = iter.fetchWayGeometry(FetchMode.ALL);
             double nextPointLat = geometry.getLat(1);
             double nextPointLon = geometry.getLon(1);
 
-            // todo: special treatment in case the coordinates of the first pillar node equal those of the base tower
-            // node, see #1694
-            if (geometry.size() > 2 && PointList.equalsEps(nextPointLat, geometry.getLat(0)) &&
+            boolean isZeroDistanceEdge = false;
+            if (PointList.equalsEps(nextPointLat, geometry.getLat(0)) &&
                     PointList.equalsEps(nextPointLon, geometry.getLon(0))) {
-                nextPointLat = geometry.getLat(2);
-                nextPointLon = geometry.getLon(2);
+                if (geometry.size() > 2) {
+                    // todo: special treatment in case the coordinates of the first pillar node equal those of the base tower
+                    // node, see #1694
+                    nextPointLat = geometry.getLat(2);
+                    nextPointLon = geometry.getLon(2);
+                } else if (geometry.size() == 2) {
+                    // an edge where base and adj node share the same coordinates. this is the case for barrier edges that
+                    // we create artificially
+                    isZeroDistanceEdge = true;
+                } else {
+                    throw new IllegalStateException("Geometry has less than two points");
+                }
             }
             Point nextPoint = new Point(nextPointLat, nextPointLon);
             Edge edge = new Edge(iter.getEdge(), iter.getAdjNode(), nextPoint);
             adjacentEdges.addEdge(edge, isIn, isOut);
+
+            if (iter.getBaseNode() == iter.getAdjNode())
+                adjacentEdges.numLoops++;
+            else if (isZeroDistanceEdge)
+                adjacentEdges.numZeroDistanceEdges++;
+            else
+                adjacentEdges.numStandardEdges++;
+
         }
         return adjacentEdges;
     }
@@ -209,7 +225,8 @@ public class DirectionResolver {
         private final Map<Point, List<Edge>> outEdgesByNextPoint = new HashMap<>(2);
         final Set<Point> nextPoints = new HashSet<>(2);
         int numLoops;
-        int numNonLoops;
+        int numStandardEdges;
+        int numZeroDistanceEdges;
 
         void addEdge(Edge edge, boolean isIn, boolean isOut) {
             if (isIn) {
