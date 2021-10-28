@@ -286,6 +286,7 @@ public class DirectionResolverOnQueryGraphTest {
         // barrier edges **can** be accessible, for example they could be blocked only for certain vehicles
         addEdge(1, 2, true).setDistance(0);
         init();
+        // currently we just use unrestricted when we snap to a barrier edge node, see #2447
         assertUnrestricted(51.9861, 19.2551);
     }
 
