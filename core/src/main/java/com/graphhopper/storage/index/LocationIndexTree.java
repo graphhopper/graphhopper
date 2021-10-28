@@ -162,7 +162,7 @@ public class LocationIndexTree implements LocationIndex {
         // I want to be able to create a location index for the empty graph without error, but for that
         // I need valid bounds so that the initialization logic works.
         if (!bounds.isValid())
-            bounds = new BBox(-10.0,10.0,-10.0,10.0);
+            bounds = new BBox(-10.0, 10.0, -10.0, 10.0);
 
         InMemConstructionIndex inMemConstructionIndex = prepareInMemConstructionIndex(bounds, edgeFilter);
 
@@ -319,58 +319,59 @@ public class LocationIndexTree implements LocationIndex {
 
     public void traverseEdge(double queryLat, double queryLon, EdgeIteratorState currEdge, EdgeCheck edgeCheck) {
         int baseNode = currEdge.getBaseNode();
-        double currLat = nodeAccess.getLat(baseNode);
-        double currLon = nodeAccess.getLon(baseNode);
-        double currNormedDist = DIST_PLANE.calcNormalizedDist(queryLat, queryLon, currLat, currLon);
-
-        int tmpClosestNode = baseNode;
-        edgeCheck.check(tmpClosestNode, currNormedDist, 0, Snap.Position.TOWER);
-        if (currNormedDist <= equalNormedDelta)
-            return;
+        double baseLat = nodeAccess.getLat(baseNode);
+        double baseLon = nodeAccess.getLon(baseNode);
+        double baseDist = DIST_PLANE.calcNormalizedDist(queryLat, queryLon, baseLat, baseLon);
 
         int adjNode = currEdge.getAdjNode();
         double adjLat = nodeAccess.getLat(adjNode);
         double adjLon = nodeAccess.getLon(adjNode);
-        double adjDist = DIST_PLANE.calcNormalizedDist(adjLat, adjLon, queryLat, queryLon);
-        // if there are wayPoints this is only an approximation
-        if (adjDist < currNormedDist)
-            tmpClosestNode = adjNode;
+        double adjDist = DIST_PLANE.calcNormalizedDist(queryLat, queryLon, adjLat, adjLon);
 
-        double tmpLat = currLat;
-        double tmpLon = currLon;
-        double tmpNormedDist;
         PointList pointList = currEdge.fetchWayGeometry(FetchMode.PILLAR_AND_ADJ);
-        int len = pointList.size();
-        for (int pointIndex = 0; pointIndex < len; pointIndex++) {
-            double wayLat = pointList.getLat(pointIndex);
-            double wayLon = pointList.getLon(pointIndex);
-            Snap.Position pos = Snap.Position.EDGE;
-            if (DIST_PLANE.isCrossBoundary(tmpLon, wayLon)) {
-                tmpLat = wayLat;
-                tmpLon = wayLon;
+        final int len = pointList.size();
+
+        int closestTowerNode;
+        double closestDist;
+        if (baseDist < adjDist) {
+            closestTowerNode = baseNode;
+            closestDist = baseDist;
+            edgeCheck.check(baseNode, baseDist, 0, Snap.Position.TOWER);
+        } else {
+            closestTowerNode = adjNode;
+            closestDist = adjDist;
+            edgeCheck.check(adjNode, adjDist, len, Snap.Position.TOWER);
+        }
+        if (closestDist <= equalNormedDelta)
+            // if a tower node is close to the query point we stop
+            return;
+
+        double lastLat = baseLat;
+        double lastLon = baseLon;
+        for (int i = 0; i < len; i++) {
+            double lat = pointList.getLat(i);
+            double lon = pointList.getLon(i);
+            if (DIST_PLANE.isCrossBoundary(lastLon, lon)) {
+                lastLat = lat;
+                lastLon = lon;
                 continue;
             }
 
-            if (DIST_PLANE.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, wayLat, wayLon)) {
-                tmpNormedDist = DIST_PLANE.calcNormalizedEdgeDistance(queryLat, queryLon,
-                        tmpLat, tmpLon, wayLat, wayLon);
-                edgeCheck.check(tmpClosestNode, tmpNormedDist, pointIndex, pos);
+            // +1 because we skipped the base node
+            final int indexInFullPointList = i + 1;
+            if (DIST_PLANE.validEdgeDistance(queryLat, queryLon, lastLat, lastLon, lat, lon)) {
+                closestDist = DIST_PLANE.calcNormalizedEdgeDistance(queryLat, queryLon, lastLat, lastLon, lat, lon);
+                edgeCheck.check(closestTowerNode, closestDist, indexInFullPointList - 1, Snap.Position.EDGE);
+            } else if (i < len - 1) {
+                closestDist = DIST_PLANE.calcNormalizedDist(queryLat, queryLon, lat, lon);
+                edgeCheck.check(closestTowerNode, closestDist, indexInFullPointList, Snap.Position.PILLAR);
             } else {
-                if (pointIndex + 1 == len) {
-                    tmpNormedDist = adjDist;
-                    pos = Snap.Position.TOWER;
-                } else {
-                    tmpNormedDist = DIST_PLANE.calcNormalizedDist(queryLat, queryLon, wayLat, wayLon);
-                    pos = Snap.Position.PILLAR;
-                }
-                edgeCheck.check(tmpClosestNode, tmpNormedDist, pointIndex + 1, pos);
+                // we snapped onto the last tower node, but we already handled this before so do nothing
             }
-
-            if (tmpNormedDist <= equalNormedDelta)
+            if (closestDist <= equalNormedDelta)
                 return;
-
-            tmpLat = wayLat;
-            tmpLon = wayLon;
+            lastLat = lat;
+            lastLon = lon;
         }
     }
 
