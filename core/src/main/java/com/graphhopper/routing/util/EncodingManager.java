@@ -398,7 +398,7 @@ public class EncodingManager implements EncodedValueLookup {
     static String fixWayName(String str) {
         if (str == null)
             return "";
-        return WAY_NAME_PATTERN.matcher(str).replaceAll(", ");
+        return str;
     }
 
     public int getIntsForFlags() {

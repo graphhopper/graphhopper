@@ -420,9 +420,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             }
         }
 
-        List<CustomArea> customAreas = estimatedCenter == null || areaIndex == null
-                ? emptyList()
-                : areaIndex.query(estimatedCenter.lat, estimatedCenter.lon);
+        List<CustomArea> customAreas = emptyList();
         // special handling for countries: since they are built-in with GraphHopper they are always fed to the encodingmanager
         Country country = Country.MISSING;
         for (CustomArea customArea : customAreas) {
