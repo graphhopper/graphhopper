@@ -31,7 +31,7 @@ public class SpatialKeyAlgoTest {
     public void testEncode() {
         SpatialKeyAlgo algo = new SpatialKeyAlgo(32, new BBox(-180, 180, -90, 90));
         long val = algo.encodeLatLon(-24.235345f, 47.234234f);
-        assertEquals("01100110101000111100000110010100", BitUtil.BIG.toLastBitString(val, 32));
+        assertEquals("01100110101000111100000110010100", BitUtil.LITTLE.toLastBitString(val, 32));
     }
 
     @Test
