@@ -286,9 +286,6 @@ public class DirectionResolverOnQueryGraphTest {
         // barrier edges **can** be accessible, for example they could be blocked only for certain vehicles
         addEdge(1, 2, true).setDistance(0);
         init();
-        //        Snap snap = snapCoordinate(lat, lon);
-//        queryGraph = QueryGraph.create(graph, snap);
-//        DirectionResolver resolver = new DirectionResolver(queryGraph, this::isAccessible);
         assertUnrestricted(51.9861, 19.2551);
     }
 
