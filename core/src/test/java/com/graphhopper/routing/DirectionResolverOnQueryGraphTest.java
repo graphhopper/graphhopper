@@ -254,24 +254,42 @@ public class DirectionResolverOnQueryGraphTest {
     }
 
     @Test
-    public void virtualNodeVeryCloseToTowerNode() {
-        FlagEncoder encoder = new CarFlagEncoder();
-        Graph graph = new GraphBuilder(EncodingManager.create(encoder)).set3D(true).create();
-        NodeAccess na = graph.getNodeAccess();
-        // todonow: need eighth digit, otherwise the seventh is still not preserved (despite #2393)
-        na.setNode(0, 39.23489461, -84.3766447, 260.311);
-        na.setNode(1, 39.23544301, -84.376595, 260.694);
-        EdgeIteratorState edge = graph.edge(0, 1).setDistance(61.13);
-        Snap snap = new Snap(39.235443, -84.37659500000001);
-        snap.setQueryDistance(1.2239298292801523E-9);
-        snap.setSnappedPosition(Snap.Position.EDGE);
-        snap.setClosestEdge(edge);
-        snap.setWayIndex(0);
-        snap.setClosestNode(1);
-        snap.calcSnappedPoint(new DistancePlaneProjection());
-        QueryGraph queryGraph = QueryGraph.create(graph, snap);
-        assertEquals(2, snap.getClosestNode());
-        new DirectionResolver(queryGraph, (e, revers) -> true).resolveDirections(snap.getClosestNode(), snap.getQueryPoint());
+    public void closeToTowerNode_issue2443() {
+        // 0x-1
+        addNode(0, 51.986000, 19.255000);
+        addNode(1, 51.985500, 19.254000);
+        DistancePlaneProjection distCalc = new DistancePlaneProjection();
+        addEdge(0, 1, true).setDistance(distCalc.calcDist(na.getLat(0), na.getLon(0), na.getLat(1), na.getLon(1)));
+        init();
+
+        double lat = 51.9855003;
+        double lon = 19.2540003;
+        Snap snap = snapCoordinate(lat, lon);
+        queryGraph = QueryGraph.create(graph, snap);
+        DirectionResolver resolver = new DirectionResolver(queryGraph, this::isAccessible);
+        DirectionResolverResult result = resolver.resolveDirections(snap.getClosestNode(), snap.getQueryPoint());
+        assertEquals(0, result.getInEdgeRight());
+        assertEquals(0, result.getOutEdgeRight());
+        assertEquals(0, result.getInEdgeLeft());
+        assertEquals(0, result.getOutEdgeRight());
+    }
+
+    @Test
+    public void unblockedBarrierEdge_issue2443() {
+        // 0---1-2
+        addNode(0, 51.9860, 19.2550);
+        addNode(1, 51.9861, 19.2551);
+        addNode(2, 51.9861, 19.2551);
+        DistancePlaneProjection distCalc = new DistancePlaneProjection();
+        addEdge(0, 1, true).setDistance(distCalc.calcDist(na.getLat(0), na.getLon(0), na.getLat(1), na.getLon(1)));
+        // a barrier edge connects two different nodes (it is not a loop), but they have the same coordinates (distance is 0)
+        // barrier edges **can** be accessible, for example they could be blocked only for certain vehicles
+        addEdge(1, 2, true).setDistance(0);
+        init();
+        //        Snap snap = snapCoordinate(lat, lon);
+//        queryGraph = QueryGraph.create(graph, snap);
+//        DirectionResolver resolver = new DirectionResolver(queryGraph, this::isAccessible);
+        assertUnrestricted(51.9861, 19.2551);
     }
 
     private void addNode(int nodeId, double lat, double lon) {
