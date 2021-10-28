@@ -198,7 +198,7 @@ public class OSMReader {
      */
     protected void setArtificialWayTags(GHPoint first, GHPoint last, ReaderWay way) {
         // todo: should we not rather do all this stuff **per edge** not per way? might be a bit slower, but we
-        // could also do raster optimization in country lookup if this is the bottleneck.
+        // could also do raster optimization in country lookup if this was the bottleneck.
 
         // Estimate length of ways containing a route tag e.g. for ferry speed calculation
         double firstLat = first.getLat(), firstLon = first.getLon();
@@ -419,7 +419,6 @@ public class OSMReader {
 
     /**
      * Creates turn relations out of an unspecified OSM relation
-     * todo: maybe this can go somewhere else?
      */
     static List<OSMTurnRelation> createTurnRelations(ReaderRelation relation) {
         List<OSMTurnRelation> osmTurnRelations = new ArrayList<>();
@@ -454,7 +453,6 @@ public class OSMReader {
         return osmTurnRelations;
     }
 
-    // todo: maybe this can go somewhere else?
     static OSMTurnRelation createTurnRelation(ReaderRelation relation, String restrictionType, String
             vehicleTypeRestricted, List<String> vehicleTypesExcept) {
         OSMTurnRelation.Type type = OSMTurnRelation.Type.getRestrictionType(restrictionType);
@@ -485,7 +483,6 @@ public class OSMReader {
     }
 
     private void finishedReading() {
-        // todonow: not a fan
         encodingManager.releaseParsers();
         eleProvider.release();
         osmWayIdToRelationFlagsMap = null;

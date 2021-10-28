@@ -18,7 +18,6 @@
 
 package com.graphhopper.reader.osm;
 
-import com.carrotsearch.hppc.LongIndexedContainer;
 import com.carrotsearch.hppc.cursors.LongCursor;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderNode;
@@ -102,7 +101,8 @@ public class WaySegmentParser {
      * @param osmFile the OSM file to parse, supported formats include .osm.xml, .osm.gz and .xml.pbf
      */
     public void readOSM(File osmFile) {
-        // todonow: either make sure this method is only called once or reset resources
+        if (nodeData.getNodeCount() > 0)
+            throw new IllegalStateException("You can only run way segment parser once");
 
         LOGGER.info("Start reading OSM file: '" + osmFile + "'");
         LOGGER.info("pass1 - start");
@@ -127,6 +127,9 @@ public class WaySegmentParser {
                 " total: " + (int) (sw1.getSeconds() + sw2.getSeconds()) + "s");
     }
 
+    /**
+     * @return the timestamp read from the OSM file, or null if nothing was read yet
+     */
     public Date getTimeStamp() {
         return timestamp;
     }
@@ -148,19 +151,16 @@ public class WaySegmentParser {
                 throw new IllegalStateException("OSM way elements must be located before relation elements in OSM file");
 
             if (++wayCounter % 10_000_000 == 0)
-                // todonow: log memory usage for node data?
-                LOGGER.info("pass1 - processed ways: " + nf(wayCounter) + ", accepted ways: " + nf(acceptedWays) + ", way nodes: " + nf(nodeData.getNodeCount()) + ", " + Helper.getMemInfo());
+                LOGGER.info("pass1 - processed ways: " + nf(wayCounter) + ", accepted ways: " + nf(acceptedWays) +
+                        ", way nodes: " + nf(nodeData.getNodeCount()) + ", " + Helper.getMemInfo());
 
             if (!wayFilter.test(way))
                 return;
             acceptedWays++;
 
-            // todonow: benchmark then simplify
-            LongIndexedContainer wayNodes = way.getNodes();
-            int s = wayNodes.size();
-            for (int i = 0; i < s; i++) {
-                final boolean isEnd = i == 0 || i == s - 1;
-                final long osmId = wayNodes.get(i);
+            for (LongCursor node : way.getNodes()) {
+                final boolean isEnd = node.index == 0 || node.index == way.getNodes().size() - 1;
+                final long osmId = node.value;
                 nodeData.setOrUpdateNodeType(osmId,
                         isEnd ? END_NODE : INTERMEDIATE_NODE,
                         // connection nodes are those where (only) two OSM ways are connected at their ends
@@ -260,7 +260,7 @@ public class WaySegmentParser {
 
             List<SegmentNode> segment = new ArrayList<>();
             for (SegmentNode node : fullSegment) {
-                if (!nodeData.isNodeId(node.id)) {
+                if (!isNodeId(node.id)) {
                     // this node exists in ways, but not in nodes. we ignore it, but we split the way when we encounter
                     // such a missing node. for example an OSM way might lead out of an area where nodes are available and
                     // back into it. we do not want to connect the exit/entry points using a straight line. this usually
@@ -269,7 +269,7 @@ public class WaySegmentParser {
                         splitLoopSegments(segment, way);
                         segment = new ArrayList<>();
                     }
-                } else if (nodeData.isTowerNode(node.id)) {
+                } else if (isTowerNode(node.id)) {
                     if (!segment.isEmpty()) {
                         segment.add(node);
                         splitLoopSegments(segment, way);
@@ -306,7 +306,7 @@ public class WaySegmentParser {
             for (int i = 0; i < parentSegment.size(); i++) {
                 SegmentNode node = parentSegment.get(i);
                 Map<String, Object> nodeTags = nodeData.getTags(node.osmNodeId);
-//             todonow: currently we interpret existing node tags as barrier nodes, but need to change this!
+                // so far we only consider node tags of split nodes, so if there are node tags we split the node
                 if (!nodeTags.isEmpty()) {
                     // this node is a barrier. we will copy it and add an extra edge
                     SegmentNode barrierFrom = node;
@@ -346,11 +346,9 @@ public class WaySegmentParser {
             for (int i = 0; i < segment.size(); i++) {
                 SegmentNode node = segment.get(i);
                 int id = node.id;
-                if (!nodeData.isNodeId(id))
+                if (!isNodeId(id))
                     throw new IllegalStateException("Invalid id for node: " + node.osmNodeId + " when handling segment " + segment + " for way: " + way.getId());
-
-                if (nodeData.isPillarNode(id) && (i == 0 || i == segment.size() - 1)) {
-                    // todonow: can we simplify the code here a bit and do not pass the osm id here?
+                if (isPillarNode(id) && (i == 0 || i == segment.size() - 1)) {
                     id = nodeData.convertPillarToTowerNode(id, node.osmNodeId);
                     node.id = id;
                 }
@@ -359,7 +357,7 @@ public class WaySegmentParser {
                     from = nodeData.idToTowerNode(id);
                 else if (i == segment.size() - 1)
                     to = nodeData.idToTowerNode(id);
-                else if (nodeData.isTowerNode(id))
+                else if (isTowerNode(id))
                     throw new IllegalStateException("Tower nodes should only appear at the end of segments, way: " + way.getId());
                 nodeData.addCoordinatesToPointList(id, pointList);
             }
@@ -394,7 +392,7 @@ public class WaySegmentParser {
 
         public int getInternalNodeIdOfOSMNode(long nodeOsmId) {
             int id = nodeData.getId(nodeOsmId);
-            if (nodeData.isTowerNode(id))
+            if (isTowerNode(id))
                 return -id - 3;
 
             return -1;

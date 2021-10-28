@@ -37,19 +37,20 @@ import static java.util.Collections.emptyMap;
 
 /**
  * This class stores OSM node data while reading an OSM file in {@link WaySegmentParser}. It is not trivial to do this
- * in a memory-efficient way. We do this as follows:
+ * in a memory-efficient way. We use the following approach:
  * <pre>
- * - For each OSM node we store an integer id that points to the associated coordinates. We use both positive and negative
+ * - For each OSM node we store an integer id that points to the nodes coordinates. We use both positive and negative
  *   ids to make use of the full integer range (~4 billion nodes). We separate nodes into (potential) tower nodes and
- *   pillar nodes and use the negative ids for tower nodes and positive ids for pillar nodes. In the future we might
+ *   pillar nodes. We use the negative ids for tower nodes and positive ids for pillar nodes. In the future we might
  *   have to consider the fact that there are more pillar nodes than tower nodes and use a different separation.
- * - We reserve a few special ids like {@link #JUNCTION_NODE} to distinguish the different node types in the first pass
- *   of {@link WaySegmentParser} before we assign actual ids in the second pass.
+ * - We reserve a few special ids like {@link #JUNCTION_NODE} to distinguish the different node types when we read the
+ *   OSM file for the first time (pass1) in {@link WaySegmentParser}. We then assign actual ids in the second pass.
  * - We store the node coordinates for tower and pillar nodes in different places. The pillar node storage is only
- *   temporary, because at the time we store the coordinates it is unknown to which edge each pillar node belongs.
- *   The tower node storage can be re-used for the final graph created by {@link OSMReader}.
+ *   temporary, because at the time we store the coordinates it is unknown to which edge each pillar node will belong.
+ *   The tower node storage, however, can be re-used for the final graph created by {@link OSMReader} so we store the
+ *   tower coordinates there already to save memory during import.
  * - We store an additional mapping between OSM node Ids and tag indices that point into a list of node tags. We use
- *   a different mapping, because we store node tags for far less OSM nodes.
+ *   a different mapping, because we store node tags for only a small fraction of all OSM nodes.
  * </pre>
  */
 class OSMNodeData {
@@ -66,7 +67,8 @@ class OSMNodeData {
     private final PillarInfo pillarNodes;
     private final PointAccess towerNodes;
 
-    // this map stores an index for each OSM node we keep the node tags of
+    // this map stores an index for each OSM node we keep the node tags of. a value of -1 means there is no entry
+    // yet and a value of -2 means there was an entry but it was removed again
     private final LongIntMap nodeTagIndicesByOsmNodeIds;
 
     // stores node tags
@@ -101,17 +103,17 @@ class OSMNodeData {
         return idsByOsmNodeIds.get(osmNodeId);
     }
 
-    public boolean isTowerNode(int id) {
+    public static boolean isTowerNode(int id) {
         // tower nodes are indexed -3, -4, -5, ...
         return id < JUNCTION_NODE;
     }
 
-    public boolean isPillarNode(int id) {
+    public static boolean isPillarNode(int id) {
         // pillar nodes are indexed 3, 4, 5, ..
         return id > CONNECTION_NODE;
     }
 
-    public boolean isNodeId(int id) {
+    public static boolean isNodeId(int id) {
         return id > CONNECTION_NODE || id < JUNCTION_NODE;
     }
 
@@ -239,13 +241,14 @@ class OSMNodeData {
     }
 
     public void setTags(ReaderNode node) {
-        // todonow: make sure setTags cannot be called after removeTags (do not add more to nodeTags)
         int tagIndex = nodeTagIndicesByOsmNodeIds.get(node.getId());
-        if (tagIndex == -1) {
+        if (tagIndex == -2)
+            throw new IllegalStateException("Cannot add tags after they were removed");
+        else if (tagIndex == -1) {
             nodeTagIndicesByOsmNodeIds.put(node.getId(), nodeTags.size());
             nodeTags.add(node.getTags());
         } else {
-            throw new IllegalStateException("Duplicate node OSM ID: " + node.getId());
+            throw new IllegalStateException("Cannot add tags twice, duplicate node OSM ID: " + node.getId());
         }
     }
 
@@ -257,17 +260,12 @@ class OSMNodeData {
     }
 
     public void removeTags(long osmNodeId) {
-        int prev = nodeTagIndicesByOsmNodeIds.put(osmNodeId, -1);
-        this.nodeTags.set(prev, emptyMap());
+        int prev = nodeTagIndicesByOsmNodeIds.put(osmNodeId, -2);
+        nodeTags.set(prev, emptyMap());
     }
 
     public void release() {
         pillarNodes.clear();
-    }
-
-    public int getMemoryUsage() {
-        // todonow: need to add memory usage for pillar+tower nodes and node tags?!
-        return idsByOsmNodeIds.getMemoryUsage() + nodeTagIndicesByOsmNodeIds.getMemoryUsage();
     }
 
     public int towerNodeToId(int towerId) {
