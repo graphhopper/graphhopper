@@ -30,6 +30,7 @@ import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.TurnCostParser;
@@ -47,6 +48,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.LongToIntFunction;
 
+import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
 import static com.graphhopper.util.Helper.nf;
 import static java.util.Collections.emptyList;
 
@@ -67,7 +69,7 @@ public class OSMReader {
     private final NodeAccess nodeAccess;
     private final TurnCostStorage turnCostStorage;
     private final EncodingManager encodingManager;
-    private final DistanceCalc distCalc = DistanceCalcEarth.DIST_EARTH;
+    private final DistanceCalc distCalc = DIST_EARTH;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private AreaIndex<CustomArea> areaIndex;
     private CountryRuleFactory countryRuleFactory = null;
@@ -142,14 +144,15 @@ public class OSMReader {
 
         WaySegmentParser waySegmentParser = new WaySegmentParser.Builder(ghStorage.getNodeAccess())
                 .setDirectory(ghStorage.getDirectory())
-                .setElevationProvider(eleProvider)
-                .setWayFilter(this::acceptWay)
-                .setSplitNodeFilter(this::isBarrierNode)
-                .setWayPreprocessor(this::preprocessWay)
-                .setRelationPreprocessor(this::preprocessRelations)
-                .setRelationProcessor(this::processRelation)
-                .setEdgeHandler(this::addEdge)
-                .setWorkerThreads(config.getWorkerThreads())
+                .setWayFilter(way -> way.getNodes().size() > 2 && way.hasTag("waterway")) // railway also works
+                .setEdgeHandler((from, to, pointList, way, nodeTags) -> {
+                    EdgeIteratorState edge = ghStorage.edge(from, to).setWayGeometry(pointList);
+                    for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
+                        edge.set(encoder.getAccessEnc(), true, true);
+                        edge.set(encoder.getAverageSpeedEnc(), Math.min(30, encoder.getMaxSpeed()));
+                        edge.setDistance(DIST_EARTH.calcDistance(pointList));
+                    }
+                })
                 .build();
         ghStorage.create(100);
         waySegmentParser.readOSM(osmFile);
