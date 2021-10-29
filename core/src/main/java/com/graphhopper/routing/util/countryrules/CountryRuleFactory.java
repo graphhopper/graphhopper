@@ -32,8 +32,57 @@ public class CountryRuleFactory {
     private final Map<Country, CountryRule> rules = new EnumMap<>(Country.class);
     
     public CountryRuleFactory() {
+        
+        // Europe
+        rules.put(ALB, null);
+        rules.put(AND, null);
         rules.put(AUT, new AustriaCountryRule());
+        rules.put(BEL, new BelgiumCountryRule());
+        rules.put(BGR, new BulgariaCountryRule());
+        rules.put(BIH, null);
+        rules.put(BLR, null);
+        rules.put(CHE, new SwitzerlandCountryRule());
+        rules.put(CZE, new CzechiaCountryRule());
         rules.put(DEU, new GermanyCountryRule());
+        rules.put(DNK, new DenmarkCountryRule());
+        rules.put(ESP, new SpainCountryRule());
+        rules.put(EST, null);
+        rules.put(FIN, null);
+        rules.put(FRA, new FranceCountryRule());
+        rules.put(FRO, null);
+        rules.put(GGY, null);
+        rules.put(GIB, null);
+        rules.put(GBR, null);
+        rules.put(GRC, null);
+        rules.put(HRV, new CroatiaCountryRule());
+        rules.put(HUN, new HungaryCountryRule());
+        rules.put(IMN, null);
+        rules.put(IRL, null);
+        rules.put(ISL, null);
+        rules.put(ITA, new ItalyCountryRule());
+        rules.put(JEY, null);
+        rules.put(LIE, null);
+        rules.put(LTU, null);
+        rules.put(LUX, new LuxembourgCountryRule());
+        rules.put(LVA, null);
+        rules.put(MCO, null);
+        rules.put(MDA, null);
+        rules.put(MKD, null);
+        rules.put(MLT, null);
+        rules.put(MNE, null);
+        rules.put(NLD, new NetherlandsCountryRule());
+        rules.put(NOR, null);
+        rules.put(POL, new PolandCountryRule());
+        rules.put(PRT, new PortugalCountryRule());
+        rules.put(ROU, null);
+        rules.put(RUS, null);
+        rules.put(SMR, null);
+        rules.put(SRB, new SerbiaCountryRule());
+        rules.put(SVK, new SlovakiaCountryRule());
+        rules.put(SVN, new SloveniaCountryRule());
+        rules.put(SWE, new SwedenCountryRule());
+        rules.put(UKR, null);
+        rules.put(VAT, null);
     }
 
     public CountryRule getCountryRule(Country country) {
