@@ -18,9 +18,8 @@
 package com.graphhopper.storage;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static com.graphhopper.storage.DAType.RAM_INT;
@@ -34,9 +33,10 @@ import static com.graphhopper.util.Helper.*;
  */
 public class GHDirectory implements Directory {
     protected final String location;
-    private final Map<String, DAType> defaultTypes = new HashMap<>();
     private final DAType typeFallback;
-    private final Map<String, Integer> mmapPreloads = new HashMap<>();
+    // first rule matches => LinkedHashMap
+    private final Map<String, DAType> defaultTypes = new LinkedHashMap<>();
+    private final Map<String, Integer> mmapPreloads = new LinkedHashMap<>();
     protected Map<String, DataAccess> map = new HashMap<>();
 
     public GHDirectory(String _location, DAType defaultType) {
@@ -55,62 +55,59 @@ public class GHDirectory implements Directory {
 
     /**
      * Configure the DAType (specified by the value) of a single DataAccess object (specified by the key). For "MMAP" you
-     * can append a percentage like ";<int>" e.g. "MMAP;20". This preloads the DataAccess into physical memory of the
-     * specified percentage.
+     * can prepend "preload." to the name and specify a percentage which preloads the DataAccess into physical memory of
+     * the specified percentage. As keys can be patterns the order is important and the LinkedHashMap is forced as type.
      */
-    public void configure(Map<String, String> config) {
-        for (Entry entry : convert(config)) {
-            defaultTypes.put(entry.name, entry.type);
-            mmapPreloads.put(entry.name, entry.preload);
+    public void configure(LinkedHashMap<String, String> config) {
+        for (Map.Entry<String, String> kv : config.entrySet()) {
+            String value = kv.getValue().trim();
+            if (kv.getKey().startsWith("preload."))
+                try {
+                    String pattern = kv.getKey().substring("preload.".length());
+                    mmapPreloads.put(pattern, Integer.parseInt(value));
+                } catch (NumberFormatException ex) {
+                    throw new IllegalArgumentException("DataAccess " + kv.getKey() + " has an incorrect preload value: " + value);
+                }
+            else {
+                String pattern = kv.getKey();
+                defaultTypes.put(pattern, DAType.fromString(value));
+            }
         }
     }
 
-    static List<Entry> convert(Map<String, String> configs) {
-        List<Entry> result = new ArrayList<>();
-        for (Map.Entry<String, String> kv : configs.entrySet()) {
-            Entry e = new Entry();
-            e.name = kv.getKey();
-            String[] values = kv.getValue().split(";");
-            if (values.length == 0)
-                throw new IllegalArgumentException("DataAccess " + kv.getKey() + " has an empty value");
-            e.type = DAType.fromString(values[0].trim());
-            if (values.length > 1)
-                try {
-                    e.preload = Integer.parseInt(values[1]);
-                } catch (NumberFormatException ex) {
-                    throw new IllegalArgumentException("DataAccess " + kv.getKey() + " has an incorrect preload value. Use e.g. MMAP;20");
-                }
-
-            result.add(e);
-        }
-        return result;
+    /**
+     * Returns the preload value or 0 the default
+     */
+    int getPreload(String name) {
+        for (Map.Entry<String, Integer> entry : mmapPreloads.entrySet())
+            if (name.matches(entry.getKey())) return entry.getValue();
+        return 0;
     }
 
     public void loadMMap() {
-        for (Map.Entry<String, Integer> entry : mmapPreloads.entrySet()) {
-            DataAccess da = map.get(entry.getKey());
-            if (da == null)
-                throw new IllegalArgumentException("Cannot preload DataAccess " + entry.getKey() + ". Does not exist. Existing: " + map.keySet());
+        for (DataAccess da : map.values()) {
             if (!(da instanceof MMapDataAccess))
-                throw new IllegalArgumentException("Can only preload MMapDataAccess " + da.getName() + ". But was " + da.getType());
-            ((MMapDataAccess) da).load(entry.getValue());
+                continue;
+            int preload = getPreload(da.getName());
+            if (preload > 0)
+                ((MMapDataAccess) da).load(preload);
         }
-    }
-
-    public static class Entry {
-        String name;
-        DAType type;
-        int preload;
     }
 
     @Override
     public DataAccess create(String name) {
-        return create(name, defaultTypes.getOrDefault(name, typeFallback));
+        return create(name, getDefault(name, typeFallback));
     }
 
     @Override
     public DataAccess create(String name, int segmentSize) {
-        return create(name, defaultTypes.getOrDefault(name, typeFallback), segmentSize);
+        return create(name, getDefault(name, typeFallback), segmentSize);
+    }
+
+    private DAType getDefault(String name, DAType typeFallback) {
+        for (Map.Entry<String, DAType> entry : defaultTypes.entrySet())
+            if (name.matches(entry.getKey())) return entry.getValue();
+        return typeFallback;
     }
 
     @Override
@@ -191,7 +188,7 @@ public class GHDirectory implements Directory {
      * method returns e.g. RAM_INT if the type of the specified DataAccess is RAM.
      */
     public DAType getDefaultType(String dataAccess, boolean preferInts) {
-        DAType type = defaultTypes.getOrDefault(dataAccess, typeFallback);
+        DAType type = getDefault(dataAccess, typeFallback);
         if (preferInts && type.isInMemory())
             return type.isStoring() ? RAM_INT_STORE : RAM_INT;
         return type;

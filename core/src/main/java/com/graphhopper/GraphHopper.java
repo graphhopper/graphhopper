@@ -91,7 +91,7 @@ public class GraphHopper {
     private int defaultSegmentSize = -1;
     private String ghLocation = "";
     private DAType dataAccessDefaultType = DAType.RAM_STORE;
-    private Map<String, String> dataAccessConfig = new HashMap<>();
+    private LinkedHashMap<String, String> dataAccessConfig = new LinkedHashMap<>();
     private boolean sortGraph = false;
     private boolean elevation = false;
     private LockFactory lockFactory = new NativeFSLockFactory();
@@ -427,6 +427,8 @@ public class GraphHopper {
         for (Map.Entry<String, Object> entry : ghConfig.asPMap().toMap().entrySet()) {
             if (entry.getKey().startsWith("graph.dataaccess.type."))
                 dataAccessConfig.put(entry.getKey().substring("graph.dataaccess.type.".length()), entry.getValue().toString());
+            if (entry.getKey().startsWith("graph.dataaccess.mmap.preload."))
+                dataAccessConfig.put(entry.getKey().substring("graph.dataaccess.mmap.".length()), entry.getValue().toString());
         }
 
         sortGraph = ghConfig.getBool("graph.do_sort", sortGraph);
