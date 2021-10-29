@@ -21,11 +21,7 @@ package com.graphhopper.gtfs;
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.google.common.collect.ArrayListMultimap;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.IntEncodedValue;
-import com.graphhopper.routing.ev.StringEncodedValue;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -241,6 +237,11 @@ public class WrapperGraph implements Graph {
 
             @Override
             public double get(DecimalEncodedValue property) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public double get(GeometryEncodedValue property) {
                 throw new UnsupportedOperationException();
             }
 
@@ -499,6 +500,11 @@ public class WrapperGraph implements Graph {
 
                     @Override
                     public double get(DecimalEncodedValue property) {
+                        return current.get(property);
+                    }
+
+                    @Override
+                    public double get(GeometryEncodedValue property) {
                         return current.get(property);
                     }
 

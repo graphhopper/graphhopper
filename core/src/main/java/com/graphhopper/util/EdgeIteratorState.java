@@ -176,6 +176,8 @@ public interface EdgeIteratorState {
 
     EdgeIteratorState set(DecimalEncodedValue property, double value);
 
+    double get(GeometryEncodedValue property);
+
     double getReverse(DecimalEncodedValue property);
 
     EdgeIteratorState setReverse(DecimalEncodedValue property, double value);

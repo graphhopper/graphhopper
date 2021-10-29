@@ -17,11 +17,7 @@
  */
 package com.graphhopper.routing.querygraph;
 
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.IntEncodedValue;
-import com.graphhopper.routing.ev.StringEncodedValue;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIterator;
@@ -181,6 +177,11 @@ class VirtualEdgeIterator implements EdgeIterator {
 
     @Override
     public double get(DecimalEncodedValue property) {
+        return getCurrentEdge().get(property);
+    }
+
+    @Override
+    public double get(GeometryEncodedValue property) {
         return getCurrentEdge().get(property);
     }
 
