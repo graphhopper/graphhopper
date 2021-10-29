@@ -1,6 +1,7 @@
 package com.graphhopper.storage;
 
 import org.junit.jupiter.api.Test;
+import sun.awt.image.ImageWatched;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -12,7 +13,7 @@ class GHDirectoryTest {
     @Test
     public void testConfigure() {
         GHDirectory dir = new GHDirectory("", DAType.RAM_STORE);
-        Map<String, String> map = new LinkedHashMap<>();
+        LinkedHashMap<String, String> map = new LinkedHashMap<>();
         map.put("nodes", "MMAP");
         dir.configure(map);
         assertEquals(DAType.MMAP, dir.getDefaultType("nodes", true));
@@ -27,7 +28,7 @@ class GHDirectoryTest {
     @Test
     public void testPatternMatching() {
         GHDirectory dir = new GHDirectory("", DAType.RAM_STORE);
-        Map<String, String> map = new LinkedHashMap<>();
+        LinkedHashMap<String, String> map = new LinkedHashMap<>();
         map.put("nodes_ch.*", "MMAP");
         dir.configure(map);
         assertEquals(DAType.RAM_STORE, dir.getDefaultType("nodes", false));
