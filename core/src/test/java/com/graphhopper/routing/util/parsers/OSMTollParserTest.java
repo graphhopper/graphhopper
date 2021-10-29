@@ -29,7 +29,7 @@ public class OSMTollParserTest {
         IntsRef intsRef = em.createEdgeFlags();
         readerWay.setTag("highway", "primary");
         parser.handleWayTags(intsRef, readerWay, false, relFlags);
-        assertEquals(Toll.NO, tollEnc.getEnum(false, intsRef));
+        assertEquals(Toll.MISSING, tollEnc.getEnum(false, intsRef));
 
         intsRef = em.createEdgeFlags();
         readerWay.setTag("highway", "primary");
