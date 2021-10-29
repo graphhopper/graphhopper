@@ -66,12 +66,13 @@ public class Constants {
     private static final int JVM_MAJOR_VERSION;
     private static final int JVM_MINOR_VERSION;
 
-    public static final int VERSION_NODE = 7;
-    public static final int VERSION_EDGE = 20;
-    public static final int VERSION_SHORTCUT = 7;
-    public static final int VERSION_GEOMETRY = 5;
-    public static final int VERSION_LOCATION_IDX = 4;
-    public static final int VERSION_STRING_IDX = 5;
+    public static final int VERSION_NODE = 8;
+    public static final int VERSION_EDGE = 21;
+    public static final int VERSION_SHORTCUT = 8;
+    public static final int VERSION_NODE_CH = 0;
+    public static final int VERSION_GEOMETRY = 6;
+    public static final int VERSION_LOCATION_IDX = 5;
+    public static final int VERSION_STRING_IDX = 6;
     /**
      * The version without the snapshot string
      */

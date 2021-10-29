@@ -18,13 +18,13 @@
 package com.graphhopper.util;
 
 import com.graphhopper.coll.GHIntLongHashMap;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.NodeAccess;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -35,7 +35,6 @@ import static org.junit.jupiter.api.Assertions.*;
 public class GHUtilityTest {
     private final FlagEncoder carEncoder = new CarFlagEncoder();
     private final EncodingManager encodingManager = EncodingManager.create(carEncoder);
-    private final BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
 
     Graph createGraph() {
         return new GraphBuilder(encodingManager).create();

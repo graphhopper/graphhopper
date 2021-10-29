@@ -20,6 +20,8 @@ package com.graphhopper.search;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.Constants;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 
 import java.util.*;
@@ -77,7 +79,11 @@ public class StringIndex {
         if (vals.loadExisting()) {
             if (!keys.loadExisting())
                 throw new IllegalStateException("Loaded values but cannot load keys");
-            bytePointer = BitUtil.LITTLE.combineIntsToLong(vals.getHeader(0), vals.getHeader(4));
+            int stringIndexKeysVersion = keys.getHeader(0);
+            int stringIndexValsVersion = vals.getHeader(0);
+            GHUtility.checkDAVersion(keys.getName(), Constants.VERSION_STRING_IDX, stringIndexKeysVersion);
+            GHUtility.checkDAVersion(vals.getName(), Constants.VERSION_STRING_IDX, stringIndexValsVersion);
+            bytePointer = BitUtil.LITTLE.combineIntsToLong(vals.getHeader(4), vals.getHeader(8));
 
             // load keys into memory
             int count = keys.getShort(0);
@@ -277,7 +283,7 @@ public class StringIndex {
             tmpPointer += 1 + valueLength;
         }
 
-        // value for specified key does not existing for the specified pointer
+        // value for specified key does not exist for the specified pointer
         return null;
     }
 
@@ -294,6 +300,7 @@ public class StringIndex {
     }
 
     public void flush() {
+        keys.setHeader(0, Constants.VERSION_STRING_IDX);
         keys.ensureCapacity(2);
         keys.setShort(0, (short) keysInMem.size());
         long keyBytePointer = 2;
@@ -308,8 +315,9 @@ public class StringIndex {
         }
         keys.flush();
 
-        vals.setHeader(0, BitUtil.LITTLE.getIntLow(bytePointer));
-        vals.setHeader(4, BitUtil.LITTLE.getIntHigh(bytePointer));
+        vals.setHeader(0, Constants.VERSION_STRING_IDX);
+        vals.setHeader(4, BitUtil.LITTLE.getIntLow(bytePointer));
+        vals.setHeader(8, BitUtil.LITTLE.getIntHigh(bytePointer));
         vals.flush();
     }
 

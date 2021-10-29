@@ -24,14 +24,14 @@ import com.graphhopper.geohash.SpatialKeyAlgo;
 import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
+import com.graphhopper.util.Constants;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
 
 import java.util.function.IntConsumer;
 
 public class LineIntIndex {
-
-    private final int MAGIC_INT = Integer.MAX_VALUE / 22318;
     // do not start with 0 as a positive value means leaf and a negative means "entry with subentries"
     static final int START_POINTER = 1;
 
@@ -59,9 +59,7 @@ public class LineIntIndex {
         if (!dataAccess.loadExisting())
             return false;
 
-        if (dataAccess.getHeader(0) != MAGIC_INT)
-            throw new IllegalStateException("incorrect location index version, expected:" + MAGIC_INT);
-
+        GHUtility.checkDAVersion("location_index", Constants.VERSION_LOCATION_IDX, dataAccess.getHeader(0));
         checksum = dataAccess.getHeader(1 * 4);
         minResolutionInMeter = dataAccess.getHeader(2 * 4);
         indexStructureInfo = IndexStructureInfo.create(bounds, minResolutionInMeter);
@@ -278,7 +276,7 @@ public class LineIntIndex {
     }
 
     public void flush() {
-        dataAccess.setHeader(0, MAGIC_INT);
+        dataAccess.setHeader(0, Constants.VERSION_LOCATION_IDX);
         dataAccess.setHeader(1 * 4, checksum);
         dataAccess.setHeader(2 * 4, minResolutionInMeter);
 
