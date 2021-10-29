@@ -25,6 +25,7 @@ import java.util.EnumMap;
 import java.util.Map;
 
 import com.graphhopper.routing.ev.Country;
+import com.graphhopper.routing.util.countryrules.europe.*;
 
 public class CountryRuleFactory {
     

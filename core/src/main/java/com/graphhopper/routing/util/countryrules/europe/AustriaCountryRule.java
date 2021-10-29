@@ -16,13 +16,14 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing.util.countryrules;
+package com.graphhopper.routing.util.countryrules.europe;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.Toll;
 import com.graphhopper.routing.util.TransportationMode;
+import com.graphhopper.routing.util.countryrules.CountryRule;
 
 public class AustriaCountryRule implements CountryRule {
 
