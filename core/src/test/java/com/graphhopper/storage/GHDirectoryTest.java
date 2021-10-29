@@ -1,10 +1,8 @@
 package com.graphhopper.storage;
 
 import org.junit.jupiter.api.Test;
-import sun.awt.image.ImageWatched;
 
 import java.util.LinkedHashMap;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
