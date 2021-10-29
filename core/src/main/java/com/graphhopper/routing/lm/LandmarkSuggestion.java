@@ -16,8 +16,8 @@ import java.util.List;
  * suboptimal automatic landmark finding process.
  */
 public class LandmarkSuggestion {
-    private List<Integer> nodeIds;
-    private BBox box;
+    private final List<Integer> nodeIds;
+    private final BBox box;
 
     public LandmarkSuggestion(List<Integer> nodeIds, BBox box) {
         this.nodeIds = nodeIds;
@@ -36,10 +36,10 @@ public class LandmarkSuggestion {
      * The expected format is lon,lat per line where lines starting with characters will be ignored. You can create
      * such a file manually via geojson.io -> Save as CSV. Optionally add a second line with
      * <pre>#BBOX:minLat,minLon,maxLat,maxLon</pre>
-     *
+     * <p>
      * to specify an explicit bounding box. TODO: support GeoJSON instead.
      */
-    public static final LandmarkSuggestion readLandmarks(String file, LocationIndex locationIndex) throws IOException {
+    public static LandmarkSuggestion readLandmarks(String file, LocationIndex locationIndex) throws IOException {
         // landmarks should be suited for all vehicles
         EdgeFilter edgeFilter = EdgeFilter.ALL_EDGES;
         List<String> lines = Helper.readFile(file);

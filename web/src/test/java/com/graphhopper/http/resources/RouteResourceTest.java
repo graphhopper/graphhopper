@@ -295,9 +295,9 @@ public class RouteResourceTest {
 
         List<PathDetail> edgeIdDetails = pathDetails.get("edge_id");
         assertEquals(77, edgeIdDetails.size());
-        assertEquals(880L, edgeIdDetails.get(0).getValue());
+        assertEquals(882L, edgeIdDetails.get(0).getValue());
         assertEquals(2, edgeIdDetails.get(0).getLength());
-        assertEquals(881L, edgeIdDetails.get(1).getValue());
+        assertEquals(883L, edgeIdDetails.get(1).getValue());
         assertEquals(8, edgeIdDetails.get(1).getLength());
 
         long expectedTime = rsp.getBest().getTime();
@@ -352,8 +352,8 @@ public class RouteResourceTest {
         JsonNode edgeIds = details.get("edge_id");
         int firstLink = edgeIds.get(0).get(2).asInt();
         int lastLink = edgeIds.get(edgeIds.size() - 1).get(2).asInt();
-        assertEquals(880, firstLink);
-        assertEquals(1420, lastLink);
+        assertEquals(882, firstLink);
+        assertEquals(1425, lastLink);
 
         JsonNode maxSpeed = details.get("max_speed");
         assertEquals(-1, maxSpeed.get(0).get(2).asDouble(-1), .01);

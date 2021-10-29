@@ -57,7 +57,7 @@ class BaseGraph implements Graph {
 
     public BaseGraph(Directory dir, int intsForFlags, boolean withElevation, boolean withTurnCosts, int segmentSize) {
         this.dir = dir;
-        this.bitUtil = BitUtil.get(dir.getByteOrder());
+        this.bitUtil = BitUtil.LITTLE;
         this.wayGeometry = dir.create("geometry", segmentSize);
         this.stringIndex = new StringIndex(dir, 1000, segmentSize);
         this.store = new BaseGraphNodesAndEdges(dir, intsForFlags, withElevation, withTurnCosts, segmentSize);

@@ -17,7 +17,7 @@
  */
 package com.graphhopper.reader.osm;
 
-import com.carrotsearch.hppc.LongIndexedContainer;
+import com.carrotsearch.hppc.LongArrayList;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
@@ -80,10 +80,6 @@ public class OSMReaderTest {
     @AfterEach
     public void tearDown() {
         Helper.removeDir(new File(dir));
-    }
-
-    GraphHopperStorage newGraph(String directory, EncodingManager encodingManager, boolean is3D, boolean turnRestrictionsImport) {
-        return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager, is3D, turnRestrictionsImport);
     }
 
     @Test
@@ -351,7 +347,7 @@ public class OSMReaderTest {
                 importOrLoad();
 
         Graph graph = hopper.getGraphHopperStorage();
-        // we ignore the barrier at node 50
+        // we ignore the barrier at node 50, but not the one at node 20
         assertEquals(7, graph.getNodes());
         assertEquals(7, graph.getEdges());
 
@@ -390,9 +386,9 @@ public class OSMReaderTest {
                 importOrLoad();
 
         Graph graph = hopper.getGraphHopperStorage();
-        // there are seven ways, but there should also be five barrier edges
-        // note that because of the extra edge at the loop way we do not split the loop
-        assertEquals(12, graph.getEdges());
+        // there are seven ways, but there should also be six barrier edges
+        // we first split the loop way into two parts, and then we split the barrier node => 3 edges total
+        assertEquals(7 + 6, graph.getEdges());
         int loops = 0;
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
@@ -401,7 +397,7 @@ public class OSMReaderTest {
             if (graph.getNodeAccess().getLat(iter.getBaseNode()) == graph.getNodeAccess().getLat(iter.getAdjNode()))
                 loops++;
         }
-        assertEquals(5 + 1, loops);
+        assertEquals(5, loops);
     }
 
     @Test
@@ -438,19 +434,10 @@ public class OSMReaderTest {
 
     @Test
     public void avoidsLoopEdgesIdenticalNodeIds_1533() {
-        // We can handle the following case with the proper result:
+        // BDCBB
         checkLoop(new GraphHopperFacade("test-avoid-loops3.xml").importOrLoad());
-        // We cannot handle the following case, i.e. no loop is created. so we only check that there are no loops
-        GraphHopper hopper = new GraphHopperFacade("test-avoid-loops4.xml").importOrLoad();
-        GraphHopperStorage graph = hopper.getGraphHopperStorage();
-        AllEdgesIterator iter = graph.getAllEdges();
-        assertEquals(2, iter.length());
-        while (iter.next()) {
-            assertTrue(iter.getAdjNode() != iter.getBaseNode(), "found a loop");
-        }
-        int nodeB = AbstractGraphStorageTester.getIdOf(graph, 12);
-        assertTrue(nodeB > -1, "could not find OSM node B");
-        assertEquals(2, GHUtility.count(graph.createEdgeExplorer().setBaseNode(nodeB)));
+        // BBCDB
+        checkLoop(new GraphHopperFacade("test-avoid-loops4.xml").importOrLoad());
     }
 
     @Test
@@ -482,29 +469,26 @@ public class OSMReaderTest {
     @Test
     public void testRelation() {
         EncodingManager manager = EncodingManager.create("bike");
-        GraphHopperStorage ghStorage = new GraphHopperStorage(new RAMDirectory(), manager, false);
-        OSMReader reader = new OSMReader(ghStorage, new OSMReaderConfig());
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 1, ""));
         osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 2, ""));
 
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        reader.prepareWaysWithRelationInfo(osmRel);
 
-        IntsRef flags = IntsRef.deepCopyOf(reader.getRelFlagsMap(1));
+        IntsRef flags = manager.createRelationFlags();
+        manager.handleRelationTags(osmRel, flags);
         assertFalse(flags.isEmpty());
 
         // unchanged network
-        reader.prepareWaysWithRelationInfo(osmRel);
-        IntsRef flags2 = reader.getRelFlagsMap(1);
-        assertEquals(flags, flags2);
+        IntsRef before = IntsRef.deepCopyOf(flags);
+        manager.handleRelationTags(osmRel, flags);
+        assertEquals(before, flags);
 
         // overwrite network
         osmRel.setTag("network", "ncn");
-        reader.prepareWaysWithRelationInfo(osmRel);
-        IntsRef flags3 = reader.getRelFlagsMap(1);
-        assertNotEquals(flags, flags3);
+        manager.handleRelationTags(osmRel, flags);
+        assertNotEquals(before, flags);
     }
 
     @Test
@@ -627,7 +611,7 @@ public class OSMReaderTest {
     public void testEstimatedDistance() {
         final CarFlagEncoder encoder = new CarFlagEncoder();
         EncodingManager manager = EncodingManager.create(encoder);
-        GraphHopperStorage ghStorage = newGraph(dir, manager, false, false);
+        GraphHopperStorage ghStorage = new GraphHopperStorage(new RAMDirectory(dir, false), manager, false, false);
         final Map<Integer, Double> latMap = new HashMap<>();
         final Map<Integer, Double> lonMap = new HashMap<>();
         latMap.put(1, 1.1d);
@@ -649,7 +633,7 @@ public class OSMReaderTest {
             }
 
             @Override
-            void addOSMWay(LongIndexedContainer osmNodeIds, IntsRef wayFlags, ReaderWay way) {
+            void handleSegment(List<SegmentNode> segment, ReaderWay way, IntsRef edgeFlags, Map<String, Object> nodeTags) {
             }
         };
 
@@ -1003,8 +987,7 @@ public class OSMReaderTest {
 
         @Override
         protected void importOSM() {
-            GraphHopperStorage tmpGraph = newGraph(dir, getEncodingManager(), hasElevation(),
-                    getEncodingManager().needsTurnCostsSupport());
+            GraphHopperStorage tmpGraph = new GraphHopperStorage(new RAMDirectory(dir, false), getEncodingManager(), hasElevation(), getEncodingManager().needsTurnCostsSupport());
             setGraphHopperStorage(tmpGraph);
             super.importOSM();
             carAccessEnc = carEncoder.getAccessEnc();
