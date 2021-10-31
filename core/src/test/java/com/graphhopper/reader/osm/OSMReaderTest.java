@@ -17,14 +17,12 @@
  */
 package com.graphhopper.reader.osm;
 
-import com.carrotsearch.hppc.LongArrayList;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperTest;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.ReaderRelation;
-import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.OSMReaderConfig;
@@ -46,9 +44,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static com.graphhopper.util.GHUtility.readCountries;
 import static org.junit.jupiter.api.Assertions.*;
@@ -605,48 +601,6 @@ public class OSMReaderTest {
         assertEquals(4.4, edge_cd.get(heightEnc), 1e-5);
         assertEquals(3.5, edge_cd.get(widthEnc), 1e-5);
         assertEquals(17.5, edge_cd.get(weightEnc), 1e-5);
-    }
-
-    @Test
-    public void testEstimatedDistance() {
-        final CarFlagEncoder encoder = new CarFlagEncoder();
-        EncodingManager manager = EncodingManager.create(encoder);
-        GraphHopperStorage ghStorage = new GraphHopperStorage(new RAMDirectory(dir, false), manager, false, false);
-        final Map<Integer, Double> latMap = new HashMap<>();
-        final Map<Integer, Double> lonMap = new HashMap<>();
-        latMap.put(1, 1.1d);
-        latMap.put(2, 1.2d);
-
-        lonMap.put(1, 1.0d);
-        lonMap.put(2, 1.0d);
-
-        OSMReader osmreader = new OSMReader(ghStorage, new OSMReaderConfig()) {
-            // mock data access
-            @Override
-            double getTmpLatitude(int id) {
-                return latMap.get(id);
-            }
-
-            @Override
-            double getTmpLongitude(int id) {
-                return lonMap.get(id);
-            }
-
-            @Override
-            void handleSegment(List<SegmentNode> segment, ReaderWay way, IntsRef edgeFlags, Map<String, Object> nodeTags) {
-            }
-        };
-
-        ReaderWay way = new ReaderWay(1L);
-        way.getNodes().add(1);
-        way.getNodes().add(2);
-        way.setTag("highway", "motorway");
-        osmreader.getNodeMap().put(1, 1);
-        osmreader.getNodeMap().put(2, 2);
-        osmreader.processWay(way);
-
-        Double d = way.getTag("estimated_distance", null);
-        assertEquals(11119.5, d, 1e-1);
     }
 
     @Test

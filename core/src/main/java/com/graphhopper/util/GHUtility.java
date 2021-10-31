@@ -427,6 +427,15 @@ public class GHUtility {
         return adjNode;
     }
 
+    public static void checkDAVersion(String name, int expectedVersion, int version) {
+        if (version != expectedVersion) {
+            throw new IllegalStateException("Unexpected version for '" + name + "'. Got: " + version + ", " +
+                    "expected: " + expectedVersion + ". "
+                    + "Make sure you are using the same GraphHopper version for reading the files that was used for creating them. "
+                    + "See https://discuss.graphhopper.com/t/722");
+        }
+    }
+
     public static EdgeIteratorState createMockedEdgeIteratorState(final double distance, final IntsRef flags) {
         return createMockedEdgeIteratorState(distance, flags, 0, 1, 2, 3, 4);
     }
