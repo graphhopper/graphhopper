@@ -36,7 +36,7 @@ class RAMIntDataAccess extends AbstractDataAccess {
     private int segmentSizeIntsPower;
 
     public static RAMIntDataAccess loadFromDisk(String location, String name) {
-        // byte order and segment size do not matter, because they will be overwritten anyway
+        // byte order and segment size does not matter, because they will be overwritten anyway
         RAMIntDataAccess da = new RAMIntDataAccess(name, location, true, 16);
         return da.loadExisting() ? da : null;
     }
