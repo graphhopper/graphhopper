@@ -17,7 +17,6 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -128,55 +127,12 @@ public class StorableProperties {
         return da.getCapacity();
     }
 
-    public synchronized void putCurrentVersions() {
-        put("nodes.version", Constants.VERSION_NODE);
-        put("edges.version", Constants.VERSION_EDGE);
-        put("geometry.version", Constants.VERSION_GEOMETRY);
-        put("location_index.version", Constants.VERSION_LOCATION_IDX);
-        put("string_index.version", Constants.VERSION_STRING_IDX);
-        put("shortcuts.version", Constants.VERSION_SHORTCUT);
-    }
-
-    public synchronized String versionsToString() {
-        return get("nodes.version") + ","
-                + get("edges.version") + ","
-                + get("geometry.version") + ","
-                + get("location_index.version") + ","
-                + get("string_index.version");
-    }
-
-    public synchronized boolean checkVersions(boolean silent) {
-        if (!check("nodes", Constants.VERSION_NODE, silent))
-            return false;
-
-        if (!check("edges", Constants.VERSION_EDGE, silent))
-            return false;
-
-        if (!check("geometry", Constants.VERSION_GEOMETRY, silent))
-            return false;
-
-        if (!check("location_index", Constants.VERSION_LOCATION_IDX, silent))
-            return false;
-
-        if (!check("string_index", Constants.VERSION_STRING_IDX, silent))
-            return false;
-
-        if (!check("shortcuts", Constants.VERSION_SHORTCUT, silent))
-            return false;
-        return true;
-    }
-
-    boolean check(String key, int vers, boolean silent) {
-        String str = get(key + ".version");
-        if (!str.equals(vers + "")) {
-            if (silent)
-                return false;
-
-            throw new IllegalStateException("Version of " + key + " unsupported: " + str + ", expected:" + vers + ". "
-                    + "Make sure you are using the same GraphHopper version for reading the files that was used for creating them. "
-                    + "See https://discuss.graphhopper.com/t/722");
-        }
-        return true;
+    public synchronized boolean containsVersion() {
+        return map.containsKey("nodes.version") ||
+                map.containsKey("edges.version") ||
+                map.containsKey("geometry.version") ||
+                map.containsKey("location_index.version") ||
+                map.containsKey("string_index.version");
     }
 
     @Override

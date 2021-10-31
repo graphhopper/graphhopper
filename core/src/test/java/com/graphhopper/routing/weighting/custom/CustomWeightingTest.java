@@ -170,7 +170,7 @@ class CustomWeightingTest {
                 set(avSpeedEnc, 80).set(accessEnc, true, true);
 
         CustomModel vehicleModel = new CustomModel();
-        vehicleModel.addToSpeed(If("toll != NO", MULTIPLY, 0.8));
+        vehicleModel.addToSpeed(If("toll == HGV || toll == ALL", MULTIPLY, 0.8));
         vehicleModel.addToSpeed(If("hazmat != NO", MULTIPLY, 0.8));
         assertEquals(1.26, createWeighting(vehicleModel).calcEdgeWeight(withToll, false), 0.01);
         assertEquals(1.26, createWeighting(vehicleModel).calcEdgeWeight(noToll, false), 0.01);

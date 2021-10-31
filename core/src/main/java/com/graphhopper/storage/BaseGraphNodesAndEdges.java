@@ -18,7 +18,9 @@
 
 package com.graphhopper.storage;
 
+import com.graphhopper.util.Constants;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
 
@@ -98,38 +100,44 @@ class BaseGraphNodesAndEdges {
             return false;
 
         // now load some properties from stored data
-        nodeEntryBytes = nodes.getHeader(0 * 4);
-        nodeCount = nodes.getHeader(1 * 4);
-        bounds.minLon = Helper.intToDegree(nodes.getHeader(2 * 4));
-        bounds.maxLon = Helper.intToDegree(nodes.getHeader(3 * 4));
-        bounds.minLat = Helper.intToDegree(nodes.getHeader(4 * 4));
-        bounds.maxLat = Helper.intToDegree(nodes.getHeader(5 * 4));
+        final int nodesVersion = nodes.getHeader(0 * 4);
+        GHUtility.checkDAVersion("nodes", Constants.VERSION_NODE, nodesVersion);
+        nodeEntryBytes = nodes.getHeader(1 * 4);
+        nodeCount = nodes.getHeader(2 * 4);
+        bounds.minLon = Helper.intToDegree(nodes.getHeader(3 * 4));
+        bounds.maxLon = Helper.intToDegree(nodes.getHeader(4 * 4));
+        bounds.minLat = Helper.intToDegree(nodes.getHeader(5 * 4));
+        bounds.maxLat = Helper.intToDegree(nodes.getHeader(6 * 4));
         if (withElevation) {
-            bounds.minEle = Helper.intToEle(nodes.getHeader(6 * 4));
-            bounds.maxEle = Helper.intToEle(nodes.getHeader(7 * 4));
+            bounds.minEle = Helper.intToEle(nodes.getHeader(7 * 4));
+            bounds.maxEle = Helper.intToEle(nodes.getHeader(8 * 4));
         }
-        frozen = nodes.getHeader(8 * 4) == 1;
+        frozen = nodes.getHeader(9 * 4) == 1;
 
-        edgeEntryBytes = edges.getHeader(0 * 4);
-        edgeCount = edges.getHeader(1 * 4);
+        final int edgesVersion = edges.getHeader(0 * 4);
+        GHUtility.checkDAVersion("edges", Constants.VERSION_EDGE, edgesVersion);
+        edgeEntryBytes = edges.getHeader(1 * 4);
+        edgeCount = edges.getHeader(2 * 4);
         return true;
     }
 
     public void flush() {
-        nodes.setHeader(0 * 4, nodeEntryBytes);
-        nodes.setHeader(1 * 4, nodeCount);
-        nodes.setHeader(2 * 4, Helper.degreeToInt(bounds.minLon));
-        nodes.setHeader(3 * 4, Helper.degreeToInt(bounds.maxLon));
-        nodes.setHeader(4 * 4, Helper.degreeToInt(bounds.minLat));
-        nodes.setHeader(5 * 4, Helper.degreeToInt(bounds.maxLat));
+        nodes.setHeader(0 * 4, Constants.VERSION_NODE);
+        nodes.setHeader(1 * 4, nodeEntryBytes);
+        nodes.setHeader(2 * 4, nodeCount);
+        nodes.setHeader(3 * 4, Helper.degreeToInt(bounds.minLon));
+        nodes.setHeader(4 * 4, Helper.degreeToInt(bounds.maxLon));
+        nodes.setHeader(5 * 4, Helper.degreeToInt(bounds.minLat));
+        nodes.setHeader(6 * 4, Helper.degreeToInt(bounds.maxLat));
         if (withElevation) {
-            nodes.setHeader(6 * 4, Helper.eleToInt(bounds.minEle));
-            nodes.setHeader(7 * 4, Helper.eleToInt(bounds.maxEle));
+            nodes.setHeader(7 * 4, Helper.eleToInt(bounds.minEle));
+            nodes.setHeader(8 * 4, Helper.eleToInt(bounds.maxEle));
         }
-        nodes.setHeader(8 * 4, frozen ? 1 : 0);
+        nodes.setHeader(9 * 4, frozen ? 1 : 0);
 
-        edges.setHeader(0, edgeEntryBytes);
-        edges.setHeader(1 * 4, edgeCount);
+        edges.setHeader(0 * 4, Constants.VERSION_EDGE);
+        edges.setHeader(1 * 4, edgeEntryBytes);
+        edges.setHeader(2 * 4, edgeCount);
 
         edges.flush();
         nodes.flush();

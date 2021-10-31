@@ -15,25 +15,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.ev;
 
-/**
- * This enum defines the toll value like MISSING (default), NO (no toll), HGV
- * (toll for heavy goods vehicles) and ALL (all vehicles)
- */
-public enum Toll {
-    MISSING("missing"), NO("no"), HGV("hgv"), ALL("all");
+package com.graphhopper.reader.osm;
 
-    public static final String KEY = "toll";
+class SegmentNode {
+    long osmNodeId;
+    int id;
 
-    private final String name;
-
-    Toll(String name) {
-        this.name = name;
-    }
-
-    @Override
-    public String toString() {
-        return name;
+    public SegmentNode(long osmNodeId, int id) {
+        this.osmNodeId = osmNodeId;
+        this.id = id;
     }
 }
