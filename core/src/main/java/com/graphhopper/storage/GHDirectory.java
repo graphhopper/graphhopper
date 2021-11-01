@@ -56,7 +56,8 @@ public class GHDirectory implements Directory {
     /**
      * Configure the DAType (specified by the value) of a single DataAccess object (specified by the key). For "MMAP" you
      * can prepend "preload." to the name and specify a percentage which preloads the DataAccess into physical memory of
-     * the specified percentage. As keys can be patterns the order is important and the LinkedHashMap is forced as type.
+     * the specified percentage (only applied for load, not for import).
+     * As keys can be patterns the order is important and the LinkedHashMap is forced as type.
      */
     public void configure(LinkedHashMap<String, String> config) {
         for (Map.Entry<String, String> kv : config.entrySet()) {
@@ -76,7 +77,8 @@ public class GHDirectory implements Directory {
     }
 
     /**
-     * Returns the preload value or 0 the default
+     * Returns the preload value or 0 if no patterns match.
+     * See {@link #configure(LinkedHashMap)}
      */
     int getPreload(String name) {
         for (Map.Entry<String, Integer> entry : mmapPreloads.entrySet())
