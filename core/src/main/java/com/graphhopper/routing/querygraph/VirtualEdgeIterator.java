@@ -181,11 +181,6 @@ class VirtualEdgeIterator implements EdgeIterator {
     }
 
     @Override
-    public double get(GeometryEncodedValue property) {
-        return getCurrentEdge().get(property);
-    }
-
-    @Override
     public EdgeIteratorState setReverse(DecimalEncodedValue property, double value) {
         getCurrentEdge().setReverse(property, value);
         return this;

@@ -241,11 +241,6 @@ public class WrapperGraph implements Graph {
             }
 
             @Override
-            public double get(GeometryEncodedValue property) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
             public double getReverse(DecimalEncodedValue property) {
                 throw new UnsupportedOperationException();
             }
@@ -500,11 +495,6 @@ public class WrapperGraph implements Graph {
 
                     @Override
                     public double get(DecimalEncodedValue property) {
-                        return current.get(property);
-                    }
-
-                    @Override
-                    public double get(GeometryEncodedValue property) {
                         return current.get(property);
                     }
 

@@ -469,11 +469,6 @@ public class GHUtility {
             }
 
             @Override
-            public double get(GeometryEncodedValue property) {
-                return property.getDecimal(false, flags);
-            }
-
-            @Override
             public double getReverse(DecimalEncodedValue property) {
                 return property.getDecimal(true, flags);
             }
@@ -860,11 +855,6 @@ public class GHUtility {
 
         @Override
         public EdgeIteratorState set(DecimalEncodedValue property, double value) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public double get(GeometryEncodedValue property) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 

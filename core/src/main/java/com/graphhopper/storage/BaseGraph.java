@@ -759,11 +759,6 @@ class BaseGraph implements Graph {
         }
 
         @Override
-        public double get(GeometryEncodedValue property) {
-            return property.getDecimal(reverse, getFlags());
-        }
-
-        @Override
         public double getReverse(DecimalEncodedValue property) {
             return property.getDecimal(!reverse, getFlags());
         }
