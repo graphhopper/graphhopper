@@ -224,27 +224,27 @@ class VirtualEdgeIterator implements EdgeIterator {
         getCurrentEdge().set(property, fwd, bwd);
         return this;
     }
-    
+
     @Override
     public String get(StringEncodedValue property) {
         return getCurrentEdge().get(property);
     }
-    
+
     @Override
     public EdgeIteratorState set(StringEncodedValue property, String value) {
         return getCurrentEdge().set(property, value);
     }
-    
+
     @Override
     public String getReverse(StringEncodedValue property) {
         return getCurrentEdge().getReverse(property);
     }
-    
+
     @Override
     public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
         return getCurrentEdge().setReverse(property, value);
     }
-    
+
     @Override
     public EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd) {
         return getCurrentEdge().set(property, fwd, bwd);
