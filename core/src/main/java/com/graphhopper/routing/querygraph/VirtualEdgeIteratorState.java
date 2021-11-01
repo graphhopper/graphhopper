@@ -268,29 +268,29 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
         property.setEnum(!reverse, edgeFlags, bwd);
         return this;
     }
-    
+
     @Override
     public String get(StringEncodedValue property) {
         return property.getString(reverse, edgeFlags);
     }
-    
+
     @Override
     public EdgeIteratorState set(StringEncodedValue property, String value) {
         property.setString(reverse, edgeFlags, value);
         return this;
     }
-    
+
     @Override
     public String getReverse(StringEncodedValue property) {
         return property.getString(!reverse, edgeFlags);
     }
-    
+
     @Override
     public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
         property.setString(!reverse, edgeFlags, value);
         return this;
     }
-    
+
     @Override
     public EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd) {
         if (!property.isStoreTwoDirections())
