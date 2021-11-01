@@ -175,14 +175,14 @@ class OSMNodeData {
     }
 
     /**
-     * Creates a copy of the coordinates stored for the given OSM node ID
+     * Creates a copy of the coordinates stored for the given node ID
      *
      * @return the (artificial) OSM node ID created for the copied node and the associated ID
      */
-    SegmentNode addCopyOfNode(long osmNodeId) {
-        GHPoint3D point = getCoordinates(osmNodeId);
+    SegmentNode addCopyOfNode(SegmentNode node) {
+        GHPoint3D point = getCoordinates(node.id);
         if (point == null)
-            throw new IllegalStateException("Cannot copy node : " + osmNodeId + ", because it is missing");
+            throw new IllegalStateException("Cannot copy node : " + node.osmNodeId + ", because it is missing");
         final long newOsmId = nextArtificialOSMNodeId++;
         if (idsByOsmNodeIds.put(newOsmId, INTERMEDIATE_NODE) != EMPTY_NODE)
             throw new IllegalStateException("Artificial osm node id already exists: " + newOsmId);
@@ -204,8 +204,7 @@ class OSMNodeData {
         return addTowerNode(osmNodeId, lat, lon, ele);
     }
 
-    public GHPoint3D getCoordinates(long osmNodeId) {
-        int id = idsByOsmNodeIds.get(osmNodeId);
+    public GHPoint3D getCoordinates(int id) {
         if (isTowerNode(id)) {
             int tower = idToTowerNode(id);
             return towerNodes.is3D()

@@ -249,15 +249,14 @@ public class WaySegmentParser {
 
             if (!wayFilter.test(way))
                 return;
-            wayPreprocessor.preprocessWay(getPoint(way.getNodes().get(0)), getPoint(way.getNodes().get(way.getNodes().size() - 1)), way);
-            splitWayAtJunctionsAndEmptySections(way);
+            List<SegmentNode> segment = new ArrayList<>(way.getNodes().size());
+            for (LongCursor node : way.getNodes())
+                segment.add(new SegmentNode(node.value, nodeData.getId(node.value)));
+            wayPreprocessor.preprocessWay(getPoint(segment.get(0).id), getPoint(segment.get(segment.size() - 1).id), way);
+            splitWayAtJunctionsAndEmptySections(segment, way);
         }
 
-        private void splitWayAtJunctionsAndEmptySections(ReaderWay way) {
-            List<SegmentNode> fullSegment = new ArrayList<>();
-            for (LongCursor node : way.getNodes())
-                fullSegment.add(new SegmentNode(node.value, nodeData.getId(node.value)));
-
+        private void splitWayAtJunctionsAndEmptySections(List<SegmentNode> fullSegment, ReaderWay way) {
             List<SegmentNode> segment = new ArrayList<>();
             for (SegmentNode node : fullSegment) {
                 if (!isNodeId(node.id)) {
@@ -310,7 +309,7 @@ public class WaySegmentParser {
                 if (!nodeTags.isEmpty()) {
                     // this node is a barrier. we will copy it and add an extra edge
                     SegmentNode barrierFrom = node;
-                    SegmentNode barrierTo = nodeData.addCopyOfNode(node.osmNodeId);
+                    SegmentNode barrierTo = nodeData.addCopyOfNode(node);
                     if (i == parentSegment.size() - 1) {
                         // make sure the barrier node is always on the inside of the segment
                         SegmentNode tmp = barrierFrom;
@@ -366,8 +365,8 @@ public class WaySegmentParser {
             edgeHandler.handleEdge(from, to, pointList, way, nodeTags);
         }
 
-        private GHPoint getPoint(long osmNodeId) {
-            GHPoint point = nodeData.getCoordinates(osmNodeId);
+        private GHPoint getPoint(int id) {
+            GHPoint point = nodeData.getCoordinates(id);
             // in case the point is missing we return NaN, but this is a bit ugly and maybe at some point we no longer
             // need to pass the points to preprocessWay. it does not make so much sense to pass just the first and
             // last points, especially when they even could be missing.
@@ -394,7 +393,6 @@ public class WaySegmentParser {
             int id = nodeData.getId(nodeOsmId);
             if (isTowerNode(id))
                 return -id - 3;
-
             return -1;
         }
     }
