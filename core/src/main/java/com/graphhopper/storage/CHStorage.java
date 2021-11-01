@@ -68,8 +68,8 @@ public class CHStorage {
 
     public CHStorage(Directory dir, String name, int segmentSize, boolean edgeBased) {
         this.edgeBased = edgeBased;
-        this.nodesCH = dir.create("nodes_ch_" + name, DAType.getPreferredInt(dir.getDefaultType()), segmentSize);
-        this.shortcuts = dir.create("shortcuts_" + name, DAType.getPreferredInt(dir.getDefaultType()), segmentSize);
+        this.nodesCH = dir.create("nodes_ch_" + name, dir.getDefaultType("nodes_ch_" + name, true), segmentSize);
+        this.shortcuts = dir.create("shortcuts_" + name, dir.getDefaultType("shortcuts_" + name, true), segmentSize);
         // shortcuts are stored consecutively using this layout (the last two entries only exist for edge-based):
         // NODEA | NODEB | WEIGHT | SKIP_EDGE1 | SKIP_EDGE2 | S_ORIG_FIRST | S_ORIG_LAST
         S_NODEA = 0;

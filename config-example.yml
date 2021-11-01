@@ -148,7 +148,7 @@ graphhopper:
 
 
   # configure the memory access, use RAM_STORE for well equipped servers (default and recommended)
-  graph.dataaccess: RAM_STORE
+  graph.dataaccess.default_type: RAM_STORE
 
 
   # will write way names in the preferred language (language code as defined in ISO 639-1 or ISO 639-2):

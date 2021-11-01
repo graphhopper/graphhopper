@@ -90,7 +90,8 @@ public class GraphHopper {
     private EncodingManager encodingManager;
     private int defaultSegmentSize = -1;
     private String ghLocation = "";
-    private DAType dataAccessType = DAType.RAM_STORE;
+    private DAType dataAccessDefaultType = DAType.RAM_STORE;
+    private LinkedHashMap<String, String> dataAccessConfig = new LinkedHashMap<>();
     private boolean sortGraph = false;
     private boolean elevation = false;
     private LockFactory lockFactory = new NativeFSLockFactory();
@@ -177,9 +178,9 @@ public class GraphHopper {
     public GraphHopper setStoreOnFlush(boolean storeOnFlush) {
         ensureNotLoaded();
         if (storeOnFlush)
-            dataAccessType = DAType.RAM_STORE;
+            dataAccessDefaultType = DAType.RAM_STORE;
         else
-            dataAccessType = DAType.RAM;
+            dataAccessDefaultType = DAType.RAM;
         return this;
     }
 
@@ -421,8 +422,14 @@ public class GraphHopper {
 
         defaultSegmentSize = ghConfig.getInt("graph.dataaccess.segment_size", defaultSegmentSize);
 
-        String graphDATypeStr = ghConfig.getString("graph.dataaccess", "RAM_STORE");
-        dataAccessType = DAType.fromString(graphDATypeStr);
+        String daTypeString = ghConfig.getString("graph.dataaccess.default_type", ghConfig.getString("graph.dataaccess", "RAM_STORE"));
+        dataAccessDefaultType = DAType.fromString(daTypeString);
+        for (Map.Entry<String, Object> entry : ghConfig.asPMap().toMap().entrySet()) {
+            if (entry.getKey().startsWith("graph.dataaccess.type."))
+                dataAccessConfig.put(entry.getKey().substring("graph.dataaccess.type.".length()), entry.getValue().toString());
+            if (entry.getKey().startsWith("graph.dataaccess.mmap.preload."))
+                dataAccessConfig.put(entry.getKey().substring("graph.dataaccess.mmap.".length()), entry.getValue().toString());
+        }
 
         sortGraph = ghConfig.getBool("graph.do_sort", sortGraph);
         removeZipped = ghConfig.getBool("graph.remove_zipped", removeZipped);
@@ -727,17 +734,18 @@ public class GraphHopper {
             }
         }
 
-        if (!allowWrites && dataAccessType.isMMap())
-            dataAccessType = DAType.MMAP_RO;
+        if (!allowWrites && dataAccessDefaultType.isMMap())
+            dataAccessDefaultType = DAType.MMAP_RO;
         if (encodingManager == null) {
-            StorableProperties properties = new StorableProperties(new GHDirectory(ghLocation, dataAccessType));
+            StorableProperties properties = new StorableProperties(new GHDirectory(ghLocation, dataAccessDefaultType));
             encodingManager = properties.loadExisting()
                     ? EncodingManager.create(emBuilder, encodedValueFactory, flagEncoderFactory, properties)
                     : buildEncodingManager(new GraphHopperConfig());
         }
 
-        GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
-        ghStorage = new GraphHopperStorage(dir, encodingManager, hasElevation(), encodingManager.needsTurnCostsSupport(), defaultSegmentSize);
+        GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
+        directory.configure(dataAccessConfig);
+        ghStorage = new GraphHopperStorage(directory, encodingManager, hasElevation(), encodingManager.needsTurnCostsSupport(), defaultSegmentSize);
         checkProfilesConsistency();
 
         // todo: move this after base graph loading/import, just like for LM. there is no real reason we have to setup CH before
@@ -764,6 +772,7 @@ public class GraphHopper {
                 return false;
 
             postProcessing(false);
+            directory.loadMMap();
             setFullyLoaded();
             return true;
         } finally {

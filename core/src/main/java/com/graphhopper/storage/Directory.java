@@ -56,6 +56,8 @@ public interface Directory {
      */
     DAType getDefaultType();
 
+    DAType getDefaultType(String dataAccess, boolean preferInts);
+
     /**
      * Removes all contained objects from the directory and releases its resources.
      */

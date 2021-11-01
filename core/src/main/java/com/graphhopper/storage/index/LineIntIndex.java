@@ -21,7 +21,6 @@ package com.graphhopper.storage.index;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntHashSet;
 import com.graphhopper.geohash.SpatialKeyAlgo;
-import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.util.Constants;
@@ -49,7 +48,7 @@ public class LineIntIndex {
 
     public LineIntIndex(BBox bBox, Directory dir, String name) {
         this.bounds = bBox;
-        this.dataAccess = dir.create(name, DAType.getPreferredInt(dir.getDefaultType()));
+        this.dataAccess = dir.create(name, dir.getDefaultType(name, true));
     }
 
     public boolean loadExisting() {
