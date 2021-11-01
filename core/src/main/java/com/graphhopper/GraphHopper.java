@@ -899,7 +899,7 @@ public class GraphHopper {
         if (isCHPrepared()) {
             // check loaded profiles
             for (CHProfile profile : chPreparationHandler.getCHProfiles()) {
-                if (!getProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
+                if (!getCHProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
                     throw new IllegalArgumentException("CH preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
             }
         } else {
@@ -1002,18 +1002,26 @@ public class GraphHopper {
         return "true".equals(ghStorage.getProperties().get(CH.PREPARE + "done"));
     }
 
-    private String getProfileVersion(String profile) {
-        return ghStorage.getProperties().get("graph.profiles." + profile + ".version");
+    private String getCHProfileVersion(String profile) {
+        return ghStorage.getProperties().get("graph.profiles.ch." + profile + ".version");
     }
 
-    private void setProfileVersion(String profile, int version) {
-        ghStorage.getProperties().put("graph.profiles." + profile + ".version", version);
+    private void setCHProfileVersion(String profile, int version) {
+        ghStorage.getProperties().put("graph.profiles.ch." + profile + ".version", version);
+    }
+
+    private String getLMProfileVersion(String profile) {
+        return ghStorage.getProperties().get("graph.profiles.lm." + profile + ".version");
+    }
+
+    private void setLMProfileVersion(String profile, int version) {
+        ghStorage.getProperties().put("graph.profiles.lm." + profile + ".version", version);
     }
 
     protected void prepareCH(boolean closeEarly) {
         for (CHProfile profile : chPreparationHandler.getCHProfiles()) {
-            if (!getProfileVersion(profile.getProfile()).isEmpty()
-                    && !getProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
+            if (!getCHProfileVersion(profile.getProfile()).isEmpty()
+                    && !getCHProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
                 throw new IllegalArgumentException("CH preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
         }
 
@@ -1033,10 +1041,8 @@ public class GraphHopper {
             ghStorage.freeze();
             chPreparationHandler.prepare(ghStorage.getProperties(), closeEarly);
             ghStorage.getProperties().put(CH.PREPARE + "done", true);
-            for (CHProfile profile : chPreparationHandler.getCHProfiles()) {
-                // potentially overwrite existing keys from LM
-                setProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
-            }
+            for (CHProfile profile : chPreparationHandler.getCHProfiles())
+                setCHProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
         }
     }
 
@@ -1045,19 +1051,16 @@ public class GraphHopper {
      */
     protected void loadOrPrepareLM(boolean closeEarly) {
         for (LMProfile profile : lmPreparationHandler.getLMProfiles()) {
-            if (!getProfileVersion(profile.getProfile()).isEmpty()
-                    && !getProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
+            if (!getLMProfileVersion(profile.getProfile()).isEmpty()
+                    && !getLMProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
                 throw new IllegalArgumentException("LM preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
         }
         ensureWriteAccess();
         ghStorage.freeze();
         List<LMConfig> lmConfigs = createLMConfigs(lmPreparationHandler.getLMProfiles());
-        if (lmPreparationHandler.loadOrDoWork(lmConfigs, ghStorage, locationIndex, closeEarly)) {
-            for (LMProfile profile : lmPreparationHandler.getLMProfiles()) {
-                // potentially overwrite existing keys from CH
-                setProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
-            }
-        }
+        if (lmPreparationHandler.loadOrDoWork(lmConfigs, ghStorage, locationIndex, closeEarly))
+            for (LMProfile profile : lmPreparationHandler.getLMProfiles())
+                setLMProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
     }
 
     /**
