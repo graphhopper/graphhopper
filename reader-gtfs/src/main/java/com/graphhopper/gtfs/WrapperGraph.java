@@ -115,8 +115,8 @@ public class WrapperGraph implements Graph {
             @Override
             public int length() {
                 return IntStream.concat(
-                        IntStream.of(mainGraph.getAllEdges().length() - 1),
-                        StreamSupport.stream(extraEdges.values().spliterator(), false).mapToInt(cursor -> cursor.value.getEdge()))
+                                IntStream.of(mainGraph.getAllEdges().length() - 1),
+                                StreamSupport.stream(extraEdges.values().spliterator(), false).mapToInt(cursor -> cursor.value.getEdge()))
                         .max().getAsInt() + 1;
             }
 
@@ -284,27 +284,27 @@ public class WrapperGraph implements Graph {
             public <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
                 throw new UnsupportedOperationException();
             }
-            
+
             @Override
             public String get(StringEncodedValue property) {
                 throw new UnsupportedOperationException();
             }
-            
+
             @Override
             public EdgeIteratorState set(StringEncodedValue property, String value) {
                 throw new UnsupportedOperationException();
             }
-            
+
             @Override
             public String getReverse(StringEncodedValue property) {
                 throw new UnsupportedOperationException();
             }
-            
+
             @Override
             public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
                 throw new UnsupportedOperationException();
             }
-            
+
             @Override
             public EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd) {
                 throw new UnsupportedOperationException();
@@ -548,29 +548,29 @@ public class WrapperGraph implements Graph {
                         current.set(property, fwd, bwd);
                         return this;
                     }
-                    
+
                     @Override
                     public String get(StringEncodedValue property) {
                         return current.get(property);
                     }
-                    
+
                     @Override
                     public EdgeIteratorState set(StringEncodedValue property, String value) {
                         current.set(property, value);
                         return this;
                     }
-                    
+
                     @Override
                     public String getReverse(StringEncodedValue property) {
                         return current.getReverse(property);
                     }
-                    
+
                     @Override
                     public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
                         current.setReverse(property, value);
                         return this;
                     }
-                    
+
                     @Override
                     public EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd) {
                         current.set(property, fwd, bwd);

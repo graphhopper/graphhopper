@@ -19,8 +19,11 @@ package com.graphhopper.storage;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static com.graphhopper.storage.DAType.RAM_INT;
+import static com.graphhopper.storage.DAType.RAM_INT_STORE;
 import static com.graphhopper.util.Helper.*;
 
 /**
@@ -30,11 +33,14 @@ import static com.graphhopper.util.Helper.*;
  */
 public class GHDirectory implements Directory {
     protected final String location;
-    private final DAType defaultType;
+    private final DAType typeFallback;
+    // first rule matches => LinkedHashMap
+    private final Map<String, DAType> defaultTypes = new LinkedHashMap<>();
+    private final Map<String, Integer> mmapPreloads = new LinkedHashMap<>();
     protected Map<String, DataAccess> map = new HashMap<>();
 
     public GHDirectory(String _location, DAType defaultType) {
-        this.defaultType = defaultType;
+        this.typeFallback = defaultType;
         if (isEmpty(_location))
             _location = new File("").getAbsolutePath();
 
@@ -47,14 +53,63 @@ public class GHDirectory implements Directory {
             throw new RuntimeException("file '" + dir + "' exists but is not a directory");
     }
 
+    /**
+     * Configure the DAType (specified by the value) of a single DataAccess object (specified by the key). For "MMAP" you
+     * can prepend "preload." to the name and specify a percentage which preloads the DataAccess into physical memory of
+     * the specified percentage (only applied for load, not for import).
+     * As keys can be patterns the order is important and the LinkedHashMap is forced as type.
+     */
+    public void configure(LinkedHashMap<String, String> config) {
+        for (Map.Entry<String, String> kv : config.entrySet()) {
+            String value = kv.getValue().trim();
+            if (kv.getKey().startsWith("preload."))
+                try {
+                    String pattern = kv.getKey().substring("preload.".length());
+                    mmapPreloads.put(pattern, Integer.parseInt(value));
+                } catch (NumberFormatException ex) {
+                    throw new IllegalArgumentException("DataAccess " + kv.getKey() + " has an incorrect preload value: " + value);
+                }
+            else {
+                String pattern = kv.getKey();
+                defaultTypes.put(pattern, DAType.fromString(value));
+            }
+        }
+    }
+
+    /**
+     * Returns the preload value or 0 if no patterns match.
+     * See {@link #configure(LinkedHashMap)}
+     */
+    int getPreload(String name) {
+        for (Map.Entry<String, Integer> entry : mmapPreloads.entrySet())
+            if (name.matches(entry.getKey())) return entry.getValue();
+        return 0;
+    }
+
+    public void loadMMap() {
+        for (DataAccess da : map.values()) {
+            if (!(da instanceof MMapDataAccess))
+                continue;
+            int preload = getPreload(da.getName());
+            if (preload > 0)
+                ((MMapDataAccess) da).load(preload);
+        }
+    }
+
     @Override
     public DataAccess create(String name) {
-        return create(name, defaultType);
+        return create(name, getDefault(name, typeFallback));
     }
 
     @Override
     public DataAccess create(String name, int segmentSize) {
-        return create(name, defaultType, segmentSize);
+        return create(name, getDefault(name, typeFallback), segmentSize);
+    }
+
+    private DAType getDefault(String name, DAType typeFallback) {
+        for (Map.Entry<String, DAType> entry : defaultTypes.entrySet())
+            if (name.matches(entry.getKey())) return entry.getValue();
+        return typeFallback;
     }
 
     @Override
@@ -127,11 +182,22 @@ public class GHDirectory implements Directory {
 
     @Override
     public DAType getDefaultType() {
-        return defaultType;
+        return typeFallback;
+    }
+
+    /**
+     * This method returns the default DAType of the specified DataAccess (as string). If preferInts is true then this
+     * method returns e.g. RAM_INT if the type of the specified DataAccess is RAM.
+     */
+    public DAType getDefaultType(String dataAccess, boolean preferInts) {
+        DAType type = getDefault(dataAccess, typeFallback);
+        if (preferInts && type.isInMemory())
+            return type.isStoring() ? RAM_INT_STORE : RAM_INT;
+        return type;
     }
 
     public boolean isStoring() {
-        return defaultType.isStoring();
+        return typeFallback.isStoring();
     }
 
     @Override
