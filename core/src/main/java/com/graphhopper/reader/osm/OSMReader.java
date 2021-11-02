@@ -145,7 +145,18 @@ public class OSMReader {
                 .setElevationProvider(eleProvider)
                 .setWayFilter(this::acceptWay)
                 .setSplitNodeFilter(this::isBarrierNode)
-                // todonow: maybe do at least the date parsing only once per way?
+                .setWayPreprocessor((first, last, way) -> {
+                    // todonow: move to method
+                    if (way.getTag("duration") != null) {
+                        try {
+                            long dur = OSMReaderUtility.parseDuration(way.getTag("duration"));
+                            // Provide the duration value in seconds in an artificial graphhopper specific tag:
+                            way.setTag("duration:seconds", Long.toString(dur));
+                        } catch (Exception ex) {
+                            LOGGER.warn("Parsing error in way with OSMID=" + way.getId() + " : " + ex.getMessage());
+                        }
+                    }
+                })
                 .setRelationPreprocessor(this::preprocessRelations)
                 .setRelationProcessor(this::processRelation)
                 .setEdgeHandler(this::addEdge)
@@ -206,16 +217,6 @@ public class OSMReader {
             // Add artificial tag for the estimated distance
             way.setTag("estimated_distance", estimatedDist);
             estimatedCenter = new GHPoint((firstLat + lastLat) / 2, (firstLon + lastLon) / 2);
-        }
-
-        if (way.getTag("duration") != null) {
-            try {
-                long dur = OSMReaderUtility.parseDuration(way.getTag("duration"));
-                // Provide the duration value in seconds in an artificial graphhopper specific tag:
-                way.setTag("duration:seconds", Long.toString(dur));
-            } catch (Exception ex) {
-                LOGGER.warn("Parsing error in way with OSMID=" + way.getId() + " : " + ex.getMessage());
-            }
         }
 
         List<CustomArea> customAreas = estimatedCenter == null || areaIndex == null
