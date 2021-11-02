@@ -128,6 +128,10 @@ public class PrepareLandmarks {
         totalPrepareTime = sw.getMillis();
     }
 
+    public boolean isPrepared() {
+        return prepared;
+    }
+
     public long getTotalPrepareTime() {
         return totalPrepareTime;
     }

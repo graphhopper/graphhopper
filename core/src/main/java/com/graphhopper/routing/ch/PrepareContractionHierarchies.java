@@ -134,6 +134,10 @@ public class PrepareContractionHierarchies {
         logFinalGraphStats();
     }
 
+    public boolean isPrepared() {
+        return prepared;
+    }
+
     private void logFinalGraphStats() {
         logger.info("shortcuts that exceed maximum weight: {}", chStore.getNumShortcutsExceedingWeight());
         logger.info("took: {}s, graph now - num edges: {}, num nodes: {}, num shortcuts: {}",
