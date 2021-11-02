@@ -32,7 +32,6 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.lm.LMApproximator;
 import com.graphhopper.routing.lm.LandmarkStorage;
-import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.DefaultSnapFilter;
@@ -40,7 +39,6 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
@@ -77,7 +75,7 @@ public class MapMatching {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final Graph graph;
-    private final PrepareLandmarks landmarks;
+    private final LandmarkStorage landmarks;
     private final LocationIndexTree locationIndex;
     private double measurementErrorSigma = 50.0;
     private double transitionProbabilityBeta = 2.0;
@@ -123,21 +121,21 @@ public class MapMatching {
         if (graphHopper.getLMPreparationHandler().isEnabled() && !useDijkstra) {
             // using LM because u-turn prevention does not work properly with (node-based) CH
             List<String> lmProfileNames = new ArrayList<>();
-            PrepareLandmarks lmPreparation = null;
+            LandmarkStorage landmarkStorage = null;
             for (LMProfile lmProfile : graphHopper.getLMPreparationHandler().getLMProfiles()) {
                 lmProfileNames.add(lmProfile.getProfile());
                 if (lmProfile.getProfile().equals(profile.getName())) {
-                    lmPreparation = graphHopper.getLMPreparationHandler().getPreparation(
+                    landmarkStorage = graphHopper.getLMPreparationHandler().getPreparation(
                             lmProfile.usesOtherPreparation() ? lmProfile.getPreparationProfile() : lmProfile.getProfile()
-                    );
+                    ).getLandmarkStorage();
                 }
             }
-            if (lmPreparation == null) {
+            if (landmarkStorage == null) {
                 throw new IllegalArgumentException("Cannot find LM preparation for the requested profile: '" + profile.getName() + "'" +
                         "\nYou can try disabling LM using " + Parameters.Landmark.DISABLE + "=true" +
                         "\navailable LM profiles: " + lmProfileNames);
             }
-            landmarks = lmPreparation;
+            this.landmarks = landmarkStorage;
         } else {
             landmarks = null;
         }
@@ -390,9 +388,8 @@ public class MapMatching {
                     super.initCollections(50);
                 }
             };
-            LandmarkStorage lms = landmarks.getLandmarkStorage();
-            int activeLM = Math.min(8, lms.getLandmarkCount());
-            algo.setApproximation(LMApproximator.forLandmarks(queryGraph, lms, activeLM));
+            int activeLM = Math.min(8, landmarks.getLandmarkCount());
+            algo.setApproximation(LMApproximator.forLandmarks(queryGraph, landmarks, activeLM));
             algo.setMaxVisitedNodes(maxVisitedNodes);
             router = algo;
         } else {
