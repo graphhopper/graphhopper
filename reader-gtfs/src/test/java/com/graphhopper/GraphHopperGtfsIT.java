@@ -18,6 +18,7 @@
 
 package com.graphhopper;
 
+import com.conveyal.gtfs.model.Stop;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
 import com.graphhopper.util.Helper;
@@ -475,6 +476,12 @@ public class GraphHopperGtfsIT {
 
         assertEquals(1, response.getAll().size(), "Get exactly one solution");
         assertEquals(solutionWithoutTransfer.getTime(), response.getBest().getTime(), "Prefer solution without transfers when I give the higher beta");
+    }
+
+    @Test
+    public void testBoardingArea() {
+        Stop boardingArea = graphHopperGtfs.getGtfsStorage().getGtfsFeeds().values().iterator().next().stops.get("BOARDING_AREA");
+        assertEquals(4, boardingArea.location_type, "Boarding area can be read (doesn't do anything though)");
     }
 
 }
