@@ -21,7 +21,6 @@ import com.carrotsearch.hppc.IntContainer;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.coll.MinHeapWithUpdate;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -183,7 +182,7 @@ public class PrepareContractionHierarchies {
         sortedNodes = new MinHeapWithUpdate(prepareGraph.getNodes());
         logger.info("Building CH prepare graph, {}", getMemInfo());
         StopWatch sw = new StopWatch().start();
-        CHPreparationGraph.buildFromGraph(prepareGraph, graph, getWeighting());
+        CHPreparationGraph.buildFromGraph(prepareGraph, graph, chConfig.getWeighting());
         logger.info("Finished building CH prepare graph, took: {}s, {}", sw.stop().getSeconds(), getMemInfo());
         nodeContractor.initFromGraph();
     }
@@ -393,10 +392,6 @@ public class PrepareContractionHierarchies {
 
     public double getNeighborTime() {
         return neighborUpdateSW.getCurrentSeconds();
-    }
-
-    public Weighting getWeighting() {
-        return chConfig.getWeighting();
     }
 
     public CHConfig getCHConfig() {

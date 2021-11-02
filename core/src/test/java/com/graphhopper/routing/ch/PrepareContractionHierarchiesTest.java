@@ -135,7 +135,7 @@ public class PrepareContractionHierarchiesTest {
     public void testReturnsCorrectWeighting() {
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         prepare.doWork();
-        assertSame(weighting, prepare.getWeighting());
+        assertSame(weighting, prepare.getCHConfig().getWeighting());
     }
 
     @Test
