@@ -145,7 +145,7 @@ public class OSMReader {
                 .setElevationProvider(eleProvider)
                 .setWayFilter(this::acceptWay)
                 .setSplitNodeFilter(this::isBarrierNode)
-                .setWayPreprocessor(this::preprocessWay)
+                // todonow: maybe do at least the date parsing only once per way?
                 .setRelationPreprocessor(this::preprocessRelations)
                 .setRelationProcessor(this::processRelation)
                 .setEdgeHandler(this::addEdge)
@@ -194,15 +194,12 @@ public class OSMReader {
 
     /**
      * This method is called during the second pass of {@link WaySegmentParser} and provides an entry point to enrich
-     * the given OSM way with additional tags before it is split into segments.
+     * the given OSM way with additional tags before it is passed on to the tag parsers.
      */
-    protected void setArtificialWayTags(GHPoint first, GHPoint last, ReaderWay way) {
-        // todo: should we not rather do all this stuff **per edge** not per way? might be a bit slower, but we
-        // could also do raster optimization in country lookup if this was the bottleneck.
-
+    protected void setArtificialWayTags(PointList pointList, ReaderWay way) {
         // Estimate length of ways containing a route tag e.g. for ferry speed calculation
-        double firstLat = first.getLat(), firstLon = first.getLon();
-        double lastLat = last.getLat(), lastLon = last.getLon();
+        double firstLat = pointList.getLat(0), firstLon = pointList.getLat(0);
+        double lastLat = pointList.getLat(pointList.size() - 1), lastLon = pointList.getLon(pointList.size() - 1);
         GHPoint estimatedCenter = null;
         if (!Double.isNaN(firstLat) && !Double.isNaN(firstLon) && !Double.isNaN(lastLat) && !Double.isNaN(lastLon)) {
             double estimatedDist = distCalc.calcDist(firstLat, firstLon, lastLat, lastLon);
@@ -301,7 +298,13 @@ public class OSMReader {
             towerNodeDistance = maxDistance;
         }
 
-        IntsRef edgeFlags = (IntsRef) way.getTags().get("gh:flags");
+        setArtificialWayTags(pointList, way);
+        EncodingManager.AcceptWay acceptWay = new EncodingManager.AcceptWay();
+        if (!encodingManager.acceptWay(way, acceptWay))
+            throw new IllegalStateException("unaccepted way: " + way.getId());
+
+        IntsRef relationFlags = getRelFlagsMap(way.getId());
+        IntsRef edgeFlags = encodingManager.handleWayTags(way, acceptWay, relationFlags);
         if (edgeFlags.isEmpty())
             return;
 
@@ -342,17 +345,6 @@ public class OSMReader {
         else if (Math.abs(edgeDistance - geometryDistance) > tolerance)
             throw new IllegalStateException("Suspicious distance for edge: " + edge + " " + edgeDistance + " vs. " + geometryDistance
                     + ", difference: " + (edgeDistance - geometryDistance));
-    }
-
-    private void preprocessWay(GHPoint first, GHPoint last, ReaderWay way) {
-        setArtificialWayTags(first, last, way);
-        EncodingManager.AcceptWay acceptWay = new EncodingManager.AcceptWay();
-        if (!encodingManager.acceptWay(way, acceptWay))
-            throw new IllegalStateException("unaccepted way: " + way.getId());
-
-        IntsRef relationFlags = getRelFlagsMap(way.getId());
-        IntsRef edgeFlags = encodingManager.handleWayTags(way, acceptWay, relationFlags);
-        way.setTag("gh:flags", edgeFlags);
     }
 
     /**
