@@ -20,7 +20,6 @@ package com.graphhopper.routing.ch;
 import com.carrotsearch.hppc.IntContainer;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.coll.MinHeapWithUpdate;
-import com.graphhopper.routing.util.AbstractAlgoPreparation;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
@@ -50,7 +49,7 @@ import static com.graphhopper.util.Helper.nf;
  *
  * @author Peter Karich
  */
-public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
+public class PrepareContractionHierarchies {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final CHConfig chConfig;
     private final CHStorage chStore;
@@ -71,6 +70,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     private MinHeapWithUpdate sortedNodes;
     private PMap pMap = new PMap();
     private int checkCounter;
+    private boolean prepared = false;
 
     public static PrepareContractionHierarchies fromGraphHopperStorage(GraphHopperStorage ghStorage, CHConfig chConfig) {
         return new PrepareContractionHierarchies(ghStorage, chConfig);
@@ -118,8 +118,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         return this;
     }
 
-    @Override
-    public void doSpecificWork() {
+    public void doWork() {
+        if (prepared)
+            throw new IllegalStateException("Call doWork only once!");
+        prepared = true;
         if (!graph.isFrozen()) {
             throw new IllegalStateException("Given GraphHopperStorage has not been frozen yet");
         }

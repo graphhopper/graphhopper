@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.lm;
 
-import com.graphhopper.routing.util.AbstractAlgoPreparation;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Directory;
@@ -37,12 +36,13 @@ import java.util.List;
  *
  * @author Peter Karich
  */
-public class PrepareLandmarks extends AbstractAlgoPreparation {
+public class PrepareLandmarks {
     private static final Logger LOGGER = LoggerFactory.getLogger(PrepareLandmarks.class);
     private final Graph graph;
     private final LandmarkStorage lms;
     private final LMConfig lmConfig;
     private long totalPrepareTime;
+    private boolean prepared = false;
 
     public PrepareLandmarks(Directory dir, GraphHopperStorage graph, LMConfig lmConfig, int landmarks) {
         this.graph = graph;
@@ -112,8 +112,10 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
         return lms.loadExisting();
     }
 
-    @Override
-    public void doSpecificWork() {
+    public void doWork() {
+        if (prepared)
+            throw new IllegalStateException("Call doWork only once!");
+        prepared = true;
         StopWatch sw = new StopWatch().start();
         LOGGER.info("Start calculating " + lms.getLandmarkCount() + " landmarks, weighting:" + lms.getLmSelectionWeighting() + ", " + Helper.getMemInfo());
 
