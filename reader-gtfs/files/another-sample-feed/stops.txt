@@ -1,0 +1,5 @@
+stop_id,stop_name,stop_desc,stop_lat,stop_lon,zone_id,stop_url
+JUSTICE_COURT,Beatty Justice Court,,36.9010208,-116.7659466,,
+MUSEUM,Beatty Museum,,36.9059371,-116.7618071,,
+NEXT_TO_MUSEUM,Next to Beatty Museum,,36.906095,-116.76207,,
+AIRPORT,County Airport,,36.868446,-116.784582,,
