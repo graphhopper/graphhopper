@@ -52,7 +52,7 @@ import java.util.zip.ZipOutputStream;
  * One concrete subclass is defined for each table in a GTFS feed.
  */
 // TODO K is the key type for this table
-public abstract class Entity implements Serializable {
+public abstract class Entity implements Serializable, Cloneable {
 
     private static final long serialVersionUID = -3576441868127607448L;
     public static final int INT_MISSING = Integer.MIN_VALUE;

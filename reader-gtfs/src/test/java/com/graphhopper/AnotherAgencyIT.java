@@ -18,6 +18,8 @@
 
 package com.graphhopper;
 
+import com.conveyal.gtfs.model.Stop;
+import com.conveyal.gtfs.model.Transfer;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
 import com.graphhopper.util.Helper;

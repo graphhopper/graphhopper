@@ -59,7 +59,7 @@ public class TransfersTest {
         assertEquals("NEXT_TO_MUSEUM", transfer.to_stop_id);
         Assertions.assertNull(transfer.from_route_id);
         Assertions.assertNull(transfer.to_route_id);
-        Assertions.assertNotEquals(0, transfer.min_transfer_time);
+        Assertions.assertEquals(600, transfer.min_transfer_time);
 
         Transfer withinStationTransfer = transfersToStop.get(1);
         assertEquals("NEXT_TO_MUSEUM", withinStationTransfer.from_stop_id);
