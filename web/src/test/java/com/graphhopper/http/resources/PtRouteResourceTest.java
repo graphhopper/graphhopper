@@ -52,7 +52,7 @@ public class PtRouteResourceTest {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("datareader.file", "../reader-gtfs/files/beatty.osm").
-                putObject("gtfs.file", "../reader-gtfs/files/sample-feed.zip").
+                putObject("gtfs.file", "../reader-gtfs/files/sample-feed").
                 putObject("graph.location", DIR).
                 setProfiles(Collections.singletonList(new Profile("foot").setVehicle("foot").setWeighting("fastest")));
         return config;
