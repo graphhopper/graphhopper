@@ -31,8 +31,10 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.PMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -195,16 +197,8 @@ public class GraphHopperGtfs extends GraphHopper {
                 .parallelStream()
                 .filter(e -> e.getValue().transfer_type == 0)
                 .map(e -> {
-                    PointList points = new PointList(2, false);
                     final int fromnode = getGtfsStorage().getStationNodes().get(new GtfsStorage.FeedIdWithStopId(id, e.getValue().from_stop_id));
-                    final Snap fromstation = new Snap(graphHopperStorage.getNodeAccess().getLat(fromnode), graphHopperStorage.getNodeAccess().getLon(fromnode));
-                    fromstation.setClosestNode(fromnode);
-                    points.add(graphHopperStorage.getNodeAccess().getLat(fromnode), graphHopperStorage.getNodeAccess().getLon(fromnode));
-
                     final int tonode = getGtfsStorage().getStationNodes().get(new GtfsStorage.FeedIdWithStopId(id, e.getValue().to_stop_id));
-                    final Snap tostation = new Snap(graphHopperStorage.getNodeAccess().getLat(tonode), graphHopperStorage.getNodeAccess().getLon(tonode));
-                    tostation.setClosestNode(tonode);
-                    points.add(graphHopperStorage.getNodeAccess().getLat(tonode), graphHopperStorage.getNodeAccess().getLon(tonode));
 
                     QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, Collections.emptyList());
                     final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, transferWeighting, ptEncodedValues, getGtfsStorage(), realtimeFeed, false, true, false, 5.0, false, 0);
