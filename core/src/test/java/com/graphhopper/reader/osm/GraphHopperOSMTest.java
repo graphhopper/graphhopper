@@ -817,9 +817,9 @@ public class GraphHopperOSMTest {
                 String name = prepLM.getLMConfig().getName();
                 Integer singleThreadShortcutCount = landmarkCount.get(name);
                 if (singleThreadShortcutCount == null)
-                    landmarkCount.put(name, prepLM.getSubnetworksWithLandmarks());
+                    landmarkCount.put(name, prepLM.getLandmarkStorage().getSubnetworksWithLandmarks());
                 else
-                    assertEquals((int) singleThreadShortcutCount, prepLM.getSubnetworksWithLandmarks());
+                    assertEquals((int) singleThreadShortcutCount, prepLM.getLandmarkStorage().getSubnetworksWithLandmarks());
 
                 String keyError = Parameters.Landmark.PREPARE + "error." + name;
                 String valueError = hopper.getGraphHopperStorage().getProperties().get(keyError);
