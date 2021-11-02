@@ -22,14 +22,14 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.CH;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Callable;
 
 import static com.graphhopper.util.Helper.createFormatter;
 import static com.graphhopper.util.Helper.getMemInfo;
@@ -47,7 +47,6 @@ public class CHPreparationHandler {
     // the actual Weightings)
     private final List<CHProfile> chProfiles = new ArrayList<>();
     private int preparationThreads;
-    private ExecutorService threadPool;
     private PMap pMap = new PMap();
 
     public CHPreparationHandler() {
@@ -116,37 +115,26 @@ public class CHPreparationHandler {
      */
     public void setPreparationThreads(int preparationThreads) {
         this.preparationThreads = preparationThreads;
-        this.threadPool = java.util.concurrent.Executors.newFixedThreadPool(preparationThreads);
     }
 
     public void prepare(final StorableProperties properties, final boolean closeEarly) {
-        ExecutorCompletionService<String> completionService = new ExecutorCompletionService<>(threadPool);
-        int counter = 0;
-        for (final PrepareContractionHierarchies prepare : preparations) {
-            LOGGER.info((++counter) + "/" + preparations.size() + " calling " +
+        List<Callable<String>> callables = new ArrayList<>(preparations.size());
+        for (int i = 0; i < preparations.size(); ++i) {
+            PrepareContractionHierarchies prepare = preparations.get(i);
+            LOGGER.info((i + 1) + "/" + preparations.size() + " calling " +
                     "CH prepare.doWork for profile '" + prepare.getCHConfig().getName() + "' " + prepare.getCHConfig().getTraversalMode() + " ... (" + getMemInfo() + ")");
-            final String name = prepare.getCHConfig().getName();
-            completionService.submit(() -> {
+            callables.add(() -> {
+                final String name = prepare.getCHConfig().getName();
                 // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options
                 Thread.currentThread().setName(name);
                 prepare.doWork();
                 if (closeEarly)
                     prepare.close();
-
                 properties.put(CH.PREPARE + "date." + name, createFormatter().format(new Date()));
-            }, name);
+                return name;
+            });
         }
-
-        threadPool.shutdown();
-
-        try {
-            for (int i = 0; i < preparations.size(); i++) {
-                completionService.take().get();
-            }
-        } catch (Exception e) {
-            threadPool.shutdownNow();
-            throw new RuntimeException(e);
-        }
+        GHUtility.runConcurrently(callables, preparationThreads);
         LOGGER.info("Finished CH preparation, {}", getMemInfo());
     }
 
