@@ -51,32 +51,40 @@ import static com.graphhopper.util.Helper.nf;
  * @author Peter Karich
  */
 public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final CHConfig chConfig;
-    private final CHStorage chStore;
-    private final CHStorageBuilder chBuilder;
+// ORS-GH MOD START change access from private to public
+    public final Logger logger = LoggerFactory.getLogger(getClass());
+    public final CHConfig chConfig;
+    public final CHStorage chStore;
+    public final CHStorageBuilder chBuilder;
+// ORS-GH MOD END
     private final Random rand = new Random(123);
     private final StopWatch allSW = new StopWatch();
     private final StopWatch periodicUpdateSW = new StopWatch();
     private final StopWatch lazyUpdateSW = new StopWatch();
     private final StopWatch neighborUpdateSW = new StopWatch();
     private final StopWatch contractionSW = new StopWatch();
-    private final Params params;
-    private final GraphHopperStorage graph;
-    private NodeContractor nodeContractor;
-    private final int nodes;
+// ORS-GH MOD START change access from private to public
+    public final Params params;
+    public final GraphHopperStorage graph;
+    public NodeContractor nodeContractor;
+    public final int nodes;
+// ORS-GH MOD END
     private NodeOrderingProvider nodeOrderingProvider;
-    private int maxLevel;
+// ORS-GH MOD START change access from private to public
+    public int maxLevel;
     // nodes with highest priority come last
-    private MinHeapWithUpdate sortedNodes;
-    private PMap pMap = new PMap();
+    public MinHeapWithUpdate sortedNodes;
+    public PMap pMap = new PMap();
+// ORS-GH MOD END
     private int checkCounter;
 
     public static PrepareContractionHierarchies fromGraphHopperStorage(GraphHopperStorage ghStorage, CHConfig chConfig) {
         return new PrepareContractionHierarchies(ghStorage, chConfig);
     }
 
-    private PrepareContractionHierarchies(GraphHopperStorage ghStorage, CHConfig chConfig) {
+// ORS-GH MOD START change access from private to public
+    public PrepareContractionHierarchies(GraphHopperStorage ghStorage, CHConfig chConfig) {
+// ORS-GH MOD END
         graph = ghStorage;
         chStore = ghStorage.getCHStore(chConfig.getName());
         if (chStore == null)
@@ -154,7 +162,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         return chConfig.isEdgeBased();
     }
 
-    private void initFromGraph() {
+// ORS-GH MOD START change access from private to public
+    public void initFromGraph() {
+// ORS-GH MOD END
         // todo: this whole chain of initFromGraph() methods is just needed because PrepareContractionHierarchies does
         // not simply prepare contraction hierarchies, but instead it also serves as some kind of 'container' to give
         // access to the preparations in the GraphHopper class. If this was not so we could make this a lot cleaner here,
@@ -232,7 +242,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
 
         // according to paper "Polynomial-time Construction of Contraction Hierarchies for Multi-criteria Objectives" by Funke and Storandt
         // we don't need to wait for all nodes to be contracted
-        final long nodesToAvoidContract = Math.round(initSize * ((100 - params.getNodesContractedPercentage()) / 100d));
+// ORS-GH MOD START
+        final long nodesToAvoidContract = getNodesToAvoidContract(initSize);
+// ORS-GH MOD END
 
         // Recompute priority of (the given percentage of) uncontracted neighbors. Doing neighbor updates takes additional
         // time during preparation but keeps node priorities more up to date. this potentially improves query time and
@@ -272,9 +284,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
             IntContainer neighbors = contractNode(polledNode, level);
             level++;
 
-            if (sortedNodes.size() < nodesToAvoidContract)
+// ORS-GH MOD START add hook
+            if (sortedNodes.size() < nodesToAvoidContract) {
                 // skipped nodes are already set to maxLevel
+                uncontractedNodesHook();
                 break;
+            }
+// ORS-GH MOD END
 
             // there might be multiple edges going to the same neighbor nodes -> only calculate priority once per node
             for (IntCursor neighbor : neighbors) {
@@ -307,6 +323,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         // The preparation object itself has to be intact to create the algorithm.
         _close();
     }
+
+// ORS-GH MOD START add methods
+    protected long getNodesToAvoidContract(int initSize) {
+        return Math.round(initSize * ((100 - params.getNodesContractedPercentage()) / 100d));
+    }
+
+    public void uncontractedNodesHook() {}
+// ORS-GH MOD END
 
     private void contractNodesUsingFixedNodeOrdering() {
         nodeContractor.prepareContraction();
@@ -419,7 +443,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         return allSW.getMillis();
     }
 
-    private float calculatePriority(int node) {
+// ORS-GH MOD START change access from private to public
+    public float calculatePriority(int node) {
+// ORS-GH MOD END
         if (isContracted(node))
             throw new IllegalArgumentException("Priority should only be calculated for not yet contracted nodes");
         return nodeContractor.calculatePriority(node);

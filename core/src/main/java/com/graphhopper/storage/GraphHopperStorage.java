@@ -144,7 +144,9 @@ public final class GraphHopperStorage implements Graph, Closeable {
         if (chConfig.getWeighting() == null)
             throw new IllegalStateException("Weighting for CHConfig must not be null");
 
-        CHStorage store = new CHStorage(dir, chConfig.getName(), segmentSize, chConfig.isEdgeBased());
+// ORS-GH MOD START
+        CHStorage store = new CHStorage(dir, chConfig.getName(), segmentSize, chConfig.isEdgeBased(), chConfig.getType());
+// ORS-GH MOD END
         store.setLowShortcutWeightConsumer(s -> {
             // we just log these to find mapping errors
             NodeAccess nodeAccess = baseGraph.getNodeAccess();

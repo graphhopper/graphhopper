@@ -64,10 +64,21 @@ public class CHStorage {
     // use this to report shortcuts with too small weights
     private Consumer<LowWeightShortcut> lowShortcutWeightConsumer;
 
+// ORS-GH MOD START add member variable and constructor
+    private boolean isTypeCore;
+    private int coreNodeCount = -1;
+    private int S_TIME;
+
     public CHStorage(Directory dir, String name, int segmentSize, boolean edgeBased) {
+        this(dir, name, segmentSize, edgeBased, "ch");
+    }
+
+    public CHStorage(Directory dir, String name, int segmentSize, boolean edgeBased, String type) {
+        this.isTypeCore =  CHConfig.TYPE_CORE.equals(type);
+        this.nodesCH = dir.find("nodes_" + type + "_" + name, DAType.getPreferredInt(dir.getDefaultType()));
+        this.shortcuts = dir.find("shortcuts_" + type + "_" + name, DAType.getPreferredInt(dir.getDefaultType()));
+// ORS-GH MOD END
         this.edgeBased = edgeBased;
-        this.nodesCH = dir.find("nodes_ch_" + name, DAType.getPreferredInt(dir.getDefaultType()));
-        this.shortcuts = dir.find("shortcuts_" + name, DAType.getPreferredInt(dir.getDefaultType()));
         if (segmentSize >= 0) {
             nodesCH.setSegmentSize(segmentSize);
             shortcuts.setSegmentSize(segmentSize);
@@ -82,6 +93,12 @@ public class CHStorage {
         S_ORIG_FIRST = S_SKIP_EDGE2 + (edgeBased ? 4 : 0);
         S_ORIG_LAST = S_ORIG_FIRST + (edgeBased ? 4 : 0);
         shortcutEntryBytes = S_ORIG_LAST + 4;
+// ORS-GH MOD START: TD CALT
+        if (isTypeCore) {
+            S_TIME = shortcutEntryBytes;
+            shortcutEntryBytes = S_TIME + 4;
+        }
+// ORS-GH MOD END
 
         // nodes/levels are stored consecutively using this layout:
         // LEVEL | N_LAST_SC
@@ -129,6 +146,9 @@ public class CHStorage {
         // nodes
         nodesCH.setHeader(0, nodeCount);
         nodesCH.setHeader(4, nodeCHEntryBytes);
+// ORS-GH MOD START added header field
+        nodesCH.setHeader(8, coreNodeCount);
+// ORS-GH MOD END
         nodesCH.flush();
 
         // shortcuts
@@ -146,6 +166,9 @@ public class CHStorage {
         // nodes
         nodeCount = nodesCH.getHeader(0);
         nodeCHEntryBytes = nodesCH.getHeader(4);
+// ORS-GH MOD START added header field
+        coreNodeCount = nodesCH.getHeader(8);
+// ORS-GH MOD END
 
         // shortcuts
         shortcutCount = shortcuts.getHeader(0);
@@ -178,6 +201,17 @@ public class CHStorage {
         setOrigEdges(toShortcutPointer(shortcut), origFirst, origLast);
         return shortcut;
     }
+
+// ORS-GH MOD START add method
+    public int shortcutCore(int nodeA, int nodeB, int accessFlags, double weight, int skip1, int skip2, int time) {
+        if (!isTypeCore) {
+            throw new IllegalStateException("Cannot add time to shortcuts of a non-core graph");
+        }
+        int shortcut = shortcut(nodeA, nodeB, accessFlags, weight, skip1, skip2);
+        shortcuts.setInt(toShortcutPointer(shortcut) + S_ORIG_FIRST, time);
+        return shortcut;
+    }
+// ORS-GH MOD END
 
     private int shortcut(int nodeA, int nodeB, int accessFlags, double weight, int skip1, int skip2) {
         if (shortcutCount == Integer.MAX_VALUE)
@@ -307,6 +341,13 @@ public class CHStorage {
         return shortcuts.getInt(shortcutPointer + S_ORIG_LAST);
     }
 
+// ORS-GH MOD START add method
+    public int getTime(long shortcutPointer) {
+        assert isTypeCore : "time is only available for core graph";
+        return shortcuts.getInt(shortcutPointer + S_TIME);
+    }
+// ORS-GH MOD END
+
     public NodeOrderingProvider getNodeOrderingProvider() {
         int numNodes = getNodes();
         final int[] nodeOrdering = new int[numNodes];
@@ -403,6 +444,16 @@ public class CHStorage {
                     + MAX_STORED_INTEGER_WEIGHT);
         return weight;
     }
+
+// ORS-GH MOD START add methods
+    public int getCoreNodes() {
+        return coreNodeCount;
+    }
+
+    public void setCoreNodes(int coreNodeCount) {
+        this.coreNodeCount = coreNodeCount;
+    }
+// ORS-GH MOD END
 
     public static class LowWeightShortcut {
         int nodeA;

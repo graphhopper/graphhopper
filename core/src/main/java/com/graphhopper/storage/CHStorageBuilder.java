@@ -75,6 +75,18 @@ public class CHStorageBuilder {
         return shortcut;
     }
 
+// ORS-GH MOD START added method
+    public int addShortcutCore(int a, int b, int accessFlags, double weight, int skippedEdge1, int skippedEdge2, int time) {
+        checkNewShortcut(a, b);
+        int shortcut = storage.shortcutCore(a, b, accessFlags, weight, skippedEdge1, skippedEdge2, time);
+        // we keep track of the last shortcut for each node (-1 if there are no shortcuts), but
+        // we do not register the shortcut at node b, because b is the higher level node (so no need to 'see' the lower
+        // level node a)
+        setLastShortcut(a, shortcut);
+        return shortcut;
+    }
+// ORS-GH MOD END
+
     public void replaceSkippedEdges(IntUnaryOperator mapping) {
         for (int i = 0; i < storage.getShortcuts(); ++i) {
             long shortcutPointer = storage.toShortcutPointer(i);

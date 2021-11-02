@@ -46,4 +46,10 @@ public interface PrepareGraphEdgeIterator {
     void setWeight(double weight);
 
     void setOrigEdgeCount(int origEdgeCount);
+
+// ORS-GH MOD START add methods
+    int getTime();
+
+    void setTime(int time);
+// ORS-GH MOD END
 }

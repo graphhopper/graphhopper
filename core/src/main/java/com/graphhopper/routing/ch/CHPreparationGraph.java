@@ -58,7 +58,9 @@ public class CHPreparationGraph {
     private IntSet neighborSet;
     private OrigGraph origGraph;
     private OrigGraph.Builder origGraphBuilder;
-    private int nextShortcutId;
+// ORS-GH MOD START change access from private to public
+    public int nextShortcutId;
+// ORS-GH MOD END
     private boolean ready;
 
     public static CHPreparationGraph nodeBased(int nodes, int edges) {
@@ -74,7 +76,9 @@ public class CHPreparationGraph {
      * @param edges the maximum number of (non-shortcut) edges in this graph. edges-1 is the maximum edge id that may
      *              be used.
      */
-    private CHPreparationGraph(int nodes, int edges, boolean edgeBased, TurnCostFunction turnCostFunction) {
+// ORS-GH MOD START change access from private to public
+    public CHPreparationGraph(int nodes, int edges, boolean edgeBased, TurnCostFunction turnCostFunction) {
+// ORS-GH MOD END
         this.turnCostFunction = turnCostFunction;
         this.nodes = nodes;
         this.edges = edges;
@@ -345,41 +349,61 @@ public class CHPreparationGraph {
             origGraph = null;
     }
 
-    private void addOutEdge(int node, PrepareEdge prepareEdge) {
+// ORS-GH MOD START change access of the following methods from private to public
+    public void addOutEdge(int node, PrepareEdge prepareEdge) {
         prepareEdge.setNextOut(node, prepareEdgesOut[node]);
         prepareEdgesOut[node] = prepareEdge;
         degrees[node]++;
     }
 
-    private void addInEdge(int node, PrepareEdge prepareEdge) {
+    public void addInEdge(int node, PrepareEdge prepareEdge) {
         prepareEdge.setNextIn(node, prepareEdgesIn[node]);
         prepareEdgesIn[node] = prepareEdge;
         degrees[node]++;
     }
 
-    private void checkReady() {
+    public void checkReady() {
         if (!ready)
             throw new IllegalStateException("You need to call prepareForContraction() before calling this method");
     }
 
-    private void checkNotReady() {
+    public void checkNotReady() {
         if (ready)
             throw new IllegalStateException("You cannot call this method after calling prepareForContraction()");
     }
+// ORS-GH MOD END
+
+// ORS-GH MOD START add methods
+    public PrepareEdge[] getPrepareEdgesOut() {
+        return prepareEdgesOut;
+    }
+
+    public PrepareEdge[] getPrepareEdgesIn() {
+        return prepareEdgesIn;
+    }
+// ORS-GH MOD END
 
     @FunctionalInterface
     public interface TurnCostFunction {
         double getTurnWeight(int inEdge, int viaNode, int outEdge);
     }
 
-    private static class PrepareGraphEdgeExplorerImpl implements PrepareGraphEdgeExplorer, PrepareGraphEdgeIterator {
+// ORS-GH MOD START change access from private to public
+    public static class PrepareGraphEdgeExplorerImpl implements PrepareGraphEdgeExplorer, PrepareGraphEdgeIterator {
+// ORS-GH MOD END
         private final PrepareEdge[] prepareEdges;
-        private final boolean reverse;
+// ORS-GH MOD START change access from private to public
+        public final boolean reverse;
+// ORS-GH MOD END
         private int node = -1;
-        private PrepareEdge currEdge;
+// ORS-GH MOD START change access from private to public
+        public PrepareEdge currEdge;
+// ORS-GH MOD END
         private PrepareEdge nextEdge;
 
-        PrepareGraphEdgeExplorerImpl(PrepareEdge[] prepareEdges, boolean reverse) {
+// ORS-GH MOD START change access from private to public
+        public PrepareGraphEdgeExplorerImpl(PrepareEdge[] prepareEdges, boolean reverse) {
+// ORS-GH MOD END
             this.prepareEdges = prepareEdges;
             this.reverse = reverse;
         }
@@ -467,6 +491,18 @@ public class CHPreparationGraph {
             currEdge.setWeight(weight);
         }
 
+// ORS-GH MOD START add methods
+        @Override
+        public int getTime() {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public void setTime(int time) {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+// ORS-GH MOD END
+
         @Override
         public void setOrigEdgeCount(int origEdgeCount) {
             currEdge.setOrigEdgeCount(origEdgeCount);
@@ -477,13 +513,17 @@ public class CHPreparationGraph {
             return currEdge == null ? "not_started" : getBaseNode() + "-" + getAdjNode();
         }
 
-        private boolean nodeAisBase() {
+// ORS-GH MOD START change access from private to public
+        public boolean nodeAisBase() {
+// ORS-GH MOD END
             // in some cases we need to determine which direction of the (bidirectional) edge we want
             return currEdge.getNodeA() == node;
         }
     }
 
-    interface PrepareEdge {
+// ORS-GH MOD START change access from private to public
+    public interface PrepareEdge {
+// ORS-GH MOD END
         boolean isShortcut();
 
         int getPrepareEdge();
@@ -680,7 +720,9 @@ public class CHPreparationGraph {
         }
     }
 
-    private static class PrepareShortcut implements PrepareEdge {
+// ORS-GH MOD START change access from private to public
+    public static class PrepareShortcut implements PrepareEdge {
+// ORS-GH MOD END
         private final int prepareEdge;
         private final int from;
         private final int to;
@@ -691,7 +733,9 @@ public class CHPreparationGraph {
         private PrepareEdge nextOut;
         private PrepareEdge nextIn;
 
-        private PrepareShortcut(int prepareEdge, int from, int to, double weight, int skipped1, int skipped2, int origEdgeCount) {
+// ORS-GH MOD START change access from private to public
+        public PrepareShortcut(int prepareEdge, int from, int to, double weight, int skipped1, int skipped2, int origEdgeCount) {
+// ORS-GH MOD END
             this.prepareEdge = prepareEdge;
             this.from = from;
             this.to = to;
