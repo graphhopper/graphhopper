@@ -194,12 +194,12 @@ public class GtfsStorage implements GtfsStorageI {
 		this.platformDescriptorsByEdge = data.getHashMap("routes");
 	}
 
-	void loadGtfsFromZipFile(String id, ZipFile zipFile) {
+	void loadGtfsFromZipFileOrDirectory(String id, File zipFileOrDirectory) {
 		File dbFile = new File(dir.getLocation() + "/" + id);
 		try {
 			Files.deleteIfExists(dbFile.toPath());
 			GTFSFeed feed = new GTFSFeed(dbFile);
-			feed.loadFromFileAndLogErrors(zipFile);
+			feed.loadFromFileAndLogErrors(zipFileOrDirectory);
 			this.gtfsFeeds.put(id, feed);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
