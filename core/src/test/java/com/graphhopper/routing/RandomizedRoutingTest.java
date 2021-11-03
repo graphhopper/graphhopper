@@ -23,9 +23,7 @@ import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.Subnetwork;
-import com.graphhopper.routing.lm.LMConfig;
-import com.graphhopper.routing.lm.PerfectApproximator;
-import com.graphhopper.routing.lm.PrepareLandmarks;
+import com.graphhopper.routing.lm.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.*;
@@ -104,7 +102,7 @@ public class RandomizedRoutingTest {
         private final Weighting weighting;
         private final EncodingManager encodingManager;
         private RoutingCHGraph routingCHGraph;
-        private PrepareLandmarks lm;
+        private LandmarkStorage lm;
 
         Fixture(Algo algo, boolean prepareCH, boolean prepareLM, TraversalMode traversalMode) {
             this.algo = algo;
@@ -143,9 +141,10 @@ public class RandomizedRoutingTest {
                 routingCHGraph = graph.getRoutingCHGraph(chConfig.getName());
             }
             if (prepareLM) {
-                lm = new PrepareLandmarks(dir, graph, lmConfig, 16);
-                lm.setMaximumWeight(10000);
-                lm.doWork();
+                PrepareLandmarks prepare = new PrepareLandmarks(dir, graph, lmConfig, 16);
+                prepare.setMaximumWeight(10000);
+                prepare.doWork();
+                lm = prepare.getLandmarkStorage();
             }
         }
 
@@ -174,9 +173,9 @@ public class RandomizedRoutingTest {
                     return algoFactory.createAlgo(new PMap().putObject(ALGORITHM, ASTAR_BI));
                 }
                 case LM_BIDIR:
-                    return lm.getRoutingAlgorithmFactory().createAlgo(graph, weighting, new AlgorithmOptions().setAlgorithm(ASTAR_BI).setTraversalMode(traversalMode));
+                    return new LMRoutingAlgorithmFactory(lm).createAlgo(graph, weighting, new AlgorithmOptions().setAlgorithm(ASTAR_BI).setTraversalMode(traversalMode));
                 case LM_UNIDIR:
-                    return lm.getRoutingAlgorithmFactory().createAlgo(graph, weighting, new AlgorithmOptions().setAlgorithm(ASTAR).setTraversalMode(traversalMode));
+                    return new LMRoutingAlgorithmFactory(lm).createAlgo(graph, weighting, new AlgorithmOptions().setAlgorithm(ASTAR).setTraversalMode(traversalMode));
                 case PERFECT_ASTAR: {
                     AStarBidirection perfectAStarBi = new AStarBidirection(graph, weighting, traversalMode);
                     perfectAStarBi.setApproximation(new PerfectApproximator(graph, weighting, traversalMode, false));

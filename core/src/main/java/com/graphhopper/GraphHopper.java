@@ -1053,7 +1053,6 @@ public class GraphHopper {
         ghStorage.freeze();
         List<LMConfig> lmConfigs = createLMConfigs(lmPreparationHandler.getLMProfiles());
         if (lmPreparationHandler.loadOrDoWork(lmConfigs, ghStorage, locationIndex, closeEarly)) {
-            ghStorage.getProperties().put(Landmark.PREPARE + "done", true);
             for (LMProfile profile : lmPreparationHandler.getLMProfiles()) {
                 // potentially overwrite existing keys from CH
                 setProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());

@@ -133,13 +133,6 @@ public class PrepareLandmarks {
     }
 
     /**
-     * Convenience method to obtain a routing algo factory from the preparation.
-     */
-    public LMRoutingAlgorithmFactory getRoutingAlgorithmFactory() {
-        return new LMRoutingAlgorithmFactory(getLandmarkStorage());
-    }
-
-    /**
      * Release landmark storage resources
      */
     void close() {
