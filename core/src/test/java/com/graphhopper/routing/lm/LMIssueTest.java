@@ -42,7 +42,7 @@ public class LMIssueTest {
     private GraphHopperStorage graph;
     private FlagEncoder encoder;
     private Weighting weighting;
-    private PrepareLandmarks lm;
+    private LandmarkStorage lm;
 
     private enum Algo {
         DIJKSTRA,
@@ -66,9 +66,10 @@ public class LMIssueTest {
 
     private void preProcessGraph() {
         graph.freeze();
-        lm = new PrepareLandmarks(dir, graph, new LMConfig("car", weighting), 16);
-        lm.setMaximumWeight(10000);
-        lm.doWork();
+        PrepareLandmarks prepare = new PrepareLandmarks(dir, graph, new LMConfig("car", weighting), 16);
+        prepare.setMaximumWeight(10000);
+        prepare.doWork();
+        lm = prepare.getLandmarkStorage();
     }
 
     private RoutingAlgorithm createAlgo(Algo algo) {
@@ -80,9 +81,9 @@ public class LMIssueTest {
             case ASTAR_BIDIR:
                 return new AStarBidirection(graph, weighting, NODE_BASED);
             case LM_BIDIR:
-                return lm.getRoutingAlgorithmFactory().createAlgo(graph, weighting, new AlgorithmOptions().setAlgorithm(ASTAR_BI).setTraversalMode(NODE_BASED));
+                return new LMRoutingAlgorithmFactory(lm).createAlgo(graph, weighting, new AlgorithmOptions().setAlgorithm(ASTAR_BI).setTraversalMode(NODE_BASED));
             case LM_UNIDIR:
-                return lm.getRoutingAlgorithmFactory().createAlgo(graph, weighting, new AlgorithmOptions().setAlgorithm(ASTAR).setTraversalMode(NODE_BASED));
+                return new LMRoutingAlgorithmFactory(lm).createAlgo(graph, weighting, new AlgorithmOptions().setAlgorithm(ASTAR).setTraversalMode(NODE_BASED));
             case PERFECT_ASTAR:
                 AStarBidirection perfectastarbi = new AStarBidirection(graph, weighting, NODE_BASED);
                 perfectastarbi.setApproximation(new PerfectApproximator(graph, weighting, NODE_BASED, false));
