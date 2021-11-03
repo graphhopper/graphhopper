@@ -145,19 +145,7 @@ public class OSMReader {
                 .setElevationProvider(eleProvider)
                 .setWayFilter(this::acceptWay)
                 .setSplitNodeFilter(this::isBarrierNode)
-                .setWayPreprocessor((first, last, way) -> {
-                    // todonow: move to method
-                    if (way.getTag("duration") != null) {
-                        try {
-                            long dur = OSMReaderUtility.parseDuration(way.getTag("duration"));
-                            // Provide the duration value in seconds in an artificial graphhopper specific tag:
-                            way.setTag("duration:seconds", Long.toString(dur));
-                        } catch (Exception ex) {
-                            LOGGER.warn("Parsing error in way with OSMID=" + way.getId() + " : " + ex.getMessage());
-                        }
-                    }
-                })
-                .setRelationPreprocessor(this::preprocessRelations)
+
                 .setRelationProcessor(this::processRelation)
                 .setEdgeHandler(this::addEdge)
                 .setWorkerThreads(config.getWorkerThreads())
@@ -212,6 +200,9 @@ public class OSMReader {
         double firstLat = pointList.getLat(0), firstLon = pointList.getLon(0);
         double lastLat = pointList.getLat(pointList.size() - 1), lastLon = pointList.getLon(pointList.size() - 1);
         GHPoint estimatedCenter = null;
+        // todonow: we have to remove the tags again, because there can be multiple edges per way, but what if this was
+        //          not an artificial tag?
+        way.removeTag("estimated_distance");
         if (!Double.isNaN(firstLat) && !Double.isNaN(firstLon) && !Double.isNaN(lastLat) && !Double.isNaN(lastLon)) {
             double estimatedDist = distCalc.calcDist(firstLat, firstLon, lastLat, lastLon);
             // Add artificial tag for the estimated distance
@@ -219,6 +210,20 @@ public class OSMReader {
             estimatedCenter = new GHPoint((firstLat + lastLat) / 2, (firstLon + lastLon) / 2);
         }
 
+        way.removeTag("duration:seconds");
+        if (way.getTag("duration") != null) {
+            try {
+                long dur = OSMReaderUtility.parseDuration(way.getTag("duration"));
+                // Provide the duration value in seconds in an artificial graphhopper specific tag:
+                way.setTag("duration:seconds", Long.toString(dur));
+            } catch (Exception ex) {
+                LOGGER.warn("Parsing error in way with OSMID=" + way.getId() + " : " + ex.getMessage());
+            }
+        }
+
+        way.removeTag("country");
+        way.removeTag("country_rule");
+        way.removeTag("custom_areas");
         List<CustomArea> customAreas = estimatedCenter == null || areaIndex == null
                 ? emptyList()
                 : areaIndex.query(estimatedCenter.lat, estimatedCenter.lon);
