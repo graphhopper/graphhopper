@@ -209,7 +209,7 @@ public class OSMReader {
      */
     protected void setArtificialWayTags(PointList pointList, ReaderWay way) {
         // Estimate length of ways containing a route tag e.g. for ferry speed calculation
-        double firstLat = pointList.getLat(0), firstLon = pointList.getLat(0);
+        double firstLat = pointList.getLat(0), firstLon = pointList.getLon(0);
         double lastLat = pointList.getLat(pointList.size() - 1), lastLon = pointList.getLon(pointList.size() - 1);
         GHPoint estimatedCenter = null;
         if (!Double.isNaN(firstLat) && !Double.isNaN(firstLon) && !Double.isNaN(lastLat) && !Double.isNaN(lastLon)) {
