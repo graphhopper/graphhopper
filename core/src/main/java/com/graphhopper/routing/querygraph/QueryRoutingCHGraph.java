@@ -315,6 +315,13 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
             return reverse ? weightBwd : weightFwd;
         }
 
+// ORS-GH MOD START add method for TD core routing
+        @Override
+        public int getTime(boolean reverse, long time) {
+            throw new UnsupportedOperationException("Not supported.");//FIXME
+        }
+// ORS-GH MOD END
+
         @Override
         public String toString() {
             return "virtual: " + edge + ": " + baseNode + "->" + adjNode + ", orig: " + origEdge + ", weightFwd: " + Helper.round2(weightFwd) + ", weightBwd: " + Helper.round2(weightBwd);
@@ -390,6 +397,13 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         public double getWeight(boolean reverse) {
             return getCurrent().getWeight(reverse);
         }
+
+// ORS-GH MOD START add method for TD core routing
+        @Override
+        public int getTime(boolean reverse, long time) {
+            return getCurrent().getTime(reverse, time);
+        }
+// ORS-GH MOD END
 
         @Override
         public String toString() {

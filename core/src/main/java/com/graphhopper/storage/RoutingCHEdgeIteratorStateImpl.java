@@ -20,7 +20,6 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
@@ -126,6 +125,17 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
             return getOrigEdgeWeight(reverse, true);
         }
     }
+
+// ORS-GH MOD START add method for TD core routing
+    @Override
+    public int getTime(boolean reverse, long time) {
+        if (isShortcut()) {
+            return store.getTime(shortcutPointer);
+        } else {
+            return (int) weighting.calcEdgeMillis(getBaseGraphEdgeState(), reverse, time);
+        }
+    }
+// ORS-GH MOD END
 
     /**
      * @param needWeight if true this method will return as soon as its clear that the weight is finite (no need to
