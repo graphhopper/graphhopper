@@ -304,7 +304,7 @@ public class OSMReader {
             towerNodeDistance = maxDistance;
         }
 
-//        setArtificialWayTags(pointList, way);
+        setArtificialWayTags(pointList, way);
         EncodingManager.AcceptWay acceptWay = new EncodingManager.AcceptWay();
         if (!encodingManager.acceptWay(way, acceptWay))
             throw new IllegalStateException("unaccepted way: " + way.getId());
