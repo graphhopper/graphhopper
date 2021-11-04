@@ -18,7 +18,6 @@
 
 package com.graphhopper.gtfs;
 
-import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Transfer;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
@@ -44,7 +43,6 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-import java.util.stream.Stream;
 
 public class GraphHopperGtfs extends GraphHopper {
 
@@ -80,12 +78,6 @@ public class GraphHopperGtfs extends GraphHopper {
         return null;
     }
 
-    static class TransferWithTime {
-        public String id;
-        Transfer transfer;
-        long time;
-    }
-
     @Override
     protected void importPublicTransit() {
         gtfsStorage = new GtfsStorage(getGraphHopperStorage().getDirectory());
@@ -110,12 +102,6 @@ public class GraphHopperGtfs extends GraphHopper {
                     allTransfers.put(id, transfers);
                     GtfsReader gtfsReader = new GtfsReader(id, graphHopperStorage, graphHopperStorage.getEncodingManager(), getGtfsStorage(), streetNetworkIndex, transfers);
                     gtfsReader.connectStopsToStreetNetwork();
-                    getType0TransferWithTimes(id, gtfsFeed)
-                            .forEach(t -> {
-                                t.transfer.transfer_type = 2;
-                                t.transfer.min_transfer_time = (int) (t.time / 1000L);
-                                gtfsFeed.transfers.put(t.id, t.transfer);
-                            });
                     LOGGER.info("Building transit graph for feed {}", gtfsFeed.feedId);
                     gtfsReader.buildPtNetwork();
                     allReaders.put(id, gtfsReader);
@@ -186,42 +172,6 @@ public class GraphHopperGtfs extends GraphHopper {
         } else {
             return ((GtfsStorageI.RoutePlatform) platformDescriptor).route_id;
         }
-    }
-
-    private Stream<TransferWithTime> getType0TransferWithTimes(String id, GTFSFeed gtfsFeed) {
-        GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
-        RealtimeFeed realtimeFeed = RealtimeFeed.empty(getGtfsStorage());
-        PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
-        Weighting transferWeighting = createWeighting(getProfile("foot"), new PMap());
-        return gtfsFeed.transfers.entrySet()
-                .parallelStream()
-                .filter(e -> e.getValue().transfer_type == 0)
-                .map(e -> {
-                    final int fromnode = getGtfsStorage().getStationNodes().get(new GtfsStorage.FeedIdWithStopId(id, e.getValue().from_stop_id));
-                    final int tonode = getGtfsStorage().getStationNodes().get(new GtfsStorage.FeedIdWithStopId(id, e.getValue().to_stop_id));
-
-                    QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, Collections.emptyList());
-                    final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, transferWeighting, ptEncodedValues, getGtfsStorage(), realtimeFeed, false, true, false, 5.0, false, 0);
-
-                    MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, false, false, false, 0, new ArrayList<>());
-                    Iterator<Label> iterator = router.calcLabels(fromnode, Instant.ofEpochMilli(0)).iterator();
-                    Label solution = null;
-                    while (iterator.hasNext()) {
-                        Label label = iterator.next();
-                        if (tonode == label.adjNode) {
-                            solution = label;
-                            break;
-                        }
-                    }
-                    if (solution == null) {
-                        throw new RuntimeException("Can't find a transfer walk route.");
-                    }
-                    TransferWithTime transferWithTime = new TransferWithTime();
-                    transferWithTime.id = e.getKey();
-                    transferWithTime.transfer = e.getValue();
-                    transferWithTime.time = solution.currentTime;
-                    return transferWithTime;
-                });
     }
 
     @Override
