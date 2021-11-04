@@ -18,6 +18,7 @@
 
 package com.graphhopper;
 
+import com.conveyal.gtfs.model.Stop;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
 import com.graphhopper.util.Helper;
@@ -54,7 +55,7 @@ public class GraphHopperGtfsIT {
     public static void init() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
         ghConfig.putObject("graph.location", GRAPH_LOC);
-        ghConfig.putObject("gtfs.file", "files/sample-feed.zip");
+        ghConfig.putObject("gtfs.file", "files/sample-feed");
         ghConfig.setProfiles(Arrays.asList(
                 new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                 new Profile("car").setVehicle("car").setWeighting("fastest")));
@@ -475,6 +476,12 @@ public class GraphHopperGtfsIT {
 
         assertEquals(1, response.getAll().size(), "Get exactly one solution");
         assertEquals(solutionWithoutTransfer.getTime(), response.getBest().getTime(), "Prefer solution without transfers when I give the higher beta");
+    }
+
+    @Test
+    public void testBoardingArea() {
+        Stop boardingArea = graphHopperGtfs.getGtfsStorage().getGtfsFeeds().values().iterator().next().stops.get("BOARDING_AREA");
+        assertEquals(4, boardingArea.location_type, "Boarding area can be read (doesn't do anything though)");
     }
 
 }

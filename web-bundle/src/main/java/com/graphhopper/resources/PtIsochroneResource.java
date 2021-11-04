@@ -27,7 +27,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import javax.inject.Inject;
 import javax.ws.rs.DefaultValue;
@@ -86,8 +85,6 @@ public class PtIsochroneResource {
     private final GraphHopperStorage graphHopperStorage;
     private final LocationIndex locationIndex;
 
-    private final Function<Label, Double> z = label -> (double) label.currentTime;
-
     @Inject
     public PtIsochroneResource(GtfsStorage gtfsStorage, EncodingManager encodingManager, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex) {
         this.gtfsStorage = gtfsStorage;
@@ -121,7 +118,7 @@ public class PtIsochroneResource {
             throw new IllegalArgumentException(String.format(Locale.ROOT, "Illegal value for required parameter %s: [%s]", "pt.earliest_departure_time", departureTimeString));
         }
 
-        double targetZ = initialTime.toEpochMilli() + seconds * 1000;
+        double targetZ = seconds * 1000;
 
         GeometryFactory geometryFactory = new GeometryFactory();
         final FlagEncoder footEncoder = encodingManager.getEncoder("foot");
@@ -142,15 +139,15 @@ public class PtIsochroneResource {
 
         MultiCriteriaLabelSetting.SPTVisitor sptVisitor = nodeLabel -> {
             Coordinate nodeCoordinate = new Coordinate(nodeAccess.getLon(nodeLabel.adjNode), nodeAccess.getLat(nodeLabel.adjNode));
-            z1.merge(nodeCoordinate, this.z.apply(nodeLabel), Math::min);
+            z1.merge(nodeCoordinate, (double) (nodeLabel.currentTime - initialTime.toEpochMilli()) * (reverseFlow ? -1 : 1), Math::min);
         };
 
         if (format.equals("multipoint")) {
-            calcLabels(router, snap.getClosestNode(), initialTime, sptVisitor, label -> label.currentTime <= targetZ);
+            calcLabels(router, snap.getClosestNode(), initialTime, sptVisitor, label -> (label.currentTime - initialTime.toEpochMilli()) * (reverseFlow ? -1 : 1) <= targetZ);
             MultiPoint exploredPoints = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
             return wrap(exploredPoints);
         } else {
-            calcLabels(router, snap.getClosestNode(), initialTime, sptVisitor, label -> label.currentTime <= targetZ);
+            calcLabels(router, snap.getClosestNode(), initialTime, sptVisitor, label -> (label.currentTime - initialTime.toEpochMilli()) * (reverseFlow ? -1 : 1) <= targetZ);
             MultiPoint exploredPoints = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
 
             // Get at least all nodes within our bounding box (I think convex hull would be enough.)

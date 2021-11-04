@@ -135,7 +135,7 @@ public class PrepareContractionHierarchiesTest {
     public void testReturnsCorrectWeighting() {
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         prepare.doWork();
-        assertSame(weighting, prepare.getWeighting());
+        assertSame(weighting, prepare.getCHConfig().getWeighting());
     }
 
     @Test
@@ -465,8 +465,8 @@ public class PrepareContractionHierarchiesTest {
         int endNode = Integer.MAX_VALUE / 37 * 17;
 
         long edgeId = (long) fromNode << 32 | endNode;
-        assertEquals((BitUtil.BIG.toBitString(edgeId)),
-                BitUtil.BIG.toLastBitString(fromNode, 32) + BitUtil.BIG.toLastBitString(endNode, 32));
+        assertEquals((BitUtil.LITTLE.toBitString(edgeId)),
+                BitUtil.LITTLE.toLastBitString(fromNode, 32) + BitUtil.LITTLE.toLastBitString(endNode, 32));
     }
 
     @Test

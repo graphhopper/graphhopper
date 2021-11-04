@@ -21,6 +21,7 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.util.Constants;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
@@ -103,9 +104,8 @@ public final class GraphHopperStorage implements Graph, Closeable {
      * @see #addCHGraph(CHConfig)
      */
     public GraphHopperStorage addCHGraphs(List<CHConfig> chConfigs) {
-        for (CHConfig chConfig : chConfigs) {
+        for (CHConfig chConfig : chConfigs)
             addCHGraph(chConfig);
-        }
         return this;
     }
 
@@ -218,9 +218,7 @@ public final class GraphHopperStorage implements Graph, Closeable {
         properties.put("graph.encoded_values", encodingManager.toEncodedValuesAsString());
         properties.put("graph.flag_encoders", encodingManager.toFlagEncodersAsString());
 
-        properties.put("graph.byte_order", dir.getByteOrder());
         properties.put("graph.dimension", baseGraph.nodeAccess.getDimension());
-        properties.putCurrentVersions();
 
         baseGraph.create(initSize);
 
@@ -246,7 +244,9 @@ public final class GraphHopperStorage implements Graph, Closeable {
     public boolean loadExisting() {
         baseGraph.checkNotInitialized();
         if (properties.loadExisting()) {
-            properties.checkVersions(false);
+            if (properties.containsVersion())
+                throw new IllegalStateException("The GraphHopper file format is not compatible with the data you are " +
+                        "trying to load. You either need to use an older version of GraphHopper or run a new import");
             // check encoding for compatibility
             String flagEncodersStr = properties.get("graph.flag_encoders");
 
@@ -264,10 +264,6 @@ public final class GraphHopperStorage implements Graph, Closeable {
                         + "\nGraph: " + encodedValueStr
                         + "\nChange configuration to match the graph or delete " + dir.getLocation());
             }
-
-            String byteOrder = properties.get("graph.byte_order");
-            if (!byteOrder.equalsIgnoreCase("" + dir.getByteOrder()))
-                throw new IllegalStateException("Configured graph.byte_order (" + dir.getByteOrder() + ") is not equal to loaded " + byteOrder + "");
 
             String dim = properties.get("graph.dimension");
             baseGraph.loadExisting(dim);
@@ -360,7 +356,17 @@ public final class GraphHopperStorage implements Graph, Closeable {
                 + "|" + getDirectory().getDefaultType()
                 + "|" + baseGraph.nodeAccess.getDimension() + "D"
                 + "|" + (baseGraph.supportsTurnCosts() ? baseGraph.turnCostStorage : "no_turn_cost")
-                + "|" + getProperties().versionsToString();
+                + "|" + getVersionsString();
+    }
+
+    private String getVersionsString() {
+        return "nodes:" + Constants.VERSION_NODE +
+                ",edges:" + Constants.VERSION_EDGE +
+                ",geometry:" + Constants.VERSION_GEOMETRY +
+                ",location_index:" + Constants.VERSION_LOCATION_IDX +
+                ",string_index:" + Constants.VERSION_STRING_IDX +
+                ",nodesCH:" + Constants.VERSION_NODE_CH +
+                ",shortcuts:" + Constants.VERSION_SHORTCUT;
     }
 
     // now delegate all Graph methods to BaseGraph to avoid ugly programming flow ala

@@ -27,7 +27,7 @@ import java.util.Map;
  * @author Peter Karich
  */
 public class PMap {
-    private final Map<String, Object> map;
+    private final LinkedHashMap<String, Object> map;
 
     public PMap() {
         this(5);

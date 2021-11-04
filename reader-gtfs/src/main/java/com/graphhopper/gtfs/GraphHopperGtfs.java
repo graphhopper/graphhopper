@@ -36,14 +36,13 @@ import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Stream;
-import java.util.zip.ZipFile;
 
 public class GraphHopperGtfs extends GraphHopper {
 
@@ -99,11 +98,7 @@ public class GraphHopperGtfs extends GraphHopper {
                 int idx = 0;
                 List<String> gtfsFiles = ghConfig.has("gtfs.file") ? Arrays.asList(ghConfig.getString("gtfs.file", "").split(",")) : Collections.emptyList();
                 for (String gtfsFile : gtfsFiles) {
-                    try {
-                        getGtfsStorage().loadGtfsFromZipFile("gtfs_" + idx++, new ZipFile(gtfsFile));
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+                    getGtfsStorage().loadGtfsFromZipFileOrDirectory("gtfs_" + idx++, new File(gtfsFile));
                 }
                 getGtfsStorage().postInit();
                 Map<String, Transfers> allTransfers = new HashMap<>();

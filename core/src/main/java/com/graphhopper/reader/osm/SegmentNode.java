@@ -15,24 +15,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
 
-/**
- * @author Peter Karich
- */
-public abstract class AbstractAlgoPreparation {
-    private boolean prepared = false;
+package com.graphhopper.reader.osm;
 
-    public void doWork() {
-        if (prepared)
-            throw new IllegalStateException("Call doWork only once!");
-        prepared = true;
-        doSpecificWork();
-    }
+class SegmentNode {
+    long osmNodeId;
+    int id;
 
-    protected abstract void doSpecificWork();
-
-    public boolean isPrepared() {
-        return prepared;
+    public SegmentNode(long osmNodeId, int id) {
+        this.osmNodeId = osmNodeId;
+        this.id = id;
     }
 }

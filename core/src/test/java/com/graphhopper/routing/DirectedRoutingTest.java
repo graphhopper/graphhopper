@@ -21,6 +21,8 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.LMConfig;
+import com.graphhopper.routing.lm.LMRoutingAlgorithmFactory;
+import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
@@ -83,7 +85,7 @@ public class DirectedRoutingTest {
         private final Weighting weighting;
         private final EncodingManager encodingManager;
         private RoutingCHGraph routingCHGraph;
-        private PrepareLandmarks lm;
+        private LandmarkStorage lm;
 
         public Fixture(Algo algo, int uTurnCosts, boolean prepareCH, boolean prepareLM) {
             this.algo = algo;
@@ -124,9 +126,10 @@ public class DirectedRoutingTest {
                 routingCHGraph = graph.getRoutingCHGraph(chConfig.getName());
             }
             if (prepareLM) {
-                lm = new PrepareLandmarks(dir, graph, lmConfig, 16);
-                lm.setMaximumWeight(1000);
-                lm.doWork();
+                PrepareLandmarks prepare = new PrepareLandmarks(dir, graph, lmConfig, 16);
+                prepare.setMaximumWeight(1000);
+                prepare.doWork();
+                lm = prepare.getLandmarkStorage();
             }
         }
 
@@ -151,7 +154,7 @@ public class DirectedRoutingTest {
                     return algoFactory.createAlgo(new PMap().putObject(ALGORITHM, ASTAR_BI));
                 }
                 case LM:
-                    return (BidirRoutingAlgorithm) lm.getRoutingAlgorithmFactory().createAlgo(graph, weighting, new AlgorithmOptions().setAlgorithm(ASTAR_BI).setTraversalMode(TraversalMode.EDGE_BASED));
+                    return (BidirRoutingAlgorithm) new LMRoutingAlgorithmFactory(lm).createAlgo(graph, weighting, new AlgorithmOptions().setAlgorithm(ASTAR_BI).setTraversalMode(TraversalMode.EDGE_BASED));
                 default:
                     throw new IllegalArgumentException("unknown algo " + algo);
             }

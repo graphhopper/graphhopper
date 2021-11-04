@@ -28,6 +28,7 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.lm.LMRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
@@ -35,7 +36,6 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RoutingCHGraph;
@@ -336,10 +336,8 @@ public class MiniGraphUI {
     private RoutingAlgorithm createAlgo(GraphHopper hopper) {
         Profile profile = hopper.getProfiles().iterator().next();
         if (useCH) {
-            CHConfig chConfig = hopper.getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
-            Weighting weighting = chConfig.getWeighting();
-            RoutingCHGraph chGraph = hopper.getGraphHopperStorage().getRoutingCHGraph(chConfig.getName());
-            logger.info("CH algo, weighting: " + weighting);
+            RoutingCHGraph chGraph = hopper.getGraphHopperStorage().getRoutingCHGraph(profile.getName());
+            logger.info("CH algo, profile: " + profile.getName());
             QueryGraph qGraph = QueryGraph.create(hopper.getGraphHopperStorage(), fromRes, toRes);
             QueryRoutingCHGraph queryRoutingCHGraph = new QueryRoutingCHGraph(chGraph, qGraph);
             return new CHDebugAlgo(queryRoutingCHGraph, mg);
@@ -347,7 +345,7 @@ public class MiniGraphUI {
             Weighting weighting = hopper.createWeighting(profile, new PMap());
             final PrepareLandmarks preparation = hopper.getLMPreparationHandler().getPreparation(profile.getName());
             RoutingAlgorithmFactory algoFactory = (g, w, opts) -> {
-                RoutingAlgorithm algo = preparation.getRoutingAlgorithmFactory().createAlgo(g, w, opts);
+                RoutingAlgorithm algo = new LMRoutingAlgorithmFactory(preparation.getLandmarkStorage()).createAlgo(g, w, opts);
                 if (algo instanceof AStarBidirection) {
                     return new DebugAStarBi(g, w, opts.getTraversalMode(), mg).
                             setApproximation(((AStarBidirection) algo).getApproximation());

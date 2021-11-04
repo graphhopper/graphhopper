@@ -143,13 +143,11 @@ public class IsochroneResource {
         for (Double z : zs) {
             logger.info("Building contour z={}", z);
             MultiPolygon isochrone = contourBuilder.computeIsoline(z, result.seedEdges);
-            if (!isochrone.isEmpty()) {
-                if (fullGeometry) {
-                    isochrones.add(isochrone);
-                } else {
-                    Polygon maxPolygon = heuristicallyFindMainConnectedComponent(isochrone, isochrone.getFactory().createPoint(new Coordinate(point.get().lon, point.get().lat)));
-                    isochrones.add(isochrone.getFactory().createPolygon(((LinearRing) maxPolygon.getExteriorRing())));
-                }
+            if (fullGeometry) {
+                isochrones.add(isochrone);
+            } else {
+                Polygon maxPolygon = heuristicallyFindMainConnectedComponent(isochrone, isochrone.getFactory().createPoint(new Coordinate(point.get().lon, point.get().lat)));
+                isochrones.add(isochrone.getFactory().createPolygon(((LinearRing) maxPolygon.getExteriorRing())));
             }
         }
         ArrayList<JsonFeature> features = new ArrayList<>();

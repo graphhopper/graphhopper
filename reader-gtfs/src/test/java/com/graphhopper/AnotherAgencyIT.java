@@ -18,6 +18,8 @@
 
 package com.graphhopper;
 
+import com.conveyal.gtfs.model.Stop;
+import com.conveyal.gtfs.model.Transfer;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
 import com.graphhopper.util.Helper;
@@ -48,7 +50,7 @@ public class AnotherAgencyIT {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
         ghConfig.putObject("graph.location", GRAPH_LOC);
         ghConfig.putObject("datareader.file", "files/beatty.osm");
-        ghConfig.putObject("gtfs.file", "files/sample-feed.zip,files/another-sample-feed.zip");
+        ghConfig.putObject("gtfs.file", "files/sample-feed,files/another-sample-feed");
         ghConfig.setProfiles(Arrays.asList(
                 new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                 new Profile("car").setVehicle("car").setWeighting("fastest")));

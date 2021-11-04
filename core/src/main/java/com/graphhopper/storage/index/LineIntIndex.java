@@ -21,17 +21,16 @@ package com.graphhopper.storage.index;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntHashSet;
 import com.graphhopper.geohash.SpatialKeyAlgo;
-import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
+import com.graphhopper.util.Constants;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
 
 import java.util.function.IntConsumer;
 
 public class LineIntIndex {
-
-    private final int MAGIC_INT = Integer.MAX_VALUE / 22318;
     // do not start with 0 as a positive value means leaf and a negative means "entry with subentries"
     static final int START_POINTER = 1;
 
@@ -49,7 +48,7 @@ public class LineIntIndex {
 
     public LineIntIndex(BBox bBox, Directory dir, String name) {
         this.bounds = bBox;
-        this.dataAccess = dir.create(name, DAType.getPreferredInt(dir.getDefaultType()));
+        this.dataAccess = dir.create(name, dir.getDefaultType(name, true));
     }
 
     public boolean loadExisting() {
@@ -59,9 +58,7 @@ public class LineIntIndex {
         if (!dataAccess.loadExisting())
             return false;
 
-        if (dataAccess.getHeader(0) != MAGIC_INT)
-            throw new IllegalStateException("incorrect location index version, expected:" + MAGIC_INT);
-
+        GHUtility.checkDAVersion("location_index", Constants.VERSION_LOCATION_IDX, dataAccess.getHeader(0));
         checksum = dataAccess.getHeader(1 * 4);
         minResolutionInMeter = dataAccess.getHeader(2 * 4);
         indexStructureInfo = IndexStructureInfo.create(bounds, minResolutionInMeter);
@@ -180,9 +177,9 @@ public class LineIntIndex {
     }
 
     private void query(int intPointer, BBox queryBBox,
-                     double minLat, double minLon,
-                     double deltaLatPerDepth, double deltaLonPerDepth,
-                     LocationIndex.Visitor function, int depth) {
+                       double minLat, double minLon,
+                       double deltaLatPerDepth, double deltaLonPerDepth,
+                       LocationIndex.Visitor function, int depth) {
         long pointer = (long) intPointer * 4;
         if (depth == entries.length) {
             int nextIntPointer = dataAccess.getInt(pointer);
@@ -225,11 +222,11 @@ public class LineIntIndex {
 
     /**
      * This method collects edge ids from the neighborhood of a point and puts them into foundEntries.
-     *
+     * <p>
      * If it is called with iteration = 0, it just looks in the tile the query point is in.
      * If it is called with iteration = 0,1,2,.., it will look in additional tiles further and further
      * from the start tile. (In a square that grows by one pixel in all four directions per iteration).
-     *
+     * <p>
      * See discussion at issue #221.
      * <p>
      */
@@ -278,7 +275,7 @@ public class LineIntIndex {
     }
 
     public void flush() {
-        dataAccess.setHeader(0, MAGIC_INT);
+        dataAccess.setHeader(0, Constants.VERSION_LOCATION_IDX);
         dataAccess.setHeader(1 * 4, checksum);
         dataAccess.setHeader(2 * 4, minResolutionInMeter);
 

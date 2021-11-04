@@ -17,6 +17,8 @@
  */
 package com.graphhopper.reader;
 
+import java.util.Map;
+
 /**
  * Represents a node received from the reader.
  * <p>
@@ -29,6 +31,12 @@ public class ReaderNode extends ReaderElement {
 
     public ReaderNode(long id, double lat, double lon) {
         super(id, NODE);
+        this.lat = lat;
+        this.lon = lon;
+    }
+
+    public ReaderNode(long id, double lat, double lon, Map<String, Object> tags) {
+        super(id, NODE, tags);
         this.lat = lat;
         this.lon = lon;
     }

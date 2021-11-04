@@ -25,12 +25,11 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.Closeable;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -42,14 +41,14 @@ public class LocationIndexTreeTest {
     protected final EncodingManager encodingManager = EncodingManager.create("car");
 
     public static void initSimpleGraph(Graph g, EncodingManager em) {
-        //  6 |       4
+        //  6 |        4
         //  5 |
         //    |     6
         //  4 |              5
         //  3 |
         //  2 |    1
         //  1 |          3
-        //  0 |    2
+        //  0 |        2
         // -1 | 0
         // ---|-------------------
         //    |-2 -1 0 1 2 3 4
@@ -62,7 +61,8 @@ public class LocationIndexTreeTest {
         na.setNode(4, 6, 1);
         na.setNode(5, 4, 4);
         na.setNode(6, 4.5, -0.5);
-        List<EdgeIteratorState> list = Arrays.asList(g.edge(0, 1),
+        List<EdgeIteratorState> list = Arrays.asList(
+                g.edge(0, 1),
                 g.edge(0, 2),
                 g.edge(2, 3),
                 g.edge(3, 4),
@@ -612,5 +612,64 @@ public class LocationIndexTreeTest {
         FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
         assertEquals(2, idx.findClosest(1, -1, AccessFilter.allEdges(footEncoder.getAccessEnc())).getClosestNode());
         Helper.close((Closeable) g);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    public void closeToTowerNode(boolean snapAtBase) {
+        // 0 - 1
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 51.985500, 19.254000);
+        na.setNode(1, 51.986000, 19.255000);
+        DistancePlaneProjection distCalc = new DistancePlaneProjection();
+        // we query the location index close to node 0. since the query point is so close to the tower node we expect
+        // a TOWER snap. this should not depend on whether node 0 is the base or adj node of our edge.
+        final int snapNode = 0;
+        final int base = snapAtBase ? 0 : 1;
+        final int adj = snapAtBase ? 1 : 0;
+        graph.edge(base, adj).setDistance(distCalc.calcDist(na.getLat(0), na.getLon(0), na.getLat(1), na.getLon(1)));
+        LocationIndexTree index = new LocationIndexTree(graph, graph.getDirectory());
+        index.prepareIndex();
+
+        GHPoint queryPoint = new GHPoint(51.9855003, 19.2540003);
+        double distFromTower = distCalc.calcDist(queryPoint.lat, queryPoint.lon, na.getLat(snapNode), na.getLon(snapNode));
+        assertTrue(distFromTower < 0.1);
+        Snap snap = index.findClosest(queryPoint.lat, queryPoint.lon, EdgeFilter.ALL_EDGES);
+        assertEquals(Snap.Position.TOWER, snap.getSnappedPosition());
+    }
+
+    @Test
+    public void queryBehindBeforeOrBehindLastTowerNode() {
+        // 0 -x- 1
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 51.985000, 19.254000);
+        na.setNode(1, 51.986000, 19.255000);
+        DistancePlaneProjection distCalc = new DistancePlaneProjection();
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance(distCalc.calcDist(na.getLat(0), na.getLon(0), na.getLat(1), na.getLon(1)));
+        edge.setWayGeometry(Helper.createPointList(51.985500, 19.254500));
+        LocationIndexTree index = new LocationIndexTree(graph, graph.getDirectory());
+        index.prepareIndex();
+        {
+            // snap before last tower node
+            List<String> output = new ArrayList<>();
+            index.traverseEdge(51.985700, 19.254700, edge, (node, normedDist, wayIndex, pos) ->
+                    output.add(node + ", " + Math.round(distCalc.calcDenormalizedDist(normedDist)) + ", " + wayIndex + ", " + pos));
+            assertEquals(Arrays.asList(
+                    "1, 39, 2, TOWER",
+                    "1, 26, 1, PILLAR",
+                    "1, 0, 1, EDGE"), output);
+        }
+
+        {
+            // snap behind last tower node
+            List<String> output = new ArrayList<>();
+            index.traverseEdge(51.986100, 19.255100, edge, (node, normedDist, wayIndex, pos) ->
+                    output.add(node + ", " + Math.round(distCalc.calcDenormalizedDist(normedDist)) + ", " + wayIndex + ", " + pos));
+            assertEquals(Arrays.asList(
+                    "1, 13, 2, TOWER",
+                    "1, 78, 1, PILLAR"), output);
+        }
     }
 }

@@ -1,6 +1,6 @@
 graphhopper:
   datareader.file: reader-gtfs/files/beatty.osm
-  gtfs.file: reader-gtfs/files/sample-feed.zip,reader-gtfs/files/another-sample-feed.zip
+  gtfs.file: reader-gtfs/files/sample-feed,reader-gtfs/files/another-sample-feed
   graph.location: graphs/beatty
 
   profiles:

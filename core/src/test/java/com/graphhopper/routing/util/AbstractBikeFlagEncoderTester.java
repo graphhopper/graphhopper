@@ -366,38 +366,38 @@ public abstract class AbstractBikeFlagEncoderTester {
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         // no barrier!
-        assertTrue(encoder.handleNodeTags(node) == 0);
+        assertFalse(encoder.isBarrier(node));
 
         node.setTag("bicycle", "yes");
         // no barrier!
-        assertTrue(encoder.handleNodeTags(node) == 0);
+        assertFalse(encoder.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "no");
         // barrier!
-        assertTrue(encoder.handleNodeTags(node) > 0);
+        assertTrue(encoder.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "yes");
         node.setTag("bicycle", "no");
         // barrier!
-        assertTrue(encoder.handleNodeTags(node) > 0);
+        assertTrue(encoder.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "no");
         node.setTag("foot", "yes");
         // barrier!
-        assertTrue(encoder.handleNodeTags(node) > 0);
+        assertTrue(encoder.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "no");
         node.setTag("bicycle", "yes");
         // no barrier!
-        assertTrue(encoder.handleNodeTags(node) == 0);
+        assertFalse(encoder.isBarrier(node));
     }
 
     @Test
@@ -405,11 +405,11 @@ public abstract class AbstractBikeFlagEncoderTester {
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("ford", "yes");
         // barrier!
-        assertTrue(encoder.handleNodeTags(node) > 0);
+        assertTrue(encoder.isBarrier(node));
 
         node.setTag("bicycle", "yes");
         // no barrier!
-        assertTrue(encoder.handleNodeTags(node) == 0);
+        assertFalse(encoder.isBarrier(node));
     }
 
     @Test
