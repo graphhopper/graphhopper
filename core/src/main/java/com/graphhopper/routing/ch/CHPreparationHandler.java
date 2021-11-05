@@ -49,7 +49,11 @@ public class CHPreparationHandler {
     private final List<CHConfig> chConfigs = new ArrayList<>();
     private int preparationThreads;
     private ExecutorService threadPool;
-    private PMap pMap = new PMap();
+// ORS-GH MOD START change visibility private-> protected and allow overriding String constants
+    protected PMap pMap = new PMap();
+    protected static String PREPARE = CH.PREPARE;
+    protected static String DISABLE = CH.DISABLE;
+// ORS-GH MOD END
 
     public CHPreparationHandler() {
         setPreparationThreads(1);
@@ -58,13 +62,13 @@ public class CHPreparationHandler {
     public void init(GraphHopperConfig ghConfig) {
         // throw explicit error for deprecated configs
         if (ghConfig.has("prepare.threads"))
-            throw new IllegalStateException("Use " + CH.PREPARE + "threads instead of prepare.threads");
+            throw new IllegalStateException("Use " + PREPARE + "threads instead of prepare.threads");
         if (ghConfig.has("prepare.chWeighting") || ghConfig.has("prepare.chWeightings") || ghConfig.has("prepare.ch.weightings"))
             throw new IllegalStateException("Use profiles_ch instead of prepare.chWeighting, prepare.chWeightings or prepare.ch.weightings, see #1922 and docs/core/profiles.md");
         if (ghConfig.has("prepare.ch.edge_based"))
             throw new IllegalStateException("Use profiles_ch instead of prepare.ch.edge_based, see #1922 and docs/core/profiles.md");
 
-        setPreparationThreads(ghConfig.getInt(CH.PREPARE + "threads", getPreparationThreads()));
+        setPreparationThreads(ghConfig.getInt(PREPARE + "threads", getPreparationThreads()));
         setCHProfiles(ghConfig.getCHProfiles());
         pMap = ghConfig.asPMap();
     }
@@ -157,7 +161,7 @@ public class CHPreparationHandler {
             }
         }
         throw new IllegalArgumentException("Cannot find CH preparation for the requested profile: '" + profile + "'" +
-                "\nYou can try disabling CH using " + CH.DISABLE + "=true" +
+                "\nYou can try disabling CH using " + DISABLE + "=true" +
                 "\navailable CH profiles: " + profileNames);
     }
 
@@ -192,7 +196,7 @@ public class CHPreparationHandler {
                 if (closeEarly)
                     prepare.close();
 
-                properties.put(CH.PREPARE + "date." + name, createFormatter().format(new Date()));
+                properties.put(PREPARE + "date." + name, createFormatter().format(new Date()));
             }, name);
         }
 
@@ -221,7 +225,9 @@ public class CHPreparationHandler {
         }
     }
 
-    private PrepareContractionHierarchies createCHPreparation(GraphHopperStorage ghStorage, CHConfig chConfig) {
+// ORS-GH MOD START change visibility private-> protected
+    protected PrepareContractionHierarchies createCHPreparation(GraphHopperStorage ghStorage, CHConfig chConfig) {
+// ORS-GH MOD END
         PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, chConfig);
         pch.setParams(pMap);
         return pch;

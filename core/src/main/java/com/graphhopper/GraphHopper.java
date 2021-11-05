@@ -1038,9 +1038,12 @@ public class GraphHopper {
         } else {
             prepareCH(closeEarly);
         }
-
-        // TODO ORS: insert Calt here
+// ORS-GH MOD START add post processing hook
+        postProcessingHook(closeEarly);
     }
+
+    protected void postProcessingHook(boolean closeEarly) {}
+// ORS-GH MOD END
 
     protected void importPublicTransit() {
     }
