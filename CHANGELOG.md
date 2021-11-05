@@ -1,5 +1,6 @@
 ### 5.0 [not yet released]
 
+- fixed handling of too large mtb:scale tags
 - use GraphHopper#setGraphHopperLocation before calling load() instead of GraphHopper#load(graphHopperLocation) (#2437)
 - barrier nodes at junctions are now ignored (#2433)
 - AbstractFlagEncoder#handleNodeTags was replaced by AbstractFlagEncoder#isBarrier (#2434)
