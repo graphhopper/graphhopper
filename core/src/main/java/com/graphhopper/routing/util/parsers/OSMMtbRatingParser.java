@@ -34,7 +34,6 @@ import java.util.List;
  * @see <a href=""http://www.singletrail-skala.de/>Single Trail Scale</a>
  */
 public class OSMMtbRatingParser implements TagParser {
-
     private final IntEncodedValue mtbRatingEnc;
 
     public OSMMtbRatingParser() {
@@ -59,10 +58,8 @@ public class OSMMtbRatingParser implements TagParser {
             } catch (Exception ex) {
             }
         }
-
-        if (rating != 0)
+        if (rating > 0 && rating < 8)
             mtbRatingEnc.setInt(false, edgeFlags, rating);
-
         return edgeFlags;
     }
 }
