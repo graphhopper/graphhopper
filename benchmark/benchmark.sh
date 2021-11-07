@@ -81,7 +81,6 @@ measurement.lm=true \
 "measurement.lm.active_counts=[4,8,12,16]" \
 measurement.lm.edge_based=true \
 "graph.flag_encoders=car|turn_costs=true" \
-"graph.encoded_values=road_class,road_class_link,road_environment,max_speed,road_access,surface,smoothness,max_width,max_height,max_weight,max_axle_load,max_length,hazmat,hazmat_tunnel,hazmat_water,toll,track_type,hike_rating,horse_rating,lanes" \
 graph.location=${TMP_DIR}measurement-big-gh \
 prepare.min_network_size=10000 \
 measurement.json=true \
