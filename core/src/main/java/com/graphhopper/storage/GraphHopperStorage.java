@@ -21,10 +21,7 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.Constants;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +30,7 @@ import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 /**
@@ -270,10 +268,14 @@ public final class GraphHopperStorage implements Graph, Closeable {
 
             checkIfConfiguredAndLoadedWeightingsCompatible();
 
-            chEntries.forEach(cg -> {
-                if (!cg.chStore.loadExisting())
-                    throw new IllegalStateException("Cannot load " + cg);
-            });
+            List<Callable<String>> callables = chEntries.stream().map(c -> (Callable<String>) () -> {
+                        if (!c.chStore.loadExisting())
+                            throw new IllegalStateException("Cannot load " + c);
+                        return c.chConfig.getName();
+                    })
+                    .collect(Collectors.toList());
+            int numThreads = Math.max(1, Math.min(4, callables.size()));
+            GHUtility.runConcurrently(callables, numThreads);
 
             return true;
         }

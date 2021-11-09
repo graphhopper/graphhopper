@@ -21,11 +21,11 @@ import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.LMProfile;
-import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Landmark;
@@ -38,8 +38,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
 import java.util.*;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -60,7 +59,6 @@ public class LMPreparationHandler {
     private int minNodes = -1;
     private final List<String> lmSuggestionsLocations = new ArrayList<>(5);
     private int preparationThreads;
-    private ExecutorService threadPool;
     private boolean logDetails = false;
     private AreaIndex<SplitArea> areaIndex;
 
@@ -117,7 +115,6 @@ public class LMPreparationHandler {
      */
     public void setPreparationThreads(int preparationThreads) {
         this.preparationThreads = preparationThreads;
-        this.threadPool = java.util.concurrent.Executors.newFixedThreadPool(preparationThreads);
     }
 
     public LMPreparationHandler setLMProfiles(LMProfile... lmProfiles) {
@@ -167,7 +164,6 @@ public class LMPreparationHandler {
      * This method calculates the landmark data for all profiles (optionally in parallel) or if already existent loads it.
      *
      * @return true if the preparation data for at least one profile was calculated.
-     * @see CHPreparationHandler#prepare(StorableProperties, boolean) for a very similar method
      */
     public boolean loadOrDoWork(List<LMConfig> lmConfigs, GraphHopperStorage ghStorage, LocationIndex locationIndex, final boolean closeEarly) {
         createPreparations(lmConfigs, ghStorage, locationIndex);
@@ -177,40 +173,38 @@ public class LMPreparationHandler {
             if (areaIndex != null)
                 prep.setAreaIndex(areaIndex);
         }
-        StorableProperties properties = ghStorage.getProperties();
-        ExecutorCompletionService<String> completionService = new ExecutorCompletionService<>(threadPool);
-        int counter = 0;
-        final AtomicBoolean prepared = new AtomicBoolean(false);
-        for (final PrepareLandmarks plm : preparations) {
-            counter++;
-            final int tmpCounter = counter;
-            final String name = plm.getLMConfig().getName();
-            completionService.submit(() -> {
-                if (plm.loadExisting())
-                    return;
+        // load existing preparations and keep track of those that could not be loaded
+        List<PrepareLandmarks> preparationsToPrepare = Collections.synchronizedList(new ArrayList<>());
+        List<Callable<String>> loadingCallables = preparations.stream()
+                .map(preparation -> (Callable<String>) () -> {
+                    if (!preparation.loadExisting())
+                        preparationsToPrepare.add(preparation);
+                    return preparation.getLMConfig().getName();
+                })
+                .collect(Collectors.toList());
+        GHUtility.runConcurrently(loadingCallables, preparationThreads);
 
-                LOGGER.info(tmpCounter + "/" + getPreparations().size() + " calling LM prepare.doWork for " + plm.getLMConfig().getWeighting() + " ... (" + getMemInfo() + ")");
+        // prepare the preparations that could not be loaded
+        StorableProperties properties = ghStorage.getProperties();
+        final AtomicBoolean prepared = new AtomicBoolean(false);
+        List<Callable<String>> prepareCallables = new ArrayList<>();
+        for (int i = 0; i < preparationsToPrepare.size(); i++) {
+            PrepareLandmarks prepare = preparationsToPrepare.get(i);
+            final int count = i + 1;
+            final String name = prepare.getLMConfig().getName();
+            prepareCallables.add(() -> {
+                LOGGER.info(count + "/" + preparationsToPrepare.size() + " calling LM prepare.doWork for " + prepare.getLMConfig().getWeighting() + " ... (" + getMemInfo() + ")");
                 prepared.set(true);
                 Thread.currentThread().setName(name);
-                plm.doWork();
-                if (closeEarly) {
-                    plm.close();
-                }
+                prepare.doWork();
+                if (closeEarly)
+                    prepare.close();
                 LOGGER.info("LM {} finished {}", name, getMemInfo());
                 properties.put(Landmark.PREPARE + "date." + name, createFormatter().format(new Date()));
-            }, name);
+                return name;
+            });
         }
-
-        threadPool.shutdown();
-
-        try {
-            for (int i = 0; i < preparations.size(); i++) {
-                completionService.take().get();
-            }
-        } catch (Exception e) {
-            threadPool.shutdownNow();
-            throw new RuntimeException(e);
-        }
+        GHUtility.runConcurrently(prepareCallables, preparationThreads);
         LOGGER.info("Finished LM preparation, {}", getMemInfo());
         return prepared.get();
     }
