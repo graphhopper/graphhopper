@@ -27,6 +27,10 @@ import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;
 import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.Country;
+import com.graphhopper.routing.ev.Distance;
+import com.graphhopper.routing.ev.GeometryEncodedValue;
+import com.graphhopper.routing.ev.Distance;
+import com.graphhopper.routing.ev.GeometryEncodedValue;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.routing.util.EncodingManager;
@@ -279,7 +283,18 @@ public class OSMReader {
         if (config.getMaxWayPointDistance() > 0 && pointList.size() > 2)
             simplifyAlgo.simplify(pointList);
 
-        double towerNodeDistance = distCalc.calcDistance(pointList);
+        IntsRef edgeFlags = (IntsRef) way.getTags().get("gh:flags");
+        if (edgeFlags.isEmpty())
+            return;
+
+        // update edge flags to potentially block access in case there are node tags
+        if (!nodeTags.isEmpty())
+            edgeFlags = encodingManager.handleNodeTags(nodeTags, IntsRef.deepCopyOf(edgeFlags));
+
+        // todonow: how should we manage geometry encoded values / where do they come from, probably EncodingManager somehow?
+        //          here they are very similar to tag parsers. (handleWayTags -> handleGeometry)
+        GeometryEncodedValue distanceEnc = Distance.create();
+        double towerNodeDistance = distanceEnc.calculateDecimal(false, edgeFlags, pointList);
 
         if (towerNodeDistance < 0.001) {
             // As investigation shows often two paths should have crossed via one identical point
@@ -301,15 +316,11 @@ public class OSMReader {
             towerNodeDistance = maxDistance;
         }
 
-        IntsRef edgeFlags = (IntsRef) way.getTags().get("gh:flags");
-        if (edgeFlags.isEmpty())
-            return;
-
-        // update edge flags to potentially block access in case there are node tags
-        if (!nodeTags.isEmpty())
-            edgeFlags = encodingManager.handleNodeTags(nodeTags, IntsRef.deepCopyOf(edgeFlags));
-
-        EdgeIteratorState iter = ghStorage.edge(fromIndex, toIndex).setDistance(towerNodeDistance).setFlags(edgeFlags);
+        EdgeIteratorState iter = ghStorage.edge(fromIndex, toIndex)
+                .set(distanceEnc, towerNodeDistance)
+                // todonow: we need this until we replace edge.getDistance() with edge.get(distanceEnc) of course
+                .setDistance(towerNodeDistance)
+                .setFlags(edgeFlags);
 
         // If the entire way is just the first and last point, do not waste space storing an empty way geometry
         if (pointList.size() > 2) {

@@ -209,7 +209,10 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
 
     @Override
     public double get(DecimalEncodedValue property) {
-        return property.getDecimal(reverse, edgeFlags);
+        if (property instanceof GeometryEncodedValue)
+            return ((GeometryEncodedValue) property).calculateDecimal(reverse, edgeFlags, pointList);
+        else
+            return property.getDecimal(reverse, edgeFlags);
     }
 
     @Override
