@@ -47,9 +47,14 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
     public PrepareLandmarks(Directory dir, GraphHopperStorage graph, LMConfig lmConfig, int landmarks) {
         this.graph = graph;
         this.lmConfig = lmConfig;
-        lms = new LandmarkStorage(graph, dir, lmConfig, landmarks);
+// ORS-GH MOD START abstract to a method to allow for overriding
+        lms = createLandmarkStorage(dir, graph, lmConfig, landmarks);
     }
 
+    public LandmarkStorage createLandmarkStorage (Directory dir, GraphHopperStorage graph, LMConfig lmConfig, int landmarks) {
+        return new LandmarkStorage(graph, dir, lmConfig, landmarks);
+    }
+// ORS-GH MOD END
     /**
      * @see LandmarkStorage#setLandmarkSuggestions(List)
      */

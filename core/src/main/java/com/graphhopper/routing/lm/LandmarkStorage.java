@@ -68,9 +68,11 @@ public class LandmarkStorage {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LandmarkStorage.class);
     // This value is used to identify nodes where no subnetwork is associated
-    private static final int UNSET_SUBNETWORK = -1;
+// ORS-GH MOD START change access from private to protected
+    protected static final int UNSET_SUBNETWORK = -1;
     // This value should only be used if subnetwork is too small to be explicitly stored
-    private static final int UNCLEAR_SUBNETWORK = 0;
+    protected static final int UNCLEAR_SUBNETWORK = 0;
+// ORS-GH MOD END
     // one node has an associated landmark information ('one landmark row'): the forward and backward weight
     private long LM_ROW_LENGTH;
     private int landmarks;
@@ -301,7 +303,9 @@ public class LandmarkStorage {
             // ensure start node is reachable from both sides and no subnetwork is associated
             for (; index >= 0; index--) {
                 int nextStartNode = subnetworkIds.get(index);
-                if (subnetworks[nextStartNode] == UNSET_SUBNETWORK) {
+// ORS-GH MOD START use node index map
+                if (subnetworks[getIndex(nextStartNode)] == UNSET_SUBNETWORK) {
+// ORS-GH MOD END
                     if (logDetails) {
                         GHPoint p = createPoint(graph, nextStartNode);
                         LOGGER.info("start node: " + nextStartNode + " (" + p + ") subnetwork " + index + ", subnetwork size: " + subnetworkIds.size()
@@ -519,7 +523,9 @@ public class LandmarkStorage {
      * a node ID but the internal index of the landmark array.
      */
     int getFromWeight(int landmarkIndex, int node) {
-        int res = (int) landmarkWeightDA.getShort((long) node * LM_ROW_LENGTH + landmarkIndex * 4 + FROM_OFFSET)
+// ORS-GH MOD START use node index map
+        int res = (int) landmarkWeightDA.getShort((long) getIndex(node) * LM_ROW_LENGTH + landmarkIndex * 4 + FROM_OFFSET)
+// ORS-GH MOD END
                 & 0x0000FFFF;
         if (res == SHORT_INFINITY)
             // TODO can happen if endstanding oneway
@@ -536,7 +542,9 @@ public class LandmarkStorage {
      * @return the weight from the specified node to the landmark (specified *as index*)
      */
     int getToWeight(int landmarkIndex, int node) {
-        int res = (int) landmarkWeightDA.getShort((long) node * LM_ROW_LENGTH + landmarkIndex * 4 + TO_OFFSET)
+// ORS-GH MOD START use node index map
+        int res = (int) landmarkWeightDA.getShort((long) getIndex(node) * LM_ROW_LENGTH + landmarkIndex * 4 + TO_OFFSET)
+// ORS-GH MOD END
                 & 0x0000FFFF;
         if (res == SHORT_INFINITY)
             return SHORT_MAX;
@@ -547,7 +555,9 @@ public class LandmarkStorage {
     /**
      * @return false if the value capacity was reached and instead of the real value the SHORT_MAX was stored.
      */
-    final boolean setWeight(long pointer, double value) {
+// ORS-GH MOD START change access to protected
+    protected boolean setWeight(long pointer, double value) {
+// ORS-GH MOD END
         double tmpVal = value / factor;
         if (tmpVal > Integer.MAX_VALUE)
             throw new UnsupportedOperationException("Cannot store infinity explicitly, pointer=" + pointer + ", value=" + value + ", factor=" + factor);
@@ -574,9 +584,10 @@ public class LandmarkStorage {
         if (fromNode < 0 || toNode < 0)
             throw new IllegalStateException("from " + fromNode + " and to "
                     + toNode + " nodes have to be 0 or positive to init landmarks");
-
-        int subnetworkFrom = subnetworkStorage.getSubnetwork(fromNode);
-        int subnetworkTo = subnetworkStorage.getSubnetwork(toNode);
+// ORS-GH MOD START use node index map
+        int subnetworkFrom = subnetworkStorage.getSubnetwork(getIndex(fromNode));
+        int subnetworkTo = subnetworkStorage.getSubnetwork(getIndex(toNode));
+// ORS-GH MOD END
         if (subnetworkFrom <= UNCLEAR_SUBNETWORK || subnetworkTo <= UNCLEAR_SUBNETWORK)
             return false;
         if (subnetworkFrom != subnetworkTo) {
@@ -887,4 +898,11 @@ public class LandmarkStorage {
     static GHPoint createPoint(Graph graph, int nodeId) {
         return new GHPoint(graph.getNodeAccess().getLat(nodeId), graph.getNodeAccess().getLon(nodeId));
     }
+
+// ORS-GH MOD START add method allowing for node index mapping
+    // allow mapping of node indices
+    public int getIndex(int node) {
+        return node;
+    }
+// ORS-GH MOD END
 }

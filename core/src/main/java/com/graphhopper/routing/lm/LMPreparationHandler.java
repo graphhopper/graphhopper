@@ -27,7 +27,6 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.JsonFeatureCollection;
-import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Landmark;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,6 +65,12 @@ public class LMPreparationHandler {
     private boolean logDetails = false;
     private AreaIndex<SplitArea> areaIndex;
 
+// ORS-GH MOD START facilitate overriding in subclasses
+    protected static String PREPARE = Landmark.PREPARE;
+    protected static String DISABLE = Landmark.DISABLE;
+    protected static String COUNT = Landmark.COUNT;
+// ORS-GH MOD END
+
     public LMPreparationHandler() {
         setPreparationThreads(1);
     }
@@ -76,14 +81,14 @@ public class LMPreparationHandler {
             throw new IllegalStateException("Use profiles_lm instead of prepare.lm.weightings, see #1922 and docs/core/profiles.md");
         }
 
-        setPreparationThreads(ghConfig.getInt(Parameters.Landmark.PREPARE + "threads", getPreparationThreads()));
+        setPreparationThreads(ghConfig.getInt(PREPARE + "threads", getPreparationThreads()));
         setLMProfiles(ghConfig.getLMProfiles());
 
-        landmarkCount = ghConfig.getInt(Parameters.Landmark.COUNT, landmarkCount);
-        logDetails = ghConfig.getBool(Landmark.PREPARE + "log_details", false);
-        minNodes = ghConfig.getInt(Landmark.PREPARE + "min_network_size", -1);
+        landmarkCount = ghConfig.getInt(COUNT, landmarkCount);
+        logDetails = ghConfig.getBool(PREPARE + "log_details", false);
+        minNodes = ghConfig.getInt(PREPARE + "min_network_size", -1);
 
-        for (String loc : ghConfig.getString(Landmark.PREPARE + "suggestions_location", "").split(",")) {
+        for (String loc : ghConfig.getString(PREPARE + "suggestions_location", "").split(",")) {
             if (!loc.trim().isEmpty())
                 lmSuggestionsLocations.add(loc.trim());
         }
@@ -91,7 +96,7 @@ public class LMPreparationHandler {
         if (!isEnabled())
             return;
 
-        String splitAreaLocation = ghConfig.getString(Landmark.PREPARE + "split_area_location", "");
+        String splitAreaLocation = ghConfig.getString(PREPARE + "split_area_location", "");
         JsonFeatureCollection landmarkSplittingFeatureCollection = loadLandmarkSplittingFeatureCollection(splitAreaLocation);
         if (landmarkSplittingFeatureCollection != null && !landmarkSplittingFeatureCollection.getFeatures().isEmpty()) {
             List<SplitArea> splitAreas = landmarkSplittingFeatureCollection.getFeatures().stream()
@@ -195,7 +200,7 @@ public class LMPreparationHandler {
             }
         }
         throw new IllegalArgumentException("Cannot find LM preparation for the requested profile: '" + profile + "'" +
-                "\nYou can try disabling LM using " + Parameters.Landmark.DISABLE + "=true" +
+                "\nYou can try disabling LM using " + DISABLE + "=true" +
                 "\navailable LM profiles: " + profileNames);
     }
 
@@ -231,7 +236,7 @@ public class LMPreparationHandler {
                     plm.close();
                 }
                 LOGGER.info("LM {} finished {}", name, getMemInfo());
-                properties.put(Landmark.PREPARE + "date." + name, createFormatter().format(new Date()));
+                properties.put(PREPARE + "date." + name, createFormatter().format(new Date()));
             }, name);
         }
 
@@ -270,6 +275,12 @@ public class LMPreparationHandler {
             }
         }
 
+// ORS-GH MOD START abstract to a method in order to facilitate overriding
+        createPreparationsInternal(ghStorage, lmSuggestions);
+    }
+
+    protected void createPreparationsInternal(GraphHopperStorage ghStorage, List<LandmarkSuggestion> lmSuggestions) {
+// ORS-GH MOD END
         for (LMConfig lmConfig : lmConfigs) {
             Double maximumWeight = maximumWeights.get(lmConfig.getName());
             if (maximumWeight == null)
@@ -301,4 +312,18 @@ public class LMPreparationHandler {
             return null;
         }
     }
+
+// ORS-GH MOD START add methods
+    public Map<String, Double> getMaximumWeights() {
+        return maximumWeights;
+    }
+
+    public int getMinNodes() {
+        return minNodes;
+    }
+
+    public boolean getLogDetails() {
+        return logDetails;
+    }
+// ORS-GH MOD END
 }
