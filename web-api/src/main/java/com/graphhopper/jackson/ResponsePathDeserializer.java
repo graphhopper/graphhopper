@@ -266,10 +266,10 @@ public class ResponsePathDeserializer extends JsonDeserializer<ResponsePath> {
             else if (exClass.equals(ConnectionNotFoundException.class.getName())) {
                 errors.add(new ConnectionNotFoundException(exMessage, toMap(objectMapper, error)));
             } else if (exClass.equals(PointNotFoundException.class.getName())) {
-                int pointIndex = error.get("point_index").asInt();
+                int pointIndex = error.get(PointNotFoundException.INDEX_KEY).asInt();
                 errors.add(new PointNotFoundException(exMessage, pointIndex));
             } else if (exClass.equals(PointOutOfBoundsException.class.getName())) {
-                int pointIndex = error.get("point_index").asInt();
+                int pointIndex = error.get(PointNotFoundException.INDEX_KEY).asInt();
                 errors.add(new PointOutOfBoundsException(exMessage, pointIndex));
             } else if (exClass.isEmpty())
                 errors.add(new DetailedRuntimeException(exMessage, toMap(objectMapper, error)));
