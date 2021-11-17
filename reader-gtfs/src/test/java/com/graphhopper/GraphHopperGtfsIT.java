@@ -349,7 +349,36 @@ public class GraphHopperGtfsIT {
         GHResponse response = ptRouter.route(ghRequest);
         assertEquals(time(1, 20), response.getAll().get(0).getTime(), "Expected travel time == scheduled travel time");
         assertEquals(time(7, 20), response.getAll().get(1).getTime(), "Expected travel time == scheduled travel time");
-        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(903);
+        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(904);
+    }
+
+    @Test
+    public void testBlockRouteTypes() {
+        Request ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("AMV"),
+                new GHStationLocation("FUR_CREEK_RES")),
+                LocalDateTime.of(2007, 1, 7, 9, 0).atZone(zoneId).toInstant());
+        GHResponse response = ptRouter.route(ghRequest);
+        ResponsePath mondayTrip = response.getBest();
+        assertEquals("AB", ((Trip.PtLeg) mondayTrip.getLegs().get(1)).route_id);
+
+        ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("BEATTY_AIRPORT"),
+                new GHStationLocation("FUR_CREEK_RES")),
+                LocalDateTime.of(2007, 1, 7, 9, 0).atZone(zoneId).toInstant());
+        ghRequest.setBlockedRouteTypes(4);
+        response = ptRouter.route(ghRequest);
+        mondayTrip = response.getBest();
+        assertNotEquals("AB", ((Trip.PtLeg) mondayTrip.getLegs().get(0)).route_id);
+
+        ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("AMV"),
+                new GHStationLocation("FUR_CREEK_RES")),
+                LocalDateTime.of(2007, 1, 7, 9, 0).atZone(zoneId).toInstant());
+        ghRequest.setBlockedRouteTypes(4);
+        response = ptRouter.route(ghRequest);
+        mondayTrip = response.getBest();
+        assertNotEquals("AB", ((Trip.PtLeg) mondayTrip.getLegs().get(1)).route_id);
     }
 
     @Test

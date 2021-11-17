@@ -1,5 +1,5 @@
 route_id,agency_id,route_short_name,route_long_name,route_desc,route_type,route_url,route_color,route_text_color
-AB,DTA,10,Airport - Bullfrog,,3,,,
+AB,DTA,10,Airport - Bullfrog,,2,,,
 BFC,DTA,20,Bullfrog - Furnace Creek Resort,,3,,,
 STBA,DTA,30,Stagecoach - Airport Shuttle,,3,,,
 CITY,DTA,40,City,,3,,,
