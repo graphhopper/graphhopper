@@ -20,6 +20,8 @@ package com.graphhopper.util.exceptions;
 import java.util.Collections;
 
 public class MaximumNodesExceededException extends DetailedIllegalArgumentException {
+
+    private static final long serialVersionUID = 1L;
     
     public static final String NODES_KEY = "max_visited_nodes";
 

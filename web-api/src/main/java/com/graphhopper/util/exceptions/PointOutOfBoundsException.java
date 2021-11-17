@@ -6,6 +6,9 @@ package com.graphhopper.util.exceptions;
  * @author Robin Boldt
  */
 public class PointOutOfBoundsException extends PointNotFoundException {
+
+    private static final long serialVersionUID = 1L;
+    
     public PointOutOfBoundsException(String var1, int pointIndex) {
         super(var1, pointIndex);
     }

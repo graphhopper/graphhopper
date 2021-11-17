@@ -26,6 +26,8 @@ import java.util.Collections;
  * @author Robin Boldt
  */
 public class PointNotFoundException extends DetailedIllegalArgumentException {
+
+    private static final long serialVersionUID = 1L;
     
     public static final String INDEX_KEY = "point_index";
 
