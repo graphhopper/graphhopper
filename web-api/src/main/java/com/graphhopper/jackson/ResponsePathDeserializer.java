@@ -265,6 +265,9 @@ public class ResponsePathDeserializer extends JsonDeserializer<ResponsePath> {
                 errors.add(new DetailedIllegalArgumentException(exMessage, toMap(objectMapper, error)));
             else if (exClass.equals(ConnectionNotFoundException.class.getName())) {
                 errors.add(new ConnectionNotFoundException(exMessage, toMap(objectMapper, error)));
+            } else if (exClass.equals(MaximumNodesExceededException.class.getName())) {
+                int maxVisitedNodes = error.get(MaximumNodesExceededException.NODES_KEY).asInt();
+                errors.add(new MaximumNodesExceededException(exMessage, maxVisitedNodes));
             } else if (exClass.equals(PointNotFoundException.class.getName())) {
                 int pointIndex = error.get(PointNotFoundException.INDEX_KEY).asInt();
                 errors.add(new PointNotFoundException(exMessage, pointIndex));
