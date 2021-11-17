@@ -24,7 +24,6 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.Helper;
@@ -44,7 +43,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.LongToIntFunction;
 import java.util.function.Predicate;
 
@@ -72,7 +70,7 @@ public class WaySegmentParser {
     private static final Logger LOGGER = LoggerFactory.getLogger(WaySegmentParser.class);
 
     private final ElevationProvider eleProvider;
-    private final Function<ReaderWay, EncodingManager.AcceptWay> wayFilter;
+    private final Predicate<ReaderWay> wayFilter;
     private final Predicate<ReaderNode> splitNodeFilter;
     private final WayPreprocessor wayPreprocessor;
     private final Consumer<ReaderRelation> relationPreprocessor;
@@ -84,7 +82,7 @@ public class WaySegmentParser {
     private Date timestamp;
 
     private WaySegmentParser(PointAccess nodeAccess, Directory directory, ElevationProvider eleProvider,
-                             Function<ReaderWay, EncodingManager.AcceptWay> wayFilter, Predicate<ReaderNode> splitNodeFilter, WayPreprocessor wayPreprocessor,
+                             Predicate<ReaderWay> wayFilter, Predicate<ReaderNode> splitNodeFilter, WayPreprocessor wayPreprocessor,
                              Consumer<ReaderRelation> relationPreprocessor, RelationProcessor relationProcessor,
                              EdgeHandler edgeHandler, int workerThreads) {
         this.eleProvider = eleProvider;
@@ -156,7 +154,7 @@ public class WaySegmentParser {
                 LOGGER.info("pass1 - processed ways: " + nf(wayCounter) + ", accepted ways: " + nf(acceptedWays) +
                         ", way nodes: " + nf(nodeData.getNodeCount()) + ", " + Helper.getMemInfo());
 
-            if (!wayFilter.apply(way).hasAccepted())
+            if (!wayFilter.test(way))
                 return;
             acceptedWays++;
 
@@ -249,13 +247,12 @@ public class WaySegmentParser {
             if (++wayCounter % 10_000_000 == 0)
                 LOGGER.info("pass2 - processed ways: " + nf(wayCounter) + ", " + Helper.getMemInfo());
 
-            EncodingManager.AcceptWay acceptWay = wayFilter.apply(way);
-            if (!acceptWay.hasAccepted())
+            if (!wayFilter.test(way))
                 return;
             List<SegmentNode> segment = new ArrayList<>(way.getNodes().size());
             for (LongCursor node : way.getNodes())
                 segment.add(new SegmentNode(node.value, nodeData.getId(node.value)));
-            wayPreprocessor.preprocessWay(getPoint(segment.get(0).id), getPoint(segment.get(segment.size() - 1).id), way, acceptWay);
+            wayPreprocessor.preprocessWay(getPoint(segment.get(0).id), getPoint(segment.get(segment.size() - 1).id), way);
             splitWayAtJunctionsAndEmptySections(segment, way);
         }
 
@@ -418,13 +415,12 @@ public class WaySegmentParser {
     }
 
     public static class Builder {
-        private static final EncodingManager.AcceptWay DO_ACCEPT_WAY = new AcceptAll();
         private final PointAccess nodeAccess;
         private Directory directory = new RAMDirectory();
         private ElevationProvider elevationProvider = ElevationProvider.NOOP;
-        private Function<ReaderWay, EncodingManager.AcceptWay> wayFilter = way -> DO_ACCEPT_WAY;
+        private Predicate<ReaderWay> wayFilter = way -> true;
         private Predicate<ReaderNode> splitNodeFilter = node -> false;
-        private WayPreprocessor wayPreprocessor = (first, last, way, acceptWay) -> {
+        private WayPreprocessor wayPreprocessor = (first, last, way) -> {
         };
         private Consumer<ReaderRelation> relationPreprocessor = relation -> {
         };
@@ -461,7 +457,7 @@ public class WaySegmentParser {
         /**
          * @param wayFilter return true for OSM ways that should be considered and false otherwise
          */
-        public Builder setWayFilter(Function<ReaderWay, EncodingManager.AcceptWay> wayFilter) {
+        public Builder setWayFilter(Predicate<ReaderWay> wayFilter) {
             this.wayFilter = wayFilter;
             return this;
         }
@@ -567,29 +563,6 @@ public class WaySegmentParser {
     }
 
     public interface WayPreprocessor {
-        void preprocessWay(GHPoint first, GHPoint last, ReaderWay way, EncodingManager.AcceptWay acceptWay);
-    }
-
-    private static class AcceptAll extends EncodingManager.AcceptWay {
-
-        @Override
-        public EncodingManager.Access get(String key) {
-            return EncodingManager.Access.WAY;
-        }
-
-        @Override
-        public boolean isEmpty() {
-            return false;
-        }
-
-        @Override
-        public boolean hasAccepted() {
-            return true;
-        }
-
-        @Override
-        public boolean isFerry() {
-            return false;
-        }
+        void preprocessWay(GHPoint first, GHPoint last, ReaderWay way);
     }
 }

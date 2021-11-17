@@ -62,8 +62,6 @@ import static java.util.Collections.emptyList;
 public class OSMReader {
     private static final Logger LOGGER = LoggerFactory.getLogger(OSMReader.class);
 
-    private static final EncodingManager.AcceptWay DO_NOT_ACCEPT_WAY = new EncodingManager.AcceptWay();
-
     private final OSMReaderConfig config;
     private final GraphHopperStorage ghStorage;
     private final NodeAccess nodeAccess;
@@ -174,18 +172,16 @@ public class OSMReader {
      * This method is called for each way during the first and second pass of the {@link WaySegmentParser}. All OSM
      * ways that are not accepted here and all nodes that are not referenced by any such way will be ignored.
      */
-    protected EncodingManager.AcceptWay acceptWay(ReaderWay item) {
+    protected boolean acceptWay(ReaderWay item) {
         // ignore broken geometry
         if (item.getNodes().size() < 2)
-            return DO_NOT_ACCEPT_WAY;
+            return false;
 
         // ignore multipolygon geometry
         if (!item.hasTags())
-            return DO_NOT_ACCEPT_WAY;
+            return false;
 
-        EncodingManager.AcceptWay acceptWay = new EncodingManager.AcceptWay();
-        encodingManager.acceptWay(item, acceptWay);
-        return acceptWay;
+        return encodingManager.acceptWay(item, new EncodingManager.AcceptWay());
     }
 
     /**
@@ -348,9 +344,10 @@ public class OSMReader {
                     + ", difference: " + (edgeDistance - geometryDistance));
     }
 
-    private void preprocessWay(GHPoint first, GHPoint last, ReaderWay way, EncodingManager.AcceptWay acceptWay) {
+    private void preprocessWay(GHPoint first, GHPoint last, ReaderWay way) {
         setArtificialWayTags(first, last, way);
-        if (!acceptWay.hasAccepted())
+        EncodingManager.AcceptWay acceptWay = new EncodingManager.AcceptWay();
+        if (!encodingManager.acceptWay(way, acceptWay))
             throw new IllegalStateException("unaccepted way: " + way.getId());
 
         IntsRef relationFlags = getRelFlagsMap(way.getId());

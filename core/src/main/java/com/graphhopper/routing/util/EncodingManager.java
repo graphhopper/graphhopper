@@ -483,7 +483,7 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public static class AcceptWay {
-        private final Map<String, Access> accessMap;
+        private Map<String, Access> accessMap;
         boolean hasAccepted = false;
         boolean isFerry = false;
 
@@ -491,7 +491,7 @@ public class EncodingManager implements EncodedValueLookup {
             this.accessMap = new HashMap<>(5);
         }
 
-        public Access get(String key) {
+        private Access get(String key) {
             Access res = accessMap.get(key);
             if (res == null)
                 throw new IllegalArgumentException("Couldn't fetch Access value for encoder key " + key);
