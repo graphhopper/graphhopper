@@ -1,6 +1,9 @@
 ### 5.0 [not yet released]
 
-- fixed handling of too large mtb:scale tags
+- removed the ferry argument of TagParser#handleWayTags. ferry ways can be recognized using the reader way (#2467)
+- removed RoadEnvironment.SHUTTLE_TRAIN. this is covered by `FERRY` (#2466)
+- create edge flags per edge, not per way. increases custom_area precision -> (#2457)
+- fixed handling of too large mtb:scale tags (#2458)
 - use GraphHopper#setGraphHopperLocation before calling load() instead of GraphHopper#load(graphHopperLocation) (#2437)
 - barrier nodes at junctions are now ignored (#2433)
 - AbstractFlagEncoder#handleNodeTags was replaced by AbstractFlagEncoder#isBarrier (#2434)

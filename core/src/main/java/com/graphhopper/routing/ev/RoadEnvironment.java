@@ -20,12 +20,12 @@ package com.graphhopper.routing.ev;
 import com.graphhopper.util.Helper;
 
 /**
- * This enum the road environment of an edge. Currently road, ferry, tunnel, ford, bridge and shuttle_train. All edges
+ * This enum the road environment of an edge. Currently road, ferry, tunnel, ford, bridge. All edges
  * that do not fit get "other" as value.
  */
 public enum RoadEnvironment {
     OTHER("other"), ROAD("road"), FERRY("ferry"),
-    TUNNEL("tunnel"), BRIDGE("bridge"), FORD("ford"), SHUTTLE_TRAIN("shuttle_train");
+    TUNNEL("tunnel"), BRIDGE("bridge"), FORD("ford");
 
     public static final String KEY = "road_environment";
 

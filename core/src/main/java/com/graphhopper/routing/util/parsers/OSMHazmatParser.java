@@ -23,7 +23,7 @@ public class OSMHazmatParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
         if (readerWay.hasTag("hazmat", "no")) {
             hazEnc.setEnum(false, edgeFlags, Hazmat.NO);
         }
