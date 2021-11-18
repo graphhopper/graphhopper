@@ -32,5 +32,5 @@ public interface TagParser {
 
     void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue);
 
-    IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags);
+    IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags);
 }

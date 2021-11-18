@@ -45,7 +45,7 @@ public class OSMHikeRatingParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
         String scale = readerWay.getTag("sac_scale");
         int rating = 0;
         if (scale != null) {

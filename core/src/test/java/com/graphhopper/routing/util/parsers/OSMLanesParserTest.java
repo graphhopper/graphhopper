@@ -42,7 +42,7 @@ class OSMLanesParserTest {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef intsRef = em.createEdgeFlags();
         readerWay.setTag("lanes", "4");
-        parser.handleWayTags(intsRef, readerWay, false, em.createRelationFlags());
+        parser.handleWayTags(intsRef, readerWay, em.createRelationFlags());
         Assertions.assertEquals(4, em.getIntEncodedValue(Lanes.KEY).getInt(false, intsRef));
     }
 
@@ -50,7 +50,7 @@ class OSMLanesParserTest {
     void notTagged() {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef intsRef = em.createEdgeFlags();
-        parser.handleWayTags(intsRef, readerWay, false, em.createRelationFlags());
+        parser.handleWayTags(intsRef, readerWay, em.createRelationFlags());
         Assertions.assertEquals(1, em.getIntEncodedValue(Lanes.KEY).getInt(false, intsRef));
     }
 
