@@ -469,8 +469,7 @@ public class EncodingManager implements EncodedValueLookup {
     /**
      * Determine whether a way is routable for one of the added encoders.
      *
-     * @return if at least one encoder consumes the specified way. Additionally the specified acceptWay is changed
-     * to provide more details.
+     * @return if at least one encoder consumes the specified way
      */
     public boolean acceptWay(ReaderWay way) {
         return edgeEncoders.stream().anyMatch(encoder -> !encoder.getAccess(way).equals(Access.CAN_SKIP));
@@ -515,9 +514,6 @@ public class EncodingManager implements EncodedValueLookup {
      * @param relationFlags The preprocessed relation flags is used to influence the way properties.
      */
     public IntsRef handleWayTags(ReaderWay way, IntsRef relationFlags) {
-//        EncodingManager.AcceptWay acceptWay = new EncodingManager.AcceptWay();
-//        if (!acceptWay(way, acceptWay))
-//            throw new IllegalStateException("unaccepted way: " + way.getId());
         IntsRef edgeFlags = createEdgeFlags();
         for (TagParser parser : edgeTagParsers) {
             parser.handleWayTags(edgeFlags, way, relationFlags);
