@@ -1,5 +1,6 @@
 ### 5.0 [not yet released]
 
+- removed RoadEnvironment.SHUTTLE_TRAIN. this is covered by `FERRY` (#2466)
 - create edge flags per edge, not per way. increases custom_area precision -> (#2457)
 - fixed handling of too large mtb:scale tags (#2458)
 - use GraphHopper#setGraphHopperLocation before calling load() instead of GraphHopper#load(graphHopperLocation) (#2437)
