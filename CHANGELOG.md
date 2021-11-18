@@ -1,6 +1,6 @@
 ### 5.0 [not yet released]
 
-- removed RoadEnvironment.SHUTTLE_TRAIN. this is covered by `FERRY` (# ???)
+- removed RoadEnvironment.SHUTTLE_TRAIN. this is covered by `FERRY` (#2466)
 - fixed handling of too large mtb:scale tags
 - use GraphHopper#setGraphHopperLocation before calling load() instead of GraphHopper#load(graphHopperLocation) (#2437)
 - barrier nodes at junctions are now ignored (#2433)
