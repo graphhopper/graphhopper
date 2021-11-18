@@ -200,8 +200,9 @@ public class OSMReader {
         double firstLat = pointList.getLat(0), firstLon = pointList.getLon(0);
         double lastLat = pointList.getLat(pointList.size() - 1), lastLon = pointList.getLon(pointList.size() - 1);
         GHPoint estimatedCenter = null;
-        // todonow: we have to remove the tags again, because there can be multiple edges per way, but what if this was
-        //          not an artificial tag?
+        // we have to remove existing artificial tags, because we modify the way even though there can be multiple edges
+        // per way. sooner or later we should separate the artificial ('edge') tags from the way, see discussion here:
+        // https://github.com/graphhopper/graphhopper/pull/2457#discussion_r751155404
         way.removeTag("estimated_distance");
         if (!Double.isNaN(firstLat) && !Double.isNaN(firstLon) && !Double.isNaN(lastLat) && !Double.isNaN(lastLon)) {
             double estimatedDist = distCalc.calcDist(firstLat, firstLon, lastLat, lastLon);
@@ -255,8 +256,7 @@ public class OSMReader {
      * @param fromIndex a unique integer id for the first node of this segment
      * @param toIndex   a unique integer id for the last node of this segment
      * @param pointList coordinates of this segment
-     * @param way       the OSM way this segment was taken from. it is the same object that was passed to
-     *                  {@link #setArtificialWayTags} earlier
+     * @param way       the OSM way this segment was taken from
      * @param nodeTags  node tags of this segment if it is an artificial edge, empty otherwise
      */
     protected void addEdge(int fromIndex, int toIndex, PointList pointList, ReaderWay way, Map<String, Object> nodeTags) {
