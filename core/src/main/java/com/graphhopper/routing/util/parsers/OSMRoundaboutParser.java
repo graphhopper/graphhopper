@@ -44,9 +44,7 @@ public class OSMRoundaboutParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
-        if (ferry)
-            return edgeFlags;
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
         if (isRoundabout)
             roundaboutEnc.setBool(false, edgeFlags, true);
