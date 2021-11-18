@@ -229,7 +229,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access accept) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+        EncodingManager.Access accept = getAccess(way);
         if (accept.canSkip())
             return edgeFlags;
 

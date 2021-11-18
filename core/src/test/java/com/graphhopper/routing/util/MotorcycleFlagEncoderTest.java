@@ -129,7 +129,7 @@ public class MotorcycleFlagEncoderTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
         assertTrue(encoder.getAccess(way).isWay());
-        IntsRef edgeFlags = encoder.handleWayTags(em.createEdgeFlags(), way, EncodingManager.Access.WAY);
+        IntsRef edgeFlags = encoder.handleWayTags(em.createEdgeFlags(), way);
         assertEquals(20, encoder.avgSpeedEnc.getDecimal(false, edgeFlags), .1);
         assertEquals(20, encoder.avgSpeedEnc.getDecimal(true, edgeFlags), .1);
     }
@@ -168,7 +168,7 @@ public class MotorcycleFlagEncoderTest {
         way.setTag("highway", "primary");
         way.setTag("estimated_distance", estimatedDistance);
         assertTrue(encoder.getAccess(way).isWay());
-        IntsRef flags = encoder.handleWayTags(em.createEdgeFlags(), way, EncodingManager.Access.WAY);
+        IntsRef flags = encoder.handleWayTags(em.createEdgeFlags(), way);
         edge.setFlags(flags);
         encoder.applyWayTags(way, edge);
         DecimalEncodedValue curvatureEnc = encoder.getDecimalEncodedValue(EncodingManager.getKey(encoder, "curvature"));
