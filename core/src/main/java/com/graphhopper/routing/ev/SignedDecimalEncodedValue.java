@@ -71,8 +71,9 @@ public final class SignedDecimalEncodedValue extends SignedIntEncodedValue imple
             }
             throw new IllegalArgumentException("Value cannot be infinite if useMaximumAsInfinity is false");
         }
-        if (defaultIsInfinity && value == 0)
-            throw new IllegalArgumentException("0 cannot be explicitly used when defaultIsInfinity is true. Set via Double.POSITIVE_INFINITY instead.");
+        // TODO NOW
+//        if (defaultIsInfinity && value == 0)
+//            throw new IllegalArgumentException("0 cannot be explicitly used when defaultIsInfinity is true. Set via Double.POSITIVE_INFINITY instead.");
         if (Double.isNaN(value))
             throw new IllegalArgumentException("NaN value for " + getName() + " not allowed!");
 
