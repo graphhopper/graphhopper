@@ -220,10 +220,22 @@ public class OSMReader {
         way.removeTag("country");
         way.removeTag("country_rule");
         way.removeTag("custom_areas");
-
-        List<CustomArea> customAreas = areaIndex == null
-                ? emptyList()
-                : areaIndex.query(pointList.getLat(pointList.size() / 2), pointList.getLon(pointList.size() / 2));
+        
+        List<CustomArea> customAreas;
+        if (areaIndex != null) {
+            double middleLat;
+            double middleLon;
+            if (pointList.size() > 2) {
+                middleLat = pointList.getLat(pointList.size() / 2);
+                middleLon = pointList.getLon(pointList.size() / 2);
+            } else {
+                middleLat = (firstLat + lastLat) / 2;
+                middleLon = (firstLon + lastLon) / 2;
+            }
+            customAreas = areaIndex.query(middleLat, middleLon);
+        } else {
+            customAreas = emptyList();
+        }
 
         // special handling for countries: since they are built-in with GraphHopper they are always fed to the EncodingManager
         Country country = Country.MISSING;
