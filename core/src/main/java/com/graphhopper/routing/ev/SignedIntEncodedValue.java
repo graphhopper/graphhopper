@@ -40,8 +40,9 @@ public class SignedIntEncodedValue implements IntEncodedValue {
     private int bwdDataIndex;
     private final boolean storeTwoDirections;
     final int bits;
+    final boolean negateReverseDirection;
     final int minValue;
-    int maxValue;
+    final int maxValue;
     int fwdShift = -1;
     int bwdShift = -1;
     int fwdMask;
@@ -54,17 +55,29 @@ public class SignedIntEncodedValue implements IntEncodedValue {
      * @param storeTwoDirections if true this EncodedValue can store different values for the forward and backward
      *                           direction.
      */
-    public SignedIntEncodedValue(String name, int bits, int minValue, boolean storeTwoDirections) {
+    public SignedIntEncodedValue(String name, int bits, boolean storeTwoDirections) {
+        this(name, bits, 0, false, storeTwoDirections);
+    }
+
+    public SignedIntEncodedValue(String name, int bits, int minValue, boolean negateReverseDirection, boolean storeTwoDirections) {
         if (!EncodingManager.isValidEncodedValue(name))
             throw new IllegalArgumentException("EncodedValue name wasn't valid: " + name + ". Use lower case letters, underscore and numbers only.");
         if (bits <= 0)
             throw new IllegalArgumentException(name + ": bits cannot be zero or negative");
         if (bits > 31)
             throw new IllegalArgumentException(name + ": at the moment the number of reserved bits cannot be more than 31");
-        this.bits = bits;
+        if (negateReverseDirection && (minValue != 0 || storeTwoDirections))
+            throw new IllegalArgumentException(name + ": negating value for reverse direction only works for minValue == 0 " +
+                    "and !storeTwoDirections but was minValue=" + minValue + ", storeTwoDirections=" + storeTwoDirections);
+
         this.name = name;
         this.storeTwoDirections = storeTwoDirections;
-        this.minValue = minValue;
+        // negateReverseDirection: store the negative value only once but for that we need the same range as maxValue for negative values
+        this.minValue = negateReverseDirection ? -((1 << bits) - 1) : minValue;
+        // negateReverseDirection: we need twice the range
+        this.bits = negateReverseDirection ? bits + 1 : bits;
+        this.negateReverseDirection = negateReverseDirection;
+        this.maxValue = (1 << bits) - 1 + minValue;
     }
 
     @Override
@@ -83,7 +96,6 @@ public class SignedIntEncodedValue implements IntEncodedValue {
             this.bwdShift = init.shift;
         }
 
-        this.maxValue = (1 << bits) - 1 + minValue;
         return storeTwoDirections ? 2 * bits : bits;
     }
 
@@ -107,7 +119,12 @@ public class SignedIntEncodedValue implements IntEncodedValue {
     }
 
     final void uncheckedSet(boolean reverse, IntsRef ref, int value) {
-        if (reverse && !storeTwoDirections)
+        if (negateReverseDirection) {
+            if (reverse) {
+                reverse = false;
+                value = -value;
+            }
+        } else if (reverse && !storeTwoDirections)
             throw new IllegalArgumentException(getName() + ": value for reverse direction would overwrite forward direction. Enable storeTwoDirections for this EncodedValue or don't use setReverse");
 
         value -= minValue;
@@ -132,6 +149,8 @@ public class SignedIntEncodedValue implements IntEncodedValue {
             return minValue + (flags & bwdMask) >>> bwdShift;
         } else {
             flags = ref.ints[fwdDataIndex + ref.offset];
+            if (negateReverseDirection && reverse)
+                return -(minValue + (flags & fwdMask) >>> fwdShift);
             return minValue + (flags & fwdMask) >>> fwdShift;
         }
     }
@@ -154,7 +173,8 @@ public class SignedIntEncodedValue implements IntEncodedValue {
     @Override
     public final String toString() {
         return getName() + "|version=" + getVersion() + "|bits=" + bits + "|min_value=" + minValue
-                + "|index=" + fwdDataIndex + "|shift=" + fwdShift + "|store_both_directions=" + storeTwoDirections;
+                + "|negate_reverse_direction" + negateReverseDirection + "|index=" + fwdDataIndex
+                + "|shift=" + fwdShift + "|store_both_directions=" + storeTwoDirections;
     }
 
     @Override
@@ -171,6 +191,7 @@ public class SignedIntEncodedValue implements IntEncodedValue {
                 bwdShift == that.bwdShift &&
                 fwdMask == that.fwdMask &&
                 bwdMask == that.bwdMask &&
+                negateReverseDirection == that.negateReverseDirection &&
                 storeTwoDirections == that.storeTwoDirections &&
                 Objects.equals(name, that.name);
     }
@@ -184,6 +205,7 @@ public class SignedIntEncodedValue implements IntEncodedValue {
     public int getVersion() {
         int val = Helper.staticHashCode(name);
         val = 31 * val + (storeTwoDirections ? 1231 : 1237);
+        val = 31 * val + (negateReverseDirection ? 13 : 17);
         return staticHashCode(val, fwdDataIndex, bwdDataIndex, bits, minValue, maxValue, fwdShift, bwdShift, fwdMask, bwdMask);
     }
 

@@ -32,7 +32,7 @@ public final class EnumEncodedValue<E extends Enum> extends SignedIntEncodedValu
     }
 
     public EnumEncodedValue(String name, Class<E> enumType, boolean storeTwoDirections) {
-        super(name, 32 - Integer.numberOfLeadingZeros(enumType.getEnumConstants().length - 1), 0, storeTwoDirections);
+        super(name, 32 - Integer.numberOfLeadingZeros(enumType.getEnumConstants().length - 1), storeTwoDirections);
         arr = enumType.getEnumConstants();
     }
 

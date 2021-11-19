@@ -38,7 +38,7 @@ public class SignedDecimalEncodedValueTest {
 
     @Test
     public void setMaxToInfinity() {
-        SignedDecimalEncodedValue testEnc = new SignedDecimalEncodedValue("test", 3, 0, 1, false, false, true);
+        SignedDecimalEncodedValue testEnc = new SignedDecimalEncodedValue("test", 3, 0, 1, false, false, false, true);
         testEnc.init(new EncodedValue.InitializerConfig());
         IntsRef intsRef = new IntsRef(1);
         assertEquals(0, testEnc.getDecimal(false, intsRef), .1);
@@ -49,24 +49,35 @@ public class SignedDecimalEncodedValueTest {
 
     @Test
     public void testNegative() {
-        SignedDecimalEncodedValue testEnc = new SignedDecimalEncodedValue("test", 3, -6, 0.1, false, false, true);
+        SignedDecimalEncodedValue testEnc = new SignedDecimalEncodedValue("test", 3, -6, 0.1, false, false, false, true);
         testEnc.init(new EncodedValue.InitializerConfig());
         IntsRef intsRef = new IntsRef(1);
         testEnc.setDecimal(false, intsRef, -5.5);
         assertEquals(-5.5, testEnc.getDecimal(false, intsRef), .1);
+        assertEquals(-5.5, testEnc.getDecimal(true, intsRef), .1);
 
         Exception e = assertThrows(IllegalArgumentException.class, () -> {
-            new SignedDecimalEncodedValue("test", 3, -6, 0.11, false, false, true);
+            new SignedDecimalEncodedValue("test", 3, -6, 0.11, false, false, false, true);
         });
         assertTrue(e.getMessage().contains("minValue -6.0 is not a multiple of the specified factor"), e.getMessage());
     }
 
     @Test
     public void testInfinityWithMinValue() {
-        SignedDecimalEncodedValue testEnc = new SignedDecimalEncodedValue("test", 3, -6, 0.1, false, false, true);
+        SignedDecimalEncodedValue testEnc = new SignedDecimalEncodedValue("test", 3, -6, 0.1, false, false, false, true);
         testEnc.init(new EncodedValue.InitializerConfig());
         IntsRef intsRef = new IntsRef(1);
         testEnc.setDecimal(false, intsRef, Double.POSITIVE_INFINITY);
         assertEquals(Double.POSITIVE_INFINITY, testEnc.getDecimal(false, intsRef), .1);
+    }
+
+    @Test
+    public void testNegateReverse() {
+        SignedDecimalEncodedValue testEnc = new SignedDecimalEncodedValue("test", 4, 0, 0.5, false, true, false, false);
+        testEnc.init(new EncodedValue.InitializerConfig());
+        IntsRef intsRef = new IntsRef(1);
+        testEnc.setDecimal(false, intsRef, 5.5);
+        assertEquals(5.5, testEnc.getDecimal(false, intsRef), .1);
+        assertEquals(-5.5, testEnc.getDecimal(true, intsRef), .1);
     }
 }

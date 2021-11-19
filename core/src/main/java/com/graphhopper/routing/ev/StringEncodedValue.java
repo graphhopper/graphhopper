@@ -26,7 +26,7 @@ public final class StringEncodedValue extends SignedIntEncodedValue {
     }
 
     public StringEncodedValue(String name, int expectedValueCount, boolean storeTwoDirections) {
-        super(name, 32 - Integer.numberOfLeadingZeros(expectedValueCount), 0, storeTwoDirections);
+        super(name, 32 - Integer.numberOfLeadingZeros(expectedValueCount), storeTwoDirections);
 
         this.maxValues = roundUp(expectedValueCount);
         this.values = new ArrayList<>(maxValues);
@@ -34,7 +34,7 @@ public final class StringEncodedValue extends SignedIntEncodedValue {
     }
 
     public StringEncodedValue(String name, int bits, List<String> values, boolean storeTwoDirections) {
-        super(name, bits, 0, storeTwoDirections);
+        super(name, bits, storeTwoDirections);
 
         this.maxValues = (1 << bits) - 1;
         if (values.size() > maxValues)

@@ -29,7 +29,7 @@ public final class SimpleBooleanEncodedValue extends SignedIntEncodedValue imple
     }
 
     public SimpleBooleanEncodedValue(String name, boolean storeBothDirections) {
-        super(name, 1, 0, storeBothDirections);
+        super(name, 1, storeBothDirections);
     }
 
     @Override

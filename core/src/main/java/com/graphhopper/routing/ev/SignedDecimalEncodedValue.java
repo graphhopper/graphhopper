@@ -40,12 +40,13 @@ public final class SignedDecimalEncodedValue extends SignedIntEncodedValue imple
      * @param storeTwoDirections true if forward and backward direction of the edge should get two independent values.
      */
     public SignedDecimalEncodedValue(String name, int bits, double factor, boolean defaultIsInfinity, boolean storeTwoDirections) {
-        this(name, bits, 0, factor, defaultIsInfinity, storeTwoDirections, false);
+        this(name, bits, 0, factor, defaultIsInfinity, false, storeTwoDirections, false);
     }
 
-    public SignedDecimalEncodedValue(String name, int bits, double minValue, double factor, boolean defaultIsInfinity, boolean storeTwoDirections, boolean useMaximumAsInfinity) {
-        super(name, bits, (int) Math.round(minValue / factor), storeTwoDirections);
-        if (super.minValue * factor != minValue)
+    public SignedDecimalEncodedValue(String name, int bits, double minValue, double factor, boolean defaultIsInfinity,
+                                     boolean negateReverseDirection, boolean storeTwoDirections, boolean useMaximumAsInfinity) {
+        super(name, bits, (int) Math.round(minValue / factor), negateReverseDirection, storeTwoDirections);
+        if (!negateReverseDirection && super.minValue * factor != minValue)
             throw new IllegalArgumentException("minValue " + minValue + " is not a multiple of the specified factor " + factor);
         this.factor = factor;
         this.defaultIsInfinity = defaultIsInfinity;
