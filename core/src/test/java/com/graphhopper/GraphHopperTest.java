@@ -1040,7 +1040,7 @@ public class GraphHopperTest {
         if (!withTunnelInterpolation) {
             hopper.getEncodingManagerBuilder().add(new OSMRoadEnvironmentParser() {
                 @Override
-                public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
+                public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
                     // do not change RoadEnvironment to avoid triggering tunnel interpolation
                     return edgeFlags;
                 }

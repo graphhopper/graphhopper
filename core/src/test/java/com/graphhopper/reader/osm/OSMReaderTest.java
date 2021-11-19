@@ -29,6 +29,7 @@ import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
+import com.graphhopper.routing.util.parsers.CountryParser;
 import com.graphhopper.routing.util.parsers.OSMMaxHeightParser;
 import com.graphhopper.routing.util.parsers.OSMMaxWeightParser;
 import com.graphhopper.routing.util.parsers.OSMMaxWidthParser;
@@ -904,6 +905,26 @@ public class OSMReaderTest {
         assertEquals(RoadAccess.DESTINATION, edgeBerlin.get(roadAccessEnc));
         // for Paris there is no such rule, we just get the default RoadAccess.YES
         assertEquals(RoadAccess.YES, edgeParis.get(roadAccessEnc));
+    }
+
+    @Test
+    public void testCurvedWayAlongBorder() throws IOException {
+        // see https://discuss.graphhopper.com/t/country-of-way-is-wrong-on-road-near-border-with-curvature/6908/2
+        EncodingManager em = EncodingManager.start()
+                .add(new CarFlagEncoder())
+                .add(new CountryParser())
+                .build();
+        EnumEncodedValue<Country> countryEnc = em.getEnumEncodedValue(Country.KEY, Country.class);
+        GraphHopperStorage graph = new GraphBuilder(em).build();
+        OSMReader reader = new OSMReader(graph, new OSMReaderConfig());
+        reader.setCountryRuleFactory(new CountryRuleFactory());
+        reader.setAreaIndex(createCountryIndex());
+        reader.setFile(new File(getClass().getResource("test-osm12.xml").getFile()));
+        reader.readGraph();
+        assertEquals(1, graph.getEdges());
+        AllEdgesIterator iter = graph.getAllEdges();
+        iter.next();
+        assertEquals(Country.BGR, iter.get(countryEnc));
     }
 
     private AreaIndex<CustomArea> createCountryIndex() {

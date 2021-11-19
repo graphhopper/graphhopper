@@ -21,7 +21,6 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadAccess;
-import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TransportationMode;
@@ -56,12 +55,12 @@ class OSMRoadAccessParserTest {
                 return RoadAccess.DESTINATION;
             }
         });
-        parser.handleWayTags(e1.getFlags(), way, false, relFlags);
+        parser.handleWayTags(e1.getFlags(), way, relFlags);
         assertEquals(RoadAccess.DESTINATION, e1.get(roadAccessEnc));
 
         // if there is no country rule we get the default value
         way.removeTag("country_rule");
-        parser.handleWayTags(e2.getFlags(), way, false, relFlags);
+        parser.handleWayTags(e2.getFlags(), way, relFlags);
         assertEquals(RoadAccess.YES, e2.get(roadAccessEnc));
     }
 

@@ -207,7 +207,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             EncodingManager.Access accept = EncodingManager.Access.CAN_SKIP;
 
             if (way.hasTag("route", ferries)) {
-                // if bike is NOT explicitly tagged allow bike but only if foot is not specified
+                // if bike is NOT explicitly tagged allow bike but only if foot is not specified either
                 String bikeTag = way.getTag("bicycle");
                 if (bikeTag == null && !way.hasTag("foot") || intendedValues.contains(bikeTag))
                     accept = EncodingManager.Access.FERRY;
