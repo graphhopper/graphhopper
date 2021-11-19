@@ -203,11 +203,8 @@ public class OSMReader {
         // per way. sooner or later we should separate the artificial ('edge') tags from the way, see discussion here:
         // https://github.com/graphhopper/graphhopper/pull/2457#discussion_r751155404
         way.removeTag("estimated_distance");
-        if (!Double.isNaN(firstLat) && !Double.isNaN(firstLon) && !Double.isNaN(lastLat) && !Double.isNaN(lastLon)) {
-            double estimatedDist = distCalc.calcDist(firstLat, firstLon, lastLat, lastLon);
-            // Add artificial tag for the estimated distance
-            way.setTag("estimated_distance", estimatedDist);
-        }
+        double estimatedDist = distCalc.calcDist(firstLat, firstLon, lastLat, lastLon);
+        way.setTag("estimated_distance", estimatedDist);
 
         way.removeTag("duration:seconds");
         if (way.getTag("duration") != null) {
@@ -224,17 +221,9 @@ public class OSMReader {
         way.removeTag("country_rule");
         way.removeTag("custom_areas");
 
-        List<CustomArea> customAreas;
-        if (areaIndex != null) {
-            double middleLat = pointList.getLat(pointList.size() / 2), middleLon = pointList.getLon(pointList.size() / 2);
-            if (!Double.isNaN(middleLat) && !Double.isNaN(middleLon)) {
-                customAreas = areaIndex.query(middleLat, middleLon);
-            } else {
-                customAreas = emptyList();
-            }
-        } else {
-            customAreas = emptyList();
-        }
+        List<CustomArea> customAreas = areaIndex == null
+                ? emptyList()
+                : areaIndex.query(pointList.getLat(pointList.size() / 2), pointList.getLon(pointList.size() / 2));
 
         // special handling for countries: since they are built-in with GraphHopper they are always fed to the EncodingManager
         Country country = Country.MISSING;
