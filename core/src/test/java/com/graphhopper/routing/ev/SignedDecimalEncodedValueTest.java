@@ -26,10 +26,9 @@ public class SignedDecimalEncodedValueTest {
         testEnc.init(new EncodedValue.InitializerConfig());
         assertTrue(Double.isInfinite(testEnc.getDecimal(false, intsRef)));
 
-        Exception e = assertThrows(IllegalArgumentException.class, () -> {
-            testEnc.setDecimal(false, intsRef, 0);
-        });
-        assertTrue(e.getMessage().contains("0 cannot be explicitly used when defaultIsInfinity is true"), e.getMessage());
+        // set the default which maps to infinity (see TODO NOW)
+        testEnc.setDecimal(false, intsRef, 0);
+        assertTrue(Double.isInfinite(testEnc.getDecimal(false, intsRef)));
 
         assertTrue(Double.MAX_VALUE < testEnc.getDecimal(false, intsRef));
         testEnc.setDecimal(false, intsRef, Double.POSITIVE_INFINITY);
