@@ -44,7 +44,6 @@ import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.*;
-import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
@@ -893,19 +892,9 @@ public class GraphHopper {
 
         if (lmPreparationHandler.isEnabled())
             loadOrPrepareLM(closeEarly);
+
         if (chPreparationHandler.isEnabled())
-            chPreparationHandler.createPreparations(ghStorage);
-        boolean prepareCH = true;
-        for (CHProfile profile : chPreparationHandler.getCHProfiles()) {
-            if (!getCHProfileVersion(profile.getProfile()).isEmpty()) {
-                // one of the CH preparations already exists, we won't prepare more
-                prepareCH = false;
-                if (!getCHProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
-                    throw new IllegalArgumentException("CH preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
-            }
-        }
-        if (prepareCH)
-            prepareCH(closeEarly);
+            loadOrPrepareCH(closeEarly);
     }
 
     protected void importPublicTransit() {
@@ -1015,25 +1004,33 @@ public class GraphHopper {
         ghStorage.getProperties().put("graph.profiles.lm." + profile + ".version", version);
     }
 
-    protected void prepareCH(boolean closeEarly) {
-        boolean chEnabled = chPreparationHandler.isEnabled();
-        if (chEnabled) {
-            ensureWriteAccess();
-
-            if (closeEarly) {
-                locationIndex.close();
-                boolean includesCustomProfiles = getProfiles().stream().anyMatch(p -> p instanceof CustomProfile);
-                if (!includesCustomProfiles)
-                    // when there are custom profiles we must not close way geometry or StringIndex, because
-                    // they might be needed to evaluate the custom weighting during CH preparation
-                    ghStorage.flushAndCloseEarly();
+    protected void loadOrPrepareCH(boolean closeEarly) {
+        boolean prepareCH = true;
+        for (CHProfile profile : chPreparationHandler.getCHProfiles())
+            if (!getCHProfileVersion(profile.getProfile()).isEmpty()) {
+                // one of the CH preparations already exists, we won't prepare more
+                prepareCH = false;
+                if (!getCHProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
+                    throw new IllegalArgumentException("CH preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
             }
-
-            ghStorage.freeze();
-            chPreparationHandler.prepare(ghStorage.getProperties(), closeEarly);
-            for (CHProfile profile : chPreparationHandler.getCHProfiles())
-                setCHProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
+        chPreparationHandler.createPreparations(ghStorage);
+        if (!prepareCH)
+            // we don't prepare more CH preparations, but there is not really anything to 'load' either, because the CH
+            // graphs were loaded with GraphHopperStorage already (without any real reason)
+            return;
+        ensureWriteAccess();
+        if (closeEarly) {
+            locationIndex.close();
+            boolean includesCustomProfiles = getProfiles().stream().anyMatch(p -> p instanceof CustomProfile);
+            if (!includesCustomProfiles)
+                // when there are custom profiles we must not close way geometry or StringIndex, because
+                // they might be needed to evaluate the custom weighting during CH preparation
+                ghStorage.flushAndCloseEarly();
         }
+        ghStorage.freeze();
+        chPreparationHandler.prepare(ghStorage.getProperties(), closeEarly);
+        for (CHProfile profile : chPreparationHandler.getCHProfiles())
+            setCHProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
     }
 
     /**
