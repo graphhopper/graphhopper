@@ -567,7 +567,6 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
 
     @Test
     public void testCalcPriority() {
-        // we want to test the priority assuming the way is accessible, even when it is not
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "tertiary");
         ReaderRelation osmRel = new ReaderRelation(1);
