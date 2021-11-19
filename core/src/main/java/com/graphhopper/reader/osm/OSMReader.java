@@ -199,7 +199,6 @@ public class OSMReader {
         // Estimate length of ways containing a route tag e.g. for ferry speed calculation
         double firstLat = pointList.getLat(0), firstLon = pointList.getLon(0);
         double lastLat = pointList.getLat(pointList.size() - 1), lastLon = pointList.getLon(pointList.size() - 1);
-        GHPoint estimatedCenter = null;
         // we have to remove existing artificial tags, because we modify the way even though there can be multiple edges
         // per way. sooner or later we should separate the artificial ('edge') tags from the way, see discussion here:
         // https://github.com/graphhopper/graphhopper/pull/2457#discussion_r751155404
@@ -208,7 +207,6 @@ public class OSMReader {
             double estimatedDist = distCalc.calcDist(firstLat, firstLon, lastLat, lastLon);
             // Add artificial tag for the estimated distance
             way.setTag("estimated_distance", estimatedDist);
-            estimatedCenter = new GHPoint((firstLat + lastLat) / 2, (firstLon + lastLon) / 2);
         }
 
         way.removeTag("duration:seconds");
@@ -225,9 +223,19 @@ public class OSMReader {
         way.removeTag("country");
         way.removeTag("country_rule");
         way.removeTag("custom_areas");
-        List<CustomArea> customAreas = estimatedCenter == null || areaIndex == null
-                ? emptyList()
-                : areaIndex.query(estimatedCenter.lat, estimatedCenter.lon);
+
+        List<CustomArea> customAreas;
+        if (areaIndex != null) {
+            double middleLat = pointList.getLat(pointList.size() / 2), middleLon = pointList.getLon(pointList.size() / 2);
+            if (!Double.isNaN(middleLat) && !Double.isNaN(middleLon)) {
+                customAreas = areaIndex.query(middleLat, middleLon);
+            } else {
+                customAreas = emptyList();
+            }
+        } else {
+            customAreas = emptyList();
+        }
+
         // special handling for countries: since they are built-in with GraphHopper they are always fed to the EncodingManager
         Country country = Country.MISSING;
         for (CustomArea customArea : customAreas) {
