@@ -230,11 +230,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
-        EncodingManager.Access accept = getAccess(way);
-        if (accept.canSkip())
+        EncodingManager.Access access = getAccess(way);
+        if (access.canSkip())
             return edgeFlags;
 
-        if (!accept.isFerry()) {
+        if (!access.isFerry()) {
             // get assumed speed from highway type
             double speed = getSpeed(way);
             speed = applyMaxSpeed(way, speed);
