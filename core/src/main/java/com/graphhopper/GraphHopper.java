@@ -893,18 +893,15 @@ public class GraphHopper {
 
         if (lmPreparationHandler.isEnabled())
             loadOrPrepareLM(closeEarly);
-
         if (chPreparationHandler.isEnabled())
             chPreparationHandler.createPreparations(ghStorage);
-        if (isCHPrepared()) {
-            // check loaded profiles
-            for (CHProfile profile : chPreparationHandler.getCHProfiles()) {
-                if (!getCHProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
-                    throw new IllegalArgumentException("CH preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
-            }
-        } else {
-            prepareCH(closeEarly);
+        for (CHProfile profile : chPreparationHandler.getCHProfiles()) {
+            if (!getCHProfileVersion(profile.getProfile()).isEmpty()
+                    && !getCHProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
+                throw new IllegalArgumentException("CH preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
         }
+        if (!isCHPrepared())
+            prepareCH(closeEarly);
     }
 
     protected void importPublicTransit() {
@@ -1019,12 +1016,6 @@ public class GraphHopper {
     }
 
     protected void prepareCH(boolean closeEarly) {
-        for (CHProfile profile : chPreparationHandler.getCHProfiles()) {
-            if (!getCHProfileVersion(profile.getProfile()).isEmpty()
-                    && !getCHProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
-                throw new IllegalArgumentException("CH preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
-        }
-
         boolean chEnabled = chPreparationHandler.isEnabled();
         if (chEnabled) {
             ensureWriteAccess();
@@ -1050,11 +1041,10 @@ public class GraphHopper {
      * For landmarks it is required to always call this method: either it creates the landmark data or it loads it.
      */
     protected void loadOrPrepareLM(boolean closeEarly) {
-        for (LMProfile profile : lmPreparationHandler.getLMProfiles()) {
+        for (LMProfile profile : lmPreparationHandler.getLMProfiles())
             if (!getLMProfileVersion(profile.getProfile()).isEmpty()
                     && !getLMProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
                 throw new IllegalArgumentException("LM preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
-        }
         ensureWriteAccess();
         ghStorage.freeze();
         List<LMConfig> lmConfigs = createLMConfigs(lmPreparationHandler.getLMProfiles());
