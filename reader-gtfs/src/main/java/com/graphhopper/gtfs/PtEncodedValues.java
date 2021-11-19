@@ -43,10 +43,10 @@ public class PtEncodedValues {
 
     public static EncodingManager.Builder createAndAddEncodedValues(EncodingManager.Builder builder) {
         builder.add(new SimpleBooleanEncodedValue("is_forward_pt_edge", true));
-        builder.add(new UnsignedIntEncodedValue("pt_validity_id", 20, false));
-        builder.add(new UnsignedIntEncodedValue("pt_transfers", 1, false));
+        builder.add(new SignedIntEncodedValue("pt_validity_id", 20, 0, false));
+        builder.add(new SignedIntEncodedValue("pt_transfers", 1, 0, false));
         builder.add(new EnumEncodedValue<>("pt_edge_type", GtfsStorage.EdgeType.class));
-        builder.add(new UnsignedIntEncodedValue("pt_time", 17, false));
+        builder.add(new SignedIntEncodedValue("pt_time", 17, 0, false));
         return builder;
     }
 

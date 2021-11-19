@@ -9,7 +9,7 @@ public class IntEncodedValueTest {
 
     @Test
     public void testInvalidReverseAccess() {
-        IntEncodedValue prop = new UnsignedIntEncodedValue("test", 10, false);
+        IntEncodedValue prop = new SignedIntEncodedValue("test", 10, 0, false);
         prop.init(new EncodedValue.InitializerConfig());
         try {
             prop.setInt(true, new IntsRef(1), -1);
@@ -20,7 +20,7 @@ public class IntEncodedValueTest {
 
     @Test
     public void testDirectedValue() {
-        IntEncodedValue prop = new UnsignedIntEncodedValue("test", 10, true);
+        IntEncodedValue prop = new SignedIntEncodedValue("test", 10, 0, true);
         prop.init(new EncodedValue.InitializerConfig());
         IntsRef ref = new IntsRef(1);
         prop.setInt(false, ref, 10);
@@ -31,7 +31,7 @@ public class IntEncodedValueTest {
 
     @Test
     public void multiIntsUsage() {
-        IntEncodedValue prop = new UnsignedIntEncodedValue("test", 31, true);
+        IntEncodedValue prop = new SignedIntEncodedValue("test", 31, 0, true);
         prop.init(new EncodedValue.InitializerConfig());
         IntsRef ref = new IntsRef(2);
         prop.setInt(false, ref, 10);
@@ -42,7 +42,7 @@ public class IntEncodedValueTest {
 
     @Test
     public void padding() {
-        IntEncodedValue prop = new UnsignedIntEncodedValue("test", 30, true);
+        IntEncodedValue prop = new SignedIntEncodedValue("test", 30, 0, true);
         prop.init(new EncodedValue.InitializerConfig());
         IntsRef ref = new IntsRef(2);
         prop.setInt(false, ref, 10);
@@ -53,22 +53,33 @@ public class IntEncodedValueTest {
 
     @Test
     public void testSignedInt() {
-        IntEncodedValue prop = new UnsignedIntEncodedValue("test", 31, false);
-        BooleanEncodedValue sign = new SimpleBooleanEncodedValue("a");
+        IntEncodedValue prop = new SignedIntEncodedValue("test", 31, -5, false);
         EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
         prop.init(config);
-        sign.init(config);
 
         IntsRef ref = new IntsRef(1);
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            prop.setInt(false, ref, Integer.MAX_VALUE);
+        });
+        assertTrue(exception.getMessage().contains("test value too large for encoding"), exception.getMessage());
 
-        prop.setInt(false, ref, Integer.MAX_VALUE);
-        sign.setBool(false, ref, true);
-        assertEquals(Integer.MAX_VALUE, prop.getInt(false, ref));
-        assertTrue(sign.getBool(false, ref));
+        prop.setInt(false, ref, -5);
+        assertEquals(-5, prop.getInt(false, ref));
+    }
 
+    @Test
+    public void testSignedInt2() {
+        IntEncodedValue prop = new SignedIntEncodedValue("test", 31, 0, false);
+        EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
+        prop.init(config);
+
+        IntsRef ref = new IntsRef(1);
         prop.setInt(false, ref, Integer.MAX_VALUE);
-        sign.setBool(false, ref, false);
         assertEquals(Integer.MAX_VALUE, prop.getInt(false, ref));
-        assertFalse(sign.getBool(false, ref));
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            prop.setInt(false, ref, -5);
+        });
+        assertTrue(exception.getMessage().contains("test value too small for encoding"), exception.getMessage());
     }
 }

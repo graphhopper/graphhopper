@@ -22,14 +22,14 @@ import com.graphhopper.storage.IntsRef;
 /**
  * This class implements a simple boolean storage via an UnsignedIntEncodedValue with 1 bit.
  */
-public final class SimpleBooleanEncodedValue extends UnsignedIntEncodedValue implements BooleanEncodedValue {
+public final class SimpleBooleanEncodedValue extends SignedIntEncodedValue implements BooleanEncodedValue {
 
     public SimpleBooleanEncodedValue(String name) {
         this(name, false);
     }
 
     public SimpleBooleanEncodedValue(String name, boolean storeBothDirections) {
-        super(name, 1, storeBothDirections);
+        super(name, 1, 0, storeBothDirections);
     }
 
     @Override

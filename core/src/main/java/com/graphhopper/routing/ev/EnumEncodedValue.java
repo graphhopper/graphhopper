@@ -24,7 +24,7 @@ import java.util.Arrays;
 /**
  * This class allows to store distinct values via an enum. I.e. it stores just the indices
  */
-public final class EnumEncodedValue<E extends Enum> extends UnsignedIntEncodedValue {
+public final class EnumEncodedValue<E extends Enum> extends SignedIntEncodedValue {
     private final E[] arr;
 
     public EnumEncodedValue(String name, Class<E> enumType) {
@@ -32,7 +32,7 @@ public final class EnumEncodedValue<E extends Enum> extends UnsignedIntEncodedVa
     }
 
     public EnumEncodedValue(String name, Class<E> enumType, boolean storeTwoDirections) {
-        super(name, 32 - Integer.numberOfLeadingZeros(enumType.getEnumConstants().length - 1), storeTwoDirections);
+        super(name, 32 - Integer.numberOfLeadingZeros(enumType.getEnumConstants().length - 1), 0, storeTwoDirections);
         arr = enumType.getEnumConstants();
     }
 

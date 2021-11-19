@@ -29,7 +29,7 @@ import java.util.Objects;
  * Implementation of the IntEncodedValue via a limited number of bits and without a sign. It introduces handling
  * of "backward"- and "forward"-edge information.
  */
-public class UnsignedIntEncodedValue implements IntEncodedValue {
+public class SignedIntEncodedValue implements IntEncodedValue {
 
     private final String name;
 
@@ -40,6 +40,7 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
     private int bwdDataIndex;
     private final boolean storeTwoDirections;
     final int bits;
+    final int minValue;
     int maxValue;
     int fwdShift = -1;
     int bwdShift = -1;
@@ -53,7 +54,7 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
      * @param storeTwoDirections if true this EncodedValue can store different values for the forward and backward
      *                           direction.
      */
-    public UnsignedIntEncodedValue(String name, int bits, boolean storeTwoDirections) {
+    public SignedIntEncodedValue(String name, int bits, int minValue, boolean storeTwoDirections) {
         if (!EncodingManager.isValidEncodedValue(name))
             throw new IllegalArgumentException("EncodedValue name wasn't valid: " + name + ". Use lower case letters, underscore and numbers only.");
         if (bits <= 0)
@@ -63,6 +64,7 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
         this.bits = bits;
         this.name = name;
         this.storeTwoDirections = storeTwoDirections;
+        this.minValue = minValue;
     }
 
     @Override
@@ -81,21 +83,12 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
             this.bwdShift = init.shift;
         }
 
-        this.maxValue = (1 << bits) - 1;
+        this.maxValue = (1 << bits) - 1 + minValue;
         return storeTwoDirections ? 2 * bits : bits;
     }
 
     boolean isInitialized() {
         return fwdMask != 0;
-    }
-
-    private void checkValue(int value) {
-        if (!isInitialized())
-            throw new IllegalStateException("EncodedValue " + getName() + " not initialized");
-        if (value > maxValue)
-            throw new IllegalArgumentException(name + " value too large for encoding: " + value + ", maxValue:" + maxValue);
-        if (value < 0)
-            throw new IllegalArgumentException("negative value for " + name + " not allowed! " + value);
     }
 
     @Override
@@ -104,10 +97,20 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
         uncheckedSet(reverse, ref, value);
     }
 
+    private void checkValue(int value) {
+        if (!isInitialized())
+            throw new IllegalStateException("EncodedValue " + getName() + " not initialized");
+        if (value > maxValue)
+            throw new IllegalArgumentException(name + " value too large for encoding: " + value + ", maxValue:" + maxValue);
+        if (value < minValue)
+            throw new IllegalArgumentException(name + " value too small for encoding " + value + ", minValue:" + minValue);
+    }
+
     final void uncheckedSet(boolean reverse, IntsRef ref, int value) {
         if (reverse && !storeTwoDirections)
             throw new IllegalArgumentException(getName() + ": value for reverse direction would overwrite forward direction. Enable storeTwoDirections for this EncodedValue or don't use setReverse");
 
+        value -= minValue;
         if (reverse) {
             int flags = ref.ints[bwdDataIndex + ref.offset];
             // clear value bits
@@ -126,10 +129,10 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
         // if we do not store both directions ignore reverse == true for convenient reading
         if (storeTwoDirections && reverse) {
             flags = ref.ints[bwdDataIndex + ref.offset];
-            return (flags & bwdMask) >>> bwdShift;
+            return minValue + (flags & bwdMask) >>> bwdShift;
         } else {
             flags = ref.ints[fwdDataIndex + ref.offset];
-            return (flags & fwdMask) >>> fwdShift;
+            return minValue + (flags & fwdMask) >>> fwdShift;
         }
     }
 
@@ -150,18 +153,20 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
 
     @Override
     public final String toString() {
-        return getName() + "|version=" + getVersion() + "|bits=" + bits + "|index=" + fwdDataIndex + "|shift=" + fwdShift + "|store_both_directions=" + storeTwoDirections;
+        return getName() + "|version=" + getVersion() + "|bits=" + bits + "|min_value=" + minValue
+                + "|index=" + fwdDataIndex + "|shift=" + fwdShift + "|store_both_directions=" + storeTwoDirections;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        UnsignedIntEncodedValue that = (UnsignedIntEncodedValue) o;
+        SignedIntEncodedValue that = (SignedIntEncodedValue) o;
         return fwdDataIndex == that.fwdDataIndex &&
                 bwdDataIndex == that.bwdDataIndex &&
                 bits == that.bits &&
                 maxValue == that.maxValue &&
+                minValue == that.minValue &&
                 fwdShift == that.fwdShift &&
                 bwdShift == that.bwdShift &&
                 fwdMask == that.fwdMask &&
@@ -179,7 +184,7 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
     public int getVersion() {
         int val = Helper.staticHashCode(name);
         val = 31 * val + (storeTwoDirections ? 1231 : 1237);
-        return staticHashCode(val, fwdDataIndex, bwdDataIndex, bits, maxValue, fwdShift, bwdShift, fwdMask, bwdMask);
+        return staticHashCode(val, fwdDataIndex, bwdDataIndex, bits, minValue, maxValue, fwdShift, bwdShift, fwdMask, bwdMask);
     }
 
     /**

@@ -18,7 +18,7 @@ public class DefaultEncodedValueFactoryTest {
     @Test
     public void loadCarMaxSpeed() {
         EncodedValue enc = MaxSpeed.create();
-        UnsignedDecimalEncodedValue loadedEnc = (UnsignedDecimalEncodedValue) factory.create(enc.toString());
+        SignedDecimalEncodedValue loadedEnc = (SignedDecimalEncodedValue) factory.create(enc.toString());
         assertEquals(loadedEnc, enc);
     }
 
