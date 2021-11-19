@@ -895,12 +895,16 @@ public class GraphHopper {
             loadOrPrepareLM(closeEarly);
         if (chPreparationHandler.isEnabled())
             chPreparationHandler.createPreparations(ghStorage);
+        boolean prepareCH = true;
         for (CHProfile profile : chPreparationHandler.getCHProfiles()) {
-            if (!getCHProfileVersion(profile.getProfile()).isEmpty()
-                    && !getCHProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
-                throw new IllegalArgumentException("CH preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
+            if (!getCHProfileVersion(profile.getProfile()).isEmpty()) {
+                // one of the CH preparations already exists, we won't prepare more
+                prepareCH = false;
+                if (!getCHProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
+                    throw new IllegalArgumentException("CH preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
+            }
         }
-        if (!isCHPrepared())
+        if (prepareCH)
             prepareCH(closeEarly);
     }
 
@@ -995,10 +999,6 @@ public class GraphHopper {
         locationIndex = createLocationIndex(ghStorage.getDirectory());
     }
 
-    private boolean isCHPrepared() {
-        return "true".equals(ghStorage.getProperties().get(CH.PREPARE + "done"));
-    }
-
     private String getCHProfileVersion(String profile) {
         return ghStorage.getProperties().get("graph.profiles.ch." + profile + ".version");
     }
@@ -1031,7 +1031,6 @@ public class GraphHopper {
 
             ghStorage.freeze();
             chPreparationHandler.prepare(ghStorage.getProperties(), closeEarly);
-            ghStorage.getProperties().put(CH.PREPARE + "done", true);
             for (CHProfile profile : chPreparationHandler.getCHProfiles())
                 setCHProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
         }
