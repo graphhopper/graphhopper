@@ -42,10 +42,7 @@ public class OSMRoadClassParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
-        if (ferry)
-            return edgeFlags;
-
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
         String roadClassTag = readerWay.getTag("highway");
         if (roadClassTag == null)
             return edgeFlags;

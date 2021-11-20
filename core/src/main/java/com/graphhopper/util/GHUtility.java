@@ -39,6 +39,10 @@ import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -720,6 +724,20 @@ public class GHUtility {
                     .collect(Collectors.toList());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
+        }
+    }
+
+    public static void runConcurrently(List<Callable<String>> callables, int threads) {
+        ExecutorService executorService = Executors.newFixedThreadPool(threads);
+        ExecutorCompletionService<String> completionService = new ExecutorCompletionService<>(executorService);
+        callables.forEach(completionService::submit);
+        executorService.shutdown();
+        try {
+            for (int i = 0; i < callables.size(); i++)
+                completionService.take().get();
+        } catch (Exception e) {
+            executorService.shutdownNow();
+            throw new RuntimeException(e);
         }
     }
 

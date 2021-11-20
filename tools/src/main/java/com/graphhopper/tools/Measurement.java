@@ -121,9 +121,9 @@ public class Measurement {
 
         GraphHopper hopper = new GraphHopper() {
             @Override
-            protected void prepareCH(boolean closeEarly) {
+            protected void loadOrPrepareCH(boolean closeEarly) {
                 StopWatch sw = new StopWatch().start();
-                super.prepareCH(closeEarly);
+                super.loadOrPrepareCH(closeEarly);
                 // note that we measure the total time of all (possibly edge&node) CH preparations
                 put(Parameters.CH.PREPARE + "time", sw.stop().getMillis());
                 int edges = getGraphHopperStorage().getEdges();

@@ -30,11 +30,7 @@ import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.subnetwork.SubnetworkStorage;
 import com.graphhopper.routing.subnetwork.TarjanSCC;
 import com.graphhopper.routing.subnetwork.TarjanSCC.ConnectedComponents;
-import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.util.AreaIndex;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
@@ -140,7 +136,7 @@ public class LandmarkStorage {
         this.FROM_OFFSET = 0;
         this.TO_OFFSET = 2;
         this.landmarkIDs = new ArrayList<>();
-        this.subnetworkStorage = new SubnetworkStorage(dir, "landmarks_" + lmConfig.getName());
+        this.subnetworkStorage = new SubnetworkStorage(dir.create("landmarks_subnetwork_" + lmConfig.getName()));
     }
 
     /**

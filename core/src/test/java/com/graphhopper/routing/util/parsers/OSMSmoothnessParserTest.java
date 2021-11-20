@@ -30,11 +30,11 @@ public class OSMSmoothnessParserTest {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef intsRef = em.createEdgeFlags();
         readerWay.setTag("highway", "primary");
-        parser.handleWayTags(intsRef, readerWay, false, relFlags);
+        parser.handleWayTags(intsRef, readerWay, relFlags);
         assertEquals(Smoothness.MISSING, smoothnessEnc.getEnum(false, intsRef));
 
         readerWay.setTag("smoothness", "bad");
-        parser.handleWayTags(intsRef, readerWay, false, relFlags);
+        parser.handleWayTags(intsRef, readerWay, relFlags);
         assertEquals(Smoothness.BAD, smoothnessEnc.getEnum(false, intsRef));
         assertTrue(Smoothness.BAD.ordinal() < Smoothness.VERY_BAD.ordinal());
     }
