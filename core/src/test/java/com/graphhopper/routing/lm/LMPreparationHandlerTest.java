@@ -8,8 +8,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.GraphBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -42,7 +41,7 @@ public class LMPreparationHandlerTest {
                 new LMConfig("conf1", new FastestWeighting(car)),
                 new LMConfig("conf2", new ShortestWeighting(car))
         );
-        handler.createPreparations(lmConfigs, new GraphHopperStorage(new RAMDirectory(), em, false), null);
+        handler.createPreparations(lmConfigs, new GraphBuilder(em).build(), null);
         assertEquals(1, handler.getPreparations().get(0).getLandmarkStorage().getFactor(), .1);
         assertEquals(0.3, handler.getPreparations().get(1).getLandmarkStorage().getFactor(), .1);
     }

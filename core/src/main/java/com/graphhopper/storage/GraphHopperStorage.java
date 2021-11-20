@@ -41,7 +41,6 @@ import java.util.stream.Collectors;
  * <p>
  *
  * @author Peter Karich
- * @see GraphBuilder to create a (CH)Graph easier
  */
 public final class GraphHopperStorage implements Graph, Closeable {
     private static final Logger LOGGER = LoggerFactory.getLogger(GraphHopperStorage.class);
@@ -53,14 +52,9 @@ public final class GraphHopperStorage implements Graph, Closeable {
     private final Collection<CHEntry> chEntries;
     private final int segmentSize;
 
-    public GraphHopperStorage(Directory dir, EncodingManager encodingManager, boolean withElevation) {
-        this(dir, encodingManager, withElevation, false);
-    }
-
-    public GraphHopperStorage(Directory dir, EncodingManager encodingManager, boolean withElevation, boolean withTurnCosts) {
-        this(dir, encodingManager, withElevation, withTurnCosts, -1);
-    }
-
+    /**
+     * Use {@link GraphBuilder} to create a graph
+     */
     public GraphHopperStorage(Directory dir, EncodingManager encodingManager, boolean withElevation, boolean withTurnCosts, int segmentSize) {
         if (encodingManager == null)
             throw new IllegalArgumentException("EncodingManager needs to be non-null since 0.7. Create one using EncodingManager.create or EncodingManager.create(flagEncoderFactory, ghLocation)");

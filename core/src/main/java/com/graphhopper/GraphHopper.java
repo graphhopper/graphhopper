@@ -744,7 +744,12 @@ public class GraphHopper {
 
         GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
         directory.configure(dataAccessConfig);
-        ghStorage = new GraphHopperStorage(directory, encodingManager, hasElevation(), encodingManager.needsTurnCostsSupport(), defaultSegmentSize);
+        ghStorage = new GraphBuilder(encodingManager)
+                .setDir(directory)
+                .set3D(hasElevation())
+                .withTurnCosts(encodingManager.needsTurnCostsSupport())
+                .setSegmentSize(defaultSegmentSize)
+                .build();
         checkProfilesConsistency();
 
         // todo: move this after base graph loading/import, just like for LM. there is no real reason we have to setup CH before

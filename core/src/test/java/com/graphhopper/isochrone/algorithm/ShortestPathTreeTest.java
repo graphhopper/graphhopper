@@ -8,8 +8,8 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.AfterEach;
@@ -67,8 +67,7 @@ public class ShortestPathTreeTest {
 
     @BeforeEach
     public void setUp() {
-        graph = new GraphHopperStorage(new RAMDirectory(), encodingManager, false);
-        graph.create(1000);
+        graph = new GraphBuilder(encodingManager).create();
 
         //         8
         //        /
