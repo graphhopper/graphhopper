@@ -20,8 +20,8 @@ package com.graphhopper.routing.ev;
 import com.graphhopper.storage.IntsRef;
 
 /**
- * This class holds a decimal value and stores it as an unsigned integer value via a conversion factor and a maximum number
- * of bits.
+ * This class holds a signed decimal value and stores it as an unsigned integer value via a conversion factor and a
+ * maximum number of bits.
  */
 public final class SignedDecimalEncodedValue extends SignedIntEncodedValue implements DecimalEncodedValue {
     private final double factor;
@@ -71,9 +71,6 @@ public final class SignedDecimalEncodedValue extends SignedIntEncodedValue imple
             }
             throw new IllegalArgumentException("Value cannot be infinite if useMaximumAsInfinity is false");
         }
-        // TODO NOW
-//        if (defaultIsInfinity && value == 0)
-//            throw new IllegalArgumentException("0 cannot be explicitly used when defaultIsInfinity is true. Set via Double.POSITIVE_INFINITY instead.");
         if (Double.isNaN(value))
             throw new IllegalArgumentException("NaN value for " + getName() + " not allowed!");
 

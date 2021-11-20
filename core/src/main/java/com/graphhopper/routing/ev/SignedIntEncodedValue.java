@@ -26,8 +26,13 @@ import java.util.Collection;
 import java.util.Objects;
 
 /**
- * Implementation of the IntEncodedValue via a limited number of bits and without a sign. It introduces handling
- * of "backward"- and "forward"-edge information.
+ * Implementation of the IntEncodedValue via a certain number of bits (an indirect maximum value) and
+ * a minimum value (default is 0).
+ * With storeTwoDirections = true it can store separate values for forward and reverse edge direction e.g. for one speed
+ * value per direction of an edge.
+ * With negateReverseDirection = true it supports negating the value for the reverse direction without storing a separate
+ * value e.g. to store an elevation slope which is negative for the reverse direction but has otherwise the same value
+ * and saves storage space.
  */
 public class SignedIntEncodedValue implements IntEncodedValue {
 

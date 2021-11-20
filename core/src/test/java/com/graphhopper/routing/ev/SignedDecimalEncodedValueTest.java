@@ -26,7 +26,7 @@ public class SignedDecimalEncodedValueTest {
         testEnc.init(new EncodedValue.InitializerConfig());
         assertTrue(Double.isInfinite(testEnc.getDecimal(false, intsRef)));
 
-        // set the default which maps to infinity (see TODO NOW)
+        // set the default which maps to infinity (see discussion in #2473)
         testEnc.setDecimal(false, intsRef, 0);
         assertTrue(Double.isInfinite(testEnc.getDecimal(false, intsRef)));
 
