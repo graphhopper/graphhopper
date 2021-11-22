@@ -39,6 +39,11 @@ public class CHConfig {
         this.edgeBased = edgeBased;
     }
 
+    public CHConfig(String chGraphName, Weighting weighting, boolean edgeBased, String type) {
+        this(chGraphName, weighting, edgeBased);
+        this.type = type;
+    }
+
     public Weighting getWeighting() {
         return weighting;
     }

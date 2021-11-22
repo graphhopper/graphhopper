@@ -208,7 +208,7 @@ public class CHStorage {
             throw new IllegalStateException("Cannot add time to shortcuts of a non-core graph");
         }
         int shortcut = shortcut(nodeA, nodeB, accessFlags, weight, skip1, skip2);
-        shortcuts.setInt(toShortcutPointer(shortcut) + S_ORIG_FIRST, time);
+        shortcuts.setInt(toShortcutPointer(shortcut) + S_TIME, time);
         return shortcut;
     }
 // ORS-GH MOD END
