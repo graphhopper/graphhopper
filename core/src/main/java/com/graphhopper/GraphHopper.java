@@ -27,6 +27,7 @@ import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHPreparationHandler;
+import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMPreparationHandler;
@@ -109,6 +110,8 @@ public class GraphHopper {
     // preparation handlers
     private final LMPreparationHandler lmPreparationHandler = new LMPreparationHandler();
     private final CHPreparationHandler chPreparationHandler = new CHPreparationHandler();
+    private Map<String, RoutingCHGraph> chGraphs = Collections.emptyMap();
+    private Map<String, LandmarkStorage> landmarks = Collections.emptyMap();
 
     // for data reader
     private String osmFile;
@@ -301,6 +304,18 @@ public class GraphHopper {
     public void setGraphHopperStorage(GraphHopperStorage ghStorage) {
         this.ghStorage = ghStorage;
         setFullyLoaded();
+    }
+
+    public Map<String, RoutingCHGraph> getCHGraphs() {
+        if (chGraphs == null)
+            throw new IllegalStateException("CHGraphs were not loaded or imported yet");
+        return chGraphs;
+    }
+
+    public Map<String, LandmarkStorage> getLandmarks() {
+        if (landmarks == null)
+            throw new IllegalStateException("Landmarks were not loaded or imported yet");
+        return landmarks;
     }
 
     /**
@@ -946,19 +961,6 @@ public class GraphHopper {
         if (locationIndex == null)
             throw new IllegalStateException("Location index not initialized");
 
-        Map<String, RoutingCHGraph> chGraphs = new LinkedHashMap<>();
-        for (CHProfile chProfile : chPreparationHandler.getCHProfiles()) {
-            String chGraphName = chPreparationHandler.getPreparation(chProfile.getProfile()).getCHConfig().getName();
-            chGraphs.put(chProfile.getProfile(), ghStorage.getRoutingCHGraph(chGraphName));
-        }
-        Map<String, LandmarkStorage> landmarks = new LinkedHashMap<>();
-        for (LMProfile lmp : lmPreparationHandler.getLMProfiles()) {
-            landmarks.put(lmp.getProfile(),
-                    lmp.usesOtherPreparation()
-                            // cross-querying
-                            ? lmPreparationHandler.getPreparation(lmp.getPreparationProfile()).getLandmarkStorage()
-                            : lmPreparationHandler.getPreparation(lmp.getProfile()).getLandmarkStorage());
-        }
         return doCreateRouter(ghStorage, locationIndex, profilesByName, pathBuilderFactory,
                 trMap, routerConfig, createWeightingFactory(), chGraphs, landmarks);
     }
@@ -1018,11 +1020,21 @@ public class GraphHopper {
                 if (!getCHProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
                     throw new IllegalArgumentException("CH preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
             }
-        chPreparationHandler.createPreparations(ghStorage);
-        if (!prepareCH)
+        if (prepareCH) {
+            prepareCH(closeEarly);
+        } else {
             // we don't prepare more CH preparations, but there is not really anything to 'load' either, because the CH
             // graphs were loaded with GraphHopperStorage already (without any real reason)
-            return;
+            // -> do this here instead!
+        }
+        chGraphs = new LinkedHashMap<>();
+        for (CHProfile chProfile : chPreparationHandler.getCHProfiles())
+            chGraphs.put(chProfile.getProfile(), ghStorage.getRoutingCHGraph(chProfile.getProfile()));
+    }
+
+    protected Map<String, PrepareContractionHierarchies.Result> prepareCH(boolean closeEarly) {
+        if (!chGraphs.isEmpty())
+            throw new IllegalStateException("CH graphs were already prepared");
         ensureWriteAccess();
         if (closeEarly) {
             locationIndex.close();
@@ -1033,9 +1045,10 @@ public class GraphHopper {
                 ghStorage.flushAndCloseEarly();
         }
         ghStorage.freeze();
-        chPreparationHandler.prepare(ghStorage.getProperties(), closeEarly);
+        Map<String, PrepareContractionHierarchies.Result> result = chPreparationHandler.prepare(ghStorage, closeEarly);
         for (CHProfile profile : chPreparationHandler.getCHProfiles())
             setCHProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
+        return result;
     }
 
     /**
@@ -1052,6 +1065,14 @@ public class GraphHopper {
         if (lmPreparationHandler.loadOrDoWork(lmConfigs, ghStorage, locationIndex, closeEarly))
             for (LMProfile profile : lmPreparationHandler.getLMProfiles())
                 setLMProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
+        landmarks = new LinkedHashMap<>();
+        for (LMProfile lmp : lmPreparationHandler.getLMProfiles()) {
+            landmarks.put(lmp.getProfile(),
+                    lmp.usesOtherPreparation()
+                            // cross-querying
+                            ? lmPreparationHandler.getPreparation(lmp.getPreparationProfile()).getLandmarkStorage()
+                            : lmPreparationHandler.getPreparation(lmp.getProfile()).getLandmarkStorage());
+        }
     }
 
     /**

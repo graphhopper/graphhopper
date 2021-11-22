@@ -33,7 +33,9 @@ import com.graphhopper.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.jupiter.api.Assertions.*;
@@ -171,8 +173,8 @@ public class PrepareContractionHierarchiesTest {
         int oldCount = routingCHGraph.getEdges();
         assertEquals(6, oldCount);
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
-        prepare.doWork();
-        assertEquals(2, prepare.getShortcuts());
+        PrepareContractionHierarchies.Result result = prepare.doWork();
+        assertEquals(2, result.getShortcuts());
         assertEquals(oldCount, g.getEdges());
         assertEquals(oldCount + 2, routingCHGraph.getEdges());
         RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(routingCHGraph).createAlgo(new PMap());
@@ -188,12 +190,12 @@ public class PrepareContractionHierarchiesTest {
         assertEquals(19, oldCount);
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         useNodeOrdering(prepare, new int[]{10, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 11, 12, 13, 14, 15, 16});
-        prepare.doWork();
+        PrepareContractionHierarchies.Result result = prepare.doWork();
         assertEquals(oldCount, g.getEdges());
         assertEquals(oldCount, GHUtility.count(g.getAllEdges()));
 
         long numShortcuts = 9;
-        assertEquals(numShortcuts, prepare.getShortcuts());
+        assertEquals(numShortcuts, result.getShortcuts());
         assertEquals(oldCount, g.getEdges());
         assertEquals(oldCount + numShortcuts, routingCHGraph.getEdges());
         RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(routingCHGraph).createAlgo(new PMap());
@@ -432,8 +434,8 @@ public class PrepareContractionHierarchiesTest {
         GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 2).setDistance(10));
         GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 3).setDistance(10));
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
-        prepare.doWork();
-        assertEquals(0, prepare.getShortcuts());
+        PrepareContractionHierarchies.Result result = prepare.doWork();
+        assertEquals(0, result.getShortcuts());
     }
 
     @Test
@@ -455,8 +457,8 @@ public class PrepareContractionHierarchiesTest {
 
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         useNodeOrdering(prepare, new int[]{4, 1, 2, 0, 5, 6, 3});
-        prepare.doWork();
-        assertEquals(2, prepare.getShortcuts());
+        PrepareContractionHierarchies.Result result = prepare.doWork();
+        assertEquals(2, result.getShortcuts());
     }
 
     @Test
@@ -570,8 +572,8 @@ public class PrepareContractionHierarchiesTest {
         RoutingCHGraph lg = g.getRoutingCHGraph(c.getName());
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, c);
         useNodeOrdering(prepare, nodeOrdering);
-        prepare.doWork();
-        assertEquals(expShortcuts, prepare.getShortcuts(), c.toString());
+        PrepareContractionHierarchies.Result result = prepare.doWork();
+        assertEquals(expShortcuts, result.getShortcuts(), c.toString());
         RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(lg).createAlgo(new PMap());
         Path path = algo.calcPath(3, 12);
         assertEquals(expDistance, path.getDistance(), 1e-5, path.toString());

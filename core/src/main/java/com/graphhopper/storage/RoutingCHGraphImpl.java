@@ -44,6 +44,11 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
     }
 
     @Override
+    public int getShortcuts() {
+        return chStorage.getShortcuts();
+    }
+
+    @Override
     public RoutingCHEdgeExplorer createInEdgeExplorer() {
         return RoutingCHEdgeIteratorImpl.inEdges(chStorage, baseGraph, weighting);
     }

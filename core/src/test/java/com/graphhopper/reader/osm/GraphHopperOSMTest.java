@@ -23,20 +23,11 @@ import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.ch.CHPreparationHandler;
-import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.lm.PrepareLandmarks;
-import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
-import com.graphhopper.storage.CHConfig;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -136,7 +127,7 @@ public class GraphHopperOSMTest {
                 setOSMFile(testOsm);
         gh.importOrLoad();
 
-        assertTrue(gh.getCHPreparationHandler().getPreparations().isEmpty());
+        assertTrue(gh.getCHGraphs().isEmpty());
 
         GHResponse rsp = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4)
                 .setProfile(profile));
@@ -161,7 +152,7 @@ public class GraphHopperOSMTest {
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
 
-        assertTrue(gh.getCHPreparationHandler().getPreparations().isEmpty());
+        assertTrue(gh.getCHGraphs().isEmpty());
         gh.close();
     }
 
@@ -733,7 +724,7 @@ public class GraphHopperOSMTest {
 
     @Test
     public void testMultipleCHPreparationsInParallel() {
-        HashMap<String, Long> shortcutCountMap = new HashMap<>();
+        HashMap<String, Integer> shortcutCountMap = new HashMap<>();
         // try all parallelization modes        
         for (int threadCount = 1; threadCount < 6; threadCount++) {
             GraphHopper hopper = new GraphHopper().
@@ -759,16 +750,14 @@ public class GraphHopperOSMTest {
 
             hopper.importOrLoad();
 
-            assertEquals(5, hopper.getCHPreparationHandler().getPreparations().size());
-            for (PrepareContractionHierarchies pch : hopper.getCHPreparationHandler().getPreparations()) {
-                assertTrue(pch.isPrepared(), "Preparation wasn't run! [" + threadCount + "]");
-
-                String name = pch.getCHConfig().toFileName();
-                Long singleThreadShortcutCount = shortcutCountMap.get(name);
-                if (singleThreadShortcutCount == null)
-                    shortcutCountMap.put(name, pch.getShortcuts());
+            assertEquals(5, hopper.getCHGraphs().size());
+            for (Map.Entry<String, RoutingCHGraph> chGraph : hopper.getCHGraphs().entrySet()) {
+                String name = chGraph.getKey();
+                Integer shortcutCount = shortcutCountMap.get(name);
+                if (shortcutCount == null)
+                    shortcutCountMap.put(name, chGraph.getValue().getShortcuts());
                 else
-                    assertEquals((long) singleThreadShortcutCount, pch.getShortcuts());
+                    assertEquals((long) shortcutCount, chGraph.getValue().getShortcuts());
 
                 String keyError = Parameters.CH.PREPARE + "error." + name;
                 String valueError = hopper.getGraphHopperStorage().getProperties().get(keyError);
@@ -810,16 +799,14 @@ public class GraphHopperOSMTest {
 
             hopper.importOrLoad();
 
-            assertEquals(5, hopper.getLMPreparationHandler().getPreparations().size());
-            for (PrepareLandmarks prepLM : hopper.getLMPreparationHandler().getPreparations()) {
-                assertTrue(prepLM.isPrepared(), "Preparation wasn't run! [" + threadCount + "]");
-
-                String name = prepLM.getLMConfig().getName();
-                Integer singleThreadShortcutCount = landmarkCount.get(name);
-                if (singleThreadShortcutCount == null)
-                    landmarkCount.put(name, prepLM.getLandmarkStorage().getSubnetworksWithLandmarks());
+            assertEquals(5, hopper.getLandmarks().size());
+            for (Map.Entry<String, LandmarkStorage> landmarks : hopper.getLandmarks().entrySet()) {
+                String name = landmarks.getKey();
+                Integer landmarksCount = landmarkCount.get(name);
+                if (landmarksCount == null)
+                    landmarkCount.put(name, landmarks.getValue().getSubnetworksWithLandmarks());
                 else
-                    assertEquals((int) singleThreadShortcutCount, prepLM.getLandmarkStorage().getSubnetworksWithLandmarks());
+                    assertEquals((int) landmarksCount, landmarks.getValue().getSubnetworksWithLandmarks());
 
                 String keyError = Parameters.Landmark.PREPARE + "error." + name;
                 String valueError = hopper.getGraphHopperStorage().getProperties().get(keyError);
@@ -831,35 +818,6 @@ public class GraphHopperOSMTest {
             }
             hopper.close();
         }
-    }
-
-    @Test
-    public void testGetWeightingForCH() {
-        FlagEncoder truck = new CarFlagEncoder() {
-            @Override
-            public String toString() {
-                return "truck";
-            }
-        };
-        FlagEncoder simpleTruck = new CarFlagEncoder() {
-            @Override
-            public String toString() {
-                return "simple_truck";
-            }
-        };
-
-        // use simple truck first
-        EncodingManager em = EncodingManager.create(simpleTruck, truck);
-        CHPreparationHandler chHandler = new CHPreparationHandler();
-        Weighting fwSimpleTruck = new FastestWeighting(simpleTruck);
-        Weighting fwTruck = new FastestWeighting(truck);
-        CHConfig simpleTruckConfig = CHConfig.nodeBased("simple_truck", fwSimpleTruck);
-        CHConfig truckConfig = CHConfig.nodeBased("truck", fwTruck);
-        GraphHopperStorage storage = new GraphBuilder(em).setCHConfigs(Arrays.asList(simpleTruckConfig, truckConfig)).build();
-        chHandler.createPreparations(storage);
-
-        assertEquals("fastest|truck", chHandler.getPreparation("truck").getCHConfig().getWeighting().toString());
-        assertEquals("fastest|simple_truck", chHandler.getPreparation("simple_truck").getCHConfig().getWeighting().toString());
     }
 
     @Test
@@ -876,10 +834,7 @@ public class GraphHopperOSMTest {
                 new CHProfile("profile1"), new CHProfile("profile2")
         );
         hopper.importOrLoad();
-        assertEquals(2, hopper.getCHPreparationHandler().getPreparations().size());
-        for (PrepareContractionHierarchies p : hopper.getCHPreparationHandler().getPreparations()) {
-            assertTrue(p.isPrepared(), "did not get prepared");
-        }
+        assertEquals(2, hopper.getCHGraphs().size());
     }
 
     @Test
