@@ -91,6 +91,6 @@ public class PillarInfo implements PointAccess {
     }
 
     public void clear() {
-        dir.remove(da);
+        dir.remove(da.getName());
     }
 }

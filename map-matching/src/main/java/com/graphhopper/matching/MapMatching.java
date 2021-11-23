@@ -22,7 +22,6 @@ import com.bmw.hmm.Transition;
 import com.bmw.hmm.ViterbiAlgorithm;
 import com.carrotsearch.hppc.IntHashSet;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.AStarBidirection;
 import com.graphhopper.routing.BidirRoutingAlgorithm;
@@ -120,22 +119,12 @@ public class MapMatching {
 
         if (graphHopper.getLMPreparationHandler().isEnabled() && !useDijkstra) {
             // using LM because u-turn prevention does not work properly with (node-based) CH
-            List<String> lmProfileNames = new ArrayList<>();
-            LandmarkStorage landmarkStorage = null;
-            for (LMProfile lmProfile : graphHopper.getLMPreparationHandler().getLMProfiles()) {
-                lmProfileNames.add(lmProfile.getProfile());
-                if (lmProfile.getProfile().equals(profile.getName())) {
-                    landmarkStorage = graphHopper.getLMPreparationHandler().getPreparation(
-                            lmProfile.usesOtherPreparation() ? lmProfile.getPreparationProfile() : lmProfile.getProfile()
-                    ).getLandmarkStorage();
-                }
-            }
-            if (landmarkStorage == null) {
+            landmarks = graphHopper.getLandmarks().get(profile.getName());
+            if (landmarks == null) {
                 throw new IllegalArgumentException("Cannot find LM preparation for the requested profile: '" + profile.getName() + "'" +
                         "\nYou can try disabling LM using " + Parameters.Landmark.DISABLE + "=true" +
-                        "\navailable LM profiles: " + lmProfileNames);
+                        "\navailable LM profiles: " + graphHopper.getLandmarks().keySet());
             }
-            this.landmarks = landmarkStorage;
         } else {
             landmarks = null;
         }

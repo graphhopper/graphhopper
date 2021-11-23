@@ -32,6 +32,7 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.lm.LandmarkStorage;
+import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks.PrepareJob;
 import com.graphhopper.routing.util.*;
@@ -306,15 +307,19 @@ public class GraphHopper {
         setFullyLoaded();
     }
 
+    /**
+     * @return a mapping between profile names and according CH preparations. The map will be empty before loading
+     * or import.
+     */
     public Map<String, RoutingCHGraph> getCHGraphs() {
-        if (chGraphs == null)
-            throw new IllegalStateException("CHGraphs were not loaded or imported yet");
         return chGraphs;
     }
 
+    /**
+     * @return a mapping between profile names and according landmark preparations. The map will be empty before loading
+     * or import.
+     */
     public Map<String, LandmarkStorage> getLandmarks() {
-        if (landmarks == null)
-            throw new IllegalStateException("Landmarks were not loaded or imported yet");
         return landmarks;
     }
 
@@ -1061,18 +1066,33 @@ public class GraphHopper {
                 throw new IllegalArgumentException("LM preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
         ensureWriteAccess();
         ghStorage.freeze();
+
+        // we load landmark storages that already exist and prepare the other ones
         List<LMConfig> lmConfigs = createLMConfigs(lmPreparationHandler.getLMProfiles());
-        if (lmPreparationHandler.loadOrDoWork(lmConfigs, ghStorage, locationIndex, closeEarly))
-            for (LMProfile profile : lmPreparationHandler.getLMProfiles())
-                setLMProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
+        List<LandmarkStorage> loaded = lmPreparationHandler.load(lmConfigs, ghStorage);
+        List<LMConfig> loadedConfigs = loaded.stream().map(LandmarkStorage::getLMConfig).collect(Collectors.toList());
+        List<LMConfig> configsToPrepare = lmConfigs.stream().filter(c -> !loadedConfigs.contains(c)).collect(Collectors.toList());
+        List<PrepareLandmarks> prepared = prepareLM(closeEarly, configsToPrepare);
+
+        // we map all profile names for which there is LM support to the according LM storages
         landmarks = new LinkedHashMap<>();
         for (LMProfile lmp : lmPreparationHandler.getLMProfiles()) {
-            landmarks.put(lmp.getProfile(),
-                    lmp.usesOtherPreparation()
-                            // cross-querying
-                            ? lmPreparationHandler.getPreparation(lmp.getPreparationProfile()).getLandmarkStorage()
-                            : lmPreparationHandler.getPreparation(lmp.getProfile()).getLandmarkStorage());
+            // cross-querying
+            String prepProfile = lmp.usesOtherPreparation() ? lmp.getPreparationProfile() : lmp.getProfile();
+            Optional<LandmarkStorage> loadedLMS = loaded.stream().filter(lms -> lms.getLMConfig().getName().equals(prepProfile)).findFirst();
+            Optional<PrepareLandmarks> preparedLMS = prepared.stream().filter(pl -> pl.getLandmarkStorage().getLMConfig().getName().equals(prepProfile)).findFirst();
+            if (loadedLMS.isPresent() && preparedLMS.isPresent())
+                throw new IllegalStateException("LM should be either loaded or prepared, but not both: " + prepProfile);
+            else if (preparedLMS.isPresent()) {
+                setLMProfileVersion(lmp.getProfile(), profilesByName.get(lmp.getProfile()).getVersion());
+                landmarks.put(lmp.getProfile(), preparedLMS.get().getLandmarkStorage());
+            } else
+                loadedLMS.ifPresent(landmarkStorage -> landmarks.put(lmp.getProfile(), landmarkStorage));
         }
+    }
+
+    protected List<PrepareLandmarks> prepareLM(boolean closeEarly, List<LMConfig> configsToPrepare) {
+        return lmPreparationHandler.prepare(configsToPrepare, ghStorage, locationIndex, closeEarly);
     }
 
     /**

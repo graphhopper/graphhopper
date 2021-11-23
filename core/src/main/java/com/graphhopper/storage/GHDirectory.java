@@ -166,13 +166,13 @@ public class GHDirectory implements Directory {
     }
 
     @Override
-    public void remove(DataAccess da) {
-        DataAccess old = map.remove(da.getName());
+    public void remove(String name) {
+        DataAccess old = map.remove(name);
         if (old == null)
-            throw new IllegalStateException("Couldn't remove DataAccess: " + da.getName());
+            throw new IllegalStateException("Couldn't remove DataAccess: " + name);
 
-        da.close();
-        removeBackingFile(da, da.getName());
+        old.close();
+        removeBackingFile(old, name);
     }
 
     private void removeBackingFile(DataAccess da, String name) {

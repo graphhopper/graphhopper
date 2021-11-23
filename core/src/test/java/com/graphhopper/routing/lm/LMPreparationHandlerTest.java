@@ -41,9 +41,9 @@ public class LMPreparationHandlerTest {
                 new LMConfig("conf1", new FastestWeighting(car)),
                 new LMConfig("conf2", new ShortestWeighting(car))
         );
-        handler.createPreparations(lmConfigs, new GraphBuilder(em).build(), null);
-        assertEquals(1, handler.getPreparations().get(0).getLandmarkStorage().getFactor(), .1);
-        assertEquals(0.3, handler.getPreparations().get(1).getLandmarkStorage().getFactor(), .1);
+        List<PrepareLandmarks> preparations = handler.createPreparations(lmConfigs, new GraphBuilder(em).build(), null);
+        assertEquals(1, preparations.get(0).getLandmarkStorage().getFactor(), .1);
+        assertEquals(0.3, preparations.get(1).getLandmarkStorage().getFactor(), .1);
     }
 
     @Test
@@ -56,7 +56,7 @@ public class LMPreparationHandlerTest {
         assertTrue(handler.isEnabled());
 
         // See #1076
-        ghConfig.setLMProfiles(Collections.<LMProfile>emptyList());
+        ghConfig.setLMProfiles(Collections.emptyList());
         handler = new LMPreparationHandler();
         handler.init(ghConfig);
         assertFalse(handler.isEnabled());
