@@ -20,8 +20,8 @@ package com.graphhopper.gtfs;
 
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RAMDirectory;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -38,7 +38,7 @@ public class WrapperGraphTest {
 
     @Test
     public void testEternalOffByOneError() {
-        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory("wurst"), encodingManager, false);
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).build();
         assertEquals(0, graph.getNodes());
         assertEquals(0, graph.getEdges());
         WrapperGraph wrapperGraph = new WrapperGraph(graph, Collections.emptyList());

@@ -27,8 +27,8 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
@@ -58,8 +58,7 @@ public class LandmarkStorageTest {
         encoder = new CarFlagEncoder();
         subnetworkEnc = Subnetwork.create("car");
         encodingManager = new EncodingManager.Builder().add(encoder).add(subnetworkEnc).build();
-        graph = new GraphHopperStorage(new RAMDirectory(),
-                encodingManager, false);
+        graph = new GraphBuilder(encodingManager).build();
         graph.create(1000);
     }
 

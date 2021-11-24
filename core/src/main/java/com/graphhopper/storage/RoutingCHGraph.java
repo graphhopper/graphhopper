@@ -26,6 +26,8 @@ public interface RoutingCHGraph {
 
     int getEdges();
 
+    int getShortcuts();
+
     /**
      * Traverses the base edges and shortcuts at a given node. This will only include shortcuts coming from higher
      * level nodes, but *all* base edges with finite weight.

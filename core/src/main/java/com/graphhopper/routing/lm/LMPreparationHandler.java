@@ -23,7 +23,6 @@ import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.JsonFeatureCollection;
@@ -39,7 +38,6 @@ import java.io.Reader;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static com.graphhopper.util.Helper.*;
@@ -52,8 +50,6 @@ import static com.graphhopper.util.Helper.*;
 public class LMPreparationHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(LMPreparationHandler.class);
     private int landmarkCount = 16;
-
-    private final List<PrepareLandmarks> preparations = new ArrayList<>();
     private final List<LMProfile> lmProfiles = new ArrayList<>();
     private final Map<String, Double> maximumWeights = new HashMap<>();
     private int minNodes = -1;
@@ -102,7 +98,7 @@ public class LMPreparationHandler {
     }
 
     public final boolean isEnabled() {
-        return !lmProfiles.isEmpty() || !preparations.isEmpty();
+        return !lmProfiles.isEmpty();
     }
 
     public int getPreparationThreads() {
@@ -140,81 +136,67 @@ public class LMPreparationHandler {
         return lmProfiles;
     }
 
-    public List<PrepareLandmarks> getPreparations() {
-        return preparations;
-    }
-
-    public PrepareLandmarks getPreparation(String profile) {
-        if (preparations.isEmpty())
-            throw new IllegalStateException("No LM preparations added yet");
-
-        List<String> profileNames = new ArrayList<>(preparations.size());
-        for (PrepareLandmarks preparation : preparations) {
-            profileNames.add(preparation.getLMConfig().getName());
-            if (preparation.getLMConfig().getName().equals(profile)) {
-                return preparation;
-            }
-        }
-        throw new IllegalArgumentException("Cannot find LM preparation for the requested profile: '" + profile + "'" +
-                "\nYou can try disabling LM using " + Parameters.Landmark.DISABLE + "=true" +
-                "\navailable LM profiles: " + profileNames);
-    }
-
     /**
-     * This method calculates the landmark data for all profiles (optionally in parallel) or if already existent loads it.
+     * Loads the landmark data for all given configs if available.
      *
-     * @return true if the preparation data for at least one profile was calculated.
+     * @return the loaded landmark storages
      */
-    public boolean loadOrDoWork(List<LMConfig> lmConfigs, GraphHopperStorage ghStorage, LocationIndex locationIndex, final boolean closeEarly) {
-        createPreparations(lmConfigs, ghStorage, locationIndex);
-        for (PrepareLandmarks prep : preparations) {
-            // using the area index we separate certain areas from each other but we do not change the base graph for this
-            // so that other algorithms still can route between these areas
-            if (areaIndex != null)
-                prep.setAreaIndex(areaIndex);
-        }
-        // load existing preparations and keep track of those that could not be loaded
-        List<PrepareLandmarks> preparationsToPrepare = Collections.synchronizedList(new ArrayList<>());
-        List<Callable<String>> loadingCallables = preparations.stream()
-                .map(preparation -> (Callable<String>) () -> {
-                    if (!preparation.loadExisting())
-                        preparationsToPrepare.add(preparation);
-                    return preparation.getLMConfig().getName();
+    public List<LandmarkStorage> load(List<LMConfig> lmConfigs, GraphHopperStorage ghStorage) {
+        List<LandmarkStorage> loaded = Collections.synchronizedList(new ArrayList<>());
+        List<Callable<String>> loadingCallables = lmConfigs.stream()
+                .map(lmConfig -> (Callable<String>) () -> {
+                    // todo: specifying ghStorage and landmarkCount should not be necessary, because all we want to do
+                    //       is load the landmark data and these parameters are only needed to calculate the landmarks.
+                    //       we should also work towards a separation of the storage and preparation related code in
+                    //       landmark storage
+                    LandmarkStorage lms = new LandmarkStorage(ghStorage, ghStorage.getDirectory(), lmConfig, landmarkCount);
+                    if (lms.loadExisting())
+                        loaded.add(lms);
+                    else {
+                        // todo: this is very ugly. all we wanted to do was see if the landmarks exist already, but now
+                        //       we need to remove the DAs from the directory. This is because otherwise we cannot
+                        //       create these DataAccess again when we actually prepare the landmarks that don't exist
+                        //       yet.
+                        ghStorage.getDirectory().remove("landmarks_" + lmConfig.getName());
+                        ghStorage.getDirectory().remove("landmarks_subnetwork_" + lmConfig.getName());
+                    }
+                    return lmConfig.getName();
                 })
                 .collect(Collectors.toList());
         GHUtility.runConcurrently(loadingCallables, preparationThreads);
+        return loaded;
+    }
 
-        // prepare the preparations that could not be loaded
-        StorableProperties properties = ghStorage.getProperties();
-        final AtomicBoolean prepared = new AtomicBoolean(false);
+    /**
+     * Prepares the landmark data for all given configs
+     */
+    public List<PrepareLandmarks> prepare(List<LMConfig> lmConfigs, GraphHopperStorage ghStorage, LocationIndex locationIndex, final boolean closeEarly) {
+        List<PrepareLandmarks> preparations = createPreparations(lmConfigs, ghStorage, locationIndex);
         List<Callable<String>> prepareCallables = new ArrayList<>();
-        for (int i = 0; i < preparationsToPrepare.size(); i++) {
-            PrepareLandmarks prepare = preparationsToPrepare.get(i);
+        for (int i = 0; i < preparations.size(); i++) {
+            PrepareLandmarks prepare = preparations.get(i);
             final int count = i + 1;
             final String name = prepare.getLMConfig().getName();
             prepareCallables.add(() -> {
-                LOGGER.info(count + "/" + preparationsToPrepare.size() + " calling LM prepare.doWork for " + prepare.getLMConfig().getWeighting() + " ... (" + getMemInfo() + ")");
-                prepared.set(true);
+                LOGGER.info(count + "/" + lmConfigs.size() + " calling LM prepare.doWork for " + prepare.getLMConfig().getWeighting() + " ... (" + getMemInfo() + ")");
                 Thread.currentThread().setName(name);
                 prepare.doWork();
                 if (closeEarly)
                     prepare.close();
                 LOGGER.info("LM {} finished {}", name, getMemInfo());
-                properties.put(Landmark.PREPARE + "date." + name, createFormatter().format(new Date()));
+                ghStorage.getProperties().put(Landmark.PREPARE + "date." + name, createFormatter().format(new Date()));
                 return name;
             });
         }
         GHUtility.runConcurrently(prepareCallables, preparationThreads);
         LOGGER.info("Finished LM preparation, {}", getMemInfo());
-        return prepared.get();
+        return preparations;
     }
 
     /**
      * This method creates the landmark storages ready for landmark creation.
      */
-    void createPreparations(List<LMConfig> lmConfigs, GraphHopperStorage ghStorage, LocationIndex locationIndex) {
-        if (!preparations.isEmpty())
-            throw new IllegalStateException("LM preparations were created already");
+    List<PrepareLandmarks> createPreparations(List<LMConfig> lmConfigs, GraphHopperStorage ghStorage, LocationIndex locationIndex) {
         LOGGER.info("Creating LM preparations, {}", getMemInfo());
         List<LandmarkSuggestion> lmSuggestions = new ArrayList<>(lmSuggestionsLocations.size());
         if (!lmSuggestionsLocations.isEmpty()) {
@@ -227,6 +209,7 @@ public class LMPreparationHandler {
             }
         }
 
+        List<PrepareLandmarks> preparations = new ArrayList<>();
         for (LMConfig lmConfig : lmConfigs) {
             Double maximumWeight = maximumWeights.get(lmConfig.getName());
             if (maximumWeight == null)
@@ -240,8 +223,13 @@ public class LMPreparationHandler {
                     setLogDetails(logDetails);
             if (minNodes > 1)
                 prepareLandmarks.setMinimumNodes(minNodes);
+            // using the area index we separate certain areas from each other but we do not change the base graph for this
+            // so that other algorithms still can route between these areas
+            if (areaIndex != null)
+                prepareLandmarks.setAreaIndex(areaIndex);
             preparations.add(prepareLandmarks);
         }
+        return preparations;
     }
 
     private JsonFeatureCollection loadLandmarkSplittingFeatureCollection(String splitAreaLocation) {

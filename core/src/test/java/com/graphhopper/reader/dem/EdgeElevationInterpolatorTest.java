@@ -25,9 +25,9 @@ import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.AfterEach;
@@ -53,9 +53,9 @@ public abstract class EdgeElevationInterpolatorTest {
     @SuppressWarnings("resource")
     @BeforeEach
     public void setUp() {
-        graph = new GraphHopperStorage(new RAMDirectory(),
-                encodingManager = new EncodingManager.Builder().add(new CarFlagEncoder()).add(new FootFlagEncoder()).build(),
-                true).create(100);
+        graph = new GraphBuilder(
+                encodingManager = new EncodingManager.Builder().add(new CarFlagEncoder()).add(new FootFlagEncoder()).build()
+        ).set3D(true).create();
         roadEnvEnc = encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         edgeElevationInterpolator = createEdgeElevationInterpolator();
         relFlags = encodingManager.createRelationFlags();

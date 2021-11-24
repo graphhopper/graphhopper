@@ -27,7 +27,9 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
+import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
@@ -121,30 +123,32 @@ public class Measurement {
 
         GraphHopper hopper = new GraphHopper() {
             @Override
-            protected void prepareCH(boolean closeEarly) {
+            protected Map<String, PrepareContractionHierarchies.Result> prepareCH(boolean closeEarly) {
                 StopWatch sw = new StopWatch().start();
-                super.prepareCH(closeEarly);
+                Map<String, PrepareContractionHierarchies.Result> result = super.prepareCH(closeEarly);
                 // note that we measure the total time of all (possibly edge&node) CH preparations
                 put(Parameters.CH.PREPARE + "time", sw.stop().getMillis());
                 int edges = getGraphHopperStorage().getEdges();
                 if (getGraphHopperStorage().getRoutingCHGraph("profile_no_tc") != null) {
                     int edgesAndShortcuts = getGraphHopperStorage().getRoutingCHGraph("profile_no_tc").getEdges();
                     put(Parameters.CH.PREPARE + "node.shortcuts", edgesAndShortcuts - edges);
-                    put(Parameters.CH.PREPARE + "node.time", getCHPreparationHandler().getPreparation("profile_no_tc").getTotalPrepareTime());
+                    put(Parameters.CH.PREPARE + "node.time", result.get("profile_no_tc").getTotalPrepareTime());
                 }
                 if (getGraphHopperStorage().getRoutingCHGraph("profile_tc") != null) {
                     int edgesAndShortcuts = getGraphHopperStorage().getRoutingCHGraph("profile_tc").getEdges();
                     put(Parameters.CH.PREPARE + "edge.shortcuts", edgesAndShortcuts - edges);
-                    put(Parameters.CH.PREPARE + "edge.time", getCHPreparationHandler().getPreparation("profile_tc").getTotalPrepareTime());
+                    put(Parameters.CH.PREPARE + "edge.time", result.get("profile_tc").getTotalPrepareTime());
                 }
+                return result;
             }
 
             @Override
-            protected void loadOrPrepareLM(boolean closeEarly) {
-                super.loadOrPrepareLM(closeEarly);
-                for (PrepareLandmarks plm : getLMPreparationHandler().getPreparations()) {
+            protected List<PrepareLandmarks> prepareLM(boolean closeEarly, List<LMConfig> configsToPrepare) {
+                List<PrepareLandmarks> prepareLandmarks = super.prepareLM(closeEarly, configsToPrepare);
+                for (PrepareLandmarks plm : prepareLandmarks) {
                     put(Landmark.PREPARE + "time", plm.getTotalPrepareTime());
                 }
+                return prepareLandmarks;
             }
 
             @Override

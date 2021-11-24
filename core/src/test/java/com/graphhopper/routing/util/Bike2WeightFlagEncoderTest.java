@@ -36,7 +36,7 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
     }
 
     private Graph initExampleGraph() {
-        GraphHopperStorage gs = new GraphHopperStorage(new RAMDirectory(), encodingManager, true).create(1000);
+        GraphHopperStorage gs = new GraphBuilder(encodingManager).set3D(true).create();
         NodeAccess na = gs.getNodeAccess();
         // 50--(0.0001)-->49--(0.0004)-->55--(0.0005)-->60
         na.setNode(0, 51.1, 12.001, 50);
@@ -89,9 +89,7 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
 
     @Test
     public void testRoutingFailsWithInvalidGraph_issue665() {
-        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), encodingManager, true);
-        graph.create(100);
-
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).set3D(true).create();
         ReaderWay way = new ReaderWay(0);
         way.setTag("route", "ferry");
 

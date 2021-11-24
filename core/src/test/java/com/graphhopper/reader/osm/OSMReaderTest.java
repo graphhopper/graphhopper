@@ -962,7 +962,7 @@ public class OSMReaderTest {
 
         @Override
         protected void importOSM() {
-            GraphHopperStorage tmpGraph = new GraphHopperStorage(new RAMDirectory(dir, false), getEncodingManager(), hasElevation(), getEncodingManager().needsTurnCostsSupport());
+            GraphHopperStorage tmpGraph = new GraphBuilder(getEncodingManager()).set3D(hasElevation()).withTurnCosts(getEncodingManager().needsTurnCostsSupport()).build();
             setGraphHopperStorage(tmpGraph);
             super.importOSM();
             carAccessEnc = carEncoder.getAccessEnc();

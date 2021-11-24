@@ -211,6 +211,10 @@ public class LandmarkStorage {
         return weighting;
     }
 
+    public LMConfig getLMConfig() {
+        return lmConfig;
+    }
+
     boolean isInitialized() {
         return initialized;
     }
