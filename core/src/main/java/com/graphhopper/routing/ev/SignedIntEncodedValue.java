@@ -77,12 +77,13 @@ public class SignedIntEncodedValue implements IntEncodedValue {
 
         this.name = name;
         this.storeTwoDirections = storeTwoDirections;
-        // negateReverseDirection: store the negative value only once but for that we need the same range as maxValue for negative values
-        this.minValue = negateReverseDirection ? -((1 << bits) - 1) : minValue;
-        // negateReverseDirection: we need twice the range
+        int max = (1 << bits) - 1;
+        // negateReverseDirection: store the negative value only once, but for that we need the same range as maxValue for negative values
+        this.minValue = negateReverseDirection ? -max : minValue;
+        this.maxValue = max + minValue;
+        // negateReverseDirection: we need twice the integer range, i.e. 1 more bit
         this.bits = negateReverseDirection ? bits + 1 : bits;
         this.negateReverseDirection = negateReverseDirection;
-        this.maxValue = (1 << bits) - 1 + minValue;
     }
 
     @Override
