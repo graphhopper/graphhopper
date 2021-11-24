@@ -576,11 +576,18 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         IntsRef flags = encodingManager.handleWayTags(osmWay, relFlags);
         assertEquals(PriorityCode.getValue(BEST.getValue()), priorityEnc.getDecimal(false, flags), .1);
 
-        // important: UNCHANGED should not get 0 priority!
+        // for some highways the priority is UNCHANGED
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "track");
         flags = encodingManager.handleWayTags(osmWay, encodingManager.createRelationFlags());
         assertEquals(PriorityCode.getValue(UNCHANGED.getValue()), priorityEnc.getDecimal(false, flags), .1);
+
+        // for unknown highways we should probably keep the priority unchanged, but currently it does not matter
+        // because the access will be false anyway
+        osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "whatever");
+        flags = encodingManager.handleWayTags(osmWay, encodingManager.createRelationFlags());
+        assertEquals(EXCLUDE.getValue(), priorityEnc.getDecimal(false, flags), .1);
     }
 
     @Test
