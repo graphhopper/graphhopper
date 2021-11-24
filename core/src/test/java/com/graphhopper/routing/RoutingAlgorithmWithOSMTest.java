@@ -166,7 +166,7 @@ public class RoutingAlgorithmWithOSMTest {
 
     @Test
     public void testMoscow() {
-        // extracted via ./graphhopper.sh extract "37.582641,55.805261,37.626929,55.824455"
+        // extracted from OSM area: "37.582641,55.805261,37.626929,55.824455"
         List<Query> queries = new ArrayList<>();
         // choose perpendicular
         // http://localhost:8989/?point=55.818994%2C37.595354&point=55.819175%2C37.596931

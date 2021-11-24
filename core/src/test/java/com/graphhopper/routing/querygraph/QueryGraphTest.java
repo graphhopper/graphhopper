@@ -270,7 +270,7 @@ public class QueryGraphTest {
     @Test
     public void testUseMeanElevation() {
         g.close();
-        g = new GraphHopperStorage(new RAMDirectory(), encodingManager, true).create(100);
+        g = new GraphBuilder(encodingManager).set3D(true).create();
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0, 0, 0);
         na.setNode(1, 0, 0.0001, 20);
@@ -497,8 +497,7 @@ public class QueryGraphTest {
     public void testTurnCostsProperlyPropagated_Issue282() {
         FlagEncoder encoder = new CarFlagEncoder(5, 5, 15);
         EncodingManager em = EncodingManager.create(encoder);
-        GraphHopperStorage graphWithTurnCosts = new GraphHopperStorage(new RAMDirectory(), em, false, true).
-                create(100);
+        GraphHopperStorage graphWithTurnCosts = new GraphBuilder(em).withTurnCosts(true).create();
         TurnCostStorage turnExt = graphWithTurnCosts.getTurnCostStorage();
         DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(TurnCost.key(encoder.toString()));
         NodeAccess na = graphWithTurnCosts.getNodeAccess();

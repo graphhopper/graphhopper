@@ -25,7 +25,6 @@ import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.DistanceCalcEuclidean;
 import com.graphhopper.util.EdgeIteratorState;
@@ -101,8 +100,7 @@ public class GraphExplorerTest {
 
     @Test
     public void testExtraEdgesWithNonEmptyGraph() {
-        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory("wurst"), encodingManager, false);
-        graph.create(0);
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
         EdgeIteratorState d = graph.edge(4, 5);
         d.set(pt.getAccessEnc(), true);
         d.set(foot.getAccessEnc(), true);
@@ -141,8 +139,7 @@ public class GraphExplorerTest {
 
     @Test
     public void testExtraEdgesWithNonEmptyGraphAndQueryGraph() {
-        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory("wurst"), encodingManager, false);
-        graph.create(0);
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
         EdgeIteratorState c = graph.edge(4, 3);
         c.set(pt.getAccessEnc(), true);
         c.set(foot.getAccessEnc(), true);

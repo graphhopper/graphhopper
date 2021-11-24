@@ -74,6 +74,11 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
     }
 
     @Override
+    public int getShortcuts() {
+        return routingCHGraph.getShortcuts();
+    }
+
+    @Override
     public RoutingCHEdgeExplorer createInEdgeExplorer() {
         return createEdgeExplorer(routingCHGraph.createInEdgeExplorer(), virtualInEdgesAtRealNodes);
     }

@@ -1234,7 +1234,7 @@ public class GraphHopperTest {
         hopper.setMinNetworkSize(0);
         hopper.importOrLoad();
 
-        assertEquals(2, hopper.getCHPreparationHandler().getPreparations().size());
+        assertEquals(2, hopper.getCHGraphs().size());
 
         GHResponse rsp = hopper.route(new GHRequest(43.745084, 7.430513, 43.745247, 7.430347)
                 .setProfile(profile1));
@@ -1280,7 +1280,7 @@ public class GraphHopperTest {
         hopper.setMinNetworkSize(0);
         hopper.importOrLoad();
 
-        assertEquals(2, hopper.getCHPreparationHandler().getPreparations().size());
+        assertEquals(2, hopper.getCHGraphs().size());
         GHResponse rsp = hopper.route(new GHRequest(52.513505, 13.350443, 52.513505, 13.350245)
                 .setProfile(profile1));
 

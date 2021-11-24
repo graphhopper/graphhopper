@@ -29,6 +29,7 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -66,10 +67,7 @@ public class PrepareLandmarksTest {
         encoder = new CarFlagEncoder();
         tm = TraversalMode.NODE_BASED;
         encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
-        GraphHopperStorage tmp = new GraphHopperStorage(new RAMDirectory(),
-                encodingManager, false);
-        tmp.create(1000);
-        graph = tmp;
+        graph = new GraphBuilder(encodingManager).create();
     }
 
     @Test

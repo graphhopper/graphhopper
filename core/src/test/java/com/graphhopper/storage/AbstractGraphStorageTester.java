@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
-import static com.graphhopper.util.GHUtility.count;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -657,7 +656,6 @@ public abstract class AbstractGraphStorageTester {
 
     @Test
     public void test8AndMoreBytesForEdgeFlags() {
-        Directory dir = new RAMDirectory();
         List<FlagEncoder> list = new ArrayList<>();
         list.add(new CarFlagEncoder(29, 0.001, 0) {
             @Override
@@ -667,7 +665,7 @@ public abstract class AbstractGraphStorageTester {
         });
         list.add(new CarFlagEncoder(29, 0.001, 0));
         EncodingManager manager = EncodingManager.create(list);
-        graph = new GraphHopperStorage(dir, manager, false).create(defaultSize);
+        graph = new GraphBuilder(manager).create();
 
         EdgeIteratorState edge = graph.edge(0, 1);
         IntsRef intsRef = manager.createEdgeFlags();
@@ -677,8 +675,7 @@ public abstract class AbstractGraphStorageTester {
         assertEquals(Integer.MAX_VALUE / 3, edge.getFlags().ints[0]);
         graph.close();
 
-        dir = new RAMDirectory();
-        graph = new GraphHopperStorage(dir, manager, false).create(defaultSize);
+        graph = new GraphBuilder(manager).create();
 
         DecimalEncodedValue avSpeed0Enc = manager.getDecimalEncodedValue(getKey("car0", "average_speed"));
         BooleanEncodedValue access0Enc = manager.getBooleanEncodedValue(getKey("car0", "access"));
@@ -717,7 +714,7 @@ public abstract class AbstractGraphStorageTester {
             }
         });
         manager = EncodingManager.create(list);
-        graph = new GraphHopperStorage(new RAMDirectory(), manager, false).create(defaultSize);
+        graph = new GraphBuilder(manager).create();
         edgeIter = graph.edge(0, 1).set(access0Enc, true, false);
         assertTrue(edgeIter.get(access0Enc));
         assertFalse(edgeIter.getReverse(access0Enc));

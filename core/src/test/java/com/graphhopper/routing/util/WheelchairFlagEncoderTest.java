@@ -22,7 +22,10 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.Test;
 
 import java.text.DateFormat;
@@ -483,7 +486,7 @@ public class WheelchairFlagEncoderTest {
     }
 
     private Graph initExampleGraph() {
-        GraphHopperStorage gs = new GraphHopperStorage(new RAMDirectory(), encodingManager, true, false).create(1000);
+        GraphHopperStorage gs = new GraphBuilder(encodingManager).set3D(true).create();
         NodeAccess na = gs.getNodeAccess();
         // incline of 5% over all
         na.setNode(0, 51.1, 12.001, 50);

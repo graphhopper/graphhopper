@@ -27,10 +27,12 @@ import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHPreparationHandler;
+import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.lm.LandmarkStorage;
+import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks.PrepareJob;
 import com.graphhopper.routing.util.*;
@@ -44,7 +46,6 @@ import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.*;
-import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
@@ -110,6 +111,8 @@ public class GraphHopper {
     // preparation handlers
     private final LMPreparationHandler lmPreparationHandler = new LMPreparationHandler();
     private final CHPreparationHandler chPreparationHandler = new CHPreparationHandler();
+    private Map<String, RoutingCHGraph> chGraphs = Collections.emptyMap();
+    private Map<String, LandmarkStorage> landmarks = Collections.emptyMap();
 
     // for data reader
     private String osmFile;
@@ -302,6 +305,22 @@ public class GraphHopper {
     public void setGraphHopperStorage(GraphHopperStorage ghStorage) {
         this.ghStorage = ghStorage;
         setFullyLoaded();
+    }
+
+    /**
+     * @return a mapping between profile names and according CH preparations. The map will be empty before loading
+     * or import.
+     */
+    public Map<String, RoutingCHGraph> getCHGraphs() {
+        return chGraphs;
+    }
+
+    /**
+     * @return a mapping between profile names and according landmark preparations. The map will be empty before loading
+     * or import.
+     */
+    public Map<String, LandmarkStorage> getLandmarks() {
+        return landmarks;
     }
 
     /**
@@ -745,7 +764,12 @@ public class GraphHopper {
 
         GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
         directory.configure(dataAccessConfig);
-        ghStorage = new GraphHopperStorage(directory, encodingManager, hasElevation(), encodingManager.needsTurnCostsSupport(), defaultSegmentSize);
+        ghStorage = new GraphBuilder(encodingManager)
+                .setDir(directory)
+                .set3D(hasElevation())
+                .withTurnCosts(encodingManager.needsTurnCostsSupport())
+                .setSegmentSize(defaultSegmentSize)
+                .build();
         checkProfilesConsistency();
 
         // todo: move this after base graph loading/import, just like for LM. there is no real reason we have to setup CH before
@@ -895,16 +919,7 @@ public class GraphHopper {
             loadOrPrepareLM(closeEarly);
 
         if (chPreparationHandler.isEnabled())
-            chPreparationHandler.createPreparations(ghStorage);
-        if (isCHPrepared()) {
-            // check loaded profiles
-            for (CHProfile profile : chPreparationHandler.getCHProfiles()) {
-                if (!getProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
-                    throw new IllegalArgumentException("CH preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
-            }
-        } else {
-            prepareCH(closeEarly);
-        }
+            loadOrPrepareCH(closeEarly);
     }
 
     protected void importPublicTransit() {
@@ -951,19 +966,6 @@ public class GraphHopper {
         if (locationIndex == null)
             throw new IllegalStateException("Location index not initialized");
 
-        Map<String, RoutingCHGraph> chGraphs = new LinkedHashMap<>();
-        for (CHProfile chProfile : chPreparationHandler.getCHProfiles()) {
-            String chGraphName = chPreparationHandler.getPreparation(chProfile.getProfile()).getCHConfig().getName();
-            chGraphs.put(chProfile.getProfile(), ghStorage.getRoutingCHGraph(chGraphName));
-        }
-        Map<String, LandmarkStorage> landmarks = new LinkedHashMap<>();
-        for (LMProfile lmp : lmPreparationHandler.getLMProfiles()) {
-            landmarks.put(lmp.getProfile(),
-                    lmp.usesOtherPreparation()
-                            // cross-querying
-                            ? lmPreparationHandler.getPreparation(lmp.getPreparationProfile()).getLandmarkStorage()
-                            : lmPreparationHandler.getPreparation(lmp.getProfile()).getLandmarkStorage());
-        }
         return doCreateRouter(ghStorage, locationIndex, profilesByName, pathBuilderFactory,
                 trMap, routerConfig, createWeightingFactory(), chGraphs, landmarks);
     }
@@ -998,66 +1000,99 @@ public class GraphHopper {
         locationIndex = createLocationIndex(ghStorage.getDirectory());
     }
 
-    private boolean isCHPrepared() {
-        return "true".equals(ghStorage.getProperties().get(CH.PREPARE + "done"));
+    private String getCHProfileVersion(String profile) {
+        return ghStorage.getProperties().get("graph.profiles.ch." + profile + ".version");
     }
 
-    private String getProfileVersion(String profile) {
-        return ghStorage.getProperties().get("graph.profiles." + profile + ".version");
+    private void setCHProfileVersion(String profile, int version) {
+        ghStorage.getProperties().put("graph.profiles.ch." + profile + ".version", version);
     }
 
-    private void setProfileVersion(String profile, int version) {
-        ghStorage.getProperties().put("graph.profiles." + profile + ".version", version);
+    private String getLMProfileVersion(String profile) {
+        return ghStorage.getProperties().get("graph.profiles.lm." + profile + ".version");
     }
 
-    protected void prepareCH(boolean closeEarly) {
-        for (CHProfile profile : chPreparationHandler.getCHProfiles()) {
-            if (!getProfileVersion(profile.getProfile()).isEmpty()
-                    && !getProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
-                throw new IllegalArgumentException("CH preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
-        }
+    private void setLMProfileVersion(String profile, int version) {
+        ghStorage.getProperties().put("graph.profiles.lm." + profile + ".version", version);
+    }
 
-        boolean chEnabled = chPreparationHandler.isEnabled();
-        if (chEnabled) {
-            ensureWriteAccess();
-
-            if (closeEarly) {
-                locationIndex.close();
-                boolean includesCustomProfiles = getProfiles().stream().anyMatch(p -> p instanceof CustomProfile);
-                if (!includesCustomProfiles)
-                    // when there are custom profiles we must not close way geometry or StringIndex, because
-                    // they might be needed to evaluate the custom weighting during CH preparation
-                    ghStorage.flushAndCloseEarly();
+    protected void loadOrPrepareCH(boolean closeEarly) {
+        boolean prepareCH = true;
+        for (CHProfile profile : chPreparationHandler.getCHProfiles())
+            if (!getCHProfileVersion(profile.getProfile()).isEmpty()) {
+                // one of the CH preparations already exists, we won't prepare more
+                prepareCH = false;
+                if (!getCHProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
+                    throw new IllegalArgumentException("CH preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
             }
-
-            ghStorage.freeze();
-            chPreparationHandler.prepare(ghStorage.getProperties(), closeEarly);
-            ghStorage.getProperties().put(CH.PREPARE + "done", true);
-            for (CHProfile profile : chPreparationHandler.getCHProfiles()) {
-                // potentially overwrite existing keys from LM
-                setProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
-            }
+        if (prepareCH) {
+            prepareCH(closeEarly);
+        } else {
+            // we don't prepare more CH preparations, but there is not really anything to 'load' either, because the CH
+            // graphs were loaded with GraphHopperStorage already (without any real reason)
+            // -> do this here instead!
         }
+        chGraphs = new LinkedHashMap<>();
+        for (CHProfile chProfile : chPreparationHandler.getCHProfiles())
+            chGraphs.put(chProfile.getProfile(), ghStorage.getRoutingCHGraph(chProfile.getProfile()));
+    }
+
+    protected Map<String, PrepareContractionHierarchies.Result> prepareCH(boolean closeEarly) {
+        if (!chGraphs.isEmpty())
+            throw new IllegalStateException("CH graphs were already prepared");
+        ensureWriteAccess();
+        if (closeEarly) {
+            locationIndex.close();
+            boolean includesCustomProfiles = getProfiles().stream().anyMatch(p -> p instanceof CustomProfile);
+            if (!includesCustomProfiles)
+                // when there are custom profiles we must not close way geometry or StringIndex, because
+                // they might be needed to evaluate the custom weighting during CH preparation
+                ghStorage.flushAndCloseEarly();
+        }
+        ghStorage.freeze();
+        Map<String, PrepareContractionHierarchies.Result> result = chPreparationHandler.prepare(ghStorage, closeEarly);
+        for (CHProfile profile : chPreparationHandler.getCHProfiles())
+            setCHProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
+        return result;
     }
 
     /**
      * For landmarks it is required to always call this method: either it creates the landmark data or it loads it.
      */
     protected void loadOrPrepareLM(boolean closeEarly) {
-        for (LMProfile profile : lmPreparationHandler.getLMProfiles()) {
-            if (!getProfileVersion(profile.getProfile()).isEmpty()
-                    && !getProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
+        for (LMProfile profile : lmPreparationHandler.getLMProfiles())
+            if (!getLMProfileVersion(profile.getProfile()).isEmpty()
+                    && !getLMProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
                 throw new IllegalArgumentException("LM preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
-        }
         ensureWriteAccess();
         ghStorage.freeze();
+
+        // we load landmark storages that already exist and prepare the other ones
         List<LMConfig> lmConfigs = createLMConfigs(lmPreparationHandler.getLMProfiles());
-        if (lmPreparationHandler.loadOrDoWork(lmConfigs, ghStorage, locationIndex, closeEarly)) {
-            for (LMProfile profile : lmPreparationHandler.getLMProfiles()) {
-                // potentially overwrite existing keys from CH
-                setProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
-            }
+        List<LandmarkStorage> loaded = lmPreparationHandler.load(lmConfigs, ghStorage);
+        List<LMConfig> loadedConfigs = loaded.stream().map(LandmarkStorage::getLMConfig).collect(Collectors.toList());
+        List<LMConfig> configsToPrepare = lmConfigs.stream().filter(c -> !loadedConfigs.contains(c)).collect(Collectors.toList());
+        List<PrepareLandmarks> prepared = prepareLM(closeEarly, configsToPrepare);
+
+        // we map all profile names for which there is LM support to the according LM storages
+        landmarks = new LinkedHashMap<>();
+        for (LMProfile lmp : lmPreparationHandler.getLMProfiles()) {
+            // cross-querying
+            String prepProfile = lmp.usesOtherPreparation() ? lmp.getPreparationProfile() : lmp.getProfile();
+            Optional<LandmarkStorage> loadedLMS = loaded.stream().filter(lms -> lms.getLMConfig().getName().equals(prepProfile)).findFirst();
+            Optional<PrepareLandmarks> preparedLMS = prepared.stream().filter(pl -> pl.getLandmarkStorage().getLMConfig().getName().equals(prepProfile)).findFirst();
+            if (loadedLMS.isPresent() && preparedLMS.isPresent())
+                throw new IllegalStateException("LM should be either loaded or prepared, but not both: " + prepProfile);
+            else if (preparedLMS.isPresent()) {
+                setLMProfileVersion(lmp.getProfile(), profilesByName.get(lmp.getProfile()).getVersion());
+                landmarks.put(lmp.getProfile(), preparedLMS.get().getLandmarkStorage());
+            } else
+                loadedLMS.ifPresent(landmarkStorage -> landmarks.put(lmp.getProfile(), landmarkStorage));
         }
+    }
+
+    protected List<PrepareLandmarks> prepareLM(boolean closeEarly, List<LMConfig> configsToPrepare) {
+        return lmPreparationHandler.prepare(configsToPrepare, ghStorage, locationIndex, closeEarly);
     }
 
     /**

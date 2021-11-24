@@ -49,7 +49,7 @@ public interface Directory {
     /**
      * Removes the specified object from the directory.
      */
-    void remove(DataAccess da);
+    void remove(String name);
 
     /**
      * @return the default type of a newly created DataAccess object

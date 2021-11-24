@@ -24,8 +24,8 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.CHConfig;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
@@ -39,7 +39,7 @@ public class AlternativeRouteCHTest {
     private final EncodingManager em = EncodingManager.create(carFE);
 
     public GraphHopperStorage createTestGraph(EncodingManager tmpEM) {
-        final GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), tmpEM, false);
+        final GraphHopperStorage graph = new GraphBuilder(tmpEM).build();
         CHConfig chConfig = CHConfig.nodeBased("p", new FastestWeighting(carFE));
         graph.addCHGraph(chConfig);
         graph.create(1000);
