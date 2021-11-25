@@ -128,6 +128,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         private final double betaStreetTime;
         private final double walkSpeedKmH;
         private final int blockedRouteTypes;
+        private final Map<Integer, Long> boardingPenaltiesByRouteType;
         private final GHLocation enter;
         private final GHLocation exit;
         private final Translation translation;
@@ -161,6 +162,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
             arriveBy = request.isArriveBy();
             walkSpeedKmH = request.getWalkSpeedKmH();
             blockedRouteTypes = request.getBlockedRouteTypes();
+            boardingPenaltiesByRouteType = request.getBoardingPenaltiesByRouteType();
             translation = translationMap.getWithFallBack(request.getLocale());
             enter = request.getPoints().get(0);
             exit = request.getPoints().get(1);
@@ -256,6 +258,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
             router.setBetaTransfers(betaTransfers);
             router.setBetaStreetTime(betaStreetTime);
             router.setLimitStreetTime(limitStreetTime);
+            router.setBoardingPenaltyByRouteType(routeType -> boardingPenaltiesByRouteType.getOrDefault(routeType, 0L));
             Iterator<Label> iterator = router.calcLabels(startNode, initialTime).iterator();
             while (iterator.hasNext()) {
                 Label label = iterator.next();

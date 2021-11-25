@@ -243,4 +243,16 @@ public final class GraphExplorer {
     int calcNTransfers(EdgeIteratorState edge) {
         return edge.get(flagEncoder.getTransfersEnc());
     }
+
+    int routeType(EdgeIteratorState edgeIterator) {
+        GtfsStorageI.PlatformDescriptor platformDescriptor = realtimeFeed.getPlatformDescriptorByEdge().get(edgeIterator.getEdge());
+        int routeType;
+        if (platformDescriptor instanceof GtfsStorageI.RouteTypePlatform) {
+            routeType = ((GtfsStorageI.RouteTypePlatform) platformDescriptor).route_type;
+        } else {
+            routeType = gtfsStorage.getGtfsFeeds().get(platformDescriptor.feed_id).routes.get(((GtfsStorageI.RoutePlatform) platformDescriptor).route_id).route_type;
+        }
+        return routeType;
+    }
+
 }
