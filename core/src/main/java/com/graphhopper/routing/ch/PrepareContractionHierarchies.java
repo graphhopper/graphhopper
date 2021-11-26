@@ -284,13 +284,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
             IntContainer neighbors = contractNode(polledNode, level);
             level++;
 
-// ORS-GH MOD START add hook
             if (sortedNodes.size() < nodesToAvoidContract) {
                 // skipped nodes are already set to maxLevel
-                uncontractedNodesHook();
                 break;
             }
-// ORS-GH MOD END
 
             // there might be multiple edges going to the same neighbor nodes -> only calculate priority once per node
             for (IntCursor neighbor : neighbors) {
@@ -304,6 +301,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
             }
         }
 
+// ORS-GH MOD START add hook
+        finishContractionHook();
+// ORS-GH MOD END
+        
         nodeContractor.finishContraction();
 
         logHeuristicStats(updateCounter);
@@ -329,7 +330,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         return Math.round(initSize * ((100 - params.getNodesContractedPercentage()) / 100d));
     }
 
-    public void uncontractedNodesHook() {}
+    public void finishContractionHook() {}
 // ORS-GH MOD END
 
     private void contractNodesUsingFixedNodeOrdering() {
