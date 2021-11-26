@@ -77,7 +77,8 @@ public class CHStorageBuilder {
 
 // ORS-GH MOD START added method
     public int addShortcutCore(int a, int b, int accessFlags, double weight, int skippedEdge1, int skippedEdge2, int time) {
-        checkNewShortcut(a, b);
+        // do not perform node level checks as regular assumptions do not hold in case of core
+        //checkNewShortcut(a, b);
         int shortcut = storage.shortcutCore(a, b, accessFlags, weight, skippedEdge1, skippedEdge2, time);
         // we keep track of the last shortcut for each node (-1 if there are no shortcuts), but
         // we do not register the shortcut at node b, because b is the higher level node (so no need to 'see' the lower
