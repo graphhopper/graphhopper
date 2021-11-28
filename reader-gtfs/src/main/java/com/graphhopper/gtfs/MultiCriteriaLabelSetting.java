@@ -20,11 +20,13 @@ package com.graphhopper.gtfs;
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.util.EdgeIterator;
 
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.IntToLongFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -48,6 +50,7 @@ public class MultiCriteriaLabelSetting {
     private final List<Label> targetLabels;
     private long startTime;
     private final EnumEncodedValue<GtfsStorage.EdgeType> typeEnc;
+    private final IntEncodedValue validityEnc;
     private final IntObjectMap<List<Label>> fromMap;
     private final PriorityQueue<Label> fromHeap;
     private final long maxProfileDuration;
@@ -55,7 +58,8 @@ public class MultiCriteriaLabelSetting {
     private final boolean mindTransfers;
     private final boolean profileQuery;
     private final GraphExplorer explorer;
-    private double betaTransfers;
+    private double betaTransfers = 0.0;
+    private IntToLongFunction transferPenaltiesByRouteType = (routeType -> 0L);
     private double betaStreetTime = 1.0;
     private long limitTripTime = Long.MAX_VALUE;
     private long limitStreetTime = Long.MAX_VALUE;
@@ -68,6 +72,7 @@ public class MultiCriteriaLabelSetting {
         this.maxProfileDuration = maxProfileDuration;
         this.targetLabels = solutions;
         this.typeEnc = flagEncoder.getTypeEnc();
+        this.validityEnc = flagEncoder.getValidityIdEnc();
 
         queueComparator = Comparator
                 .comparingLong(this::weight)
@@ -92,11 +97,15 @@ public class MultiCriteriaLabelSetting {
         this.betaStreetTime = betaWalkTime;
     }
 
+    void setBoardingPenaltyByRouteType(IntToLongFunction transferPenaltiesByRouteType) {
+        this.transferPenaltiesByRouteType = transferPenaltiesByRouteType;
+    }
+
     private class MultiCriteriaLabelSettingSpliterator extends Spliterators.AbstractSpliterator<Label> {
 
         MultiCriteriaLabelSettingSpliterator(int from) {
             super(0, 0);
-            Label label = new Label(startTime, EdgeIterator.NO_EDGE, from, 0, null, 0, 0, false, null);
+            Label label = new Label(startTime, EdgeIterator.NO_EDGE, from, 0, null, 0, 0L, 0, false, null);
             ArrayList<Label> labels = new ArrayList<>(1);
             labels.add(label);
             fromMap.put(from, labels);
@@ -120,8 +129,17 @@ public class MultiCriteriaLabelSetting {
                         nextTime = label.currentTime + explorer.calcTravelTimeMillis(edge, label.currentTime);
                     }
                     int nTransfers = label.nTransfers + explorer.calcNTransfers(edge);
+                    long extraWeight = label.extraWeight;
                     Long firstPtDepartureTime = label.departureTime;
                     GtfsStorage.EdgeType edgeType = edge.get(typeEnc);
+                    if (edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT) {
+                        int currentRouteType = edge.get(validityEnc);
+                        extraWeight += transferPenaltiesByRouteType.applyAsLong(currentRouteType);
+                    }
+                    if (edgeType == GtfsStorage.EdgeType.TRANSFER) {
+                        int currentRouteType = explorer.routeType(edge);
+                        extraWeight += transferPenaltiesByRouteType.applyAsLong(currentRouteType);
+                    }
                     if (!reverse && (edgeType == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK || edgeType == GtfsStorage.EdgeType.WAIT)) {
                         if (label.nTransfers == 0) {
                             firstPtDepartureTime = nextTime - label.streetTime;
@@ -159,14 +177,14 @@ public class MultiCriteriaLabelSetting {
                         }
                     }
                     if (!reverse && edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK && residualDelay > 0) {
-                        Label newImpossibleLabelForDelayedTrip = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, residualDelay, true, label);
+                        Label newImpossibleLabelForDelayedTrip = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, true, label);
                         insertIfNotDominated(newImpossibleLabelForDelayedTrip);
                         nextTime += residualDelay;
                         residualDelay = 0;
-                        Label newLabel = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, residualDelay, impossible, label);
+                        Label newLabel = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, impossible, label);
                         insertIfNotDominated(newLabel);
                     } else {
-                        Label newLabel = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, residualDelay, impossible, label);
+                        Label newLabel = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, impossible, label);
                         insertIfNotDominated(newLabel);
                     }
                 });
@@ -253,7 +271,7 @@ public class MultiCriteriaLabelSetting {
     }
 
     long weight(Label label) {
-        return timeSinceStartTime(label) + (long) (label.nTransfers * betaTransfers) + (long) (label.streetTime * (betaStreetTime - 1.0));
+        return timeSinceStartTime(label) + (long) (label.nTransfers * betaTransfers) + (long) (label.streetTime * (betaStreetTime - 1.0)) + label.extraWeight;
     }
 
     long timeSinceStartTime(Label label) {

@@ -24,6 +24,7 @@ import com.graphhopper.gtfs.*;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
 import com.graphhopper.util.TranslationMap;
+import org.assertj.core.util.Maps;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -376,6 +377,46 @@ public class GraphHopperGtfsIT {
                 new GHStationLocation("FUR_CREEK_RES")),
                 LocalDateTime.of(2007, 1, 7, 9, 0).atZone(zoneId).toInstant());
         ghRequest.setBlockedRouteTypes(4);
+        response = ptRouter.route(ghRequest);
+        mondayTrip = response.getBest();
+        assertNotEquals("AB", ((Trip.PtLeg) mondayTrip.getLegs().get(1)).route_id);
+    }
+
+    @Test
+    public void testPenalizeRouteTypes() {
+        Request ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("AMV"),
+                new GHStationLocation("FUR_CREEK_RES")),
+                LocalDateTime.of(2007, 1, 7, 9, 0).atZone(zoneId).toInstant());
+        GHResponse response = ptRouter.route(ghRequest);
+        ResponsePath mondayTrip = response.getBest();
+        assertEquals("AB", ((Trip.PtLeg) mondayTrip.getLegs().get(1)).route_id);
+        assertEquals(22800000.0, mondayTrip.getRouteWeight());
+
+        ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("BEATTY_AIRPORT"),
+                new GHStationLocation("FUR_CREEK_RES")),
+                LocalDateTime.of(2007, 1, 7, 9, 0).atZone(zoneId).toInstant());
+        ghRequest.setBoardingPenaltiesByRouteType(Maps.newHashMap(2, 100000L));
+        response = ptRouter.route(ghRequest);
+        mondayTrip = response.getBest();
+        assertEquals("AB", ((Trip.PtLeg) mondayTrip.getLegs().get(0)).route_id);
+        assertEquals(22900000.0, mondayTrip.getRouteWeight());
+
+        ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("BEATTY_AIRPORT"),
+                new GHStationLocation("FUR_CREEK_RES")),
+                LocalDateTime.of(2007, 1, 7, 9, 0).atZone(zoneId).toInstant());
+        ghRequest.setBoardingPenaltiesByRouteType(Maps.newHashMap(2, 1000000L));
+        response = ptRouter.route(ghRequest);
+        mondayTrip = response.getBest();
+        assertNotEquals("AB", ((Trip.PtLeg) mondayTrip.getLegs().get(0)).route_id);
+
+        ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("AMV"),
+                new GHStationLocation("FUR_CREEK_RES")),
+                LocalDateTime.of(2007, 1, 7, 9, 0).atZone(zoneId).toInstant());
+        ghRequest.setBoardingPenaltiesByRouteType(Maps.newHashMap(2, 1000000L));
         response = ptRouter.route(ghRequest);
         mondayTrip = response.getBest();
         assertNotEquals("AB", ((Trip.PtLeg) mondayTrip.getLegs().get(1)).route_id);
