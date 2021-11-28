@@ -171,16 +171,16 @@ public class OSMReader {
      * This method is called for each way during the first and second pass of the {@link WaySegmentParser}. All OSM
      * ways that are not accepted here and all nodes that are not referenced by any such way will be ignored.
      */
-    protected boolean acceptWay(ReaderWay item) {
+    protected boolean acceptWay(ReaderWay way) {
         // ignore broken geometry
-        if (item.getNodes().size() < 2)
+        if (way.getNodes().size() < 2)
             return false;
 
         // ignore multipolygon geometry
-        if (!item.hasTags())
+        if (!way.hasTags())
             return false;
 
-        return encodingManager.acceptWay(item, new EncodingManager.AcceptWay());
+        return encodingManager.acceptWay(way);
     }
 
     /**
@@ -314,12 +314,8 @@ public class OSMReader {
         }
 
         setArtificialWayTags(pointList, way);
-        EncodingManager.AcceptWay acceptWay = new EncodingManager.AcceptWay();
-        if (!encodingManager.acceptWay(way, acceptWay))
-            throw new IllegalStateException("unaccepted way: " + way.getId());
-
         IntsRef relationFlags = getRelFlagsMap(way.getId());
-        IntsRef edgeFlags = encodingManager.handleWayTags(way, acceptWay, relationFlags);
+        IntsRef edgeFlags = encodingManager.handleWayTags(way, relationFlags);
         if (edgeFlags.isEmpty())
             return;
 

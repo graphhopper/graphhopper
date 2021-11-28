@@ -204,26 +204,26 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     public EncodingManager.Access getAccess(ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
-            EncodingManager.Access accept = EncodingManager.Access.CAN_SKIP;
+            EncodingManager.Access access = EncodingManager.Access.CAN_SKIP;
 
             if (way.hasTag("route", ferries)) {
                 // if bike is NOT explicitly tagged allow bike but only if foot is not specified either
                 String bikeTag = way.getTag("bicycle");
                 if (bikeTag == null && !way.hasTag("foot") || intendedValues.contains(bikeTag))
-                    accept = EncodingManager.Access.FERRY;
+                    access = EncodingManager.Access.FERRY;
             }
 
             // special case not for all acceptedRailways, only platform
             if (way.hasTag("railway", "platform"))
-                accept = EncodingManager.Access.WAY;
+                access = EncodingManager.Access.WAY;
 
             if (way.hasTag("man_made", "pier"))
-                accept = EncodingManager.Access.WAY;
+                access = EncodingManager.Access.WAY;
 
-            if (!accept.canSkip()) {
+            if (!access.canSkip()) {
                 if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
                     return EncodingManager.Access.CAN_SKIP;
-                return accept;
+                return access;
             }
 
             return EncodingManager.Access.CAN_SKIP;
@@ -292,7 +292,8 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+        EncodingManager.Access access = getAccess(way);
         if (access.canSkip())
             return edgeFlags;
 
