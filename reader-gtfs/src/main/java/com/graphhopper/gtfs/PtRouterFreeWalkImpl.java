@@ -40,6 +40,7 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
+import com.graphhopper.util.exceptions.MaximumNodesExceededException;
 import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
 
@@ -280,7 +281,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
 
             response.addDebugInfo("routing:" + stopWatch.stop().getSeconds() + "s");
             if (discoveredSolutions.isEmpty() && visitedNodes >= maxVisitedNodesForRequest) {
-                response.addError(new IllegalArgumentException("No path found - maximum number of nodes exceeded: " + maxVisitedNodesForRequest));
+                response.addError(new MaximumNodesExceededException("No path found - maximum number of nodes exceeded: " + maxVisitedNodesForRequest, maxVisitedNodesForRequest));
             }
             response.getHints().putObject("visited_nodes.sum", visitedNodes);
             response.getHints().putObject("visited_nodes.average", visitedNodes);
