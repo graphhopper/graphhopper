@@ -24,6 +24,8 @@ import java.util.Map;
  */
 public class DetailedRuntimeException extends RuntimeException implements GHException {
 
+    private static final long serialVersionUID = 1L;
+
     private final Map<String, Object> details;
 
     public DetailedRuntimeException(String var1, Map<String, Object> details) {
