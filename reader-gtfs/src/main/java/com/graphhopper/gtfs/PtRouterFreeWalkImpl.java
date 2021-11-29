@@ -40,6 +40,7 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
+import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 import com.graphhopper.util.exceptions.MaximumNodesExceededException;
 import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
@@ -286,7 +287,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
             response.getHints().putObject("visited_nodes.sum", visitedNodes);
             response.getHints().putObject("visited_nodes.average", visitedNodes);
             if (discoveredSolutions.isEmpty()) {
-                response.addError(new RuntimeException("No route found"));
+                response.addError(new ConnectionNotFoundException("No route found", Collections.emptyMap()));
             }
             return paths;
         }
