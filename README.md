@@ -2,8 +2,7 @@
 
 [![Build Status](https://secure.travis-ci.org/graphhopper/graphhopper.png?branch=master)](http://travis-ci.org/graphhopper/graphhopper)
 
-GraphHopper is a fast and memory efficient Java routing engine, released under Apache License 2.0.
-By default it uses OpenStreetMap and GTFS data, but it can import other data sources.
+GraphHopper is a fast and memory-efficient routing engine released under Apache License 2.0. It can be used as a Java library or standalone web server to calculate the distance, time, turn-by-turn instructions and many road attributes for a route between two or more points. Beyond this "A-to-B" routing it supports ["snap to road"](README.md#Map-Matching), [Isochrone calculation](README.md#Analysis), [mobile navigation](README.md#mobile-apps) and [more](README.md#Features). GraphHopper uses OpenStreetMap and GTFS data by default and it can import [other data sources too](README.md#OpenStreetMap-Support).
 
 # Community
 
@@ -124,10 +123,9 @@ Furthermore, it allows you to use
 very easily. We call this **speed mode**; without this CH preparation, we call it **flexible mode**.
 
 The speed mode comes with very fast and lightweight (less RAM) responses and it does not use heuristics. 
-The downsides are that the speed mode allows only pre-defined vehicle profiles (multiple possible in GraphHopper) 
-and requires a time consuming and resource-intensive preparation.
+However, only predefined vehicle profiles are possible and this additional CH preparation is time and resource consuming.
 
-Then there is the **hybrid mode** which also requires preparation time and memory,
+Then there is the **hybrid mode** which also requires more time and memory for the preparation,
 but it is much more flexible regarding changing properties per request or e.g. integrating traffic data. 
 Furthermore, this hybrid mode is slower than the speed mode, but it is an 
 order of magnitude faster than the flexible mode and uses less RAM for one request.
@@ -169,9 +167,7 @@ See [our example application](./example/src/main/java/com/graphhopper/example/Ro
 
 ## Customizable
 
-We've built the GraphHopper class which makes simple things easy and complex things like multi-modal routing possible. 
-Still, you can use the low level API of GraphHopper and you'll see that
-it was created to allow fast and memory efficient use of the underlying data structures and algorithms.
+You can customize GraphHopper with Java knowledge (with a high and low level API) and also without Java knowledge using the [custom models](./docs/core/custom-models.md).
 
 ### Web UI and API
 
