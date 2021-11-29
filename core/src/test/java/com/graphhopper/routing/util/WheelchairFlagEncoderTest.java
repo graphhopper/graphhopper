@@ -22,7 +22,10 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.Test;
 
 import java.text.DateFormat;
@@ -271,7 +274,7 @@ public class WheelchairFlagEncoderTest {
     public void testPier() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("man_made", "pier");
-        IntsRef flags = wheelchairEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, wheelchairEncoder.getAccess(way));
+        IntsRef flags = wheelchairEncoder.handleWayTags(encodingManager.createEdgeFlags(), way);
         assertFalse(flags.isEmpty());
     }
 
@@ -279,16 +282,16 @@ public class WheelchairFlagEncoderTest {
     public void testMixSpeedAndSafe() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway");
-        IntsRef flags = wheelchairEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, wheelchairEncoder.getAccess(way));
+        IntsRef flags = wheelchairEncoder.handleWayTags(encodingManager.createEdgeFlags(), way);
         assertTrue(flags.isEmpty());
 
         way.setTag("sidewalk", "yes");
-        flags = wheelchairEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, wheelchairEncoder.getAccess(way));
+        flags = wheelchairEncoder.handleWayTags(encodingManager.createEdgeFlags(), way);
         assertEquals(5, wheelchairAvSpeedEnc.getDecimal(false, flags), .1);
 
         way.clearTags();
         way.setTag("highway", "track");
-        flags = wheelchairEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, wheelchairEncoder.getAccess(way));
+        flags = wheelchairEncoder.handleWayTags(encodingManager.createEdgeFlags(), way);
         assertEquals(0, wheelchairAvSpeedEnc.getDecimal(false, flags), .1);
     }
 
@@ -483,7 +486,7 @@ public class WheelchairFlagEncoderTest {
     }
 
     private Graph initExampleGraph() {
-        GraphHopperStorage gs = new GraphHopperStorage(new RAMDirectory(), encodingManager, true, false).create(1000);
+        GraphHopperStorage gs = new GraphBuilder(encodingManager).set3D(true).create();
         NodeAccess na = gs.getNodeAccess();
         // incline of 5% over all
         na.setNode(0, 51.1, 12.001, 50);

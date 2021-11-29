@@ -29,7 +29,7 @@ public class DecimalEncodedValueTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway_link");
         way.setTag("maxspeed", "70 mph");
-        IntsRef flags = carEncoder.handleWayTags(em.createEdgeFlags(), way, carEncoder.getAccess(way));
+        IntsRef flags = carEncoder.handleWayTags(em.createEdgeFlags(), way);
         assertEquals(101.5, carAverageSpeedEnc.getDecimal(true, flags), 1e-1);
 
         DecimalEncodedValue instance1 = new UnsignedDecimalEncodedValue("test1", 8, 0.5, false);

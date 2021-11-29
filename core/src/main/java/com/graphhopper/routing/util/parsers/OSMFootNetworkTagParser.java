@@ -65,7 +65,7 @@ public class OSMFootNetworkTagParser implements RelationTagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         // just copy value into different bit range
         RouteNetwork footNetwork = transformerRouteRelEnc.getEnum(false, relationFlags);
         footRouteEnc.setEnum(false, edgeFlags, footNetwork);

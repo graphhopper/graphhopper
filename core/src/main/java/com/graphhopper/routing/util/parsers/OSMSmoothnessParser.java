@@ -26,7 +26,8 @@ import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
 
-import static com.graphhopper.routing.ev.Smoothness.*;
+import static com.graphhopper.routing.ev.Smoothness.KEY;
+import static com.graphhopper.routing.ev.Smoothness.MISSING;
 
 public class OSMSmoothnessParser implements TagParser {
 
@@ -46,7 +47,7 @@ public class OSMSmoothnessParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
         String smoothnessTag = readerWay.getTag("smoothness");
         Smoothness smoothness = Smoothness.find(smoothnessTag);
         if (smoothness == MISSING)

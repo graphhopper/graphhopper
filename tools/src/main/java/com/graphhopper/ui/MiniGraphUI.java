@@ -29,13 +29,12 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.lm.LMRoutingAlgorithmFactory;
-import com.graphhopper.routing.lm.PrepareLandmarks;
+import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RoutingCHGraph;
@@ -342,10 +341,9 @@ public class MiniGraphUI {
             QueryRoutingCHGraph queryRoutingCHGraph = new QueryRoutingCHGraph(chGraph, qGraph);
             return new CHDebugAlgo(queryRoutingCHGraph, mg);
         } else {
-            Weighting weighting = hopper.createWeighting(profile, new PMap());
-            final PrepareLandmarks preparation = hopper.getLMPreparationHandler().getPreparation(profile.getName());
+            LandmarkStorage landmarks = hopper.getLandmarks().get(profile.getName());
             RoutingAlgorithmFactory algoFactory = (g, w, opts) -> {
-                RoutingAlgorithm algo = new LMRoutingAlgorithmFactory(preparation.getLandmarkStorage()).createAlgo(g, w, opts);
+                RoutingAlgorithm algo = new LMRoutingAlgorithmFactory(landmarks).createAlgo(g, w, opts);
                 if (algo instanceof AStarBidirection) {
                     return new DebugAStarBi(g, w, opts.getTraversalMode(), mg).
                             setApproximation(((AStarBidirection) algo).getApproximation());
@@ -359,9 +357,9 @@ public class MiniGraphUI {
                 return algo;
             };
             AlgorithmOptions algoOpts = new AlgorithmOptions().setAlgorithm(Algorithms.ASTAR_BI);
-            logger.info("algoOpts:" + algoOpts + ", weighting: " + weighting);
+            logger.info("algoOpts:" + algoOpts + ", weighting: " + landmarks.getWeighting() + ", profile: " + profile.getName());
             QueryGraph qGraph = QueryGraph.create(graph, fromRes, toRes);
-            return algoFactory.createAlgo(qGraph, weighting, algoOpts);
+            return algoFactory.createAlgo(qGraph, landmarks.getWeighting(), algoOpts);
         }
     }
 

@@ -21,7 +21,6 @@ import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.CH;
@@ -30,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 import static com.graphhopper.util.Helper.createFormatter;
 import static com.graphhopper.util.Helper.getMemInfo;
@@ -42,7 +42,6 @@ import static com.graphhopper.util.Helper.getMemInfo;
  */
 public class CHPreparationHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(CHPreparationHandler.class);
-    private final List<PrepareContractionHierarchies> preparations = new ArrayList<>();
     // we first add the profiles and later read them to create the config objects (because they require
     // the actual Weightings)
     private final List<CHProfile> chProfiles = new ArrayList<>();
@@ -68,7 +67,7 @@ public class CHPreparationHandler {
     }
 
     public final boolean isEnabled() {
-        return !chProfiles.isEmpty() || !preparations.isEmpty();
+        return !chProfiles.isEmpty();
     }
 
     public CHPreparationHandler setCHProfiles(CHProfile... chProfiles) {
@@ -86,25 +85,6 @@ public class CHPreparationHandler {
         return chProfiles;
     }
 
-    public List<PrepareContractionHierarchies> getPreparations() {
-        return preparations;
-    }
-
-    public PrepareContractionHierarchies getPreparation(String chGraphName) {
-        if (preparations.isEmpty())
-            throw new IllegalStateException("No CH preparations added yet");
-        List<String> profileNames = new ArrayList<>(preparations.size());
-        for (PrepareContractionHierarchies preparation : preparations) {
-            profileNames.add(preparation.getCHConfig().getName());
-            if (preparation.getCHConfig().getName().equalsIgnoreCase(chGraphName)) {
-                return preparation;
-            }
-        }
-        throw new IllegalArgumentException("Cannot find CH preparation for the requested profile: '" + chGraphName + "'" +
-                "\nYou can try disabling CH using " + CH.DISABLE + "=true" +
-                "\navailable CH profiles: " + profileNames);
-    }
-
     public int getPreparationThreads() {
         return preparationThreads;
     }
@@ -117,7 +97,12 @@ public class CHPreparationHandler {
         this.preparationThreads = preparationThreads;
     }
 
-    public void prepare(final StorableProperties properties, final boolean closeEarly) {
+    public Map<String, PrepareContractionHierarchies.Result> prepare(GraphHopperStorage ghStorage, final boolean closeEarly) {
+        LOGGER.info("Creating CH preparations, {}", getMemInfo());
+        List<PrepareContractionHierarchies> preparations = ghStorage.getCHConfigs().stream()
+                .map(c -> createCHPreparation(ghStorage, c))
+                .collect(Collectors.toList());
+        Map<String, PrepareContractionHierarchies.Result> results = new LinkedHashMap<>();
         List<Callable<String>> callables = new ArrayList<>(preparations.size());
         for (int i = 0; i < preparations.size(); ++i) {
             PrepareContractionHierarchies prepare = preparations.get(i);
@@ -127,24 +112,17 @@ public class CHPreparationHandler {
                 final String name = prepare.getCHConfig().getName();
                 // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options
                 Thread.currentThread().setName(name);
-                prepare.doWork();
+                PrepareContractionHierarchies.Result result = prepare.doWork();
+                results.put(name, result);
                 if (closeEarly)
                     prepare.close();
-                properties.put(CH.PREPARE + "date." + name, createFormatter().format(new Date()));
+                ghStorage.getProperties().put(CH.PREPARE + "date." + name, createFormatter().format(new Date()));
                 return name;
             });
         }
         GHUtility.runConcurrently(callables, preparationThreads);
         LOGGER.info("Finished CH preparation, {}", getMemInfo());
-    }
-
-    public void createPreparations(GraphHopperStorage ghStorage) {
-        if (!preparations.isEmpty())
-            throw new IllegalStateException("CH preparations were created already");
-        LOGGER.info("Creating CH preparations, {}", getMemInfo());
-        for (CHConfig chConfig : ghStorage.getCHConfigs()) {
-            preparations.add(createCHPreparation(ghStorage, chConfig));
-        }
+        return results;
     }
 
     private PrepareContractionHierarchies createCHPreparation(GraphHopperStorage ghStorage, CHConfig chConfig) {

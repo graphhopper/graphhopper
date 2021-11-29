@@ -117,7 +117,7 @@ public class PrepareContractionHierarchies {
         return this;
     }
 
-    public void doWork() {
+    public Result doWork() {
         if (prepared)
             throw new IllegalStateException("Call doWork only once!");
         prepared = true;
@@ -132,6 +132,15 @@ public class PrepareContractionHierarchies {
         runGraphContraction();
         allSW.stop();
         logFinalGraphStats();
+        return new Result(
+                chConfig, chStore,
+                nodeContractor.getDijkstraCount(),
+                nodeContractor.getAddedShortcutsCount(),
+                lazyUpdateSW.getCurrentSeconds(),
+                periodicUpdateSW.getCurrentSeconds(),
+                neighborUpdateSW.getCurrentSeconds(),
+                allSW.getMillis()
+        );
     }
 
     public boolean isPrepared() {
@@ -155,7 +164,7 @@ public class PrepareContractionHierarchies {
         }
     }
 
-    public boolean isEdgeBased() {
+    private boolean isEdgeBased() {
         return chConfig.isEdgeBased();
     }
 
@@ -378,26 +387,6 @@ public class PrepareContractionHierarchies {
         );
     }
 
-    public long getDijkstraCount() {
-        return nodeContractor.getDijkstraCount();
-    }
-
-    public long getShortcuts() {
-        return nodeContractor.getAddedShortcutsCount();
-    }
-
-    public double getLazyTime() {
-        return lazyUpdateSW.getCurrentSeconds();
-    }
-
-    public double getPeriodTime() {
-        return periodicUpdateSW.getCurrentSeconds();
-    }
-
-    public double getNeighborTime() {
-        return neighborUpdateSW.getCurrentSeconds();
-    }
-
     public CHConfig getCHConfig() {
         return chConfig;
     }
@@ -439,6 +428,60 @@ public class PrepareContractionHierarchies {
     void close() {
         chStore.flush();
         chStore.close();
+    }
+
+    public static class Result {
+        private final CHConfig chConfig;
+        private final CHStorage chStorage;
+        private final long dijkstraCount;
+        private final long shortcuts;
+        private final double lazyTime;
+        private final double periodTime;
+        private final double neighborTime;
+        private final long totalPrepareTime;
+
+        private Result(CHConfig chConfig, CHStorage chStorage, long dijkstraCount, long shortcuts, double lazyTime, double periodTime, double neighborTime, long totalPrepareTime) {
+            this.chStorage = chStorage;
+            this.dijkstraCount = dijkstraCount;
+            this.shortcuts = shortcuts;
+            this.lazyTime = lazyTime;
+            this.periodTime = periodTime;
+            this.neighborTime = neighborTime;
+            this.totalPrepareTime = totalPrepareTime;
+            this.chConfig = chConfig;
+        }
+
+        public CHConfig getCHConfig() {
+            return chConfig;
+        }
+
+        public CHStorage getCHStorage() {
+            return chStorage;
+        }
+
+        public long getDijkstraCount() {
+            return dijkstraCount;
+        }
+
+        public long getShortcuts() {
+            return shortcuts;
+        }
+
+        public double getLazyTime() {
+            return lazyTime;
+        }
+
+        public double getPeriodTime() {
+            return periodTime;
+        }
+
+        public double getNeighborTime() {
+            return neighborTime;
+        }
+
+        public long getTotalPrepareTime() {
+            return totalPrepareTime;
+        }
     }
 
     private static class Params {

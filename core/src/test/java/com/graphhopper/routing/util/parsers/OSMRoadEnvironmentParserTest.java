@@ -19,39 +19,31 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.Lanes;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadEnvironment;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class OSMLanesParserTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-    private OSMLanesParser parser;
-    private EncodingManager em;
-
-    @BeforeEach
-    void setup() {
-        parser = new OSMLanesParser();
-        em = new EncodingManager.Builder().add(parser).build();
-    }
+class OSMRoadEnvironmentParserTest {
 
     @Test
-    void basic() {
-        ReaderWay readerWay = new ReaderWay(1);
-        IntsRef intsRef = em.createEdgeFlags();
-        readerWay.setTag("lanes", "4");
-        parser.handleWayTags(intsRef, readerWay, em.createRelationFlags());
-        Assertions.assertEquals(4, em.getIntEncodedValue(Lanes.KEY).getInt(false, intsRef));
-    }
-
-    @Test
-    void notTagged() {
-        ReaderWay readerWay = new ReaderWay(1);
-        IntsRef intsRef = em.createEdgeFlags();
-        parser.handleWayTags(intsRef, readerWay, em.createRelationFlags());
-        Assertions.assertEquals(1, em.getIntEncodedValue(Lanes.KEY).getInt(false, intsRef));
+    void ferry() {
+        OSMRoadEnvironmentParser parser = new OSMRoadEnvironmentParser();
+        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        EncodingManager em = new EncodingManager.Builder()
+                .add(carEncoder)
+                .add(parser).build();
+        EnumEncodedValue<RoadEnvironment> roadEnvironmentEnc = em.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
+        IntsRef edgeFlags = em.createEdgeFlags();
+        ReaderWay way = new ReaderWay(0);
+        way.setTag("route", "shuttle_train");
+        parser.handleWayTags(edgeFlags, way, em.createRelationFlags());
+        RoadEnvironment roadEnvironment = roadEnvironmentEnc.getEnum(false, edgeFlags);
+        assertEquals(RoadEnvironment.FERRY, roadEnvironment);
     }
 
 }

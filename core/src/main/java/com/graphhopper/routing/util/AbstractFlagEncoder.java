@@ -139,7 +139,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      * Analyze properties of a way and create the edge flags. This method is called in the second
      * parsing step.
      */
-    public abstract IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access);
+    public abstract IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way);
 
     public int getMaxTurnCosts() {
         return maxTurnCosts;

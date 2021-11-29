@@ -75,19 +75,22 @@ public class Label {
 
     public final Long departureTime;
     public final long streetTime;
+    public final long extraWeight;
+
 
     final long residualDelay;
     final boolean impossible;
 
     public final Label parent;
 
-    Label(long currentTime, int edgeId, int adjNode, int nTransfers, Long departureTime, long streetTime, long residualDelay, boolean impossible, Label parent) {
+    Label(long currentTime, int edgeId, int adjNode, int nTransfers, Long departureTime, long streetTime, long extraWeight, long residualDelay, boolean impossible, Label parent) {
         this.currentTime = currentTime;
         this.edge = edgeId;
         this.adjNode = adjNode;
         this.nTransfers = nTransfers;
         this.departureTime = departureTime;
         this.streetTime = streetTime;
+        this.extraWeight = extraWeight;
         this.residualDelay = residualDelay;
         this.impossible = impossible;
         this.parent = parent;

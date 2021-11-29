@@ -102,12 +102,12 @@ public class OSMGetOffBikeParserTest {
     }
 
     private RoadClass getRoadClass(ReaderWay way) {
-        IntsRef edgeFlags = em.handleWayTags(way, new EncodingManager.AcceptWay().put("bike", EncodingManager.Access.WAY), em.createRelationFlags());
+        IntsRef edgeFlags = em.handleWayTags(way, em.createRelationFlags());
         return roadClassEnc.getEnum(false, edgeFlags);
     }
 
     private boolean isGetOffBike(ReaderWay way) {
-        IntsRef edgeFlags = em.handleWayTags(way, new EncodingManager.AcceptWay().put("bike", EncodingManager.Access.WAY), em.createRelationFlags());
+        IntsRef edgeFlags = em.handleWayTags(way, em.createRelationFlags());
         return offBikeEnc.getBool(false, edgeFlags);
     }
 }

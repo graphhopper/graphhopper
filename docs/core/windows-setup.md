@@ -8,8 +8,4 @@ After that graphhopper web should start. After this open [http://localhost:8989/
 
 ### Troubleshooting
  * Make sure you have the latest JDK installed and not only the JRE
- * For me JAVA_HOME was not correct so I had to overwrite it before calling
-   the `graphhopper.sh` script:
-   ```bash
-   export JAVA_HOME=/cygdrive/c/Programme/Java/jdk1.8.0_77
-   ```
+ * Using cygwin you might need to call java via /cygdrive/c/Programme/Java/jdk1.8.0_77/bin/java

@@ -43,7 +43,7 @@ public class OSMLanesParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         int laneCount = 1;
         if (way.hasTag("lanes")) {
             String noLanes = way.getTag("lanes");

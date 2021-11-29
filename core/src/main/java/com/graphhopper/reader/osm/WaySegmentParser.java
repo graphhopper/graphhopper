@@ -30,7 +30,6 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointAccess;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -252,7 +251,7 @@ public class WaySegmentParser {
             List<SegmentNode> segment = new ArrayList<>(way.getNodes().size());
             for (LongCursor node : way.getNodes())
                 segment.add(new SegmentNode(node.value, nodeData.getId(node.value)));
-            wayPreprocessor.preprocessWay(getPoint(segment.get(0).id), getPoint(segment.get(segment.size() - 1).id), way);
+            wayPreprocessor.preprocessWay(way);
             splitWayAtJunctionsAndEmptySections(segment, way);
         }
 
@@ -365,14 +364,6 @@ public class WaySegmentParser {
             edgeHandler.handleEdge(from, to, pointList, way, nodeTags);
         }
 
-        private GHPoint getPoint(int id) {
-            GHPoint point = nodeData.getCoordinates(id);
-            // in case the point is missing we return NaN, but this is a bit ugly and maybe at some point we no longer
-            // need to pass the points to preprocessWay. it does not make so much sense to pass just the first and
-            // last points, especially when they even could be missing.
-            return point == null ? new GHPoint(Double.NaN, Double.NaN) : point;
-        }
-
         @Override
         public void handleRelation(ReaderRelation relation) {
             if (!handledRelations) {
@@ -420,7 +411,7 @@ public class WaySegmentParser {
         private ElevationProvider elevationProvider = ElevationProvider.NOOP;
         private Predicate<ReaderWay> wayFilter = way -> true;
         private Predicate<ReaderNode> splitNodeFilter = node -> false;
-        private WayPreprocessor wayPreprocessor = (first, last, way) -> {
+        private WayPreprocessor wayPreprocessor = way -> {
         };
         private Consumer<ReaderRelation> relationPreprocessor = relation -> {
         };
@@ -563,6 +554,6 @@ public class WaySegmentParser {
     }
 
     public interface WayPreprocessor {
-        void preprocessWay(GHPoint first, GHPoint last, ReaderWay way);
+        void preprocessWay(ReaderWay way);
     }
 }

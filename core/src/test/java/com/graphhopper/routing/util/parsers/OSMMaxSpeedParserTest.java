@@ -20,7 +20,6 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.MaxSpeed;
-import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TransportationMode;
@@ -54,12 +53,12 @@ class OSMMaxSpeedParserTest {
                 return 5;
             }
         });
-        parser.handleWayTags(e1.getFlags(), way, false, relFlags);
+        parser.handleWayTags(e1.getFlags(), way, relFlags);
         assertEquals(5, e1.get(maxSpeedEnc), .1);
 
         // without a country_rule we get the default value
         way.removeTag("country_rule");
-        parser.handleWayTags(e2.getFlags(), way, false, relFlags);
+        parser.handleWayTags(e2.getFlags(), way, relFlags);
         assertEquals(MaxSpeed.UNSET_SPEED, e2.get(maxSpeedEnc), .1);
     }
 

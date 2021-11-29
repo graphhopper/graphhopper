@@ -28,8 +28,8 @@ import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.CHConfig;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -47,7 +47,7 @@ public class AlternativeRouteEdgeCHTest {
     private final EncodingManager em = EncodingManager.create(carFE);
 
     public GraphHopperStorage createTestGraph(EncodingManager tmpEM) {
-        final GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), tmpEM, false, true);
+        final GraphHopperStorage graph = new GraphBuilder(tmpEM).withTurnCosts(true).build();
         TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(carFE, graph.getTurnCostStorage());
         CHConfig chConfig = CHConfig.edgeBased("profile", new FastestWeighting(carFE, turnCostProvider));
         graph.addCHGraph(chConfig);

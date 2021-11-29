@@ -34,7 +34,6 @@ import static org.junit.jupiter.api.Assertions.*;
  * For other bidirectional algorithms we simply compare with {@link DijkstraBidirectionRef} in {@link DirectedRoutingTest}
  */
 public class DirectedBidirectionalDijkstraTest {
-    private Directory dir;
     private TurnCostStorage turnCostStorage;
     private int maxTurnCosts;
     private GraphHopperStorage graph;
@@ -45,11 +44,10 @@ public class DirectedBidirectionalDijkstraTest {
 
     @BeforeEach
     public void setup() {
-        dir = new RAMDirectory();
         maxTurnCosts = 10;
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
-        graph = new GraphHopperStorage(dir, encodingManager, false, true).create(1000);
+        graph = new GraphBuilder(encodingManager).withTurnCosts(true).create();
         turnCostStorage = graph.getTurnCostStorage();
         weighting = createWeighting(Weighting.INFINITE_U_TURN_COSTS);
         turnCostEnc = encodingManager.getDecimalEncodedValue(TurnCost.key(encoder.toString()));
@@ -478,7 +476,7 @@ public class DirectedBidirectionalDijkstraTest {
         na.setNode(4, 0, 1);
         na.setNode(5, 0, 0);
 
-        LocationIndexTree locationIndex = new LocationIndexTree(graph, dir);
+        LocationIndexTree locationIndex = new LocationIndexTree(graph, graph.getDirectory());
         locationIndex.prepareIndex();
         Snap snap = locationIndex.findClosest(1.1, 0.5, EdgeFilter.ALL_EDGES);
         QueryGraph queryGraph = QueryGraph.create(graph, snap);

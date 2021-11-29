@@ -123,7 +123,7 @@ public class RoundTripRoutingTest {
     }
 
     private Graph createTestGraph() {
-        Graph graph = new GraphHopperStorage(new RAMDirectory(), em, false, true).create(1000);
+        Graph graph = new GraphBuilder(em).withTurnCosts(true).create();
         AlternativeRouteTest.initTestGraph(graph, carFE);
         return graph;
     }
