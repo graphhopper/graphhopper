@@ -39,6 +39,7 @@ import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.details.PathDetail;
+import com.graphhopper.util.exceptions.MaximumNodesExceededException;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
@@ -848,7 +849,7 @@ public class GraphHopperTest {
         GHResponse rsp = hopper.route(req);
 
         assertTrue(rsp.hasErrors());
-        assertTrue(rsp.getErrors().toString().contains("maximum nodes exceeded"), rsp.getErrors().toString());
+        assertTrue(rsp.getErrors().get(0) instanceof MaximumNodesExceededException);
 
         req = new GHRequest(from, to).setProfile(profile);
         rsp = hopper.route(req);
