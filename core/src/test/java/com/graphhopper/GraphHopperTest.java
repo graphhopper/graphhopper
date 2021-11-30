@@ -849,7 +849,10 @@ public class GraphHopperTest {
         GHResponse rsp = hopper.route(req);
 
         assertTrue(rsp.hasErrors());
-        assertTrue(rsp.getErrors().get(0) instanceof MaximumNodesExceededException);
+        Throwable throwable = rsp.getErrors().get(0);
+        assertTrue(throwable instanceof MaximumNodesExceededException);
+        Object nodesDetail = ((MaximumNodesExceededException) throwable).getDetails().get(MaximumNodesExceededException.NODES_KEY);
+        assertEquals(5, nodesDetail);
 
         req = new GHRequest(from, to).setProfile(profile);
         rsp = hopper.route(req);
