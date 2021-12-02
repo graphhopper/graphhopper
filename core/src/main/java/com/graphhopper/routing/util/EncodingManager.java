@@ -469,62 +469,10 @@ public class EncodingManager implements EncodedValueLookup {
     /**
      * Determine whether a way is routable for one of the added encoders.
      *
-     * @return if at least one encoder consumes the specified way. Additionally the specified acceptWay is changed
-     * to provide more details.
+     * @return if at least one encoder consumes the specified way
      */
-    public boolean acceptWay(ReaderWay way, AcceptWay acceptWay) {
-        if (!acceptWay.isEmpty())
-            throw new IllegalArgumentException("AcceptWay must be empty");
-
-        for (AbstractFlagEncoder encoder : edgeEncoders) {
-            acceptWay.put(encoder.toString(), encoder.getAccess(way));
-        }
-        return acceptWay.hasAccepted();
-    }
-
-    public static class AcceptWay {
-        private Map<String, Access> accessMap;
-        boolean hasAccepted = false;
-        boolean isFerry = false;
-
-        public AcceptWay() {
-            this.accessMap = new HashMap<>(5);
-        }
-
-        private Access get(String key) {
-            Access res = accessMap.get(key);
-            if (res == null)
-                throw new IllegalArgumentException("Couldn't fetch Access value for encoder key " + key);
-
-            return res;
-        }
-
-        public AcceptWay put(String key, Access access) {
-            accessMap.put(key, access);
-            if (access != Access.CAN_SKIP)
-                hasAccepted = true;
-            if (access == Access.FERRY)
-                isFerry = true;
-            return this;
-        }
-
-        public boolean isEmpty() {
-            return accessMap.isEmpty();
-        }
-
-        /**
-         * At least one of the entries is not CAN_SKIP
-         */
-        public boolean hasAccepted() {
-            return hasAccepted;
-        }
-
-        /**
-         * At least one of the entries is FERRY (usually all entries)
-         */
-        public boolean isFerry() {
-            return isFerry;
-        }
+    public boolean acceptWay(ReaderWay way) {
+        return edgeEncoders.stream().anyMatch(encoder -> !encoder.getAccess(way).equals(Access.CAN_SKIP));
     }
 
     public enum Access {
@@ -565,13 +513,13 @@ public class EncodingManager implements EncodedValueLookup {
      *
      * @param relationFlags The preprocessed relation flags is used to influence the way properties.
      */
-    public IntsRef handleWayTags(ReaderWay way, AcceptWay acceptWay, IntsRef relationFlags) {
+    public IntsRef handleWayTags(ReaderWay way, IntsRef relationFlags) {
         IntsRef edgeFlags = createEdgeFlags();
         for (TagParser parser : edgeTagParsers) {
             parser.handleWayTags(edgeFlags, way, relationFlags);
         }
         for (AbstractFlagEncoder encoder : edgeEncoders) {
-            encoder.handleWayTags(edgeFlags, way, acceptWay.get(encoder.toString()));
+            encoder.handleWayTags(edgeFlags, way);
         }
         return edgeFlags;
     }

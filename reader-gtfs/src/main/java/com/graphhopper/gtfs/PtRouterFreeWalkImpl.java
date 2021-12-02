@@ -40,6 +40,8 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
+import com.graphhopper.util.exceptions.ConnectionNotFoundException;
+import com.graphhopper.util.exceptions.MaximumNodesExceededException;
 import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
 
@@ -128,6 +130,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         private final double betaStreetTime;
         private final double walkSpeedKmH;
         private final int blockedRouteTypes;
+        private final Map<Integer, Long> boardingPenaltiesByRouteType;
         private final GHLocation enter;
         private final GHLocation exit;
         private final Translation translation;
@@ -161,6 +164,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
             arriveBy = request.isArriveBy();
             walkSpeedKmH = request.getWalkSpeedKmH();
             blockedRouteTypes = request.getBlockedRouteTypes();
+            boardingPenaltiesByRouteType = request.getBoardingPenaltiesByRouteType();
             translation = translationMap.getWithFallBack(request.getLocale());
             enter = request.getPoints().get(0);
             exit = request.getPoints().get(1);
@@ -256,6 +260,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
             router.setBetaTransfers(betaTransfers);
             router.setBetaStreetTime(betaStreetTime);
             router.setLimitStreetTime(limitStreetTime);
+            router.setBoardingPenaltyByRouteType(routeType -> boardingPenaltiesByRouteType.getOrDefault(routeType, 0L));
             Iterator<Label> iterator = router.calcLabels(startNode, initialTime).iterator();
             while (iterator.hasNext()) {
                 Label label = iterator.next();
@@ -280,12 +285,12 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
 
             response.addDebugInfo("routing:" + stopWatch.stop().getSeconds() + "s");
             if (discoveredSolutions.isEmpty() && visitedNodes >= maxVisitedNodesForRequest) {
-                response.addError(new IllegalArgumentException("No path found - maximum number of nodes exceeded: " + maxVisitedNodesForRequest));
+                response.addError(new MaximumNodesExceededException("No path found - maximum number of nodes exceeded: " + maxVisitedNodesForRequest, maxVisitedNodesForRequest));
             }
             response.getHints().putObject("visited_nodes.sum", visitedNodes);
             response.getHints().putObject("visited_nodes.average", visitedNodes);
             if (discoveredSolutions.isEmpty()) {
-                response.addError(new RuntimeException("No route found"));
+                response.addError(new ConnectionNotFoundException("No route found", Collections.emptyMap()));
             }
             return paths;
         }

@@ -38,8 +38,6 @@ import org.junit.jupiter.api.BeforeEach;
  */
 public abstract class EdgeElevationInterpolatorTest {
 
-    protected final static EncodingManager.AcceptWay ACCEPT_WAY = new EncodingManager.AcceptWay().
-            put(RoadEnvironment.KEY, EncodingManager.Access.WAY).put("car", EncodingManager.Access.WAY).put("foot", EncodingManager.Access.WAY);
     protected static final double PRECISION = ElevationInterpolator.EPSILON2;
     protected ReaderWay interpolatableWay;
     protected ReaderWay normalWay;

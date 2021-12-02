@@ -13,6 +13,7 @@
 - consider heading when snapping coordinates to the road network, this is especially important for navigation (#2411)
 - OSMReader no longer sets the artificial 'estimated_center' tag and processNode also receives EMPTY_NODEs (971d686)
 - added Toll.MISSING; custom models must be adapted to check for explicit toll values e.g `toll != NO` -> `toll == HGV || toll == ALL` (#2164)
+- throw MaximumNodesExceededException instead of a generic IllegalArgumentException (#2464)
 
 ### 4.0 [29 Sep 2021]
 
