@@ -283,25 +283,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         }
     }
 
-    // ORS GH MOD start
-    // ORS GH MOD switch from package-private to public for package-external flag encoders and some weightings
-    @Deprecated // TODO ORS: method removed from GH3.0
-    public double getSpeed(IntsRef edgeFlags) {
-        return getSpeed(false, edgeFlags);
-    }
-
-    // ORS GH MOD switch from package-private to public for package-external flag encoders and some weightings
-    @Deprecated // TODO ORS: method removed from GH3.0
-    public double getSpeed(boolean reverse, IntsRef edgeFlags) {
-        // ORS orig: double speedVal = speedEncoder.getDecimal(reverse, edgeFlags);
-        double speedVal = avgSpeedEnc.getDecimal(reverse, edgeFlags); // TODO ORS: temporary hack to make it compile
-        if (speedVal < 0)
-            throw new IllegalStateException("Speed was negative!? " + speedVal);
-
-        return speedVal;
-    }
-    // ORS GH MOD end
-
     /**
      * @param way   needed to retrieve tags
      * @param speed speed guessed e.g. from the road type or other tags
