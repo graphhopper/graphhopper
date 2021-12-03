@@ -202,7 +202,7 @@ function fetchAndDrawSPT(point) {
 function fetchAndDrawIsoline(point) {
     var radius = menu.isochroneRadius;
     var profile = menu.isochroneProfile;
-    fetch("/isochrone?profile=" + profile + "&point=" + point.lat + "," + point.lng + "&time_limit=" + radius)
+    fetch("/isochrone?profile=" + profile + "&point=" + point.lat + "," + point.lng + "&time_limit=" + radius + (profile === "pt" ? "&pt.earliest_departure_time=" + new Date().toISOString() : ""))
         .then(response => response.json())
         .then(data => {
             console.log('isoline took: ' + data.info.took + 'ms');
