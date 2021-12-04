@@ -27,10 +27,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
-import com.graphhopper.storage.CHConfig;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
@@ -47,11 +44,7 @@ public class AlternativeRouteEdgeCHTest {
     private final EncodingManager em = EncodingManager.create(carFE);
 
     public GraphHopperStorage createTestGraph(EncodingManager tmpEM) {
-        final GraphHopperStorage graph = new GraphBuilder(tmpEM).withTurnCosts(true).build();
-        TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(carFE, graph.getTurnCostStorage());
-        CHConfig chConfig = CHConfig.edgeBased("profile", new FastestWeighting(carFE, turnCostProvider));
-        graph.addCHGraph(chConfig);
-        graph.create(1000);
+        final GraphHopperStorage graph = new GraphBuilder(tmpEM).withTurnCosts(true).create();
 
         /*
 
@@ -92,23 +85,34 @@ public class AlternativeRouteEdgeCHTest {
         turnCostStorage.set(carTurnCost, e6_3.getEdge(), 3, e3_4.getEdge(), Double.POSITIVE_INFINITY);
 
         graph.freeze();
-
-        PrepareContractionHierarchies contractionHierarchies = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
-        contractionHierarchies.doWork();
         return graph;
+    }
+
+    private RoutingCHGraph prepareCH(GraphHopperStorage graph) {
+        TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(carFE, graph.getTurnCostStorage());
+        CHConfig chConfig = CHConfig.edgeBased("profile", new FastestWeighting(carFE, turnCostProvider));
+        PrepareContractionHierarchies contractionHierarchies = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
+        PrepareContractionHierarchies.Result res = contractionHierarchies.doWork();
+        return graph.createCHGraph(res.getCHStorage(), res.getCHConfig());
     }
 
     @Test
     public void testAssumptions() {
         GraphHopperStorage g = createTestGraph(em);
-        DijkstraBidirectionEdgeCHNoSOD router = new DijkstraBidirectionEdgeCHNoSOD(g.getRoutingCHGraph());
+        TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(carFE, g.getTurnCostStorage());
+        CHConfig chConfig = CHConfig.edgeBased("profile", new FastestWeighting(carFE, turnCostProvider));
+        CHStorage chStorage = g.createCHStorage(chConfig);
+        RoutingCHGraph chGraph = g.createCHGraph(chStorage, chConfig);
+        DijkstraBidirectionEdgeCHNoSOD router = new DijkstraBidirectionEdgeCHNoSOD(chGraph);
         Path path = router.calcPath(5, 10);
         assertTrue(path.isFound());
         assertEquals(IntArrayList.from(5, 6, 7, 8, 4, 10), path.calcNodes());
         assertEquals(50000.0, path.getDistance(), 0.0);
         // 6 -> 3 -> 4 is forbidden
 
-        router = new DijkstraBidirectionEdgeCHNoSOD(g.getRoutingCHGraph());
+        g = createTestGraph(em);
+        RoutingCHGraph routingCHGraph = prepareCH(g);
+        router = new DijkstraBidirectionEdgeCHNoSOD(routingCHGraph);
         path = router.calcPath(5, 3, ANY_EDGE, GHUtility.getEdge(g, 2, 3).getEdge());
         assertEquals(IntArrayList.from(5, 1, 9, 2, 3), path.calcNodes());
         assertEquals(40000.0, path.getDistance(), 0.0);
@@ -123,7 +127,8 @@ public class AlternativeRouteEdgeCHTest {
         hints.putObject("alternative_route.max_weight_factor", 4);
         hints.putObject("alternative_route.local_optimality_factor", 0.5);
         hints.putObject("alternative_route.max_paths", 4);
-        AlternativeRouteEdgeCH altDijkstra = new AlternativeRouteEdgeCH(g.getRoutingCHGraph(), hints);
+        RoutingCHGraph routingCHGraph = prepareCH(g);
+        AlternativeRouteEdgeCH altDijkstra = new AlternativeRouteEdgeCH(routingCHGraph, hints);
         List<AlternativeRouteEdgeCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 10);
         assertEquals(2, pathInfos.size());
         assertEquals(IntArrayList.from(5, 6, 7, 8, 4, 10), pathInfos.get(0).path.calcNodes());
@@ -139,7 +144,8 @@ public class AlternativeRouteEdgeCHTest {
         hints.putObject("alternative_route.max_weight_factor", 4);
         hints.putObject("alternative_route.local_optimality_factor", 0.5);
         hints.putObject("alternative_route.max_paths", 4);
-        AlternativeRouteEdgeCH altDijkstra = new AlternativeRouteEdgeCH(g.getRoutingCHGraph(), hints);
+        RoutingCHGraph routingCHGraph = prepareCH(g);
+        AlternativeRouteEdgeCH altDijkstra = new AlternativeRouteEdgeCH(routingCHGraph, hints);
         List<AlternativeRouteEdgeCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(10, 5);
         assertEquals(3, pathInfos.size());
         assertEquals(IntArrayList.from(10, 4, 3, 6, 5), pathInfos.get(0).path.calcNodes());

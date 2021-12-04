@@ -98,4 +98,9 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
         return weighting.calcTurnWeight(edgeFrom, nodeVia, edgeTo);
     }
 
+    @Override
+    public void close() {
+        if (!baseGraph.isClosed()) baseGraph.close();
+        chStorage.close();
+    }
 }

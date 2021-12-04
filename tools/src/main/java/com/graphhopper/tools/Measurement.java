@@ -123,20 +123,19 @@ public class Measurement {
 
         GraphHopper hopper = new GraphHopper() {
             @Override
-            protected Map<String, PrepareContractionHierarchies.Result> prepareCH(boolean closeEarly) {
+            protected Map<String, PrepareContractionHierarchies.Result> prepareCH(boolean closeEarly, List<CHConfig> configsToPrepare) {
                 StopWatch sw = new StopWatch().start();
-                Map<String, PrepareContractionHierarchies.Result> result = super.prepareCH(closeEarly);
+                Map<String, PrepareContractionHierarchies.Result> result = super.prepareCH(closeEarly, configsToPrepare);
                 // note that we measure the total time of all (possibly edge&node) CH preparations
                 put(Parameters.CH.PREPARE + "time", sw.stop().getMillis());
-                int edges = getGraphHopperStorage().getEdges();
-                if (getGraphHopperStorage().getRoutingCHGraph("profile_no_tc") != null) {
-                    int edgesAndShortcuts = getGraphHopperStorage().getRoutingCHGraph("profile_no_tc").getEdges();
-                    put(Parameters.CH.PREPARE + "node.shortcuts", edgesAndShortcuts - edges);
+                if (result.get("profile_no_tc") != null) {
+                    int shortcuts = result.get("profile_no_tc").getCHStorage().getShortcuts();
+                    put(Parameters.CH.PREPARE + "node.shortcuts", shortcuts);
                     put(Parameters.CH.PREPARE + "node.time", result.get("profile_no_tc").getTotalPrepareTime());
                 }
-                if (getGraphHopperStorage().getRoutingCHGraph("profile_tc") != null) {
-                    int edgesAndShortcuts = getGraphHopperStorage().getRoutingCHGraph("profile_tc").getEdges();
-                    put(Parameters.CH.PREPARE + "edge.shortcuts", edgesAndShortcuts - edges);
+                if (result.get("profile_tc") != null) {
+                    int shortcuts = result.get("profile_tc").getCHStorage().getShortcuts();
+                    put(Parameters.CH.PREPARE + "edge.shortcuts", shortcuts);
                     put(Parameters.CH.PREPARE + "edge.time", result.get("profile_tc").getTotalPrepareTime());
                 }
                 return result;
@@ -228,7 +227,7 @@ public class Measurement {
                 boolean isCH = true;
                 boolean isLM = false;
                 gcAndWait();
-                RoutingCHGraph nodeBasedCH = g.getRoutingCHGraph("profile_no_tc");
+                RoutingCHGraph nodeBasedCH = hopper.getCHGraphs().get("profile_no_tc");
                 if (nodeBasedCH != null) {
                     measureGraphTraversalCH(nodeBasedCH, count * 100);
                     gcAndWait();
@@ -250,7 +249,7 @@ public class Measurement {
                     measureRouting(hopper, new QuerySettings("routingCH_via_100_full", count / 100, isCH, isLM).
                             withPoints(100).sod().withInstructions().simplify().pathDetails());
                 }
-                RoutingCHGraph edgeBasedCH = g.getRoutingCHGraph("profile_tc");
+                RoutingCHGraph edgeBasedCH = hopper.getCHGraphs().get("profile_tc");
                 if (edgeBasedCH != null) {
                     measureRouting(hopper, new QuerySettings("routingCH_edge", count, isCH, isLM).
                             edgeBased().withInstructions());

@@ -77,9 +77,9 @@ public class PrepareContractionHierarchies {
 
     private PrepareContractionHierarchies(GraphHopperStorage ghStorage, CHConfig chConfig) {
         graph = ghStorage;
-        chStore = ghStorage.getCHStore(chConfig.getName());
-        if (chStore == null)
-            throw new IllegalArgumentException("There is no CH graph '" + chConfig.getName() + "', existing: " + ghStorage.getCHGraphNames());
+        if (!graph.isFrozen())
+            throw new IllegalStateException("BaseGraph must be frozen before creating CHs");
+        chStore = ghStorage.createCHStorage(chConfig);
         chBuilder = new CHStorageBuilder(chStore);
         this.chConfig = chConfig;
         params = Params.forTraversalMode(chConfig.getTraversalMode());
@@ -425,8 +425,11 @@ public class PrepareContractionHierarchies {
         sortedNodes = null;
     }
 
-    void close() {
+    void flush() {
         chStore.flush();
+    }
+
+    void close() {
         chStore.close();
     }
 

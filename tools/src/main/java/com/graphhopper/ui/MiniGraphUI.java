@@ -335,7 +335,7 @@ public class MiniGraphUI {
     private RoutingAlgorithm createAlgo(GraphHopper hopper) {
         Profile profile = hopper.getProfiles().iterator().next();
         if (useCH) {
-            RoutingCHGraph chGraph = hopper.getGraphHopperStorage().getRoutingCHGraph(profile.getName());
+            RoutingCHGraph chGraph = hopper.getCHGraphs().get(profile.getName());
             logger.info("CH algo, profile: " + profile.getName());
             QueryGraph qGraph = QueryGraph.create(hopper.getGraphHopperStorage(), fromRes, toRes);
             QueryRoutingCHGraph queryRoutingCHGraph = new QueryRoutingCHGraph(chGraph, qGraph);

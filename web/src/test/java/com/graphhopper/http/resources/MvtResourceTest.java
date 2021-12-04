@@ -41,7 +41,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 import static com.graphhopper.http.util.TestUtils.clientTarget;

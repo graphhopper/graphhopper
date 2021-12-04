@@ -20,7 +20,9 @@ package com.graphhopper.routing.ch;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.storage.CHConfig;
+import com.graphhopper.storage.CHStorage;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.CH;
@@ -97,12 +99,31 @@ public class CHPreparationHandler {
         this.preparationThreads = preparationThreads;
     }
 
-    public Map<String, PrepareContractionHierarchies.Result> prepare(GraphHopperStorage ghStorage, final boolean closeEarly) {
+    public Map<String, RoutingCHGraph> load(GraphHopperStorage ghStorage, List<CHConfig> chConfigs) {
+        Map<String, RoutingCHGraph> loaded = Collections.synchronizedMap(new LinkedHashMap<>());
+        List<Callable<String>> callables = chConfigs.stream()
+                .map(c -> (Callable<String>) () -> {
+                    CHStorage chStorage = ghStorage.loadCHStorage(c.getName(), c.isEdgeBased());
+                    if (chStorage != null)
+                        loaded.put(c.getName(), ghStorage.createCHGraph(chStorage, c));
+                    else {
+                        // todo: this is ugly, see comments in LMPreparationHandler
+                        ghStorage.getDirectory().remove("nodes_ch_" + c.getName());
+                        ghStorage.getDirectory().remove("shortcuts_" + c.getName());
+                    }
+                    return c.getName();
+                })
+                .collect(Collectors.toList());
+        GHUtility.runConcurrently(callables, preparationThreads);
+        return loaded;
+    }
+
+    public Map<String, PrepareContractionHierarchies.Result> prepare(GraphHopperStorage ghStorage, List<CHConfig> chConfigs, final boolean closeEarly) {
         LOGGER.info("Creating CH preparations, {}", getMemInfo());
-        List<PrepareContractionHierarchies> preparations = ghStorage.getCHConfigs().stream()
+        List<PrepareContractionHierarchies> preparations = chConfigs.stream()
                 .map(c -> createCHPreparation(ghStorage, c))
                 .collect(Collectors.toList());
-        Map<String, PrepareContractionHierarchies.Result> results = new LinkedHashMap<>();
+        Map<String, PrepareContractionHierarchies.Result> results = Collections.synchronizedMap(new LinkedHashMap<>());
         List<Callable<String>> callables = new ArrayList<>(preparations.size());
         for (int i = 0; i < preparations.size(); ++i) {
             PrepareContractionHierarchies prepare = preparations.get(i);
@@ -114,6 +135,7 @@ public class CHPreparationHandler {
                 Thread.currentThread().setName(name);
                 PrepareContractionHierarchies.Result result = prepare.doWork();
                 results.put(name, result);
+                prepare.flush();
                 if (closeEarly)
                     prepare.close();
                 ghStorage.getProperties().put(CH.PREPARE + "date." + name, createFormatter().format(new Date()));
