@@ -1,5 +1,6 @@
 ### 5.0 [not yet released]
 
+- it is now possible to add CH preparations to an existing graph folder (#2481)
 - removed graphhopper.sh script. Use java command directly instead. (#2431)
 - removed the ferry argument of TagParser#handleWayTags. ferry ways can be recognized using the reader way (#2467)
 - removed RoadEnvironment.SHUTTLE_TRAIN. this is covered by `FERRY` (#2466)
