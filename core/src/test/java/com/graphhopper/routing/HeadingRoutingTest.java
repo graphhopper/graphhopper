@@ -39,6 +39,8 @@ import org.junit.jupiter.api.Test;
 import java.util.*;
 
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA;
+import static com.graphhopper.util.Parameters.Algorithms.ROUND_TRIP;
+import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -162,6 +164,52 @@ class HeadingRoutingTest {
         GHResponse response = router.route(req);
         assertFalse(response.hasErrors());
         assertArrayEquals(new int[]{5, 4, 3, 8, 7, 6, 5, 4, 3, 2}, calcNodes(graph, response.getAll().get(0)));
+    }
+
+    @Test
+    public void headingTestWithToleranceRoundTrip() {
+        // Test enforce start direction
+        GraphHopperStorage graph = createSquareGraph();
+        int tolerance = 80;
+        Router router = createRouter(graph);
+
+        // Start in middle of edge 4-5
+        GHPoint start = new GHPoint(0.0015, 0.002);
+
+        GHRequest req = new GHRequest().
+                addPoint(start).
+                setHeadings(Arrays.asList(180.)).
+                setProfile("profile").
+                setTolerance(tolerance).
+                setPathDetails(Collections.singletonList("edge_key")).
+                setAlgorithm(ROUND_TRIP);
+        GHResponse response = router.route(req);
+        assertFalse(response.hasErrors(), response.getErrors().toString());
+        assertArrayEquals(new int[]{4, 5, 4}, calcNodes(graph, response.getAll().get(0)));
+    }
+
+    @Test
+    public void headingTestWithToleranceAlt() {
+        // Test enforce start direction
+        GraphHopperStorage graph = createSquareGraph();
+        int tolerance = 80;
+        Router router = createRouter(graph);
+
+        // Start in middle of edge 4-5
+        GHPoint start = new GHPoint(0.0015, 0.002);
+        // End at middle of edge 2-3
+        GHPoint end = new GHPoint(0.002, 0.0005);
+
+        GHRequest req = new GHRequest().
+                setPoints(Arrays.asList(start, end)).
+                setHeadings(Arrays.asList(180., Double.NaN)).
+                setProfile("profile").
+                setTolerance(tolerance).
+                setPathDetails(Collections.singletonList("edge_key")).
+                setAlgorithm(ALT_ROUTE);
+        GHResponse response = router.route(req);
+        assertFalse(response.hasErrors(), response.getErrors().toString());
+        assertArrayEquals(new int[]{4, 5, 8, 3, 2}, calcNodes(graph, response.getAll().get(0)));
     }
 
     @Test

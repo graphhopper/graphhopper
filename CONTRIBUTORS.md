@@ -79,6 +79,7 @@ Here is an overview:
  * vvikas, ideas for many to many improvements and #616
  * zstadler, multiple fixes and car4wd
  * samruston, improved point hint matching
+ * kylemikableh, added tolerance changing
 
 ## Translations
 

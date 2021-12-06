@@ -26,10 +26,11 @@ import com.graphhopper.util.shapes.GHPoint;
 
 public class HeadingResolver {
     private final EdgeExplorer edgeExplorer;
-    private double toleranceRad = Math.toRadians(100);
+    private double toleranceRad;
 
     public HeadingResolver(Graph graph) {
         this.edgeExplorer = graph.createEdgeExplorer();
+        toleranceRad = Math.toRadians(100); //default tolerance
     }
 
     //Added constructor to allow configuration of the tolerance (issue #1646)
