@@ -20,29 +20,40 @@ package com.graphhopper.routing.ev;
 import com.graphhopper.storage.IntsRef;
 
 /**
- * This class holds a signed decimal value and stores it as an unsigned integer value via a conversion factor and a
- * maximum number of bits.
+ * This class holds a signed decimal value and stores it as an integer value via a conversion factor and a certain
+ * number of bits that determine the maximum value.
  */
 public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implements DecimalEncodedValue {
     private final double factor;
     private final boolean defaultIsInfinity;
     private final boolean useMaximumAsInfinity;
 
+    /**
+     * @see #DecimalEncodedValueImpl(String, int, double, double, boolean, boolean, boolean, boolean)
+     */
     public DecimalEncodedValueImpl(String name, int bits, double factor, boolean storeTwoDirections) {
         this(name, bits, factor, false, storeTwoDirections);
     }
 
     /**
-     * @param name               the key to identify this EncodedValue
-     * @param bits               the bits that should be reserved for the storage
-     * @param factor             the precision factor, i.e. store = (int) Math.round(value / factor)
-     * @param defaultIsInfinity  true if default should be Double.Infinity. False if 0 should be default.
-     * @param storeTwoDirections true if forward and backward direction of the edge should get two independent values.
+     * @see #DecimalEncodedValueImpl(String, int, double, double, boolean, boolean, boolean, boolean)
      */
     public DecimalEncodedValueImpl(String name, int bits, double factor, boolean defaultIsInfinity, boolean storeTwoDirections) {
         this(name, bits, 0, factor, defaultIsInfinity, false, storeTwoDirections, false);
     }
 
+    /**
+     * @param name                   the key to identify this EncodedValue
+     * @param bits                   the bits that should be reserved for storing the integer value. This determines the
+     *                               maximum value.
+     * @param minValue               the minimum value. Use e.g. 0 if no negative values are needed.
+     * @param factor                 the precision factor, i.e. store = (int) Math.round(value / factor)
+     * @param defaultIsInfinity      true if default should be Double.Infinity. False if 0 should be default.
+     * @param negateReverseDirection true if the reverse direction should be always negative of the forward direction.
+     *                               This is used to reduce space and store the value only once.
+     * @param storeTwoDirections     true if forward and backward direction of the edge should get two independent values.
+     * @param useMaximumAsInfinity   true if the maximum value should be treated as Double.Infinity
+     */
     public DecimalEncodedValueImpl(String name, int bits, double minValue, double factor, boolean defaultIsInfinity,
                                    boolean negateReverseDirection, boolean storeTwoDirections, boolean useMaximumAsInfinity) {
         super(name, bits, (int) Math.round(minValue / factor), negateReverseDirection, storeTwoDirections);

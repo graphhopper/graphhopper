@@ -26,13 +26,13 @@ import java.util.Collection;
 import java.util.Objects;
 
 /**
- * Implementation of the IntEncodedValue via a certain number of bits (an indirect maximum value) and
+ * Implementation of the IntEncodedValue via a certain number of bits (that determines the maximum value) and
  * a minimum value (default is 0).
  * With storeTwoDirections = true it can store separate values for forward and reverse edge direction e.g. for one speed
  * value per direction of an edge.
  * With negateReverseDirection = true it supports negating the value for the reverse direction without storing a separate
  * value e.g. to store an elevation slope which is negative for the reverse direction but has otherwise the same value
- * and saves storage space.
+ * and is used to save storage space.
  */
 public class IntEncodedValueImpl implements IntEncodedValue {
 
@@ -54,16 +54,24 @@ public class IntEncodedValueImpl implements IntEncodedValue {
     int bwdMask;
 
     /**
-     * This constructor reserves the specified number of bits in the underlying data structure or twice the amount if
-     * storeTwoDirections is true.
-     *
-     * @param storeTwoDirections if true this EncodedValue can store different values for the forward and backward
-     *                           direction.
+     * @see #IntEncodedValueImpl(String, int, int, boolean, boolean)
      */
     public IntEncodedValueImpl(String name, int bits, boolean storeTwoDirections) {
         this(name, bits, 0, false, storeTwoDirections);
     }
 
+    /**
+     * This creates an EncodedValue to store an integer value with up to the specified bits.
+     *
+     * @param name                   the key to identify this EncodedValue
+     * @param bits                   the bits that should be reserved for storing the value. This determines the
+     *                               maximum value.
+     * @param minValue               the minimum value. Use e.g. 0 if no negative values are needed.
+     * @param negateReverseDirection true if the reverse direction should be always negative of the forward direction.
+     *                               This is used to reduce space and store the value only once. If this option is used
+     *                               you cannot use storeTwoDirections or a minValue different to 0.
+     * @param storeTwoDirections     true if forward and backward direction of the edge should get two independent values.
+     */
     public IntEncodedValueImpl(String name, int bits, int minValue, boolean negateReverseDirection, boolean storeTwoDirections) {
         if (!EncodingManager.isValidEncodedValue(name))
             throw new IllegalArgumentException("EncodedValue name wasn't valid: " + name + ". Use lower case letters, underscore and numbers only.");
