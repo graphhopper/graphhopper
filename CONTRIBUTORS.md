@@ -80,6 +80,7 @@ Here is an overview:
  * zstadler, multiple fixes and car4wd
  * samruston, improved point hint matching
  * kylemikableh, added tolerance changing
+ * shunfan-shao, fix potential flaky tests
 
 ## Translations
 
