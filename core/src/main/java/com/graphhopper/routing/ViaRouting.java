@@ -96,7 +96,7 @@ public class ViaRouting {
         return snaps;
     }
 
-    public static Result calcPaths(List<GHPoint> points, QueryGraph queryGraph, List<Snap> snaps, Weighting weighting, PathCalculator pathCalculator, List<String> curbsides, boolean forceCurbsides, List<Double> headings, boolean passThrough) {
+    public static Result calcPaths(List<GHPoint> points, QueryGraph queryGraph, List<Snap> snaps, Weighting weighting, PathCalculator pathCalculator, List<String> curbsides, boolean forceCurbsides, List<Double> headings, boolean passThrough, int tolerance) {
         if (!curbsides.isEmpty() && curbsides.size() != points.size())
             throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
         if (!curbsides.isEmpty() && !headings.isEmpty())
@@ -131,7 +131,7 @@ public class ViaRouting {
 
             EdgeRestrictions edgeRestrictions = buildEdgeRestrictions(queryGraph, fromSnap, toSnap,
                     fromHeading, toHeading, incomingEdge, passThrough,
-                    fromCurbside, toCurbside, weighting);
+                    fromCurbside, toCurbside, weighting, tolerance);
 
             edgeRestrictions.setSourceOutEdge(ignoreThrowOrAcceptImpossibleCurbsides(curbsides, edgeRestrictions.getSourceOutEdge(), leg, forceCurbsides));
             edgeRestrictions.setTargetInEdge(ignoreThrowOrAcceptImpossibleCurbsides(curbsides, edgeRestrictions.getTargetInEdge(), leg + 1, forceCurbsides));
@@ -181,7 +181,7 @@ public class ViaRouting {
     private static EdgeRestrictions buildEdgeRestrictions(
             QueryGraph queryGraph, Snap fromSnap, Snap toSnap,
             double fromHeading, double toHeading, int incomingEdge, boolean passThrough,
-            String fromCurbside, String toCurbside, Weighting weighting) {
+            String fromCurbside, String toCurbside, Weighting weighting, int tolerance) {
         EdgeRestrictions edgeRestrictions = new EdgeRestrictions();
 
         // curbsides
@@ -218,7 +218,7 @@ public class ViaRouting {
             // this way (unless we implement this), but this is more or less ok as we can use finite u-turn costs
             // instead. maybe the hardest part is dealing with headings that cannot be fulfilled, like in one-way
             // streets. see also #1765
-            HeadingResolver headingResolver = new HeadingResolver(queryGraph);
+            HeadingResolver headingResolver = new HeadingResolver(queryGraph, tolerance);
             if (!Double.isNaN(fromHeading))
                 edgeRestrictions.getUnfavoredEdges().addAll(headingResolver.getEdgesWithDifferentHeading(fromSnap.getClosestNode(), fromHeading));
 

@@ -32,6 +32,12 @@ public class HeadingResolver {
         this.edgeExplorer = graph.createEdgeExplorer();
     }
 
+    //Added constructor to allow configuration of the tolerance (issue #1646)
+    public HeadingResolver(Graph graph, int toleranceDec) {
+        this.edgeExplorer = graph.createEdgeExplorer();
+        toleranceRad = Math.toRadians(toleranceDec);
+    }
+
     /**
      * Returns a list of edge IDs of edges adjacent to the given base node that do *not* have the same or a similar
      * heading as the given heading. If for example the tolerance is 45 degrees this method returns all edges for which

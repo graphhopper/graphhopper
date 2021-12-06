@@ -37,6 +37,7 @@ import java.util.Locale;
 public class GHRequest {
     private List<GHPoint> points;
     private String profile = "";
+    private final int DEFAULT_TOLERANCE = 100; //Default tolerance that can be changed
     private final PMap hints = new PMap();
     // List of favored start (1st element) and arrival heading (all other).
     // Headings are north based azimuth (clockwise) in (0, 360) or NaN for equal preference
@@ -48,6 +49,7 @@ public class GHRequest {
     private String algo = "";
     private Locale locale = Locale.US;
     private CustomModel customModel;
+    private int tolerance = DEFAULT_TOLERANCE;
 
     public GHRequest() {
         this(5);
@@ -163,6 +165,18 @@ public class GHRequest {
 
     public String getAlgorithm() {
         return algo;
+    }
+
+    /** 
+     * Set the tolerance of the GHRequest
+    */
+    public GHRequest setTolerance(int tolerance) {
+        this.tolerance = tolerance;
+        return this;
+    }
+
+    public int getTolerance() {
+        return tolerance;
     }
 
     /**
