@@ -23,12 +23,12 @@ import com.graphhopper.storage.IntsRef;
  * This class holds a signed decimal value and stores it as an unsigned integer value via a conversion factor and a
  * maximum number of bits.
  */
-public final class SignedDecimalEncodedValue extends SignedIntEncodedValue implements DecimalEncodedValue {
+public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implements DecimalEncodedValue {
     private final double factor;
     private final boolean defaultIsInfinity;
     private final boolean useMaximumAsInfinity;
 
-    public SignedDecimalEncodedValue(String name, int bits, double factor, boolean storeTwoDirections) {
+    public DecimalEncodedValueImpl(String name, int bits, double factor, boolean storeTwoDirections) {
         this(name, bits, factor, false, storeTwoDirections);
     }
 
@@ -39,12 +39,12 @@ public final class SignedDecimalEncodedValue extends SignedIntEncodedValue imple
      * @param defaultIsInfinity  true if default should be Double.Infinity. False if 0 should be default.
      * @param storeTwoDirections true if forward and backward direction of the edge should get two independent values.
      */
-    public SignedDecimalEncodedValue(String name, int bits, double factor, boolean defaultIsInfinity, boolean storeTwoDirections) {
+    public DecimalEncodedValueImpl(String name, int bits, double factor, boolean defaultIsInfinity, boolean storeTwoDirections) {
         this(name, bits, 0, factor, defaultIsInfinity, false, storeTwoDirections, false);
     }
 
-    public SignedDecimalEncodedValue(String name, int bits, double minValue, double factor, boolean defaultIsInfinity,
-                                     boolean negateReverseDirection, boolean storeTwoDirections, boolean useMaximumAsInfinity) {
+    public DecimalEncodedValueImpl(String name, int bits, double minValue, double factor, boolean defaultIsInfinity,
+                                   boolean negateReverseDirection, boolean storeTwoDirections, boolean useMaximumAsInfinity) {
         super(name, bits, (int) Math.round(minValue / factor), negateReverseDirection, storeTwoDirections);
         if (!negateReverseDirection && super.minValue * factor != minValue)
             throw new IllegalArgumentException("minValue " + minValue + " is not a multiple of the specified factor " + factor);
@@ -99,7 +99,7 @@ public final class SignedDecimalEncodedValue extends SignedIntEncodedValue imple
     @Override
     public boolean equals(Object o) {
         if (!super.equals(o)) return false;
-        SignedDecimalEncodedValue that = (SignedDecimalEncodedValue) o;
+        DecimalEncodedValueImpl that = (DecimalEncodedValueImpl) o;
         return Double.compare(that.factor, factor) == 0 && useMaximumAsInfinity == that.useMaximumAsInfinity
                 && defaultIsInfinity == that.defaultIsInfinity;
     }

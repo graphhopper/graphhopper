@@ -34,7 +34,7 @@ import java.util.Objects;
  * value e.g. to store an elevation slope which is negative for the reverse direction but has otherwise the same value
  * and saves storage space.
  */
-public class SignedIntEncodedValue implements IntEncodedValue {
+public class IntEncodedValueImpl implements IntEncodedValue {
 
     private final String name;
 
@@ -60,11 +60,11 @@ public class SignedIntEncodedValue implements IntEncodedValue {
      * @param storeTwoDirections if true this EncodedValue can store different values for the forward and backward
      *                           direction.
      */
-    public SignedIntEncodedValue(String name, int bits, boolean storeTwoDirections) {
+    public IntEncodedValueImpl(String name, int bits, boolean storeTwoDirections) {
         this(name, bits, 0, false, storeTwoDirections);
     }
 
-    public SignedIntEncodedValue(String name, int bits, int minValue, boolean negateReverseDirection, boolean storeTwoDirections) {
+    public IntEncodedValueImpl(String name, int bits, int minValue, boolean negateReverseDirection, boolean storeTwoDirections) {
         if (!EncodingManager.isValidEncodedValue(name))
             throw new IllegalArgumentException("EncodedValue name wasn't valid: " + name + ". Use lower case letters, underscore and numbers only.");
         if (bits <= 0)
@@ -187,7 +187,7 @@ public class SignedIntEncodedValue implements IntEncodedValue {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        SignedIntEncodedValue that = (SignedIntEncodedValue) o;
+        IntEncodedValueImpl that = (IntEncodedValueImpl) o;
         return fwdDataIndex == that.fwdDataIndex &&
                 bwdDataIndex == that.bwdDataIndex &&
                 bits == that.bits &&

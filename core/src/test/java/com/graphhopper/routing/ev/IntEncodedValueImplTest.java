@@ -5,11 +5,11 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class SignedIntEncodedValueTest {
+public class IntEncodedValueImplTest {
 
     @Test
     public void testInvalidReverseAccess() {
-        IntEncodedValue prop = new SignedIntEncodedValue("test", 10, false);
+        IntEncodedValue prop = new IntEncodedValueImpl("test", 10, false);
         prop.init(new EncodedValue.InitializerConfig());
         try {
             prop.setInt(true, new IntsRef(1), -1);
@@ -20,7 +20,7 @@ public class SignedIntEncodedValueTest {
 
     @Test
     public void testDirectedValue() {
-        IntEncodedValue prop = new SignedIntEncodedValue("test", 10, true);
+        IntEncodedValue prop = new IntEncodedValueImpl("test", 10, true);
         prop.init(new EncodedValue.InitializerConfig());
         IntsRef ref = new IntsRef(1);
         prop.setInt(false, ref, 10);
@@ -31,7 +31,7 @@ public class SignedIntEncodedValueTest {
 
     @Test
     public void multiIntsUsage() {
-        IntEncodedValue prop = new SignedIntEncodedValue("test", 31, true);
+        IntEncodedValue prop = new IntEncodedValueImpl("test", 31, true);
         prop.init(new EncodedValue.InitializerConfig());
         IntsRef ref = new IntsRef(2);
         prop.setInt(false, ref, 10);
@@ -42,7 +42,7 @@ public class SignedIntEncodedValueTest {
 
     @Test
     public void padding() {
-        IntEncodedValue prop = new SignedIntEncodedValue("test", 30, true);
+        IntEncodedValue prop = new IntEncodedValueImpl("test", 30, true);
         prop.init(new EncodedValue.InitializerConfig());
         IntsRef ref = new IntsRef(2);
         prop.setInt(false, ref, 10);
@@ -53,7 +53,7 @@ public class SignedIntEncodedValueTest {
 
     @Test
     public void testSignedInt() {
-        IntEncodedValue prop = new SignedIntEncodedValue("test", 31, -5, false, true);
+        IntEncodedValue prop = new IntEncodedValueImpl("test", 31, -5, false, true);
         EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
         prop.init(config);
 
@@ -70,7 +70,7 @@ public class SignedIntEncodedValueTest {
 
     @Test
     public void testSignedInt2() {
-        IntEncodedValue prop = new SignedIntEncodedValue("test", 31, false);
+        IntEncodedValue prop = new IntEncodedValueImpl("test", 31, false);
         EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
         prop.init(config);
 
@@ -86,7 +86,7 @@ public class SignedIntEncodedValueTest {
 
     @Test
     public void testNegateReverseDirection() {
-        IntEncodedValue prop = new SignedIntEncodedValue("test", 5, 0, true, false);
+        IntEncodedValue prop = new IntEncodedValueImpl("test", 5, 0, true, false);
         EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
         prop.init(config);
 
