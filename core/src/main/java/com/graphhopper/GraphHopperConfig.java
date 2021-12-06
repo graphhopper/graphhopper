@@ -113,7 +113,7 @@ public class GraphHopperConfig {
         return map.getFloat(key, _default);
     }
 
-    public double getDouble(String key, double _default) { //
+    public double getDouble(String key, double _default) {
         return map.getDouble(key, _default);
     }
 
