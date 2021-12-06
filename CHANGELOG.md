@@ -1,5 +1,6 @@
 ### 5.0 [not yet released]
 
+- the two EncodedValue implementations accept now negative values too. The default value can now only be 0 or Double.Infinity, but this option will be removed later too, see discussion in #2473
 - removed graphhopper.sh script. Use java command directly instead. (#2431)
 - removed the ferry argument of TagParser#handleWayTags. ferry ways can be recognized using the reader way (#2467)
 - removed RoadEnvironment.SHUTTLE_TRAIN. this is covered by `FERRY` (#2466)

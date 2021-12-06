@@ -26,10 +26,15 @@ import java.util.Collection;
 import java.util.Objects;
 
 /**
- * Implementation of the IntEncodedValue via a limited number of bits and without a sign. It introduces handling
- * of "backward"- and "forward"-edge information.
+ * Implementation of the IntEncodedValue via a certain number of bits (that determines the maximum value) and
+ * a minimum value (default is 0).
+ * With storeTwoDirections = true it can store separate values for forward and reverse edge direction e.g. for one speed
+ * value per direction of an edge.
+ * With negateReverseDirection = true it supports negating the value for the reverse direction without storing a separate
+ * value e.g. to store an elevation slope which is negative for the reverse direction but has otherwise the same value
+ * and is used to save storage space.
  */
-public class UnsignedIntEncodedValue implements IntEncodedValue {
+public class IntEncodedValueImpl implements IntEncodedValue {
 
     private final String name;
 
@@ -40,29 +45,53 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
     private int bwdDataIndex;
     private final boolean storeTwoDirections;
     final int bits;
-    int maxValue;
+    final boolean negateReverseDirection;
+    final int minValue;
+    final int maxValue;
     int fwdShift = -1;
     int bwdShift = -1;
     int fwdMask;
     int bwdMask;
 
     /**
-     * This constructor reserves the specified number of bits in the underlying data structure or twice the amount if
-     * storeTwoDirections is true.
-     *
-     * @param storeTwoDirections if true this EncodedValue can store different values for the forward and backward
-     *                           direction.
+     * @see #IntEncodedValueImpl(String, int, int, boolean, boolean)
      */
-    public UnsignedIntEncodedValue(String name, int bits, boolean storeTwoDirections) {
+    public IntEncodedValueImpl(String name, int bits, boolean storeTwoDirections) {
+        this(name, bits, 0, false, storeTwoDirections);
+    }
+
+    /**
+     * This creates an EncodedValue to store an integer value with up to the specified bits.
+     *
+     * @param name                   the key to identify this EncodedValue
+     * @param bits                   the bits that should be reserved for storing the value. This determines the
+     *                               maximum value.
+     * @param minValue               the minimum value. Use e.g. 0 if no negative values are needed.
+     * @param negateReverseDirection true if the reverse direction should be always negative of the forward direction.
+     *                               This is used to reduce space and store the value only once. If this option is used
+     *                               you cannot use storeTwoDirections or a minValue different to 0.
+     * @param storeTwoDirections     true if forward and backward direction of the edge should get two independent values.
+     */
+    public IntEncodedValueImpl(String name, int bits, int minValue, boolean negateReverseDirection, boolean storeTwoDirections) {
         if (!EncodingManager.isValidEncodedValue(name))
             throw new IllegalArgumentException("EncodedValue name wasn't valid: " + name + ". Use lower case letters, underscore and numbers only.");
         if (bits <= 0)
             throw new IllegalArgumentException(name + ": bits cannot be zero or negative");
         if (bits > 31)
             throw new IllegalArgumentException(name + ": at the moment the number of reserved bits cannot be more than 31");
-        this.bits = bits;
+        if (negateReverseDirection && (minValue != 0 || storeTwoDirections))
+            throw new IllegalArgumentException(name + ": negating value for reverse direction only works for minValue == 0 " +
+                    "and !storeTwoDirections but was minValue=" + minValue + ", storeTwoDirections=" + storeTwoDirections);
+
         this.name = name;
         this.storeTwoDirections = storeTwoDirections;
+        int max = (1 << bits) - 1;
+        // negateReverseDirection: store the negative value only once, but for that we need the same range as maxValue for negative values
+        this.minValue = negateReverseDirection ? -max : minValue;
+        this.maxValue = max + minValue;
+        // negateReverseDirection: we need twice the integer range, i.e. 1 more bit
+        this.bits = negateReverseDirection ? bits + 1 : bits;
+        this.negateReverseDirection = negateReverseDirection;
     }
 
     @Override
@@ -81,21 +110,11 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
             this.bwdShift = init.shift;
         }
 
-        this.maxValue = (1 << bits) - 1;
         return storeTwoDirections ? 2 * bits : bits;
     }
 
     boolean isInitialized() {
         return fwdMask != 0;
-    }
-
-    private void checkValue(int value) {
-        if (!isInitialized())
-            throw new IllegalStateException("EncodedValue " + getName() + " not initialized");
-        if (value > maxValue)
-            throw new IllegalArgumentException(name + " value too large for encoding: " + value + ", maxValue:" + maxValue);
-        if (value < 0)
-            throw new IllegalArgumentException("negative value for " + name + " not allowed! " + value);
     }
 
     @Override
@@ -104,10 +123,25 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
         uncheckedSet(reverse, ref, value);
     }
 
+    private void checkValue(int value) {
+        if (!isInitialized())
+            throw new IllegalStateException("EncodedValue " + getName() + " not initialized");
+        if (value > maxValue)
+            throw new IllegalArgumentException(name + " value too large for encoding: " + value + ", maxValue:" + maxValue);
+        if (value < minValue)
+            throw new IllegalArgumentException(name + " value too small for encoding " + value + ", minValue:" + minValue);
+    }
+
     final void uncheckedSet(boolean reverse, IntsRef ref, int value) {
-        if (reverse && !storeTwoDirections)
+        if (negateReverseDirection) {
+            if (reverse) {
+                reverse = false;
+                value = -value;
+            }
+        } else if (reverse && !storeTwoDirections)
             throw new IllegalArgumentException(getName() + ": value for reverse direction would overwrite forward direction. Enable storeTwoDirections for this EncodedValue or don't use setReverse");
 
+        value -= minValue;
         if (reverse) {
             int flags = ref.ints[bwdDataIndex + ref.offset];
             // clear value bits
@@ -126,10 +160,12 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
         // if we do not store both directions ignore reverse == true for convenient reading
         if (storeTwoDirections && reverse) {
             flags = ref.ints[bwdDataIndex + ref.offset];
-            return (flags & bwdMask) >>> bwdShift;
+            return minValue + (flags & bwdMask) >>> bwdShift;
         } else {
             flags = ref.ints[fwdDataIndex + ref.offset];
-            return (flags & fwdMask) >>> fwdShift;
+            if (negateReverseDirection && reverse)
+                return -(minValue + (flags & fwdMask) >>> fwdShift);
+            return minValue + (flags & fwdMask) >>> fwdShift;
         }
     }
 
@@ -150,22 +186,26 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
 
     @Override
     public final String toString() {
-        return getName() + "|version=" + getVersion() + "|bits=" + bits + "|index=" + fwdDataIndex + "|shift=" + fwdShift + "|store_both_directions=" + storeTwoDirections;
+        return getName() + "|version=" + getVersion() + "|bits=" + bits + "|min_value=" + minValue
+                + "|negate_reverse_direction" + negateReverseDirection + "|index=" + fwdDataIndex
+                + "|shift=" + fwdShift + "|store_both_directions=" + storeTwoDirections;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        UnsignedIntEncodedValue that = (UnsignedIntEncodedValue) o;
+        IntEncodedValueImpl that = (IntEncodedValueImpl) o;
         return fwdDataIndex == that.fwdDataIndex &&
                 bwdDataIndex == that.bwdDataIndex &&
                 bits == that.bits &&
                 maxValue == that.maxValue &&
+                minValue == that.minValue &&
                 fwdShift == that.fwdShift &&
                 bwdShift == that.bwdShift &&
                 fwdMask == that.fwdMask &&
                 bwdMask == that.bwdMask &&
+                negateReverseDirection == that.negateReverseDirection &&
                 storeTwoDirections == that.storeTwoDirections &&
                 Objects.equals(name, that.name);
     }
@@ -179,7 +219,8 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
     public int getVersion() {
         int val = Helper.staticHashCode(name);
         val = 31 * val + (storeTwoDirections ? 1231 : 1237);
-        return staticHashCode(val, fwdDataIndex, bwdDataIndex, bits, maxValue, fwdShift, bwdShift, fwdMask, bwdMask);
+        val = 31 * val + (negateReverseDirection ? 13 : 17);
+        return staticHashCode(val, fwdDataIndex, bwdDataIndex, bits, minValue, maxValue, fwdShift, bwdShift, fwdMask, bwdMask);
     }
 
     /**

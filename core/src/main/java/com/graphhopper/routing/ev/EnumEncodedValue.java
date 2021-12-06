@@ -24,7 +24,7 @@ import java.util.Arrays;
 /**
  * This class allows to store distinct values via an enum. I.e. it stores just the indices
  */
-public final class EnumEncodedValue<E extends Enum> extends UnsignedIntEncodedValue {
+public final class EnumEncodedValue<E extends Enum> extends IntEncodedValueImpl {
     private final E[] arr;
 
     public EnumEncodedValue(String name, Class<E> enumType) {

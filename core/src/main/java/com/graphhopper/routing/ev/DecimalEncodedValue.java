@@ -8,7 +8,7 @@ import com.graphhopper.storage.IntsRef;
  * so that the storable part of it fits into the specified number of bits (maximum 32 at the moment
  * for all implementations) and 2. the default value is always 0.
  *
- * @see UnsignedDecimalEncodedValue
+ * @see DecimalEncodedValueImpl
  */
 public interface DecimalEncodedValue extends EncodedValue {
 
