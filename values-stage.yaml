@@ -14,7 +14,10 @@ deployment:
 istio:
   internal:
     hosts:
-    - graphhopper.stage.cure.fit.internal
+      - graphhopper.stage.cure.fit.internal
+  vpn:
+    hosts:
+      - graphhopper.stage.curefit.co
   mesh:
     timeout: 360s
 service:
