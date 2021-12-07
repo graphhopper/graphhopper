@@ -80,6 +80,7 @@ Here is an overview:
  * zstadler, multiple fixes and car4wd
  * samruston, improved point hint matching
  * shunfan-shao, fix potential flaky tests
+ * ainar, add route_type to public transport leg
 
 ## Translations
 
