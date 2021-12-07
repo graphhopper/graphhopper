@@ -360,11 +360,13 @@ class TripFromLabel {
                             .forEach(stopsFromBoardHopDwellEdges::next);
                     stopsFromBoardHopDwellEdges.finish();
                     List<Trip.Stop> stops = stopsFromBoardHopDwellEdges.stops;
+                    GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(feedId);
 
                     result.add(new Trip.PtLeg(
                             feedId, partition.get(0).edge.nTransfers == 0,
                             tripDescriptor.getTripId(),
                             tripDescriptor.getRouteId(),
+                            gtfsFeed.routes.get(tripDescriptor.getRouteId()).route_type,
                             edges(partition).map(edgeLabel -> edgeLabel.edgeIteratorState).collect(Collectors.toList()).get(0).getName(),
                             stops,
                             partition.stream().mapToDouble(t -> t.edge.distance).sum(),
