@@ -49,6 +49,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import java.util.stream.Stream;
 
@@ -116,19 +118,14 @@ public class RoutingAlgorithmTest {
          * Creates a GH storage supporting the default weighting for CH
          */
         private GraphHopperStorage createGHStorage() {
-            return createGHStorage(false, defaultWeighting);
+            return createGHStorage(false);
         }
 
         /**
          * Creates a GH storage supporting the given weightings for CH
          */
-        private GraphHopperStorage createGHStorage(boolean is3D, Weighting... weightings) {
-            CHConfig[] chConfigs = new CHConfig[weightings.length];
-            for (int i = 0; i < weightings.length; i++) {
-                chConfigs[i] = new CHConfig(getCHGraphName(weightings[i]), weightings[i], traversalMode.isEdgeBased());
-            }
+        private GraphHopperStorage createGHStorage(boolean is3D) {
             return new GraphBuilder(encodingManager).set3D(is3D)
-                    .setCHConfigs(chConfigs)
                     // this test should never include turn costs, but we have to set it to true to be able to
                     // run edge-based algorithms
                     .withTurnCosts(traversalMode.isEdgeBased())
@@ -192,6 +189,14 @@ public class RoutingAlgorithmTest {
             assertEquals(refPath.calcNodes(), path.calcNodes(), "wrong nodes, " + weighting + ", seed: " + seed);
             assertEquals(refPath.getDistance(), path.getDistance(), 1.e-1, "wrong distance, " + weighting + ", seed: " + seed);
             assertEquals(refPath.getTime(), path.getTime(), 100, "wrong time, " + weighting + ", seed: " + seed);
+        }
+
+        public void resetCH() {
+            // ugly: we need to clear the ch graphs map when we use a new graph. currently we have to use this map because
+            //       otherwise we get an error because of the already existing DataAccess in the DA map in Directory.
+            if (pathCalculator instanceof CHCalculator) {
+                ((CHCalculator) pathCalculator).routingCHGraphs.clear();
+            }
         }
     }
 
@@ -275,7 +280,7 @@ public class RoutingAlgorithmTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testCalcFastestPath(Fixture f) {
         FastestWeighting fastestWeighting = new FastestWeighting(f.carEncoder);
-        GraphHopperStorage graph = f.createGHStorage(false, f.defaultWeighting, fastestWeighting);
+        GraphHopperStorage graph = f.createGHStorage(false);
         initDirectedAndDiffSpeed(graph, f.carEncoder);
 
         Path p1 = f.calcPath(graph, f.defaultWeighting, 0, 3);
@@ -333,7 +338,7 @@ public class RoutingAlgorithmTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testCalcFootPath(Fixture f) {
         ShortestWeighting shortestWeighting = new ShortestWeighting(f.footEncoder);
-        GraphHopperStorage graph = f.createGHStorage(false, shortestWeighting);
+        GraphHopperStorage graph = f.createGHStorage(false);
         initFootVsCar(f.carEncoder, f.footEncoder, graph);
         Path p1 = f.calcPath(graph, shortestWeighting, 0, 7);
         assertEquals(17000, p1.getDistance(), 1e-6, p1.toString());
@@ -441,6 +446,7 @@ public class RoutingAlgorithmTest {
         graph = f.createGHStorage();
         GHUtility.setSpeed(60, true, false, f.carEncoder, graph.edge(0, 1).setDistance(1));
         GHUtility.setSpeed(60, true, true, f.carEncoder, graph.edge(0, 2).setDistance(1));
+        f.resetCH();
         assertFalse(f.calcPath(graph, 1, 2).isFound());
         assertTrue(f.calcPath(graph, 2, 1).isFound());
     }
@@ -731,7 +737,7 @@ public class RoutingAlgorithmTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testWithCoordinates(Fixture f) {
         Weighting weighting = new ShortestWeighting(f.carEncoder);
-        GraphHopperStorage graph = f.createGHStorage(false, weighting);
+        GraphHopperStorage graph = f.createGHStorage(false);
         GHUtility.setSpeed(60, true, true, f.carEncoder, graph.edge(0, 1).setDistance(2)).
                 setWayGeometry(Helper.createPointList(1.5, 1));
         GHUtility.setSpeed(60, true, true, f.carEncoder, graph.edge(2, 3).setDistance(2)).
@@ -859,7 +865,7 @@ public class RoutingAlgorithmTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testQueryGraphAndFastest(Fixture f) {
         Weighting weighting = new FastestWeighting(f.carEncoder);
-        GraphHopperStorage graph = f.createGHStorage(false, weighting);
+        GraphHopperStorage graph = f.createGHStorage(false);
         initDirectedAndDiffSpeed(graph, f.carEncoder);
         Path p = f.calcPath(graph, weighting, new GHPoint(0.002, 0.0005), new GHPoint(0.0017, 0.0031));
         assertEquals(nodes(8, 1, 5, 3, 9), p.calcNodes());
@@ -870,7 +876,7 @@ public class RoutingAlgorithmTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testTwoWeightsPerEdge(Fixture f) {
         FastestWeighting fastestWeighting = new FastestWeighting(f.bike2Encoder);
-        GraphHopperStorage graph = f.createGHStorage(true, fastestWeighting);
+        GraphHopperStorage graph = f.createGHStorage(true);
         initEleGraph(graph, f.bike2Encoder, 18);
         // force the other path
         GHUtility.setSpeed(10, false, true, f.bike2Encoder, GHUtility.getEdge(graph, 0, 3));
@@ -974,12 +980,12 @@ public class RoutingAlgorithmTest {
             }
         };
 
-        GraphHopperStorage graph = f.createGHStorage(true, f.defaultWeighting);
+        GraphHopperStorage graph = f.createGHStorage(true);
         initEleGraph(graph, f.carEncoder, 60);
         Path p = f.calcPath(graph, 0, 10);
         assertEquals(nodes(0, 4, 6, 10), p.calcNodes());
 
-        graph = f.createGHStorage(true, fakeWeighting);
+        graph = f.createGHStorage(true);
         initEleGraph(graph, f.carEncoder, 60);
         p = f.calcPath(graph, fakeWeighting, 3, 0, 10, 9);
         assertEquals(nodes(12, 0, 1, 2, 11, 7, 10, 13), p.calcNodes());
@@ -993,7 +999,7 @@ public class RoutingAlgorithmTest {
     public void testRandomGraph(Fixture f) {
         // todo: use speed both directions
         FastestWeighting fastestWeighting = new FastestWeighting(f.carEncoder);
-        GraphHopperStorage graph = f.createGHStorage(false, fastestWeighting);
+        GraphHopperStorage graph = f.createGHStorage(false);
         final long seed = System.nanoTime();
         LOGGER.info("testRandomGraph - using seed: " + seed);
         Random rnd = new Random(seed);
@@ -1018,7 +1024,7 @@ public class RoutingAlgorithmTest {
         FastestWeighting footWeighting = new FastestWeighting(f.footEncoder);
         FastestWeighting carWeighting = new FastestWeighting(f.carEncoder);
 
-        GraphHopperStorage ghStorage = f.createGHStorage(false, footWeighting, carWeighting);
+        GraphHopperStorage ghStorage = f.createGHStorage(false);
         initFootVsCar(f.carEncoder, f.footEncoder, ghStorage);
 
         // normal path would be 0-4-6-7 for car:
@@ -1030,11 +1036,12 @@ public class RoutingAlgorithmTest {
         assertEquals(nodes(0, 4, 5, 7), footPath1.calcNodes());
         assertEquals(17000, footPath1.getDistance(), 1e-6, footPath1.toString());
 
-        // ... but now we block 4-6 for car, note that we have to recreate the storage otherwise CH graphs won't be
-        // refreshed
-        ghStorage = f.createGHStorage(false, footWeighting, carWeighting);
+        // ... but now we block 4-6 for car. note that we have to recreate the storage to create a new directory so
+        //     we can create new CHs :(
+        ghStorage = f.createGHStorage(false);
         initFootVsCar(f.carEncoder, f.footEncoder, ghStorage);
         GHUtility.setSpeed(20, false, false, f.carEncoder, GHUtility.getEdge(ghStorage, 4, 6));
+        f.resetCH();
 
         // ... car needs to take another way
         Path carPath2 = f.calcPath(ghStorage, carWeighting, 0, 7);
@@ -1205,15 +1212,18 @@ public class RoutingAlgorithmTest {
     }
 
     private static abstract class CHCalculator implements PathCalculator {
+        private final Map<String, RoutingCHGraph> routingCHGraphs = new HashMap<>();
+
         @Override
         public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, int from, int to) {
-            CHConfig chConfig = new CHConfig(getCHGraphName(weighting), weighting, traversalMode.isEdgeBased());
-            PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
-            RoutingCHGraph routingCHGraph = graph.getRoutingCHGraph(chConfig.getName());
-            if (routingCHGraph.getEdges() == routingCHGraph.getBaseGraph().getEdges()) {
+            String chGraphName = getCHGraphName(weighting) + (traversalMode.isEdgeBased() ? "_edge" : "_node");
+            RoutingCHGraph routingCHGraph = routingCHGraphs.computeIfAbsent(chGraphName, name -> {
                 graph.freeze();
-                pch.doWork();
-            }
+                CHConfig chConfig = new CHConfig(name, weighting, traversalMode.isEdgeBased());
+                PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
+                PrepareContractionHierarchies.Result res = pch.doWork();
+                return graph.createCHGraph(res.getCHStorage(), res.getCHConfig());
+            });
             RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(routingCHGraph).createAlgo(new PMap()
                     .putObject(ALGORITHM, getAlgorithm())
                     .putObject(MAX_VISITED_NODES, maxVisitedNodes)
@@ -1232,13 +1242,14 @@ public class RoutingAlgorithmTest {
 
         @Override
         public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, Snap from, Snap to) {
-            CHConfig chConfig = new CHConfig(getCHGraphName(weighting), weighting, traversalMode.isEdgeBased());
-            PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
-            RoutingCHGraph routingCHGraph = graph.getRoutingCHGraph(chConfig.getName());
-            if (routingCHGraph.getEdges() == routingCHGraph.getBaseGraph().getEdges()) {
+            String chGraphName = getCHGraphName(weighting) + (traversalMode.isEdgeBased() ? "_edge" : "_node");
+            RoutingCHGraph routingCHGraph = routingCHGraphs.computeIfAbsent(chGraphName, name -> {
                 graph.freeze();
-                pch.doWork();
-            }
+                CHConfig chConfig = new CHConfig(name, weighting, traversalMode.isEdgeBased());
+                PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
+                PrepareContractionHierarchies.Result res = pch.doWork();
+                return graph.createCHGraph(res.getCHStorage(), res.getCHConfig());
+            });
             QueryGraph queryGraph = QueryGraph.create(graph, Arrays.asList(from, to));
             QueryRoutingCHGraph queryRoutingCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
             RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(queryRoutingCHGraph).createAlgo(new PMap()

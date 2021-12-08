@@ -18,7 +18,6 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -240,16 +239,12 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         int nodes = graph.getNodes();
         int edges = graph.getAllEdges().length();
         graph.flush();
-        boolean ch = graph.isCHPossible();
         Helper.close(graph);
 
         // load without configured FlagEncoders
         GraphHopper hopper = new GraphHopper();
         hopper.setProfiles(Arrays.asList(new Profile("p_car").setVehicle("car").setWeighting("fastest"),
                 new Profile("p_bike").setVehicle("bike").setWeighting("fastest")));
-        if (ch) {
-            hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("p_car"));
-        }
         hopper.setGraphHopperLocation(defaultGraphLoc);
         assertTrue(hopper.load());
         graph = hopper.getGraphHopperStorage();
@@ -261,8 +256,6 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         // load via explicitly configured FlagEncoders then we can define only one profile
         hopper.getEncodingManagerBuilder().add(createCarFlagEncoder()).add(new BikeFlagEncoder());
         hopper.setProfiles(Collections.singletonList(new Profile("p_car").setVehicle("car").setWeighting("fastest")));
-        if (ch)
-            hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("p_car"));
         hopper.setGraphHopperLocation(defaultGraphLoc);
         assertTrue(hopper.load());
         graph = hopper.getGraphHopperStorage();

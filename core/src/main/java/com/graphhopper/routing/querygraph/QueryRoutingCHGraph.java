@@ -154,6 +154,14 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         return weighting;
     }
 
+    @Override
+    public void close() {
+        routingCHGraph.close();
+        virtualEdgesAtVirtualNodes.clear();
+        virtualInEdgesAtRealNodes.clear();
+        virtualOutEdgesAtRealNodes.clear();
+    }
+
     private VirtualEdgeIteratorState getVirtualEdgeState(int virtualEdgeId, int adjNode) {
         assert isVirtualEdge(virtualEdgeId);
         int internalVirtualEdgeId = getInternalVirtualEdgeId(virtualEdgeId);
