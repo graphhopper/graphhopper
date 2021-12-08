@@ -238,7 +238,7 @@ public class GraphHopperOSMTest {
 
         Helper.removeDir(new File(ghLoc));
 
-        // when there is no CH preparation we get an error if we try to load GH with a CH profile
+        // when there is no CH preparation yet it will be added (CH delta import)
         gh = new GraphHopper().
                 setStoreOnFlush(true).
                 setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
@@ -255,9 +255,11 @@ public class GraphHopperOSMTest {
                 setStoreOnFlush(true);
         gh.getCHPreparationHandler().setCHProfiles(new CHProfile("profile"));
         gh.setGraphHopperLocation(ghLoc);
-        final GraphHopper tmpGh = gh;
-        Exception ex = assertThrows(Exception.class, tmpGh::load);
-        assertTrue(ex.getMessage().contains("is not contained in loaded CH profiles"), ex.getMessage());
+        gh.importOrLoad();
+        rsp = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).setProfile(profile));
+        assertFalse(rsp.hasErrors());
+        assertEquals(3, rsp.getBest().getPoints().size());
+        // no error
     }
 
     @Test

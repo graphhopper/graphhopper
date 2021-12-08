@@ -39,7 +39,8 @@ import java.io.File;
 import java.util.Arrays;
 
 import static com.graphhopper.http.util.TestUtils.clientTarget;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * @author Peter Karich

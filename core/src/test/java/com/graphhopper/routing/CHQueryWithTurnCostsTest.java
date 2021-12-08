@@ -25,9 +25,9 @@ import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.CHStorageBuilder;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.ShortestWeighting;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -56,15 +56,15 @@ public class CHQueryWithTurnCostsTest {
         private final FlagEncoder encoder = new CarFlagEncoder(5, 5, maxCost).setSpeedTwoDirections(true);
         private final EncodingManager encodingManager = EncodingManager.create(encoder);
         private final GraphHopperStorage graph;
-        private final CHStorageBuilder chBuilder;
+        private final CHConfig chConfig;
         private final String algoString;
+        private CHStorage chStore;
+        private CHStorageBuilder chBuilder;
 
         public Fixture(String algoString) {
             this.algoString = algoString;
-            graph = new GraphBuilder(encodingManager)
-                    .setCHConfigStrings("profile|car|shortest|edge")
-                    .create();
-            chBuilder = new CHStorageBuilder(graph.getCHStore());
+            graph = new GraphBuilder(encodingManager).create();
+            chConfig = CHConfig.edgeBased("profile", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage())));
         }
 
         @Override
@@ -74,8 +74,14 @@ public class CHQueryWithTurnCostsTest {
 
         private AbstractBidirectionEdgeCHNoSOD createAlgo() {
             return "astar".equals(algoString) ?
-                    new AStarBidirectionEdgeCHNoSOD(graph.getRoutingCHGraph()) :
-                    new DijkstraBidirectionEdgeCHNoSOD(graph.getRoutingCHGraph());
+                    new AStarBidirectionEdgeCHNoSOD(graph.createCHGraph(chStore, chConfig)) :
+                    new DijkstraBidirectionEdgeCHNoSOD(graph.createCHGraph(chStore, chConfig));
+        }
+
+        private void freeze() {
+            graph.freeze();
+            chStore = graph.createCHStorage(chConfig);
+            chBuilder = new CHStorageBuilder(chStore);
         }
 
         private void addShortcut(int from, int to, int firstOrigEdge, int lastOrigEdge, int skipped1, int skipped2, double weight, boolean reverse) {
@@ -148,7 +154,7 @@ public class CHQueryWithTurnCostsTest {
         GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(1, 0).setDistance(3));
         GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(0, 2).setDistance(5));
         f.setTurnCost(1, 0, 2, 3);
-        f.graph.freeze();
+        f.freeze();
 
         // contraction yields no shortcuts for edge based case (at least without u-turns).
         f.setIdentityLevels();
@@ -178,7 +184,7 @@ public class CHQueryWithTurnCostsTest {
         f.setTurnCost(4, 6, 5, 6);
         f.setTurnCost(5, 6, 4, 2);
         f.setTurnCost(5, 3, 1, 5);
-        f.graph.freeze();
+        f.freeze();
 
         // contraction yields no shortcuts
         f.setIdentityLevels();
@@ -220,7 +226,7 @@ public class CHQueryWithTurnCostsTest {
         f.setRestriction(8, 4, 2);
         f.setRestriction(1, 4, 6);
 
-        f.graph.freeze();
+        f.freeze();
 
         f.setIdentityLevels();
         // from contracting nodes 1&2
@@ -257,7 +263,7 @@ public class CHQueryWithTurnCostsTest {
         f.setRestriction(6, 4, 7);
         f.setRestriction(6, 4, 2);
         f.setRestriction(1, 4, 7);
-        f.graph.freeze();
+        f.freeze();
 
         f.setIdentityLevels();
         // from contracting nodes 1&2
@@ -286,7 +292,7 @@ public class CHQueryWithTurnCostsTest {
         f.setTurnCost(1, 2, 0, 5);
         f.setTurnCost(2, 0, 3, 2);
         f.setTurnCost(0, 3, 4, 1);
-        f.graph.freeze();
+        f.freeze();
 
         // only when node 0 is contracted a shortcut is added
         f.setIdentityLevels();
@@ -312,7 +318,7 @@ public class CHQueryWithTurnCostsTest {
         GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(2, 0).setDistance(3));
         GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(0, 3).setDistance(1));
         GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(3, 4).setDistance(3));
-        f.graph.freeze();
+        f.freeze();
 
         f.setTurnCost(1, 2, 0, 2);
         f.setTurnCost(0, 3, 4, 4);
@@ -338,7 +344,7 @@ public class CHQueryWithTurnCostsTest {
         f.setTurnCost(2, 3, 1, 5);
         f.setTurnCost(3, 1, 0, 2);
         f.setTurnCost(1, 0, 4, 1);
-        f.graph.freeze();
+        f.freeze();
 
         f.setIdentityLevels();
         // contraction of node 0 and 1 each yield a single shortcut
@@ -366,7 +372,7 @@ public class CHQueryWithTurnCostsTest {
         GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(3, 1).setDistance(9));
         GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(0, 1).setDistance(50));
         f.setTurnCost(2, 3, 1, 4);
-        f.graph.freeze();
+        f.freeze();
 
         // no shortcuts here
         f.setIdentityLevels();
@@ -390,7 +396,7 @@ public class CHQueryWithTurnCostsTest {
                 f.graph.edge(5, 4).setDistance(6),
                 f.graph.edge(4, 2).setDistance(3));
         f.setTurnCost(1, 3, 4, 3);
-        f.graph.freeze();
+        f.freeze();
 
         // no shortcuts here
         f.setIdentityLevels();
@@ -408,7 +414,7 @@ public class CHQueryWithTurnCostsTest {
         GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(2, 0).setDistance(14));
         GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(2, 1).setDistance(2));
         GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(3, 2).setDistance(9));
-        f.graph.freeze();
+        f.freeze();
 
         //no shortcuts
         f.setIdentityLevels();
@@ -426,7 +432,7 @@ public class CHQueryWithTurnCostsTest {
         GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(0, 1).setDistance(9));
         GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(0, 3).setDistance(14));
         GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(3, 2).setDistance(9));
-        f.graph.freeze();
+        f.freeze();
         f.setIdentityLevels();
         f.addShortcut(1, 3, 0, 1, 0, 1, 23, false);
         f.testPathCalculation(0, 2, 23, IntArrayList.from(0, 3, 2));
@@ -445,7 +451,7 @@ public class CHQueryWithTurnCostsTest {
         f.setTurnCost(0, 2, 3, 5);
         f.setTurnCost(2, 3, 2, 4);
         f.setTurnCost(3, 2, 1, 7);
-        f.graph.freeze();
+        f.freeze();
 
         // contraction yields no shortcuts
         f.setIdentityLevels();
@@ -487,7 +493,7 @@ public class CHQueryWithTurnCostsTest {
         GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(nodeB, 2).setDistance(1));
         final EdgeIteratorState e3toB = GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(3, nodeB).setDistance(2));
         final EdgeIteratorState e3toA = GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(3, nodeA).setDistance(1));
-        f.graph.freeze();
+        f.freeze();
         f.setRestriction(0, 3, nodeB);
 
         // one shortcut when contracting node 3
@@ -515,7 +521,7 @@ public class CHQueryWithTurnCostsTest {
         // need to specify edges explicitly because there are two edges between nodes 2 and 3
         f.setRestriction(edge1, edge4, 2);
         f.setTurnCost(edge1, edge2, 2, 3);
-        f.graph.freeze();
+        f.freeze();
 
         // no shortcuts
         f.setIdentityLevels();
@@ -545,7 +551,7 @@ public class CHQueryWithTurnCostsTest {
         f.setTurnCost(0, 2, 1, 9);
         f.setTurnCost(0, 3, 1, 2);
         f.setTurnCost(0, 4, 1, 1);
-        f.graph.freeze();
+        f.freeze();
 
         // contraction yields no shortcuts
         f.setIdentityLevels();
@@ -566,7 +572,7 @@ public class CHQueryWithTurnCostsTest {
         EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(3, 2).setDistance(1));
         EdgeIteratorState edge3 = GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(2, 1).setDistance(1));
         f.setRestriction(edge0, edge2, 3);
-        f.graph.freeze();
+        f.freeze();
 
         // contraction yields no shortcuts
         f.setIdentityLevels();
@@ -590,7 +596,7 @@ public class CHQueryWithTurnCostsTest {
         EdgeIteratorState edge3 = GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(0, 2).setDistance(1));
         EdgeIteratorState edge4 = GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(2, 1).setDistance(1));
         f.setRestriction(edge1, edge4, 2);
-        f.graph.freeze();
+        f.freeze();
 
         f.setIdentityLevels();
         // contracting node 0 yields (the only) shortcut - and its a loop
@@ -621,7 +627,7 @@ public class CHQueryWithTurnCostsTest {
         GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(4, 1).setDistance(5));
         GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(4, 2).setDistance(4));
         f.setRestriction(3, 4, 2);
-        f.graph.freeze();
+        f.freeze();
 
         f.setIdentityLevels();
         // contracting node 0
@@ -670,7 +676,7 @@ public class CHQueryWithTurnCostsTest {
                 f.graph.edge(5, nodeB).setDistance(1),
                 f.graph.edge(nodeB, 7).setDistance(2));
         f.setRestriction(nodeA, 5, nodeB);
-        f.graph.freeze();
+        f.freeze();
         f.setIdentityLevels();
         f.addShortcut(3, 5, 4, 5, 4, 5, 3, false);
         f.addShortcut(3, 5, 2, 3, 2, 3, 3, true);
@@ -711,7 +717,7 @@ public class CHQueryWithTurnCostsTest {
 
         f.setRestriction(e4to7, e5to7, 7);
         f.setRestriction(e5to7, e4to7, 7);
-        f.graph.freeze();
+        f.freeze();
 
         f.setIdentityLevels();
         // contracting node 0,1,2,3
@@ -753,7 +759,7 @@ public class CHQueryWithTurnCostsTest {
         GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(3, 6).setDistance(3));
         GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(6, 2).setDistance(4));
         f.setRestriction(3, 6, 2);
-        f.graph.freeze();
+        f.freeze();
 
         f.setIdentityLevels();
         // contracting node 0
