@@ -197,7 +197,7 @@ public class StringIndex {
         if (keyCount == 0)
             return Collections.emptyMap();
 
-        Map<String, String> map = new HashMap<>(keyCount);
+        Map<String, String> map = new LinkedHashMap<>(keyCount);
         long tmpPointer = entryPointer + 1;
         for (int i = 0; i < keyCount; i++) {
             int currentKeyIndex = vals.getShort(tmpPointer);

@@ -92,6 +92,28 @@ public class PtIsochroneTest {
         assertFalse(isoline.covers(geometryFactory.createPoint(makePrecise(new Coordinate(-116.751677, 36.915682)))));
     }
 
+    @Test
+    public void testIsolineFromStation() {
+        WebTarget webTarget = clientTarget(app, "/isochrone")
+                .queryParam("vehicle", "pt")
+                .queryParam("point", "Stop(NADAV)")
+                .queryParam("pt.earliest_departure_time", LocalDateTime.of(2007, 1, 1, 0, 0, 0).atZone(zoneId).toInstant())
+                .queryParam("time_limit", 6 * 60 * 60 + 49 * 60); // exactly the time I should arrive at NANAA
+        Invocation.Builder request = webTarget.request();
+        PtIsochroneResource.Response isochroneResponse = request.get(PtIsochroneResource.Response.class);
+        Geometry isoline = isochroneResponse.polygons.get(0).getGeometry();
+        // NADAV is in
+        assertTrue(isoline.covers(geometryFactory.createPoint(makePrecise(new Coordinate(-116.76821, 36.914893)))));
+        // NANAA is in
+        assertTrue(isoline.covers(geometryFactory.createPoint(makePrecise(new Coordinate(-116.761472, 36.914944)))));
+        // DADAN is in
+        assertTrue(isoline.covers(geometryFactory.createPoint(makePrecise(new Coordinate(-116.768242, 36.909489)))));
+        // EMSI is in
+        assertTrue(isoline.covers(geometryFactory.createPoint(makePrecise(new Coordinate(-116.76218, 36.905697)))));
+        // STAGECOACH is out
+        assertFalse(isoline.covers(geometryFactory.createPoint(makePrecise(new Coordinate(-116.751677, 36.915682)))));
+    }
+
     // Snap coordinate to GraphHopper's implicit grid of allowable points.
     // Otherwise, we can't reliably use coordinates from input data in tests.
     private Coordinate makePrecise(Coordinate coordinate) {

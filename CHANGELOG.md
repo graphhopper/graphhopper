@@ -1,6 +1,7 @@
 ### 5.0 [not yet released]
 
-- it is now possible to add CH preparations to an existing graph folder (#2481)
+- it is now possible to add CH preparations to an existing graph folder, CH graphs no longer need to be added before GraphHopperStorage#freeze (#2481)
+- the two EncodedValue implementations accept now negative values too. The default value can now only be 0 or Double.Infinity, but this option will be removed later too, see discussion in #2473
 - removed graphhopper.sh script. Use java command directly instead. (#2431)
 - removed the ferry argument of TagParser#handleWayTags. ferry ways can be recognized using the reader way (#2467)
 - removed RoadEnvironment.SHUTTLE_TRAIN. this is covered by `FERRY` (#2466)
@@ -13,6 +14,7 @@
 - consider heading when snapping coordinates to the road network, this is especially important for navigation (#2411)
 - OSMReader no longer sets the artificial 'estimated_center' tag and processNode also receives EMPTY_NODEs (971d686)
 - added Toll.MISSING; custom models must be adapted to check for explicit toll values e.g `toll != NO` -> `toll == HGV || toll == ALL` (#2164)
+- throw MaximumNodesExceededException instead of a generic IllegalArgumentException (#2464)
 
 ### 4.0 [29 Sep 2021]
 

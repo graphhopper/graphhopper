@@ -16,7 +16,7 @@ import java.util.Objects;
  * @author Peter Karich
  * @author Thomas Butz
  */
-public final class StringEncodedValue extends UnsignedIntEncodedValue {
+public final class StringEncodedValue extends IntEncodedValueImpl {
     private final int maxValues;
     private final List<String> values;
     private final ObjectIntMap<String> indexMap;

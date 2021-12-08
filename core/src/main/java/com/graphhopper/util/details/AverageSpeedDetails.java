@@ -35,7 +35,7 @@ public class AverageSpeedDetails extends AbstractPathDetailsBuilder {
 
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        // for very short edges we might not be able calculate a proper value for speed. dividing by calcMillis can
+        // for very short edges we might not be able to calculate a proper value for speed. dividing by calcMillis can
         // even lead to speed=Infinity -> just ignore these cases here, see #1848
         final double distance = edge.getDistance();
         if (distance < 0.1) {

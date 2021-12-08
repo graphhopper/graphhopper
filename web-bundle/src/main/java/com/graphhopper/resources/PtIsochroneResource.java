@@ -25,10 +25,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.function.Predicate;
 import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -36,6 +36,11 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import com.conveyal.gtfs.GTFSFeed;
+import com.graphhopper.gtfs.*;
+import com.graphhopper.http.GHLocationParam;
+import com.graphhopper.util.exceptions.PointNotFoundException;
+import io.dropwizard.jersey.params.InstantParam;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.CoordinateList;
 import org.locationtech.jts.geom.Geometry;
@@ -49,12 +54,6 @@ import org.locationtech.jts.triangulate.quadedge.QuadEdge;
 import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
 import org.locationtech.jts.triangulate.quadedge.Vertex;
 
-import com.graphhopper.gtfs.GraphExplorer;
-import com.graphhopper.gtfs.GtfsStorage;
-import com.graphhopper.gtfs.Label;
-import com.graphhopper.gtfs.MultiCriteriaLabelSetting;
-import com.graphhopper.gtfs.PtEncodedValues;
-import com.graphhopper.gtfs.RealtimeFeed;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.isochrone.algorithm.ReadableTriangulation;
 import com.graphhopper.jackson.ResponsePathSerializer;
@@ -73,7 +72,6 @@ import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.JsonFeature;
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
 
 @Path("isochrone-pt")
 public class PtIsochroneResource {
@@ -105,29 +103,25 @@ public class PtIsochroneResource {
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public Response doGet(
-            @QueryParam("point") GHPoint source,
+            @QueryParam("point") GHLocationParam sourceParam,
             @QueryParam("time_limit") @DefaultValue("600") long seconds,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
-            @QueryParam("pt.earliest_departure_time") String departureTimeString,
+            @QueryParam("pt.earliest_departure_time") @NotNull InstantParam departureTimeParam,
             @QueryParam("pt.blocked_route_types") @DefaultValue("0") int blockedRouteTypes,
             @QueryParam("result") @DefaultValue("multipolygon") String format) {
-        Instant initialTime;
-        try {
-            initialTime = Instant.parse(departureTimeString);
-        } catch (Exception e) {
-            throw new IllegalArgumentException(String.format(Locale.ROOT, "Illegal value for required parameter %s: [%s]", "pt.earliest_departure_time", departureTimeString));
-        }
+        Instant initialTime = departureTimeParam.get();
+        GHLocation location = sourceParam.get();
 
         double targetZ = seconds * 1000;
 
         GeometryFactory geometryFactory = new GeometryFactory();
         final FlagEncoder footEncoder = encodingManager.getEncoder("foot");
         final Weighting weighting = new FastestWeighting(footEncoder);
-        final EdgeFilter filter = new DefaultSnapFilter(weighting, encodingManager.getBooleanEncodedValue(Subnetwork.key("foot")));
-        final Snap snap = locationIndex.findClosest(source.lat, source.lon, filter);
+
+        Snap snap = findByPointOrStation(location, weighting);
         QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, Collections.singletonList(snap));
         if (!snap.isValid()) {
-            throw new IllegalArgumentException("Cannot find point: " + source);
+            throw new PointNotFoundException("Cannot find location: " + location, 0);
         }
 
         PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(encodingManager);
@@ -220,6 +214,26 @@ public class PtIsochroneResource {
             }
         }
 
+    }
+
+    private Snap findByPointOrStation(GHLocation location, Weighting weighting) {
+        if (location instanceof GHPointLocation) {
+            final EdgeFilter filter = new DefaultSnapFilter(weighting, encodingManager.getBooleanEncodedValue(Subnetwork.key("foot")));
+            return locationIndex.findClosest(((GHPointLocation) location).ghPoint.lat, ((GHPointLocation) location).ghPoint.lon, filter);
+        } else if (location instanceof GHStationLocation) {
+            for (Map.Entry<String, GTFSFeed> entry : gtfsStorage.getGtfsFeeds().entrySet()) {
+                final Integer node = gtfsStorage.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(entry.getKey(), ((GHStationLocation) location).stop_id));
+                if (node != null) {
+                    Snap snap = new Snap(graphHopperStorage.getNodeAccess().getLat(node), graphHopperStorage.getNodeAccess().getLon(node));
+                    snap.setSnappedPosition(Snap.Position.TOWER);
+                    snap.setClosestNode(node);
+                    return snap;
+                }
+            }
+            throw new PointNotFoundException("Cannot find station: " + ((GHStationLocation) location).stop_id, 0);
+        } else {
+            throw new RuntimeException();
+        }
     }
 
     private static void calcLabels(MultiCriteriaLabelSetting router, int from, Instant startTime, MultiCriteriaLabelSetting.SPTVisitor visitor, Predicate<Label> predicate) {

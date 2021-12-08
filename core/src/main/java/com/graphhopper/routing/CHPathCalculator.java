@@ -21,6 +21,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.exceptions.MaximumNodesExceededException;
 
 import java.util.Collections;
 import java.util.List;
@@ -68,7 +69,7 @@ public class CHPathCalculator implements PathCalculator {
             throw new IllegalStateException("Path list was empty for " + from + " -> " + to);
         int maxVisitedNodes = algoOpts.getInt(MAX_VISITED_NODES, Integer.MAX_VALUE);
         if (algo.getVisitedNodes() >= maxVisitedNodes)
-            throw new IllegalArgumentException("No path found due to maximum nodes exceeded " + maxVisitedNodes);
+            throw new MaximumNodesExceededException("No path found due to maximum nodes exceeded " + maxVisitedNodes, maxVisitedNodes);
         visitedNodes = algo.getVisitedNodes();
         debug += ", " + algo.getName() + "-routing:" + sw.stop().getMillis() + " ms";
         return paths;

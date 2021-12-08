@@ -15,23 +15,18 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.ev;
+package com.graphhopper.util.exceptions;
 
-/**
- * One of the four logistic attributes that can be stored per edge.
- *
- * @see MaxHeight
- * @see MaxWeight
- * @see MaxWidth
- */
-public class MaxLength {
-    public static final String KEY = "max_length";
+import java.util.Collections;
 
-    /**
-     * Currently enables to store 0.1 to max=0.1*2⁷m and infinity. If a value is
-     * between the maximum and infinity it is assumed to use the maximum value.
-     */
-    public static DecimalEncodedValue create() {
-        return new DecimalEncodedValueImpl(KEY, 7, 0.1, true, false);
+public class MaximumNodesExceededException extends DetailedIllegalArgumentException {
+
+    private static final long serialVersionUID = 1L;
+    
+    public static final String NODES_KEY = "max_visited_nodes";
+
+    public MaximumNodesExceededException(String message, int maxVisitedNodes) {
+        super(message, Collections.singletonMap(NODES_KEY, maxVisitedNodes));
     }
+
 }

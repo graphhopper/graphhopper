@@ -48,6 +48,7 @@ Read [here](../CONTRIBUTING.md) on how to contribute as a developer and translat
 Various topics are explained in more detail separately:
 
  * [Technical overview](./core/technical.md): Technical details about how GraphHopper its calculations are working.
+ * [Custom models](./core/custom-models.md): This tutorial explains how to customize an existing vehicle profile to your needs without to know Java.
  * [Simple routing](./core/routing.md): Tutorial how to integrate GraphHopper in your Java application (or pick any JVM language)
  * [Create custom weighting](./core/weighting.md): Documentation about how to create a custom weighting class to influence the track calculation.
  * [Import GTFS](../reader-gtfs): Simple steps to get GTFS import and routing done.

@@ -7,7 +7,7 @@ import com.graphhopper.storage.IntsRef;
  * integer is highly limited (unlike the Java 32bit integer values) so that the storable part of it fits into the
  * specified number of bits (maximum 32) and 2. the default value is always 0.
  *
- * @see UnsignedIntEncodedValue
+ * @see IntEncodedValueImpl
  */
 public interface IntEncodedValue extends EncodedValue {
 

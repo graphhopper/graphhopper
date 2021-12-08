@@ -89,11 +89,11 @@ public class GtfsStorage implements GtfsStorageI {
 
 	}
 
-	static class FeedIdWithStopId implements Serializable {
+	public static class FeedIdWithStopId implements Serializable {
 		final String feedId;
 		final String stopId;
 
-		FeedIdWithStopId(String feedId, String stopId) {
+		public FeedIdWithStopId(String feedId, String stopId) {
 			this.feedId = feedId;
 			this.stopId = stopId;
 		}
