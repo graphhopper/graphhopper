@@ -96,7 +96,7 @@ class NodeBasedNodeContractor implements NodeContractor {
         // originalEdgesCount = σ(v) := sum_{ (u,w) ∈ shortcuts(v) } of r(u, w)
         shortcutsCount = 0;
         originalEdgesCount = 0;
-        findAndHandleShortcuts(node, this::countShortcuts);
+        findAndHandleShortcuts(node, this::countShortcuts, 50);
 
         // from shortcuts we can compute the edgeDifference
         // # low influence: with it the shortcut creation is slightly faster
@@ -115,7 +115,7 @@ class NodeBasedNodeContractor implements NodeContractor {
 
     @Override
     public IntContainer contractNode(int node) {
-        long degree = findAndHandleShortcuts(node, this::addOrUpdateShortcut);
+        long degree = findAndHandleShortcuts(node, this::addOrUpdateShortcut, 1000);
         insertShortcuts(node);
         // put weight factor on meanDegree instead of taking the average => meanDegree is more stable
         meanDegree = (meanDegree * 2 + degree) / 3;
@@ -205,8 +205,7 @@ class NodeBasedNodeContractor implements NodeContractor {
      * Returns the 'degree' of the given node (disregarding edges from/to already contracted nodes).
      * Note that here the degree is not the total number of adjacent edges, but only the number of incoming edges
      */
-    private long findAndHandleShortcuts(int node, PrepareShortcutHandler handler) {
-        int maxVisitedNodes = getMaxVisitedNodesEstimate();
+    private long findAndHandleShortcuts(int node, PrepareShortcutHandler handler, int maxVisitedNodes) {
         long degree = 0;
         PrepareGraphEdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
         // collect outgoing nodes (goal-nodes) only once
@@ -296,10 +295,6 @@ class NodeBasedNodeContractor implements NodeContractor {
     @Override
     public float getDijkstraSeconds() {
         return dijkstraSW.getCurrentSeconds();
-    }
-
-    private int getMaxVisitedNodesEstimate() {
-        return (int) (meanDegree * 100);
     }
 
     @FunctionalInterface
