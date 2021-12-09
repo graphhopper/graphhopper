@@ -115,7 +115,7 @@ class NodeBasedNodeContractor implements NodeContractor {
 
     @Override
     public IntContainer contractNode(int node) {
-        long degree = findAndHandleShortcuts(node, this::addOrUpdateShortcut, 1000);
+        long degree = findAndHandleShortcuts(node, this::addOrUpdateShortcut, 500);
         insertShortcuts(node);
         // put weight factor on meanDegree instead of taking the average => meanDegree is more stable
         meanDegree = (meanDegree * 2 + degree) / 3;
