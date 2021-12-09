@@ -26,8 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import static com.graphhopper.routing.ch.CHParameters.EDGE_DIFFERENCE_WEIGHT;
-import static com.graphhopper.routing.ch.CHParameters.ORIGINAL_EDGE_COUNT_WEIGHT;
+import static com.graphhopper.routing.ch.CHParameters.*;
 import static com.graphhopper.util.Helper.nf;
 
 class NodeBasedNodeContractor implements NodeContractor {
@@ -59,6 +58,8 @@ class NodeBasedNodeContractor implements NodeContractor {
     private void extractParams(PMap pMap) {
         params.edgeDifferenceWeight = pMap.getFloat(EDGE_DIFFERENCE_WEIGHT, params.edgeDifferenceWeight);
         params.originalEdgesCountWeight = pMap.getFloat(ORIGINAL_EDGE_COUNT_WEIGHT, params.originalEdgesCountWeight);
+        params.maxVisitedNodesHeuristic = pMap.getInt(MAX_VISITED_NODES_HEURISTIC, params.maxVisitedNodesHeuristic);
+        params.maxVisitedNodesContraction = pMap.getInt(MAX_VISITED_NODES_CONTRACTION, params.maxVisitedNodesContraction);
     }
 
     @Override
@@ -96,7 +97,7 @@ class NodeBasedNodeContractor implements NodeContractor {
         // originalEdgesCount = σ(v) := sum_{ (u,w) ∈ shortcuts(v) } of r(u, w)
         shortcutsCount = 0;
         originalEdgesCount = 0;
-        findAndHandleShortcuts(node, this::countShortcuts, 50);
+        findAndHandleShortcuts(node, this::countShortcuts, params.maxVisitedNodesHeuristic);
 
         // from shortcuts we can compute the edgeDifference
         // # low influence: with it the shortcut creation is slightly faster
@@ -115,7 +116,7 @@ class NodeBasedNodeContractor implements NodeContractor {
 
     @Override
     public IntContainer contractNode(int node) {
-        long degree = findAndHandleShortcuts(node, this::addOrUpdateShortcut, 500);
+        long degree = findAndHandleShortcuts(node, this::addOrUpdateShortcut, params.maxVisitedNodesContraction);
         insertShortcuts(node);
         // put weight factor on meanDegree instead of taking the average => meanDegree is more stable
         meanDegree = (meanDegree * 2 + degree) / 3;
@@ -308,6 +309,8 @@ class NodeBasedNodeContractor implements NodeContractor {
         // default values were optimized for Unterfranken
         private float edgeDifferenceWeight = 10;
         private float originalEdgesCountWeight = 1;
+        private int maxVisitedNodesHeuristic = 50;
+        private int maxVisitedNodesContraction = 500;
     }
 
     private static class Shortcut {
@@ -342,5 +345,4 @@ class NodeBasedNodeContractor implements NodeContractor {
             return str + to + ", weight:" + weight + " (" + skippedEdge1 + "," + skippedEdge2 + ")";
         }
     }
-
 }
