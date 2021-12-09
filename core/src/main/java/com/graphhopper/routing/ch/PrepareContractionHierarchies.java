@@ -524,7 +524,7 @@ public class PrepareContractionHierarchies {
         static Params forTraversalMode(TraversalMode traversalMode) {
             if (traversalMode.isEdgeBased()) {
                 // todo: optimize
-                return new Params(0, 100, 0, 100, 5);
+                return new Params(0, 0, 100, 100, 5);
             } else {
                 return new Params(0, 0, 100, 100, 20);
             }
