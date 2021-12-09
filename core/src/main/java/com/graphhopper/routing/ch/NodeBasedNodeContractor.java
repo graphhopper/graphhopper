@@ -309,8 +309,8 @@ class NodeBasedNodeContractor implements NodeContractor {
         // default values were optimized for Unterfranken
         private float edgeDifferenceWeight = 10;
         private float originalEdgesCountWeight = 1;
-        private int maxVisitedNodesHeuristic = 50;
-        private int maxVisitedNodesContraction = 500;
+        private int maxVisitedNodesHeuristic = 30;
+        private int maxVisitedNodesContraction = 200;
     }
 
     private static class Shortcut {
