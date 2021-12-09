@@ -526,7 +526,7 @@ public class PrepareContractionHierarchies {
                 // todo: optimize
                 return new Params(0, 100, 0, 100, 5);
             } else {
-                return new Params(0, 100, 100, 100, 20);
+                return new Params(0, 0, 100, 100, 20);
             }
         }
 
