@@ -99,10 +99,7 @@ public class RouteResourceTest {
     @Test
     public void testBasicQuery() {
         final Response response = clientTarget(app, "/route?profile=my_car&" +
-                "point=42.554851,1.536198&point=0,1.548128").request().buildGet().invoke();
-        JsonNode jsonNode = response.readEntity(JsonNode.class);
-        System.out.println(jsonNode.toPrettyString());
-//        new ObjectMapper().writeValueAsString(jsonNode));
+                "point=42.554851,1.536198&point=42.510071,1.548128").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
