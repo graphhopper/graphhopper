@@ -199,24 +199,12 @@ public class PathTest {
         Path path = extractPath(g, weighting, e1);
 
         InstructionList il = InstructionsFromEdges.calcInstructions(path, path.graph, weighting, carManager, tr);
-        Instruction nextInstr0 = Instructions.find(il, -0.001, 0.0, 1000);
-        assertEquals(Instruction.CONTINUE_ON_STREET, nextInstr0.getSign());
-
-        Instruction nextInstr1 = Instructions.find(il, 0.001, 0.001, 1000);
-        assertEquals(Instruction.TURN_RIGHT, nextInstr1.getSign());
-
-        Instruction nextInstr2 = Instructions.find(il, 5.0, 0.004, 1000);
-        assertEquals(Instruction.TURN_LEFT, nextInstr2.getSign());
-
-        Instruction nextInstr3 = Instructions.find(il, 9.99, 0.503, 1000);
-        assertEquals(Instruction.TURN_SHARP_LEFT, nextInstr3.getSign());
-
-        // a bit far away ...
-        Instruction nextInstr4 = Instructions.find(il, 7.40, 0.25, 20000);
-        assertEquals(Instruction.FINISH, nextInstr4.getSign());
-
-        // too far away
-        assertNull(Instructions.find(il, 50.8, 50.25, 1000));
+        assertEquals(5, il.size());
+        assertEquals(Instruction.CONTINUE_ON_STREET, il.get(0).getSign());
+        assertEquals(Instruction.TURN_RIGHT, il.get(1).getSign());
+        assertEquals(Instruction.TURN_LEFT, il.get(2).getSign());
+        assertEquals(Instruction.TURN_SHARP_LEFT, il.get(3).getSign());
+        assertEquals(Instruction.FINISH, il.get(4).getSign());
     }
 
     /**
@@ -234,8 +222,8 @@ public class PathTest {
             // Test instructions
             List<String> tmpList = getTurnDescriptions(wayList);
             assertEquals(Arrays.asList("continue onto MainStreet 1 2",
-                    "At roundabout, take exit 3 onto 5-8",
-                    "arrive at destination"),
+                            "At roundabout, take exit 3 onto 5-8",
+                            "arrive at destination"),
                     tmpList);
             // Test Radian
             double delta = roundaboutGraph.getAngle(1, 2, 5, 8);
@@ -248,8 +236,8 @@ public class PathTest {
             wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncoders, tr);
             tmpList = getTurnDescriptions(wayList);
             assertEquals(Arrays.asList("continue onto MainStreet 1 2",
-                    "At roundabout, take exit 2 onto MainStreet 4 7",
-                    "arrive at destination"),
+                            "At roundabout, take exit 2 onto MainStreet 4 7",
+                            "arrive at destination"),
                     tmpList);
             // Test Radian
             delta = roundaboutGraph.getAngle(1, 2, 4, 7);
@@ -267,7 +255,7 @@ public class PathTest {
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncoders, tr);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("At roundabout, take exit 3 onto 5-8",
-                "arrive at destination"),
+                        "arrive at destination"),
                 tmpList);
     }
 
@@ -281,8 +269,8 @@ public class PathTest {
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncoders, tr);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue onto 3-6",
-                "At roundabout, take exit 3 onto 5-8",
-                "arrive at destination"),
+                        "At roundabout, take exit 3 onto 5-8",
+                        "arrive at destination"),
                 tmpList);
         roundaboutGraph.inverse3to9();
     }
@@ -472,8 +460,8 @@ public class PathTest {
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncoders, tr);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue onto MainStreet 1 2",
-                "At roundabout, take exit 2 onto 5-8",
-                "arrive at destination"),
+                        "At roundabout, take exit 2 onto 5-8",
+                        "arrive at destination"),
                 tmpList);
         // Test Radian
         double delta = roundaboutGraph.getAngle(1, 2, 5, 8);
@@ -552,7 +540,7 @@ public class PathTest {
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, carManager, tr);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("At roundabout, take exit 1 onto MainStreet 1 11",
-                "arrive at destination"),
+                        "arrive at destination"),
                 tmpList);
     }
 
@@ -566,8 +554,8 @@ public class PathTest {
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncoders, tr);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue onto MainStreet 1 2",
-                "At roundabout, take exit 1 onto 5-8",
-                "arrive at destination"),
+                        "At roundabout, take exit 1 onto 5-8",
+                        "arrive at destination"),
                 tmpList);
         // Test Radian
         double delta = roundaboutGraph.getAngle(1, 2, 5, 8);
@@ -1025,7 +1013,7 @@ public class PathTest {
 
         EdgeIteratorState tmpEdge;
         tmpEdge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(5)).setName("1-2");
-        assertNotEquals(EncodingManager.Access.CAN_SKIP, ((AbstractFlagEncoder)encoder).getAccess(w));
+        assertNotEquals(EncodingManager.Access.CAN_SKIP, ((AbstractFlagEncoder) encoder).getAccess(w));
         IntsRef relFlags = carManager.createRelationFlags();
         tmpEdge.setFlags(carManager.handleWayTags(w, relFlags));
         tmpEdge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 5).setDistance(5)).setName("4-5");
