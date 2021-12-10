@@ -18,6 +18,7 @@
 package com.graphhopper.util;
 
 import java.io.*;
+import java.util.function.LongConsumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -45,7 +46,7 @@ public class Unzipper {
     /**
      * @param progressListener updates not in percentage but the number of bytes already read.
      */
-    public void unzip(InputStream fromIs, File toFolder, ProgressListener progressListener) throws IOException {
+    public void unzip(InputStream fromIs, File toFolder, LongConsumer progressListener) throws IOException {
         if (!toFolder.exists())
             toFolder.mkdirs();
 
@@ -70,7 +71,7 @@ public class Unzipper {
                             fos.write(buffer, 0, len);
                             sumBytes += len * factor;
                             if (progressListener != null)
-                                progressListener.update(sumBytes);
+                                progressListener.accept(sumBytes);
                         }
                     } finally {
                         fos.close();

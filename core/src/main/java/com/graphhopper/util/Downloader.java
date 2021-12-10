@@ -20,6 +20,7 @@ package com.graphhopper.util;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.function.LongConsumer;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
@@ -39,12 +40,7 @@ public class Downloader {
 
     public static void main(String[] args) throws IOException {
         new Downloader("GraphHopper Downloader").downloadAndUnzip("http://graphhopper.com/public/maps/0.1/europe_germany_berlin.ghz", "somefolder",
-                new ProgressListener() {
-                    @Override
-                    public void update(long val) {
-                        System.out.println("progress:" + val);
-                    }
-                });
+                val -> System.out.println("progress:" + val));
     }
 
     public Downloader setTimeout(int timeout) {
@@ -90,7 +86,7 @@ public class Downloader {
     }
 
     public InputStream fetch(String url) throws IOException {
-        return fetch((HttpURLConnection) createConnection(url), false);
+        return fetch(createConnection(url), false);
     }
 
     public HttpURLConnection createConnection(String urlStr) throws IOException {
@@ -128,20 +124,15 @@ public class Downloader {
         }
     }
 
-    public void downloadAndUnzip(String url, String toFolder, final ProgressListener progressListener) throws IOException {
+    public void downloadAndUnzip(String url, String toFolder, final LongConsumer progressListener) throws IOException {
         HttpURLConnection conn = createConnection(url);
         final int length = conn.getContentLength();
         InputStream iStream = fetch(conn, false);
 
-        new Unzipper().unzip(iStream, new File(toFolder), new ProgressListener() {
-            @Override
-            public void update(long sumBytes) {
-                progressListener.update((int) (100 * sumBytes / length));
-            }
-        });
+        new Unzipper().unzip(iStream, new File(toFolder), sumBytes -> progressListener.accept((int) (100 * sumBytes / length)));
     }
 
     public String downloadAsString(String url, boolean readErrorStreamNoException) throws IOException {
-        return Helper.isToString(fetch((HttpURLConnection) createConnection(url), readErrorStreamNoException));
+        return Helper.isToString(fetch(createConnection(url), readErrorStreamNoException));
     }
 }
