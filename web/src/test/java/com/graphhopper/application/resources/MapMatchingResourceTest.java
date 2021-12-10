@@ -91,7 +91,7 @@ public class MapMatchingResourceTest {
         WKTReader wktReader = new WKTReader();
         final Response response = app.client().target("http://localhost:8080/match?profile=fast_bike")
                 .request()
-                .buildPost(Entity.xml(getClass().getResourceAsStream("tour2-with-loop.gpx")))
+                .buildPost(Entity.xml(getClass().getResourceAsStream("another-tour-with-loop.gpx")))
                 .invoke();
         assertEquals(200, response.getStatus(), "no success");
         JsonNode json = response.readEntity(JsonNode.class);

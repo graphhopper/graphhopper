@@ -107,7 +107,7 @@ public class MapMatchingResourceTurnCostsTest {
     public void errorOnUnknownProfile() {
         final Response response = app.client().target("http://localhost:8080/match?profile=xyz")
                 .request()
-                .buildPost(Entity.xml(getClass().getResourceAsStream("tour2-with-loop.gpx")))
+                .buildPost(Entity.xml(getClass().getResourceAsStream("another-tour-with-loop.gpx")))
                 .invoke();
         JsonNode json = response.readEntity(JsonNode.class);
         assertTrue(json.has("message"), json.toString());
@@ -118,7 +118,7 @@ public class MapMatchingResourceTurnCostsTest {
     private void runCar(String urlParams) {
         final Response response = app.client().target("http://localhost:8080/match?" + urlParams)
                 .request()
-                .buildPost(Entity.xml(getClass().getResourceAsStream("tour2-with-loop.gpx")))
+                .buildPost(Entity.xml(getClass().getResourceAsStream("another-tour-with-loop.gpx")))
                 .invoke();
         JsonNode json = response.readEntity(JsonNode.class);
         assertFalse(json.has("message"), json.toString());
@@ -137,7 +137,7 @@ public class MapMatchingResourceTurnCostsTest {
     private void runBike(String urlParams) {
         final Response response = app.client().target("http://localhost:8080/match?" + urlParams)
                 .request()
-                .buildPost(Entity.xml(getClass().getResourceAsStream("tour2-with-loop.gpx")))
+                .buildPost(Entity.xml(getClass().getResourceAsStream("another-tour-with-loop.gpx")))
                 .invoke();
         JsonNode json = response.readEntity(JsonNode.class);
         assertFalse(json.has("message"), json.toString());
