@@ -309,8 +309,12 @@ class NodeBasedNodeContractor implements NodeContractor {
         // default values were optimized for Unterfranken
         private float edgeDifferenceWeight = 10;
         private float originalEdgesCountWeight = 1;
-        private int maxVisitedNodesHeuristic = 20;
-        private int maxVisitedNodesContraction = 100;
+        // these values seemed to work best for planet (fast prep without compromising too much for the query time)
+        // higher values can further decrease the number of shortcuts and improve the query time, but only by a few
+        // percent and at the cost of a longer preparation. for smaller maps smaller values can work even better, i.e.
+        // try 20/100 or similar.
+        private int maxVisitedNodesHeuristic = 30;
+        private int maxVisitedNodesContraction = 200;
     }
 
     private static class Shortcut {
