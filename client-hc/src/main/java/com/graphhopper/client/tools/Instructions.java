@@ -16,7 +16,11 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.util;
+package com.graphhopper.client.tools;
+
+import com.graphhopper.util.Instruction;
+import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.PointList;
 
 public class Instructions {
 
@@ -37,8 +41,7 @@ public class Instructions {
         PointList points = instructions.get(0).getPoints();
         double prevLat = points.getLat(0);
         double prevLon = points.getLon(0);
-        DistanceCalc distCalc = DistanceCalcEarth.DIST_EARTH;
-        double foundMinDistance = distCalc.calcNormalizedDist(lat, lon, prevLat, prevLon);
+        double foundMinDistance = Distance.calcDist(lat, lon, prevLat, prevLon);
         int foundInstruction = 0;
 
         // Search the closest edge to the query point
@@ -53,12 +56,12 @@ public class Instructions {
                         // calculate the distance from the point to the edge
                         double distance;
                         int index = instructionIndex;
-                        if (distCalc.validEdgeDistance(lat, lon, currLat, currLon, prevLat, prevLon)) {
-                            distance = distCalc.calcNormalizedEdgeDistance(lat, lon, currLat, currLon, prevLat, prevLon);
+                        if (Distance.validEdgeDistance(lat, lon, currLat, currLon, prevLat, prevLon)) {
+                            distance = Distance.calcNormalizedEdgeDistance(lat, lon, currLat, currLon, prevLat, prevLon);
                             if (pointIndex > 0)
                                 index++;
                         } else {
-                            distance = distCalc.calcNormalizedDist(lat, lon, currLat, currLon);
+                            distance = Distance.calcNormalizedDist(lat, lon, currLat, currLon);
                             if (pointIndex > 0)
                                 index++;
                         }
@@ -74,7 +77,7 @@ public class Instructions {
             }
         }
 
-        if (distCalc.calcDenormalizedDist(foundMinDistance) > maxDistance)
+        if (foundMinDistance > maxDistance)
             return null;
 
         // special case finish condition

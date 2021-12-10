@@ -38,7 +38,6 @@ import java.util.List;
 import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * @author Peter Karich
@@ -333,18 +332,31 @@ public class InstructionListTest {
         ShortestWeighting weighting = new ShortestWeighting(carEncoder);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 5);
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
+        PointList pl0 = new PointList();
+        pl0.add(15.0, 10.0);
+        PointList pl1 = new PointList();
+        pl1.add(15.1, 10.0);
+        PointList pl2 = new PointList();
+        pl2.add(15.1, 9.9);
+        pl2.add(15.2, 9.9);
+        pl2.add(15.2, 10.0);
+        PointList pl3 = new PointList();
+        pl3.add(15.2, 10.1);
+        InstructionList instructions = new InstructionList(new TranslationMap.TranslationHashMap(Locale.ENGLISH));
+        instructions.add(0, new Instruction(Instruction.CONTINUE_ON_STREET, "1-2", pl0).setDistance(10000).setTime(600000));
+        instructions.add(1, new Instruction(Instruction.TURN_LEFT, "2-3", pl1).setDistance(10000).setTime(60000));
+        instructions.add(2, new Instruction(Instruction.TURN_RIGHT, "3-4", pl2).setDistance(20000).setTime(1200000));
+        instructions.add(3, new Instruction(Instruction.FINISH, "", pl3));
 
-        // query on first edge, get instruction for second edge
-        assertEquals("2-3", Instructions.find(wayList, 15.05, 10, 1000).getName());
-
-        // query east of first edge, get instruction for second edge
-        assertEquals("2-3", Instructions.find(wayList, 15.05, 10.001, 1000).getName());
-
-        // query south-west of node 3, get instruction for third edge
-        assertEquals("3-4", Instructions.find(wayList, 15.099, 9.9, 1000).getName());
-
-        // too far away
-        assertNull(Instructions.find(wayList, 50.8, 50.25, 1000));
+        assertEquals(4, wayList.size());
+        assertEquals("1-2", wayList.get(0).getName());
+        assertEquals(Instruction.CONTINUE_ON_STREET, wayList.get(0).getSign());
+        assertEquals("2-3", wayList.get(1).getName());
+        assertEquals(Instruction.TURN_LEFT, wayList.get(1).getSign());
+        assertEquals("3-4", wayList.get(2).getName());
+        assertEquals(Instruction.TURN_RIGHT, wayList.get(2).getSign());
+        assertEquals("", wayList.get(3).getName());
+        assertEquals(Instruction.FINISH, wayList.get(3).getSign());
     }
 
     private void compare(List<List<Double>> expected, List<List<Double>> actual) {
