@@ -1,6 +1,6 @@
 ### 5.0 [not yet released]
 
-- the GraphHopperApplication class was moved from com.graphhopper.http to com.graphhopper.app (#2487)
+- the GraphHopperApplication class was moved from com.graphhopper.http to com.graphhopper.application (#2487)
 - it is now possible to add CH preparations to an existing graph folder, CH graphs no longer need to be added before
   GraphHopperStorage#freeze (#2481)
 - the two EncodedValue implementations accept now negative values too. The default value can now only be 0 or Double.Infinity, but this option will be removed later too, see discussion in #2473
