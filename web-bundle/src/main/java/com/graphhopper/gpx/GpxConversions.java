@@ -38,7 +38,7 @@ public class GpxConversions {
 
     static String simpleXMLEscape(String str) {
         // We could even use the 'more flexible' CDATA section but for now do the following. The 'and' could be important sometimes:
-        return str.replaceAll("&", "&amp;").
+        return str.replace("&", "&amp;").
                 // but do not care for:
                         replaceAll("[\\<\\>]", "_");
     }
