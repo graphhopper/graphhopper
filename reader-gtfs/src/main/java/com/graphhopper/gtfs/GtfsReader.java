@@ -116,7 +116,7 @@ class GtfsReader {
                 int streetNode;
                 if (!locationSnap.isValid()) {
                     streetNode = i++;
-                    nodeAccess.setNode(streetNode, stop.stop_lat, stop.stop_lon);
+                    setNodeCoordinates(stop, streetNode);
                     EdgeIteratorState edge = graph.edge(streetNode, streetNode);
                     edge.set(accessEnc, true).setReverse(accessEnc, false);
                     edge.set(footEncoder.getAccessEnc(), true).setReverse(footEncoder.getAccessEnc(), false);
@@ -284,7 +284,7 @@ class GtfsReader {
         for (StopTime stopTime : trip.stopTimes) {
             Stop stop = feed.stops.get(stopTime.stop_id);
             arrivalNode = i++;
-            nodeAccess.setNode(arrivalNode, stop.stop_lat, stop.stop_lon);
+            setNodeCoordinates(stop, arrivalNode);
             arrivalTime = stopTime.arrival_time + time;
             if (prev != null) {
                 Stop fromStop = feed.stops.get(prev.stop_id);
@@ -312,18 +312,18 @@ class GtfsReader {
             NavigableMap<Integer, Integer> departureTimeline = departureTimelines.computeIfAbsent(platform, s -> new TreeMap<>());
             int departureTimelineNode = departureTimeline.computeIfAbsent((stopTime.departure_time + time) % (24 * 60 * 60), t -> {
                 final int _departureTimelineNode = i++;
-                nodeAccess.setNode(_departureTimelineNode, stop.stop_lat, stop.stop_lon);
+                setNodeCoordinates(stop, _departureTimelineNode);
                 return _departureTimelineNode;
             });
             Map<GtfsStorageI.PlatformDescriptor, NavigableMap<Integer, Integer>> arrivalTimelines = arrivalTimelinesByStop.computeIfAbsent(stopTime.stop_id, s -> new HashMap<>());
             NavigableMap<Integer, Integer> arrivalTimeline = arrivalTimelines.computeIfAbsent(platform, s -> new TreeMap<>());
             int arrivalTimelineNode = arrivalTimeline.computeIfAbsent((stopTime.arrival_time + time) % (24 * 60 * 60), t -> {
                 final int _arrivalTimelineNode = i++;
-                nodeAccess.setNode(_arrivalTimelineNode, stop.stop_lat, stop.stop_lon);
+                setNodeCoordinates(stop, _arrivalTimelineNode);
                 return _arrivalTimelineNode;
             });
             departureNode = i++;
-            nodeAccess.setNode(departureNode, stop.stop_lat, stop.stop_lon);
+            setNodeCoordinates(stop, departureNode);
             int dayShift = stopTime.departure_time / (24 * 60 * 60);
             GtfsStorage.Validity validOn = new GtfsStorage.Validity(getValidOn(trip.validOnDay, dayShift), zoneId, startDate);
             int validityId;
@@ -381,7 +381,7 @@ class GtfsReader {
 
     private void wireUpDepartureTimeline(int streetNode, Stop stop, NavigableMap<Integer, Integer> departureTimeline, int route_type, GtfsStorageI.PlatformDescriptor platformDescriptor) {
         LOGGER.debug("Creating timeline at stop {} for departure platform {}", stop.stop_id, platformDescriptor);
-        nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
+        setNodeCoordinates(stop, i++);
         int platformEnterNode = i - 1;
         EdgeIteratorState entryEdge = graph.edge(streetNode, platformEnterNode);
         entryEdge.set(accessEnc, true).setReverse(accessEnc, false);
@@ -394,7 +394,7 @@ class GtfsReader {
 
     private void wireUpArrivalTimeline(int streetNode, Stop stop, NavigableMap<Integer, Integer> arrivalTimeline, int route_type, GtfsStorageI.PlatformDescriptor platformDescriptorIfStatic) {
         LOGGER.debug("Creating timeline at stop {} for arrival platform {}", stop.stop_id, platformDescriptorIfStatic);
-        nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
+        setNodeCoordinates(stop, i++);
         int platformExitNode = i - 1;
         EdgeIteratorState exitEdge = graph.edge(platformExitNode, streetNode);
         exitEdge.set(accessEnc, true).setReverse(accessEnc, false);
@@ -504,14 +504,9 @@ class GtfsReader {
     int addDelayedBoardEdge(ZoneId zoneId, GtfsRealtime.TripDescriptor tripDescriptor, int stopSequence, int departureTime, int departureNode, BitSet validOnDay) {
         Trip trip = feed.trips.get(tripDescriptor.getTripId());
         StopTime stopTime = feed.stop_times.get(new Fun.Tuple2(tripDescriptor.getTripId(), stopSequence));
-        Stop stop = feed.stops.get(stopTime.stop_id);
         Map<GtfsStorageI.PlatformDescriptor, NavigableMap<Integer, Integer>> departureTimelineNodesByRoute = departureTimelinesByStop.computeIfAbsent(stopTime.stop_id, s -> new HashMap<>());
         NavigableMap<Integer, Integer> departureTimelineNodes = departureTimelineNodesByRoute.computeIfAbsent(GtfsStorageI.PlatformDescriptor.route(id, stopTime.stop_id, trip.route_id), s -> new TreeMap<>());
-        int departureTimelineNode = departureTimelineNodes.computeIfAbsent(departureTime % (24 * 60 * 60), t -> {
-            final int _departureTimelineNode = i++;
-            nodeAccess.setNode(_departureTimelineNode, stop.stop_lat, stop.stop_lon);
-            return _departureTimelineNode;
-        });
+        int departureTimelineNode = departureTimelineNodes.computeIfAbsent(departureTime % (24 * 60 * 60), t -> i++);
 
         int dayShift = departureTime / (24 * 60 * 60);
         GtfsStorage.Validity validOn = new GtfsStorage.Validity(getValidOn(validOnDay, dayShift), zoneId, startDate);
@@ -602,7 +597,7 @@ class GtfsReader {
                     blockTransferValidityId = gtfsStorage.getOperatingDayPatterns().size();
                     gtfsStorage.getOperatingDayPatterns().put(blockTransferValidOn, blockTransferValidityId);
                 }
-                nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
+                setNodeCoordinates(stop, i++);
                 EdgeIteratorState transferEdge = graph.edge(lastTrip.arrivalNode, i - 1);
                 transferEdge.set(accessEnc, true).setReverse(accessEnc, false);
                 setEdgeTypeAndClearDistance(transferEdge, GtfsStorage.EdgeType.TRANSFER);
@@ -688,6 +683,12 @@ class GtfsReader {
             return null;
         } else {
             return ((GtfsStorageI.RoutePlatform) platformDescriptor).route_id;
+        }
+    }
+
+    private void setNodeCoordinates(Stop stop, int streetNode) {
+        if (nodeAccess != null) { // unless doing realtime update
+            nodeAccess.setNode(streetNode, stop.stop_lat, stop.stop_lon);
         }
     }
 
