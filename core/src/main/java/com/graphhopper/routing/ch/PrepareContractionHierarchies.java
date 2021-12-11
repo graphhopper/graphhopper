@@ -223,7 +223,6 @@ public class PrepareContractionHierarchies {
         // but has always been like that and changing it would possibly require retuning the contraction parameters
         updatePrioritiesOfRemainingNodes();
         logger.info("Finished building queue, took: {}s, {}", sw.stop().getSeconds(), getMemInfo());
-        nodeContractor.prepareContraction();
         final int initSize = sortedNodes.size();
         int level = 0;
         checkCounter = 0;
@@ -323,7 +322,6 @@ public class PrepareContractionHierarchies {
     }
 
     private void contractNodesUsingFixedNodeOrdering() {
-        nodeContractor.prepareContraction();
         final int nodesToContract = nodeOrderingProvider.getNumNodes();
         final int logSize = Math.max(10, (int) (params.getLogMessagesPercentage() / 100.0 * nodesToContract));
         StopWatch stopWatch = new StopWatch();
@@ -528,7 +526,7 @@ public class PrepareContractionHierarchies {
                 // todo: optimize
                 return new Params(0, 100, 0, 100, 5);
             } else {
-                return new Params(20, 10, 20, 100, 20);
+                return new Params(0, 0, 100, 100, 20);
             }
         }
 
