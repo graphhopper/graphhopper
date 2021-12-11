@@ -20,7 +20,6 @@ package com.graphhopper.gtfs;
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.util.EdgeIterator;
 
 import java.time.Instant;
@@ -50,7 +49,6 @@ public class MultiCriteriaLabelSetting {
     private final List<Label> targetLabels;
     private long startTime;
     private final EnumEncodedValue<GtfsStorage.EdgeType> typeEnc;
-    private final IntEncodedValue validityEnc;
     private final IntObjectMap<List<Label>> fromMap;
     private final PriorityQueue<Label> fromHeap;
     private final long maxProfileDuration;
@@ -72,7 +70,6 @@ public class MultiCriteriaLabelSetting {
         this.maxProfileDuration = maxProfileDuration;
         this.targetLabels = solutions;
         this.typeEnc = flagEncoder.getTypeEnc();
-        this.validityEnc = flagEncoder.getValidityIdEnc();
 
         queueComparator = Comparator
                 .comparingLong(this::weight)
@@ -128,12 +125,12 @@ public class MultiCriteriaLabelSetting {
                     } else {
                         nextTime = label.currentTime + explorer.calcTravelTimeMillis(edge, label.currentTime);
                     }
-                    int nTransfers = label.nTransfers + explorer.calcNTransfers(edge);
+                    int nTransfers = label.nTransfers + explorer.nTransfers(edge);
                     long extraWeight = label.extraWeight;
                     Long firstPtDepartureTime = label.departureTime;
                     GtfsStorage.EdgeType edgeType = edge.get(typeEnc);
-                    if (edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT) {
-                        int currentRouteType = edge.get(validityEnc);
+                    if (!reverse && (edgeType == GtfsStorage.EdgeType.ENTER_PT) || reverse && (edgeType == GtfsStorage.EdgeType.EXIT_PT)) {
+                        int currentRouteType = explorer.routeType(edge);
                         extraWeight += transferPenaltiesByRouteType.applyAsLong(currentRouteType);
                     }
                     if (edgeType == GtfsStorage.EdgeType.TRANSFER) {
