@@ -16,7 +16,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <slf4j.version>1.7.25</slf4j.version>
-        <log4j.version>2.15.0</log4j.version>
         <commons-compress.version>1.12</commons-compress.version>
         <jackson.version>2.9.1</jackson.version>
         <maven.compiler.target>1.8</maven.compiler.target>
