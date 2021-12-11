@@ -21,15 +21,10 @@ package com.graphhopper.gtfs;
 import com.conveyal.gtfs.model.Transfer;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -38,8 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -66,28 +59,11 @@ public class GraphHopperGtfs extends GraphHopper {
     }
 
     @Override
-    protected LocationIndex createLocationIndex(Directory dir) {
-        // if the location index was already created (we are 'loading') we use it. but we must not create the location
-        // index object in case the index does not exist yet, because we only can create it once. we are not ready yet,
-        // because first we need to import PT.
-        if (Files.exists(Paths.get(getGraphHopperLocation()).resolve("location_index"))) {
-            LocationIndexTree index = new LocationIndexTree(getGraphHopperStorage(), dir);
-            index.loadExisting();
-            return index;
-        }
-        return null;
-    }
-
-    @Override
     protected void importPublicTransit() {
         gtfsStorage = new GtfsStorage(getGraphHopperStorage().getDirectory());
         if (!getGtfsStorage().loadExisting()) {
             ensureWriteAccess();
             getGtfsStorage().create();
-            GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
-            // temporary location index for the street network that we only use during import
-            LocationIndexTree streetNetworkIndex = new LocationIndexTree(getGraphHopperStorage(), new RAMDirectory());
-            streetNetworkIndex.prepareIndex();
             try {
                 int idx = 0;
                 List<String> gtfsFiles = ghConfig.has("gtfs.file") ? Arrays.asList(ghConfig.getString("gtfs.file", "").split(",")) : Collections.emptyList();
@@ -100,7 +76,7 @@ public class GraphHopperGtfs extends GraphHopper {
                 getGtfsStorage().getGtfsFeeds().forEach((id, gtfsFeed) -> {
                     Transfers transfers = new Transfers(gtfsFeed);
                     allTransfers.put(id, transfers);
-                    GtfsReader gtfsReader = new GtfsReader(id, graphHopperStorage, graphHopperStorage.getEncodingManager(), getGtfsStorage(), streetNetworkIndex, transfers);
+                    GtfsReader gtfsReader = new GtfsReader(id, getGraphHopperStorage(), getGraphHopperStorage().getEncodingManager(), getGtfsStorage(), getLocationIndex(), transfers);
                     gtfsReader.connectStopsToStreetNetwork();
                     LOGGER.info("Building transit graph for feed {}", gtfsFeed.feedId);
                     gtfsReader.buildPtNetwork();
@@ -110,13 +86,6 @@ public class GraphHopperGtfs extends GraphHopper {
             } catch (Exception e) {
                 throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
             }
-            streetNetworkIndex.close();
-            // now we build the final location index
-            LocationIndexTree locationIndex = new LocationIndexTree(getGraphHopperStorage(), getGraphHopperStorage().getDirectory());
-            PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(getEncodingManager());
-            EnumEncodedValue<GtfsStorage.EdgeType> typeEnc = ptEncodedValues.getTypeEnc();
-            locationIndex.prepareIndex(edgeState -> edgeState.get(typeEnc) == GtfsStorage.EdgeType.HIGHWAY);
-            setLocationIndex(locationIndex);
         }
     }
 
