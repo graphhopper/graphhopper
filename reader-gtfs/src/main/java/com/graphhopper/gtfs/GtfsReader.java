@@ -51,8 +51,14 @@ import static java.time.temporal.ChronoUnit.DAYS;
 
 class GtfsReader {
 
+    private final PtGraph ptGraph;
+    private final PtGraphOut out;
     private LocalDate startDate;
     private LocalDate endDate;
+
+    static class PtGraphOut {
+
+    }
 
     static class TripWithStopTimes {
         TripWithStopTimes(Trip trip, List<StopTime> stopTimes, BitSet validOnDay, Set<Integer> cancelledArrivals, Set<Integer> cancelledDepartures) {
@@ -89,7 +95,7 @@ class GtfsReader {
     private final IntEncodedValue timeEnc;
     private final IntEncodedValue validityIdEnc;
 
-    GtfsReader(String id, Graph graph, EncodingManager encodingManager, GtfsStorageI gtfsStorage, LocationIndex walkNetworkIndex, Transfers transfers) {
+    GtfsReader(String id, GraphHopperStorage graph, PtGraph ptGraph, PtGraphOut out, EncodingManager encodingManager, GtfsStorageI gtfsStorage, LocationIndex walkNetworkIndex, Transfers transfers) {
         this.id = id;
         this.graph = graph;
         this.gtfsStorage = gtfsStorage;
@@ -104,6 +110,8 @@ class GtfsReader {
         this.i = graph.getNodes();
         this.startDate = feed.getStartDate();
         this.endDate = feed.getEndDate();
+        this.ptGraph = ptGraph;
+        this.out = out;
     }
 
     void connectStopsToStreetNetwork() {
@@ -113,20 +121,13 @@ class GtfsReader {
         for (Stop stop : feed.stops.values()) {
             if (stop.location_type == 0) { // Only stops. Not interested in parent stations for now.
                 Snap locationSnap = walkNetworkIndex.findClosest(stop.stop_lat, stop.stop_lon, filter);
-                int streetNode;
-                if (!locationSnap.isValid()) {
-                    streetNode = i++;
-                    setNodeCoordinates(stop, streetNode);
-                    EdgeIteratorState edge = graph.edge(streetNode, streetNode);
-                    edge.set(accessEnc, true).setReverse(accessEnc, false);
-                    edge.set(footEncoder.getAccessEnc(), true).setReverse(footEncoder.getAccessEnc(), false);
-                    edge.set(footEncoder.getAverageSpeedEnc(), 5.0);
+                if (locationSnap.isValid()) {
+                    Integer prev = gtfsStorage.getStationNodes().put(new GtfsStorage.FeedIdWithStopId(id, stop.stop_id), locationSnap.getClosestNode());
+                    if (prev != null) {
+                        throw new RuntimeException("Duplicate stop id: "+stop.stop_id);
+                    }
                 } else {
-                    streetNode = locationSnap.getClosestNode();
-                }
-                Integer prev = gtfsStorage.getStationNodes().put(new GtfsStorage.FeedIdWithStopId(id, stop.stop_id), streetNode);
-                if (prev != null) {
-                    throw new RuntimeException("Duplicate stop id: "+stop.stop_id);
+                    System.out.println("unmatched stop");
                 }
             }
         }
@@ -205,6 +206,7 @@ class GtfsReader {
         List<Transfer> transfersToPlatform = transfers.getTransfersToStop(toPlatformDescriptor.stop_id, routeIdOrNull(toPlatformDescriptor));
         transfersToPlatform.forEach(transfer -> {
             int stationNode = gtfsStorage.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(id, transfer.from_stop_id));
+
             EdgeIterator i = graph.createEdgeExplorer().setBaseNode(stationNode);
             while (i.next()) {
                 if (i.get(ptEncodedValues.getTypeEnc()) == GtfsStorage.EdgeType.EXIT_PT) {

@@ -64,6 +64,7 @@ public class GraphHopperGtfs extends GraphHopper {
         if (!getGtfsStorage().loadExisting()) {
             ensureWriteAccess();
             getGtfsStorage().create();
+            PtGraph ptGraph = new PtGraph(getGraphHopperStorage().getDirectory(), 4, 100);
             try {
                 int idx = 0;
                 List<String> gtfsFiles = ghConfig.has("gtfs.file") ? Arrays.asList(ghConfig.getString("gtfs.file", "").split(",")) : Collections.emptyList();
@@ -76,7 +77,10 @@ public class GraphHopperGtfs extends GraphHopper {
                 getGtfsStorage().getGtfsFeeds().forEach((id, gtfsFeed) -> {
                     Transfers transfers = new Transfers(gtfsFeed);
                     allTransfers.put(id, transfers);
-                    GtfsReader gtfsReader = new GtfsReader(id, getGraphHopperStorage(), getGraphHopperStorage().getEncodingManager(), getGtfsStorage(), getLocationIndex(), transfers);
+                    GtfsReader.PtGraphOut ptGraphOut = new GtfsReader.PtGraphOut() {
+
+                    };
+                    GtfsReader gtfsReader = new GtfsReader(id, getGraphHopperStorage(), ptGraph, ptGraphOut, getGraphHopperStorage().getEncodingManager(), getGtfsStorage(), getLocationIndex(), transfers);
                     gtfsReader.connectStopsToStreetNetwork();
                     LOGGER.info("Building transit graph for feed {}", gtfsFeed.feedId);
                     gtfsReader.buildPtNetwork();

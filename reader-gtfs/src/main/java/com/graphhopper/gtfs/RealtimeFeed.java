@@ -27,19 +27,8 @@ import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
-import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.TurnCostStorage;
-import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.shapes.BBox;
 import org.mapdb.Fun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +40,6 @@ import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
 import static com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate.ScheduleRelationship.NO_DATA;
@@ -98,91 +86,7 @@ public class RealtimeFeed {
         final IntLongHashMap delaysForBoardEdges = new IntLongHashMap();
         final IntLongHashMap delaysForAlightEdges = new IntLongHashMap();
         final LinkedList<VirtualEdgeIteratorState> additionalEdges = new LinkedList<>();
-        final Graph overlayGraph = new Graph() {
-            int firstEdge = graphHopperStorage.getEdges();
-            EncodingManager encodingManager = graphHopperStorage.getEncodingManager();
-
-            @Override
-            public Graph getBaseGraph() {
-                return graphHopperStorage;
-            }
-
-            @Override
-            public int getNodes() {
-                return IntStream.concat(
-                        IntStream.of(graphHopperStorage.getNodes() - 1),
-                        additionalEdges.stream().flatMapToInt(edge -> IntStream.of(edge.getBaseNode(), edge.getAdjNode())))
-                        .max().getAsInt() + 1;
-            }
-
-            @Override
-            public int getEdges() {
-                return getAllEdges().length();
-            }
-
-            @Override
-            public NodeAccess getNodeAccess() {
-                return null;
-            }
-
-            @Override
-            public BBox getBounds() {
-                return null;
-            }
-
-            @Override
-            public EdgeIteratorState edge(int a, int b) {
-                int edge = firstEdge++;
-                final VirtualEdgeIteratorState newEdge = new VirtualEdgeIteratorState(-1,
-                        GHUtility.createEdgeKey(edge, false), a, b, 0.0, encodingManager.createEdgeFlags(), "", new PointList(), false);
-                final VirtualEdgeIteratorState reverseNewEdge = new VirtualEdgeIteratorState(-1,
-                        GHUtility.createEdgeKey(edge, true), b, a, 0.0, encodingManager.createEdgeFlags(), "", new PointList(), true);
-                newEdge.setReverseEdge(reverseNewEdge);
-                reverseNewEdge.setReverseEdge(newEdge);
-                additionalEdges.push(newEdge);
-                return newEdge;
-            }
-
-            @Override
-            public EdgeIteratorState getEdgeIteratorState(int edgeId, int adjNode) {
-                return null;
-            }
-
-            @Override
-            public EdgeIteratorState getEdgeIteratorStateForKey(int edgeKey) {
-                return null;
-            }
-
-            @Override
-            public AllEdgesIterator getAllEdges() {
-                return null;
-            }
-
-            @Override
-            public EdgeExplorer createEdgeExplorer(EdgeFilter filter) {
-                return null;
-            }
-
-            @Override
-            public TurnCostStorage getTurnCostStorage() {
-                throw new RuntimeException();
-            }
-
-            @Override
-            public Weighting wrapWeighting(Weighting weighting) {
-                throw new RuntimeException();
-            }
-
-            @Override
-            public int getOtherNode(int edge, int node) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public boolean isAdjacentToNode(int edge, int node) {
-                throw new UnsupportedOperationException();
-            }
-        };
+        final GtfsReader.PtGraphOut overlayGraph = new GtfsReader.PtGraphOut() {};
 
         Map<GtfsStorage.Validity, Integer> operatingDayPatterns = new HashMap<>(staticGtfs.getOperatingDayPatterns());
         Map<Integer, byte[]> tripDescriptors = new HashMap<>();
@@ -253,7 +157,8 @@ public class RealtimeFeed {
                     return platformDescriptorByEdge;
                 }
             };
-            final GtfsReader gtfsReader = new GtfsReader(feedKey, overlayGraph, graphHopperStorage.getEncodingManager(), gtfsStorage, null, transfers.get(feedKey));
+            PtGraph ptGraphNodesAndEdges = null;
+            final GtfsReader gtfsReader = new GtfsReader(feedKey, graphHopperStorage, ptGraphNodesAndEdges, overlayGraph, graphHopperStorage.getEncodingManager(), gtfsStorage, null, transfers.get(feedKey));
             Instant timestamp = Instant.ofEpochSecond(feedMessage.getHeader().getTimestamp());
             LocalDate dateToChange = timestamp.atZone(timezone).toLocalDate(); //FIXME
             BitSet validOnDay = new BitSet();
