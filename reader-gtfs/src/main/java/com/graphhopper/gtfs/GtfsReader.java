@@ -335,7 +335,6 @@ class GtfsReader {
             }
 
             EdgeIteratorState boardEdge = graph.edge(departureTimelineNode, departureNode);
-            boardEdge.setName(getRouteName(feed, trip.trip));
             setEdgeTypeAndClearDistance(boardEdge, GtfsStorage.EdgeType.BOARD);
             boardEdge.set(accessEnc, true).setReverse(accessEnc, false);
             while (boardEdges.size() < stopTime.stop_sequence) {
@@ -348,7 +347,6 @@ class GtfsReader {
             boardEdge.set(ptEncodedValues.getTransfersEnc(), 1);
 
             EdgeIteratorState alightEdge = graph.edge(arrivalNode, arrivalTimelineNode);
-            alightEdge.setName(getRouteName(feed, trip.trip));
             setEdgeTypeAndClearDistance(alightEdge, GtfsStorage.EdgeType.ALIGHT);
             alightEdge.set(accessEnc, true).setReverse(accessEnc, false);
             while (alightEdges.size() < stopTime.stop_sequence) {
@@ -361,7 +359,6 @@ class GtfsReader {
 
             EdgeIteratorState dwellEdge = graph.edge(arrivalNode, departureNode);
             dwellEdge.set(accessEnc, true).setReverse(accessEnc, false);
-            dwellEdge.setName(getRouteName(feed, trip.trip));
             setEdgeTypeAndClearDistance(dwellEdge, GtfsStorage.EdgeType.DWELL);
             dwellEdge.set(timeEnc, stopTime.departure_time - stopTime.arrival_time);
 
@@ -520,7 +517,6 @@ class GtfsReader {
 
         EdgeIteratorState boardEdge = graph.edge(departureTimelineNode, departureNode);
         boardEdge.set(accessEnc, true).setReverse(accessEnc, false);
-        boardEdge.setName(getRouteName(feed, trip));
         setEdgeTypeAndClearDistance(boardEdge, GtfsStorage.EdgeType.BOARD);
         gtfsStorage.getStopSequences().put(boardEdge.getEdge(), stopSequence);
         gtfsStorage.getTripDescriptors().put(boardEdge.getEdge(), tripDescriptor.toByteArray());
@@ -643,12 +639,6 @@ class GtfsReader {
                 }
             }
         }
-    }
-
-    private String getRouteName(GTFSFeed feed, Trip trip) {
-        Route route = feed.routes.get(trip.route_id);
-        String routePart = route != null ? (route.route_long_name != null ? route.route_long_name : route.route_short_name) : "extra";
-        return routePart + " " + trip.trip_headsign;
     }
 
     private void setEdgeTypeAndClearDistance(EdgeIteratorState edge, GtfsStorage.EdgeType edgeType) {

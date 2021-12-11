@@ -365,7 +365,7 @@ class TripFromLabel {
                             feedId, partition.get(0).edge.nTransfers == 0,
                             tripDescriptor.getTripId(),
                             tripDescriptor.getRouteId(),
-                            edges(partition).map(edgeLabel -> edgeLabel.edgeIteratorState).collect(Collectors.toList()).get(0).getName(),
+                            Optional.ofNullable(gtfsStorage.getGtfsFeeds().get(feedId).trips.get(tripDescriptor.getTripId())).map(t -> t.trip_headsign).orElse("extra"),
                             stops,
                             partition.stream().mapToDouble(t -> t.edge.distance).sum(),
                             path.get(i - 1).label.currentTime - boardTime,
