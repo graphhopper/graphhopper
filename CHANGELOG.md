@@ -1,5 +1,6 @@
 ### 5.0 [not yet released]
 
+- improved node-based CH performance (faster preparation and less shortcuts(=memory usage)) (#2491)
 - the GraphHopperApplication class was moved from com.graphhopper.http to com.graphhopper.application (#2487)
 - it is now possible to add CH preparations to an existing graph folder, CH graphs no longer need to be added before
   GraphHopperStorage#freeze (#2481)
