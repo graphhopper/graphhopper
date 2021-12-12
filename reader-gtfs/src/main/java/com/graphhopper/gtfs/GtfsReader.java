@@ -234,6 +234,7 @@ class GtfsReader {
                     edge.set(accessEnc, true).setReverse(accessEnc, false);
                     setEdgeTypeAndClearDistance(edge, GtfsStorage.EdgeType.TRANSFER);
                     edge.set(timeEnc, tailSet.firstKey() - arrivalTime);
+                    edge.set(validityIdEnc, routeType(departurePlatform));
                     gtfsStorage.getPlatformDescriptorByEdge().put(edge.getEdge(), departurePlatform);
                 }
             }
@@ -592,6 +593,7 @@ class GtfsReader {
                 transferEdge.set(accessEnc, true).setReverse(accessEnc, false);
                 setEdgeTypeAndClearDistance(transferEdge, GtfsStorage.EdgeType.TRANSFER);
                 transferEdge.set(timeEnc, dwellTime);
+                transferEdge.set(validityIdEnc, routeType(platform));
                 gtfsStorage.getPlatformDescriptorByEdge().put(transferEdge.getEdge(), platform);
                 EdgeIteratorState boardEdge = graph.edge(i - 1, departureNode);
                 boardEdge.set(accessEnc, true).setReverse(accessEnc, false);
@@ -625,6 +627,7 @@ class GtfsReader {
                                 edge.set(accessEnc, true).setReverse(accessEnc, false);
                                 setEdgeTypeAndClearDistance(edge, GtfsStorage.EdgeType.TRANSFER);
                                 edge.set(timeEnc, departureTime - time);
+                                edge.set(validityIdEnc, routeType(toPlatform));
                                 gtfsStorage.getPlatformDescriptorByEdge().put(edge.getEdge(), toPlatform);
                                 break;
                             }
