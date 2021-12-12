@@ -60,6 +60,7 @@ Here is an overview:
  * NopMap, massive improvements regarding OSM, parsing and encoding, route relations
  * ocampana, initial implementation for instructions
  * oflebbe, work on iOS port and issues like #2060
+ * oli0044 small bug fix
  * oschlueter, fixes like #1185
  * otbutz, added multiple EncodedValues
  * PGWelch, shapefile reader #874
