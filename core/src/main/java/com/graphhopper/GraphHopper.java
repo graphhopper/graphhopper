@@ -1039,7 +1039,9 @@ public class GraphHopper {
     }
 
     protected Map<String, PrepareContractionHierarchies.Result> prepareCH(boolean closeEarly, List<CHConfig> configsToPrepare) {
-        ensureWriteAccess();
+        if (!closeEarly && !configsToPrepare.isEmpty()) { // do not check write access if no ch profiles have to be prepared and no ealry closing is set
+            ensureWriteAccess();
+        }
         ghStorage.freeze();
         if (closeEarly) {
             locationIndex.close();
