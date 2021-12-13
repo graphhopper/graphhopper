@@ -34,6 +34,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Collections;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
@@ -71,6 +73,19 @@ public class PtRouteResourceTest {
                 .queryParam("point", "Stop(NANAA)")
                 .queryParam("profile", "pt")
                 .queryParam("pt.earliest_departure_time", "2007-01-01T08:00:00Z")
+                .request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        GHResponse ghResponse = response.readEntity(GHResponse.class);
+        assertFalse(ghResponse.hasErrors());
+    }
+
+    @Test
+    public void testStationStationQueryWithOffsetDateTime() {
+        final Response response = clientTarget(app, "/route")
+                .queryParam("point", "Stop(NADAV)")
+                .queryParam("point", "Stop(NANAA)")
+                .queryParam("profile", "pt")
+                .queryParam("pt.earliest_departure_time", "2007-01-01T07:44:00-08:00")
                 .request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         GHResponse ghResponse = response.readEntity(GHResponse.class);
