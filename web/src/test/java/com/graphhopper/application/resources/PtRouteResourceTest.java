@@ -34,8 +34,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Collections;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
@@ -72,11 +70,11 @@ public class PtRouteResourceTest {
                 .queryParam("point", "Stop(NADAV)")
                 .queryParam("point", "Stop(NANAA)")
                 .queryParam("profile", "pt")
-                .queryParam("pt.earliest_departure_time", "2007-01-01T08:00:00Z")
+                .queryParam("pt.earliest_departure_time", "2007-01-01T15:44:00Z")
                 .request().buildGet().invoke();
         assertEquals(200, response.getStatus());
-        GHResponse ghResponse = response.readEntity(GHResponse.class);
-        assertFalse(ghResponse.hasErrors());
+        JsonNode jsonNode = response.readEntity(JsonNode.class);
+        assertEquals(1, jsonNode.at("/paths/0/legs").size());
     }
 
     @Test
@@ -88,8 +86,8 @@ public class PtRouteResourceTest {
                 .queryParam("pt.earliest_departure_time", "2007-01-01T07:44:00-08:00")
                 .request().buildGet().invoke();
         assertEquals(200, response.getStatus());
-        GHResponse ghResponse = response.readEntity(GHResponse.class);
-        assertFalse(ghResponse.hasErrors());
+        JsonNode jsonNode = response.readEntity(JsonNode.class);
+        assertEquals(1, jsonNode.at("/paths/0/legs").size());
     }
 
     @Test
@@ -98,11 +96,11 @@ public class PtRouteResourceTest {
                 .queryParam("point", "36.914893,-116.76821") // NADAV stop
                 .queryParam("point", "36.914944,-116.761472") //NANAA stop
                 .queryParam("profile", "pt")
-                .queryParam("pt.earliest_departure_time", "2007-01-01T08:00:00Z")
+                .queryParam("pt.earliest_departure_time", "2007-01-01T15:44:00Z")
                 .request().buildGet().invoke();
         assertEquals(200, response.getStatus());
-        GHResponse ghResponse = response.readEntity(GHResponse.class);
-        assertFalse(ghResponse.hasErrors());
+        JsonNode jsonNode = response.readEntity(JsonNode.class);
+        assertEquals(1, jsonNode.at("/paths/0/legs").size());
     }
 
     @Test
