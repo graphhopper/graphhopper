@@ -9,14 +9,20 @@ import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.*;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.util.stream.Stream;
 
+import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -29,23 +35,28 @@ public class ShortcutUnpackerTest {
         private final EncodingManager encodingManager;
         private final FlagEncoder encoder;
         private final GraphHopperStorage graph;
-        private final CHStorageBuilder chBuilder;
-        private final RoutingCHGraph routingCHGraph;
+        private CHStorageBuilder chBuilder;
+        private RoutingCHGraph routingCHGraph;
 
         Fixture(boolean edgeBased) {
             this.edgeBased = edgeBased;
             encoder = new CarFlagEncoder(5, 5, 10).setSpeedTwoDirections(true);
             encodingManager = EncodingManager.create(encoder);
-            graph = new GraphBuilder(encodingManager)
-                    .setCHConfigStrings("profile|car|fastest|" + (edgeBased ? "edge" : "node"))
-                    .create();
-            chBuilder = new CHStorageBuilder(graph.getCHStore());
-            routingCHGraph = graph.getRoutingCHGraph("profile");
+            graph = new GraphBuilder(encodingManager).create();
         }
 
         @Override
         public String toString() {
             return "edge_based=" + edgeBased;
+        }
+
+        private void freeze() {
+            graph.freeze();
+            TurnCostProvider turnCostProvider = edgeBased ? new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()) : NO_TURN_COST_PROVIDER;
+            CHConfig chConfig = new CHConfig("profile", new FastestWeighting(encoder, turnCostProvider), edgeBased);
+            CHStorage chStore = graph.createCHStorage(chConfig);
+            chBuilder = new CHStorageBuilder(chStore);
+            routingCHGraph = graph.createCHGraph(chStore, chConfig);
         }
 
         private void setCHLevels(int... order) {
@@ -104,7 +115,7 @@ public class ShortcutUnpackerTest {
                 f.graph.edge(4, 5).setDistance(1),
                 f.graph.edge(5, 6).setDistance(1) // edge 5
         );
-        f.graph.freeze();
+        f.freeze();
 
         f.setCHLevels(1, 3, 5, 4, 2, 0, 6);
         f.shortcut(4, 2, 2, 3, 2, 3, true);
@@ -192,7 +203,7 @@ public class ShortcutUnpackerTest {
                 f.graph.edge(3, 4).setDistance(1),
                 f.graph.edge(4, 1).setDistance(1),
                 f.graph.edge(1, 5).setDistance(1));
-        f.graph.freeze();
+        f.freeze();
 
         f.setCHLevels(2, 4, 3, 1, 5, 0);
         f.shortcut(3, 1, 1, 2, 1, 2, true);
@@ -269,7 +280,7 @@ public class ShortcutUnpackerTest {
                 edge3 = f.graph.edge(3, 4).setDistance(1),
                 edge4 = f.graph.edge(4, 5).setDistance(1),
                 edge5 = f.graph.edge(5, 6).setDistance(1));
-        f.graph.freeze();
+        f.freeze();
 
         // turn costs ->
         f.setTurnCost(PREV_EDGE, 0, edge0.getEdge(), 2.0);

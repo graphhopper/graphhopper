@@ -46,21 +46,25 @@ public class NodeBasedNodeContractorTest {
     private final CarFlagEncoder encoder = new CarFlagEncoder();
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
-    private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHConfigs(CHConfig.nodeBased("profile", weighting)).create();
-    private final CHStorage store = graph.getCHStore();
-    private final CHStorageBuilder chBuilder = new CHStorageBuilder(store);
+    private final GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
+    private final CHConfig chConfig = CHConfig.nodeBased("profile", weighting);
+    private CHStorage store;
 
     private NodeContractor createNodeContractor() {
-        return createNodeContractor(graph, chBuilder);
+        return createNodeContractor(graph, store, chConfig);
     }
 
-    private NodeContractor createNodeContractor(GraphHopperStorage g, CHStorageBuilder chBuilder) {
+    private static NodeContractor createNodeContractor(GraphHopperStorage g, CHStorage store, CHConfig chConfig) {
         CHPreparationGraph prepareGraph = CHPreparationGraph.nodeBased(g.getNodes(), g.getEdges());
-        CHPreparationGraph.buildFromGraph(prepareGraph, g, g.getRoutingCHGraph().getWeighting());
-        NodeContractor nodeContractor = new NodeBasedNodeContractor(prepareGraph, chBuilder, new PMap());
+        CHPreparationGraph.buildFromGraph(prepareGraph, g, g.createCHGraph(store, chConfig).getWeighting());
+        NodeContractor nodeContractor = new NodeBasedNodeContractor(prepareGraph, new CHStorageBuilder(store), new PMap());
         nodeContractor.initFromGraph();
-        nodeContractor.prepareContraction();
         return nodeContractor;
+    }
+
+    private void freeze() {
+        graph.freeze();
+        store = graph.createCHStorage(chConfig);
     }
 
     @ParameterizedTest
@@ -82,7 +86,7 @@ public class NodeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 5).setDistance(2));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 6).setDistance(2));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 7).setDistance(2));
-        graph.freeze();
+        freeze();
 
         setMaxLevelOnAllNodes();
 
@@ -110,7 +114,7 @@ public class NodeBasedNodeContractorTest {
         final EdgeIteratorState iter6to8 = GHUtility.setSpeed(60, true, false, encoder, graph.edge(6, 8).setDistance(2));
         final EdgeIteratorState iter8to4 = GHUtility.setSpeed(60, true, false, encoder, graph.edge(8, 4).setDistance(1));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 7).setDistance(1));
-        graph.freeze();
+        freeze();
 
         contractInOrder(3, 5, 7, 8, 4, 1, 6);
         // note: after contraction of nodes 3, 5, 8 the graph looks like this:
@@ -118,7 +122,7 @@ public class NodeBasedNodeContractorTest {
         //       \      |
         //        --<----
 
-        RoutingCHGraph lg = graph.getRoutingCHGraph();
+        RoutingCHGraph lg = graph.createCHGraph(store, chConfig);
         checkShortcuts(
                 expectedShortcut(4, 1, iter3to4, iter1to3, true, true),
                 expectedShortcut(4, 6, iter8to4, iter6to8, false, true),
@@ -144,7 +148,7 @@ public class NodeBasedNodeContractorTest {
         final EdgeIteratorState edge1to2bidirected = GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(2));
         final EdgeIteratorState edge1to2directed = GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(1));
         final EdgeIteratorState edge2to3 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(1));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         if (reverse) {
             contractInOrder(2, 1, 3);
@@ -166,7 +170,7 @@ public class NodeBasedNodeContractorTest {
         // 0 --> 1 --> 2
         final EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 1).setDistance(1));
         final EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(2));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractInOrder(1, 0, 2);
         checkShortcuts(expectedShortcut(0, 2, edge1, edge2, true, false));
@@ -177,7 +181,7 @@ public class NodeBasedNodeContractorTest {
         // 0 <-- 1 <-- 2
         final EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 1).setDistance(1));
         final EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 0).setDistance(2));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractInOrder(1, 2, 0);
         checkShortcuts(expectedShortcut(2, 0, edge1, edge2, true, false));
@@ -188,7 +192,7 @@ public class NodeBasedNodeContractorTest {
         // 0 -- 1 -- 2
         final EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1));
         final EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(2));
-        graph.freeze();
+        freeze();
         contractInOrder(1, 2, 0);
         checkShortcuts(expectedShortcut(2, 0, edge2, edge1, true, true));
     }
@@ -200,7 +204,7 @@ public class NodeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 1).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(2));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 2).setDistance(1));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         createNodeContractor().contractNode(1);
         checkNoShortcuts();
@@ -218,7 +222,7 @@ public class NodeBasedNodeContractorTest {
         EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(distances[2]));
         EdgeIteratorState edge3 = GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(distances[3]));
         EdgeIteratorState edge4 = GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 4).setDistance(distances[4]));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
 
         // make sure that distances do not get changed in storage (they might get truncated)
@@ -239,7 +243,8 @@ public class NodeBasedNodeContractorTest {
         Dijkstra dikstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED);
         Path dijkstraPath = dikstra.calcPath(from, to);
 
-        DijkstraBidirectionCH ch = new DijkstraBidirectionCH(graph.getRoutingCHGraph());
+        RoutingCHGraph lg = graph.createCHGraph(store, chConfig);
+        DijkstraBidirectionCH ch = new DijkstraBidirectionCH(lg);
         Path chPath = ch.calcPath(from, to);
         assertEquals(dijkstraPath.calcNodes(), chPath.calcNodes());
         assertEquals(dijkstraPath.getDistance(), chPath.getDistance(), 1.e-6);
@@ -262,8 +267,7 @@ public class NodeBasedNodeContractorTest {
     public void testNodeContraction_shortcutWeightRounding() {
         CarFlagEncoder encoder = new CarFlagEncoder();
         EncodingManager encodingManager = EncodingManager.create(encoder);
-        Weighting weighting = new FastestWeighting(encoder);
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHConfigs(CHConfig.nodeBased("p1", weighting)).create();
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
         // 0 ------------> 4
         //  \             /
         //   1 --> 2 --> 3
@@ -275,10 +279,13 @@ public class NodeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(distances[3]));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 4).setDistance(distances[4]));
         graph.freeze();
-        setMaxLevelOnAllNodes(graph.getCHStore());
+        Weighting weighting = new FastestWeighting(encoder);
+        CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
+        CHStorage chStore = graph.createCHStorage(chConfig);
+        setMaxLevelOnAllNodes(chStore);
 
         // perform CH contraction
-        contractInOrder(graph, new CHStorageBuilder(graph.getCHStore()), 1, 3, 2, 0, 4);
+        contractInOrder(graph, chStore, chConfig, 1, 3, 2, 0, 4);
 
         // first we compare dijkstra with CH to make sure they produce the same results
         int from = 0;
@@ -286,7 +293,7 @@ public class NodeBasedNodeContractorTest {
         Dijkstra dikstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED);
         Path dijkstraPath = dikstra.calcPath(from, to);
 
-        DijkstraBidirectionCH ch = new DijkstraBidirectionCH(graph.getRoutingCHGraph());
+        DijkstraBidirectionCH ch = new DijkstraBidirectionCH(graph.createCHGraph(chStore, chConfig));
         Path chPath = ch.calcPath(from, to);
         assertEquals(dijkstraPath.calcNodes(), chPath.calcNodes());
         assertEquals(dijkstraPath.getDistance(), chPath.getDistance(), 1.e-6);
@@ -299,8 +306,7 @@ public class NodeBasedNodeContractorTest {
         // see also #1583
         CarFlagEncoder encoder = new CarFlagEncoder();
         EncodingManager encodingManager = EncodingManager.create(encoder);
-        Weighting weighting = new FastestWeighting(encoder);
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHConfigs(CHConfig.nodeBased("p1", weighting)).create();
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
         // 0 - 1 - 2 - 3
         // o           o
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1));
@@ -310,22 +316,24 @@ public class NodeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 3).setDistance(1));
 
         graph.freeze();
-        setMaxLevelOnAllNodes(graph.getCHStore());
-        NodeContractor nodeContractor = createNodeContractor(graph, new CHStorageBuilder(graph.getCHStore()));
+        Weighting weighting = new FastestWeighting(encoder);
+        CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
+        CHStorage chStore = graph.createCHStorage(chConfig);
+        setMaxLevelOnAllNodes(chStore);
+        NodeContractor nodeContractor = createNodeContractor(graph, chStore, chConfig);
         nodeContractor.contractNode(0);
         nodeContractor.contractNode(3);
-        checkNoShortcuts(graph.getCHStore());
+        checkNoShortcuts(chStore);
     }
 
     private void contractInOrder(int... nodeIds) {
-        contractInOrder(graph, chBuilder, nodeIds);
+        contractInOrder(graph, store, chConfig, nodeIds);
     }
 
-    private void contractInOrder(GraphHopperStorage g, CHStorageBuilder chBuilder, int... nodeIds) {
-        setMaxLevelOnAllNodes();
-        NodeContractor nodeContractor = createNodeContractor(g, chBuilder);
-        CHStorage store = g.getCHStore();
+    private static void contractInOrder(GraphHopperStorage g, CHStorage store, CHConfig chConfig, int... nodeIds) {
+        setMaxLevelOnAllNodes(store);
         CHStorageBuilder b = new CHStorageBuilder(store);
+        NodeContractor nodeContractor = createNodeContractor(g, store, chConfig);
         int level = 0;
         for (int n : nodeIds) {
             b.setLevel(n, level);
@@ -393,7 +401,7 @@ public class NodeBasedNodeContractorTest {
         setMaxLevelOnAllNodes(store);
     }
 
-    private void setMaxLevelOnAllNodes(CHStorage store) {
+    private static void setMaxLevelOnAllNodes(CHStorage store) {
         new CHStorageBuilder(store).setLevelForAllNodes(store.getNodes());
     }
 

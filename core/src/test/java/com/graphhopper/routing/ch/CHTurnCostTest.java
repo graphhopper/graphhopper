@@ -85,7 +85,6 @@ public class CHTurnCostTest {
         graph = new GraphBuilder(encodingManager).build();
         turnCostStorage = graph.getTurnCostStorage();
         chConfigs = createCHConfigs();
-        graph.addCHGraphs(chConfigs).create(1000);
         // the default CH profile with infinite u-turn costs, can be reset in tests that should run with finite u-turn
         // costs
         chConfig = chConfigs.get(0);
@@ -1208,8 +1207,8 @@ public class CHTurnCostTest {
         NodeOrderingProvider nodeOrderingProvider = NodeOrderingProvider.fromArray(contractionOrder);
         PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig)
                 .useFixedNodeOrdering(nodeOrderingProvider);
-        ch.doWork();
-        chGraph = graph.getRoutingCHGraph(chConfig.getName());
+        PrepareContractionHierarchies.Result res = ch.doWork();
+        chGraph = graph.createCHGraph(res.getCHStorage(), res.getCHConfig());
     }
 
     private void automaticPrepareCH() {
@@ -1220,8 +1219,8 @@ public class CHTurnCostTest {
         pMap.putObject(LOG_MESSAGES, 10);
         PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
         ch.setParams(pMap);
-        ch.doWork();
-        chGraph = graph.getRoutingCHGraph(chConfig.getName());
+        PrepareContractionHierarchies.Result res = ch.doWork();
+        chGraph = graph.createCHGraph(res.getCHStorage(), res.getCHConfig());
     }
 
     private void automaticCompareCHWithDijkstra(int numQueries) {

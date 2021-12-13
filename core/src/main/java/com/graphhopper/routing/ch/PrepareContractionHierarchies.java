@@ -77,9 +77,9 @@ public class PrepareContractionHierarchies {
 
     private PrepareContractionHierarchies(GraphHopperStorage ghStorage, CHConfig chConfig) {
         graph = ghStorage;
-        chStore = ghStorage.getCHStore(chConfig.getName());
-        if (chStore == null)
-            throw new IllegalArgumentException("There is no CH graph '" + chConfig.getName() + "', existing: " + ghStorage.getCHGraphNames());
+        if (!graph.isFrozen())
+            throw new IllegalStateException("BaseGraph must be frozen before creating CHs");
+        chStore = ghStorage.createCHStorage(chConfig);
         chBuilder = new CHStorageBuilder(chStore);
         this.chConfig = chConfig;
         params = Params.forTraversalMode(chConfig.getTraversalMode());
@@ -223,7 +223,6 @@ public class PrepareContractionHierarchies {
         // but has always been like that and changing it would possibly require retuning the contraction parameters
         updatePrioritiesOfRemainingNodes();
         logger.info("Finished building queue, took: {}s, {}", sw.stop().getSeconds(), getMemInfo());
-        nodeContractor.prepareContraction();
         final int initSize = sortedNodes.size();
         int level = 0;
         checkCounter = 0;
@@ -323,7 +322,6 @@ public class PrepareContractionHierarchies {
     }
 
     private void contractNodesUsingFixedNodeOrdering() {
-        nodeContractor.prepareContraction();
         final int nodesToContract = nodeOrderingProvider.getNumNodes();
         final int logSize = Math.max(10, (int) (params.getLogMessagesPercentage() / 100.0 * nodesToContract));
         StopWatch stopWatch = new StopWatch();
@@ -425,8 +423,11 @@ public class PrepareContractionHierarchies {
         sortedNodes = null;
     }
 
-    void close() {
+    void flush() {
         chStore.flush();
+    }
+
+    void close() {
         chStore.close();
     }
 
@@ -525,7 +526,7 @@ public class PrepareContractionHierarchies {
                 // todo: optimize
                 return new Params(0, 100, 0, 100, 5);
             } else {
-                return new Params(20, 10, 20, 100, 20);
+                return new Params(0, 0, 100, 100, 20);
             }
         }
 

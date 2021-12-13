@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * @author Peter Karich
@@ -341,6 +342,9 @@ public class InstructionListTest {
 
         // query south-west of node 3, get instruction for third edge
         assertEquals("3-4", Instructions.find(wayList, 15.099, 9.9, 1000).getName());
+
+        // too far away
+        assertNull(Instructions.find(wayList, 50.8, 50.25, 1000));
     }
 
     private void compare(List<List<Double>> expected, List<List<Double>> actual) {

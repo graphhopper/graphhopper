@@ -103,11 +103,6 @@ class EdgeBasedNodeContractor implements NodeContractor {
     }
 
     @Override
-    public void prepareContraction() {
-        // not needed
-    }
-
-    @Override
     public float calculatePriority(int node) {
         activeStats = countingStats;
         resetEdgeCounters();

@@ -6,6 +6,8 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -44,9 +46,9 @@ public class RandomCHRoutingTest {
         private final Directory dir;
         private final CarFlagEncoder encoder;
         private final EncodingManager encodingManager;
-        private final Weighting weighting;
-        private final GraphHopperStorage graph;
-        private final CHConfig chConfig;
+        private Weighting weighting;
+        private GraphHopperStorage graph;
+        private CHConfig chConfig;
 
         Fixture(TraversalMode traversalMode, int uTurnCosts) {
             this.traversalMode = traversalMode;
@@ -55,10 +57,14 @@ public class RandomCHRoutingTest {
             dir = new RAMDirectory();
             encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
             encodingManager = EncodingManager.create(encoder);
-            graph = new GraphBuilder(encodingManager)
-                    .setCHConfigStrings("p|car|fastest|" + (traversalMode.isEdgeBased() ? "edge" : "node") + "|" + uTurnCosts)
-                    .create();
-            chConfig = graph.getCHConfig();
+            graph = new GraphBuilder(encodingManager).create();
+        }
+
+        void freeze() {
+            graph.freeze();
+            chConfig = traversalMode.isEdgeBased()
+                    ? CHConfig.edgeBased("p", new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage(), uTurnCosts)))
+                    : CHConfig.nodeBased("p", new FastestWeighting(encoder));
             weighting = chConfig.getWeighting();
         }
 
@@ -72,10 +78,10 @@ public class RandomCHRoutingTest {
         @Override
         public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
             return Stream.of(
-                    new Fixture(TraversalMode.NODE_BASED, INFINITE_U_TURN_COSTS),
-                    new Fixture(TraversalMode.EDGE_BASED, 40),
-                    new Fixture(TraversalMode.EDGE_BASED, INFINITE_U_TURN_COSTS)
-            )
+                            new Fixture(TraversalMode.NODE_BASED, INFINITE_U_TURN_COSTS),
+                            new Fixture(TraversalMode.EDGE_BASED, 40),
+                            new Fixture(TraversalMode.EDGE_BASED, INFINITE_U_TURN_COSTS)
+                    )
                     .map(Arguments::of);
         }
     }
@@ -156,10 +162,10 @@ public class RandomCHRoutingTest {
         LocationIndexTree locationIndex = new LocationIndexTree(f.graph, f.dir);
         locationIndex.prepareIndex();
 
-        f.graph.freeze();
-        RoutingCHGraph chGraph = f.graph.getRoutingCHGraph(f.chConfig.getName());
+        f.freeze();
         PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(f.graph, f.chConfig);
-        pch.doWork();
+        PrepareContractionHierarchies.Result res = pch.doWork();
+        RoutingCHGraph chGraph = f.graph.createCHGraph(res.getCHStorage(), res.getCHConfig());
 
         int numQueryGraph = 25;
         for (int j = 0; j < numQueryGraph; j++) {

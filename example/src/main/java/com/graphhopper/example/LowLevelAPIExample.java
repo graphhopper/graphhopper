@@ -80,9 +80,8 @@ public class LowLevelAPIExample {
         CHConfig chConfig = CHConfig.nodeBased("my_profile", weighting);
         GraphHopperStorage graph = new GraphBuilder(em)
                 .setRAM(graphLocation, true)
-                // need to setup CH at time of graph creation here!
-                .setCHConfigs(chConfig)
                 .create();
+        graph.flush();
 
         // Set node coordinates and build location index
         NodeAccess na = graph.getNodeAccess();
@@ -93,13 +92,8 @@ public class LowLevelAPIExample {
         // Prepare the graph for fast querying ...
         graph.freeze();
         PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
-        pch.doWork();
-
-        // flush after preparation!
-        graph.flush();
-
-        // get the CH graph
-        RoutingCHGraph chGraph = graph.getRoutingCHGraph("my_profile");
+        PrepareContractionHierarchies.Result pchRes = pch.doWork();
+        RoutingCHGraph chGraph = graph.createCHGraph(pchRes.getCHStorage(), pchRes.getCHConfig());
 
         // create location index
         LocationIndexTree index = new LocationIndexTree(graph, graph.getDirectory());

@@ -384,6 +384,7 @@ public class GraphHopperGtfsIT {
 
     @Test
     public void testPenalizeRouteTypes() {
+        // Baseline
         Request ghRequest = new Request(Arrays.asList(
                 new GHStationLocation("AMV"),
                 new GHStationLocation("FUR_CREEK_RES")),
@@ -393,6 +394,7 @@ public class GraphHopperGtfsIT {
         assertEquals("AB", ((Trip.PtLeg) mondayTrip.getLegs().get(1)).route_id);
         assertEquals(22800000.0, mondayTrip.getRouteWeight());
 
+        // Boarding and transferring out of disliked route type, penalty is applied, but not high enough to divert
         ghRequest = new Request(Arrays.asList(
                 new GHStationLocation("BEATTY_AIRPORT"),
                 new GHStationLocation("FUR_CREEK_RES")),
@@ -403,6 +405,28 @@ public class GraphHopperGtfsIT {
         assertEquals("AB", ((Trip.PtLeg) mondayTrip.getLegs().get(0)).route_id);
         assertEquals(22900000.0, mondayTrip.getRouteWeight());
 
+        // Baseline when getting off at BULLFROG (no transfer)
+        ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("BEATTY_AIRPORT"),
+                new GHStationLocation("BULLFROG")),
+                LocalDateTime.of(2007, 1, 7, 9, 0).atZone(zoneId).toInstant());
+        response = ptRouter.route(ghRequest);
+        mondayTrip = response.getBest();
+        assertEquals("AB", ((Trip.PtLeg) mondayTrip.getLegs().get(0)).route_id);
+        assertEquals(18600000.0, mondayTrip.getRouteWeight());
+
+        // Board and exit disliked route type directly. Penalty applied, not high enough to divert
+        ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("BEATTY_AIRPORT"),
+                new GHStationLocation("BULLFROG")),
+                LocalDateTime.of(2007, 1, 7, 9, 0).atZone(zoneId).toInstant());
+        ghRequest.setBoardingPenaltiesByRouteType(Maps.newHashMap(2, 100000L));
+        response = ptRouter.route(ghRequest);
+        mondayTrip = response.getBest();
+        assertEquals("AB", ((Trip.PtLeg) mondayTrip.getLegs().get(0)).route_id);
+        assertEquals(18700000.0, mondayTrip.getRouteWeight());
+
+        // Would board disliked route type and then transfer, penalty is high, so we divert
         ghRequest = new Request(Arrays.asList(
                 new GHStationLocation("BEATTY_AIRPORT"),
                 new GHStationLocation("FUR_CREEK_RES")),
@@ -412,6 +436,7 @@ public class GraphHopperGtfsIT {
         mondayTrip = response.getBest();
         assertNotEquals("AB", ((Trip.PtLeg) mondayTrip.getLegs().get(0)).route_id);
 
+        // Would transfer in and out, penalty is high, so we divert
         ghRequest = new Request(Arrays.asList(
                 new GHStationLocation("AMV"),
                 new GHStationLocation("FUR_CREEK_RES")),
@@ -420,6 +445,17 @@ public class GraphHopperGtfsIT {
         response = ptRouter.route(ghRequest);
         mondayTrip = response.getBest();
         assertNotEquals("AB", ((Trip.PtLeg) mondayTrip.getLegs().get(1)).route_id);
+
+        // Transferring in and out, penalty is applied, but not high enough to divert
+        ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("AMV"),
+                new GHStationLocation("FUR_CREEK_RES")),
+                LocalDateTime.of(2007, 1, 7, 9, 0).atZone(zoneId).toInstant());
+        ghRequest.setBoardingPenaltiesByRouteType(Maps.newHashMap(2, 100000L));
+        response = ptRouter.route(ghRequest);
+        mondayTrip = response.getBest();
+        assertEquals("AB", ((Trip.PtLeg) mondayTrip.getLegs().get(1)).route_id);
+        assertEquals(22900000.0, mondayTrip.getRouteWeight());
     }
 
     @Test

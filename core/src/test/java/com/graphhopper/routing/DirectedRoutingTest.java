@@ -100,14 +100,12 @@ public class DirectedRoutingTest {
             // only for loops instead?
             encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
             encodingManager = EncodingManager.create(encoder);
-            graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).build();
+            graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).create();
             turnCostStorage = graph.getTurnCostStorage();
             weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts));
             chConfig = CHConfig.edgeBased("p1", weighting);
             // important: for LM preparation we need to use a weighting without turn costs #1960
             lmConfig = new LMConfig("c2", new FastestWeighting(encoder));
-            graph.addCHGraph(chConfig);
-            graph.create(1000);
         }
 
         @Override
@@ -122,8 +120,8 @@ public class DirectedRoutingTest {
             }
             if (prepareCH) {
                 PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
-                pch.doWork();
-                routingCHGraph = graph.getRoutingCHGraph(chConfig.getName());
+                PrepareContractionHierarchies.Result res = pch.doWork();
+                routingCHGraph = graph.createCHGraph(res.getCHStorage(), res.getCHConfig());
             }
             if (prepareLM) {
                 PrepareLandmarks prepare = new PrepareLandmarks(dir, graph, lmConfig, 16);

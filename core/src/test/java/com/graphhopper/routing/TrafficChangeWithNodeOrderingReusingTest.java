@@ -10,10 +10,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHConfig;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RoutingCHGraph;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.MiniPerfTest;
 import com.graphhopper.util.PMap;
@@ -57,7 +54,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
             EncodingManager em = EncodingManager.create(encoder);
             baseCHConfig = CHConfig.nodeBased("base", new FastestWeighting(encoder));
             trafficCHConfig = CHConfig.nodeBased("traffic", new RandomDeviationWeighting(baseCHConfig.getWeighting(), maxDeviationPercentage));
-            ghStorage = new GraphBuilder(em).setCHConfigs(baseCHConfig, trafficCHConfig).build();
+            ghStorage = new GraphBuilder(em).build();
         }
 
         @Override
@@ -101,8 +98,9 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         runPerformanceTest(f.ghStorage, f.baseCHConfig, seed, numQueries);
 
         // now we re-use the contraction order from the previous contraction and re-run it with the traffic weighting
+        CHStorage chStore = f.ghStorage.createCHStorage(f.baseCHConfig);
         PrepareContractionHierarchies trafficPch = PrepareContractionHierarchies.fromGraphHopperStorage(f.ghStorage, f.trafficCHConfig)
-                .useFixedNodeOrdering(f.ghStorage.getCHStore(f.baseCHConfig.getName()).getNodeOrderingProvider());
+                .useFixedNodeOrdering(chStore.getNodeOrderingProvider());
         trafficPch.doWork();
 
         // check correctness & performance
@@ -112,7 +110,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
 
     private static void checkCorrectness(GraphHopperStorage ghStorage, CHConfig chConfig, long seed, long numQueries) {
         LOGGER.info("checking correctness");
-        RoutingCHGraph chGraph = ghStorage.getRoutingCHGraph(chConfig.getName());
+        RoutingCHGraph chGraph = ghStorage.createCHGraph(ghStorage.createCHStorage(chConfig), chConfig);
         Random rnd = new Random(seed);
         int numFails = 0;
         for (int i = 0; i < numQueries; ++i) {
@@ -135,7 +133,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
 
     private static void runPerformanceTest(final GraphHopperStorage ghStorage, CHConfig chConfig, long seed, final int iterations) {
         final int numNodes = ghStorage.getNodes();
-        final RoutingCHGraph chGraph = ghStorage.getRoutingCHGraph(chConfig.getName());
+        RoutingCHGraph chGraph = ghStorage.createCHGraph(ghStorage.createCHStorage(chConfig), chConfig);
         final Random random = new Random(seed);
 
         LOGGER.info("Running performance test, seed = {}", seed);

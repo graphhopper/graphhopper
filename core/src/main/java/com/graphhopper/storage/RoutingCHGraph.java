@@ -58,4 +58,7 @@ public interface RoutingCHGraph {
     boolean isEdgeBased();
 
     Weighting getWeighting();
+
+    // todo: would like to get rid of this
+    void close();
 }

@@ -25,7 +25,6 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -59,11 +58,11 @@ public class DijkstraBidirectionCHTest {
 
     @Test
     public void testBaseGraph() {
-        ShortestWeighting weighting = new ShortestWeighting(carEncoder);
-        GraphHopperStorage ghStorage = createGHStorage(weighting);
+        GraphHopperStorage ghStorage = createGHStorage();
         RoutingAlgorithmTest.initDirectedAndDiffSpeed(ghStorage, carEncoder);
 
         // do CH preparation for car
+        ShortestWeighting weighting = new ShortestWeighting(carEncoder);
         prepareCH(ghStorage, CHConfig.nodeBased(weighting.getName(), weighting));
 
         // use base graph for solving normal Dijkstra
@@ -81,16 +80,14 @@ public class DijkstraBidirectionCHTest {
         FastestWeighting footWeighting = new FastestWeighting(footEncoder);
         FastestWeighting carWeighting = new FastestWeighting(carEncoder);
 
-        CHConfig footConfig = CHConfig.nodeBased("p_foot", footWeighting);
         CHConfig carConfig = CHConfig.nodeBased("p_car", carWeighting);
-        GraphHopperStorage g = new GraphBuilder(em).setCHConfigs(footConfig, carConfig).create();
+        GraphHopperStorage g = new GraphBuilder(em).create();
         RoutingAlgorithmTest.initFootVsCar(carEncoder, footEncoder, g);
 
         // do CH preparation for car
-        prepareCH(g, carConfig);
+        RoutingCHGraph chGraph = prepareCH(g, carConfig);
 
         // use contracted graph for car
-        RoutingCHGraph chGraph = g.getRoutingCHGraph(carConfig.getName());
         Path p1 = createCHAlgo(chGraph, true).calcPath(0, 7);
         assertEquals(IntArrayList.from(0, 4, 6, 7), p1.calcNodes());
         assertEquals(15000, p1.getDistance(), 1e-6, p1.toString());
@@ -118,8 +115,7 @@ public class DijkstraBidirectionCHTest {
     // 4----------3--/
     @Test
     public void testStallingNodesReducesNumberOfVisitedNodes() {
-        ShortestWeighting weighting = new ShortestWeighting(carEncoder);
-        GraphHopperStorage graph = createGHStorage(weighting);
+        GraphHopperStorage graph = createGHStorage();
         GHUtility.setSpeed(60, 0, carEncoder,
                 graph.edge(8, 9).setDistance(100),
                 graph.edge(8, 3).setDistance(2),
@@ -135,12 +131,15 @@ public class DijkstraBidirectionCHTest {
         GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(9, 0).setDistance(1));
         GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(3, 9).setDistance(200));
         graph.freeze();
-        CHStorage store = graph.getCHStore();
+
+        ShortestWeighting weighting = new ShortestWeighting(carEncoder);
+        CHConfig chConfig = CHConfig.nodeBased(weighting.getName(), weighting);
+        CHStorage store = graph.createCHStorage(chConfig);
 
         // explicitly set the node levels equal to the node ids
         // the graph contraction with this ordering yields no shortcuts
         new CHStorageBuilder(store).setIdentityLevels();
-        RoutingCHGraph routingCHGraph = graph.getRoutingCHGraph();
+        RoutingCHGraph routingCHGraph = graph.createCHGraph(store, chConfig);
         RoutingAlgorithm algo = createCHAlgo(routingCHGraph, true);
         Path p = algo.calcPath(1, 0);
         // node 3 will be stalled and nodes 4-7 won't be explored --> we visit 7 nodes
@@ -178,31 +177,33 @@ public class DijkstraBidirectionCHTest {
     }
 
     private void runTestWithDirectionDependentEdgeSpeed(double speed, double revSpeed, int from, int to, IntArrayList expectedPath, FlagEncoder encoder) {
-        FastestWeighting weighting = new FastestWeighting(encoder);
-        GraphHopperStorage graph = createGHStorage(weighting);
+        GraphHopperStorage graph = createGHStorage();
         EdgeIteratorState edge = GHUtility.setSpeed(encoder.getMaxSpeed() / 2, true, true, encoder, graph.edge(0, 1).setDistance(2));
         DecimalEncodedValue avSpeedEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(encoder, "average_speed"));
         edge.set(avSpeedEnc, speed, revSpeed);
 
         GHUtility.setSpeed(encoder.getMaxSpeed() / 2, true, true, encoder, graph.edge(1, 2).setDistance(1));
         graph.freeze();
-        CHStorage chStore = graph.getCHStore();
+        FastestWeighting weighting = new FastestWeighting(encoder);
+        CHConfig chConfig = CHConfig.nodeBased(weighting.getName(), weighting);
+        CHStorage chStore = graph.createCHStorage(chConfig);
         new CHStorageBuilder(chStore).setIdentityLevels();
-        RoutingCHGraph routingCHGraph = graph.getRoutingCHGraph();
+        RoutingCHGraph routingCHGraph = graph.createCHGraph(chStore, chConfig);
         RoutingAlgorithm algo = createCHAlgo(routingCHGraph, true);
         Path p = algo.calcPath(from, to);
         assertEquals(3, p.getDistance(), 1.e-3);
         assertEquals(expectedPath, p.calcNodes(), p.toString());
     }
 
-    private GraphHopperStorage createGHStorage(Weighting weighting) {
-        return new GraphBuilder(encodingManager).setCHConfigs(CHConfig.nodeBased(weighting.getName(), weighting)).create();
+    private GraphHopperStorage createGHStorage() {
+        return new GraphBuilder(encodingManager).create();
     }
 
-    private void prepareCH(GraphHopperStorage graphHopperStorage, CHConfig chConfig) {
+    private RoutingCHGraph prepareCH(GraphHopperStorage graphHopperStorage, CHConfig chConfig) {
         graphHopperStorage.freeze();
         PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graphHopperStorage, chConfig);
-        pch.doWork();
+        PrepareContractionHierarchies.Result res = pch.doWork();
+        return graphHopperStorage.createCHGraph(res.getCHStorage(), res.getCHConfig());
     }
 
     private RoutingAlgorithm createCHAlgo(RoutingCHGraph chGraph, boolean withSOD) {

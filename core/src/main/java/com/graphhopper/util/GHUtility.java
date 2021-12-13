@@ -410,7 +410,7 @@ public class GHUtility {
     }
 
     /**
-     * Create a new storage from the specified one without copying the data.
+     * Create a new storage from the specified one without copying the data. CHGraphs won't be copied.
      */
     public static GraphHopperStorage newStorage(GraphHopperStorage store) {
         Directory outdir = guessDirectory(store);
@@ -419,7 +419,6 @@ public class GHUtility {
                 .withTurnCosts(store.getTurnCostStorage() != null)
                 .set3D(is3D)
                 .setDir(outdir)
-                .setCHConfigs(store.getCHConfigs())
                 .create();
     }
 

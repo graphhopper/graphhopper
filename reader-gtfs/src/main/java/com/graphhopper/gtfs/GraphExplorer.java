@@ -126,10 +126,7 @@ public final class GraphExplorer {
                     if (edgeType == GtfsStorage.EdgeType.EXIT_PT && !reverse && ptOnly) {
                         continue;
                     }
-                    if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT) && (blockedRouteTypes & (1 << edgeIterator.get(validityEnc))) != 0) {
-                        continue;
-                    }
-                    if (edgeType == GtfsStorage.EdgeType.TRANSFER && routeTypeBlocked(edgeIterator)) {
+                    if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT || edgeType == GtfsStorage.EdgeType.TRANSFER) && (blockedRouteTypes & (1 << edgeIterator.get(validityEnc))) != 0) {
                         continue;
                     }
                     if (edgeType == GtfsStorage.EdgeType.ENTER_PT && justExitedPt(label)) {
@@ -139,20 +136,6 @@ public final class GraphExplorer {
                     return true;
                 }
                 return false;
-            }
-
-            private boolean routeTypeBlocked(EdgeIterator edgeIterator) {
-                GtfsStorageI.PlatformDescriptor platformDescriptor = realtimeFeed.getPlatformDescriptorByEdge().get(edgeIterator.getEdge());
-                int routeType = routeType(platformDescriptor);
-                return (blockedRouteTypes & (1 << routeType)) != 0;
-            }
-
-            private int routeType(GtfsStorageI.PlatformDescriptor platformDescriptor) {
-                if (platformDescriptor instanceof GtfsStorageI.RouteTypePlatform) {
-                    return ((GtfsStorageI.RouteTypePlatform) platformDescriptor).route_type;
-                } else {
-                    return gtfsStorage.getGtfsFeeds().get(platformDescriptor.feed_id).routes.get(((GtfsStorageI.RoutePlatform) platformDescriptor).route_id).route_type;
-                }
             }
 
             private boolean justExitedPt(Label label) {
@@ -240,19 +223,16 @@ public final class GraphExplorer {
         }
     }
 
-    int calcNTransfers(EdgeIteratorState edge) {
+    int nTransfers(EdgeIteratorState edge) {
         return edge.get(flagEncoder.getTransfersEnc());
     }
 
-    int routeType(EdgeIteratorState edgeIterator) {
-        GtfsStorageI.PlatformDescriptor platformDescriptor = realtimeFeed.getPlatformDescriptorByEdge().get(edgeIterator.getEdge());
-        int routeType;
-        if (platformDescriptor instanceof GtfsStorageI.RouteTypePlatform) {
-            routeType = ((GtfsStorageI.RouteTypePlatform) platformDescriptor).route_type;
-        } else {
-            routeType = gtfsStorage.getGtfsFeeds().get(platformDescriptor.feed_id).routes.get(((GtfsStorageI.RoutePlatform) platformDescriptor).route_id).route_type;
+    int routeType(EdgeIteratorState edge) {
+        GtfsStorage.EdgeType edgeType = edge.get(typeEnc);
+        if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT || edgeType == GtfsStorage.EdgeType.TRANSFER)) {
+            return edge.get(validityEnc);
         }
-        return routeType;
+        throw new RuntimeException("Edge type "+edgeType+" doesn't encode route type.");
     }
 
 }
