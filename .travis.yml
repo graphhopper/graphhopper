@@ -1,6 +1,6 @@
 language: java
 sudo: true
-dist: trusty
+dist: xenial
 
 env:
   global:
@@ -12,6 +12,8 @@ env:
 matrix:
   include:
     - jdk: openjdk8
+    - env: JDK='OpenJDK 11'
+      install: . ./install-jdk.sh -F 11 -C
     - env: JDK='OpenJDK 17'
       install: . ./install-jdk.sh -F 17 -C
     - env: JDK='OpenJDK 18'

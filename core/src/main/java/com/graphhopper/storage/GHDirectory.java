@@ -18,6 +18,7 @@
 package com.graphhopper.storage;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -37,7 +38,7 @@ public class GHDirectory implements Directory {
     // first rule matches => LinkedHashMap
     private final Map<String, DAType> defaultTypes = new LinkedHashMap<>();
     private final Map<String, Integer> mmapPreloads = new LinkedHashMap<>();
-    protected Map<String, DataAccess> map = new HashMap<>();
+    private final Map<String, DataAccess> map = Collections.synchronizedMap(new HashMap<>());
 
     public GHDirectory(String _location, DAType defaultType) {
         this.typeFallback = defaultType;
