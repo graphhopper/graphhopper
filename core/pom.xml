@@ -106,12 +106,14 @@
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
+            <artifactId>log4j-over-slf4j</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>log4j</groupId>
+            <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j</artifactId>
+            <type>pom</type>
+            <version>2.16.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
