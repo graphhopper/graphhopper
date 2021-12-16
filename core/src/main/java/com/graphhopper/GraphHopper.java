@@ -77,7 +77,6 @@ import static com.graphhopper.util.Parameters.Algorithms.RoundTrip;
 public class GraphHopper {
     private static final Logger logger = LoggerFactory.getLogger(GraphHopper.class);
     private final Map<String, Profile> profilesByName = new LinkedHashMap<>();
-    private final String fileLockName = "gh.lock";
     // utils
     private final TranslationMap trMap = new TranslationMap().doImport();
     boolean removeZipped = true;
@@ -95,7 +94,6 @@ public class GraphHopper {
     private final LinkedHashMap<String, String> dataAccessConfig = new LinkedHashMap<>();
     private boolean sortGraph = false;
     private boolean elevation = false;
-    private LockFactory lockFactory = new NativeFSLockFactory();
     private boolean allowWrites = true;
     private boolean fullyLoaded = false;
     private final OSMReaderConfig osmReaderConfig = new OSMReaderConfig();
@@ -469,11 +467,6 @@ public class GraphHopper {
         setProfiles(ghConfig.getProfiles());
         encodingManager = buildEncodingManager(ghConfig);
 
-        if (ghConfig.getString("graph.locktype", "native").equals("simple"))
-            lockFactory = new SimpleFSLockFactory();
-        else
-            lockFactory = new NativeFSLockFactory();
-
         // elevation
         osmReaderConfig.setSmoothElevation(ghConfig.getBool("graph.elevation.smoothing", osmReaderConfig.isSmoothElevation()));
         osmReaderConfig.setLongEdgeSamplingDistance(ghConfig.getDouble("graph.elevation.long_edge_sampling_distance", osmReaderConfig.getLongEdgeSamplingDistance()));
@@ -636,26 +629,14 @@ public class GraphHopper {
      * Creates the graph from OSM data.
      */
     private void process(boolean closeEarly) {
-        GHLock lock = null;
-        try {
-            if (ghStorage == null)
-                throw new IllegalStateException("GraphHopperStorage must be initialized before starting the import");
-            if (ghStorage.getDirectory().getDefaultType().isStoring()) {
-                lockFactory.setLockDir(new File(ghLocation));
-                lock = lockFactory.create(fileLockName, true);
-                if (!lock.tryLock())
-                    throw new RuntimeException("To avoid multiple writers we need to obtain a write lock but it failed. In " + ghLocation, lock.getObtainFailedReason());
-            }
-            ensureWriteAccess();
-            importOSM();
-            cleanUp();
-            postImport();
-            postProcessing(closeEarly);
-            flush();
-        } finally {
-            if (lock != null)
-                lock.release();
-        }
+        if (ghStorage == null)
+            throw new IllegalStateException("GraphHopperStorage must be initialized before starting the import");
+        ensureWriteAccess();
+        importOSM();
+        cleanUp();
+        postImport();
+        postProcessing(closeEarly);
+        flush();
     }
 
     protected void postImport() {
@@ -775,28 +756,13 @@ public class GraphHopper {
         if (!new File(ghLocation).exists())
             return false;
 
-        GHLock lock = null;
-        try {
-            // create locks only if writes are allowed, if they are not allowed a lock cannot be created
-            // (e.g. on a read only filesystem locks would fail)
-            if (ghStorage.getDirectory().getDefaultType().isStoring() && isAllowWrites()) {
-                lockFactory.setLockDir(new File(ghLocation));
-                lock = lockFactory.create(fileLockName, false);
-                if (!lock.tryLock())
-                    throw new RuntimeException("To avoid reading partial data we need to obtain the read lock but it failed. In " + ghLocation, lock.getObtainFailedReason());
-            }
+        if (!ghStorage.loadExisting())
+            return false;
 
-            if (!ghStorage.loadExisting())
-                return false;
-
-            postProcessing(false);
-            directory.loadMMap();
-            setFullyLoaded();
-            return true;
-        } finally {
-            if (lock != null)
-                lock.release();
-        }
+        postProcessing(false);
+        directory.loadMMap();
+        setFullyLoaded();
+        return true;
     }
 
     private void checkProfilesConsistency() {
@@ -1130,12 +1096,6 @@ public class GraphHopper {
 
         if (locationIndex != null)
             locationIndex.close();
-
-        try {
-            lockFactory.forceRemove(fileLockName, true);
-        } catch (Exception ex) {
-            // silently fail e.g. on Windows where we cannot remove an unreleased native lock
-        }
     }
 
     /**
