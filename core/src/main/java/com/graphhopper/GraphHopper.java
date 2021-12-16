@@ -1039,7 +1039,6 @@ public class GraphHopper {
     }
 
     protected Map<String, PrepareContractionHierarchies.Result> prepareCH(boolean closeEarly, List<CHConfig> configsToPrepare) {
-        ensureWriteAccess();
         ghStorage.freeze();
         if (closeEarly) {
             locationIndex.close();
@@ -1086,7 +1085,6 @@ public class GraphHopper {
     }
 
     protected List<PrepareLandmarks> prepareLM(boolean closeEarly, List<LMConfig> configsToPrepare) {
-        ensureWriteAccess();
         ghStorage.freeze();
         return lmPreparationHandler.prepare(configsToPrepare, ghStorage, locationIndex, closeEarly);
     }
