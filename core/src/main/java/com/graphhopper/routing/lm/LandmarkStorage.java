@@ -24,6 +24,7 @@ import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.carrotsearch.hppc.procedures.IntObjectProcedure;
 import com.graphhopper.coll.MapEntry;
 import com.graphhopper.routing.DijkstraBidirectionRef;
+import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.SPTEntry;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
@@ -62,19 +63,22 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class LandmarkStorage {
 
     // Short.MAX_VALUE = 2^15-1 but we have unsigned short so we need 2^16-1
-    private static final int SHORT_INFINITY = Short.MAX_VALUE * 2 + 1;
+// ORS-GH MOD START change access from private to protected
+    protected static final int SHORT_INFINITY = Short.MAX_VALUE * 2 + 1;
+// ORS-GH MOD END
     // We have large values that do not fit into a short, use a specific maximum value
     private static final int SHORT_MAX = SHORT_INFINITY - 1;
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(LandmarkStorage.class);
+// ORS-GH MOD START change access from private to protected
+    protected static final Logger LOGGER = LoggerFactory.getLogger(LandmarkStorage.class);
+// ORS-GH MOD END
     // This value is used to identify nodes where no subnetwork is associated
 // ORS-GH MOD START change access from private to protected
     protected static final int UNSET_SUBNETWORK = -1;
     // This value should only be used if subnetwork is too small to be explicitly stored
     protected static final int UNCLEAR_SUBNETWORK = 0;
-// ORS-GH MOD END
     // one node has an associated landmark information ('one landmark row'): the forward and backward weight
-    private long LM_ROW_LENGTH;
+    protected long LM_ROW_LENGTH;
+// ORS-GH MOD END
     private int landmarks;
     private final int FROM_OFFSET;
     private final int TO_OFFSET;
@@ -82,7 +86,9 @@ public class LandmarkStorage {
     // every subnetwork has its own landmark mapping but the count of landmarks is always the same
     private final List<int[]> landmarkIDs;
     private double factor = -1;
-    private final static double DOUBLE_MLTPL = 1e6;
+// ORS-GH MOD START change access from private to protected
+    protected final static double DOUBLE_MLTPL = 1e6;
+// ORS-GH MOD END
     private final GraphHopperStorage graph;
     private final NodeAccess na;
     private final FlagEncoder encoder;
@@ -112,29 +118,17 @@ public class LandmarkStorage {
         }
         this.encoder = weighting.getFlagEncoder();
         // allowing arbitrary weighting is too dangerous
-        this.lmSelectionWeighting = new ShortestWeighting(encoder) {
-            @Override
-            public double calcEdgeWeight(EdgeIteratorState edge, boolean reverse) {
-                // make accessibility of shortest identical to the provided weighting to avoid problems like shown in testWeightingConsistence
-                double res = weighting.calcEdgeWeight(edge, reverse);
-                if (res >= Double.MAX_VALUE)
-                    return Double.POSITIVE_INFINITY;
-
-                // returning the time or distance leads to strange landmark positions (ferries -> slow&very long) and BFS is more what we want
-                return 1;
-            }
-
-            @Override
-            public String toString() {
-                return "LM_BFS|" + encoder;
-            }
-        };
+// ORS-GH MOD START
+        this.lmSelectionWeighting = createLmSelectionWeighting();
+// ORS-GH MOD END
 
         // Edge based is not really necessary because when adding turn costs while routing we can still
         // use the node based traversal as this is a smaller weight approximation and will still produce correct results
         // In this sense its even 'better' to use node-based.
         this.traversalMode = TraversalMode.NODE_BASED;
-        this.landmarkWeightDA = dir.find("landmarks_" + lmConfig.getName());
+// ORS-GH MOD START
+        this.landmarkWeightDA = dir.find(getLandmarksFileName());
+// ORS-GH MOD END
 
         this.landmarks = landmarks;
         // one short per landmark and two directions => 2*2 byte
@@ -142,8 +136,42 @@ public class LandmarkStorage {
         this.FROM_OFFSET = 0;
         this.TO_OFFSET = 2;
         this.landmarkIDs = new ArrayList<>();
-        this.subnetworkStorage = new SubnetworkStorage(dir, "landmarks_" + lmConfig.getName());
+// ORS-GH MOD START
+        this.subnetworkStorage = new SubnetworkStorage(dir, getLandmarksFileName());
+// ORS-GH MOD END
     }
+
+// ORS-GH MOD START add methods which can be overriden by CoreLandmarksStorage
+    public String getLandmarksFileName() {
+        return "landmarks_" + lmConfig.getName();
+    }
+
+    public Weighting createLmSelectionWeighting() {
+        return new LmSelectionWeighting();
+    }
+
+    protected class LmSelectionWeighting extends ShortestWeighting {
+        public LmSelectionWeighting() {
+            super(encoder);
+        }
+
+        @Override
+        public double calcEdgeWeight(EdgeIteratorState edge, boolean reverse) {
+            // make accessibility of shortest identical to the provided weighting to avoid problems like shown in testWeightingConsistence
+            double res = weighting.calcEdgeWeight(edge, reverse);
+            if (res >= Double.MAX_VALUE)
+                return Double.POSITIVE_INFINITY;
+
+            // returning the time or distance leads to strange landmark positions (ferries -> slow&very long) and BFS is more what we want
+            return 1;
+        }
+
+        @Override
+        public String toString() {
+            return "LM_BFS|" + encoder;
+        }
+    }
+// ORS-GH MOD END
 
     /**
      * Specify the maximum possible value for your used area. With this maximum weight value you can influence the storage
@@ -217,9 +245,15 @@ public class LandmarkStorage {
         return weighting;
     }
 
-    boolean isInitialized() {
+// ORS-GH MOD START change access and add method
+    protected boolean isInitialized() {
         return initialized;
     }
+
+    protected void setInitialized(boolean initialized) {
+        this.initialized = initialized;
+    }
+// ORS-GH MOD END
 
     /**
      * This method calculates the landmarks and initial weightings to & from them.
@@ -354,7 +388,9 @@ public class LandmarkStorage {
     /**
      * This method returns the maximum weight for the graph starting from the landmarks
      */
-    private double estimateMaxWeight(List<IntArrayList> graphComponents, EdgeFilter accessFilter) {
+// ORS-GH MOD START change access from private to protected
+    protected double estimateMaxWeight(List<IntArrayList> graphComponents, EdgeFilter accessFilter) {
+// ORS-GH MOD END
         double maxWeight = 0;
         int searchedSubnetworks = 0;
         Random random = new Random(0);
@@ -381,7 +417,9 @@ public class LandmarkStorage {
                 // starting
                 for (int lmIdx = 0; lmIdx < tmpLandmarkNodeIds.length; lmIdx++) {
                     int lmNodeId = tmpLandmarkNodeIds[lmIdx];
-                    explorer = new LandmarkExplorer(graph, this, weighting, traversalMode, accessFilter, false);
+// ORS-GH MOD START
+                    explorer = getLandmarkExplorer(accessFilter, weighting,false);
+// ORS-GH MOD END
                     explorer.setStartNode(lmNodeId);
                     explorer.runAlgo();
                     maxWeight = Math.max(maxWeight, explorer.getLastEntry().weight);
@@ -403,7 +441,9 @@ public class LandmarkStorage {
      *
      * @return landmark mapping
      */
-    private boolean createLandmarksForSubnetwork(final int startNode, final byte[] subnetworks, EdgeFilter accessFilter) {
+// ORS-GH MOD START change access from private to protected
+    protected boolean createLandmarksForSubnetwork(final int startNode, final byte[] subnetworks, EdgeFilter accessFilter) {
+// ORS-GH MOD END
         final int subnetworkId = landmarkIDs.size();
         int[] tmpLandmarkNodeIds = new int[landmarks];
         int logOffset = Math.max(1, landmarks / 2);
@@ -450,7 +490,9 @@ public class LandmarkStorage {
                 throw new RuntimeException("Thread was interrupted for landmark " + lmIdx);
             }
             int lmNodeId = tmpLandmarkNodeIds[lmIdx];
-            LandmarkExplorer explorer = new LandmarkExplorer(graph, this, weighting, traversalMode, accessFilter, false);
+// ORS-GH MOD START
+            LandmarkExplorer explorer = getLandmarkExplorer(accessFilter, weighting, false);
+// ORS-GH MOD END
             explorer.setStartNode(lmNodeId);
             explorer.runAlgo();
             explorer.initLandmarkWeights(lmIdx, lmNodeId, LM_ROW_LENGTH, FROM_OFFSET);
@@ -461,7 +503,9 @@ public class LandmarkStorage {
                     return false;
             }
 
-            explorer = new LandmarkExplorer(graph, this, weighting, traversalMode, accessFilter, true);
+// ORS-GH MOD START
+            explorer = getLandmarkExplorer(accessFilter, weighting,true);
+// ORS-GH MOD END
             explorer.setStartNode(lmNodeId);
             explorer.runAlgo();
             explorer.initLandmarkWeights(lmIdx, lmNodeId, LM_ROW_LENGTH, TO_OFFSET);
@@ -514,9 +558,11 @@ public class LandmarkStorage {
     /**
      * The factor is used to convert double values into more compact int values.
      */
-    double getFactor() {
+// ORS-GH MOD START change access to protected
+    protected double getFactor() {
         return factor;
     }
+// ORS-GH MOD END
 
     /**
      * @return the weight from the landmark to the specified node. Where the landmark integer is not
@@ -746,7 +792,9 @@ public class LandmarkStorage {
         int logOffset = Math.max(1, landmarkNodeIdsToReturn.length / 2);
         // 1a) pick landmarks via special weighting for a better geographical spreading
         Weighting initWeighting = lmSelectionWeighting;
-        LandmarkExplorer explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode, accessFilter, false);
+// ORS-GH MOD START
+        LandmarkExplorer explorer = getLandmarkExplorer(accessFilter, initWeighting, false);
+// ORS-GH MOD END
         explorer.setStartNode(startNode);
         explorer.runAlgo();
 
@@ -754,7 +802,9 @@ public class LandmarkStorage {
             // 1b) we have one landmark, now determine the other landmarks
             landmarkNodeIdsToReturn[0] = explorer.getLastEntry().adjNode;
             for (int lmIdx = 0; lmIdx < landmarkNodeIdsToReturn.length - 1; lmIdx++) {
-                explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode, accessFilter, false);
+// ORS-GH MOD START
+                explorer = getLandmarkExplorer(accessFilter, initWeighting, false);
+// ORS-GH MOD END
                 // set all current landmarks as start so that the next getLastNode is hopefully a "far away" node
                 for (int j = 0; j < lmIdx + 1; j++) {
                     explorer.setStartNode(landmarkNodeIdsToReturn[j]);
@@ -770,17 +820,35 @@ public class LandmarkStorage {
         return explorer;
     }
 
+// ORS-GH MOD START add methods which can be overriden by CoreLandmarksStorage and adapt classes
+    public LandmarkExplorer getLandmarkExplorer(EdgeFilter accessFilter, Weighting weighting, boolean reverse) {
+        return new DefaultLandmarkExplorer(graph, this, weighting, traversalMode, accessFilter, reverse);
+    }
+
+    public interface LandmarkExplorer extends RoutingAlgorithm{
+        void setStartNode(int startNode);
+
+        int getFromCount();
+
+        void runAlgo();
+
+        SPTEntry getLastEntry();
+
+        boolean setSubnetworks(final byte[] subnetworks, final int subnetworkId);
+
+        void initLandmarkWeights(final int lmIdx, int lmNodeId, final long rowSize, final int offset);
+    }
     /**
      * This class is used to calculate landmark location (equally distributed).
      * It derives from DijkstraBidirectionRef, but is only used as forward or backward search.
      */
-    private static class LandmarkExplorer extends DijkstraBidirectionRef {
+    private static class DefaultLandmarkExplorer extends DijkstraBidirectionRef implements LandmarkExplorer {
         private EdgeFilter accessFilter;
         private final boolean reverse;
         private final LandmarkStorage lms;
         private SPTEntry lastEntry;
 
-        public LandmarkExplorer(Graph g, LandmarkStorage lms, Weighting weighting, TraversalMode tMode, EdgeFilter accessFilter, boolean reverse) {
+        public DefaultLandmarkExplorer(Graph g, LandmarkStorage lms, Weighting weighting, TraversalMode tMode, EdgeFilter accessFilter, boolean reverse) {
             super(g, weighting, tMode);
             this.accessFilter = accessFilter;
             this.lms = lms;
@@ -795,6 +863,7 @@ public class LandmarkStorage {
             setUpdateBestPath(false);
         }
 
+        @Override
         public void setStartNode(int startNode) {
             if (reverse)
                 initTo(startNode, 0);
@@ -809,15 +878,18 @@ public class LandmarkStorage {
             return GHUtility.calcWeightWithTurnWeightWithAccess(weighting, iter, reverse, currEdge.edge) + currEdge.getWeightOfVisitedPath();
         }
 
-        int getFromCount() {
+        @Override
+        public int getFromCount() {
             return bestWeightMapFrom.size();
         }
 
+        @Override
         public void runAlgo() {
             super.runAlgo();
         }
 
-        SPTEntry getLastEntry() {
+        @Override
+        public SPTEntry getLastEntry() {
             if (!finished())
                 throw new IllegalStateException("Cannot get max weight if not yet finished");
             return lastEntry;
@@ -834,6 +906,7 @@ public class LandmarkStorage {
             }
         }
 
+        @Override
         public boolean setSubnetworks(final byte[] subnetworks, final int subnetworkId) {
             if (subnetworkId > 127)
                 throw new IllegalStateException("Too many subnetworks " + subnetworkId);
@@ -862,6 +935,7 @@ public class LandmarkStorage {
             return failed.get();
         }
 
+        @Override
         public void initLandmarkWeights(final int lmIdx, int lmNodeId, final long rowSize, final int offset) {
             IntObjectMap<SPTEntry> map = reverse ? bestWeightMapTo : bestWeightMapFrom;
             final AtomicInteger maxedout = new AtomicInteger(0);
@@ -884,6 +958,7 @@ public class LandmarkStorage {
             }
         }
     }
+// ORS-GH MOD END
 
     /**
      * Sort landmark by weight and let maximum weight come first, to pick best active landmarks.
@@ -895,14 +970,37 @@ public class LandmarkStorage {
         }
     };
 
-    static GHPoint createPoint(Graph graph, int nodeId) {
+// ORS-GH MOD START change access to protected
+    protected static GHPoint createPoint(Graph graph, int nodeId) {
+// ORS-GH MOD END
         return new GHPoint(graph.getNodeAccess().getLat(nodeId), graph.getNodeAccess().getLon(nodeId));
     }
 
 // ORS-GH MOD START add method allowing for node index mapping
-    // allow mapping of node indices
-    public int getIndex(int node) {
+    protected int getIndex(int node) {
         return node;
+    }
+// ORS-GH MOD END
+
+// ORS-GH MOD START add getters
+    public DataAccess getLandmarkWeightDA() {
+        return landmarkWeightDA;
+    }
+
+    public List<int[]> getLandmarkIDs() {
+        return landmarkIDs;
+    }
+
+    public SubnetworkStorage getSubnetworkStorage() {
+        return subnetworkStorage;
+    }
+
+    public AreaIndex<SplitArea> getAreaIndex() {
+        return areaIndex;
+    }
+
+    public boolean isLogDetails() {
+        return logDetails;
     }
 // ORS-GH MOD END
 }
