@@ -284,7 +284,8 @@ public class GraphHopperTest {
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
                 setProfiles(profile).
-                setStoreOnFlush(true);
+                setStoreOnFlush(true).
+                setAllowWrites(false);
         if (ch) {
             hopper.getCHPreparationHandler()
                     .setCHProfiles(new CHProfile(profileName));
