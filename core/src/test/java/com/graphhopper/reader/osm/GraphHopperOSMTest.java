@@ -38,6 +38,9 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static org.junit.jupiter.api.Assertions.*;
@@ -284,6 +287,64 @@ public class GraphHopperOSMTest {
         instance1.close();
         instance2.close();
         instance3.close();
+    }
+
+    @Test
+    public void testDoNotAllowWritingAndLoadingAtTheSameTime() throws Exception {
+        final CountDownLatch latch1 = new CountDownLatch(1);
+        final CountDownLatch latch2 = new CountDownLatch(1);
+        final GraphHopper instance1 = new GraphHopper() {
+            @Override
+            protected void importOSM() {
+                try {
+                    latch2.countDown();
+                    latch1.await(3, TimeUnit.SECONDS);
+                } catch (InterruptedException ex) {
+                    throw new RuntimeException(ex);
+                }
+                super.importOSM();
+            }
+        }.setStoreOnFlush(true).
+                setGraphHopperLocation(ghLoc).
+                setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest")).
+                setOSMFile(testOsm);
+        final AtomicReference<Exception> ar = new AtomicReference<>();
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    instance1.importOrLoad();
+                } catch (Exception ex) {
+                    ar.set(ex);
+                }
+            }
+        };
+        thread.start();
+
+        GraphHopper instance2 = new GraphHopper().
+                setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest")).
+                setStoreOnFlush(true).
+                setOSMFile(testOsm).
+                setGraphHopperLocation(ghLoc);
+        try {
+            // let thread reach the CountDownLatch
+            latch2.await(3, TimeUnit.SECONDS);
+            // now importOrLoad should have create a lock which this load call does not like
+            instance2.load();
+            fail("There should have been an error because of the lock");
+        } catch (RuntimeException ex) {
+            assertNotNull(ex);
+            assertTrue(ex.getMessage().startsWith("To avoid reading partial data"), ex.getMessage());
+        } finally {
+            instance2.close();
+            latch1.countDown();
+            // make sure the import process wasn't interrupted and no other error happened
+            thread.join();
+        }
+
+        if (ar.get() != null)
+            assertNull(ar.get(), ar.get().getMessage());
+        instance1.close();
     }
 
     @Test
