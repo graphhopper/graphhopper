@@ -909,8 +909,20 @@ public class GraphHopper {
         initLocationIndex();
         importPublicTransit();
 
+        if (closeEarly) {
+            boolean includesCustomProfiles = profilesByName.values().stream().anyMatch(p -> p instanceof CustomProfile);
+            if (!includesCustomProfiles)
+                // when there are custom profiles we must not close way geometry or StringIndex, because
+                // they might be needed to evaluate the custom weightings for the following preparations
+                ghStorage.flushAndCloseGeometryAndNameStorage();
+        }
+
         if (lmPreparationHandler.isEnabled())
             loadOrPrepareLM(closeEarly);
+
+        if (closeEarly)
+            // we needed the location index for the LM preparation, but we don't need it for CH
+            locationIndex.close();
 
         if (chPreparationHandler.isEnabled())
             loadOrPrepareCH(closeEarly);
@@ -1039,15 +1051,9 @@ public class GraphHopper {
     }
 
     protected Map<String, PrepareContractionHierarchies.Result> prepareCH(boolean closeEarly, List<CHConfig> configsToPrepare) {
+        if (!configsToPrepare.isEmpty())
+            ensureWriteAccess();
         ghStorage.freeze();
-        if (closeEarly) {
-            locationIndex.close();
-            boolean includesCustomProfiles = getProfiles().stream().anyMatch(p -> p instanceof CustomProfile);
-            if (!includesCustomProfiles)
-                // when there are custom profiles we must not close way geometry or StringIndex, because
-                // they might be needed to evaluate the custom weighting during CH preparation
-                ghStorage.flushAndCloseEarly();
-        }
         return chPreparationHandler.prepare(ghStorage, configsToPrepare, closeEarly);
     }
 
@@ -1085,6 +1091,8 @@ public class GraphHopper {
     }
 
     protected List<PrepareLandmarks> prepareLM(boolean closeEarly, List<LMConfig> configsToPrepare) {
+        if (!configsToPrepare.isEmpty())
+            ensureWriteAccess();
         ghStorage.freeze();
         return lmPreparationHandler.prepare(configsToPrepare, ghStorage, locationIndex, closeEarly);
     }
