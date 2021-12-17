@@ -118,9 +118,23 @@ public class LandmarkStorage {
         }
         this.encoder = weighting.getFlagEncoder();
         // allowing arbitrary weighting is too dangerous
-// ORS-GH MOD START
-        this.lmSelectionWeighting = createLmSelectionWeighting();
-// ORS-GH MOD END
+        this.lmSelectionWeighting = new ShortestWeighting(encoder) {
+            @Override
+            public double calcEdgeWeight(EdgeIteratorState edge, boolean reverse) {
+                // make accessibility of shortest identical to the provided weighting to avoid problems like shown in testWeightingConsistence
+                double res = weighting.calcEdgeWeight(edge, reverse);
+                if (res >= Double.MAX_VALUE)
+                    return Double.POSITIVE_INFINITY;
+
+                // returning the time or distance leads to strange landmark positions (ferries -> slow&very long) and BFS is more what we want
+                return 1;
+            }
+
+            @Override
+            public String toString() {
+                return "LM_BFS|" + encoder;
+            }
+        };
 
         // Edge based is not really necessary because when adding turn costs while routing we can still
         // use the node based traversal as this is a smaller weight approximation and will still produce correct results
@@ -141,35 +155,9 @@ public class LandmarkStorage {
 // ORS-GH MOD END
     }
 
-// ORS-GH MOD START add methods which can be overriden by CoreLandmarksStorage
+// ORS-GH MOD START add method which can be overriden by CoreLandmarksStorage
     public String getLandmarksFileName() {
         return "landmarks_" + lmConfig.getName();
-    }
-
-    public Weighting createLmSelectionWeighting() {
-        return new LmSelectionWeighting();
-    }
-
-    protected class LmSelectionWeighting extends ShortestWeighting {
-        public LmSelectionWeighting() {
-            super(encoder);
-        }
-
-        @Override
-        public double calcEdgeWeight(EdgeIteratorState edge, boolean reverse) {
-            // make accessibility of shortest identical to the provided weighting to avoid problems like shown in testWeightingConsistence
-            double res = weighting.calcEdgeWeight(edge, reverse);
-            if (res >= Double.MAX_VALUE)
-                return Double.POSITIVE_INFINITY;
-
-            // returning the time or distance leads to strange landmark positions (ferries -> slow&very long) and BFS is more what we want
-            return 1;
-        }
-
-        @Override
-        public String toString() {
-            return "LM_BFS|" + encoder;
-        }
     }
 // ORS-GH MOD END
 
@@ -791,9 +779,8 @@ public class LandmarkStorage {
     private LandmarkExplorer findLandmarks(int[] landmarkNodeIdsToReturn, int startNode, EdgeFilter accessFilter, String info) {
         int logOffset = Math.max(1, landmarkNodeIdsToReturn.length / 2);
         // 1a) pick landmarks via special weighting for a better geographical spreading
-        Weighting initWeighting = lmSelectionWeighting;
 // ORS-GH MOD START
-        LandmarkExplorer explorer = getLandmarkExplorer(accessFilter, initWeighting, false);
+        LandmarkExplorer explorer = getLandmarkSelector(accessFilter);
 // ORS-GH MOD END
         explorer.setStartNode(startNode);
         explorer.runAlgo();
@@ -803,7 +790,7 @@ public class LandmarkStorage {
             landmarkNodeIdsToReturn[0] = explorer.getLastEntry().adjNode;
             for (int lmIdx = 0; lmIdx < landmarkNodeIdsToReturn.length - 1; lmIdx++) {
 // ORS-GH MOD START
-                explorer = getLandmarkExplorer(accessFilter, initWeighting, false);
+                explorer = getLandmarkSelector(accessFilter);
 // ORS-GH MOD END
                 // set all current landmarks as start so that the next getLastNode is hopefully a "far away" node
                 for (int j = 0; j < lmIdx + 1; j++) {
@@ -823,6 +810,10 @@ public class LandmarkStorage {
 // ORS-GH MOD START add methods which can be overriden by CoreLandmarksStorage and adapt classes
     public LandmarkExplorer getLandmarkExplorer(EdgeFilter accessFilter, Weighting weighting, boolean reverse) {
         return new DefaultLandmarkExplorer(graph, this, weighting, traversalMode, accessFilter, reverse);
+    }
+
+    public LandmarkExplorer getLandmarkSelector(EdgeFilter accessFilter) {
+        return getLandmarkExplorer(accessFilter, lmSelectionWeighting, false);
     }
 
     public interface LandmarkExplorer extends RoutingAlgorithm{
