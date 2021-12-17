@@ -358,6 +358,11 @@ public class GraphHopperTest {
     }
 
     @Test
+    public void testImportThenLoadLMWithCustom() {
+        testImportCloseAndLoad(false, true, false, true);
+    }
+
+    @Test
     public void testImportThenLoadCHLM() {
         testImportCloseAndLoad(true, true, false, false);
     }
