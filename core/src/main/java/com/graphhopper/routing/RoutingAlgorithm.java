@@ -17,8 +17,6 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.util.NotThreadSafe;
-
 import java.util.List;
 
 /**
@@ -27,7 +25,6 @@ import java.util.List;
  *
  * @author Peter Karich
  */
-@NotThreadSafe
 public interface RoutingAlgorithm {
     /**
      * Calculates the best path between the specified nodes.

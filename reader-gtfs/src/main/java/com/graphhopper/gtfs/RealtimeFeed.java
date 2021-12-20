@@ -19,7 +19,6 @@
 package com.graphhopper.gtfs;
 
 import com.carrotsearch.hppc.IntHashSet;
-import com.carrotsearch.hppc.IntIntHashMap;
 import com.carrotsearch.hppc.IntLongHashMap;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Fare;
@@ -102,54 +101,6 @@ public class RealtimeFeed {
         final Graph overlayGraph = new Graph() {
             int firstEdge = graphHopperStorage.getEdges();
             EncodingManager encodingManager = graphHopperStorage.getEncodingManager();
-            final NodeAccess nodeAccess = new NodeAccess() {
-                IntIntHashMap turnCostIndices = new IntIntHashMap();
-
-                @Override
-                public int getTurnCostIndex(int nodeId) {
-                    return 0;
-                }
-
-                @Override
-                public void setTurnCostIndex(int nodeId, int additionalValue) {
-                    turnCostIndices.put(nodeId, additionalValue);
-                }
-
-                @Override
-                public boolean is3D() {
-                    return false;
-                }
-
-                @Override
-                public int getDimension() {
-                    return 0;
-                }
-
-                @Override
-                public void ensureNode(int nodeId) {
-
-                }
-
-                @Override
-                public void setNode(int nodeId, double lat, double lon, double ele) {
-
-                }
-
-                @Override
-                public double getLat(int nodeId) {
-                    return 0;
-                }
-
-                @Override
-                public double getLon(int nodeId) {
-                    return 0;
-                }
-
-                @Override
-                public double getEle(int nodeId) {
-                    return 0;
-                }
-            };
 
             @Override
             public Graph getBaseGraph() {
@@ -171,7 +122,7 @@ public class RealtimeFeed {
 
             @Override
             public NodeAccess getNodeAccess() {
-                return nodeAccess;
+                return null;
             }
 
             @Override

@@ -41,7 +41,7 @@ graphhopper:
   #   You can also use th e`custom_model` field instead and specify your custom model in the profile directly.
   #
   #   For more information about profiles and especially custom profiles have a look into the documentation
-  #   at docs/core/profiles.md or the examples under web/src/test/resources/com/graphhopper/http/resources/ or
+  #   at docs/core/profiles.md or the examples under web/src/test/java/com/graphhopper/application/resources/ or
   #   the CustomWeighting class for the raw details.
   #
   # To prevent long running routing queries you should usually enable either speed or hybrid mode for all the given

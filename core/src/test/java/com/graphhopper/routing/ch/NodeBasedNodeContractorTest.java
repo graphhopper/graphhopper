@@ -59,7 +59,6 @@ public class NodeBasedNodeContractorTest {
         CHPreparationGraph.buildFromGraph(prepareGraph, g, g.createCHGraph(store, chConfig).getWeighting());
         NodeContractor nodeContractor = new NodeBasedNodeContractor(prepareGraph, new CHStorageBuilder(store), new PMap());
         nodeContractor.initFromGraph();
-        nodeContractor.prepareContraction();
         return nodeContractor;
     }
 
