@@ -50,9 +50,9 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     protected HashSet<String> sidewalkValues = new HashSet<>(5);
     protected HashSet<String> sidewalksNoValues = new HashSet<>(5);
     protected boolean speedTwoDirections;
-    private DecimalEncodedValue priorityWayEncoder;
-    private EnumEncodedValue<RouteNetwork> footRouteEnc;
-    Map<RouteNetwork, Integer> routeMap = new HashMap<>();
+    protected DecimalEncodedValue priorityWayEncoder;
+    protected EnumEncodedValue<RouteNetwork> footRouteEnc;
+    protected Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
     public FootFlagEncoder() {
         this(4, 1);
@@ -148,7 +148,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         super.createEncodedValues(registerNewEncodedValue, prefix);
         // larger value required - ferries are faster than pedestrians
         registerNewEncodedValue.add(avgSpeedEnc = new DecimalEncodedValueImpl(getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
-        registerNewEncodedValue.add(priorityWayEncoder = new DecimalEncodedValueImpl(getKey(prefix, "priority"), 4, PriorityCode.getFactor(1), speedTwoDirections));
+        registerNewEncodedValue.add(priorityWayEncoder = new DecimalEncodedValueImpl(getKey(prefix, "priority"), 4, PriorityCode.getFactor(1), false));
 
         footRouteEnc = getEnumEncodedValue(RouteNetwork.key("foot"), RouteNetwork.class);
     }

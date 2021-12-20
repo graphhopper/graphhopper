@@ -28,8 +28,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
 
-import static com.graphhopper.routing.util.PriorityCode.AVOID;
-import static com.graphhopper.routing.util.PriorityCode.VERY_NICE;
+import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
  * A flag encoder for wheelchairs.
@@ -80,10 +79,6 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         excludeHighwayTags.add("trunk_link");
         excludeHighwayTags.add("primary");
         excludeHighwayTags.add("primary_link");
-        excludeHighwayTags.add("secondary");
-        excludeHighwayTags.add("secondary_link");
-        excludeHighwayTags.add("tertiary");
-        excludeHighwayTags.add("tertiary_link");
         excludeHighwayTags.add("steps");
         excludeHighwayTags.add("track");
 
@@ -203,6 +198,8 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
             setSpeed(edgeFlags, true, true, ferrySpeed);
         }
 
+        Integer priorityFromRelation = routeMap.get(footRouteEnc.getEnum(false, edgeFlags));
+        priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, priorityFromRelation)));
         return edgeFlags;
     }
 
@@ -214,44 +211,36 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     @Override
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
         PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
+        double fullDist2D = edge.getDistance();
+        if (Double.isInfinite(fullDist2D))
+            throw new IllegalStateException("Infinite distance should not happen due to #435. way ID=" + way.getId());
+
+        // skip elevation data adjustment for too short segments, TODO improve the elevation data handling and/or use the same mechanism as in bike2
+        if (fullDist2D < 20 || !pl.is3D())
+            return;
 
         double prevEle = pl.getEle(0);
-        double fullDist2D = edge.getDistance();
-
-        if (Double.isInfinite(fullDist2D)) {
-            throw new IllegalStateException("Infinite distance should not happen due to #435. way ID=" + way.getId());
-        }
-
-        if (fullDist2D < 1) {
-            return;
-        }
-
         double eleDelta = pl.getEle(pl.size() - 1) - prevEle;
         double elePercent = eleDelta / fullDist2D * 100;
         int smallInclinePercent = 3;
+        double fwdSpeed = 0, bwdSpeed = 0;
         if (elePercent > smallInclinePercent && elePercent < maxInclinePercent) {
-            setFwdBwdSpeed(edge, SLOW_SPEED, MEAN_SPEED);
+            fwdSpeed = SLOW_SPEED;
+            bwdSpeed = MEAN_SPEED;
         } else if (elePercent < -smallInclinePercent && elePercent > -maxInclinePercent) {
-            setFwdBwdSpeed(edge, MEAN_SPEED, SLOW_SPEED);
+            fwdSpeed = MEAN_SPEED;
+            bwdSpeed = SLOW_SPEED;
         } else if (elePercent > maxInclinePercent || elePercent < -maxInclinePercent) {
-            edge.set(accessEnc, false);
-            edge.setReverse(accessEnc, false);
+            // it can be problematic to exclude roads due to potential bad elevation data(e.g.delta for narrow nodes could be too high)
+            fwdSpeed = SLOW_SPEED;
+            bwdSpeed = SLOW_SPEED;
+            edge.set(priorityWayEncoder, PriorityCode.getValue(PriorityCode.REACH_DESTINATION.getValue()));
         }
-    }
 
-    /**
-     * Sets the given speed values to the given edge depending on the forward and backward accessibility of the edge.
-     *
-     * @param edge     the edge to set speed for
-     * @param fwdSpeed speed value in forward direction
-     * @param bwdSpeed speed value in backward direction
-     */
-    private void setFwdBwdSpeed(EdgeIteratorState edge, int fwdSpeed, int bwdSpeed) {
-        if (edge.get(accessEnc))
-            edge.set(avgSpeedEnc, fwdSpeed);
-
-        if (edge.getReverse(accessEnc))
-            edge.setReverse(avgSpeedEnc, bwdSpeed);
+        if (fwdSpeed > 0 && edge.get(accessEnc))
+            setSpeed(edge.getFlags(), true, false, fwdSpeed);
+        if (bwdSpeed > 0 && edge.getReverse(accessEnc))
+            setSpeed(edge.getFlags(), false, true, bwdSpeed);
     }
 
     /**
@@ -271,6 +260,11 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         } else if (way.hasTag("wheelchair", "limited")) {
             weightToPrioMap.put(102d, AVOID.getValue());
         }
+        String highway = way.getTag("highway", "");
+        if (highway.startsWith("tertiary"))
+            weightToPrioMap.put(103d, BAD.getValue());
+        else if (highway.startsWith("secondary"))
+            weightToPrioMap.put(103d, VERY_BAD.getValue());
 
         return weightToPrioMap.lastEntry().getValue();
     }
