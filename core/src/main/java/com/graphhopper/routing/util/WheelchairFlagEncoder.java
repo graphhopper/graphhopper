@@ -231,7 +231,10 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
             fwdSpeed = MEAN_SPEED;
             bwdSpeed = SLOW_SPEED;
         } else if (elePercent > maxInclinePercent || elePercent < -maxInclinePercent) {
-            // it can be problematic to exclude roads due to potential bad elevation data(e.g.delta for narrow nodes could be too high)
+            // it can be problematic to exclude roads due to potential bad elevation data (e.g.delta for narrow nodes could be too high)
+            // so exclude only when we are certain
+            if (fullDist2D > 50) edge.set(accessEnc, false, false);
+
             fwdSpeed = SLOW_SPEED;
             bwdSpeed = SLOW_SPEED;
             edge.set(priorityWayEncoder, PriorityCode.getValue(PriorityCode.REACH_DESTINATION.getValue()));

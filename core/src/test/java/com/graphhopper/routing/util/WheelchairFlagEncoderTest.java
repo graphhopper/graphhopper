@@ -485,43 +485,52 @@ public class WheelchairFlagEncoderTest {
         assertTrue(wheelchairEncoder.getAccess(way).canSkip());
     }
 
-    private Graph initExampleGraph() {
-        GraphHopperStorage gs = new GraphBuilder(encodingManager).set3D(true).create();
-        NodeAccess na = gs.getNodeAccess();
-        // incline of 5% over all
-        na.setNode(0, 51.1, 12.001, 50);
-        na.setNode(1, 51.1, 12.002, 55);
-        EdgeIteratorState edge0 = gs.edge(0, 1).setWayGeometry(Helper.createPointList3D(51.1, 12.0011, 49, 51.1, 12.0015, 55));
-        edge0.setDistance(100);
-        GHUtility.setSpeed(5, 5, wheelchairEncoder, edge0);
-
-        // incline of 10% over all
-        na.setNode(2, 51.2, 12.101, 50);
-        na.setNode(3, 51.2, 12.102, 60);
-        EdgeIteratorState edge1 = gs.edge(2, 3).setWayGeometry(Helper.createPointList3D(51.2, 12.1011, 49, 51.2, 12.1015, 55));
-        edge1.setDistance(100);
-        GHUtility.setSpeed(5, 5, wheelchairEncoder, edge1);
-        return gs;
-    }
-
     @Test
     public void testApplyWayTags() {
-        Graph graph = initExampleGraph();
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).set3D(true).create();
+        NodeAccess na = graph.getNodeAccess();
+        // incline of 5% over all
+        na.setNode(0, 51.1, 12.0010, 50);
+        na.setNode(1, 51.1, 12.0015, 55);
+        EdgeIteratorState edge01 = graph.edge(0, 1).setWayGeometry(Helper.createPointList3D(51.1, 12.0011, 49, 51.1, 12.0015, 55));
+        edge01.setDistance(100);
+        GHUtility.setSpeed(5, 5, wheelchairEncoder, edge01);
 
-        EdgeIteratorState edge0 = GHUtility.getEdge(graph, 0, 1);
-        ReaderWay way0 = new ReaderWay(1);
-        wheelchairEncoder.applyWayTags(way0, edge0);
+        // incline of 10% & shorter edge
+        na.setNode(2, 51.2, 12.1010, 50);
+        na.setNode(3, 51.2, 12.1015, 60);
+        EdgeIteratorState edge23 = graph.edge(2, 3).setWayGeometry(Helper.createPointList3D(51.2, 12.1011, 49, 51.2, 12.1015, 55));
+        edge23.setDistance(30);
+        GHUtility.setSpeed(5, 5, wheelchairEncoder, edge23);
 
-        assertTrue(edge0.get(wheelchairAccessEnc));
-        assertTrue(edge0.getReverse(wheelchairAccessEnc));
-        assertEquals(2, edge0.get(wheelchairEncoder.getAverageSpeedEnc()), 0);
-        assertEquals(5, edge0.getReverse(wheelchairEncoder.getAverageSpeedEnc()), 0);
+        // incline of 10% & longer edge
+        na.setNode(4, 51.2, 12.101, 50);
+        na.setNode(5, 51.2, 12.102, 60);
+        EdgeIteratorState edge45 = graph.edge(2, 3).setWayGeometry(Helper.createPointList3D(51.2, 12.1011, 49, 51.2, 12.1015, 55));
+        edge45.setDistance(100);
+        GHUtility.setSpeed(5, 5, wheelchairEncoder, edge45);
 
-        EdgeIteratorState edge1 = GHUtility.getEdge(graph, 2, 3);
-        ReaderWay way1 = new ReaderWay(2);
-        wheelchairEncoder.applyWayTags(way1, edge1);
 
-        assertFalse(edge1.get(wheelchairAccessEnc));
-        assertFalse(edge1.getReverse(wheelchairAccessEnc));
+        wheelchairEncoder.applyWayTags(new ReaderWay(1), edge01);
+
+        assertTrue(edge01.get(wheelchairAccessEnc));
+        assertTrue(edge01.getReverse(wheelchairAccessEnc));
+        assertEquals(2, edge01.get(wheelchairEncoder.getAverageSpeedEnc()), 0);
+        assertEquals(5, edge01.getReverse(wheelchairEncoder.getAverageSpeedEnc()), 0);
+
+
+        wheelchairEncoder.applyWayTags(new ReaderWay(2), edge23);
+
+        assertTrue(edge23.get(wheelchairAccessEnc));
+        assertTrue(edge23.getReverse(wheelchairAccessEnc));
+        assertEquals(2, edge23.get(wheelchairEncoder.getAverageSpeedEnc()), 0);
+        assertEquals(2, edge23.getReverse(wheelchairEncoder.getAverageSpeedEnc()), 0);
+
+
+        // only exclude longer edges with too large incline:
+        wheelchairEncoder.applyWayTags(new ReaderWay(3), edge45);
+
+        assertFalse(edge45.get(wheelchairAccessEnc));
+        assertFalse(edge45.getReverse(wheelchairAccessEnc));
     }
 }
