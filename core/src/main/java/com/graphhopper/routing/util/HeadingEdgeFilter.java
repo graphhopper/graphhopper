@@ -6,10 +6,10 @@ import com.graphhopper.util.shapes.GHPoint;
 public class HeadingEdgeFilter implements EdgeFilter {
 
     private final double heading;
-    private final EdgeFilter directedEdgeFilter;
+    private final DirectedEdgeFilter directedEdgeFilter;
     private final GHPoint pointNearHeading;
 
-    public HeadingEdgeFilter(EdgeFilter directedEdgeFilter, double heading, GHPoint pointNearHeading) {
+    public HeadingEdgeFilter(DirectedEdgeFilter directedEdgeFilter, double heading, GHPoint pointNearHeading) {
         this.directedEdgeFilter = directedEdgeFilter;
         this.heading = heading;
         this.pointNearHeading = pointNearHeading;
@@ -26,8 +26,8 @@ public class HeadingEdgeFilter implements EdgeFilter {
             // this edge is too far away. we do not accept it.
             return false;
         // we accept the edge if either of the two directions roughly has the right heading
-        return Math.abs(headingOfEdge - heading) < tolerance && directedEdgeFilter.accept(edgeState) ||
-                Math.abs((headingOfEdge + 180) % 360 - heading) < tolerance && directedEdgeFilter.accept(edgeState.detach(true));
+        return Math.abs(headingOfEdge - heading) < tolerance && directedEdgeFilter.accept(edgeState, false) ||
+                Math.abs((headingOfEdge + 180) % 360 - heading) < tolerance && directedEdgeFilter.accept(edgeState, true);
     }
 
     /**
