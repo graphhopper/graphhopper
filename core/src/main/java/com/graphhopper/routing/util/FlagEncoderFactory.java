@@ -23,6 +23,7 @@ import com.graphhopper.util.PMap;
  * @author Peter Karich
  */
 public interface FlagEncoderFactory {
+    String ROADS = "roads";
     String CAR = "car";
     String CAR4WD = "car4wd";
     String BIKE = "bike";
