@@ -86,7 +86,12 @@ public class RealtimeFeed {
         final IntLongHashMap delaysForBoardEdges = new IntLongHashMap();
         final IntLongHashMap delaysForAlightEdges = new IntLongHashMap();
         final LinkedList<VirtualEdgeIteratorState> additionalEdges = new LinkedList<>();
-        final GtfsReader.PtGraphOut overlayGraph = new GtfsReader.PtGraphOut() {};
+        final GtfsReader.PtGraphOut overlayGraph = new GtfsReader.PtGraphOut() {
+            @Override
+            public void putPlatformNode(int platformEnterNode, GtfsStorageI.PlatformDescriptor platformDescriptor) {
+
+            }
+        };
 
         Map<GtfsStorage.Validity, Integer> operatingDayPatterns = new HashMap<>(staticGtfs.getOperatingDayPatterns());
         Map<Integer, byte[]> tripDescriptors = new HashMap<>();
@@ -158,7 +163,7 @@ public class RealtimeFeed {
                 }
             };
             PtGraph ptGraphNodesAndEdges = null;
-            final GtfsReader gtfsReader = new GtfsReader(feedKey, graphHopperStorage, ptGraphNodesAndEdges, overlayGraph, graphHopperStorage.getEncodingManager(), gtfsStorage, null, transfers.get(feedKey));
+            final GtfsReader gtfsReader = new GtfsReader(feedKey, graphHopperStorage, ptGraphNodesAndEdges, overlayGraph, gtfsStorage, null, transfers.get(feedKey));
             Instant timestamp = Instant.ofEpochSecond(feedMessage.getHeader().getTimestamp());
             LocalDate dateToChange = timestamp.atZone(timezone).toLocalDate(); //FIXME
             BitSet validOnDay = new BitSet();

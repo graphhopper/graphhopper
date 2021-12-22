@@ -18,10 +18,14 @@
 
 package com.graphhopper.gtfs;
 
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.DataAccess;
+import com.graphhopper.storage.Directory;
 import com.graphhopper.util.EdgeIterator;
 
-public class PtGraph {
+import java.util.HashMap;
+import java.util.Map;
+
+public class PtGraph implements GtfsReader.PtGraphOut {
 
     // nodes
     private final DataAccess nodes;
@@ -179,4 +183,46 @@ public class PtGraph {
         return nodes.getInt(nodePointer);
     }
 
+    Map<Integer, GtfsStorageI.PlatformDescriptor> platforms = new HashMap<>();
+
+    public Map<Integer, GtfsStorageI.PlatformDescriptor> getPlatforms(GtfsStorage.FeedIdWithStopId feedIdWithStopId) {
+        HashMap<Integer, GtfsStorageI.PlatformDescriptor> result = new HashMap<>();
+        platforms.forEach((node, platformDescriptor) -> {
+            if (platformDescriptor.feed_id.equals(feedIdWithStopId.feedId) && platformDescriptor.stop_id.equals(feedIdWithStopId.stopId))
+                result.put(node, platformDescriptor);
+        });
+        return result;
+    }
+
+    @Override
+    public void putPlatformNode(int platformEnterNode, GtfsStorageI.PlatformDescriptor platformDescriptor) {
+        platforms.put(platformEnterNode, platformDescriptor);
+    }
+
+    @Override
+    public int createEdge(int src, int dest, PtEdgeAttributes attrs) {
+        return 0;
+    }
+
+    public int createNode() {
+        return 0;
+    }
+
+    public Iterable<PtEdge> edgesAround(int node) {
+        return null;
+    }
+
+    public class PtEdge {
+        public GtfsStorage.EdgeType getType() {
+            return null;
+        }
+
+        public int getTime() {
+            return 0;
+        }
+
+        public int getAdjNode() {
+            return 0;
+        }
+    }
 }

@@ -19,6 +19,7 @@
 package com.graphhopper.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.model.Stop;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
@@ -60,12 +61,13 @@ public final class PtRouterImpl implements PtRouter {
     private final GraphHopperStorage graphHopperStorage;
     private final LocationIndex locationIndex;
     private final GtfsStorage gtfsStorage;
+    private final PtGraph ptGraph;
     private final RealtimeFeed realtimeFeed;
     private final TripFromLabel tripFromLabel;
     private final WeightingFactory weightingFactory;
 
     @Inject
-    public PtRouterImpl(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
+    public PtRouterImpl(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, PtGraph ptGraph, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
         this.config = config;
         this.ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
         this.weightingFactory = new DefaultWeightingFactory(graphHopperStorage, graphHopperStorage.getEncodingManager());
@@ -73,12 +75,9 @@ public final class PtRouterImpl implements PtRouter {
         this.graphHopperStorage = graphHopperStorage;
         this.locationIndex = locationIndex;
         this.gtfsStorage = gtfsStorage;
+        this.ptGraph = ptGraph;
         this.realtimeFeed = realtimeFeed;
         this.tripFromLabel = new TripFromLabel(this.graphHopperStorage, this.gtfsStorage, this.realtimeFeed, pathDetailsBuilderFactory);
-    }
-
-    public static Factory createFactory(GraphHopperConfig config, TranslationMap translationMap, GraphHopper graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
-        return new Factory(config, translationMap, graphHopperStorage.getGraphHopperStorage(), locationIndex, gtfsStorage);
     }
 
     @Override
@@ -93,13 +92,15 @@ public final class PtRouterImpl implements PtRouter {
         private final LocationIndex locationIndex;
         private final GtfsStorage gtfsStorage;
         private final Map<String, Transfers> transfers;
+        private final PtGraph ptGraph;
 
-        private Factory(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
+        public Factory(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, PtGraph ptGraph, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
             this.config = config;
             this.translationMap = translationMap;
             this.graphHopperStorage = graphHopperStorage;
             this.locationIndex = locationIndex;
             this.gtfsStorage = gtfsStorage;
+            this.ptGraph = ptGraph;
             this.transfers = new HashMap<>();
             for (Map.Entry<String, GTFSFeed> entry : this.gtfsStorage.getGtfsFeeds().entrySet()) {
                 this.transfers.put(entry.getKey(), new Transfers(entry.getValue()));
@@ -109,11 +110,11 @@ public final class PtRouterImpl implements PtRouter {
         public PtRouter createWith(GtfsRealtime.FeedMessage realtimeFeed) {
             Map<String, GtfsRealtime.FeedMessage> realtimeFeeds = new HashMap<>();
             realtimeFeeds.put("gtfs_0", realtimeFeed);
-            return new PtRouterImpl(config, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, this.transfers, realtimeFeeds), new PathDetailsBuilderFactory());
+            return new PtRouterImpl(config, translationMap, graphHopperStorage, ptGraph, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, this.transfers, realtimeFeeds), new PathDetailsBuilderFactory());
         }
 
         public PtRouter createWithoutRealtimeFeed() {
-            return new PtRouterImpl(config, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage), new PathDetailsBuilderFactory());
+            return new PtRouterImpl(config, translationMap, graphHopperStorage, ptGraph, locationIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage), new PathDetailsBuilderFactory());
         }
     }
 
@@ -227,7 +228,7 @@ public final class PtRouterImpl implements PtRouter {
 
         private Snap findByStationId(GHStationLocation station, int indexForErrorMessage) {
             for (Map.Entry<String, GTFSFeed> entry : gtfsStorage.getGtfsFeeds().entrySet()) {
-                final Integer node = gtfsStorage.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(entry.getKey(), station.stop_id));
+                final Integer node = gtfsStorage.getStopNode(new GtfsStorage.FeedIdWithStopId(entry.getKey(), station.stop_id));
                 if (node != null) {
                     final Snap stationSnap = new Snap(graphHopperStorage.getNodeAccess().getLat(node), graphHopperStorage.getNodeAccess().getLon(node));
                     stationSnap.setClosestNode(node);
