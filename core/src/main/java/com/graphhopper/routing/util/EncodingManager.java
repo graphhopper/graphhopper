@@ -313,6 +313,10 @@ public class EncodingManager implements EncodedValueLookup {
                 // TODO introduce road_access for different vehicles? But how to create it in DefaultTagParserFactory?
                 _addEdgeTagParser(new OSMRoadAccessParser(), false);
             }
+            if (!em.hasEncodedValue("car_access"))
+                _addEdgeTagParser(new DefaultTagParserFactory().create("car_access", new PMap()), false);
+            if (!em.hasEncodedValue("bike_access"))
+                _addEdgeTagParser(new DefaultTagParserFactory().create("bike_access", new PMap()), false);
 
             if (dateRangeParser == null)
                 dateRangeParser = new DateRangeParser(DateRangeParser.createCalendar());
