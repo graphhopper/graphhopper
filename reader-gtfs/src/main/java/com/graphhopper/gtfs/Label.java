@@ -30,9 +30,9 @@ public class Label {
 
     static class Transition {
         final Label label;
-        final EdgeLabel edge;
+        final GraphExplorer.MultiModalEdge edge;
 
-        Transition(Label label, EdgeLabel edge) {
+        Transition(Label label, GraphExplorer.MultiModalEdge edge) {
             this.label = label;
             this.edge = edge;
         }
@@ -70,7 +70,7 @@ public class Label {
 
     public final long currentTime;
 
-    public final int edge;
+    public final GraphExplorer.MultiModalEdge edge;
     public final NodeId node;
 
     public final int nTransfers;
@@ -85,7 +85,7 @@ public class Label {
 
     public final Label parent;
 
-    Label(long currentTime, int edgeId, NodeId node, int nTransfers, Long departureTime, long streetTime, long extraWeight, long residualDelay, boolean impossible, Label parent) {
+    Label(long currentTime, GraphExplorer.MultiModalEdge edgeId, NodeId node, int nTransfers, Long departureTime, long streetTime, long extraWeight, long residualDelay, boolean impossible, Label parent) {
         this.currentTime = currentTime;
         this.edge = edgeId;
         this.node = node;
@@ -118,14 +118,11 @@ public class Label {
 //            if (!reverseEdgeFlags && edgeIteratorState != null && (edgeIteratorState.getAdjNode() != label.parent.adjNode || edgeIteratorState.getBaseNode() != label.adjNode)) {
 //                throw new IllegalStateException();
 //            }
-
             Label.Transition transition;
             if (reverseEdgeFlags) {
-                PtEdgeAttributes attrs = ptGraph.getEdgeAttributes(label.edge);
-                transition = new Label.Transition(label, attrs != null ? Label.getEdgeLabel(new PtGraph.PtEdge(label.edge, -1 /* FIXME */, attrs), realtimeFeed) : null);
+                transition = new Label.Transition(label, label.edge);
             } else {
-                PtEdgeAttributes attrs = ptGraph.getEdgeAttributes(label.edge);
-                transition = new Label.Transition(label.parent, attrs != null ? Label.getEdgeLabel(new PtGraph.PtEdge(label.edge, -1 /* FIXME */, attrs), realtimeFeed) : null);
+                transition = new Label.Transition(label.parent, label.edge);
             }
             label = label.parent;
             result.add(transition);

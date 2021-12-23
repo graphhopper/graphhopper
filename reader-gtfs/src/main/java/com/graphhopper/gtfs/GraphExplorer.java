@@ -192,7 +192,7 @@ public final class GraphExplorer {
                 return false;
             }
         }, false)
-                .map(e -> new MultiModalEdge(e.getEdge(), e.getBaseNode(), e.getAdjNode(), (int) (accessEgressWeighting.calcEdgeMillis(e.detach(false), reverse) * (5.0 / walkSpeedKmH))));
+                .map(e -> new MultiModalEdge(e.getEdge(), e.getBaseNode(), e.getAdjNode(), (long) (accessEgressWeighting.calcEdgeMillis(e.detach(false), reverse) * (5.0 / walkSpeedKmH))));
     }
 
     long calcTravelTimeMillis(MultiModalEdge edge, long earliestStartTime) {
@@ -210,7 +210,7 @@ public final class GraphExplorer {
                     return 0;
                 }
             default:
-                return edge.getTime() * 1000L;
+                return edge.getTime();
         }
     }
 
@@ -229,7 +229,7 @@ public final class GraphExplorer {
                     return 0;
                 }
             default:
-                return edge.getTime() * 1000L;
+                return edge.getTime();
         }
     }
 
@@ -285,23 +285,18 @@ public final class GraphExplorer {
         throw new RuntimeException("Edge type "+edgeType+" doesn't encode route type.");
     }
 
-    public PtEdgeAttributes getEdgeAttributes(int edge) {
-        return ptGraph.getEdgeAttributes(edge);
-    }
-
     public static class MultiModalEdge {
-        int baseNode;
-        int adjNode;
-        int time;
-        int edge;
-        PtGraph.PtEdge ptEdge;
-
+        private int baseNode;
+        private int adjNode;
+        private long time;
+        private int edge;
+        private PtGraph.PtEdge ptEdge;
 
         public MultiModalEdge(PtGraph.PtEdge ptEdge) {
             this.ptEdge = ptEdge;
         }
 
-        public MultiModalEdge(int edge, int baseNode, int adjNode, int time) {
+        public MultiModalEdge(int edge, int baseNode, int adjNode, long time) {
             this.edge = edge;
             this.baseNode = baseNode;
             this.adjNode = adjNode;
@@ -325,7 +320,7 @@ public final class GraphExplorer {
         }
 
         public long getTime() {
-            return ptEdge != null ? ptEdge.getTime() : time;
+            return ptEdge != null ? ptEdge.getTime() * 1000L : time;
         }
 
         @Override
@@ -335,6 +330,10 @@ public final class GraphExplorer {
                     ", edge=" + edge +
                     ", ptEdge=" + ptEdge +
                     '}';
+        }
+
+        public double getDistance() {
+            return 0;
         }
     }
 }

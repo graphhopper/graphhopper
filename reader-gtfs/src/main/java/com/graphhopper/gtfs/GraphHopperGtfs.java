@@ -101,9 +101,8 @@ public class GraphHopperGtfs extends GraphHopper {
             while (iterator.hasNext()) {
                 Label label = iterator.next();
                 if (label.parent != null) {
-                    PtEdgeAttributes edgeIteratorState = ptGraph.getEdgeAttributes(label.edge);
-                    if (edgeIteratorState.type == GtfsStorage.EdgeType.EXIT_PT) {
-                        GtfsStorageI.PlatformDescriptor fromPlatformDescriptor = getGtfsStorage().getPlatformDescriptorByEdge().get(label.edge);
+                    if (label.edge.getType() == GtfsStorage.EdgeType.EXIT_PT) {
+                        GtfsStorageI.PlatformDescriptor fromPlatformDescriptor = getGtfsStorage().getPlatformDescriptorByEdge().get(label.edge.getId());
                         Transfers transfers = allTransfers.get(fromPlatformDescriptor.feed_id);
                         for (PtGraph.PtEdge ptEdge : ptGraph.edgesAround(stationNode.node)) {
                             if (ptEdge.getType() == GtfsStorage.EdgeType.ENTER_PT) {

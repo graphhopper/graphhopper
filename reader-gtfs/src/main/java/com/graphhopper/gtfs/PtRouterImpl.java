@@ -263,7 +263,7 @@ public final class PtRouterImpl implements PtRouter {
                 if (label.node.equals(startNode)) {
                     stationLabels.add(label);
                     break;
-                } else if (label.edge != -1 && ptGraph.getEdgeAttributes(label.edge) != null && ptGraph.getEdgeAttributes(label.edge).type == edgeType) {
+                } else if (label.edge != null && label.edge.getType() == edgeType) {
                     stationLabels.add(label);
                 }
             }
@@ -321,7 +321,7 @@ public final class PtRouterImpl implements PtRouter {
                 }
                 Label reverseLabel = reverseSettledSet.get(label.node);
                 if (reverseLabel != null) {
-                    Label combinedSolution = new Label(label.currentTime - reverseLabel.currentTime + initialTime.toEpochMilli(), -1, label.node, label.nTransfers + reverseLabel.nTransfers, label.departureTime, label.streetTime + reverseLabel.streetTime, label.extraWeight + reverseLabel.extraWeight, 0, label.impossible, null);
+                    Label combinedSolution = new Label(label.currentTime - reverseLabel.currentTime + initialTime.toEpochMilli(), null, label.node, label.nTransfers + reverseLabel.nTransfers, label.departureTime, label.streetTime + reverseLabel.streetTime, label.extraWeight + reverseLabel.extraWeight, 0, label.impossible, null);
                     List<Label> filteredSolutions;
                     List<Label> otherSolutions;
                     if (profileQuery && combinedSolution.departureTime != null) {

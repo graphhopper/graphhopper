@@ -17,8 +17,6 @@
  */
 package com.graphhopper.gtfs;
 
-import com.graphhopper.util.EdgeIterator;
-
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
@@ -98,7 +96,7 @@ public class MultiCriteriaLabelSetting {
 
         MultiCriteriaLabelSettingSpliterator(Label.NodeId from) {
             super(0, 0);
-            Label label = new Label(startTime, EdgeIterator.NO_EDGE, from, 0, null, 0, 0L, 0, false, null);
+            Label label = new Label(startTime, null, from, 0, null, 0, 0L, 0, false, null);
             ArrayList<Label> labels = new ArrayList<>(1);
             labels.add(label);
             fromMap.put(from, labels);
@@ -148,7 +146,11 @@ public class MultiCriteriaLabelSetting {
                         return;
                     if (Math.abs(nextTime - startTime) > limitTripTime)
                         return;
-                    if (edgeType == GtfsStorage.EdgeType.ENTER_PT && justExitedPt(label)) {
+                    boolean result = false;
+                    if (label.edge != null) {
+                        result = label.edge.getType() == GtfsStorage.EdgeType.EXIT_PT;
+                    }
+                    if (edgeType == GtfsStorage.EdgeType.ENTER_PT && result) {
                         return;
                     }
                     boolean impossible = label.impossible
@@ -174,14 +176,14 @@ public class MultiCriteriaLabelSetting {
                         }
                     }
                     if (!reverse && edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK && residualDelay > 0) {
-                        Label newImpossibleLabelForDelayedTrip = new Label(nextTime, edge.getId(), edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, true, label);
+                        Label newImpossibleLabelForDelayedTrip = new Label(nextTime, edge, edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, true, label);
                         insertIfNotDominated(newImpossibleLabelForDelayedTrip);
                         nextTime += residualDelay;
                         residualDelay = 0;
-                        Label newLabel = new Label(nextTime, edge.getId(), edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, impossible, label);
+                        Label newLabel = new Label(nextTime, edge, edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, impossible, label);
                         insertIfNotDominated(newLabel);
                     } else {
-                        Label newLabel = new Label(nextTime, edge.getId(), edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, impossible, label);
+                        Label newLabel = new Label(nextTime, edge, edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, impossible, label);
                         insertIfNotDominated(newLabel);
                     }
                 });
@@ -190,12 +192,6 @@ public class MultiCriteriaLabelSetting {
         }
     }
 
-
-    private boolean justExitedPt(Label label) {
-        if (label.edge == -1)
-            return false;
-        return explorer.getEdgeAttributes(label.edge).type == GtfsStorage.EdgeType.EXIT_PT;
-    }
 
     void insertIfNotDominated(Label me) {
         List<Label> filteredTargetLabels = profileQuery && me.departureTime != null ? partitionByProfileCriterion(me, targetLabels).get(true) : targetLabels;

@@ -28,7 +28,6 @@ import com.conveyal.gtfs.model.Trip;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.EdgeIteratorState;
 import org.mapdb.Fun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -251,10 +250,10 @@ public class RealtimeFeed {
         return additionalEdges;
     }
 
-    public Optional<GtfsReader.TripWithStopTimes> getTripUpdate(GTFSFeed staticFeed, GtfsRealtime.TripDescriptor tripDescriptor, Label.Transition boardEdge, Instant boardTime) {
+    public Optional<GtfsReader.TripWithStopTimes> getTripUpdate(GTFSFeed staticFeed, GtfsRealtime.TripDescriptor tripDescriptor, Instant boardTime) {
         try {
             logger.trace("getTripUpdate {}", tripDescriptor);
-            if (!isThisRealtimeUpdateAboutThisLineRun(boardEdge.edge.ptEdge, boardTime)) {
+            if (!isThisRealtimeUpdateAboutThisLineRun(boardTime)) {
                 return Optional.empty();
             } else {
                 GtfsRealtime.TripDescriptor normalizedTripDescriptor = normalize(tripDescriptor);
@@ -377,7 +376,7 @@ public class RealtimeFeed {
     }
 
     public long getDelayForBoardEdge(PtGraph.PtEdge edge, Instant now) {
-        if (isThisRealtimeUpdateAboutThisLineRun(edge, now)) {
+        if (isThisRealtimeUpdateAboutThisLineRun(now)) {
             return delaysForBoardEdges.getOrDefault(edge.getId(), 0);
         } else {
             return 0;
@@ -385,14 +384,14 @@ public class RealtimeFeed {
     }
 
     public long getDelayForAlightEdge(PtGraph.PtEdge edge, Instant now) {
-        if (isThisRealtimeUpdateAboutThisLineRun(edge, now)) {
+        if (isThisRealtimeUpdateAboutThisLineRun(now)) {
             return delaysForAlightEdges.getOrDefault(edge.getId(), 0);
         } else {
             return 0;
         }
     }
 
-    boolean isThisRealtimeUpdateAboutThisLineRun(PtGraph.PtEdge edge, Instant now) {
+    boolean isThisRealtimeUpdateAboutThisLineRun(Instant now) {
         if (Duration.between(feedTimestampOrNow(), now).toHours() > 24) {
             return false;
         } else {
@@ -421,7 +420,7 @@ public class RealtimeFeed {
     public StopTime getStopTime(GTFSFeed staticFeed, GtfsRealtime.TripDescriptor tripDescriptor, Label.Transition t, Instant boardTime, int stopSequence) {
         StopTime stopTime = staticFeed.stop_times.get(new Fun.Tuple2<>(tripDescriptor.getTripId(), stopSequence));
         if (stopTime == null) {
-            return getTripUpdate(staticFeed, tripDescriptor, t, boardTime).get().stopTimes.get(stopSequence - 1);
+            return getTripUpdate(staticFeed, tripDescriptor, boardTime).get().stopTimes.get(stopSequence - 1);
         } else {
             return stopTime;
         }
