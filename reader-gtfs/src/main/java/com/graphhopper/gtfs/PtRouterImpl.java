@@ -48,6 +48,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import javax.inject.Inject;
 import java.time.Instant;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparingLong;
@@ -179,7 +180,7 @@ public final class PtRouterImpl implements PtRouter {
         GHResponse route() {
             StopWatch stopWatch = new StopWatch().start();
             ArrayList<Snap> pointSnaps = new ArrayList<>();
-            ArrayList<Label.NodeId> allSnaps = new ArrayList<>();
+            ArrayList<Supplier<Label.NodeId>> allSnaps = new ArrayList<>();
             PointList points = new PointList(2, false);
             List<GHLocation> locations = Arrays.asList(enter, exit);
             for (int i = 0; i < locations.size(); i++) {
@@ -187,11 +188,11 @@ public final class PtRouterImpl implements PtRouter {
                 if (location instanceof GHPointLocation) {
                     final Snap closest = findByPoint(((GHPointLocation) location).ghPoint, i, i == 0 ? this.accessSnapFilter : this.egressSnapFilter);
                     pointSnaps.add(closest);
-                    allSnaps.add(new Label.NodeId(closest.getClosestNode(), false));
+                    allSnaps.add(() -> new Label.NodeId(closest.getClosestNode(), false));
                     points.add(closest.getSnappedPoint());
                 } else if (location instanceof GHStationLocation) {
                     final Snap station = findByStationId((GHStationLocation) location, i);
-                    allSnaps.add(new Label.NodeId(station.getClosestNode(), true));
+                    allSnaps.add(() -> new Label.NodeId(station.getClosestNode(), true));
                     points.add(station.getQueryPoint().lat, station.getQueryPoint().lon);
                 }
             }
@@ -201,11 +202,11 @@ public final class PtRouterImpl implements PtRouter {
             Label.NodeId startNode;
             Label.NodeId destNode;
             if (arriveBy) {
-                startNode = allSnaps.get(1);
-                destNode = allSnaps.get(0);
+                startNode = allSnaps.get(1).get();
+                destNode = allSnaps.get(0).get();
             } else {
-                startNode = allSnaps.get(0);
-                destNode = allSnaps.get(1);
+                startNode = allSnaps.get(0).get();
+                destNode = allSnaps.get(1).get();
             }
             List<List<Label.Transition>> solutions = findPaths(startNode, destNode);
             parseSolutionsAndAddToResponse(solutions, points);
