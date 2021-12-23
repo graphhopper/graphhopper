@@ -26,12 +26,12 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.Iterator;
 import java.util.Spliterators;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -54,9 +54,11 @@ public final class GraphExplorer {
     private final IntEncodedValue validityEnc;
     private final int blockedRouteTypes;
     private final Graph graph;
+    private final PtGraph ptGraph;
 
-    public GraphExplorer(Graph graph, Weighting accessEgressWeighting, PtEncodedValues flagEncoder, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, boolean walkOnly, boolean ptOnly, double walkSpeedKmh, boolean ignoreValidities, int blockedRouteTypes) {
+    public GraphExplorer(Graph graph, PtGraph ptGraph, Weighting accessEgressWeighting, PtEncodedValues flagEncoder, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, boolean walkOnly, boolean ptOnly, double walkSpeedKmh, boolean ignoreValidities, int blockedRouteTypes) {
         this.graph = graph;
+        this.ptGraph = ptGraph;
         this.accessEgressWeighting = accessEgressWeighting;
         this.accessEnc = accessEgressWeighting.getFlagEncoder().getAccessEnc();
         this.ignoreValidities = ignoreValidities;
@@ -79,14 +81,15 @@ public final class GraphExplorer {
         this.walkSpeedKmH = walkSpeedKmh;
     }
 
-    Stream<EdgeIteratorState> exploreEdgesAround(Label label) {
-        return StreamSupport.stream(new Spliterators.AbstractSpliterator<EdgeIteratorState>(0, 0) {
-            final EdgeIterator edgeIterator = edgeExplorer.setBaseNode(label.adjNode);
+    Stream<PtGraph.PtEdge> exploreEdgesAround(Label label) {
+        return StreamSupport.stream(new Spliterators.AbstractSpliterator<PtGraph.PtEdge>(0, 0) {
+            final Iterator<PtGraph.PtEdge> edgeIterator = ptGraph.edgesAround(label.adjNode).iterator();
 
             @Override
-            public boolean tryAdvance(Consumer<? super EdgeIteratorState> action) {
-                while (edgeIterator.next()) {
-                    GtfsStorage.EdgeType edgeType = edgeIterator.get(typeEnc);
+            public boolean tryAdvance(Consumer<? super PtGraph.PtEdge> action) {
+                while (edgeIterator.hasNext()) {
+                    PtGraph.PtEdge edge = edgeIterator.next();
+                    GtfsStorage.EdgeType edgeType = edge.getType();
 
                     // Optimization (around 20% in Swiss network):
                     // Only use the (single) least-wait-time edge to enter the
@@ -99,22 +102,22 @@ public final class GraphExplorer {
                         if (walkOnly) {
                             return false;
                         } else {
-                            action.accept(findEnterEdge()); // fully consumes edgeIterator
+                            action.accept(findEnterEdge(edge)); // fully consumes edgeIterator
                             return true;
                         }
                     }
-                    if (edgeType == GtfsStorage.EdgeType.HIGHWAY) {
-                        if (reverse ? edgeIterator.getReverse(accessEnc) : edgeIterator.get(accessEnc)) {
-                            action.accept(edgeIterator);
-                            return true;
-                        } else {
-                            continue;
-                        }
-                    }
+//                    if (edgeType == GtfsStorage.EdgeType.HIGHWAY) {
+//                        if (reverse ? edgeIterator.getReverse(accessEnc) : edgeIterator.get(accessEnc)) {
+//                            action.accept(edgeIterator);
+//                            return true;
+//                        } else {
+//                            continue;
+//                        }
+//                    }
                     if (walkOnly && edgeType != (reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT)) {
                         continue;
                     }
-                    if (!(ignoreValidities || isValidOn(edgeIterator, label.currentTime))) {
+                    if (!(ignoreValidities || isValidOn(edge, label.currentTime))) {
                         continue;
                     }
                     if (edgeType == GtfsStorage.EdgeType.WAIT_ARRIVAL && !reverse) {
@@ -126,23 +129,23 @@ public final class GraphExplorer {
                     if (edgeType == GtfsStorage.EdgeType.EXIT_PT && !reverse && ptOnly) {
                         continue;
                     }
-                    if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT) && (blockedRouteTypes & (1 << edgeIterator.get(validityEnc))) != 0) {
+                    if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT) && (blockedRouteTypes & (1 << edge.getAttrs().validityId)) != 0) {
                         continue;
                     }
-                    if (edgeType == GtfsStorage.EdgeType.TRANSFER && routeTypeBlocked(edgeIterator)) {
+                    if (edgeType == GtfsStorage.EdgeType.TRANSFER && routeTypeBlocked(edge)) {
                         continue;
                     }
                     if (edgeType == GtfsStorage.EdgeType.ENTER_PT && justExitedPt(label)) {
                         continue;
                     }
-                    action.accept(edgeIterator);
+                    action.accept(edge);
                     return true;
                 }
                 return false;
             }
 
-            private boolean routeTypeBlocked(EdgeIterator edgeIterator) {
-                GtfsStorageI.PlatformDescriptor platformDescriptor = realtimeFeed.getPlatformDescriptorByEdge().get(edgeIterator.getEdge());
+            private boolean routeTypeBlocked(PtGraph.PtEdge edge) {
+                GtfsStorageI.PlatformDescriptor platformDescriptor = realtimeFeed.getPlatformDescriptorByEdge().get(edge.getId());
                 int routeType = routeType(platformDescriptor);
                 return (blockedRouteTypes & (1 << routeType)) != 0;
             }
@@ -163,14 +166,13 @@ public final class GraphExplorer {
                 return edgeType == GtfsStorage.EdgeType.EXIT_PT;
             }
 
-            private EdgeIteratorState findEnterEdge() {
-                EdgeIteratorState first = edgeIterator.detach(false);
-                long firstTT = calcTravelTimeMillis(edgeIterator, label.currentTime);
-                while (edgeIterator.next()) {
-                    long nextTT = calcTravelTimeMillis(edgeIterator, label.currentTime);
+            private PtGraph.PtEdge findEnterEdge(PtGraph.PtEdge first) {
+                long firstTT = calcTravelTimeMillis(first, label.currentTime);
+                while (edgeIterator.hasNext()) {
+                    PtGraph.PtEdge result = edgeIterator.next();
+                    long nextTT = calcTravelTimeMillis(result, label.currentTime);
                     if (nextTT < firstTT) {
-                        EdgeIteratorState result = edgeIterator.detach(false);
-                        while (edgeIterator.next());
+                        edgeIterator.forEachRemaining(ptEdge -> {});
                         return result;
                     }
                 }
@@ -180,10 +182,10 @@ public final class GraphExplorer {
         }, false);
     }
 
-    long calcTravelTimeMillis(EdgeIteratorState edge, long earliestStartTime) {
-        switch (edge.get(typeEnc)) {
-            case HIGHWAY:
-                return (long) (accessEgressWeighting.calcEdgeMillis(edge, reverse) * (5.0 / walkSpeedKmH));
+    long calcTravelTimeMillis(PtGraph.PtEdge edge, long earliestStartTime) {
+        switch (edge.getType()) {
+//            case HIGHWAY:
+//                return (long) (accessEgressWeighting.calcEdgeMillis(edge, reverse) * (5.0 / walkSpeedKmH));
             case ENTER_TIME_EXPANDED_NETWORK:
                 if (reverse) {
                     return 0;
@@ -197,24 +199,24 @@ public final class GraphExplorer {
                     return 0;
                 }
             default:
-                return edge.get(flagEncoder.getTimeEnc()) * 1000;
+                return edge.getTime() * 1000L;
         }
     }
 
-    boolean isBlocked(EdgeIteratorState edge) {
-        return realtimeFeed.isBlocked(edge.getEdge());
+    boolean isBlocked(PtGraph.PtEdge edge) {
+        return realtimeFeed.isBlocked(edge.getId());
     }
 
-    long getDelayFromBoardEdge(EdgeIteratorState edge, long currentTime) {
+    long getDelayFromBoardEdge(PtGraph.PtEdge edge, long currentTime) {
         return realtimeFeed.getDelayForBoardEdge(edge, Instant.ofEpochMilli(currentTime));
     }
 
-    long getDelayFromAlightEdge(EdgeIteratorState edge, long currentTime) {
+    long getDelayFromAlightEdge(PtGraph.PtEdge edge, long currentTime) {
         return realtimeFeed.getDelayForAlightEdge(edge, Instant.ofEpochMilli(currentTime));
     }
 
-    private long waitingTime(EdgeIteratorState edge, long earliestStartTime) {
-        long l = edge.get(flagEncoder.getTimeEnc()) * 1000 - millisOnTravelDay(edge, earliestStartTime);
+    private long waitingTime(PtGraph.PtEdge edge, long earliestStartTime) {
+        long l = edge.getTime() * 1000L - millisOnTravelDay(edge, earliestStartTime);
         if (!reverse) {
             if (l < 0) l = l + 24 * 60 * 60 * 1000;
         } else {
@@ -223,16 +225,14 @@ public final class GraphExplorer {
         return l;
     }
 
-    private long millisOnTravelDay(EdgeIteratorState edge, long instant) {
-        final ZoneId zoneId = gtfsStorage.getTimeZones().get(edge.get(flagEncoder.getValidityIdEnc())).zoneId;
+    private long millisOnTravelDay(PtGraph.PtEdge edge, long instant) {
+        final ZoneId zoneId = gtfsStorage.getTimeZones().get(edge.getAttrs().validityId).zoneId;
         return Instant.ofEpochMilli(instant).atZone(zoneId).toLocalTime().toNanoOfDay() / 1000000L;
     }
 
-    private boolean isValidOn(EdgeIteratorState edge, long instant) {
-        GtfsStorage.EdgeType edgeType = edge.get(typeEnc);
-        if (edgeType == GtfsStorage.EdgeType.BOARD || edgeType == GtfsStorage.EdgeType.ALIGHT) {
-            final int validityId = edge.get(validityEnc);
-            final GtfsStorage.Validity validity = realtimeFeed.getValidity(validityId);
+    private boolean isValidOn(PtGraph.PtEdge edge, long instant) {
+        if (edge.getType() == GtfsStorage.EdgeType.BOARD || edge.getType() == GtfsStorage.EdgeType.ALIGHT) {
+            final GtfsStorage.Validity validity = realtimeFeed.getValidity(edge.getAttrs().validityId);
             final int trafficDay = (int) ChronoUnit.DAYS.between(validity.start, Instant.ofEpochMilli(instant).atZone(validity.zoneId).toLocalDate());
             return trafficDay >= 0 && validity.validity.get(trafficDay);
         } else {
@@ -244,17 +244,17 @@ public final class GraphExplorer {
         return edge.get(flagEncoder.getTransfersEnc());
     }
 
-    int routeType(EdgeIteratorState edge) {
-        GtfsStorage.EdgeType edgeType = edge.get(typeEnc);
+    int routeType(PtGraph.PtEdge edge) {
+        GtfsStorage.EdgeType edgeType = edge.getType();
         if (edgeType == GtfsStorage.EdgeType.TRANSFER) {
-            GtfsStorageI.PlatformDescriptor platformDescriptor = realtimeFeed.getPlatformDescriptorByEdge().get(edge.getEdge());
+            GtfsStorageI.PlatformDescriptor platformDescriptor = realtimeFeed.getPlatformDescriptorByEdge().get(edge.getId());
             if (platformDescriptor instanceof GtfsStorageI.RouteTypePlatform) {
                 return ((GtfsStorageI.RouteTypePlatform) platformDescriptor).route_type;
             } else {
                 return gtfsStorage.getGtfsFeeds().get(platformDescriptor.feed_id).routes.get(((GtfsStorageI.RoutePlatform) platformDescriptor).route_id).route_type;
             }
         } else if (edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT) {
-            return edge.get(validityEnc);
+            return edge.getAttrs().validityId;
         }
         throw new RuntimeException("Edge type "+edgeType+" doesn't encode route type.");
     }

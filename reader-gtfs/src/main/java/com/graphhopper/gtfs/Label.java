@@ -49,6 +49,7 @@ public class Label {
         public final String feedId;
         public final int nTransfers;
         public final double distance;
+        public PtGraph.PtEdge ptEdge;
 
         public EdgeLabel(EdgeIteratorState edgeIteratorState, GtfsStorage.EdgeType edgeType, String feedId, int nTransfers, double distance) {
             this.edgeIteratorState = edgeIteratorState;

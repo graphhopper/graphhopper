@@ -22,8 +22,7 @@ import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.util.EdgeIterator;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class PtGraph implements GtfsReader.PtGraphOut {
 
@@ -194,6 +193,12 @@ public class PtGraph implements GtfsReader.PtGraphOut {
         return result;
     }
 
+    int nextEdge = 0;
+    int nextNode = 0;
+    Map<Integer, PtEdgeAttributes> edgeAttributesMap = new HashMap<>();
+    Map<Integer, Integer> edgeDestinationsMap = new HashMap<>();
+    Map<Integer, List<Integer>> nodeToOutEdges = new HashMap<>();
+
     @Override
     public void putPlatformNode(int platformEnterNode, GtfsStorageI.PlatformDescriptor platformDescriptor) {
         platforms.put(platformEnterNode, platformDescriptor);
@@ -201,28 +206,52 @@ public class PtGraph implements GtfsReader.PtGraphOut {
 
     @Override
     public int createEdge(int src, int dest, PtEdgeAttributes attrs) {
-        return 0;
+        int edge = nextEdge++;
+        edgeAttributesMap.put(edge, attrs);
+        edgeDestinationsMap.put(edge, dest);
+        nodeToOutEdges.putIfAbsent(src, new ArrayList<>());
+        List<Integer> outEdges = nodeToOutEdges.get(src);
+        outEdges.add(edge);
+        return edge;
     }
 
     public int createNode() {
-        return 0;
+        return nextNode++;
     }
 
     public Iterable<PtEdge> edgesAround(int node) {
-        return null;
+        return () -> nodeToOutEdges.getOrDefault(node, Collections.emptyList()).stream().map(e -> new PtEdge(e, edgeDestinationsMap.get(e), edgeAttributesMap.get(e))).iterator();
     }
 
     public class PtEdge {
+        private final int edgeId;
+        private final int adjNode;
+        private final PtEdgeAttributes attrs;
+
+        public PtEdge(int edgeId, int adjNode, PtEdgeAttributes attrs) {
+            this.edgeId = edgeId;
+            this.adjNode = adjNode;
+            this.attrs = attrs;
+        }
+
         public GtfsStorage.EdgeType getType() {
-            return null;
+            return attrs.type;
         }
 
         public int getTime() {
-            return 0;
+            return attrs.time;
         }
 
         public int getAdjNode() {
-            return 0;
+            return adjNode;
+        }
+
+        public PtEdgeAttributes getAttrs() {
+            return attrs;
+        }
+
+        public int getId() {
+            return edgeId;
         }
     }
 }

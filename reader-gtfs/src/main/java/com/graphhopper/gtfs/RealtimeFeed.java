@@ -91,6 +91,11 @@ public class RealtimeFeed {
             public void putPlatformNode(int platformEnterNode, GtfsStorageI.PlatformDescriptor platformDescriptor) {
 
             }
+
+            @Override
+            public int createEdge(int src, int dest, PtEdgeAttributes attrs) {
+                return 0;
+            }
         };
 
         Map<GtfsStorage.Validity, Integer> operatingDayPatterns = new HashMap<>(staticGtfs.getOperatingDayPatterns());
@@ -249,7 +254,7 @@ public class RealtimeFeed {
     public Optional<GtfsReader.TripWithStopTimes> getTripUpdate(GTFSFeed staticFeed, GtfsRealtime.TripDescriptor tripDescriptor, Label.Transition boardEdge, Instant boardTime) {
         try {
             logger.trace("getTripUpdate {}", tripDescriptor);
-            if (!isThisRealtimeUpdateAboutThisLineRun(boardEdge.edge.edgeIteratorState, boardTime)) {
+            if (!isThisRealtimeUpdateAboutThisLineRun(boardEdge.edge.ptEdge, boardTime)) {
                 return Optional.empty();
             } else {
                 GtfsRealtime.TripDescriptor normalizedTripDescriptor = normalize(tripDescriptor);
@@ -371,23 +376,23 @@ public class RealtimeFeed {
         return new GtfsReader.TripWithStopTimes(trip, stopTimes, validOnDay, cancelledArrivals, cancelledDepartures);
     }
 
-    public long getDelayForBoardEdge(EdgeIteratorState edge, Instant now) {
+    public long getDelayForBoardEdge(PtGraph.PtEdge edge, Instant now) {
         if (isThisRealtimeUpdateAboutThisLineRun(edge, now)) {
-            return delaysForBoardEdges.getOrDefault(edge.getEdge(), 0);
+            return delaysForBoardEdges.getOrDefault(edge.getId(), 0);
         } else {
             return 0;
         }
     }
 
-    public long getDelayForAlightEdge(EdgeIteratorState edge, Instant now) {
+    public long getDelayForAlightEdge(PtGraph.PtEdge edge, Instant now) {
         if (isThisRealtimeUpdateAboutThisLineRun(edge, now)) {
-            return delaysForAlightEdges.getOrDefault(edge.getEdge(), 0);
+            return delaysForAlightEdges.getOrDefault(edge.getId(), 0);
         } else {
             return 0;
         }
     }
 
-    boolean isThisRealtimeUpdateAboutThisLineRun(EdgeIteratorState edge, Instant now) {
+    boolean isThisRealtimeUpdateAboutThisLineRun(PtGraph.PtEdge edge, Instant now) {
         if (Duration.between(feedTimestampOrNow(), now).toHours() > 24) {
             return false;
         } else {
