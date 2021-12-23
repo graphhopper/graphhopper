@@ -225,7 +225,7 @@ class TripFromLabel {
             switch (t.edge.edgeType) {
                 case BOARD: {
                     boardTime = Instant.ofEpochMilli(t.label.currentTime);
-                    stopSequence = realtimeFeed.getStopSequence(t.edge.edgeIteratorState.getEdge());
+                    stopSequence = realtimeFeed.getStopSequence(t.edge.ptEdge.getId());
                     stopTime = realtimeFeed.getStopTime(gtfsFeed, tripDescriptor, t, boardTime, stopSequence);
                     tripUpdate = realtimeFeed.getTripUpdate(gtfsFeed, tripDescriptor, t, boardTime).orElse(null);
                     Instant plannedDeparture = Instant.ofEpochMilli(t.label.currentTime);
@@ -238,7 +238,7 @@ class TripFromLabel {
                     break;
                 }
                 case HOP: {
-                    stopSequence = realtimeFeed.getStopSequence(t.edge.edgeIteratorState.getEdge());
+                    stopSequence = realtimeFeed.getStopSequence(t.edge.ptEdge.getId());
                     stopTime = realtimeFeed.getStopTime(gtfsFeed, tripDescriptor, t, boardTime, stopSequence);
                     arrivalTimeFromHopEdge = Instant.ofEpochMilli(t.label.currentTime);
                     updatedArrival = getArrivalDelay(stopSequence).map(delay -> arrivalTimeFromHopEdge.plus(delay, SECONDS));
@@ -350,7 +350,7 @@ class TripFromLabel {
                     Geometry lineString = lineStringFromEdges(partition);
                     GtfsRealtime.TripDescriptor tripDescriptor;
                     try {
-                        tripDescriptor = GtfsRealtime.TripDescriptor.parseFrom(realtimeFeed.getTripDescriptor(partition.get(0).edge.edgeIteratorState.getEdge()));
+                        tripDescriptor = GtfsRealtime.TripDescriptor.parseFrom(realtimeFeed.getTripDescriptor(partition.get(0).edge.ptEdge.getId()));
                     } catch (InvalidProtocolBufferException e) {
                         throw new RuntimeException(e);
                     }
@@ -419,10 +419,11 @@ class TripFromLabel {
 
     private Geometry lineStringFromEdges(List<Label.Transition> transitions) {
         List<Coordinate> coordinates = new ArrayList<>();
-        final Iterator<Label.Transition> iterator = transitions.iterator();
-        iterator.next();
-        coordinates.addAll(toCoordinateArray(iterator.next().edge.edgeIteratorState.fetchWayGeometry(FetchMode.ALL)));
-        iterator.forEachRemaining(transition -> coordinates.addAll(toCoordinateArray(transition.edge.edgeIteratorState.fetchWayGeometry(FetchMode.PILLAR_AND_ADJ))));
+//        final Iterator<Label.Transition> iterator = transitions.iterator();
+//        iterator.next();
+//        coordinates.addAll(toCoordinateArray(iterator.next().edge.edgeIteratorState.fetchWayGeometry(FetchMode.ALL)));
+//        iterator.forEachRemaining(transition -> coordinates.addAll(toCoordinateArray(transition.edge.edgeIteratorState.fetchWayGeometry(FetchMode.PILLAR_AND_ADJ))));
+        // FIXME
         return geometryFactory.createLineString(coordinates.toArray(new Coordinate[coordinates.size()]));
     }
 

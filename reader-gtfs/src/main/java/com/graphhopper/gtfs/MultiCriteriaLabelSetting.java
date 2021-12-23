@@ -19,7 +19,6 @@ package com.graphhopper.gtfs;
 
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
-import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.util.EdgeIterator;
 
 import java.time.Instant;
@@ -48,7 +47,6 @@ public class MultiCriteriaLabelSetting {
     private final Comparator<Label> queueComparator;
     private final List<Label> targetLabels;
     private long startTime;
-    private final EnumEncodedValue<GtfsStorage.EdgeType> typeEnc;
     private final IntObjectMap<List<Label>> fromMap;
     private final PriorityQueue<Label> fromHeap;
     private final long maxProfileDuration;
@@ -62,14 +60,13 @@ public class MultiCriteriaLabelSetting {
     private long limitTripTime = Long.MAX_VALUE;
     private long limitStreetTime = Long.MAX_VALUE;
 
-    public MultiCriteriaLabelSetting(GraphExplorer explorer, PtEncodedValues flagEncoder, boolean reverse, boolean mindTransfers, boolean profileQuery, long maxProfileDuration, List<Label> solutions) {
+    public MultiCriteriaLabelSetting(GraphExplorer explorer, boolean reverse, boolean mindTransfers, boolean profileQuery, long maxProfileDuration, List<Label> solutions) {
         this.explorer = explorer;
         this.reverse = reverse;
         this.mindTransfers = mindTransfers;
         this.profileQuery = profileQuery;
         this.maxProfileDuration = maxProfileDuration;
         this.targetLabels = solutions;
-        this.typeEnc = flagEncoder.getTypeEnc();
 
         queueComparator = Comparator
                 .comparingLong(this::weight)
@@ -83,7 +80,8 @@ public class MultiCriteriaLabelSetting {
 
     public Stream<Label> calcLabels(int from, Instant startTime) {
         this.startTime = startTime.toEpochMilli();
-        return StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from), false);
+        return StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from), false)
+                .peek(l -> System.out.println(l));
     }
 
     void setBetaTransfers(double betaTransfers) {
@@ -117,6 +115,7 @@ public class MultiCriteriaLabelSetting {
                 return false;
             } else {
                 Label label = fromHeap.poll();
+                System.out.println("pop " + label);
                 action.accept(label);
                 explorer.exploreEdgesAround(label).forEach(edge -> {
                     long nextTime;

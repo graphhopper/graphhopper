@@ -7,6 +7,16 @@ public class PtEdgeAttributes {
     public int validityId;
     public int transfers;
 
+    @Override
+    public String toString() {
+        return "PtEdgeAttributes{" +
+                "type=" + type +
+                ", time=" + time +
+                ", validityId=" + validityId +
+                ", transfers=" + transfers +
+                '}';
+    }
+
     public PtEdgeAttributes(GtfsStorage.EdgeType type, int time, int validityId, int transfers) {
         this.type = type;
         this.time = time;

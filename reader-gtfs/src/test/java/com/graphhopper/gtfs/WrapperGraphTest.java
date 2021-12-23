@@ -33,7 +33,7 @@ public class WrapperGraphTest {
     private final EncodingManager encodingManager;
 
     public WrapperGraphTest() {
-        encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new FootFlagEncoder()).build();
+        encodingManager = EncodingManager.start().add(new FootFlagEncoder()).build();
     }
 
     @Test

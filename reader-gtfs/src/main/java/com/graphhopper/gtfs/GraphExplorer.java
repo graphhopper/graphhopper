@@ -19,14 +19,10 @@
 package com.graphhopper.gtfs;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.routing.util.AccessFilter;
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIteratorState;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -40,8 +36,6 @@ import java.util.stream.StreamSupport;
 public final class GraphExplorer {
 
     private final EdgeExplorer edgeExplorer;
-    private final PtEncodedValues flagEncoder;
-    private final EnumEncodedValue<GtfsStorage.EdgeType> typeEnc;
     private final GtfsStorage gtfsStorage;
     private final RealtimeFeed realtimeFeed;
     private final boolean reverse;
@@ -51,12 +45,11 @@ public final class GraphExplorer {
     private final boolean ptOnly;
     private final double walkSpeedKmH;
     private final boolean ignoreValidities;
-    private final IntEncodedValue validityEnc;
     private final int blockedRouteTypes;
     private final Graph graph;
     private final PtGraph ptGraph;
 
-    public GraphExplorer(Graph graph, PtGraph ptGraph, Weighting accessEgressWeighting, PtEncodedValues flagEncoder, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, boolean walkOnly, boolean ptOnly, double walkSpeedKmh, boolean ignoreValidities, int blockedRouteTypes) {
+    public GraphExplorer(Graph graph, PtGraph ptGraph, Weighting accessEgressWeighting, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, boolean walkOnly, boolean ptOnly, double walkSpeedKmh, boolean ignoreValidities, int blockedRouteTypes) {
         this.graph = graph;
         this.ptGraph = ptGraph;
         this.accessEgressWeighting = accessEgressWeighting;
@@ -65,14 +58,7 @@ public final class GraphExplorer {
         this.blockedRouteTypes = blockedRouteTypes;
         AccessFilter accessEgressIn = AccessFilter.inEdges(accessEgressWeighting.getFlagEncoder().getAccessEnc());
         AccessFilter accessEgressOut = AccessFilter.outEdges(accessEgressWeighting.getFlagEncoder().getAccessEnc());
-        AccessFilter ptIn = AccessFilter.inEdges(flagEncoder.getAccessEnc());
-        AccessFilter ptOut = AccessFilter.outEdges(flagEncoder.getAccessEnc());
-        EdgeFilter in = edgeState -> accessEgressIn.accept(edgeState) || ptIn.accept(edgeState);
-        EdgeFilter out = edgeState -> accessEgressOut.accept(edgeState) || ptOut.accept(edgeState);
-        this.edgeExplorer = graph.createEdgeExplorer(reverse ? in : out);
-        this.flagEncoder = flagEncoder;
-        this.typeEnc = flagEncoder.getTypeEnc();
-        this.validityEnc = flagEncoder.getValidityIdEnc();
+        this.edgeExplorer = graph.createEdgeExplorer(reverse ? accessEgressIn : accessEgressOut);
         this.gtfsStorage = gtfsStorage;
         this.realtimeFeed = realtimeFeed;
         this.reverse = reverse;
@@ -82,8 +68,11 @@ public final class GraphExplorer {
     }
 
     Stream<PtGraph.PtEdge> exploreEdgesAround(Label label) {
+        System.out.println("start "+label.adjNode);
         return StreamSupport.stream(new Spliterators.AbstractSpliterator<PtGraph.PtEdge>(0, 0) {
-            final Iterator<PtGraph.PtEdge> edgeIterator = ptGraph.edgesAround(label.adjNode).iterator();
+            final Iterator<PtGraph.PtEdge> edgeIterator = reverse ?
+                    ptGraph.backEdgesAround(label.adjNode).iterator() :
+                    ptGraph.edgesAround(label.adjNode).iterator();
 
             @Override
             public boolean tryAdvance(Consumer<? super PtGraph.PtEdge> action) {
@@ -161,9 +150,7 @@ public final class GraphExplorer {
             private boolean justExitedPt(Label label) {
                 if (label.edge == -1)
                     return false;
-                EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorState(label.edge, label.adjNode);
-                GtfsStorage.EdgeType edgeType = edgeIteratorState.get(typeEnc);
-                return edgeType == GtfsStorage.EdgeType.EXIT_PT;
+                return ptGraph.getEdgeAttributes(label.edge).type == GtfsStorage.EdgeType.EXIT_PT;
             }
 
             private PtGraph.PtEdge findEnterEdge(PtGraph.PtEdge first) {
@@ -179,7 +166,7 @@ public final class GraphExplorer {
                 return first;
             }
 
-        }, false);
+        }, false).peek(e -> System.out.println(e));
     }
 
     long calcTravelTimeMillis(PtGraph.PtEdge edge, long earliestStartTime) {
@@ -238,10 +225,6 @@ public final class GraphExplorer {
         } else {
             return true;
         }
-    }
-
-    int nTransfers(EdgeIteratorState edge) {
-        return edge.get(flagEncoder.getTransfersEnc());
     }
 
     int routeType(PtGraph.PtEdge edge) {

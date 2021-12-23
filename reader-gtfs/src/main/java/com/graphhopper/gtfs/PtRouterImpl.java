@@ -22,7 +22,6 @@ import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Stop;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.Profile;
@@ -57,7 +56,6 @@ public final class PtRouterImpl implements PtRouter {
 
     private final GraphHopperConfig config;
     private final TranslationMap translationMap;
-    private final PtEncodedValues ptEncodedValues;
     private final GraphHopperStorage graphHopperStorage;
     private final LocationIndex locationIndex;
     private final GtfsStorage gtfsStorage;
@@ -69,7 +67,6 @@ public final class PtRouterImpl implements PtRouter {
     @Inject
     public PtRouterImpl(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, PtGraph ptGraph, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
         this.config = config;
-        this.ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
         this.weightingFactory = new DefaultWeightingFactory(graphHopperStorage, graphHopperStorage.getEncodingManager());
         this.translationMap = translationMap;
         this.graphHopperStorage = graphHopperStorage;
@@ -220,9 +217,6 @@ public final class PtRouterImpl implements PtRouter {
             if (!source.isValid()) {
                 throw new PointNotFoundException("Cannot find point: " + point, indexForErrorMessage);
             }
-            if (source.getClosestEdge().get(ptEncodedValues.getTypeEnc()) != GtfsStorage.EdgeType.HIGHWAY) {
-                throw new RuntimeException(source.getClosestEdge().get(ptEncodedValues.getTypeEnc()).name());
-            }
             return source;
         }
 
@@ -253,11 +247,12 @@ public final class PtRouterImpl implements PtRouter {
         }
 
         private List<List<Label.Transition>> findPaths(int startNode, int destNode) {
+            System.out.println("---");
             StopWatch stopWatch = new StopWatch().start();
             boolean isEgress = !arriveBy;
-            final GraphExplorer accessEgressGraphExplorer = new GraphExplorer(queryGraph, ptGraph, isEgress ? egressWeighting : accessWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, isEgress, true, false, walkSpeedKmH, false, blockedRouteTypes);
+            final GraphExplorer accessEgressGraphExplorer = new GraphExplorer(queryGraph, ptGraph, isEgress ? egressWeighting : accessWeighting, gtfsStorage, realtimeFeed, isEgress, true, false, walkSpeedKmH, false, blockedRouteTypes);
             GtfsStorage.EdgeType edgeType = isEgress ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT;
-            MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, ptEncodedValues, isEgress, false, false, maxProfileDuration, new ArrayList<>());
+            MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, isEgress, false, false, maxProfileDuration, new ArrayList<>());
             stationRouter.setBetaStreetTime(betaStreetTime);
             stationRouter.setLimitStreetTime(limitStreetTime);
             Iterator<Label> stationIterator = stationRouter.calcLabels(destNode, initialTime).iterator();
@@ -268,7 +263,7 @@ public final class PtRouterImpl implements PtRouter {
                 if (label.adjNode == startNode) {
                     stationLabels.add(label);
                     break;
-                } else if (label.edge != -1 && queryGraph.getEdgeIteratorState(label.edge, label.parent.adjNode).get(ptEncodedValues.getTypeEnc()) == edgeType) {
+                } else if (label.edge != -1 && ptGraph.getEdgeAttributes(label.edge) != null && ptGraph.getEdgeAttributes(label.edge).type == edgeType) {
                     stationLabels.add(label);
                 }
             }
@@ -277,10 +272,11 @@ public final class PtRouterImpl implements PtRouter {
             for (Label stationLabel : stationLabels) {
                 reverseSettledSet.put(stationLabel.adjNode, stationLabel);
             }
+            System.out.println("---");
 
-            GraphExplorer graphExplorer = new GraphExplorer(queryGraph, ptGraph, arriveBy ? egressWeighting : accessWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, arriveBy, false, true, walkSpeedKmH, false, blockedRouteTypes);
+            GraphExplorer graphExplorer = new GraphExplorer(queryGraph, ptGraph, arriveBy ? egressWeighting : accessWeighting, gtfsStorage, realtimeFeed, arriveBy, false, true, walkSpeedKmH, false, blockedRouteTypes);
             List<Label> discoveredSolutions = new ArrayList<>();
-            router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, arriveBy, !ignoreTransfers, profileQuery, maxProfileDuration, discoveredSolutions);
+            router = new MultiCriteriaLabelSetting(graphExplorer, arriveBy, !ignoreTransfers, profileQuery, maxProfileDuration, discoveredSolutions);
             router.setBetaTransfers(betaTransfers);
             router.setBetaStreetTime(betaStreetTime);
             router.setBoardingPenaltyByRouteType(routeType -> transferPenaltiesByRouteType.getOrDefault(routeType, 0L));
@@ -371,9 +367,9 @@ public final class PtRouterImpl implements PtRouter {
             List<List<Label.Transition>> paths = new ArrayList<>();
             for (Label discoveredSolution : discoveredSolutions) {
                 Label originalSolution = originalSolutions.get(discoveredSolution);
-                List<Label.Transition> pathToDestinationStop = Label.getTransitions(originalSolution, arriveBy, ptEncodedValues, queryGraph, realtimeFeed);
+                List<Label.Transition> pathToDestinationStop = Label.getTransitions(originalSolution, arriveBy, queryGraph, ptGraph, realtimeFeed);
                 if (arriveBy) {
-                    List<Label.Transition> pathFromStation = Label.getTransitions(reverseSettledSet.get(pathToDestinationStop.get(0).label.adjNode), false, ptEncodedValues, queryGraph, realtimeFeed);
+                    List<Label.Transition> pathFromStation = Label.getTransitions(reverseSettledSet.get(pathToDestinationStop.get(0).label.adjNode), false, queryGraph, ptGraph, realtimeFeed);
                     long diff = pathToDestinationStop.get(0).label.currentTime - pathFromStation.get(pathFromStation.size() - 1).label.currentTime;
                     List<Label.Transition> patchedPathFromStation = pathFromStation.stream().map(t -> {
                         return new Label.Transition(new Label(t.label.currentTime + diff, t.label.edge, t.label.adjNode, t.label.nTransfers, t.label.departureTime, t.label.streetTime, t.label.extraWeight, t.label.residualDelay, t.label.impossible, null), t.edge);
@@ -383,7 +379,7 @@ public final class PtRouterImpl implements PtRouter {
                     paths.add(pp);
                 } else {
                     Label destinationStopLabel = pathToDestinationStop.get(pathToDestinationStop.size() - 1).label;
-                    List<Label.Transition> pathFromStation = Label.getTransitions(reverseSettledSet.get(destinationStopLabel.adjNode), true, ptEncodedValues, queryGraph, realtimeFeed);
+                    List<Label.Transition> pathFromStation = Label.getTransitions(reverseSettledSet.get(destinationStopLabel.adjNode), true, queryGraph, ptGraph, realtimeFeed);
                     long diff = destinationStopLabel.currentTime - pathFromStation.get(0).label.currentTime;
                     List<Label.Transition> patchedPathFromStation = pathFromStation.stream().map(t -> {
                         return new Label.Transition(new Label(t.label.currentTime + diff, t.label.edge, t.label.adjNode, destinationStopLabel.nTransfers + t.label.nTransfers, t.label.departureTime, destinationStopLabel.streetTime + pathFromStation.get(0).label.streetTime, destinationStopLabel.extraWeight + t.label.extraWeight, t.label.residualDelay, t.label.impossible, null), t.edge);

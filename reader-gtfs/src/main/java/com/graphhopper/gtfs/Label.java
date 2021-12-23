@@ -102,7 +102,7 @@ public class Label {
         return adjNode + " " + (departureTime != null ? Instant.ofEpochMilli(departureTime) : "---") + "\t" + nTransfers + "\t" + Instant.ofEpochMilli(currentTime);
     }
 
-    static List<Label.Transition> getTransitions(Label _label, boolean arriveBy, PtEncodedValues encoder, Graph queryGraph, RealtimeFeed realtimeFeed) {
+    static List<Label.Transition> getTransitions(Label _label, boolean arriveBy, Graph queryGraph, PtGraph ptGraph, RealtimeFeed realtimeFeed) {
         Label label = _label;
         boolean reverseEdgeFlags = !arriveBy;
         List<Label.Transition> result = new ArrayList<>();
@@ -110,19 +110,21 @@ public class Label {
             result.add(new Label.Transition(label, null));
         }
         while (label.parent != null) {
-            EdgeIteratorState edgeIteratorState = queryGraph.getEdgeIteratorState(label.edge, reverseEdgeFlags ? label.adjNode : label.parent.adjNode).detach(false);
-            if (reverseEdgeFlags && edgeIteratorState != null && (edgeIteratorState.getBaseNode() != label.parent.adjNode || edgeIteratorState.getAdjNode() != label.adjNode)) {
-                throw new IllegalStateException();
-            }
-            if (!reverseEdgeFlags && edgeIteratorState != null && (edgeIteratorState.getAdjNode() != label.parent.adjNode || edgeIteratorState.getBaseNode() != label.adjNode)) {
-                throw new IllegalStateException();
-            }
+//            EdgeIteratorState edgeIteratorState = queryGraph.getEdgeIteratorState(label.edge, reverseEdgeFlags ? label.adjNode : label.parent.adjNode).detach(false);
+//            if (reverseEdgeFlags && edgeIteratorState != null && (edgeIteratorState.getBaseNode() != label.parent.adjNode || edgeIteratorState.getAdjNode() != label.adjNode)) {
+//                throw new IllegalStateException();
+//            }
+//            if (!reverseEdgeFlags && edgeIteratorState != null && (edgeIteratorState.getAdjNode() != label.parent.adjNode || edgeIteratorState.getBaseNode() != label.adjNode)) {
+//                throw new IllegalStateException();
+//            }
 
             Label.Transition transition;
             if (reverseEdgeFlags) {
-                transition = new Label.Transition(label, edgeIteratorState != null ? Label.getEdgeLabel(edgeIteratorState, encoder, realtimeFeed) : null);
+                PtEdgeAttributes attrs = ptGraph.getEdgeAttributes(label.edge);
+                transition = new Label.Transition(label, attrs != null ? Label.getEdgeLabel(new PtGraph.PtEdge(label.edge, -1 /* FIXME */, attrs), realtimeFeed) : null);
             } else {
-                transition = new Label.Transition(label.parent, edgeIteratorState != null ? Label.getEdgeLabel(edgeIteratorState, encoder, realtimeFeed) : null);
+                PtEdgeAttributes attrs = ptGraph.getEdgeAttributes(label.edge);
+                transition = new Label.Transition(label.parent, attrs != null ? Label.getEdgeLabel(new PtGraph.PtEdge(label.edge, -1 /* FIXME */, attrs), realtimeFeed) : null);
             }
             label = label.parent;
             result.add(transition);
@@ -134,18 +136,25 @@ public class Label {
         return result;
     }
 
-    public static EdgeLabel getEdgeLabel(EdgeIteratorState edgeIteratorState, PtEncodedValues flagEncoder, RealtimeFeed realtimeFeed) {
-        GtfsStorage.EdgeType edgeType = edgeIteratorState.get(flagEncoder.getTypeEnc());
+    public static EdgeLabel getEdgeLabel(PtGraph.PtEdge ptEdge, RealtimeFeed realtimeFeed) {
+        GtfsStorage.EdgeType edgeType = ptEdge.getAttrs().type;
         String feedId;
         if (edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.TRANSFER) {
-            GtfsStorageI.PlatformDescriptor platformDescriptor = realtimeFeed.getPlatformDescriptorByEdge().get(edgeIteratorState.getEdge());
+            GtfsStorageI.PlatformDescriptor platformDescriptor = realtimeFeed.getPlatformDescriptorByEdge().get(ptEdge.getId());
             feedId = platformDescriptor.feed_id;
         } else {
             feedId = null;
         }
-        int nTransfers = edgeIteratorState.get(flagEncoder.getTransfersEnc());
+        int nTransfers = ptEdge.getAttrs().transfers;
+        double distance = 1234; // FIXME
+        EdgeLabel edgeLabel = new EdgeLabel(null, edgeType, feedId, nTransfers, distance);
+        edgeLabel.ptEdge = ptEdge;
+        return edgeLabel;
+    }
+
+    public static EdgeLabel getEdgeLabel(EdgeIteratorState edgeIteratorState) {
         double distance = edgeIteratorState.getDistance();
-        return new EdgeLabel(edgeIteratorState, edgeType, feedId, nTransfers, distance);
+        return new EdgeLabel(edgeIteratorState, GtfsStorage.EdgeType.HIGHWAY, null, 0, distance);
     }
 
 }

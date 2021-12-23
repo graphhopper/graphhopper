@@ -55,7 +55,6 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
 
     private final GraphHopperConfig config;
     private final TranslationMap translationMap;
-    private final PtEncodedValues ptEncodedValues;
     private final Weighting accessEgressWeighting;
     private final GraphHopperStorage graphHopperStorage;
     private final LocationIndex locationIndex;
@@ -67,7 +66,6 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
     @Inject
     public PtRouterFreeWalkImpl(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
         this.config = config;
-        this.ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
         this.weightingFactory = new DefaultWeightingFactory(graphHopperStorage, graphHopperStorage.getEncodingManager());
         this.accessEgressWeighting = new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder("foot"));
         this.translationMap = translationMap;
@@ -220,9 +218,6 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
             if (!source.isValid()) {
                 throw new PointNotFoundException("Cannot find point: " + point, indexForErrorMessage);
             }
-            if (source.getClosestEdge().get(ptEncodedValues.getTypeEnc()) != GtfsStorage.EdgeType.HIGHWAY) {
-                throw new RuntimeException(source.getClosestEdge().get(ptEncodedValues.getTypeEnc()).name());
-            }
             return source;
         }
 
@@ -254,9 +249,9 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         private List<List<Label.Transition>> findPaths(int startNode, int destNode) {
             StopWatch stopWatch = new StopWatch().start();
 
-            GraphExplorer graphExplorer = new GraphExplorer(queryGraph, null, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, arriveBy, false, false, walkSpeedKmH, false, blockedRouteTypes);
+            GraphExplorer graphExplorer = new GraphExplorer(queryGraph, null, accessEgressWeighting, gtfsStorage, realtimeFeed, arriveBy, false, false, walkSpeedKmH, false, blockedRouteTypes);
             List<Label> discoveredSolutions = new ArrayList<>();
-            router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, arriveBy, !ignoreTransfers, profileQuery, maxProfileDuration, discoveredSolutions);
+            router = new MultiCriteriaLabelSetting(graphExplorer, arriveBy, !ignoreTransfers, profileQuery, maxProfileDuration, discoveredSolutions);
             router.setBetaTransfers(betaTransfers);
             router.setBetaStreetTime(betaStreetTime);
             router.setLimitStreetTime(limitStreetTime);
@@ -279,7 +274,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
 
             List<List<Label.Transition>> paths = new ArrayList<>();
             for (Label discoveredSolution : discoveredSolutions) {
-                List<Label.Transition> path = Label.getTransitions(discoveredSolution, arriveBy, ptEncodedValues, queryGraph, realtimeFeed);
+                List<Label.Transition> path = Label.getTransitions(discoveredSolution, arriveBy, queryGraph, null, realtimeFeed);
                 paths.add(path);
             }
 

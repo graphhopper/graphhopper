@@ -196,8 +196,10 @@ public class PtGraph implements GtfsReader.PtGraphOut {
     int nextEdge = 0;
     int nextNode = 0;
     Map<Integer, PtEdgeAttributes> edgeAttributesMap = new HashMap<>();
+    Map<Integer, Integer> edgeSourcesMap = new HashMap<>();
     Map<Integer, Integer> edgeDestinationsMap = new HashMap<>();
     Map<Integer, List<Integer>> nodeToOutEdges = new HashMap<>();
+    Map<Integer, List<Integer>> nodeToInEdges = new HashMap<>();
 
     @Override
     public void putPlatformNode(int platformEnterNode, GtfsStorageI.PlatformDescriptor platformDescriptor) {
@@ -208,10 +210,14 @@ public class PtGraph implements GtfsReader.PtGraphOut {
     public int createEdge(int src, int dest, PtEdgeAttributes attrs) {
         int edge = nextEdge++;
         edgeAttributesMap.put(edge, attrs);
+        edgeSourcesMap.put(edge, src);
         edgeDestinationsMap.put(edge, dest);
         nodeToOutEdges.putIfAbsent(src, new ArrayList<>());
+        nodeToInEdges.putIfAbsent(dest, new ArrayList<>());
         List<Integer> outEdges = nodeToOutEdges.get(src);
         outEdges.add(edge);
+        List<Integer> inEdges = nodeToInEdges.get(dest);
+        inEdges.add(edge);
         return edge;
     }
 
@@ -220,10 +226,26 @@ public class PtGraph implements GtfsReader.PtGraphOut {
     }
 
     public Iterable<PtEdge> edgesAround(int node) {
-        return () -> nodeToOutEdges.getOrDefault(node, Collections.emptyList()).stream().map(e -> new PtEdge(e, edgeDestinationsMap.get(e), edgeAttributesMap.get(e))).iterator();
+        return () -> {
+            List<Integer> edgeIds = new ArrayList<>(nodeToOutEdges.getOrDefault(node, Collections.emptyList()));
+            edgeIds.sort(Comparator.<Integer>naturalOrder().reversed());
+            return edgeIds.stream().map(e -> new PtEdge(e, edgeDestinationsMap.get(e), edgeAttributesMap.get(e))).iterator();
+        };
     }
 
-    public class PtEdge {
+    public Iterable<PtEdge> backEdgesAround(int node) {
+        return () -> {
+            List<Integer> edgeIds = new ArrayList<>(nodeToInEdges.getOrDefault(node, Collections.emptyList()));
+            edgeIds.sort(Comparator.<Integer>naturalOrder().reversed());
+            return edgeIds.stream().map(e -> new PtEdge(e, edgeSourcesMap.get(e), edgeAttributesMap.get(e))).iterator();
+        };
+    }
+
+    public PtEdgeAttributes getEdgeAttributes(int edge) {
+        return edgeAttributesMap.get(edge);
+    }
+
+    public static class PtEdge {
         private final int edgeId;
         private final int adjNode;
         private final PtEdgeAttributes attrs;
@@ -252,6 +274,15 @@ public class PtGraph implements GtfsReader.PtGraphOut {
 
         public int getId() {
             return edgeId;
+        }
+
+        @Override
+        public String toString() {
+            return "PtEdge{" +
+                    "edgeId=" + edgeId +
+                    ", adjNode=" + adjNode +
+                    ", attrs=" + attrs +
+                    '}';
         }
     }
 }

@@ -19,8 +19,10 @@
 package com.graphhopper;
 
 import com.graphhopper.config.Profile;
-import com.graphhopper.gtfs.*;
-import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.gtfs.GraphHopperGtfs;
+import com.graphhopper.gtfs.PtRouter;
+import com.graphhopper.gtfs.PtRouterImpl;
+import com.graphhopper.gtfs.Request;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import org.junit.jupiter.api.AfterAll;
@@ -55,8 +57,7 @@ public class ExtendedRouteTypeIT {
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
-        ptRouter = new PtRouterImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getGraphHopperStorage(), (PtGraph) graphHopperGtfs.getLocationIndex(), (LocationIndex) graphHopperGtfs.getGtfsStorage(), null)
-                .createWithoutRealtimeFeed();
+        ptRouter = new PtRouterImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getGraphHopperStorage(), graphHopperGtfs.getPtGraph(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage()).createWithoutRealtimeFeed();
     }
 
     @AfterAll
