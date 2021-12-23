@@ -27,15 +27,13 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.graphhopper.gtfs.GtfsHelper.time;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
@@ -100,6 +98,26 @@ public class FreeWalkIT {
         assertEquals(4500000L, transitSolution.getTime());
         assertEquals(4500000.0, transitSolution.getRouteWeight());
         assertEquals(time(1, 15), transitSolution.getTime(), "Expected total travel time == scheduled travel time + wait time");
+    }
+
+    @Test
+    public void testFastWalking() {
+        Request ghRequest = new Request(
+                36.91311729030539, -116.76769495010377,
+                36.91260259593356, -116.76149368286134
+        );
+        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 6, 40, 0).atZone(zoneId).toInstant());
+        ghRequest.setWalkSpeedKmH(50); // Yes, I can walk very fast, 50 km/h. Problem?
+
+        GHResponse response = ptRouter.route(ghRequest);
+
+        ResponsePath walkSolution = response.getAll().stream().filter(p -> p.getLegs().size() == 1).findFirst().get();
+        assertThat(walkSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
+                .isEqualTo(LocalTime.parse("06:40"));
+        assertThat(walkSolution.getLegs().get(0).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
+                .isEqualTo(LocalTime.parse("06:41:07.025"));
+        assertThat(walkSolution.getLegs().size()).isEqualTo(1);
+        assertThat(walkSolution.getNumChanges()).isEqualTo(-1);
     }
 
 }
