@@ -62,9 +62,10 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
     private final RealtimeFeed realtimeFeed;
     private final TripFromLabel tripFromLabel;
     private final WeightingFactory weightingFactory;
+    private final PtGraph ptGraph;
 
     @Inject
-    public PtRouterFreeWalkImpl(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
+    public PtRouterFreeWalkImpl(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage, PtGraph ptGraph, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
         this.config = config;
         this.weightingFactory = new DefaultWeightingFactory(graphHopperStorage, graphHopperStorage.getEncodingManager());
         this.accessEgressWeighting = new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder("foot"));
@@ -74,10 +75,11 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         this.gtfsStorage = gtfsStorage;
         this.realtimeFeed = realtimeFeed;
         this.tripFromLabel = new TripFromLabel(this.graphHopperStorage, this.gtfsStorage, this.realtimeFeed, pathDetailsBuilderFactory);
+        this.ptGraph = ptGraph;
     }
 
-    public static Factory createFactory(GraphHopperConfig config, TranslationMap translationMap, GraphHopper graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
-        return new Factory(config, translationMap, graphHopperStorage.getGraphHopperStorage(), locationIndex, gtfsStorage);
+    public static Factory createFactory(GraphHopperConfig config, TranslationMap translationMap, GraphHopperGtfs graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
+        return new Factory(config, translationMap, graphHopperStorage.getGraphHopperStorage(), graphHopperStorage.getPtGraph(), locationIndex, gtfsStorage);
     }
 
     @Override
@@ -89,14 +91,16 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         private final GraphHopperConfig config;
         private final TranslationMap translationMap;
         private final GraphHopperStorage graphHopperStorage;
+        private PtGraph ptGraph;
         private final LocationIndex locationIndex;
         private final GtfsStorage gtfsStorage;
         private final Map<String, Transfers> transfers;
 
-        private Factory(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
+        private Factory(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, PtGraph ptGraph, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
             this.config = config;
             this.translationMap = translationMap;
             this.graphHopperStorage = graphHopperStorage;
+            this.ptGraph = ptGraph;
             this.locationIndex = locationIndex;
             this.gtfsStorage = gtfsStorage;
             this.transfers = new HashMap<>();
@@ -108,11 +112,11 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         public PtRouter createWith(GtfsRealtime.FeedMessage realtimeFeed) {
             Map<String, GtfsRealtime.FeedMessage> realtimeFeeds = new HashMap<>();
             realtimeFeeds.put("gtfs_0", realtimeFeed);
-            return new PtRouterFreeWalkImpl(config, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, this.transfers, realtimeFeeds), new PathDetailsBuilderFactory());
+            return new PtRouterFreeWalkImpl(config, translationMap, graphHopperStorage, locationIndex, gtfsStorage, ptGraph, RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, this.transfers, realtimeFeeds), new PathDetailsBuilderFactory());
         }
 
         public PtRouter createWithoutRealtimeFeed() {
-            return new PtRouterFreeWalkImpl(config, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage), new PathDetailsBuilderFactory());
+            return new PtRouterFreeWalkImpl(config, translationMap, graphHopperStorage, locationIndex, gtfsStorage, ptGraph, RealtimeFeed.empty(gtfsStorage), new PathDetailsBuilderFactory());
         }
     }
 
@@ -180,7 +184,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         GHResponse route() {
             StopWatch stopWatch = new StopWatch().start();
             ArrayList<Snap> pointSnaps = new ArrayList<>();
-            ArrayList<Snap> allSnaps = new ArrayList<>();
+            ArrayList<Label.NodeId> allSnaps = new ArrayList<>();
             PointList points = new PointList(2, false);
             List<GHLocation> locations = Arrays.asList(enter, exit);
             for (int i = 0; i < locations.size(); i++) {
@@ -188,25 +192,25 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
                 if (location instanceof GHPointLocation) {
                     final Snap closest = findByPoint(((GHPointLocation) location).ghPoint, i, i == 0 ? this.accessSnapFilter : this.egressSnapFilter);
                     pointSnaps.add(closest);
-                    allSnaps.add(closest);
+                    allSnaps.add(new Label.NodeId(closest.getClosestNode(), false));
                     points.add(closest.getSnappedPoint());
                 } else if (location instanceof GHStationLocation) {
                     final Snap station = findByStationId((GHStationLocation) location, i);
-                    allSnaps.add(station);
+                    allSnaps.add(new Label.NodeId(station.getClosestNode(), true));
                     points.add(graphHopperStorage.getNodeAccess().getLat(station.getClosestNode()), graphHopperStorage.getNodeAccess().getLon(station.getClosestNode()));
                 }
             }
             queryGraph = QueryGraph.create(graphWithExtraEdges, pointSnaps); // modifies pointSnaps!
             response.addDebugInfo("idLookup:" + stopWatch.stop().getSeconds() + "s");
 
-            int startNode;
-            int destNode;
+            Label.NodeId startNode;
+            Label.NodeId destNode;
             if (arriveBy) {
-                startNode = allSnaps.get(1).getClosestNode();
-                destNode = allSnaps.get(0).getClosestNode();
+                startNode = allSnaps.get(1);
+                destNode = allSnaps.get(0);
             } else {
-                startNode = allSnaps.get(0).getClosestNode();
-                destNode = allSnaps.get(1).getClosestNode();
+                startNode = allSnaps.get(0);
+                destNode = allSnaps.get(1);
             }
             List<List<Label.Transition>> solutions = findPaths(startNode, destNode);
             parseSolutionsAndAddToResponse(solutions, points);
@@ -246,10 +250,10 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
             response.getAll().sort(c.thenComparing(d));
         }
 
-        private List<List<Label.Transition>> findPaths(int startNode, int destNode) {
+        private List<List<Label.Transition>> findPaths(Label.NodeId startNode, Label.NodeId destNode) {
             StopWatch stopWatch = new StopWatch().start();
 
-            GraphExplorer graphExplorer = new GraphExplorer(queryGraph, null, accessEgressWeighting, gtfsStorage, realtimeFeed, arriveBy, false, false, walkSpeedKmH, false, blockedRouteTypes);
+            GraphExplorer graphExplorer = new GraphExplorer(queryGraph, ptGraph, accessEgressWeighting, gtfsStorage, realtimeFeed, arriveBy, false, false, walkSpeedKmH, false, blockedRouteTypes);
             List<Label> discoveredSolutions = new ArrayList<>();
             router = new MultiCriteriaLabelSetting(graphExplorer, arriveBy, !ignoreTransfers, profileQuery, maxProfileDuration, discoveredSolutions);
             router.setBetaTransfers(betaTransfers);
@@ -263,7 +267,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
                 if (visitedNodes >= maxVisitedNodesForRequest) {
                     break;
                 }
-                if (label.adjNode == destNode) {
+                if (label.node.equals(destNode)) {
                         discoveredSolutions.add(label);
                         if (discoveredSolutions.size() >= limitSolutions) {
                             break;
@@ -274,7 +278,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
 
             List<List<Label.Transition>> paths = new ArrayList<>();
             for (Label discoveredSolution : discoveredSolutions) {
-                List<Label.Transition> path = Label.getTransitions(discoveredSolution, arriveBy, queryGraph, null, realtimeFeed);
+                List<Label.Transition> path = Label.getTransitions(discoveredSolution, arriveBy, queryGraph, ptGraph, realtimeFeed);
                 paths.add(path);
             }
 

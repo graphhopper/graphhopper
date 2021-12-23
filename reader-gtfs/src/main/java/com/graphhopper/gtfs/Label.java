@@ -24,6 +24,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class Label {
 
@@ -38,7 +39,7 @@ public class Label {
 
         @Override
         public String toString() {
-            return (edge != null ? edge.toString() + " -> " : "") + label.adjNode;
+            return (edge != null ? edge.toString() + " -> " : "") + label.node;
         }
 
     }
@@ -70,7 +71,7 @@ public class Label {
     public final long currentTime;
 
     public final int edge;
-    public final int adjNode;
+    public final NodeId node;
 
     public final int nTransfers;
 
@@ -84,10 +85,10 @@ public class Label {
 
     public final Label parent;
 
-    Label(long currentTime, int edgeId, int adjNode, int nTransfers, Long departureTime, long streetTime, long extraWeight, long residualDelay, boolean impossible, Label parent) {
+    Label(long currentTime, int edgeId, NodeId node, int nTransfers, Long departureTime, long streetTime, long extraWeight, long residualDelay, boolean impossible, Label parent) {
         this.currentTime = currentTime;
         this.edge = edgeId;
-        this.adjNode = adjNode;
+        this.node = node;
         this.nTransfers = nTransfers;
         this.departureTime = departureTime;
         this.streetTime = streetTime;
@@ -99,7 +100,7 @@ public class Label {
 
     @Override
     public String toString() {
-        return adjNode + " " + (departureTime != null ? Instant.ofEpochMilli(departureTime) : "---") + "\t" + nTransfers + "\t" + Instant.ofEpochMilli(currentTime);
+        return node + " " + (departureTime != null ? Instant.ofEpochMilli(departureTime) : "---") + "\t" + nTransfers + "\t" + Instant.ofEpochMilli(currentTime);
     }
 
     static List<Label.Transition> getTransitions(Label _label, boolean arriveBy, Graph queryGraph, PtGraph ptGraph, RealtimeFeed realtimeFeed) {
@@ -157,4 +158,34 @@ public class Label {
         return new EdgeLabel(edgeIteratorState, GtfsStorage.EdgeType.HIGHWAY, null, 0, distance);
     }
 
+    public static class NodeId {
+        public NodeId(int node, boolean pt) {
+            this.node = node;
+            this.pt = pt;
+        }
+
+        public int node;
+        public boolean pt;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            NodeId nodeId = (NodeId) o;
+            return node == nodeId.node && pt == nodeId.pt;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(node, pt);
+        }
+
+        @Override
+        public String toString() {
+            return "NodeId{" +
+                    "node=" + node +
+                    ", pt=" + pt +
+                    '}';
+        }
+    }
 }

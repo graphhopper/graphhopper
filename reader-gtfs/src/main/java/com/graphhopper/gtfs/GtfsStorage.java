@@ -36,7 +36,6 @@ import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
-import java.util.zip.ZipFile;
 
 public class GtfsStorage implements GtfsStorageI {
 
@@ -131,6 +130,9 @@ public class GtfsStorage implements GtfsStorageI {
 
 	private Map<FeedIdWithStopId, Integer> stationNodes;
 
+	private Map<Integer, Integer> ptToStreet;
+	private Map<Integer, Integer> streetToPt;
+
 	public enum EdgeType {
 		HIGHWAY, ENTER_TIME_EXPANDED_NETWORK, LEAVE_TIME_EXPANDED_NETWORK, ENTER_PT, EXIT_PT, HOP, DWELL, BOARD, ALIGHT, OVERNIGHT, TRANSFER, WAIT, WAIT_ARRIVAL
     }
@@ -192,6 +194,8 @@ public class GtfsStorage implements GtfsStorageI {
 		this.leaveEdgesForTrip = data.getHashMap("leaveEdgesForTrip");
 		this.stationNodes = data.getHashMap("stationNodes");
 		this.platformDescriptorsByEdge = data.getHashMap("routes");
+		this.ptToStreet = data.getHashMap("ptToStreet");
+		this.streetToPt = data.getHashMap("streetToPt");
 	}
 
 	void loadGtfsFromZipFileOrDirectory(String id, File zipFileOrDirectory) {
@@ -269,6 +273,14 @@ public class GtfsStorage implements GtfsStorageI {
     @Override
 	public Map<String, Map<String, Fare>> getFares() {
 		return faresByFeed;
+	}
+
+	public Map<Integer, Integer> getPtToStreet() {
+		return ptToStreet;
+	}
+
+	public Map<Integer, Integer> getStreetToPt() {
+		return streetToPt;
 	}
 
 	public Map<String, GTFSFeed> getGtfsFeeds() {

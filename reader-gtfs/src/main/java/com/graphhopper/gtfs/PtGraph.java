@@ -37,9 +37,10 @@ public class PtGraph implements GtfsReader.PtGraphOut {
     private final int edgeEntryBytes;
     private int edgeCount;
 
-    public PtGraph(Directory dir, int intsForFlags, int segmentSize) {
-        nodes = dir.create("pt_nodes", dir.getDefaultType("pt_nodes", true), segmentSize);
-        edges = dir.create("pt_edges", dir.getDefaultType("pt_edges", true), segmentSize);
+    public PtGraph(Directory dir, int firstNode) {
+        nextNode = firstNode;
+        nodes = dir.create("pt_nodes", dir.getDefaultType("pt_nodes", true), 100);
+        edges = dir.create("pt_edges", dir.getDefaultType("pt_edges", true), 100);
 
         nodeEntryBytes = 4;
 

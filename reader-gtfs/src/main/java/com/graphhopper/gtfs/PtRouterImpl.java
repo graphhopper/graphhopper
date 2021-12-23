@@ -179,7 +179,7 @@ public final class PtRouterImpl implements PtRouter {
         GHResponse route() {
             StopWatch stopWatch = new StopWatch().start();
             ArrayList<Snap> pointSnaps = new ArrayList<>();
-            ArrayList<Snap> allSnaps = new ArrayList<>();
+            ArrayList<Label.NodeId> allSnaps = new ArrayList<>();
             PointList points = new PointList(2, false);
             List<GHLocation> locations = Arrays.asList(enter, exit);
             for (int i = 0; i < locations.size(); i++) {
@@ -187,25 +187,25 @@ public final class PtRouterImpl implements PtRouter {
                 if (location instanceof GHPointLocation) {
                     final Snap closest = findByPoint(((GHPointLocation) location).ghPoint, i, i == 0 ? this.accessSnapFilter : this.egressSnapFilter);
                     pointSnaps.add(closest);
-                    allSnaps.add(closest);
+                    allSnaps.add(new Label.NodeId(closest.getClosestNode(), false));
                     points.add(closest.getSnappedPoint());
                 } else if (location instanceof GHStationLocation) {
                     final Snap station = findByStationId((GHStationLocation) location, i);
-                    allSnaps.add(station);
+                    allSnaps.add(new Label.NodeId(station.getClosestNode(), true));
                     points.add(station.getQueryPoint().lat, station.getQueryPoint().lon);
                 }
             }
             queryGraph = QueryGraph.create(graphWithExtraEdges, pointSnaps); // modifies pointSnaps!
             response.addDebugInfo("idLookup:" + stopWatch.stop().getSeconds() + "s");
 
-            int startNode;
-            int destNode;
+            Label.NodeId startNode;
+            Label.NodeId destNode;
             if (arriveBy) {
-                startNode = allSnaps.get(1).getClosestNode();
-                destNode = allSnaps.get(0).getClosestNode();
+                startNode = allSnaps.get(1);
+                destNode = allSnaps.get(0);
             } else {
-                startNode = allSnaps.get(0).getClosestNode();
-                destNode = allSnaps.get(1).getClosestNode();
+                startNode = allSnaps.get(0);
+                destNode = allSnaps.get(1);
             }
             List<List<Label.Transition>> solutions = findPaths(startNode, destNode);
             parseSolutionsAndAddToResponse(solutions, points);
@@ -246,7 +246,7 @@ public final class PtRouterImpl implements PtRouter {
             response.getAll().sort(c.thenComparing(d));
         }
 
-        private List<List<Label.Transition>> findPaths(int startNode, int destNode) {
+        private List<List<Label.Transition>> findPaths(Label.NodeId startNode, Label.NodeId destNode) {
             System.out.println("---");
             StopWatch stopWatch = new StopWatch().start();
             boolean isEgress = !arriveBy;
@@ -260,7 +260,7 @@ public final class PtRouterImpl implements PtRouter {
             while (stationIterator.hasNext()) {
                 Label label = stationIterator.next();
                 visitedNodes++;
-                if (label.adjNode == startNode) {
+                if (label.node.equals(startNode)) {
                     stationLabels.add(label);
                     break;
                 } else if (label.edge != -1 && ptGraph.getEdgeAttributes(label.edge) != null && ptGraph.getEdgeAttributes(label.edge).type == edgeType) {
@@ -268,9 +268,9 @@ public final class PtRouterImpl implements PtRouter {
                 }
             }
 
-            Map<Integer, Label> reverseSettledSet = new HashMap<>();
+            Map<Label.NodeId, Label> reverseSettledSet = new HashMap<>();
             for (Label stationLabel : stationLabels) {
-                reverseSettledSet.put(stationLabel.adjNode, stationLabel);
+                reverseSettledSet.put(stationLabel.node, stationLabel);
             }
             System.out.println("---");
 
@@ -319,9 +319,9 @@ public final class PtRouterImpl implements PtRouter {
                 if ((!profileQuery || profileFinished(router, discoveredSolutions, accessEgressModeOnlySolution)) && router.weight(label) + smallestStationLabelWeight > highestWeightForDominationTest) {
                     break;
                 }
-                Label reverseLabel = reverseSettledSet.get(label.adjNode);
+                Label reverseLabel = reverseSettledSet.get(label.node);
                 if (reverseLabel != null) {
-                    Label combinedSolution = new Label(label.currentTime - reverseLabel.currentTime + initialTime.toEpochMilli(), -1, label.adjNode, label.nTransfers + reverseLabel.nTransfers, label.departureTime, label.streetTime + reverseLabel.streetTime, label.extraWeight + reverseLabel.extraWeight, 0, label.impossible, null);
+                    Label combinedSolution = new Label(label.currentTime - reverseLabel.currentTime + initialTime.toEpochMilli(), -1, label.node, label.nTransfers + reverseLabel.nTransfers, label.departureTime, label.streetTime + reverseLabel.streetTime, label.extraWeight + reverseLabel.extraWeight, 0, label.impossible, null);
                     List<Label> filteredSolutions;
                     List<Label> otherSolutions;
                     if (profileQuery && combinedSolution.departureTime != null) {
@@ -369,20 +369,20 @@ public final class PtRouterImpl implements PtRouter {
                 Label originalSolution = originalSolutions.get(discoveredSolution);
                 List<Label.Transition> pathToDestinationStop = Label.getTransitions(originalSolution, arriveBy, queryGraph, ptGraph, realtimeFeed);
                 if (arriveBy) {
-                    List<Label.Transition> pathFromStation = Label.getTransitions(reverseSettledSet.get(pathToDestinationStop.get(0).label.adjNode), false, queryGraph, ptGraph, realtimeFeed);
+                    List<Label.Transition> pathFromStation = Label.getTransitions(reverseSettledSet.get(pathToDestinationStop.get(0).label.node), false, queryGraph, ptGraph, realtimeFeed);
                     long diff = pathToDestinationStop.get(0).label.currentTime - pathFromStation.get(pathFromStation.size() - 1).label.currentTime;
                     List<Label.Transition> patchedPathFromStation = pathFromStation.stream().map(t -> {
-                        return new Label.Transition(new Label(t.label.currentTime + diff, t.label.edge, t.label.adjNode, t.label.nTransfers, t.label.departureTime, t.label.streetTime, t.label.extraWeight, t.label.residualDelay, t.label.impossible, null), t.edge);
+                        return new Label.Transition(new Label(t.label.currentTime + diff, t.label.edge, t.label.node, t.label.nTransfers, t.label.departureTime, t.label.streetTime, t.label.extraWeight, t.label.residualDelay, t.label.impossible, null), t.edge);
                     }).collect(Collectors.toList());
                     List<Label.Transition> pp = new ArrayList<>(pathToDestinationStop.subList(1, pathToDestinationStop.size()));
                     pp.addAll(0, patchedPathFromStation);
                     paths.add(pp);
                 } else {
                     Label destinationStopLabel = pathToDestinationStop.get(pathToDestinationStop.size() - 1).label;
-                    List<Label.Transition> pathFromStation = Label.getTransitions(reverseSettledSet.get(destinationStopLabel.adjNode), true, queryGraph, ptGraph, realtimeFeed);
+                    List<Label.Transition> pathFromStation = Label.getTransitions(reverseSettledSet.get(destinationStopLabel.node), true, queryGraph, ptGraph, realtimeFeed);
                     long diff = destinationStopLabel.currentTime - pathFromStation.get(0).label.currentTime;
                     List<Label.Transition> patchedPathFromStation = pathFromStation.stream().map(t -> {
-                        return new Label.Transition(new Label(t.label.currentTime + diff, t.label.edge, t.label.adjNode, destinationStopLabel.nTransfers + t.label.nTransfers, t.label.departureTime, destinationStopLabel.streetTime + pathFromStation.get(0).label.streetTime, destinationStopLabel.extraWeight + t.label.extraWeight, t.label.residualDelay, t.label.impossible, null), t.edge);
+                        return new Label.Transition(new Label(t.label.currentTime + diff, t.label.edge, t.label.node, destinationStopLabel.nTransfers + t.label.nTransfers, t.label.departureTime, destinationStopLabel.streetTime + pathFromStation.get(0).label.streetTime, destinationStopLabel.extraWeight + t.label.extraWeight, t.label.residualDelay, t.label.impossible, null), t.edge);
                     }).collect(Collectors.toList());
                     List<Label.Transition> pp = new ArrayList<>(pathToDestinationStop);
                     pp.addAll(patchedPathFromStation.subList(1, pathFromStation.size()));

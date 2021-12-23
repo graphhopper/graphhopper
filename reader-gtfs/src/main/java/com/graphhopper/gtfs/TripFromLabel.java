@@ -395,8 +395,8 @@ class TripFromLabel {
                 if (transition.edge != null)
                     pathh.addEdge(transition.edge.edgeIteratorState.getEdge());
             }
-            pathh.setFromNode(path.get(0).label.adjNode);
-            pathh.setEndNode(path.get(path.size()-1).label.adjNode);
+            pathh.setFromNode(path.get(0).label.node.node);
+            pathh.setEndNode(path.get(path.size()-1).label.node.node);
             pathh.setFound(true);
             Map<String, List<PathDetail>> pathDetails = PathDetailsFromEdges.calcDetails(pathh, graphHopperStorage.getEncodingManager(), weighting, requestedPathDetails, pathDetailsBuilderFactory, 0);
 

@@ -80,7 +80,7 @@ class GtfsReader {
 
     private final Graph graph;
     private final LocationIndex walkNetworkIndex;
-    private final GtfsStorageI gtfsStorage;
+    private final GtfsStorage gtfsStorage;
 
     private final Transfers transfers;
     private final String id;
@@ -88,7 +88,7 @@ class GtfsReader {
     private final Map<String, Map<GtfsStorageI.PlatformDescriptor, NavigableMap<Integer, Integer>>> departureTimelinesByStop = new HashMap<>();
     private final Map<String, Map<GtfsStorageI.PlatformDescriptor, NavigableMap<Integer, Integer>>> arrivalTimelinesByStop = new HashMap<>();
 
-    GtfsReader(String id, GraphHopperStorage graph, PtGraph ptGraph, PtGraphOut out, GtfsStorageI gtfsStorage, LocationIndex walkNetworkIndex, Transfers transfers) {
+    GtfsReader(String id, GraphHopperStorage graph, PtGraph ptGraph, PtGraphOut out, GtfsStorage gtfsStorage, LocationIndex walkNetworkIndex, Transfers transfers) {
         this.id = id;
         this.graph = graph;
         this.gtfsStorage = gtfsStorage;
@@ -111,10 +111,9 @@ class GtfsReader {
             if (stop.location_type == 0) { // Only stops. Not interested in parent stations for now.
                 Snap locationSnap = walkNetworkIndex.findClosest(stop.stop_lat, stop.stop_lon, filter);
                 if (locationSnap.isValid()) {
-                    Integer prev = gtfsStorage.getStationNodes().put(new GtfsStorage.FeedIdWithStopId(id, stop.stop_id), locationSnap.getClosestNode());
-                    if (prev != null) {
-                        throw new RuntimeException("Duplicate stop id: "+stop.stop_id);
-                    }
+                    gtfsStorage.getPtToStreet().put(stopNode, locationSnap.getClosestNode());
+                    gtfsStorage.getStreetToPt().put(locationSnap.getClosestNode(), stopNode);
+                    System.out.printf("Associate pt stop node %d with street node %d.\n", stopNode, locationSnap.getClosestNode());
                 } else {
                     System.out.println("unmatched stop");
                 }

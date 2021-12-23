@@ -17,8 +17,6 @@
  */
 package com.graphhopper.gtfs;
 
-import com.carrotsearch.hppc.IntObjectHashMap;
-import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.util.EdgeIterator;
 
 import java.time.Instant;
@@ -47,7 +45,7 @@ public class MultiCriteriaLabelSetting {
     private final Comparator<Label> queueComparator;
     private final List<Label> targetLabels;
     private long startTime;
-    private final IntObjectMap<List<Label>> fromMap;
+    private final Map<Label.NodeId, List<Label>> fromMap;
     private final PriorityQueue<Label> fromHeap;
     private final long maxProfileDuration;
     private final boolean reverse;
@@ -75,10 +73,10 @@ public class MultiCriteriaLabelSetting {
                 .thenComparingLong(l -> departureTimeCriterion(l) != null ? departureTimeCriterion(l) : 0)
                 .thenComparingLong(l -> l.impossible ? 1 : 0);
         fromHeap = new PriorityQueue<>(queueComparator);
-        fromMap = new IntObjectHashMap<>();
+        fromMap = new HashMap<>();
     }
 
-    public Stream<Label> calcLabels(int from, Instant startTime) {
+    public Stream<Label> calcLabels(Label.NodeId from, Instant startTime) {
         this.startTime = startTime.toEpochMilli();
         return StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from), false)
                 .peek(l -> System.out.println(l));
@@ -98,7 +96,7 @@ public class MultiCriteriaLabelSetting {
 
     private class MultiCriteriaLabelSettingSpliterator extends Spliterators.AbstractSpliterator<Label> {
 
-        MultiCriteriaLabelSettingSpliterator(int from) {
+        MultiCriteriaLabelSettingSpliterator(Label.NodeId from) {
             super(0, 0);
             Label label = new Label(startTime, EdgeIterator.NO_EDGE, from, 0, null, 0, 0L, 0, false, null);
             ArrayList<Label> labels = new ArrayList<>(1);
@@ -124,7 +122,7 @@ public class MultiCriteriaLabelSetting {
                     } else {
                         nextTime = label.currentTime + explorer.calcTravelTimeMillis(edge, label.currentTime);
                     }
-                    int nTransfers = label.nTransfers + edge.getAttrs().transfers;
+                    int nTransfers = label.nTransfers + edge.getTransfers();
                     long extraWeight = label.extraWeight;
                     Long firstPtDepartureTime = label.departureTime;
                     GtfsStorage.EdgeType edgeType = edge.getType();
@@ -150,6 +148,9 @@ public class MultiCriteriaLabelSetting {
                         return;
                     if (Math.abs(nextTime - startTime) > limitTripTime)
                         return;
+                    if (edgeType == GtfsStorage.EdgeType.ENTER_PT && justExitedPt(label)) {
+                        return;
+                    }
                     boolean impossible = label.impossible
                             || explorer.isBlocked(edge)
                             || (!reverse) && edgeType == GtfsStorage.EdgeType.BOARD && label.residualDelay > 0
@@ -189,13 +190,20 @@ public class MultiCriteriaLabelSetting {
         }
     }
 
+
+    private boolean justExitedPt(Label label) {
+        if (label.edge == -1)
+            return false;
+        return explorer.getEdgeAttributes(label.edge).type == GtfsStorage.EdgeType.EXIT_PT;
+    }
+
     void insertIfNotDominated(Label me) {
         List<Label> filteredTargetLabels = profileQuery && me.departureTime != null ? partitionByProfileCriterion(me, targetLabels).get(true) : targetLabels;
         if (isNotDominatedByAnyOf(me, filteredTargetLabels)) {
-            List<Label> sptEntries = fromMap.get(me.adjNode);
+            List<Label> sptEntries = fromMap.get(me.node);
             if (sptEntries == null) {
                 sptEntries = new ArrayList<>(1);
-                fromMap.put(me.adjNode, sptEntries);
+                fromMap.put(me.node, sptEntries);
             }
             List<Label> filteredSptEntries;
             List<Label> otherSptEntries;

@@ -168,7 +168,7 @@ public class RealtimeFeed {
                 }
             };
             PtGraph ptGraphNodesAndEdges = null;
-            final GtfsReader gtfsReader = new GtfsReader(feedKey, graphHopperStorage, ptGraphNodesAndEdges, overlayGraph, gtfsStorage, null, transfers.get(feedKey));
+            final GtfsReader gtfsReader = new GtfsReader(feedKey, graphHopperStorage, ptGraphNodesAndEdges, overlayGraph, null, null, transfers.get(feedKey));
             Instant timestamp = Instant.ofEpochSecond(feedMessage.getHeader().getTimestamp());
             LocalDate dateToChange = timestamp.atZone(timezone).toLocalDate(); //FIXME
             BitSet validOnDay = new BitSet();
