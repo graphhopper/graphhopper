@@ -78,10 +78,6 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         this.ptGraph = ptGraph;
     }
 
-    public static Factory createFactory(GraphHopperConfig config, TranslationMap translationMap, GraphHopperGtfs graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
-        return new Factory(config, translationMap, graphHopperStorage.getGraphHopperStorage(), graphHopperStorage.getPtGraph(), locationIndex, gtfsStorage);
-    }
-
     @Override
     public GHResponse route(Request request) {
         return new RequestHandler(request).route();
@@ -96,7 +92,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         private final GtfsStorage gtfsStorage;
         private final Map<String, Transfers> transfers;
 
-        private Factory(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, PtGraph ptGraph, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
+        public Factory(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, PtGraph ptGraph, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
             this.config = config;
             this.translationMap = translationMap;
             this.graphHopperStorage = graphHopperStorage;

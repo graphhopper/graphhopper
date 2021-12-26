@@ -18,6 +18,8 @@
 
 package com.graphhopper.gtfs;
 
+import com.carrotsearch.hppc.IntHashSet;
+import com.carrotsearch.hppc.cursors.IntCursor;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Stop;
 import com.google.transit.realtime.GtfsRealtime;
@@ -186,14 +188,36 @@ public final class PtRouterImpl implements PtRouter {
             for (int i = 0; i < locations.size(); i++) {
                 GHLocation location = locations.get(i);
                 if (location instanceof GHPointLocation) {
-                    final Snap closest = findByPoint(((GHPointLocation) location).ghPoint, i, i == 0 ? this.accessSnapFilter : this.egressSnapFilter);
-                    pointSnaps.add(closest);
-                    allSnaps.add(() -> new Label.NodeId(closest.getClosestNode(), false));
-                    points.add(closest.getSnappedPoint());
+                    GHPoint point = ((GHPointLocation) location).ghPoint;
+                    EdgeFilter snapFilter = i == 0 ? this.accessSnapFilter : this.egressSnapFilter;
+                    Snap source = locationIndex.findClosest(point.lat, point.lon, snapFilter);
+                    final Snap closest = source;
+                    if (!closest.isValid()) {
+                        IntHashSet result = new IntHashSet();
+                        gtfsStorage.getStopIndex().findEdgeIdsInNeighborhood(point.lat, point.lon, 0, result::add);
+                        gtfsStorage.getStopIndex().findEdgeIdsInNeighborhood(point.lat, point.lon, 1, result::add);
+                        if (result.isEmpty()) {
+                            throw new PointNotFoundException("Cannot find point: " + point, i);
+                        }
+                        IntCursor stopNodeId = result.iterator().next();
+                        for (Map.Entry<GtfsStorage.FeedIdWithStopId, Integer> e : gtfsStorage.getStationNodes().entrySet()) {
+                            if (e.getValue() == stopNodeId.value) {
+                                Stop stop = gtfsStorage.getGtfsFeeds().get(e.getKey().feedId).stops.get(e.getKey().stopId);
+                                final Snap stopSnap = new Snap(stop.stop_lat, stop.stop_lon);
+                                stopSnap.setClosestNode(stopNodeId.value);
+                                allSnaps.add(() -> new Label.NodeId(stopSnap.getClosestNode(), true));
+                                points.add(stopSnap.getQueryPoint().lat, stopSnap.getQueryPoint().lon);
+                            }
+                        }
+                    } else {
+                        pointSnaps.add(closest);
+                        allSnaps.add(() -> new Label.NodeId(closest.getClosestNode(), false));
+                        points.add(closest.getSnappedPoint());
+                    }
                 } else if (location instanceof GHStationLocation) {
-                    final Snap station = findByStationId((GHStationLocation) location, i);
-                    allSnaps.add(() -> new Label.NodeId(station.getClosestNode(), true));
-                    points.add(station.getQueryPoint().lat, station.getQueryPoint().lon);
+                    final Snap stopSnap = findByStopId((GHStationLocation) location, i);
+                    allSnaps.add(() -> new Label.NodeId(stopSnap.getClosestNode(), true));
+                    points.add(stopSnap.getQueryPoint().lat, stopSnap.getQueryPoint().lon);
                 }
             }
             queryGraph = QueryGraph.create(graphWithExtraEdges, pointSnaps); // modifies pointSnaps!
@@ -213,15 +237,7 @@ public final class PtRouterImpl implements PtRouter {
             return response;
         }
 
-        private Snap findByPoint(GHPoint point, int indexForErrorMessage, EdgeFilter snapFilter) {
-            Snap source = locationIndex.findClosest(point.lat, point.lon, snapFilter);
-            if (!source.isValid()) {
-                throw new PointNotFoundException("Cannot find point: " + point, indexForErrorMessage);
-            }
-            return source;
-        }
-
-        private Snap findByStationId(GHStationLocation station, int indexForErrorMessage) {
+        private Snap findByStopId(GHStationLocation station, int indexForErrorMessage) {
             for (Map.Entry<String, GTFSFeed> entry : gtfsStorage.getGtfsFeeds().entrySet()) {
                 final Integer node = gtfsStorage.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(entry.getKey(), station.stop_id));
                 if (node != null) {

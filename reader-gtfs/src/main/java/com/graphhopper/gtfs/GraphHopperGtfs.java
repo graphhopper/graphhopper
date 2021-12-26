@@ -24,10 +24,15 @@ import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.index.InMemConstructionIndex;
+import com.graphhopper.storage.index.IndexStructureInfo;
+import com.graphhopper.storage.index.LineIntIndex;
 import com.graphhopper.util.PMap;
+import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.sound.sampled.Line;
 import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
@@ -40,6 +45,7 @@ public class GraphHopperGtfs extends GraphHopper {
     private final GraphHopperConfig ghConfig;
     private GtfsStorage gtfsStorage;
     private PtGraph ptGraph;
+    private LineIntIndex stopIndex;
 
     public GraphHopperGtfs(GraphHopperConfig ghConfig) {
         this.ghConfig = ghConfig;
@@ -58,10 +64,13 @@ public class GraphHopperGtfs extends GraphHopper {
     protected void importPublicTransit() {
         ptGraph = new PtGraph(getGraphHopperStorage().getDirectory(), 100);
         gtfsStorage = new GtfsStorage(getGraphHopperStorage().getDirectory());
+        stopIndex = new LineIntIndex(new BBox(-180.0, 180.0, -90.0, 90.0), getGraphHopperStorage().getDirectory(), "stop_index");
         if (!getGtfsStorage().loadExisting()) {
             ensureWriteAccess();
             getGtfsStorage().create();
             ptGraph.create(100);
+            InMemConstructionIndex indexBuilder = new InMemConstructionIndex(IndexStructureInfo.create(
+                    new BBox(-180.0, 180.0, -90.0, 90.0), 300));
             try {
                 int idx = 0;
                 List<String> gtfsFiles = ghConfig.has("gtfs.file") ? Arrays.asList(ghConfig.getString("gtfs.file", "").split(",")) : Collections.emptyList();
@@ -74,7 +83,7 @@ public class GraphHopperGtfs extends GraphHopper {
                 getGtfsStorage().getGtfsFeeds().forEach((id, gtfsFeed) -> {
                     Transfers transfers = new Transfers(gtfsFeed);
                     allTransfers.put(id, transfers);
-                    GtfsReader gtfsReader = new GtfsReader(id, getGraphHopperStorage(), ptGraph, ptGraph, getGtfsStorage(), getLocationIndex(), transfers);
+                    GtfsReader gtfsReader = new GtfsReader(id, getGraphHopperStorage(), ptGraph, ptGraph, getGtfsStorage(), getLocationIndex(), transfers, indexBuilder);
                     gtfsReader.connectStopsToStreetNetwork();
                     LOGGER.info("Building transit graph for feed {}", gtfsFeed.feedId);
                     gtfsReader.buildPtNetwork();
@@ -84,6 +93,8 @@ public class GraphHopperGtfs extends GraphHopper {
             } catch (Exception e) {
                 throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
             }
+            stopIndex.store(indexBuilder);
+            gtfsStorage.setStopIndex(stopIndex);
         }
     }
 

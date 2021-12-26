@@ -108,66 +108,8 @@ public class RealtimeFeed {
         feedMessages.forEach((feedKey, feedMessage) -> {
             GTFSFeed feed = staticGtfs.getGtfsFeeds().get(feedKey);
             ZoneId timezone = ZoneId.of(feed.agency.values().stream().findFirst().get().agency_timezone);
-            GtfsStorageI gtfsStorage = new GtfsStorageI() {
-                @Override
-                public Map<String, Map<String, Fare>> getFares() {
-                    return null;
-                }
-
-                @Override
-                public Map<GtfsStorage.Validity, Integer> getOperatingDayPatterns() {
-                    return operatingDayPatterns;
-                }
-
-                @Override
-                public Map<GtfsStorage.FeedIdWithTimezone, Integer> getWritableTimeZones() {
-                    return writableTimeZones;
-                }
-
-                @Override
-                public Map<Integer, GtfsStorage.FeedIdWithTimezone> getTimeZones() {
-                    return staticGtfs.getTimeZones();
-                }
-
-                @Override
-                public Map<Integer, byte[]> getTripDescriptors() {
-                    return tripDescriptors;
-                }
-
-                @Override
-                public Map<Integer, Integer> getStopSequences() {
-                    return stopSequences;
-                }
-
-                @Override
-                public Map<String, int[]> getBoardEdgesForTrip() {
-                    return boardEdgesForTrip;
-                }
-
-                @Override
-                public Map<String, int[]> getAlightEdgesForTrip() {
-                    return alightEdgesForTrip;
-                }
-
-                @Override
-                public Map<String, GTFSFeed> getGtfsFeeds() {
-                    HashMap<String, GTFSFeed> stringGTFSFeedHashMap = new HashMap<>();
-                    stringGTFSFeedHashMap.put(feedKey, feed);
-                    return stringGTFSFeedHashMap;
-                }
-
-                @Override
-                public Map<GtfsStorage.FeedIdWithStopId, Integer> getStationNodes() {
-                    return staticGtfs.getStationNodes();
-                }
-
-                @Override
-                public Map<Integer, PlatformDescriptor> getPlatformDescriptorByEdge() {
-                    return platformDescriptorByEdge;
-                }
-            };
             PtGraph ptGraphNodesAndEdges = null;
-            final GtfsReader gtfsReader = new GtfsReader(feedKey, graphHopperStorage, ptGraphNodesAndEdges, overlayGraph, null, null, transfers.get(feedKey));
+            final GtfsReader gtfsReader = new GtfsReader(feedKey, graphHopperStorage, ptGraphNodesAndEdges, overlayGraph, null, null, transfers.get(feedKey), null);
             Instant timestamp = Instant.ofEpochSecond(feedMessage.getHeader().getTimestamp());
             LocalDate dateToChange = timestamp.atZone(timezone).toLocalDate(); //FIXME
             BitSet validOnDay = new BitSet();

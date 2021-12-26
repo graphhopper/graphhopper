@@ -31,6 +31,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.index.InMemConstructionIndex;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIteratorState;
@@ -50,6 +51,7 @@ class GtfsReader {
 
     private final PtGraph ptGraph;
     private final PtGraphOut out;
+    private final InMemConstructionIndex indexBuilder;
     private LocalDate startDate;
     private LocalDate endDate;
 
@@ -88,7 +90,7 @@ class GtfsReader {
     private final Map<String, Map<GtfsStorageI.PlatformDescriptor, NavigableMap<Integer, Integer>>> departureTimelinesByStop = new HashMap<>();
     private final Map<String, Map<GtfsStorageI.PlatformDescriptor, NavigableMap<Integer, Integer>>> arrivalTimelinesByStop = new HashMap<>();
 
-    GtfsReader(String id, GraphHopperStorage graph, PtGraph ptGraph, PtGraphOut out, GtfsStorage gtfsStorage, LocationIndex walkNetworkIndex, Transfers transfers) {
+    GtfsReader(String id, GraphHopperStorage graph, PtGraph ptGraph, PtGraphOut out, GtfsStorage gtfsStorage, LocationIndex walkNetworkIndex, Transfers transfers, InMemConstructionIndex indexBuilder) {
         this.id = id;
         this.graph = graph;
         this.gtfsStorage = gtfsStorage;
@@ -99,6 +101,7 @@ class GtfsReader {
         this.endDate = feed.getEndDate();
         this.ptGraph = ptGraph;
         this.out = out;
+        this.indexBuilder = indexBuilder;
     }
 
     void connectStopsToStreetNetwork() {
@@ -117,6 +120,7 @@ class GtfsReader {
                 } else {
                     System.out.println("unmatched stop");
                 }
+                indexBuilder.addToAllTilesOnLine(stopNode, stop.stop_lat, stop.stop_lon, stop.stop_lat, stop.stop_lon);
             }
         }
     }

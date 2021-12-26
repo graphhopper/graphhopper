@@ -22,6 +22,7 @@ import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Fare;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.index.LineIntIndex;
 import org.mapdb.Bind;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
@@ -40,6 +41,15 @@ import java.util.*;
 public class GtfsStorage implements GtfsStorageI {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(GtfsStorage.class);
+	private LineIntIndex stopIndex;
+
+	public void setStopIndex(LineIntIndex stopIndex) {
+		this.stopIndex = stopIndex;
+	}
+
+	public LineIntIndex getStopIndex() {
+		return stopIndex;
+	}
 
 	public static class Validity implements Serializable {
 		final BitSet validity;
