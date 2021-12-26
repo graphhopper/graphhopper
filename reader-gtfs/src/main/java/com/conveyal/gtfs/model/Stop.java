@@ -85,4 +85,10 @@ public class Stop extends Entity {
 
     }
 
+    @Override
+    public String toString() {
+        return "Stop{" +
+                "stop_id='" + stop_id + '\'' +
+                '}';
+    }
 }

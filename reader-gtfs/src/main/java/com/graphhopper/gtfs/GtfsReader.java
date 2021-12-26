@@ -116,9 +116,9 @@ class GtfsReader {
                 if (locationSnap.isValid()) {
                     gtfsStorage.getPtToStreet().put(stopNode, locationSnap.getClosestNode());
                     gtfsStorage.getStreetToPt().put(locationSnap.getClosestNode(), stopNode);
-                    System.out.printf("Associate pt stop node %d with street node %d.\n", stopNode, locationSnap.getClosestNode());
+                    System.out.printf("Associate pt stop %s with street node %d.\n", stop, locationSnap.getClosestNode());
                 } else {
-                    System.out.println("unmatched stop");
+                    System.out.printf("unmatched stop %s.\n", stop);
                 }
                 indexBuilder.addToAllTilesOnLine(stopNode, stop.stop_lat, stop.stop_lon, stop.stop_lat, stop.stop_lon);
             }
