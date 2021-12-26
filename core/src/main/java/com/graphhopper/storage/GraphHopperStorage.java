@@ -294,7 +294,7 @@ public final class GraphHopperStorage implements Graph, Closeable {
     /**
      * Flush and free base graph resources like way geometries and StringIndex
      */
-    public void flushAndCloseEarly() {
+    public void flushAndCloseGeometryAndNameStorage() {
         baseGraph.flushAndCloseGeometryAndNameStorage();
     }
 

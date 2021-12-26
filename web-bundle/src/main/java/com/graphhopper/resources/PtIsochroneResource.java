@@ -18,42 +18,10 @@
 
 package com.graphhopper.resources;
 
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Predicate;
-import javax.inject.Inject;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-
 import com.conveyal.gtfs.GTFSFeed;
 import com.graphhopper.gtfs.*;
 import com.graphhopper.http.GHLocationParam;
-import com.graphhopper.util.exceptions.PointNotFoundException;
-import io.dropwizard.jersey.params.InstantParam;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.CoordinateList;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.MultiPoint;
-import org.locationtech.jts.geom.MultiPolygon;
-import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
-import org.locationtech.jts.triangulate.ConstraintVertex;
-import org.locationtech.jts.triangulate.DelaunayTriangulationBuilder;
-import org.locationtech.jts.triangulate.quadedge.QuadEdge;
-import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
-import org.locationtech.jts.triangulate.quadedge.Vertex;
-
+import com.graphhopper.http.OffsetDateTimeParam;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.isochrone.algorithm.ReadableTriangulation;
 import com.graphhopper.jackson.ResponsePathSerializer;
@@ -71,7 +39,23 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.JsonFeature;
+import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.BBox;
+import org.locationtech.jts.geom.*;
+import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
+import org.locationtech.jts.triangulate.ConstraintVertex;
+import org.locationtech.jts.triangulate.DelaunayTriangulationBuilder;
+import org.locationtech.jts.triangulate.quadedge.QuadEdge;
+import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
+import org.locationtech.jts.triangulate.quadedge.Vertex;
+
+import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import java.time.Instant;
+import java.util.*;
+import java.util.function.Predicate;
 
 @Path("isochrone-pt")
 public class PtIsochroneResource {
@@ -106,10 +90,10 @@ public class PtIsochroneResource {
             @QueryParam("point") GHLocationParam sourceParam,
             @QueryParam("time_limit") @DefaultValue("600") long seconds,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
-            @QueryParam("pt.earliest_departure_time") @NotNull InstantParam departureTimeParam,
+            @QueryParam("pt.earliest_departure_time") @NotNull OffsetDateTimeParam departureTimeParam,
             @QueryParam("pt.blocked_route_types") @DefaultValue("0") int blockedRouteTypes,
             @QueryParam("result") @DefaultValue("multipolygon") String format) {
-        Instant initialTime = departureTimeParam.get();
+        Instant initialTime = departureTimeParam.get().toInstant();
         GHLocation location = sourceParam.get();
 
         double targetZ = seconds * 1000;

@@ -70,11 +70,24 @@ public class PtRouteResourceTest {
                 .queryParam("point", "Stop(NADAV)")
                 .queryParam("point", "Stop(NANAA)")
                 .queryParam("profile", "pt")
-                .queryParam("pt.earliest_departure_time", "2007-01-01T08:00:00Z")
+                .queryParam("pt.earliest_departure_time", "2007-01-01T15:44:00Z")
                 .request().buildGet().invoke();
         assertEquals(200, response.getStatus());
-        GHResponse ghResponse = response.readEntity(GHResponse.class);
-        assertFalse(ghResponse.hasErrors());
+        JsonNode jsonNode = response.readEntity(JsonNode.class);
+        assertEquals(1, jsonNode.at("/paths/0/legs").size());
+    }
+
+    @Test
+    public void testStationStationQueryWithOffsetDateTime() {
+        final Response response = clientTarget(app, "/route")
+                .queryParam("point", "Stop(NADAV)")
+                .queryParam("point", "Stop(NANAA)")
+                .queryParam("profile", "pt")
+                .queryParam("pt.earliest_departure_time", "2007-01-01T07:44:00-08:00")
+                .request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        JsonNode jsonNode = response.readEntity(JsonNode.class);
+        assertEquals(1, jsonNode.at("/paths/0/legs").size());
     }
 
     @Test
@@ -83,11 +96,11 @@ public class PtRouteResourceTest {
                 .queryParam("point", "36.914893,-116.76821") // NADAV stop
                 .queryParam("point", "36.914944,-116.761472") //NANAA stop
                 .queryParam("profile", "pt")
-                .queryParam("pt.earliest_departure_time", "2007-01-01T08:00:00Z")
+                .queryParam("pt.earliest_departure_time", "2007-01-01T15:44:00Z")
                 .request().buildGet().invoke();
         assertEquals(200, response.getStatus());
-        GHResponse ghResponse = response.readEntity(GHResponse.class);
-        assertFalse(ghResponse.hasErrors());
+        JsonNode jsonNode = response.readEntity(JsonNode.class);
+        assertEquals(1, jsonNode.at("/paths/0/legs").size());
     }
 
     @Test
