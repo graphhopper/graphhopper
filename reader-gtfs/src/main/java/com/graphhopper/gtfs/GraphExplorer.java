@@ -270,19 +270,8 @@ public final class GraphExplorer {
         }
     }
 
-    int routeType(MultiModalEdge edge) {
-        GtfsStorage.EdgeType edgeType = edge.getType();
-        if (edgeType == GtfsStorage.EdgeType.TRANSFER) {
-            GtfsStorageI.PlatformDescriptor platformDescriptor = realtimeFeed.getPlatformDescriptorByEdge().get(edge.getId());
-            if (platformDescriptor instanceof GtfsStorageI.RouteTypePlatform) {
-                return ((GtfsStorageI.RouteTypePlatform) platformDescriptor).route_type;
-            } else {
-                return gtfsStorage.getGtfsFeeds().get(platformDescriptor.feed_id).routes.get(((GtfsStorageI.RoutePlatform) platformDescriptor).route_id).route_type;
-            }
-        } else if (edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT) {
-            return edge.ptEdge.getAttrs().validityId;
-        }
-        throw new RuntimeException("Edge type "+edgeType+" doesn't encode route type.");
+    int routeType(PtGraph.PtEdge edge) {
+        return edge.getRouteType();
     }
 
     public static class MultiModalEdge {
@@ -336,6 +325,10 @@ public final class GraphExplorer {
 
         public double getDistance() {
             return distance;
+        }
+
+        public int getRouteType() {
+            return ptEdge.getRouteType();
         }
     }
 }

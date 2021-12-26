@@ -285,5 +285,13 @@ public class PtGraph implements GtfsReader.PtGraphOut {
                     ", attrs=" + attrs +
                     '}';
         }
+
+        public int getRouteType() {
+            GtfsStorage.EdgeType edgeType = getType();
+            if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT || edgeType == GtfsStorage.EdgeType.TRANSFER)) {
+                return getAttrs().validityId;
+            }
+            throw new RuntimeException("Edge type "+edgeType+" doesn't encode route type.");
+        }
     }
 }

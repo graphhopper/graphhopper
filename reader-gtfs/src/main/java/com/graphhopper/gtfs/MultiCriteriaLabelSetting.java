@@ -125,12 +125,10 @@ public class MultiCriteriaLabelSetting {
                     Long firstPtDepartureTime = label.departureTime;
                     GtfsStorage.EdgeType edgeType = edge.getType();
                     if (!reverse && (edgeType == GtfsStorage.EdgeType.ENTER_PT) || reverse && (edgeType == GtfsStorage.EdgeType.EXIT_PT)) {
-                        int currentRouteType = explorer.routeType(edge);
-                        extraWeight += transferPenaltiesByRouteType.applyAsLong(currentRouteType);
+                        extraWeight += transferPenaltiesByRouteType.applyAsLong(edge.getRouteType());
                     }
                     if (edgeType == GtfsStorage.EdgeType.TRANSFER) {
-                        int currentRouteType = explorer.routeType(edge);
-                        extraWeight += transferPenaltiesByRouteType.applyAsLong(currentRouteType);
+                        extraWeight += transferPenaltiesByRouteType.applyAsLong(edge.getRouteType());
                     }
                     if (!reverse && (edgeType == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK || edgeType == GtfsStorage.EdgeType.WAIT)) {
                         if (label.nTransfers == 0) {
