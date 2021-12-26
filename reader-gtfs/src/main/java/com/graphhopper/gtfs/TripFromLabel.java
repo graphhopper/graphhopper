@@ -415,10 +415,6 @@ class TripFromLabel {
         }
     }
 
-    private String feedId(GraphExplorer.MultiModalEdge edge) {
-        return "pups";
-    }
-
     private Stream<GraphExplorer.MultiModalEdge> edges(List<Label.Transition> path) {
         return path.stream().filter(t -> t.edge != null).map(t -> t.edge);
     }

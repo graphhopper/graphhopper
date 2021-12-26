@@ -192,7 +192,7 @@ public final class GraphExplorer {
                 return false;
             }
         }, false)
-                .map(e -> new MultiModalEdge(e.getEdge(), e.getBaseNode(), e.getAdjNode(), (long) (accessEgressWeighting.calcEdgeMillis(e.detach(false), reverse) * (5.0 / walkSpeedKmH))));
+                .map(e -> new MultiModalEdge(e.getEdge(), e.getBaseNode(), e.getAdjNode(), (long) (accessEgressWeighting.calcEdgeMillis(e.detach(false), reverse) * (5.0 / walkSpeedKmH)), e.getDistance()));
     }
 
     long calcTravelTimeMillis(MultiModalEdge edge, long earliestStartTime) {
@@ -289,6 +289,7 @@ public final class GraphExplorer {
         private int baseNode;
         private int adjNode;
         private long time;
+        private double distance;
         private int edge;
         private PtGraph.PtEdge ptEdge;
 
@@ -296,11 +297,12 @@ public final class GraphExplorer {
             this.ptEdge = ptEdge;
         }
 
-        public MultiModalEdge(int edge, int baseNode, int adjNode, long time) {
+        public MultiModalEdge(int edge, int baseNode, int adjNode, long time, double distance) {
             this.edge = edge;
             this.baseNode = baseNode;
             this.adjNode = adjNode;
             this.time = time;
+            this.distance = distance;
         }
 
         public GtfsStorage.EdgeType getType() {
@@ -333,7 +335,7 @@ public final class GraphExplorer {
         }
 
         public double getDistance() {
-            return 0;
+            return distance;
         }
     }
 }

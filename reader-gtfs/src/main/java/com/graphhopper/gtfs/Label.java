@@ -17,9 +17,6 @@
  */
 package com.graphhopper.gtfs;
 
-import com.graphhopper.storage.Graph;
-import com.graphhopper.util.EdgeIteratorState;
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,28 +39,6 @@ public class Label {
             return (edge != null ? edge.toString() + " -> " : "") + label.node;
         }
 
-    }
-
-    public static class EdgeLabel {
-        public final EdgeIteratorState edgeIteratorState;
-        public final GtfsStorage.EdgeType edgeType;
-        public final String feedId;
-        public final int nTransfers;
-        public final double distance;
-        public PtGraph.PtEdge ptEdge;
-
-        public EdgeLabel(EdgeIteratorState edgeIteratorState, GtfsStorage.EdgeType edgeType, String feedId, int nTransfers, double distance) {
-            this.edgeIteratorState = edgeIteratorState;
-            this.edgeType = edgeType;
-            this.feedId = feedId;
-            this.nTransfers = nTransfers;
-            this.distance = distance;
-        }
-
-        @Override
-        public String toString() {
-            return edgeType.toString();
-        }
     }
 
     public boolean deleted = false;
@@ -103,7 +78,7 @@ public class Label {
         return node + " " + (departureTime != null ? Instant.ofEpochMilli(departureTime) : "---") + "\t" + nTransfers + "\t" + Instant.ofEpochMilli(currentTime);
     }
 
-    static List<Label.Transition> getTransitions(Label _label, boolean arriveBy, Graph queryGraph, PtGraph ptGraph, RealtimeFeed realtimeFeed) {
+    static List<Label.Transition> getTransitions(Label _label, boolean arriveBy) {
         Label label = _label;
         boolean reverseEdgeFlags = !arriveBy;
         List<Label.Transition> result = new ArrayList<>();
@@ -111,13 +86,6 @@ public class Label {
             result.add(new Label.Transition(label, null));
         }
         while (label.parent != null) {
-//            EdgeIteratorState edgeIteratorState = queryGraph.getEdgeIteratorState(label.edge, reverseEdgeFlags ? label.adjNode : label.parent.adjNode).detach(false);
-//            if (reverseEdgeFlags && edgeIteratorState != null && (edgeIteratorState.getBaseNode() != label.parent.adjNode || edgeIteratorState.getAdjNode() != label.adjNode)) {
-//                throw new IllegalStateException();
-//            }
-//            if (!reverseEdgeFlags && edgeIteratorState != null && (edgeIteratorState.getAdjNode() != label.parent.adjNode || edgeIteratorState.getBaseNode() != label.adjNode)) {
-//                throw new IllegalStateException();
-//            }
             Label.Transition transition;
             if (reverseEdgeFlags) {
                 transition = new Label.Transition(label, label.edge);
@@ -132,27 +100,6 @@ public class Label {
             Collections.reverse(result);
         }
         return result;
-    }
-
-    public static EdgeLabel getEdgeLabel(PtGraph.PtEdge ptEdge, RealtimeFeed realtimeFeed) {
-        GtfsStorage.EdgeType edgeType = ptEdge.getAttrs().type;
-        String feedId;
-        if (edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.TRANSFER) {
-            GtfsStorageI.PlatformDescriptor platformDescriptor = realtimeFeed.getPlatformDescriptorByEdge().get(ptEdge.getId());
-            feedId = platformDescriptor.feed_id;
-        } else {
-            feedId = null;
-        }
-        int nTransfers = ptEdge.getAttrs().transfers;
-        double distance = 1234; // FIXME
-        EdgeLabel edgeLabel = new EdgeLabel(null, edgeType, feedId, nTransfers, distance);
-        edgeLabel.ptEdge = ptEdge;
-        return edgeLabel;
-    }
-
-    public static EdgeLabel getEdgeLabel(EdgeIteratorState edgeIteratorState) {
-        double distance = edgeIteratorState.getDistance();
-        return new EdgeLabel(edgeIteratorState, GtfsStorage.EdgeType.HIGHWAY, null, 0, distance);
     }
 
     public static class NodeId {

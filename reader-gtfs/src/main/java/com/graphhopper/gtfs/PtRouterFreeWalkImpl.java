@@ -21,7 +21,6 @@ package com.graphhopper.gtfs;
 import com.conveyal.gtfs.GTFSFeed;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.Profile;
@@ -279,7 +278,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
 
             List<List<Label.Transition>> paths = new ArrayList<>();
             for (Label discoveredSolution : discoveredSolutions) {
-                List<Label.Transition> path = Label.getTransitions(discoveredSolution, arriveBy, queryGraph, ptGraph, realtimeFeed);
+                List<Label.Transition> path = Label.getTransitions(discoveredSolution, arriveBy);
                 paths.add(path);
             }
 
