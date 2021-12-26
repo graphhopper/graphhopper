@@ -386,6 +386,8 @@ class TripFromLabel {
                 if (path.get(i).edge.getType() != GtfsStorage.EdgeType.HIGHWAY) {
                     throw new IllegalStateException("Got a transit edge where I think I must be on a road.");
                 }
+                if (path.get(i).label.node.pt)
+                    continue; // This is the edge that goes over into the pt graph.
                 EdgeIteratorState edge = graph.getEdgeIteratorState(path.get(i).edge.getId(), path.get(i).label.node.node);
                 instructionsFromEdges.next(edge, i, prevEdgeId);
                 prevEdgeId = edge.getEdge();
