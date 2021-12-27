@@ -367,7 +367,7 @@ class GtfsReader {
         if (platformExitNode != -1) {
             patchArrivalTimeline(zoneId, timeline, platformExitNode);
         } else {
-            wireUpArrivalTimeline(stop, timeline, 0, null);
+            wireUpArrivalTimeline(stop, timeline, 0, route);
         }
         final Optional<Transfer> withinStationTransfer = transfers.getTransfersFromStop(stop.stop_id, routeId).stream().filter(t -> t.from_stop_id.equals(stop.stop_id)).findAny();
         if (!withinStationTransfer.isPresent()) {

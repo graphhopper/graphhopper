@@ -96,6 +96,7 @@ public class GraphHopperGtfs extends GraphHopper {
             stopIndex.store(indexBuilder);
             gtfsStorage.setStopIndex(stopIndex);
         }
+        gtfsStorage.setPtGraph(ptGraph);
     }
 
     private void interpolateTransfers(HashMap<String, GtfsReader> readers, Map<String, Transfers> allTransfers) {

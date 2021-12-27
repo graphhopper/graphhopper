@@ -108,8 +108,8 @@ public class RealtimeFeed {
         feedMessages.forEach((feedKey, feedMessage) -> {
             GTFSFeed feed = staticGtfs.getGtfsFeeds().get(feedKey);
             ZoneId timezone = ZoneId.of(feed.agency.values().stream().findFirst().get().agency_timezone);
-            PtGraph ptGraphNodesAndEdges = null;
-            final GtfsReader gtfsReader = new GtfsReader(feedKey, graphHopperStorage, ptGraphNodesAndEdges, overlayGraph, null, null, transfers.get(feedKey), null);
+            PtGraph ptGraphNodesAndEdges = staticGtfs.getPtGraph();
+            final GtfsReader gtfsReader = new GtfsReader(feedKey, graphHopperStorage, ptGraphNodesAndEdges, overlayGraph, staticGtfs, null, transfers.get(feedKey), null);
             Instant timestamp = Instant.ofEpochSecond(feedMessage.getHeader().getTimestamp());
             LocalDate dateToChange = timestamp.atZone(timezone).toLocalDate(); //FIXME
             BitSet validOnDay = new BitSet();
@@ -148,7 +148,7 @@ public class RealtimeFeed {
                             int departureDelay = stopTime.departure_time - originalStopTime.departure_time;
                             if (departureDelay > 0) {
                                 int boardEdge = boardEdges[stopTime.stop_sequence];
-                                int departureNode = graphHopperStorage.getEdgeIteratorState(boardEdge, Integer.MIN_VALUE).getAdjNode();
+                                int departureNode = ptGraphNodesAndEdges.edge(boardEdge).getAdjNode();
                                 int delayedBoardEdge = gtfsReader.addDelayedBoardEdge(timezone, tripUpdate.getTrip(), stopTime.stop_sequence, stopTime.departure_time + timeOffset, departureNode, validOnDay);
                                 delaysForBoardEdges.put(delayedBoardEdge, departureDelay * 1000);
                             }

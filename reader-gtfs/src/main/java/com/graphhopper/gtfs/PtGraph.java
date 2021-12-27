@@ -230,8 +230,12 @@ public class PtGraph implements GtfsReader.PtGraphOut {
         return () -> {
             List<Integer> edgeIds = new ArrayList<>(nodeToOutEdges.getOrDefault(node, Collections.emptyList()));
             edgeIds.sort(Comparator.<Integer>naturalOrder().reversed());
-            return edgeIds.stream().map(e -> new PtEdge(e, edgeDestinationsMap.get(e), edgeAttributesMap.get(e))).iterator();
+            return edgeIds.stream().map(e -> edge(e)).iterator();
         };
+    }
+
+    public PtEdge edge(int e) {
+        return new PtEdge(e, edgeDestinationsMap.get(e), edgeAttributesMap.get(e));
     }
 
     public Iterable<PtEdge> backEdgesAround(int node) {

@@ -42,6 +42,7 @@ public class GtfsStorage implements GtfsStorageI {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(GtfsStorage.class);
 	private LineIntIndex stopIndex;
+	private PtGraph ptGraph;
 
 	public void setStopIndex(LineIntIndex stopIndex) {
 		this.stopIndex = stopIndex;
@@ -51,7 +52,15 @@ public class GtfsStorage implements GtfsStorageI {
 		return stopIndex;
 	}
 
-	public static class Validity implements Serializable {
+    public PtGraph getPtGraph() {
+        return ptGraph;
+    }
+
+    public void setPtGraph(PtGraph ptGraph) {
+        this.ptGraph = ptGraph;
+    }
+
+    public static class Validity implements Serializable {
 		final BitSet validity;
 		final ZoneId zoneId;
 		final LocalDate start;
