@@ -81,10 +81,6 @@ public class RealtimeFeed {
         final GtfsReader.PtGraphOut overlayGraph = new GtfsReader.PtGraphOut() {
             int pups = 3000000;
             int wurst = 30000000;
-            @Override
-            public void putPlatformNode(int platformEnterNode, GtfsStorageI.PlatformDescriptor platformDescriptor) {
-
-            }
 
             @Override
             public int createEdge(int src, int dest, PtEdgeAttributes attrs) {
@@ -96,6 +92,16 @@ public class RealtimeFeed {
             @Override
             public int createNode() {
                 return wurst++;
+            }
+
+            @Override
+            public void putPlatformEnterNode(int platformEnterNode, GtfsStorageI.PlatformDescriptor platformDescriptor) {
+
+            }
+
+            @Override
+            public void putPlatformExitNode(int platformExitNode, GtfsStorageI.PlatformDescriptor platformDescriptor) {
+
             }
         };
 

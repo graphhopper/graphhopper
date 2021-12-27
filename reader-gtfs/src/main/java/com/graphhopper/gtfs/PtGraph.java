@@ -183,11 +183,21 @@ public class PtGraph implements GtfsReader.PtGraphOut {
         return nodes.getInt(nodePointer);
     }
 
-    Map<Integer, GtfsStorageI.PlatformDescriptor> platforms = new HashMap<>();
+    Map<Integer, GtfsStorageI.PlatformDescriptor> enterPlatforms = new HashMap<>();
+    Map<Integer, GtfsStorageI.PlatformDescriptor> exitPlatforms = new HashMap<>();
 
-    public Map<Integer, GtfsStorageI.PlatformDescriptor> getPlatforms(GtfsStorage.FeedIdWithStopId feedIdWithStopId) {
+    public Map<Integer, GtfsStorageI.PlatformDescriptor> getEnterPlatforms(GtfsStorage.FeedIdWithStopId feedIdWithStopId) {
         HashMap<Integer, GtfsStorageI.PlatformDescriptor> result = new HashMap<>();
-        platforms.forEach((node, platformDescriptor) -> {
+        enterPlatforms.forEach((node, platformDescriptor) -> {
+            if (platformDescriptor.feed_id.equals(feedIdWithStopId.feedId) && platformDescriptor.stop_id.equals(feedIdWithStopId.stopId))
+                result.put(node, platformDescriptor);
+        });
+        return result;
+    }
+
+    public Map<Integer, GtfsStorageI.PlatformDescriptor> getExitPlatforms(GtfsStorage.FeedIdWithStopId feedIdWithStopId) {
+        HashMap<Integer, GtfsStorageI.PlatformDescriptor> result = new HashMap<>();
+        exitPlatforms.forEach((node, platformDescriptor) -> {
             if (platformDescriptor.feed_id.equals(feedIdWithStopId.feedId) && platformDescriptor.stop_id.equals(feedIdWithStopId.stopId))
                 result.put(node, platformDescriptor);
         });
@@ -202,10 +212,14 @@ public class PtGraph implements GtfsReader.PtGraphOut {
     Map<Integer, List<Integer>> nodeToOutEdges = new HashMap<>();
     Map<Integer, List<Integer>> nodeToInEdges = new HashMap<>();
 
-    @Override
-    public void putPlatformNode(int platformEnterNode, GtfsStorageI.PlatformDescriptor platformDescriptor) {
-        platforms.put(platformEnterNode, platformDescriptor);
+    public void putPlatformEnterNode(int platformEnterNode, GtfsStorageI.PlatformDescriptor platformDescriptor) {
+        enterPlatforms.put(platformEnterNode, platformDescriptor);
     }
+
+    public void putPlatformExitNode(int platformExitNode, GtfsStorageI.PlatformDescriptor platformDescriptor) {
+        exitPlatforms.put(platformExitNode, platformDescriptor);
+    }
+
 
     @Override
     public int createEdge(int src, int dest, PtEdgeAttributes attrs) {
@@ -252,9 +266,20 @@ public class PtGraph implements GtfsReader.PtGraphOut {
 
     public static class PtEdge {
         private final int edgeId;
+        private final int baseNode;
+
+        @Override
+        public String toString() {
+            return "PtEdge{" +
+                    "edgeId=" + edgeId +
+                    ", baseNode=" + baseNode +
+                    ", adjNode=" + adjNode +
+                    ", attrs=" + attrs +
+                    '}';
+        }
+
         private final int adjNode;
         private final PtEdgeAttributes attrs;
-        private final int baseNode;
 
         public PtEdge(int edgeId, int baseNode, int adjNode, PtEdgeAttributes attrs) {
             this.edgeId = edgeId;
@@ -283,14 +308,7 @@ public class PtGraph implements GtfsReader.PtGraphOut {
             return edgeId;
         }
 
-        @Override
-        public String toString() {
-            return "PtEdge{" +
-                    "edgeId=" + edgeId +
-                    ", adjNode=" + adjNode +
-                    ", attrs=" + attrs +
-                    '}';
-        }
+
 
         public int getRouteType() {
             GtfsStorage.EdgeType edgeType = getType();

@@ -74,7 +74,10 @@ public final class GraphExplorer {
         Stream<MultiModalEdge> ptEdges = label.node.ptNode != -1 ? ptEdgeStream(label.node.ptNode, label.currentTime) : Stream.empty();
         Stream<MultiModalEdge> streetEdges = label.node.streetNode != -1 ? streetEdgeStream(label.node.streetNode) : Stream.empty();
         Stream<MultiModalEdge> extraEdges = label.node.ptNode != -1 ? realtimeFeed.getAdditionalEdges().stream().filter(e -> e.getBaseNode() == label.node.ptNode).map(MultiModalEdge::new) : Stream.empty();
-        return Stream.of(ptEdges, streetEdges, extraEdges).flatMap(s -> s);
+        return Stream.of(ptEdges, streetEdges, extraEdges).flatMap(s -> s)
+                .peek(e -> {
+                        System.out.println("blubb " + e);
+                });
     }
 
     private Stream<MultiModalEdge> ptEdgeStream(int ptNode, long currentTime) {
