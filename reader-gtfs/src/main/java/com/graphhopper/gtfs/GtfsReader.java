@@ -109,18 +109,26 @@ class GtfsReader {
         FlagEncoder footEncoder = em.getEncoder("foot");
         final EdgeFilter filter = new DefaultSnapFilter(new FastestWeighting(footEncoder), em.getBooleanEncodedValue(Subnetwork.key("foot")));
         for (Stop stop : feed.stops.values()) {
-            int stopNode = ptGraph.createNode();
-            gtfsStorage.getStationNodes().put(new GtfsStorage.FeedIdWithStopId(id, stop.stop_id), stopNode);
             if (stop.location_type == 0) { // Only stops. Not interested in parent stations for now.
                 Snap locationSnap = walkNetworkIndex.findClosest(stop.stop_lat, stop.stop_lon, filter);
                 if (locationSnap.isValid()) {
-                    gtfsStorage.getPtToStreet().put(stopNode, locationSnap.getClosestNode());
-                    gtfsStorage.getStreetToPt().put(locationSnap.getClosestNode(), stopNode);
                     System.out.printf("Associate pt stop %s with street node %d.\n", stop, locationSnap.getClosestNode());
+                    Integer stopNode = gtfsStorage.getStreetToPt().get(locationSnap.getClosestNode());
+                    if (stopNode == null) {
+                        stopNode = ptGraph.createNode();
+                        indexBuilder.addToAllTilesOnLine(stopNode, stop.stop_lat, stop.stop_lon, stop.stop_lat, stop.stop_lon);
+                        Integer prev1 = gtfsStorage.getPtToStreet().put(stopNode, locationSnap.getClosestNode());
+                        assert prev1 == null;
+                        Integer prev2 = gtfsStorage.getStreetToPt().put(locationSnap.getClosestNode(), stopNode);
+                        assert prev2 == null;
+                    }
+                    gtfsStorage.getStationNodes().put(new GtfsStorage.FeedIdWithStopId(id, stop.stop_id), stopNode);
                 } else {
                     System.out.printf("unmatched stop %s.\n", stop);
+                    int stopNode = ptGraph.createNode();
+                    gtfsStorage.getStationNodes().put(new GtfsStorage.FeedIdWithStopId(id, stop.stop_id), stopNode);
+                    indexBuilder.addToAllTilesOnLine(stopNode, stop.stop_lat, stop.stop_lon, stop.stop_lat, stop.stop_lon);
                 }
-                indexBuilder.addToAllTilesOnLine(stopNode, stop.stop_lat, stop.stop_lon, stop.stop_lat, stop.stop_lon);
             }
         }
     }
