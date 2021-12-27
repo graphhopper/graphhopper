@@ -105,7 +105,10 @@ public class GraphHopperGtfs extends GraphHopper {
         QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, Collections.emptyList());
         Weighting transferWeighting = createWeighting(getProfile("foot"), new PMap());
         final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, ptGraph, transferWeighting, getGtfsStorage(), RealtimeFeed.empty(getGtfsStorage()), true, true, false, 5.0, false, 0);
-        getGtfsStorage().getStationNodes().values().stream().distinct().map(n -> new Label.NodeId(n, true)).forEach(stationNode -> {
+        getGtfsStorage().getStationNodes().values().stream().distinct().map(n -> {
+            int streetNode = Optional.ofNullable(gtfsStorage.getPtToStreet().get(n)).orElse(-1);
+            return new Label.NodeId(streetNode, n);
+        }).forEach(stationNode -> {
             MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, true, false, false, 0, new ArrayList<>());
             router.setLimitStreetTime(Duration.ofSeconds(maxTransferWalkTimeSeconds).toMillis());
             Iterator<Label> iterator = router.calcLabels(stationNode, Instant.ofEpochMilli(0)).iterator();
@@ -115,19 +118,19 @@ public class GraphHopperGtfs extends GraphHopper {
                     if (label.edge.getType() == GtfsStorage.EdgeType.EXIT_PT) {
                         GtfsStorageI.PlatformDescriptor fromPlatformDescriptor = getGtfsStorage().getPlatformDescriptorByEdge().get(label.edge.getId());
                         Transfers transfers = allTransfers.get(fromPlatformDescriptor.feed_id);
-                        for (PtGraph.PtEdge ptEdge : ptGraph.edgesAround(stationNode.node)) {
+                        for (PtGraph.PtEdge ptEdge : ptGraph.edgesAround(stationNode.ptNode)) {
                             if (ptEdge.getType() == GtfsStorage.EdgeType.ENTER_PT) {
                                 GtfsStorageI.PlatformDescriptor toPlatformDescriptor = getGtfsStorage().getPlatformDescriptorByEdge().get(ptEdge.getId());
                                 LOGGER.debug(fromPlatformDescriptor + " -> " + toPlatformDescriptor);
                                 if (!toPlatformDescriptor.feed_id.equals(fromPlatformDescriptor.feed_id)) {
                                     LOGGER.debug(" Different feed. Inserting transfer with " + (int) (label.streetTime / 1000L) + " s.");
                                     GtfsReader toFeedReader = readers.get(toPlatformDescriptor.feed_id);
-                                    toFeedReader.insertTransferEdges(label.node.node, (int) (label.streetTime / 1000L), toPlatformDescriptor);
+                                    toFeedReader.insertTransferEdges(label.node.ptNode, (int) (label.streetTime / 1000L), toPlatformDescriptor);
                                 } else {
                                     List<Transfer> transfersToStop = transfers.getTransfersToStop(toPlatformDescriptor.stop_id, routeIdOrNull(toPlatformDescriptor));
                                     if (transfersToStop.stream().noneMatch(t -> t.from_stop_id.equals(fromPlatformDescriptor.stop_id))) {
                                         GtfsReader toFeedReader = readers.get(toPlatformDescriptor.feed_id);
-                                        toFeedReader.insertTransferEdges(label.node.node, (int) (label.streetTime / 1000L), toPlatformDescriptor);
+                                        toFeedReader.insertTransferEdges(label.node.ptNode, (int) (label.streetTime / 1000L), toPlatformDescriptor);
                                         LOGGER.debug("  Inserting transfer with " + (int) (label.streetTime / 1000L) + " s.");
                                     }
                                 }

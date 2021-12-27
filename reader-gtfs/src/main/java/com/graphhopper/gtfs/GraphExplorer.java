@@ -30,6 +30,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.Spliterators;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -70,26 +71,9 @@ public final class GraphExplorer {
     }
 
     Stream<MultiModalEdge> exploreEdgesAround(Label label) {
-        if (label.node.pt) {
-            System.out.println("start " + label.node.node);
-            Integer streetNode = gtfsStorage.getPtToStreet().get(label.node.node);
-            Stream<MultiModalEdge> connection;
-            if (streetNode != null) {
-                connection = streetEdgeStream(streetNode);
-            } else {
-                connection = Stream.empty();
-            }
-            return Stream.concat(ptEdgeStream(label.node.node, label.currentTime), connection).peek(e -> System.out.println(e));
-        } else {
-            Integer ptNode = gtfsStorage.getStreetToPt().get(label.node.node);
-            Stream<MultiModalEdge> connection;
-            if (ptNode != null) {
-                connection = ptEdgeStream(ptNode, label.currentTime);
-            } else {
-                connection = Stream.empty();
-            }
-            return Stream.concat(streetEdgeStream(label.node.node), connection).peek(e -> System.out.println(e));
-        }
+        return Stream.concat(label.node.ptNode != -1 ? ptEdgeStream(label.node.ptNode, label.currentTime) : Stream.empty(),
+                label.node.streetNode != -1 ? streetEdgeStream(label.node.streetNode) : Stream.empty())
+                .peek(e -> System.out.println(e));
     }
 
     private Stream<MultiModalEdge> ptEdgeStream(int ptNode, long currentTime) {
@@ -274,7 +258,7 @@ public final class GraphExplorer {
         return edge.getRouteType();
     }
 
-    public static class MultiModalEdge {
+    public class MultiModalEdge {
         private int baseNode;
         private int adjNode;
         private long time;
@@ -307,7 +291,13 @@ public final class GraphExplorer {
         }
 
         public Label.NodeId getAdjNode() {
-            return ptEdge != null ? new Label.NodeId(ptEdge.getAdjNode(), true) : new Label.NodeId(adjNode, false); // FIXME
+            if (ptEdge != null) {
+                int streetNode = Optional.ofNullable(gtfsStorage.getPtToStreet().get(ptEdge.getAdjNode())).orElse(-1);
+                return new Label.NodeId(streetNode, ptEdge.getAdjNode());
+            } else {
+                int ptNode = Optional.ofNullable(gtfsStorage.getStreetToPt().get(adjNode)).orElse(-1);
+                return new Label.NodeId(adjNode, ptNode);
+            }
         }
 
         public long getTime() {

@@ -103,32 +103,32 @@ public class Label {
     }
 
     public static class NodeId {
-        public NodeId(int node, boolean pt) {
-            this.node = node;
-            this.pt = pt;
+        public NodeId(int streetNode, int ptNode) {
+            this.streetNode = streetNode;
+            this.ptNode = ptNode;
         }
 
-        public int node;
-        public boolean pt;
+        public int streetNode;
+        public int ptNode;
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             NodeId nodeId = (NodeId) o;
-            return node == nodeId.node && pt == nodeId.pt;
+            return streetNode == nodeId.streetNode && ptNode == nodeId.ptNode;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(node, pt);
+            return Objects.hash(streetNode, ptNode);
         }
 
         @Override
         public String toString() {
             return "NodeId{" +
-                    "node=" + node +
-                    ", pt=" + pt +
+                    "streetNode=" + streetNode +
+                    ", ptNode=" + ptNode +
                     '}';
         }
     }

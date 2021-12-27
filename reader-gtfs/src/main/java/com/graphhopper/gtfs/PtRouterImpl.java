@@ -205,18 +205,21 @@ public final class PtRouterImpl implements PtRouter {
                                 Stop stop = gtfsStorage.getGtfsFeeds().get(e.getKey().feedId).stops.get(e.getKey().stopId);
                                 final Snap stopSnap = new Snap(stop.stop_lat, stop.stop_lon);
                                 stopSnap.setClosestNode(stopNodeId.value);
-                                allSnaps.add(() -> new Label.NodeId(stopSnap.getClosestNode(), true));
+                                int streetNode = Optional.ofNullable(gtfsStorage.getPtToStreet().get(stopSnap.getClosestNode())).orElse(-1);
+                                allSnaps.add(() -> new Label.NodeId(streetNode, stopSnap.getClosestNode()));
                                 points.add(stopSnap.getQueryPoint().lat, stopSnap.getQueryPoint().lon);
                             }
                         }
                     } else {
                         pointSnaps.add(closest);
-                        allSnaps.add(() -> new Label.NodeId(closest.getClosestNode(), false));
+                        int ptNode = Optional.ofNullable(gtfsStorage.getStreetToPt().get(closest.getClosestNode())).orElse(-1);
+                        allSnaps.add(() -> new Label.NodeId(closest.getClosestNode(), ptNode));
                         points.add(closest.getSnappedPoint());
                     }
                 } else if (location instanceof GHStationLocation) {
                     final Snap stopSnap = findByStopId((GHStationLocation) location, i);
-                    allSnaps.add(() -> new Label.NodeId(stopSnap.getClosestNode(), true));
+                    int streetNode = Optional.ofNullable(gtfsStorage.getPtToStreet().get(stopSnap.getClosestNode())).orElse(-1);
+                    allSnaps.add(() -> new Label.NodeId(streetNode, stopSnap.getClosestNode()));
                     points.add(stopSnap.getQueryPoint().lat, stopSnap.getQueryPoint().lon);
                 }
             }

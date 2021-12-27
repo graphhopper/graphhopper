@@ -23,6 +23,7 @@ import com.graphhopper.gtfs.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
+import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;

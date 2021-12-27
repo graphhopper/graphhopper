@@ -386,9 +386,9 @@ class TripFromLabel {
                 if (path.get(i).edge.getType() != GtfsStorage.EdgeType.HIGHWAY) {
                     throw new IllegalStateException("Got a transit edge where I think I must be on a road.");
                 }
-                if (path.get(i).label.node.pt)
-                    continue; // This is the edge that goes over into the pt graph.
-                EdgeIteratorState edge = graph.getEdgeIteratorState(path.get(i).edge.getId(), path.get(i).label.node.node);
+//                if (path.get(i).label.node.ptNode != -1)
+//                    continue; // This is the edge that goes over into the pt graph.
+                EdgeIteratorState edge = graph.getEdgeIteratorState(path.get(i).edge.getId(), path.get(i).label.node.streetNode);
                 instructionsFromEdges.next(edge, i, prevEdgeId);
                 prevEdgeId = edge.getEdge();
             }
@@ -399,8 +399,8 @@ class TripFromLabel {
                 if (transition.edge != null)
                     pathh.addEdge(transition.edge.getId());
             }
-            pathh.setFromNode(path.get(0).label.node.node);
-            pathh.setEndNode(path.get(path.size()-1).label.node.node);
+            pathh.setFromNode(path.get(0).label.node.streetNode);
+            pathh.setEndNode(path.get(path.size()-1).label.node.streetNode);
             pathh.setFound(true);
             Map<String, List<PathDetail>> pathDetails = PathDetailsFromEdges.calcDetails(pathh, graphHopperStorage.getEncodingManager(), weighting, requestedPathDetails, pathDetailsBuilderFactory, 0);
 
