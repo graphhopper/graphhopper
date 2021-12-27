@@ -38,7 +38,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
 
-public class GtfsStorage implements GtfsStorageI {
+public class GtfsStorage {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(GtfsStorage.class);
 	private LineIntIndex stopIndex;
@@ -141,7 +141,7 @@ public class GtfsStorage implements GtfsStorageI {
 	private Map<Integer, byte[]> tripDescriptors;
 	private Map<Integer, Integer> stopSequences;
 
-	private Map<Integer, PlatformDescriptor> platformDescriptorsByEdge;
+	private Map<Integer, GtfsStorageI.PlatformDescriptor> platformDescriptorsByEdge;
 
 	private Map<String, Map<String, Fare>> faresByFeed;
 	private Map<String, int[]> boardEdgesForTrip;
@@ -249,47 +249,26 @@ public class GtfsStorage implements GtfsStorageI {
 		}
 	}
 
-    @Override
-	public Map<Validity, Integer> getOperatingDayPatterns() {
-        return operatingDayPatterns;
-    }
-
-    @Override
-	public Map<Integer, FeedIdWithTimezone> getTimeZones() {
-		return readableTimeZones;
-	}
-
-	@Override
-	public Map<FeedIdWithTimezone, Integer> getWritableTimeZones() {
-		return timeZones;
-	}
-
-	@Override
 	public Map<Integer, byte[]> getTripDescriptors() {
 		return tripDescriptors;
 	}
 
-	@Override
 	public Map<Integer, Integer> getStopSequences() {
 		return stopSequences;
 	}
 
-	@Override
 	public Map<String, int[]> getBoardEdgesForTrip() {
 		return boardEdgesForTrip;
 	}
 
-	@Override
 	public Map<String, int[]> getAlightEdgesForTrip() {
 		return leaveEdgesForTrip;
 	}
 
-    @Override
-    public Map<Integer, PlatformDescriptor> getPlatformDescriptorByEdge() {
+    public Map<Integer, GtfsStorageI.PlatformDescriptor> getPlatformDescriptorByEdge() {
         return platformDescriptorsByEdge;
     }
 
-    @Override
 	public Map<String, Map<String, Fare>> getFares() {
 		return faresByFeed;
 	}
@@ -306,7 +285,6 @@ public class GtfsStorage implements GtfsStorageI {
 		return Collections.unmodifiableMap(gtfsFeeds);
 	}
 
-	@Override
 	public Map<FeedIdWithStopId, Integer> getStationNodes() {
 		return stationNodes;
 	}

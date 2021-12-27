@@ -136,10 +136,8 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         private final GHLocation exit;
         private final Translation translation;
         private final List<String> requestedPathDetails;
-        private final List<VirtualEdgeIteratorState> extraEdges = new ArrayList<>(realtimeFeed.getAdditionalEdges());
 
         private final GHResponse response = new GHResponse();
-        private final Graph graphWithExtraEdges = new WrapperGraph(graphHopperStorage, extraEdges);
         private final long limitTripTime;
         private final long limitStreetTime;
         private QueryGraph queryGraph;
@@ -224,7 +222,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
                     points.add(stopSnap.getQueryPoint().lat, stopSnap.getQueryPoint().lon);
                 }
             }
-            queryGraph = QueryGraph.create(graphWithExtraEdges, pointSnaps); // modifies pointSnaps!
+            queryGraph = QueryGraph.create(graphHopperStorage, pointSnaps); // modifies pointSnaps!
             response.addDebugInfo("idLookup:" + stopWatch.stop().getSeconds() + "s");
 
             Label.NodeId startNode;

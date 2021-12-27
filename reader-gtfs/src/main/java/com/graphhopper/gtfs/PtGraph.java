@@ -235,14 +235,14 @@ public class PtGraph implements GtfsReader.PtGraphOut {
     }
 
     public PtEdge edge(int e) {
-        return new PtEdge(e, edgeDestinationsMap.get(e), edgeAttributesMap.get(e));
+        return new PtEdge(e, edgeSourcesMap.get(e), edgeDestinationsMap.get(e), edgeAttributesMap.get(e));
     }
 
     public Iterable<PtEdge> backEdgesAround(int node) {
         return () -> {
             List<Integer> edgeIds = new ArrayList<>(nodeToInEdges.getOrDefault(node, Collections.emptyList()));
             edgeIds.sort(Comparator.<Integer>naturalOrder().reversed());
-            return edgeIds.stream().map(e -> new PtEdge(e, edgeSourcesMap.get(e), edgeAttributesMap.get(e))).iterator();
+            return edgeIds.stream().map(e -> new PtEdge(e, edgeDestinationsMap.get(e), edgeSourcesMap.get(e), edgeAttributesMap.get(e))).iterator();
         };
     }
 
@@ -254,9 +254,11 @@ public class PtGraph implements GtfsReader.PtGraphOut {
         private final int edgeId;
         private final int adjNode;
         private final PtEdgeAttributes attrs;
+        private final int baseNode;
 
-        public PtEdge(int edgeId, int adjNode, PtEdgeAttributes attrs) {
+        public PtEdge(int edgeId, int baseNode, int adjNode, PtEdgeAttributes attrs) {
             this.edgeId = edgeId;
+            this.baseNode = baseNode;
             this.adjNode = adjNode;
             this.attrs = attrs;
         }
@@ -293,9 +295,13 @@ public class PtGraph implements GtfsReader.PtGraphOut {
         public int getRouteType() {
             GtfsStorage.EdgeType edgeType = getType();
             if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT || edgeType == GtfsStorage.EdgeType.TRANSFER)) {
-                return getAttrs().validityId;
+                return getAttrs().route_type;
             }
             throw new RuntimeException("Edge type "+edgeType+" doesn't encode route type.");
+        }
+
+        public int getBaseNode() {
+            return baseNode;
         }
     }
 }

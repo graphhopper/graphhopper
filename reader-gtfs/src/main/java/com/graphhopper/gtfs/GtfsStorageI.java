@@ -119,26 +119,4 @@ public interface GtfsStorageI {
                     '}';
         }
     }
-
-    Map<String, Map<String, Fare>> getFares();
-
-    Map<GtfsStorage.Validity, Integer> getOperatingDayPatterns();
-
-    Map<GtfsStorage.FeedIdWithTimezone, Integer> getWritableTimeZones();
-
-    Map<Integer, GtfsStorage.FeedIdWithTimezone> getTimeZones();
-
-    Map<Integer, byte[]> getTripDescriptors();
-
-    Map<Integer, Integer> getStopSequences();
-
-    Map<String, int[]> getBoardEdgesForTrip();
-
-    Map<String, int[]> getAlightEdgesForTrip();
-
-    Map<String, GTFSFeed> getGtfsFeeds();
-
-    Map<GtfsStorage.FeedIdWithStopId, Integer> getStationNodes();
-
-    Map<Integer, PlatformDescriptor> getPlatformDescriptorByEdge();
 }

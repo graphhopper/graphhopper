@@ -71,9 +71,10 @@ public final class GraphExplorer {
     }
 
     Stream<MultiModalEdge> exploreEdgesAround(Label label) {
-        return Stream.concat(label.node.ptNode != -1 ? ptEdgeStream(label.node.ptNode, label.currentTime) : Stream.empty(),
-                label.node.streetNode != -1 ? streetEdgeStream(label.node.streetNode) : Stream.empty())
-                .peek(e -> System.out.println(e));
+        Stream<MultiModalEdge> ptEdges = label.node.ptNode != -1 ? ptEdgeStream(label.node.ptNode, label.currentTime) : Stream.empty();
+        Stream<MultiModalEdge> streetEdges = label.node.streetNode != -1 ? streetEdgeStream(label.node.streetNode) : Stream.empty();
+        Stream<MultiModalEdge> extraEdges = label.node.ptNode != -1 ? realtimeFeed.getAdditionalEdges().stream().filter(e -> e.getBaseNode() == label.node.ptNode).map(MultiModalEdge::new) : Stream.empty();
+        return Stream.of(ptEdges, streetEdges, extraEdges).flatMap(s -> s);
     }
 
     private Stream<MultiModalEdge> ptEdgeStream(int ptNode, long currentTime) {
@@ -118,7 +119,7 @@ public final class GraphExplorer {
                     if (edgeType == GtfsStorage.EdgeType.EXIT_PT && !reverse && ptOnly) {
                         continue;
                     }
-                    if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT) && (blockedRouteTypes & (1 << edge.getAttrs().validityId)) != 0) {
+                    if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT) && (blockedRouteTypes & (1 << edge.getAttrs().route_type)) != 0) {
                         continue;
                     }
                     if (edgeType == GtfsStorage.EdgeType.TRANSFER && routeTypeBlocked(edge)) {
@@ -240,13 +241,13 @@ public final class GraphExplorer {
     }
 
     private long millisOnTravelDay(PtGraph.PtEdge edge, long instant) {
-        final ZoneId zoneId = gtfsStorage.getTimeZones().get(edge.getAttrs().validityId).zoneId;
+        final ZoneId zoneId = edge.getAttrs().feedIdWithTimezone.zoneId;
         return Instant.ofEpochMilli(instant).atZone(zoneId).toLocalTime().toNanoOfDay() / 1000000L;
     }
 
     private boolean isValidOn(PtGraph.PtEdge edge, long instant) {
         if (edge.getType() == GtfsStorage.EdgeType.BOARD || edge.getType() == GtfsStorage.EdgeType.ALIGHT) {
-            final GtfsStorage.Validity validity = realtimeFeed.getValidity(edge.getAttrs().validityId);
+            final GtfsStorage.Validity validity = edge.getAttrs().validity;
             final int trafficDay = (int) ChronoUnit.DAYS.between(validity.start, Instant.ofEpochMilli(instant).atZone(validity.zoneId).toLocalDate());
             return trafficDay >= 0 && validity.validity.get(trafficDay);
         } else {
