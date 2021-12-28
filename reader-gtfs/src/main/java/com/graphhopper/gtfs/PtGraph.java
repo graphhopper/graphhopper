@@ -260,10 +260,6 @@ public class PtGraph implements GtfsReader.PtGraphOut {
         };
     }
 
-    public PtEdgeAttributes getEdgeAttributes(int edge) {
-        return edgeAttributesMap.get(edge);
-    }
-
     public static class PtEdge {
         private final int edgeId;
         private final int baseNode;

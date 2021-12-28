@@ -312,7 +312,7 @@ class GtfsReader {
             gtfsStorage.getStopSequences().put(alightEdge, stopTime.stop_sequence);
             gtfsStorage.getTripDescriptors().put(alightEdge, tripDescriptor.toByteArray());
 
-            ptGraph.createEdge(arrivalNode, departureNode, new PtEdgeAttributes(GtfsStorage.EdgeType.DWELL, stopTime.departure_time - stopTime.arrival_time, null, -1, null, 0));
+            out.createEdge(arrivalNode, departureNode, new PtEdgeAttributes(GtfsStorage.EdgeType.DWELL, stopTime.departure_time - stopTime.arrival_time, null, -1, null, 0));
 
             if (prev == null) {
                 insertInboundBlockTransfers(arrivalNodes, tripDescriptor, departureNode, stopTime.departure_time + time, stopTime, stop, validOn, zoneId, platform);

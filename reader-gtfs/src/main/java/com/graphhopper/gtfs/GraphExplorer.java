@@ -18,6 +18,7 @@
 
 package com.graphhopper.gtfs;
 
+import com.google.common.collect.Iterators;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.weighting.Weighting;
@@ -49,11 +50,9 @@ public final class GraphExplorer {
     private final double walkSpeedKmH;
     private final boolean ignoreValidities;
     private final int blockedRouteTypes;
-    private final Graph graph;
     private final PtGraph ptGraph;
 
     public GraphExplorer(Graph graph, PtGraph ptGraph, Weighting accessEgressWeighting, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, boolean walkOnly, boolean ptOnly, double walkSpeedKmh, boolean ignoreValidities, int blockedRouteTypes) {
-        this.graph = graph;
         this.ptGraph = ptGraph;
         this.accessEgressWeighting = accessEgressWeighting;
         this.accessEnc = accessEgressWeighting.getFlagEncoder().getAccessEnc();
@@ -73,24 +72,29 @@ public final class GraphExplorer {
     Stream<MultiModalEdge> exploreEdgesAround(Label label) {
         Stream<MultiModalEdge> ptEdges = label.node.ptNode != -1 ? ptEdgeStream(label.node.ptNode, label.currentTime) : Stream.empty();
         Stream<MultiModalEdge> streetEdges = label.node.streetNode != -1 ? streetEdgeStream(label.node.streetNode) : Stream.empty();
-        Stream<MultiModalEdge> extraEdges = label.node.ptNode != -1 ? realtimeFeed.getAdditionalEdges().stream()
-                .filter(e -> e.getBaseNode() == label.node.ptNode)
-                .map(MultiModalEdge::new) : Stream.empty();
-        if (reverse)
-            extraEdges = label.node.ptNode != -1 ? realtimeFeed.getAdditionalEdges().stream()
-                    .filter(e -> e.getAdjNode() == label.node.ptNode)
-                    .map(e -> new MultiModalEdge(new PtGraph.PtEdge(e.getId(), e.getAdjNode(), e.getBaseNode(), e.getAttrs()))) : Stream.empty();
-        return Stream.of(ptEdges, streetEdges, extraEdges).flatMap(s -> s)
+        return Stream.of(ptEdges, streetEdges).flatMap(s -> s)
                 .peek(e -> {
                         System.out.println("blubb " + e);
                 });
     }
 
+    private Iterable<PtGraph.PtEdge> realtimeEdgesAround(int node) {
+        return () -> realtimeFeed.getAdditionalEdges().stream().filter(e -> e.getBaseNode() == node).iterator();
+    }
+
+    private Iterable<PtGraph.PtEdge> backRealtimeEdgesAround(int node) {
+        return () -> realtimeFeed.getAdditionalEdges().stream()
+                .filter(e -> e.getAdjNode() == node)
+                .map(e -> new PtGraph.PtEdge(e.getId(), e.getAdjNode(), e.getBaseNode(), e.getAttrs()))
+                .iterator();
+    }
+
+
     private Stream<MultiModalEdge> ptEdgeStream(int ptNode, long currentTime) {
         return StreamSupport.stream(new Spliterators.AbstractSpliterator<MultiModalEdge>(0, 0) {
             final Iterator<PtGraph.PtEdge> edgeIterator = reverse ?
-                    ptGraph.backEdgesAround(ptNode).iterator() :
-                    ptGraph.edgesAround(ptNode).iterator();
+                    Iterators.concat(ptGraph.backEdgesAround(ptNode).iterator(), backRealtimeEdgesAround(ptNode).iterator()) :
+                    Iterators.concat(ptGraph.edgesAround(ptNode).iterator(), realtimeEdgesAround(ptNode).iterator());
 
             @Override
             public boolean tryAdvance(Consumer<? super MultiModalEdge> action) {
@@ -128,30 +132,13 @@ public final class GraphExplorer {
                     if (edgeType == GtfsStorage.EdgeType.EXIT_PT && !reverse && ptOnly) {
                         continue;
                     }
-                    if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT) && (blockedRouteTypes & (1 << edge.getAttrs().route_type)) != 0) {
-                        continue;
-                    }
-                    if (edgeType == GtfsStorage.EdgeType.TRANSFER && routeTypeBlocked(edge)) {
+                    if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT || edgeType == GtfsStorage.EdgeType.TRANSFER) && (blockedRouteTypes & (1 << edge.getAttrs().route_type)) != 0) {
                         continue;
                     }
                     action.accept(new MultiModalEdge(edge));
                     return true;
                 }
                 return false;
-            }
-
-            private boolean routeTypeBlocked(PtGraph.PtEdge edge) {
-                GtfsStorageI.PlatformDescriptor platformDescriptor = realtimeFeed.getPlatformDescriptorByEdge().get(edge.getId());
-                int routeType = routeType(platformDescriptor);
-                return (blockedRouteTypes & (1 << routeType)) != 0;
-            }
-
-            private int routeType(GtfsStorageI.PlatformDescriptor platformDescriptor) {
-                if (platformDescriptor instanceof GtfsStorageI.RouteTypePlatform) {
-                    return ((GtfsStorageI.RouteTypePlatform) platformDescriptor).route_type;
-                } else {
-                    return gtfsStorage.getGtfsFeeds().get(platformDescriptor.feed_id).routes.get(((GtfsStorageI.RoutePlatform) platformDescriptor).route_id).route_type;
-                }
             }
 
             private PtGraph.PtEdge findEnterEdge(PtGraph.PtEdge first) {
@@ -262,10 +249,6 @@ public final class GraphExplorer {
         } else {
             return true;
         }
-    }
-
-    int routeType(PtGraph.PtEdge edge) {
-        return edge.getRouteType();
     }
 
     public class MultiModalEdge {
