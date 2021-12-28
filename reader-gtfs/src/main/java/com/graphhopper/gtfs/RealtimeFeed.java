@@ -25,7 +25,6 @@ import com.conveyal.gtfs.model.Frequency;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import com.google.transit.realtime.GtfsRealtime;
-import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.storage.GraphHopperStorage;
 import org.mapdb.Fun;
 import org.slf4j.Logger;
@@ -108,8 +107,6 @@ public class RealtimeFeed {
 
         Map<Integer, byte[]> tripDescriptors = new HashMap<>();
         Map<Integer, Integer> stopSequences = new HashMap<>();
-        Map<String, int[]> boardEdgesForTrip = new HashMap<>();
-        Map<String, int[]> alightEdgesForTrip = new HashMap<>();
         Map<Integer, GtfsStorageI.PlatformDescriptor> platformDescriptorByEdge = new HashMap<>(staticGtfs.getPlatformDescriptorByEdge()); // FIXME: Too slow for production
 
         feedMessages.forEach((feedKey, feedMessage) -> {
