@@ -354,14 +354,6 @@ public class RealtimeFeed {
         }).findFirst().orElse(Instant.now());
     }
 
-    public byte[] getTripDescriptor(int edge) {
-        return staticGtfs.getTripDescriptors().getOrDefault(edge, additionalTripDescriptors.get(edge));
-    }
-
-    public int getStopSequence(int edge) {
-        return staticGtfs.getStopSequences().getOrDefault(edge, stopSequences.get(edge));
-    }
-
     public StopTime getStopTime(GTFSFeed staticFeed, GtfsRealtime.TripDescriptor tripDescriptor, Label.Transition t, Instant boardTime, int stopSequence) {
         StopTime stopTime = staticFeed.stop_times.get(new Fun.Tuple2<>(tripDescriptor.getTripId(), stopSequence));
         if (stopTime == null) {

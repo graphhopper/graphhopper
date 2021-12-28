@@ -314,5 +314,13 @@ public final class GraphExplorer {
         public int getRouteType() {
             return ptEdge.getRouteType();
         }
+
+        public int getStopSequence() {
+            return ptEdge.getAttrs().stop_sequence;
+        }
+
+        public byte[] getTripDescriptor() {
+            return ptEdge.getAttrs().tripDescriptor;
+        }
     }
 }

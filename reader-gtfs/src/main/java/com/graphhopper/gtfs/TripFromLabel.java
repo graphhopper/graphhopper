@@ -225,7 +225,7 @@ class TripFromLabel {
             switch (t.edge.getType()) {
                 case BOARD: {
                     boardTime = Instant.ofEpochMilli(t.label.currentTime);
-                    stopSequence = realtimeFeed.getStopSequence(t.edge.getId());
+                    stopSequence = t.edge.getStopSequence();
                     stopTime = realtimeFeed.getStopTime(gtfsFeed, tripDescriptor, t, boardTime, stopSequence);
                     tripUpdate = realtimeFeed.getTripUpdate(gtfsFeed, tripDescriptor, boardTime).orElse(null);
                     Instant plannedDeparture = Instant.ofEpochMilli(t.label.currentTime);
@@ -238,7 +238,7 @@ class TripFromLabel {
                     break;
                 }
                 case HOP: {
-                    stopSequence = realtimeFeed.getStopSequence(t.edge.getId());
+                    stopSequence = t.edge.getStopSequence();
                     stopTime = realtimeFeed.getStopTime(gtfsFeed, tripDescriptor, t, boardTime, stopSequence);
                     arrivalTimeFromHopEdge = Instant.ofEpochMilli(t.label.currentTime);
                     updatedArrival = getArrivalDelay(stopSequence).map(delay -> arrivalTimeFromHopEdge.plus(delay, SECONDS));
@@ -350,7 +350,7 @@ class TripFromLabel {
                     Geometry lineString = lineStringFromEdges(partition);
                     GtfsRealtime.TripDescriptor tripDescriptor;
                     try {
-                        tripDescriptor = GtfsRealtime.TripDescriptor.parseFrom(realtimeFeed.getTripDescriptor(partition.get(0).edge.getId()));
+                        tripDescriptor = GtfsRealtime.TripDescriptor.parseFrom(partition.get(0).edge.getTripDescriptor());
                     } catch (InvalidProtocolBufferException e) {
                         throw new RuntimeException(e);
                     }

@@ -249,14 +249,6 @@ public class GtfsStorage {
 		}
 	}
 
-	public Map<Integer, byte[]> getTripDescriptors() {
-		return tripDescriptors;
-	}
-
-	public Map<Integer, Integer> getStopSequences() {
-		return stopSequences;
-	}
-
 	public Map<String, int[]> getBoardEdgesForTrip() {
 		return boardEdgesForTrip;
 	}
