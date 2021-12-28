@@ -69,7 +69,7 @@ public class RealtimeFeed {
     }
 
     public static RealtimeFeed empty(GtfsStorage staticGtfs) {
-        return new RealtimeFeed(staticGtfs, Collections.emptyMap(), new IntHashSet(), new IntLongHashMap(), new IntLongHashMap(), Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap(), staticGtfs.getPlatformDescriptorByEdge());
+        return new RealtimeFeed(staticGtfs, Collections.emptyMap(), new IntHashSet(), new IntLongHashMap(), new IntLongHashMap(), Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap(), null);
     }
 
     public static RealtimeFeed fromProtobuf(GraphHopperStorage graphHopperStorage, GtfsStorage staticGtfs, Map<String, Transfers> transfers, Map<String, GtfsRealtime.FeedMessage> feedMessages) {
@@ -106,7 +106,6 @@ public class RealtimeFeed {
 
         Map<Integer, byte[]> tripDescriptors = new HashMap<>();
         Map<Integer, Integer> stopSequences = new HashMap<>();
-        Map<Integer, GtfsStorageI.PlatformDescriptor> platformDescriptorByEdge = new HashMap<>(staticGtfs.getPlatformDescriptorByEdge()); // FIXME: Too slow for production
 
         feedMessages.forEach((feedKey, feedMessage) -> {
             GTFSFeed feed = staticGtfs.getGtfsFeeds().get(feedKey);
@@ -184,7 +183,7 @@ public class RealtimeFeed {
             gtfsReader.wireUpAdditionalDeparturesAndArrivals(timezone);
         });
 
-        return new RealtimeFeed(staticGtfs, feedMessages, blockedEdges, delaysForBoardEdges, delaysForAlightEdges, additionalEdges, tripDescriptors, stopSequences, platformDescriptorByEdge);
+        return new RealtimeFeed(staticGtfs, feedMessages, blockedEdges, delaysForBoardEdges, delaysForAlightEdges, additionalEdges, tripDescriptors, stopSequences, null);
     }
 
     boolean isBlocked(int edgeId) {

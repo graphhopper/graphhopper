@@ -10,6 +10,7 @@ public class PtEdgeAttributes {
     public int transfers;
     public int stop_sequence;
     public byte[] tripDescriptor;
+    public GtfsStorageI.PlatformDescriptor platformDescriptor;
 
     @Override
     public String toString() {
@@ -20,7 +21,7 @@ public class PtEdgeAttributes {
                 '}';
     }
 
-    public PtEdgeAttributes(GtfsStorage.EdgeType type, int time, GtfsStorage.Validity validity, int route_type, GtfsStorage.FeedIdWithTimezone feedIdWithTimezone, int transfers, int stop_sequence, byte[] tripDescriptor) {
+    public PtEdgeAttributes(GtfsStorage.EdgeType type, int time, GtfsStorage.Validity validity, int route_type, GtfsStorage.FeedIdWithTimezone feedIdWithTimezone, int transfers, int stop_sequence, byte[] tripDescriptor, GtfsStorageI.PlatformDescriptor platformDescriptor) {
         this.type = type;
         this.time = time;
         this.validity = validity;
@@ -29,6 +30,7 @@ public class PtEdgeAttributes {
         this.transfers = transfers;
         this.stop_sequence = stop_sequence;
         this.tripDescriptor = tripDescriptor;
+        this.platformDescriptor = platformDescriptor;
     }
 
 }

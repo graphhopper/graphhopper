@@ -332,7 +332,7 @@ class TripFromLabel {
             return Collections.emptyList();
         }
         if (GtfsStorage.EdgeType.ENTER_PT == path.get(1).edge.getType()) {
-            String feedId = gtfsStorage.getPlatformDescriptorByEdge().get(path.get(1).edge.getId()).feed_id;
+            String feedId = path.get(1).edge.getPlatformDescriptor().feed_id;
             List<Trip.Leg> result = new ArrayList<>();
             long boardTime = -1;
             List<Label.Transition> partition = null;
@@ -372,7 +372,7 @@ class TripFromLabel {
                             lineString));
                     partition = null;
                     if (edge.getType() == GtfsStorage.EdgeType.TRANSFER) {
-                        feedId = gtfsStorage.getPlatformDescriptorByEdge().get(edge.getId()).feed_id;;
+                        feedId = edge.getPlatformDescriptor().feed_id;;
                     }
                 }
             }

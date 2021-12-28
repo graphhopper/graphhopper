@@ -117,11 +117,11 @@ public class GraphHopperGtfs extends GraphHopper {
                 Label label = iterator.next();
                 if (label.parent != null) {
                     if (label.edge.getType() == GtfsStorage.EdgeType.EXIT_PT) {
-                        GtfsStorageI.PlatformDescriptor fromPlatformDescriptor = getGtfsStorage().getPlatformDescriptorByEdge().get(label.edge.getId());
+                        GtfsStorageI.PlatformDescriptor fromPlatformDescriptor = label.edge.getPlatformDescriptor();
                         Transfers transfers = allTransfers.get(fromPlatformDescriptor.feed_id);
                         for (PtGraph.PtEdge ptEdge : ptGraph.edgesAround(stationNode.ptNode)) {
                             if (ptEdge.getType() == GtfsStorage.EdgeType.ENTER_PT) {
-                                GtfsStorageI.PlatformDescriptor toPlatformDescriptor = getGtfsStorage().getPlatformDescriptorByEdge().get(ptEdge.getId());
+                                GtfsStorageI.PlatformDescriptor toPlatformDescriptor = ptEdge.getAttrs().platformDescriptor;
                                 LOGGER.debug(fromPlatformDescriptor + " -> " + toPlatformDescriptor);
                                 if (!toPlatformDescriptor.feed_id.equals(fromPlatformDescriptor.feed_id)) {
                                     LOGGER.debug(" Different feed. Inserting transfer with " + (int) (label.streetTime / 1000L) + " s.");

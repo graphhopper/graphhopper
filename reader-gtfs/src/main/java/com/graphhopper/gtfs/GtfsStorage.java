@@ -257,10 +257,6 @@ public class GtfsStorage {
 		return leaveEdgesForTrip;
 	}
 
-    public Map<Integer, GtfsStorageI.PlatformDescriptor> getPlatformDescriptorByEdge() {
-        return platformDescriptorsByEdge;
-    }
-
 	public Map<String, Map<String, Fare>> getFares() {
 		return faresByFeed;
 	}
