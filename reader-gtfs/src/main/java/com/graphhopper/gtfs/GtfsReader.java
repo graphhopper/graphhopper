@@ -313,8 +313,6 @@ class GtfsReader {
             }
             prev = stopTime;
         }
-        gtfsStorage.getBoardEdgesForTrip().put(GtfsStorage.tripKey(tripDescriptor, frequencyBased), boardEdges.toArray());
-        gtfsStorage.getAlightEdgesForTrip().put(GtfsStorage.tripKey(tripDescriptor, frequencyBased), alightEdges.toArray());
         TripWithStopTimeAndArrivalNode tripWithStopTimeAndArrivalNode = new TripWithStopTimeAndArrivalNode();
         tripWithStopTimeAndArrivalNode.tripWithStopTimes = trip;
         tripWithStopTimeAndArrivalNode.arrivalNode = arrivalNode;
