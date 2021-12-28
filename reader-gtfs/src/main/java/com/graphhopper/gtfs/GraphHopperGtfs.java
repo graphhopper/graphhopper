@@ -65,7 +65,10 @@ public class GraphHopperGtfs extends GraphHopper {
         ptGraph = new PtGraph(getGraphHopperStorage().getDirectory(), 100);
         gtfsStorage = new GtfsStorage(getGraphHopperStorage().getDirectory());
         stopIndex = new LineIntIndex(new BBox(-180.0, 180.0, -90.0, 90.0), getGraphHopperStorage().getDirectory(), "stop_index");
-        if (!getGtfsStorage().loadExisting()) {
+        if (getGtfsStorage().loadExisting()) {
+            ptGraph.loadExisting();
+            stopIndex.loadExisting();
+        } else {
             ensureWriteAccess();
             getGtfsStorage().create();
             ptGraph.create(100);
@@ -93,9 +96,11 @@ public class GraphHopperGtfs extends GraphHopper {
             } catch (Exception e) {
                 throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
             }
+            ptGraph.flush();
             stopIndex.store(indexBuilder);
-            gtfsStorage.setStopIndex(stopIndex);
+            stopIndex.flush();
         }
+        gtfsStorage.setStopIndex(stopIndex);
         gtfsStorage.setPtGraph(ptGraph);
     }
 
