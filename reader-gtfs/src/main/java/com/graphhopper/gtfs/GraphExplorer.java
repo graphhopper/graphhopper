@@ -30,6 +30,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.Spliterators;
@@ -93,8 +94,8 @@ public final class GraphExplorer {
     private Stream<MultiModalEdge> ptEdgeStream(int ptNode, long currentTime) {
         return StreamSupport.stream(new Spliterators.AbstractSpliterator<MultiModalEdge>(0, 0) {
             final Iterator<PtGraph.PtEdge> edgeIterator = reverse ?
-                    Iterators.concat(ptGraph.backEdgesAround(ptNode).iterator(), backRealtimeEdgesAround(ptNode).iterator()) :
-                    Iterators.concat(ptGraph.edgesAround(ptNode).iterator(), realtimeEdgesAround(ptNode).iterator());
+                    Iterators.concat(ptNode < ptGraph.getNodeCount() ? ptGraph.backEdgesAround(ptNode).iterator() : Collections.<PtGraph.PtEdge>emptyIterator(), backRealtimeEdgesAround(ptNode).iterator()) :
+                    Iterators.concat(ptNode < ptGraph.getNodeCount() ? ptGraph.edgesAround(ptNode).iterator() : Collections.<PtGraph.PtEdge>emptyIterator(), realtimeEdgesAround(ptNode).iterator());
 
             @Override
             public boolean tryAdvance(Consumer<? super MultiModalEdge> action) {

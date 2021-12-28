@@ -23,6 +23,8 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.util.EdgeIterator;
 
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.stream.StreamSupport;
 
 public class PtGraph implements GtfsReader.PtGraphOut {
 
@@ -42,7 +44,7 @@ public class PtGraph implements GtfsReader.PtGraphOut {
         nodes = dir.create("pt_nodes", dir.getDefaultType("pt_nodes", true), 100);
         edges = dir.create("pt_edges", dir.getDefaultType("pt_edges", true), 100);
 
-        nodeEntryBytes = 4;
+        nodeEntryBytes = 8;
 
         // memory layout for edges
         E_NODEA = 0;
@@ -106,15 +108,15 @@ public class PtGraph implements GtfsReader.PtGraphOut {
         // we keep a linked list of edges at each node. here we prepend the new edge at the already existing linked
         // list of edges.
         long nodePointerA = toNodePointer(nodeA);
-        int edgeRefA = getEdgeRef(nodePointerA);
+        int edgeRefA = getEdgeRefOut(nodePointerA);
         setLinkA(edgePointer, edgeRefA >= 0 ? edgeRefA : -1);
-        setEdgeRef(nodePointerA, edge);
+        setEdgeRefOut(nodePointerA, edge);
 
         if (nodeA != nodeB) {
             long nodePointerB = toNodePointer(nodeB);
-            int edgeRefB = getEdgeRef(nodePointerB);
+            int edgeRefB = getEdgeRefIn(nodePointerB);
             setLinkB(edgePointer, EdgeIterator.Edge.isValid(edgeRefB) ? edgeRefB : -1);
-            setEdgeRef(nodePointerB, edge);
+            setEdgeRefIn(nodePointerB, edge);
         }
         return edge;
     }
@@ -127,7 +129,8 @@ public class PtGraph implements GtfsReader.PtGraphOut {
         nodeCount = node + 1;
         nodes.ensureCapacity((long) nodeCount * nodeEntryBytes);
         for (int n = oldNodes; n < nodeCount; ++n) {
-            setEdgeRef(toNodePointer(n), -1);
+            setEdgeRefOut(toNodePointer(n), -1);
+            setEdgeRefIn(toNodePointer(n), -1);
         }
     }
 
@@ -175,12 +178,20 @@ public class PtGraph implements GtfsReader.PtGraphOut {
         return edges.getInt(edgePointer + E_LINKB);
     }
 
-    public void setEdgeRef(long nodePointer, int edgeRef) {
+    public void setEdgeRefOut(long nodePointer, int edgeRef) {
         nodes.setInt(nodePointer, edgeRef);
     }
 
-    public int getEdgeRef(long nodePointer) {
+    public void setEdgeRefIn(long nodePointer, int edgeRef) {
+        nodes.setInt(nodePointer + 4, edgeRef);
+    }
+
+    public int getEdgeRefOut(long nodePointer) {
         return nodes.getInt(nodePointer);
+    }
+
+    public int getEdgeRefIn(long nodePointer) {
+        return nodes.getInt(nodePointer + 4);
     }
 
     Map<Integer, GtfsStorageI.PlatformDescriptor> enterPlatforms = new HashMap<>();
@@ -204,13 +215,8 @@ public class PtGraph implements GtfsReader.PtGraphOut {
         return result;
     }
 
-    int nextEdge = 0;
     int nextNode = 0;
     Map<Integer, PtEdgeAttributes> edgeAttributesMap = new HashMap<>();
-    Map<Integer, Integer> edgeSourcesMap = new HashMap<>();
-    Map<Integer, Integer> edgeDestinationsMap = new HashMap<>();
-    Map<Integer, List<Integer>> nodeToOutEdges = new HashMap<>();
-    Map<Integer, List<Integer>> nodeToInEdges = new HashMap<>();
 
     public void putPlatformEnterNode(int platformEnterNode, GtfsStorageI.PlatformDescriptor platformDescriptor) {
         enterPlatforms.put(platformEnterNode, platformDescriptor);
@@ -223,16 +229,8 @@ public class PtGraph implements GtfsReader.PtGraphOut {
 
     @Override
     public int createEdge(int src, int dest, PtEdgeAttributes attrs) {
-        int edge = nextEdge++;
+        int edge = addEdge(src, dest);
         edgeAttributesMap.put(edge, attrs);
-        edgeSourcesMap.put(edge, src);
-        edgeDestinationsMap.put(edge, dest);
-        nodeToOutEdges.putIfAbsent(src, new ArrayList<>());
-        nodeToInEdges.putIfAbsent(dest, new ArrayList<>());
-        List<Integer> outEdges = nodeToOutEdges.get(src);
-        outEdges.add(edge);
-        List<Integer> inEdges = nodeToInEdges.get(dest);
-        inEdges.add(edge);
         return edge;
     }
 
@@ -240,24 +238,55 @@ public class PtGraph implements GtfsReader.PtGraphOut {
         return nextNode++;
     }
 
-    public Iterable<PtEdge> edgesAround(int node) {
-        return () -> {
-            List<Integer> edgeIds = new ArrayList<>(nodeToOutEdges.getOrDefault(node, Collections.emptyList()));
-            edgeIds.sort(Comparator.<Integer>naturalOrder().reversed());
-            return edgeIds.stream().map(e -> edge(e)).iterator();
+    public Iterable<PtEdge> edgesAround(int baseNode) {
+        Spliterators.AbstractSpliterator<PtEdge> spliterator = new Spliterators.AbstractSpliterator<PtEdge>(0, 0) {
+            int edgeId = getEdgeRefOut(toNodePointer(baseNode));
+
+            @Override
+            public boolean tryAdvance(Consumer<? super PtEdge> action) {
+                if (edgeId < 0)
+                    return false;
+
+                long edgePointer = toEdgePointer(edgeId);
+
+                int nodeA = getNodeA(edgePointer);
+                int nodeB = getNodeB(edgePointer);
+                action.accept(new PtEdge(edgeId, nodeA, nodeB, edgeAttributesMap.get(edgeId)));
+                edgeId = getLinkA(edgePointer);
+
+                return true;
+            }
         };
+        return () -> StreamSupport.stream(spliterator, false).iterator();
     }
 
-    public PtEdge edge(int e) {
-        return new PtEdge(e, edgeSourcesMap.get(e), edgeDestinationsMap.get(e), edgeAttributesMap.get(e));
+    public PtEdge edge(int edgeId) {
+        long edgePointer = toEdgePointer(edgeId);
+        int nodeA = getNodeA(edgePointer);
+        int nodeB = getNodeB(edgePointer);
+        return new PtEdge(edgeId, nodeA, nodeB, edgeAttributesMap.get(edgeId));
     }
 
-    public Iterable<PtEdge> backEdgesAround(int node) {
-        return () -> {
-            List<Integer> edgeIds = new ArrayList<>(nodeToInEdges.getOrDefault(node, Collections.emptyList()));
-            edgeIds.sort(Comparator.<Integer>naturalOrder().reversed());
-            return edgeIds.stream().map(e -> new PtEdge(e, edgeDestinationsMap.get(e), edgeSourcesMap.get(e), edgeAttributesMap.get(e))).iterator();
+    public Iterable<PtEdge> backEdgesAround(int adjNode) {
+        Spliterators.AbstractSpliterator<PtEdge> spliterator = new Spliterators.AbstractSpliterator<PtEdge>(0, 0) {
+            int edgeId = getEdgeRefIn(toNodePointer(adjNode));
+
+            @Override
+            public boolean tryAdvance(Consumer<? super PtEdge> action) {
+                if (edgeId < 0)
+                    return false;
+
+                long edgePointer = toEdgePointer(edgeId);
+
+                int nodeA = getNodeA(edgePointer);
+                int nodeB = getNodeB(edgePointer);
+                action.accept(new PtEdge(edgeId, nodeB, nodeA, edgeAttributesMap.get(edgeId)));
+                edgeId = getLinkB(edgePointer);
+
+                return true;
+            }
         };
+        return () -> StreamSupport.stream(spliterator, false).iterator();
     }
 
     public static class PtEdge {

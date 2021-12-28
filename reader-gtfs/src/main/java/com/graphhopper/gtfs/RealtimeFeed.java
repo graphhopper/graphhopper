@@ -78,20 +78,19 @@ public class RealtimeFeed {
         final IntLongHashMap delaysForAlightEdges = new IntLongHashMap();
         final LinkedList<PtGraph.PtEdge> additionalEdges = new LinkedList<>();
         final GtfsReader.PtGraphOut overlayGraph = new GtfsReader.PtGraphOut() {
-            //FIXME
-            int pups = 3000000;
-            int wurst = 30000000;
+            int nextEdge = staticGtfs.getPtGraph().getEdgeCount();
+            int nextNode = staticGtfs.getPtGraph().getNodeCount();
 
             @Override
             public int createEdge(int src, int dest, PtEdgeAttributes attrs) {
-                int edgeId = pups++;
+                int edgeId = nextEdge++;
                 additionalEdges.add(new PtGraph.PtEdge(edgeId, src, dest, attrs));
                 return edgeId;
             }
 
             @Override
             public int createNode() {
-                return wurst++;
+                return nextNode++;
             }
 
             @Override
