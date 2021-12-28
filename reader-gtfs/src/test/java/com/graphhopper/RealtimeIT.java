@@ -282,7 +282,7 @@ public class RealtimeIT {
                 .setScheduleRelationship(SKIPPED);
 
         // Add a few more trips (but we only need the first one; add more because there used to be a bug with something like an index overflow)
-        for (int i=0; i<100; i++){
+        for (int i=0; i<1; i++){
             final GtfsRealtime.TripUpdate.Builder extraTripUpdate = feedMessageBuilder.addEntityBuilder()
                     .setId("2")
                     .getTripUpdateBuilder()

@@ -206,7 +206,7 @@ class GtfsReader {
         LOGGER.debug("Creating transfers to stop {}, platform {}", toPlatformDescriptor.stop_id, toPlatformDescriptor);
         List<Transfer> transfersToPlatform = transfers.getTransfersToStop(toPlatformDescriptor.stop_id, routeIdOrNull(toPlatformDescriptor));
         transfersToPlatform.forEach(transfer -> {
-            ptGraph.getEnterPlatforms(new GtfsStorage.FeedIdWithStopId(id, transfer.from_stop_id)).forEach((fromPlatformNode, fromPlatformDescriptor) -> {
+            ptGraph.getExitPlatforms(new GtfsStorage.FeedIdWithStopId(id, transfer.from_stop_id)).forEach((fromPlatformNode, fromPlatformDescriptor) -> {
                 if (fromPlatformDescriptor.stop_id.equals(transfer.from_stop_id) &&
                         (transfer.from_route_id == null && fromPlatformDescriptor instanceof GtfsStorageI.RouteTypePlatform || transfer.from_route_id != null && GtfsStorageI.PlatformDescriptor.route(id, transfer.from_stop_id, transfer.from_route_id).equals(fromPlatformDescriptor))) {
                     LOGGER.debug("  Creating transfers from stop {}, platform {}", transfer.from_stop_id, fromPlatformDescriptor);
