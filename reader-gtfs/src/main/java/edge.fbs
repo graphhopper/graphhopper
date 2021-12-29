@@ -1,0 +1,37 @@
+// Example IDL file for our monster's schema.
+
+namespace MyGame.Sample;
+
+enum Type:byte { HIGHWAY, ENTER_TIME_EXPANDED_NETWORK, LEAVE_TIME_EXPANDED_NETWORK, ENTER_PT, EXIT_PT, HOP, DWELL, BOARD, ALIGHT, OVERNIGHT, TRANSFER, WAIT, WAIT_ARRIVAL }
+
+table PlatformDescriptor {
+  feed_id: string;
+  stop_id: string;
+  route_id: string;
+  route_type: int32;
+}
+
+table Validity {
+  bit_set: [ubyte];
+  start:int64;
+  zone_id: string;
+}
+
+table FeedIdWithTimezone {
+  feed_id: string;
+  zone_id: string;
+}
+
+table Edge {
+  type:Type;
+  time:int32;
+  validity:Validity;
+  route_type:int32;
+  feed_id_with_timezone:FeedIdWithTimezone;
+  transfers:int32;
+  stop_sequence:int32;
+  trip_descriptor:[ubyte];
+  platform_descriptor:PlatformDescriptor;
+}
+
+root_type Edge;

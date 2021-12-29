@@ -18,11 +18,22 @@
 
 package com.graphhopper.gtfs;
 
+import MyGame.Sample.Edge;
+import MyGame.Sample.FeedIdWithTimezone;
+import MyGame.Sample.PlatformDescriptor;
+import MyGame.Sample.Validity;
+import com.google.flatbuffers.FlatBufferBuilder;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.util.EdgeIterator;
 
-import java.util.*;
+import java.nio.ByteBuffer;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.BitSet;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Spliterators;
 import java.util.function.Consumer;
 import java.util.stream.StreamSupport;
 
@@ -35,14 +46,17 @@ public class PtGraph implements GtfsReader.PtGraphOut {
 
     // edges
     private final DataAccess edges;
-    private final int E_NODEA, E_NODEB, E_LINKA, E_LINKB;
+    private final int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_ATTRS;
     private final int edgeEntryBytes;
     private int edgeCount;
+
+    private final DataAccess attrs;
 
     public PtGraph(Directory dir, int firstNode) {
         nextNode = firstNode;
         nodes = dir.create("pt_nodes", dir.getDefaultType("pt_nodes", true), 100);
         edges = dir.create("pt_edges", dir.getDefaultType("pt_edges", true), 100);
+        attrs = dir.create("pt_edge_attrs", dir.getDefaultType("pt_edge_attrs", false), 1000);
 
         nodeEntryBytes = 8;
 
@@ -51,16 +65,18 @@ public class PtGraph implements GtfsReader.PtGraphOut {
         E_NODEB = 4;
         E_LINKA = 8;
         E_LINKB = 12;
-        edgeEntryBytes = E_LINKB + 4;
+        E_ATTRS = 16;
+        edgeEntryBytes = E_ATTRS + 4;
     }
 
     public void create(long initSize) {
         nodes.create(initSize);
         edges.create(initSize);
+        attrs.create(initSize);
     }
 
     public boolean loadExisting() {
-        if (!nodes.loadExisting() || !edges.loadExisting())
+        if (!nodes.loadExisting() || !edges.loadExisting() || !attrs.loadExisting())
             return false;
 
         nodeCount = nodes.getHeader(2 * 4);
@@ -74,11 +90,13 @@ public class PtGraph implements GtfsReader.PtGraphOut {
 
         edges.flush();
         nodes.flush();
+        attrs.flush();
     }
 
     public void close() {
         edges.close();
         nodes.close();
+        attrs.flush();
     }
 
     public int getNodeCount() {
@@ -94,7 +112,7 @@ public class PtGraph implements GtfsReader.PtGraphOut {
         return nodes.isClosed();
     }
 
-    public int addEdge(int nodeA, int nodeB) {
+    public int addEdge(int nodeA, int nodeB, long attrPointer) {
         if (edgeCount == Integer.MAX_VALUE)
             throw new IllegalStateException("Maximum edge count exceeded: " + edgeCount);
         ensureNodeCapacity(Math.max(nodeA, nodeB));
@@ -105,6 +123,7 @@ public class PtGraph implements GtfsReader.PtGraphOut {
 
         setNodeA(edgePointer, nodeA);
         setNodeB(edgePointer, nodeB);
+        setAttrPointer(edgePointer, attrPointer);
         // we keep a linked list of edges at each node. here we prepend the new edge at the already existing linked
         // list of edges.
         long nodePointerA = toNodePointer(nodeA);
@@ -148,6 +167,14 @@ public class PtGraph implements GtfsReader.PtGraphOut {
 
     public void setNodeA(long edgePointer, int nodeA) {
         edges.setInt(edgePointer + E_NODEA, nodeA);
+    }
+
+    private void setAttrPointer(long edgePointer, long attrPointer) {
+        edges.setInt(edgePointer + E_ATTRS, (int) attrPointer);
+    }
+
+    private int getAttrPointer(long edgePointer) {
+        return edges.getInt(edgePointer + E_ATTRS);
     }
 
     public void setNodeB(long edgePointer, int nodeB) {
@@ -216,7 +243,6 @@ public class PtGraph implements GtfsReader.PtGraphOut {
     }
 
     int nextNode = 0;
-    Map<Integer, PtEdgeAttributes> edgeAttributesMap = new HashMap<>();
 
     public void putPlatformEnterNode(int platformEnterNode, GtfsStorageI.PlatformDescriptor platformDescriptor) {
         enterPlatforms.put(platformEnterNode, platformDescriptor);
@@ -227,10 +253,73 @@ public class PtGraph implements GtfsReader.PtGraphOut {
     }
 
 
+    long currentPointer = 0;
+
     @Override
     public int createEdge(int src, int dest, PtEdgeAttributes attrs) {
-        int edge = addEdge(src, dest);
-        edgeAttributesMap.put(edge, attrs);
+        FlatBufferBuilder fbb = new FlatBufferBuilder(1);
+        int validity = -1;
+        if (attrs.validity != null) {
+            int bitSetVector = Validity.createBitSetVector(fbb, attrs.validity.validity.toByteArray());
+            int string = fbb.createString(attrs.validity.zoneId.getId());
+            Validity.startValidity(fbb);
+            Validity.addBitSet(fbb, bitSetVector);
+            Validity.addStart(fbb, attrs.validity.start.toEpochDay());
+            Validity.addZoneId(fbb, string);
+            validity = Validity.endValidity(fbb);
+        }
+        int tripDescriptorVector = -1;
+        if (attrs.tripDescriptor != null) {
+            tripDescriptorVector = Edge.createTripDescriptorVector(fbb, attrs.tripDescriptor);
+        }
+        int platformDescriptor = -1;
+        if (attrs.platformDescriptor != null) {
+            int stopId = fbb.createString(attrs.platformDescriptor.stop_id);
+            int feedId = fbb.createString(attrs.platformDescriptor.feed_id);
+            int routeId = -1;
+            if (attrs.platformDescriptor instanceof GtfsStorageI.RoutePlatform) {
+                routeId = fbb.createString(((GtfsStorageI.RoutePlatform) attrs.platformDescriptor).route_id);
+            }
+            PlatformDescriptor.startPlatformDescriptor(fbb);
+            PlatformDescriptor.addStopId(fbb, stopId);
+            PlatformDescriptor.addFeedId(fbb, feedId);
+            if (attrs.platformDescriptor instanceof GtfsStorageI.RouteTypePlatform) {
+                PlatformDescriptor.addRouteType(fbb, ((GtfsStorageI.RouteTypePlatform) attrs.platformDescriptor).route_type);
+            }
+            if (routeId != -1) {
+                PlatformDescriptor.addRouteId(fbb, routeId);
+            }
+            platformDescriptor = PlatformDescriptor.endPlatformDescriptor(fbb);
+        }
+        int feedIdWithTimezone = -1;
+        if (attrs.feedIdWithTimezone != null) {
+            feedIdWithTimezone = FeedIdWithTimezone.createFeedIdWithTimezone(fbb, fbb.createString(attrs.feedIdWithTimezone.feedId), fbb.createString(attrs.feedIdWithTimezone.zoneId.getId()));
+        }
+        Edge.startEdge(fbb);
+        Edge.addType(fbb, (byte) attrs.type.ordinal());
+        Edge.addTime(fbb, attrs.time);
+        Edge.addRouteType(fbb, attrs.route_type);
+        Edge.addTransfers(fbb, attrs.transfers);
+        Edge.addStopSequence(fbb, attrs.stop_sequence);
+        if (attrs.tripDescriptor != null) {
+            Edge.addTripDescriptor(fbb, tripDescriptorVector);
+        }
+        if (validity != -1) {
+            Edge.addValidity(fbb, validity);
+        }
+        if (platformDescriptor != -1) {
+            Edge.addPlatformDescriptor(fbb, platformDescriptor);
+        }
+        if (feedIdWithTimezone != -1) {
+            Edge.addFeedIdWithTimezone(fbb, feedIdWithTimezone);
+        }
+        int offset = Edge.endEdge(fbb);
+        Edge.finishSizePrefixedEdgeBuffer(fbb, offset);
+        byte[] bytes = fbb.sizedByteArray();
+        this.attrs.ensureCapacity(currentPointer + 10000);
+        this.attrs.setBytes(currentPointer, bytes, bytes.length);
+        int edge = addEdge(src, dest, currentPointer);
+        currentPointer += bytes.length * 4L;
         return edge;
     }
 
@@ -251,20 +340,56 @@ public class PtGraph implements GtfsReader.PtGraphOut {
 
                 int nodeA = getNodeA(edgePointer);
                 int nodeB = getNodeB(edgePointer);
-                action.accept(new PtEdge(edgeId, nodeA, nodeB, edgeAttributesMap.get(edgeId)));
+                PtEdgeAttributes attrs = pullAttrs(edgeId);
+                action.accept(new PtEdge(edgeId, nodeA, nodeB, attrs));
                 edgeId = getLinkA(edgePointer);
-
                 return true;
             }
+
         };
         return () -> StreamSupport.stream(spliterator, false).iterator();
+    }
+
+    private PtEdgeAttributes pullAttrs(int edgeId) {
+        int attrPointer = getAttrPointer(toEdgePointer(edgeId));
+        int size = attrs.getInt(attrPointer);
+        byte[] bytes = new byte[size];
+        attrs.getBytes(attrPointer + 4, bytes, size);
+        Edge edge = Edge.getRootAsEdge(ByteBuffer.wrap(bytes));
+        GtfsStorageI.PlatformDescriptor pd = null;
+        PlatformDescriptor platformDescriptor = edge.platformDescriptor();
+        if (platformDescriptor != null) {
+            if (platformDescriptor.routeId() != null) {
+                pd = GtfsStorageI.PlatformDescriptor.route(platformDescriptor.feedId(), platformDescriptor.stopId(), platformDescriptor.routeId());
+            } else {
+                pd = GtfsStorageI.PlatformDescriptor.routeType(platformDescriptor.feedId(), platformDescriptor.stopId(), platformDescriptor.routeType());
+            }
+        }
+        GtfsStorage.FeedIdWithTimezone feedIdWithTimezone = null;
+        if (edge.feedIdWithTimezone() != null) {
+            feedIdWithTimezone = new GtfsStorage.FeedIdWithTimezone(edge.feedIdWithTimezone().feedId(), ZoneId.of(edge.feedIdWithTimezone().zoneId()));
+        }
+
+        Validity validity = edge.validity();
+        GtfsStorage.Validity v = null;
+        if (validity != null) {
+            v = new GtfsStorage.Validity(BitSet.valueOf(validity.bitSetAsByteBuffer()), ZoneId.of(validity.zoneId()), LocalDate.ofEpochDay(validity.start()));
+        }
+        ByteBuffer x = edge.tripDescriptorAsByteBuffer();
+        byte[] arr = null;
+        if (x != null) {
+            arr = new byte[x.remaining()];
+            x.get(arr);
+        }
+        return new PtEdgeAttributes(GtfsStorage.EdgeType.values()[edge.type()], edge.time(), v, edge.routeType(), feedIdWithTimezone,
+                edge.transfers(), edge.stopSequence(), edge.tripDescriptorAsByteBuffer() != null ? arr : null, pd);
     }
 
     public PtEdge edge(int edgeId) {
         long edgePointer = toEdgePointer(edgeId);
         int nodeA = getNodeA(edgePointer);
         int nodeB = getNodeB(edgePointer);
-        return new PtEdge(edgeId, nodeA, nodeB, edgeAttributesMap.get(edgeId));
+        return new PtEdge(edgeId, nodeA, nodeB, pullAttrs(edgeId));
     }
 
     public Iterable<PtEdge> backEdgesAround(int adjNode) {
@@ -280,7 +405,7 @@ public class PtGraph implements GtfsReader.PtGraphOut {
 
                 int nodeA = getNodeA(edgePointer);
                 int nodeB = getNodeB(edgePointer);
-                action.accept(new PtEdge(edgeId, nodeB, nodeA, edgeAttributesMap.get(edgeId)));
+                action.accept(new PtEdge(edgeId, nodeB, nodeA, pullAttrs(edgeId)));
                 edgeId = getLinkB(edgePointer);
 
                 return true;

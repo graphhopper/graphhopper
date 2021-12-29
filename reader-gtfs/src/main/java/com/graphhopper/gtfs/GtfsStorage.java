@@ -65,7 +65,7 @@ public class GtfsStorage {
 		final ZoneId zoneId;
 		final LocalDate start;
 
-		Validity(BitSet validity, ZoneId zoneId, LocalDate start) {
+		public Validity(BitSet validity, ZoneId zoneId, LocalDate start) {
 			this.validity = validity;
 			this.zoneId = zoneId;
 			this.start = start;
