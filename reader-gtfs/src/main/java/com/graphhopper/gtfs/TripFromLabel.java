@@ -348,12 +348,7 @@ class TripFromLabel {
                 }
                 if (EnumSet.of(GtfsStorage.EdgeType.TRANSFER, GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK).contains(edge.getType())) {
                     Geometry lineString = lineStringFromEdges(partition);
-                    GtfsRealtime.TripDescriptor tripDescriptor;
-                    try {
-                        tripDescriptor = GtfsRealtime.TripDescriptor.parseFrom(partition.get(0).edge.getTripDescriptor());
-                    } catch (InvalidProtocolBufferException e) {
-                        throw new RuntimeException(e);
-                    }
+                    GtfsRealtime.TripDescriptor tripDescriptor = partition.get(0).edge.getTripDescriptor();
                     final StopsFromBoardHopDwellEdges stopsFromBoardHopDwellEdges = new StopsFromBoardHopDwellEdges(feedId, tripDescriptor);
                     partition.stream()
                             .filter(e -> EnumSet.of(GtfsStorage.EdgeType.HOP, GtfsStorage.EdgeType.BOARD, GtfsStorage.EdgeType.DWELL).contains(e.edge.getType()))

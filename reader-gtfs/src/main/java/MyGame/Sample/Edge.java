@@ -17,40 +17,32 @@ public final class Edge extends Table {
 
   public byte type() { int o = __offset(4); return o != 0 ? bb.get(o + bb_pos) : 0; }
   public int time() { int o = __offset(6); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
-  public MyGame.Sample.Validity validity() { return validity(new MyGame.Sample.Validity()); }
-  public MyGame.Sample.Validity validity(MyGame.Sample.Validity obj) { int o = __offset(8); return o != 0 ? obj.__assign(__indirect(o + bb_pos), bb) : null; }
+  public int validity() { int o = __offset(8); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
   public int routeType() { int o = __offset(10); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
-  public MyGame.Sample.FeedIdWithTimezone feedIdWithTimezone() { return feedIdWithTimezone(new MyGame.Sample.FeedIdWithTimezone()); }
-  public MyGame.Sample.FeedIdWithTimezone feedIdWithTimezone(MyGame.Sample.FeedIdWithTimezone obj) { int o = __offset(12); return o != 0 ? obj.__assign(__indirect(o + bb_pos), bb) : null; }
+  public int feedIdWithTimezone() { int o = __offset(12); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
   public int transfers() { int o = __offset(14); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
   public int stopSequence() { int o = __offset(16); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
-  public int tripDescriptor(int j) { int o = __offset(18); return o != 0 ? bb.get(__vector(o) + j * 1) & 0xFF : 0; }
-  public int tripDescriptorLength() { int o = __offset(18); return o != 0 ? __vector_len(o) : 0; }
-  public ByteVector tripDescriptorVector() { return tripDescriptorVector(new ByteVector()); }
-  public ByteVector tripDescriptorVector(ByteVector obj) { int o = __offset(18); return o != 0 ? obj.__assign(__vector(o), bb) : null; }
-  public ByteBuffer tripDescriptorAsByteBuffer() { return __vector_as_bytebuffer(18, 1); }
-  public ByteBuffer tripDescriptorInByteBuffer(ByteBuffer _bb) { return __vector_in_bytebuffer(_bb, 18, 1); }
-  public MyGame.Sample.PlatformDescriptor platformDescriptor() { return platformDescriptor(new MyGame.Sample.PlatformDescriptor()); }
-  public MyGame.Sample.PlatformDescriptor platformDescriptor(MyGame.Sample.PlatformDescriptor obj) { int o = __offset(20); return o != 0 ? obj.__assign(__indirect(o + bb_pos), bb) : null; }
+  public int tripDescriptor() { int o = __offset(18); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
+  public int platformDescriptor() { int o = __offset(20); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
 
   public static int createEdge(FlatBufferBuilder builder,
       byte type,
       int time,
-      int validityOffset,
+      int validity,
       int route_type,
-      int feed_id_with_timezoneOffset,
+      int feed_id_with_timezone,
       int transfers,
       int stop_sequence,
-      int trip_descriptorOffset,
-      int platform_descriptorOffset) {
+      int trip_descriptor,
+      int platform_descriptor) {
     builder.startTable(9);
-    Edge.addPlatformDescriptor(builder, platform_descriptorOffset);
-    Edge.addTripDescriptor(builder, trip_descriptorOffset);
+    Edge.addPlatformDescriptor(builder, platform_descriptor);
+    Edge.addTripDescriptor(builder, trip_descriptor);
     Edge.addStopSequence(builder, stop_sequence);
     Edge.addTransfers(builder, transfers);
-    Edge.addFeedIdWithTimezone(builder, feed_id_with_timezoneOffset);
+    Edge.addFeedIdWithTimezone(builder, feed_id_with_timezone);
     Edge.addRouteType(builder, route_type);
-    Edge.addValidity(builder, validityOffset);
+    Edge.addValidity(builder, validity);
     Edge.addTime(builder, time);
     Edge.addType(builder, type);
     return Edge.endEdge(builder);
@@ -59,16 +51,13 @@ public final class Edge extends Table {
   public static void startEdge(FlatBufferBuilder builder) { builder.startTable(9); }
   public static void addType(FlatBufferBuilder builder, byte type) { builder.addByte(0, type, 0); }
   public static void addTime(FlatBufferBuilder builder, int time) { builder.addInt(1, time, 0); }
-  public static void addValidity(FlatBufferBuilder builder, int validityOffset) { builder.addOffset(2, validityOffset, 0); }
+  public static void addValidity(FlatBufferBuilder builder, int validity) { builder.addInt(2, validity, 0); }
   public static void addRouteType(FlatBufferBuilder builder, int routeType) { builder.addInt(3, routeType, 0); }
-  public static void addFeedIdWithTimezone(FlatBufferBuilder builder, int feedIdWithTimezoneOffset) { builder.addOffset(4, feedIdWithTimezoneOffset, 0); }
+  public static void addFeedIdWithTimezone(FlatBufferBuilder builder, int feedIdWithTimezone) { builder.addInt(4, feedIdWithTimezone, 0); }
   public static void addTransfers(FlatBufferBuilder builder, int transfers) { builder.addInt(5, transfers, 0); }
   public static void addStopSequence(FlatBufferBuilder builder, int stopSequence) { builder.addInt(6, stopSequence, 0); }
-  public static void addTripDescriptor(FlatBufferBuilder builder, int tripDescriptorOffset) { builder.addOffset(7, tripDescriptorOffset, 0); }
-  public static int createTripDescriptorVector(FlatBufferBuilder builder, byte[] data) { return builder.createByteVector(data); }
-  public static int createTripDescriptorVector(FlatBufferBuilder builder, ByteBuffer data) { return builder.createByteVector(data); }
-  public static void startTripDescriptorVector(FlatBufferBuilder builder, int numElems) { builder.startVector(1, numElems, 1); }
-  public static void addPlatformDescriptor(FlatBufferBuilder builder, int platformDescriptorOffset) { builder.addOffset(8, platformDescriptorOffset, 0); }
+  public static void addTripDescriptor(FlatBufferBuilder builder, int tripDescriptor) { builder.addInt(7, tripDescriptor, 0); }
+  public static void addPlatformDescriptor(FlatBufferBuilder builder, int platformDescriptor) { builder.addInt(8, platformDescriptor, 0); }
   public static int endEdge(FlatBufferBuilder builder) {
     int o = builder.endTable();
     return o;

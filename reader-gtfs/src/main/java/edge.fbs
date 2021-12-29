@@ -25,13 +25,13 @@ table FeedIdWithTimezone {
 table Edge {
   type:Type;
   time:int32;
-  validity:Validity;
+  validity:int32;
   route_type:int32;
-  feed_id_with_timezone:FeedIdWithTimezone;
+  feed_id_with_timezone:int32;
   transfers:int32;
   stop_sequence:int32;
-  trip_descriptor:[ubyte];
-  platform_descriptor:PlatformDescriptor;
+  trip_descriptor:int32;
+  platform_descriptor:int32;
 }
 
 root_type Edge;

@@ -19,6 +19,7 @@
 package com.graphhopper.gtfs;
 
 import com.google.common.collect.Iterators;
+import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.weighting.Weighting;
@@ -319,7 +320,7 @@ public final class GraphExplorer {
             return ptEdge.getAttrs().stop_sequence;
         }
 
-        public byte[] getTripDescriptor() {
+        public GtfsRealtime.TripDescriptor getTripDescriptor() {
             return ptEdge.getAttrs().tripDescriptor;
         }
 

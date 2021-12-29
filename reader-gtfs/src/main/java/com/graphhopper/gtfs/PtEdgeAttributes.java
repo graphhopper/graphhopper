@@ -1,5 +1,7 @@
 package com.graphhopper.gtfs;
 
+import com.google.transit.realtime.GtfsRealtime;
+
 public class PtEdgeAttributes {
 
     public final GtfsStorage.Validity validity;
@@ -9,7 +11,7 @@ public class PtEdgeAttributes {
     public GtfsStorage.FeedIdWithTimezone feedIdWithTimezone;
     public int transfers;
     public int stop_sequence;
-    public byte[] tripDescriptor;
+    public GtfsRealtime.TripDescriptor tripDescriptor;
     public GtfsStorage.PlatformDescriptor platformDescriptor;
 
     @Override
@@ -21,7 +23,7 @@ public class PtEdgeAttributes {
                 '}';
     }
 
-    public PtEdgeAttributes(GtfsStorage.EdgeType type, int time, GtfsStorage.Validity validity, int route_type, GtfsStorage.FeedIdWithTimezone feedIdWithTimezone, int transfers, int stop_sequence, byte[] tripDescriptor, GtfsStorage.PlatformDescriptor platformDescriptor) {
+    public PtEdgeAttributes(GtfsStorage.EdgeType type, int time, GtfsStorage.Validity validity, int route_type, GtfsStorage.FeedIdWithTimezone feedIdWithTimezone, int transfers, int stop_sequence, GtfsRealtime.TripDescriptor tripDescriptor, GtfsStorage.PlatformDescriptor platformDescriptor) {
         this.type = type;
         this.time = time;
         this.validity = validity;

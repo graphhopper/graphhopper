@@ -294,13 +294,13 @@ class GtfsReader {
             departureNode = out.createNode();
             int dayShift = stopTime.departure_time / (24 * 60 * 60);
             GtfsStorage.Validity validOn = new GtfsStorage.Validity(getValidOn(trip.validOnDay, dayShift), zoneId, startDate);
-            int boardEdge = out.createEdge(departureTimelineNode, departureNode, new PtEdgeAttributes(GtfsStorage.EdgeType.BOARD, 0, validOn, -1, null, 1, stopTime.stop_sequence, tripDescriptor.toByteArray(), null));
+            int boardEdge = out.createEdge(departureTimelineNode, departureNode, new PtEdgeAttributes(GtfsStorage.EdgeType.BOARD, 0, validOn, -1, null, 1, stopTime.stop_sequence, tripDescriptor, null));
             while (boardEdges.size() < stopTime.stop_sequence) {
                 boardEdges.add(-1); // Padding, so that index == stop_sequence
             }
             boardEdges.add(boardEdge);
 
-            int alightEdge = out.createEdge(arrivalNode, arrivalTimelineNode, new PtEdgeAttributes(GtfsStorage.EdgeType.ALIGHT, 0, validOn, -1, null, 0, stopTime.stop_sequence, tripDescriptor.toByteArray(), null));
+            int alightEdge = out.createEdge(arrivalNode, arrivalTimelineNode, new PtEdgeAttributes(GtfsStorage.EdgeType.ALIGHT, 0, validOn, -1, null, 0, stopTime.stop_sequence, tripDescriptor, null));
             while (alightEdges.size() < stopTime.stop_sequence) {
                 alightEdges.add(-1);
             }
@@ -422,7 +422,7 @@ class GtfsReader {
 
         int dayShift = departureTime / (24 * 60 * 60);
         GtfsStorage.Validity validOn = new GtfsStorage.Validity(getValidOn(validOnDay, dayShift), zoneId, startDate);
-        int boardEdge = out.createEdge(departureTimelineNode, departureNode, new PtEdgeAttributes(GtfsStorage.EdgeType.BOARD, 0, validOn, -1, null, 1, stopSequence, tripDescriptor.toByteArray(), null));
+        int boardEdge = out.createEdge(departureTimelineNode, departureNode, new PtEdgeAttributes(GtfsStorage.EdgeType.BOARD, 0, validOn, -1, null, 1, stopSequence, tripDescriptor, null));
         return boardEdge;
     }
 
@@ -464,7 +464,7 @@ class GtfsReader {
                 GtfsStorage.Validity blockTransferValidOn = new GtfsStorage.Validity(blockTransferValidity, zoneId, startDate);
                 int node = ptGraph.createNode();
                 int transferEdge = out.createEdge(lastTrip.arrivalNode, node, new PtEdgeAttributes(GtfsStorage.EdgeType.TRANSFER, dwellTime, null, -1, null, 0, -1, null, platform));
-                int boardEdge = out.createEdge(node, departureNode, new PtEdgeAttributes(GtfsStorage.EdgeType.BOARD, 0, blockTransferValidOn, -1, null, 0, stopTime.stop_sequence, tripDescriptor.toByteArray(), null));
+                int boardEdge = out.createEdge(node, departureNode, new PtEdgeAttributes(GtfsStorage.EdgeType.BOARD, 0, blockTransferValidOn, -1, null, 0, stopTime.stop_sequence, tripDescriptor, null));
                 accumulatorValidity.andNot(lastTrip.tripWithStopTimes.validOnDay);
             }
         }
