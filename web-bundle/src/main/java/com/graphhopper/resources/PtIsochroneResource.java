@@ -108,7 +108,6 @@ public class PtIsochroneResource {
             throw new PointNotFoundException("Cannot find location: " + location, 0);
         }
 
-        PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(encodingManager);
         GraphExplorer graphExplorer = new GraphExplorer(queryGraph, null, weighting, gtfsStorage, RealtimeFeed.empty(gtfsStorage), reverseFlow, false, false, 5.0, reverseFlow, blockedRouteTypes);
         MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, reverseFlow, false, false, 0, Collections.emptyList());
 
@@ -116,7 +115,7 @@ public class PtIsochroneResource {
         NodeAccess nodeAccess = queryGraph.getNodeAccess();
 
         MultiCriteriaLabelSetting.SPTVisitor sptVisitor = nodeLabel -> {
-            Coordinate nodeCoordinate = new Coordinate(nodeAccess.getLon(nodeLabel.adjNode), nodeAccess.getLat(nodeLabel.adjNode));
+            Coordinate nodeCoordinate = new Coordinate(nodeAccess.getLon(nodeLabel.node.streetNode), nodeAccess.getLat(nodeLabel.node.streetNode)); //FIXME
             z1.merge(nodeCoordinate, (double) (nodeLabel.currentTime - initialTime.toEpochMilli()) * (reverseFlow ? -1 : 1), Math::min);
         };
 
@@ -221,7 +220,7 @@ public class PtIsochroneResource {
     }
 
     private static void calcLabels(MultiCriteriaLabelSetting router, int from, Instant startTime, MultiCriteriaLabelSetting.SPTVisitor visitor, Predicate<Label> predicate) {
-        Iterator<Label> iterator = router.calcLabels(from, startTime).iterator();
+        Iterator<Label> iterator = router.calcLabels(new Label.NodeId(from, -1), startTime).iterator(); // FIXME
         while(iterator.hasNext()) {
             Label label = iterator.next();
             if (!predicate.test(label)) {

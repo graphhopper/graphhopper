@@ -323,7 +323,7 @@ public final class GraphExplorer {
             return ptEdge.getAttrs().tripDescriptor;
         }
 
-        public GtfsStorageI.PlatformDescriptor getPlatformDescriptor() {
+        public GtfsStorage.PlatformDescriptor getPlatformDescriptor() {
             return ptEdge.getAttrs().platformDescriptor;
         }
     }

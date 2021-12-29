@@ -87,15 +87,6 @@ public class RealtimeFeed {
                 return nextNode++;
             }
 
-            @Override
-            public void putPlatformEnterNode(int platformEnterNode, GtfsStorageI.PlatformDescriptor platformDescriptor) {
-
-            }
-
-            @Override
-            public void putPlatformExitNode(int platformExitNode, GtfsStorageI.PlatformDescriptor platformDescriptor) {
-
-            }
         };
 
         feedMessages.forEach((feedKey, feedMessage) -> {

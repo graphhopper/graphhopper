@@ -31,8 +31,6 @@ import java.nio.ByteBuffer;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.BitSet;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Spliterators;
 import java.util.function.Consumer;
 import java.util.stream.StreamSupport;
@@ -54,9 +52,9 @@ public class PtGraph implements GtfsReader.PtGraphOut {
 
     public PtGraph(Directory dir, int firstNode) {
         nextNode = firstNode;
-        nodes = dir.create("pt_nodes", dir.getDefaultType("pt_nodes", true), 100);
-        edges = dir.create("pt_edges", dir.getDefaultType("pt_edges", true), 100);
-        attrs = dir.create("pt_edge_attrs", dir.getDefaultType("pt_edge_attrs", false), 1000);
+        nodes = dir.create("pt_nodes", dir.getDefaultType("pt_nodes", true), -1);
+        edges = dir.create("pt_edges", dir.getDefaultType("pt_edges", true), -1);
+        attrs = dir.create("pt_edge_attrs", dir.getDefaultType("pt_edge_attrs", false), -1);
 
         nodeEntryBytes = 8;
 
@@ -221,37 +219,7 @@ public class PtGraph implements GtfsReader.PtGraphOut {
         return nodes.getInt(nodePointer + 4);
     }
 
-    Map<Integer, GtfsStorageI.PlatformDescriptor> enterPlatforms = new HashMap<>();
-    Map<Integer, GtfsStorageI.PlatformDescriptor> exitPlatforms = new HashMap<>();
-
-    public Map<Integer, GtfsStorageI.PlatformDescriptor> getEnterPlatforms(GtfsStorage.FeedIdWithStopId feedIdWithStopId) {
-        HashMap<Integer, GtfsStorageI.PlatformDescriptor> result = new HashMap<>();
-        enterPlatforms.forEach((node, platformDescriptor) -> {
-            if (platformDescriptor.feed_id.equals(feedIdWithStopId.feedId) && platformDescriptor.stop_id.equals(feedIdWithStopId.stopId))
-                result.put(node, platformDescriptor);
-        });
-        return result;
-    }
-
-    public Map<Integer, GtfsStorageI.PlatformDescriptor> getExitPlatforms(GtfsStorage.FeedIdWithStopId feedIdWithStopId) {
-        HashMap<Integer, GtfsStorageI.PlatformDescriptor> result = new HashMap<>();
-        exitPlatforms.forEach((node, platformDescriptor) -> {
-            if (platformDescriptor.feed_id.equals(feedIdWithStopId.feedId) && platformDescriptor.stop_id.equals(feedIdWithStopId.stopId))
-                result.put(node, platformDescriptor);
-        });
-        return result;
-    }
-
     int nextNode = 0;
-
-    public void putPlatformEnterNode(int platformEnterNode, GtfsStorageI.PlatformDescriptor platformDescriptor) {
-        enterPlatforms.put(platformEnterNode, platformDescriptor);
-    }
-
-    public void putPlatformExitNode(int platformExitNode, GtfsStorageI.PlatformDescriptor platformDescriptor) {
-        exitPlatforms.put(platformExitNode, platformDescriptor);
-    }
-
 
     long currentPointer = 0;
 
@@ -277,14 +245,14 @@ public class PtGraph implements GtfsReader.PtGraphOut {
             int stopId = fbb.createString(attrs.platformDescriptor.stop_id);
             int feedId = fbb.createString(attrs.platformDescriptor.feed_id);
             int routeId = -1;
-            if (attrs.platformDescriptor instanceof GtfsStorageI.RoutePlatform) {
-                routeId = fbb.createString(((GtfsStorageI.RoutePlatform) attrs.platformDescriptor).route_id);
+            if (attrs.platformDescriptor instanceof GtfsStorage.RoutePlatform) {
+                routeId = fbb.createString(((GtfsStorage.RoutePlatform) attrs.platformDescriptor).route_id);
             }
             PlatformDescriptor.startPlatformDescriptor(fbb);
             PlatformDescriptor.addStopId(fbb, stopId);
             PlatformDescriptor.addFeedId(fbb, feedId);
-            if (attrs.platformDescriptor instanceof GtfsStorageI.RouteTypePlatform) {
-                PlatformDescriptor.addRouteType(fbb, ((GtfsStorageI.RouteTypePlatform) attrs.platformDescriptor).route_type);
+            if (attrs.platformDescriptor instanceof GtfsStorage.RouteTypePlatform) {
+                PlatformDescriptor.addRouteType(fbb, ((GtfsStorage.RouteTypePlatform) attrs.platformDescriptor).route_type);
             }
             if (routeId != -1) {
                 PlatformDescriptor.addRouteId(fbb, routeId);
@@ -356,13 +324,13 @@ public class PtGraph implements GtfsReader.PtGraphOut {
         byte[] bytes = new byte[size];
         attrs.getBytes(attrPointer + 4, bytes, size);
         Edge edge = Edge.getRootAsEdge(ByteBuffer.wrap(bytes));
-        GtfsStorageI.PlatformDescriptor pd = null;
+        GtfsStorage.PlatformDescriptor pd = null;
         PlatformDescriptor platformDescriptor = edge.platformDescriptor();
         if (platformDescriptor != null) {
             if (platformDescriptor.routeId() != null) {
-                pd = GtfsStorageI.PlatformDescriptor.route(platformDescriptor.feedId(), platformDescriptor.stopId(), platformDescriptor.routeId());
+                pd = GtfsStorage.PlatformDescriptor.route(platformDescriptor.feedId(), platformDescriptor.stopId(), platformDescriptor.routeId());
             } else {
-                pd = GtfsStorageI.PlatformDescriptor.routeType(platformDescriptor.feedId(), platformDescriptor.stopId(), platformDescriptor.routeType());
+                pd = GtfsStorage.PlatformDescriptor.routeType(platformDescriptor.feedId(), platformDescriptor.stopId(), platformDescriptor.routeType());
             }
         }
         GtfsStorage.FeedIdWithTimezone feedIdWithTimezone = null;

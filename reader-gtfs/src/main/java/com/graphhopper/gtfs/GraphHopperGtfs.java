@@ -32,7 +32,6 @@ import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.sound.sampled.Line;
 import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
@@ -122,11 +121,11 @@ public class GraphHopperGtfs extends GraphHopper {
                 Label label = iterator.next();
                 if (label.parent != null) {
                     if (label.edge.getType() == GtfsStorage.EdgeType.EXIT_PT) {
-                        GtfsStorageI.PlatformDescriptor fromPlatformDescriptor = label.edge.getPlatformDescriptor();
+                        GtfsStorage.PlatformDescriptor fromPlatformDescriptor = label.edge.getPlatformDescriptor();
                         Transfers transfers = allTransfers.get(fromPlatformDescriptor.feed_id);
                         for (PtGraph.PtEdge ptEdge : ptGraph.edgesAround(stationNode.ptNode)) {
                             if (ptEdge.getType() == GtfsStorage.EdgeType.ENTER_PT) {
-                                GtfsStorageI.PlatformDescriptor toPlatformDescriptor = ptEdge.getAttrs().platformDescriptor;
+                                GtfsStorage.PlatformDescriptor toPlatformDescriptor = ptEdge.getAttrs().platformDescriptor;
                                 LOGGER.debug(fromPlatformDescriptor + " -> " + toPlatformDescriptor);
                                 if (!toPlatformDescriptor.feed_id.equals(fromPlatformDescriptor.feed_id)) {
                                     LOGGER.debug(" Different feed. Inserting transfer with " + (int) (label.streetTime / 1000L) + " s.");
@@ -148,11 +147,11 @@ public class GraphHopperGtfs extends GraphHopper {
         });
     }
 
-    private String routeIdOrNull(GtfsStorageI.PlatformDescriptor platformDescriptor) {
-        if (platformDescriptor instanceof GtfsStorageI.RouteTypePlatform) {
+    private String routeIdOrNull(GtfsStorage.PlatformDescriptor platformDescriptor) {
+        if (platformDescriptor instanceof GtfsStorage.RouteTypePlatform) {
             return null;
         } else {
-            return ((GtfsStorageI.RoutePlatform) platformDescriptor).route_id;
+            return ((GtfsStorage.RoutePlatform) platformDescriptor).route_id;
         }
     }
 

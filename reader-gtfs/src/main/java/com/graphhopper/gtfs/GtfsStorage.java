@@ -141,7 +141,7 @@ public class GtfsStorage {
 	private Map<Integer, byte[]> tripDescriptors;
 	private Map<Integer, Integer> stopSequences;
 
-	private Map<Integer, GtfsStorageI.PlatformDescriptor> platformDescriptorsByEdge;
+	private Map<Integer, PlatformDescriptor> platformDescriptorsByEdge;
 
 	private Map<String, Map<String, Fare>> faresByFeed;
 	private Map<String, int[]> boardEdgesForTrip;
@@ -277,4 +277,93 @@ public class GtfsStorage {
 		}
 	}
 
+	public abstract static class PlatformDescriptor implements Serializable {
+		public String feed_id;
+		public String stop_id;
+
+		public static PlatformDescriptor route(String feed_id, String stop_id, String route_id) {
+			GtfsStorage.RoutePlatform routePlatform = new GtfsStorage.RoutePlatform();
+			routePlatform.feed_id = feed_id;
+			routePlatform.stop_id = stop_id;
+			routePlatform.route_id = route_id;
+			return routePlatform;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			PlatformDescriptor that = (PlatformDescriptor) o;
+			return Objects.equals(feed_id, that.feed_id) &&
+					Objects.equals(stop_id, that.stop_id);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(feed_id, stop_id);
+		}
+
+		public static GtfsStorage.RouteTypePlatform routeType(String feed_id, String stop_id, int route_type) {
+			GtfsStorage.RouteTypePlatform routeTypePlatform = new GtfsStorage.RouteTypePlatform();
+			routeTypePlatform.feed_id = feed_id;
+			routeTypePlatform.stop_id = stop_id;
+			routeTypePlatform.route_type = route_type;
+			return routeTypePlatform;
+		}
+
+	}
+
+	public static class RoutePlatform extends PlatformDescriptor {
+		String route_id;
+
+		@Override
+		public String toString() {
+			return "RoutePlatform{" +
+					"feed_id='" + feed_id + '\'' +
+					", stop_id='" + stop_id + '\'' +
+					", route_id='" + route_id + '\'' +
+					'}';
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			if (!super.equals(o)) return false;
+			RoutePlatform that = (RoutePlatform) o;
+			return route_id.equals(that.route_id);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(super.hashCode(), route_id);
+		}
+	}
+
+	public static class RouteTypePlatform extends PlatformDescriptor {
+		int route_type;
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			if (!super.equals(o)) return false;
+			RouteTypePlatform that = (RouteTypePlatform) o;
+			return route_type == that.route_type;
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(super.hashCode(), route_type);
+		}
+
+		@Override
+		public String toString() {
+			return "RouteTypePlatform{" +
+					"feed_id='" + feed_id + '\'' +
+					", stop_id='" + stop_id + '\'' +
+					", route_type=" + route_type +
+					'}';
+		}
+	}
 }
