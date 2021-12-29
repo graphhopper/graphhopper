@@ -2,7 +2,61 @@
 
 namespace MyGame.Sample;
 
-enum Type:byte { HIGHWAY, ENTER_TIME_EXPANDED_NETWORK, LEAVE_TIME_EXPANDED_NETWORK, ENTER_PT, EXIT_PT, HOP, DWELL, BOARD, ALIGHT, OVERNIGHT, TRANSFER, WAIT, WAIT_ARRIVAL }
+union EdgeAttrs { EnterTimeExpandedNetwork, LeaveTimeExpandedNetwork, EnterPt, ExitPt, Hop, Dwell, Board, Alight, Overnight, Transfer, Wait, WaitArrival}
+
+table EnterTimeExpandedNetwork {
+  feed_id_with_timezone:int32;
+
+}
+
+table LeaveTimeExpandedNetwork {
+  feed_id_with_timezone:int32;
+
+}
+
+table EnterPt {
+  route_type:ubyte;
+  platform_descriptor:int32;
+}
+
+table ExitPt {
+  platform_descriptor:int32;
+
+}
+
+table Hop {
+  stop_sequence:ubyte;
+}
+
+table Dwell {
+}
+
+table Board {
+  stop_sequence:ubyte;
+  trip_descriptor:int32;
+  validity:int32;
+  transfer:bool;
+}
+
+table Alight {
+  stop_sequence:ubyte;
+  trip_descriptor:int32;
+  validity:int32;
+}
+
+table Overnight {
+}
+
+table Transfer {
+  route_type:ubyte;
+  platform_descriptor:int32;
+}
+
+table Wait {
+}
+
+table WaitArrival {
+}
 
 table PlatformDescriptor {
   feed_id: string;
@@ -23,15 +77,8 @@ table FeedIdWithTimezone {
 }
 
 table Edge {
-  type:Type;
+  attrs:EdgeAttrs;
   time:int32;
-  validity:int32;
-  route_type:ubyte;
-  feed_id_with_timezone:int32;
-  transfers:ubyte;
-  stop_sequence:ubyte;
-  trip_descriptor:int32;
-  platform_descriptor:int32;
 }
 
 root_type Edge;

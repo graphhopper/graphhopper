@@ -18,7 +18,7 @@
 
 package com.graphhopper.gtfs;
 
-import MyGame.Sample.Edge;
+import MyGame.Sample.*;
 import com.google.common.primitives.Longs;
 import com.google.flatbuffers.FlatBufferBuilder;
 import com.google.transit.realtime.GtfsRealtime;
@@ -237,22 +237,68 @@ public class PtGraph implements GtfsReader.PtGraphOut {
     @Override
     public int createEdge(int src, int dest, PtEdgeAttributes attrs) {
         FlatBufferBuilder fbb = new FlatBufferBuilder(1);
-        Edge.startEdge(fbb);
-        Edge.addType(fbb, (byte) attrs.type.ordinal());
-        Edge.addTime(fbb, attrs.time);
-        Edge.addRouteType(fbb, attrs.route_type);
-        Edge.addTransfers(fbb, attrs.transfers);
-        Edge.addStopSequence(fbb, attrs.stop_sequence);
+        int attrOffset;
+        byte fbsType;
+        switch (attrs.type) {
+            case ENTER_PT:
+                attrOffset = EnterPt.createEnterPt(fbb, attrs.route_type, sharePlatformDescriptor(attrs.platformDescriptor));
+                fbsType = Type.ENTER_PT;
+                break;
+            case EXIT_PT:
+                attrOffset = ExitPt.createExitPt(fbb, sharePlatformDescriptor(attrs.platformDescriptor));
+                fbsType = Type.EXIT_PT;
+                break;
+            case ENTER_TIME_EXPANDED_NETWORK:
+                attrOffset = EnterTimeExpandedNetwork.createEnterTimeExpandedNetwork(fbb, shareFeedIdWithTimezone(attrs.feedIdWithTimezone));
+                fbsType = Type.ENTER_TIME_EXPANDED_NETWORK;
+                break;
+            case LEAVE_TIME_EXPANDED_NETWORK:
+                attrOffset = LeaveTimeExpandedNetwork.createLeaveTimeExpandedNetwork(fbb, shareFeedIdWithTimezone(attrs.feedIdWithTimezone));
+                fbsType = Type.LEAVE_TIME_EXPANDED_NETWORK;
+                break;
+            case BOARD:
+                attrOffset = Board.createBoard(fbb, attrs.stop_sequence, shareTripDescriptor(attrs.tripDescriptor), shareValidity(attrs.validity), attrs.transfers > 0);
+                fbsType = Type.BOARD;
+                break;
+            case ALIGHT:
+                attrOffset = Alight.createAlight(fbb, attrs.stop_sequence, shareTripDescriptor(attrs.tripDescriptor), shareValidity(attrs.validity));
+                fbsType = Type.ALIGHT;
+                break;
+            case WAIT:
+                Wait.startWait(fbb);
+                attrOffset = Wait.endWait(fbb);
+                fbsType = Type.WAIT;
+                break;
+            case WAIT_ARRIVAL:
+                WaitArrival.startWaitArrival(fbb);
+                attrOffset = WaitArrival.endWaitArrival(fbb);
+                fbsType = Type.WAIT_ARRIVAL;
+                break;
+            case OVERNIGHT:
+                Overnight.startOvernight(fbb);
+                attrOffset = Overnight.endOvernight(fbb);
+                fbsType = Type.OVERNIGHT;
+                break;
+            case HOP:
+                attrOffset = Hop.createHop(fbb, attrs.stop_sequence);
+                fbsType = Type.HOP;
+                break;
+            case DWELL:
+                Dwell.startDwell(fbb);
+                attrOffset = Dwell.endDwell(fbb);
+                fbsType = Type.DWELL;
+                break;
+            case TRANSFER:
+                attrOffset = Transfer.createTransfer(fbb, attrs.route_type, sharePlatformDescriptor(attrs.platformDescriptor));
+                fbsType = Type.TRANSFER;
+                break;
+            default:
+                throw new RuntimeException();
+        }
+        int offset = Edge.createEdge(fbb, fbsType, attrOffset, attrs.time);
 //        if (attrs.tripDescriptor != null) {
 //            Edge.addTripDescriptor(fbb, tripDescriptorVector);
 //        }
-        if (attrs.validity != null) {
-            Integer validityId = validities.get(attrs.validity);
-            if (validityId == null) {
-                validityId = validityList.size();
-                validities.put(attrs.validity, validityId);
-                validityList.add(attrs.validity);
-            }
 //            int bitSetVector = Validity.createBitSetVector(fbb, attrs.validity.validity.toByteArray());
 //            int string = fbb.createString(attrs.validity.zoneId.getId());
 //            Validity.startValidity(fbb);
@@ -260,15 +306,6 @@ public class PtGraph implements GtfsReader.PtGraphOut {
 //            Validity.addStart(fbb, attrs.validity.start.toEpochDay());
 //            Validity.addZoneId(fbb, string);
 //            validity = Validity.endValidity(fbb);
-            Edge.addValidity(fbb, validityId);
-        }
-        if (attrs.platformDescriptor != null) {
-            Integer platformDescriptorId = platformDescriptors.get(attrs.platformDescriptor);
-            if (platformDescriptorId == null) {
-                platformDescriptorId = platformDescriptorList.size();
-                platformDescriptors.put(attrs.platformDescriptor, platformDescriptorId);
-                platformDescriptorList.add(attrs.platformDescriptor);
-            }
 
 //            int stopId = fbb.createString(attrs.platformDescriptor.stop_id);
 //            int feedId = fbb.createString(attrs.platformDescriptor.feed_id);
@@ -286,29 +323,8 @@ public class PtGraph implements GtfsReader.PtGraphOut {
 //                PlatformDescriptor.addRouteId(fbb, routeId);
 //            }
 //            platformDescriptor = PlatformDescriptor.endPlatformDescriptor(fbb);
-            Edge.addPlatformDescriptor(fbb, platformDescriptorId);
-        }
-        if (attrs.feedIdWithTimezone != null) {
-            Integer feedIdWithTimezone = feedIdWithTimezones.get(attrs.feedIdWithTimezone);
-            if (feedIdWithTimezone == null) {
-                feedIdWithTimezone = feedIdWithTimezoneList.size();
-                feedIdWithTimezones.put(attrs.feedIdWithTimezone, feedIdWithTimezone);
-                feedIdWithTimezoneList.add(attrs.feedIdWithTimezone);
-            }
-            Edge.addFeedIdWithTimezone(fbb, feedIdWithTimezone);
             //feedIdWithTimezone = FeedIdWithTimezone.createFeedIdWithTimezone(fbb, fbb.createString(attrs.feedIdWithTimezone.feedId), fbb.createString(attrs.feedIdWithTimezone.zoneId.getId()));
-        }
-        if (attrs.tripDescriptor != null) {
-            Integer tripDescriptorId = tripDescriptors.get(attrs.tripDescriptor);
-            if (tripDescriptorId == null) {
-                tripDescriptorId = tripDescriptorList.size();
-                tripDescriptors.put(attrs.tripDescriptor, tripDescriptorId);
-                tripDescriptorList.add(attrs.tripDescriptor);
-            }
-            Edge.addTripDescriptor(fbb, tripDescriptorId);
-        }
 
-        int offset = Edge.endEdge(fbb);
         Edge.finishSizePrefixedEdgeBuffer(fbb, offset);
         byte[] bytes = fbb.sizedByteArray();
         this.attrs.ensureCapacity(currentPointer + 10000);
@@ -316,6 +332,46 @@ public class PtGraph implements GtfsReader.PtGraphOut {
         int edge = addEdge(src, dest, currentPointer);
         currentPointer += bytes.length * 4L;
         return edge;
+    }
+
+    private int shareValidity(GtfsStorage.Validity validity) {
+        Integer validityId = validities.get(validity);
+        if (validityId == null) {
+            validityId = validityList.size();
+            validities.put(validity, validityId);
+            validityList.add(validity);
+        }
+        return validityId;
+    }
+
+    private int shareTripDescriptor(GtfsRealtime.TripDescriptor tripDescriptor) {
+        Integer tripDescriptorId = tripDescriptors.get(tripDescriptor);
+        if (tripDescriptorId == null) {
+            tripDescriptorId = tripDescriptorList.size();
+            tripDescriptors.put(tripDescriptor, tripDescriptorId);
+            tripDescriptorList.add(tripDescriptor);
+        }
+        return tripDescriptorId;
+    }
+
+    private Integer shareFeedIdWithTimezone(GtfsStorage.FeedIdWithTimezone feedIdWithTimezone1) {
+        Integer feedIdWithTimezone = feedIdWithTimezones.get(feedIdWithTimezone1);
+        if (feedIdWithTimezone == null) {
+            feedIdWithTimezone = feedIdWithTimezoneList.size();
+            feedIdWithTimezones.put(feedIdWithTimezone1, feedIdWithTimezone);
+            feedIdWithTimezoneList.add(feedIdWithTimezone1);
+        }
+        return feedIdWithTimezone;
+    }
+
+    private Integer sharePlatformDescriptor(GtfsStorage.PlatformDescriptor platformDescriptor) {
+        Integer platformDescriptorId = platformDescriptors.get(platformDescriptor);
+        if (platformDescriptorId == null) {
+            platformDescriptorId = platformDescriptorList.size();
+            platformDescriptors.put(platformDescriptor, platformDescriptorId);
+            platformDescriptorList.add(platformDescriptor);
+        }
+        return platformDescriptorId;
     }
 
     public int createNode() {
@@ -351,7 +407,66 @@ public class PtGraph implements GtfsReader.PtGraphOut {
         byte[] bytes = new byte[size];
         attrs.getBytes(attrPointer + 4, bytes, size);
         Edge edge = Edge.getRootAsEdge(ByteBuffer.wrap(bytes));
-        GtfsStorage.PlatformDescriptor pd = platformDescriptorList.get(edge.platformDescriptor());
+
+        switch (edge.attrsType()) {
+            case Type.BOARD:
+                Board board = new Board();
+                edge.attrs(board);
+                return new PtEdgeAttributes(GtfsStorage.EdgeType.BOARD, edge.time(), validityList.get(board.validity()), -1, null,
+                        board.transfer() ? 1 : 0, board.stopSequence(), tripDescriptorList.get(board.tripDescriptor()), null);
+            case Type.ALIGHT:
+                Alight alight = new Alight();
+                edge.attrs(alight);
+                return new PtEdgeAttributes(GtfsStorage.EdgeType.ALIGHT, edge.time(), validityList.get(alight.validity()), -1, null,
+                        0, alight.stopSequence(), tripDescriptorList.get(alight.tripDescriptor()), null);
+            case Type.ENTER_PT:
+                EnterPt enterPt = new EnterPt();
+                edge.attrs(enterPt);
+                return new PtEdgeAttributes(GtfsStorage.EdgeType.ENTER_PT, edge.time(), null, enterPt.routeType(), null,
+                        0, -1, null, platformDescriptorList.get(enterPt.platformDescriptor()));
+            case Type.EXIT_PT:
+                ExitPt exitPt = new ExitPt();
+                edge.attrs(exitPt);
+                return new PtEdgeAttributes(GtfsStorage.EdgeType.EXIT_PT, edge.time(), null, -1, null,
+                        0, -1, null, platformDescriptorList.get(exitPt.platformDescriptor()));
+            case Type.HOP:
+                Hop hop = new Hop();
+                edge.attrs(hop);
+                return new PtEdgeAttributes(GtfsStorage.EdgeType.HOP, edge.time(), null, -1, null,
+                        0, hop.stopSequence(), null, null);
+            case Type.DWELL:
+                return new PtEdgeAttributes(GtfsStorage.EdgeType.DWELL, edge.time(), null, -1, null,
+                        0, -1, null, null);
+            case Type.ENTER_TIME_EXPANDED_NETWORK:
+                EnterTimeExpandedNetwork enterTimeExpandedNetwork = new EnterTimeExpandedNetwork();
+                edge.attrs(enterTimeExpandedNetwork);
+                return new PtEdgeAttributes(GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK, edge.time(), null, -1, feedIdWithTimezoneList.get(enterTimeExpandedNetwork.feedIdWithTimezone()),
+                        0, -1, null, null);
+            case Type.LEAVE_TIME_EXPANDED_NETWORK:
+                LeaveTimeExpandedNetwork leaveTimeExpandedNetwork = new LeaveTimeExpandedNetwork();
+                edge.attrs(leaveTimeExpandedNetwork);
+                return new PtEdgeAttributes(GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK, edge.time(), null, -1, feedIdWithTimezoneList.get(leaveTimeExpandedNetwork.feedIdWithTimezone()),
+                        0, -1, null, null);
+            case Type.WAIT:
+                return new PtEdgeAttributes(GtfsStorage.EdgeType.WAIT, edge.time(), null, -1, null,
+                            0, -1, null, null);
+            case Type.WAIT_ARRIVAL:
+                return new PtEdgeAttributes(GtfsStorage.EdgeType.WAIT_ARRIVAL, edge.time(), null, -1, null,
+                        0, -1, null, null);
+
+            case Type.OVERNIGHT:
+                return new PtEdgeAttributes(GtfsStorage.EdgeType.OVERNIGHT, edge.time(), null, -1, null,
+                        0, -1, null, null);
+            case Type.TRANSFER:
+                Transfer transfer = new Transfer();
+                edge.attrs(transfer);
+                return new PtEdgeAttributes(GtfsStorage.EdgeType.TRANSFER, edge.time(), null, transfer.routeType(), null,
+                        0, -1, null, platformDescriptorList.get(transfer.platformDescriptor()));
+
+            default:
+                throw new RuntimeException();
+        }
+
 //        if (platformDescriptor != null) {
 //            if (platformDescriptor.routeId() != null) {
 //                pd = GtfsStorage.PlatformDescriptor.route(platformDescriptor.feedId(), platformDescriptor.stopId(), platformDescriptor.routeId());
@@ -359,15 +474,10 @@ public class PtGraph implements GtfsReader.PtGraphOut {
 //                pd = GtfsStorage.PlatformDescriptor.routeType(platformDescriptor.feedId(), platformDescriptor.stopId(), platformDescriptor.routeType());
 //            }
 //        }
-        GtfsStorage.FeedIdWithTimezone feedIdWithTimezone = feedIdWithTimezoneList.get(edge.feedIdWithTimezone());
 //        if (edge.feedIdWithTimezone() != null) {
 //            feedIdWithTimezone = new GtfsStorage.FeedIdWithTimezone(edge.feedIdWithTimezone().feedId(), ZoneId.of(edge.feedIdWithTimezone().zoneId()));
 //        }
 
-        GtfsStorage.Validity v = validityList.get(edge.validity());
-        GtfsRealtime.TripDescriptor tripDescriptor = tripDescriptorList.get(edge.tripDescriptor());
-        return new PtEdgeAttributes(GtfsStorage.EdgeType.values()[edge.type()], edge.time(), v, edge.routeType(), feedIdWithTimezone,
-                edge.transfers(), edge.stopSequence(), tripDescriptor, pd);
     }
 
     public PtEdge edge(int edgeId) {
