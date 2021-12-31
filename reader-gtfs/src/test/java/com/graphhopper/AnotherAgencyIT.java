@@ -18,8 +18,6 @@
 
 package com.graphhopper;
 
-import com.conveyal.gtfs.model.Stop;
-import com.conveyal.gtfs.model.Transfer;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
 import com.graphhopper.util.Helper;
@@ -29,7 +27,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.time.*;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -129,11 +130,14 @@ public class AnotherAgencyIT {
         );
         ghRequest.setIgnoreTransfers(true);
         ghRequest.setWalkSpeedKmH(0.005); // Prevent walk solution
-        ResponsePath route = ptRouter.route(ghRequest).getBest();
-        Instant arrivalTime = Instant.ofEpochMilli(route.getLegs().get(1).getArrivalTime().getTime());
+        ResponsePath transitSolution = ptRouter.route(ghRequest).getBest();
+        List<Trip.Leg> ptLegs = transitSolution.getLegs().stream().filter(l -> l instanceof Trip.PtLeg).collect(Collectors.toList());
+        assertEquals("NEXT_TO_MUSEUM,AIRPORT", ((Trip.PtLeg) ptLegs.get(0)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
+        assertEquals("BEATTY_AIRPORT,BULLFROG", ((Trip.PtLeg) ptLegs.get(1)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
+        Instant arrivalTime = Instant.ofEpochMilli(transitSolution.getLegs().get(1).getArrivalTime().getTime());
         assertEquals("14:10", LocalDateTime.ofInstant(arrivalTime, zoneId).toLocalTime().toString());
         assertEquals(15_000_000, Duration.between(ghRequest.getEarliestDepartureTime(), arrivalTime).toMillis());
-        assertEquals(1.5E7, route.getRouteWeight());
+        assertEquals(1.5E7, transitSolution.getRouteWeight());
     }
 
     @Test
@@ -153,10 +157,8 @@ public class AnotherAgencyIT {
         assertEquals(1, route.getAll().size());
         ResponsePath transitSolution = route.getBest();
         List<Trip.Leg> ptLegs = transitSolution.getLegs().stream().filter(l -> l instanceof Trip.PtLeg).collect(Collectors.toList());
-        Trip.PtLeg firstLeg = ((Trip.PtLeg) ptLegs.get(0));
-        Trip.PtLeg secondLeg = ((Trip.PtLeg) ptLegs.get(1));
-        assertEquals("JUSTICE_COURT,MUSEUM", firstLeg.stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
-        assertEquals("EMSI,DADAN", secondLeg.stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
+        assertEquals("JUSTICE_COURT,MUSEUM", ((Trip.PtLeg) ptLegs.get(0)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
+        assertEquals("EMSI,DADAN", ((Trip.PtLeg) ptLegs.get(1)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
         // TODO: write down 10 min transfer time
         assertEquals(4500000L, transitSolution.getTime());
         assertEquals(4500000.0, transitSolution.getRouteWeight());

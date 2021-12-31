@@ -17,13 +17,13 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.util.DirectedEdgeFilter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.*;
-import java.util.function.BiPredicate;
 
 /**
  * This class is used to determine the pairs of edges that go into/out of a node of the routing graph. Two such pairs
@@ -52,9 +52,9 @@ import java.util.function.BiPredicate;
 public class DirectionResolver {
     private final EdgeExplorer edgeExplorer;
     private final NodeAccess nodeAccess;
-    private final BiPredicate<EdgeIteratorState, Boolean> isAccessible;
+    private final DirectedEdgeFilter isAccessible;
 
-    public DirectionResolver(Graph graph, BiPredicate<EdgeIteratorState, Boolean> isAccessible) {
+    public DirectionResolver(Graph graph, DirectedEdgeFilter isAccessible) {
         this.edgeExplorer = graph.createEdgeExplorer();
         this.nodeAccess = graph.getNodeAccess();
         this.isAccessible = isAccessible;
@@ -179,8 +179,8 @@ public class DirectionResolver {
         AdjacentEdges adjacentEdges = new AdjacentEdges();
         EdgeIterator iter = edgeExplorer.setBaseNode(node);
         while (iter.next()) {
-            boolean isIn = isAccessible.test(iter, true);
-            boolean isOut = isAccessible.test(iter, false);
+            boolean isIn = isAccessible.accept(iter, true);
+            boolean isOut = isAccessible.accept(iter, false);
             if (!isIn && !isOut)
                 continue;
             // we are interested in the coordinates of the next point on this edge, it could be the adj tower node

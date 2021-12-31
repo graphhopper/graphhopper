@@ -2414,4 +2414,42 @@ public class GraphHopperTest {
         // since GermanyCountryRule avoids TRACK roads the route will now be much longer as it goes around the forest
         assertEquals(4186, distance, 1);
     }
+
+    @Test
+    void curbsideWithSubnetwork_issue2502() {
+        final String profile = "profile";
+        GraphHopper hopper = new GraphHopper()
+                .setProfiles(new Profile(profile).setVehicle("car").setWeighting("fastest").setTurnCosts(true)
+                        .setTurnCosts(true).putHint(U_TURN_COSTS, 80))
+                .setGraphHopperLocation(GH_LOCATION)
+                .setMinNetworkSize(200)
+                .setOSMFile(DIR + "/one_way_dead_end.osm.pbf");
+        hopper.importOrLoad();
+        GHPoint pointA = new GHPoint(28.77428, -81.61593);
+        GHPoint pointB = new GHPoint(28.773038, -81.611595);
+        {
+            // A->B
+            GHRequest request = new GHRequest(pointA, pointB);
+            request.setProfile(profile);
+            request.setCurbsides(Arrays.asList("right", "right"));
+            GHResponse response = hopper.route(request);
+            assertFalse(response.hasErrors(), response.getErrors().toString());
+            double distance = response.getBest().getDistance();
+            assertEquals(382, distance, 1);
+        }
+        {
+            // B->A
+            // point B is close to a tiny one-way dead end street. it should be marked as subnetwork and excluded
+            // when the curbside constraints are evaluated. this should make the snap a tower snap such that the curbside
+            // constraint won't result in a connection not found error
+            GHRequest request = new GHRequest(pointB, pointA);
+            request.setProfile(profile);
+            request.setCurbsides(Arrays.asList("right", "right"));
+            GHResponse response = hopper.route(request);
+            assertFalse(response.hasErrors(), response.getErrors().toString());
+            double distance = response.getBest().getDistance();
+            assertEquals(2318, distance, 1);
+        }
+    }
+
 }
