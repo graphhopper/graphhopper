@@ -165,8 +165,6 @@ public class WheelchairFlagEncoderTest {
         way.setTag("highway", "track");
         way.setTag("ford", "yes");
         assertTrue(wheelchairEncoder.getAccess(way).canSkip());
-        way.setTag("foot", "yes");
-        assertTrue(wheelchairEncoder.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("route", "ferry");
@@ -268,6 +266,13 @@ public class WheelchairFlagEncoderTest {
         assertTrue(wheelchairEncoder.getAccess(way).canSkip());
         way.setTag("kerb", "20mm");
         assertTrue(wheelchairEncoder.getAccess(way).isWay());
+
+        // highway tag required
+        way.clearTags();
+        way.setTag("wheelchair", "yes");
+        assertTrue(wheelchairEncoder.getAccess(way).canSkip());
+        way.setTag("highway", "footway");
+        assertTrue(wheelchairEncoder.getAccess(way).isWay());
     }
 
     @Test
@@ -300,8 +305,9 @@ public class WheelchairFlagEncoderTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "cycleway");
         assertEquals(PriorityCode.UNCHANGED.getValue(), wheelchairEncoder.handlePriority(way, null));
-
         way.setTag("highway", "primary");
+        assertEquals(PriorityCode.AVOID.getValue(), wheelchairEncoder.handlePriority(way, null));
+        way.setTag("highway", "secondary");
         assertEquals(PriorityCode.AVOID.getValue(), wheelchairEncoder.handlePriority(way, null));
 
         way.setTag("highway", "track");

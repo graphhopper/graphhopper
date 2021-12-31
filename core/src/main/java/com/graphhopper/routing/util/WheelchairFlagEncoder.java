@@ -38,7 +38,6 @@ import static com.graphhopper.routing.util.PriorityCode.*;
 public class WheelchairFlagEncoder extends FootFlagEncoder {
     private final Set<String> excludeSurfaces = new HashSet<>();
     private final Set<String> excludeSmoothness = new HashSet<>();
-    private final Set<String> excludeHighwayTags = new HashSet<>();
     private final int maxInclinePercent = 6;
 
     /**
@@ -59,6 +58,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         super(speedBits, speedFactor);
 
         restrictions.add("wheelchair");
+
         blockByDefaultBarriers.add("handrail");
         blockByDefaultBarriers.add("wall");
         blockByDefaultBarriers.add("turnstile");
@@ -75,12 +75,15 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         safeHighwayTags.add("service");
         safeHighwayTags.add("platform");
 
-        excludeHighwayTags.add("trunk");
-        excludeHighwayTags.add("trunk_link");
-        excludeHighwayTags.add("primary");
-        excludeHighwayTags.add("primary_link");
-        excludeHighwayTags.add("steps");
-        excludeHighwayTags.add("track");
+        safeHighwayTags.remove("steps");
+        safeHighwayTags.remove("track");
+
+        allowedHighwayTags.clear();
+        allowedHighwayTags.addAll(safeHighwayTags);
+        allowedHighwayTags.addAll(avoidHighwayTags);
+        allowedHighwayTags.add("cycleway");
+        allowedHighwayTags.add("unclassified");
+        allowedHighwayTags.add("road");
 
         excludeSurfaces.add("cobblestone");
         excludeSurfaces.add("gravel");
@@ -92,10 +95,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         excludeSmoothness.add("very_horrible");
         excludeSmoothness.add("impassable");
 
-        allowedHighwayTags.addAll(safeHighwayTags);
-        allowedHighwayTags.add("cycleway");
-        allowedHighwayTags.add("unclassified");
-        allowedHighwayTags.add("road");
+        allowedSacScale.clear();
 
         maxPossibleSpeed = FERRY_SPEED;
         speedTwoDirections = true;
@@ -106,18 +106,6 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
      */
     @Override
     public EncodingManager.Access getAccess(ReaderWay way) {
-        if (way.hasTag("wheelchair", intendedValues)) {
-            return EncodingManager.Access.WAY;
-        }
-
-        if (way.getTag("sac_scale") != null) {
-            return EncodingManager.Access.CAN_SKIP;
-        }
-
-        if (way.hasTag("highway", excludeHighwayTags) && !way.hasTag("sidewalk", sidewalkValues)) {
-            return EncodingManager.Access.CAN_SKIP;
-        }
-
         if (way.hasTag("surface", excludeSurfaces)) {
             if (!way.hasTag("sidewalk", sidewalkValues)) {
                 return EncodingManager.Access.CAN_SKIP;
@@ -157,9 +145,8 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
             }
         }
 
-        if (way.hasTag("kerb", "raised")) {
+        if (way.hasTag("kerb", "raised"))
             return EncodingManager.Access.CAN_SKIP;
-        }
 
         if (way.hasTag("kerb")) {
             String tagValue = way.getTag("kerb");
@@ -185,9 +172,8 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         EncodingManager.Access access = getAccess(way);
-        if (access.canSkip()) {
+        if (access.canSkip())
             return edgeFlags;
-        }
 
         accessEnc.setBool(false, edgeFlags, true);
         accessEnc.setBool(true, edgeFlags, true);
@@ -263,11 +249,6 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         } else if (way.hasTag("wheelchair", "limited")) {
             weightToPrioMap.put(102d, AVOID.getValue());
         }
-        String highway = way.getTag("highway", "");
-        if (highway.startsWith("tertiary"))
-            weightToPrioMap.put(103d, BAD.getValue());
-        else if (highway.startsWith("secondary"))
-            weightToPrioMap.put(103d, VERY_BAD.getValue());
 
         return weightToPrioMap.lastEntry().getValue();
     }
