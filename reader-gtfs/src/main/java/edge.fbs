@@ -5,24 +5,6 @@ namespace MyGame.Sample;
 enum EdgeType: ubyte { 		HIGHWAY, ENTER_TIME_EXPANDED_NETWORK, LEAVE_TIME_EXPANDED_NETWORK, ENTER_PT, EXIT_PT, HOP, DWELL, BOARD, ALIGHT, OVERNIGHT, TRANSFER, WAIT, WAIT_ARRIVAL
 }
 
-table PlatformDescriptor {
-  feed_id: string;
-  stop_id: string;
-  route_id: string;
-  route_type: int32;
-}
-
-table Validity {
-  bit_set: [ubyte];
-  start:int64;
-  zone_id: string;
-}
-
-table FeedIdWithTimezone {
-  feed_id: string;
-  zone_id: string;
-}
-
 table Edge {
   type:EdgeType;
   time:int32;

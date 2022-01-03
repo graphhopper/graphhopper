@@ -1,0 +1,34 @@
+// Example IDL file for our monster's schema.
+
+namespace MyGame.Sample;
+
+table PlatformDescriptor {
+  feed_id: string;
+  stop_id: string;
+  route_id: string;
+  route_type: int32;
+}
+
+table Validity {
+  bit_set: [ubyte];
+  start:int64;
+  zone_id: string;
+}
+
+table FeedIdWithTimezone {
+  feed_id: string;
+  zone_id: string;
+}
+
+table TripDescriptor {
+  bytes: [ubyte];
+}
+
+table Extra {
+  validities: [Validity];
+  feed_id_with_timezones: [FeedIdWithTimezone];
+  platform_descriptors: [PlatformDescriptor];
+  trip_descriptors: [TripDescriptor];
+}
+
+root_type Extra;
