@@ -113,7 +113,7 @@
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j</artifactId>
             <type>pom</type>
-            <version>2.16.0</version>
+            <version>2.17.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
