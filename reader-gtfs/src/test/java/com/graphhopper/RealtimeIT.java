@@ -61,11 +61,11 @@ public class RealtimeIT {
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
 
-        graphHopperGtfs.close();
-        // Re-load read only
-        graphHopperGtfs = new GraphHopperGtfs(ghConfig);
-        graphHopperGtfs.init(ghConfig);
-        graphHopperGtfs.importOrLoad();
+//        graphHopperGtfs.close();
+//        // Re-load read only
+//        graphHopperGtfs = new GraphHopperGtfs(ghConfig);
+//        graphHopperGtfs.init(ghConfig);
+//        graphHopperGtfs.importOrLoad();
 
         graphHopperFactory = new PtRouterImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getGraphHopperStorage(), graphHopperGtfs.getPtGraph(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage());
     }

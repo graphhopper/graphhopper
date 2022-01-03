@@ -18,6 +18,7 @@
 
 package com.graphhopper.gtfs;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntLongHashMap;
 import com.conveyal.gtfs.GTFSFeed;
@@ -37,6 +38,8 @@ import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate.ScheduleRelationship.NO_DATA;
@@ -51,25 +54,19 @@ public class RealtimeFeed {
     private final List<PtGraph.PtEdge> additionalEdges;
     public final Map<String, GtfsRealtime.FeedMessage> feedMessages;
     private final GtfsStorage staticGtfs;
-    private final Map<Integer, byte[]> additionalTripDescriptors;
-    private final Map<Integer, Integer> stopSequences;
-    private final Map<Integer, GtfsStorageI.PlatformDescriptor> platformDescriptorByEdge;
 
     private RealtimeFeed(GtfsStorage staticGtfs, Map<String, GtfsRealtime.FeedMessage> feedMessages, IntHashSet blockedEdges,
-                         IntLongHashMap delaysForBoardEdges, IntLongHashMap delaysForAlightEdges, List<PtGraph.PtEdge> additionalEdges, Map<Integer, byte[]> tripDescriptors, Map<Integer, Integer> stopSequences, Map<Integer, GtfsStorageI.PlatformDescriptor> platformDescriptorByEdge) {
+                         IntLongHashMap delaysForBoardEdges, IntLongHashMap delaysForAlightEdges, List<PtGraph.PtEdge> additionalEdges) {
         this.staticGtfs = staticGtfs;
         this.feedMessages = feedMessages;
         this.blockedEdges = blockedEdges;
         this.delaysForBoardEdges = delaysForBoardEdges;
         this.delaysForAlightEdges = delaysForAlightEdges;
         this.additionalEdges = additionalEdges;
-        this.additionalTripDescriptors = tripDescriptors;
-        this.stopSequences = stopSequences;
-        this.platformDescriptorByEdge = platformDescriptorByEdge;
     }
 
     public static RealtimeFeed empty(GtfsStorage staticGtfs) {
-        return new RealtimeFeed(staticGtfs, Collections.emptyMap(), new IntHashSet(), new IntLongHashMap(), new IntLongHashMap(), Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap(), null);
+        return new RealtimeFeed(staticGtfs, Collections.emptyMap(), new IntHashSet(), new IntLongHashMap(), new IntLongHashMap(), Collections.emptyList());
     }
 
     public static RealtimeFeed fromProtobuf(GraphHopperStorage graphHopperStorage, GtfsStorage staticGtfs, Map<String, Transfers> transfers, Map<String, GtfsRealtime.FeedMessage> feedMessages) {
@@ -115,9 +112,8 @@ public class RealtimeFeed {
                     .forEach(tripUpdate -> {
                         Collection<Frequency> frequencies = feed.getFrequencies(tripUpdate.getTrip().getTripId());
                         int timeOffset = (tripUpdate.getTrip().hasStartTime() && !frequencies.isEmpty()) ? LocalTime.parse(tripUpdate.getTrip().getStartTime()).toSecondOfDay() : 0;
-                        String key = GtfsStorage.tripKey(tripUpdate.getTrip(), !frequencies.isEmpty());
-                        final int[] boardEdges = staticGtfs.getBoardEdgesForTrip().get(key);
-                        final int[] leaveEdges = staticGtfs.getAlightEdgesForTrip().get(key);
+                        final int[] boardEdges = findBoardEdgesForTrip(staticGtfs, feedKey, feed, tripUpdate);
+                        final int[] leaveEdges = findLeaveEdgesForTrip(staticGtfs, feedKey, feed, tripUpdate);
                         if (boardEdges == null || leaveEdges == null) {
                             logger.warn("Trip not found: {}", tripUpdate.getTrip());
                             return;
@@ -174,7 +170,98 @@ public class RealtimeFeed {
             gtfsReader.wireUpAdditionalDeparturesAndArrivals(timezone);
         });
 
-        return new RealtimeFeed(staticGtfs, feedMessages, blockedEdges, delaysForBoardEdges, delaysForAlightEdges, additionalEdges, tripDescriptors, stopSequences, null);
+        return new RealtimeFeed(staticGtfs, feedMessages, blockedEdges, delaysForBoardEdges, delaysForAlightEdges, additionalEdges);
+    }
+
+    private static int[] findLeaveEdgesForTrip(GtfsStorage staticGtfs, String feedKey, GTFSFeed feed, GtfsRealtime.TripUpdate tripUpdate) {
+        Trip trip = feed.trips.get(tripUpdate.getTrip().getTripId());
+        StopTime next = feed.getOrderedStopTimesForTrip(trip.trip_id).iterator().next();
+        int station = staticGtfs.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(feedKey, next.stop_id));
+        Optional<PtGraph.PtEdge> firstBoarding = StreamSupport.stream(staticGtfs.getPtGraph().backEdgesAround(station).spliterator(), false)
+                .flatMap(e -> StreamSupport.stream(staticGtfs.getPtGraph().backEdgesAround(e.getAdjNode()).spliterator(), false))
+                .flatMap(e -> StreamSupport.stream(staticGtfs.getPtGraph().backEdgesAround(e.getAdjNode()).spliterator(), false))
+                .filter(e -> e.getType() == GtfsStorage.EdgeType.ALIGHT)
+                .filter(e -> normalize(e.getAttrs().tripDescriptor).equals(tripUpdate.getTrip()))
+                .findAny();
+        int n = firstBoarding.get().getAdjNode();
+        Stream<PtGraph.PtEdge> boardEdges = evenIndexed(nodes(hopDwellChain(staticGtfs, n)))
+                .mapToObj(e -> alightForBaseNode(staticGtfs, e));
+        return collectWithPadding(boardEdges);
+    }
+
+    private static int[] findBoardEdgesForTrip(GtfsStorage staticGtfs, String feedKey, GTFSFeed feed, GtfsRealtime.TripUpdate tripUpdate) {
+        Trip trip = feed.trips.get(tripUpdate.getTrip().getTripId());
+        StopTime next = feed.getOrderedStopTimesForTrip(trip.trip_id).iterator().next();
+        int station = staticGtfs.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(feedKey, next.stop_id));
+        Optional<PtGraph.PtEdge> firstBoarding = StreamSupport.stream(staticGtfs.getPtGraph().edgesAround(station).spliterator(), false)
+                .flatMap(e -> StreamSupport.stream(staticGtfs.getPtGraph().edgesAround(e.getAdjNode()).spliterator(), false))
+                .flatMap(e -> StreamSupport.stream(staticGtfs.getPtGraph().edgesAround(e.getAdjNode()).spliterator(), false))
+                .filter(e -> e.getType() == GtfsStorage.EdgeType.BOARD)
+                .filter(e -> normalize(e.getAttrs().tripDescriptor).equals(tripUpdate.getTrip()))
+                .findAny();
+        int n = firstBoarding.get().getAdjNode();
+        Stream<PtGraph.PtEdge> boardEdges = evenIndexed(nodes(hopDwellChain(staticGtfs, n)))
+                .mapToObj(e -> boardForAdjNode(staticGtfs, e));
+        return collectWithPadding(boardEdges);
+    }
+
+    private static int[] collectWithPadding(Stream<PtGraph.PtEdge> boardEdges) {
+        IntArrayList result = new IntArrayList();
+        boardEdges.forEach(boardEdge -> {
+            while (result.size() < boardEdge.getAttrs().stop_sequence) {
+                result.add(-1); // Padding, so that index == stop_sequence
+            }
+            result.add(boardEdge.getId());
+        });
+        return result.toArray();
+    }
+
+    private static PtGraph.PtEdge alightForBaseNode(GtfsStorage staticGtfs, int n) {
+        return StreamSupport.stream(staticGtfs.getPtGraph().edgesAround(n).spliterator(), false)
+                .filter(e -> e.getType() == GtfsStorage.EdgeType.ALIGHT)
+                .findAny()
+                .get();
+    }
+
+    private static PtGraph.PtEdge boardForAdjNode(GtfsStorage staticGtfs, int n) {
+        return StreamSupport.stream(staticGtfs.getPtGraph().backEdgesAround(n).spliterator(), false)
+                .filter(e -> e.getType() == GtfsStorage.EdgeType.BOARD)
+                .findAny()
+                .get();
+    }
+
+    private static IntStream evenIndexed(IntStream nodes) {
+        int[] ints = nodes.toArray();
+        IntStream.Builder builder = IntStream.builder();
+        for (int i = 0; i < ints.length; i++) {
+            if (i % 2 == 0)
+                builder.add(ints[i]);
+        }
+        return builder.build();
+    }
+
+    private static IntStream nodes(Stream<PtGraph.PtEdge> path) {
+        List<PtGraph.PtEdge> edges = path.collect(Collectors.toList());
+        IntStream.Builder builder = IntStream.builder();
+        builder.accept(edges.get(0).getBaseNode());
+        for (PtGraph.PtEdge edge : edges) {
+            builder.accept(edge.getAdjNode());
+        }
+        return builder.build();
+    }
+
+    private static Stream<PtGraph.PtEdge> hopDwellChain(GtfsStorage staticGtfs, int n) {
+        Stream.Builder<PtGraph.PtEdge> builder = Stream.builder();
+        Optional<PtGraph.PtEdge> any = StreamSupport.stream(staticGtfs.getPtGraph().edgesAround(n).spliterator(), false)
+                .filter(e -> e.getType() == GtfsStorage.EdgeType.HOP || e.getType() == GtfsStorage.EdgeType.DWELL)
+                .findAny();
+        while (any.isPresent()) {
+            builder.accept(any.get());
+            any = StreamSupport.stream(staticGtfs.getPtGraph().edgesAround(any.get().getAdjNode()).spliterator(), false)
+                    .filter(e -> e.getType() == GtfsStorage.EdgeType.HOP || e.getType() == GtfsStorage.EdgeType.DWELL)
+                    .findAny();
+        }
+        return builder.build();
     }
 
     boolean isBlocked(int edgeId) {
@@ -211,7 +298,7 @@ public class RealtimeFeed {
         }
     }
 
-    public GtfsRealtime.TripDescriptor normalize(GtfsRealtime.TripDescriptor tripDescriptor) {
+    public static GtfsRealtime.TripDescriptor normalize(GtfsRealtime.TripDescriptor tripDescriptor) {
         return GtfsRealtime.TripDescriptor.newBuilder(tripDescriptor).clearRouteId().build();
     }
 
@@ -351,10 +438,6 @@ public class RealtimeFeed {
         } else {
             return stopTime;
         }
-    }
-
-    public Map<Integer, GtfsStorageI.PlatformDescriptor> getPlatformDescriptorByEdge() {
-        return platformDescriptorByEdge;
     }
 
 }
