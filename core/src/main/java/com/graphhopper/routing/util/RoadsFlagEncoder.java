@@ -13,7 +13,7 @@ public class RoadsFlagEncoder extends AbstractFlagEncoder {
 
     public RoadsFlagEncoder() {
         super(7, 2, 3);
-        maxPossibleSpeed = 200;
+        maxPossibleSpeed = 254;
     }
 
     @Override
@@ -25,7 +25,7 @@ public class RoadsFlagEncoder extends AbstractFlagEncoder {
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         // let's make it high and let it be reduced in the custom model
-        double speed = 200;
+        double speed = maxPossibleSpeed;
         accessEnc.setBool(true, edgeFlags, true);
         accessEnc.setBool(false, edgeFlags, true);
         setSpeed(false, edgeFlags, speed);
