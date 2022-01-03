@@ -18,7 +18,6 @@
 
 package com.graphhopper.gtfs;
 
-import com.carrotsearch.hppc.IntArrayList;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.*;
 import com.google.common.collect.HashMultimap;
@@ -265,8 +264,6 @@ class GtfsReader {
     }
 
     void addTrip(ZoneId zoneId, int time, List<TripWithStopTimeAndArrivalNode> arrivalNodes, TripWithStopTimes trip, GtfsRealtime.TripDescriptor tripDescriptor, boolean frequencyBased) {
-        IntArrayList boardEdges = new IntArrayList();
-        IntArrayList alightEdges = new IntArrayList();
         StopTime prev = null;
         int arrivalNode = -1;
         int arrivalTime = -1;
@@ -276,7 +273,7 @@ class GtfsReader {
             arrivalNode = out.createNode();
             arrivalTime = stopTime.arrival_time + time;
             if (prev != null) {
-                int edge = out.createEdge(departureNode, arrivalNode, new PtEdgeAttributes(GtfsStorage.EdgeType.HOP, stopTime.arrival_time - prev.departure_time, null, -1, null, 0, stopTime.stop_sequence, null, null));
+                out.createEdge(departureNode, arrivalNode, new PtEdgeAttributes(GtfsStorage.EdgeType.HOP, stopTime.arrival_time - prev.departure_time, null, -1, null, 0, stopTime.stop_sequence, null, null));
             }
             Route route = feed.routes.get(trip.trip.route_id);
             GtfsStorage.PlatformDescriptor platform;
@@ -294,18 +291,8 @@ class GtfsReader {
             departureNode = out.createNode();
             int dayShift = stopTime.departure_time / (24 * 60 * 60);
             GtfsStorage.Validity validOn = new GtfsStorage.Validity(getValidOn(trip.validOnDay, dayShift), zoneId, startDate);
-            int boardEdge = out.createEdge(departureTimelineNode, departureNode, new PtEdgeAttributes(GtfsStorage.EdgeType.BOARD, 0, validOn, -1, null, 1, stopTime.stop_sequence, tripDescriptor, null));
-            while (boardEdges.size() < stopTime.stop_sequence) {
-                boardEdges.add(-1); // Padding, so that index == stop_sequence
-            }
-            boardEdges.add(boardEdge);
-
-            int alightEdge = out.createEdge(arrivalNode, arrivalTimelineNode, new PtEdgeAttributes(GtfsStorage.EdgeType.ALIGHT, 0, validOn, -1, null, 0, stopTime.stop_sequence, tripDescriptor, null));
-            while (alightEdges.size() < stopTime.stop_sequence) {
-                alightEdges.add(-1);
-            }
-            alightEdges.add(alightEdge);
-
+            out.createEdge(departureTimelineNode, departureNode, new PtEdgeAttributes(GtfsStorage.EdgeType.BOARD, 0, validOn, -1, null, 1, stopTime.stop_sequence, tripDescriptor, null));
+            out.createEdge(arrivalNode, arrivalTimelineNode, new PtEdgeAttributes(GtfsStorage.EdgeType.ALIGHT, 0, validOn, -1, null, 0, stopTime.stop_sequence, tripDescriptor, null));
             out.createEdge(arrivalNode, departureNode, new PtEdgeAttributes(GtfsStorage.EdgeType.DWELL, stopTime.departure_time - stopTime.arrival_time, null, -1, null, 0, -1, null, null));
 
             if (prev == null) {
@@ -313,8 +300,6 @@ class GtfsReader {
             }
             prev = stopTime;
         }
-        gtfsStorage.getBoardEdgesForTrip().put(GtfsStorage.tripKey(tripDescriptor, frequencyBased), boardEdges.toArray());
-        gtfsStorage.getAlightEdgesForTrip().put(GtfsStorage.tripKey(tripDescriptor, frequencyBased), alightEdges.toArray());
         TripWithStopTimeAndArrivalNode tripWithStopTimeAndArrivalNode = new TripWithStopTimeAndArrivalNode();
         tripWithStopTimeAndArrivalNode.tripWithStopTimes = trip;
         tripWithStopTimeAndArrivalNode.arrivalNode = arrivalNode;

@@ -23,10 +23,8 @@ import com.conveyal.gtfs.model.Fare;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.index.LineIntIndex;
-import org.mapdb.Bind;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
-import org.mapdb.HTreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -135,18 +133,7 @@ public class GtfsStorage {
 	private Directory dir;
 	private Set<String> gtfsFeedIds;
 	private Map<String, GTFSFeed> gtfsFeeds = new HashMap<>();
-	private HTreeMap<Validity, Integer> operatingDayPatterns;
-	private Bind.MapWithModificationListener<FeedIdWithTimezone, Integer> timeZones;
-	private Map<Integer, FeedIdWithTimezone> readableTimeZones;
-	private Map<Integer, byte[]> tripDescriptors;
-	private Map<Integer, Integer> stopSequences;
-
-	private Map<Integer, PlatformDescriptor> platformDescriptorsByEdge;
-
 	private Map<String, Map<String, Fare>> faresByFeed;
-	private Map<String, int[]> boardEdgesForTrip;
-	private Map<String, int[]> leaveEdgesForTrip;
-
 	private Map<FeedIdWithStopId, Integer> stationNodes;
 
 	private Map<Integer, Integer> ptToStreet;
@@ -199,20 +186,7 @@ public class GtfsStorage {
 
     private void init() {
 		this.gtfsFeedIds = data.getHashSet("gtfsFeeds");
-		this.operatingDayPatterns = data.getHashMap("validities");
-		this.timeZones = data.getHashMap("timeZones");
-		Map<Integer, FeedIdWithTimezone> readableTimeZones = new HashMap<>();
-		for (Map.Entry<FeedIdWithTimezone, Integer> entry : this.timeZones.entrySet()) {
-			readableTimeZones.put(entry.getValue(), entry.getKey());
-		}
-		Bind.mapInverse(this.timeZones, readableTimeZones);
-		this.readableTimeZones = Collections.unmodifiableMap(readableTimeZones);
-		this.tripDescriptors = data.getTreeMap("tripDescriptors");
-		this.stopSequences = data.getTreeMap("stopSequences");
-		this.boardEdgesForTrip = data.getHashMap("boardEdgesForTrip");
-		this.leaveEdgesForTrip = data.getHashMap("leaveEdgesForTrip");
 		this.stationNodes = data.getHashMap("stationNodes");
-		this.platformDescriptorsByEdge = data.getHashMap("routes");
 		this.ptToStreet = data.getHashMap("ptToStreet");
 		this.streetToPt = data.getHashMap("streetToPt");
 	}
@@ -247,14 +221,6 @@ public class GtfsStorage {
 				feed.close();
 			}
 		}
-	}
-
-	public Map<String, int[]> getBoardEdgesForTrip() {
-		return boardEdgesForTrip;
-	}
-
-	public Map<String, int[]> getAlightEdgesForTrip() {
-		return leaveEdgesForTrip;
 	}
 
 	public Map<String, Map<String, Fare>> getFares() {
