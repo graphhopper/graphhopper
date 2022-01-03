@@ -92,9 +92,6 @@ public class RealtimeFeed {
 
         };
 
-        Map<Integer, byte[]> tripDescriptors = new HashMap<>();
-        Map<Integer, Integer> stopSequences = new HashMap<>();
-
         feedMessages.forEach((feedKey, feedMessage) -> {
             GTFSFeed feed = staticGtfs.getGtfsFeeds().get(feedKey);
             ZoneId timezone = ZoneId.of(feed.agency.values().stream().findFirst().get().agency_timezone);
