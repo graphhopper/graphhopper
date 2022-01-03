@@ -51,19 +51,25 @@ public class RealtimeFeed {
     private final List<PtGraph.PtEdge> additionalEdges;
     public final Map<String, GtfsRealtime.FeedMessage> feedMessages;
     private final GtfsStorage staticGtfs;
+    private final Map<Integer, byte[]> additionalTripDescriptors;
+    private final Map<Integer, Integer> stopSequences;
+    private final Map<Integer, GtfsStorageI.PlatformDescriptor> platformDescriptorByEdge;
 
     private RealtimeFeed(GtfsStorage staticGtfs, Map<String, GtfsRealtime.FeedMessage> feedMessages, IntHashSet blockedEdges,
-                         IntLongHashMap delaysForBoardEdges, IntLongHashMap delaysForAlightEdges, List<PtGraph.PtEdge> additionalEdges) {
+                         IntLongHashMap delaysForBoardEdges, IntLongHashMap delaysForAlightEdges, List<PtGraph.PtEdge> additionalEdges, Map<Integer, byte[]> tripDescriptors, Map<Integer, Integer> stopSequences, Map<Integer, GtfsStorageI.PlatformDescriptor> platformDescriptorByEdge) {
         this.staticGtfs = staticGtfs;
         this.feedMessages = feedMessages;
         this.blockedEdges = blockedEdges;
         this.delaysForBoardEdges = delaysForBoardEdges;
         this.delaysForAlightEdges = delaysForAlightEdges;
         this.additionalEdges = additionalEdges;
+        this.additionalTripDescriptors = tripDescriptors;
+        this.stopSequences = stopSequences;
+        this.platformDescriptorByEdge = platformDescriptorByEdge;
     }
 
     public static RealtimeFeed empty(GtfsStorage staticGtfs) {
-        return new RealtimeFeed(staticGtfs, Collections.emptyMap(), new IntHashSet(), new IntLongHashMap(), new IntLongHashMap(), Collections.emptyList());
+        return new RealtimeFeed(staticGtfs, Collections.emptyMap(), new IntHashSet(), new IntLongHashMap(), new IntLongHashMap(), Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap(), null);
     }
 
     public static RealtimeFeed fromProtobuf(GraphHopperStorage graphHopperStorage, GtfsStorage staticGtfs, Map<String, Transfers> transfers, Map<String, GtfsRealtime.FeedMessage> feedMessages) {
@@ -89,6 +95,9 @@ public class RealtimeFeed {
 
         };
 
+        Map<Integer, byte[]> tripDescriptors = new HashMap<>();
+        Map<Integer, Integer> stopSequences = new HashMap<>();
+
         feedMessages.forEach((feedKey, feedMessage) -> {
             GTFSFeed feed = staticGtfs.getGtfsFeeds().get(feedKey);
             ZoneId timezone = ZoneId.of(feed.agency.values().stream().findFirst().get().agency_timezone);
@@ -107,8 +116,8 @@ public class RealtimeFeed {
                         Collection<Frequency> frequencies = feed.getFrequencies(tripUpdate.getTrip().getTripId());
                         int timeOffset = (tripUpdate.getTrip().hasStartTime() && !frequencies.isEmpty()) ? LocalTime.parse(tripUpdate.getTrip().getStartTime()).toSecondOfDay() : 0;
                         String key = GtfsStorage.tripKey(tripUpdate.getTrip(), !frequencies.isEmpty());
-                        final int[] boardEdges = findBoardEdgesForTrip(key);
-                        final int[] leaveEdges = findAlightEdgesForTrip(key);
+                        final int[] boardEdges = staticGtfs.getBoardEdgesForTrip().get(key);
+                        final int[] leaveEdges = staticGtfs.getAlightEdgesForTrip().get(key);
                         if (boardEdges == null || leaveEdges == null) {
                             logger.warn("Trip not found: {}", tripUpdate.getTrip());
                             return;
@@ -165,15 +174,7 @@ public class RealtimeFeed {
             gtfsReader.wireUpAdditionalDeparturesAndArrivals(timezone);
         });
 
-        return new RealtimeFeed(staticGtfs, feedMessages, blockedEdges, delaysForBoardEdges, delaysForAlightEdges, additionalEdges);
-    }
-
-    private static int[] findAlightEdgesForTrip(String key) {
-        return null;
-    }
-
-    private static int[] findBoardEdgesForTrip(String key) {
-        return null;
+        return new RealtimeFeed(staticGtfs, feedMessages, blockedEdges, delaysForBoardEdges, delaysForAlightEdges, additionalEdges, tripDescriptors, stopSequences, null);
     }
 
     boolean isBlocked(int edgeId) {
@@ -350,6 +351,10 @@ public class RealtimeFeed {
         } else {
             return stopTime;
         }
+    }
+
+    public Map<Integer, GtfsStorageI.PlatformDescriptor> getPlatformDescriptorByEdge() {
+        return platformDescriptorByEdge;
     }
 
 }

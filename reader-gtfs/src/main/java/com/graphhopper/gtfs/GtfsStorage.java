@@ -249,6 +249,14 @@ public class GtfsStorage {
 		}
 	}
 
+	public Map<String, int[]> getBoardEdgesForTrip() {
+		return boardEdgesForTrip;
+	}
+
+	public Map<String, int[]> getAlightEdgesForTrip() {
+		return leaveEdgesForTrip;
+	}
+
 	public Map<String, Map<String, Fare>> getFares() {
 		return faresByFeed;
 	}
