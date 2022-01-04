@@ -66,14 +66,14 @@ public final class PtRouterImpl implements PtRouter {
     private final WeightingFactory weightingFactory;
 
     @Inject
-    public PtRouterImpl(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, PtGraph ptGraph, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
+    public PtRouterImpl(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
         this.config = config;
         this.weightingFactory = new DefaultWeightingFactory(graphHopperStorage, graphHopperStorage.getEncodingManager());
         this.translationMap = translationMap;
         this.graphHopperStorage = graphHopperStorage;
         this.locationIndex = locationIndex;
         this.gtfsStorage = gtfsStorage;
-        this.ptGraph = ptGraph;
+        this.ptGraph = gtfsStorage.getPtGraph();
         this.realtimeFeed = realtimeFeed;
         this.tripFromLabel = new TripFromLabel(this.graphHopperStorage, this.gtfsStorage, this.realtimeFeed, pathDetailsBuilderFactory);
     }
@@ -90,15 +90,13 @@ public final class PtRouterImpl implements PtRouter {
         private final LocationIndex locationIndex;
         private final GtfsStorage gtfsStorage;
         private final Map<String, Transfers> transfers;
-        private final PtGraph ptGraph;
 
-        public Factory(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, PtGraph ptGraph, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
+        public Factory(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
             this.config = config;
             this.translationMap = translationMap;
             this.graphHopperStorage = graphHopperStorage;
             this.locationIndex = locationIndex;
             this.gtfsStorage = gtfsStorage;
-            this.ptGraph = ptGraph;
             this.transfers = new HashMap<>();
             for (Map.Entry<String, GTFSFeed> entry : this.gtfsStorage.getGtfsFeeds().entrySet()) {
                 this.transfers.put(entry.getKey(), new Transfers(entry.getValue()));
@@ -108,11 +106,11 @@ public final class PtRouterImpl implements PtRouter {
         public PtRouter createWith(GtfsRealtime.FeedMessage realtimeFeed) {
             Map<String, GtfsRealtime.FeedMessage> realtimeFeeds = new HashMap<>();
             realtimeFeeds.put("gtfs_0", realtimeFeed);
-            return new PtRouterImpl(config, translationMap, graphHopperStorage, ptGraph, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, this.transfers, realtimeFeeds), new PathDetailsBuilderFactory());
+            return new PtRouterImpl(config, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, this.transfers, realtimeFeeds), new PathDetailsBuilderFactory());
         }
 
         public PtRouter createWithoutRealtimeFeed() {
-            return new PtRouterImpl(config, translationMap, graphHopperStorage, ptGraph, locationIndex, gtfsStorage, RealtimeFeed.empty(), new PathDetailsBuilderFactory());
+            return new PtRouterImpl(config, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty(), new PathDetailsBuilderFactory());
         }
     }
 

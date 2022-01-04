@@ -57,7 +57,7 @@ public class ExtendedRouteTypeIT {
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
-        ptRouter = new PtRouterImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getGraphHopperStorage(), graphHopperGtfs.getPtGraph(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage()).createWithoutRealtimeFeed();
+        ptRouter = new PtRouterImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getGraphHopperStorage(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage()).createWithoutRealtimeFeed();
     }
 
     @AfterAll
