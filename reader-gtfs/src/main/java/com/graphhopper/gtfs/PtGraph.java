@@ -356,34 +356,33 @@ public class PtGraph implements GtfsReader.PtGraphOut {
 
     @Override
     public int createEdge(int src, int dest, PtEdgeAttributes attrs) {
-        FlatBufferBuilder fbb = new FlatBufferBuilder(1);
-        Edge.startEdge(fbb);
-        Edge.addType(fbb, attrs.type.ordinal());
-        Edge.addTime(fbb, attrs.time);
+        ByteBuffer bb = ByteBuffer.allocate(50);
+        bb.putInt(attrs.type.ordinal());
+        bb.putInt(attrs.time);
         switch (attrs.type) {
             case ENTER_PT:
-                Edge.addRouteType(fbb, attrs.route_type);
-                Edge.addPlatformDescriptor(fbb, sharePlatformDescriptor(attrs.platformDescriptor));
+                bb.putInt(attrs.route_type);
+                bb.putInt(sharePlatformDescriptor(attrs.platformDescriptor));
                 break;
             case EXIT_PT:
-                Edge.addPlatformDescriptor(fbb, sharePlatformDescriptor(attrs.platformDescriptor));
+                bb.putInt(sharePlatformDescriptor(attrs.platformDescriptor));
                 break;
             case ENTER_TIME_EXPANDED_NETWORK:
-                Edge.addFeedIdWithTimezone(fbb, shareFeedIdWithTimezone(attrs.feedIdWithTimezone));
+                bb.putInt(shareFeedIdWithTimezone(attrs.feedIdWithTimezone));
                 break;
             case LEAVE_TIME_EXPANDED_NETWORK:
-                Edge.addFeedIdWithTimezone(fbb, shareFeedIdWithTimezone(attrs.feedIdWithTimezone));
+                bb.putInt(shareFeedIdWithTimezone(attrs.feedIdWithTimezone));
                 break;
             case BOARD:
-                Edge.addStopSequence(fbb, attrs.stop_sequence);
-                Edge.addTripDescriptor(fbb, shareTripDescriptor(attrs.tripDescriptor));
-                Edge.addValidity(fbb, shareValidity(attrs.validity));
-                Edge.addTransfer(fbb, attrs.transfers > 0);
+                bb.putInt(attrs.stop_sequence);
+                bb.putInt(shareTripDescriptor(attrs.tripDescriptor));
+                bb.putInt(shareValidity(attrs.validity));
+                bb.putInt(attrs.transfers);
                 break;
             case ALIGHT:
-                Edge.addStopSequence(fbb, attrs.stop_sequence);
-                Edge.addTripDescriptor(fbb, shareTripDescriptor(attrs.tripDescriptor));
-                Edge.addValidity(fbb, shareValidity(attrs.validity));
+                bb.putInt(attrs.stop_sequence);
+                bb.putInt(shareTripDescriptor(attrs.tripDescriptor));
+                bb.putInt(shareValidity(attrs.validity));
                 break;
             case WAIT:
                 break;
@@ -392,21 +391,20 @@ public class PtGraph implements GtfsReader.PtGraphOut {
             case OVERNIGHT:
                 break;
             case HOP:
-                Edge.addStopSequence(fbb, attrs.stop_sequence);
+                bb.putInt(attrs.stop_sequence);
                 break;
             case DWELL:
                 break;
             case TRANSFER:
-                Edge.addRouteType(fbb, attrs.route_type);
-                Edge.addPlatformDescriptor(fbb, sharePlatformDescriptor(attrs.platformDescriptor));
+                bb.putInt(attrs.route_type);
+                bb.putInt(sharePlatformDescriptor(attrs.platformDescriptor));
                 break;
             default:
                 throw new RuntimeException();
         }
-        int offset = Edge.endEdge(fbb);
-        Edge.finishEdgeBuffer(fbb, offset);
-        byte[] bytes = fbb.sizedByteArray();
-        // System.out.printf("type %s, size: %d\n", attrs.type, bytes.length);
+        bb.flip();
+        byte[] bytes = new byte[bb.remaining()];
+        bb.get(bytes);
         this.attrs.ensureCapacity(currentPointer + 10000);
         this.attrs.setBytes(currentPointer, bytes, bytes.length);
         int edge = addEdge(src, dest, currentPointer);
@@ -486,44 +484,73 @@ public class PtGraph implements GtfsReader.PtGraphOut {
         int size = 50;
         byte[] bytes = new byte[size];
         attrs.getBytes(attrPointer, bytes, size);
-        Edge edge = Edge.getRootAsEdge(ByteBuffer.wrap(bytes));
-        switch (edge.type()) {
-            case EdgeType.BOARD:
-                return new PtEdgeAttributes(GtfsStorage.EdgeType.BOARD, edge.time(), validityList.get(edge.validity()), -1, null,
-                        edge.transfer() ? 1 : 0, edge.stopSequence(), tripDescriptorList.get(edge.tripDescriptor()), null);
-            case EdgeType.ALIGHT:
-                return new PtEdgeAttributes(GtfsStorage.EdgeType.ALIGHT, edge.time(), validityList.get(edge.validity()), -1, null,
-                        0, edge.stopSequence(), tripDescriptorList.get(edge.tripDescriptor()), null);
-            case EdgeType.ENTER_PT:
-                return new PtEdgeAttributes(GtfsStorage.EdgeType.ENTER_PT, edge.time(), null, edge.routeType(), null,
-                        0, -1, null, platformDescriptorList.get(edge.platformDescriptor()));
-            case EdgeType.EXIT_PT:
-                return new PtEdgeAttributes(GtfsStorage.EdgeType.EXIT_PT, edge.time(), null, -1, null,
-                        0, -1, null, platformDescriptorList.get(edge.platformDescriptor()));
-            case EdgeType.HOP:
-                return new PtEdgeAttributes(GtfsStorage.EdgeType.HOP, edge.time(), null, -1, null,
-                        0, edge.stopSequence(), null, null);
-            case EdgeType.DWELL:
-                return new PtEdgeAttributes(GtfsStorage.EdgeType.DWELL, edge.time(), null, -1, null,
+        ByteBuffer bb = ByteBuffer.wrap(bytes);
+        int type = bb.getInt();
+        int time = bb.getInt();
+        switch (type) {
+            case EdgeType.BOARD: {
+                int stop_sequence = bb.getInt();
+                int tripDescriptor = bb.getInt();
+                int validity = bb.getInt();
+                int transfers = bb.getInt();
+                return new PtEdgeAttributes(GtfsStorage.EdgeType.BOARD, time, validityList.get(validity), -1, null,
+                        transfers, stop_sequence, tripDescriptorList.get(tripDescriptor), null);
+            }
+            case EdgeType.ALIGHT: {
+                int stop_sequence = bb.getInt();
+                int tripDescriptor = bb.getInt();
+                int validity = bb.getInt();
+                return new PtEdgeAttributes(GtfsStorage.EdgeType.ALIGHT, time, validityList.get(validity), -1, null,
+                        0, stop_sequence, tripDescriptorList.get(tripDescriptor), null);
+            }
+            case EdgeType.ENTER_PT: {
+                int routeType = bb.getInt();
+                int platformDescriptor = bb.getInt();
+                return new PtEdgeAttributes(GtfsStorage.EdgeType.ENTER_PT, time, null, routeType, null,
+                        0, -1, null, platformDescriptorList.get(platformDescriptor));
+            }
+            case EdgeType.EXIT_PT: {
+                int platformDescriptor = bb.getInt();
+                return new PtEdgeAttributes(GtfsStorage.EdgeType.EXIT_PT, time, null, -1, null,
+                        0, -1, null, platformDescriptorList.get(platformDescriptor));
+            }
+            case EdgeType.HOP: {
+                int stop_sequence = bb.getInt();
+                return new PtEdgeAttributes(GtfsStorage.EdgeType.HOP, time, null, -1, null,
+                        0, stop_sequence, null, null);
+            }
+            case EdgeType.DWELL: {
+                return new PtEdgeAttributes(GtfsStorage.EdgeType.DWELL, time, null, -1, null,
                         0, -1, null, null);
-            case EdgeType.ENTER_TIME_EXPANDED_NETWORK:
-                return new PtEdgeAttributes(GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK, edge.time(), null, -1, feedIdWithTimezoneList.get(edge.feedIdWithTimezone()),
+            }
+            case EdgeType.ENTER_TIME_EXPANDED_NETWORK: {
+                int feedId = bb.getInt();
+                return new PtEdgeAttributes(GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK, time, null, -1, feedIdWithTimezoneList.get(feedId),
                         0, -1, null, null);
-            case EdgeType.LEAVE_TIME_EXPANDED_NETWORK:
-                return new PtEdgeAttributes(GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK, edge.time(), null, -1, feedIdWithTimezoneList.get(edge.feedIdWithTimezone()),
+            }
+            case EdgeType.LEAVE_TIME_EXPANDED_NETWORK: {
+                int feedId = bb.getInt();
+                return new PtEdgeAttributes(GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK, time, null, -1, feedIdWithTimezoneList.get(feedId),
                         0, -1, null, null);
-            case EdgeType.WAIT:
-                return new PtEdgeAttributes(GtfsStorage.EdgeType.WAIT, edge.time(), null, -1, null,
-                            0, -1, null, null);
-            case EdgeType.WAIT_ARRIVAL:
-                return new PtEdgeAttributes(GtfsStorage.EdgeType.WAIT_ARRIVAL, edge.time(), null, -1, null,
+            }
+            case EdgeType.WAIT: {
+                return new PtEdgeAttributes(GtfsStorage.EdgeType.WAIT, time, null, -1, null,
                         0, -1, null, null);
-            case EdgeType.OVERNIGHT:
-                return new PtEdgeAttributes(GtfsStorage.EdgeType.OVERNIGHT, edge.time(), null, -1, null,
+            }
+            case EdgeType.WAIT_ARRIVAL: {
+                return new PtEdgeAttributes(GtfsStorage.EdgeType.WAIT_ARRIVAL, time, null, -1, null,
                         0, -1, null, null);
-            case EdgeType.TRANSFER:
-                return new PtEdgeAttributes(GtfsStorage.EdgeType.TRANSFER, edge.time(), null, edge.routeType(), null,
-                        0, -1, null, platformDescriptorList.get(edge.platformDescriptor()));
+            }
+            case EdgeType.OVERNIGHT: {
+                return new PtEdgeAttributes(GtfsStorage.EdgeType.OVERNIGHT, time, null, -1, null,
+                        0, -1, null, null);
+            }
+            case EdgeType.TRANSFER: {
+                int routeType = bb.getInt();
+                int platformDescriptor = bb.getInt();
+                return new PtEdgeAttributes(GtfsStorage.EdgeType.TRANSFER, time, null, routeType, null,
+                        0, -1, null, platformDescriptorList.get(platformDescriptor));
+            }
             default:
                 throw new RuntimeException();
         }
