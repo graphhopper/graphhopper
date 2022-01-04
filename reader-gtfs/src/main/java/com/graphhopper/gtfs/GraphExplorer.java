@@ -74,10 +74,7 @@ public final class GraphExplorer {
     Stream<MultiModalEdge> exploreEdgesAround(Label label) {
         Stream<MultiModalEdge> ptEdges = label.node.ptNode != -1 ? ptEdgeStream(label.node.ptNode, label.currentTime) : Stream.empty();
         Stream<MultiModalEdge> streetEdges = label.node.streetNode != -1 ? streetEdgeStream(label.node.streetNode) : Stream.empty();
-        return Stream.of(ptEdges, streetEdges).flatMap(s -> s)
-                .peek(e -> {
-                        System.out.println("blubb " + e);
-                });
+        return Stream.concat(ptEdges, streetEdges);
     }
 
     private Iterable<PtGraph.PtEdge> realtimeEdgesAround(int node) {

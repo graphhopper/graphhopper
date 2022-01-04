@@ -104,9 +104,6 @@ public class PtGraph implements GtfsReader.PtGraphOut {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        System.out.println("val: "+validities.size());
-        System.out.println("pla: "+platformDescriptors.size());
-        System.out.println("tri: "+tripDescriptors.size());
     }
 
     public void close() {

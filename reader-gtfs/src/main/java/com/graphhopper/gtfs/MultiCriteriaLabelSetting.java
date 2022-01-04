@@ -76,8 +76,7 @@ public class MultiCriteriaLabelSetting {
 
     public Stream<Label> calcLabels(Label.NodeId from, Instant startTime) {
         this.startTime = startTime.toEpochMilli();
-        return StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from), false)
-                .peek(l -> System.out.println(l));
+        return StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from), false);
     }
 
     void setBetaTransfers(double betaTransfers) {
@@ -111,7 +110,6 @@ public class MultiCriteriaLabelSetting {
                 return false;
             } else {
                 Label label = fromHeap.poll();
-                System.out.println("pop " + label);
                 action.accept(label);
                 explorer.exploreEdgesAround(label).forEach(edge -> {
                     long nextTime;

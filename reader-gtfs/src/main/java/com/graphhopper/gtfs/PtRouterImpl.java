@@ -262,7 +262,6 @@ public final class PtRouterImpl implements PtRouter {
         }
 
         private List<List<Label.Transition>> findPaths(Label.NodeId startNode, Label.NodeId destNode) {
-            System.out.println("---wurst---");
             StopWatch stopWatch = new StopWatch().start();
             boolean isEgress = !arriveBy;
             final GraphExplorer accessEgressGraphExplorer = new GraphExplorer(queryGraph, ptGraph, isEgress ? egressWeighting : accessWeighting, gtfsStorage, realtimeFeed, isEgress, true, false, walkSpeedKmH, false, blockedRouteTypes);
@@ -287,7 +286,6 @@ public final class PtRouterImpl implements PtRouter {
             for (Label stationLabel : stationLabels) {
                 reverseSettledSet.put(stationLabel.node, stationLabel);
             }
-            System.out.println("---pups---");
 
             GraphExplorer graphExplorer = new GraphExplorer(queryGraph, ptGraph, arriveBy ? egressWeighting : accessWeighting, gtfsStorage, realtimeFeed, arriveBy, false, true, walkSpeedKmH, false, blockedRouteTypes);
             List<Label> discoveredSolutions = new ArrayList<>();
