@@ -408,7 +408,7 @@ public class PtGraph implements GtfsReader.PtGraphOut {
         this.attrs.ensureCapacity(currentPointer + 10000);
         this.attrs.setBytes(currentPointer, bytes, bytes.length);
         int edge = addEdge(src, dest, currentPointer);
-        currentPointer += bytes.length * 4L;
+        currentPointer += bytes.length;
         return edge;
     }
 
