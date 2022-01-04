@@ -108,7 +108,7 @@ public class PtIsochroneResource {
             throw new PointNotFoundException("Cannot find location: " + location, 0);
         }
 
-        GraphExplorer graphExplorer = new GraphExplorer(queryGraph, null, weighting, gtfsStorage, RealtimeFeed.empty(gtfsStorage), reverseFlow, false, false, 5.0, reverseFlow, blockedRouteTypes);
+        GraphExplorer graphExplorer = new GraphExplorer(queryGraph, null, weighting, gtfsStorage, RealtimeFeed.empty(), reverseFlow, false, false, 5.0, reverseFlow, blockedRouteTypes);
         MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, reverseFlow, false, false, 0, Collections.emptyList());
 
         Map<Coordinate, Double> z1 = new HashMap<>();
