@@ -18,7 +18,6 @@
 
 package com.graphhopper.gtfs;
 
-import MyGame.Sample.EdgeType;
 import com.google.common.primitives.Longs;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.storage.DataAccess;
@@ -30,6 +29,8 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.StreamSupport;
+
+import static com.graphhopper.gtfs.GtfsStorage.EdgeType.BOARD;
 
 public class PtGraph implements GtfsReader.PtGraphOut {
 
@@ -395,67 +396,67 @@ public class PtGraph implements GtfsReader.PtGraphOut {
         byte[] bytes = new byte[size];
         attrs.getBytes(attrPointer, bytes, size);
         ByteBuffer bb = ByteBuffer.wrap(bytes);
-        int type = bb.getInt();
+        GtfsStorage.EdgeType type = GtfsStorage.EdgeType.values()[bb.getInt()];
         int time = bb.getInt();
         switch (type) {
-            case EdgeType.BOARD: {
+            case BOARD: {
                 int stop_sequence = bb.getInt();
                 int tripDescriptor = bb.getInt();
                 int validity = bb.getInt();
                 int transfers = bb.getInt();
-                return new PtEdgeAttributes(GtfsStorage.EdgeType.BOARD, time, validityList.get(validity), -1, null,
+                return new PtEdgeAttributes(BOARD, time, validityList.get(validity), -1, null,
                         transfers, stop_sequence, tripDescriptorList.get(tripDescriptor), null);
             }
-            case EdgeType.ALIGHT: {
+            case ALIGHT: {
                 int stop_sequence = bb.getInt();
                 int tripDescriptor = bb.getInt();
                 int validity = bb.getInt();
                 return new PtEdgeAttributes(GtfsStorage.EdgeType.ALIGHT, time, validityList.get(validity), -1, null,
                         0, stop_sequence, tripDescriptorList.get(tripDescriptor), null);
             }
-            case EdgeType.ENTER_PT: {
+            case ENTER_PT: {
                 int routeType = bb.getInt();
                 int platformDescriptor = bb.getInt();
                 return new PtEdgeAttributes(GtfsStorage.EdgeType.ENTER_PT, time, null, routeType, null,
                         0, -1, null, platformDescriptorList.get(platformDescriptor));
             }
-            case EdgeType.EXIT_PT: {
+            case EXIT_PT: {
                 int platformDescriptor = bb.getInt();
                 return new PtEdgeAttributes(GtfsStorage.EdgeType.EXIT_PT, time, null, -1, null,
                         0, -1, null, platformDescriptorList.get(platformDescriptor));
             }
-            case EdgeType.HOP: {
+            case HOP: {
                 int stop_sequence = bb.getInt();
                 return new PtEdgeAttributes(GtfsStorage.EdgeType.HOP, time, null, -1, null,
                         0, stop_sequence, null, null);
             }
-            case EdgeType.DWELL: {
+            case DWELL: {
                 return new PtEdgeAttributes(GtfsStorage.EdgeType.DWELL, time, null, -1, null,
                         0, -1, null, null);
             }
-            case EdgeType.ENTER_TIME_EXPANDED_NETWORK: {
+            case ENTER_TIME_EXPANDED_NETWORK: {
                 int feedId = bb.getInt();
                 return new PtEdgeAttributes(GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK, time, null, -1, feedIdWithTimezoneList.get(feedId),
                         0, -1, null, null);
             }
-            case EdgeType.LEAVE_TIME_EXPANDED_NETWORK: {
+            case LEAVE_TIME_EXPANDED_NETWORK: {
                 int feedId = bb.getInt();
                 return new PtEdgeAttributes(GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK, time, null, -1, feedIdWithTimezoneList.get(feedId),
                         0, -1, null, null);
             }
-            case EdgeType.WAIT: {
+            case WAIT: {
                 return new PtEdgeAttributes(GtfsStorage.EdgeType.WAIT, time, null, -1, null,
                         0, -1, null, null);
             }
-            case EdgeType.WAIT_ARRIVAL: {
+            case WAIT_ARRIVAL: {
                 return new PtEdgeAttributes(GtfsStorage.EdgeType.WAIT_ARRIVAL, time, null, -1, null,
                         0, -1, null, null);
             }
-            case EdgeType.OVERNIGHT: {
+            case OVERNIGHT: {
                 return new PtEdgeAttributes(GtfsStorage.EdgeType.OVERNIGHT, time, null, -1, null,
                         0, -1, null, null);
             }
-            case EdgeType.TRANSFER: {
+            case TRANSFER: {
                 int routeType = bb.getInt();
                 int platformDescriptor = bb.getInt();
                 return new PtEdgeAttributes(GtfsStorage.EdgeType.TRANSFER, time, null, routeType, null,
