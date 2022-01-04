@@ -403,12 +403,12 @@ public class PtGraph implements GtfsReader.PtGraphOut {
                 throw new RuntimeException();
         }
         bb.flip();
-        byte[] bytes = new byte[bb.remaining()];
-        bb.get(bytes);
-        this.attrs.ensureCapacity(currentPointer + 10000);
-        this.attrs.setBytes(currentPointer, bytes, bytes.length);
         int edge = addEdge(src, dest, currentPointer);
-        currentPointer += bytes.length;
+        this.attrs.ensureCapacity(currentPointer + 10000);
+        while(bb.hasRemaining()) {
+            this.attrs.setByte(currentPointer, bb.get());
+            currentPointer++;
+        }
         return edge;
     }
 
