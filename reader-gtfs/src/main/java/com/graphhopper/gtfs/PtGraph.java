@@ -18,22 +18,15 @@
 
 package com.graphhopper.gtfs;
 
-import MyGame.Sample.*;
-import com.carrotsearch.hppc.IntArrayList;
+import MyGame.Sample.EdgeType;
 import com.google.common.primitives.Longs;
-import com.google.flatbuffers.FlatBufferBuilder;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.util.EdgeIterator;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.StreamSupport;
@@ -86,7 +79,7 @@ public class PtGraph implements GtfsReader.PtGraphOut {
         edgeCount = edges.getHeader(2 * 4);
         try {
             deserializeExtraStuff();
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
         return true;
@@ -254,104 +247,21 @@ public class PtGraph implements GtfsReader.PtGraphOut {
     List<GtfsStorage.FeedIdWithTimezone> feedIdWithTimezoneList = new ArrayList<>();
 
     private void serializeExtraStuff() throws IOException {
-        FlatBufferBuilder fbb = new FlatBufferBuilder();
-        int validitesOffset = Extra.createValiditiesVector(fbb, serializeValidities(fbb));
-        int platformDescriptorsOffset = Extra.createPlatformDescriptorsVector(fbb, serializePlatformDescriptors(fbb));
-        int feedIdsOffset = Extra.createFeedIdWithTimezonesVector(fbb, serializeFeedIds(fbb));
-        int tripDescriptorsOffset = Extra.createTripDescriptorsVector(fbb, serializeTripDescriptors(fbb));
-        int extra = Extra.createExtra(fbb, validitesOffset, feedIdsOffset, platformDescriptorsOffset, tripDescriptorsOffset);
-        fbb.finish(extra);
-        try (FileChannel fc = new FileOutputStream(dir.getLocation() + "/wurst").getChannel()) {
-            fc.write(fbb.dataBuffer());
+        try (ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(dir.getLocation() + "/pt_extra"))) {
+            os.writeObject(validityList);
+            os.writeObject(platformDescriptorList);
+            os.writeObject(tripDescriptorList);
+            os.writeObject(feedIdWithTimezoneList);
         }
     }
 
-    private void deserializeExtraStuff() throws IOException {
-        try (FileChannel fc = new FileInputStream(dir.getLocation() + "/wurst").getChannel()) {
-            ByteBuffer buffer = ByteBuffer.allocate((int) fc.size());
-            fc.read(buffer);
-            buffer.flip();
-            Extra extra = Extra.getRootAsExtra(buffer);
-            for (int i = 0; i < extra.validitiesLength(); i++) {
-                Validity validity = extra.validities(i);
-                ByteBuffer bb = validity.bitSetAsByteBuffer();
-                byte[] arr = new byte[bb.remaining()];
-                bb.get(arr);
-                validityList.add(new GtfsStorage.Validity(BitSet.valueOf(arr), ZoneId.of(validity.zoneId()), LocalDate.ofEpochDay(validity.start())));
-            }
-            for (int i = 0; i < extra.feedIdWithTimezonesLength(); i++) {
-                feedIdWithTimezoneList.add(new GtfsStorage.FeedIdWithTimezone(extra.feedIdWithTimezones(i).feedId(), ZoneId.of(extra.feedIdWithTimezones(i).zoneId())));
-            }
-            for (int i = 0; i < extra.platformDescriptorsLength(); i++) {
-                PlatformDescriptor platformDescriptor = extra.platformDescriptors(i);
-                GtfsStorage.PlatformDescriptor pd;
-                if (platformDescriptor.routeId() != null) {
-                    pd = GtfsStorage.PlatformDescriptor.route(platformDescriptor.feedId(), platformDescriptor.stopId(), platformDescriptor.routeId());
-                } else {
-                    pd = GtfsStorage.PlatformDescriptor.routeType(platformDescriptor.feedId(), platformDescriptor.stopId(), platformDescriptor.routeType());
-                }
-                platformDescriptorList.add(pd);
-            }
-            for (int i = 0; i < extra.tripDescriptorsLength(); i++) {
-                tripDescriptorList.add(GtfsRealtime.TripDescriptor.parseFrom(extra.tripDescriptors(i).bytesAsByteBuffer()));
-            }
+    private void deserializeExtraStuff() throws IOException, ClassNotFoundException {
+        try (ObjectInputStream is = new ObjectInputStream(new FileInputStream(dir.getLocation() + "/pt_extra"))) {
+            validityList = ((List<GtfsStorage.Validity>) is.readObject());
+            platformDescriptorList = ((List<GtfsStorage.PlatformDescriptor>) is.readObject());
+            tripDescriptorList = ((List<GtfsRealtime.TripDescriptor>) is.readObject());
+            feedIdWithTimezoneList = ((List<GtfsStorage.FeedIdWithTimezone>) is.readObject());
         }
-    }
-
-    private int[] serializeValidities(FlatBufferBuilder fbb) {
-        IntArrayList offsets = new IntArrayList();
-        for (GtfsStorage.Validity validity : validityList) {
-            int bitSetVector = Validity.createBitSetVector(fbb, validity.validity.toByteArray());
-            int string = fbb.createString(validity.zoneId.getId());
-            Validity.startValidity(fbb);
-            Validity.addBitSet(fbb, bitSetVector);
-            Validity.addStart(fbb, validity.start.toEpochDay());
-            Validity.addZoneId(fbb, string);
-            int offset = Validity.endValidity(fbb);
-            offsets.add(offset);
-        }
-        return offsets.toArray();
-    }
-
-    private int[] serializeFeedIds(FlatBufferBuilder fbb) {
-        IntArrayList offsets = new IntArrayList();
-        for (GtfsStorage.FeedIdWithTimezone feedIdWithTimezone : feedIdWithTimezoneList) {
-            int offset = FeedIdWithTimezone.createFeedIdWithTimezone(fbb, fbb.createString(feedIdWithTimezone.feedId), fbb.createString(feedIdWithTimezone.zoneId.getId()));
-            offsets.add(offset);
-        }
-        return offsets.toArray();
-    }
-
-    private int[] serializeTripDescriptors(FlatBufferBuilder fbb) {
-        IntArrayList offsets = new IntArrayList();
-        for (GtfsRealtime.TripDescriptor tripDescriptor : tripDescriptorList) {
-            offsets.add(TripDescriptor.createTripDescriptor(fbb, TripDescriptor.createBytesVector(fbb, tripDescriptor.toByteArray())));
-        }
-        return offsets.toArray();
-    }
-
-    private int[] serializePlatformDescriptors(FlatBufferBuilder fbb) {
-        IntArrayList offsets = new IntArrayList();
-        for (GtfsStorage.PlatformDescriptor platformDescriptor : platformDescriptorList) {
-            int stopId = fbb.createString(platformDescriptor.stop_id);
-            int feedId = fbb.createString(platformDescriptor.feed_id);
-            int routeId = -1;
-            if (platformDescriptor instanceof GtfsStorage.RoutePlatform) {
-                routeId = fbb.createString(((GtfsStorage.RoutePlatform) platformDescriptor).route_id);
-            }
-            PlatformDescriptor.startPlatformDescriptor(fbb);
-            PlatformDescriptor.addStopId(fbb, stopId);
-            PlatformDescriptor.addFeedId(fbb, feedId);
-            if (platformDescriptor instanceof GtfsStorage.RouteTypePlatform) {
-                PlatformDescriptor.addRouteType(fbb, ((GtfsStorage.RouteTypePlatform) platformDescriptor).route_type);
-            }
-            if (routeId != -1) {
-                PlatformDescriptor.addRouteId(fbb, routeId);
-            }
-            int offset = PlatformDescriptor.endPlatformDescriptor(fbb);
-            offsets.add(offset);
-        }
-        return offsets.toArray();
     }
 
     @Override
