@@ -20,7 +20,6 @@ package com.graphhopper.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Fare;
-import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.index.LineIntIndex;
 import org.mapdb.DB;
@@ -241,14 +240,6 @@ public class GtfsStorage {
 
 	public Map<FeedIdWithStopId, Integer> getStationNodes() {
 		return stationNodes;
-	}
-
-	static String tripKey(GtfsRealtime.TripDescriptor tripDescriptor, boolean isFrequencyBased) {
-		if (isFrequencyBased) {
-			return tripDescriptor.getTripId()+tripDescriptor.getStartTime();
-		} else {
-			return tripDescriptor.getTripId();
-		}
 	}
 
 	public abstract static class PlatformDescriptor implements Serializable {

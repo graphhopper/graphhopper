@@ -53,11 +53,9 @@ public class RealtimeFeed {
     private final IntLongHashMap delaysForAlightEdges;
     private final List<PtGraph.PtEdge> additionalEdges;
     public final Map<String, GtfsRealtime.FeedMessage> feedMessages;
-    private final GtfsStorage staticGtfs;
 
-    private RealtimeFeed(GtfsStorage staticGtfs, Map<String, GtfsRealtime.FeedMessage> feedMessages, IntHashSet blockedEdges,
+    private RealtimeFeed(Map<String, GtfsRealtime.FeedMessage> feedMessages, IntHashSet blockedEdges,
                          IntLongHashMap delaysForBoardEdges, IntLongHashMap delaysForAlightEdges, List<PtGraph.PtEdge> additionalEdges) {
-        this.staticGtfs = staticGtfs;
         this.feedMessages = feedMessages;
         this.blockedEdges = blockedEdges;
         this.delaysForBoardEdges = delaysForBoardEdges;
@@ -65,8 +63,8 @@ public class RealtimeFeed {
         this.additionalEdges = additionalEdges;
     }
 
-    public static RealtimeFeed empty(GtfsStorage staticGtfs) {
-        return new RealtimeFeed(staticGtfs, Collections.emptyMap(), new IntHashSet(), new IntLongHashMap(), new IntLongHashMap(), Collections.emptyList());
+    public static RealtimeFeed empty() {
+        return new RealtimeFeed(Collections.emptyMap(), new IntHashSet(), new IntLongHashMap(), new IntLongHashMap(), Collections.emptyList());
     }
 
     public static RealtimeFeed fromProtobuf(GraphHopperStorage graphHopperStorage, GtfsStorage staticGtfs, Map<String, Transfers> transfers, Map<String, GtfsRealtime.FeedMessage> feedMessages) {
@@ -167,7 +165,7 @@ public class RealtimeFeed {
             gtfsReader.wireUpAdditionalDeparturesAndArrivals(timezone);
         });
 
-        return new RealtimeFeed(staticGtfs, feedMessages, blockedEdges, delaysForBoardEdges, delaysForAlightEdges, additionalEdges);
+        return new RealtimeFeed(feedMessages, blockedEdges, delaysForBoardEdges, delaysForAlightEdges, additionalEdges);
     }
 
     private static int[] findLeaveEdgesForTrip(GtfsStorage staticGtfs, String feedKey, GTFSFeed feed, GtfsRealtime.TripUpdate tripUpdate) {
