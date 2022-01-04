@@ -160,7 +160,7 @@ public class RealtimeFeed {
                                 })
                                 .collect(Collectors.toList());
                         GtfsReader.TripWithStopTimes tripWithStopTimes = new GtfsReader.TripWithStopTimes(trip, stopTimes, validOnDay, Collections.emptySet(), Collections.emptySet());
-                        gtfsReader.addTrip(timezone, 0, new ArrayList<>(), tripWithStopTimes, tripUpdate.getTrip(), false);
+                        gtfsReader.addTrip(timezone, 0, new ArrayList<>(), tripWithStopTimes, tripUpdate.getTrip());
                     });
             gtfsReader.wireUpAdditionalDeparturesAndArrivals(timezone);
         });
