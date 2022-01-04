@@ -92,7 +92,6 @@ class TripFromLabel {
 
         ResponsePath path = new ResponsePath();
         path.setWaypoints(waypoints);
-
         path.getLegs().addAll(legs);
 
         final InstructionList instructions = new InstructionList(tr);
@@ -362,7 +361,7 @@ class TripFromLabel {
                             stops,
                             partition.stream().mapToDouble(t -> t.edge.getDistance()).sum(),
                             path.get(i - 1).label.currentTime - boardTime,
-                            lineStringFromStops(stops)));
+                            geometryFactory.createLineString(stops.stream().map(s -> s.geometry.getCoordinate()).toArray(Coordinate[]::new))));
                     partition = null;
                     if (edge.getType() == GtfsStorage.EdgeType.TRANSFER) {
                         feedId = edge.getPlatformDescriptor().feed_id;;
@@ -379,8 +378,6 @@ class TripFromLabel {
                 if (path.get(i).edge.getType() != GtfsStorage.EdgeType.HIGHWAY) {
                     throw new IllegalStateException("Got a transit edge where I think I must be on a road.");
                 }
-//                if (path.get(i).label.node.ptNode != -1)
-//                    continue; // This is the edge that goes over into the pt graph.
                 EdgeIteratorState edge = graph.getEdgeIteratorState(path.get(i).edge.getId(), path.get(i).label.node.streetNode);
                 instructionsFromEdges.next(edge, i, prevEdgeId);
                 prevEdgeId = edge.getEdge();
@@ -415,19 +412,12 @@ class TripFromLabel {
     }
 
     private Geometry lineStringFromEdges(List<Label.Transition> transitions) {
-        List<Coordinate> coordinates = new ArrayList<>();
         final Iterator<Label.Transition> iterator = transitions.iterator();
         iterator.next();
-
         Label.Transition first = iterator.next();
-        coordinates.addAll(toCoordinateArray(graph.getEdgeIteratorState(first.edge.getId(), first.edge.getAdjNode().streetNode).fetchWayGeometry(FetchMode.ALL)));
+        List<Coordinate> coordinates = new ArrayList<>(toCoordinateArray(graph.getEdgeIteratorState(first.edge.getId(), first.edge.getAdjNode().streetNode).fetchWayGeometry(FetchMode.ALL)));
         iterator.forEachRemaining(transition -> coordinates.addAll(toCoordinateArray(graph.getEdgeIteratorState(transition.edge.getId(), transition.edge.getAdjNode().streetNode).fetchWayGeometry(FetchMode.PILLAR_AND_ADJ))));
-        // FIXME
         return geometryFactory.createLineString(coordinates.toArray(new Coordinate[coordinates.size()]));
-    }
-
-    private Geometry lineStringFromStops(List<Trip.Stop> stops) {
-        return geometryFactory.createLineString(stops.stream().map(s -> s.geometry.getCoordinate()).toArray(Coordinate[]::new));
     }
 
     private static List<Coordinate> toCoordinateArray(PointList pointList) {
