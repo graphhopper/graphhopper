@@ -61,7 +61,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
     private final LocationIndex locationIndex;
     private final GtfsStorage gtfsStorage;
     private final RealtimeFeed realtimeFeed;
-    private final TripFromLabel tripFromLabel;
+    private final PathDetailsBuilderFactory pathDetailsBuilderFactory;
     private final WeightingFactory weightingFactory;
     private final PtGraph ptGraph;
 
@@ -75,7 +75,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         this.locationIndex = locationIndex;
         this.gtfsStorage = gtfsStorage;
         this.realtimeFeed = realtimeFeed;
-        this.tripFromLabel = new TripFromLabel(this.graphHopperStorage, this.gtfsStorage, this.realtimeFeed, pathDetailsBuilderFactory);
+        this.pathDetailsBuilderFactory = pathDetailsBuilderFactory;
         this.ptGraph = ptGraph;
     }
 
@@ -251,6 +251,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         }
 
         private void parseSolutionsAndAddToResponse(List<List<Label.Transition>> solutions, PointList waypoints) {
+            TripFromLabel tripFromLabel = new TripFromLabel(queryGraph, gtfsStorage, realtimeFeed, pathDetailsBuilderFactory);
             for (List<Label.Transition> solution : solutions) {
                 final ResponsePath responsePath = tripFromLabel.createResponsePath(translation, waypoints, queryGraph, accessWeighting, egressWeighting, solution, requestedPathDetails);
                 responsePath.setImpossible(solution.stream().anyMatch(t -> t.label.impossible));

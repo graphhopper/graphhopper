@@ -62,7 +62,7 @@ public final class PtRouterImpl implements PtRouter {
     private final GtfsStorage gtfsStorage;
     private final PtGraph ptGraph;
     private final RealtimeFeed realtimeFeed;
-    private final TripFromLabel tripFromLabel;
+    private final PathDetailsBuilderFactory pathDetailsBuilderFactory;
     private final WeightingFactory weightingFactory;
 
     @Inject
@@ -75,7 +75,7 @@ public final class PtRouterImpl implements PtRouter {
         this.gtfsStorage = gtfsStorage;
         this.ptGraph = gtfsStorage.getPtGraph();
         this.realtimeFeed = realtimeFeed;
-        this.tripFromLabel = new TripFromLabel(this.graphHopperStorage, this.gtfsStorage, this.realtimeFeed, pathDetailsBuilderFactory);
+        this.pathDetailsBuilderFactory = pathDetailsBuilderFactory;
     }
 
     @Override
@@ -248,6 +248,7 @@ public final class PtRouterImpl implements PtRouter {
         }
 
         private void parseSolutionsAndAddToResponse(List<List<Label.Transition>> solutions, PointList waypoints) {
+            TripFromLabel tripFromLabel = new TripFromLabel(queryGraph, gtfsStorage, realtimeFeed, pathDetailsBuilderFactory);
             for (List<Label.Transition> solution : solutions) {
                 final ResponsePath responsePath = tripFromLabel.createResponsePath(translation, waypoints, queryGraph, accessWeighting, egressWeighting, solution, requestedPathDetails);
                 responsePath.setImpossible(solution.stream().anyMatch(t -> t.label.impossible));
