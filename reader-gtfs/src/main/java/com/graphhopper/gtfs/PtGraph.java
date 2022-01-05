@@ -182,9 +182,15 @@ public class PtGraph implements GtfsReader.PtGraphOut {
     }
 
     private long getAttrPointer(long edgePointer) {
-        byte[] bytes = new byte[8];
-        edges.getBytes(edgePointer + E_ATTRS, bytes, 8);
-        return Longs.fromByteArray(bytes);
+        return Longs.fromBytes(
+                edges.getByte(edgePointer + E_ATTRS),
+                edges.getByte(edgePointer + E_ATTRS + 1),
+                edges.getByte(edgePointer + E_ATTRS + 2),
+                edges.getByte(edgePointer + E_ATTRS + 3),
+                edges.getByte(edgePointer + E_ATTRS + 4),
+                edges.getByte(edgePointer + E_ATTRS + 5),
+                edges.getByte(edgePointer + E_ATTRS + 6),
+                edges.getByte(edgePointer + E_ATTRS + 7));
     }
 
     public void setNodeB(long edgePointer, int nodeB) {

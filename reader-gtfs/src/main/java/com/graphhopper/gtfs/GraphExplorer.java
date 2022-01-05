@@ -282,7 +282,7 @@ public final class GraphExplorer {
             return ptEdge != null ? ptEdge.getId() : edge;
         }
 
-        public Label.NodeId getAdjNode() {
+        public Label.NodeId getAdjNode() { //FIXME
             if (ptEdge != null) {
                 int streetNode = Optional.ofNullable(gtfsStorage.getPtToStreet().get(ptEdge.getAdjNode())).orElse(-1);
                 return new Label.NodeId(streetNode, ptEdge.getAdjNode());
