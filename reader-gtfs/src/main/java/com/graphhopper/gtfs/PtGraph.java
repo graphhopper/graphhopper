@@ -47,6 +47,7 @@ public class PtGraph implements GtfsReader.PtGraphOut {
     private int edgeCount;
 
     private final DataAccess attrs;
+    private final static GtfsStorage.EdgeType[] edgeTypeValues = GtfsStorage.EdgeType.values();
 
     public PtGraph(Directory dir, int firstNode) {
         this.dir = dir;
@@ -431,9 +432,10 @@ public class PtGraph implements GtfsReader.PtGraphOut {
         return () -> StreamSupport.stream(spliterator, false).iterator();
     }
 
+
     private PtEdgeAttributes pullAttrs(int edgeId) {
         long attrPointer = getAttrPointer(toEdgePointer(edgeId));
-        GtfsStorage.EdgeType type = GtfsStorage.EdgeType.values()[attrs.getInt(attrPointer)];
+        GtfsStorage.EdgeType type = edgeTypeValues[attrs.getInt(attrPointer)];
         attrPointer += 4;
         int time = attrs.getInt(attrPointer);
         attrPointer += 4;
