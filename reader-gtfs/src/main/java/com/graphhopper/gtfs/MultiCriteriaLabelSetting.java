@@ -64,12 +64,7 @@ public class MultiCriteriaLabelSetting {
         this.maxProfileDuration = maxProfileDuration;
         this.targetLabels = solutions;
 
-        queueComparator = Comparator
-                .comparingLong(this::weight)
-                .thenComparingLong(l -> l.nTransfers)
-                .thenComparingLong(l -> l.streetTime)
-                .thenComparingLong(l -> l.departureTime != null ? this.reverse ? l.departureTime : -l.departureTime : 0)
-                .thenComparingLong(l -> l.impossible ? 1 : 0);
+        queueComparator = new LabelComparator();
         fromHeap = new PriorityQueue<>(queueComparator);
         fromMap = new HashMap<>();
     }
@@ -192,11 +187,7 @@ public class MultiCriteriaLabelSetting {
     void insertIfNotDominated(Label me) {
         List<Label> filteredTargetLabels = profileQuery && me.departureTime != null ? partitionByProfileCriterion(me, targetLabels).get(true) : targetLabels;
         if (isNotDominatedByAnyOf(me, filteredTargetLabels)) {
-            List<Label> sptEntries = fromMap.get(me.node);
-            if (sptEntries == null) {
-                sptEntries = new ArrayList<>(1);
-                fromMap.put(me.node, sptEntries);
-            }
+            List<Label> sptEntries = fromMap.computeIfAbsent(me.node, k -> new ArrayList<>(1));
             List<Label> filteredSptEntries;
             List<Label> otherSptEntries;
             if (profileQuery && me.departureTime != null) {
@@ -282,4 +273,27 @@ public class MultiCriteriaLabelSetting {
         this.limitStreetTime = limitStreetTime;
     }
 
+    private class LabelComparator implements Comparator<Label> {
+
+        @Override
+        public int compare(Label o1, Label o2) {
+            int c = Long.compare(weight(o1), weight(o2));
+            if (c != 0)
+                return c;
+            c = Integer.compare(o1.nTransfers, o2.nTransfers);
+            if (c != 0)
+                return c;
+
+            c = Long.compare(o1.streetTime, o2.streetTime);
+            if (c != 0)
+                return c;
+
+            c = Long.compare(o1.departureTime != null ? reverse ? o1.departureTime : -o1.departureTime : 0, o2.departureTime != null ? reverse ? o2.departureTime : -o2.departureTime : 0);
+            if (c != 0)
+                return c;
+
+            c = Integer.compare(o1.impossible ? 1 : 0, o2.impossible ? 1 : 0);
+            return c;
+        }
+    }
 }
