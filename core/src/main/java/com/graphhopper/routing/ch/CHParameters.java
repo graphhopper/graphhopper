@@ -7,6 +7,7 @@ public final class CHParameters {
     public static final String PERIODIC_UPDATES = Parameters.CH.PREPARE + "updates.periodic";
     public static final String LAST_LAZY_NODES_UPDATES = Parameters.CH.PREPARE + "updates.lazy";
     public static final String NEIGHBOR_UPDATES = Parameters.CH.PREPARE + "updates.neighbor";
+    public static final String NEIGHBOR_UPDATES_MAX = Parameters.CH.PREPARE + "updates.neighbor_max";
     public static final String CONTRACTED_NODES = Parameters.CH.PREPARE + "contracted_nodes";
     public static final String LOG_MESSAGES = Parameters.CH.PREPARE + "log_messages";
     // node contraction, node-based
