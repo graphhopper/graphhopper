@@ -106,7 +106,7 @@ public class MultiCriteriaLabelSetting {
             } else {
                 Label label = fromHeap.poll();
                 action.accept(label);
-                explorer.exploreEdgesAround(label).forEach(edge -> {
+                for (GraphExplorer.MultiModalEdge edge : explorer.exploreEdgesAround(label)) {
                     long nextTime;
                     if (reverse) {
                         nextTime = label.currentTime - explorer.calcTravelTimeMillis(edge, label.currentTime);
@@ -134,15 +134,15 @@ public class MultiCriteriaLabelSetting {
                     }
                     long walkTime = label.streetTime + (edgeType == GtfsStorage.EdgeType.HIGHWAY || edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT ? ((reverse ? -1 : 1) * (nextTime - label.currentTime)) : 0);
                     if (walkTime > limitStreetTime)
-                        return;
+                        continue;
                     if (Math.abs(nextTime - startTime) > limitTripTime)
-                        return;
+                        continue;
                     boolean result = false;
                     if (label.edge != null) {
                         result = label.edge.getType() == GtfsStorage.EdgeType.EXIT_PT;
                     }
                     if (edgeType == GtfsStorage.EdgeType.ENTER_PT && result) {
-                        return;
+                        continue;
                     }
                     boolean impossible = label.impossible
                             || explorer.isBlocked(edge)
@@ -177,7 +177,7 @@ public class MultiCriteriaLabelSetting {
                         Label newLabel = new Label(nextTime, edge, edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, impossible, label);
                         insertIfNotDominated(newLabel);
                     }
-                });
+                }
                 return true;
             }
         }

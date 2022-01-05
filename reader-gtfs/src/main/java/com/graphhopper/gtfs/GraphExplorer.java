@@ -26,7 +26,6 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -36,8 +35,6 @@ import java.util.Iterator;
 import java.util.Optional;
 import java.util.Spliterators;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 public final class GraphExplorer {
 
@@ -71,10 +68,12 @@ public final class GraphExplorer {
         this.walkSpeedKmH = walkSpeedKmh;
     }
 
-    Stream<MultiModalEdge> exploreEdgesAround(Label label) {
-        Stream<MultiModalEdge> ptEdges = label.node.ptNode != -1 ? ptEdgeStream(label.node.ptNode, label.currentTime) : Stream.empty();
-        Stream<MultiModalEdge> streetEdges = label.node.streetNode != -1 ? streetEdgeStream(label.node.streetNode) : Stream.empty();
-        return Stream.concat(ptEdges, streetEdges);
+    Iterable<MultiModalEdge> exploreEdgesAround(Label label) {
+        return () -> {
+            Iterator<MultiModalEdge> ptEdges = label.node.ptNode != -1 ? ptEdgeStream(label.node.ptNode, label.currentTime).iterator() : Collections.emptyIterator();
+            Iterator<MultiModalEdge> streetEdges = label.node.streetNode != -1 ? streetEdgeStream(label.node.streetNode).iterator() : Collections.emptyIterator();
+            return Iterators.concat(ptEdges, streetEdges);
+        };
     }
 
     private Iterable<PtGraph.PtEdge> realtimeEdgesAround(int node) {
@@ -89,8 +88,8 @@ public final class GraphExplorer {
     }
 
 
-    private Stream<MultiModalEdge> ptEdgeStream(int ptNode, long currentTime) {
-        return StreamSupport.stream(new Spliterators.AbstractSpliterator<MultiModalEdge>(0, 0) {
+    private Iterable<MultiModalEdge> ptEdgeStream(int ptNode, long currentTime) {
+        return () -> Spliterators.iterator(new Spliterators.AbstractSpliterator<MultiModalEdge>(0, 0) {
             final Iterator<PtGraph.PtEdge> edgeIterator = reverse ?
                     Iterators.concat(ptNode < ptGraph.getNodeCount() ? ptGraph.backEdgesAround(ptNode).iterator() : Collections.<PtGraph.PtEdge>emptyIterator(), backRealtimeEdgesAround(ptNode).iterator()) :
                     Iterators.concat(ptNode < ptGraph.getNodeCount() ? ptGraph.edgesAround(ptNode).iterator() : Collections.<PtGraph.PtEdge>emptyIterator(), realtimeEdgesAround(ptNode).iterator());
@@ -154,25 +153,24 @@ public final class GraphExplorer {
                 return first;
             }
 
-        }, false);
+        });
     }
 
-    private Stream<MultiModalEdge> streetEdgeStream(int streetNode) {
-        return StreamSupport.stream(new Spliterators.AbstractSpliterator<EdgeIteratorState>(0, 0) {
-            final EdgeIterator edgeIterator = edgeExplorer.setBaseNode(streetNode);
+    private Iterable<MultiModalEdge> streetEdgeStream(int streetNode) {
+        return () -> Spliterators.iterator(new Spliterators.AbstractSpliterator<MultiModalEdge>(0, 0) {
+            final EdgeIterator e = edgeExplorer.setBaseNode(streetNode);
 
             @Override
-            public boolean tryAdvance(Consumer<? super EdgeIteratorState> action) {
-                while (edgeIterator.next()) {
-                    if (reverse ? edgeIterator.getReverse(accessEnc) : edgeIterator.get(accessEnc)) {
-                        action.accept(edgeIterator);
+            public boolean tryAdvance(Consumer<? super MultiModalEdge> action) {
+                while (e.next()) {
+                    if (reverse ? e.getReverse(accessEnc) : e.get(accessEnc)) {
+                        action.accept(new MultiModalEdge(e.getEdge(), e.getBaseNode(), e.getAdjNode(), (long) (accessEgressWeighting.calcEdgeMillis(e.detach(false), reverse) * (5.0 / walkSpeedKmH)), e.getDistance()));
                         return true;
                     }
                 }
                 return false;
             }
-        }, false)
-                .map(e -> new MultiModalEdge(e.getEdge(), e.getBaseNode(), e.getAdjNode(), (long) (accessEgressWeighting.calcEdgeMillis(e.detach(false), reverse) * (5.0 / walkSpeedKmH)), e.getDistance()));
+        });
     }
 
     long calcTravelTimeMillis(MultiModalEdge edge, long earliestStartTime) {
