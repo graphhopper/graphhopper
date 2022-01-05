@@ -68,7 +68,7 @@ public class MultiCriteriaLabelSetting {
                 .comparingLong(this::weight)
                 .thenComparingLong(l -> l.nTransfers)
                 .thenComparingLong(l -> l.streetTime)
-                .thenComparingLong(l -> departureTimeCriterion(l) != null ? departureTimeCriterion(l) : 0)
+                .thenComparingLong(l -> l.departureTime != null ? this.reverse ? l.departureTime : -l.departureTime : 0)
                 .thenComparingLong(l -> l.impossible ? 1 : 0);
         fromHeap = new PriorityQueue<>(queueComparator);
         fromMap = new HashMap<>();
@@ -260,10 +260,6 @@ public class MultiCriteriaLabelSetting {
             return true;
 
         return queueComparator.compare(me, they) <= 0;
-    }
-
-    private Long departureTimeCriterion(Label label) {
-        return label.departureTime == null ? null : reverse ? label.departureTime : -label.departureTime;
     }
 
     long weight(Label label) {
