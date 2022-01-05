@@ -177,21 +177,28 @@ public class PtGraph implements GtfsReader.PtGraphOut {
     }
 
     private void setAttrPointer(long edgePointer, long attrPointer) {
-        byte[] bytes = Longs.toByteArray(attrPointer);
-        edges.setBytes(edgePointer + E_ATTRS, bytes, bytes.length);
+        edges.setInt(edgePointer + E_ATTRS, getIntLow(attrPointer));
+        edges.setInt(edgePointer + E_ATTRS + 4, getIntHigh(attrPointer));
     }
 
     private long getAttrPointer(long edgePointer) {
-        return Longs.fromBytes(
-                edges.getByte(edgePointer + E_ATTRS),
-                edges.getByte(edgePointer + E_ATTRS + 1),
-                edges.getByte(edgePointer + E_ATTRS + 2),
-                edges.getByte(edgePointer + E_ATTRS + 3),
-                edges.getByte(edgePointer + E_ATTRS + 4),
-                edges.getByte(edgePointer + E_ATTRS + 5),
-                edges.getByte(edgePointer + E_ATTRS + 6),
-                edges.getByte(edgePointer + E_ATTRS + 7));
+        return combineIntsToLong(
+                edges.getInt(edgePointer + E_ATTRS),
+                edges.getInt(edgePointer + E_ATTRS + 4));
     }
+
+    final int getIntLow(long longValue) {
+        return (int) (longValue & 0xFFFFFFFFL);
+    }
+
+    final int getIntHigh(long longValue) {
+        return (int) (longValue >> 32);
+    }
+
+    final long combineIntsToLong(int intLow, int intHigh) {
+        return ((long) intHigh << 32) | (intLow & 0xFFFFFFFFL);
+    }
+
 
     public void setNodeB(long edgePointer, int nodeB) {
         edges.setInt(edgePointer + E_NODEB, nodeB);
@@ -273,33 +280,62 @@ public class PtGraph implements GtfsReader.PtGraphOut {
 
     @Override
     public int createEdge(int src, int dest, PtEdgeAttributes attrs) {
-        ByteBuffer bb = ByteBuffer.allocate(50);
-        bb.putInt(attrs.type.ordinal());
-        bb.putInt(attrs.time);
+        this.attrs.ensureCapacity(currentPointer + 10000);
+
+        int edge = addEdge(src, dest, currentPointer);
+        this.attrs.setInt(currentPointer, attrs.type.ordinal());
+        currentPointer += 4;
+        this.attrs.setInt(currentPointer, attrs.time);
+        currentPointer += 4;
+
         switch (attrs.type) {
             case ENTER_PT:
-                bb.putInt(attrs.route_type);
-                bb.putInt(sharePlatformDescriptor(attrs.platformDescriptor));
+                this.attrs.setInt(currentPointer, attrs.route_type);
+                currentPointer += 4;
+
+                this.attrs.setInt(currentPointer, sharePlatformDescriptor(attrs.platformDescriptor));
+                currentPointer += 4;
+
                 break;
             case EXIT_PT:
-                bb.putInt(sharePlatformDescriptor(attrs.platformDescriptor));
+                this.attrs.setInt(currentPointer, sharePlatformDescriptor(attrs.platformDescriptor));
+                currentPointer += 4;
+
                 break;
             case ENTER_TIME_EXPANDED_NETWORK:
-                bb.putInt(shareFeedIdWithTimezone(attrs.feedIdWithTimezone));
+                this.attrs.setInt(currentPointer, shareFeedIdWithTimezone(attrs.feedIdWithTimezone));
+                currentPointer += 4;
+
                 break;
             case LEAVE_TIME_EXPANDED_NETWORK:
-                bb.putInt(shareFeedIdWithTimezone(attrs.feedIdWithTimezone));
+                this.attrs.setInt(currentPointer, shareFeedIdWithTimezone(attrs.feedIdWithTimezone));
+                currentPointer += 4;
+
                 break;
             case BOARD:
-                bb.putInt(attrs.stop_sequence);
-                bb.putInt(shareTripDescriptor(attrs.tripDescriptor));
-                bb.putInt(shareValidity(attrs.validity));
-                bb.putInt(attrs.transfers);
+                this.attrs.setInt(currentPointer, attrs.stop_sequence);
+                currentPointer += 4;
+
+                this.attrs.setInt(currentPointer, shareTripDescriptor(attrs.tripDescriptor));
+                currentPointer += 4;
+
+                this.attrs.setInt(currentPointer, shareValidity(attrs.validity));
+                currentPointer += 4;
+
+                this.attrs.setInt(currentPointer, attrs.transfers);
+                currentPointer += 4;
+
                 break;
             case ALIGHT:
-                bb.putInt(attrs.stop_sequence);
-                bb.putInt(shareTripDescriptor(attrs.tripDescriptor));
-                bb.putInt(shareValidity(attrs.validity));
+                this.attrs.setInt(currentPointer, attrs.stop_sequence);
+                currentPointer += 4;
+
+                this.attrs.setInt(currentPointer, shareTripDescriptor(attrs.tripDescriptor));
+                currentPointer += 4;
+
+                this.attrs.setInt(currentPointer, shareValidity(attrs.validity));
+                currentPointer += 4;
+
                 break;
             case WAIT:
                 break;
@@ -308,23 +344,22 @@ public class PtGraph implements GtfsReader.PtGraphOut {
             case OVERNIGHT:
                 break;
             case HOP:
-                bb.putInt(attrs.stop_sequence);
+                this.attrs.setInt(currentPointer, attrs.stop_sequence);
+                currentPointer += 4;
+
                 break;
             case DWELL:
                 break;
             case TRANSFER:
-                bb.putInt(attrs.route_type);
-                bb.putInt(sharePlatformDescriptor(attrs.platformDescriptor));
+                this.attrs.setInt(currentPointer, attrs.route_type);
+                currentPointer += 4;
+
+                this.attrs.setInt(currentPointer, sharePlatformDescriptor(attrs.platformDescriptor));
+                currentPointer += 4;
+
                 break;
             default:
                 throw new RuntimeException();
-        }
-        bb.flip();
-        int edge = addEdge(src, dest, currentPointer);
-        this.attrs.ensureCapacity(currentPointer + 10000);
-        while(bb.hasRemaining()) {
-            this.attrs.setByte(currentPointer, bb.get());
-            currentPointer++;
         }
         return edge;
     }
@@ -398,41 +433,50 @@ public class PtGraph implements GtfsReader.PtGraphOut {
 
     private PtEdgeAttributes pullAttrs(int edgeId) {
         long attrPointer = getAttrPointer(toEdgePointer(edgeId));
-        int size = 50;
-        byte[] bytes = new byte[size];
-        attrs.getBytes(attrPointer, bytes, size);
-        ByteBuffer bb = ByteBuffer.wrap(bytes);
-        GtfsStorage.EdgeType type = GtfsStorage.EdgeType.values()[bb.getInt()];
-        int time = bb.getInt();
+        GtfsStorage.EdgeType type = GtfsStorage.EdgeType.values()[attrs.getInt(attrPointer)];
+        attrPointer += 4;
+        int time = attrs.getInt(attrPointer);
+        attrPointer += 4;
         switch (type) {
             case BOARD: {
-                int stop_sequence = bb.getInt();
-                int tripDescriptor = bb.getInt();
-                int validity = bb.getInt();
-                int transfers = bb.getInt();
+                int stop_sequence = attrs.getInt(attrPointer);
+                attrPointer += 4;
+                int tripDescriptor = attrs.getInt(attrPointer);
+                attrPointer += 4;
+                int validity = attrs.getInt(attrPointer);
+                attrPointer += 4;
+                int transfers = attrs.getInt(attrPointer);
+                attrPointer += 4;
                 return new PtEdgeAttributes(BOARD, time, validityList.get(validity), -1, null,
                         transfers, stop_sequence, tripDescriptorList.get(tripDescriptor), null);
             }
             case ALIGHT: {
-                int stop_sequence = bb.getInt();
-                int tripDescriptor = bb.getInt();
-                int validity = bb.getInt();
+                int stop_sequence = attrs.getInt(attrPointer);
+                attrPointer += 4;
+                int tripDescriptor = attrs.getInt(attrPointer);
+                attrPointer += 4;
+                int validity = attrs.getInt(attrPointer);
+                attrPointer += 4;
                 return new PtEdgeAttributes(GtfsStorage.EdgeType.ALIGHT, time, validityList.get(validity), -1, null,
                         0, stop_sequence, tripDescriptorList.get(tripDescriptor), null);
             }
             case ENTER_PT: {
-                int routeType = bb.getInt();
-                int platformDescriptor = bb.getInt();
+                int routeType = attrs.getInt(attrPointer);
+                attrPointer += 4;
+                int platformDescriptor = attrs.getInt(attrPointer);
+                attrPointer += 4;
                 return new PtEdgeAttributes(GtfsStorage.EdgeType.ENTER_PT, time, null, routeType, null,
                         0, -1, null, platformDescriptorList.get(platformDescriptor));
             }
             case EXIT_PT: {
-                int platformDescriptor = bb.getInt();
+                int platformDescriptor = attrs.getInt(attrPointer);
+                attrPointer += 4;
                 return new PtEdgeAttributes(GtfsStorage.EdgeType.EXIT_PT, time, null, -1, null,
                         0, -1, null, platformDescriptorList.get(platformDescriptor));
             }
             case HOP: {
-                int stop_sequence = bb.getInt();
+                int stop_sequence = attrs.getInt(attrPointer);
+                attrPointer += 4;
                 return new PtEdgeAttributes(GtfsStorage.EdgeType.HOP, time, null, -1, null,
                         0, stop_sequence, null, null);
             }
@@ -441,12 +485,14 @@ public class PtGraph implements GtfsReader.PtGraphOut {
                         0, -1, null, null);
             }
             case ENTER_TIME_EXPANDED_NETWORK: {
-                int feedId = bb.getInt();
+                int feedId = attrs.getInt(attrPointer);
+                attrPointer += 4;
                 return new PtEdgeAttributes(GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK, time, null, -1, feedIdWithTimezoneList.get(feedId),
                         0, -1, null, null);
             }
             case LEAVE_TIME_EXPANDED_NETWORK: {
-                int feedId = bb.getInt();
+                int feedId = attrs.getInt(attrPointer);
+                attrPointer += 4;
                 return new PtEdgeAttributes(GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK, time, null, -1, feedIdWithTimezoneList.get(feedId),
                         0, -1, null, null);
             }
@@ -463,8 +509,10 @@ public class PtGraph implements GtfsReader.PtGraphOut {
                         0, -1, null, null);
             }
             case TRANSFER: {
-                int routeType = bb.getInt();
-                int platformDescriptor = bb.getInt();
+                int routeType = attrs.getInt(attrPointer);
+                attrPointer += 4;
+                int platformDescriptor = attrs.getInt(attrPointer);
+                attrPointer += 4;
                 return new PtEdgeAttributes(GtfsStorage.EdgeType.TRANSFER, time, null, routeType, null,
                         0, -1, null, platformDescriptorList.get(platformDescriptor));
             }
