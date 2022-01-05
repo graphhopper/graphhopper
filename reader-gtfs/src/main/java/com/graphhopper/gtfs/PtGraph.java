@@ -53,8 +53,8 @@ public class PtGraph implements GtfsReader.PtGraphOut {
         this.dir = dir;
         nextNode = firstNode;
         nodes = dir.create("pt_nodes", dir.getDefaultType("pt_nodes", true), -1);
-        edges = dir.create("pt_edges", dir.getDefaultType("pt_edges", false), -1);
-        attrs = dir.create("pt_edge_attrs", dir.getDefaultType("pt_edge_attrs", false), -1);
+        edges = dir.create("pt_edges", dir.getDefaultType("pt_edges", true), -1);
+        attrs = dir.create("pt_edge_attrs", dir.getDefaultType("pt_edge_attrs", true), -1);
 
         nodeEntryBytes = 8;
 
@@ -429,7 +429,7 @@ public class PtGraph implements GtfsReader.PtGraphOut {
             }
 
         };
-        return () -> StreamSupport.stream(spliterator, false).iterator();
+        return () -> Spliterators.iterator(spliterator);
     }
 
 
@@ -549,7 +549,7 @@ public class PtGraph implements GtfsReader.PtGraphOut {
                 return true;
             }
         };
-        return () -> StreamSupport.stream(spliterator, false).iterator();
+        return () -> Spliterators.iterator(spliterator);
     }
 
     public static class PtEdge {
