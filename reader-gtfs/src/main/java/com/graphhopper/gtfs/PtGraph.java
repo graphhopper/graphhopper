@@ -18,17 +18,14 @@
 
 package com.graphhopper.gtfs;
 
-import com.google.common.primitives.Longs;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.util.EdgeIterator;
 
 import java.io.*;
-import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.StreamSupport;
 
 import static com.graphhopper.gtfs.GtfsStorage.EdgeType.BOARD;
 
