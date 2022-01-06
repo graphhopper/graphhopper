@@ -18,10 +18,7 @@
 
 package com.graphhopper.gtfs;
 
-import com.carrotsearch.hppc.IntHashSet;
-import com.carrotsearch.hppc.cursors.IntCursor;
 import com.conveyal.gtfs.GTFSFeed;
-import com.conveyal.gtfs.model.Stop;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperConfig;
@@ -37,18 +34,14 @@ import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 import com.graphhopper.util.exceptions.MaximumNodesExceededException;
-import com.graphhopper.util.exceptions.PointNotFoundException;
-import com.graphhopper.util.shapes.GHPoint;
 
 import javax.inject.Inject;
 import java.time.Instant;
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparingLong;
@@ -175,76 +168,22 @@ public final class PtRouterImpl implements PtRouter {
 
         GHResponse route() {
             StopWatch stopWatch = new StopWatch().start();
-            ArrayList<Snap> pointSnaps = new ArrayList<>();
-            ArrayList<Supplier<Label.NodeId>> allSnaps = new ArrayList<>();
-            PointList points = new PointList(2, false);
-            List<GHLocation> locations = Arrays.asList(enter, exit);
-            for (int i = 0; i < locations.size(); i++) {
-                GHLocation location = locations.get(i);
-                if (location instanceof GHPointLocation) {
-                    GHPoint point = ((GHPointLocation) location).ghPoint;
-                    EdgeFilter snapFilter = i == 0 ? this.accessSnapFilter : this.egressSnapFilter;
-                    Snap source = locationIndex.findClosest(point.lat, point.lon, snapFilter);
-                    final Snap closest = source;
-                    if (!closest.isValid()) {
-                        IntHashSet result = new IntHashSet();
-                        gtfsStorage.getStopIndex().findEdgeIdsInNeighborhood(point.lat, point.lon, 0, result::add);
-                        gtfsStorage.getStopIndex().findEdgeIdsInNeighborhood(point.lat, point.lon, 1, result::add);
-                        if (result.isEmpty()) {
-                            throw new PointNotFoundException("Cannot find point: " + point, i);
-                        }
-                        IntCursor stopNodeId = result.iterator().next();
-                        for (Map.Entry<GtfsStorage.FeedIdWithStopId, Integer> e : gtfsStorage.getStationNodes().entrySet()) {
-                            if (e.getValue() == stopNodeId.value) {
-                                Stop stop = gtfsStorage.getGtfsFeeds().get(e.getKey().feedId).stops.get(e.getKey().stopId);
-                                final Snap stopSnap = new Snap(stop.stop_lat, stop.stop_lon);
-                                stopSnap.setClosestNode(stopNodeId.value);
-                                int streetNode = Optional.ofNullable(gtfsStorage.getPtToStreet().get(stopSnap.getClosestNode())).orElse(-1);
-                                allSnaps.add(() -> new Label.NodeId(streetNode, stopSnap.getClosestNode()));
-                                points.add(stopSnap.getQueryPoint().lat, stopSnap.getQueryPoint().lon);
-                            }
-                        }
-                    } else {
-                        pointSnaps.add(closest);
-                        int ptNode = Optional.ofNullable(gtfsStorage.getStreetToPt().get(closest.getClosestNode())).orElse(-1);
-                        allSnaps.add(() -> new Label.NodeId(closest.getClosestNode(), ptNode));
-                        points.add(closest.getSnappedPoint());
-                    }
-                } else if (location instanceof GHStationLocation) {
-                    final Snap stopSnap = findByStopId((GHStationLocation) location, i);
-                    int streetNode = Optional.ofNullable(gtfsStorage.getPtToStreet().get(stopSnap.getClosestNode())).orElse(-1);
-                    allSnaps.add(() -> new Label.NodeId(streetNode, stopSnap.getClosestNode()));
-                    points.add(stopSnap.getQueryPoint().lat, stopSnap.getQueryPoint().lon);
-                }
-            }
-            queryGraph = QueryGraph.create(graphHopperStorage, pointSnaps); // modifies pointSnaps!
+            PtLocationSnapper.Result result = new PtLocationSnapper(graphHopperStorage, locationIndex, gtfsStorage).snapAll(Arrays.asList(enter, exit), Arrays.asList(accessSnapFilter, egressSnapFilter));
+            queryGraph = result.queryGraph;
             response.addDebugInfo("idLookup:" + stopWatch.stop().getSeconds() + "s");
 
             Label.NodeId startNode;
             Label.NodeId destNode;
             if (arriveBy) {
-                startNode = allSnaps.get(1).get();
-                destNode = allSnaps.get(0).get();
+                startNode = result.nodes.get(1);
+                destNode = result.nodes.get(0);
             } else {
-                startNode = allSnaps.get(0).get();
-                destNode = allSnaps.get(1).get();
+                startNode = result.nodes.get(0);
+                destNode = result.nodes.get(1);
             }
             List<List<Label.Transition>> solutions = findPaths(startNode, destNode);
-            parseSolutionsAndAddToResponse(solutions, points);
+            parseSolutionsAndAddToResponse(solutions, result.points);
             return response;
-        }
-
-        private Snap findByStopId(GHStationLocation station, int indexForErrorMessage) {
-            for (Map.Entry<String, GTFSFeed> entry : gtfsStorage.getGtfsFeeds().entrySet()) {
-                final Integer node = gtfsStorage.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(entry.getKey(), station.stop_id));
-                if (node != null) {
-                    Stop stop = gtfsStorage.getGtfsFeeds().get(entry.getKey()).stops.get(station.stop_id);
-                    final Snap stationSnap = new Snap(stop.stop_lat, stop.stop_lon);
-                    stationSnap.setClosestNode(node);
-                    return stationSnap;
-                }
-            }
-            throw new PointNotFoundException("Cannot find station: " + station.stop_id, indexForErrorMessage);
         }
 
         private void parseSolutionsAndAddToResponse(List<List<Label.Transition>> solutions, PointList waypoints) {

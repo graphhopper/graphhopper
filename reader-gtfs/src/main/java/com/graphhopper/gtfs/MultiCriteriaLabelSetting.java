@@ -34,10 +34,6 @@ import java.util.stream.Collectors;
  */
 public class MultiCriteriaLabelSetting {
 
-    public interface SPTVisitor {
-        void visit(Label label);
-    }
-
     private final Comparator<Label> queueComparator;
     private final List<Label> targetLabels;
     private long startTime;
