@@ -116,9 +116,7 @@ public class GraphHopperGtfs extends GraphHopper {
         }).forEach(stationNode -> {
             MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, true, false, false, 0, new ArrayList<>());
             router.setLimitStreetTime(Duration.ofSeconds(maxTransferWalkTimeSeconds).toMillis());
-            Iterator<Label> iterator = router.calcLabels(stationNode, Instant.ofEpochMilli(0)).iterator();
-            while (iterator.hasNext()) {
-                Label label = iterator.next();
+            for (Label label : router.calcLabels(stationNode, Instant.ofEpochMilli(0))) {
                 if (label.parent != null) {
                     if (label.edge.getType() == GtfsStorage.EdgeType.EXIT_PT) {
                         GtfsStorage.PlatformDescriptor fromPlatformDescriptor = label.edge.getPlatformDescriptor();

@@ -274,18 +274,16 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
             router.setBetaStreetTime(betaStreetTime);
             router.setLimitStreetTime(limitStreetTime);
             router.setBoardingPenaltyByRouteType(routeType -> boardingPenaltiesByRouteType.getOrDefault(routeType, 0L));
-            Iterator<Label> iterator = router.calcLabels(startNode, initialTime).iterator();
-            while (iterator.hasNext()) {
-                Label label = iterator.next();
+            for (Label label : router.calcLabels(startNode, initialTime)) {
                 visitedNodes++;
                 if (visitedNodes >= maxVisitedNodesForRequest) {
                     break;
                 }
                 if (label.node.equals(destNode)) {
-                        discoveredSolutions.add(label);
-                        if (discoveredSolutions.size() >= limitSolutions) {
-                            break;
-                        }
+                    discoveredSolutions.add(label);
+                    if (discoveredSolutions.size() >= limitSolutions) {
+                        break;
+                    }
                 }
             }
             discoveredSolutions.sort(comparingLong(s -> Optional.ofNullable(s.departureTime).orElse(0L)));

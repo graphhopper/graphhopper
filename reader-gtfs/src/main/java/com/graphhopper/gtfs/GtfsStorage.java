@@ -105,8 +105,8 @@ public class GtfsStorage {
 	}
 
 	public static class FeedIdWithStopId implements Serializable {
-		final String feedId;
-		final String stopId;
+		public final String feedId;
+		public final String stopId;
 
 		public FeedIdWithStopId(String feedId, String stopId) {
 			this.feedId = feedId;

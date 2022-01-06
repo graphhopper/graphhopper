@@ -22,8 +22,6 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.IntToLongFunction;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 /**
  * Implements a Multi-Criteria Label Setting (MLS) path finding algorithm
@@ -69,9 +67,9 @@ public class MultiCriteriaLabelSetting {
         fromMap = new HashMap<>();
     }
 
-    public Stream<Label> calcLabels(Label.NodeId from, Instant startTime) {
+    public Iterable<Label> calcLabels(Label.NodeId from, Instant startTime) {
         this.startTime = startTime.toEpochMilli();
-        return StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from), false);
+        return () -> Spliterators.iterator(new MultiCriteriaLabelSettingSpliterator(from));
     }
 
     void setBetaTransfers(double betaTransfers) {

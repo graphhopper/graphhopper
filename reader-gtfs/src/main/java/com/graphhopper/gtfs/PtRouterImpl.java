@@ -269,10 +269,8 @@ public final class PtRouterImpl implements PtRouter {
             MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, isEgress, false, false, maxProfileDuration, new ArrayList<>());
             stationRouter.setBetaStreetTime(betaStreetTime);
             stationRouter.setLimitStreetTime(limitStreetTime);
-            Iterator<Label> stationIterator = stationRouter.calcLabels(destNode, initialTime).iterator();
             List<Label> stationLabels = new ArrayList<>();
-            while (stationIterator.hasNext()) {
-                Label label = stationIterator.next();
+            for (Label label : stationRouter.calcLabels(destNode, initialTime)) {
                 visitedNodes++;
                 if (label.node.equals(startNode)) {
                     stationLabels.add(label);
@@ -304,13 +302,11 @@ public final class PtRouterImpl implements PtRouter {
             } else {
                 smallestStationLabelWeight = Long.MAX_VALUE;
             }
-            Iterator<Label> iterator = router.calcLabels(startNode, initialTime).iterator();
             Map<Label, Label> originalSolutions = new HashMap<>();
 
             Label accessEgressModeOnlySolution = null;
             long highestWeightForDominationTest = Long.MAX_VALUE;
-            while (iterator.hasNext()) {
-                Label label = iterator.next();
+            for (Label label : router.calcLabels(startNode, initialTime)) {
                 visitedNodes++;
                 if (visitedNodes >= maxVisitedNodesForRequest) {
                     break;

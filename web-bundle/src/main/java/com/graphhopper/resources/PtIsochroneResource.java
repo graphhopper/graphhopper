@@ -18,7 +18,10 @@
 
 package com.graphhopper.resources;
 
+import com.carrotsearch.hppc.IntHashSet;
+import com.carrotsearch.hppc.cursors.IntCursor;
 import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.model.Stop;
 import com.graphhopper.gtfs.*;
 import com.graphhopper.http.GHLocationParam;
 import com.graphhopper.http.OffsetDateTimeParam;
@@ -41,6 +44,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.JsonFeature;
 import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.GHPoint;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
 import org.locationtech.jts.triangulate.ConstraintVertex;
@@ -119,12 +123,17 @@ public class PtIsochroneResource {
             z1.merge(nodeCoordinate, (double) (nodeLabel.currentTime - initialTime.toEpochMilli()) * (reverseFlow ? -1 : 1), Math::min);
         };
 
+        for (Label label : router.calcLabels(new Label.NodeId(snap.getClosestNode(), -1), initialTime)) {
+            if (!((label.currentTime - initialTime.toEpochMilli()) * (reverseFlow ? -1 : 1) <= targetZ)) {
+                break;
+            }
+            sptVisitor.visit(label);
+        }
+
         if (format.equals("multipoint")) {
-            calcLabels(router, snap.getClosestNode(), initialTime, sptVisitor, label -> (label.currentTime - initialTime.toEpochMilli()) * (reverseFlow ? -1 : 1) <= targetZ);
             MultiPoint exploredPoints = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
             return wrap(exploredPoints);
         } else {
-            calcLabels(router, snap.getClosestNode(), initialTime, sptVisitor, label -> (label.currentTime - initialTime.toEpochMilli()) * (reverseFlow ? -1 : 1) <= targetZ);
             MultiPoint exploredPoints = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
 
             // Get at least all nodes within our bounding box (I think convex hull would be enough.)
@@ -199,34 +208,40 @@ public class PtIsochroneResource {
 
     }
 
-    private Snap findByPointOrStation(GHLocation location, Weighting weighting) {
+    private Label.NodeId findByPointOrStation(GHLocation location, Weighting weighting) {
         if (location instanceof GHPointLocation) {
             final EdgeFilter filter = new DefaultSnapFilter(weighting, encodingManager.getBooleanEncodedValue(Subnetwork.key("foot")));
-            return locationIndex.findClosest(((GHPointLocation) location).ghPoint.lat, ((GHPointLocation) location).ghPoint.lon, filter);
+            GHPoint point = ((GHPointLocation) location).ghPoint;
+            Snap closest = locationIndex.findClosest(point.lat, point.lon, filter);
+            if (closest.isValid()) {
+                int ptNode = Optional.ofNullable(gtfsStorage.getStreetToPt().get(closest.getClosestNode())).orElse(-1);
+                return new Label.NodeId(closest.getClosestNode(), ptNode);
+            } else {
+                IntHashSet result = new IntHashSet();
+                gtfsStorage.getStopIndex().findEdgeIdsInNeighborhood(point.lat, point.lon, 0, result::add);
+                gtfsStorage.getStopIndex().findEdgeIdsInNeighborhood(point.lat, point.lon, 1, result::add);
+                if (!result.isEmpty()) {
+                    IntCursor stopNodeId = result.iterator().next();
+                    for (Map.Entry<GtfsStorage.FeedIdWithStopId, Integer> e : gtfsStorage.getStationNodes().entrySet()) {
+                        if (e.getValue() == stopNodeId.value) {
+                            int streetNode = Optional.ofNullable(gtfsStorage.getPtToStreet().get(stopNodeId.value)).orElse(-1);
+                            return new Label.NodeId(streetNode, stopNodeId.value);
+                        }
+                    }
+                }
+            }
+            throw new PointNotFoundException("Cannot find point", 0);
         } else if (location instanceof GHStationLocation) {
             for (Map.Entry<String, GTFSFeed> entry : gtfsStorage.getGtfsFeeds().entrySet()) {
                 final Integer node = gtfsStorage.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(entry.getKey(), ((GHStationLocation) location).stop_id));
                 if (node != null) {
-                    Snap snap = new Snap(graphHopperStorage.getNodeAccess().getLat(node), graphHopperStorage.getNodeAccess().getLon(node));
-                    snap.setSnappedPosition(Snap.Position.TOWER);
-                    snap.setClosestNode(node);
-                    return snap;
+                    int streetNode = Optional.ofNullable(gtfsStorage.getPtToStreet().get(node)).orElse(-1);
+                    return new Label.NodeId(streetNode, node);
                 }
             }
             throw new PointNotFoundException("Cannot find station: " + ((GHStationLocation) location).stop_id, 0);
         } else {
             throw new RuntimeException();
-        }
-    }
-
-    private static void calcLabels(MultiCriteriaLabelSetting router, int from, Instant startTime, MultiCriteriaLabelSetting.SPTVisitor visitor, Predicate<Label> predicate) {
-        Iterator<Label> iterator = router.calcLabels(new Label.NodeId(from, -1), startTime).iterator(); // FIXME
-        while(iterator.hasNext()) {
-            Label label = iterator.next();
-            if (!predicate.test(label)) {
-                break;
-            }
-            visitor.visit(label);
         }
     }
 
