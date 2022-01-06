@@ -64,8 +64,11 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     protected BikeCommonFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
         super(speedBits, speedFactor, maxTurnCosts);
 
+        restrictedValues.add("agricultural");
+        restrictedValues.add("forestry");
         restrictedValues.add("no");
         restrictedValues.add("restricted");
+        restrictedValues.add("delivery");
         restrictedValues.add("military");
         restrictedValues.add("emergency");
         restrictedValues.add("private");
