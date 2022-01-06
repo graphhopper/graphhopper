@@ -224,7 +224,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
 
         // This makes an IllegalArgumentException come out as a MultiException with
         // a single entry.
-        //environment.jersey().register(new IllegalArgumentExceptionMapper());
+        environment.jersey().register(new IllegalArgumentExceptionMapper());
 
         final GraphHopperManaged graphHopperManaged = new GraphHopperManaged(configuration.getGraphHopperConfiguration());
         environment.lifecycle().manage(graphHopperManaged);
