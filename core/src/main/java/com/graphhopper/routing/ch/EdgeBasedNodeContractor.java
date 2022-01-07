@@ -112,7 +112,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
             // no shortcuts will be introduced
             return Float.NEGATIVE_INFINITY;
         stats().stopWatch.start();
-        findAndHandlePrepareShortcuts(node, this::countShortcuts);
+        findPriority(node);
         stats().stopWatch.stop();
         // the higher the priority the later (!) this node will be contracted
         float edgeQuotient = numShortcuts / (float) numPrevEdges;
@@ -172,6 +172,46 @@ class EdgeBasedNodeContractor implements NodeContractor {
 
     public int getNumPolledEdges() {
         return numPolledEdges;
+    }
+
+    private void findPriority(int node) {
+        stats().nodes++;
+        addedShortcuts.clear();
+
+        // first we need to identify the possible source nodes from which we can reach the center node
+        int sourceNodesCnt = 0;
+        sourceNodes.clear();
+        PrepareGraphEdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
+        while (incomingEdges.next()) {
+            int sourceNode = incomingEdges.getAdjNode();
+            if (sourceNode == node) {
+                continue;
+            }
+            boolean isNewSourceNode = sourceNodes.add(sourceNode);
+            if (!isNewSourceNode) {
+                continue;
+            }
+            sourceNodesCnt++;
+            numOrigEdges += incomingEdges.getOrigEdgeCount();
+        }
+
+        // now we need to identify all target nodes that can be reached from the center node
+        int targetNodesCnt = 0;
+        targetNodes.clear();
+        PrepareGraphEdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(node);
+        while (outgoingEdges.next()) {
+            int targetNode = outgoingEdges.getAdjNode();
+            if (targetNode == node) {
+                continue;
+            }
+            boolean isNewTargetNode = targetNodes.add(targetNode);
+            if (!isNewTargetNode) {
+                continue;
+            }
+            numOrigEdges += outgoingEdges.getOrigEdgeCount();
+            targetNodesCnt++;
+        }
+        numShortcuts = sourceNodesCnt * targetNodesCnt;
     }
 
     /**
@@ -412,30 +452,9 @@ class EdgeBasedNodeContractor implements NodeContractor {
         void handleShortcut(PrepareCHEntry edgeFrom, PrepareCHEntry edgeTo, int origEdgeCount);
     }
 
-    private void countShortcuts(PrepareCHEntry edgeFrom, PrepareCHEntry edgeTo, int origEdgeCount) {
-        int fromNode = edgeFrom.parent.adjNode;
-        int toNode = edgeTo.adjNode;
-        int firstOrigEdgeKey = edgeFrom.getParent().incEdgeKey;
-        int lastOrigEdgeKey = edgeTo.incEdgeKey;
-
-        // check if this shortcut already exists
-        final PrepareGraphEdgeIterator iter = existingShortcutExplorer.setBaseNode(fromNode);
-        while (iter.next()) {
-            if (isSameShortcut(iter, toNode, firstOrigEdgeKey, lastOrigEdgeKey)) {
-                // this shortcut exists already, maybe its weight will be updated but we should not count it as
-                // a new edge
-                return;
-            }
-        }
-
-        // this shortcut is new --> increase counts
-        numShortcuts++;
-        numOrigEdges += origEdgeCount;
-    }
-
     public static class Params {
         // todo: optimize
-        private float edgeQuotientWeight = 1;
+        private float edgeQuotientWeight = 10f;
         private float originalEdgeQuotientWeight = 3;
         private float hierarchyDepthWeight = 2;
     }

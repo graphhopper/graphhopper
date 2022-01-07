@@ -524,7 +524,10 @@ public class PrepareContractionHierarchies {
         static Params forTraversalMode(TraversalMode traversalMode) {
             if (traversalMode.isEdgeBased()) {
                 // todo: optimize
-                return new Params(0, 100, 0, 100, 5);
+                // prio calculation is so fast we can do almost as many periodic updates we want
+                // *but* apparently the heuristic is not good enough to go much below 375k shortcuts (target is 335k, -10%)
+                // 5x faster prep vs. 10% more shortcuts...
+                return new Params(20, 100, 100, 100, 5);
             } else {
                 return new Params(0, 0, 100, 100, 20);
             }
