@@ -22,7 +22,6 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.IntToLongFunction;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * Implements a Multi-Criteria Label Setting (MLS) path finding algorithm
@@ -196,19 +195,11 @@ public class MultiCriteriaLabelSetting {
         }
     }
 
-    Map<Boolean, List<Label>> partitionByProfileCriterion(Label me, List<Label> sptEntries) {
-        if (!reverse) {
-            return sptEntries.stream().collect(Collectors.partitioningBy(they -> prc(me, they)));
-        } else {
-            return sptEntries.stream().collect(Collectors.partitioningBy(they -> rprc(me, they)));
-        }
-    }
-
-    private boolean rprc(Label me, Label they) {
+    boolean rprc(Label me, Label they) {
         return they.departureTime != null && (they.departureTime <= me.departureTime || they.departureTime <= startTime - maxProfileDuration);
     }
 
-    private boolean prc(Label me, Label they) {
+    boolean prc(Label me, Label they) {
         return they.departureTime != null && (they.departureTime >= me.departureTime || they.departureTime >= startTime + maxProfileDuration);
     }
 

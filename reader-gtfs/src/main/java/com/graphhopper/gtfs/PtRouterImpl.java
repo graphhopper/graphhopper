@@ -42,6 +42,7 @@ import com.graphhopper.util.exceptions.MaximumNodesExceededException;
 import javax.inject.Inject;
 import java.time.Instant;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparingLong;
@@ -270,21 +271,13 @@ public final class PtRouterImpl implements PtRouter {
                 Label reverseLabel = reverseSettledSet.get(label.node);
                 if (reverseLabel != null) {
                     Label combinedSolution = new Label(label.currentTime - reverseLabel.currentTime + initialTime.toEpochMilli(), null, label.node, label.nTransfers + reverseLabel.nTransfers, label.departureTime, label.streetTime + reverseLabel.streetTime, label.extraWeight + reverseLabel.extraWeight, 0, label.impossible, null);
-                    List<Label> filteredSolutions;
-                    List<Label> otherSolutions;
-                    if (profileQuery && combinedSolution.departureTime != null) {
-                        Map<Boolean, List<Label>> partitionedSptEntries = router.partitionByProfileCriterion(combinedSolution, discoveredSolutions);
-                        filteredSolutions = new ArrayList<>(partitionedSptEntries.get(true));
-                        otherSolutions = new ArrayList<>(partitionedSptEntries.get(false));
-                    } else {
-                        filteredSolutions = new ArrayList<>(discoveredSolutions);
-                        otherSolutions = Collections.emptyList();
-                    }
-                    if (router.isNotDominatedByAnyOf(combinedSolution, filteredSolutions, l -> true)) {
-                        router.removeDominated(combinedSolution, filteredSolutions, l -> true);
-                        discoveredSolutions.clear();
-                        discoveredSolutions.addAll(filteredSolutions);
-                        discoveredSolutions.addAll(otherSolutions);
+                    Predicate<Label> filter;
+                    if (profileQuery && combinedSolution.departureTime != null)
+                        filter = targetLabel -> (!arriveBy ? router.prc(combinedSolution, targetLabel) : router.rprc(combinedSolution, targetLabel));
+                    else
+                        filter = tagetLabel -> true;
+                    if (router.isNotDominatedByAnyOf(combinedSolution, discoveredSolutions, filter)) {
+                        router.removeDominated(combinedSolution, discoveredSolutions, filter);
                         List<Label> closedSolutions = discoveredSolutions.stream().filter(s -> router.weight(s) < router.weight(label) + smallestStationLabelWeight).collect(Collectors.toList());
                         if (closedSolutions.size() >= limitSolutions) continue;
                         if (profileQuery && combinedSolution.departureTime != null && (combinedSolution.departureTime - initialTime.toEpochMilli()) * (arriveBy ? -1L : 1L) > maxProfileDuration && closedSolutions.size() > 0 && closedSolutions.get(closedSolutions.size() - 1).departureTime != null && (closedSolutions.get(closedSolutions.size() - 1).departureTime - initialTime.toEpochMilli()) * (arriveBy ? -1L : 1L) > maxProfileDuration) {
