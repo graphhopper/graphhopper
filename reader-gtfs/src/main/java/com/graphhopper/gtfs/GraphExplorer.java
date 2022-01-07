@@ -32,7 +32,6 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.Optional;
 import java.util.Spliterators;
 import java.util.function.Consumer;
 
@@ -280,13 +279,13 @@ public final class GraphExplorer {
             return ptEdge != null ? ptEdge.getId() : edge;
         }
 
-        public Label.NodeId getAdjNode() { //FIXME
+        public Label.NodeId getAdjNode() {
             if (ptEdge != null) {
-                int streetNode = Optional.ofNullable(gtfsStorage.getPtToStreet().get(ptEdge.getAdjNode())).orElse(-1);
-                return new Label.NodeId(streetNode, ptEdge.getAdjNode());
+                Integer streetNode = gtfsStorage.getPtToStreet().get(ptEdge.getAdjNode());
+                return new Label.NodeId(streetNode != null ? streetNode : -1, ptEdge.getAdjNode());
             } else {
-                int ptNode = Optional.ofNullable(gtfsStorage.getStreetToPt().get(adjNode)).orElse(-1);
-                return new Label.NodeId(adjNode, ptNode);
+                Integer ptNode = gtfsStorage.getStreetToPt().get(adjNode);
+                return new Label.NodeId(adjNode, ptNode != null ? ptNode : -1);
             }
         }
 

@@ -18,10 +18,7 @@
 package com.graphhopper.gtfs;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class Label {
 
@@ -121,7 +118,10 @@ public class Label {
 
         @Override
         public int hashCode() {
-            return Objects.hash(streetNode, ptNode);
+            int result = 1;
+            result = 31 * result + streetNode;
+            result = 31 * result + ptNode;
+            return result;
         }
 
         @Override

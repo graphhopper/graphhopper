@@ -21,6 +21,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.IntToLongFunction;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -179,24 +180,16 @@ public class MultiCriteriaLabelSetting {
 
 
     void insertIfNotDominated(Label me) {
-        List<Label> filteredTargetLabels = profileQuery && me.departureTime != null ? partitionByProfileCriterion(me, targetLabels).get(true) : targetLabels;
-        if (isNotDominatedByAnyOf(me, filteredTargetLabels)) {
+        Predicate<Label> filter;
+        if (profileQuery && me.departureTime != null) {
+            filter = (targetLabel) -> (!reverse ? prc(me, targetLabel) : rprc(me, targetLabel));
+        } else {
+            filter = label -> true;
+        }
+        if (isNotDominatedByAnyOf(me, targetLabels, filter)) {
             List<Label> sptEntries = fromMap.computeIfAbsent(me.node, k -> new ArrayList<>(1));
-            List<Label> filteredSptEntries;
-            List<Label> otherSptEntries;
-            if (profileQuery && me.departureTime != null) {
-                Map<Boolean, List<Label>> partitionedSptEntries = partitionByProfileCriterion(me, sptEntries);
-                filteredSptEntries = new ArrayList<>(partitionedSptEntries.get(true));
-                otherSptEntries = new ArrayList<>(partitionedSptEntries.get(false));
-            } else {
-                filteredSptEntries = new ArrayList<>(sptEntries);
-                otherSptEntries = Collections.emptyList();
-            }
-            if (isNotDominatedByAnyOf(me, filteredSptEntries)) {
-                removeDominated(me, filteredSptEntries);
-                sptEntries.clear();
-                sptEntries.addAll(filteredSptEntries);
-                sptEntries.addAll(otherSptEntries);
+            if (isNotDominatedByAnyOf(me, sptEntries, filter)) {
+                removeDominated(me, sptEntries, filter);
                 sptEntries.add(me);
                 fromHeap.add(me);
             }
@@ -205,25 +198,33 @@ public class MultiCriteriaLabelSetting {
 
     Map<Boolean, List<Label>> partitionByProfileCriterion(Label me, List<Label> sptEntries) {
         if (!reverse) {
-            return sptEntries.stream().collect(Collectors.partitioningBy(they -> they.departureTime != null && (they.departureTime >= me.departureTime || they.departureTime >= startTime + maxProfileDuration)));
+            return sptEntries.stream().collect(Collectors.partitioningBy(they -> prc(me, they)));
         } else {
-            return sptEntries.stream().collect(Collectors.partitioningBy(they -> they.departureTime != null && (they.departureTime <= me.departureTime || they.departureTime <= startTime - maxProfileDuration)));
+            return sptEntries.stream().collect(Collectors.partitioningBy(they -> rprc(me, they)));
         }
     }
 
-    boolean isNotDominatedByAnyOf(Label me, Collection<Label> sptEntries) {
+    private boolean rprc(Label me, Label they) {
+        return they.departureTime != null && (they.departureTime <= me.departureTime || they.departureTime <= startTime - maxProfileDuration);
+    }
+
+    private boolean prc(Label me, Label they) {
+        return they.departureTime != null && (they.departureTime >= me.departureTime || they.departureTime >= startTime + maxProfileDuration);
+    }
+
+    boolean isNotDominatedByAnyOf(Label me, Collection<Label> sptEntries, Predicate<Label> filter) {
         for (Label they : sptEntries) {
-            if (dominates(they, me)) {
+            if (filter.test(they) && dominates(they, me)) {
                 return false;
             }
         }
         return true;
     }
 
-    void removeDominated(Label me, Collection<Label> sptEntries) {
+    void removeDominated(Label me, Collection<Label> sptEntries, Predicate<Label> filter) {
         for (Iterator<Label> iterator = sptEntries.iterator(); iterator.hasNext(); ) {
             Label sptEntry = iterator.next();
-            if (dominates(me, sptEntry)) {
+            if (filter.test(sptEntry) && dominates(me, sptEntry)) {
                 sptEntry.deleted = true;
                 iterator.remove();
             }

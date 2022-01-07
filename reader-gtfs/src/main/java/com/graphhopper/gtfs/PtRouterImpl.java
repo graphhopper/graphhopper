@@ -280,8 +280,8 @@ public final class PtRouterImpl implements PtRouter {
                         filteredSolutions = new ArrayList<>(discoveredSolutions);
                         otherSolutions = Collections.emptyList();
                     }
-                    if (router.isNotDominatedByAnyOf(combinedSolution, filteredSolutions)) {
-                        router.removeDominated(combinedSolution, filteredSolutions);
+                    if (router.isNotDominatedByAnyOf(combinedSolution, filteredSolutions, l -> true)) {
+                        router.removeDominated(combinedSolution, filteredSolutions, l -> true);
                         discoveredSolutions.clear();
                         discoveredSolutions.addAll(filteredSolutions);
                         discoveredSolutions.addAll(otherSolutions);
