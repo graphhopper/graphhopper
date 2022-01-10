@@ -43,7 +43,8 @@ Then 'only' 15GB are necessary and without contraction hierarchy this can be fur
 ### System tuning
 
 Avoid swapping e.g. on linux via `vm.swappiness=0` in /etc/sysctl.conf. See some tuning discussion in the answers [here](http://stackoverflow.com/q/38905739/194609).
-When using MMAP or elevation data ensure `/proc/sys/vm/max_map_count` is enough or set it via `sysctl -w vm.max_map_count=262144`.
+
+When using the MMAP setting (default for elevation data), then ensure `/proc/sys/vm/max_map_count` is enough or set it via `sysctl -w vm.max_map_count=500000`. see also https://github.com/graphhopper/graphhopper/issues/1866.
 
 ### Elevation Data
 
