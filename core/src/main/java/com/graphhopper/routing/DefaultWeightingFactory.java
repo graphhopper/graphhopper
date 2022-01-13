@@ -66,7 +66,7 @@ public class DefaultWeightingFactory implements WeightingFactory {
         } else {
             turnCostProvider = NO_TURN_COST_PROVIDER;
         }
-        // TODO ORS: check what to do here
+        // TODO ORS: Is this still relevant?
         // ORS-GH MOD START
 //        TraversalMode tMode = encoder.supports(TurnWeighting.class) ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
 //        if (hints.has(Routing.EDGE_BASED))
@@ -109,11 +109,9 @@ public class DefaultWeightingFactory implements WeightingFactory {
         } else if ("short_fastest".equalsIgnoreCase(weightingStr)) {
             weighting = new ShortFastestWeighting(encoder, hints, turnCostProvider);
         }
-        // ORS-GH MOD START - add support for time-dependent routing
-        else if ("td_fastest".equalsIgnoreCase(weightingStr)) {
-            weighting = new FastestWeighting(encoder, hints);
-            if (encodingManager.hasEncodedValue(EncodingManager.getKey(encoder, ConditionalEdges.SPEED)))
-                weighting.setSpeedCalculator(new ConditionalSpeedCalculator(weighting.getSpeedCalculator(), ghStorage, encoder));
+        // ORS-GH MOD START - hook for ORS-specific weightings
+        else {
+            weighting = handleOrsWeightings(weightingStr, hints, encoder, turnCostProvider);
         }
         // ORS-GH MOD END
 
@@ -122,4 +120,24 @@ public class DefaultWeightingFactory implements WeightingFactory {
 
         return weighting;
     }
+
+    // ORS-GH MOD START - additional methods
+    public Weighting handleOrsWeightings(String weightingStr, PMap hints, FlagEncoder encoder, TurnCostProvider turnCostProvider) {
+        Weighting weighting;
+        if ("td_fastest".equalsIgnoreCase(weightingStr)) {
+            weighting = new FastestWeighting(encoder, hints);
+            if (encodingManager.hasEncodedValue(EncodingManager.getKey(encoder, ConditionalEdges.SPEED)))
+                weighting.setSpeedCalculator(new ConditionalSpeedCalculator(weighting.getSpeedCalculator(), ghStorage, encoder));
+        } else {
+            weighting = handleExternalOrsWeightings(weightingStr, hints, encoder, turnCostProvider);
+        }
+        return weighting;
+    }
+
+    // Note: this method is only needed because ORS is split into two
+    // codebases (graphHopper fork and main code base)
+    protected Weighting handleExternalOrsWeightings(String weightingStr, PMap hints, FlagEncoder encoder, TurnCostProvider turnCostProvider) {
+        return null; // Override in external ORS code base
+    }
+    // ORS-GH MOD END
 }
