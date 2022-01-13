@@ -122,8 +122,8 @@ public class DefaultWeightingFactory implements WeightingFactory {
     }
 
     // ORS-GH MOD START - additional methods
-    public Weighting handleOrsWeightings(String weightingStr, PMap hints, FlagEncoder encoder, TurnCostProvider turnCostProvider) {
-        Weighting weighting;
+    private Weighting handleOrsWeightings(String weightingStr, PMap hints, FlagEncoder encoder, TurnCostProvider turnCostProvider) {
+        Weighting weighting = null;
         if ("td_fastest".equalsIgnoreCase(weightingStr)) {
             weighting = new FastestWeighting(encoder, hints);
             if (encodingManager.hasEncodedValue(EncodingManager.getKey(encoder, ConditionalEdges.SPEED)))
