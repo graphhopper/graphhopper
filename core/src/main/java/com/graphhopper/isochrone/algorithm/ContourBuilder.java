@@ -19,6 +19,7 @@ import org.locationtech.jts.geom.prep.PreparedPolygon;
 import org.locationtech.jts.triangulate.quadedge.Vertex;
 
 import java.util.*;
+import java.util.function.ToIntBiFunction;
 
 /**
  *
@@ -43,6 +44,17 @@ public class ContourBuilder {
     }
 
     public MultiPolygon computeIsoline(double z0, Collection<ReadableQuadEdge> seedEdges) {
+        ToIntBiFunction<Vertex, Vertex> cut = (orig, dest) -> {
+            double za = orig.getZ();
+            double zb = dest.getZ();
+            if (za <= z0 && zb > z0) return 1;
+            if (za > z0 && zb <= z0) return -1;
+            return 0;
+        };
+        return computeIsoline(cut, seedEdges);
+    }
+
+    public MultiPolygon computeIsoline(ToIntBiFunction<Vertex, Vertex> cut, Collection<ReadableQuadEdge> seedEdges) {
         Set<ReadableQuadEdge> processed = new HashSet<>();
         List<LinearRing> rings = new ArrayList<>();
 
@@ -51,12 +63,12 @@ public class ContourBuilder {
             if (processed.contains(e))
                 continue;
             processed.add(e);
-            int cut = cut(e.orig().getZ(), e.dest().getZ(), z0);
-            if (cut == 0) {
+            int cut0 = cut.applyAsInt(e.orig(), e.dest());
+            if (cut0 == 0) {
                 continue; // While, next edge
             }
             List<Coordinate> polyPoints = new ArrayList<>();
-            boolean ccw = cut > 0;
+            boolean ccw = cut0 > 0;
             while (true) {
                 // Add a point to polyline
                 Coordinate cC;
@@ -72,8 +84,8 @@ public class ContourBuilder {
                 processed.add(e);
                 ReadableQuadEdge E1 = ccw ? e.oNext().getPrimary() : e.oPrev().getPrimary();
                 ReadableQuadEdge E2 = ccw ? e.dPrev().getPrimary() : e.dNext().getPrimary();
-                int cut1 = E1 == null ? 0 : cut(E1.orig().getZ(), E1.dest().getZ(), z0);
-                int cut2 = E2 == null ? 0 : cut(E2.orig().getZ(), E2.dest().getZ(), z0);
+                int cut1 = E1 == null ? 0 : cut.applyAsInt(E1.orig(), E1.dest());
+                int cut2 = E2 == null ? 0 : cut.applyAsInt(E2.orig(), E2.dest());
                 boolean ok1 = cut1 != 0 && !processed.contains(E1);
                 boolean ok2 = cut2 != 0 && !processed.contains(E2);
                 if (ok1) {
@@ -105,12 +117,6 @@ public class ContourBuilder {
 
     private Coordinate moveEpsilonTowards(Coordinate coordinate, Coordinate distantFrameCoordinate) {
         return new Coordinate(coordinate.x + EPSILON * (distantFrameCoordinate.x - coordinate.x), coordinate.y + EPSILON * (distantFrameCoordinate.y - coordinate.y));
-    }
-
-    private int cut(double za, double zb, double z0) {
-        if (za <= z0 && zb > z0) return 1;
-        if (za > z0 && zb <= z0) return -1;
-        return 0;
     }
 
     @SuppressWarnings("unchecked")

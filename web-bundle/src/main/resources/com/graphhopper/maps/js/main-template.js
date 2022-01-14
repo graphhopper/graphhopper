@@ -108,7 +108,7 @@ $(document).ready(function (e) {
             + "\n \"priority\": ["
             + "\n  {"
             + "\n   \"if\": \"road_environment == TUNNEL\","
-            + "\n   \"multiply_by\": 0.0"
+            + "\n   \"multiply_by\": 0.5"
             + "\n  },"
             + "\n  {"
             + "\n   \"if\": \"max_weight < 3\","
