@@ -313,8 +313,8 @@ class NodeBasedNodeContractor implements NodeContractor {
         // higher values can further decrease the number of shortcuts and improve the query time, but only by a few
         // percent and at the cost of a longer preparation. for smaller maps smaller values can work even better, i.e.
         // try 20/100 or similar.
-        private int maxVisitedNodesHeuristic = 30;
-        private int maxVisitedNodesContraction = 200;
+        private int maxVisitedNodesHeuristic = 200;
+        private int maxVisitedNodesContraction = 500;
     }
 
     private static class Shortcut {
