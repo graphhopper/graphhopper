@@ -204,13 +204,21 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         periodicUpdateSW.start();
         sortedNodes.clear();
         for (int node = 0; node < nodes; node++) {
-            if (isContracted(node))
+// ORS-GH MOD START
+            if (doNotContract(node))
+// ORS-GH MOD END
                 continue;
             float priority = calculatePriority(node);
             sortedNodes.push(node, priority);
         }
         periodicUpdateSW.stop();
     }
+
+// ORS-GH MOD START added method
+    protected boolean doNotContract(int node) {
+        return isContracted(node);
+    }
+// ORS-GH MOD END
 
     private void contractNodesUsingHeuristicNodeOrdering() {
         StopWatch sw = new StopWatch().start();
@@ -242,9 +250,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
 
         // according to paper "Polynomial-time Construction of Contraction Hierarchies for Multi-criteria Objectives" by Funke and Storandt
         // we don't need to wait for all nodes to be contracted
-// ORS-GH MOD START
-        final long nodesToAvoidContract = getNodesToAvoidContract(initSize);
-// ORS-GH MOD END
+        final long nodesToAvoidContract = Math.round(initSize * ((100 - params.getNodesContractedPercentage()) / 100d));
 
         // Recompute priority of (the given percentage of) uncontracted neighbors. Doing neighbor updates takes additional
         // time during preparation but keeps node priorities more up to date. this potentially improves query time and
@@ -325,11 +331,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         _close();
     }
 
-// ORS-GH MOD START add methods
-    protected long getNodesToAvoidContract(int initSize) {
-        return Math.round(initSize * ((100 - params.getNodesContractedPercentage()) / 100d));
-    }
-
+// ORS-GH MOD START add method
     public void finishContractionHook() {}
 // ORS-GH MOD END
 
@@ -358,7 +360,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         }
     }
 
-    private IntContainer contractNode(int node, int level) {
+// ORS-GH MOD START change access from private to protected
+    protected IntContainer contractNode(int node, int level) {
+// ORS-GH MOD END
         if (isContracted(node))
             throw new IllegalArgumentException("Node " + node + " was contracted already");
         contractionSW.start();
@@ -444,9 +448,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         return allSW.getMillis();
     }
 
-// ORS-GH MOD START change access from private to public
-    public float calculatePriority(int node) {
-// ORS-GH MOD END
+    private float calculatePriority(int node) {
         if (isContracted(node))
             throw new IllegalArgumentException("Priority should only be calculated for not yet contracted nodes");
         return nodeContractor.calculatePriority(node);
