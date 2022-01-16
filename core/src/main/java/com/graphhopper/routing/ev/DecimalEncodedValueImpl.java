@@ -87,9 +87,9 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
 
         value /= factor;
         if (value > maxValue)
-            throw new IllegalArgumentException(getName() + " value too large for encoding: " + value + ", maxValue:" + maxValue);
+            throw new IllegalArgumentException(getName() + " value too large for encoding: " + value + ", maxValue:" + maxValue + ", factor: " + factor);
         if (value < minValue)
-            throw new IllegalArgumentException(getName() + " value too small for encoding " + value + ", minValue:" + minValue);
+            throw new IllegalArgumentException(getName() + " value too small for encoding " + value + ", minValue:" + minValue + ", factor: " + factor);
 
         super.uncheckedSet(reverse, ref, (int) Math.round(value));
     }
