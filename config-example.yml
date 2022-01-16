@@ -187,11 +187,11 @@ logging:
   - type: file
     time_zone: UTC
     current_log_filename: logs/graphhopper.log
-    log_format: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    log_format: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
     archive: true
     archived_log_filename_pattern: ./logs/graphhopper-%d.log.gz
     archived_file_count: 30
     never_block: true
   - type: console
     time_zone: UTC
-    log_format: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    log_format: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

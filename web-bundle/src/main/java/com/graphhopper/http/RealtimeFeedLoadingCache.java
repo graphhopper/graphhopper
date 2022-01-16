@@ -92,7 +92,7 @@ public class RealtimeFeedLoadingCache implements Factory<RealtimeFeed>, Managed 
             return cache.get("pups");
         } catch (ExecutionException | RuntimeException e) {
             e.printStackTrace();
-            return RealtimeFeed.empty(gtfsStorage);
+            return RealtimeFeed.empty();
         }
     }
 

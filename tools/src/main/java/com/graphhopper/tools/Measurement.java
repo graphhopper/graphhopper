@@ -209,17 +209,17 @@ public class Measurement {
                 boolean isLM = true;
                 Helper.parseList(args.getString("measurement.lm.active_counts", "[4,8,12,16]")).stream()
                         .mapToInt(Integer::parseInt).forEach(activeLMCount -> {
-                    measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount, count / 4, isCH, isLM).
+                    measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount, count / 20, isCH, isLM).
                             withInstructions().activeLandmarks(activeLMCount));
                     if (args.getBool("measurement.lm.edge_based", encoder.supportsTurnCosts())) {
-                        measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", count / 4, isCH, isLM).
+                        measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", count / 20, isCH, isLM).
                                 withInstructions().activeLandmarks(activeLMCount).edgeBased());
                     }
                 });
 
                 final int activeLMCount = 8;
                 if (!blockAreaStr.isEmpty())
-                    measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount + "_block_area", count / 4, isCH, isLM).
+                    measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount + "_block_area", count / 20, isCH, isLM).
                             withInstructions().activeLandmarks(activeLMCount).blockArea(blockAreaStr));
             }
 

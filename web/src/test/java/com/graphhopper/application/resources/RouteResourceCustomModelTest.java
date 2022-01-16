@@ -59,13 +59,14 @@ public class RouteResourceCustomModelTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "bike,car,foot,roads").
+                putObject("graph.flag_encoders", "bike,car,foot,wheelchair,roads").
                 putObject("prepare.min_network_size", 200).
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
                 putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type").
                 putObject("custom_model_folder", "./src/test/resources/com/graphhopper/application/resources").
                 setProfiles(Arrays.asList(
+                        new Profile("wheelchair"),
                         new CustomProfile("roads").setCustomModel(new CustomModel()).setVehicle("roads"),
                         new CustomProfile("car").setCustomModel(new CustomModel()).setVehicle("car"),
                         new CustomProfile("bike").setCustomModel(new CustomModel().setDistanceInfluence(0)).setVehicle("bike"),
@@ -337,6 +338,17 @@ public class RouteResourceCustomModelTest {
         path = getPath(jsonQuery);
         assertEquals(660, path.get("distance").asDouble(), 10);
         assertEquals(77, path.get("time").asLong() / 1000, 1);
+    }
+
+    @Test
+    public void wheelchair() {
+        String jsonQuery = "{" +
+                " \"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
+                " \"profile\": \"wheelchair\"," +
+                " \"ch.disable\": true" +
+                "}";
+        JsonNode path = getPath(jsonQuery);
+        assertEquals(1500, path.get("distance").asDouble(), 10);
     }
 
     private void assertMessageStartsWith(JsonNode jsonNode, String message) {

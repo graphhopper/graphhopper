@@ -24,11 +24,11 @@ import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-class QuadEdgeSubdivisionAsReadableTriangulation implements ReadableTriangulation {
+public class QuadEdgeSubdivisionAsReadableTriangulation implements ReadableTriangulation {
 
     private final QuadEdgeSubdivision delegate;
 
-    QuadEdgeSubdivisionAsReadableTriangulation(QuadEdgeSubdivision quadEdgeSubdivision) {
+    public QuadEdgeSubdivisionAsReadableTriangulation(QuadEdgeSubdivision quadEdgeSubdivision) {
         this.delegate = quadEdgeSubdivision;
     }
 

@@ -72,7 +72,7 @@ public class RealtimeBundle implements ConfiguredBundle<RealtimeBundleConfigurat
 
         @Override
         public RealtimeFeed provide() {
-            return RealtimeFeed.empty(staticGtfs);
+            return RealtimeFeed.empty();
         }
 
         @Override

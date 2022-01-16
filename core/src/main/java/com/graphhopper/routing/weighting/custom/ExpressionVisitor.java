@@ -40,6 +40,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
     private final Set<String> allowedMethods = new HashSet<>(Arrays.asList("ordinal", "getDistance", "getName",
             "contains", "sqrt", "abs"));
     private String invalidMessage;
+    private DefaultEncodedValueFactory factory = new DefaultEncodedValueFactory();
 
     public ExpressionVisitor(ParseResult result, NameValidator nameValidator, EncodedValueLookup lookup) {
         this.result = result;
@@ -73,7 +74,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
                     // e.g. like road_class
                     if (isValidIdentifier(arg)) return true;
                     try {
-                        new DefaultEncodedValueFactory().create(arg);
+                        factory.create(arg);
                         invalidMessage = "encoded value '" + arg + "' not available";
                         return false;
                     } catch (Exception ex) {
@@ -170,7 +171,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
                     expressions.append("else ");
                 expressions.append("if (" + parseResult.converted + ") {" + statement.getOperation().build(statement.getValue()) + "; }\n");
             } else {
-                throw new IllegalArgumentException("The clause must be either 'if', 'else_if' or 'else'");
+                throw new IllegalArgumentException("The statement must be either 'if', 'else_if' or 'else'");
             }
         }
         expressions.append(lastStmt);

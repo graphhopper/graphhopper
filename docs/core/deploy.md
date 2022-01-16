@@ -44,6 +44,8 @@ Then 'only' 15GB are necessary and without contraction hierarchy this can be fur
 
 Avoid swapping e.g. on linux via `vm.swappiness=0` in /etc/sysctl.conf. See some tuning discussion in the answers [here](http://stackoverflow.com/q/38905739/194609).
 
+When using the MMAP setting (default for elevation data), then ensure `/proc/sys/vm/max_map_count` is enough or set it via `sysctl -w vm.max_map_count=500000`. see also https://github.com/graphhopper/graphhopper/issues/1866.
+
 ### Elevation Data
 
 If you want to use elevation data you need to increase the allowed number of open files. Under linux this works as follows:
@@ -55,3 +57,4 @@ If you want to use elevation data you need to increase the allowed number of ope
  * add: `fs.file-max = 90000`
  * reboot now (or sudo sysctl -p; and re-login)
  * afterwards `ulimit -Hn` and `ulimit -Sn` should give you 100000
+ 
