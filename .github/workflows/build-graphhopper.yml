@@ -44,5 +44,5 @@ jobs:
           push: true
           tags:
             ${{ steps.meta.outputs.tags }}
-            ${{ env.IMAGE }}@${{ env.GIT_SHA }}
+            ${{ env.IMAGE }}${{ env.GIT_SHA }}
           labels: ${{ steps.meta.outputs.labels }}
