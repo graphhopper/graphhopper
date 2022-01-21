@@ -44,5 +44,6 @@ jobs:
           push: true
           tags:
             ${{ steps.meta.outputs.tags }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.IMAGE }}:${{ env.GIT_REF }}
+            ${{ env.IMAGE }}:${{ env.GIT_SHA }}
           labels: ${{ steps.meta.outputs.labels }}
