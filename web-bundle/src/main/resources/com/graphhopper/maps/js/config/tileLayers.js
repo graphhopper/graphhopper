@@ -79,15 +79,6 @@ var availableTileLayers = {
     "Omniscale": omniscale,
     "OpenStreetMap": osm,
     "Esri Aerial": esriAerial,
-    "TF Transport": thunderTransport,
-    "TF Cycle": thunderCycle,
-    "TF Outdoors": thunderOutdoors,
-    "TF Neighbourhood": thunderNeighbourhood,
-    "Kurviger Liberty": kurvigerLiberty,
-    "Lyrk": lyrk,
-    "WanderReitKarte": wrk,
-    "Sorbian Language": sorbianLang,
-    "OpenStreetMap.de": osmde
 };
 
 var overlays;
