@@ -1,10 +1,8 @@
 graphhopper:
 
   # OpenStreetMap input file PBF or XML, can be changed via command line -Ddw.graphhopper.datareader.file=some.pbf
-  datareader.file: ${PATH_TO_PBF}
-  # datareader.file: /media/norcal-latest.osm.pbf
-  gtfs.file: ${PATH_TO_GTFS_ZIP}
-  # gtfs.file: /media/bay-area-gtfs.zip
+  datareader.file: /media/norcal-latest.osm.pbf
+  gtfs.file: /media/bay-area-gtfs.zip
   # Local folder used by graphhopper to store its data
   graph.location: graph-cache
 
