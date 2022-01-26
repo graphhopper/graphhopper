@@ -141,7 +141,7 @@ public class LandmarkStorage {
         // In this sense its even 'better' to use node-based.
         this.traversalMode = TraversalMode.NODE_BASED;
 // ORS-GH MOD START
-        this.landmarkWeightDA = dir.find(getLandmarksFileName());
+        this.landmarkWeightDA = dir.find(getLandmarksFileName() + lmConfig.getName());
 // ORS-GH MOD END
 
         this.landmarks = landmarks;
@@ -151,13 +151,13 @@ public class LandmarkStorage {
         this.TO_OFFSET = 2;
         this.landmarkIDs = new ArrayList<>();
 // ORS-GH MOD START
-        this.subnetworkStorage = new SubnetworkStorage(dir, getLandmarksFileName());
+        this.subnetworkStorage = new SubnetworkStorage(dir, getLandmarksFileName() + lmConfig.getName());
 // ORS-GH MOD END
     }
 
 // ORS-GH MOD START add method which can be overriden by CoreLandmarksStorage
     public String getLandmarksFileName() {
-        return "landmarks_" + lmConfig.getName();
+        return "landmarks_";
     }
 // ORS-GH MOD END
 
