@@ -53,16 +53,14 @@ public abstract class GHMatrixAbstractRequester {
     public GHMatrixAbstractRequester(String serviceUrl) {
         this(serviceUrl, new OkHttpClient.Builder().
                 connectTimeout(5, TimeUnit.SECONDS).
-                readTimeout(5, TimeUnit.SECONDS), true);
+                readTimeout(5, TimeUnit.SECONDS).build(), true);
     }
 
-    public GHMatrixAbstractRequester(String serviceUrl, OkHttpClient.Builder builder, boolean doRequestGzip) {
+    public GHMatrixAbstractRequester(String serviceUrl, OkHttpClient client, boolean doRequestGzip) {
         if (serviceUrl.endsWith("/")) {
             serviceUrl = serviceUrl.substring(0, serviceUrl.length() - 1);
         }
-        if (doRequestGzip)
-            builder.addInterceptor(new GzipRequestInterceptor());
-        this.downloader = builder.build();
+        this.downloader = doRequestGzip ? client.newBuilder().addInterceptor(new GzipRequestInterceptor()).build() : client;
         this.serviceUrl = serviceUrl;
 
         ignoreSet.add("key");
