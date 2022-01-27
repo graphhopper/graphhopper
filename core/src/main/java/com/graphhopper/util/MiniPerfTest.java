@@ -17,9 +17,6 @@
  */
 package com.graphhopper.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
@@ -33,7 +30,6 @@ public class MiniPerfTest {
     private static final double NS_PER_MS = 1e6;
     private static final double NS_PER_US = 1e3;
 
-    protected Logger logger = LoggerFactory.getLogger(getClass());
     private int counts = 100;
     private long fullTime = 0;
     private long max;
@@ -57,7 +53,6 @@ public class MiniPerfTest {
                 max = time;
         }
         fullTime = System.nanoTime() - startFull;
-        logger.info("dummySum:" + dummySum);
         return this;
     }
 
