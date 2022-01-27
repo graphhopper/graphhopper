@@ -33,12 +33,12 @@ import java.util.SortedMap;
  * @author Robin Boldt
  */
 @Path("health")
-public class HealthcheckResource {
+public class HealthCheckResource {
 
     private HealthCheckRegistry registry;
 
     @Inject
-    public HealthcheckResource(HealthCheckRegistry registry) {
+    public HealthCheckResource(HealthCheckRegistry registry) {
         this.registry = registry;
     }
 
