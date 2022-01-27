@@ -505,29 +505,21 @@ public class PathTest {
         EdgeIteratorState tmpEdge;
         tmpEdge = GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 9).setDistance(2)).setName("3-9");
         BooleanEncodedValue carManagerRoundabout = carManager.getBooleanEncodedValue(Roundabout.KEY);
-        carManagerRoundabout.setBool(false, tmpEdge.getFlags(), true);
-        tmpEdge.setFlags(tmpEdge.getFlags());
+        tmpEdge.set(carManagerRoundabout, true);
         tmpEdge = GHUtility.setSpeed(60, true, false, encoder, graph.edge(9, 10).setDistance(2)).setName("9-10");
-        carManagerRoundabout.setBool(false, tmpEdge.getFlags(), true);
-        tmpEdge.setFlags(tmpEdge.getFlags());
+        tmpEdge.set(carManagerRoundabout, true);
         tmpEdge = GHUtility.setSpeed(60, true, false, encoder, graph.edge(6, 10).setDistance(2)).setName("6-10");
-        carManagerRoundabout.setBool(false, tmpEdge.getFlags(), true);
-        tmpEdge.setFlags(tmpEdge.getFlags());
+        tmpEdge.set(carManagerRoundabout, true);
         tmpEdge = GHUtility.setSpeed(60, true, false, encoder, graph.edge(10, 1).setDistance(2)).setName("10-1");
-        carManagerRoundabout.setBool(false, tmpEdge.getFlags(), true);
-        tmpEdge.setFlags(tmpEdge.getFlags());
+        tmpEdge.set(carManagerRoundabout, true);
         tmpEdge = GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 2).setDistance(5)).setName("2-3");
-        carManagerRoundabout.setBool(false, tmpEdge.getFlags(), true);
-        tmpEdge.setFlags(tmpEdge.getFlags());
+        tmpEdge.set(carManagerRoundabout, true);
         tmpEdge = GHUtility.setSpeed(60, true, false, encoder, graph.edge(4, 3).setDistance(5)).setName("3-4");
-        carManagerRoundabout.setBool(false, tmpEdge.getFlags(), true);
-        tmpEdge.setFlags(tmpEdge.getFlags());
+        tmpEdge.set(carManagerRoundabout, true);
         tmpEdge = GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 4).setDistance(5)).setName("4-5");
-        carManagerRoundabout.setBool(false, tmpEdge.getFlags(), true);
-        tmpEdge.setFlags(tmpEdge.getFlags());
+        tmpEdge.set(carManagerRoundabout, true);
         tmpEdge = GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 5).setDistance(5)).setName("5-2");
-        carManagerRoundabout.setBool(false, tmpEdge.getFlags(), true);
-        tmpEdge.setFlags(tmpEdge.getFlags());
+        tmpEdge.set(carManagerRoundabout, true);
 
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 7).setDistance(5)).setName("MainStreet 4 7");
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 8).setDistance(5)).setName("5-8");
@@ -1119,8 +1111,7 @@ public class PathTest {
                 BooleanEncodedValue accessEnc = encoder.getAccessEnc();
                 for (EdgeIteratorState edge : roundaboutEdges) {
                     edge.set(accessEnc, clockwise).setReverse(accessEnc, !clockwise);
-                    mixedRoundabout.setBool(false, edge.getFlags(), true);
-                    edge.setFlags(edge.getFlags());
+                    edge.set(mixedRoundabout, true);
                 }
             }
             this.clockwise = clockwise;

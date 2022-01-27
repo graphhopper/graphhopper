@@ -199,7 +199,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             // out of the roundabout
             EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(edge.getAdjNode());
             while (edgeIter.next()) {
-                if (!roundaboutEnc.getBool(false, edgeIter.getFlags())) {
+                if (!edgeIter.get(roundaboutEnc)) {
                     ((RoundaboutInstruction) prevInstruction).increaseExitNumber();
                     break;
                 }
