@@ -36,6 +36,10 @@ public class MiniPerfTest {
     private long min = Long.MAX_VALUE;
     private int dummySum;
 
+    /**
+     * Important: Make sure to use the dummy sum in your program somewhere such that it's calculation cannot be skipped
+     * by the JVM. Either use {@link #getDummySum()} or {@link #getReport()} after running this method.
+     */
     public MiniPerfTest start(Task m) {
         int warmupCount = Math.max(1, counts / 3);
         for (int i = 0; i < warmupCount; i++) {
@@ -116,7 +120,7 @@ public class MiniPerfTest {
 
     public String getReport() {
         double meanNs = ((double) fullTime) / counts;
-        return "sum:" + formatDuration(fullTime) + ", time/call:" + formatDuration(meanNs);
+        return "sum:" + formatDuration(fullTime) + ", time/call:" + formatDuration(meanNs) + ", dummy: " + dummySum;
     }
 
     public int getDummySum() {
