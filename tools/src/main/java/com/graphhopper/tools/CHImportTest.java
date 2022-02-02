@@ -50,16 +50,16 @@ public class CHImportTest {
                 new Profile(vehicle).setVehicle(vehicle).setWeighting("fastest")
         ));
         config.setCHProfiles(Collections.singletonList(new CHProfile(vehicle)));
-        config.putObject(CHParameters.PERIODIC_UPDATES, map.getInt("periodic", 20));
-        config.putObject(CHParameters.LAST_LAZY_NODES_UPDATES, map.getInt("lazy", 10));
-        config.putObject(CHParameters.NEIGHBOR_UPDATES, map.getInt("neighbor", 20));
-        config.putObject(CHParameters.NEIGHBOR_UPDATES_MAX, map.getInt("neighbor_max", -1));
+        config.putObject(CHParameters.PERIODIC_UPDATES, map.getInt("periodic", 0));
+        config.putObject(CHParameters.LAST_LAZY_NODES_UPDATES, map.getInt("lazy", 100));
+        config.putObject(CHParameters.NEIGHBOR_UPDATES, map.getInt("neighbor", 100));
+        config.putObject(CHParameters.NEIGHBOR_UPDATES_MAX, map.getInt("neighbor_max", 2));
         config.putObject(CHParameters.CONTRACTED_NODES, map.getInt("contracted", 100));
         config.putObject(CHParameters.LOG_MESSAGES, map.getInt("logs", 20));
         config.putObject(CHParameters.EDGE_DIFFERENCE_WEIGHT, map.getDouble("edge_diff", 10));
         config.putObject(CHParameters.ORIGINAL_EDGE_COUNT_WEIGHT, map.getDouble("orig_edge", 1));
-        config.putObject(CHParameters.MEAN_FACTOR_NODES_HEURISTIC, map.getDouble("mf_heur", 100));
-        config.putObject(CHParameters.MEAN_FACTOR_NODES_CONTRACTION, map.getDouble("mf_contr", 100));
+        config.putObject(CHParameters.MAX_POLL_FACTOR_HEURISTIC_NODE, map.getDouble("mpf_heur", 5));
+        config.putObject(CHParameters.MAX_POLL_FACTOR_CONTRACTION_NODE, map.getDouble("mpf_contr", 200));
         GraphHopper hopper = new GraphHopper();
         hopper.init(config);
         if (map.getBool("use_country_rules", false))

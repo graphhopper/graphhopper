@@ -58,8 +58,8 @@ class NodeBasedNodeContractor implements NodeContractor {
     private void extractParams(PMap pMap) {
         params.edgeDifferenceWeight = pMap.getFloat(EDGE_DIFFERENCE_WEIGHT, params.edgeDifferenceWeight);
         params.originalEdgesCountWeight = pMap.getFloat(ORIGINAL_EDGE_COUNT_WEIGHT, params.originalEdgesCountWeight);
-        params.meanFactorHeuristic = pMap.getDouble(MEAN_FACTOR_NODES_HEURISTIC, params.meanFactorHeuristic);
-        params.meanFactorContraction = pMap.getDouble(MEAN_FACTOR_NODES_CONTRACTION, params.meanFactorContraction);
+        params.meanFactorHeuristic = pMap.getDouble(MAX_POLL_FACTOR_HEURISTIC_NODE, params.meanFactorHeuristic);
+        params.meanFactorContraction = pMap.getDouble(MAX_POLL_FACTOR_CONTRACTION_NODE, params.meanFactorContraction);
     }
 
     @Override
@@ -309,13 +309,9 @@ class NodeBasedNodeContractor implements NodeContractor {
         // default values were optimized for Unterfranken
         private float edgeDifferenceWeight = 10;
         private float originalEdgesCountWeight = 1;
-        // todonow: update comments
         // these values seemed to work best for planet (fast prep without compromising too much for the query time)
-        // higher values can further decrease the number of shortcuts and improve the query time, but only by a few
-        // percent and at the cost of a longer preparation. for smaller maps smaller values can work even better, i.e.
-        // try 20/100 or similar.
-//        private int maxVisitedNodesHeuristic = 30;
-//        private int maxVisitedNodesContraction = 200;
+        // higher values can further decrease the number of shortcuts and improve the query time, but normally at the
+        // cost of a longer preparation
         private double meanFactorHeuristic = 5;
         private double meanFactorContraction = 200;
     }
