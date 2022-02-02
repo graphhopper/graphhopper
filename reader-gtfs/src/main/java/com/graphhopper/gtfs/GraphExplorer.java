@@ -163,7 +163,7 @@ public final class GraphExplorer {
             public boolean tryAdvance(Consumer<? super MultiModalEdge> action) {
                 while (e.next()) {
                     if (reverse ? e.getReverse(accessEnc) : e.get(accessEnc)) {
-                        action.accept(new MultiModalEdge(e.getEdge(), e.getBaseNode(), e.getAdjNode(), (long) (accessEgressWeighting.calcEdgeMillis(e.detach(false), reverse) * (5.0 / walkSpeedKmH)), e.getDistance()));
+                        action.accept(new MultiModalEdge(e.getEdge(), e.getBaseNode(), e.getAdjNode(), (long) (accessEgressWeighting.calcEdgeMillis(e.detach(false), reverse)), e.getDistance()));
                         return true;
                     }
                 }

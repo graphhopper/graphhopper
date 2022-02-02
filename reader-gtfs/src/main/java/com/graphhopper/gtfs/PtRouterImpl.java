@@ -159,10 +159,12 @@ public final class PtRouterImpl implements PtRouter {
             limitTripTime = request.getLimitTripTime() != null ? request.getLimitTripTime().toMillis() : Long.MAX_VALUE;
             limitStreetTime = request.getLimitStreetTime() != null ? request.getLimitStreetTime().toMillis() : Long.MAX_VALUE;
             requestedPathDetails = request.getPathDetails();
-            accessProfile = config.getProfiles().stream().filter(p -> p.getName().equals(request.getAccessProfile())).findFirst().get();
+            accessProfile = new Profile("bike2");
+            accessProfile.setVehicle("bike2");
             accessWeighting = weightingFactory.createWeighting(accessProfile, new PMap(), false);
             accessSnapFilter = new DefaultSnapFilter(new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder(accessProfile.getVehicle())), graphHopperStorage.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(accessProfile.getVehicle())));
-            egressProfile = config.getProfiles().stream().filter(p -> p.getName().equals(request.getEgressProfile())).findFirst().get();
+            egressProfile = new Profile("bike2");
+            egressProfile.setVehicle("bike2");
             egressWeighting = weightingFactory.createWeighting(egressProfile, new PMap(), false);
             egressSnapFilter = new DefaultSnapFilter(new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder(egressProfile.getVehicle())), graphHopperStorage.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(egressProfile.getVehicle())));
         }
