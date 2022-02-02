@@ -78,7 +78,7 @@ class GtfsReader {
     private static final Logger LOGGER = LoggerFactory.getLogger(GtfsReader.class);
 
     private final GraphHopperStorage graph;
-    private final LocationIndex walkNetworkIndex;
+    private final LocationIndex bikeNetworkIndex;
     private final GtfsStorage gtfsStorage;
 
     private final Transfers transfers;
@@ -91,7 +91,7 @@ class GtfsReader {
         this.id = id;
         this.graph = graph;
         this.gtfsStorage = gtfsStorage;
-        this.walkNetworkIndex = walkNetworkIndex;
+        this.bikeNetworkIndex = walkNetworkIndex;
         this.feed = this.gtfsStorage.getGtfsFeeds().get(id);
         this.transfers = transfers;
         this.startDate = feed.getStartDate();
@@ -103,11 +103,11 @@ class GtfsReader {
 
     void connectStopsToStreetNetwork() {
         EncodingManager em = graph.getEncodingManager();
-        FlagEncoder footEncoder = em.getEncoder("foot");
-        final EdgeFilter filter = new DefaultSnapFilter(new FastestWeighting(footEncoder), em.getBooleanEncodedValue(Subnetwork.key("foot")));
+        FlagEncoder bikeEncoder = em.getEncoder("bike2");
+        final EdgeFilter filter = new DefaultSnapFilter(new FastestWeighting(bikeEncoder), em.getBooleanEncodedValue(Subnetwork.key("bike2")));
         for (Stop stop : feed.stops.values()) {
             if (stop.location_type == 0) { // Only stops. Not interested in parent stations for now.
-                Snap locationSnap = walkNetworkIndex.findClosest(stop.stop_lat, stop.stop_lon, filter);
+                Snap locationSnap = bikeNetworkIndex.findClosest(stop.stop_lat, stop.stop_lon, filter);
                 Integer stopNode;
                 if (locationSnap.isValid()) {
                     stopNode = gtfsStorage.getStreetToPt().get(locationSnap.getClosestNode());
