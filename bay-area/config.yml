@@ -84,6 +84,11 @@ graphhopper:
   # for the preparation (`my_other_profile`)
   profiles_lm: []
 
+  ##### Multi Modal #####
+
+  # The profile to use for access/egress to/from public transit
+  pt.connecting_profile: bike2
+
   ##### Elevation #####
 
 

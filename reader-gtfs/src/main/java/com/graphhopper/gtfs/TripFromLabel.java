@@ -70,12 +70,12 @@ class TripFromLabel {
         this.pathDetailsBuilderFactory = pathDetailsBuilderFactory;
     }
 
-    ResponsePath createResponsePath(Translation tr, PointList waypoints, Graph queryGraph, Weighting accessWeighting, Weighting egressWeighting, List<Label.Transition> solution, List<String> requestedPathDetails) {
+    ResponsePath createResponsePath(Translation tr, PointList waypoints, Graph queryGraph, Weighting connectingWeighting, List<Label.Transition> solution, List<String> requestedPathDetails) {
         final List<List<Label.Transition>> partitions = parsePathToPartitions(solution);
 
         final List<Trip.Leg> legs = new ArrayList<>();
         for (int i = 0; i < partitions.size(); i++) {
-            legs.addAll(parsePartitionToLegs(partitions.get(i), queryGraph, i == partitions.size() - 1 ? egressWeighting : accessWeighting, tr, requestedPathDetails));
+            legs.addAll(parsePartitionToLegs(partitions.get(i), queryGraph, connectingWeighting, tr, requestedPathDetails));
         }
 
         if (legs.size() > 1 && legs.get(0) instanceof Trip.WalkLeg) {

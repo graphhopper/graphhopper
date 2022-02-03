@@ -41,7 +41,7 @@ public final class GraphExplorer {
     private final GtfsStorage gtfsStorage;
     private final RealtimeFeed realtimeFeed;
     private final boolean reverse;
-    private final Weighting accessEgressWeighting;
+    private final Weighting connectingWeighting;
     private final BooleanEncodedValue accessEnc;
     private final boolean walkOnly;
     private final boolean ptOnly;
@@ -50,14 +50,14 @@ public final class GraphExplorer {
     private final int blockedRouteTypes;
     private final PtGraph ptGraph;
 
-    public GraphExplorer(Graph graph, PtGraph ptGraph, Weighting accessEgressWeighting, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, boolean walkOnly, boolean ptOnly, double walkSpeedKmh, boolean ignoreValidities, int blockedRouteTypes) {
+    public GraphExplorer(Graph graph, PtGraph ptGraph, Weighting connectingWeighting, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, boolean walkOnly, boolean ptOnly, double walkSpeedKmh, boolean ignoreValidities, int blockedRouteTypes) {
         this.ptGraph = ptGraph;
-        this.accessEgressWeighting = accessEgressWeighting;
-        this.accessEnc = accessEgressWeighting.getFlagEncoder().getAccessEnc();
+        this.connectingWeighting = connectingWeighting;
+        this.accessEnc = connectingWeighting.getFlagEncoder().getAccessEnc();
         this.ignoreValidities = ignoreValidities;
         this.blockedRouteTypes = blockedRouteTypes;
-        AccessFilter accessEgressIn = AccessFilter.inEdges(accessEgressWeighting.getFlagEncoder().getAccessEnc());
-        AccessFilter accessEgressOut = AccessFilter.outEdges(accessEgressWeighting.getFlagEncoder().getAccessEnc());
+        AccessFilter accessEgressIn = AccessFilter.inEdges(connectingWeighting.getFlagEncoder().getAccessEnc());
+        AccessFilter accessEgressOut = AccessFilter.outEdges(connectingWeighting.getFlagEncoder().getAccessEnc());
         this.edgeExplorer = graph.createEdgeExplorer(reverse ? accessEgressIn : accessEgressOut);
         this.gtfsStorage = gtfsStorage;
         this.realtimeFeed = realtimeFeed;
@@ -163,7 +163,7 @@ public final class GraphExplorer {
             public boolean tryAdvance(Consumer<? super MultiModalEdge> action) {
                 while (e.next()) {
                     if (reverse ? e.getReverse(accessEnc) : e.get(accessEnc)) {
-                        action.accept(new MultiModalEdge(e.getEdge(), e.getBaseNode(), e.getAdjNode(), (long) (accessEgressWeighting.calcEdgeMillis(e.detach(false), reverse)), e.getDistance()));
+                        action.accept(new MultiModalEdge(e.getEdge(), e.getBaseNode(), e.getAdjNode(), (long) (connectingWeighting.calcEdgeMillis(e.detach(false), reverse)), e.getDistance()));
                         return true;
                     }
                 }
