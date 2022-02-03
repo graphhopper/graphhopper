@@ -172,6 +172,6 @@ public class MotorcycleFlagEncoderTest {
         edge.setFlags(flags);
         encoder.applyWayTags(way, edge);
         DecimalEncodedValue curvatureEnc = encoder.getDecimalEncodedValue(EncodingManager.getKey(encoder, "curvature"));
-        return curvatureEnc.getDecimal(false, edge.getFlags());
+        return edge.get(curvatureEnc);
     }
 }

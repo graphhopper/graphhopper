@@ -34,7 +34,10 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphEdgeIdFinder;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
@@ -217,8 +220,9 @@ public class Router {
             throw new IllegalArgumentException("Currently alternative routes work only with start and end point. You tried to use: " + request.getPoints().size() + " points");
         GHResponse ghRsp = new GHResponse();
         StopWatch sw = new StopWatch().start();
+        DirectedEdgeFilter directedEdgeFilter = solver.createDirectedEdgeFilter();
         List<Snap> snaps = ViaRouting.lookup(encodingManager, request.getPoints(), solver.createSnapFilter(), locationIndex,
-                request.getSnapPreventions(), request.getPointHints(), solver.createDirectedSnapFilter(), request.getHeadings());
+                request.getSnapPreventions(), request.getPointHints(), directedEdgeFilter, request.getHeadings());
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
         QueryGraph queryGraph = QueryGraph.create(ghStorage, snaps);
         PathCalculator pathCalculator = solver.createPathCalculator(queryGraph);
@@ -229,7 +233,7 @@ public class Router {
         if (!request.getCurbsides().isEmpty())
             throw new IllegalArgumentException("Alternative paths do not support the " + CURBSIDE + " parameter yet");
 
-        ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, snaps, solver.weighting, pathCalculator, request.getCurbsides(), forceCurbsides, request.getHeadings(), passThrough);
+        ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, snaps, directedEdgeFilter, pathCalculator, request.getCurbsides(), forceCurbsides, request.getHeadings(), passThrough);
         if (result.paths.isEmpty())
             throw new RuntimeException("Empty paths for alternative route calculation not expected");
 
@@ -248,8 +252,9 @@ public class Router {
     protected GHResponse routeVia(GHRequest request, Solver solver) {
         GHResponse ghRsp = new GHResponse();
         StopWatch sw = new StopWatch().start();
+        DirectedEdgeFilter directedEdgeFilter = solver.createDirectedEdgeFilter();
         List<Snap> snaps = ViaRouting.lookup(encodingManager, request.getPoints(), solver.createSnapFilter(), locationIndex,
-                request.getSnapPreventions(), request.getPointHints(), solver.createDirectedSnapFilter(), request.getHeadings());
+                request.getSnapPreventions(), request.getPointHints(), directedEdgeFilter, request.getHeadings());
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
         // (base) query graph used to resolve headings, curbsides etc. this is not necessarily the same thing as
         // the (possibly implementation specific) query graph used by PathCalculator
@@ -257,7 +262,7 @@ public class Router {
         PathCalculator pathCalculator = solver.createPathCalculator(queryGraph);
         boolean passThrough = getPassThrough(request.getHints());
         boolean forceCurbsides = getForceCurbsides(request.getHints());
-        ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, snaps, solver.weighting,
+        ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, snaps, directedEdgeFilter,
                 pathCalculator, request.getCurbsides(), forceCurbsides, request.getHeadings(), passThrough);
 
         if (request.getPoints().size() != result.paths.size() + 1)
@@ -385,9 +390,9 @@ public class Router {
             return new DefaultSnapFilter(weighting, lookup.getBooleanEncodedValue(Subnetwork.key(profile.getName())));
         }
 
-        protected EdgeFilter createDirectedSnapFilter() {
+        protected DirectedEdgeFilter createDirectedEdgeFilter() {
             BooleanEncodedValue inSubnetworkEnc = lookup.getBooleanEncodedValue(Subnetwork.key(profile.getName()));
-            return edgeState -> !edgeState.get(inSubnetworkEnc) && Double.isFinite(weighting.calcEdgeWeightWithAccess(edgeState, false));
+            return (edgeState, reverse) -> !edgeState.get(inSubnetworkEnc) && Double.isFinite(weighting.calcEdgeWeightWithAccess(edgeState, reverse));
         }
 
         protected abstract PathCalculator createPathCalculator(QueryGraph queryGraph);

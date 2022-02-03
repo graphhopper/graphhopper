@@ -59,13 +59,14 @@ public class RouteResourceCustomModelTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "bike,car,foot").
+                putObject("graph.flag_encoders", "bike,car,foot,wheelchair").
                 putObject("prepare.min_network_size", 200).
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
                 putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type").
                 putObject("custom_model_folder", "./src/test/resources/com/graphhopper/application/resources").
                 setProfiles(Arrays.asList(
+                        new Profile("wheelchair"),
                         new CustomProfile("car").setCustomModel(new CustomModel()).setVehicle("car"),
                         new CustomProfile("bike").setCustomModel(new CustomModel().setDistanceInfluence(0)).setVehicle("bike"),
                         new Profile("bike_fastest").setWeighting("fastest").setVehicle("bike"),
@@ -77,8 +78,8 @@ public class RouteResourceCustomModelTest {
                                 putHint("custom_model_file", "json_bike.json"),
                         new Profile("foot_profile").setVehicle("foot").setWeighting("fastest"),
                         new CustomProfile("car_no_unclassified").setCustomModel(
-                                new CustomModel(new CustomModel().
-                                        addToPriority(If("road_class == UNCLASSIFIED", LIMIT, 0)))).
+                                        new CustomModel(new CustomModel().
+                                                addToPriority(If("road_class == UNCLASSIFIED", LIMIT, 0)))).
                                 setVehicle("car"),
                         new CustomProfile("custom_bike").
                                 setCustomModel(new CustomModel().
@@ -86,13 +87,13 @@ public class RouteResourceCustomModelTest {
                                         addToPriority(If("max_width < 1.2", MULTIPLY, 0))).
                                 setVehicle("bike"),
                         new CustomProfile("custom_bike2").setCustomModel(
-                                new CustomModel(new CustomModel().
-                                        addToPriority(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, 0)))).
+                                        new CustomModel(new CustomModel().
+                                                addToPriority(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, 0)))).
                                 setVehicle("bike"),
                         new CustomProfile("custom_bike3").setCustomModel(
-                                new CustomModel(new CustomModel().
-                                        addToSpeed(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, 10)).
-                                        addToSpeed(If("true", LIMIT, 40)))).
+                                        new CustomModel(new CustomModel().
+                                                addToSpeed(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, 10)).
+                                                addToSpeed(If("true", LIMIT, 40)))).
                                 setVehicle("bike"))).
                 setCHProfiles(Arrays.asList(new CHProfile("truck"), new CHProfile("car_no_unclassified")));
         return config;
@@ -323,6 +324,17 @@ public class RouteResourceCustomModelTest {
         path = getPath(jsonQuery);
         assertEquals(660, path.get("distance").asDouble(), 10);
         assertEquals(77, path.get("time").asLong() / 1000, 1);
+    }
+
+    @Test
+    public void wheelchair() {
+        String jsonQuery = "{" +
+                " \"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
+                " \"profile\": \"wheelchair\"," +
+                " \"ch.disable\": true" +
+                "}";
+        JsonNode path = getPath(jsonQuery);
+        assertEquals(1500, path.get("distance").asDouble(), 10);
     }
 
     private void assertMessageStartsWith(JsonNode jsonNode, String message) {
