@@ -21,8 +21,7 @@ const CreateQuery = (baseUrl, search) => {
     url.searchParams.set("locale", "en-US");
     url.searchParams.set("profile", "pt");
     url.searchParams.set("pt.profile", search.rangeQuery);
-    url.searchParams.set("pt.access_profile", search.accessProfile);
-    url.searchParams.set("pt.egress_profile", search.egressProfile);
+    url.searchParams.set("pt.connecting_profile", search.connectingProfile);
     url.searchParams.set("pt.profile_duration", search.rangeQueryDuration);
     url.searchParams.set("pt.limit_street_time", search.limitStreetTime);
     url.searchParams.set("pt.ignore_transfers", search.ignoreTransfers);
@@ -65,8 +64,7 @@ const ParseQuery = (search, searchParams) => {
     parse("pt.profile_duration", "rangeQueryDuration", searchParams);
     parse("pt.limit_street_time", "limitStreetTime", searchParams);
     parse("pt.ignore_transfers", "ignoreTransfers", searchParams);
-    parse("pt.access_profile", "accessProfile", searchParams);
-    parse("pt.egress_profile", "egressProfile", searchParams);
+    parse("pt.connecting_profile", "connectingProfile", searchParams);
     return search;
 };
 

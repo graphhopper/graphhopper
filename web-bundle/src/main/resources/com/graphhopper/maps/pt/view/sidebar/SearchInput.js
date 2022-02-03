@@ -76,18 +76,11 @@ class SearchInput extends React.Component {
             "div",
             null,
             React.createElement(Select, {
-                value: this.props.search.accessProfile,
-                label: "Access profile",
-                options: this.accessEgressProfileOptions(),
+                value: this.props.search.connectingProfile,
+                label: "Connecting profile",
+                options: this.connectingProfileOptions(),
                 onChange: this.handleInputChange,
-                actionType: "accessProfile"
-            }),
-            React.createElement(Select, {
-                value: this.props.search.egressProfile,
-                label: "Egress profile",
-                options: this.accessEgressProfileOptions(),
-                onChange: this.handleInputChange,
-                actionType: "egressProfile"
+                actionType: "connectingProfile"
             }),
             React.createElement(
                 TextInput,
@@ -123,7 +116,7 @@ class SearchInput extends React.Component {
         ) : ""));
     }
 
-    accessEgressProfileOptions() {
+    connectingProfileOptions() {
         return this.props.search.info.profiles
             .filter(function (profile) {
                 return profile.name != "pt";

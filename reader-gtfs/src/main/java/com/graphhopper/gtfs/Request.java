@@ -43,8 +43,7 @@ public class Request {
     private Duration limitStreetTime;
     private Duration maxProfileDuration = Duration.ofDays(1);
     private List<String> pathDetails = new ArrayList<>();
-    private String accessProfile = "foot";
-    private String egressProfile = "foot";
+    private String connectingProfile;
 
     public Request(List<GHLocation> points, Instant departureTime) {
         this.points = points;
@@ -187,19 +186,12 @@ public class Request {
         this.pathDetails = pathDetails;
     }
 
-    public String getAccessProfile() {
-        return accessProfile;
+    public String getConnectingProfile() {
+        return connectingProfile;
     }
 
-    public void setAccessProfile(String accessProfile) {
-        this.accessProfile = accessProfile;
+    public void setConnectingProfile(String accessProfile) {
+        this.connectingProfile = accessProfile;
     }
 
-    public String getEgressProfile() {
-        return egressProfile;
-    }
-
-    public void setEgressProfile(String egressProfile) {
-        this.egressProfile = egressProfile;
-    }
 }

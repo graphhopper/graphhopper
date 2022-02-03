@@ -28,6 +28,7 @@ import com.graphhopper.util.PMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * This class represents the global configuration for the GraphHopper class, which is typically configured via the
@@ -58,6 +59,10 @@ public class GraphHopperConfig {
 
     public List<Profile> getProfiles() {
         return profiles;
+    }
+
+    public Optional<Profile> getProfileByName(String name) {
+        return getProfiles().stream().filter(p -> p.getName().equals(name)).findFirst();
     }
 
     public GraphHopperConfig setProfiles(List<Profile> profiles) {
