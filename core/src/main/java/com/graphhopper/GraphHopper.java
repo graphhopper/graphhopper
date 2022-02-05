@@ -907,6 +907,7 @@ public class GraphHopper {
      */
     protected void postProcessing(boolean closeEarly) {
         initLocationIndex();
+        initTurnCosts();
         importPublicTransit();
 
         if (closeEarly) {
@@ -1004,6 +1005,15 @@ public class GraphHopper {
             throw new IllegalStateException("Cannot initialize locationIndex twice!");
 
         locationIndex = createLocationIndex(ghStorage.getDirectory());
+    }
+
+    protected void initTurnCosts() {
+        // TODO NOW use weighting or profile
+        CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("car");
+        if (carEncoder.getMaxTurnCosts() == 3) {
+            int addedCosts = TurnCostCalc.initGraph(ghStorage, carEncoder);
+            logger.info("turn costs added " + addedCosts);
+        }
     }
 
     private String getCHProfileVersion(String profile) {
