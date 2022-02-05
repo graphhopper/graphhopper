@@ -43,14 +43,17 @@ public class TurnCostCalc {
         private final DoubleArrayList orientations = new DoubleArrayList(6);
         // TODO: should we store orientation via edge keys?
         private final IntArrayList edges = new IntArrayList(6);
+        private boolean allEdgesNoName;
     }
 
     public static JunctionInfo calcJunctionInfo(EdgeExplorer explorer, NodeAccess nodeAccess, int node) {
         EdgeIterator edgeIter = explorer.setBaseNode(node);
         double baseLat = nodeAccess.getLat(node), baseLon = nodeAccess.getLon(node);
         JunctionInfo info = new JunctionInfo();
+        info.allEdgesNoName = true;
 
         while (edgeIter.next()) {
+            if (!edgeIter.getName().isEmpty()) info.allEdgesNoName = false;
             PointList list = edgeIter.fetchWayGeometry(FetchMode.ALL);
             double lat = list.getLat(1), lon = list.getLon(1);
             // angle in [-pi, +pi] where 0 is east
@@ -101,7 +104,10 @@ public class TurnCostCalc {
         for (int nodeIdx = 0; nodeIdx < storage.getNodes(); nodeIdx++) {
             JunctionInfo info = calcJunctionInfo(explorer, nodeAccess, nodeIdx);
 
-            // TODO NOW restrict access!
+            // do not add costs for unimportant edges
+            if (info.allEdgesNoName) continue;
+
+            // TODO NOW restrict access via Weighting
             // TODO NOW create much more efficient storage format e.g. just list of edges + orientations
             for (int fromIdx = 0; fromIdx < info.edges.size(); fromIdx++) {
                 int fromEdge = info.edges.get(fromIdx);
@@ -110,19 +116,33 @@ public class TurnCostCalc {
                     if (fromIdx == toIdx)
                         continue; // u-turns are handled elsewhere
 
+
                     int toEdge = info.edges.get(toIdx);
+                    if (storage.getEdgeIteratorState(fromEdge, nodeIdx).getName().startsWith("Innstr")
+                            && storage.getEdgeIteratorState(toEdge, nodeIdx).getName().startsWith("Sonnenallee")) {
+
+                        // http://localhost:8989/maps/?point=52.482205%2C13.444519&point=52.48444%2C13.434992
+                        // from north - right turn - 147208: (52.4807051,13.4431265), (52.4804364,13.4427754) TO 48313: (52.4810961,13.4414439), (52.4804364,13.4427754)
+                        // from south - left  turn -  48304: (52.4803543,13.4426655), (52.4804364,13.4427754) TO 48313: (52.4810961,13.4414439), (52.4804364,13.4427754)
+
+                        System.out.println(fromEdge + ": " + storage.getEdgeIteratorState(fromEdge, nodeIdx).fetchWayGeometry(FetchMode.ALL)
+                                + " TO " + toEdge + ": " + storage.getEdgeIteratorState(toEdge, nodeIdx).fetchWayGeometry(FetchMode.ALL));
+                    }
+
                     double outOrient = info.orientations.get(toIdx);
                     double angle = deltaOrientation(inOrient, outOrient) / Math.PI * 180;
                     if (Math.abs(angle) < 35)
                         continue; // do not add cost for straight direction
 
                     addedCosts++;
-                    if (angle < 0) tcStorage.set(turnCostEnc, fromEdge, nodeIdx, toEdge, 1); // right
-                    else tcStorage.set(turnCostEnc, fromEdge, nodeIdx, toEdge, 2);  // left
+                    // TODO special requirements to DecimalEncodedValue: factor 5 and useMaximumAsInfinity=true
+                    if (angle < 0) tcStorage.set(turnCostEnc, fromEdge, nodeIdx, toEdge, 5); // right
+                    else tcStorage.set(turnCostEnc, fromEdge, nodeIdx, toEdge, 10);  // left
                 }
             }
         }
-        tcStorage.flush();
+        tcStorage.flush(); // tc data itself
+        storage.flush(); // refs to tc data if new
         return addedCosts;
     }
 }
