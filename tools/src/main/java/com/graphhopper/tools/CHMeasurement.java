@@ -56,7 +56,7 @@ public class CHMeasurement {
      */
     private static void testPerformanceAutomaticNodeOrdering(String[] args) {
         // example args:
-        // map=berlin.pbf stats_file=stats.dat period_updates=0 lazy_updates=100 neighbor_updates=0 contract_nodes=100 log_messages=20 edge_quotient_weight=1.0 orig_edge_quotient_weight=3.0 hierarchy_depth_weight=2.0 sigma_factor=3.0 min_max_settled_edges=100 reset_interval=10000 landmarks=0 cleanup=true turncosts=true threshold=0.1 seed=456 comp_iterations=10 perf_iterations=100 quick=false
+        // map=berlin.pbf stats_file=stats.dat period_updates=0 lazy_updates=100 neighbor_updates=0 contract_nodes=100 log_messages=20 edge_quotient_weight=1.0 orig_edge_quotient_weight=3.0 hierarchy_depth_weight=2.0 landmarks=0 cleanup=true turncosts=true threshold=0.1 seed=456 comp_iterations=10 perf_iterations=100 quick=false
         long start = nanoTime();
         PMap map = PMap.read(args);
         GraphHopperConfig ghConfig = new GraphHopperConfig(map);
@@ -116,9 +116,6 @@ public class CHMeasurement {
         ghConfig.putObject(EDGE_QUOTIENT_WEIGHT, edgeQuotientWeight);
         ghConfig.putObject(ORIGINAL_EDGE_QUOTIENT_WEIGHT, origEdgeQuotientWeight);
         ghConfig.putObject(HIERARCHY_DEPTH_WEIGHT, hierarchyDepthWeight);
-        ghConfig.putObject(SIGMA_FACTOR, sigmaFactor);
-        ghConfig.putObject(MIN_MAX_SETTLED_EDGES, minMaxSettledEdges);
-        ghConfig.putObject(SETTLED_EDGES_RESET_INTERVAL, resetInterval);
 
         LOGGER.info("Initializing graph hopper with args: {}", ghConfig);
         graphHopper.init(ghConfig);
@@ -235,7 +232,7 @@ public class CHMeasurement {
                     results.putObject("_" + algo + ".deviations", chDeviations);
                 }
                 GHRequest req = buildRandomRequest(random, numNodes, nodeAccess);
-                req.getHints().putObject(Parameters.Routing.EDGE_BASED, withTurnCosts);
+                req.setProfile("car_profile");
                 req.getHints().putObject(Parameters.CH.DISABLE, false);
                 req.getHints().putObject(Parameters.Landmark.DISABLE, true);
                 req.getHints().putObject(Parameters.Routing.U_TURN_COSTS, uTurnCosts);
@@ -311,7 +308,6 @@ public class CHMeasurement {
                     results.putObject("_" + algo + ".time_ch", avg);
                 }
                 GHRequest req = buildRandomRequest(random, numNodes, nodeAccess);
-                req.putHint(Parameters.Routing.EDGE_BASED, withTurnCosts);
                 req.putHint(Parameters.CH.DISABLE, lm);
                 req.putHint(Parameters.Landmark.DISABLE, !lm);
                 req.setProfile("car_profile");
