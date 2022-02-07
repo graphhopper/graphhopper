@@ -136,8 +136,8 @@ public class TurnCostCalc {
 
                     addedCosts++;
                     // TODO special requirements to DecimalEncodedValue: factor 5 and useMaximumAsInfinity=true
-                    if (angle < 0) tcStorage.set(turnCostEnc, fromEdge, nodeIdx, toEdge, 5); // right
-                    else tcStorage.set(turnCostEnc, fromEdge, nodeIdx, toEdge, 10);  // left
+                    if (angle < 0) tcStorage.set(turnCostEnc, fromEdge, nodeIdx, toEdge, 10); // right
+                    else tcStorage.set(turnCostEnc, fromEdge, nodeIdx, toEdge, 20);  // left
                 }
             }
         }
