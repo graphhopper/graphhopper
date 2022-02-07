@@ -402,7 +402,10 @@ class EdgeBasedNodeContractor implements NodeContractor {
         }
 
         // this shortcut is new --> increase counts
-        numShortcuts++;
+        while (edgeTo != edgeFrom) {
+            numShortcuts++;
+            edgeTo = edgeTo.parent;
+        }
         numOrigEdges += origEdgeCount;
     }
 
