@@ -36,7 +36,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static java.lang.System.nanoTime;
@@ -61,7 +60,7 @@ public class CHMeasurement {
         PMap map = PMap.read(args);
         GraphHopperConfig ghConfig = new GraphHopperConfig(map);
         LOGGER.info("Running analysis with parameters {}", ghConfig);
-        String osmFile = ghConfig.getString("map", "local/maps/unterfranken-latest.osm.pbf");
+        String osmFile = ghConfig.getString("map", "core/files/andorra.osm.pbf");
         ghConfig.putObject("datareader.file", osmFile);
         final String statsFile = ghConfig.getString("stats_file", null);
         final int periodicUpdates = ghConfig.getInt("period_updates", 0);
@@ -78,7 +77,7 @@ public class CHMeasurement {
         final int landmarks = ghConfig.getInt("landmarks", 0);
         final boolean cleanup = ghConfig.getBool("cleanup", true);
         final boolean withTurnCosts = ghConfig.getBool("turncosts", true);
-        final int uTurnCosts = ghConfig.getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
+        final int uTurnCosts = ghConfig.getInt(Parameters.Routing.U_TURN_COSTS, 80);
         final double errorThreshold = ghConfig.getDouble("threshold", 0.1);
         final long seed = ghConfig.getLong("seed", 456);
         final int compIterations = ghConfig.getInt("comp_iterations", 100);
@@ -90,7 +89,7 @@ public class CHMeasurement {
         if (withTurnCosts) {
             ghConfig.putObject("graph.flag_encoders", "car|turn_costs=true");
             ghConfig.setProfiles(Collections.singletonList(
-                    new Profile(profile).setVehicle("car").setWeighting("fastest").setTurnCosts(true)
+                    new Profile(profile).setVehicle("car").setWeighting("fastest").setTurnCosts(true).putHint(Parameters.Routing.U_TURN_COSTS, uTurnCosts)
             ));
             ghConfig.setCHProfiles(Collections.singletonList(
                     new CHProfile(profile)
@@ -235,7 +234,7 @@ public class CHMeasurement {
                     results.putObject("_" + algo + ".deviations", chDeviations);
                 }
                 GHRequest req = buildRandomRequest(random, numNodes, nodeAccess);
-                req.getHints().putObject(Parameters.Routing.EDGE_BASED, withTurnCosts);
+                req.setProfile("car_profile");
                 req.getHints().putObject(Parameters.CH.DISABLE, false);
                 req.getHints().putObject(Parameters.Landmark.DISABLE, true);
                 req.getHints().putObject(Parameters.Routing.U_TURN_COSTS, uTurnCosts);
@@ -311,7 +310,6 @@ public class CHMeasurement {
                     results.putObject("_" + algo + ".time_ch", avg);
                 }
                 GHRequest req = buildRandomRequest(random, numNodes, nodeAccess);
-                req.putHint(Parameters.Routing.EDGE_BASED, withTurnCosts);
                 req.putHint(Parameters.CH.DISABLE, lm);
                 req.putHint(Parameters.Landmark.DISABLE, !lm);
                 req.setProfile("car_profile");
