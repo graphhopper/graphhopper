@@ -289,11 +289,6 @@ class NodeBasedNodeContractor implements NodeContractor {
     }
 
     @Override
-    public long getDijkstraCount() {
-        return dijkstraCount;
-    }
-
-    @Override
     public float getDijkstraSeconds() {
         return dijkstraSW.getCurrentSeconds();
     }

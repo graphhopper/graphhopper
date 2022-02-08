@@ -199,10 +199,6 @@ public class EdgeBasedWitnessPathSearcher {
         return (adjNodesAndIsPathToCenters[key] & 0b01) == 0b01;
     }
 
-    public Stats getStats() {
-        return stats;
-    }
-
     public void close() {
         prepareGraph.close();
         outEdgeExplorer = null;

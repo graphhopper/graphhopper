@@ -160,11 +160,6 @@ class EdgeBasedNodeContractor implements NodeContractor {
     }
 
     @Override
-    public long getDijkstraCount() {
-        return witnessPathSearcher.getStats().numTrees;
-    }
-
-    @Override
     public float getDijkstraSeconds() {
         return dijkstraSW.getCurrentSeconds();
     }
@@ -409,8 +404,8 @@ class EdgeBasedNodeContractor implements NodeContractor {
         numOrigEdges += origEdgeCount;
     }
 
-    public long getNumPolledEdges() {
-        return witnessPathSearcher.getStats().numPolls;
+    long getNumPolledEdges() {
+        return wpsStatsContr.numPolls + wpsStatsHeur.numPolls;
     }
 
     public static class Params {
