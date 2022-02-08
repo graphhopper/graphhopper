@@ -60,7 +60,7 @@ public class CHMeasurement {
         PMap map = PMap.read(args);
         GraphHopperConfig ghConfig = new GraphHopperConfig(map);
         LOGGER.info("Running analysis with parameters {}", ghConfig);
-        String osmFile = ghConfig.getString("map", "core/files/andorra.osm.pbf");
+        String osmFile = ghConfig.getString("map", "map-matching/files/leipzig_germany.osm.pbf");
         ghConfig.putObject("datareader.file", osmFile);
         final String statsFile = ghConfig.getString("stats_file", null);
         final int periodicUpdates = ghConfig.getInt("period_updates", 0);
