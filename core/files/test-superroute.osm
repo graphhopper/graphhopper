@@ -1,0 +1,79 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version='0.6' generator='JOSM'>
+  <bounds minlat='47.8' minlon='-6.94' maxlat='47.86' maxlon='-6.86' origin='CGImap 0.8.6 (841013 spike-08.openstreetmap.org)' />
+  <node id='101751' visible='true' version='1' lat='47.83978436706' lon='-6.93115888412' />
+  <node id='101752' visible='true' version='1' lat='47.82076817998' lon='-6.86549364807' />
+  <node id='101753' visible='true' version='1' lat='47.85026278958' lon='-6.93113615844' />
+  <node id='101755' visible='true' version='1' lat='47.80827071063' lon='-6.8658607525' />
+  <node id='101761' visible='true' version='1' lat='47.85115271426' lon='-6.89650921101' />
+  <node id='101762' visible='true' version='1' lat='47.80797382557' lon='-6.89680398211' />
+  <node id='101763' visible='true' version='1' lat='47.843686737' lon='-6.90089279837' />
+  <node id='101764' visible='true' version='1' lat='47.83708514877' lon='-6.89794582412' />
+  <node id='101765' visible='true' version='1' lat='47.83166973582' lon='-6.90107698426' />
+  <node id='101766' visible='true' version='1' lat='47.82331059194' lon='-6.89901410229' />
+  <node id='101767' visible='true' version='1' lat='47.81346587512' lon='-6.90188743902' />
+  <way id='113165' visible='true' version='1'>
+    <nd ref='101753' />
+    <nd ref='101751' />
+    <tag k='highway' v='residential' />
+    <tag k='name' v='dummy' />
+  </way>
+  <way id='113166' visible='true' version='1'>
+    <nd ref='101755' />
+    <nd ref='101752' />
+    <tag k='highway' v='residential' />
+    <tag k='name' v='dummy' />
+  </way>
+  <way id='113168' version='1' visible='true'>
+    <nd ref='101765' />
+    <nd ref='101764' />
+    <nd ref='101763' />
+    <nd ref='101761' />
+    <tag k='highway' v='residential' />
+    <tag k='name' v='indirect connection part1' />
+  </way>
+  <way id='104989' visible='true' version='1'>
+    <nd ref='101762' />
+    <nd ref='101767' />
+    <nd ref='101766' />
+    <nd ref='101765' />
+    <tag k='highway' v='residential' />
+    <tag k='name' v='indirect connection part2' />
+  </way>
+  <way id='105049' visible='true' version='1'>
+    <nd ref='101761' />
+    <nd ref='101762' />
+    <tag k='highway' v='residential' />
+    <tag k='name' v='direct connection' />
+  </way>
+  <relation id='99758' visible='true' version='1'>
+    <member type='way' ref='105049' role='' />
+    <tag k='name' v='direct rcn' />
+    <tag k='network' v='rcn' />
+    <tag k='route' v='bicycle' />
+    <tag k='type' v='route' />
+  </relation>  
+  <relation id='99764' version='1' visible='true'>
+    <member type='way' ref='113168' role='' />
+    <tag k='name' v='rcn route part1' />
+    <tag k='network' v='rcn' />
+    <tag k='route' v='bicycle' />
+    <tag k='type' v='route' />
+  </relation>
+  <relation id='99766' visible='true' version='1'>
+    <member type='relation' ref='99764' role='' />
+    <member type='relation' ref='99768' role='' />
+    <member type='relation' ref='997627' role='not contained' />
+    <tag k='name' v='icn superroute' />
+    <tag k='network' v='icn' />
+    <tag k='route' v='bicycle' />
+    <tag k='type' v='superroute' />
+  </relation>
+  <relation id='99768' version='1' visible='true'>
+    <member type='way' ref='104989' role='' />
+    <tag k='name' v='longer route part2' />
+    <tag k='network' v='rcn' />
+    <tag k='route' v='bicycle' />
+    <tag k='type' v='route' />
+  </relation>
+</osm>

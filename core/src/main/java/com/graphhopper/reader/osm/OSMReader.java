@@ -49,6 +49,7 @@ import java.util.function.LongToIntFunction;
 
 import static com.graphhopper.util.Helper.nf;
 import static java.util.Collections.emptyList;
+import java.util.HashMap;
 
 /**
  * Parses an OSM file (xml, zipped xml or pbf) and creates a graph from it. The OSM file is actually read twice.
@@ -82,6 +83,11 @@ public class OSMReader {
     // stores osm way ids used by relations to identify which edge ids needs to be mapped later
     private GHLongHashSet osmWayIdSet = new GHLongHashSet();
     private IntLongMap edgeIdToOsmWayIdMap;
+    // stores route relation OSM ID and the "network" tag value of a superroute
+    private HashMap<Long, String> superRouteRouteMembers = new HashMap<Long, String>();
+    // stores all the ways of a route relation for route=bicycle relations in order to process superroutes
+    private HashMap<Long, ArrayList<Long>> bicycleRouteWayMembers = new HashMap<Long, ArrayList<Long>>();
+    private List<String> bicycleNetworks = Arrays.asList("lcn", "rcn", "ncn", "icn");
 
     public OSMReader(GraphHopperStorage ghStorage, OSMReaderConfig config) {
         this.ghStorage = ghStorage;
@@ -358,18 +364,68 @@ public class OSMReader {
                     + ", difference: " + (edgeDistance - geometryDistance));
     }
 
+    private ReaderRelation createReaderRelation(String network) {
+        ReaderRelation readerRelation = new ReaderRelation(1L);
+        readerRelation.setTag("type", "route");
+        readerRelation.setTag("route", "bicycle");
+        readerRelation.setTag("network", network);
+        return readerRelation;
+    }
+
     /**
      * This method is called for each relation during the first pass of {@link WaySegmentParser}
      */
     protected void preprocessRelations(ReaderRelation relation) {
+        // handling for bicycle superroutes, see #2512
+        if (relation.hasTag("type", "superroute") && relation.hasTag("route", "bicycle")) {
+            String newNetwork = relation.getTag("network");
+            for (ReaderRelation.Member member : relation.getMembers()) {
+                Long relatioinOSMId = member.getRef();
+                if (member.getType() != ReaderRelation.Member.RELATION)
+                    continue;
+                if (relation.hasTag("network"))  {
+                    // relation member is already member of another superroute
+                    if (superRouteRouteMembers.containsKey(relatioinOSMId))  {
+                        String oldNetwork = superRouteRouteMembers.get(relatioinOSMId);
+                        //check if the new superrelation classification is higher
+                        if (bicycleNetworks.indexOf(newNetwork) > bicycleNetworks.indexOf(oldNetwork))  
+                            superRouteRouteMembers.put(relatioinOSMId, newNetwork);  // Overwrite exisiting value
+                    } else {
+                       superRouteRouteMembers.put(relatioinOSMId, newNetwork);
+                    }
+                }
+                if (newNetwork != null)  {
+                    if (bicycleRouteWayMembers.containsKey(relatioinOSMId))  {
+                        for (Long wayID : bicycleRouteWayMembers.get(relatioinOSMId))  {
+                            IntsRef oldRelationFlags = getRelFlagsMap(wayID);
+                            ReaderRelation bikerelation = createReaderRelation(newNetwork);
+                            IntsRef newRelationFlags = encodingManager.handleRelationTags(bikerelation, oldRelationFlags);
+                            putRelFlagsMap(wayID, newRelationFlags);
+                        }
+                    }
+                }
+            }
+        }
+
         if (!relation.isMetaRelation() && relation.hasTag("type", "route")) {
+            // we keep track of all bicycle route relations, so they are available when we read in route relations in the pass1
+            ArrayList<Long> wayMembersOfBicycleRelations = new ArrayList<Long>();
             // we keep track of all route relations, so they are available when we create edges later
+            Long relationOSMId = relation.getId();
             for (ReaderRelation.Member member : relation.getMembers()) {
                 if (member.getType() != ReaderRelation.Member.WAY)
                     continue;
-                IntsRef oldRelationFlags = getRelFlagsMap(member.getRef());
+                if (relation.hasTag("route", "bicycle"))
+                    wayMembersOfBicycleRelations.add(member.getRef());
+                IntsRef oldRelationFlags = getRelFlagsMap(member.getRef());;
+                if (superRouteRouteMembers.containsKey(relationOSMId)) {
+                    ReaderRelation bikerelation = createReaderRelation(superRouteRouteMembers.get(relationOSMId));
+                    oldRelationFlags = encodingManager.handleRelationTags(bikerelation, oldRelationFlags);
+                }   
                 IntsRef newRelationFlags = encodingManager.handleRelationTags(relation, oldRelationFlags);
                 putRelFlagsMap(member.getRef(), newRelationFlags);
+                if (wayMembersOfBicycleRelations.size() != 0)
+                    bicycleRouteWayMembers.put(relation.getId(), wayMembersOfBicycleRelations);
             }
         }
 
@@ -491,6 +547,9 @@ public class OSMReader {
         osmWayIdToRelationFlagsMap = null;
         osmWayIdSet = null;
         edgeIdToOsmWayIdMap = null;
+        bicycleRouteWayMembers = null;
+        superRouteRouteMembers = null;
+        bicycleNetworks = null;
     }
 
     IntsRef getRelFlagsMap(long osmId) {

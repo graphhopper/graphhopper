@@ -75,6 +75,7 @@ public class GraphHopperTest {
     private static final String BAYREUTH = DIR + "/north-bayreuth.osm.gz";
     private static final String BERLIN = DIR + "/berlin-siegessaeule.osm.gz";
     private static final String KREMS = DIR + "/krems.osm.gz";
+    private static final String SUPERROUTE = DIR + "/test-superroute.osm";
     private static final String LAUF = DIR + "/Laufamholzstrasse.osm.xml";
     private static final String MONACO = DIR + "/monaco.osm.gz";
     private static final String MOSCOW = DIR + "/moscow.osm.gz";
@@ -1219,6 +1220,35 @@ public class GraphHopperTest {
         assertFalse(rsp.hasErrors());
         il = rsp.getBest().getInstructions();
         assertEquals("continue onto Obere Landstraße", il.get(0).getTurnDescription(tr));
+    }
+
+    @Test
+    public void testBicycleSuperroute() {
+        final String profile1 = "bike_profile";
+        final String vehicle1 = "bike";
+        final String weighting = "fastest";
+
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile(SUPERROUTE).
+                setProfiles(new Profile(profile1).setVehicle(vehicle1).setWeighting(weighting)).
+                setStoreOnFlush(true).
+                importOrLoad();
+
+        Translation tr = hopper.getTranslationMap().getWithFallBack(Locale.US);
+        GHResponse rsp = hopper.route(new GHRequest(47.850952,-6.896925, 47.808255,-6.896839).
+                setProfile(profile1));
+        assertFalse(rsp.hasErrors());
+        ResponsePath res = rsp.getBest();
+        assertEquals(5080.4, res.getDistance(), .1);
+        assertEquals(8, res.getPoints().size());
+
+        InstructionList il = res.getInstructions();
+        assertEquals(2, il.size());
+
+        assertEquals("continue onto indirect connection part1", il.get(0).getTurnDescription(tr));
+        assertEquals(201.5, (Double) il.get(0).getExtraInfoJSON().get("heading"), .01);
+        assertEquals("arrive at destination", il.get(1).getTurnDescription(tr));
     }
 
     @Test
