@@ -69,14 +69,14 @@ public class Trip {
                     '}';
         }
     }
-    public static class WalkLeg extends Leg {
+    public static class ConnectingLeg extends Leg {
         public final InstructionList instructions;
         public final Map<String, List<PathDetail>> details;
         private final Date departureTime;
         private final Date arrivalTime;
 
-        public WalkLeg(String departureLocation, Date departureTime, Geometry geometry, double distance, InstructionList instructions, Map<String, List<PathDetail>> details, Date arrivalTime) {
-            super("walk", departureLocation, geometry, distance);
+        public ConnectingLeg(String type, String departureLocation, Date departureTime, Geometry geometry, double distance, InstructionList instructions, Map<String, List<PathDetail>> details, Date arrivalTime) {
+            super(type, departureLocation, geometry, distance);
             this.instructions = instructions;
             this.departureTime = departureTime;
             this.details = details;
@@ -96,19 +96,26 @@ public class Trip {
     }
     public static class PtLeg extends Leg {
         public final String feed_id;
+        public final String agency_name;
         public final boolean isInSameVehicleAsPrevious;
         public final String trip_headsign;
+        public final String route_color;
+        public final String route_name;
+
         public final long travelTime;
         public final List<Stop> stops;
         public final String trip_id;
         public final String route_id;
 
-        public PtLeg(String feedId, boolean isInSameVehicleAsPrevious, String tripId, String routeId, String headsign, List<Stop> stops, double distance, long travelTime, Geometry geometry) {
+        public PtLeg(String feedId, boolean isInSameVehicleAsPrevious, String tripId, String routeId, String headsign, String color, String routeName, String agencyName, List<Stop> stops, double distance, long travelTime, Geometry geometry) {
             super("pt", stops.get(0).stop_name, geometry, distance);
             this.feed_id = feedId;
+            this.agency_name = agencyName;
             this.isInSameVehicleAsPrevious = isInSameVehicleAsPrevious;
             this.trip_id = tripId;
             this.route_id = routeId;
+            this.route_color = color;
+            this.route_name = routeName;
             this.trip_headsign = headsign;
             this.travelTime = travelTime;
             this.stops = stops;

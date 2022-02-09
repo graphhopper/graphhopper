@@ -87,7 +87,7 @@ public class FreeWalkIT {
         assertEquals(1, route.getAll().size());
         ResponsePath transitSolution = route.getBest();
         Trip.PtLeg firstLeg = ((Trip.PtLeg) transitSolution.getLegs().get(0));
-        Trip.WalkLeg transferLeg = ((Trip.WalkLeg) transitSolution.getLegs().get(1));
+        Trip.ConnectingLeg transferLeg = ((Trip.ConnectingLeg) transitSolution.getLegs().get(1));
         Trip.PtLeg secondLeg = ((Trip.PtLeg) transitSolution.getLegs().get(2));
         assertEquals("JUSTICE_COURT,MUSEUM", firstLeg.stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
         assertEquals("EMSI,DADAN", secondLeg.stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));

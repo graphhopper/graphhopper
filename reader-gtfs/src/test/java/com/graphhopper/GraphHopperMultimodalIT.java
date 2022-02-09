@@ -140,11 +140,11 @@ public class GraphHopperMultimodalIT {
         assertThat(distances.get(0).getFirst()).isEqualTo(0); // PathDetails start and end with PointList
         assertThat(distances.get(distances.size()-1).getLast()).isEqualTo(10);
 
-        List<PathDetail> accessDistances = ((Trip.WalkLeg) firstTransitSolution.getLegs().get(0)).details.get("distance");
+        List<PathDetail> accessDistances = ((Trip.ConnectingLeg) firstTransitSolution.getLegs().get(0)).details.get("distance");
         assertThat(accessDistances.get(0).getFirst()).isEqualTo(0);
         assertThat(accessDistances.get(accessDistances.size()-1).getLast()).isEqualTo(2);
 
-        List<PathDetail> egressDistances = ((Trip.WalkLeg) firstTransitSolution.getLegs().get(2)).details.get("distance");
+        List<PathDetail> egressDistances = ((Trip.ConnectingLeg) firstTransitSolution.getLegs().get(2)).details.get("distance");
         assertThat(egressDistances.get(0).getFirst()).isEqualTo(0);
         assertThat(egressDistances.get(egressDistances.size()-1).getLast()).isEqualTo(5);
 
