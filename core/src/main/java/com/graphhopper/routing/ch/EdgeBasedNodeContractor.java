@@ -189,7 +189,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
             // for each source node we need to look at every incoming original edge and find the initial entries
             PrepareGraphOrigEdgeIterator origInIter = sourceNodeOrigInEdgeExplorer.setBaseNode(sourceNode);
             while (origInIter.next()) {
-                IntObjectMap<BridgePathFinder.BridePathEntry> bridgePaths = bridgePathFinder.find(origInIter.getOrigEdgeKeyLast(), sourceNode, node);
+                IntObjectMap<BridgePathFinder.BridePathEntry> bridgePaths = bridgePathFinder.find(GHUtility.reverseEdgeKey(origInIter.getOrigEdgeKeyLast()), sourceNode, node);
                 if (bridgePaths.isEmpty())
                     continue;
                 witnessPathSearcher.initSearch(GHUtility.reverseEdgeKey(origInIter.getOrigEdgeKeyLast()), sourceNode, node, wpsStats);
