@@ -75,6 +75,7 @@ public class WaySegmentParser {
     private final Consumer<ReaderRelation> relationPreprocessor;
     private final RelationProcessor relationProcessor;
     private final EdgeHandler edgeHandler;
+    private final Pass1Finished pass1Finished;
     private final int workerThreads;
 
     private final OSMNodeData nodeData;
@@ -83,7 +84,7 @@ public class WaySegmentParser {
     private WaySegmentParser(PointAccess nodeAccess, Directory directory, ElevationProvider eleProvider,
                              Predicate<ReaderWay> wayFilter, Predicate<ReaderNode> splitNodeFilter, WayPreprocessor wayPreprocessor,
                              Consumer<ReaderRelation> relationPreprocessor, RelationProcessor relationProcessor,
-                             EdgeHandler edgeHandler, int workerThreads) {
+                             EdgeHandler edgeHandler, int workerThreads, Pass1Finished pass1Finished) {
         this.eleProvider = eleProvider;
         this.wayFilter = wayFilter;
         this.splitNodeFilter = splitNodeFilter;
@@ -92,6 +93,7 @@ public class WaySegmentParser {
         this.relationProcessor = relationProcessor;
         this.edgeHandler = edgeHandler;
         this.workerThreads = workerThreads;
+        this.pass1Finished = pass1Finished;
 
         this.nodeData = new OSMNodeData(nodeAccess, directory);
     }
@@ -107,6 +109,7 @@ public class WaySegmentParser {
         LOGGER.info("pass1 - start");
         StopWatch sw1 = StopWatch.started();
         readOSM(osmFile, new Pass1Handler());
+        this.pass1Finished.pass1Finished();
         LOGGER.info("pass1 - finished, took: {}", sw1.stop().getTimeString());
 
         long nodes = nodeData.getNodeCount();
@@ -419,6 +422,7 @@ public class WaySegmentParser {
         };
         private EdgeHandler edgeHandler = (from, to, pointList, way, nodeTags) ->
                 System.out.println("edge " + from + "->" + to + " (" + pointList.size() + " points)");
+        private Pass1Finished pass1Finished;
         private int workerThreads = 2;
 
         /**
@@ -501,10 +505,18 @@ public class WaySegmentParser {
             return this;
         }
 
+        /**
+         * @param pass1Finished callback function that is called after pass1
+         */
+        public Builder setPass1Finished (Pass1Finished pass1Finished) {
+            this.pass1Finished = pass1Finished;
+            return this;
+        }
+
         public WaySegmentParser build() {
             return new WaySegmentParser(
                     nodeAccess, directory, elevationProvider, wayFilter, splitNodeFilter, wayPreprocessor, relationPreprocessor, relationProcessor,
-                    edgeHandler, workerThreads
+                    edgeHandler, workerThreads, pass1Finished
             );
         }
     }
@@ -555,5 +567,9 @@ public class WaySegmentParser {
 
     public interface WayPreprocessor {
         void preprocessWay(ReaderWay way);
+    }
+
+    public interface Pass1Finished {
+        void pass1Finished();
     }
 }

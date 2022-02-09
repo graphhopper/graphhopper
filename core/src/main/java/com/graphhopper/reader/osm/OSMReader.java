@@ -154,6 +154,7 @@ public class OSMReader {
                 .setRelationPreprocessor(this::preprocessRelations)
                 .setRelationProcessor(this::processRelation)
                 .setEdgeHandler(this::addEdge)
+                .setPass1Finished(this::pass1Finished)
                 .setWorkerThreads(config.getWorkerThreads())
                 .build();
         ghStorage.create(100);
@@ -468,6 +469,13 @@ public class OSMReader {
         }
     }
 
+    protected void pass1Finished()  {
+        LOGGER.info("pass1Finished bicycleRouteWayMembers.size(): " + bicycleRouteWayMembers.size() + " superRouteRouteMembers.size(): " + superRouteRouteMembers.size());        
+        bicycleRouteWayMembers = null;
+        superRouteRouteMembers = null;
+        bicycleNetworks = null;
+    }
+
     private IntLongMap getEdgeIdToOsmWayIdMap() {
         // todo: is this lazy initialization really advantageous?
         if (edgeIdToOsmWayIdMap == null)
@@ -547,9 +555,6 @@ public class OSMReader {
         osmWayIdToRelationFlagsMap = null;
         osmWayIdSet = null;
         edgeIdToOsmWayIdMap = null;
-        bicycleRouteWayMembers = null;
-        superRouteRouteMembers = null;
-        bicycleNetworks = null;
     }
 
     IntsRef getRelFlagsMap(long osmId) {
