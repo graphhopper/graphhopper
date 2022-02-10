@@ -21,10 +21,8 @@ import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.cursors.IntObjectCursor;
 import com.graphhopper.storage.CHStorageBuilder;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -208,6 +206,9 @@ class EdgeBasedNodeContractor implements NodeContractor {
                     while (EdgeIterator.Edge.isValid(root.parent.prepareEdge))
                         root = root.getParent();
 
+                    long addedShortcutKey = BitUtil.LITTLE.combineIntsToLong(root.firstEdgeKey, bridgePath.value.chEntry.incEdgeKey);
+                    if (!addedShortcuts.add(addedShortcutKey))
+                        continue;
                     double initialTurnCost = prepareGraph.getTurnWeight(getEdgeFromEdgeKey(origInIter.getOrigEdgeKeyLast()), sourceNode, getEdgeFromEdgeKey(root.firstEdgeKey));
                     bridgePath.value.chEntry.weight -= initialTurnCost;
                     LOGGER.trace("Adding shortcuts for target entry {}", bridgePath.value.chEntry);
@@ -385,19 +386,15 @@ class EdgeBasedNodeContractor implements NodeContractor {
         int firstOrigEdgeKey = edgeFrom.firstEdgeKey;
         int lastOrigEdgeKey = edgeTo.incEdgeKey;
 
-//        long addedShortcutKey = BitUtil.LITTLE.combineIntsToLong(firstOrigEdgeKey, lastOrigEdgeKey);
-//        if (!addedShortcuts.add(addedShortcutKey))
-//            return;
-
         // check if this shortcut already exists
-//        final PrepareGraphEdgeIterator iter = existingShortcutExplorer.setBaseNode(fromNode);
-//        while (iter.next()) {
-//            if (isSameShortcut(iter, toNode, firstOrigEdgeKey, lastOrigEdgeKey)) {
-        // this shortcut exists already, maybe its weight will be updated but we should not count it as
-        // a new edge
-//                return;
-//            }
-//        }
+        final PrepareGraphEdgeIterator iter = existingShortcutExplorer.setBaseNode(fromNode);
+        while (iter.next()) {
+            if (isSameShortcut(iter, toNode, firstOrigEdgeKey, lastOrigEdgeKey)) {
+                // this shortcut exists already, maybe its weight will be updated but we should not count it as
+                // a new edge
+                return;
+            }
+        }
 
         // this shortcut is new --> increase counts
         while (edgeTo != edgeFrom) {
