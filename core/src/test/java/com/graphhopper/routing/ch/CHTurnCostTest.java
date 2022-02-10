@@ -1114,17 +1114,102 @@ public class CHTurnCostTest {
         // for larger graphs preparation takes much longer the higher the degree is!
         GHUtility.buildRandomGraph(graph, rnd, 20, 3.0, true, true,
                 encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, 0.7, 0.9, 0.8);
-        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxCost, turnCostStorage);
+//        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxCost, turnCostStorage);
         graph.freeze();
         checkStrict = false;
         IntArrayList contractionOrder = getRandomIntegerSequence(graph.getNodes(), rnd);
         compareCHWithDijkstra(100, contractionOrder.toArray());
     }
 
+
+    @Test
+    void bla() {
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 49.405908, 9.709863);
+        na.setNode(1, 49.407163, 9.702490);
+        na.setNode(2, 49.404052, 9.708387);
+        na.setNode(3, 49.406064, 9.702564);
+        na.setNode(4, 49.405674, 9.708730);
+        na.setNode(5, 49.405594, 9.702406);
+        na.setNode(6, 49.406548, 9.703132);
+        na.setNode(7, 49.407061, 9.706434);
+        na.setNode(8, 49.403664, 9.700418);
+        na.setNode(9, 49.400349, 9.706176);
+        na.setNode(10, 49.404411, 9.706293);
+        na.setNode(11, 49.409881, 9.702741);
+        na.setNode(12, 49.404157, 9.707728);
+        na.setNode(13, 49.401517, 9.707610);
+        na.setNode(14, 49.403679, 9.707036);
+        na.setNode(15, 49.401214, 9.704735);
+        na.setNode(16, 49.405482, 9.702935);
+        na.setNode(17, 49.402761, 9.703806);
+        na.setNode(18, 49.405947, 9.700462);
+        na.setNode(19, 49.403742, 9.709229);
+        GHUtility.setSpeed(30.000000, 30.000000, encoder, graph.edge(13, 2).setDistance(287.350000)); // edgeId=0
+        GHUtility.setSpeed(45.000000, 0.000000, encoder, graph.edge(12, 12).setDistance(0.000000)); // edgeId=1
+        GHUtility.setSpeed(105.000000, 105.000000, encoder, graph.edge(9, 9).setDistance(0.000000)); // edgeId=2
+        GHUtility.setSpeed(20.000000, 20.000000, encoder, graph.edge(12, 8).setDistance(535.267000)); // edgeId=3
+        GHUtility.setSpeed(120.000000, 120.000000, encoder, graph.edge(8, 13).setDistance(575.345000)); // edgeId=4
+        GHUtility.setSpeed(110.000000, 110.000000, encoder, graph.edge(4, 2).setDistance(183.703000)); // edgeId=5
+        GHUtility.setSpeed(115.000000, 0.000000, encoder, graph.edge(19, 6).setDistance(544.453000)); // edgeId=6
+        GHUtility.setSpeed(105.000000, 105.000000, encoder, graph.edge(12, 12).setDistance(0.000000)); // edgeId=7
+        GHUtility.setSpeed(120.000000, 120.000000, encoder, graph.edge(16, 12).setDistance(378.203000)); // edgeId=8
+        GHUtility.setSpeed(85.000000, 85.000000, encoder, graph.edge(10, 19).setDistance(226.549000)); // edgeId=9
+        GHUtility.setSpeed(15.000000, 15.000000, encoder, graph.edge(15, 18).setDistance(614.362000)); // edgeId=10
+        GHUtility.setSpeed(50.000000, 50.000000, encoder, graph.edge(15, 2).setDistance(414.002000)); // edgeId=11
+        GHUtility.setSpeed(100.000000, 0.000000, encoder, graph.edge(13, 4).setDistance(473.909000)); // edgeId=12
+        GHUtility.setSpeed(35.000000, 35.000000, encoder, graph.edge(2, 19).setDistance(70.495000)); // edgeId=13
+        GHUtility.setSpeed(85.000000, 85.000000, encoder, graph.edge(15, 10).setDistance(375.752000)); // edgeId=14
+        GHUtility.setSpeed(115.000000, 115.000000, encoder, graph.edge(11, 6).setDistance(373.805000)); // edgeId=15
+        GHUtility.setSpeed(55.000000, 55.000000, encoder, graph.edge(10, 5).setDistance(310.922000)); // edgeId=16
+        GHUtility.setSpeed(55.000000, 55.000000, encoder, graph.edge(17, 16).setDistance(311.197000)); // edgeId=17
+        GHUtility.setSpeed(105.000000, 105.000000, encoder, graph.edge(7, 15).setDistance(661.710000)); // edgeId=18
+        GHUtility.setSpeed(75.000000, 75.000000, encoder, graph.edge(16, 0).setDistance(505.861000)); // edgeId=19
+        GHUtility.setSpeed(110.000000, 110.000000, encoder, graph.edge(12, 19).setDistance(118.002000)); // edgeId=20
+        GHUtility.setSpeed(30.000000, 30.000000, encoder, graph.edge(11, 14).setDistance(756.418000)); // edgeId=21
+        GHUtility.setSpeed(45.000000, 45.000000, encoder, graph.edge(15, 4).setDistance(576.586000)); // edgeId=22
+        GHUtility.setSpeed(55.000000, 55.000000, encoder, graph.edge(12, 15).setDistance(395.902000)); // edgeId=23
+        GHUtility.setSpeed(45.000000, 45.000000, encoder, graph.edge(2, 17).setDistance(363.983000)); // edgeId=24
+        GHUtility.setSpeed(110.000000, 110.000000, encoder, graph.edge(17, 5).setDistance(330.923000)); // edgeId=25
+        GHUtility.setSpeed(25.000000, 25.000000, encoder, graph.edge(2, 2).setDistance(454.823000)); // edgeId=26
+        GHUtility.setSpeed(65.000000, 65.000000, encoder, graph.edge(0, 16).setDistance(506.610000)); // edgeId=27
+        GHUtility.setSpeed(50.000000, 50.000000, encoder, graph.edge(17, 5).setDistance(331.864000)); // edgeId=28
+        GHUtility.setSpeed(105.000000, 105.000000, encoder, graph.edge(10, 19).setDistance(225.106000)); // edgeId=29
+        graph.freeze();
+        checkStrict = false;
+        automaticCompareCHWithDijkstra(100);
+
+    }
+
+    @Test
+    void bla2() {
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 49.400613, 9.702695);
+        na.setNode(1, 49.401954, 9.707284);
+        na.setNode(2, 49.402709, 9.707648);
+        na.setNode(3, 49.408989, 9.700858);
+        na.setNode(4, 49.402768, 9.705516);
+        na.setNode(5, 49.400228, 9.709740);
+        na.setNode(6, 49.408803, 9.706722);
+        GHUtility.setSpeed(60.000000, 60.000000, encoder, graph.edge(5, 1).setDistance(263.944000)); // edgeId=0
+        GHUtility.setSpeed(90.000000, 90.000000, encoder, graph.edge(3, 3).setDistance(113.016000)); // edgeId=1
+        GHUtility.setSpeed(60.000000, 60.000000, encoder, graph.edge(2, 5).setDistance(314.692000)); // edgeId=2
+        GHUtility.setSpeed(120.000000, 120.000000, encoder, graph.edge(5, 2).setDistance(315.026000)); // edgeId=3
+        GHUtility.setSpeed(40.000000, 40.000000, encoder, graph.edge(1, 4).setDistance(157.012000)); // edgeId=4
+        GHUtility.setSpeed(45.000000, 45.000000, encoder, graph.edge(5, 0).setDistance(513.913000)); // edgeId=5
+        GHUtility.setSpeed(15.000000, 15.000000, encoder, graph.edge(6, 4).setDistance(678.992000)); // edgeId=6
+        GHUtility.setSpeed(60.000000, 0.000000, encoder, graph.edge(5, 5).setDistance(0.000000)); // edgeId=7
+        GHUtility.setSpeed(40.000000, 40.000000, encoder, graph.edge(6, 6).setDistance(890.261000)); // edgeId=8
+        GHUtility.setSpeed(90.000000, 0.000000, encoder, graph.edge(5, 5).setDistance(0.000000)); // edgeId=9
+        graph.freeze();
+        checkStrict = false;
+        automaticCompareCHWithDijkstra(100);
+    }
+
     /**
      * same as {@link #testFindPath_random_compareWithDijkstra()}, but using automatic node priority calculation
      */
-    @RepeatedTest(10)
+    @RepeatedTest(1)
     public void testFindPath_heuristic_compareWithDijkstra() {
         long seed = System.nanoTime();
         LOGGER.info("Seed for testFindPath_heuristic_compareWithDijkstra: {}", seed);
@@ -1140,9 +1225,9 @@ public class CHTurnCostTest {
     }
 
     private void compareWithDijkstraOnRandomGraph_heuristic(long seed) {
-        GHUtility.buildRandomGraph(graph, new Random(seed), 20, 3.0, true, true,
+        GHUtility.buildRandomGraph(graph, new Random(seed), 7, 3.0, true, true,
                 encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, 0.7, 0.9, 0.8);
-        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxCost, turnCostStorage);
+//        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxCost, turnCostStorage);
         graph.freeze();
         checkStrict = false;
         automaticCompareCHWithDijkstra(100);
