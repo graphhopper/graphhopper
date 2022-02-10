@@ -206,9 +206,6 @@ class EdgeBasedNodeContractor implements NodeContractor {
                     while (EdgeIterator.Edge.isValid(root.parent.prepareEdge))
                         root = root.getParent();
 
-                    long addedShortcutKey = BitUtil.LITTLE.combineIntsToLong(root.firstEdgeKey, bridgePath.value.chEntry.incEdgeKey);
-                    if (!addedShortcuts.add(addedShortcutKey))
-                        continue;
                     double initialTurnCost = prepareGraph.getTurnWeight(getEdgeFromEdgeKey(origInIter.getOrigEdgeKeyLast()), sourceNode, getEdgeFromEdgeKey(root.firstEdgeKey));
                     bridgePath.value.chEntry.weight -= initialTurnCost;
                     LOGGER.trace("Adding shortcuts for target entry {}", bridgePath.value.chEntry);
@@ -385,6 +382,10 @@ class EdgeBasedNodeContractor implements NodeContractor {
         int toNode = edgeTo.adjNode;
         int firstOrigEdgeKey = edgeFrom.firstEdgeKey;
         int lastOrigEdgeKey = edgeTo.incEdgeKey;
+
+        long addedShortcutKey = BitUtil.LITTLE.combineIntsToLong(firstOrigEdgeKey, lastOrigEdgeKey);
+        if (!addedShortcuts.add(addedShortcutKey))
+            return;
 
         // check if this shortcut already exists
         final PrepareGraphEdgeIterator iter = existingShortcutExplorer.setBaseNode(fromNode);
