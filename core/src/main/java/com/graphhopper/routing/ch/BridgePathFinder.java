@@ -76,11 +76,12 @@ public class BridgePathFinder {
                         queue.add(entry);
                     }
                 } else if (currEntry.adjNode == centerNode) {
+                    double weight = currEntry.weight + graph.getTurnWeight(getEdgeFromEdgeKey(currEntry.incEdgeKey),
+                            currEntry.adjNode, getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst())) + iter.getWeight();
+                    if (Double.isInfinite(weight))
+                        continue;
                     PrepareGraphOrigEdgeIterator origOutIter = origOutExplorer.setBaseNode(iter.getAdjNode());
                     while (origOutIter.next()) {
-                        double weight = currEntry.weight + graph.getTurnWeight(
-                                getEdgeFromEdgeKey(currEntry.incEdgeKey), currEntry.adjNode, getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()))
-                                + iter.getWeight();
                         double totalWeight = weight + graph.getTurnWeight(
                                 getEdgeFromEdgeKey(iter.getOrigEdgeKeyLast()), iter.getAdjNode(), getEdgeFromEdgeKey(origOutIter.getOrigEdgeKeyFirst()));
                         if (Double.isInfinite(totalWeight))
