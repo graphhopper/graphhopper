@@ -2452,4 +2452,26 @@ public class GraphHopperTest {
         }
     }
 
+    @Test
+    void averageSpeedPathDetailBug() {
+        final String profile = "profile";
+        GraphHopper hopper = new GraphHopper()
+                .setProfiles(new Profile(profile).setVehicle("car").setWeighting("fastest").setTurnCosts(true).putHint(U_TURN_COSTS, 80))
+                .setGraphHopperLocation(GH_LOCATION)
+                .setMinNetworkSize(200)
+                .setOSMFile(BAYREUTH);
+        hopper.importOrLoad();
+        GHPoint pointA = new GHPoint(50.020562, 11.500196);
+        GHPoint pointB = new GHPoint(50.019935, 11.500567);
+        GHPoint pointC = new GHPoint(50.022027, 11.498255);
+        GHRequest request = new GHRequest(Arrays.asList(pointA, pointB, pointC));
+        request.setProfile(profile);
+        request.setPathDetails(Collections.singletonList("average_speed"));
+        // this used to fail, because we did not wrap the weighting for query graph and so we tried calculating turn costs for virtual nodes
+        GHResponse response = hopper.route(request);
+        assertFalse(response.hasErrors(), response.getErrors().toString());
+        double distance = response.getBest().getDistance();
+        assertEquals(467, distance, 1);
+    }
+
 }
