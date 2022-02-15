@@ -367,6 +367,7 @@ class TripFromLabel {
                             Optional.ofNullable(trip).map(t -> t.trip_headsign).orElse("extra"),
                             route.route_color,
                             route.route_short_name,
+                            trip.bikes_allowed,
                             agency.agency_name,
                             stops,
                             partition.stream().mapToDouble(t -> t.edge.getDistance()).sum(),

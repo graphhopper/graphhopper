@@ -112,7 +112,7 @@ public class GraphHopperGtfs extends GraphHopper {
         QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, Collections.emptyList());
         String transferProfileName = ghConfig.getString("pt.transfer_profile", "foot");
         Weighting transferWeighting = createWeighting(getProfile(transferProfileName), new PMap());
-        final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, ptGraph, transferWeighting, getGtfsStorage(), RealtimeFeed.empty(), true, true, false, 5.0, false, 0);
+        final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, ptGraph, transferWeighting, getGtfsStorage(), RealtimeFeed.empty(), true, true, false, false, false, 0);
         getGtfsStorage().getStationNodes().values().stream().distinct().map(n -> {
             int streetNode = Optional.ofNullable(gtfsStorage.getPtToStreet().get(n)).orElse(-1);
             return new Label.NodeId(streetNode, n);

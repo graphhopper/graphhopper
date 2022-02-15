@@ -61,18 +61,20 @@ public class GtfsStorage {
 		final BitSet validity;
 		final ZoneId zoneId;
 		final LocalDate start;
+		final boolean bikesAllowed;
 
-		public Validity(BitSet validity, ZoneId zoneId, LocalDate start) {
+		public Validity(BitSet validity, ZoneId zoneId, LocalDate start, boolean bikesAllowed) {
 			this.validity = validity;
 			this.zoneId = zoneId;
 			this.start = start;
+			this.bikesAllowed = bikesAllowed;
 		}
 
 		@Override
 		public boolean equals(Object other) {
 			if (! (other instanceof Validity)) return false;
 			Validity v = (Validity) other;
-			return validity.equals(v.validity) && zoneId.equals(v.zoneId) && start.equals(v.start);
+			return validity.equals(v.validity) && zoneId.equals(v.zoneId) && start.equals(v.start) && bikesAllowed == v.bikesAllowed;
 		}
 
 		@Override

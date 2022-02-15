@@ -87,6 +87,7 @@ public class PtIsochroneResource {
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
             @QueryParam("pt.earliest_departure_time") @NotNull OffsetDateTimeParam departureTimeParam,
             @QueryParam("pt.blocked_route_types") @DefaultValue("0") int blockedRouteTypes,
+            @QueryParam("pt.connecting_profile") @DefaultValue("foot") String connectingProfileName,
             @QueryParam("result") @DefaultValue("multipolygon") String format) {
         Instant initialTime = departureTimeParam.get().toInstant();
         GHLocation location = sourceParam.get();
@@ -94,12 +95,14 @@ public class PtIsochroneResource {
         double targetZ = seconds * 1000;
 
         GeometryFactory geometryFactory = new GeometryFactory();
-        final FlagEncoder footEncoder = encodingManager.getEncoder("foot");
+        final FlagEncoder footEncoder = encodingManager.getEncoder(connectingProfileName);
         final Weighting weighting = new FastestWeighting(footEncoder);
-        DefaultSnapFilter snapFilter = new DefaultSnapFilter(weighting, graphHopperStorage.getEncodingManager().getBooleanEncodedValue(Subnetwork.key("foot")));
+        DefaultSnapFilter snapFilter = new DefaultSnapFilter(weighting, graphHopperStorage.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(connectingProfileName)));
+
+        boolean isBike = connectingProfileName.contains("bike");
 
         PtLocationSnapper.Result snapResult = new PtLocationSnapper(graphHopperStorage, locationIndex, gtfsStorage).snapAll(Arrays.asList(location), Arrays.asList(snapFilter));
-        GraphExplorer graphExplorer = new GraphExplorer(snapResult.queryGraph, gtfsStorage.getPtGraph(), weighting, gtfsStorage, RealtimeFeed.empty(), reverseFlow, false, false, 5.0, reverseFlow, blockedRouteTypes);
+        GraphExplorer graphExplorer = new GraphExplorer(snapResult.queryGraph, gtfsStorage.getPtGraph(), weighting, gtfsStorage, RealtimeFeed.empty(), reverseFlow, false, false, isBike, reverseFlow, blockedRouteTypes);
         MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, reverseFlow, false, false, 0, Collections.emptyList());
 
         Map<Coordinate, Double> z1 = new HashMap<>();

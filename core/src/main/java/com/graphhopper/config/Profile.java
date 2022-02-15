@@ -84,6 +84,10 @@ public class Profile {
         return turnCosts;
     }
 
+    public boolean isBike() {
+        return vehicle.contains("bike");
+    }
+
     public Profile setTurnCosts(boolean turnCosts) {
         this.turnCosts = turnCosts;
         return this;

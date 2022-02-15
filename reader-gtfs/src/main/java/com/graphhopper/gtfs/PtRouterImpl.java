@@ -200,7 +200,7 @@ public final class PtRouterImpl implements PtRouter {
         private List<List<Label.Transition>> findPaths(Label.NodeId startNode, Label.NodeId destNode) {
             StopWatch stopWatch = new StopWatch().start();
             boolean isEgress = !arriveBy;
-            final GraphExplorer accessEgressGraphExplorer = new GraphExplorer(queryGraph, ptGraph, connectingWeighting, gtfsStorage, realtimeFeed, isEgress, true, false, walkSpeedKmH, false, blockedRouteTypes);
+            final GraphExplorer accessEgressGraphExplorer = new GraphExplorer(queryGraph, ptGraph, connectingWeighting, gtfsStorage, realtimeFeed, isEgress, true, false, connectingProfile.isBike(), false, blockedRouteTypes);
             GtfsStorage.EdgeType edgeType = isEgress ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT;
             MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, isEgress, false, false, maxProfileDuration, new ArrayList<>());
             stationRouter.setBetaStreetTime(betaStreetTime);
@@ -221,7 +221,7 @@ public final class PtRouterImpl implements PtRouter {
                 reverseSettledSet.put(stationLabel.node, stationLabel);
             }
 
-            GraphExplorer graphExplorer = new GraphExplorer(queryGraph, ptGraph, connectingWeighting, gtfsStorage, realtimeFeed, arriveBy, false, true, walkSpeedKmH, false, blockedRouteTypes);
+            GraphExplorer graphExplorer = new GraphExplorer(queryGraph, ptGraph, connectingWeighting, gtfsStorage, realtimeFeed, arriveBy, false, true, connectingProfile.isBike(), false, blockedRouteTypes);
             List<Label> discoveredSolutions = new ArrayList<>();
             router = new MultiCriteriaLabelSetting(graphExplorer, arriveBy, !ignoreTransfers, profileQuery, maxProfileDuration, discoveredSolutions);
             router.setBetaTransfers(betaTransfers);

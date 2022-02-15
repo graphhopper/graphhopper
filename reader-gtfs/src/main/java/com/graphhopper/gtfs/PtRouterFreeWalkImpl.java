@@ -201,7 +201,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         private List<List<Label.Transition>> findPaths(Label.NodeId startNode, Label.NodeId destNode) {
             StopWatch stopWatch = new StopWatch().start();
 
-            GraphExplorer graphExplorer = new GraphExplorer(queryGraph, ptGraph, accessEgressWeighting, gtfsStorage, realtimeFeed, arriveBy, false, false, walkSpeedKmH, false, blockedRouteTypes);
+            GraphExplorer graphExplorer = new GraphExplorer(queryGraph, ptGraph, accessEgressWeighting, gtfsStorage, realtimeFeed, arriveBy, false, false, connectingProfile.isBike(), false, blockedRouteTypes);
             List<Label> discoveredSolutions = new ArrayList<>();
             router = new MultiCriteriaLabelSetting(graphExplorer, arriveBy, !ignoreTransfers, profileQuery, maxProfileDuration, discoveredSolutions);
             router.setBetaTransfers(betaTransfers);

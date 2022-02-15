@@ -286,7 +286,8 @@ class GtfsReader {
             int arrivalTimelineNode = arrivalTimeline.computeIfAbsent((stopTime.arrival_time + time) % (24 * 60 * 60), t -> out.createNode());
             departureNode = out.createNode();
             int dayShift = stopTime.departure_time / (24 * 60 * 60);
-            GtfsStorage.Validity validOn = new GtfsStorage.Validity(getValidOn(trip.validOnDay, dayShift), zoneId, startDate);
+            boolean bikesAllowed = !(trip.trip.bikes_allowed == 2);
+            GtfsStorage.Validity validOn = new GtfsStorage.Validity(getValidOn(trip.validOnDay, dayShift), zoneId, startDate, bikesAllowed);
             out.createEdge(departureTimelineNode, departureNode, new PtEdgeAttributes(GtfsStorage.EdgeType.BOARD, 0, validOn, -1, null, 1, stopTime.stop_sequence, tripDescriptor, null));
             out.createEdge(arrivalNode, arrivalTimelineNode, new PtEdgeAttributes(GtfsStorage.EdgeType.ALIGHT, 0, validOn, -1, null, 0, stopTime.stop_sequence, tripDescriptor, null));
             out.createEdge(arrivalNode, departureNode, new PtEdgeAttributes(GtfsStorage.EdgeType.DWELL, stopTime.departure_time - stopTime.arrival_time, null, -1, null, 0, -1, null, null));
@@ -404,7 +405,8 @@ class GtfsReader {
         int departureTimelineNode = departureTimelineNodes.computeIfAbsent(departureTime % (24 * 60 * 60), t -> ptGraph.createNode());
 
         int dayShift = departureTime / (24 * 60 * 60);
-        GtfsStorage.Validity validOn = new GtfsStorage.Validity(getValidOn(validOnDay, dayShift), zoneId, startDate);
+        boolean bikesAllowed = !(trip.bikes_allowed == 2);
+        GtfsStorage.Validity validOn = new GtfsStorage.Validity(getValidOn(validOnDay, dayShift), zoneId, startDate, bikesAllowed);
         return out.createEdge(departureTimelineNode, departureNode, new PtEdgeAttributes(GtfsStorage.EdgeType.BOARD, 0, validOn, -1, null, 1, stopSequence, tripDescriptor, null));
     }
 
@@ -443,7 +445,7 @@ class GtfsReader {
                 BitSet blockTransferValidity = new BitSet(validOn.validity.size());
                 blockTransferValidity.or(validOn.validity);
                 blockTransferValidity.and(accumulatorValidity);
-                GtfsStorage.Validity blockTransferValidOn = new GtfsStorage.Validity(blockTransferValidity, zoneId, startDate);
+                GtfsStorage.Validity blockTransferValidOn = new GtfsStorage.Validity(blockTransferValidity, zoneId, startDate, validOn.bikesAllowed);
                 int node = ptGraph.createNode();
                 out.createEdge(lastTrip.arrivalNode, node, new PtEdgeAttributes(GtfsStorage.EdgeType.TRANSFER, dwellTime, null, -1, null, 0, -1, null, platform));
                 out.createEdge(node, departureNode, new PtEdgeAttributes(GtfsStorage.EdgeType.BOARD, 0, blockTransferValidOn, -1, null, 0, stopTime.stop_sequence, tripDescriptor, null));
