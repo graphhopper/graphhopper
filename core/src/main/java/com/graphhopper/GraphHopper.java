@@ -834,11 +834,14 @@ public class GraphHopper {
         }
 
         GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
-        // TODO ORS (major): Do we need to create ORSGraphHopper here through GraphStorageFactory? E.g.:
-        //if (graphStorageFactory != null) {
-//      //      ghStorage = graphStorageFactory.createStorage(...);
-//      //} else { // Fallback to GH origial
-        ghStorage = new GraphHopperStorage(dir, encodingManager, hasElevation(), encodingManager.needsTurnCostsSupport(), defaultSegmentSize);
+
+        // ORS-GH MOD START use storage factory in ORSGraphHopper
+        if (graphStorageFactory != null) {
+            ghStorage = graphStorageFactory.createStorage(dir, this);
+        } else {
+            ghStorage = new GraphHopperStorage(dir, encodingManager, hasElevation(), encodingManager.needsTurnCostsSupport(), defaultSegmentSize);
+        }
+        // ORS-GH MOD END
         checkProfilesConsistency();
 
         if (lmPreparationHandler.isEnabled())
