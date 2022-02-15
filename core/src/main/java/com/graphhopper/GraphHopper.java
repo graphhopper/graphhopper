@@ -739,7 +739,7 @@ public class GraphHopper {
         AreaIndex<CustomArea> areaIndex = new AreaIndex<>(customAreas);
 
         logger.info("start creating graph from " + osmFile);
-        OSMReader reader = new OSMReader(ghStorage).setFile(_getOSMFile()).
+        OSMReader reader = createOSMReader().setFile(_getOSMFile()).
                 setAreaIndex(areaIndex).
                 setElevationProvider(eleProvider).
                 setWorkerThreads(dataReaderWorkerThreads).
@@ -759,6 +759,12 @@ public class GraphHopper {
         if (reader.getDataDate() != null)
             ghStorage.getProperties().put("datareader.data.date", f.format(reader.getDataDate()));
     }
+
+    // ORS-GH MOD START add method for overriding
+    protected  OSMReader createOSMReader() {
+        return new OSMReader(ghStorage);
+    }
+    // ORS-GH MOD END
 
     private List<CustomArea> readCustomAreas() {
         ObjectMapper objectMapper = new ObjectMapper();

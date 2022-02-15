@@ -145,6 +145,10 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             throw new IllegalArgumentException("Cannot use relation flags with != 2 integers");
 
         tcs = graph.getTurnCostStorage();
+
+        // ORS-GH MOD START init
+        osmNodeTagValues = new GHLongObjectHashMap<>(200, .5f);
+        // ORS-GH MOD END
     }
 
     // ORS-GH MOD START - Method for getting the recorded tags for a node
