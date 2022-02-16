@@ -1137,7 +1137,7 @@ public class CHTurnCostTest {
         // for larger graphs preparation takes much longer the higher the degree is!
         GHUtility.buildRandomGraph(graph, rnd, 20, 3.0, true, true,
                 encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, 0.7, 0.9, 0.8);
-//        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxCost, turnCostStorage);
+        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxCost, turnCostStorage);
         graph.freeze();
         checkStrict = false;
         IntArrayList contractionOrder = getRandomIntegerSequence(graph.getNodes(), rnd);
@@ -1232,7 +1232,7 @@ public class CHTurnCostTest {
     /**
      * same as {@link #testFindPath_random_compareWithDijkstra()}, but using automatic node priority calculation
      */
-    @RepeatedTest(1)
+    @RepeatedTest(10)
     public void testFindPath_heuristic_compareWithDijkstra() {
         long seed = System.nanoTime();
         LOGGER.info("Seed for testFindPath_heuristic_compareWithDijkstra: {}", seed);
@@ -1248,9 +1248,9 @@ public class CHTurnCostTest {
     }
 
     private void compareWithDijkstraOnRandomGraph_heuristic(long seed) {
-        GHUtility.buildRandomGraph(graph, new Random(seed), 7, 3.0, true, true,
+        GHUtility.buildRandomGraph(graph, new Random(seed), 20, 3.0, true, true,
                 encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, 0.7, 0.9, 0.8);
-//        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxCost, turnCostStorage);
+        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxCost, turnCostStorage);
         graph.freeze();
         checkStrict = false;
         automaticCompareCHWithDijkstra(100);

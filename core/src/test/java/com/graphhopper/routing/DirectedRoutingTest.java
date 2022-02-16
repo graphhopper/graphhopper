@@ -198,8 +198,7 @@ public class DirectedRoutingTest {
     @ParameterizedTest
     @ArgumentsSource(RepeatedFixtureProvider.class)
     public void randomGraph(Fixture f) {
-        // todo: fix this, put it back and run again. is this the double loop thing?
-        final long seed = 473404219283980l;
+        final long seed = System.nanoTime();
         final int numQueries = 50;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(f.graph, rnd, 100, 2.2, true, true,
@@ -237,9 +236,7 @@ public class DirectedRoutingTest {
     @ParameterizedTest
     @ArgumentsSource(RepeatedFixtureProvider.class)
     public void randomGraph_withQueryGraph(Fixture f) {
-//        final long seed = System.nanoTime();
-        // todo: fix this, then put it back and run again. is this the double loop thing?
-        final long seed = 473470292655902l;
+        final long seed = System.nanoTime();
         final int numQueries = 50;
 
         // we may not use an offset when query graph is involved, otherwise traveling via virtual edges will not be

@@ -1341,6 +1341,8 @@ public class EdgeBasedNodeContractorTest {
                 createShortcut(4, 5, 0, 2, 0, 2, 200, false, true),
                 createShortcut(4, 5, 2, 0, 2, 0, 200, true, false)
         );
+        // todo: this seems to be the only case that needs special treatment for zero weight loops with the new implementation
+        //       explain this with a few more details here.
         // todo: why no shortcut when we **only* contract node 1, even on master??
     }
 
