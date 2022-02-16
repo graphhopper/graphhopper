@@ -22,7 +22,9 @@ import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.cursors.IntObjectCursor;
 import com.graphhopper.storage.CHStorageBuilder;
 import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.PMap;
+import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +32,7 @@ import java.util.Locale;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
 import static com.graphhopper.util.GHUtility.getEdgeFromEdgeKey;
+import static com.graphhopper.util.GHUtility.reverseEdgeKey;
 import static com.graphhopper.util.Helper.nf;
 
 /**
@@ -53,7 +56,6 @@ class EdgeBasedNodeContractor implements NodeContractor {
     private PrepareGraphOrigEdgeExplorer sourceNodeOrigInEdgeExplorer;
     private CHStorageBuilder chBuilder;
     private final Params params = new Params();
-    private final PMap pMap;
     private final StopWatch dijkstraSW = new StopWatch();
     // temporary data used during node contraction
     private final IntSet sourceNodes = new IntHashSet(10);
@@ -62,10 +64,10 @@ class EdgeBasedNodeContractor implements NodeContractor {
     private final Stats addingStats = new Stats();
     private final Stats countingStats = new Stats();
     private Stats activeStats;
-    private BridgePathFinder bridgePathFinder;
 
     private int[] hierarchyDepths;
     private EdgeBasedWitnessPathSearcher witnessPathSearcher;
+    private BridgePathFinder bridgePathFinder;
     private final EdgeBasedWitnessPathSearcher.Stats wpsStatsHeur = new EdgeBasedWitnessPathSearcher.Stats();
     private final EdgeBasedWitnessPathSearcher.Stats wpsStatsContr = new EdgeBasedWitnessPathSearcher.Stats();
 
@@ -84,7 +86,6 @@ class EdgeBasedNodeContractor implements NodeContractor {
     public EdgeBasedNodeContractor(CHPreparationGraph prepareGraph, CHStorageBuilder chBuilder, PMap pMap) {
         this.prepareGraph = prepareGraph;
         this.chBuilder = chBuilder;
-        this.pMap = pMap;
         extractParams(pMap);
     }
 
@@ -102,8 +103,8 @@ class EdgeBasedNodeContractor implements NodeContractor {
         outEdgeExplorer = prepareGraph.createOutEdgeExplorer();
         existingShortcutExplorer = prepareGraph.createOutEdgeExplorer();
         sourceNodeOrigInEdgeExplorer = prepareGraph.createInOrigEdgeExplorer();
-        witnessPathSearcher = new EdgeBasedWitnessPathSearcher(prepareGraph);
         hierarchyDepths = new int[prepareGraph.getNodes()];
+        witnessPathSearcher = new EdgeBasedWitnessPathSearcher(prepareGraph);
         bridgePathFinder = new BridgePathFinder(prepareGraph);
         meanDegree = prepareGraph.getOriginalEdges() * 1.0 / prepareGraph.getNodes();
     }
@@ -143,6 +144,8 @@ class EdgeBasedNodeContractor implements NodeContractor {
         findAndHandlePrepareShortcuts(node, this::addShortcutsToPrepareGraph, (int) (meanDegree * params.maxPollFactorContraction), wpsStatsContr);
         insertShortcuts(node);
         IntContainer neighbors = prepareGraph.disconnect(node);
+        // We maintain an approximation of the mean degree which we update after every contracted node.
+        // We do it the same way as for node-based CH for now.
         meanDegree = (meanDegree * 2 + neighbors.size()) / 3;
         updateHierarchyDepthsOfNeighbors(node, neighbors);
         stats().stopWatch.stop();
@@ -166,7 +169,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
 
     @Override
     public String getStatisticsString() {
-        return String.format(Locale.ROOT, "degree_approx: %3.1f", meanDegree) + "\npriority   : " + countingStats + ", " + wpsStatsHeur + "\ncontraction: " + addingStats + ", " + wpsStatsContr;
+        return String.format(Locale.ROOT, "degree_approx: %3.1f", meanDegree) + ", priority   : " + countingStats + ", " + wpsStatsHeur + ", contraction: " + addingStats + ", " + wpsStatsContr;
     }
 
     /**
@@ -176,23 +179,26 @@ class EdgeBasedNodeContractor implements NodeContractor {
     private void findAndHandlePrepareShortcuts(int node, PrepareShortcutHandler shortcutHandler, int maxPolls, EdgeBasedWitnessPathSearcher.Stats wpsStats) {
         stats().nodes++;
         addedShortcuts.clear();
-
-        // first we need to identify the possible source nodes from which we can reach the center node
         sourceNodes.clear();
+
+        // traverse incoming edges/shortcuts to find all the source nodes
         PrepareGraphEdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
         while (incomingEdges.next()) {
             final int sourceNode = incomingEdges.getAdjNode();
             if (sourceNode == node)
                 continue;
+            // make sure we process each source node only once
             if (!sourceNodes.add(sourceNode))
                 continue;
-            // for each source node we need to look at every incoming original edge and find the initial entries
+            // for each source node we need to look at every incoming original edge and check which target edges are reachable
             PrepareGraphOrigEdgeIterator origInIter = sourceNodeOrigInEdgeExplorer.setBaseNode(sourceNode);
             while (origInIter.next()) {
-                IntObjectMap<BridgePathFinder.BridePathEntry> bridgePaths = bridgePathFinder.find(GHUtility.reverseEdgeKey(origInIter.getOrigEdgeKeyLast()), sourceNode, node);
+                int origInKey = reverseEdgeKey(origInIter.getOrigEdgeKeyLast());
+                // we search 'bridge paths' leading to the target edges
+                IntObjectMap<BridgePathFinder.BridePathEntry> bridgePaths = bridgePathFinder.find(reverseEdgeKey(origInKey), sourceNode, node);
                 if (bridgePaths.isEmpty())
                     continue;
-                witnessPathSearcher.initSearch(GHUtility.reverseEdgeKey(origInIter.getOrigEdgeKeyLast()), sourceNode, node, wpsStats);
+                witnessPathSearcher.initSearch(reverseEdgeKey(origInKey), sourceNode, node, wpsStats);
                 for (IntObjectCursor<BridgePathFinder.BridePathEntry> bridgePath : bridgePaths) {
                     if (!Double.isFinite(bridgePath.value.weight))
                         throw new IllegalStateException("Bridge entry weights should always be finite");
@@ -201,17 +207,21 @@ class EdgeBasedNodeContractor implements NodeContractor {
                     double weight = witnessPathSearcher.runSearch(bridgePath.value.chEntry.adjNode, targetEdgeKey, bridgePath.value.weight, maxPolls);
                     dijkstraSW.stop();
                     if (weight <= bridgePath.value.weight)
+                        // we found a witness, nothing to do
                         continue;
                     PrepareCHEntry root = bridgePath.value.chEntry;
                     while (EdgeIterator.Edge.isValid(root.parent.prepareEdge))
                         root = root.getParent();
-
+                    // we make sure to add each shortcut only once. when we are actually adding shortcuts we check for existing
+                    // shortcuts anyway, but at least this is important when we *count* shortcuts.
                     long addedShortcutKey = BitUtil.LITTLE.combineIntsToLong(root.firstEdgeKey, bridgePath.value.chEntry.incEdgeKey);
                     if (!addedShortcuts.add(addedShortcutKey))
                         continue;
-                    double initialTurnCost = prepareGraph.getTurnWeight(getEdgeFromEdgeKey(origInIter.getOrigEdgeKeyLast()), sourceNode, getEdgeFromEdgeKey(root.firstEdgeKey));
+                    double initialTurnCost = prepareGraph.getTurnWeight(getEdgeFromEdgeKey(origInKey), sourceNode, getEdgeFromEdgeKey(root.firstEdgeKey));
                     bridgePath.value.chEntry.weight -= initialTurnCost;
                     LOGGER.trace("Adding shortcuts for target entry {}", bridgePath.value.chEntry);
+                    // todo: re-implement loop-avoidance heuristic as it existed in GH 1.0? it did not work the
+                    //       way it was implemented so it was removed at some point
                     shortcutHandler.handleShortcut(root, bridgePath.value.chEntry, bridgePath.value.chEntry.origEdges);
                 }
                 witnessPathSearcher.finishSearch();
@@ -409,10 +419,11 @@ class EdgeBasedNodeContractor implements NodeContractor {
     }
 
     public static class Params {
-        // todo: optimize
         private float edgeQuotientWeight = 100;
         private float originalEdgeQuotientWeight = 100;
         private float hierarchyDepthWeight = 20;
+        // Increasing these parameters (heuristic especially) will lead to a longer preparation time but also to fewer
+        // shortcuts and possibly (slightly) faster queries.
         private double maxPollFactorHeuristic = 5;
         private double maxPollFactorContraction = 200;
     }

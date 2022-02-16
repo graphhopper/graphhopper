@@ -37,6 +37,8 @@ import static com.graphhopper.util.ArrayUtil.zero;
 /**
  * Graph data structure used for CH preparation. It allows caching weights, and edges that are not needed anymore
  * (those adjacent to contracted nodes) can be removed (see {@link #disconnect}.
+ *
+ * @author easbar
  */
 public class CHPreparationGraph {
     private final int nodes;
@@ -692,6 +694,7 @@ public class CHPreparationGraph {
             this.prepareEdge = prepareEdge;
             this.from = from;
             this.to = to;
+            assert Double.isFinite(weight);
             this.weight = weight;
             this.skipped1 = skipped1;
             this.skipped2 = skipped2;

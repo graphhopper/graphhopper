@@ -28,6 +28,14 @@ import java.util.PriorityQueue;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.GHUtility.getEdgeFromEdgeKey;
 
+/**
+ * Used to find 'bridge-paths' during edge-based CH preparation. Bridge-paths are paths that start and end at neighbor
+ * nodes of the node we like to contract without visiting any nodes other than that node. They can include loops at the
+ * node to be contracted. These are the paths that we might have to replace with shortcuts if no witness paths exist.
+ *
+ * @author easbar
+ * @see EdgeBasedNodeContractor
+ */
 public class BridgePathFinder {
     private final CHPreparationGraph graph;
     private final PrepareGraphEdgeExplorer outExplorer;
@@ -43,12 +51,17 @@ public class BridgePathFinder {
         map = new IntObjectScatterMap<>();
     }
 
+    /**
+     * Finds all bridge paths starting at a given node and starting edge key.
+     *
+     * @return a mapping between the target edge keys we can reach via bridge paths and information about the
+     * corresponding bridge path
+     */
     public IntObjectMap<BridePathEntry> find(int startInEdgeKey, int startNode, int centerNode) {
         queue.clear();
         map.clear();
         IntObjectMap<BridePathEntry> result = new IntObjectHashMap<>(16, 0.5, HashOrderMixing.constant(123));
         PrepareCHEntry startEntry = new PrepareCHEntry(NO_EDGE, startInEdgeKey, startInEdgeKey, startNode, 0, 0);
-        startEntry.firstEdgeKey = startInEdgeKey;
         map.put(startInEdgeKey, startEntry);
         queue.add(startEntry);
         while (!queue.isEmpty()) {
@@ -56,8 +69,10 @@ public class BridgePathFinder {
             PrepareGraphEdgeIterator iter = outExplorer.setBaseNode(currEntry.adjNode);
             while (iter.next()) {
                 if (iter.getAdjNode() == centerNode) {
-                    double weight = currEntry.weight + graph.getTurnWeight(getEdgeFromEdgeKey(currEntry.incEdgeKey),
-                            currEntry.adjNode, getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst())) + iter.getWeight();
+                    // We arrived at the center node, so we keep expanding the search
+                    double weight = currEntry.weight +
+                            graph.getTurnWeight(getEdgeFromEdgeKey(currEntry.incEdgeKey), currEntry.adjNode, getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst())) +
+                            iter.getWeight();
                     if (Double.isInfinite(weight))
                         continue;
                     PrepareCHEntry entry = map.get(iter.getOrigEdgeKeyLast());
@@ -76,8 +91,12 @@ public class BridgePathFinder {
                         queue.add(entry);
                     }
                 } else if (currEntry.adjNode == centerNode) {
-                    double weight = currEntry.weight + graph.getTurnWeight(getEdgeFromEdgeKey(currEntry.incEdgeKey),
-                            currEntry.adjNode, getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst())) + iter.getWeight();
+                    // We just left the center node, so we arrived at some neighbor node. Every edge we can reach from
+                    // there is a target edge, so we add a bridge path entry for it. We do not continue the search from the
+                    // neighbor node anymore
+                    double weight = currEntry.weight +
+                            graph.getTurnWeight(getEdgeFromEdgeKey(currEntry.incEdgeKey), currEntry.adjNode, getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst())) +
+                            iter.getWeight();
                     if (Double.isInfinite(weight))
                         continue;
                     PrepareGraphOrigEdgeIterator origOutIter = origOutExplorer.setBaseNode(iter.getAdjNode());
@@ -103,6 +122,8 @@ public class BridgePathFinder {
                         }
                     }
                 }
+                // We arrived at some node that is not the center node. We do not expand the search as we oare only
+                // concerned with finding bridge paths.
             }
         }
         return result;

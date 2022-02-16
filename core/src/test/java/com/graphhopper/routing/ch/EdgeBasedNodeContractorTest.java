@@ -1337,12 +1337,14 @@ public class EdgeBasedNodeContractorTest {
         freeze();
         setMaxLevelOnAllNodes();
         contractNodes(1, 3, 0, 2, 7, 6, 4);
+        // contracting node 1 leads to two shortcuts. it is important that we do not consider the path 5-5-1-4 a
+        // witness for the bridge path 5-1-4. it has the same weight and 'looks' like a witness path, because it
+        // connects the same nodes and is not a bridge path. this needs special handling in our edge-based witness path
+        // searcher.
         checkShortcuts(
                 createShortcut(4, 5, 0, 2, 0, 2, 200, false, true),
                 createShortcut(4, 5, 2, 0, 2, 0, 200, true, false)
         );
-        // todo: this seems to be the only case that needs special treatment for zero weight loops with the new implementation
-        //       explain this with a few more details here.
     }
 
     @Test

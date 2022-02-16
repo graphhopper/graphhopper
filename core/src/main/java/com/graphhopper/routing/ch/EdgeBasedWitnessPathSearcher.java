@@ -39,7 +39,7 @@ import static com.graphhopper.util.Helper.nf;
  * <p>
  * 1) The path only consists of one edge from s to x, an arbitrary number of loops at x, and one edge from x to t.
  * This is called a 'bridge-path' here.
- * 2) The path includes an edge from s to another node than x or an edge from another node than x to t.
+ * 2) The path includes an edge from s to a node other than x or an edge from another node than x to t.
  * This is called a 'witness-path'. Note that a witness path can still include x! This is because if a witness includes
  * x we still do not need to include a shortcut because the path contains another (smaller) shortcut in this case.
  * <p>
@@ -52,6 +52,7 @@ import static com.graphhopper.util.Helper.nf;
  */
 public class EdgeBasedWitnessPathSearcher {
     private static final int NO_NODE = -1;
+    private static final double MAX_ZERO_WEIGHT_LOOP = 1.e-3;
 
     private final CHPreparationGraph prepareGraph;
     private PrepareGraphEdgeExplorer outEdgeExplorer;
@@ -116,7 +117,7 @@ public class EdgeBasedWitnessPathSearcher {
      *                       returned weight might be larger than the weight of the real shortest path. If there is
      *                       no path with weight smaller than or equal to this we stop the search and return the weight
      *                       of the best path found so far.
-     * @return the weight of the found path or {@link Double#POSITIVE_INFINITY} if no found was found
+     * @return the weight of the found path or {@link Double#POSITIVE_INFINITY} if no path was found
      */
     public double runSearch(int targetNode, int targetEdgeKey, double acceptedWeight, int maxPolls) {
         stats.numSearches++;
@@ -140,8 +141,8 @@ public class EdgeBasedWitnessPathSearcher {
             double foundWeight = Double.POSITIVE_INFINITY;
             while (iter.next()) {
                 // in a few very special cases this is needed to prevent paths that start with a zero weight loop from
-                // being recognized as witnesses when there are double zero weights at the source node
-                if (iter.getAdjNode() == currNode && iter.getWeight() < 1.e-3)
+                // being recognized as witnesses when there are double zero weight loops at the source node
+                if (iter.getAdjNode() == currNode && iter.getWeight() < MAX_ZERO_WEIGHT_LOOP)
                     continue;
                 final double weight = weights[currKey] + calcTurnWeight(getEdgeFromEdgeKey(currKey), currNode, getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst())) + iter.getWeight();
                 if (Double.isInfinite(weight))
@@ -158,7 +159,6 @@ public class EdgeBasedWitnessPathSearcher {
                         foundWeight = Math.min(foundWeight, weight + calcTurnWeight(getEdgeFromEdgeKey(key), targetNode, getEdgeFromEdgeKey(targetEdgeKey)));
                 } else if (weight < weights[key]
                         // if weights are equal make sure we prefer witness paths over bridge paths
-                        // todo: we used to require iter.getAdjNode() == targetNode here?!
                         || (weight == weights[key] && !isPathToCenter(currKey))) {
                     numUpdates++;
                     weights[key] = weight;

@@ -369,9 +369,8 @@ public class PrepareContractionHierarchies {
                 updateCounter,
                 nf(checkCounter),
                 getTimesAsString(),
-                Helper.getMemInfo(),
-                nodeContractor.getStatisticsString()
-        ));
+                nodeContractor.getStatisticsString(),
+                Helper.getMemInfo()));
     }
 
     private void logFixedNodeOrderingStats(int nodesContracted, int logSize, StopWatch stopWatch) {
@@ -523,6 +522,8 @@ public class PrepareContractionHierarchies {
         private int logMessagesPercentage;
 
         static Params forTraversalMode(TraversalMode traversalMode) {
+            // Lower values for the neighbor update percentage (and/or max neighbor updates) yield a slower
+            // preparation but possibly fewer shortcuts and a slightly better query time.
             if (traversalMode.isEdgeBased()) {
                 return new Params(0, 100, 50, 3, 100, 5);
             } else {
