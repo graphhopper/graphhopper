@@ -141,8 +141,8 @@ public class EdgeBasedWitnessPathSearcher {
             while (iter.next()) {
                 // in a few very special cases this is needed to prevent paths that start with a zero weight loop from
                 // being recognized as witnesses when there are double zero weights at the source node
-//                if (iter.getAdjNode() == currNode && iter.getWeight() < 1.e-3)
-//                    continue;
+                if (iter.getAdjNode() == currNode && iter.getWeight() < 1.e-3)
+                    continue;
                 final double weight = weights[currKey] + calcTurnWeight(getEdgeFromEdgeKey(currKey), currNode, getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst())) + iter.getWeight();
                 if (Double.isInfinite(weight))
                     continue;
