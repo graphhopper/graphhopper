@@ -30,6 +30,7 @@ import java.util.Locale;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+import static com.graphhopper.util.GHUtility.getEdgeFromEdgeKey;
 import static java.lang.Double.isInfinite;
 
 /**
@@ -214,8 +215,8 @@ public class EdgeBasedWitnessPathSearcher {
             final int fromNode = getAdjNode(currKey);
             PrepareGraphEdgeIterator iter = outEdgeExplorer.setBaseNode(fromNode);
             while (iter.next()) {
-                double edgeWeight = iter.getWeight() + calcTurnWeight(GHUtility.getEdgeFromEdgeKey(currKey),
-                        iter.getBaseNode(), GHUtility.getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()));
+                double edgeWeight = iter.getWeight() + calcTurnWeight(getEdgeFromEdgeKey(currKey),
+                        iter.getBaseNode(), getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()));
                 double weight = edgeWeight + weights[currKey];
                 if (isInfinite(weight)) {
                     continue;
@@ -290,16 +291,11 @@ public class EdgeBasedWitnessPathSearcher {
     }
 
     public String getStatisticsString() {
-        return "last batch: " + currentBatchStats.toString() + " total: " + totalStats.toString();
+        return "last batch: " + currentBatchStats + " total: " + totalStats;
     }
 
     public long getNumPolledEdges() {
         return numPolledEdges;
-    }
-
-
-    public long getTotalNumSearches() {
-        return totalStats.numSearches;
     }
 
     public void resetStats() {
@@ -343,7 +339,7 @@ public class EdgeBasedWitnessPathSearcher {
     private void setInitialEntries(int sourceNode, int sourceEdge, int centerNode) {
         PrepareGraphEdgeIterator outIter = outEdgeExplorer.setBaseNode(sourceNode);
         while (outIter.next()) {
-            double turnWeight = calcTurnWeight(sourceEdge, sourceNode, GHUtility.getEdgeFromEdgeKey(outIter.getOrigEdgeKeyFirst()));
+            double turnWeight = calcTurnWeight(sourceEdge, sourceNode, getEdgeFromEdgeKey(outIter.getOrigEdgeKeyFirst()));
             if (isInfinite(turnWeight)) {
                 continue;
             }
@@ -423,7 +419,7 @@ public class EdgeBasedWitnessPathSearcher {
         // whenever we hit the target node we update the best path *if* it allows turning onto the target edge
         // less costly than the currently best path
         if (getAdjNode(edgeKey) == targetNode) {
-            double totalWeight = weights[edgeKey] + calcTurnWeight(GHUtility.getEdgeFromEdgeKey(edgeKey), targetNode, targetEdge);
+            double totalWeight = weights[edgeKey] + calcTurnWeight(getEdgeFromEdgeKey(edgeKey), targetNode, targetEdge);
             // there is a path to the target so we know that there must be some parent. therefore a negative parent key
             // means that the parent is a root parent (a parent of an initial entry) and we did not go via the center
             // node.
