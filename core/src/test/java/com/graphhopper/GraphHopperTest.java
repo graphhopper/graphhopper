@@ -95,8 +95,8 @@ public class GraphHopperTest {
             ASTAR + ",false,444",
             DIJKSTRA_BI + ",false,228",
             ASTAR_BI + ",false,184",
-            ASTAR_BI + ",true,61",
-            DIJKSTRA_BI + ",true,61"
+            ASTAR_BI + ",true,49",
+            DIJKSTRA_BI + ",true,48"
     })
     public void testMonacoDifferentAlgorithms(String algo, boolean withCH, int expectedVisitedNodes) {
         final String vehicle = "car";
@@ -1380,7 +1380,7 @@ public class GraphHopperTest {
         // identify the number of counts to compare with none-CH foot route which had nearly 700 counts
         long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
         assertNotEquals(sum, 0);
-        assertTrue(sum < 145, "Too many nodes visited " + sum);
+        assertTrue(sum < 147, "Too many nodes visited " + sum);
         assertEquals(3437.1, bestPath.getDistance(), .1);
         assertEquals(85, bestPath.getPoints().size());
 
