@@ -7,8 +7,6 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.parsers.OSMSurfaceParser;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
@@ -105,16 +103,16 @@ public class RoutingExample {
         assert res.getAll().size() == 1;
         assert Helper.round(res.getBest().getDistance(), -2) == 800;
 
-        // calculate potential alternative routes to the current one (supported with and without CH)
+        // calculate alternative routes between two points (supported with and without CH)
         req = new GHRequest().setProfile("car").
-                addPoint(new GHPoint(42.505088, 1.516371)).addPoint(new GHPoint(42.506623, 1.531756)).
+                addPoint(new GHPoint(42.502904, 1.514714)).addPoint(new GHPoint(42.511953, 1.535914)).
                 setAlgorithm(Parameters.Algorithms.ALT_ROUTE);
         req.getHints().putObject(Parameters.Algorithms.AltRoute.MAX_PATHS, 3);
         res = hopper.route(req);
         if (res.hasErrors())
             throw new RuntimeException(res.getErrors().toString());
         assert res.getAll().size() == 2;
-        assert Helper.round(res.getBest().getDistance(), -2) == 1600;
+        assert Helper.round(res.getBest().getDistance(), -2) == 2300;
     }
 
     public static void customizableRouting(String ghLoc) {
