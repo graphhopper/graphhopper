@@ -808,6 +808,7 @@ public class CHTurnCostTest {
         na.setNode(4, 49.402768, 9.705516);
         na.setNode(5, 49.400228, 9.709740);
         na.setNode(6, 49.408803, 9.706722);
+        // note there are two (directed) zero weight loops at node 5!
         GHUtility.setSpeed(60.000000, 60.000000, encoder, graph.edge(5, 1).setDistance(263.944000)); // edgeId=0
         GHUtility.setSpeed(90.000000, 90.000000, encoder, graph.edge(3, 3).setDistance(113.016000)); // edgeId=1
         GHUtility.setSpeed(60.000000, 60.000000, encoder, graph.edge(2, 5).setDistance(314.692000)); // edgeId=2

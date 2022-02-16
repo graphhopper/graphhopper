@@ -289,11 +289,11 @@ public class PrepareContractionHierarchies {
                 // skipped nodes are already set to maxLevel
                 break;
 
-            int neighborsCnt = 0;
+            int neighborCount = 0;
             // there might be multiple edges going to the same neighbor nodes -> only calculate priority once per node
             for (IntCursor neighbor : neighbors) {
-                if (neighborUpdate && (params.getMaxNeighborUpdates() < 0 || neighborsCnt < params.getMaxNeighborUpdates()) && rand.nextInt(100) < params.getNeighborUpdatePercentage()) {
-                    neighborsCnt++;
+                if (neighborUpdate && (params.getMaxNeighborUpdates() < 0 || neighborCount < params.getMaxNeighborUpdates()) && rand.nextInt(100) < params.getNeighborUpdatePercentage()) {
+                    neighborCount++;
                     neighborUpdateSW.start();
                     float priority = calculatePriority(neighbor.value);
                     sortedNodes.update(neighbor.value, priority);
@@ -527,7 +527,7 @@ public class PrepareContractionHierarchies {
                 // todo: optimize
                 return new Params(0, 100, 50, 3, 100, 5);
             } else {
-                return new Params(0, 0, 100, -1, 100, 20);
+                return new Params(0, 100, 100, 2, 100, 20);
             }
         }
 
