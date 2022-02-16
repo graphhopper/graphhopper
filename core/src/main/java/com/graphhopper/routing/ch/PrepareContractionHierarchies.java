@@ -97,6 +97,7 @@ public class PrepareContractionHierarchies {
         params.setPeriodicUpdatesPercentage(pMap.getInt(PERIODIC_UPDATES, params.getPeriodicUpdatesPercentage()));
         params.setLastNodesLazyUpdatePercentage(pMap.getInt(LAST_LAZY_NODES_UPDATES, params.getLastNodesLazyUpdatePercentage()));
         params.setNeighborUpdatePercentage(pMap.getInt(NEIGHBOR_UPDATES, params.getNeighborUpdatePercentage()));
+        params.setMaxNeighborUpdates(pMap.getInt(NEIGHBOR_UPDATES_MAX, params.getMaxNeighborUpdates()));
         params.setNodesContractedPercentage(pMap.getInt(CONTRACTED_NODES, params.getNodesContractedPercentage()));
         params.setLogMessagesPercentage(pMap.getInt(LOG_MESSAGES, params.getLogMessagesPercentage()));
         return this;
@@ -289,13 +290,14 @@ public class PrepareContractionHierarchies {
                 // skipped nodes are already set to maxLevel
                 break;
 
+            int neighborCount = 0;
             // there might be multiple edges going to the same neighbor nodes -> only calculate priority once per node
             for (IntCursor neighbor : neighbors) {
-                int nn = neighbor.value;
-                if (neighborUpdate && rand.nextInt(100) < params.getNeighborUpdatePercentage()) {
+                if (neighborUpdate && (params.getMaxNeighborUpdates() < 0 || neighborCount < params.getMaxNeighborUpdates()) && rand.nextInt(100) < params.getNeighborUpdatePercentage()) {
+                    neighborCount++;
                     neighborUpdateSW.start();
-                    float priority = calculatePriority(nn);
-                    sortedNodes.update(nn, priority);
+                    float priority = calculatePriority(neighbor.value);
+                    sortedNodes.update(neighbor.value, priority);
                     neighborUpdateSW.stop();
                 }
             }
@@ -509,6 +511,11 @@ public class PrepareContractionHierarchies {
          */
         private int neighborUpdatePercentage;
         /**
+         * Specifies the maximum number of neighbor updates per contracted node. For example for the foot profile we
+         * see a large number of neighbor updates that can be limited with this setting. -1 means unlimited.
+         */
+        private int maxNeighborUpdates;
+        /**
          * Defines how many nodes (percentage) should be contracted. A value of 20 means only the first 20% of all nodes
          * will be contracted. Higher values here mean longer preparation times, but faster queries (because the
          * graph will be fully contracted).
@@ -524,17 +531,18 @@ public class PrepareContractionHierarchies {
         static Params forTraversalMode(TraversalMode traversalMode) {
             if (traversalMode.isEdgeBased()) {
                 // todo: optimize
-                return new Params(0, 100, 0, 100, 5);
+                return new Params(0, 100, 0, -1, 100, 5);
             } else {
-                return new Params(0, 0, 100, 100, 20);
+                return new Params(0, 100, 100, 2, 100, 20);
             }
         }
 
-        private Params(int periodicUpdatesPercentage, int lastNodesLazyUpdatePercentage, int neighborUpdatePercentage,
+        private Params(int periodicUpdatesPercentage, int lastNodesLazyUpdatePercentage, int neighborUpdatePercentage, int maxNeighborUpdates,
                        int nodesContractedPercentage, int logMessagesPercentage) {
             setPeriodicUpdatesPercentage(periodicUpdatesPercentage);
             setLastNodesLazyUpdatePercentage(lastNodesLazyUpdatePercentage);
             setNeighborUpdatePercentage(neighborUpdatePercentage);
+            setMaxNeighborUpdates(maxNeighborUpdates);
             setNodesContractedPercentage(nodesContractedPercentage);
             setLogMessagesPercentage(logMessagesPercentage);
         }
@@ -564,6 +572,14 @@ public class PrepareContractionHierarchies {
         void setNeighborUpdatePercentage(int neighborUpdatePercentage) {
             checkPercentage(NEIGHBOR_UPDATES, neighborUpdatePercentage);
             this.neighborUpdatePercentage = neighborUpdatePercentage;
+        }
+
+        int getMaxNeighborUpdates() {
+            return maxNeighborUpdates;
+        }
+
+        void setMaxNeighborUpdates(int maxNeighborUpdates) {
+            this.maxNeighborUpdates = maxNeighborUpdates;
         }
 
         int getNodesContractedPercentage() {
