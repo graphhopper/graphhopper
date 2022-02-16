@@ -63,7 +63,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * taking place  in {@link PrepareContractionHierarchies} is not covered, but this is ok, because the correctness
  * of CH should not depend on the contraction order.
  *
- * @see EdgeBasedNodeContractor where shortcut creation is tested independent from the routing query
+ * @see EdgeBasedNodeContractor where shortcut creation is tested independent of the routing query
  */
 public class CHTurnCostTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(CHTurnCostTest.class);

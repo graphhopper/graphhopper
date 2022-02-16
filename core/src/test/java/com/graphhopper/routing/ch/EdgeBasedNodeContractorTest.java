@@ -1372,6 +1372,10 @@ public class EdgeBasedNodeContractorTest {
 
     @Test
     public void testNodeContraction_numPolledEdges() {
+        //           1<-6
+        //           |
+        // 0 -> 3 -> 2 <-> 4 -> 5
+        //  \---<----|
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 2).setDistance(71.203000));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 3).setDistance(79.003000));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 0).setDistance(21.328000));
