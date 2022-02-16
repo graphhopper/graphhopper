@@ -45,7 +45,6 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
     protected final NodeAccess nodeAccess;
     protected final Weighting weighting;
     protected EdgeExplorer edgeExplorer;
-    protected EdgeFilter additionalEdgeFilter;
 
     public AbstractNonCHBidirAlgo(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(tMode);
