@@ -86,7 +86,7 @@ public class CHPreparationGraph {
         shortcutsByPrepareEdges = new IntArrayList();
         degrees = new int[nodes];
         origGraphBuilder = edgeBased ? new OrigGraph.Builder() : null;
-        neighborSet = new IntScatterSet();
+        neighborSet = new IntHashSet();
         nextShortcutId = edges;
     }
 
@@ -263,6 +263,7 @@ public class CHPreparationGraph {
         // we use this neighbor set to guarantee a deterministic order of the returned
         // node ids
         neighborSet.clear();
+        IntArrayList neighbors = new IntArrayList(getDegree(node));
         PrepareEdge currOut = prepareEdgesOut[node];
         while (currOut != null) {
             int adjNode = currOut.getNodeB();
@@ -274,7 +275,8 @@ public class CHPreparationGraph {
                 continue;
             }
             removeInEdge(adjNode, currOut);
-            neighborSet.add(adjNode);
+            if (neighborSet.add(adjNode))
+                neighbors.add(adjNode);
             currOut = currOut.getNextOut(node);
         }
         PrepareEdge currIn = prepareEdgesIn[node];
@@ -288,13 +290,14 @@ public class CHPreparationGraph {
                 continue;
             }
             removeOutEdge(adjNode, currIn);
-            neighborSet.add(adjNode);
+            if (neighborSet.add(adjNode))
+                neighbors.add(adjNode);
             currIn = currIn.getNextIn(node);
         }
         prepareEdgesOut[node] = null;
         prepareEdgesIn[node] = null;
         degrees[node] = 0;
-        return neighborSet;
+        return neighbors;
     }
 
     private void removeOutEdge(int node, PrepareEdge prepareEdge) {
