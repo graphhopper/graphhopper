@@ -364,7 +364,12 @@ class TripFromLabel {
                             geometryFactory.createLineString(stops.stream().map(s -> s.geometry.getCoordinate()).toArray(Coordinate[]::new))));
                     partition = null;
                     if (edge.getType() == GtfsStorage.EdgeType.TRANSFER) {
-                        feedId = edge.getPlatformDescriptor().feed_id;;
+                        feedId = edge.getPlatformDescriptor().feed_id;
+                        int[] skippedEdgesForTransfer = gtfsStorage.getSkippedEdgesForTransfer().get(edge.getId());
+                        if (skippedEdgesForTransfer != null) {
+                            List<Trip.Leg> legs = parsePartitionToLegs(transferPath(skippedEdgesForTransfer, weighting), graph, weighting, tr, requestedPathDetails);
+                            result.add(legs.get(0));
+                        }
                     }
                 }
             }
@@ -405,6 +410,11 @@ class TripFromLabel {
                     pathDetails,
                     Date.from(arrivalTime)));
         }
+    }
+
+    private List<Label.Transition> transferPath(int[] skippedEdgesForTransfer, Weighting accessEgressWeighting) {
+        GraphExplorer graphExplorer = new GraphExplorer(graph, gtfsStorage.getPtGraph(), accessEgressWeighting, gtfsStorage, realtimeFeed, false, true, false, 0, false, 0);
+        return graphExplorer.walkPath(skippedEdgesForTransfer);
     }
 
     private Stream<GraphExplorer.MultiModalEdge> edges(List<Label.Transition> path) {

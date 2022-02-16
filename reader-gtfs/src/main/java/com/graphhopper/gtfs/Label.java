@@ -57,9 +57,9 @@ public class Label {
 
     public final Label parent;
 
-    Label(long currentTime, GraphExplorer.MultiModalEdge edgeId, NodeId node, int nTransfers, Long departureTime, long streetTime, long extraWeight, long residualDelay, boolean impossible, Label parent) {
+    Label(long currentTime, GraphExplorer.MultiModalEdge edge, NodeId node, int nTransfers, Long departureTime, long streetTime, long extraWeight, long residualDelay, boolean impossible, Label parent) {
         this.currentTime = currentTime;
-        this.edge = edgeId;
+        this.edge = edge;
         this.node = node;
         this.nTransfers = nTransfers;
         this.departureTime = departureTime;

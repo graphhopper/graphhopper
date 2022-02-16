@@ -27,6 +27,7 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.InMemConstructionIndex;
 import com.graphhopper.storage.index.IndexStructureInfo;
 import com.graphhopper.storage.index.LineIntIndex;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
@@ -128,7 +129,16 @@ public class GraphHopperGtfs extends GraphHopper {
                                 if (!toPlatformDescriptor.feed_id.equals(fromPlatformDescriptor.feed_id)) {
                                     LOGGER.debug(" Different feed. Inserting transfer with " + (int) (label.streetTime / 1000L) + " s.");
                                     GtfsReader toFeedReader = readers.get(toPlatformDescriptor.feed_id);
-                                    toFeedReader.insertTransferEdges(label.node.ptNode, (int) (label.streetTime / 1000L), toPlatformDescriptor);
+                                    List<Integer> transferEdgeIds = toFeedReader.insertTransferEdges(label.node.ptNode, (int) (label.streetTime / 1000L), toPlatformDescriptor);
+                                    List<Label.Transition> transitions = Label.getTransitions(label.parent, true);
+                                    int[] edgeIds = transitions.stream().filter(t -> t.edge != null).mapToInt(t -> {
+                                        Label.NodeId adjNode = t.edge.getAdjNode();
+                                        EdgeIteratorState edgeIteratorState = graphHopperStorage.getEdgeIteratorState(t.edge.getId(), adjNode.streetNode);
+                                        return edgeIteratorState.getEdgeKey();
+                                    }).toArray();
+                                    for (Integer transferEdgeId : transferEdgeIds) {
+                                        gtfsStorage.getSkippedEdgesForTransfer().put(transferEdgeId, edgeIds);
+                                    }
                                 } else {
                                     List<Transfer> transfersToStop = transfers.getTransfersToStop(toPlatformDescriptor.stop_id, routeIdOrNull(toPlatformDescriptor));
                                     if (transfersToStop.stream().noneMatch(t -> t.from_stop_id.equals(fromPlatformDescriptor.stop_id))) {
