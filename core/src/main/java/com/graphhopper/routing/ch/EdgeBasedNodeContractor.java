@@ -138,8 +138,6 @@ class EdgeBasedNodeContractor implements NodeContractor {
 
     @Override
     public IntContainer contractNode(int node) {
-        // todo: revert
-        LOGGER.info("contract node: " + node);
         activeStats = addingStats;
         stats().stopWatch.start();
         findAndHandlePrepareShortcuts(node, this::addShortcutsToPrepareGraph, (int) (meanDegree * params.maxPollFactorContraction), wpsStatsContr);
@@ -333,8 +331,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
 
         // our shortcut is new --> add it
         int origFirstKey = edgeFrom.firstEdgeKey;
-        // todo: revert
-        LOGGER.info("Adding shortcut from {} to {}, weight: {}, firstOrigEdgeKey: {}, lastOrigEdgeKey: {}",
+        LOGGER.trace("Adding shortcut from {} to {}, weight: {}, firstOrigEdgeKey: {}, lastOrigEdgeKey: {}",
                 from, adjNode, edgeTo.weight, origFirstKey, edgeTo.incEdgeKey);
         int prepareEdge = prepareGraph.addShortcut(from, adjNode, origFirstKey, edgeTo.incEdgeKey, edgeFrom.prepareEdge, edgeTo.prepareEdge, edgeTo.weight, origEdgeCount);
         // does not matter here
