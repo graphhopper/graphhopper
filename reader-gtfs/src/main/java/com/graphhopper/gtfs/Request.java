@@ -44,6 +44,7 @@ public class Request {
     private Duration maxProfileDuration = Duration.ofDays(1);
     private List<String> pathDetails = new ArrayList<>();
     private String connectingProfile;
+    private boolean enableElevation = false;
 
     public Request(List<GHLocation> points, Instant departureTime) {
         this.points = points;
@@ -192,6 +193,14 @@ public class Request {
 
     public void setConnectingProfile(String accessProfile) {
         this.connectingProfile = accessProfile;
+    }
+
+    public boolean getEnableElevation() {
+        return enableElevation;
+    }
+
+    public void setEnableElevation(boolean enableElevation) {
+        this.enableElevation = enableElevation;
     }
 
 }

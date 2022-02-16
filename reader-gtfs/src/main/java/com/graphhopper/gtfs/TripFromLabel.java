@@ -73,12 +73,12 @@ class TripFromLabel {
         this.pathDetailsBuilderFactory = pathDetailsBuilderFactory;
     }
 
-    ResponsePath createResponsePath(Translation tr, PointList waypoints, Graph queryGraph, Weighting connectingWeighting, List<Label.Transition> solution, List<String> requestedPathDetails, String connectingVehicle) {
+    ResponsePath createResponsePath(Translation tr, PointList waypoints, Graph queryGraph, Weighting connectingWeighting, List<Label.Transition> solution, List<String> requestedPathDetails, String connectingVehicle, boolean includeElevation) {
         final List<List<Label.Transition>> partitions = parsePathToPartitions(solution);
 
         final List<Trip.Leg> legs = new ArrayList<>();
         for (int i = 0; i < partitions.size(); i++) {
-            legs.addAll(parsePartitionToLegs(partitions.get(i), queryGraph, connectingWeighting, tr, requestedPathDetails, connectingVehicle));
+            legs.addAll(parsePartitionToLegs(partitions.get(i), queryGraph, connectingWeighting, tr, requestedPathDetails, connectingVehicle, includeElevation));
         }
 
         if (legs.size() > 1 && legs.get(0) instanceof Trip.ConnectingLeg) {
@@ -328,7 +328,7 @@ class TripFromLabel {
     // One could argue that one should never write a parser
     // by hand, because it is always ugly, but use a parser library.
     // The code would then read like a specification of what paths through the graph mean.
-    private List<Trip.Leg> parsePartitionToLegs(List<Label.Transition> path, Graph graph, Weighting weighting, Translation tr, List<String> requestedPathDetails, String connectingVehicle) {
+    private List<Trip.Leg> parsePartitionToLegs(List<Label.Transition> path, Graph graph, Weighting weighting, Translation tr, List<String> requestedPathDetails, String connectingVehicle, boolean includeElevation) {
         if (path.size() <= 1) {
             return Collections.emptyList();
         }
@@ -411,7 +411,7 @@ class TripFromLabel {
                     connectingVehicle,
                     connectingVehicle,
                     Date.from(departureTime),
-                    lineStringFromEdges(path),
+                    lineStringFromInstructions(instructions, includeElevation),
                     edges(path).mapToDouble(edgeLabel -> edgeLabel.getDistance()).sum(),
                     instructions,
                     pathDetails,
@@ -423,13 +423,12 @@ class TripFromLabel {
         return path.stream().filter(t -> t.edge != null).map(t -> t.edge);
     }
 
-    private Geometry lineStringFromEdges(List<Label.Transition> transitions) {
-        final Iterator<Label.Transition> iterator = transitions.iterator();
-        iterator.next();
-        Label.Transition first = iterator.next();
-        List<Coordinate> coordinates = new ArrayList<>(toCoordinateArray(graph.getEdgeIteratorState(first.edge.getId(), first.edge.getAdjNode().streetNode).fetchWayGeometry(FetchMode.ALL)));
-        iterator.forEachRemaining(transition -> coordinates.addAll(toCoordinateArray(graph.getEdgeIteratorState(transition.edge.getId(), transition.edge.getAdjNode().streetNode).fetchWayGeometry(FetchMode.PILLAR_AND_ADJ))));
-        return geometryFactory.createLineString(coordinates.toArray(new Coordinate[coordinates.size()]));
+    private Geometry lineStringFromInstructions(InstructionList instructions, boolean includeElevation) {
+        final PointList pointsList = new PointList();
+        for (Instruction instruction : instructions) {
+            pointsList.add(instruction.getPoints());
+        }
+        return pointsList.toLineString(includeElevation);
     }
 
     private static List<Coordinate> toCoordinateArray(PointList pointList) {

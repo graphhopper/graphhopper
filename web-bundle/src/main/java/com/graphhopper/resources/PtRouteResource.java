@@ -64,7 +64,8 @@ public class PtRouteResource {
                             @QueryParam("pt.limit_solutions") Integer limitSolutions,
                             @QueryParam("pt.limit_trip_time") DurationParam limitTripTime,
                             @QueryParam("pt.limit_street_time") DurationParam limitStreetTime,
-                            @QueryParam("pt.connecting_profile") String connectingProfile) {
+                            @QueryParam("pt.connecting_profile") String connectingProfile,
+                            @QueryParam("elevation") @DefaultValue("false") boolean enableElevation) {
         StopWatch stopWatch = new StopWatch().start();
         List<GHLocation> points = requestPoints.stream().map(AbstractParam::get).collect(toList());
         Instant departureTime = departureTimeParam.get().toInstant();
@@ -79,9 +80,10 @@ public class PtRouteResource {
         Optional.ofNullable(limitTripTime.get()).ifPresent(request::setLimitTripTime);
         Optional.ofNullable(limitStreetTime.get()).ifPresent(request::setLimitStreetTime);
         Optional.ofNullable(connectingProfile).ifPresent(request::setConnectingProfile);
+        Optional.ofNullable(enableElevation).ifPresent(request::setEnableElevation);
 
         GHResponse route = ptRouter.route(request);
-        return ResponsePathSerializer.jsonObject(route, true, true, false, false, stopWatch.stop().getMillis());
+        return ResponsePathSerializer.jsonObject(route, true, true, enableElevation, false, stopWatch.stop().getMillis());
     }
 
 }
