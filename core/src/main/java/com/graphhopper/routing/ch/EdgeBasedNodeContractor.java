@@ -92,8 +92,8 @@ class EdgeBasedNodeContractor implements NodeContractor {
         params.edgeQuotientWeight = pMap.getFloat(EDGE_QUOTIENT_WEIGHT, params.edgeQuotientWeight);
         params.originalEdgeQuotientWeight = pMap.getFloat(ORIGINAL_EDGE_QUOTIENT_WEIGHT, params.originalEdgeQuotientWeight);
         params.hierarchyDepthWeight = pMap.getFloat(HIERARCHY_DEPTH_WEIGHT, params.hierarchyDepthWeight);
-        params.maxVisitedNodesFactorHeuristic = pMap.getDouble(MAX_VISITED_NODES_FACTOR_HEURISTIC_EB, params.maxVisitedNodesFactorHeuristic);
-        params.maxVisitedNodesFactorContraction = pMap.getDouble(MAX_VISITED_NODES_FACTOR_CONTRACTION_EB, params.maxVisitedNodesFactorContraction);
+        params.maxPollFactorHeuristic = pMap.getDouble(MAX_POLL_FACTOR_HEURISTIC_EDGE, params.maxPollFactorHeuristic);
+        params.maxPollFactorContraction = pMap.getDouble(MAX_POLL_FACTOR_CONTRACTION_EDGE, params.maxPollFactorContraction);
     }
 
     @Override
@@ -118,7 +118,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
             // no shortcuts will be introduced
             return Float.NEGATIVE_INFINITY;
         stats().stopWatch.start();
-        findAndHandlePrepareShortcuts(node, this::countShortcuts, (int) (meanDegree * params.maxVisitedNodesFactorHeuristic), wpsStatsHeur);
+        findAndHandlePrepareShortcuts(node, this::countShortcuts, (int) (meanDegree * params.maxPollFactorHeuristic), wpsStatsHeur);
         stats().stopWatch.stop();
         // the higher the priority the later (!) this node will be contracted
         float edgeQuotient = numShortcuts / (float) (prepareGraph.getDegree(node));
@@ -140,7 +140,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
     public IntContainer contractNode(int node) {
         activeStats = addingStats;
         stats().stopWatch.start();
-        findAndHandlePrepareShortcuts(node, this::addShortcutsToPrepareGraph, (int) (meanDegree * params.maxVisitedNodesFactorContraction), wpsStatsContr);
+        findAndHandlePrepareShortcuts(node, this::addShortcutsToPrepareGraph, (int) (meanDegree * params.maxPollFactorContraction), wpsStatsContr);
         insertShortcuts(node);
         IntContainer neighbors = prepareGraph.disconnect(node);
         meanDegree = (meanDegree * 2 + neighbors.size()) / 3;
@@ -173,7 +173,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
      * This method performs witness searches between all nodes adjacent to the given node and calls the
      * given handler for all required shortcuts.
      */
-    private void findAndHandlePrepareShortcuts(int node, PrepareShortcutHandler shortcutHandler, int maxSettledKeys, EdgeBasedWitnessPathSearcher.Stats wpsStats) {
+    private void findAndHandlePrepareShortcuts(int node, PrepareShortcutHandler shortcutHandler, int maxPolls, EdgeBasedWitnessPathSearcher.Stats wpsStats) {
         stats().nodes++;
         addedShortcuts.clear();
 
@@ -198,7 +198,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
                         throw new IllegalStateException("Bridge entry weights should always be finite");
                     int targetEdgeKey = bridgePath.key;
                     dijkstraSW.start();
-                    double weight = witnessPathSearcher.runSearch(bridgePath.value.chEntry.adjNode, targetEdgeKey, bridgePath.value.weight, maxSettledKeys);
+                    double weight = witnessPathSearcher.runSearch(bridgePath.value.chEntry.adjNode, targetEdgeKey, bridgePath.value.weight, maxPolls);
                     dijkstraSW.stop();
                     if (weight <= bridgePath.value.weight)
                         continue;
@@ -413,8 +413,8 @@ class EdgeBasedNodeContractor implements NodeContractor {
         private float edgeQuotientWeight = 100;
         private float originalEdgeQuotientWeight = 100;
         private float hierarchyDepthWeight = 20;
-        private double maxVisitedNodesFactorHeuristic = 5;
-        private double maxVisitedNodesFactorContraction = 200;
+        private double maxPollFactorHeuristic = 5;
+        private double maxPollFactorContraction = 200;
     }
 
     private static class Stats {

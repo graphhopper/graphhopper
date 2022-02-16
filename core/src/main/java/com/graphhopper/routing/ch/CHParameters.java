@@ -19,8 +19,8 @@ public final class CHParameters {
     public static final String EDGE_QUOTIENT_WEIGHT = Parameters.CH.PREPARE + "edge.edge_quotient_weight";
     public static final String ORIGINAL_EDGE_QUOTIENT_WEIGHT = Parameters.CH.PREPARE + "edge.original_edge_quotient_weight";
     public static final String HIERARCHY_DEPTH_WEIGHT = Parameters.CH.PREPARE + "edge.hierarchy_depth_weight";
-    public static final String MAX_VISITED_NODES_FACTOR_HEURISTIC_EB = Parameters.CH.PREPARE + "edge.max_visited_nodes_factor_heuristic";
-    public static final String MAX_VISITED_NODES_FACTOR_CONTRACTION_EB = Parameters.CH.PREPARE + "edge.max_visited_nodes_factor_contraction";
+    public static final String MAX_POLL_FACTOR_HEURISTIC_EDGE = Parameters.CH.PREPARE + "edge.max_poll_factor_heuristic";
+    public static final String MAX_POLL_FACTOR_CONTRACTION_EDGE = Parameters.CH.PREPARE + "edge.max_poll_factor_contraction";
 
     private CHParameters() {
     }
