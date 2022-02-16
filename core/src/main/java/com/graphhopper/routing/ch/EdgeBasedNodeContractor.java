@@ -79,7 +79,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
     private int numPrevOrigEdges;
     private int numAllEdges;
 
-    double meanDegree;
+    private double meanDegree;
 
     public EdgeBasedNodeContractor(CHPreparationGraph prepareGraph, CHStorageBuilder chBuilder, PMap pMap) {
         this.prepareGraph = prepareGraph;
