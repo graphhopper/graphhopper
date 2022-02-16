@@ -1326,24 +1326,23 @@ public class EdgeBasedNodeContractorTest {
         // 0 - 5 - 2
         //    oo
         // note there are two (directed) zero weight loops at node 5!
-        GHUtility.setSpeed(60, 60, encoder, graph.edge(5, 1).setDistance(100)); // edgeId=0
-        GHUtility.setSpeed(60, 60, encoder, graph.edge(5, 2).setDistance(100)); // edgeId=1
-        GHUtility.setSpeed(60, 60, encoder, graph.edge(1, 4).setDistance(100)); // edgeId=2
-        GHUtility.setSpeed(60, 60, encoder, graph.edge(5, 0).setDistance(100)); // edgeId=3
-        GHUtility.setSpeed(60, 60, encoder, graph.edge(6, 4).setDistance(100)); // edgeId=4
-        GHUtility.setSpeed(60, 0, encoder, graph.edge(5, 5).setDistance(0)); // edgeId=5
-        GHUtility.setSpeed(60, 60, encoder, graph.edge(6, 7).setDistance(100)); // edgeId=6
-        GHUtility.setSpeed(60, 0, encoder, graph.edge(5, 5).setDistance(0)); // edgeId=7
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 1).setDistance(100)); // edgeId=0
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 2).setDistance(100)); // edgeId=1
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 4).setDistance(100)); // edgeId=2
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 0).setDistance(100)); // edgeId=3
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 4).setDistance(100)); // edgeId=4
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 5).setDistance(0)); // edgeId=5
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 7).setDistance(100)); // edgeId=6
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 5).setDistance(0)); // edgeId=7
         freeze();
         setMaxLevelOnAllNodes();
-        contractNodes(3, 0, 2, 7, 6, 1, 4, 5);
+        contractNodes(1, 3, 0, 2, 7, 6, 4);
         checkShortcuts(
                 createShortcut(4, 5, 0, 2, 0, 2, 200, false, true),
                 createShortcut(4, 5, 2, 0, 2, 0, 200, true, false)
         );
         // todo: this seems to be the only case that needs special treatment for zero weight loops with the new implementation
         //       explain this with a few more details here.
-        // todo: why no shortcut when we **only* contract node 1, even on master??
     }
 
     @Test
