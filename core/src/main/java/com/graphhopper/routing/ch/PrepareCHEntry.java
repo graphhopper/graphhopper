@@ -19,7 +19,7 @@ package com.graphhopper.routing.ch;
 
 public class PrepareCHEntry {
     /**
-     * The edge key of the incoming original edge at this shortest path tree entry. For original edges this is the same
+     * The edge key of the incoming edge at this shortest path tree entry. For original edges this is the same
      * as the edge key, but for shortcuts this is the edge key of the last original edge of the shortcut.
      */
     public int incEdgeKey;

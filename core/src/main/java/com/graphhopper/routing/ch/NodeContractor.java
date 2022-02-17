@@ -43,8 +43,6 @@ public interface NodeContractor {
 
     String getStatisticsString();
 
-    long getDijkstraCount();
-
     float getDijkstraSeconds();
 
 }
