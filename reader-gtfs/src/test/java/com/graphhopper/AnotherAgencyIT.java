@@ -62,7 +62,7 @@ public class AnotherAgencyIT {
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
-        ptRouter = new PtRouterImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getGraphHopperStorage(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
+        ptRouter = new PtRouterFreeWalkImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getGraphHopperStorage(), graphHopperGtfs.getPtGraph(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
                 .createWithoutRealtimeFeed();
     }
 
@@ -159,20 +159,15 @@ public class AnotherAgencyIT {
 
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
+
         ResponsePath transitSolution = route.getBest();
-        List<Trip.Leg> ptLegs = transitSolution.getLegs().stream().filter(l -> l instanceof Trip.PtLeg).collect(Collectors.toList());
-        assertEquals("JUSTICE_COURT,MUSEUM", ((Trip.PtLeg) ptLegs.get(0)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
-        assertEquals("EMSI,DADAN", ((Trip.PtLeg) ptLegs.get(1)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
         // TODO: write down 10 min transfer time
         assertEquals(4500000L, transitSolution.getTime());
         assertEquals(4500000.0, transitSolution.getRouteWeight());
 
-        assertTrue(transitSolution.getLegs().get(0) instanceof Trip.PtLeg);
-        assertTrue(transitSolution.getLegs().get(1) instanceof Trip.WalkLeg);
-        assertTrue(transitSolution.getLegs().get(2) instanceof Trip.PtLeg);
-
-        Trip.WalkLeg walkLeg = (Trip.WalkLeg) transitSolution.getLegs().get(1);
-        assertEquals(readWktLineString("LINESTRING (-116.7616398 36.9060932, -116.761812 36.905928, -116.76217 36.905659)"), walkLeg.geometry);
+        assertEquals("JUSTICE_COURT,MUSEUM", ((Trip.PtLeg) transitSolution.getLegs().get(0)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
+        assertEquals(readWktLineString("LINESTRING (-116.76164 36.906093, -116.761812 36.905928, -116.76217 36.905659)"), transitSolution.getLegs().get(1).geometry);
+        assertEquals("EMSI,DADAN", ((Trip.PtLeg) transitSolution.getLegs().get(2)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
 
         assertEquals(time(1, 15), transitSolution.getTime(), "Expected total travel time == scheduled travel time + wait time");
     }

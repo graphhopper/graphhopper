@@ -136,8 +136,10 @@ public class GraphHopperGtfs extends GraphHopper {
                                         EdgeIteratorState edgeIteratorState = graphHopperStorage.getEdgeIteratorState(t.edge.getId(), adjNode.streetNode);
                                         return edgeIteratorState.getEdgeKey();
                                     }).toArray();
-                                    for (Integer transferEdgeId : transferEdgeIds) {
-                                        gtfsStorage.getSkippedEdgesForTransfer().put(transferEdgeId, edgeIds);
+                                    if (edgeIds.length > 0) { // TODO: Elsewhere, we distinguish empty path ("at" a node) from no path
+                                        for (Integer transferEdgeId : transferEdgeIds) {
+                                            gtfsStorage.getSkippedEdgesForTransfer().put(transferEdgeId, edgeIds);
+                                        }
                                     }
                                 } else {
                                     List<Transfer> transfersToStop = transfers.getTransfersToStop(toPlatformDescriptor.stop_id, routeIdOrNull(toPlatformDescriptor));

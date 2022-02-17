@@ -404,7 +404,7 @@ class TripFromLabel {
             return Collections.singletonList(new Trip.WalkLeg(
                     "Walk",
                     Date.from(departureTime),
-                    lineStringFromEdges(path),
+                    lineStringFromInstructions(instructions),
                     edges(path).mapToDouble(edgeLabel -> edgeLabel.getDistance()).sum(),
                     instructions,
                     pathDetails,
@@ -421,13 +421,12 @@ class TripFromLabel {
         return path.stream().filter(t -> t.edge != null).map(t -> t.edge);
     }
 
-    private Geometry lineStringFromEdges(List<Label.Transition> transitions) {
-        final Iterator<Label.Transition> iterator = transitions.iterator();
-        iterator.next();
-        Label.Transition first = iterator.next();
-        List<Coordinate> coordinates = new ArrayList<>(toCoordinateArray(graph.getEdgeIteratorState(first.edge.getId(), first.edge.getAdjNode().streetNode).fetchWayGeometry(FetchMode.ALL)));
-        iterator.forEachRemaining(transition -> coordinates.addAll(toCoordinateArray(graph.getEdgeIteratorState(transition.edge.getId(), transition.edge.getAdjNode().streetNode).fetchWayGeometry(FetchMode.PILLAR_AND_ADJ))));
-        return geometryFactory.createLineString(coordinates.toArray(new Coordinate[coordinates.size()]));
+    private Geometry lineStringFromInstructions(InstructionList instructions) {
+        final PointList pointsList = new PointList();
+        for (Instruction instruction : instructions) {
+            pointsList.add(instruction.getPoints());
+        }
+        return pointsList.toLineString(false);
     }
 
     private static List<Coordinate> toCoordinateArray(PointList pointList) {
