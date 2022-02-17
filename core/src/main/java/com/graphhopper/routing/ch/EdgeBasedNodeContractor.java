@@ -195,10 +195,10 @@ class EdgeBasedNodeContractor implements NodeContractor {
             while (origInIter.next()) {
                 int origInKey = reverseEdgeKey(origInIter.getOrigEdgeKeyLast());
                 // we search 'bridge paths' leading to the target edges
-                IntObjectMap<BridgePathFinder.BridePathEntry> bridgePaths = bridgePathFinder.find(reverseEdgeKey(origInKey), sourceNode, node);
+                IntObjectMap<BridgePathFinder.BridePathEntry> bridgePaths = bridgePathFinder.find(origInKey, sourceNode, node);
                 if (bridgePaths.isEmpty())
                     continue;
-                witnessPathSearcher.initSearch(reverseEdgeKey(origInKey), sourceNode, node, wpsStats);
+                witnessPathSearcher.initSearch(origInKey, sourceNode, node, wpsStats);
                 for (IntObjectCursor<BridgePathFinder.BridePathEntry> bridgePath : bridgePaths) {
                     if (!Double.isFinite(bridgePath.value.weight))
                         throw new IllegalStateException("Bridge entry weights should always be finite");
