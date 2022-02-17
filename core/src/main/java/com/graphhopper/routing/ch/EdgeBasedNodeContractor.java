@@ -21,13 +21,16 @@ import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.storage.CHStorageBuilder;
 import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.PMap;
+import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Locale;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
+import static com.graphhopper.util.GHUtility.getEdgeFromEdgeKey;
 import static com.graphhopper.util.Helper.nf;
 
 /**
@@ -153,11 +156,6 @@ class EdgeBasedNodeContractor implements NodeContractor {
     }
 
     @Override
-    public long getDijkstraCount() {
-        return witnessPathSearcher.getTotalNumSearches();
-    }
-
-    @Override
     public float getDijkstraSeconds() {
         return dijkstraSW.getCurrentSeconds();
     }
@@ -187,18 +185,15 @@ class EdgeBasedNodeContractor implements NodeContractor {
         sourceNodes.clear();
         PrepareGraphEdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
         while (incomingEdges.next()) {
-            int sourceNode = incomingEdges.getAdjNode();
-            if (sourceNode == node) {
+            final int sourceNode = incomingEdges.getAdjNode();
+            if (sourceNode == node)
                 continue;
-            }
-            boolean isNewSourceNode = sourceNodes.add(sourceNode);
-            if (!isNewSourceNode) {
+            if (!sourceNodes.add(sourceNode))
                 continue;
-            }
             // for each source node we need to look at every incoming original edge and find the initial entries
             PrepareGraphOrigEdgeIterator origInIter = sourceNodeOrigInEdgeExplorer.setBaseNode(sourceNode);
             while (origInIter.next()) {
-                int numInitialEntries = witnessPathSearcher.initSearch(node, sourceNode, GHUtility.getEdgeFromEdgeKey(origInIter.getOrigEdgeKeyLast()));
+                int numInitialEntries = witnessPathSearcher.initSearch(node, sourceNode, getEdgeFromEdgeKey(origInIter.getOrigEdgeKeyLast()));
                 if (numInitialEntries < 1) {
                     continue;
                 }
@@ -220,7 +215,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
                     PrepareGraphOrigEdgeIterator targetEdgeIter = targetNodeOrigOutEdgeExplorer.setBaseNode(targetNode);
                     while (targetEdgeIter.next()) {
                         dijkstraSW.start();
-                        PrepareCHEntry entry = witnessPathSearcher.runSearch(targetNode, GHUtility.getEdgeFromEdgeKey(targetEdgeIter.getOrigEdgeKeyFirst()));
+                        PrepareCHEntry entry = witnessPathSearcher.runSearch(targetNode, getEdgeFromEdgeKey(targetEdgeIter.getOrigEdgeKeyFirst()));
                         dijkstraSW.stop();
                         if (entry == null || Double.isInfinite(entry.weight)) {
                             continue;
@@ -267,8 +262,8 @@ class EdgeBasedNodeContractor implements NodeContractor {
             int shortcut = chBuilder.addShortcutEdgeBased(node, iter.getAdjNode(),
                     PrepareEncoder.getScFwdDir(), iter.getWeight(),
                     iter.getSkipped1(), iter.getSkipped2(),
-                    GHUtility.getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()),
-                    GHUtility.getEdgeFromEdgeKey(iter.getOrigEdgeKeyLast()));
+                    getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()),
+                    getEdgeFromEdgeKey(iter.getOrigEdgeKeyLast()));
             prepareGraph.setShortcutForPrepareEdge(iter.getPrepareEdge(), prepareGraph.getOriginalEdges() + shortcut);
             addedShortcutsCount++;
         }
@@ -285,8 +280,8 @@ class EdgeBasedNodeContractor implements NodeContractor {
             int shortcut = chBuilder.addShortcutEdgeBased(node, iter.getAdjNode(),
                     PrepareEncoder.getScBwdDir(), iter.getWeight(),
                     iter.getSkipped1(), iter.getSkipped2(),
-                    GHUtility.getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()),
-                    GHUtility.getEdgeFromEdgeKey(iter.getOrigEdgeKeyLast()));
+                    getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()),
+                    getEdgeFromEdgeKey(iter.getOrigEdgeKeyLast()));
             prepareGraph.setShortcutForPrepareEdge(iter.getPrepareEdge(), prepareGraph.getOriginalEdges() + shortcut);
             addedShortcutsCount++;
         }
@@ -447,7 +442,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
         @Override
         public String toString() {
             return String.format(Locale.ROOT,
-                    "time: %7.2fs, nodes-handled: %10s", stopWatch.getCurrentSeconds(), nf(nodes));
+                    "time: %7.2fs, nodes: %10s", stopWatch.getCurrentSeconds(), nf(nodes));
         }
     }
 
