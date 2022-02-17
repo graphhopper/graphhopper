@@ -27,6 +27,7 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.InMemConstructionIndex;
 import com.graphhopper.storage.index.IndexStructureInfo;
 import com.graphhopper.storage.index.LineIntIndex;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
@@ -44,7 +45,6 @@ public class GraphHopperGtfs extends GraphHopper {
     private final GraphHopperConfig ghConfig;
     private GtfsStorage gtfsStorage;
     private PtGraph ptGraph;
-    private LineIntIndex stopIndex;
 
     public GraphHopperGtfs(GraphHopperConfig ghConfig) {
         this.ghConfig = ghConfig;
@@ -63,7 +63,7 @@ public class GraphHopperGtfs extends GraphHopper {
     protected void importPublicTransit() {
         ptGraph = new PtGraph(getGraphHopperStorage().getDirectory(), 100);
         gtfsStorage = new GtfsStorage(getGraphHopperStorage().getDirectory());
-        stopIndex = new LineIntIndex(new BBox(-180.0, 180.0, -90.0, 90.0), getGraphHopperStorage().getDirectory(), "stop_index");
+        LineIntIndex stopIndex = new LineIntIndex(new BBox(-180.0, 180.0, -90.0, 90.0), getGraphHopperStorage().getDirectory(), "stop_index");
         if (getGtfsStorage().loadExisting()) {
             ptGraph.loadExisting();
             stopIndex.loadExisting();
@@ -127,14 +127,12 @@ public class GraphHopperGtfs extends GraphHopper {
                                 LOGGER.debug(fromPlatformDescriptor + " -> " + toPlatformDescriptor);
                                 if (!toPlatformDescriptor.feed_id.equals(fromPlatformDescriptor.feed_id)) {
                                     LOGGER.debug(" Different feed. Inserting transfer with " + (int) (label.streetTime / 1000L) + " s.");
-                                    GtfsReader toFeedReader = readers.get(toPlatformDescriptor.feed_id);
-                                    toFeedReader.insertTransferEdges(label.node.ptNode, (int) (label.streetTime / 1000L), toPlatformDescriptor);
+                                    insertInterpolatedTransfer(label, toPlatformDescriptor, readers);
                                 } else {
                                     List<Transfer> transfersToStop = transfers.getTransfersToStop(toPlatformDescriptor.stop_id, routeIdOrNull(toPlatformDescriptor));
                                     if (transfersToStop.stream().noneMatch(t -> t.from_stop_id.equals(fromPlatformDescriptor.stop_id))) {
-                                        GtfsReader toFeedReader = readers.get(toPlatformDescriptor.feed_id);
-                                        toFeedReader.insertTransferEdges(label.node.ptNode, (int) (label.streetTime / 1000L), toPlatformDescriptor);
                                         LOGGER.debug("  Inserting transfer with " + (int) (label.streetTime / 1000L) + " s.");
+                                        insertInterpolatedTransfer(label, toPlatformDescriptor, readers);
                                     }
                                 }
                             }
@@ -143,6 +141,22 @@ public class GraphHopperGtfs extends GraphHopper {
                 }
             }
         });
+    }
+
+    private void insertInterpolatedTransfer(Label label, GtfsStorage.PlatformDescriptor toPlatformDescriptor, HashMap<String, GtfsReader> readers) {
+        GtfsReader toFeedReader = readers.get(toPlatformDescriptor.feed_id);
+        List<Integer> transferEdgeIds = toFeedReader.insertTransferEdges(label.node.ptNode, (int) (label.streetTime / 1000L), toPlatformDescriptor);
+        List<Label.Transition> transitions = Label.getTransitions(label.parent, true);
+        int[] edgeIds = transitions.stream().filter(t -> t.edge != null).mapToInt(t -> {
+            Label.NodeId adjNode = t.edge.getAdjNode();
+            EdgeIteratorState edgeIteratorState = getGraphHopperStorage().getEdgeIteratorState(t.edge.getId(), adjNode.streetNode);
+            return edgeIteratorState.getEdgeKey();
+        }).toArray();
+        if (edgeIds.length > 0) { // TODO: Elsewhere, we distinguish empty path ("at" a node) from no path
+            for (Integer transferEdgeId : transferEdgeIds) {
+                gtfsStorage.getSkippedEdgesForTransfer().put(transferEdgeId, edgeIds);
+            }
+        }
     }
 
     private String routeIdOrNull(GtfsStorage.PlatformDescriptor platformDescriptor) {
