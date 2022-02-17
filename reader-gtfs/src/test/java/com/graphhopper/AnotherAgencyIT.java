@@ -62,7 +62,7 @@ public class AnotherAgencyIT {
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
-        ptRouter = new PtRouterFreeWalkImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getGraphHopperStorage(), graphHopperGtfs.getPtGraph(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
+        ptRouter = new PtRouterImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getGraphHopperStorage(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
                 .createWithoutRealtimeFeed();
     }
 
@@ -161,15 +161,17 @@ public class AnotherAgencyIT {
         assertEquals(1, route.getAll().size());
 
         ResponsePath transitSolution = route.getBest();
-        // TODO: write down 10 min transfer time
         assertEquals(4500000L, transitSolution.getTime());
         assertEquals(4500000.0, transitSolution.getRouteWeight());
+        assertEquals(time(1, 15), transitSolution.getTime(), "Expected total travel time == scheduled travel time + wait time");
 
         assertEquals("JUSTICE_COURT,MUSEUM", ((Trip.PtLeg) transitSolution.getLegs().get(0)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
+        Instant walkDepartureTime = Instant.ofEpochMilli(transitSolution.getLegs().get(1).getDepartureTime().getTime());
+        assertEquals("10:00", LocalDateTime.ofInstant(walkDepartureTime, zoneId).toLocalTime().toString());
         assertEquals(readWktLineString("LINESTRING (-116.76164 36.906093, -116.761812 36.905928, -116.76217 36.905659)"), transitSolution.getLegs().get(1).geometry);
+        Instant walkArrivalTime = Instant.ofEpochMilli(transitSolution.getLegs().get(1).getArrivalTime().getTime());
+        assertEquals("10:08:06.660", LocalDateTime.ofInstant(walkArrivalTime, zoneId).toLocalTime().toString());
         assertEquals("EMSI,DADAN", ((Trip.PtLeg) transitSolution.getLegs().get(2)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
-
-        assertEquals(time(1, 15), transitSolution.getTime(), "Expected total travel time == scheduled travel time + wait time");
     }
 
     @Test

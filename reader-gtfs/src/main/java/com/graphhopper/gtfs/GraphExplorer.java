@@ -251,9 +251,9 @@ public final class GraphExplorer {
         }
     }
 
-    public List<Label.Transition> walkPath(int[] skippedEdgesForTransfer) {
+    public List<Label.Transition> walkPath(int[] skippedEdgesForTransfer, long currentTime) {
         EdgeIteratorState firstEdge = graph.getEdgeIteratorStateForKey(skippedEdgesForTransfer[0]);
-        Label label = new Label(0, null, new Label.NodeId(firstEdge.getBaseNode(), -1), 0, null, 0, 0, 0, false, null);
+        Label label = new Label(currentTime, null, new Label.NodeId(firstEdge.getBaseNode(), -1), 0, null, 0, 0, 0, false, null);
         for (int i : skippedEdgesForTransfer) {
             EdgeIteratorState e = graph.getEdgeIteratorStateForKey(i);
             MultiModalEdge multiModalEdge = new MultiModalEdge(e.getEdge(), e.getBaseNode(), e.getAdjNode(), (long) (accessEgressWeighting.calcEdgeMillis(e, reverse) * (5.0 / walkSpeedKmH)), e.getDistance());

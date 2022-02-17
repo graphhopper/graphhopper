@@ -62,12 +62,14 @@ class TripFromLabel {
     private final RealtimeFeed realtimeFeed;
     private final GeometryFactory geometryFactory = new GeometryFactory();
     private final PathDetailsBuilderFactory pathDetailsBuilderFactory;
+    private final double walkSpeedKmH;
 
-    TripFromLabel(Graph graph, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
+    TripFromLabel(Graph graph, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory, double walkSpeedKmH) {
         this.graph = graph;
         this.gtfsStorage = gtfsStorage;
         this.realtimeFeed = realtimeFeed;
         this.pathDetailsBuilderFactory = pathDetailsBuilderFactory;
+        this.walkSpeedKmH = walkSpeedKmH;
     }
 
     ResponsePath createResponsePath(Translation tr, PointList waypoints, Graph queryGraph, Weighting accessWeighting, Weighting egressWeighting, List<Label.Transition> solution, List<String> requestedPathDetails) {
@@ -367,7 +369,7 @@ class TripFromLabel {
                         feedId = edge.getPlatformDescriptor().feed_id;
                         int[] skippedEdgesForTransfer = gtfsStorage.getSkippedEdgesForTransfer().get(edge.getId());
                         if (skippedEdgesForTransfer != null) {
-                            List<Trip.Leg> legs = parsePartitionToLegs(transferPath(skippedEdgesForTransfer, weighting), graph, weighting, tr, requestedPathDetails);
+                            List<Trip.Leg> legs = parsePartitionToLegs(transferPath(skippedEdgesForTransfer, weighting, path.get(i - 1).label.currentTime), graph, weighting, tr, requestedPathDetails);
                             result.add(legs.get(0));
                         }
                     }
@@ -412,9 +414,9 @@ class TripFromLabel {
         }
     }
 
-    private List<Label.Transition> transferPath(int[] skippedEdgesForTransfer, Weighting accessEgressWeighting) {
-        GraphExplorer graphExplorer = new GraphExplorer(graph, gtfsStorage.getPtGraph(), accessEgressWeighting, gtfsStorage, realtimeFeed, false, true, false, 0, false, 0);
-        return graphExplorer.walkPath(skippedEdgesForTransfer);
+    private List<Label.Transition> transferPath(int[] skippedEdgesForTransfer, Weighting accessEgressWeighting, long currentTime) {
+        GraphExplorer graphExplorer = new GraphExplorer(graph, gtfsStorage.getPtGraph(), accessEgressWeighting, gtfsStorage, realtimeFeed, false, true, false, walkSpeedKmH, false, 0);
+        return graphExplorer.walkPath(skippedEdgesForTransfer, currentTime);
     }
 
     private Stream<GraphExplorer.MultiModalEdge> edges(List<Label.Transition> path) {
@@ -428,16 +430,5 @@ class TripFromLabel {
         }
         return pointsList.toLineString(false);
     }
-
-    private static List<Coordinate> toCoordinateArray(PointList pointList) {
-        List<Coordinate> coordinates = new ArrayList<>(pointList.size());
-        for (int i = 0; i < pointList.size(); i++) {
-            coordinates.add(pointList.getDimension() == 3 ?
-                    new Coordinate(pointList.getLon(i), pointList.getLat(i)) :
-                    new Coordinate(pointList.getLon(i), pointList.getLat(i), pointList.getEle(i)));
-        }
-        return coordinates;
-    }
-
 
 }
