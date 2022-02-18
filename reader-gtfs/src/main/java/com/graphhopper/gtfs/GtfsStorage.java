@@ -57,7 +57,11 @@ public class GtfsStorage {
         this.ptGraph = ptGraph;
     }
 
-    public static class Validity implements Serializable {
+	public Map<Integer, int[]> getSkippedEdgesForTransfer() {
+		return skippedEdgesForTransfer;
+	}
+
+	public static class Validity implements Serializable {
 		final BitSet validity;
 		final ZoneId zoneId;
 		final LocalDate start;
@@ -134,6 +138,7 @@ public class GtfsStorage {
 	private Map<String, GTFSFeed> gtfsFeeds = new HashMap<>();
 	private Map<String, Map<String, Fare>> faresByFeed;
 	private Map<FeedIdWithStopId, Integer> stationNodes;
+	private Map<Integer, int[]> skippedEdgesForTransfer;
 
 	private Map<Integer, Integer> ptToStreet;
 	private Map<Integer, Integer> streetToPt;
@@ -188,6 +193,7 @@ public class GtfsStorage {
 		this.stationNodes = data.getHashMap("stationNodes");
 		this.ptToStreet = data.getHashMap("ptToStreet");
 		this.streetToPt = data.getHashMap("streetToPt");
+		this.skippedEdgesForTransfer = data.getHashMap("skippedEdgesForTransfer");
 	}
 
 	void loadGtfsFromZipFileOrDirectory(String id, File zipFileOrDirectory) {
@@ -247,7 +253,7 @@ public class GtfsStorage {
 		public String stop_id;
 
 		public static PlatformDescriptor route(String feed_id, String stop_id, String route_id) {
-			GtfsStorage.RoutePlatform routePlatform = new GtfsStorage.RoutePlatform();
+			RoutePlatform routePlatform = new RoutePlatform();
 			routePlatform.feed_id = feed_id;
 			routePlatform.stop_id = stop_id;
 			routePlatform.route_id = route_id;
@@ -268,8 +274,8 @@ public class GtfsStorage {
 			return Objects.hash(feed_id, stop_id);
 		}
 
-		public static GtfsStorage.RouteTypePlatform routeType(String feed_id, String stop_id, int route_type) {
-			GtfsStorage.RouteTypePlatform routeTypePlatform = new GtfsStorage.RouteTypePlatform();
+		public static RouteTypePlatform routeType(String feed_id, String stop_id, int route_type) {
+			RouteTypePlatform routeTypePlatform = new RouteTypePlatform();
 			routeTypePlatform.feed_id = feed_id;
 			routeTypePlatform.stop_id = stop_id;
 			routeTypePlatform.route_type = route_type;

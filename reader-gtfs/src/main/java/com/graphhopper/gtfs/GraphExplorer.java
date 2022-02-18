@@ -26,12 +26,14 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Spliterators;
 import java.util.function.Consumer;
 
@@ -49,8 +51,10 @@ public final class GraphExplorer {
     private final boolean ignoreValidities;
     private final int blockedRouteTypes;
     private final PtGraph ptGraph;
+    private final Graph graph;
 
     public GraphExplorer(Graph graph, PtGraph ptGraph, Weighting accessEgressWeighting, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, boolean walkOnly, boolean ptOnly, double walkSpeedKmh, boolean ignoreValidities, int blockedRouteTypes) {
+        this.graph = graph;
         this.ptGraph = ptGraph;
         this.accessEgressWeighting = accessEgressWeighting;
         this.accessEnc = accessEgressWeighting.getFlagEncoder().getAccessEnc();
@@ -245,6 +249,17 @@ public final class GraphExplorer {
         } else {
             return true;
         }
+    }
+
+    public List<Label.Transition> walkPath(int[] skippedEdgesForTransfer, long currentTime) {
+        EdgeIteratorState firstEdge = graph.getEdgeIteratorStateForKey(skippedEdgesForTransfer[0]);
+        Label label = new Label(currentTime, null, new Label.NodeId(firstEdge.getBaseNode(), -1), 0, null, 0, 0, 0, false, null);
+        for (int i : skippedEdgesForTransfer) {
+            EdgeIteratorState e = graph.getEdgeIteratorStateForKey(i);
+            MultiModalEdge multiModalEdge = new MultiModalEdge(e.getEdge(), e.getBaseNode(), e.getAdjNode(), (long) (accessEgressWeighting.calcEdgeMillis(e, reverse) * (5.0 / walkSpeedKmH)), e.getDistance());
+            label = new Label(label.currentTime + multiModalEdge.time, multiModalEdge, new Label.NodeId(firstEdge.getBaseNode(), -1), 0, null, 0, 0, 0, false, label);
+        }
+        return Label.getTransitions(label, false);
     }
 
     public class MultiModalEdge {
