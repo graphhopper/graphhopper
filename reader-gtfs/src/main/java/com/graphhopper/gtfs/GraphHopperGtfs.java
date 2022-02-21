@@ -37,6 +37,7 @@ import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class GraphHopperGtfs extends GraphHopper {
 
@@ -147,16 +148,26 @@ public class GraphHopperGtfs extends GraphHopper {
         GtfsReader toFeedReader = readers.get(toPlatformDescriptor.feed_id);
         List<Integer> transferEdgeIds = toFeedReader.insertTransferEdges(label.node.ptNode, (int) (label.streetTime / 1000L), toPlatformDescriptor);
         List<Label.Transition> transitions = Label.getTransitions(label.parent, true);
-        int[] edgeIds = transitions.stream().filter(t -> t.edge != null).mapToInt(t -> {
-            Label.NodeId adjNode = t.edge.getAdjNode();
+        int[] skippedEdgesForTransfer = transitions.stream().filter(t -> t.edge != null).mapToInt(t -> {
+            Label.NodeId adjNode = t.label.node;
             EdgeIteratorState edgeIteratorState = getGraphHopperStorage().getEdgeIteratorState(t.edge.getId(), adjNode.streetNode);
             return edgeIteratorState.getEdgeKey();
         }).toArray();
-        if (edgeIds.length > 0) { // TODO: Elsewhere, we distinguish empty path ("at" a node) from no path
+        if (skippedEdgesForTransfer.length > 0) { // TODO: Elsewhere, we distinguish empty path ("at" a node) from no path
+            assert isValidPath(skippedEdgesForTransfer);
             for (Integer transferEdgeId : transferEdgeIds) {
-                gtfsStorage.getSkippedEdgesForTransfer().put(transferEdgeId, edgeIds);
+                gtfsStorage.getSkippedEdgesForTransfer().put(transferEdgeId, skippedEdgesForTransfer);
             }
         }
+    }
+
+    private boolean isValidPath(int[] edgeKeys) {
+        List<EdgeIteratorState> edges = Arrays.stream(edgeKeys).mapToObj(i -> getGraphHopperStorage().getEdgeIteratorStateForKey(i)).collect(Collectors.toList());
+        for (int i = 1; i < edges.size(); i++) {
+            if (edges.get(i).getBaseNode() != edges.get(i-1).getAdjNode())
+                return false;
+        }
+        return true;
     }
 
     private String routeIdOrNull(GtfsStorage.PlatformDescriptor platformDescriptor) {

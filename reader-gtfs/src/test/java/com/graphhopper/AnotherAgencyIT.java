@@ -189,6 +189,7 @@ public class AnotherAgencyIT {
         ResponsePath walkRoute = route.getBest();
         assertEquals(1, walkRoute.getLegs().size());
         assertEquals(486660, walkRoute.getTime()); // < 10 min, so the transfer in test above works ^^
+        assertEquals(readWktLineString("LINESTRING (-116.76164 36.906093, -116.761812 36.905928, -116.76217 36.905659)"), walkRoute.getLegs().get(0).geometry);
         assertFalse(route.hasErrors());
     }
 
