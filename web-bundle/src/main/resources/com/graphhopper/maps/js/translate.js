@@ -132,22 +132,26 @@ module.exports.createEleInfoString = function (ascend, descend, useMiles) {
 };
 
 module.exports.createTimeString = function (time) {
-    var tmpTime = mathTools.round(time / 60 / 1000, 1000);
+    var seconds = mathTools.round(time / 1000, 1);
+    var minutes = mathTools.round(seconds / 60, 1);
+    var restSeconds = mathTools.round(seconds % 60, 1)
     var resTimeStr;
-    if (tmpTime > 60) {
-        if (tmpTime / 60 > 24) {
-            resTimeStr = mathTools.floor(tmpTime / 60 / 24, 1) + tr2("day_abbr");
-            tmpTime = mathTools.floor(((tmpTime / 60) % 24), 1);
-            if (tmpTime > 0)
-                resTimeStr += " " + tmpTime + tr2("hour_abbr");
+    if (minutes > 60) {
+        if (minutes / 60 > 24) {
+            resTimeStr = mathTools.floor(minutes / 60 / 24, 1) + tr2("day_abbr");
+            minutes = mathTools.floor(((minutes / 60) % 24), 1);
+            if (minutes > 0)
+                resTimeStr += " " + minutes + tr2("hour_abbr");
         } else {
-            resTimeStr = mathTools.floor(tmpTime / 60, 1) + tr2("hour_abbr");
-            tmpTime = mathTools.floor(tmpTime % 60, 1);
-            if (tmpTime > 0)
-                resTimeStr += " " + tmpTime + tr2("min_abbr");
+            resTimeStr = mathTools.floor(minutes / 60, 1) + tr2("hour_abbr");
+            minutes = mathTools.floor(minutes % 60, 1);
+            if (minutes > 0)
+                resTimeStr += " " + minutes + tr2("min_abbr");
         }
+    } else if (minutes < 10 && restSeconds > 0) {
+        resTimeStr = minutes + tr2("min_abbr") + restSeconds.toString().padStart(2, "0");
     } else
-        resTimeStr = mathTools.round(tmpTime % 60, 1) + tr2("min_abbr");
+        resTimeStr = minutes + tr2("min_abbr");
     return resTimeStr;
 };
 

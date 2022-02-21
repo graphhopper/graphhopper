@@ -13,12 +13,14 @@ public class Trip {
     public static abstract class Leg {
         public final String type;
         public final String departureLocation;
+        public final String arrivalLocation;
         public final Geometry geometry;
         public final double distance;
 
-        public Leg(String type, String departureLocation, Geometry geometry, double distance) {
+        public Leg(String type, String departureLocation, String arrivalLocation, Geometry geometry, double distance) {
             this.type = type;
             this.departureLocation = departureLocation;
+            this.arrivalLocation = arrivalLocation;
             this.geometry = geometry;
             this.distance = distance;
         }
@@ -75,8 +77,8 @@ public class Trip {
         private final Date departureTime;
         private final Date arrivalTime;
 
-        public WalkLeg(String departureLocation, Date departureTime, Geometry geometry, double distance, InstructionList instructions, Map<String, List<PathDetail>> details, Date arrivalTime) {
-            super("walk", departureLocation, geometry, distance);
+        public WalkLeg(String departureLocation, String arrivalLocation, Date departureTime, Geometry geometry, double distance, InstructionList instructions, Map<String, List<PathDetail>> details, Date arrivalTime) {
+            super("walk", departureLocation, arrivalLocation, geometry, distance);
             this.instructions = instructions;
             this.departureTime = departureTime;
             this.details = details;
@@ -103,17 +105,24 @@ public class Trip {
         public final String trip_id;
         public final String route_id;
         public final int route_type;
+        public final String route_short_name;
+        public final String route_long_name;
+        public final String route_url;
 
-        public PtLeg(String feedId, boolean isInSameVehicleAsPrevious, String tripId, String routeId, int routeType, String headsign, List<Stop> stops, double distance, long travelTime, Geometry geometry) {
-            super("pt", stops.get(0).stop_name, geometry, distance);
+
+        public PtLeg(String feedId, boolean isInSameVehicleAsPrevious, String tripId, String routeId, int routeType, String routeUrl, String routeShortName, String routeLongName, String headsign, List<Stop> stops, double distance, long travelTime, Geometry geometry) {
+            super("pt", stops.get(0).stop_name, stops.get(stops.size() - 1).stop_name, geometry, distance);
             this.feed_id = feedId;
             this.isInSameVehicleAsPrevious = isInSameVehicleAsPrevious;
             this.trip_id = tripId;
             this.route_id = routeId;
-            this.route_type = routeType;
+            this.route_short_name = routeShortName;
+            this.route_long_name = routeLongName;
             this.trip_headsign = headsign;
             this.travelTime = travelTime;
             this.stops = stops;
+            this.route_type = routeType;
+            this.route_url = routeUrl;
         }
 
         @Override

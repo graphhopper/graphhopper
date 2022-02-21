@@ -19,6 +19,7 @@
 package com.graphhopper.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.StopTime;
 import com.google.common.collect.Iterables;
@@ -82,12 +83,12 @@ class TripFromLabel {
 
         if (legs.size() > 1 && legs.get(0) instanceof Trip.WalkLeg) {
             final Trip.WalkLeg accessLeg = (Trip.WalkLeg) legs.get(0);
-            legs.set(0, new Trip.WalkLeg(accessLeg.departureLocation, new Date(legs.get(1).getDepartureTime().getTime() - (accessLeg.getArrivalTime().getTime() - accessLeg.getDepartureTime().getTime())),
+            legs.set(0, new Trip.WalkLeg(accessLeg.departureLocation, accessLeg.arrivalLocation, new Date(legs.get(1).getDepartureTime().getTime() - (accessLeg.getArrivalTime().getTime() - accessLeg.getDepartureTime().getTime())),
                     accessLeg.geometry, accessLeg.distance, accessLeg.instructions, accessLeg.details, legs.get(1).getDepartureTime()));
         }
         if (legs.size() > 1 && legs.get(legs.size() - 1) instanceof Trip.WalkLeg) {
             final Trip.WalkLeg egressLeg = (Trip.WalkLeg) legs.get(legs.size() - 1);
-            legs.set(legs.size() - 1, new Trip.WalkLeg(egressLeg.departureLocation, legs.get(legs.size() - 2).getArrivalTime(),
+            legs.set(legs.size() - 1, new Trip.WalkLeg(egressLeg.departureLocation, egressLeg.arrivalLocation, legs.get(legs.size() - 2).getArrivalTime(),
                     egressLeg.geometry, egressLeg.distance, egressLeg.instructions,
                     egressLeg.details, new Date(legs.get(legs.size() - 2).getArrivalTime().getTime() + (egressLeg.getArrivalTime().getTime() - egressLeg.getDepartureTime().getTime()))));
         }
@@ -116,7 +117,7 @@ class TripFromLabel {
                 final PointList pl;
                 if (!ptLeg.isInSameVehicleAsPrevious) {
                     pl = new PointList();
-                    final Instruction departureInstruction = new Instruction(Instruction.PT_START_TRIP, ptLeg.trip_headsign, pl);
+                    final Instruction departureInstruction = new Instruction(Instruction.PT_START_TRIP, ptLeg.route_id + " (" + ptLeg.trip_headsign + ")", pl);
                     departureInstruction.setDistance(leg.getDistance());
                     departureInstruction.setTime(ptLeg.travelTime);
                     instructions.add(departureInstruction);
@@ -355,12 +356,16 @@ class TripFromLabel {
                     stopsFromBoardHopDwellEdges.finish();
                     List<Trip.Stop> stops = stopsFromBoardHopDwellEdges.stops;
                     GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(feedId);
+                    Route route = gtfsFeed.routes.get(tripDescriptor.getRouteId());
 
                     result.add(new Trip.PtLeg(
                             feedId, partition.get(0).edge.getTransfers() == 0,
                             tripDescriptor.getTripId(),
                             tripDescriptor.getRouteId(),
-                            gtfsFeed.routes.get(tripDescriptor.getRouteId()).route_type,
+                            route.route_type,
+                            route.route_url == null ? "" : route.route_url.toString(),
+                            route.route_short_name,
+                            route.route_long_name,
                             Optional.ofNullable(gtfsFeed.trips.get(tripDescriptor.getTripId())).map(t -> t.trip_headsign).orElse("extra"),
                             stops,
                             partition.stream().mapToDouble(t -> t.edge.getDistance()).sum(),
@@ -405,10 +410,14 @@ class TripFromLabel {
 
             final Instant departureTime = Instant.ofEpochMilli(path.get(0).label.currentTime);
             final Instant arrivalTime = Instant.ofEpochMilli(path.get(path.size() - 1).label.currentTime);
+            Geometry geometry = lineStringFromInstructions(instructions);
+            Coordinate[] coordinates =  geometry.getCoordinates();
+            Coordinate departureLocation = coordinates[0];
+            Coordinate arrivalLocation = coordinates[geometry.getNumPoints() - 1];
             return Collections.singletonList(new Trip.WalkLeg(
-                    "Walk",
+                departureLocation.toString(), arrivalLocation.toString(),
                     Date.from(departureTime),
-                    lineStringFromInstructions(instructions),
+                    geometry,
                     edges(path).mapToDouble(edgeLabel -> edgeLabel.getDistance()).sum(),
                     instructions,
                     pathDetails,

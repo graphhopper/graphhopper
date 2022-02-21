@@ -760,16 +760,16 @@ function createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom) {
 
            var tempDistance = translate.createDistanceString(path.distance, request.useMiles);
            var tempRouteInfo;
+           var tmpDuration = translate.createTimeString(path.time);
            if(request.isPublicTransit()) {
                var tempArrTime = moment(ghRequest.getEarliestDepartureTime())
                                        .add(path.time, 'milliseconds')
                                        .format('LT');
                if(path.transfers >= 0)
-                   tempRouteInfo = translate.tr("pt_route_info", [tempArrTime, path.transfers, tempDistance]);
+                   tempRouteInfo = translate.tr("pt_route_info", [tempArrTime, path.transfers, tempDistance + ", " + tmpDuration]);
                else
-                   tempRouteInfo = translate.tr("pt_route_info_walking", [tempArrTime, tempDistance]);
+                   tempRouteInfo = translate.tr("pt_route_info_walking", [tempArrTime, tempDistance + ", " + tmpDuration]);
            } else {
-               var tmpDuration = translate.createTimeString(path.time);
                tempRouteInfo = translate.tr("route_info", [tempDistance, tmpDuration]);
            }
 

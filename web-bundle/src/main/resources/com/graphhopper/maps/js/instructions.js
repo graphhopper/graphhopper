@@ -28,9 +28,18 @@ function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles, deb
 
     instructionDiv.append(tdVar);
     var distance = instr.distance;
+    var time = instr.time;
     if (distance > 0) {
-        instructionDiv.append("<td class='instr_distance'><span>" + translate.createDistanceString(distance, useMiles) + "<br/>" + translate.createTimeString(instr.time) + "</span></td>");
+        var distanceString = translate.createDistanceString(distance, useMiles) + "<br/>";
+    } else {
+        var distanceString = "";
     }
+    if (time > 0) {
+        var timeString = translate.createTimeString(time) + "<br/>";
+    } else {
+        var timeString = "";
+    }
+    instructionDiv.append("<td class='instr_distance'><span>" + distanceString + timeString + "</span></td>");
 
     if (lngLat) {
         instructionDiv.click(function () {
