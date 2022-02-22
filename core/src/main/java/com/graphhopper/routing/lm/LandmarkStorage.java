@@ -546,8 +546,8 @@ public class LandmarkStorage {
     /**
      * The factor is used to convert double values into more compact int values.
      */
-// ORS-GH MOD START change access to protected
-    protected double getFactor() {
+// ORS-GH MOD START change access to public
+    public double getFactor() {
         return factor;
     }
 // ORS-GH MOD END
