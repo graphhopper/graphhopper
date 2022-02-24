@@ -75,6 +75,8 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMHorseRatingParser();
         else if (name.equals(Country.KEY))
             return new CountryParser();
+        else if (name.equals(Cycleway.KEY))
+            return new OSMCyclewayParser();
 
         throw new IllegalArgumentException("DefaultTagParserFactory cannot find: " + name);
     }
