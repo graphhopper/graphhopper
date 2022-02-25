@@ -19,9 +19,8 @@ public final class CHParameters {
     public static final String EDGE_QUOTIENT_WEIGHT = Parameters.CH.PREPARE + "edge.edge_quotient_weight";
     public static final String ORIGINAL_EDGE_QUOTIENT_WEIGHT = Parameters.CH.PREPARE + "edge.original_edge_quotient_weight";
     public static final String HIERARCHY_DEPTH_WEIGHT = Parameters.CH.PREPARE + "edge.hierarchy_depth_weight";
-    public static final String SIGMA_FACTOR = Parameters.CH.PREPARE + "edge.witness_search.sigma_factor";
-    public static final String MIN_MAX_SETTLED_EDGES = Parameters.CH.PREPARE + "edge.witness_search.min_max_settled_edges";
-    public static final String SETTLED_EDGES_RESET_INTERVAL = Parameters.CH.PREPARE + "edge.witness_search.reset_interval";
+    public static final String MAX_POLL_FACTOR_HEURISTIC_EDGE = Parameters.CH.PREPARE + "edge.max_poll_factor_heuristic";
+    public static final String MAX_POLL_FACTOR_CONTRACTION_EDGE = Parameters.CH.PREPARE + "edge.max_poll_factor_contraction";
 
     private CHParameters() {
     }

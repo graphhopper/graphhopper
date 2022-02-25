@@ -522,9 +522,10 @@ public class PrepareContractionHierarchies {
         private int logMessagesPercentage;
 
         static Params forTraversalMode(TraversalMode traversalMode) {
+            // Lower values for the neighbor update percentage (and/or max neighbor updates) yield a slower
+            // preparation but possibly fewer shortcuts and a slightly better query time.
             if (traversalMode.isEdgeBased()) {
-                // todo: optimize
-                return new Params(0, 100, 0, -1, 100, 5);
+                return new Params(0, 100, 50, 3, 100, 5);
             } else {
                 return new Params(0, 100, 100, 2, 100, 20);
             }
