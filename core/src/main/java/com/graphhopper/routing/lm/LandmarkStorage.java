@@ -234,7 +234,7 @@ public class LandmarkStorage {
     }
 
 // ORS-GH MOD START change access and add method
-    protected boolean isInitialized() {
+    public boolean isInitialized() {
         return initialized;
     }
 
@@ -556,7 +556,8 @@ public class LandmarkStorage {
      * @return the weight from the landmark to the specified node. Where the landmark integer is not
      * a node ID but the internal index of the landmark array.
      */
-    int getFromWeight(int landmarkIndex, int node) {
+// ORS-GH MOD START change access to public
+    public int getFromWeight(int landmarkIndex, int node) {
 // ORS-GH MOD START use node index map
         int res = (int) landmarkWeightDA.getShort((long) getIndex(node) * LM_ROW_LENGTH + landmarkIndex * 4 + FROM_OFFSET)
 // ORS-GH MOD END
@@ -575,7 +576,8 @@ public class LandmarkStorage {
     /**
      * @return the weight from the specified node to the landmark (specified *as index*)
      */
-    int getToWeight(int landmarkIndex, int node) {
+// ORS-GH MOD START change access to public
+    public int getToWeight(int landmarkIndex, int node) {
 // ORS-GH MOD START use node index map
         int res = (int) landmarkWeightDA.getShort((long) getIndex(node) * LM_ROW_LENGTH + landmarkIndex * 4 + TO_OFFSET)
 // ORS-GH MOD END
@@ -614,7 +616,9 @@ public class LandmarkStorage {
     }
 
     // From all available landmarks pick just a few active ones
-    boolean chooseActiveLandmarks(int fromNode, int toNode, int[] activeLandmarkIndices, boolean reverse) {
+// ORS-GH MOD START change access to public
+    public boolean chooseActiveLandmarks(int fromNode, int toNode, int[] activeLandmarkIndices, boolean reverse) {
+// ORS-GH MOD END
         if (fromNode < 0 || toNode < 0)
             throw new IllegalStateException("from " + fromNode + " and to "
                     + toNode + " nodes have to be 0 or positive to init landmarks");
