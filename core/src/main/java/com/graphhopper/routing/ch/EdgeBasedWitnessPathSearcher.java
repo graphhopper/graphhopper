@@ -58,7 +58,6 @@ public class EdgeBasedWitnessPathSearcher {
     private PrepareGraphEdgeExplorer outEdgeExplorer;
     private PrepareGraphOrigEdgeExplorer origInEdgeExplorer;
 
-    private int sourceNode;
     private int centerNode;
 
     // various counters
@@ -97,7 +96,6 @@ public class EdgeBasedWitnessPathSearcher {
     public void initSearch(int sourceEdgeKey, int sourceNode, int centerNode, Stats stats) {
         this.stats = stats;
         stats.numTrees++;
-        this.sourceNode = sourceNode;
         this.centerNode = centerNode;
 
         // set start entry
@@ -144,7 +142,7 @@ public class EdgeBasedWitnessPathSearcher {
             while (iter.next()) {
                 // in a few very special cases this is needed to prevent paths that start with a zero weight loop from
                 // being recognized as witnesses when there are double zero weight loops at the source node
-                if (currNode == sourceNode && iter.getAdjNode() == sourceNode && iter.getWeight() < MAX_ZERO_WEIGHT_LOOP)
+                if (iter.getAdjNode() == currNode && iter.getWeight() < MAX_ZERO_WEIGHT_LOOP)
                     continue;
                 final double weight = weights[currKey] + calcTurnWeight(getEdgeFromEdgeKey(currKey), currNode, getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst())) + iter.getWeight();
                 if (Double.isInfinite(weight))
