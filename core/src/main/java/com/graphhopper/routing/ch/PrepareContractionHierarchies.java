@@ -135,7 +135,6 @@ public class PrepareContractionHierarchies {
         logFinalGraphStats();
         return new Result(
                 chConfig, chStore,
-                nodeContractor.getDijkstraCount(),
                 nodeContractor.getAddedShortcutsCount(),
                 lazyUpdateSW.getCurrentSeconds(),
                 periodicUpdateSW.getCurrentSeconds(),
@@ -436,16 +435,14 @@ public class PrepareContractionHierarchies {
     public static class Result {
         private final CHConfig chConfig;
         private final CHStorage chStorage;
-        private final long dijkstraCount;
         private final long shortcuts;
         private final double lazyTime;
         private final double periodTime;
         private final double neighborTime;
         private final long totalPrepareTime;
 
-        private Result(CHConfig chConfig, CHStorage chStorage, long dijkstraCount, long shortcuts, double lazyTime, double periodTime, double neighborTime, long totalPrepareTime) {
+        private Result(CHConfig chConfig, CHStorage chStorage, long shortcuts, double lazyTime, double periodTime, double neighborTime, long totalPrepareTime) {
             this.chStorage = chStorage;
-            this.dijkstraCount = dijkstraCount;
             this.shortcuts = shortcuts;
             this.lazyTime = lazyTime;
             this.periodTime = periodTime;
@@ -460,10 +457,6 @@ public class PrepareContractionHierarchies {
 
         public CHStorage getCHStorage() {
             return chStorage;
-        }
-
-        public long getDijkstraCount() {
-            return dijkstraCount;
         }
 
         public long getShortcuts() {
@@ -529,9 +522,10 @@ public class PrepareContractionHierarchies {
         private int logMessagesPercentage;
 
         static Params forTraversalMode(TraversalMode traversalMode) {
+            // Lower values for the neighbor update percentage (and/or max neighbor updates) yield a slower
+            // preparation but possibly fewer shortcuts and a slightly better query time.
             if (traversalMode.isEdgeBased()) {
-                // todo: optimize
-                return new Params(0, 100, 0, -1, 100, 5);
+                return new Params(0, 100, 50, 3, 100, 5);
             } else {
                 return new Params(0, 100, 100, 2, 100, 20);
             }

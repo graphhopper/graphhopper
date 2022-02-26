@@ -1320,6 +1320,34 @@ public class EdgeBasedNodeContractorTest {
     }
 
     @Test
+    public void testNodeContraction_zeroWeightLoop_another() {
+        //         1 - 4 - 6 - 7
+        //       /
+        // 0 - 5 - 2
+        //    oo
+        // note there are two (directed) zero weight loops at node 5!
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 1).setDistance(100)); // edgeId=0
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 2).setDistance(100)); // edgeId=1
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 4).setDistance(100)); // edgeId=2
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 0).setDistance(100)); // edgeId=3
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 4).setDistance(100)); // edgeId=4
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 5).setDistance(0)); // edgeId=5
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 7).setDistance(100)); // edgeId=6
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 5).setDistance(0)); // edgeId=7
+        freeze();
+        setMaxLevelOnAllNodes();
+        contractNodes(1, 3, 0, 2, 7, 6, 4);
+        // contracting node 1 leads to two shortcuts. it is important that we do not consider the path 5-5-1-4 a
+        // witness for the bridge path 5-1-4. it has the same weight and 'looks' like a witness path, because it
+        // connects the same nodes and is not a bridge path. this needs special handling in our edge-based witness path
+        // searcher.
+        checkShortcuts(
+                createShortcut(4, 5, 0, 2, 0, 2, 200, false, true),
+                createShortcut(4, 5, 2, 0, 2, 0, 200, true, false)
+        );
+    }
+
+    @Test
     public void testNodeContraction_zeroWeightLoop_twoLoopsAndEdge_withTurnRestriction() {
         //                  /|
         // 0 -> 1 -> 2 -> 3 --
@@ -1344,6 +1372,10 @@ public class EdgeBasedNodeContractorTest {
 
     @Test
     public void testNodeContraction_numPolledEdges() {
+        //           1<-6
+        //           |
+        // 0 -> 3 -> 2 <-> 4 -> 5
+        //  \---<----|
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 2).setDistance(71.203000));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 3).setDistance(79.003000));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 0).setDistance(21.328000));

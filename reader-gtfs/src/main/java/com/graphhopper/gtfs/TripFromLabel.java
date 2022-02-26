@@ -62,12 +62,14 @@ class TripFromLabel {
     private final RealtimeFeed realtimeFeed;
     private final GeometryFactory geometryFactory = new GeometryFactory();
     private final PathDetailsBuilderFactory pathDetailsBuilderFactory;
+    private final double walkSpeedKmH;
 
-    TripFromLabel(Graph graph, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
+    TripFromLabel(Graph graph, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory, double walkSpeedKmH) {
         this.graph = graph;
         this.gtfsStorage = gtfsStorage;
         this.realtimeFeed = realtimeFeed;
         this.pathDetailsBuilderFactory = pathDetailsBuilderFactory;
+        this.walkSpeedKmH = walkSpeedKmH;
     }
 
     ResponsePath createResponsePath(Translation tr, PointList waypoints, Graph queryGraph, Weighting accessWeighting, Weighting egressWeighting, List<Label.Transition> solution, List<String> requestedPathDetails) {
@@ -364,7 +366,12 @@ class TripFromLabel {
                             geometryFactory.createLineString(stops.stream().map(s -> s.geometry.getCoordinate()).toArray(Coordinate[]::new))));
                     partition = null;
                     if (edge.getType() == GtfsStorage.EdgeType.TRANSFER) {
-                        feedId = edge.getPlatformDescriptor().feed_id;;
+                        feedId = edge.getPlatformDescriptor().feed_id;
+                        int[] skippedEdgesForTransfer = gtfsStorage.getSkippedEdgesForTransfer().get(edge.getId());
+                        if (skippedEdgesForTransfer != null) {
+                            List<Trip.Leg> legs = parsePartitionToLegs(transferPath(skippedEdgesForTransfer, weighting, path.get(i - 1).label.currentTime), graph, weighting, tr, requestedPathDetails);
+                            result.add(legs.get(0));
+                        }
                     }
                 }
             }
@@ -399,7 +406,7 @@ class TripFromLabel {
             return Collections.singletonList(new Trip.WalkLeg(
                     "Walk",
                     Date.from(departureTime),
-                    lineStringFromEdges(path),
+                    lineStringFromInstructions(instructions),
                     edges(path).mapToDouble(edgeLabel -> edgeLabel.getDistance()).sum(),
                     instructions,
                     pathDetails,
@@ -407,28 +414,21 @@ class TripFromLabel {
         }
     }
 
+    private List<Label.Transition> transferPath(int[] skippedEdgesForTransfer, Weighting accessEgressWeighting, long currentTime) {
+        GraphExplorer graphExplorer = new GraphExplorer(graph, gtfsStorage.getPtGraph(), accessEgressWeighting, gtfsStorage, realtimeFeed, false, true, false, walkSpeedKmH, false, 0);
+        return graphExplorer.walkPath(skippedEdgesForTransfer, currentTime);
+    }
+
     private Stream<GraphExplorer.MultiModalEdge> edges(List<Label.Transition> path) {
         return path.stream().filter(t -> t.edge != null).map(t -> t.edge);
     }
 
-    private Geometry lineStringFromEdges(List<Label.Transition> transitions) {
-        final Iterator<Label.Transition> iterator = transitions.iterator();
-        iterator.next();
-        Label.Transition first = iterator.next();
-        List<Coordinate> coordinates = new ArrayList<>(toCoordinateArray(graph.getEdgeIteratorState(first.edge.getId(), first.edge.getAdjNode().streetNode).fetchWayGeometry(FetchMode.ALL)));
-        iterator.forEachRemaining(transition -> coordinates.addAll(toCoordinateArray(graph.getEdgeIteratorState(transition.edge.getId(), transition.edge.getAdjNode().streetNode).fetchWayGeometry(FetchMode.PILLAR_AND_ADJ))));
-        return geometryFactory.createLineString(coordinates.toArray(new Coordinate[coordinates.size()]));
-    }
-
-    private static List<Coordinate> toCoordinateArray(PointList pointList) {
-        List<Coordinate> coordinates = new ArrayList<>(pointList.size());
-        for (int i = 0; i < pointList.size(); i++) {
-            coordinates.add(pointList.getDimension() == 3 ?
-                    new Coordinate(pointList.getLon(i), pointList.getLat(i)) :
-                    new Coordinate(pointList.getLon(i), pointList.getLat(i), pointList.getEle(i)));
+    private Geometry lineStringFromInstructions(InstructionList instructions) {
+        final PointList pointsList = new PointList();
+        for (Instruction instruction : instructions) {
+            pointsList.add(instruction.getPoints());
         }
-        return coordinates;
+        return pointsList.toLineString(false);
     }
-
 
 }

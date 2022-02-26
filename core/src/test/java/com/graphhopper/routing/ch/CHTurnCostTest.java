@@ -63,7 +63,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * taking place  in {@link PrepareContractionHierarchies} is not covered, but this is ok, because the correctness
  * of CH should not depend on the contraction order.
  *
- * @see EdgeBasedNodeContractor where shortcut creation is tested independent from the routing query
+ * @see EdgeBasedNodeContractor where shortcut creation is tested independent of the routing query
  */
 public class CHTurnCostTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(CHTurnCostTest.class);
@@ -794,31 +794,23 @@ public class CHTurnCostTest {
         checkPath(expectedPath, 4, 0, 0, 4, new int[]{2, 0, 4, 1, 3});
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {DIJKSTRA_BI, ASTAR_BI})
+    @Test
     void anotherDoubleZeroWeightLoop() {
         // taken from a random graph test. this one failed in a feature branch when the others did not.
-        NodeAccess na = graph.getNodeAccess();
-        na.setNode(0, 49.400613, 9.702695);
-        na.setNode(1, 49.401954, 9.707284);
-        na.setNode(2, 49.402709, 9.707648);
-        na.setNode(3, 49.408989, 9.700858);
-        na.setNode(4, 49.402768, 9.705516);
-        na.setNode(5, 49.400228, 9.709740);
-        na.setNode(6, 49.408803, 9.706722);
+        //         1 - 4 - 6 - 7
+        //       /
+        // 0 - 5 - 2
+        //    oo
         // note there are two (directed) zero weight loops at node 5!
         GHUtility.setSpeed(60.000000, 60.000000, encoder, graph.edge(5, 1).setDistance(263.944000)); // edgeId=0
-        GHUtility.setSpeed(90.000000, 90.000000, encoder, graph.edge(3, 3).setDistance(113.016000)); // edgeId=1
-        GHUtility.setSpeed(60.000000, 60.000000, encoder, graph.edge(2, 5).setDistance(314.692000)); // edgeId=2
-        GHUtility.setSpeed(120.000000, 120.000000, encoder, graph.edge(5, 2).setDistance(315.026000)); // edgeId=3
-        GHUtility.setSpeed(40.000000, 40.000000, encoder, graph.edge(1, 4).setDistance(157.012000)); // edgeId=4
-        GHUtility.setSpeed(45.000000, 45.000000, encoder, graph.edge(5, 0).setDistance(513.913000)); // edgeId=5
-        GHUtility.setSpeed(15.000000, 15.000000, encoder, graph.edge(6, 4).setDistance(678.992000)); // edgeId=6
-        GHUtility.setSpeed(60.000000, 0.000000, encoder, graph.edge(5, 5).setDistance(0.000000)); // edgeId=7
-        GHUtility.setSpeed(40.000000, 40.000000, encoder, graph.edge(6, 6).setDistance(890.261000)); // edgeId=8
-        GHUtility.setSpeed(90.000000, 0.000000, encoder, graph.edge(5, 5).setDistance(0.000000)); // edgeId=9
+        GHUtility.setSpeed(120.000000, 120.000000, encoder, graph.edge(5, 2).setDistance(315.026000)); // edgeId=1
+        GHUtility.setSpeed(40.000000, 40.000000, encoder, graph.edge(1, 4).setDistance(157.012000)); // edgeId=2
+        GHUtility.setSpeed(45.000000, 45.000000, encoder, graph.edge(5, 0).setDistance(513.913000)); // edgeId=3
+        GHUtility.setSpeed(15.000000, 15.000000, encoder, graph.edge(6, 4).setDistance(678.992000)); // edgeId=4
+        GHUtility.setSpeed(60.000000, 0.000000, encoder, graph.edge(5, 5).setDistance(0.000000)); // edgeId=5
+        GHUtility.setSpeed(40.000000, 40.000000, encoder, graph.edge(6, 7).setDistance(890.261000)); // edgeId=6
+        GHUtility.setSpeed(90.000000, 0.000000, encoder, graph.edge(5, 5).setDistance(0.000000)); // edgeId=7
         graph.freeze();
-        checkStrict = false;
         automaticCompareCHWithDijkstra(100);
     }
 
