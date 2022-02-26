@@ -28,10 +28,10 @@ import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.text.DateFormat;
 import java.util.Date;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -460,11 +460,16 @@ public class FootFlagEncoderTest {
     @Test
     public void maxSpeed() {
         FootFlagEncoder encoder = new FootFlagEncoder(new PMap().putObject("speed_bits", 4).putObject("speed_factor", 2));
-        assertEquals(15, encoder.getMaxSpeed());
-
+        // The foot max speed is supposed to be 15km/h, but for speed_bits=4,speed_factor=2 as we use here 15 cannot
+        // be stored. In fact, when we set the speed of an edge to 15 and call the getter afterwards we get a value of 16
+        // because of the internal (scaled) integer representation:
         EncodingManager em = EncodingManager.create(encoder);
         GraphHopperStorage graph = new GraphBuilder(em).create();
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(100).set(encoder.getAverageSpeedEnc(), 15);
-        assertEquals(15, edge.get(encoder.getAverageSpeedEnc()));
+        assertEquals(16, edge.get(encoder.getAverageSpeedEnc()));
+
+        // ... because of this we have to make sure the max speed is set to a value that cannot be exceeded even when
+        // such conversion occurs. in our case it must be 16 not 15!
+        assertEquals(16, encoder.getMaxSpeed());
     }
 }
