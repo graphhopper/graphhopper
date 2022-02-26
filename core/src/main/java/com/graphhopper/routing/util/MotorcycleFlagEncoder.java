@@ -19,8 +19,8 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.routing.weighting.CurvatureWeighting;
 import com.graphhopper.routing.weighting.PriorityWeighting;
@@ -75,6 +75,8 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
         preferSet.add("tertiary");
 
         maxPossibleSpeed = 120;
+        // todo: would like to do it like this but avgSpeedEnc is not created yet
+//        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(120);
 
         // autobahn
         defaultSpeedMap.put("motorway", 100);

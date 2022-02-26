@@ -18,8 +18,8 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -140,6 +140,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         // limit speed on bad surfaces to 30 km/h
         badSurfaceSpeed = 30;
         maxPossibleSpeed = 140;
+        // todo: would like to do it like this but avgSpeedEnc is not created yet
+//        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(140);
     }
 
     public CarFlagEncoder setSpeedTwoDirections(boolean value) {

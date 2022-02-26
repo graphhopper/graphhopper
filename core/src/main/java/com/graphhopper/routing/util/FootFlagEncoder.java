@@ -133,6 +133,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         allowedSacScale.add("demanding_mountain_hiking");
 
         maxPossibleSpeed = FERRY_SPEED;
+        // todo: would like to do it like this but avgSpeedEnc is not created yet
+//        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(FERRY_SPEED);
     }
 
     @Override

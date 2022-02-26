@@ -103,6 +103,16 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
     }
 
     @Override
+    public double getNextStorableValue(double value) {
+        if (!useMaximumAsInfinity && value > getMaxDecimal())
+            throw new IllegalArgumentException(getName() + ": There is no next storable value for " + value + ". max:" + getMaxDecimal());
+        else if (useMaximumAsInfinity && value > getMaxDecimal())
+            return Double.POSITIVE_INFINITY;
+        else
+            return (factor * (int) Math.ceil(value / factor));
+    }
+
+    @Override
     public double getMaxDecimal() {
         return maxValue * factor;
     }

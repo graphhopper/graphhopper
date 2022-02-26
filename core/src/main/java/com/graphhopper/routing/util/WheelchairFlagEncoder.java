@@ -28,7 +28,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
 
-import static com.graphhopper.routing.util.PriorityCode.*;
+import static com.graphhopper.routing.util.PriorityCode.AVOID;
+import static com.graphhopper.routing.util.PriorityCode.VERY_NICE;
 
 /**
  * A flag encoder for wheelchairs.
@@ -98,6 +99,9 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         allowedSacScale.clear();
 
         maxPossibleSpeed = FERRY_SPEED;
+        // todo: would like to do it like this but avgSpeedEnc is not created yet
+//        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(FERRY_SPEED);
+
         speedTwoDirections = true;
     }
 
