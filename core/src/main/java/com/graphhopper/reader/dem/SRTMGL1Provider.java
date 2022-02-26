@@ -17,8 +17,6 @@
  */
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.util.Helper;
-
 import java.io.*;
 
 import static com.graphhopper.util.Helper.*;

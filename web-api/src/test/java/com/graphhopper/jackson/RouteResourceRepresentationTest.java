@@ -21,9 +21,7 @@ package com.graphhopper.jackson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.ResponsePath;
-import com.graphhopper.jackson.Jackson;
-import com.graphhopper.jackson.ResponsePathDeserializer;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 

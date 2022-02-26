@@ -59,7 +59,7 @@ public class PathMerger {
 
     public PathMerger(Graph graph, Weighting weighting) {
         this.graph = graph;
-        this.weighting = weighting;
+        this.weighting = graph.wrapWeighting(weighting);
     }
 
     public PathMerger setCalcPoints(boolean calcPoints) {
@@ -143,7 +143,7 @@ public class PathMerger {
         }
 
         if (!fullPoints.isEmpty()) {
-            responsePath.addDebugInfo("simplify (" + origPoints + "->" + fullPoints.getSize() + ")");
+            responsePath.addDebugInfo("simplify (" + origPoints + "->" + fullPoints.size() + ")");
             if (fullPoints.is3D)
                 calcAscendDescend(responsePath, fullPoints);
         }

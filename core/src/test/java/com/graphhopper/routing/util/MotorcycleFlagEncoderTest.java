@@ -24,12 +24,12 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.text.DateFormat;
 import java.util.Date;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -40,7 +40,7 @@ public class MotorcycleFlagEncoderTest {
     private final BooleanEncodedValue accessEnc = encoder.getAccessEnc();
 
     private Graph initExampleGraph() {
-        GraphHopperStorage gs = new GraphHopperStorage(new RAMDirectory(), em, true).create(1000);
+        GraphHopperStorage gs = new GraphBuilder(em).set3D(true).create();
         NodeAccess na = gs.getNodeAccess();
         // 50--(0.0001)-->49--(0.0004)-->55--(0.0005)-->60
         na.setNode(0, 51.1, 12.001, 50);
@@ -129,7 +129,7 @@ public class MotorcycleFlagEncoderTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
         assertTrue(encoder.getAccess(way).isWay());
-        IntsRef edgeFlags = encoder.handleWayTags(em.createEdgeFlags(), way, EncodingManager.Access.WAY);
+        IntsRef edgeFlags = encoder.handleWayTags(em.createEdgeFlags(), way);
         assertEquals(20, encoder.avgSpeedEnc.getDecimal(false, edgeFlags), .1);
         assertEquals(20, encoder.avgSpeedEnc.getDecimal(true, edgeFlags), .1);
     }
@@ -160,7 +160,7 @@ public class MotorcycleFlagEncoderTest {
         double bendinessOfStraightWay = getBendiness(edge, 100.0);
         double bendinessOfCurvyWay = getBendiness(edge, 10.0);
 
-        assertTrue("The bendiness of the straight road is smaller than the one of the curvy road", bendinessOfCurvyWay < bendinessOfStraightWay);
+        assertTrue(bendinessOfCurvyWay < bendinessOfStraightWay, "The bendiness of the straight road is smaller than the one of the curvy road");
     }
 
     private double getBendiness(EdgeIteratorState edge, double estimatedDistance) {
@@ -168,10 +168,10 @@ public class MotorcycleFlagEncoderTest {
         way.setTag("highway", "primary");
         way.setTag("estimated_distance", estimatedDistance);
         assertTrue(encoder.getAccess(way).isWay());
-        IntsRef flags = encoder.handleWayTags(em.createEdgeFlags(), way, EncodingManager.Access.WAY);
+        IntsRef flags = encoder.handleWayTags(em.createEdgeFlags(), way);
         edge.setFlags(flags);
         encoder.applyWayTags(way, edge);
         DecimalEncodedValue curvatureEnc = encoder.getDecimalEncodedValue(EncodingManager.getKey(encoder, "curvature"));
-        return curvatureEnc.getDecimal(false, edge.getFlags());
+        return edge.get(curvatureEnc);
     }
 }

@@ -2,23 +2,26 @@ package com.graphhopper.reader.dem;
 
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.PointList;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class EdgeSamplingTest {
-    private final ElevationProvider elevation = new AbstractElevationProvider("") {
+    private final ElevationProvider elevation = new ElevationProvider() {
         @Override
         public double getEle(double lat, double lon) {
             return 10;
         }
 
         @Override
-        public void release() {}
+        public boolean canInterpolate() {
+            return false;
+        }
+
         @Override
-        String getFileName(double lat, double lon) { return ""; }
-        @Override
-        String getDownloadURL(double lat, double lon) { return ""; }
+        public void release() {
+        }
+
     };
 
     private double round(double d) {

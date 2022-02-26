@@ -62,6 +62,8 @@ function mergeParamIntoObject(res, key, value) {
     var newKey = key.substring(0, objectIndex);
     var subKey = key.substring(objectIndex + 1);
 
+    if(newKey == "__proto__" || newKey == "constructor" || newKey == "prototype") return res;
+
     tmpVal = res[newKey];
     if(!tmpVal)
         tmpVal = {};

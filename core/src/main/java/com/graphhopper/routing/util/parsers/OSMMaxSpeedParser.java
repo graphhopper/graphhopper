@@ -22,10 +22,9 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.MaxSpeed;
-import com.graphhopper.routing.ev.RoadClass;
-import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleSet;
 import com.graphhopper.routing.util.TransportationMode;
+import com.graphhopper.routing.util.countryrules.CountryRule;
+import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
@@ -53,14 +52,12 @@ public class OSMMaxSpeedParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
 
-        SpatialRuleSet spatialRuleSet = way.getTag("spatial_rule_set", null);
-        if (spatialRuleSet != null && spatialRuleSet != SpatialRuleSet.EMPTY) {
-            RoadClass roadClass = RoadClass.find(way.getTag("highway", ""));
-            maxSpeed = spatialRuleSet.getMaxSpeed(roadClass, TransportationMode.CAR, maxSpeed);
-        }
+        CountryRule countryRule = way.getTag("country_rule", null);
+        if (countryRule != null)
+            maxSpeed = countryRule.getMaxSpeed(way, TransportationMode.CAR, maxSpeed);
 
         double fwdSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:forward"));
         if (!isValidSpeed(fwdSpeed) && isValidSpeed(maxSpeed))

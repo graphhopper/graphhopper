@@ -19,17 +19,15 @@
 package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.graphhopper.jackson.Jackson;
 import com.graphhopper.util.*;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 
-import static io.dropwizard.testing.FixtureHelpers.fixture;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class InstructionListRepresentationTest {
 
@@ -48,7 +46,7 @@ public class InstructionListRepresentationTest {
                 .setExitNumber(2)
                 .setExited();
         il.add(instr);
-        assertEquals(objectMapper.readTree(fixture("fixtures/roundabout1.json")).toString(), objectMapper.valueToTree(il).toString());
+        assertEquals(objectMapper.readTree(getClass().getClassLoader().getResourceAsStream("fixtures/roundabout1.json")).toString(), objectMapper.valueToTree(il).toString());
     }
 
 
@@ -67,7 +65,7 @@ public class InstructionListRepresentationTest {
                 .setExitNumber(2)
                 .setExited();
         il.add(instr);
-        assertEquals(objectMapper.readTree(fixture("fixtures/roundabout2.json")).toString(), objectMapper.valueToTree(il).toString());
+        assertEquals(objectMapper.readTree(getClass().getClassLoader().getResourceAsStream("fixtures/roundabout2.json")).toString(), objectMapper.valueToTree(il).toString());
     }
 
     private static Translation usTR = new Translation() {

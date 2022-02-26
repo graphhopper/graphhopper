@@ -18,74 +18,43 @@
 
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PMap;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class EdgeBasedWitnessPathSearcherTest {
-
-    private GraphHopperStorage graph;
-    private CHGraph chGraph;
-    private Weighting weighting;
-    private FlagEncoder encoder;
-
-    @Before
-    public void setup() {
-        encoder = new CarFlagEncoder(5, 5, 10);
-        EncodingManager encodingManager = EncodingManager.create(encoder);
-        graph = new GraphBuilder(encodingManager)
-                .setCHConfigStrings("p|car|shortest|edge")
-                .create();
-        chGraph = graph.getCHGraph();
-        weighting = chGraph.getCHConfig().getWeighting();
-    }
 
     @Test
     public void test_shortcut_needed_basic() {
         // 0 -> 1 -> 2 -> 3 -> 4
-        GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 4).setDistance(1));
-        graph.freeze();
-        setMaxLevelOnAllNodes();
-        EdgeBasedWitnessPathSearcher finder = createFinder();
-        finder.initSearch(2, 1, 0);
-        PrepareCHEntry result = finder.runSearch(3, 3);
-        PrepareCHEntry expected = new ExpectedResultBuilder(3, 2, 4, 2.0)
-                .withParent(2, 1, 2, 1.0)
-                .build(2);
-        assertFinderResult(expected, result);
+        CHPreparationGraph graph = CHPreparationGraph.edgeBased(5, 4, (in, via, out) -> in == out ? 10 : 0);
+        int edge = 0;
+        graph.addEdge(0, 1, edge++, 10, Double.POSITIVE_INFINITY);
+        graph.addEdge(1, 2, edge++, 10, Double.POSITIVE_INFINITY);
+        graph.addEdge(2, 3, edge++, 10, Double.POSITIVE_INFINITY);
+        graph.addEdge(3, 4, edge++, 10, Double.POSITIVE_INFINITY);
+        graph.prepareForContraction();
+        EdgeBasedWitnessPathSearcher searcher = new EdgeBasedWitnessPathSearcher(graph);
+        searcher.initSearch(0, 1, 2, new EdgeBasedWitnessPathSearcher.Stats());
+        double weight = searcher.runSearch(3, 6, 20.0, 100);
+        assertTrue(Double.isInfinite(weight));
     }
 
     @Test
     public void test_shortcut_needed_bidirectional() {
         // 0 -> 1 -> 2 -> 3 -> 4
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(1));
-        graph.freeze();
-        setMaxLevelOnAllNodes();
-        EdgeBasedWitnessPathSearcher finder = createFinder();
-        finder.initSearch(2, 1, 0);
-        PrepareCHEntry result = finder.runSearch(3, 3);
-        PrepareCHEntry expected = new ExpectedResultBuilder(3, 2, 4, 2.0)
-                .withParent(2, 1, 2, 1.0)
-                .build(2);
-        assertFinderResult(expected, result);
+        CHPreparationGraph graph = CHPreparationGraph.edgeBased(5, 4, (in, via, out) -> in == out ? 10 : 0);
+        int edge = 0;
+        graph.addEdge(0, 1, edge++, 10, 10);
+        graph.addEdge(1, 2, edge++, 10, 10);
+        graph.addEdge(2, 3, edge++, 10, 10);
+        graph.addEdge(3, 4, edge++, 10, 10);
+        graph.prepareForContraction();
+        EdgeBasedWitnessPathSearcher searcher = new EdgeBasedWitnessPathSearcher(graph);
+        searcher.initSearch(0, 1, 2, new EdgeBasedWitnessPathSearcher.Stats());
+        double weight = searcher.runSearch(3, 6, 20.0, 100);
+        assertTrue(Double.isInfinite(weight));
     }
 
     @Test
@@ -93,18 +62,19 @@ public class EdgeBasedWitnessPathSearcherTest {
         // 0 -> 1 -> 2 -> 3 -> 4
         //       \       /
         //        \> 5 >/
-        GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(2));
-        GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 5).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 3).setDistance(1));
-        graph.freeze();
-        setMaxLevelOnAllNodes();
-        EdgeBasedWitnessPathSearcher finder = createFinder();
-        finder.initSearch(2, 1, 0);
-        PrepareCHEntry result = finder.runSearch(3, 3);
-        assertNull(result);
+        CHPreparationGraph graph = CHPreparationGraph.edgeBased(6, 6, (in, via, out) -> in == out ? 10 : 0);
+        int edge = 0;
+        graph.addEdge(0, 1, edge++, 10, Double.POSITIVE_INFINITY);
+        graph.addEdge(1, 2, edge++, 10, Double.POSITIVE_INFINITY);
+        graph.addEdge(2, 3, edge++, 20, Double.POSITIVE_INFINITY);
+        graph.addEdge(3, 4, edge++, 10, Double.POSITIVE_INFINITY);
+        graph.addEdge(1, 5, edge++, 10, Double.POSITIVE_INFINITY);
+        graph.addEdge(5, 3, edge++, 10, Double.POSITIVE_INFINITY);
+        graph.prepareForContraction();
+        EdgeBasedWitnessPathSearcher searcher = new EdgeBasedWitnessPathSearcher(graph);
+        searcher.initSearch(0, 1, 2, new EdgeBasedWitnessPathSearcher.Stats());
+        double weight = searcher.runSearch(3, 6, 30.0, 100);
+        assertEquals(20, weight, 1.e-6);
     }
 
     @Test
@@ -112,66 +82,19 @@ public class EdgeBasedWitnessPathSearcherTest {
         // 0 -> 1 -> 2 -> 3 -> 4
         //       \       /
         //        \> 5 >/
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(2));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 5).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 3).setDistance(1));
-        graph.freeze();
-        setMaxLevelOnAllNodes();
-        EdgeBasedWitnessPathSearcher finder = createFinder();
-        finder.initSearch(2, 1, 0);
-        PrepareCHEntry result = finder.runSearch(3, 3);
-        assertNull(result);
-    }
-
-    private EdgeBasedWitnessPathSearcher createFinder() {
-        CHPreparationGraph.TurnCostFunction turnCostFunction = CHPreparationGraph.buildTurnCostFunctionFromTurnCostStorage(graph, weighting);
-        CHPreparationGraph prepareGraph = CHPreparationGraph.edgeBased(graph.getNodes(), graph.getEdges(), turnCostFunction);
-        CHPreparationGraph.buildFromGraph(prepareGraph, graph, weighting);
-        return new EdgeBasedWitnessPathSearcher(prepareGraph, new PMap());
-    }
-
-    private void setMaxLevelOnAllNodes() {
-        int nodes = chGraph.getNodes();
-        for (int node = 0; node < nodes; node++) {
-            chGraph.setLevel(node, nodes);
-        }
-    }
-
-    private void assertFinderResult(PrepareCHEntry expected, PrepareCHEntry result) {
-        while (expected.parent != null) {
-            assertEquals(expected.adjNode, result.adjNode);
-            assertEquals(expected.prepareEdge, result.prepareEdge);
-            assertEquals(expected.incEdgeKey, result.incEdgeKey);
-            assertEquals(expected.weight, result.weight, 1.e-6);
-            expected = expected.getParent();
-            result = result.getParent();
-        }
-    }
-
-    private static class ExpectedResultBuilder {
-        private final PrepareCHEntry result;
-        private PrepareCHEntry last;
-
-        private ExpectedResultBuilder(int adjNode, int edge, int incKey, double weight) {
-            result = new PrepareCHEntry(edge, incKey, adjNode, weight);
-            last = result;
-        }
-
-        ExpectedResultBuilder withParent(int adjNode, int edge, int incKey, double weight) {
-            PrepareCHEntry parent = new PrepareCHEntry(edge, incKey, adjNode, weight);
-            last.parent = parent;
-            last = parent;
-            return this;
-        }
-
-        PrepareCHEntry build(int firstKey) {
-            last.parent = new PrepareCHEntry(EdgeIterator.NO_EDGE, firstKey, -1, 0.0);
-            return result;
-        }
-
+        CHPreparationGraph graph = CHPreparationGraph.edgeBased(6, 6, (in, via, out) -> in == out ? 10 : 0);
+        int edge = 0;
+        graph.addEdge(0, 1, edge++, 10, 10);
+        graph.addEdge(1, 2, edge++, 10, 10);
+        graph.addEdge(2, 3, edge++, 20, 20);
+        graph.addEdge(3, 4, edge++, 10, 10);
+        graph.addEdge(1, 5, edge++, 10, 10);
+        graph.addEdge(5, 3, edge++, 10, 10);
+        graph.prepareForContraction();
+        EdgeBasedWitnessPathSearcher searcher = new EdgeBasedWitnessPathSearcher(graph);
+        searcher.initSearch(0, 1, 2, new EdgeBasedWitnessPathSearcher.Stats());
+        double weight = searcher.runSearch(3, 6, 30.0, 100);
+        assertEquals(20, weight, 1.e-6);
     }
 
 }

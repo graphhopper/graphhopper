@@ -108,7 +108,7 @@ public class IsochroneResource {
             throw new IllegalArgumentException("Point not found:" + point);
         QueryGraph queryGraph = QueryGraph.create(graph, snap);
         TraversalMode traversalMode = profile.isTurnCosts() ? EDGE_BASED : NODE_BASED;
-        ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow, traversalMode);
+        ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, queryGraph.wrapWeighting(weighting), reverseFlow, traversalMode);
 
         double limit;
         if (weightLimit.get() > 0) {
@@ -143,13 +143,11 @@ public class IsochroneResource {
         for (Double z : zs) {
             logger.info("Building contour z={}", z);
             MultiPolygon isochrone = contourBuilder.computeIsoline(z, result.seedEdges);
-            if (!isochrone.isEmpty()) {
-                if (fullGeometry) {
-                    isochrones.add(isochrone);
-                } else {
-                    Polygon maxPolygon = heuristicallyFindMainConnectedComponent(isochrone, isochrone.getFactory().createPoint(new Coordinate(point.get().lon, point.get().lat)));
-                    isochrones.add(isochrone.getFactory().createPolygon(((LinearRing) maxPolygon.getExteriorRing())));
-                }
+            if (fullGeometry) {
+                isochrones.add(isochrone);
+            } else {
+                Polygon maxPolygon = heuristicallyFindMainConnectedComponent(isochrone, isochrone.getFactory().createPoint(new Coordinate(point.get().lon, point.get().lat)));
+                isochrones.add(isochrone.getFactory().createPolygon(((LinearRing) maxPolygon.getExteriorRing())));
             }
         }
         ArrayList<JsonFeature> features = new ArrayList<>();

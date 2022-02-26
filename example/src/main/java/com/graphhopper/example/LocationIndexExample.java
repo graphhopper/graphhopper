@@ -5,9 +5,8 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
@@ -37,13 +36,12 @@ public class LocationIndexExample {
 
     public static void lowLevelLocationIndex() {
         // If you don't use the GraphHopper class you have to use the low level API:
-        Directory dir = new RAMDirectory();
-        GraphHopperStorage graph = new GraphHopperStorage(dir, EncodingManager.create(new CarFlagEncoder()), false).create(100);
+        GraphHopperStorage graph = new GraphBuilder(EncodingManager.create(new CarFlagEncoder())).create();
         graph.edge(0, 1).setName("test edge");
         graph.getNodeAccess().setNode(0, 12, 42);
         graph.getNodeAccess().setNode(1, 12.01, 42.01);
 
-        LocationIndexTree index = new LocationIndexTree(graph.getBaseGraph(), dir);
+        LocationIndexTree index = new LocationIndexTree(graph.getBaseGraph(), graph.getDirectory());
         index.setResolution(300);
         index.setMaxRegionSearch(4);
         if (!index.loadExisting())

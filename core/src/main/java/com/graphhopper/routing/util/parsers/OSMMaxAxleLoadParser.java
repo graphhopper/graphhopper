@@ -46,7 +46,7 @@ public class OSMMaxAxleLoadParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         OSMValueExtractor.extractTons(edgeFlags, way, maxAxleLoadEncoder, Collections.singletonList("maxaxleload"));
         return edgeFlags;
     }

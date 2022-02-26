@@ -5,14 +5,14 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>graphhopper-web</artifactId>
     <packaging>jar</packaging>
-    <version>3.0-SNAPSHOT</version>
+    <version>5.0-SNAPSHOT</version>
     <name>GraphHopper Web</name>
     <description>Use the GraphHopper routing engine as a web-service</description>
 
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>3.0-SNAPSHOT</version>
+        <version>5.0-SNAPSHOT</version>
     </parent>
     <properties>
         <shade-phase>package</shade-phase>
@@ -91,7 +91,7 @@
                                         implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.graphhopper.http.GraphHopperApplication</mainClass>
+                                    <mainClass>com.graphhopper.application.GraphHopperApplication</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

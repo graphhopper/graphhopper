@@ -25,21 +25,19 @@ import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 /**
  * @author Alexey Valikov
  */
 public abstract class EdgeElevationInterpolatorTest {
 
-    protected final static EncodingManager.AcceptWay ACCEPT_WAY = new EncodingManager.AcceptWay().
-            put(RoadEnvironment.KEY, EncodingManager.Access.WAY).put("car", EncodingManager.Access.WAY).put("foot", EncodingManager.Access.WAY);
     protected static final double PRECISION = ElevationInterpolator.EPSILON2;
     protected ReaderWay interpolatableWay;
     protected ReaderWay normalWay;
@@ -51,11 +49,11 @@ public abstract class EdgeElevationInterpolatorTest {
     protected EdgeElevationInterpolator edgeElevationInterpolator;
 
     @SuppressWarnings("resource")
-    @Before
+    @BeforeEach
     public void setUp() {
-        graph = new GraphHopperStorage(new RAMDirectory(),
-                encodingManager = new EncodingManager.Builder().add(new CarFlagEncoder()).add(new FootFlagEncoder()).build(),
-                true).create(100);
+        graph = new GraphBuilder(
+                encodingManager = new EncodingManager.Builder().add(new CarFlagEncoder()).add(new FootFlagEncoder()).build()
+        ).set3D(true).create();
         roadEnvEnc = encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         edgeElevationInterpolator = createEdgeElevationInterpolator();
         relFlags = encodingManager.createRelationFlags();
@@ -64,7 +62,7 @@ public abstract class EdgeElevationInterpolatorTest {
         normalWay.setTag("highway", "primary");
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         Helper.close(graph);
     }

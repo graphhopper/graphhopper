@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+
 /**
  * Edge-based version of Tarjan's algorithm to find strongly connected components on a directed graph. Compared
  * to the more traditional node-based version that traverses the nodes of the graph this version works directly with
@@ -221,6 +223,8 @@ public class EdgeBasedTarjanSCC {
         for (IntCursor edge : startEdges) {
             // todo: using getEdgeIteratorState here is not efficient
             EdgeIteratorState edgeState = graph.getEdgeIteratorState(edge.value, Integer.MIN_VALUE);
+            if (!edgeTransitionFilter.accept(NO_EDGE, edgeState))
+                continue;
             findComponentsForEdgeState(edgeState);
         }
         return components;

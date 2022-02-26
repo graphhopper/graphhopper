@@ -38,7 +38,7 @@ public class PillarInfo implements PointAccess {
     public PillarInfo(boolean enabled3D, Directory dir) {
         this.enabled3D = enabled3D;
         this.dir = dir;
-        this.da = dir.find("tmp_pillar_info").create(100);
+        this.da = dir.create("tmp_pillar_info").create(100);
         this.rowSizeInBytes = getDimension() * 4;
     }
 
@@ -91,6 +91,6 @@ public class PillarInfo implements PointAccess {
     }
 
     public void clear() {
-        dir.remove(da);
+        dir.remove(da.getName());
     }
 }

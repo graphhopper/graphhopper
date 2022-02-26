@@ -52,7 +52,7 @@ public class ResponsePathSerializer {
 
     public static String encodePolyline(PointList poly, boolean includeElevation, double precision) {
         StringBuilder sb = new StringBuilder(Math.max(20, poly.size() * 3));
-        int size = poly.getSize();
+        int size = poly.size();
         int prevLat = 0;
         int prevLon = 0;
         int prevEle = 0;
@@ -104,9 +104,7 @@ public class ResponsePathSerializer {
             }
             if (calcPoints) {
                 jsonPath.put("points_encoded", pointsEncoded);
-                if (p.getPoints().getSize() >= 2) {
-                    jsonPath.putPOJO("bbox", p.calcBBox2D());
-                }
+                jsonPath.putPOJO("bbox", p.calcBBox2D());
                 jsonPath.putPOJO("points", pointsEncoded ? encodePolyline(p.getPoints(), enableElevation, 1e5) : p.getPoints().toLineString(enableElevation));
                 if (enableInstructions) {
                     jsonPath.putPOJO("instructions", p.getInstructions());

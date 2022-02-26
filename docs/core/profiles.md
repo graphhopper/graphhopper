@@ -54,6 +54,9 @@ weightings:
 - curvature (prefers routes with lots of curves for enjoyable motorcycle rides)
 - custom (enables custom profiles, see the next section)
 
+Another important profile setting is `turn_costs: true/false`. Use this to enable turn restrictions for each profile. 
+You can learn more about this setting [here](./turn-restrictions.md)
+
 The profile name is used to select the profile when executing routing queries. To do this use the `profile` request
 parameter, for example `/route?point=49.5,11.1&profile=car` or `/route?point=49.5,11.1&profile=some_other_profile`.
 
@@ -75,7 +78,7 @@ profiles:
       "speed": [
         {
           "if": "road_class == MOTORWAY",
-          "multiply_by": 80
+          "multiply_by": 0.8
         }
       ]               
     }

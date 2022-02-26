@@ -24,9 +24,9 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Alexey Valikov
@@ -91,19 +91,19 @@ public class BridgeElevationInterpolatorTest extends EdgeElevationInterpolatorTe
         edge17.setWayGeometry(Helper.createPointList3D(12, 2, 200, 14, 4, 400, 16, 6, 600, 18, 8, 800));
 
         IntsRef relFlags = encodingManager.createRelationFlags();
-        edge01.setFlags(encodingManager.handleWayTags(normalWay, ACCEPT_WAY, relFlags));
-        edge12.setFlags(encodingManager.handleWayTags(normalWay, ACCEPT_WAY, relFlags));
-        edge23.setFlags(encodingManager.handleWayTags(normalWay, ACCEPT_WAY, relFlags));
-        edge34.setFlags(encodingManager.handleWayTags(normalWay, ACCEPT_WAY, relFlags));
+        edge01.setFlags(encodingManager.handleWayTags(normalWay, relFlags));
+        edge12.setFlags(encodingManager.handleWayTags(normalWay, relFlags));
+        edge23.setFlags(encodingManager.handleWayTags(normalWay, relFlags));
+        edge34.setFlags(encodingManager.handleWayTags(normalWay, relFlags));
 
-        edge56.setFlags(encodingManager.handleWayTags(normalWay, ACCEPT_WAY, relFlags));
-        edge67.setFlags(encodingManager.handleWayTags(interpolatableWay, ACCEPT_WAY, relFlags));
-        edge78.setFlags(encodingManager.handleWayTags(interpolatableWay, ACCEPT_WAY, relFlags));
-        edge89.setFlags(encodingManager.handleWayTags(normalWay, ACCEPT_WAY, relFlags));
+        edge56.setFlags(encodingManager.handleWayTags(normalWay, relFlags));
+        edge67.setFlags(encodingManager.handleWayTags(interpolatableWay, relFlags));
+        edge78.setFlags(encodingManager.handleWayTags(interpolatableWay, relFlags));
+        edge89.setFlags(encodingManager.handleWayTags(normalWay, relFlags));
 
-        edge17.setFlags(encodingManager.handleWayTags(interpolatableWay, ACCEPT_WAY, relFlags));
-        edge27.setFlags(encodingManager.handleWayTags(interpolatableWay, ACCEPT_WAY, relFlags));
-        edge37.setFlags(encodingManager.handleWayTags(interpolatableWay, ACCEPT_WAY, relFlags));
+        edge17.setFlags(encodingManager.handleWayTags(interpolatableWay, relFlags));
+        edge27.setFlags(encodingManager.handleWayTags(interpolatableWay, relFlags));
+        edge37.setFlags(encodingManager.handleWayTags(interpolatableWay, relFlags));
 
         final GHIntHashSet outerNodeIds = new GHIntHashSet();
         final GHIntHashSet innerNodeIds = new GHIntHashSet();

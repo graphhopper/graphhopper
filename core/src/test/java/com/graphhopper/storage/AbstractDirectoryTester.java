@@ -18,15 +18,13 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.util.Helper;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author Peter Karich
@@ -37,14 +35,14 @@ public abstract class AbstractDirectoryTester {
 
     abstract Directory createDir();
 
-    @After
+    @AfterEach
     public void tearDown() {
         if (da != null)
             da.close();
         Helper.removeDir(new File(location));
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         Helper.removeDir(new File(location));
     }
@@ -52,17 +50,15 @@ public abstract class AbstractDirectoryTester {
     @Test
     public void testNoDuplicates() {
         Directory dir = createDir();
-        DataAccess da1 = dir.find("testing");
-        DataAccess da2 = dir.find("testing");
-        assertTrue(da1 == da2);
+        DataAccess da1 = dir.create("testing");
+        assertThrows(IllegalStateException.class, () -> dir.create("testing"));
         da1.close();
-        da2.close();
     }
 
     @Test
     public void testNoErrorForDACreate() {
         Directory dir = createDir();
-        da = dir.find("testing");
+        da = dir.create("testing");
         da.create(100);
         da.flush();
     }

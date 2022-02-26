@@ -32,7 +32,6 @@ public class GraphHopperConfigModuleTest {
     @Test
     public void testDeserializeConfig() throws IOException {
         ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
-        objectMapper.registerModule(new GraphHopperConfigModule());
         objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
         GraphHopperConfig graphHopperConfig = objectMapper.readValue(getClass().getResourceAsStream("config.yml"), GraphHopperConfig.class);
         // The dot in the key is no special symbol in YAML. It's just part of the string.

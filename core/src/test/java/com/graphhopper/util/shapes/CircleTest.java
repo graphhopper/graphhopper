@@ -19,9 +19,10 @@ package com.graphhopper.util.shapes;
 
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.PointList;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Peter Karich

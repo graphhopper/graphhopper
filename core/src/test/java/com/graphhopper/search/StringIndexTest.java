@@ -1,22 +1,21 @@
 package com.graphhopper.search;
 
 import com.carrotsearch.hppc.LongArrayList;
-import com.graphhopper.Repeat;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.Helper;
-import org.junit.Test;
+import org.junit.jupiter.api.RepeatedTest;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.*;
 
 import static com.graphhopper.search.StringIndex.MAX_UNIQUE_KEYS;
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class StringIndexTest {
 
     private StringIndex create() {
-        return new StringIndex(new RAMDirectory()).create(1000);
+        return new StringIndex(new RAMDirectory(), 1000, -1).create(1000);
     }
 
     Map<String, String> createMap(String... strings) {
@@ -165,17 +164,17 @@ public class StringIndexTest {
         String location = "./target/stringindex-store";
         Helper.removeDir(new File(location));
 
-        StringIndex index = new StringIndex(new RAMDirectory(location, true).create()).create(1000);
+        StringIndex index = new StringIndex(new RAMDirectory(location, true).create(), 1000, -1).create(1000);
         long pointer = index.add(createMap("", "test"));
         index.flush();
         index.close();
 
-        index = new StringIndex(new RAMDirectory(location, true));
+        index = new StringIndex(new RAMDirectory(location, true), 1000, -1);
         assertTrue(index.loadExisting());
         assertEquals("test", index.get(pointer, ""));
         // make sure bytePointer is correctly set after loadExisting
         long newPointer = index.add(createMap("", "testing"));
-        assertEquals(newPointer + ">" + pointer, pointer + 1 + 3 + "test".getBytes().length, newPointer);
+        assertEquals(pointer + 1 + 3 + "test".getBytes().length, newPointer, newPointer + ">" + pointer);
         index.close();
 
         Helper.removeDir(new File(location));
@@ -186,7 +185,7 @@ public class StringIndexTest {
         String location = "./target/stringindex-store";
         Helper.removeDir(new File(location));
 
-        StringIndex index = new StringIndex(new RAMDirectory(location, true).create()).create(1000);
+        StringIndex index = new StringIndex(new RAMDirectory(location, true).create(), 1000, -1).create(1000);
         long pointerA = index.add(createMap("c", "test value"));
         assertEquals(2, index.getKeys().size());
         long pointerB = index.add(createMap("a", "value", "b", "another value"));
@@ -195,7 +194,7 @@ public class StringIndexTest {
         index.flush();
         index.close();
 
-        index = new StringIndex(new RAMDirectory(location, true));
+        index = new StringIndex(new RAMDirectory(location, true), 1000, -1);
         assertTrue(index.loadExisting());
         assertEquals("[, c, a, b]", index.getKeys().toString());
         assertEquals("test value", index.get(pointerA, "c"));
@@ -223,32 +222,34 @@ public class StringIndexTest {
         assertNull(index.get(pointerB, ""));
     }
 
-    @Test
-    @Repeat(times = 100)
+    @RepeatedTest(20)
     public void testRandom() {
-        StringIndex index = create();
         long seed = new Random().nextLong();
-        System.out.println("StringIndexText.testRandom seed:" + seed);
-        Random random = new Random(seed);
-        List<String> keys = createRandomList(random, "_key", 1000);
-        List<String> values = createRandomList(random, "_value", 5000);
+        try {
+            StringIndex index = create();
+            Random random = new Random(seed);
+            List<String> keys = createRandomList(random, "_key", 1000);
+            List<String> values = createRandomList(random, "_value", 5000);
 
-        int size = 20000;
-        LongArrayList pointers = new LongArrayList(size);
-        for (int i = 0; i < size; i++) {
-            Map<String, String> map = createRandomMap(random, keys, values);
-            long pointer = index.add(map);
-            try {
-                assertEquals("" + i, map.size(), index.getAll(pointer).size());
-            } catch (Exception ex) {
-                throw new RuntimeException(i + " " + map + ", " + pointer, ex);
+            int size = 20000;
+            LongArrayList pointers = new LongArrayList(size);
+            for (int i = 0; i < size; i++) {
+                Map<String, String> map = createRandomMap(random, keys, values);
+                long pointer = index.add(map);
+                try {
+                    assertEquals(map.size(), index.getAll(pointer).size(), "" + i);
+                } catch (Exception ex) {
+                    throw new RuntimeException(i + " " + map + ", " + pointer, ex);
+                }
+                pointers.add(pointer);
             }
-            pointers.add(pointer);
-        }
 
-        for (int i = 0; i < size; i++) {
-            Map<String, String> map = index.getAll(pointers.get(i));
-            assertTrue(i + " " + map, map.size() > 0);
+            for (int i = 0; i < size; i++) {
+                Map<String, String> map = index.getAll(pointers.get(i));
+                assertTrue(map.size() > 0, i + " " + map);
+            }
+        } catch (Throwable t) {
+            throw new RuntimeException("seed:" + seed + ", error:" + t);
         }
     }
 

@@ -1,8 +1,8 @@
 package com.graphhopper.routing.ev;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DefaultEncodedValueFactoryTest {
 
@@ -18,7 +18,7 @@ public class DefaultEncodedValueFactoryTest {
     @Test
     public void loadCarMaxSpeed() {
         EncodedValue enc = MaxSpeed.create();
-        UnsignedDecimalEncodedValue loadedEnc = (UnsignedDecimalEncodedValue) factory.create(enc.toString());
+        DecimalEncodedValueImpl loadedEnc = (DecimalEncodedValueImpl) factory.create(enc.toString());
         assertEquals(loadedEnc, enc);
     }
 

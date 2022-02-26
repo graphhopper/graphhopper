@@ -19,6 +19,7 @@ package com.graphhopper.reader;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -31,7 +32,7 @@ public class ReaderRelation extends ReaderElement {
     protected List<Member> members;
 
     public ReaderRelation(long id) {
-        super(id, RELATION, 2);
+        super(id, RELATION, new HashMap<>(2));
     }
 
     @Override

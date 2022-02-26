@@ -143,7 +143,7 @@ public class BBox implements Shape, Cloneable {
     }
 
     public static boolean intersects(RectangleLineIntersector intersector, PointList pointList) {
-        int len = pointList.getSize();
+        int len = pointList.size();
         if (len == 0)
             throw new IllegalArgumentException("PointList must not be empty");
 

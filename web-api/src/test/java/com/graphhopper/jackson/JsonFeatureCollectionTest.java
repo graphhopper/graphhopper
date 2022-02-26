@@ -21,8 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.util.JsonFeature;
 import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.util.PointList;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -33,8 +32,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static io.dropwizard.testing.FixtureHelpers.fixture;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Peter Karich
@@ -84,25 +82,25 @@ public class JsonFeatureCollectionTest {
         }
 
         String expected = objectMapper.writeValueAsString(
-                objectMapper.readValue(fixture("fixtures/geojson1.json"), JsonFeatureCollection.class));
+                objectMapper.readValue(getClass().getClassLoader().getResourceAsStream("fixtures/geojson1.json"), JsonFeatureCollection.class));
         assertEquals(objectMapper.writeValueAsString(jsonFeatureCollection), expected);
     }
 
     @Test
     public void testDeserialization() throws IOException {
-        JsonFeatureCollection data = objectMapper.readValue(fixture("fixtures/geojson1.json"), JsonFeatureCollection.class);
-        Assert.assertEquals(3, data.getFeatures().size());
+        JsonFeatureCollection data = objectMapper.readValue(getClass().getClassLoader().getResourceAsStream("fixtures/geojson1.json"), JsonFeatureCollection.class);
+        assertEquals(3, data.getFeatures().size());
 
         JsonFeature f1 = data.getFeatures().get(0);
-        Assert.assertEquals("1", f1.getId());
-        Assert.assertEquals("value0", f1.getProperty("prop0"));
-        Assert.assertEquals(0.5, f1.getGeometry().getCoordinate().y, .1);
-        Assert.assertEquals(102.0, f1.getGeometry().getCoordinate().x, .1);
+        assertEquals("1", f1.getId());
+        assertEquals("value0", f1.getProperty("prop0"));
+        assertEquals(0.5, f1.getGeometry().getCoordinate().y, .1);
+        assertEquals(102.0, f1.getGeometry().getCoordinate().x, .1);
 
         JsonFeature f2 = data.getFeatures().get(1);
         // read as string despite the 2 (not a string) in json
-        Assert.assertEquals("2", f2.getId());
-        Assert.assertEquals(4, f2.getGeometry().getNumPoints());
+        assertEquals("2", f2.getId());
+        assertEquals(4, f2.getGeometry().getNumPoints());
         assertEquals(0.0, PointList.fromLineString((LineString) f2.getGeometry()).getLat(0), .1);
         assertEquals(102.0, PointList.fromLineString((LineString) f2.getGeometry()).getLon(0), .1);
         assertEquals(1.0, PointList.fromLineString((LineString) f2.getGeometry()).getLat(1), .1);

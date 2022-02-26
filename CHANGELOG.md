@@ -1,5 +1,54 @@
-### 3.0 [not yet released]
+### 5.0 [not yet released]
 
+- faster edge-based CH preparation, especially with large u-turn costs and GermanyCountryRule (many large weight edges
+  due to access=destination on tracks) (#2522)
+- consider subnetworks when evaluating curbside constraints (#2502)
+- improved node-based CH performance (faster preparation and less shortcuts(=memory usage)) (#2491)
+- the GraphHopperApplication class was moved from com.graphhopper.http to com.graphhopper.application (#2487)
+- it is now possible to add CH preparations to an existing graph folder, CH graphs no longer need to be added before
+  GraphHopperStorage#freeze (#2481)
+- the two EncodedValue implementations accept now negative values too. The default value can now only be 0 or
+  Double.Infinity, but this option will be removed later too, see discussion in #2473
+- throw MaximumNodesExceededException instead of a generic IllegalArgumentException (#2464)
+- removed graphhopper.sh script. Use java command directly instead. (#2431)
+- removed the ferry argument of TagParser#handleWayTags. ferry ways can be recognized using the reader way (#2467)
+- removed RoadEnvironment.SHUTTLE_TRAIN. this is covered by `FERRY` (#2466)
+- create edge flags per edge, not per way. increases custom_area precision. areas are recognized by points along the
+  edges now -> (#2457, #2472)
+- fixed handling of too large mtb:scale tags (#2458)
+- added Toll.MISSING; custom models must be adapted to check for explicit toll values e.g `toll != NO`
+  -> `toll == HGV || toll == ALL` (#2164)
+- use GraphHopper#setGraphHopperLocation before calling load() instead of GraphHopper#load(graphHopperLocation) (#2437)
+- barrier nodes at junctions are now ignored (#2433)
+- AbstractFlagEncoder#handleNodeTags was replaced by AbstractFlagEncoder#isBarrier (#2434)
+- consider heading when snapping coordinates to the road network, this is especially important for navigation (#2411)
+- OSMReader no longer sets the artificial 'estimated_center' tag and processNode also receives EMPTY_NODEs (971d686)
+
+### 4.0 [29 Sep 2021]
+
+- faster node-based CH preparation (~20%), (#2390)
+- more flexible ElevationProvider interface, support providing elevation via node tags (#2374, #2381)
+- added country encoded value for all countries (#2353)
+- bike improvements (#2357, #2371, #2389)
+- improved handling of barriers (#2345, #2340, #2406)
+- removed spatial rules, replaced by country rules and custom areas (#2353)
+- removed api module and moved it into web-api, no more Jackson MixIns (#2372)
+- flag encoders are no longer versioned (#2355)
+- JSON route response contains now bbox if start and end are identical
+- renamed PriorityCode enums: AVOID_IF_POSSIBLE -> SLIGHT_AVOID, REACH_DEST -> AVOID, AVOID_AT_ALL_COSTS -> AVOID_MORE, WORST -> BAD
+- added smoothness encoded value, used to determine bike speed (#2303)
+- maps: custom_model is now included in URL (#2328)
+- maps/isochrone: works for different profiles now (#2332)
+- there is no stable tag anymore, either use master or one of the release branches like 2.x, 3.x, ...
+- moved custom model editor to github.com/graphhopper/custom-model-editor
+- PointList#getSize() -> PointList#size()
+- migrated tests from junit 4 to 5 (#2324)
+- barriers do no longer block by default for car; remove block_barriers config option (see discussion in #2340)
+
+### 3.0 [17 May 2021]
+
+- removed the stable tag (was pointing to commit dd2c20c763e4c19b701e92386432b37713cd8dc5)
+- fix location lookup with point hints for curved roads, #2319
 - custom_model_file only accepts file names without path. Use custom_model_folder instead.
 - the load method in GraphHopperWeb (client-hc) was removed
 - routing.ch.disabling_allowed and routing.lm.disabling_allowed configuration options are no longer supported
@@ -302,8 +351,7 @@
 
 ### 0.2.0 [23 Nov 2013]
 
-- change inconsistent default settings for contraction hierarchies in the API -
-  see https://lists.openstreetmap.org/pipermail/graphhopper/2013-December/000585.html
+- change inconsistent default settings for contraction hierarchies in the API - see https://lists.openstreetmap.org/pipermail/graphhopper/2013-December/000585.html
 - fixed issues with android:
   * graphhopper: use maps from 0.2 path; updated maps
   * mapsforge: use mapsforge-map dependency; merged #461; avoid duplicates otherwise mapsforge-core would be duplicate (

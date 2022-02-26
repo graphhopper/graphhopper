@@ -17,16 +17,11 @@
  */
 package com.graphhopper.gtfs;
 
-import com.carrotsearch.hppc.IntObjectHashMap;
-import com.carrotsearch.hppc.IntObjectMap;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.util.EdgeIterator;
-
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
+import java.util.function.IntToLongFunction;
+import java.util.function.Predicate;
 
 /**
  * Implements a Multi-Criteria Label Setting (MLS) path finding algorithm
@@ -39,67 +34,57 @@ import java.util.stream.StreamSupport;
  */
 public class MultiCriteriaLabelSetting {
 
-    public interface SPTVisitor {
-        void visit(Label label);
-    }
-
     private final Comparator<Label> queueComparator;
     private final List<Label> targetLabels;
     private long startTime;
-    private final EnumEncodedValue<GtfsStorage.EdgeType> typeEnc;
-    private final IntObjectMap<List<Label>> fromMap;
+    private final Map<Label.NodeId, List<Label>> fromMap;
     private final PriorityQueue<Label> fromHeap;
-    private final int maxVisitedNodes;
+    private final long maxProfileDuration;
     private final boolean reverse;
     private final boolean mindTransfers;
     private final boolean profileQuery;
-    private int visitedNodes;
     private final GraphExplorer explorer;
-    private double betaTransfers;
-    private double betaWalkTime = 1.0;
+    private double betaTransfers = 0.0;
+    private IntToLongFunction transferPenaltiesByRouteType = (routeType -> 0L);
+    private double betaStreetTime = 1.0;
+    private long limitTripTime = Long.MAX_VALUE;
     private long limitStreetTime = Long.MAX_VALUE;
 
-    public MultiCriteriaLabelSetting(GraphExplorer explorer, PtEncodedValues flagEncoder, boolean reverse, boolean mindTransfers, boolean profileQuery, int maxVisitedNodes, List<Label> solutions) {
-        this.maxVisitedNodes = maxVisitedNodes;
+    public MultiCriteriaLabelSetting(GraphExplorer explorer, boolean reverse, boolean mindTransfers, boolean profileQuery, long maxProfileDuration, List<Label> solutions) {
         this.explorer = explorer;
         this.reverse = reverse;
         this.mindTransfers = mindTransfers;
         this.profileQuery = profileQuery;
+        this.maxProfileDuration = maxProfileDuration;
         this.targetLabels = solutions;
-        this.typeEnc = flagEncoder.getTypeEnc();
 
-        queueComparator = Comparator
-                .comparingLong(this::weight)
-                .thenComparingLong(l -> l.nTransfers)
-                .thenComparingLong(l -> l.walkTime)
-                .thenComparingLong(l -> departureTimeCriterion(l) != null ? departureTimeCriterion(l) : 0)
-                .thenComparingLong(l -> l.impossible ? 1 : 0);
+        queueComparator = new LabelComparator();
         fromHeap = new PriorityQueue<>(queueComparator);
-        fromMap = new IntObjectHashMap<>();
+        fromMap = new HashMap<>();
     }
 
-    public Stream<Label> calcLabels(int from, Instant startTime) {
+    public Iterable<Label> calcLabels(Label.NodeId from, Instant startTime) {
         this.startTime = startTime.toEpochMilli();
-        return StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from), false)
-                .limit(maxVisitedNodes)
-                .peek(label -> visitedNodes++);
+        return () -> Spliterators.iterator(new MultiCriteriaLabelSettingSpliterator(from));
     }
 
-    // experimental
     void setBetaTransfers(double betaTransfers) {
         this.betaTransfers = betaTransfers;
     }
 
-    // experimental
-    void setBetaWalkTime(double betaWalkTime) {
-        this.betaWalkTime = betaWalkTime;
+    void setBetaStreetTime(double betaWalkTime) {
+        this.betaStreetTime = betaWalkTime;
+    }
+
+    void setBoardingPenaltyByRouteType(IntToLongFunction transferPenaltiesByRouteType) {
+        this.transferPenaltiesByRouteType = transferPenaltiesByRouteType;
     }
 
     private class MultiCriteriaLabelSettingSpliterator extends Spliterators.AbstractSpliterator<Label> {
 
-        MultiCriteriaLabelSettingSpliterator(int from) {
+        MultiCriteriaLabelSettingSpliterator(Label.NodeId from) {
             super(0, 0);
-            Label label = new Label(startTime, EdgeIterator.NO_EDGE, from, 0, null, 0, 0, false, null);
+            Label label = new Label(startTime, null, from, 0, null, 0, 0L, 0, false, null);
             ArrayList<Label> labels = new ArrayList<>(1);
             labels.add(label);
             fromMap.put(from, labels);
@@ -115,32 +100,43 @@ public class MultiCriteriaLabelSetting {
             } else {
                 Label label = fromHeap.poll();
                 action.accept(label);
-                explorer.exploreEdgesAround(label).forEach(edge -> {
+                for (GraphExplorer.MultiModalEdge edge : explorer.exploreEdgesAround(label)) {
                     long nextTime;
                     if (reverse) {
                         nextTime = label.currentTime - explorer.calcTravelTimeMillis(edge, label.currentTime);
                     } else {
                         nextTime = label.currentTime + explorer.calcTravelTimeMillis(edge, label.currentTime);
                     }
-                    int nTransfers = label.nTransfers + explorer.calcNTransfers(edge);
+                    int nTransfers = label.nTransfers + edge.getTransfers();
+                    long extraWeight = label.extraWeight;
                     Long firstPtDepartureTime = label.departureTime;
-                    GtfsStorage.EdgeType edgeType = edge.get(typeEnc);
+                    GtfsStorage.EdgeType edgeType = edge.getType();
+                    if (!reverse && (edgeType == GtfsStorage.EdgeType.ENTER_PT) || reverse && (edgeType == GtfsStorage.EdgeType.EXIT_PT)) {
+                        extraWeight += transferPenaltiesByRouteType.applyAsLong(edge.getRouteType());
+                    }
+                    if (edgeType == GtfsStorage.EdgeType.TRANSFER) {
+                        extraWeight += transferPenaltiesByRouteType.applyAsLong(edge.getRouteType());
+                    }
                     if (!reverse && (edgeType == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK || edgeType == GtfsStorage.EdgeType.WAIT)) {
                         if (label.nTransfers == 0) {
-                            firstPtDepartureTime = nextTime - label.walkTime;
+                            firstPtDepartureTime = nextTime - label.streetTime;
                         }
                     } else if (reverse && (edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK || edgeType == GtfsStorage.EdgeType.WAIT_ARRIVAL)) {
                         if (label.nTransfers == 0) {
-                            firstPtDepartureTime = nextTime + label.walkTime;
+                            firstPtDepartureTime = nextTime + label.streetTime;
                         }
                     }
-                    long walkTime = label.walkTime + (edgeType == GtfsStorage.EdgeType.HIGHWAY || edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT ? ((reverse ? -1 : 1) * (nextTime - label.currentTime)) : 0);
+                    long walkTime = label.streetTime + (edgeType == GtfsStorage.EdgeType.HIGHWAY || edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT ? ((reverse ? -1 : 1) * (nextTime - label.currentTime)) : 0);
                     if (walkTime > limitStreetTime)
-                        return;
-                    List<Label> sptEntries = fromMap.get(edge.getAdjNode());
-                    if (sptEntries == null) {
-                        sptEntries = new ArrayList<>(1);
-                        fromMap.put(edge.getAdjNode(), sptEntries);
+                        continue;
+                    if (Math.abs(nextTime - startTime) > limitTripTime)
+                        continue;
+                    boolean result = false;
+                    if (label.edge != null) {
+                        result = label.edge.getType() == GtfsStorage.EdgeType.EXIT_PT;
+                    }
+                    if (edgeType == GtfsStorage.EdgeType.ENTER_PT && result) {
+                        continue;
                     }
                     boolean impossible = label.impossible
                             || explorer.isBlocked(edge)
@@ -165,45 +161,61 @@ public class MultiCriteriaLabelSetting {
                         }
                     }
                     if (!reverse && edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK && residualDelay > 0) {
-                        Label newImpossibleLabelForDelayedTrip = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, residualDelay, true, label);
-                        insertIfNotDominated(sptEntries, newImpossibleLabelForDelayedTrip);
+                        Label newImpossibleLabelForDelayedTrip = new Label(nextTime, edge, edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, true, label);
+                        insertIfNotDominated(newImpossibleLabelForDelayedTrip);
                         nextTime += residualDelay;
                         residualDelay = 0;
-                        Label newLabel = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, residualDelay, impossible, label);
-                        insertIfNotDominated(sptEntries, newLabel);
+                        Label newLabel = new Label(nextTime, edge, edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, impossible, label);
+                        insertIfNotDominated(newLabel);
                     } else {
-                        Label newLabel = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, residualDelay, impossible, label);
-                        insertIfNotDominated(sptEntries, newLabel);
+                        Label newLabel = new Label(nextTime, edge, edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, impossible, label);
+                        insertIfNotDominated(newLabel);
                     }
-                });
-                return true;
-            }
-        }
-
-        private void insertIfNotDominated(Collection<Label> sptEntries, Label label) {
-            if (isNotDominatedByAnyOf(label, sptEntries)) {
-                if (isNotDominatedByAnyOf(label, targetLabels)) {
-                    removeDominated(label, sptEntries);
-                    sptEntries.add(label);
-                    fromHeap.add(label);
                 }
+                return true;
             }
         }
     }
 
-    boolean isNotDominatedByAnyOf(Label me, Collection<Label> sptEntries) {
+
+    void insertIfNotDominated(Label me) {
+        Predicate<Label> filter;
+        if (profileQuery && me.departureTime != null) {
+            filter = (targetLabel) -> (!reverse ? prc(me, targetLabel) : rprc(me, targetLabel));
+        } else {
+            filter = label -> true;
+        }
+        if (isNotDominatedByAnyOf(me, targetLabels, filter)) {
+            List<Label> sptEntries = fromMap.computeIfAbsent(me.node, k -> new ArrayList<>(1));
+            if (isNotDominatedByAnyOf(me, sptEntries, filter)) {
+                removeDominated(me, sptEntries, filter);
+                sptEntries.add(me);
+                fromHeap.add(me);
+            }
+        }
+    }
+
+    boolean rprc(Label me, Label they) {
+        return they.departureTime != null && (they.departureTime <= me.departureTime || they.departureTime <= startTime - maxProfileDuration);
+    }
+
+    boolean prc(Label me, Label they) {
+        return they.departureTime != null && (they.departureTime >= me.departureTime || they.departureTime >= startTime + maxProfileDuration);
+    }
+
+    boolean isNotDominatedByAnyOf(Label me, Collection<Label> sptEntries, Predicate<Label> filter) {
         for (Label they : sptEntries) {
-            if (dominates(they, me)) {
+            if (filter.test(they) && dominates(they, me)) {
                 return false;
             }
         }
         return true;
     }
 
-    void removeDominated(Label me, Collection<Label> sptEntries) {
+    void removeDominated(Label me, Collection<Label> sptEntries, Predicate<Label> filter) {
         for (Iterator<Label> iterator = sptEntries.iterator(); iterator.hasNext(); ) {
             Label sptEntry = iterator.next();
-            if (dominates(me, sptEntry)) {
+            if (filter.test(sptEntry) && dominates(me, sptEntry)) {
                 sptEntry.deleted = true;
                 iterator.remove();
             }
@@ -214,16 +226,6 @@ public class MultiCriteriaLabelSetting {
         if (weight(me) > weight(they))
             return false;
 
-        if (profileQuery) {
-            if (me.departureTime != null && they.departureTime != null) {
-                if (departureTimeCriterion(me) > departureTimeCriterion(they))
-                    return false;
-            } else {
-                if (travelTimeCriterion(me) > travelTimeCriterion(they))
-                    return false;
-            }
-        }
-
         if (mindTransfers && me.nTransfers > they.nTransfers)
             return false;
         if (me.impossible && !they.impossible)
@@ -231,47 +233,53 @@ public class MultiCriteriaLabelSetting {
 
         if (weight(me) < weight(they))
             return true;
-        if (profileQuery) {
-            if (me.departureTime != null && they.departureTime != null) {
-                if (departureTimeCriterion(me) < departureTimeCriterion(they))
-                    return true;
-            } else {
-                if (travelTimeCriterion(me) < travelTimeCriterion(they))
-                    return true;
-            }
-        }
         if (mindTransfers && me.nTransfers < they.nTransfers)
             return true;
 
         return queueComparator.compare(me, they) <= 0;
     }
 
-    private Long departureTimeCriterion(Label label) {
-        return label.departureTime == null ? null : reverse ? label.departureTime : -label.departureTime;
-    }
-
     long weight(Label label) {
-        return timeSinceStartTime(label) + (long) (label.nTransfers * betaTransfers) + (long) (label.walkTime * (betaWalkTime - 1.0));
+        return timeSinceStartTime(label) + (long) (label.nTransfers * betaTransfers) + (long) (label.streetTime * (betaStreetTime - 1.0)) + label.extraWeight;
     }
 
     long timeSinceStartTime(Label label) {
         return (reverse ? -1 : 1) * (label.currentTime - startTime);
     }
 
-    private long travelTimeCriterion(Label label) {
-        if (label.departureTime == null) {
-            return label.walkTime;
-        } else {
-            return (reverse ? -1 : 1) * (label.currentTime - label.departureTime);
-        }
+    Long departureTimeSinceStartTime(Label label) {
+        return label.departureTime != null ? (reverse ? -1 : 1) * (label.departureTime - startTime) : null;
+    }
+
+    public void setLimitTripTime(long limitTripTime) {
+        this.limitTripTime = limitTripTime;
     }
 
     public void setLimitStreetTime(long limitStreetTime) {
         this.limitStreetTime = limitStreetTime;
     }
 
-    int getVisitedNodes() {
-        return visitedNodes;
-    }
+    private class LabelComparator implements Comparator<Label> {
 
+        @Override
+        public int compare(Label o1, Label o2) {
+            int c = Long.compare(weight(o1), weight(o2));
+            if (c != 0)
+                return c;
+            c = Integer.compare(o1.nTransfers, o2.nTransfers);
+            if (c != 0)
+                return c;
+
+            c = Long.compare(o1.streetTime, o2.streetTime);
+            if (c != 0)
+                return c;
+
+            c = Long.compare(o1.departureTime != null ? reverse ? o1.departureTime : -o1.departureTime : 0, o2.departureTime != null ? reverse ? o2.departureTime : -o2.departureTime : 0);
+            if (c != 0)
+                return c;
+
+            c = Integer.compare(o1.impossible ? 1 : 0, o2.impossible ? 1 : 0);
+            return c;
+        }
+    }
 }

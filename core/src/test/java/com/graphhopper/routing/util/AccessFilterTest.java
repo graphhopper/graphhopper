@@ -20,13 +20,10 @@ package com.graphhopper.routing.util;
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.routing.ch.PrepareEncoder;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.CHEdgeExplorer;
-import com.graphhopper.util.CHEdgeIterator;
+import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.ShortestWeighting;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.GHUtility;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -36,9 +33,7 @@ public class AccessFilterTest {
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final GraphHopperStorage graph = new GraphBuilder(encodingManager)
             .withTurnCosts(true)
-            .setCHConfigStrings("profile|car|shortest|edge")
             .create();
-    private final CHGraph chGraph = graph.getCHGraph();
 
     @Test
     public void testAccept_fwdLoopShortcut_acceptedByInExplorer() {
@@ -50,28 +45,28 @@ public class AccessFilterTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 0).setDistance(3));
         graph.freeze();
         // add loop shortcut in 'fwd' direction
-        addShortcut(chGraph, 0, 0, true, 0, 2);
-        CHEdgeExplorer outExplorer = chGraph.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc()));
-        CHEdgeExplorer inExplorer = chGraph.createEdgeExplorer(AccessFilter.inEdges(encoder.getAccessEnc()));
+        CHConfig chConfig = CHConfig.edgeBased("profile", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage())));
+        CHStorage chStore = graph.createCHStorage(chConfig);
+        CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
+        chBuilder.setIdentityLevels();
+        chBuilder.addShortcutEdgeBased(0, 0, PrepareEncoder.getScFwdDir(), 5, 0, 2, 0, 2);
+        RoutingCHGraph chGraph = graph.createCHGraph(chStore, chConfig);
+        RoutingCHEdgeExplorer outExplorer = chGraph.createOutEdgeExplorer();
+        RoutingCHEdgeExplorer inExplorer = chGraph.createInEdgeExplorer();
 
         IntSet inEdges = new IntHashSet();
         IntSet outEdges = new IntHashSet();
-        CHEdgeIterator outIter = outExplorer.setBaseNode(0);
+        RoutingCHEdgeIterator outIter = outExplorer.setBaseNode(0);
         while (outIter.next()) {
             outEdges.add(outIter.getEdge());
         }
-        CHEdgeIterator inIter = inExplorer.setBaseNode(0);
+        RoutingCHEdgeIterator inIter = inExplorer.setBaseNode(0);
         while (inIter.next()) {
             inEdges.add(inIter.getEdge());
         }
         // the loop should be accepted by in- and outExplorers
         assertEquals(IntHashSet.from(0, 3), outEdges, "Wrong outgoing edges");
         assertEquals(IntHashSet.from(2, 3), inEdges, "Wrong incoming edges");
-    }
-
-    private void addShortcut(CHGraph chGraph, int from, int to, boolean fwd, int skip1, int skip2) {
-        int accessFlags = fwd ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir();
-        chGraph.shortcut(from, to, accessFlags, 5, skip1, skip2);
     }
 
 }

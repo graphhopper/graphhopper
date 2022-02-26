@@ -22,12 +22,17 @@ import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.Toll;
+import com.graphhopper.routing.util.TransportationMode;
+import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.storage.IntsRef;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class OSMTollParser implements TagParser {
 
+    private static final List<String> HGV_TAGS = Collections.unmodifiableList(Arrays.asList("toll:hgv", "toll:N2", "toll:N3"));
     private final EnumEncodedValue<Toll> tollEnc;
 
     public OSMTollParser() {
@@ -44,15 +49,24 @@ public class OSMTollParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
-        if (readerWay.hasTag("toll", "yes"))
-            tollEnc.setEnum(false, edgeFlags, Toll.ALL);
-        else if (readerWay.hasTag("toll:hgv", "yes"))
-            tollEnc.setEnum(false, edgeFlags, Toll.HGV);
-        else if (readerWay.hasTag("toll:N2", "yes"))
-            tollEnc.setEnum(false, edgeFlags, Toll.HGV);
-        else if (readerWay.hasTag("toll:N3", "yes"))
-            tollEnc.setEnum(false, edgeFlags, Toll.HGV);
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+        Toll toll;
+        if (readerWay.hasTag("toll", "yes")) {
+            toll = Toll.ALL;
+        } else if (readerWay.hasTag(HGV_TAGS, Collections.singletonList("yes"))) {
+            toll = Toll.HGV;
+        } else if (readerWay.hasTag("toll", "no")) {
+            toll = Toll.NO;
+        } else {
+            toll = Toll.MISSING;
+        }
+        
+        CountryRule countryRule = readerWay.getTag("country_rule", null);
+        if (countryRule != null)
+            toll = countryRule.getToll(readerWay, TransportationMode.CAR, toll);
+        
+        tollEnc.setEnum(false, edgeFlags, toll);
+        
         return edgeFlags;
     }
 }

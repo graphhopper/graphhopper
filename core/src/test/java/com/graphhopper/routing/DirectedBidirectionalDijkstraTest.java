@@ -2,8 +2,6 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntHashSet;
-import com.graphhopper.Repeat;
-import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -17,9 +15,9 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -27,7 +25,7 @@ import java.util.Random;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * This test makes sure that {@link DijkstraBidirectionRef#calcPath(int from, int to, int fromOutEdge, int toInEdge)}, i.e.
@@ -36,7 +34,6 @@ import static org.junit.Assert.*;
  * For other bidirectional algorithms we simply compare with {@link DijkstraBidirectionRef} in {@link DirectedRoutingTest}
  */
 public class DirectedBidirectionalDijkstraTest {
-    private Directory dir;
     private TurnCostStorage turnCostStorage;
     private int maxTurnCosts;
     private GraphHopperStorage graph;
@@ -45,16 +42,12 @@ public class DirectedBidirectionalDijkstraTest {
     private Weighting weighting;
     private DecimalEncodedValue turnCostEnc;
 
-    @Rule
-    public RepeatRule repeatRule = new RepeatRule();
-
-    @Before
+    @BeforeEach
     public void setup() {
-        dir = new RAMDirectory();
         maxTurnCosts = 10;
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
-        graph = new GraphHopperStorage(dir, encodingManager, false, true).create(1000);
+        graph = new GraphBuilder(encodingManager).withTurnCosts(true).create();
         turnCostStorage = graph.getTurnCostStorage();
         weighting = createWeighting(Weighting.INFINITE_U_TURN_COSTS);
         turnCostEnc = encodingManager.getDecimalEncodedValue(TurnCost.key(encoder.toString()));
@@ -374,14 +367,12 @@ public class DirectedBidirectionalDijkstraTest {
         assertPath(calcPath(0, 6, left0, left6, createWeighting(40)), 43.6, 60, 43600, nodes(0, 7, 8, 9, 6, 1, 6));
     }
 
-    @Test
-    @Repeat(times = 10)
+    @RepeatedTest(10)
     public void compare_standard_dijkstra() {
         compare_with_dijkstra(weighting);
     }
 
-    @Test
-    @Repeat(times = 10)
+    @RepeatedTest(10)
     public void compare_standard_dijkstra_finite_uturn_costs() {
         compare_with_dijkstra(createWeighting(40));
     }
@@ -405,8 +396,8 @@ public class DirectedBidirectionalDijkstraTest {
             int target = rnd.nextInt(numNodes);
             Path dijkstraPath = new Dijkstra(graph, w, TraversalMode.EDGE_BASED).calcPath(source, target);
             Path path = calcPath(source, target, ANY_EDGE, ANY_EDGE, w);
-            assertEquals("dijkstra found/did not find a path, from: " + source + ", to: " + target + ", seed: " + seed, dijkstraPath.isFound(), path.isFound());
-            assertEquals("weight does not match dijkstra, from: " + source + ", to: " + target + ", seed: " + seed, dijkstraPath.getWeight(), path.getWeight(), 1.e-6);
+            assertEquals(dijkstraPath.isFound(), path.isFound(), "dijkstra found/did not find a path, from: " + source + ", to: " + target + ", seed: " + seed);
+            assertEquals(dijkstraPath.getWeight(), path.getWeight(), 1.e-6, "weight does not match dijkstra, from: " + source + ", to: " + target + ", seed: " + seed);
             // we do not do a strict check because there can be ambiguity, for example when there are zero weight loops.
             // however, when there are too many deviations we fail
             if (
@@ -485,12 +476,12 @@ public class DirectedBidirectionalDijkstraTest {
         na.setNode(4, 0, 1);
         na.setNode(5, 0, 0);
 
-        LocationIndexTree locationIndex = new LocationIndexTree(graph, dir);
+        LocationIndexTree locationIndex = new LocationIndexTree(graph, graph.getDirectory());
         locationIndex.prepareIndex();
         Snap snap = locationIndex.findClosest(1.1, 0.5, EdgeFilter.ALL_EDGES);
         QueryGraph queryGraph = QueryGraph.create(graph, snap);
 
-        assertEquals("wanted to get EDGE", Snap.Position.EDGE, snap.getSnappedPosition());
+        assertEquals(Snap.Position.EDGE, snap.getSnappedPosition(), "wanted to get EDGE");
         assertEquals(6, snap.getClosestNode());
 
         // check what edges there are on the query graph directly, there should not be a direct connection from 1 to 0
@@ -524,15 +515,15 @@ public class DirectedBidirectionalDijkstraTest {
     }
 
     private void assertPath(Path path, double weight, double distance, long time, IntArrayList nodes) {
-        assertTrue("expected a path, but no path was found", path.isFound());
-        assertEquals("unexpected weight", weight, path.getWeight(), 1.e-6);
-        assertEquals("unexpected distance", distance, path.getDistance(), 1.e-6);
-        assertEquals("unexpected time", time, path.getTime());
-        assertEquals("unexpected nodes", nodes, path.calcNodes());
+        assertTrue(path.isFound(), "expected a path, but no path was found");
+        assertEquals(weight, path.getWeight(), 1.e-6, "unexpected weight");
+        assertEquals(distance, path.getDistance(), 1.e-6, "unexpected distance");
+        assertEquals(time, path.getTime(), "unexpected time");
+        assertEquals(nodes, path.calcNodes(), "unexpected nodes");
     }
 
     private void assertNotFound(Path path) {
-        assertFalse("expected no path, but a path was found", path.isFound());
+        assertFalse(path.isFound(), "expected no path, but a path was found");
         assertEquals(Double.MAX_VALUE, path.getWeight(), 1.e-6);
         // if no path is found dist&time are zero, see core #1566
         assertEquals(0, path.getDistance(), 1.e-6);

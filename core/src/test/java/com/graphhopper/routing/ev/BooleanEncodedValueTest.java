@@ -1,18 +1,17 @@
 package com.graphhopper.routing.ev;
 
 import com.graphhopper.storage.IntsRef;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertFalse;
-
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class BooleanEncodedValueTest {
 
     @Test
     public void testBit() {
         EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
-        IntEncodedValue intProp = new UnsignedIntEncodedValue("somevalue", 5, false);
+        IntEncodedValue intProp = new IntEncodedValueImpl("somevalue", 5, false);
         intProp.init(config);
 
         BooleanEncodedValue bool = new SimpleBooleanEncodedValue("access", false);

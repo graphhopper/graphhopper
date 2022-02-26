@@ -5,10 +5,9 @@ import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -17,68 +16,83 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.stream.Stream;
 
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.GHUtility.createRandomSnaps;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-@RunWith(Parameterized.class)
 public class RandomCHRoutingTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(RandomCHRoutingTest.class);
-    private final TraversalMode traversalMode;
-    private final int maxTurnCosts;
-    private final int uTurnCosts;
-    private Directory dir;
-    private CarFlagEncoder encoder;
-    private EncodingManager encodingManager;
-    private Weighting weighting;
-    private GraphHopperStorage graph;
-    private CHConfig chConfig;
-    private LocationIndexTree locationIndex;
 
-    @Parameterized.Parameters(name = "{0}, u-turn-costs={1}")
-    public static Collection<Object[]> params() {
-        return Arrays.asList(new Object[][]{
-                {TraversalMode.NODE_BASED, INFINITE_U_TURN_COSTS},
-                {TraversalMode.EDGE_BASED, 40},
-                {TraversalMode.EDGE_BASED, INFINITE_U_TURN_COSTS}
-        });
+    private static final class Fixture {
+        private final TraversalMode traversalMode;
+        private final int maxTurnCosts;
+        private final int uTurnCosts;
+        private final Directory dir;
+        private final CarFlagEncoder encoder;
+        private final EncodingManager encodingManager;
+        private Weighting weighting;
+        private GraphHopperStorage graph;
+        private CHConfig chConfig;
+
+        Fixture(TraversalMode traversalMode, int uTurnCosts) {
+            this.traversalMode = traversalMode;
+            this.maxTurnCosts = 10;
+            this.uTurnCosts = uTurnCosts;
+            dir = new RAMDirectory();
+            encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
+            encodingManager = EncodingManager.create(encoder);
+            graph = new GraphBuilder(encodingManager).create();
+        }
+
+        void freeze() {
+            graph.freeze();
+            chConfig = traversalMode.isEdgeBased()
+                    ? CHConfig.edgeBased("p", new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage(), uTurnCosts)))
+                    : CHConfig.nodeBased("p", new FastestWeighting(encoder));
+            weighting = chConfig.getWeighting();
+        }
+
+        @Override
+        public String toString() {
+            return traversalMode + ", u-turn-costs=" + uTurnCosts;
+        }
     }
 
-    public RandomCHRoutingTest(TraversalMode traversalMode, int uTurnCosts) {
-        this.traversalMode = traversalMode;
-        this.maxTurnCosts = 10;
-        this.uTurnCosts = uTurnCosts;
-    }
-
-    @Before
-    public void init() {
-        dir = new RAMDirectory();
-        encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
-        encodingManager = EncodingManager.create(encoder);
-        graph = new GraphBuilder(encodingManager)
-                .setCHConfigStrings("p|car|fastest|" + (traversalMode.isEdgeBased() ? "edge" : "node") + "|" + uTurnCosts)
-                .create();
-        chConfig = graph.getCHGraph().getCHConfig();
-        weighting = chConfig.getWeighting();
+    private static class FixtureProvider implements ArgumentsProvider {
+        @Override
+        public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
+            return Stream.of(
+                            new Fixture(TraversalMode.NODE_BASED, INFINITE_U_TURN_COSTS),
+                            new Fixture(TraversalMode.EDGE_BASED, 40),
+                            new Fixture(TraversalMode.EDGE_BASED, INFINITE_U_TURN_COSTS)
+                    )
+                    .map(Arguments::of);
+        }
     }
 
     /**
      * Runs random routing queries on a random query/CH graph with random speeds and adding random virtual edges and
      * nodes.
      */
-    @Test
-    public void random() {
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void random(Fixture f) {
         // you might have to keep this test running in an infinite loop for several minutes to find potential routing
         // bugs (e.g. use intellij 'run until stop/failure').
         int numNodes = 50;
@@ -88,72 +102,77 @@ public class RandomCHRoutingTest {
         // we may not use an offset when query graph is involved, otherwise traveling via virtual edges will not be
         // the same as taking the direct edge!
         double pOffset = 0;
-        GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.5, true, true,
-                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, 0.7, 0.9, pOffset);
-        if (traversalMode.isEdgeBased()) {
-            GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, graph.getTurnCostStorage());
+        GHUtility.buildRandomGraph(f.graph, rnd, numNodes, 2.5, true, true,
+                f.encoder.getAccessEnc(), f.encoder.getAverageSpeedEnc(), null, 0.7, 0.9, pOffset);
+        if (f.traversalMode.isEdgeBased()) {
+            GHUtility.addRandomTurnCosts(f.graph, seed, f.encodingManager, f.encoder, f.maxTurnCosts, f.graph.getTurnCostStorage());
         }
-        runRandomTest(rnd, 20);
+        runRandomTest(f, rnd, 20);
     }
 
-    @Test
-    public void issue1574_1() {
-        Assume.assumeFalse(traversalMode.isEdgeBased());
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void issue1574_1(Fixture f) {
+        assumeFalse(f.traversalMode.isEdgeBased());
         Random rnd = new Random(9348906923700L);
-        buildRandomGraphLegacy(rnd, 50, 2.5, false, true, 0.9);
-        runRandomTest(rnd, 20);
+        buildRandomGraphLegacy(f.graph, f.encoder, rnd, 50, 2.5, false, true, 0.9);
+        runRandomTest(f, rnd, 20);
     }
 
-    @Test
-    public void issue1574_2() {
-        Assume.assumeFalse(traversalMode.isEdgeBased());
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void issue1574_2(Fixture f) {
+        assumeFalse(f.traversalMode.isEdgeBased());
         Random rnd = new Random(10093639220394L);
-        buildRandomGraphLegacy(rnd, 50, 2.5, false, true, 0.9);
-        runRandomTest(rnd, 20);
+        buildRandomGraphLegacy(f.graph, f.encoder, rnd, 50, 2.5, false, true, 0.9);
+        runRandomTest(f, rnd, 20);
     }
 
-    @Test
-    public void issue1582() {
-        Assume.assumeFalse(traversalMode.isEdgeBased());
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void issue1582(Fixture f) {
+        assumeFalse(f.traversalMode.isEdgeBased());
         Random rnd = new Random(4111485945982L);
-        buildRandomGraphLegacy(rnd, 10, 2.5, false, true, 0.9);
-        runRandomTest(rnd, 100);
+        buildRandomGraphLegacy(f.graph, f.encoder, rnd, 10, 2.5, false, true, 0.9);
+        runRandomTest(f, rnd, 100);
     }
 
-    @Test
-    public void issue1583() {
-        Assume.assumeFalse(traversalMode.isEdgeBased());
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void issue1583(Fixture f) {
+        assumeFalse(f.traversalMode.isEdgeBased());
         Random rnd = new Random(10785899964423L);
-        buildRandomGraphLegacy(rnd, 50, 2.5, true, true, 0.9);
-        runRandomTest(rnd, 20);
+        buildRandomGraphLegacy(f.graph, f.encoder, rnd, 50, 2.5, true, true, 0.9);
+        runRandomTest(f, rnd, 20);
     }
 
-    @Test
-    public void issue1593() {
-        Assume.assumeTrue(traversalMode.isEdgeBased());
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void issue1593(Fixture f) {
+        assumeTrue(f.traversalMode.isEdgeBased());
         long seed = 60643479675316L;
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, rnd, 50, 2.5, true, true,
-                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, 0.7, 0.9, 0.0);
-        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, graph.getTurnCostStorage());
-        runRandomTest(rnd, 20);
+        GHUtility.buildRandomGraph(f.graph, rnd, 50, 2.5, true, true,
+                f.encoder.getAccessEnc(), f.encoder.getAverageSpeedEnc(), null, 0.7, 0.9, 0.0);
+        GHUtility.addRandomTurnCosts(f.graph, seed, f.encodingManager, f.encoder, f.maxTurnCosts, f.graph.getTurnCostStorage());
+        runRandomTest(f, rnd, 20);
     }
 
-    private void runRandomTest(Random rnd, int numVirtualNodes) {
-        locationIndex = new LocationIndexTree(graph, dir);
+    private void runRandomTest(Fixture f, Random rnd, int numVirtualNodes) {
+        LocationIndexTree locationIndex = new LocationIndexTree(f.graph, f.dir);
         locationIndex.prepareIndex();
 
-        graph.freeze();
-        RoutingCHGraph chGraph = graph.getRoutingCHGraph(chConfig.getName());
-        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
-        pch.doWork();
+        f.freeze();
+        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(f.graph, f.chConfig);
+        PrepareContractionHierarchies.Result res = pch.doWork();
+        RoutingCHGraph chGraph = f.graph.createCHGraph(res.getCHStorage(), res.getCHConfig());
 
         int numQueryGraph = 25;
         for (int j = 0; j < numQueryGraph; j++) {
             // add virtual nodes and edges, because they can change the routing behavior and/or produce bugs, e.g.
             // when via-points are used
-            List<Snap> snaps = createRandomSnaps(graph.getBounds(), locationIndex, rnd, numVirtualNodes, false, EdgeFilter.ALL_EDGES);
-            QueryGraph queryGraph = QueryGraph.create(graph, snaps);
+            List<Snap> snaps = createRandomSnaps(f.graph.getBounds(), locationIndex, rnd, numVirtualNodes, false, EdgeFilter.ALL_EDGES);
+            QueryGraph queryGraph = QueryGraph.create(f.graph, snaps);
 
             int numQueries = 100;
             int numPathsNotFound = 0;
@@ -161,9 +180,9 @@ public class RandomCHRoutingTest {
             for (int i = 0; i < numQueries; i++) {
                 int from = rnd.nextInt(queryGraph.getNodes());
                 int to = rnd.nextInt(queryGraph.getNodes());
-                Weighting w = queryGraph.wrapWeighting(weighting);
+                Weighting w = queryGraph.wrapWeighting(f.weighting);
                 // using plain dijkstra instead of bidirectional, because of #1592
-                RoutingAlgorithm refAlgo = new Dijkstra(queryGraph, w, traversalMode);
+                RoutingAlgorithm refAlgo = new Dijkstra(queryGraph, w, f.traversalMode);
                 Path refPath = refAlgo.calcPath(from, to);
                 double refWeight = refPath.getWeight();
 
@@ -206,7 +225,7 @@ public class RandomCHRoutingTest {
      * More or less does the same as {@link GHUtility#buildRandomGraph}, but since some special seeds
      * are used in a few tests above this code is kept here. Do not use it for new tests.
      */
-    private void buildRandomGraphLegacy(Random random, int numNodes, double meanDegree, boolean allowLoops, boolean allowZeroDistance, double pBothDir) {
+    private void buildRandomGraphLegacy(Graph graph, FlagEncoder encoder, Random random, int numNodes, double meanDegree, boolean allowLoops, boolean allowZeroDistance, double pBothDir) {
         for (int i = 0; i < numNodes; ++i) {
             double lat = 49.4 + (random.nextDouble() * 0.0001);
             double lon = 9.7 + (random.nextDouble() * 0.0001);

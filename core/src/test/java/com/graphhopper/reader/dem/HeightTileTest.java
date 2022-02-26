@@ -19,9 +19,9 @@ package com.graphhopper.reader.dem;
 
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.RAMDirectory;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Peter Karich
@@ -34,7 +34,7 @@ public class HeightTileTest {
         int width = 10;
         int height = 20;
         HeightTile instance = new HeightTile(0, 0, width, height, 1e-6, 10, 20);
-        DataAccess heights = new RAMDirectory().find("tmp");
+        DataAccess heights = new RAMDirectory().create("tmp");
         heights.create(2 * width * height);
         instance.setHeights(heights);
         init(heights, width, height, 1);
@@ -77,7 +77,7 @@ public class HeightTileTest {
     public void testGetHeightForNegativeTile() {
         int width = 10;
         HeightTile instance = new HeightTile(-20, -20, width, width, 1e-6, 10, 10);
-        DataAccess heights = new RAMDirectory().find("tmp");
+        DataAccess heights = new RAMDirectory().create("tmp");
         heights.create(2 * 10 * 10);
         instance.setHeights(heights);
         init(heights, width, width, 1);
@@ -98,7 +98,7 @@ public class HeightTileTest {
     @Test
     public void testInterpolate() {
         HeightTile instance = new HeightTile(0, 0, 2, 2, 1e-6, 10, 10).setInterpolate(true);
-        DataAccess heights = new RAMDirectory().find("tmp");
+        DataAccess heights = new RAMDirectory().create("tmp");
         heights.create(2 * 2 * 2);
         instance.setHeights(heights);
         double topLeft = 0;

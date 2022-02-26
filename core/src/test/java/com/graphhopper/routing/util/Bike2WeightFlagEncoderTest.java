@@ -21,9 +21,9 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -36,7 +36,7 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
     }
 
     private Graph initExampleGraph() {
-        GraphHopperStorage gs = new GraphHopperStorage(new RAMDirectory(), encodingManager, true).create(1000);
+        GraphHopperStorage gs = new GraphBuilder(encodingManager).set3D(true).create();
         NodeAccess na = gs.getNodeAccess();
         // 50--(0.0001)-->49--(0.0004)-->55--(0.0005)-->60
         na.setNode(0, 51.1, 12.001, 50);
@@ -89,15 +89,12 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
 
     @Test
     public void testRoutingFailsWithInvalidGraph_issue665() {
-        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), encodingManager, true);
-        graph.create(100);
-
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).set3D(true).create();
         ReaderWay way = new ReaderWay(0);
         way.setTag("route", "ferry");
 
-        EncodingManager.AcceptWay map = new EncodingManager.AcceptWay();
-        assertTrue(encodingManager.acceptWay(way, map));
-        IntsRef wayFlags = encodingManager.handleWayTags(way, map, encodingManager.createRelationFlags());
+        assertNotEquals(EncodingManager.Access.CAN_SKIP, encoder.getAccess(way));
+        IntsRef wayFlags = encodingManager.handleWayTags(way, encodingManager.createRelationFlags());
         graph.edge(0, 1).setDistance(247).setFlags(wayFlags);
 
         assertTrue(isGraphValid(graph, encoder));

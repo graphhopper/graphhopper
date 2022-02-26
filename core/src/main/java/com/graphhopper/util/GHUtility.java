@@ -17,11 +17,12 @@
  */
 package com.graphhopper.util;
 
+import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
-import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
@@ -32,8 +33,18 @@ import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
 
@@ -96,12 +107,29 @@ public class GHUtility {
         return counter;
     }
 
+    public static int count(RoutingCHEdgeIterator iter) {
+        int counter = 0;
+        while (iter.next()) {
+            counter++;
+        }
+        return counter;
+    }
+
     public static Set<Integer> asSet(int... values) {
         Set<Integer> s = new HashSet<>();
         for (int v : values) {
             s.add(v);
         }
         return s;
+    }
+
+    public static Set<Integer> getNeighbors(RoutingCHEdgeIterator iter) {
+        // make iteration order over set static => linked
+        Set<Integer> list = new LinkedHashSet<>();
+        while (iter.next()) {
+            list.add(iter.getAdjNode());
+        }
+        return list;
     }
 
     public static Set<Integer> getNeighbors(EdgeIterator iter) {
@@ -119,18 +147,6 @@ public class GHUtility {
             list.add(iter.getEdge());
         }
         return list;
-    }
-
-    public static void printEdgeInfo(final Graph g, FlagEncoder encoder) {
-        System.out.println("-- Graph nodes:" + g.getNodes() + " edges:" + g.getEdges() + " ---");
-        AllEdgesIterator iter = g.getAllEdges();
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        while (iter.next()) {
-            String prefix = (iter instanceof AllCHEdgesIterator && ((AllCHEdgesIterator) iter).isShortcut()) ? "sc" : "  ";
-            String fwdStr = iter.get(accessEnc) ? "fwd" : "   ";
-            String bwdStr = iter.getReverse(accessEnc) ? "bwd" : "   ";
-            System.out.println(prefix + " " + iter + " " + fwdStr + " " + bwdStr + " " + iter.getDistance());
-        }
     }
 
     public static void printGraphForUnitTest(Graph g, FlagEncoder encoder) {
@@ -165,7 +181,9 @@ public class GHUtility {
         int from = fwd ? edge.getBaseNode() : edge.getAdjNode();
         int to = fwd ? edge.getAdjNode() : edge.getBaseNode();
         System.out.printf(Locale.ROOT,
-                "graph.edge(%d, %d, %f, %s); // edgeId=%s\n", from, to, edge.getDistance(), fwd && bwd ? "true" : "false", edge.getEdge());
+                "GHUtility.setSpeed(%f, %f, encoder, graph.edge(%d, %d).setDistance(%f)); // edgeId=%s\n",
+                fwd ? edge.get(encoder.getAverageSpeedEnc()) : 0, bwd ? edge.getReverse(encoder.getAverageSpeedEnc()) : 0,
+                from, to, edge.getDistance(), edge.getEdge());
     }
 
     /**
@@ -292,47 +310,6 @@ public class GHUtility {
         return min + rnd.nextDouble() * (max - min);
     }
 
-    public static void printInfo(final Graph g, int startNode, final int counts, final EdgeFilter filter) {
-        new BreadthFirstSearch() {
-            int counter = 0;
-
-            @Override
-            protected GHBitSet createBitSet() {
-                return new GHTBitSet();
-            }
-
-            @Override
-            protected boolean goFurther(int nodeId) {
-                System.out.println(getNodeInfo(g, nodeId, filter));
-                return counter++ <= counts;
-            }
-        }.start(g.createEdgeExplorer(), startNode);
-    }
-
-    public static String getNodeInfo(CHGraph g, int nodeId, EdgeFilter filter) {
-        CHEdgeExplorer ex = g.createEdgeExplorer(filter);
-        CHEdgeIterator iter = ex.setBaseNode(nodeId);
-        NodeAccess na = g.getBaseGraph().getNodeAccess();
-        String str = nodeId + ":" + na.getLat(nodeId) + "," + na.getLon(nodeId) + "\n";
-        while (iter.next()) {
-            str += "  ->" + iter.getAdjNode() + "(" + iter.getSkippedEdge1() + "," + iter.getSkippedEdge2() + ") "
-                    + iter.getEdge() + " \t" + BitUtil.BIG.toBitString(iter.getFlags().ints[0], 8) + "\n";
-        }
-        return str;
-    }
-
-    public static String getNodeInfo(Graph g, int nodeId, EdgeFilter filter) {
-        EdgeIterator iter = g.createEdgeExplorer(filter).setBaseNode(nodeId);
-        NodeAccess na = g.getNodeAccess();
-        String str = nodeId + ":" + na.getLat(nodeId) + "," + na.getLon(nodeId) + "\n";
-        while (iter.next()) {
-            str += "  ->" + iter.getAdjNode() + " (" + iter.getDistance() + ") pillars:"
-                    + iter.fetchWayGeometry(FetchMode.PILLAR_ONLY).getSize() + ", edgeId:" + iter.getEdge()
-                    + "\t" + BitUtil.BIG.toBitString(iter.getFlags().ints[0], 8) + "\n";
-        }
-        return str;
-    }
-
     public static Graph shuffle(Graph g, Graph sortedGraph) {
         if (g.getTurnCostStorage() != null)
             throw new IllegalArgumentException("Shuffling the graph is currently not supported in the presence of turn costs");
@@ -425,34 +402,7 @@ public class GHUtility {
         return toSortedGraph;
     }
 
-    /**
-     * @return the specified toGraph which is now filled with data from fromGraph
-     */
-    // TODO very similar to createSortedGraph -> use a 'int map(int)' interface
-    public static Graph copyTo(Graph fromGraph, Graph toGraph) {
-        if (fromGraph.getTurnCostStorage() != null) {
-            throw new IllegalArgumentException("Copying a graph is currently not supported in the presence of turn costs");
-        }
-        AllEdgesIterator eIter = fromGraph.getAllEdges();
-        while (eIter.next()) {
-            int base = eIter.getBaseNode();
-            int adj = eIter.getAdjNode();
-            toGraph.edge(base, adj).copyPropertiesFrom(eIter);
-        }
-
-        NodeAccess fna = fromGraph.getNodeAccess();
-        NodeAccess tna = toGraph.getNodeAccess();
-        int nodes = fromGraph.getNodes();
-        for (int node = 0; node < nodes; node++) {
-            if (tna.is3D())
-                tna.setNode(node, fna.getLat(node), fna.getLon(node), fna.getEle(node));
-            else
-                tna.setNode(node, fna.getLat(node), fna.getLon(node));
-        }
-        return toGraph;
-    }
-
-    static Directory guessDirectory(GraphStorage store) {
+    static Directory guessDirectory(GraphHopperStorage store) {
         if (store.getDirectory() instanceof MMapDirectory) {
             throw new IllegalStateException("not supported yet: mmap will overwrite existing storage at the same location");
         }
@@ -462,7 +412,7 @@ public class GHUtility {
     }
 
     /**
-     * Create a new storage from the specified one without copying the data.
+     * Create a new storage from the specified one without copying the data. CHGraphs won't be copied.
      */
     public static GraphHopperStorage newStorage(GraphHopperStorage store) {
         Directory outdir = guessDirectory(store);
@@ -471,7 +421,6 @@ public class GHUtility {
                 .withTurnCosts(store.getTurnCostStorage() != null)
                 .set3D(is3D)
                 .setDir(outdir)
-                .setCHConfigs(store.getCHConfigs())
                 .create();
     }
 
@@ -481,6 +430,15 @@ public class GHUtility {
             return iterTo.getAdjNode();
         }
         return adjNode;
+    }
+
+    public static void checkDAVersion(String name, int expectedVersion, int version) {
+        if (version != expectedVersion) {
+            throw new IllegalStateException("Unexpected version for '" + name + "'. Got: " + version + ", " +
+                    "expected: " + expectedVersion + ". "
+                    + "Make sure you are using the same GraphHopper version for reading the files that was used for creating them. "
+                    + "See https://discuss.graphhopper.com/t/722");
+        }
     }
 
     public static EdgeIteratorState createMockedEdgeIteratorState(final double distance, final IntsRef flags) {
@@ -563,25 +521,34 @@ public class GHUtility {
     }
 
     /**
-     * @return the <b>first</b> edge containing the specified nodes base and adj. Returns null if
-     * not found.
+     * @return the the edge between base and adj, or null if there is no such edge
+     * @throws IllegalArgumentException when there are multiple edges
      */
     public static EdgeIteratorState getEdge(Graph graph, int base, int adj) {
-        EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(base);
+        EdgeExplorer explorer = graph.createEdgeExplorer();
+        int count = count(explorer.setBaseNode(base), adj);
+        if (count > 1)
+            throw new IllegalArgumentException("There are multiple edges between nodes " + base + " and " + adj);
+        else if (count == 0)
+            return null;
+        EdgeIterator iter = explorer.setBaseNode(base);
         while (iter.next()) {
             if (iter.getAdjNode() == adj)
                 return iter;
         }
-        return null;
+        throw new IllegalStateException("There should be an edge");
     }
 
-    public static CHEdgeIteratorState getEdge(CHGraph graph, int base, int adj) {
-        CHEdgeIterator iter = graph.createEdgeExplorer().setBaseNode(base);
-        while (iter.next()) {
-            if (iter.getAdjNode() == adj)
-                return iter;
+    /**
+     * @return the number of edges with the given adj node
+     */
+    public static int count(EdgeIterator iterator, int adj) {
+        int count = 0;
+        while (iterator.next()) {
+            if (iterator.getAdjNode() == adj)
+                count++;
         }
-        return null;
+        return count;
     }
 
     /**
@@ -743,6 +710,36 @@ public class GHUtility {
                 ? weighting.calcTurnMillis(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
                 : weighting.calcTurnMillis(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
         return edgeMillis + turnMillis;
+    }
+
+    /**
+     * Reads the country borders from the countries.geojson resource file
+     */
+    public static List<CustomArea> readCountries() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JtsModule());
+        try (Reader reader = new InputStreamReader(GHUtility.class.getResourceAsStream("/com/graphhopper/countries/countries.geojson"), StandardCharsets.UTF_8)) {
+            JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
+            return jsonFeatureCollection.getFeatures().stream()
+                    .map(CustomArea::fromJsonFeature)
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public static void runConcurrently(List<Callable<String>> callables, int threads) {
+        ExecutorService executorService = Executors.newFixedThreadPool(threads);
+        ExecutorCompletionService<String> completionService = new ExecutorCompletionService<>(executorService);
+        callables.forEach(completionService::submit);
+        executorService.shutdown();
+        try {
+            for (int i = 0; i < callables.size(); i++)
+                completionService.take().get();
+        } catch (Exception e) {
+            executorService.shutdownNow();
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -962,60 +959,9 @@ public class GHUtility {
 
     }
 
-    /**
-     * This node access can be used in tests to mock specific iterator behaviour via overloading
-     * certain methods.
-     */
-    public static class DisabledNodeAccess implements NodeAccess {
-
-        @Override
-        public int getTurnCostIndex(int nodeId) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public void setTurnCostIndex(int nodeId, int additionalValue) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public boolean is3D() {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public int getDimension() {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public void ensureNode(int nodeId) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public void setNode(int nodeId, double lat, double lon, double ele) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        public double getLat(int nodeId) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public double getLon(int nodeId) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public double getEle(int nodeId) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-    }
-
     public static BBox createBBox(EdgeIteratorState edgeState) {
         PointList towerNodes = edgeState.fetchWayGeometry(FetchMode.TOWER_ONLY);
-        int secondIndex = towerNodes.getSize() == 1 ? 0 : 1;
+        int secondIndex = towerNodes.size() == 1 ? 0 : 1;
         return BBox.fromPoints(towerNodes.getLat(0), towerNodes.getLon(0),
                 towerNodes.getLat(secondIndex), towerNodes.getLon(secondIndex));
     }

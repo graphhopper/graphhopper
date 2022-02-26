@@ -23,10 +23,7 @@ import com.graphhopper.util.shapes.GHPoint;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 public class Request {
     private List<GHLocation> points;
@@ -35,15 +32,19 @@ public class Request {
     private boolean profileQuery;
     private Boolean ignoreTransfers;
     private double betaTransfers = 0.0;
-    private double betaWalkTime = 1.0;
+    private double betaStreetTime = 1.0;
     private Integer limitSolutions;
     private boolean arriveBy;
     private double walkSpeedKmH = 5.0;
     private int blockedRouteTypes;
+    private Map<Integer, Long> boardingPenaltiesByRouteType = new HashMap<>();
     private Locale locale = Helper.getLocale("en");
+    private Duration limitTripTime;
     private Duration limitStreetTime;
-    private Duration maxProfileDuration = Duration.ofHours(1);
+    private Duration maxProfileDuration = Duration.ofDays(1);
     private List<String> pathDetails = new ArrayList<>();
+    private String accessProfile = "foot";
+    private String egressProfile = "foot";
 
     public Request(List<GHLocation> points, Instant departureTime) {
         this.points = points;
@@ -86,12 +87,12 @@ public class Request {
         this.betaTransfers = betaTransfers;
     }
 
-    public double getBetaWalkTime() {
-        return betaWalkTime;
+    public double getBetaStreetTime() {
+        return betaStreetTime;
     }
 
-    public void setBetaWalkTime(double betaWalkTime) {
-        this.betaWalkTime = betaWalkTime;
+    public void setBetaStreetTime(double betaStreetTime) {
+        this.betaStreetTime = betaStreetTime;
     }
 
     public Integer getLimitSolutions() {
@@ -134,6 +135,14 @@ public class Request {
         this.blockedRouteTypes = blockedRouteTypes;
     }
 
+    public Map<Integer, Long> getBoardingPenaltiesByRouteType() {
+        return boardingPenaltiesByRouteType;
+    }
+
+    public void setBoardingPenaltiesByRouteType(Map<Integer, Long> boardingPenaltiesByRouteType) {
+        this.boardingPenaltiesByRouteType = boardingPenaltiesByRouteType;
+    }
+
     public Locale getLocale() {
         return locale;
     }
@@ -146,8 +155,16 @@ public class Request {
         return points;
     }
 
+    public Duration getLimitTripTime() {
+        return this.limitTripTime;
+    }
+
     public Duration getLimitStreetTime() {
         return this.limitStreetTime;
+    }
+
+    public void setLimitTripTime(Duration tripTime) {
+        this.limitTripTime = tripTime;
     }
 
     public void setLimitStreetTime(Duration streetTime) {
@@ -168,5 +185,21 @@ public class Request {
 
     public void setPathDetails(List<String> pathDetails) {
         this.pathDetails = pathDetails;
+    }
+
+    public String getAccessProfile() {
+        return accessProfile;
+    }
+
+    public void setAccessProfile(String accessProfile) {
+        this.accessProfile = accessProfile;
+    }
+
+    public String getEgressProfile() {
+        return egressProfile;
+    }
+
+    public void setEgressProfile(String egressProfile) {
+        this.egressProfile = egressProfile;
     }
 }

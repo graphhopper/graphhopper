@@ -18,7 +18,6 @@
 package com.graphhopper.storage.index;
 
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.storage.Storable;
 import com.graphhopper.util.shapes.BBox;
 
 /**
@@ -30,7 +29,7 @@ import com.graphhopper.util.shapes.BBox;
  *
  * @author Peter Karich
  */
-public interface LocationIndex extends Storable<LocationIndex> {
+public interface LocationIndex {
 
     /**
      * This method returns the closest Snap for the specified location (lat, lon) and only if
@@ -54,21 +53,25 @@ public interface LocationIndex extends Storable<LocationIndex> {
      */
     void query(BBox queryBBox, Visitor function);
 
+    void close();
+
     /**
      * This interface allows to visit edges stored in the LocationIndex.
      */
-    abstract class Visitor {
-        public boolean isTileInfo() {
+    @FunctionalInterface
+    interface Visitor {
+
+        void onEdge(int edgeId);
+
+        default boolean isTileInfo() {
             return false;
         }
 
         /**
          * This method is called if isTileInfo returns true.
          */
-        public void onTile(BBox bbox, int depth) {
+        default void onTile(BBox bbox, int depth) {
         }
-
-        public abstract void onEdge(int edgeId);
     }
 
 }

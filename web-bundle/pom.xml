@@ -5,14 +5,14 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>graphhopper-web-bundle</artifactId>
     <packaging>jar</packaging>
-    <version>3.0-SNAPSHOT</version>
+    <version>5.0-SNAPSHOT</version>
     <name>GraphHopper Dropwizard Bundle</name>
     <description>Use the GraphHopper routing engine as a web-service</description>
 
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>3.0-SNAPSHOT</version>
+        <version>5.0-SNAPSHOT</version>
     </parent>
 
     <dependencies>
@@ -138,28 +138,6 @@
                         <configuration>
                             <nodeVersion>v12.3.1</nodeVersion>
                             <npmVersion>6.14.5</npmVersion>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>install custom model editor</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <configuration>
-                            <arguments>install</arguments>
-                            <workingDirectory>src/main/js/custom-model-editor</workingDirectory>
-                            <installDirectory>${project.basedir}</installDirectory>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>build custom model editor</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <configuration>
-                            <arguments>run build</arguments>
-                            <workingDirectory>src/main/js/custom-model-editor</workingDirectory>
-                            <installDirectory>${project.basedir}</installDirectory>
                         </configuration>
                     </execution>
                     <execution>

@@ -10,37 +10,29 @@ Windows users will need Cygwin - find more details [here](./windows-setup.md).
 To proceed install `git` and `openjdk8` or `openjdk11`. Get the a jdk from your package manager, 
 [AdoptOpenJDK](https://adoptopenjdk.net/) or [Red Hat](https://github.com/ojdkbuild/ojdkbuild/releases).
 
-Then do:
+Then create the jar from sources via:
 
 ```bash
+# first download some road data
+wget http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
+# now get the source code and create the jar in web/target
 git clone git://github.com/graphhopper/graphhopper.git
 cd graphhopper
-git checkout stable
-./graphhopper.sh -a web -i europe_germany_berlin.pbf
-# after Server started go to http://localhost:8989/ and you should see something similar to GraphHopper Maps: https://graphhopper.com/maps/
+git checkout master # if you prefer a less moving branch you can use e.g. 4.x
+mvn clean install -DskipTests
+# start GraphHopper
+java -Ddw.graphhopper.datareader.file=berlin-latest.osm.pbf -jar web/target/graphhopper-web-*.jar server config-example.yml
+# This does mainly 3 things:
+# - it creates routable files for graphhopper in the folder graph-data (see the config.yml)
+# - it creates data for a special routing algorithm to dramatically improve query speed. It skips this and the previous step if these files are already present.
+# - it starts the web service to service the UI and also the many endpoints like /route
+# After 'Server - Started' appears go to http://localhost:8989/ and you should see something similar to GraphHopper Maps: https://graphhopper.com/maps/
 ```
 
-In the last step the data is created to get routes within the Berlin area:
+To use a different area make sure you use a different folder instead of graph-data or remove this.
 
-  1. The script downloads the OpenStreetMap data of that area
-  2. It builds the graphhopper jar. If Maven is not available it will automatically download it.
-  3. Then it creates routable files for graphhopper in the folder europe_germany_berlin-gh. 
-  4. It will create data for a special routing algorithm to dramatically improve query speed. It skips step 3. and 4. if these files are already present.
-  5. It starts the web service to service the UI and also the many endpoints like /route
-
-For your favourite area do e.g.:
-
-```bash
-$ ./graphhopper.sh -a web -i europe_france.pbf -o france-gh
-$ ./graphhopper.sh -a web -i north-america_us_new-york.pbf -o new-york-gh
-# the format follows the link structure at http://download.geofabrik.de
-```
-
-For larger maps you need to allow the JVM to access more memory. For example for 2GB you can do this using:
-```bash
-$ export JAVA_OPTS="-Xmx2g -Xms2g"
-```
-before running `graphhopper.sh`.
+For larger maps you need to add some parameters to the JVM: `java -Xmx10g -Xms10g ...`.
+See [the deployment section](deploy.md) for more details.
 
 ## Start Development
 
@@ -54,7 +46,7 @@ Then open the project in your IDE, first class IDEs are NetBeans and IntelliJ wh
 
 Go to `Run->Edit Configurations...` and set the following to run GraphHopper from within IntelliJ:
 ```
-Main class: com.graphhopper.http.GraphHopperApplication
+Main class: com.graphhopper.application.GraphHopperApplication
 VM options: -Xms1g -Xmx1g -server -Ddw.graphhopper.datareader.file=[your-area].osm.pbf -Ddw.graphhopper.graph.location=./[your-area].osm-gh
 Program arguments: server config.yml
 ```
@@ -107,16 +99,13 @@ to perform when you make changes to the JavaScript code:
 
 1. install the [node package manager](https://github.com/nvm-sh/nvm#install--update-script). For windows
    use [nvm-windows](https://github.com/coreybutler/nvm-windows).
-2. Build the custom-model-editor
-   component: `sh -c "cd web-bundle/src/main/js/custom-model-editor && npm install && npm run build"`
-3. Build the Web UI: `cd web-bundle && npm install && npm run bundle` which results in the `main.js` file
-4. Restart the GH server so it picks up the latest version of the UI bundle
+2. Build the Web UI: `cd web-bundle && npm install && npm run bundle` which results in the `main.js` file
+3. Restart the GH server so it picks up the latest version of the UI bundle
 
 You can achieve an even faster development cycle by running `npm run watch` which will update `main.js` whenever you
-make changes to one of the .js files. The same command works in the custom-model-editor folder in case you want to make
-changes there. To hot-reload your changes in the browser the best option is to serve GH maps from a separate server like
-live-server. You can do this by running `npm run serve` from a separate terminal and pointing the routing.host property
-in src/main/resources/com/graphhopper/maps/js/config/options.js to your GH server:
+make changes to one of the .js files. To hot-reload your changes in the browser the best option is to serve GH maps from
+a separate server like live-server. You can do this by running `npm run serve` from a separate terminal and pointing the
+routing.host property in src/main/resources/com/graphhopper/maps/js/config/options.js to your GH server:
 
 ```js
 ...

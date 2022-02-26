@@ -25,12 +25,11 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.Closeable;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -42,14 +41,14 @@ public class LocationIndexTreeTest {
     protected final EncodingManager encodingManager = EncodingManager.create("car");
 
     public static void initSimpleGraph(Graph g, EncodingManager em) {
-        //  6 |       4
+        //  6 |        4
         //  5 |
         //    |     6
         //  4 |              5
         //  3 |
         //  2 |    1
         //  1 |          3
-        //  0 |    2
+        //  0 |        2
         // -1 | 0
         // ---|-------------------
         //    |-2 -1 0 1 2 3 4
@@ -62,7 +61,8 @@ public class LocationIndexTreeTest {
         na.setNode(4, 6, 1);
         na.setNode(5, 4, 4);
         na.setNode(6, 4.5, -0.5);
-        List<EdgeIteratorState> list = Arrays.asList(g.edge(0, 1),
+        List<EdgeIteratorState> list = Arrays.asList(
+                g.edge(0, 1),
                 g.edge(0, 2),
                 g.edge(2, 3),
                 g.edge(3, 4),
@@ -90,7 +90,7 @@ public class LocationIndexTreeTest {
     // 2-------/
     Graph createTestGraph(EncodingManager em) {
         FlagEncoder encoder = em.getEncoder("car");
-        Graph graph = new GraphHopperStorage(new RAMDirectory(), em, false).create(100);
+        Graph graph = new GraphBuilder(em).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 0.5, -0.5);
         na.setNode(1, -0.5, -0.5);
@@ -131,12 +131,7 @@ public class LocationIndexTreeTest {
         Graph graph = createTestGraph2();
         LocationIndexTree index = (LocationIndexTree) createIndexNoPrepare(graph, 500).prepareIndex();
         final HashSet<Integer> edges = new HashSet<>();
-        index.query(graph.getBounds(), new LocationIndex.Visitor() {
-            @Override
-            public void onEdge(int edgeId) {
-                edges.add(edgeId);
-            }
-        });
+        index.query(graph.getBounds(), edges::add);
         // All edges (see testgraph2.jpg)
         assertEquals(edges.size(), graph.getEdges());
     }
@@ -146,13 +141,8 @@ public class LocationIndexTreeTest {
         Graph graph = createTestGraph2();
         LocationIndexTree index = (LocationIndexTree) createIndexNoPrepare(graph, 500).prepareIndex();
         final IntArrayList edges = new IntArrayList();
-        BBox bbox = new BBox(11.57314, 11.57614, 49.94553, 49.94853);
-        index.query(bbox, new LocationIndex.Visitor() {
-            @Override
-            public void onEdge(int edgeId) {
-                edges.add(edgeId);
-            }
-        });
+        BBox bbox = new BBox(11.57114, 11.57814, 49.94553, 49.94853);
+        index.query(bbox, edges::add);
         // Also all edges (see testgraph2.jpg)
         assertEquals(edges.size(), graph.getEdges());
     }
@@ -160,7 +150,7 @@ public class LocationIndexTreeTest {
     @Test
     public void testMoreReal() {
         FlagEncoder encoder = new CarFlagEncoder();
-        Graph graph = new GraphHopperStorage(new RAMDirectory(), EncodingManager.create(encoder), false).create(100);
+        Graph graph = new GraphBuilder(EncodingManager.create(encoder)).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(1, 51.2492152, 9.4317166);
         na.setNode(0, 52, 9);
@@ -184,7 +174,7 @@ public class LocationIndexTreeTest {
     //-1|  2---------/
     //  |
     private Graph createTestGraphWithWayGeometry() {
-        Graph graph = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
+        Graph graph = new GraphBuilder(encodingManager).create();
         FlagEncoder encoder = encodingManager.getEncoder("car");
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 0.5, -0.5);
@@ -215,7 +205,7 @@ public class LocationIndexTreeTest {
 
     @Test
     public void testFindingWayGeometry() {
-        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
+        Graph g = new GraphBuilder(encodingManager).create();
         FlagEncoder encoder = encodingManager.getEncoder("car");
         NodeAccess na = g.getNodeAccess();
         na.setNode(10, 51.2492152, 9.4317166);
@@ -242,7 +232,7 @@ public class LocationIndexTreeTest {
     // see testgraph2.jpg
     Graph createTestGraph2() {
         FlagEncoder encoder = encodingManager.getEncoder("car");
-        Graph graph = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
+        Graph graph = new GraphBuilder(encodingManager).create();
         NodeAccess na = graph.getNodeAccess();
 
         na.setNode(0, 49.94653, 11.57114);
@@ -351,7 +341,7 @@ public class LocationIndexTreeTest {
         BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
 
         EncodingManager tmpEM = EncodingManager.create(carEncoder, bikeEncoder);
-        Graph graph = new GraphHopperStorage(new RAMDirectory(), tmpEM, false).create(100);
+        Graph graph = new GraphBuilder(tmpEM).create();
         NodeAccess na = graph.getNodeAccess();
 
         // distance from point to point is roughly 1 km
@@ -399,7 +389,7 @@ public class LocationIndexTreeTest {
     @Test
     public void testCrossBoundaryNetwork_issue667() {
         FlagEncoder encoder = encodingManager.getEncoder("car");
-        Graph graph = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
+        Graph graph = new GraphBuilder(encodingManager).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 0.1, 179.5);
         na.setNode(1, 0.1, 179.9);
@@ -452,7 +442,7 @@ public class LocationIndexTreeTest {
     @Test
     public void testSimpleGraph() {
         EncodingManager em = EncodingManager.create("car");
-        Graph g = new GraphHopperStorage(new RAMDirectory(), em, false).create(100);
+        Graph g = new GraphBuilder(em).create();
         initSimpleGraph(g, em);
 
         LocationIndexTree idx = (LocationIndexTree) createIndexNoPrepare(g, 500000).prepareIndex();
@@ -466,7 +456,7 @@ public class LocationIndexTreeTest {
     @Test
     public void testSimpleGraph2() {
         EncodingManager em = EncodingManager.create("car");
-        Graph g = new GraphHopperStorage(new RAMDirectory(), em, false).create(100);
+        Graph g = new GraphBuilder(em).create();
         initSimpleGraph(g, em);
 
         LocationIndexTree idx = (LocationIndexTree) createIndexNoPrepare(g, 500000).prepareIndex();
@@ -512,7 +502,7 @@ public class LocationIndexTreeTest {
     public void testNoErrorOnEdgeCase_lastIndex() {
         final EncodingManager encodingManager = EncodingManager.create("car");
         int locs = 10000;
-        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
+        Graph g = new GraphBuilder(encodingManager).create();
         NodeAccess na = g.getNodeAccess();
         Random rand = new Random(12);
         for (int i = 0; i < locs; i++) {
@@ -523,7 +513,7 @@ public class LocationIndexTreeTest {
     }
 
     public Graph createSampleGraph(EncodingManager encodingManager) {
-        Graph graph = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
+        Graph graph = new GraphBuilder(encodingManager).create();
         // length does not matter here but lat,lon and outgoing edges do!
 
 //
@@ -605,7 +595,7 @@ public class LocationIndexTreeTest {
     @Test
     public void testDifferentVehicles() {
         final EncodingManager encodingManager = EncodingManager.create("car,foot");
-        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
+        GraphHopperStorage g = new GraphBuilder(encodingManager).create();
         initSimpleGraph(g, encodingManager);
         LocationIndexTree idx = (LocationIndexTree) createIndexNoPrepare(g, 500000).prepareIndex();
         assertEquals(0, findClosestEdge(idx, 1, -1));
@@ -622,5 +612,64 @@ public class LocationIndexTreeTest {
         FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
         assertEquals(2, idx.findClosest(1, -1, AccessFilter.allEdges(footEncoder.getAccessEnc())).getClosestNode());
         Helper.close((Closeable) g);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    public void closeToTowerNode(boolean snapAtBase) {
+        // 0 - 1
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 51.985500, 19.254000);
+        na.setNode(1, 51.986000, 19.255000);
+        DistancePlaneProjection distCalc = new DistancePlaneProjection();
+        // we query the location index close to node 0. since the query point is so close to the tower node we expect
+        // a TOWER snap. this should not depend on whether node 0 is the base or adj node of our edge.
+        final int snapNode = 0;
+        final int base = snapAtBase ? 0 : 1;
+        final int adj = snapAtBase ? 1 : 0;
+        graph.edge(base, adj).setDistance(distCalc.calcDist(na.getLat(0), na.getLon(0), na.getLat(1), na.getLon(1)));
+        LocationIndexTree index = new LocationIndexTree(graph, graph.getDirectory());
+        index.prepareIndex();
+
+        GHPoint queryPoint = new GHPoint(51.9855003, 19.2540003);
+        double distFromTower = distCalc.calcDist(queryPoint.lat, queryPoint.lon, na.getLat(snapNode), na.getLon(snapNode));
+        assertTrue(distFromTower < 0.1);
+        Snap snap = index.findClosest(queryPoint.lat, queryPoint.lon, EdgeFilter.ALL_EDGES);
+        assertEquals(Snap.Position.TOWER, snap.getSnappedPosition());
+    }
+
+    @Test
+    public void queryBehindBeforeOrBehindLastTowerNode() {
+        // 0 -x- 1
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 51.985000, 19.254000);
+        na.setNode(1, 51.986000, 19.255000);
+        DistancePlaneProjection distCalc = new DistancePlaneProjection();
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance(distCalc.calcDist(na.getLat(0), na.getLon(0), na.getLat(1), na.getLon(1)));
+        edge.setWayGeometry(Helper.createPointList(51.985500, 19.254500));
+        LocationIndexTree index = new LocationIndexTree(graph, graph.getDirectory());
+        index.prepareIndex();
+        {
+            // snap before last tower node
+            List<String> output = new ArrayList<>();
+            index.traverseEdge(51.985700, 19.254700, edge, (node, normedDist, wayIndex, pos) ->
+                    output.add(node + ", " + Math.round(distCalc.calcDenormalizedDist(normedDist)) + ", " + wayIndex + ", " + pos));
+            assertEquals(Arrays.asList(
+                    "1, 39, 2, TOWER",
+                    "1, 26, 1, PILLAR",
+                    "1, 0, 1, EDGE"), output);
+        }
+
+        {
+            // snap behind last tower node
+            List<String> output = new ArrayList<>();
+            index.traverseEdge(51.986100, 19.255100, edge, (node, normedDist, wayIndex, pos) ->
+                    output.add(node + ", " + Math.round(distCalc.calcDenormalizedDist(normedDist)) + ", " + wayIndex + ", " + pos));
+            assertEquals(Arrays.asList(
+                    "1, 13, 2, TOWER",
+                    "1, 78, 1, PILLAR"), output);
+        }
     }
 }

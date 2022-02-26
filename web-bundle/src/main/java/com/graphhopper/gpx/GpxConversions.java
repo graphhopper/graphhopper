@@ -197,10 +197,10 @@ public class GpxConversions {
         double nextLat;
         double nextLon;
 
-        if (instruction.getPoints().getSize() >= 2) {
+        if (instruction.getPoints().size() >= 2) {
             nextLat = instruction.getPoints().getLat(1);
             nextLon = instruction.getPoints().getLon(1);
-        } else if (nextI != null && instruction.getPoints().getSize() == 1) {
+        } else if (nextI != null && instruction.getPoints().size() == 1) {
             nextLat = nextI.getPoints().getLat(0);
             nextLon = nextI.getPoints().getLon(0);
         } else {

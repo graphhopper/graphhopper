@@ -17,14 +17,14 @@
  */
 package com.graphhopper.util;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * @author Peter Karich
@@ -56,10 +56,10 @@ public class DouglasPeuckerTest {
     public void testPathSimplify() {
         PointList pointList = new PointList();
         pointList.parse2DJSON(points1);
-        assertEquals(32, pointList.getSize());
+        assertEquals(32, pointList.size());
         new DouglasPeucker().setMaxDistance(.5).simplify(pointList);
         // Arrays.asList(2, 4, 6, 7, 8, 9, 12, 14, 15, 17, 18, 19, 20, 22, 24, 27, 28, 29, 31, 33),
-        assertEquals(20, pointList.getSize());
+        assertEquals(20, pointList.size());
     }
 
     @Test
@@ -67,15 +67,15 @@ public class DouglasPeuckerTest {
         PointList pointList = new PointList();
         pointList.parse2DJSON(points1);
         DouglasPeucker dp = new DouglasPeucker().setMaxDistance(.5);
-        assertEquals(32, pointList.getSize());
+        assertEquals(32, pointList.size());
         dp.simplify(pointList);
-        assertEquals(20, pointList.getSize());
-        assertFalse(pointList.toString(), pointList.toString().contains("NaN"));
+        assertEquals(20, pointList.size());
+        assertFalse(pointList.toString().contains("NaN"), pointList.toString());
 
         pointList.clear();
         pointList.parse2DJSON(points1);
-        dp.simplify(pointList, 0, pointList.size() -1);
-        assertEquals(20, pointList.getSize());
+        dp.simplify(pointList, 0, pointList.size() - 1);
+        assertEquals(20, pointList.size());
 
         pointList.clear();
         pointList.parse2DJSON(points1);
@@ -92,10 +92,10 @@ public class DouglasPeuckerTest {
     public void testSimplifyCheckPointOrder() {
         PointList pointList = new PointList();
         pointList.parse2DJSON(points2);
-        assertEquals(13, pointList.getSize());
+        assertEquals(13, pointList.size());
         new DouglasPeucker().setMaxDistance(.5).simplify(pointList);
-        assertEquals(11, pointList.getSize());
-        assertFalse(pointList.toString(), pointList.toString().contains("NaN"));
+        assertEquals(11, pointList.size());
+        assertFalse(pointList.toString().contains("NaN"), pointList.toString());
         assertEquals("(50.203764443183644,9.961074440801317), (50.20318963087774,9.960999562464645), (50.202952888673984,9.96094144793469), (50.20267889356641,9.96223002587773), (50.201853928011374,9.961859918278305), "
                         + "(50.20138565901039,9.961668810881722), (50.20128507617008,9.96216874485095), (50.20088553877664,9.961953795595925), (50.200686794534775,9.961899033827313), (50.20014066696481,9.961716680863127), (50.199798499043254,9.961588158344957)",
                 pointList.toString());

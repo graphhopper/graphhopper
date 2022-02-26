@@ -69,7 +69,8 @@ encoded values are the following (some of their possible values are given in bra
 - road_environment: (ROAD, FERRY, BRIDGE, TUNNEL, ...)
 - road_access: (DESTINATION, DELIVERY, PRIVATE, NO, ...)
 - surface: (PAVED, DIRT, SAND, GRAVEL, ...)
-- toll: (NO, ALL, HGV)
+- smoothness: (EXCELLENT, GOOD, INTERMEDIATE, ...)
+- toll: (MISSING, NO, HGV, ALL)
 
 To learn about all available encoded values you can query the `/info` endpoint.
 
@@ -119,7 +120,7 @@ Here is a complete request example for a POST /route query in berlin that includ
   "custom_model": {
     "speed": [
       {
-        "if": true,
+        "if": "true",
         "limit_to": 100
       }
     ],

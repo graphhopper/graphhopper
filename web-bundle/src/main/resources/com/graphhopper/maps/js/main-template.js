@@ -41,7 +41,7 @@ var routeManipulation = require('./routeManipulation.js');
 var gpxExport = require('./gpxexport.js');
 var messages = require('./messages.js');
 var translate = require('./translate.js');
-var customModelEditor = require('../../../../../js/custom-model-editor/dist/index.js');
+var customModelEditor = require('custom-model-editor/dist/index.js');
 
 var format = require('./tools/format.js');
 var urlTools = require('./tools/url.js');
@@ -75,9 +75,7 @@ $(document).ready(function (e) {
     var cmEditor = customModelEditor.create({}, function (element) {
         $("#custom-model-editor").append(element);
     });
-    // todo: the idea was to highlight everything so if we start typing the example is overwritten. But unfortunately
-    // this does not work. And not even sure this is so useful?
-    showCustomModelExample();
+
     cmEditor.validListener = function(valid) {
         $("#custom-model-search-button").prop('disabled', !valid);
     };
@@ -110,7 +108,7 @@ $(document).ready(function (e) {
             + "\n \"priority\": ["
             + "\n  {"
             + "\n   \"if\": \"road_environment == TUNNEL\","
-            + "\n   \"multiply_by\": 0.0"
+            + "\n   \"multiply_by\": 0.5"
             + "\n  },"
             + "\n  {"
             + "\n   \"if\": \"max_weight < 3\","
@@ -126,6 +124,20 @@ $(document).ready(function (e) {
     $("#custom-model-example").click(function () {
         showCustomModelExample();
         return false;
+    });
+
+    $("#export-link").click(function (e) {
+        try {
+          e.preventDefault();
+          var url = location.href;
+          if(url.indexOf("?") > 0)
+            url = url.substring(0, url.indexOf("?")) + ghRequest.createHistoryURL() + "&layer=" + encodeURIComponent(tileLayers.activeLayerName);
+          if(ghRequest.cmEditorActive) {
+            var text = cmEditor.value.replaceAll("&","%26");
+            url += "&custom_model=" + new URLSearchParams(JSON.stringify(JSON.parse(text))).toString();
+          }
+          navigator.clipboard.writeText(url).then(() => { alert('Link copied to clipboard'); });
+        } catch(e) { console.warn(e); }
     });
 
     var sendCustomData = function () {
@@ -164,13 +176,22 @@ $(document).ready(function (e) {
 
     var urlParams = urlTools.parseUrlWithHisto();
 
-    var customURL = urlParams.load_custom;
-    if(urlParams.load_custom)
+    var customModelJSON = urlParams.custom_model;
+    if(customModelJSON) {
         toggleCustomModelBox(false);
-    if(customURL && ghenv.environment === 'development')
-        $.ajax(customURL).
-            done(function(data) { cmEditor.value = data; sendCustomData(); }).
-            fail(function(err)  { console.log("Cannot load custom URL " + customURL); });
+        cmEditor.value = customModelJSON; // if json parsing fails we still have the partial custom model in the box
+        try {
+            var tmpObj = JSON.parse(customModelJSON);
+            cmEditor.value = JSON.stringify(tmpObj, null, 2);
+        } catch(e) {
+            console.warn('cannot pretty print custom model: ' + e);
+        }
+
+    } else {
+        // todo: the idea was to highlight everything so if we start typing the example is overwritten. But unfortunately
+        // this does not work. And not even sure this is so useful?
+        showCustomModelExample();
+    }
 
     $.when(ghRequest.fetchTranslationMap(urlParams.locale), ghRequest.getInfo())
             .then(function (arg1, arg2) {
@@ -262,7 +283,7 @@ $(document).ready(function (e) {
                     const categories = {};
                     Object.keys(json.encoded_values).forEach((k) => {
                         const v = json.encoded_values[k];
-                        if (v.length == 2 && v[0] === 'true' && v[1] === 'false') {
+                        if (v.length === 2 && v[0] === 'true' && v[1] === 'false') {
                             categories[k] = {type: 'boolean'};
                         } else if (v.length === 2 && v[0] === '>number' && v[1] === '<number') {
                             categories[k] = {type: 'numeric'};
@@ -281,7 +302,7 @@ $(document).ready(function (e) {
                 checkInput();
             }, function (err) {
                 console.log(err);
-                $('#error').html('GraphHopper API offline? <a href="http://graphhopper.com/maps/">Refresh</a>' + '<br/>Status: ' + err.statusText + '<br/>' + host);
+                $('#error').html('GraphHopper API offline? <a href="#" onclick="location.reload();event.preventDefault();">Refresh</a>' + '<br/>Status: ' + err.statusText + '<br/>' + host);
 
                 bounds = {
                     "minLon": -180,
@@ -899,12 +920,15 @@ function doCustomRequest(request, routeResultsDiv) {
         elevation: ghRequest.api_params.elevation,
         profile: ghRequest.api_params.profile,
         custom_model: customModel,
+        locale: ghRequest.api_params.locale,
         "ch.disable": true,
         details: details
     }
+    var reqURL = host + "/route";
+    if(ghRequest.api_params.key) reqURL += "?key=" + ghRequest.api_params.key;
 
     $.ajax({
-        url: host + "/route",
+        url: reqURL,
         type: "POST",
         contentType: 'application/json; charset=utf-8',
         dataType: "json",

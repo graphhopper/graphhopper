@@ -18,6 +18,8 @@
 
 package com.graphhopper.config;
 
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
@@ -37,7 +39,7 @@ public class Profile {
     private PMap hints = new PMap();
 
     public static void validateProfileName(String profileName) {
-        if (!profileName.matches("^[a-z0-9_]*$")) {
+        if (!profileName.matches("^[a-z0-9_\\-]+$")) {
             throw new IllegalArgumentException("Profile names may only contain lower case letters, numbers and underscores, given: " + profileName);
         }
     }
@@ -87,10 +89,12 @@ public class Profile {
         return this;
     }
 
+    @JsonIgnore
     public PMap getHints() {
         return hints;
     }
 
+    @JsonAnySetter
     public Profile putHint(String key, Object value) {
         this.hints.putObject(key, value);
         return this;

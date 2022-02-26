@@ -19,22 +19,23 @@
 package com.graphhopper.resources;
 
 import com.graphhopper.util.DistanceCalcEarth;
-import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class IsochroneResourceUtilTest {
 
     @Test
     public void testMetersToDegreeApproximation1() {
         DistanceCalcEarth distanceCalcEarth = new DistanceCalcEarth();
-        Coordinate berlin = new Coordinate(13.2846508,52.5069704);
-        Coordinate hamburg = new Coordinate(9.7877407,53.5586941);
+        Coordinate berlin = new Coordinate(13.2846508, 52.5069704);
+        Coordinate hamburg = new Coordinate(9.7877407, 53.5586941);
         double berlinToHamburgInDegrees = berlin.distance(hamburg);
         double berlinToHamburgInMeters = distanceCalcEarth.calcDist(berlin.y, berlin.x, hamburg.y, hamburg.x);
         double berlinToHamburgInDegreesAccordingToTestee = IsochroneResource.degreesFromMeters(berlinToHamburgInMeters);
         // We only expect this to be in the right order of magnitude
-        Assert.assertEquals(berlinToHamburgInDegrees, berlinToHamburgInDegreesAccordingToTestee, berlinToHamburgInDegrees * 0.5);
+        assertEquals(berlinToHamburgInDegrees, berlinToHamburgInDegreesAccordingToTestee, berlinToHamburgInDegrees * 0.5);
     }
 
     @Test
@@ -46,7 +47,7 @@ public class IsochroneResourceUtilTest {
         double sanFranciscoToLosAngelesInMeters = distanceCalcEarth.calcDist(sanFrancisco.y, sanFrancisco.x, losAngeles.y, losAngeles.x);
         double sanFranciscoToLosAngelesInDegreesAccordingToTestee = IsochroneResource.degreesFromMeters(sanFranciscoToLosAngelesInMeters);
         // We only expect this to be in the right order of magnitude
-        Assert.assertEquals(sanFranciscoToLosAngelesInDegrees, sanFranciscoToLosAngelesInDegreesAccordingToTestee, sanFranciscoToLosAngelesInDegrees * 0.5);
+        assertEquals(sanFranciscoToLosAngelesInDegrees, sanFranciscoToLosAngelesInDegreesAccordingToTestee, sanFranciscoToLosAngelesInDegrees * 0.5);
     }
 
 }

@@ -248,7 +248,7 @@ public class EncodingManager implements EncodedValueLookup {
                 throw new IllegalStateException("Cannot call method after Builder.build() was called");
         }
 
-        private void _addEdgeTagParser(TagParser tagParser, boolean withNamespace, boolean insert) {
+        private void _addEdgeTagParser(TagParser tagParser, boolean withNamespace) {
             if (!em.edgeEncoders.isEmpty())
                 throw new IllegalStateException("Avoid mixing encoded values from FlagEncoder with shared encoded values until we have a more clever mechanism, see #1862");
 
@@ -257,10 +257,7 @@ public class EncodingManager implements EncodedValueLookup {
             for (EncodedValue ev : list) {
                 em.addEncodedValue(ev, withNamespace);
             }
-            if (insert)
-                em.edgeTagParsers.add(0, tagParser);
-            else
-                em.edgeTagParsers.add(tagParser);
+            em.edgeTagParsers.add(tagParser);
         }
 
         private void _addRelationTagParser(RelationTagParser tagParser) {
@@ -271,7 +268,7 @@ public class EncodingManager implements EncodedValueLookup {
             }
             em.relationTagParsers.add(tagParser);
 
-            _addEdgeTagParser(tagParser, false, false);
+            _addEdgeTagParser(tagParser, false);
         }
 
         private void _addTurnCostParser(TurnCostParser parser) {
@@ -294,13 +291,8 @@ public class EncodingManager implements EncodedValueLookup {
                 _addRelationTagParser(tagParser);
             }
 
-            List<SpatialRuleParser> insertLater = new ArrayList<>();
             for (TagParser tagParser : tagParserSet) {
-                if (SpatialRuleParser.class.isAssignableFrom(tagParser.getClass())) {
-                    insertLater.add((SpatialRuleParser) tagParser);
-                } else {
-                    _addEdgeTagParser(tagParser, false, false);
-                }
+                _addEdgeTagParser(tagParser, false);
             }
 
             for (EncodedValue ev : encodedValueMap.values()) {
@@ -308,25 +300,18 @@ public class EncodingManager implements EncodedValueLookup {
             }
 
             if (!em.hasEncodedValue(Roundabout.KEY))
-                _addEdgeTagParser(new OSMRoundaboutParser(), false, false);
+                _addEdgeTagParser(new OSMRoundaboutParser(), false);
             if (!em.hasEncodedValue(RoadClass.KEY))
-                _addEdgeTagParser(new OSMRoadClassParser(), false, false);
+                _addEdgeTagParser(new OSMRoadClassParser(), false);
             if (!em.hasEncodedValue(RoadClassLink.KEY))
-                _addEdgeTagParser(new OSMRoadClassLinkParser(), false, false);
+                _addEdgeTagParser(new OSMRoadClassLinkParser(), false);
             if (!em.hasEncodedValue(RoadEnvironment.KEY))
-                _addEdgeTagParser(new OSMRoadEnvironmentParser(), false, false);
+                _addEdgeTagParser(new OSMRoadEnvironmentParser(), false);
             if (!em.hasEncodedValue(MaxSpeed.KEY))
-                _addEdgeTagParser(new OSMMaxSpeedParser(), false, false);
+                _addEdgeTagParser(new OSMMaxSpeedParser(), false);
             if (!em.hasEncodedValue(RoadAccess.KEY)) {
                 // TODO introduce road_access for different vehicles? But how to create it in DefaultTagParserFactory?
-                _addEdgeTagParser(new OSMRoadAccessParser(), false, false);
-            }
-
-            // ensure that SpatialRuleParsers come after required EncodedValues like max_speed or road_access
-            // TODO can we avoid this hack without complex dependency management?
-            boolean insert = true;
-            for (SpatialRuleParser srp : insertLater) {
-                _addEdgeTagParser(srp, false, insert);
+                _addEdgeTagParser(new OSMRoadAccessParser(), false);
             }
 
             if (dateRangeParser == null)
@@ -337,8 +322,9 @@ public class EncodingManager implements EncodedValueLookup {
                     if (!em.hasEncodedValue(RouteNetwork.key("bike")))
                         _addRelationTagParser(new OSMBikeNetworkTagParser());
                     if (!em.hasEncodedValue(GetOffBike.KEY))
-                        _addEdgeTagParser(new OSMGetOffBikeParser(), false, false);
-
+                        _addEdgeTagParser(new OSMGetOffBikeParser(), false);
+                    if (!em.hasEncodedValue(Smoothness.KEY))
+                        _addEdgeTagParser(new OSMSmoothnessParser(), false);
                 } else if (encoder instanceof FootFlagEncoder) {
                     if (!em.hasEncodedValue(RouteNetwork.key("foot")))
                         _addRelationTagParser(new OSMFootNetworkTagParser());
@@ -435,15 +421,11 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     private void addEncoder(AbstractFlagEncoder encoder) {
-        int encoderCount = edgeEncoders.size();
-
         encoder.setEncodedValueLookup(this);
         List<EncodedValue> list = new ArrayList<>();
-        encoder.createEncodedValues(list, encoder.toString(), encoderCount);
-        for (EncodedValue ev : list) {
+        encoder.createEncodedValues(list, encoder.toString());
+        for (EncodedValue ev : list)
             addEncodedValue(ev, true);
-        }
-
         edgeEncoders.add(encoder);
     }
 
@@ -487,62 +469,10 @@ public class EncodingManager implements EncodedValueLookup {
     /**
      * Determine whether a way is routable for one of the added encoders.
      *
-     * @return if at least one encoder consumes the specified way. Additionally the specified acceptWay is changed
-     * to provide more details.
+     * @return if at least one encoder consumes the specified way
      */
-    public boolean acceptWay(ReaderWay way, AcceptWay acceptWay) {
-        if (!acceptWay.isEmpty())
-            throw new IllegalArgumentException("AcceptWay must be empty");
-
-        for (AbstractFlagEncoder encoder : edgeEncoders) {
-            acceptWay.put(encoder.toString(), encoder.getAccess(way));
-        }
-        return acceptWay.hasAccepted();
-    }
-
-    public static class AcceptWay {
-        private Map<String, Access> accessMap;
-        boolean hasAccepted = false;
-        boolean isFerry = false;
-
-        public AcceptWay() {
-            this.accessMap = new HashMap<>(5);
-        }
-
-        private Access get(String key) {
-            Access res = accessMap.get(key);
-            if (res == null)
-                throw new IllegalArgumentException("Couldn't fetch Access value for encoder key " + key);
-
-            return res;
-        }
-
-        public AcceptWay put(String key, Access access) {
-            accessMap.put(key, access);
-            if (access != Access.CAN_SKIP)
-                hasAccepted = true;
-            if (access == Access.FERRY)
-                isFerry = true;
-            return this;
-        }
-
-        public boolean isEmpty() {
-            return accessMap.isEmpty();
-        }
-
-        /**
-         * At least one of the entries is not CAN_SKIP
-         */
-        public boolean hasAccepted() {
-            return hasAccepted;
-        }
-
-        /**
-         * At least one of the entries is FERRY (usually all entries)
-         */
-        public boolean isFerry() {
-            return isFerry;
-        }
+    public boolean acceptWay(ReaderWay way) {
+        return edgeEncoders.stream().anyMatch(encoder -> !encoder.getAccess(way).equals(Access.CAN_SKIP));
     }
 
     public enum Access {
@@ -583,13 +513,13 @@ public class EncodingManager implements EncodedValueLookup {
      *
      * @param relationFlags The preprocessed relation flags is used to influence the way properties.
      */
-    public IntsRef handleWayTags(ReaderWay way, AcceptWay acceptWay, IntsRef relationFlags) {
+    public IntsRef handleWayTags(ReaderWay way, IntsRef relationFlags) {
         IntsRef edgeFlags = createEdgeFlags();
         for (TagParser parser : edgeTagParsers) {
-            parser.handleWayTags(edgeFlags, way, acceptWay.isFerry(), relationFlags);
+            parser.handleWayTags(edgeFlags, way, relationFlags);
         }
         for (AbstractFlagEncoder encoder : edgeEncoders) {
-            encoder.handleWayTags(edgeFlags, way, acceptWay.get(encoder.toString()));
+            encoder.handleWayTags(edgeFlags, way);
         }
         return edgeFlags;
     }
@@ -615,9 +545,7 @@ public class EncodingManager implements EncodedValueLookup {
 
             str.append(encoder.toString())
                     .append("|")
-                    .append(encoder.getPropertiesString())
-                    .append("|version=")
-                    .append(encoder.getVersion());
+                    .append(encoder.getPropertiesString());
         }
 
         return str.toString();
@@ -665,15 +593,20 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     /**
-     * Analyze tags on osm node. Store node tags (barriers etc) for later usage while parsing way.
+     * Updates the given edge flags based on node tags
      */
-    public long handleNodeTags(ReaderNode node) {
-        long flags = 0;
+    public IntsRef handleNodeTags(Map<String, Object> nodeTags, IntsRef edgeFlags) {
         for (AbstractFlagEncoder encoder : edgeEncoders) {
-            flags |= encoder.handleNodeTags(node);
+            // for now we just create a dummy reader node, because our encoders do not make use of the coordinates anyway
+            ReaderNode readerNode = new ReaderNode(0, 0, 0, nodeTags);
+            // block access for all encoders that treat this node as a barrier
+            if (encoder.isBarrier(readerNode)) {
+                BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+                accessEnc.setBool(false, edgeFlags, false);
+                accessEnc.setBool(true, edgeFlags, false);
+            }
         }
-
-        return flags;
+        return edgeFlags;
     }
 
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
@@ -715,16 +648,6 @@ public class EncodingManager implements EncodedValueLookup {
                 return true;
         }
         return false;
-    }
-
-    public List<BooleanEncodedValue> getAccessEncFromNodeFlags(long importNodeFlags) {
-        List<BooleanEncodedValue> list = new ArrayList<>(edgeEncoders.size());
-        for (int i = 0; i < edgeEncoders.size(); i++) {
-            FlagEncoder encoder = edgeEncoders.get(i);
-            if (((1L << i) & importNodeFlags) != 0)
-                list.add(encoder.getAccessEnc());
-        }
-        return list;
     }
 
     @Override

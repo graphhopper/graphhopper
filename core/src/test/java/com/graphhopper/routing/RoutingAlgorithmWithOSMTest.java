@@ -25,15 +25,20 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.dem.SRTMProvider;
-import com.graphhopper.storage.*;
-import com.graphhopper.util.*;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
@@ -104,7 +109,7 @@ public class RoutingAlgorithmWithOSMTest {
         List<Query> queries = new ArrayList<>();
         queries.add(new Query(43.730729, 7.42135, 43.727697, 7.419199, 2682, 119));
         queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3728, 170));
-        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.4277, 3168, 169));
+        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.4277, 3156, 165));
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 2423, 141));
         queries.add(new Query(43.730949, 7.412338, 43.739643, 7.424542, 2253, 120));
         queries.add(new Query(43.727592, 7.419333, 43.727712, 7.419333, 0, 1));
@@ -161,17 +166,17 @@ public class RoutingAlgorithmWithOSMTest {
 
     @Test
     public void testMoscow() {
-        // extracted via ./graphhopper.sh extract "37.582641,55.805261,37.626929,55.824455"
+        // extracted from OSM area: "37.582641,55.805261,37.626929,55.824455"
         List<Query> queries = new ArrayList<>();
         // choose perpendicular
         // http://localhost:8989/?point=55.818994%2C37.595354&point=55.819175%2C37.596931
-        queries.add(new Query(55.818994, 37.595354, 55.819175, 37.596931, 1052, 14));
+        queries.add(new Query(55.818891, 37.59515, 55.81997, 37.59854, 1052, 14));
         // should choose the closest road not the other one (opposite direction)
         // http://localhost:8989/?point=55.818898%2C37.59661&point=55.819066%2C37.596374
-        queries.add(new Query(55.818898, 37.59661, 55.819066, 37.596374, 24, 2));
+        queries.add(new Query(55.818536, 37.595848, 55.818702, 37.595564, 24, 2));
         // respect one way!
         // http://localhost:8989/?point=55.819066%2C37.596374&point=55.818898%2C37.59661
-        queries.add(new Query(55.819066, 37.596374, 55.818898, 37.59661, 1114, 23));
+        queries.add(new Query(55.818702, 37.595564, 55.818536, 37.595848, 1114, 23));
         GraphHopper hopper = createHopper(MOSCOW,
                 new Profile("car").setVehicle("car").setWeighting("fastest"));
         hopper.setMinNetworkSize(200);
@@ -330,7 +335,7 @@ public class RoutingAlgorithmWithOSMTest {
         // 1.
         queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2599, 115));
         queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 4180, 165));
-        queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 3244, 177));
+        queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 3244, 179));
         // 4. avoid tunnel(s)!
         queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 2436, 112));
         GraphHopper hopper = createHopper(MONACO, new Profile("bike2").setVehicle("bike2").setWeighting("fastest"));
@@ -382,7 +387,7 @@ public class RoutingAlgorithmWithOSMTest {
     @Test
     public void testMonacoMountainBike() {
         List<Query> queries = new ArrayList<>();
-        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2322, 110));
+        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2593, 110));
         queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3655, 176));
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2331, 121));
         // hard to select between secondary and primary (both are AVOID for mtb)
@@ -405,7 +410,7 @@ public class RoutingAlgorithmWithOSMTest {
     public void testMonacoRacingBike() {
         List<Query> queries = new ArrayList<>();
         queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2594, 111));
-        queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3588, 170));
+        queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3614, 184));
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2572, 135));
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1490, 84));
 
@@ -494,12 +499,14 @@ public class RoutingAlgorithmWithOSMTest {
     @Test
     public void testAndorraFoot() {
         List<Query> queries = createAndorraQueries();
-        queries.get(0).getPoints().get(1).expectedDistance = 16354;
-        queries.get(0).getPoints().get(1).expectedPoints = 648;
-        queries.get(1).getPoints().get(1).expectedDistance = 12701;
-        queries.get(1).getPoints().get(1).expectedPoints = 431;
+        queries.get(0).getPoints().get(1).expectedDistance = 16460;
+        queries.get(0).getPoints().get(1).expectedPoints = 653;
+        queries.get(1).getPoints().get(1).expectedDistance = 12839;
+        queries.get(1).getPoints().get(1).expectedPoints = 435;
 
-        GraphHopper hopper = createHopper(ANDORRA, new Profile("foot").setVehicle("foot").setWeighting("shortest"));
+        queries.add(new Query(42.521269, 1.52298, 42.50418, 1.520662, 3223, 107));
+
+        GraphHopper hopper = createHopper(ANDORRA, new Profile("foot").setVehicle("foot").setWeighting("fastest"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
     }
@@ -592,7 +599,7 @@ public class RoutingAlgorithmWithOSMTest {
     @Test
     public void testMonacoParallel() throws InterruptedException {
         GraphHopper hopper = createHopper(MONACO, new Profile("car").setVehicle("car").setWeighting("shortest"));
-        hopper.setWayPointMaxDistance(0);
+        hopper.getReaderConfig().setMaxWayPointDistance(0);
         hopper.getRouterConfig().setSimplifyResponse(false);
         hopper.importOrLoad();
         final List<Query> queries = createMonacoCarQueries();
@@ -680,7 +687,7 @@ public class RoutingAlgorithmWithOSMTest {
                 setGraphHopperLocation(GH_LOCATION);
         hopper.getRouterConfig().setSimplifyResponse(false);
         hopper.setMinNetworkSize(0);
-        hopper.setWayPointMaxDistance(0);
+        hopper.getReaderConfig().setMaxWayPointDistance(0);
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile(profiles[0].getName()));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profiles[0].getName()));
         return hopper;
@@ -718,7 +725,7 @@ public class RoutingAlgorithmWithOSMTest {
         assertEquals(query.getPoints().stream().mapToDouble(a -> a.expectedDistance).sum(), responsePath.getDistance(), 2, "unexpected distance");
         // We check the number of points to make sure we found the expected route.
         // There are real world instances where A-B-C is identical to A-C (in meter precision).
-        assertEquals(query.getPoints().stream().mapToInt(a -> a.expectedPoints).sum(), responsePath.getPoints().getSize(), 1, "unexpected point list size");
+        assertEquals(query.getPoints().stream().mapToInt(a -> a.expectedPoints).sum(), responsePath.getPoints().size(), 1, "unexpected point list size");
     }
 
     private List<Function<Query, GHRequest>> createRequestFactories() {

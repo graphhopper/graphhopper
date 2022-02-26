@@ -33,9 +33,7 @@ import java.net.SocketTimeoutException;
  *
  * @author Robin Boldt
  */
-public abstract class AbstractSRTMElevationProvider extends AbstractElevationProvider {
-
-    private static final BitUtil BIT_UTIL = BitUtil.BIG;
+public abstract class AbstractSRTMElevationProvider extends TileBasedElevationProvider {
     private final int DEFAULT_WIDTH;
     private final int MIN_LAT;
     private final int MAX_LAT;
@@ -102,7 +100,7 @@ public abstract class AbstractSRTMElevationProvider extends AbstractElevationPro
             if (fileName == null)
                 return 0;
 
-            DataAccess heights = getDirectory().find("dem" + intKey);
+            DataAccess heights = getDirectory().create("dem" + intKey);
             boolean loadExisting = false;
             try {
                 loadExisting = heights.loadExisting();
@@ -119,8 +117,8 @@ public abstract class AbstractSRTMElevationProvider extends AbstractElevationPro
                     demProvider.setHeights(heights);
                     demProvider.setSeaLevel(true);
                     // use small size on disc and in-memory
-                    heights.setSegmentSize(100).create(10).
-                            flush();
+                    heights.create(10)
+                            .flush();
                     return 0;
                 }
             }
@@ -146,7 +144,8 @@ public abstract class AbstractSRTMElevationProvider extends AbstractElevationPro
             byte[] bytes = getByteArrayFromFile(lat, lon);
             heights.create(bytes.length);
             for (int bytePos = 0; bytePos < bytes.length; bytePos += 2) {
-                short val = BIT_UTIL.toShort(bytes, bytePos);
+                // we need big endianess to read the SRTM files
+                short val = BitUtil.BIG.toShort(bytes, bytePos);
                 if (val < -1000 || val > 12000)
                     val = Short.MIN_VALUE;
 
@@ -205,5 +204,15 @@ public abstract class AbstractSRTMElevationProvider extends AbstractElevationPro
     }
 
     abstract byte[] readFile(File file) throws IOException;
+
+    /**
+     * Return the local file name without file ending, has to be lower case, because DataAccess only supports lower case names.
+     */
+    abstract String getFileName(double lat, double lon);
+
+    /**
+     * Returns the complete URL to download the file
+     */
+    abstract String getDownloadURL(double lat, double lon);
 
 }

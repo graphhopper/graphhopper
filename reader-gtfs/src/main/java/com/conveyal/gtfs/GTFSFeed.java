@@ -52,8 +52,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 /**
  * All entities must be from a single feed namespace.
@@ -111,20 +109,8 @@ public class GTFSFeed implements Cloneable, Closeable {
      *
      * Interestingly, all references are resolvable when tables are loaded in alphabetical order.
      */
-    public void loadFromFile(ZipFile zip, String fid) throws IOException {
+    public void loadFromZipfileOrDirectory(File zip, String fid) throws IOException {
         if (this.loaded) throw new UnsupportedOperationException("Attempt to load GTFS into existing database");
-
-        // NB we don't have a single CRC for the file, so we combine all the CRCs of the component files. NB we are not
-        // simply summing the CRCs because CRCs are (I assume) uniformly randomly distributed throughout the width of a
-        // long, so summing them is a convolution which moves towards a Gaussian with mean 0 (i.e. more concentrated
-        // probability in the center), degrading the quality of the hash. Instead we XOR. Assuming each bit is independent,
-        // this will yield a nice uniformly distributed result, because when combining two bits there is an equal
-        // probability of any input, which means an equal probability of any output. At least I think that's all correct.
-        // Repeated XOR is not commutative but zip.stream returns files in the order they are in the central directory
-        // of the zip file, so that's not a problem.
-        checksum = zip.stream().mapToLong(ZipEntry::getCrc).reduce((l1, l2) -> l1 ^ l2).getAsLong();
-
-        db.getAtomicLong("checksum").set(checksum);
 
         new FeedInfo.Loader(this).loadTable(zip);
         // maybe we should just point to the feed object itself instead of its ID, and null out its stoptimes map after loading
@@ -173,8 +159,8 @@ public class GTFSFeed implements Cloneable, Closeable {
         loaded = true;
     }
 
-    public void loadFromFileAndLogErrors(ZipFile zip) throws IOException {
-        loadFromFile(zip, null);
+    public void loadFromFileAndLogErrors(File zip) throws IOException {
+        loadFromZipfileOrDirectory(zip, null);
         for (GTFSError error : errors) {
             LOG.error(error.getMessageWithContext());
         }
@@ -384,15 +370,14 @@ public class GTFSFeed implements Cloneable, Closeable {
 
     /** Create a GTFS feed in a temp file */
     public GTFSFeed () {
-        // calls to this must be first operation in constructor - why, Java?
         this(DBMaker.newTempFileDB()
                 .transactionDisable()
                 .mmapFileEnable()
                 .asyncWriteEnable()
                 .deleteFilesAfterClose()
+                .closeOnJvmShutdown()
                 .compressionEnable()
-                // .cacheSize(1024 * 1024) this bloats memory consumption
-                .make()); // TODO db.close();
+                .make());
     }
 
     /** Create a GTFS feed connected to a particular DB, which will be created if it does not exist. */
@@ -414,7 +399,6 @@ public class GTFSFeed implements Cloneable, Closeable {
 
     private GTFSFeed (DB db) {
         this.db = db;
-
         agency = db.getTreeMap("agency");
         feedInfo = db.getTreeMap("feed_info");
         routes = db.getTreeMap("routes");
@@ -426,10 +410,7 @@ public class GTFSFeed implements Cloneable, Closeable {
         fares = db.getTreeMap("fares");
         services = db.getTreeMap("services");
         shape_points = db.getTreeMap("shape_points");
-
         feedId = db.getAtomicString("feed_id").get();
-        checksum = db.getAtomicLong("checksum").get();
-
         errors = db.getTreeSet("errors");
     }
 

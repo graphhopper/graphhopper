@@ -29,6 +29,6 @@ public class MaxAxleLoad {
      * it was done with the MappedDecimalEncodedValue still handling (or rounding) of unknown values is unclear.
      */
     public static DecimalEncodedValue create() {
-        return new UnsignedDecimalEncodedValue(KEY, 7, 0.5, Double.POSITIVE_INFINITY, false);
+        return new DecimalEncodedValueImpl(KEY, 7, 0.5, true, false);
     }
 }

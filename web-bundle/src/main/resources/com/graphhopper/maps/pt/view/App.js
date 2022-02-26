@@ -29,6 +29,8 @@ export default class App extends React.Component {
             from: null,
             to: null,
             departureDateTime: new moment(),
+            accessProfile: "foot",
+            egressProfile: "foot",
             rangeQuery: false,
             rangeQueryDuration: "PT120M",
             limitStreetTime: "PT30M",

@@ -26,13 +26,4 @@ import com.graphhopper.util.JsonFeatureCollection;
  */
 @Deprecated
 public class GraphHopperOSM extends GraphHopper {
-
-    public GraphHopperOSM() {
-        this(null);
-    }
-
-    public GraphHopperOSM(JsonFeatureCollection landmarkSplittingFeatureCollection) {
-        super(landmarkSplittingFeatureCollection);
-    }
-
 }

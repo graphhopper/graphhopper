@@ -41,7 +41,6 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
                 properties.getDouble("speed_factor", 2),
                 properties.getBool("turn_costs", false) ? 1 : 0);
 
-        blockBarriersByDefault(properties.getBool("block_barriers", false));
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
@@ -113,12 +112,23 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
         addPushingSection("pedestrian");
         addPushingSection("steps");
 
+        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.EXCELLENT, 1.2d);
+        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.GOOD, 1.0d);
+        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.INTERMEDIATE, 0.9d);
+        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.BAD, 0.7d);
+        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.VERY_BAD, smoothnessFactorPushingSectionThreshold);
+        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.HORRIBLE, smoothnessFactorPushingSectionThreshold);
+        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.VERY_HORRIBLE, smoothnessFactorPushingSectionThreshold);
+        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.IMPASSABLE, smoothnessFactorPushingSectionThreshold);
+
         routeMap.put(INTERNATIONAL, BEST.getValue());
         routeMap.put(NATIONAL, BEST.getValue());
         routeMap.put(REGIONAL, VERY_NICE.getValue());
         routeMap.put(LOCAL, UNCHANGED.getValue());
 
-        absoluteBarriers.add("kissing_gate");
+        blockByDefaultBarriers.add("kissing_gate");
+        blockByDefaultBarriers.add("stile");
+        blockByDefaultBarriers.add("turnstile");
 
         setAvoidSpeedLimit(81);
         setSpecificClassBicycle("roadcycling");
@@ -136,19 +146,8 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
             if ("grade1".equals(trackType))
                 weightToPrioMap.put(110d, PREFER.getValue());
             else if (trackType == null || trackType.startsWith("grade"))
-                weightToPrioMap.put(110d, AVOID_AT_ALL_COSTS.getValue());
+                weightToPrioMap.put(110d, AVOID_MORE.getValue());
         }
-    }
-
-    @Override
-    boolean isSacScaleAllowed(String sacScale) {
-        // for racing bike it is only allowed if empty
-        return false;
-    }
-
-    @Override
-    public int getVersion() {
-        return 2;
     }
 
     @Override

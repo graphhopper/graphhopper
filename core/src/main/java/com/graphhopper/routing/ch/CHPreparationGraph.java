@@ -37,6 +37,8 @@ import static com.graphhopper.util.ArrayUtil.zero;
 /**
  * Graph data structure used for CH preparation. It allows caching weights, and edges that are not needed anymore
  * (those adjacent to contracted nodes) can be removed (see {@link #disconnect}.
+ *
+ * @author easbar
  */
 public class CHPreparationGraph {
     private final int nodes;
@@ -47,6 +49,12 @@ public class CHPreparationGraph {
     // objects for every node (one for outgoing edges and one for incoming edges).
     private PrepareEdge[] prepareEdgesOut;
     private PrepareEdge[] prepareEdgesIn;
+    // todo: it should be possible to store the 'skipped node' for each shortcut instead of storing the shortcut for
+    //       each prepare edge. but this is a bit tricky for edge-based, because of our bidir shortcuts for node-based,
+    //       and because basegraph has multi-edges. the advantage of storing the skipped node is that we could just write
+    //       it to one of the skipped edges fields temporarily, so we would not need this array and save memory during
+    //       the preparation.
+    private IntArrayList shortcutsByPrepareEdges;
     // todo: maybe we can get rid of this
     private int[] degrees;
     private IntSet neighborSet;
@@ -75,9 +83,10 @@ public class CHPreparationGraph {
         this.edgeBased = edgeBased;
         prepareEdgesOut = new PrepareEdge[nodes];
         prepareEdgesIn = new PrepareEdge[nodes];
+        shortcutsByPrepareEdges = new IntArrayList();
         degrees = new int[nodes];
         origGraphBuilder = edgeBased ? new OrigGraph.Builder() : null;
-        neighborSet = new IntHashSet();
+        neighborSet = new IntScatterSet();
         nextShortcutId = edges;
     }
 
@@ -207,6 +216,20 @@ public class CHPreparationGraph {
         ready = true;
     }
 
+    public void setShortcutForPrepareEdge(int prepareEdge, int shortcut) {
+        int index = prepareEdge - edges;
+        if (index >= shortcutsByPrepareEdges.size())
+            shortcutsByPrepareEdges.resize(index + 1);
+        shortcutsByPrepareEdges.set(index, shortcut);
+    }
+
+    public int getShortcutForPrepareEdge(int prepareEdge) {
+        if (prepareEdge < edges)
+            return prepareEdge;
+        int index = prepareEdge - edges;
+        return shortcutsByPrepareEdges.get(index);
+    }
+
     public PrepareGraphEdgeExplorer createOutEdgeExplorer() {
         checkReady();
         return new PrepareGraphEdgeExplorerImpl(prepareEdgesOut, false);
@@ -240,7 +263,6 @@ public class CHPreparationGraph {
         // we use this neighbor set to guarantee a deterministic order of the returned
         // node ids
         neighborSet.clear();
-        IntArrayList neighbors = new IntArrayList(getDegree(node));
         PrepareEdge currOut = prepareEdgesOut[node];
         while (currOut != null) {
             int adjNode = currOut.getNodeB();
@@ -252,8 +274,7 @@ public class CHPreparationGraph {
                 continue;
             }
             removeInEdge(adjNode, currOut);
-            if (neighborSet.add(adjNode))
-                neighbors.add(adjNode);
+            neighborSet.add(adjNode);
             currOut = currOut.getNextOut(node);
         }
         PrepareEdge currIn = prepareEdgesIn[node];
@@ -267,14 +288,13 @@ public class CHPreparationGraph {
                 continue;
             }
             removeOutEdge(adjNode, currIn);
-            if (neighborSet.add(adjNode))
-                neighbors.add(adjNode);
+            neighborSet.add(adjNode);
             currIn = currIn.getNextIn(node);
         }
         prepareEdgesOut[node] = null;
         prepareEdgesIn[node] = null;
         degrees[node] = 0;
-        return neighbors;
+        return neighborSet;
     }
 
     private void removeOutEdge(int node, PrepareEdge prepareEdge) {
@@ -317,6 +337,7 @@ public class CHPreparationGraph {
         checkReady();
         prepareEdgesOut = null;
         prepareEdgesIn = null;
+        shortcutsByPrepareEdges = null;
         degrees = null;
         neighborSet = null;
         if (edgeBased)
@@ -980,6 +1001,11 @@ public class CHPreparationGraph {
             } else {
                 return (e & 0b10) == 0b10;
             }
+        }
+
+        @Override
+        public String toString() {
+            return getBaseNode() + "-" + getAdjNode() + "(" + getOrigEdgeKeyFirst() + ")";
         }
     }
 

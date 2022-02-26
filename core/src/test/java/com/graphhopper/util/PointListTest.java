@@ -18,9 +18,9 @@
 package com.graphhopper.util;
 
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -60,12 +60,12 @@ public class PointListTest {
         for (int i = 0; i < 7; i++) {
             instance.add(0, 0);
         }
-        assertEquals(7, instance.getSize());
+        assertEquals(7, instance.size());
         assertEquals(10, instance.getCapacity());
 
         PointList toAdd = new PointList();
         instance.add(toAdd);
-        assertEquals(7, instance.getSize());
+        assertEquals(7, instance.size());
         assertEquals(10, instance.getCapacity());
 
         toAdd.add(1, 1);
@@ -75,7 +75,7 @@ public class PointListTest {
         toAdd.add(5, 5);
         instance.add(toAdd);
 
-        assertEquals(12, instance.getSize());
+        assertEquals(12, instance.size());
         assertEquals(24, instance.getCapacity());
 
         for (int i = 0; i < toAdd.size(); i++) {
@@ -102,11 +102,11 @@ public class PointListTest {
         for (int i = 0; i < 10; i++) {
             list.add(1, i);
         }
-        assertEquals(10, list.getSize());
-        assertEquals(9, list.getLon(list.getSize() - 1), .1);
+        assertEquals(10, list.size());
+        assertEquals(9, list.getLon(list.size() - 1), .1);
         list.removeLastPoint();
-        assertEquals(9, list.getSize());
-        assertEquals(8, list.getLon(list.getSize() - 1), .1);
+        assertEquals(9, list.size());
+        assertEquals(8, list.getLon(list.size() - 1), .1);
 
         list = new PointList(20, false);
         list.add(1, 1);
@@ -116,7 +116,7 @@ public class PointListTest {
             fail();
         } catch (Exception ex) {
         }
-        assertEquals(0, list.getSize());
+        assertEquals(0, list.size());
     }
 
     @Test
@@ -125,11 +125,11 @@ public class PointListTest {
         for (int i = 0; i < 10; i++) {
             list.add(1, i);
         }
-        assertEquals(10, list.getSize());
+        assertEquals(10, list.size());
         assertEquals(20, list.getCapacity());
 
         PointList copy = list.copy(9, 10);
-        assertEquals(1, copy.getSize());
+        assertEquals(1, copy.size());
         assertEquals(1, copy.getCapacity());
         assertEquals(9, copy.getLon(0), .1);
     }
@@ -168,11 +168,11 @@ public class PointListTest {
 
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testImmutable() {
         PointList pl = new PointList();
         pl.makeImmutable();
-        pl.add(0, 0, 0);
+        assertThrows(IllegalStateException.class, () -> pl.add(0, 0, 0));
     }
 
     @Test()

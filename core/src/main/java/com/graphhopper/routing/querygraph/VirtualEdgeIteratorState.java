@@ -17,11 +17,7 @@
  */
 package com.graphhopper.routing.querygraph;
 
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.IntEncodedValue;
-import com.graphhopper.routing.ev.StringEncodedValue;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
@@ -93,26 +89,26 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
 
     @Override
     public PointList fetchWayGeometry(FetchMode mode) {
-        if (pointList.getSize() == 0)
+        if (pointList.size() == 0)
             return PointList.EMPTY;
         // due to API we need to create a new instance per call!
         if (mode == FetchMode.TOWER_ONLY) {
-            if (pointList.getSize() < 3)
+            if (pointList.size() < 3)
                 return pointList.clone(false);
             PointList towerNodes = new PointList(2, pointList.is3D());
             towerNodes.add(pointList, 0);
-            towerNodes.add(pointList, pointList.getSize() - 1);
+            towerNodes.add(pointList, pointList.size() - 1);
             return towerNodes;
         } else if (mode == FetchMode.ALL)
             return pointList.clone(false);
         else if (mode == FetchMode.BASE_AND_PILLAR)
-            return pointList.copy(0, pointList.getSize() - 1);
+            return pointList.copy(0, pointList.size() - 1);
         else if (mode == FetchMode.PILLAR_AND_ADJ)
-            return pointList.copy(1, pointList.getSize());
+            return pointList.copy(1, pointList.size());
         else if (mode == FetchMode.PILLAR_ONLY) {
-            if (pointList.getSize() == 1)
+            if (pointList.size() == 1)
                 return PointList.EMPTY;
-            return pointList.copy(1, pointList.getSize() - 1);
+            return pointList.copy(1, pointList.size() - 1);
         }
         throw new UnsupportedOperationException("Illegal mode:" + mode);
     }
@@ -272,29 +268,29 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
         property.setEnum(!reverse, edgeFlags, bwd);
         return this;
     }
-    
+
     @Override
     public String get(StringEncodedValue property) {
         return property.getString(reverse, edgeFlags);
     }
-    
+
     @Override
     public EdgeIteratorState set(StringEncodedValue property, String value) {
         property.setString(reverse, edgeFlags, value);
         return this;
     }
-    
+
     @Override
     public String getReverse(StringEncodedValue property) {
         return property.getString(!reverse, edgeFlags);
     }
-    
+
     @Override
     public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
         property.setString(!reverse, edgeFlags, value);
         return this;
     }
-    
+
     @Override
     public EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd) {
         if (!property.isStoreTwoDirections())

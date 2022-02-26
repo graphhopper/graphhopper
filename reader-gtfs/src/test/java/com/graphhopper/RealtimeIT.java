@@ -19,25 +19,27 @@
 package com.graphhopper;
 
 import com.google.transit.realtime.GtfsRealtime;
+import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.GraphHopperGtfs;
 import com.graphhopper.gtfs.PtRouter;
 import com.graphhopper.gtfs.PtRouterImpl;
 import com.graphhopper.gtfs.Request;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.math.BigDecimal;
 import java.time.*;
+import java.util.Arrays;
 
 import static com.google.transit.realtime.GtfsRealtime.TripDescriptor.ScheduleRelationship.ADDED;
 import static com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate.ScheduleRelationship.SCHEDULED;
 import static com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate.ScheduleRelationship.SKIPPED;
 import static com.graphhopper.gtfs.GtfsHelper.time;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class RealtimeIT {
 
@@ -46,25 +48,29 @@ public class RealtimeIT {
     private static PtRouterImpl.Factory graphHopperFactory;
     private static GraphHopperGtfs graphHopperGtfs;
 
-    @BeforeClass
+    @BeforeAll
     public static void init() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
-        ghConfig.putObject("graph.flag_encoders", "car,foot");
-        ghConfig.putObject("gtfs.file", "files/sample-feed.zip");
+        ghConfig.putObject("gtfs.file", "files/sample-feed");
         ghConfig.putObject("graph.location", GRAPH_LOC);
+        ghConfig.setProfiles(Arrays.asList(
+                new Profile("foot").setVehicle("foot").setWeighting("fastest"),
+                new Profile("car").setVehicle("car").setWeighting("fastest")));
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
+
         graphHopperGtfs.close();
         // Re-load read only
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
-        graphHopperFactory = PtRouterImpl.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage());
+
+        graphHopperFactory = new PtRouterImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getGraphHopperStorage(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage());
     }
 
-    @AfterClass
+    @AfterAll
     public static void close() {
         graphHopperGtfs.close();
     }
@@ -98,7 +104,7 @@ public class RealtimeIT {
 
         ResponsePath possibleAlternative = response.getAll().stream().filter(a -> !a.isImpossible()).findFirst().get();
         assertFalse(((Trip.PtLeg) possibleAlternative.getLegs().get(0)).stops.get(0).departureCancelled);
-        assertEquals("I have to wait half an hour for the next one (and ride 5 minutes)", time(0, 35), possibleAlternative.getTime(), 0.1);
+        assertEquals(time(0, 35), possibleAlternative.getTime(), 0.1, "I have to wait half an hour for the next one (and ride 5 minutes)");
 
         ResponsePath impossibleAlternative = response.getAll().stream().filter(a -> a.isImpossible()).findFirst().get();
         assertTrue(impossibleAlternative.isImpossible());
@@ -136,14 +142,14 @@ public class RealtimeIT {
 
         ResponsePath best = response.getBest();
         Trip.PtLeg bestPtLeg = (Trip.PtLeg) best.getLegs().get(0);
-        assertEquals("It's better to wait half an hour for the next one (and ride 5 minutes).", LocalDateTime.parse("2007-01-01T07:19:00").atZone(zoneId).toInstant(), bestPtLeg.stops.get(bestPtLeg.stops.size()-1).plannedArrivalTime.toInstant());
-        assertEquals("There is no predicted arrival time.", null, bestPtLeg.stops.get(bestPtLeg.stops.size()-1).predictedArrivalTime);
+        assertEquals(LocalDateTime.parse("2007-01-01T07:19:00").atZone(zoneId).toInstant(), bestPtLeg.stops.get(bestPtLeg.stops.size() - 1).plannedArrivalTime.toInstant(), "It's better to wait half an hour for the next one (and ride 5 minutes).");
+        assertNull(bestPtLeg.stops.get(bestPtLeg.stops.size() - 1).predictedArrivalTime, "There is no predicted arrival time.");
 
         ResponsePath impossibleAlternative = response.getAll().get(1);
         assertTrue(impossibleAlternative.isImpossible());
         Trip.PtLeg impossiblePtLeg = (Trip.PtLeg) impossibleAlternative.getLegs().get(0);
-        assertEquals("The impossible alternative is my planned 5-minute-trip", LocalDateTime.parse("2007-01-01T06:49:00").atZone(zoneId).toInstant(), impossiblePtLeg.stops.get(impossiblePtLeg.stops.size()-1).plannedArrivalTime.toInstant());
-        assertEquals("..which is very late today", LocalDateTime.parse("2007-01-01T07:49:00").atZone(zoneId).toInstant(), impossiblePtLeg.stops.get(impossiblePtLeg.stops.size()-1).predictedArrivalTime.toInstant());
+        assertEquals(LocalDateTime.parse("2007-01-01T06:49:00").atZone(zoneId).toInstant(), impossiblePtLeg.stops.get(impossiblePtLeg.stops.size() - 1).plannedArrivalTime.toInstant(), "The impossible alternative is my planned 5-minute-trip");
+        assertEquals(LocalDateTime.parse("2007-01-01T07:49:00").atZone(zoneId).toInstant(), impossiblePtLeg.stops.get(impossiblePtLeg.stops.size() - 1).predictedArrivalTime.toInstant(), "..which is very late today");
     }
 
     @Test
@@ -174,7 +180,7 @@ public class RealtimeIT {
 
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
 
-        assertEquals("I am two minutes late for my bus, but the bus is two minutes late, too, so I catch it!", time(0, 5), response.getBest().getTime(), 0.1);
+        assertEquals(time(0, 5), response.getBest().getTime(), 0.1, "I am two minutes late for my bus, but the bus is two minutes late, too, so I catch it!");
     }
 
     @Test
@@ -205,7 +211,7 @@ public class RealtimeIT {
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
         assertEquals(3, response.getAll().size());
 
-        assertEquals("I have to continue to STAGECOACH and then go back one stop with the 07:00 bus.", time(0, 21), response.getBest().getTime(), 0.1);
+        assertEquals(time(0, 21), response.getBest().getTime(), 0.1, "I have to continue to STAGECOACH and then go back one stop with the 07:00 bus.");
 
         ResponsePath impossibleAlternative = response.getAll().get(2);
         assertTrue(impossibleAlternative.isImpossible());
@@ -240,7 +246,7 @@ public class RealtimeIT {
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
         assertEquals(2, response.getAll().size());
 
-        assertEquals("The 6:44 bus will not call at STAGECOACH, so I will be 30 min late at the airport.", time(1, 6), response.getBest().getTime(), 0.1);
+        assertEquals(time(1, 6), response.getBest().getTime(), 0.1, "The 6:44 bus will not call at STAGECOACH, so I will be 30 min late at the airport.");
 
         ResponsePath impossibleAlternative = response.getAll().get(1);
         assertTrue(impossibleAlternative.isImpossible());
@@ -276,7 +282,7 @@ public class RealtimeIT {
                 .setScheduleRelationship(SKIPPED);
 
         // Add a few more trips (but we only need the first one; add more because there used to be a bug with something like an index overflow)
-        for (int i=0; i<100; i++){
+        for (int i=0; i<1; i++){
             final GtfsRealtime.TripUpdate.Builder extraTripUpdate = feedMessageBuilder.addEntityBuilder()
                     .setId("2")
                     .getTripUpdateBuilder()
@@ -299,7 +305,7 @@ public class RealtimeIT {
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
         assertEquals(1, response.getAll().size());
 
-        assertEquals("Luckily, there is an extra service directly from my stop to the airport, at 6:45, taking 30 minutes", time(0, 31), response.getBest().getTime(), 0.1);
+        assertEquals(time(0, 31), response.getBest().getTime(), 0.1, "Luckily, there is an extra service directly from my stop to the airport, at 6:45, taking 30 minutes");
 
         ResponsePath solution = response.getAll().get(0);
         Trip.PtLeg ptLeg = ((Trip.PtLeg) solution.getLegs().stream().filter(leg -> leg instanceof Trip.PtLeg).findFirst().get());
@@ -346,7 +352,7 @@ public class RealtimeIT {
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
         assertEquals(1, response.getAll().size());
 
-        assertEquals("There is an extra trip at 6:45 tomorrow, but that doesn't concern me today.", time(1, 5), response.getBest().getTime(), 0.1);
+        assertEquals(time(1, 5), response.getBest().getTime(), 0.1, "There is an extra trip at 6:45 tomorrow, but that doesn't concern me today.");
     }
 
     @Test
@@ -381,9 +387,9 @@ public class RealtimeIT {
 
         Trip.PtLeg responseWithRealtimeUpdateBest = (Trip.PtLeg) responseWithRealtimeUpdate.getBest().getLegs().get(0);
         Trip.PtLeg responseWithoutRealtimeUpdateBest = (Trip.PtLeg) responseWithoutRealtimeUpdate.getBest().getLegs().get(0);
-        assertEquals("My planned arrival time is correct.", LocalDateTime.parse("2007-01-01T06:49:00").atZone(zoneId).toInstant(), responseWithRealtimeUpdateBest.stops.get(responseWithRealtimeUpdateBest.stops.size()-1).plannedArrivalTime.toInstant());
-        assertEquals("My expected arrival time is the same.", LocalDateTime.parse("2007-01-01T06:49:00").atZone(zoneId).toInstant(), responseWithRealtimeUpdateBest.stops.get(responseWithRealtimeUpdateBest.stops.size()-1).predictedArrivalTime.toInstant());
-        assertNull("The trip without realtime update does not have an expected arrival time.", responseWithoutRealtimeUpdateBest.stops.get(responseWithoutRealtimeUpdateBest.stops.size() - 1).predictedArrivalTime);
+        assertEquals(LocalDateTime.parse("2007-01-01T06:49:00").atZone(zoneId).toInstant(), responseWithRealtimeUpdateBest.stops.get(responseWithRealtimeUpdateBest.stops.size() - 1).plannedArrivalTime.toInstant(), "My planned arrival time is correct.");
+        assertEquals(LocalDateTime.parse("2007-01-01T06:49:00").atZone(zoneId).toInstant(), responseWithRealtimeUpdateBest.stops.get(responseWithRealtimeUpdateBest.stops.size() - 1).predictedArrivalTime.toInstant(), "My expected arrival time is the same.");
+        assertNull(responseWithoutRealtimeUpdateBest.stops.get(responseWithoutRealtimeUpdateBest.stops.size() - 1).predictedArrivalTime, "The trip without realtime update does not have an expected arrival time.");
 
 //        assertEquals(responseWithoutRealtimeUpdateBest.toString(), responseWithRealtimeUpdateBest.toString());
     }
@@ -417,7 +423,7 @@ public class RealtimeIT {
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
         assertEquals(1, response.getAll().size());
 
-        assertEquals("My line run is 3 minutes late.", time(0, 8), response.getBest().getLegs().get(response.getBest().getLegs().size() - 1).getArrivalTime().toInstant().toEpochMilli() - initialTime.toEpochMilli(), 0.1);
+        assertEquals(time(0, 8), response.getBest().getLegs().get(response.getBest().getLegs().size() - 1).getArrivalTime().toInstant().toEpochMilli() - initialTime.toEpochMilli(), 0.1, "My line run is 3 minutes late.");
     }
 
 
@@ -453,8 +459,8 @@ public class RealtimeIT {
         assertEquals(1, response.getAll().size());
 
         Trip.PtLeg ptLeg = ((Trip.PtLeg) response.getBest().getLegs().get(0));
-        assertEquals("My line run is 3 minutes late.", LocalDateTime.parse("2007-01-01T06:52:00").atZone(zoneId).toInstant(), ptLeg.getArrivalTime().toInstant());
-        assertEquals("It is still reporting its original, scheduled time.", LocalDateTime.parse("2007-01-01T06:49:00").atZone(zoneId).toInstant(), ptLeg.stops.get(ptLeg.stops.size()-1).plannedArrivalTime.toInstant());
+        assertEquals(LocalDateTime.parse("2007-01-01T06:52:00").atZone(zoneId).toInstant(), ptLeg.getArrivalTime().toInstant(), "My line run is 3 minutes late.");
+        assertEquals(LocalDateTime.parse("2007-01-01T06:49:00").atZone(zoneId).toInstant(), ptLeg.stops.get(ptLeg.stops.size() - 1).plannedArrivalTime.toInstant(), "It is still reporting its original, scheduled time.");
     }
 
     @Test
@@ -481,8 +487,8 @@ public class RealtimeIT {
                 .setScheduleRelationship(SKIPPED);
 
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
-        assertEquals("I can still use the AB1 trip", "AB1", (((Trip.PtLeg) response.getBest().getLegs().get(0)).trip_id));
-        assertEquals("It takes", time(1,20), response.getBest().getTime());
+        assertEquals("AB1", (((Trip.PtLeg) response.getBest().getLegs().get(0)).trip_id), "I can still use the AB1 trip");
+        assertEquals(time(1, 20), response.getBest().getTime(), "It takes");
     }
 
     @Test
@@ -505,18 +511,18 @@ public class RealtimeIT {
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007,1,1,0,0).atZone(zoneId).toInstant());
+        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 0, 0).atZone(zoneId).toInstant());
         GHResponse route = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
 
         assertFalse(route.hasErrors());
-        assertTrue(route.getAll().get(route.getAll().size()-1).isImpossible());
+        assertTrue(route.getAll().get(route.getAll().size() - 1).isImpossible());
 
         // Note that my stop (BULLFROG), which is skipped, is a switch of "block legs", so even though it looks like I (impossibly) transfer there,
         // this is not a real transfer. The bus drives through BULLFROG without stopping.
         // Very untypical example, but seems correct.
         Trip.PtLeg ptLeg = (Trip.PtLeg) route.getBest().getLegs().get(3);
-        assertEquals("I have to continue on AB1 which skips my stop, go all the way to the end, and ride back.", LocalDateTime.parse("2007-01-01T12:00:00").atZone(zoneId).toInstant(), ptLeg.stops.get(ptLeg.stops.size()-1).plannedArrivalTime.toInstant());
-        assertEquals("Using expected route", "BFC2", ptLeg.trip_id);
+        assertEquals(LocalDateTime.parse("2007-01-01T12:00:00").atZone(zoneId).toInstant(), ptLeg.stops.get(ptLeg.stops.size() - 1).plannedArrivalTime.toInstant(), "I have to continue on AB1 which skips my stop, go all the way to the end, and ride back.");
+        assertEquals("BFC2", ptLeg.trip_id, "Using expected route");
     }
 
     @Test
@@ -546,12 +552,12 @@ public class RealtimeIT {
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
         assertEquals(2, response.getAll().size());
 
-        assertEquals("The 6:44 bus will be late at STAGECOACH, so I will be 30 min late at the airport.", time(1, 6), response.getBest().getTime(), 0.1);
+        assertEquals(time(1, 6), response.getBest().getTime(), 0.1, "The 6:44 bus will be late at STAGECOACH, so I will be 30 min late at the airport.");
 
         ResponsePath impossibleAlternative = response.getAll().get(1);
         assertTrue(impossibleAlternative.isImpossible());
         Trip.Stop delayedStop = ((Trip.PtLeg) impossibleAlternative.getLegs().get(0)).stops.get(2);
-        assertEquals("Five minutes late", 300, Duration.between(delayedStop.plannedArrivalTime.toInstant(), delayedStop.predictedArrivalTime.toInstant()).getSeconds());
+        assertEquals(300, Duration.between(delayedStop.plannedArrivalTime.toInstant(), delayedStop.predictedArrivalTime.toInstant()).getSeconds(), "Five minutes late");
     }
 
     @Test
@@ -598,7 +604,7 @@ public class RealtimeIT {
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
 //        assertEquals(2, response.getAll().size());
 
-        assertEquals("The 6:44 bus will be late at STAGECOACH, but I won't be late because there's an extra trip.", time(0, 36), response.getBest().getTime(), 0.1);
+        assertEquals(time(0, 36), response.getBest().getTime(), 0.1, "The 6:44 bus will be late at STAGECOACH, but I won't be late because there's an extra trip.");
     }
 
     @Test
@@ -645,7 +651,7 @@ public class RealtimeIT {
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
 //        assertEquals(2, response.getAll().size());
 
-        assertEquals("The 6:44 bus will be late at STAGECOACH, but I won't be late because there's an extra trip.", time(0, 36), response.getBest().getTime(), 0.1);
+        assertEquals(time(0, 36), response.getBest().getTime(), 0.1, "The 6:44 bus will be late at STAGECOACH, but I won't be late because there's an extra trip.");
     }
     // TODO: Similar case, but where I need a new transfer edge for it to work
     // TODO: Similar case, but where the departure of the second leg is later than all other departures on that day.
@@ -679,12 +685,12 @@ public class RealtimeIT {
         GHResponse response = graphHopper.route(ghRequest);
         assertEquals(2, response.getAll().size());
 
-        assertEquals("The 7:44 bus will not call at STAGECOACH, so I will be 30 min late at the airport.", time(1, 6), response.getBest().getTime(), 0.1);
+        assertEquals(time(1, 6), response.getBest().getTime(), 0.1, "The 7:44 bus will not call at STAGECOACH, so I will be 30 min late at the airport.");
 
         ResponsePath impossibleAlternative = response.getAll().get(1);
         assertTrue(impossibleAlternative.isImpossible());
         Trip.Stop delayedStop = ((Trip.PtLeg) impossibleAlternative.getLegs().get(0)).stops.get(2);
-        assertEquals("Five minutes late", 300, Duration.between(delayedStop.plannedArrivalTime.toInstant(), delayedStop.predictedArrivalTime.toInstant()).getSeconds());
+        assertEquals(300, Duration.between(delayedStop.plannedArrivalTime.toInstant(), delayedStop.predictedArrivalTime.toInstant()).getSeconds(), "Five minutes late");
 
         // But when I ask about tomorrow, it works as planned
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007,1,2,8,20).atZone(zoneId).toInstant());
@@ -692,7 +698,7 @@ public class RealtimeIT {
         assertEquals(1, response.getAll().size());
 
         Trip.Stop notDelayedStop = ((Trip.PtLeg) response.getBest().getLegs().get(0)).stops.get(2);
-        assertNull("Not late", notDelayedStop.predictedArrivalTime);
+        assertNull(notDelayedStop.predictedArrivalTime, "Not late");
 
     }
 
@@ -722,11 +728,11 @@ public class RealtimeIT {
 
         assertFalse(route.hasErrors());
         assertFalse(route.getAll().isEmpty());
-        assertEquals("Travel time == predicted travel time", time(8, 15), route.getBest().getTime(), 0.1);
-        assertEquals("Using expected route", "STBA", (((Trip.PtLeg) route.getBest().getLegs().get(0)).trip_id));
-        assertEquals("Using expected route", "AB1", (((Trip.PtLeg) route.getBest().getLegs().get(1)).trip_id));
-        assertEquals("Delay at destination", LocalTime.parse("08:15"), LocalTime.from(((Trip.PtLeg) route.getBest().getLegs().get(1)).stops.get(1).predictedArrivalTime.toInstant().atZone(zoneId)));
-        assertEquals("Paid expected fare", 250, route.getBest().getFare().multiply(BigDecimal.valueOf(100)).intValue()); // Two legs, no transfers allowed. Need two 'p' tickets costing 125 cents each.
+        assertEquals(time(8, 15), route.getBest().getTime(), 0.1, "Travel time == predicted travel time");
+        assertEquals("STBA", (((Trip.PtLeg) route.getBest().getLegs().get(0)).trip_id), "Using expected route");
+        assertEquals("AB1", (((Trip.PtLeg) route.getBest().getLegs().get(1)).trip_id), "Using expected route");
+        assertEquals(LocalTime.parse("08:15"), LocalTime.from(((Trip.PtLeg) route.getBest().getLegs().get(1)).stops.get(1).predictedArrivalTime.toInstant().atZone(zoneId)), "Delay at destination");
+        assertEquals(250, route.getBest().getFare().multiply(BigDecimal.valueOf(100)).intValue(), "Paid expected fare"); // Two legs, no transfers allowed. Need two 'p' tickets costing 125 cents each.
     }
 
 

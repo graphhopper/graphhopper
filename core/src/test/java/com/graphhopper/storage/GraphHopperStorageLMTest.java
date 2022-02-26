@@ -10,13 +10,13 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.EncodingManager.Access;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class GraphHopperStorageLMTest {
     @Test
@@ -36,7 +36,7 @@ public class GraphHopperStorageLMTest {
         updateDistancesFor(graph, 0, 0.00, 0.00);
         updateDistancesFor(graph, 1, 0.01, 0.01);
         graph.getEdgeIteratorState(0, 1).setFlags(
-                carFlagEncoder.handleWayTags(encodingManager.createEdgeFlags(), way_0_1, Access.WAY));
+                carFlagEncoder.handleWayTags(encodingManager.createEdgeFlags(), way_0_1));
 
         // 1-2
         ReaderWay way_1_2 = new ReaderWay(28l);
@@ -46,7 +46,7 @@ public class GraphHopperStorageLMTest {
         GHUtility.setSpeed(60, true, true, carFlagEncoder, graph.edge(1, 2).setDistance(1));
         updateDistancesFor(graph, 2, 0.02, 0.02);
         graph.getEdgeIteratorState(1, 2).setFlags(
-                carFlagEncoder.handleWayTags(encodingManager.createEdgeFlags(), way_1_2, Access.WAY));
+                carFlagEncoder.handleWayTags(encodingManager.createEdgeFlags(), way_1_2));
 
         graph.flush();
         graph.close();

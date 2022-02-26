@@ -17,8 +17,7 @@
  */
 package com.graphhopper.routing.lm;
 
-import com.graphhopper.routing.util.AbstractAlgoPreparation;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
@@ -37,12 +36,13 @@ import java.util.List;
  *
  * @author Peter Karich
  */
-public class PrepareLandmarks extends AbstractAlgoPreparation {
+public class PrepareLandmarks {
     private static final Logger LOGGER = LoggerFactory.getLogger(PrepareLandmarks.class);
     private final Graph graph;
     private final LandmarkStorage lms;
     private final LMConfig lmConfig;
     private long totalPrepareTime;
+    private boolean prepared = false;
 
     public PrepareLandmarks(Directory dir, GraphHopperStorage graph, LMConfig lmConfig, int landmarks) {
         this.graph = graph;
@@ -59,10 +59,10 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
     }
 
     /**
-     * @see LandmarkStorage#setSpatialRuleLookup(SpatialRuleLookup)
+     * @see LandmarkStorage#setAreaIndex(AreaIndex)
      */
-    public PrepareLandmarks setSpatialRuleLookup(SpatialRuleLookup ruleLookup) {
-        lms.setSpatialRuleLookup(ruleLookup);
+    public PrepareLandmarks setAreaIndex(AreaIndex<SplitArea> areaIndex) {
+        lms.setAreaIndex(areaIndex);
         return this;
     }
 
@@ -100,10 +100,6 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
         return lms;
     }
 
-    public int getSubnetworksWithLandmarks() {
-        return lms.getSubnetworksWithLandmarks();
-    }
-
     public LMConfig getLMConfig() {
         return lmConfig;
     }
@@ -112,29 +108,28 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
         return lms.loadExisting();
     }
 
-    @Override
-    public void doSpecificWork() {
+    public void doWork() {
+        if (prepared)
+            throw new IllegalStateException("Call doWork only once!");
+        prepared = true;
         StopWatch sw = new StopWatch().start();
         LOGGER.info("Start calculating " + lms.getLandmarkCount() + " landmarks, weighting:" + lms.getLmSelectionWeighting() + ", " + Helper.getMemInfo());
 
         lms.createLandmarks();
         lms.flush();
 
-        LOGGER.info("Calculated landmarks for " + (lms.getSubnetworksWithLandmarks() - 1) + " subnetworks, took:" + sw.stop().getSeconds() + " => "
+        LOGGER.info("Calculated landmarks for " + (lms.getSubnetworksWithLandmarks() - 1) + " subnetworks, took:" + (int) sw.stop().getSeconds() + "s => "
                 + lms.getLandmarksAsGeoJSON() + ", stored weights:" + lms.getLandmarkCount()
                 + ", nodes:" + graph.getNodes() + ", " + Helper.getMemInfo());
         totalPrepareTime = sw.getMillis();
     }
 
-    public long getTotalPrepareTime() {
-        return totalPrepareTime;
+    public boolean isPrepared() {
+        return prepared;
     }
 
-    /**
-     * Convenience method to obtain a routing algo factory from the preparation.
-     */
-    public LMRoutingAlgorithmFactory getRoutingAlgorithmFactory() {
-        return new LMRoutingAlgorithmFactory(getLandmarkStorage());
+    public long getTotalPrepareTime() {
+        return totalPrepareTime;
     }
 
     /**

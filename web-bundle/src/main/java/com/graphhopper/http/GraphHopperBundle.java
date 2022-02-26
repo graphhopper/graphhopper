@@ -22,16 +22,11 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.gtfs.GraphHopperGtfs;
-import com.graphhopper.gtfs.GtfsStorage;
-import com.graphhopper.gtfs.PtRouter;
-import com.graphhopper.gtfs.PtRouterImpl;
+import com.graphhopper.gtfs.*;
 import com.graphhopper.http.health.GraphHopperHealthCheck;
 import com.graphhopper.isochrone.algorithm.JTSTriangulator;
 import com.graphhopper.isochrone.algorithm.Triangulator;
-import com.graphhopper.jackson.GraphHopperConfigModule;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.resources.*;
 import com.graphhopper.routing.ProfileResolver;
@@ -190,7 +185,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         bootstrap.getObjectMapper().registerModule(new Jdk8Module());
 
         Jackson.initObjectMapper(bootstrap.getObjectMapper());
-        bootstrap.getObjectMapper().registerModule(new GraphHopperConfigModule());
         bootstrap.getObjectMapper().setDateFormat(new StdDateFormat());
         // See https://github.com/dropwizard/dropwizard/issues/1558
         bootstrap.getObjectMapper().enable(MapperFeature.ALLOW_EXPLICIT_PROPERTY_RENAMING);
@@ -232,7 +226,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         // a single entry.
         environment.jersey().register(new IllegalArgumentExceptionMapper());
 
-        final GraphHopperManaged graphHopperManaged = new GraphHopperManaged(configuration.getGraphHopperConfiguration(), environment.getObjectMapper());
+        final GraphHopperManaged graphHopperManaged = new GraphHopperManaged(configuration.getGraphHopperConfiguration());
         environment.lifecycle().manage(graphHopperManaged);
         final GraphHopper graphHopper = graphHopperManaged.getGraphHopper();
         environment.jersey().register(new AbstractBinder() {
@@ -240,7 +234,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
             protected void configure() {
                 bind(configuration.getGraphHopperConfiguration()).to(GraphHopperConfig.class);
                 bind(graphHopper).to(GraphHopper.class);
-                bind(graphHopper).to(GraphHopperAPI.class);
 
                 bind(new JTSTriangulator(graphHopper.getRouterConfig())).to(Triangulator.class);
                 bindFactory(PathDetailsBuilderFactoryFactory.class).to(PathDetailsBuilderFactory.class);
@@ -266,11 +259,16 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
             environment.jersey().register(new AbstractBinder() {
                 @Override
                 protected void configure() {
-                    bind(PtRouterImpl.class).to(PtRouter.class);
+                    if (configuration.getGraphHopperConfiguration().getBool("gtfs.free_walk", false)) {
+                        bind(PtRouterFreeWalkImpl.class).to(PtRouter.class);
+                    } else {
+                        bind(PtRouterImpl.class).to(PtRouter.class);
+                    }
                 }
             });
             environment.jersey().register(PtRouteResource.class);
             environment.jersey().register(PtIsochroneResource.class);
+            environment.jersey().register(PtMVTResource.class);
             environment.jersey().register(PtRedirectFilter.class);
         }
         environment.jersey().register(SPTResource.class);
@@ -278,6 +276,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         environment.jersey().register(InfoResource.class);
         environment.healthChecks().register("graphhopper", new GraphHopperHealthCheck(graphHopper));
         environment.jersey().register(environment.healthChecks());
-        environment.jersey().register(HealthcheckResource.class);
+        environment.jersey().register(HealthCheckResource.class);
     }
 }

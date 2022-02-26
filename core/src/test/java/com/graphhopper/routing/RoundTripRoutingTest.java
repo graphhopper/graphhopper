@@ -33,7 +33,7 @@ import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,7 +41,8 @@ import java.util.List;
 
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author Peter Karich
@@ -55,10 +56,10 @@ public class RoundTripRoutingTest {
     private final GHPoint ghPoint1 = new GHPoint(0, 0);
     private final GHPoint ghPoint2 = new GHPoint(1, 1);
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void lookup_throwsIfNumberOfPointsNotOne() {
-        RoundTripRouting.lookup(Arrays.asList(ghPoint1, ghPoint2),
-                new FiniteWeightFilter(fastestWeighting), null, new RoundTripRouting.Params());
+        assertThrows(IllegalArgumentException.class, () -> RoundTripRouting.lookup(Arrays.asList(ghPoint1, ghPoint2),
+                new FiniteWeightFilter(fastestWeighting), null, new RoundTripRouting.Params()));
     }
 
     @Test
@@ -122,7 +123,7 @@ public class RoundTripRoutingTest {
     }
 
     private Graph createTestGraph() {
-        Graph graph = new GraphHopperStorage(new RAMDirectory(), em, false, true).create(1000);
+        Graph graph = new GraphBuilder(em).withTurnCosts(true).create();
         AlternativeRouteTest.initTestGraph(graph, carFE);
         return graph;
     }

@@ -135,7 +135,12 @@ GHRequest.prototype.setElevation = function (elevation) {
 };
 
 GHRequest.prototype.hasElevation = function () {
-    return this.api_params.elevation === true;
+    if (Array.isArray(this.api_params.elevation)) {
+        return this.api_params.elevation.every(function (e) {
+            return e === true || e === "true";
+        })
+    } else
+        return this.api_params.elevation === true;
 };
 
 GHRequest.prototype.getVehicle = function () {
@@ -196,7 +201,7 @@ GHRequest.prototype.createGPXURL = function (withRoute, withTrack, withWayPoints
 };
 
 GHRequest.prototype.createHistoryURL = function () {
-    var skip = {"key": true};
+    var skip = {"key": true, "custom_model": true};
     return this.createPath("?" + this.createPointParams(true), skip) + "&use_miles=" + !!this.useMiles + (this.selectedDetail ? "&selected_detail=" + this.selectedDetail : "");
 };
 

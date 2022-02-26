@@ -47,19 +47,17 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected final Set<String> ferries = new HashSet<>(5);
     protected final Set<String> oneways = new HashSet<>(5);
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
-    protected final Set<String> absoluteBarriers = new HashSet<>(5);
-    protected final Set<String> potentialBarriers = new HashSet<>(5);
+    protected final Set<String> blockByDefaultBarriers = new HashSet<>(5); // barrier which needs to be explicitly allowed, otherwise it blocks
+    protected final Set<String> passByDefaultBarriers = new HashSet<>(5);  // barrier which may be explicitly forbidden, otherwise it is allowed
     protected final int speedBits;
     protected final double speedFactor;
     private final int maxTurnCosts;
-    private long encoderBit;
     protected BooleanEncodedValue accessEnc;
     protected BooleanEncodedValue roundaboutEnc;
     protected DecimalEncodedValue avgSpeedEnc;
     // This value determines the maximal possible speed of any road regardless of the maxspeed value
     // lower values allow more compact representation of the routing graph
     protected int maxPossibleSpeed;
-    private boolean blockByDefault = true;
     private boolean blockFords = true;
     private boolean registered;
     protected EncodedValueLookup encodedValueLookup;
@@ -108,17 +106,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         return registered;
     }
 
-    /**
-     * Should potential barriers block when no access limits are given?
-     */
-    protected void blockBarriersByDefault(boolean blockByDefault) {
-        this.blockByDefault = blockByDefault;
-    }
-
-    public boolean isBlockBarriers() {
-        return blockByDefault;
-    }
-
     public boolean isBlockFords() {
         return blockFords;
     }
@@ -142,18 +129,17 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     /**
      * Defines bits used for edge flags used for access, speed etc.
      */
-    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix, int index) {
+    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix) {
         // define the first 2 bits in flags for access
         registerNewEncodedValue.add(accessEnc = new SimpleBooleanEncodedValue(EncodingManager.getKey(prefix, "access"), true));
         roundaboutEnc = getBooleanEncodedValue(Roundabout.KEY);
-        encoderBit = 1L << index;
     }
 
     /**
      * Analyze properties of a way and create the edge flags. This method is called in the second
      * parsing step.
      */
-    public abstract IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access);
+    public abstract IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way);
 
     public int getMaxTurnCosts() {
         return maxTurnCosts;
@@ -168,41 +154,30 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     public abstract EncodingManager.Access getAccess(ReaderWay way);
 
     /**
-     * Parse tags on nodes. Node tags can add to speed (like traffic_signals) where the value is
-     * strict negative or blocks access (like a barrier), then the value is strictly positive. This
-     * method is called in the second parsing step.
-     *
-     * @return encoded values or 0 if not blocking or no value stored
+     * @return true if the given OSM node blocks access for this vehicle, false otherwise
      */
-    public long handleNodeTags(ReaderNode node) {
-        // absolute barriers always block
-        if (node.hasTag("barrier", absoluteBarriers))
-            return encoderBit;
-
-        // movable barriers block if they are not marked as passable
-        if (node.hasTag("barrier", potentialBarriers)) {
-            boolean locked = false;
-            if (node.hasTag("locked", "yes"))
-                locked = true;
+    public boolean isBarrier(ReaderNode node) {
+        boolean blockByDefault = node.hasTag("barrier", blockByDefaultBarriers);
+        if (blockByDefault || node.hasTag("barrier", passByDefaultBarriers)) {
+            boolean locked = node.hasTag("locked", "yes");
 
             for (String res : restrictions) {
                 if (!locked && node.hasTag(res, intendedValues))
-                    return 0;
+                    return false;
 
                 if (node.hasTag(res, restrictedValues))
-                    return encoderBit;
+                    return true;
             }
 
-            if (blockByDefault)
-                return encoderBit;
+            return blockByDefault;
         }
 
         if ((node.hasTag("highway", "ford") || node.hasTag("ford", "yes"))
                 && (blockFords && !node.hasTag(restrictions, intendedValues) || node.hasTag(restrictions, restrictedValues))) {
-            return encoderBit;
+            return true;
         }
 
-        return 0;
+        return false;
     }
 
     @Override
@@ -231,25 +206,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      */
     protected boolean isValidSpeed(double speed) {
         return !Double.isNaN(speed);
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 61 * hash + this.accessEnc.hashCode();
-        hash = 61 * hash + this.toString().hashCode();
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null)
-            return false;
-
-        if (getClass() != obj.getClass())
-            return false;
-        AbstractFlagEncoder afe = (AbstractFlagEncoder) obj;
-        return toString().equals(afe.toString()) && encoderBit == afe.encoderBit && accessEnc.equals(afe.accessEnc);
     }
 
     /**

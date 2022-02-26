@@ -18,18 +18,17 @@
 package com.graphhopper.reader.dem;
 
 import com.graphhopper.util.Downloader;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Robin Boldt
@@ -38,12 +37,12 @@ public class GMTEDProviderTest {
     private double precision = .1;
     GMTEDProvider instance;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         instance = new GMTEDProvider();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         instance.release();
     }
@@ -97,9 +96,9 @@ public class GMTEDProviderTest {
         });
         assertEquals(0, instance.getEle(46, -20), 1);
 
-        // file not found => small!
+        // file not found
         assertTrue(file.exists());
-        assertEquals(228, file.length());
+        assertEquals(1048676, file.length());
 
         instance.setDownloader(new Downloader("test GH") {
             @Override
@@ -111,7 +110,7 @@ public class GMTEDProviderTest {
         try {
             instance.setSleep(30);
             instance.getEle(16, -20);
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
         }
 
@@ -124,7 +123,8 @@ public class GMTEDProviderTest {
     Change to: <argLine>-Xmx500m -Xms500m</argLine>
     This test will download about 2gb of data.
      */
-    @Ignore
+    @Disabled
+    @Test
     public void testGetEle() {
         assertEquals(339, instance.getEle(49.949784, 11.57517), precision);
         assertEquals(438, instance.getEle(49.968668, 11.575127), precision);
@@ -149,7 +149,8 @@ public class GMTEDProviderTest {
 
     }
 
-    @Ignore
+    @Disabled
+    @Test
     public void testGetEleVerticalBorder() {
         // Border between the tiles 50n000e and 70n000e
         assertEquals("50n000e_20101117_gmted_mea075", instance.getFileName(69.999999, 19.493));
@@ -163,7 +164,8 @@ public class GMTEDProviderTest {
         assertEquals(241, instance.getEle(70, 19.236), precision);
     }
 
-    @Ignore
+    @Disabled
+    @Test
     public void testGetEleHorizontalBorder() {
         // Border between the tiles 50n000e and 50n030e
         assertEquals("50n000e_20101117_gmted_mea075", instance.getFileName(53, 29.999999));

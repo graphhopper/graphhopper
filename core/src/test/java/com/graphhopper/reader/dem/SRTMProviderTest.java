@@ -17,14 +17,14 @@
  */
 package com.graphhopper.reader.dem;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Peter Karich
@@ -33,12 +33,12 @@ public class SRTMProviderTest {
     private double precision = .1;
     SRTMProvider instance;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         instance = new SRTMProvider();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         instance.release();
     }
@@ -99,7 +99,8 @@ public class SRTMProviderTest {
         assertEquals(161, instance.getEle(55.8943144, -3), 1e-1);
     }
 
-    @Ignore
+    @Disabled
+    @Test
     public void testGetEle() {
         instance = new SRTMProvider();
         assertEquals(337, instance.getEle(49.949784, 11.57517), precision);
@@ -124,7 +125,8 @@ public class SRTMProviderTest {
         assertEquals(0, instance.getEle(60.251, 18.805), precision);
     }
 
-    @Ignore
+    @Disabled
+    @Test
     public void testGetEleVerticalBorder() {
         instance = new SRTMProvider();
         // Border between the tiles N42E011 and N43E011
@@ -134,7 +136,8 @@ public class SRTMProviderTest {
         assertEquals(419, instance.getEle(43.000001, 11.48), precision);
     }
 
-    @Ignore
+    @Disabled
+    @Test
     public void testGetEleHorizontalBorder() {
         instance = new SRTMProvider();
         // Border between the tiles N42E011 and N42E012
@@ -144,7 +147,8 @@ public class SRTMProviderTest {
         assertEquals(324, instance.getEle(42.1, 12.000001), precision);
     }
 
-    @Ignore
+    @Disabled
+    @Test
     public void testDownloadIssue_1274() {
         instance = new SRTMProvider();
         // The file is incorrectly named on the sever: N55W061hgt.zip (it should be N55W061.hgt.zip)

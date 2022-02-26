@@ -17,9 +17,10 @@
  */
 package com.graphhopper.coll;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author Peter Karich
@@ -80,9 +81,9 @@ public class GHTreeMapComposedTest {
         assertEquals(1, instance.getSize());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testRemovingNonExistentKeyThrows() {
         instance.insert(5, 1.1f);
-        instance.remove(5, 2.2f);
+        assertThrows(IllegalStateException.class, () -> instance.remove(5, 2.2f));
     }
 }

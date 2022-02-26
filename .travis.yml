@@ -1,6 +1,6 @@
 language: java
 sudo: true
-dist: trusty
+dist: xenial
 
 env:
   global:
@@ -12,10 +12,12 @@ env:
 matrix:
   include:
     - jdk: openjdk8
-    - env: JDK='OpenJDK 16'
-      install: . ./install-jdk.sh -F 16 -C --url 'https://api.adoptopenjdk.net/v3/binary/latest/16/ga/linux/x64/jdk/hotspot/normal/adoptopenjdk'
+    - env: JDK='OpenJDK 11'
+      install: . ./install-jdk.sh -F 11 -C
     - env: JDK='OpenJDK 17'
-      install: . ./install-jdk.sh -F 17 -C --url 'https://api.adoptopenjdk.net/v3/binary/latest/17/ea/linux/x64/jdk/hotspot/normal/adoptopenjdk'
+      install: . ./install-jdk.sh -F 17 -C
+    - env: JDK='OpenJDK 18'
+      install: . ./install-jdk.sh -F ea -C
 
 # avoid default dependency command for maven, 'true' means 'return true' and continue
 install: true

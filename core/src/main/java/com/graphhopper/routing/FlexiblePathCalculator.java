@@ -23,6 +23,7 @@ import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.exceptions.MaximumNodesExceededException;
 
 import java.util.Collections;
 import java.util.List;
@@ -84,7 +85,7 @@ public class FlexiblePathCalculator implements PathCalculator {
         if (paths.isEmpty())
             throw new IllegalStateException("Path list was empty for " + from + " -> " + to);
         if (algo.getVisitedNodes() >= algoOpts.getMaxVisitedNodes())
-            throw new IllegalArgumentException("No path found due to maximum nodes exceeded " + algoOpts.getMaxVisitedNodes());
+            throw new MaximumNodesExceededException("No path found due to maximum nodes exceeded " + algoOpts.getMaxVisitedNodes(), algoOpts.getMaxVisitedNodes());
         visitedNodes = algo.getVisitedNodes();
         debug += ", " + algo.getName() + "-routing:" + sw.stop().getMillis() + " ms";
         return paths;

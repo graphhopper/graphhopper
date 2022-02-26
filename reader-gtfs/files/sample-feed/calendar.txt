@@ -1,0 +1,7 @@
+service_id,monday,tuesday,wednesday,thursday,friday,saturday,sunday,start_date,end_date
+FULLW,1,1,1,1,1,1,1,20070101,20101231
+WE,0,0,0,0,0,1,1,20070101,20101231
+WEEK,1,1,1,1,1,0,0,20070101,20101231
+SAT,0,0,0,0,0,1,0,20070101,20101231
+SUN,0,0,0,0,0,0,1,20070101,20101231
+WEEK_SUN,1,1,1,1,1,0,1,20070101,20101231

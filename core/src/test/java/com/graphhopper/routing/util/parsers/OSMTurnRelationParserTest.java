@@ -9,13 +9,13 @@ import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.TurnCostStorage;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class OSMTurnRelationParserTest {
 
@@ -37,7 +37,7 @@ public class OSMTurnRelationParserTest {
 
             @Override
             public int getInternalNodeIdOfOsmNode(long nodeOsmId) {
-                return osmNodeToInternal.get(nodeOsmId);
+                return osmNodeToInternal.getOrDefault(nodeOsmId, -1);
             }
 
             @Override

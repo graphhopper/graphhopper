@@ -17,7 +17,7 @@ import java.util.List;
 public class OSMGetOffBikeParser implements TagParser {
 
     private final HashSet<String> pushBikeHighwayTags = new HashSet<>();
-    private final List<String> accepted = Arrays.asList("designated", "yes");
+    private final List<String> accepted = Arrays.asList("designated", "yes", "official", "permissive");
     private final BooleanEncodedValue offBikeEnc;
 
     public OSMGetOffBikeParser() {
@@ -36,7 +36,7 @@ public class OSMGetOffBikeParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         String highway = way.getTag("highway");
         if (!way.hasTag("bicycle", accepted) && (pushBikeHighwayTags.contains(highway) || way.hasTag("railway", "platform"))
                 || "steps".equals(highway) || way.hasTag("bicycle", "dismount")) {

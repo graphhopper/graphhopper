@@ -19,8 +19,9 @@ package com.graphhopper.search;
 
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.Storable;
 import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.Constants;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 
 import java.util.*;
@@ -28,7 +29,7 @@ import java.util.*;
 /**
  * @author Peter Karich
  */
-public class StringIndex implements Storable<StringIndex> {
+public class StringIndex {
     private static final long EMPTY_POINTER = 0, START_POINTER = 1;
     // Store the key index in 2 bytes. Use negative values for marking the value as duplicate.
     static final int MAX_UNIQUE_KEYS = (1 << 15);
@@ -51,17 +52,12 @@ public class StringIndex implements Storable<StringIndex> {
     private long lastEntryPointer = -1;
     private Map<String, String> lastEntryMap;
 
-    public StringIndex(Directory dir) {
-        this(dir, 1000);
-    }
-
     /**
      * Specify a larger cacheSize to reduce disk usage. Note that this increases the memory usage of this object.
      */
-    public StringIndex(Directory dir, final int cacheSize) {
-        keys = dir.find("string_index_keys");
-        keys.setSegmentSize(10 * 1024);
-        vals = dir.find("string_index_vals");
+    public StringIndex(Directory dir, final int cacheSize, final int segmentSize) {
+        keys = dir.create("string_index_keys", segmentSize);
+        vals = dir.create("string_index_vals", segmentSize);
         smallCache = new LinkedHashMap<String, Long>(cacheSize, 0.75f, true) {
             @Override
             protected boolean removeEldestEntry(Map.Entry<String, Long> entry) {
@@ -70,7 +66,6 @@ public class StringIndex implements Storable<StringIndex> {
         };
     }
 
-    @Override
     public StringIndex create(long initBytes) {
         keys.create(initBytes);
         vals.create(initBytes);
@@ -80,12 +75,15 @@ public class StringIndex implements Storable<StringIndex> {
         return this;
     }
 
-    @Override
     public boolean loadExisting() {
         if (vals.loadExisting()) {
             if (!keys.loadExisting())
                 throw new IllegalStateException("Loaded values but cannot load keys");
-            bytePointer = BitUtil.LITTLE.combineIntsToLong(vals.getHeader(0), vals.getHeader(4));
+            int stringIndexKeysVersion = keys.getHeader(0);
+            int stringIndexValsVersion = vals.getHeader(0);
+            GHUtility.checkDAVersion(keys.getName(), Constants.VERSION_STRING_IDX, stringIndexKeysVersion);
+            GHUtility.checkDAVersion(vals.getName(), Constants.VERSION_STRING_IDX, stringIndexValsVersion);
+            bytePointer = BitUtil.LITTLE.combineIntsToLong(vals.getHeader(4), vals.getHeader(8));
 
             // load keys into memory
             int count = keys.getShort(0);
@@ -199,7 +197,7 @@ public class StringIndex implements Storable<StringIndex> {
         if (keyCount == 0)
             return Collections.emptyMap();
 
-        Map<String, String> map = new HashMap<>(keyCount);
+        Map<String, String> map = new LinkedHashMap<>(keyCount);
         long tmpPointer = entryPointer + 1;
         for (int i = 0; i < keyCount; i++) {
             int currentKeyIndex = vals.getShort(tmpPointer);
@@ -285,7 +283,7 @@ public class StringIndex implements Storable<StringIndex> {
             tmpPointer += 1 + valueLength;
         }
 
-        // value for specified key does not existing for the specified pointer
+        // value for specified key does not exist for the specified pointer
         return null;
     }
 
@@ -301,8 +299,8 @@ public class StringIndex implements Storable<StringIndex> {
         return bytes;
     }
 
-    @Override
     public void flush() {
+        keys.setHeader(0, Constants.VERSION_STRING_IDX);
         keys.ensureCapacity(2);
         keys.setShort(0, (short) keysInMem.size());
         long keyBytePointer = 2;
@@ -317,34 +315,23 @@ public class StringIndex implements Storable<StringIndex> {
         }
         keys.flush();
 
-        vals.setHeader(0, BitUtil.LITTLE.getIntLow(bytePointer));
-        vals.setHeader(4, BitUtil.LITTLE.getIntHigh(bytePointer));
+        vals.setHeader(0, Constants.VERSION_STRING_IDX);
+        vals.setHeader(4, BitUtil.LITTLE.getIntLow(bytePointer));
+        vals.setHeader(8, BitUtil.LITTLE.getIntHigh(bytePointer));
         vals.flush();
     }
 
-    @Override
     public void close() {
         keys.close();
         vals.close();
     }
 
-    @Override
     public boolean isClosed() {
         return vals.isClosed() && keys.isClosed();
     }
 
-    public void setSegmentSize(int segments) {
-        keys.setSegmentSize(segments);
-        vals.setSegmentSize(segments);
-    }
-
-    @Override
     public long getCapacity() {
         return vals.getCapacity() + keys.getCapacity();
     }
 
-    public void copyTo(StringIndex stringIndex) {
-        keys.copyTo(stringIndex.keys);
-        vals.copyTo(stringIndex.vals);
-    }
 }

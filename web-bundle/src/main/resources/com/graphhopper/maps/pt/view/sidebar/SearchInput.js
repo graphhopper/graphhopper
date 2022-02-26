@@ -1,6 +1,6 @@
-import { DateInput, Select, TextInput, TimeInput } from "../components/Inputs.js";
-import Point from "../../data/Point.js";
+import {DateInput, Select, TextInput, TimeInput} from "../components/Inputs.js";
 import {TimeOption} from "../../data/Query.js";
+
 export default (({
                      search,
                      onSearchChange
@@ -10,20 +10,6 @@ export default (({
         onSearchChange: onSearchChange
     });
 });
-const options = [{
-    value: TimeOption.DEPARTURE,
-    label: "Departure at"
-}, {
-    value: TimeOption.ARRIVAL,
-    label: "Arrival at"
-}];
-const trueFalse = [{
-    value: "true",
-    label: "true"
-}, {
-    value: "false",
-    label: "false"
-}];
 const SearchActionType = {
     FROM: "SearchActionType_FROM",
     TO: "SearchActionType_TO",
@@ -48,12 +34,12 @@ class SearchInput extends React.Component {
         }, React.createElement("div", {
             className: "locationInput"
         }, React.createElement(TextInput, {
-            value: this.props.search.from != null ? this.props.search.from.toString() : "",
+            value: this.props.search.from != null ? [this.props.search.from.lat,this.props.search.from.lng].toString() : "",
             label: "From",
             actionType: SearchActionType.FROM,
             onChange: this.onChange
         }), React.createElement(TextInput, {
-            value: this.props.search.to != null ? this.props.search.to.toString() : "",
+            value: this.props.search.to != null ? [this.props.search.to.lat,this.props.search.to.lng].toString() : "",
             label: "To",
             actionType: SearchActionType.TO,
             onChange: this.onChange
@@ -62,7 +48,13 @@ class SearchInput extends React.Component {
         }, React.createElement(Select, {
             value: this.props.search.timeOption,
             label: "Time",
-            options: options,
+            options: [{
+                value: TimeOption.DEPARTURE,
+                label: "Departure at"
+            }, {
+                value: TimeOption.ARRIVAL,
+                label: "Arrival at"
+            }],
             onChange: this.onChange,
             actionType: SearchActionType.TIME_OPTION
         }), this.props.search.timeOption != TimeOption.NOW ? React.createElement("div", {
@@ -84,11 +76,18 @@ class SearchInput extends React.Component {
             "div",
             null,
             React.createElement(Select, {
-                value: this.props.search.rangeQuery,
-                label: "Range query",
-                options: trueFalse,
+                value: this.props.search.accessProfile,
+                label: "Access profile",
+                options: this.accessEgressProfileOptions(),
                 onChange: this.handleInputChange,
-                actionType: "rangeQuery"
+                actionType: "accessProfile"
+            }),
+            React.createElement(Select, {
+                value: this.props.search.egressProfile,
+                label: "Egress profile",
+                options: this.accessEgressProfileOptions(),
+                onChange: this.handleInputChange,
+                actionType: "egressProfile"
             }),
             React.createElement(
                 TextInput,
@@ -111,11 +110,30 @@ class SearchInput extends React.Component {
             React.createElement(Select, {
                 value: this.props.search.ignoreTransfers,
                 label: "Ignore # transfers as criterion",
-                options: trueFalse,
+                options: [{
+                    value: "true",
+                    label: "true"
+                }, {
+                    value: "false",
+                    label: "false"
+                }],
                 onChange: this.handleInputChange,
                 actionType: "ignoreTransfers"
             })
         ) : ""));
+    }
+
+    accessEgressProfileOptions() {
+        return this.props.search.info.profiles
+            .filter(function (profile) {
+                return profile.name != "pt";
+            })
+            .map(function (profile) {
+                return {
+                    value: profile.name,
+                    label: profile.name
+                }
+            });
     }
 
     handleInputChange(action) {
@@ -128,13 +146,13 @@ class SearchInput extends React.Component {
         switch (action.type) {
             case SearchActionType.FROM:
                 this.props.onSearchChange({
-                    from: Point.create(action.value)
+                    from: this.createFromString(action.value)
                 });
                 break;
 
             case SearchActionType.TO:
                 this.props.onSearchChange({
-                    to: Point.create(action.value)
+                    to: this.createFromString(action.value)
                 });
                 break;
 
@@ -174,6 +192,15 @@ class SearchInput extends React.Component {
             default:
                 break;
         }
+    }
+
+    createFromString(coord) {
+        let split = coord.split(",");
+        let map = split.map(value => {
+            let number = Number.parseFloat(value);
+            return Number.isNaN(number) ? 0 : number;
+        });
+        return new mapboxgl.LngLat(map[1],map[0]);
     }
 
 }

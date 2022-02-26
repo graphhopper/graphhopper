@@ -20,9 +20,11 @@ package com.graphhopper.routing.weighting;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
+import static com.graphhopper.routing.util.PriorityCode.BEST;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 
 /**
@@ -45,8 +47,7 @@ public class CurvatureWeighting extends PriorityWeighting {
         curvatureEnc = flagEncoder.getDecimalEncodedValue(EncodingManager.getKey(flagEncoder, "curvature"));
         avSpeedEnc = flagEncoder.getDecimalEncodedValue(EncodingManager.getKey(flagEncoder, "average_speed"));
         double minBendiness = 1; // see correctErrors
-        double maxPriority = 1; // BEST / BEST
-        minFactor = minBendiness / Math.log(flagEncoder.getMaxSpeed()) / (0.5 + maxPriority);
+        minFactor = minBendiness / Math.log(flagEncoder.getMaxSpeed()) / PriorityCode.getValue(BEST.getValue());
     }
 
     @Override
@@ -56,15 +57,14 @@ public class CurvatureWeighting extends PriorityWeighting {
 
     @Override
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
-        double priority = priorityEnc.getDecimal(false, edgeState.getFlags());
-        double bendiness = curvatureEnc.getDecimal(false, edgeState.getFlags());
+        double priority = edgeState.get(priorityEnc);
+        double bendiness = edgeState.get(curvatureEnc);
         double speed = getRoadSpeed(edgeState, reverse);
         double roadDistance = edgeState.getDistance();
 
         // We use the log of the speed to decrease the impact of the speed, therefore we don't use the highway
         double regularWeight = roadDistance / Math.log(speed);
-
-        return (bendiness * regularWeight) / (0.5 + priority);
+        return (bendiness * regularWeight) / priority;
     }
 
     protected double getRoadSpeed(EdgeIteratorState edge, boolean reverse) {

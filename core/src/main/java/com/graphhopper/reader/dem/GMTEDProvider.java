@@ -17,7 +17,6 @@
  */
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.util.Helper;
 import org.apache.xmlgraphics.image.codec.tiff.TIFFDecodeParam;
 import org.apache.xmlgraphics.image.codec.tiff.TIFFImageDecoder;
 import org.apache.xmlgraphics.image.codec.util.SeekableStream;

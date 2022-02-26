@@ -63,7 +63,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * taking place  in {@link PrepareContractionHierarchies} is not covered, but this is ok, because the correctness
  * of CH should not depend on the contraction order.
  *
- * @see EdgeBasedNodeContractor where shortcut creation is tested independent from the routing query
+ * @see EdgeBasedNodeContractor where shortcut creation is tested independent of the routing query
  */
 public class CHTurnCostTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(CHTurnCostTest.class);
@@ -85,7 +85,6 @@ public class CHTurnCostTest {
         graph = new GraphBuilder(encodingManager).build();
         turnCostStorage = graph.getTurnCostStorage();
         chConfigs = createCHConfigs();
-        graph.addCHGraphs(chConfigs).create(1000);
         // the default CH profile with infinite u-turn costs, can be reset in tests that should run with finite u-turn
         // costs
         chConfig = chConfigs.get(0);
@@ -796,6 +795,26 @@ public class CHTurnCostTest {
     }
 
     @Test
+    void anotherDoubleZeroWeightLoop() {
+        // taken from a random graph test. this one failed in a feature branch when the others did not.
+        //         1 - 4 - 6 - 7
+        //       /
+        // 0 - 5 - 2
+        //    oo
+        // note there are two (directed) zero weight loops at node 5!
+        GHUtility.setSpeed(60.000000, 60.000000, encoder, graph.edge(5, 1).setDistance(263.944000)); // edgeId=0
+        GHUtility.setSpeed(120.000000, 120.000000, encoder, graph.edge(5, 2).setDistance(315.026000)); // edgeId=1
+        GHUtility.setSpeed(40.000000, 40.000000, encoder, graph.edge(1, 4).setDistance(157.012000)); // edgeId=2
+        GHUtility.setSpeed(45.000000, 45.000000, encoder, graph.edge(5, 0).setDistance(513.913000)); // edgeId=3
+        GHUtility.setSpeed(15.000000, 15.000000, encoder, graph.edge(6, 4).setDistance(678.992000)); // edgeId=4
+        GHUtility.setSpeed(60.000000, 0.000000, encoder, graph.edge(5, 5).setDistance(0.000000)); // edgeId=5
+        GHUtility.setSpeed(40.000000, 40.000000, encoder, graph.edge(6, 7).setDistance(890.261000)); // edgeId=6
+        GHUtility.setSpeed(90.000000, 0.000000, encoder, graph.edge(5, 5).setDistance(0.000000)); // edgeId=7
+        graph.freeze();
+        automaticCompareCHWithDijkstra(100);
+    }
+
+    @Test
     public void testFindPath_compareWithDijkstra_zeroWeightLoops_withTurnRestriction() {
         //                  /|
         // 0 -> 1 -> 2 -> 3 --
@@ -1208,8 +1227,8 @@ public class CHTurnCostTest {
         NodeOrderingProvider nodeOrderingProvider = NodeOrderingProvider.fromArray(contractionOrder);
         PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig)
                 .useFixedNodeOrdering(nodeOrderingProvider);
-        ch.doWork();
-        chGraph = graph.getRoutingCHGraph(chConfig.getName());
+        PrepareContractionHierarchies.Result res = ch.doWork();
+        chGraph = graph.createCHGraph(res.getCHStorage(), res.getCHConfig());
     }
 
     private void automaticPrepareCH() {
@@ -1220,8 +1239,8 @@ public class CHTurnCostTest {
         pMap.putObject(LOG_MESSAGES, 10);
         PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
         ch.setParams(pMap);
-        ch.doWork();
-        chGraph = graph.getRoutingCHGraph(chConfig.getName());
+        PrepareContractionHierarchies.Result res = ch.doWork();
+        chGraph = graph.createCHGraph(res.getCHStorage(), res.getCHConfig());
     }
 
     private void automaticCompareCHWithDijkstra(int numQueries) {

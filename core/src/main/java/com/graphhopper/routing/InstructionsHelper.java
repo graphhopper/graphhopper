@@ -76,7 +76,7 @@ class InstructionsHelper {
         double tmpLat;
         double tmpLon;
         PointList tmpWayGeo = edgeIteratorState.fetchWayGeometry(FetchMode.ALL);
-        if (tmpWayGeo.getSize() <= 2) {
+        if (tmpWayGeo.size() <= 2) {
             tmpLat = nodeAccess.getLat(edgeIteratorState.getAdjNode());
             tmpLon = nodeAccess.getLon(edgeIteratorState.getAdjNode());
         } else {

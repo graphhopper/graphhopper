@@ -20,6 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static com.graphhopper.json.Statement.*;
+import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.routing.ev.RoadClass.*;
 import static com.graphhopper.routing.ev.RoadEnvironment.FERRY;
@@ -168,7 +169,7 @@ class CustomWeightingTest {
                 set(avSpeedEnc, 80).set(accessEnc, true, true);
 
         CustomModel vehicleModel = new CustomModel();
-        vehicleModel.addToSpeed(If("toll != NO", MULTIPLY, 0.8));
+        vehicleModel.addToSpeed(If("toll == HGV || toll == ALL", MULTIPLY, 0.8));
         vehicleModel.addToSpeed(If("hazmat != NO", MULTIPLY, 0.8));
         assertEquals(1.26, createWeighting(vehicleModel).calcEdgeWeight(withToll, false), 0.01);
         assertEquals(1.26, createWeighting(vehicleModel).calcEdgeWeight(noToll, false), 0.01);
@@ -211,14 +212,28 @@ class CustomWeightingTest {
     }
 
     @Test
-    public void testArea() throws Exception {
+    public void testRoadClass() throws Exception {
         EdgeIteratorState primary = graph.edge(0, 1).setDistance(10).
                 set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80).set(accessEnc, true, true);
         EdgeIteratorState secondary = graph.edge(1, 2).setDistance(10).
-                set(roadClassEnc, SECONDARY).set(avSpeedEnc, 70).set(accessEnc, true, true);
-
+                set(roadClassEnc, SECONDARY).set(avSpeedEnc, 80).set(accessEnc, true, true);
         CustomModel vehicleModel = new CustomModel();
-        vehicleModel.addToPriority(If("road_class == PRIMARY", MULTIPLY, 1.0));
+        vehicleModel.addToPriority(If("road_class == PRIMARY", MULTIPLY, 0.5));
+        assertEquals(1.6, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
+        assertEquals(1.15, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
+    }
+
+    @Test
+    public void testArea() throws Exception {
+        EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(10).
+                set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80).set(accessEnc, true, true);
+        EdgeIteratorState edge2 = graph.edge(2, 3).setDistance(10).
+                set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80).set(accessEnc, true, true);
+        graph.getNodeAccess().setNode(0, 50.0120, 11.582);
+        graph.getNodeAccess().setNode(1, 50.0125, 11.585);
+        graph.getNodeAccess().setNode(2, 40.0, 8.0);
+        graph.getNodeAccess().setNode(3, 40.1, 8.1);
+        CustomModel vehicleModel = new CustomModel();
         vehicleModel.addToPriority(If("in_custom1", MULTIPLY, 0.5));
 
         ObjectMapper om = new ObjectMapper().registerModule(new JtsModule());
@@ -226,23 +241,50 @@ class CustomWeightingTest {
                 "[[[11.5818,50.0126], [11.5818,50.0119], [11.5861,50.0119], [11.5861,50.0126], [11.5818,50.0126]]] }}", JsonFeature.class);
         vehicleModel.getAreas().put("custom1", json);
 
-        assertEquals(1.15, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
-        assertEquals(1.21, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
+        // edge1 is located within the area custom1, edge2 is not
+        assertEquals(1.6, createWeighting(vehicleModel).calcEdgeWeight(edge1, false), 0.01);
+        assertEquals(1.15, createWeighting(vehicleModel).calcEdgeWeight(edge2, false), 0.01);
     }
 
     @Test
-    public void testMaxSpeedFallBack() {
+    public void testMaxSpeed() {
         assertEquals(140, carFE.getMaxSpeed(), 0.1);
-        String message = assertThrows(IllegalArgumentException.class, () -> createWeighting(new CustomModel().
-                addToSpeed(If("true", Op.LIMIT, 150)))).
-                getMessage();
-        assertEquals("Can never apply 'limit_to': 150.0 because maximum vehicle speed is 140.0", message);
-        assertEquals(50 + 30, createWeighting(new CustomModel().
-                addToSpeed(If("true", Op.LIMIT, 72)).setDistanceInfluence(30)).getMinWeight(1000));
+
+        assertEquals(1000.0 / 72 * 3.6, createWeighting(new CustomModel().
+                addToSpeed(If("true", LIMIT, 72)).setDistanceInfluence(0)).getMinWeight(1000));
+
+        // ignore too big limit to let custom model compatibility not break when max speed of encoder later decreases
+        assertEquals(1000.0 / 140 * 3.6, createWeighting(new CustomModel().
+                addToSpeed(If("true", LIMIT, 150)).setDistanceInfluence(0)).getMinWeight(1000));
+
+        // a speed bigger than the allowed stored speed is fine, see discussion in #2335
+        assertEquals(1000.0 / 150 * 3.6, createWeighting(new CustomModel().
+                addToSpeed(If("road_class == SERVICE", MULTIPLY, 1.5)).
+                addToSpeed(If("true", LIMIT, 150)).setDistanceInfluence(0)).getMinWeight(1000));
     }
 
     @Test
-    public void tooLarge() {
+    public void testMaxPriority() {
+        assertEquals(1000.0 / 140 / 0.5 * 3.6, createWeighting(new CustomModel().
+                addToPriority(If("true", MULTIPLY, 0.5)).setDistanceInfluence(0)).getMinWeight(1000));
+
+        // ignore too big limit
+        assertEquals(1000.0 / 140 / 1.0 * 3.6, createWeighting(new CustomModel().
+                addToPriority(If("true", LIMIT, 2.0)).setDistanceInfluence(0)).getMinWeight(1000));
+
+        // priority bigger 1 is fine (if CustomModel not in query)
+        assertEquals(1000.0 / 140 / 2.0 * 3.6, createWeighting(new CustomModel().
+                addToPriority(If("true", MULTIPLY, 3.0)).
+                addToPriority(If("true", LIMIT, 2.0)).setDistanceInfluence(0)).getMinWeight(1000));
+        assertEquals(1000.0 / 140 / 1.5 * 3.6, createWeighting(new CustomModel().
+                addToPriority(If("true", MULTIPLY, 1.5)).setDistanceInfluence(0)).getMinWeight(1000));
+        // pick maximum priority from value even if this is for a very special case
+        assertEquals(1000.0 / 140 / 3.0 * 3.6, createWeighting(new CustomModel().
+                addToPriority(If("road_class == SERVICE", MULTIPLY, 3.0)).setDistanceInfluence(0)).getMinWeight(1000));
+    }
+
+    @Test
+    public void tooManyStatements() {
         CustomModel customModel = new CustomModel();
         for (int i = 0; i < 1050; i++) {
             customModel.addToPriority(If("road_class == MOTORWAY || road_class == SECONDARY || road_class == PRIMARY", MULTIPLY, 0.1));
@@ -257,7 +299,7 @@ class CustomWeightingTest {
                 set(roadClassEnc, MOTORWAY).set(avSpeedEnc, 80).set(accessEnc, true, true);
         CustomModel customModel = new CustomModel()
                 .addToSpeed(Statement.If("road_class == MOTORWAY", Statement.Op.MULTIPLY, 0.7))
-                .addToSpeed(Statement.Else(Statement.Op.LIMIT, 30));
+                .addToSpeed(Statement.Else(LIMIT, 30));
         Weighting weighting = createWeighting(customModel);
         assertEquals(1.3429, weighting.calcEdgeWeight(motorway, false), 1e-4);
         assertEquals(10 / (80 * 0.7 / 3.6) * 1000, weighting.calcEdgeMillis(motorway, false), 1);

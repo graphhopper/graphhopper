@@ -22,8 +22,8 @@ package com.graphhopper.storage;
  */
 public class RAMIntDataAccessTest extends DataAccessTest {
     @Override
-    public DataAccess createDataAccess(String name) {
-        return new RAMIntDataAccess(name, directory, true, defaultOrder).setSegmentSize(128);
+    public DataAccess createDataAccess(String name, int segmentSize) {
+        return new RAMIntDataAccess(name, directory, true, segmentSize);
     }
 
     @Override

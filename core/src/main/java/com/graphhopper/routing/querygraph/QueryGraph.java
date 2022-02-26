@@ -155,7 +155,7 @@ public class QueryGraph implements Graph {
 
     @Override
     public int getNodes() {
-        return queryOverlay.getVirtualNodes().getSize() + baseNodes;
+        return queryOverlay.getVirtualNodes().size() + baseNodes;
     }
 
     @Override
@@ -273,11 +273,6 @@ public class QueryGraph implements Graph {
 
     @Override
     public EdgeIteratorState edge(int a, int b) {
-        throw exc();
-    }
-
-    @Override
-    public Graph copyTo(Graph g) {
         throw exc();
     }
 

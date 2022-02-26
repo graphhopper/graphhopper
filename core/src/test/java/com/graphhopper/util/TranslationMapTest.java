@@ -17,12 +17,13 @@
  */
 package com.graphhopper.util;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.Locale;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Peter Karich
@@ -60,8 +61,11 @@ public class TranslationMapTest {
         assertEquals("רגל", trMap.tr("web.FOOT"));
 
         // Indonesian
-        assertEquals("in", SINGLETON.get("in").getLanguage());
-        assertEquals("in", SINGLETON.get("in_ID").getLanguage());
+        // for jdk17 and later "id" is returned, before "in" was returned
+        String lang = SINGLETON.get("id").getLanguage();
+        assertTrue(Arrays.asList("id", "in").contains(lang));
+        assertEquals(lang, SINGLETON.get("in").getLanguage());
+        assertEquals(lang, SINGLETON.get("in_ID").getLanguage());
 
         // Vietnamese
         assertEquals("vi", SINGLETON.get("vi").getLanguage());

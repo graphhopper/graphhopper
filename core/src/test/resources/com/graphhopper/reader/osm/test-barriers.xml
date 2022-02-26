@@ -4,16 +4,16 @@
         <tag k="name" v="Wiesbaden-Naurod"/>
     </node>
     <node id="20" lat="52" lon="9.4" version="1">
-        <tag k="barrier" v="gate"/>
+        <tag k="barrier" v="fence"/>
     </node>
     <node id="30" lat="53" lon="9.4" version="1">
     </node>
     <node id="40" lat="54" lon="9.4" version="1">
     </node>
 
-    <!--     barrier on tower node -->
+    <!-- barrier on tower node -->
     <node id="50" lat="55" lon="9.4" version="1">
-        <tag k="barrier" v="gate"/>
+        <tag k="barrier" v="fence"/>
     </node>
     <node id="60" lat="56" lon="9.4" version="1">
     </node>
@@ -22,9 +22,12 @@
     <node id="80" lat="58" lon="9.4" version="1">
     </node>
 
-    <!-- 10-20|-30- - 50|-..         
-         |       |     |
-         40- - -/      ..
+    <!--     b      b        -->
+    <!-- 10-20-30- 50 -60
+         |       |  |
+         40- - -/  70
+                    |
+                   80
     -->
     <way id="10" version="1">
         <nd ref="10"/>

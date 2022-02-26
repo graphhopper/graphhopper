@@ -75,8 +75,8 @@ public class OSMInputFile implements Sink, OSMInput {
     /**
      * Currently on for pbf format. Default is number of cores.
      */
-    public OSMInputFile setWorkerThreads(int num) {
-        workerThreads = num;
+    public OSMInputFile setWorkerThreads(int threads) {
+        workerThreads = threads;
         return this;
     }
 

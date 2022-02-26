@@ -17,9 +17,6 @@
  */
 package com.graphhopper.storage;
 
-import java.nio.ByteOrder;
-import java.util.Collection;
-
 /**
  * Maintains a collection of DataAccess objects stored at the same location. One GraphStorage per
  * Directory as we need one to maintain one DataAccess object for nodes, edges and location2id
@@ -35,27 +32,31 @@ public interface Directory {
     String getLocation();
 
     /**
-     * @return the order in which the data is stored
+     * Creates a new DataAccess object with the given name in the location of this Directory. Each name can only
+     * be used once.
      */
-    ByteOrder getByteOrder();
+    DataAccess create(String name);
 
     /**
-     * Tries to find the object with that name if not existent it creates one and associates the
-     * location with it. A name is unique in one Directory.
+     * @param segmentSize segment size in bytes or -1 to use the default of the corresponding DataAccess implementation
      */
-    DataAccess find(String name);
+    DataAccess create(String name, int segmentSize);
 
-    DataAccess find(String name, DAType type);
+    DataAccess create(String name, DAType type);
+
+    DataAccess create(String name, DAType type, int segmentSize);
 
     /**
      * Removes the specified object from the directory.
      */
-    void remove(DataAccess da);
+    void remove(String name);
 
     /**
      * @return the default type of a newly created DataAccess object
      */
     DAType getDefaultType();
+
+    DAType getDefaultType(String dataAccess, boolean preferInts);
 
     /**
      * Removes all contained objects from the directory and releases its resources.
@@ -66,11 +67,6 @@ public interface Directory {
      * Releases all allocated resources from the directory without removing backing files.
      */
     void close();
-
-    /**
-     * Returns all created directories.
-     */
-    Collection<DataAccess> getAll();
 
     Directory create();
 }

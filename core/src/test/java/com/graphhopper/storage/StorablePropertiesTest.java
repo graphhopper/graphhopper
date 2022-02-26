@@ -18,7 +18,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.util.Helper;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +26,7 @@ import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -44,23 +44,6 @@ public class StorablePropertiesTest {
 
         instance = new StorableProperties(createDir("", true));
         assertFalse(instance.loadExisting());
-        instance.close();
-    }
-
-    @Test
-    public void testVersionCheck() {
-        StorableProperties instance = new StorableProperties(createDir("", false));
-        instance.putCurrentVersions();
-        assertTrue(instance.checkVersions(true));
-
-        instance.put("nodes.version", 0);
-        assertFalse(instance.checkVersions(true));
-
-        try {
-            instance.checkVersions(false);
-            assertTrue(false);
-        } catch (Exception ex) {
-        }
         instance.close();
     }
 

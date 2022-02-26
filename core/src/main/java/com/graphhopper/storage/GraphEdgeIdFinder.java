@@ -83,13 +83,10 @@ public class GraphEdgeIdFinder {
      */
     private GHIntHashSet findEdgesInShape(final Shape shape, EdgeFilter filter) {
         GHIntHashSet edgeIds = new GHIntHashSet();
-        locationIndex.query(shape.getBounds(), new LocationIndex.Visitor() {
-            @Override
-            public void onEdge(int edgeId) {
-                EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeId * 2);
-                if (filter.accept(edge) && shape.intersects(edge.fetchWayGeometry(FetchMode.ALL).makeImmutable()))
-                    edgeIds.add(edge.getEdge());
-            }
+        locationIndex.query(shape.getBounds(), edgeId -> {
+            EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeId * 2);
+            if (filter.accept(edge) && shape.intersects(edge.fetchWayGeometry(FetchMode.ALL).makeImmutable()))
+                edgeIds.add(edge.getEdge());
         });
         return edgeIds;
     }
@@ -229,6 +226,8 @@ public class GraphEdgeIdFinder {
 
                 Shape shape = blockedShapes.get(shapeIdx);
                 if (shape.getBounds().intersects(bbox)) {
+                    if (shape instanceof Polygon && ((Polygon) shape).isRectangle())
+                        return true;
                     if (pointList == null)
                         pointList = edgeState.fetchWayGeometry(FetchMode.ALL).makeImmutable();
                     if (shape.intersects(pointList))

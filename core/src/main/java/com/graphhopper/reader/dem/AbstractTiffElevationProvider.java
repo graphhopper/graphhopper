@@ -32,7 +32,7 @@ import java.util.Map;
  *
  * @author Robin Boldt
  */
-public abstract class AbstractTiffElevationProvider extends AbstractElevationProvider {
+public abstract class AbstractTiffElevationProvider extends TileBasedElevationProvider {
     private final Map<String, HeightTile> cacheData = new HashMap<>();
     final double precision = 1e7;
 
@@ -86,6 +86,16 @@ public abstract class AbstractTiffElevationProvider extends AbstractElevationPro
      */
     abstract String getFileNameOfLocalFile(double lat, double lon);
 
+    /**
+     * Return the local file name without file ending, has to be lower case, because DataAccess only supports lower case names.
+     */
+    abstract String getFileName(double lat, double lon);
+
+    /**
+     * Returns the complete URL to download the file
+     */
+    abstract String getDownloadURL(double lat, double lon);
+
     @Override
     public double getEle(double lat, double lon) {
         // Return fast, if there is no data available
@@ -107,7 +117,7 @@ public abstract class AbstractTiffElevationProvider extends AbstractElevationPro
             demProvider.setInterpolate(interpolate);
 
             cacheData.put(name, demProvider);
-            DataAccess heights = getDirectory().find(name + ".gh");
+            DataAccess heights = getDirectory().create(name + ".gh");
             demProvider.setHeights(heights);
             boolean loadExisting = false;
             try {
@@ -125,8 +135,7 @@ public abstract class AbstractTiffElevationProvider extends AbstractElevationPro
                 } catch (IOException e) {
                     demProvider.setSeaLevel(true);
                     // use small size on disc and in-memory
-                    heights.setSegmentSize(100).create(10).
-                            flush();
+                    heights.create(10).flush();
                     return 0;
                 }
 

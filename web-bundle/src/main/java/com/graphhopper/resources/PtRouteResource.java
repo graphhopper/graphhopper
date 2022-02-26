@@ -25,11 +25,11 @@ import com.graphhopper.gtfs.PtRouter;
 import com.graphhopper.gtfs.Request;
 import com.graphhopper.http.DurationParam;
 import com.graphhopper.http.GHLocationParam;
+import com.graphhopper.http.OffsetDateTimeParam;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import io.dropwizard.jersey.params.AbstractParam;
-import io.dropwizard.jersey.params.InstantParam;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
@@ -55,17 +55,20 @@ public class PtRouteResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public ObjectNode route(@QueryParam("point") @Size(min=2,max=2) List<GHLocationParam> requestPoints,
-                            @QueryParam("pt.earliest_departure_time") @NotNull InstantParam departureTimeParam,
+                            @QueryParam("pt.earliest_departure_time") @NotNull OffsetDateTimeParam departureTimeParam,
                             @QueryParam("pt.profile_duration") DurationParam profileDuration,
                             @QueryParam("pt.arrive_by") @DefaultValue("false") boolean arriveBy,
                             @QueryParam("locale") String localeStr,
                             @QueryParam("pt.ignore_transfers") Boolean ignoreTransfers,
                             @QueryParam("pt.profile") Boolean profileQuery,
                             @QueryParam("pt.limit_solutions") Integer limitSolutions,
-                            @QueryParam("pt.limit_street_time") DurationParam limitStreetTime) {
+                            @QueryParam("pt.limit_trip_time") DurationParam limitTripTime,
+                            @QueryParam("pt.limit_street_time") DurationParam limitStreetTime,
+                            @QueryParam("pt.access_profile") String accessProfile,
+                            @QueryParam("pt.egress_profile") String egressProfile) {
         StopWatch stopWatch = new StopWatch().start();
         List<GHLocation> points = requestPoints.stream().map(AbstractParam::get).collect(toList());
-        Instant departureTime = departureTimeParam.get();
+        Instant departureTime = departureTimeParam.get().toInstant();
 
         Request request = new Request(points, departureTime);
         request.setArriveBy(arriveBy);
@@ -74,7 +77,10 @@ public class PtRouteResource {
         Optional.ofNullable(ignoreTransfers).ifPresent(request::setIgnoreTransfers);
         Optional.ofNullable(localeStr).ifPresent(s -> request.setLocale(Helper.getLocale(s)));
         Optional.ofNullable(limitSolutions).ifPresent(request::setLimitSolutions);
+        Optional.ofNullable(limitTripTime.get()).ifPresent(request::setLimitTripTime);
         Optional.ofNullable(limitStreetTime.get()).ifPresent(request::setLimitStreetTime);
+        Optional.ofNullable(accessProfile).ifPresent(request::setAccessProfile);
+        Optional.ofNullable(egressProfile).ifPresent(request::setEgressProfile);
 
         GHResponse route = ptRouter.route(request);
         return ResponsePathSerializer.jsonObject(route, true, true, false, false, stopWatch.stop().getMillis());

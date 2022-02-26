@@ -18,14 +18,12 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.BikeFlagEncoder;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,7 +32,7 @@ import java.util.Collections;
 
 import static com.graphhopper.util.EdgeIteratorState.REVERSE_STATE;
 import static com.graphhopper.util.FetchMode.*;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -54,18 +52,6 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
     protected GraphHopperStorage newGHStorage(Directory dir, boolean enabled3D, int segmentSize) {
         return GraphBuilder.start(encodingManager).setDir(dir).set3D(enabled3D).setSegmentSize(segmentSize).build();
-    }
-
-    @Test
-    public void testNoCreateCalled() {
-        try (GraphHopperStorage gs = GraphBuilder.start(encodingManager).build()) {
-            ((BaseGraph) gs.getBaseGraph()).ensureNodeIndex(123);
-            fail("IllegalStateException should be raised");
-        } catch (IllegalStateException err) {
-            // ok
-        } catch (Exception ex) {
-            fail("IllegalStateException should be raised, but was " + ex.toString());
-        }
     }
 
     @Test
@@ -162,16 +148,6 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     }
 
     @Test
-    public void testBigDataEdge() {
-        Directory dir = new RAMDirectory();
-        GraphHopperStorage graph = new GraphHopperStorage(dir, encodingManager, false);
-        graph.create(defaultSize);
-        ((BaseGraph) graph.getBaseGraph()).setEdgeCount(Integer.MAX_VALUE / 2);
-        assertTrue(graph.getAllEdges().next());
-        graph.close();
-    }
-
-    @Test
     public void testDoThrowExceptionIfDimDoesNotMatch() {
         graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), false);
         graph.create(1000);
@@ -184,7 +160,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
     @Test
     public void testIdentical() {
-        GraphHopperStorage store = new GraphHopperStorage(new RAMDirectory(), encodingManager, true);
+        GraphHopperStorage store = new GraphBuilder(encodingManager).set3D(true).build();
         assertEquals(store.getNodes(), store.getBaseGraph().getNodes());
         assertEquals(store.getEdges(), store.getBaseGraph().getEdges());
     }
@@ -263,17 +239,14 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         int nodes = graph.getNodes();
         int edges = graph.getAllEdges().length();
         graph.flush();
-        boolean ch = graph.isCHPossible();
         Helper.close(graph);
 
         // load without configured FlagEncoders
         GraphHopper hopper = new GraphHopper();
         hopper.setProfiles(Arrays.asList(new Profile("p_car").setVehicle("car").setWeighting("fastest"),
                 new Profile("p_bike").setVehicle("bike").setWeighting("fastest")));
-        if (ch) {
-            hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("p_car"));
-        }
-        assertTrue(hopper.load(defaultGraphLoc));
+        hopper.setGraphHopperLocation(defaultGraphLoc);
+        assertTrue(hopper.load());
         graph = hopper.getGraphHopperStorage();
         assertEquals(nodes, graph.getNodes());
         assertEquals(edges, graph.getAllEdges().length());
@@ -283,10 +256,8 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         // load via explicitly configured FlagEncoders then we can define only one profile
         hopper.getEncodingManagerBuilder().add(createCarFlagEncoder()).add(new BikeFlagEncoder());
         hopper.setProfiles(Collections.singletonList(new Profile("p_car").setVehicle("car").setWeighting("fastest")));
-        if (ch) {
-            hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("p_car"));
-        }
-        assertTrue(hopper.load(defaultGraphLoc));
+        hopper.setGraphHopperLocation(defaultGraphLoc);
+        assertTrue(hopper.load());
         graph = hopper.getGraphHopperStorage();
         assertEquals(nodes, graph.getNodes());
         assertEquals(edges, graph.getAllEdges().length());
@@ -331,4 +302,11 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         assertEquals(edgeId, edge.getEdge());
         assertEquals(key, edge.getEdgeKey());
     }
+
+    @Test
+    public void outOfBounds() {
+        GraphHopperStorage graph = createGHStorage();
+        assertThrows(IllegalArgumentException.class, () -> graph.getEdgeIteratorState(0, Integer.MIN_VALUE));
+    }
+
 }

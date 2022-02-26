@@ -57,11 +57,11 @@ public class FootFlagEncoderTest {
     public void testSteps() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
-        IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.getAccess(way));
+        IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way);
         assertEquals(FootFlagEncoder.MEAN_SPEED, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
 
         way.setTag("highway", "steps");
-        flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.getAccess(way));
+        flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way);
         assertTrue(FootFlagEncoder.MEAN_SPEED > footAvgSpeedEnc.getDecimal(false, flags));
     }
 
@@ -221,19 +221,19 @@ public class FootFlagEncoderTest {
     public void testRailPlatformIssue366() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("railway", "platform");
-        IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.getAccess(way));
+        IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way);
         assertFalse(flags.isEmpty());
 
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("railway", "platform");
-        flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.getAccess(way));
+        flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way);
         assertFalse(flags.isEmpty());
 
         way.clearTags();
         // only tram, no highway => no access
         way.setTag("railway", "tram");
-        flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.getAccess(way));
+        flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way);
         assertTrue(flags.isEmpty());
     }
 
@@ -241,7 +241,7 @@ public class FootFlagEncoderTest {
     public void testPier() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("man_made", "pier");
-        IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.getAccess(way));
+        IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way);
         assertFalse(flags.isEmpty());
     }
 
@@ -252,7 +252,7 @@ public class FootFlagEncoderTest {
         // a bit longer than an hour
         way.setTag("duration:seconds", "4000");
         assertEquals(30, footEncoder.ferrySpeedCalc.getSpeed(way), .1);
-        IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.getAccess(way));
+        IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way);
         assertEquals(15, footAvgSpeedEnc.getDecimal(false, flags), .1);
     }
 
@@ -260,16 +260,16 @@ public class FootFlagEncoderTest {
     public void testMixSpeedAndSafe() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway");
-        IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.getAccess(way));
+        IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way);
         assertEquals(0, flags.ints[0]);
 
         way.setTag("sidewalk", "yes");
-        flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.getAccess(way));
+        flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way);
         assertEquals(5, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
 
         way.clearTags();
         way.setTag("highway", "track");
-        flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.getAccess(way));
+        flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way);
         assertEquals(5, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
     }
 
@@ -280,15 +280,15 @@ public class FootFlagEncoderTest {
         assertEquals(PriorityCode.UNCHANGED.getValue(), footEncoder.handlePriority(way, null));
 
         way.setTag("highway", "primary");
-        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.AVOID.getValue(), footEncoder.handlePriority(way, null));
 
         way.setTag("highway", "track");
         way.setTag("bicycle", "official");
-        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), footEncoder.handlePriority(way, null));
 
         way.setTag("highway", "track");
         way.setTag("bicycle", "designated");
-        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), footEncoder.handlePriority(way, null));
 
         way.setTag("highway", "cycleway");
         way.setTag("bicycle", "designated");
@@ -309,14 +309,14 @@ public class FootFlagEncoderTest {
         way.setTag("highway", "road");
         way.setTag("bicycle", "official");
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), footEncoder.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "trunk");
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.AVOID.getValue(), footEncoder.handlePriority(way, null));
         way.setTag("sidewalk", "none");
-        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, null));
+        assertEquals(PriorityCode.AVOID.getValue(), footEncoder.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "residential");
@@ -329,12 +329,12 @@ public class FootFlagEncoderTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "track");
         way.setTag("sac_scale", "hiking");
-        IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.getAccess(way));
+        IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way);
         assertEquals(FootFlagEncoder.MEAN_SPEED, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
 
         way.setTag("highway", "track");
         way.setTag("sac_scale", "mountain_hiking");
-        flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.getAccess(way));
+        flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way);
         assertEquals(FootFlagEncoder.SLOW_SPEED, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
     }
 
@@ -344,34 +344,39 @@ public class FootFlagEncoderTest {
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         // no barrier!
-        assertEquals(0, footEncoder.handleNodeTags(node));
+        assertFalse(footEncoder.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "yes");
         // no barrier!
-        assertEquals(0, footEncoder.handleNodeTags(node));
+        assertFalse(footEncoder.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "no");
         // barrier!
-        assertTrue(footEncoder.handleNodeTags(node) > 0);
+        assertTrue(footEncoder.isBarrier(node));
 
         node.setTag("bicycle", "yes");
         // no barrier!?
-        // assertTrue(footEncoder.handleNodeTags(node) == 0);
+        // assertTrue(footEncoder.handleNodeTags(node) == false);
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "no");
         node.setTag("foot", "yes");
         // no barrier!
-        assertEquals(0, footEncoder.handleNodeTags(node));
+        assertFalse(footEncoder.isBarrier(node));
 
         node.setTag("locked", "yes");
         // barrier!
-        assertTrue(footEncoder.handleNodeTags(node) > 0);
+        assertTrue(footEncoder.isBarrier(node));
+
+        node.clearTags();
+        node.setTag("barrier", "yes");
+        node.setTag("access", "no");
+        assertTrue(footEncoder.isBarrier(node));
     }
 
     @Test
@@ -379,9 +384,9 @@ public class FootFlagEncoderTest {
         // by default allow access through the gate for bike & foot!
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "chain");
-        assertEquals(0, footEncoder.handleNodeTags(node));
+        assertFalse(footEncoder.isBarrier(node));
         node.setTag("foot", "no");
-        assertTrue(footEncoder.handleNodeTags(node) > 0);
+        assertTrue(footEncoder.isBarrier(node));
     }
 
     @Test
@@ -389,26 +394,26 @@ public class FootFlagEncoderTest {
         // by default do not block access due to fords!
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("ford", "no");
-        assertEquals(0, footEncoder.handleNodeTags(node));
+        assertFalse(footEncoder.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("ford", "yes");
         // no barrier!
-        assertEquals(0, footEncoder.handleNodeTags(node));
+        assertFalse(footEncoder.isBarrier(node));
 
         // barrier!
         node.setTag("foot", "no");
-        assertTrue(footEncoder.handleNodeTags(node) > 0);
+        assertTrue(footEncoder.isBarrier(node));
 
         FootFlagEncoder tmpEncoder = new FootFlagEncoder(new PMap("block_fords=true"));
         EncodingManager.create(tmpEncoder);
         node = new ReaderNode(1, -1, -1);
         node.setTag("ford", "no");
-        assertEquals(0, tmpEncoder.handleNodeTags(node));
+        assertFalse(tmpEncoder.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("ford", "yes");
-        assertTrue(tmpEncoder.handleNodeTags(node) != 0);
+        assertTrue(tmpEncoder.isBarrier(node));
     }
 
     @Test
@@ -419,37 +424,37 @@ public class FootFlagEncoderTest {
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         // potential barriers are no barrier by default
-        assertEquals(0, tmpFootEncoder.handleNodeTags(node));
+        assertFalse(tmpFootEncoder.isBarrier(node));
         node.setTag("access", "no");
-        assertTrue(tmpFootEncoder.handleNodeTags(node) > 0);
+        assertTrue(tmpFootEncoder.isBarrier(node));
 
         // absolute barriers always block
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "fence");
-        assertTrue(tmpFootEncoder.handleNodeTags(node) > 0);
+        assertTrue(tmpFootEncoder.isBarrier(node));
         node.setTag("barrier", "fence");
         node.setTag("access", "yes");
-        assertTrue(tmpFootEncoder.handleNodeTags(node) > 0);
+        assertFalse(tmpFootEncoder.isBarrier(node));
 
-        // block potential barriers per default (if no other access tag exists)
-        tmpFootEncoder = new FootFlagEncoder(new PMap("block_barriers=true"));
+        // pass potential barriers per default (if no other access tag exists)
+        tmpFootEncoder = new FootFlagEncoder();
         EncodingManager.create(tmpFootEncoder);
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
-        assertTrue(tmpFootEncoder.handleNodeTags(node) > 0);
+        assertFalse(tmpFootEncoder.isBarrier(node));
         node.setTag("access", "yes");
-        assertEquals(0, tmpFootEncoder.handleNodeTags(node));
+        assertFalse(tmpFootEncoder.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "fence");
-        assertTrue(tmpFootEncoder.handleNodeTags(node) > 0);
+        assertTrue(tmpFootEncoder.isBarrier(node));
 
         // don't block potential barriers: barrier:cattle_grid should not block here
         tmpFootEncoder = new FootFlagEncoder();
         EncodingManager.create(tmpFootEncoder);
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "cattle_grid");
-        assertEquals(0, tmpFootEncoder.handleNodeTags(node));
+        assertFalse(tmpFootEncoder.isBarrier(node));
     }
 
     @Test

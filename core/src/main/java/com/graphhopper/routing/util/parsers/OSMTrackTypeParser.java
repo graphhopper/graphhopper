@@ -42,10 +42,7 @@ public class OSMTrackTypeParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
-        if (ferry)
-            return edgeFlags;
-
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
         String trackTypeTag = readerWay.getTag("tracktype");
         TrackType trackType = TrackType.find(trackTypeTag);
         if (trackType != MISSING)
