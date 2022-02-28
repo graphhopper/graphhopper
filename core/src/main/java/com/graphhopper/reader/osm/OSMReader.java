@@ -321,7 +321,7 @@ public class OSMReader {
 
         // update edge flags to potentially block access in case there are node tags
         if (!nodeTags.isEmpty())
-            edgeFlags = encodingManager.handleNodeTags(nodeTags, IntsRef.deepCopyOf(edgeFlags));
+            edgeFlags = encodingManager.handleNodeTags(nodeTags, edgeFlags);
 
         EdgeIteratorState iter = ghStorage.edge(fromIndex, toIndex).setDistance(towerNodeDistance).setFlags(edgeFlags);
 
