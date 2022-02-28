@@ -33,62 +33,66 @@ public class Buffer {
 
     // TODO: parameters. How are the isochrone/route requests set up?
     public void generateBuffer(String roadName, double threshholdDistance, double startLat, double startLon){
-        // Point: Lat,Lon? Lon,Lat? Starting point
-        // Name: Name of road to filter on
-        // Distance: Radius of buffer
+        // roadName : Road to filter on.
+        // startLat/startLon : Starting point. TODO: Turn into/find class.
+        // threshholdDistance : Radius of buffer
+
         // TODO: Snap distance? The size of the querying bubble (Currently .001 degrees with 3 'pulses')
-        
-        threshholdDistance = 1000;
 
-        // TODO: Turn startLat and startLon into a class or something
-
-        List<Integer> filteredQueryEdges = new ArrayList<Integer>();
+        List<List<Integer>> connectedEdgeLists = new ArrayList<List<Integer>>();
 
         for (int i = 1; i < 4; i++){
             // Scale up query BBox
-            BBox bbox = new BBox(startLon - .001 * i, startLon + .001 * i, startLat - .001 * i, startLat + .001 * i);
+            BBox bbox = new BBox(startLon - .01 * i, startLon + .01 * i, startLat - .01 * i, startLat + .01 * i);
 
-            final List<Integer> allQueryEdges = queryBbox(bbox);
-            filteredQueryEdges = filterQueryEdgesByName(allQueryEdges, roadName);
+            final List<Integer> filteredQueryEdges = queryBbox(bbox, roadName);
+            connectedEdgeLists = splitEdgesIntoConnectedLists(filteredQueryEdges);
 
-            // Two adjacent highways found
-            if (filteredQueryEdges.size() == 2) {
-                break;
+            // One bidirectional road
+            if (connectedEdgeLists.size() == 1) {
+                computeBufferSegment(connectedEdgeLists.get(0), roadName, threshholdDistance, startLat, startLon, true);
+                computeBufferSegment(connectedEdgeLists.get(0), roadName, threshholdDistance, startLat, startLon, false);
+                return;
             }
 
-            if (filteredQueryEdges.size() > 2) {
-                // TODO: Determine a better way to scale bounding box
-                // This _should_ never get called, but it might?
-                System.out.println("Error with logic.");
+            // Two unidirectional, parallel roads
+            if (connectedEdgeLists.size() == 2){
+                computeBufferSegment(connectedEdgeLists.get(0), roadName, threshholdDistance, startLat, startLon, true);
+                computeBufferSegment(connectedEdgeLists.get(1), roadName, threshholdDistance, startLat, startLon, true);
+                return;
             }
         }
 
-
-        List<List<Integer>> connectedEdgeLists = splitEdgesIntoConnectedLists(filteredQueryEdges);
-
-        for (List<Integer> connectedEdgeList : connectedEdgeLists){
-            BufferStartFeature startFeature = computeStartFeature(connectedEdgeList, startLat, startLon);
-            Integer edgeAtThreshhold = computeEdgeAtDistanceThreshhold(startFeature, threshholdDistance, roadName);
-            GHPoint3D pointAtThreshhold = computePointAtDistanceThreshhold(startFeature, threshholdDistance, edgeAtThreshhold);
-
-            // Call out to the Routing service however that works with 
-            // pointAtThreshhold.lat and lon, and startFeature.lat and lon
-        }
-
-        return;
+        throw new RuntimeException("Error: Could not split up roads properly.");
     }
 
-    private List<Integer> queryBbox(BBox bbox){
-        final List<Integer> edgesInBbox = new ArrayList<Integer>();
+    private List<Integer> queryBbox(BBox bbox, String roadName){
+        final List<Integer> filteredEdgesInBbox = new ArrayList<Integer>();
 
         this.locationIndex.query(bbox, new LocationIndex.Visitor(){
             @Override
             public void onEdge(int edgeId) {
-                edgesInBbox.add(edgeId);
+                EdgeIteratorState state = graph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE);
+
+                // Roads sometimes have multiple names delineated by a comma
+                String[] queryRoadNames = sanitizeRoadNames(state.getName());
+
+                if(Arrays.stream(queryRoadNames).anyMatch(roadName::equals)){
+                    filteredEdgesInBbox.add(edgeId);
+                }
             };
         });
 
-        return edgesInBbox;
+        return filteredEdgesInBbox;
+    }
+
+    private void computeBufferSegment(List<Integer> connectedEdgeList, String roadName, double threshholdDistance, double startLat, double startLon, Boolean upstreamPath){
+        BufferStartFeature startFeature = computeStartFeature(connectedEdgeList, startLat, startLon);
+        Integer edgeAtThreshhold = computeEdgeAtDistanceThreshhold(startFeature, threshholdDistance, roadName, upstreamPath);
+        GHPoint3D pointAtThreshhold = computePointAtDistanceThreshhold(startFeature, threshholdDistance, edgeAtThreshhold, upstreamPath);
+
+        System.out.println("Point: " + startFeature.getPoint().getLon() + ", " + startFeature.getPoint().getLat());
+        System.out.println("Point: " + pointAtThreshhold.getLon() + ", " + pointAtThreshhold.getLat());
     }
 
     private String[] sanitizeRoadNames(String roadNames){
@@ -101,36 +105,16 @@ public class Buffer {
         return separatedNames;
     }
 
-    private List<Integer> filterQueryEdgesByName(List<Integer> queryEdges, String targetName){
-        List<Integer> filteredQueryEdges = new ArrayList<Integer>();
+    private List<List<Integer>> splitEdgesIntoConnectedLists(List<Integer> filteredQueryEdges){
+        List<List<Integer>> connectedLists = new ArrayList<List<Integer>>();
 
-        for (int edge : queryEdges){
-            EdgeIteratorState state = graph.getEdgeIteratorState(edge, Integer.MIN_VALUE);
-
-            // Roads sometimes have multiple names delineated by a comma
-            String[] queryRoadNames = sanitizeRoadNames(state.getName());
-
-            if(Arrays.stream(queryRoadNames).anyMatch(targetName::equals)){
-                filteredQueryEdges.add(edge);
-            }
+        while (!filteredQueryEdges.isEmpty()){
+            final List<Integer> connectedList = computeConnectedList(filteredQueryEdges);
+            filteredQueryEdges.removeAll(connectedList);
+            connectedLists.add(connectedList);
         }
 
-        return filteredQueryEdges;
-    }
-
-    private List<List<Integer>> splitEdgesIntoConnectedLists(List<Integer> filteredQueryEdges){
-        List<List<Integer>> connectedSets = new ArrayList<List<Integer>>();
-
-        final List<Integer> setA = computeConnectedList(filteredQueryEdges);
-        filteredQueryEdges.removeAll(setA);
-        final List<Integer> setB = computeConnectedList(filteredQueryEdges);
-
-        return new ArrayList<List<Integer>>() {
-            {
-                add(setA);
-                add(setB);
-            }
-        };
+        return connectedLists;
     }
 
     private List<Integer> computeConnectedList(List<Integer> edgeList){
@@ -191,92 +175,134 @@ public class Buffer {
         return new BufferStartFeature(nearestEdge, nearestPoint);
     }
 
-    private Integer computeEdgeAtDistanceThreshhold(final BufferStartFeature startFeature, double threshholdDistance, String targetRoad){
-        List<Integer> usedEdges = new ArrayList<Integer>() {{ add(startFeature.edge); }};
+    private Integer computeEdgeAtDistanceThreshhold(final BufferStartFeature startFeature, double threshholdDistance, String roadName, Boolean upstreamPath){
+        List<Integer> usedEdges = new ArrayList<Integer>() {{ add(startFeature.getEdge()); }};
 
-        EdgeIteratorState state = graph.getEdgeIteratorState(startFeature.edge, Integer.MIN_VALUE);
-        Integer baseNode = state.getBaseNode();
-        Integer finalEdge = startFeature.edge;
+        EdgeIteratorState state = graph.getEdgeIteratorState(startFeature.getEdge(), Integer.MIN_VALUE);
+        Integer currentNode = upstreamPath ? state.getBaseNode() : state.getAdjNode();
 
-        Double currentDistance = 0.0;
+        // Check starting edge
+        Double currentDistance = DistancePlaneProjection.DIST_PLANE.calcDist(startFeature.getPoint().getLat(), startFeature.getPoint().getLon(),
+            nodeAccess.getLat(currentNode), nodeAccess.getLon(currentNode));
+
+        if (currentDistance >= threshholdDistance) {
+            return startFeature.getEdge();
+        }
 
         while (true){
-            EdgeIterator iterator = edgeExplorer.setBaseNode(baseNode);
+            EdgeIterator iterator = edgeExplorer.setBaseNode(currentNode);
             int currentEdge = -1;
 
             while (iterator.next()){
-
                 String[] roadNames = sanitizeRoadNames(iterator.getName());
 
-                if (Arrays.stream(roadNames).anyMatch(targetRoad::equals) && !usedEdges.contains(iterator.getEdge())){
-                    currentEdge = iterator.getEdge();
+                Integer tempEdge = iterator.getEdge();
+
+                if (Arrays.stream(roadNames).anyMatch(roadName::equals) && !usedEdges.contains(tempEdge)){
+                    currentEdge = tempEdge;
+                    usedEdges.add(tempEdge);
                     break;
                 }
             }
 
             if (currentEdge == -1){
-                System.out.println("Error finding adjacent route?");
-                // TODO: Throw exception?
+                throw new RuntimeException("Error: Could not build out path using current name.");
             }
 
-            int otherNode = graph.getOtherNode(currentEdge, baseNode);
+            // Move to next node
+            currentNode = graph.getOtherNode(currentEdge, currentNode);
 
-            currentDistance = DistancePlaneProjection.DIST_PLANE.calcDist(startFeature.point.getLat(), startFeature.point.getLon(),
-                nodeAccess.getLat(otherNode), nodeAccess.getLon(otherNode));
+            currentDistance = DistancePlaneProjection.DIST_PLANE.calcDist(startFeature.getPoint().getLat(), startFeature.getPoint().getLon(),
+                nodeAccess.getLat(currentNode), nodeAccess.getLon(currentNode));
 
             if (currentDistance >= threshholdDistance){
-                return finalEdge;
-            }
-            else {
-                finalEdge = currentEdge;
+                return currentEdge;
             }
         }
     }
 
-    private GHPoint3D computePointAtDistanceThreshhold(BufferStartFeature startFeature, double threshholdDistance, Integer finalEdge){
+    private GHPoint3D computePointAtDistanceThreshhold(BufferStartFeature startFeature, double threshholdDistance, Integer finalEdge, Boolean upstreamPath){
         EdgeIteratorState finalState = graph.getEdgeIteratorState(finalEdge, Integer.MIN_VALUE);
         PointList pointList = finalState.fetchWayGeometry(FetchMode.ALL);
 
-        // In the case the buffer is only as wide as a single edge, truncate pointList _until_ startFeature.point
-        if (startFeature.edge.equals(finalEdge)){
-            PointList tempList = new PointList();
+        // In the case where the buffer is only as wide as a single edge, truncate one half of the segment
+        if (startFeature.getEdge().equals(finalEdge)){
 
-            for (GHPoint3D point : pointList){
-                tempList.add(point);
-                if(startFeature.point.equals(point)){
-                    break;
+            PointList tempList = new PointList();
+            
+            // Truncate _until_ startPoint
+            if (upstreamPath){
+                for (GHPoint3D point: pointList){
+                    tempList.add(point);
+                    if(startFeature.getPoint().equals(point)){
+                        break;
+                    }
+                }
+            }
+            // Truncate _after_ startPoint
+            else {
+                Boolean pastPoint = false;
+                for (GHPoint3D point: pointList){
+                    if (startFeature.getPoint().equals(point)){
+                        pastPoint = true;
+                    }
+                    if (pastPoint){
+                        tempList.add(point);
+                    }
                 }
             }
 
             pointList = tempList;
         }
 
-        // Reverse pointList so direction of travel is 'upstream'
-        pointList.reverse();
+        // Reverse geometry when going upstream
+        if(upstreamPath){
+            pointList.reverse();
+        }
 
         GHPoint3D prevPoint = pointList.get(0);
 
         for(GHPoint3D point : pointList){
-            double finalDist = DistancePlaneProjection.DIST_PLANE.calcDist(startFeature.point.getLat(), startFeature.point.getLon(),
-                point.lat, point.lon);
+            // Filter zero-points made by PointList() scaling
+            if (point.lat != 0 && point.lon != 0) {
+                double finalDist = DistancePlaneProjection.DIST_PLANE.calcDist(startFeature.getPoint().getLat(), startFeature.getPoint().getLon(),
+                    point.lat, point.lon);
 
-            if(finalDist > threshholdDistance){
-                break;
-            };
-            prevPoint = point;
+                // Point is past threshhold distance
+                if(finalDist >= threshholdDistance){
+
+                    // Check between prevPoint and currentPoint to see which is closer to the threshholdDistance
+                    if (Math.abs(DistancePlaneProjection.DIST_PLANE.calcDist(startFeature.getPoint().getLat(), startFeature.getPoint().getLon(), point.lat, point.lon) - threshholdDistance) <=
+                        Math.abs(DistancePlaneProjection.DIST_PLANE.calcDist(startFeature.getPoint().getLat(), startFeature.getPoint().getLon(), prevPoint.lat, prevPoint.lon) - threshholdDistance)) {
+                        prevPoint = point;
+
+                        // TODO: Use difference in distances to calculate point exactly at threshhold
+                    }
+                    break;
+                };
+                prevPoint = point;
+            }
         }
 
-        // Return point just _before_ crossing distanceThreshhold
+        // Return point closest to the distanceThreshhold
         return prevPoint;
     }
 }
 
 class BufferStartFeature {
-    public Integer edge;
-    public GHPoint3D point;
+    private Integer edge;
+    private GHPoint3D point;
 
     public BufferStartFeature(Integer edge, GHPoint3D point){
         this.edge = edge;
         this.point = point;
+    }
+
+    public Integer getEdge(){
+        return this.edge;
+    }
+
+    public GHPoint3D getPoint(){
+        return this.point;
     }
 }
