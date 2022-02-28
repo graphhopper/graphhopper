@@ -56,6 +56,7 @@ public class GHRequest {
 
     // ORS-GH MOD START
     // add class member
+    private String encoderName = "";
     private double[] maxSearchDistances;
     // ORS-GH MOD END
 
@@ -293,6 +294,14 @@ public class GHRequest {
     }
 
     // ORS-GH MOD START
+    public String getEncoderName() {
+        return encoderName;
+    }
+
+    public void setEncoderName(String encoderName) {
+        this.encoderName = encoderName;
+    }
+
     private PMap additionalHints;
     public void  setAdditionalHints (PMap hints) {
         this.additionalHints = hints;

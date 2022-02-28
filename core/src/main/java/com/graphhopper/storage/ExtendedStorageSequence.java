@@ -18,32 +18,38 @@ public class ExtendedStorageSequence  implements GraphExtension {
         return extensions;
     }
 
-//    public ExtendedStorageSequence create(long initSize) {
-//        for (int i = 0; i < numExtensions; i++) {
-//            extensions[i].create(initSize);
-//        }
-//
-//        return this;
-//    }
-//
-//    public boolean loadExisting() {
-//        boolean result = true;
-//        for (int i = 0; i < numExtensions; i++) {
-//            if (!extensions[i].loadExisting()) {
-//                result = false;
-//                break;
-//            }
-//        }
-//
-//        return result;
-//    }
-//
-//    public void flush() {
-//        for (int i = 0; i < numExtensions; i++) {
-//            extensions[i].flush();
-//        }
-//    }
-//
+    public ExtendedStorageSequence create(long initSize) {
+        for (int i = 0; i < numExtensions; i++) {
+            extensions[i].create(initSize);
+        }
+
+        return this;
+    }
+
+    public void init(Graph graph, Directory dir) {
+        for (int i = 0; i < numExtensions; i++) {
+            extensions[i].init(graph, dir);
+        }
+    }
+
+    public boolean loadExisting() {
+        boolean result = true;
+        for (int i = 0; i < numExtensions; i++) {
+            if (!extensions[i].loadExisting()) {
+                result = false;
+                break;
+            }
+        }
+
+        return result;
+    }
+
+    public void flush() {
+        for (int i = 0; i < numExtensions; i++) {
+            extensions[i].flush();
+        }
+    }
+
     @Override
     public void close() {
         for (int i = 0; i < numExtensions; i++) {
@@ -54,22 +60,7 @@ public class ExtendedStorageSequence  implements GraphExtension {
             }
         }
     }
-//
-//    public long getCapacity() {
-//        long capacity = 0;
-//
-//        for (int i = 0; i < extensions.length; i++) {
-//            capacity += extensions[i].getCapacity();
-//        }
-//
-//        return capacity;
-//    }
-//
-//    @Override
-//    public String toString() {
-//        return "ExtSequence";
-//    }
-//
+
     @Override
     public boolean isClosed() {
         // TODO Auto-generated method stub

@@ -63,6 +63,7 @@ public class Router {
     private final WeightingFactory weightingFactory;
     // ORS GH-MOD START: way to inject additional edgeFilters to router
     private EdgeFilterFactory edgeFilterFactory;
+    protected PathProcessorFactory pathProcessorFactory = PathProcessorFactory.DEFAULT;
     // ORS GH-MOD END
     // todo: these should not be necessary anymore as soon as GraphHopperStorage (or something that replaces) it acts
     // like a 'graph database'
@@ -130,6 +131,10 @@ public class Router {
             ghRsp.addError(ex);
             return ghRsp;
         }
+    }
+
+    public void setPathProcessorFactory(PathProcessorFactory newFactory) {
+        this.pathProcessorFactory = newFactory;
     }
 
     private void checkNoLegacyParameters(GHRequest request) {
@@ -246,6 +251,9 @@ public class Router {
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
         // ORS-GH MOD START - additional code
         checkMaxSearchDistances(request, ghRsp, snaps);
+        for (int c = 0; c < request.getHints().getInt("alternative_route.max_paths", 1); c++) {
+            ghRsp.addReturnObject(pathProcessorFactory.createPathProcessor(request.getAdditionalHints(), encodingManager.getEncoder(request.getEncoderName()), ghStorage));
+        }
         // ORS-GH MOD END
         QueryGraph queryGraph = QueryGraph.create(ghStorage, snaps);
         PathCalculator pathCalculator = solver.createPathCalculator(queryGraph);
@@ -279,6 +287,7 @@ public class Router {
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
         // ORS-GH MOD START - additional code
         checkMaxSearchDistances(request, ghRsp, snaps);
+        ghRsp.addReturnObject(pathProcessorFactory.createPathProcessor(request.getAdditionalHints(), encodingManager.getEncoder(request.getEncoderName()), ghStorage));
         // ORS-GH MOD END
         // (base) query graph used to resolve headings, curbsides etc. this is not necessarily the same thing as
         // the (possibly implementation specific) query graph used by PathCalculator

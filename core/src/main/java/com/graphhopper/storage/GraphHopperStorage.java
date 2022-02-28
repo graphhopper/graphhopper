@@ -318,7 +318,10 @@ public final class GraphHopperStorage implements Graph, Closeable {
 
         baseGraph.create(initSize);
 
-        // ORS-GH MOD START - create conditional storages
+        // ORS-GH MOD START - create extended/conditional storages
+        if (graphExtensions != null) {
+            graphExtensions.create(initSize);
+        }
         // TODO ORS: Find out byteCount to create these
         if (conditionalAccess != null) {
             conditionalAccess.create(initSize);
@@ -408,6 +411,11 @@ public final class GraphHopperStorage implements Graph, Closeable {
         chEntries.stream().map(ch -> ch.chStore).filter(s -> !s.isClosed()).forEach(CHStorage::flush);
         baseGraph.flush();
         properties.flush();
+        // ORS-GH MOD START - additional code
+        if (graphExtensions != null) {
+            graphExtensions.flush();
+        }
+        // ORS-GH MOD END
     }
 
     @Override
@@ -415,6 +423,9 @@ public final class GraphHopperStorage implements Graph, Closeable {
         properties.close();
         baseGraph.close();
         // ORS-GH MOD START - additional code
+        if (graphExtensions != null) {
+            graphExtensions.close();
+        }
         if (conditionalAccess != null) {
             conditionalAccess.close();
         }
