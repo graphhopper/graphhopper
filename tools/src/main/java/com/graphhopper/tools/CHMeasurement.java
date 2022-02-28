@@ -36,7 +36,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static java.lang.System.nanoTime;
@@ -56,29 +55,29 @@ public class CHMeasurement {
      */
     private static void testPerformanceAutomaticNodeOrdering(String[] args) {
         // example args:
-        // map=berlin.pbf stats_file=stats.dat period_updates=0 lazy_updates=100 neighbor_updates=0 contract_nodes=100 log_messages=20 edge_quotient_weight=1.0 orig_edge_quotient_weight=3.0 hierarchy_depth_weight=2.0 sigma_factor=3.0 min_max_settled_edges=100 reset_interval=10000 landmarks=0 cleanup=true turncosts=true threshold=0.1 seed=456 comp_iterations=10 perf_iterations=100 quick=false
+        // map=berlin.pbf stats_file=stats.dat period_updates=0 lazy_updates=100 neighbor_updates=50 max_neighbor_updatse=3 contract_nodes=100 log_messages=20 edge_quotient_weight=100.0 orig_edge_quotient_weight=100.0 hierarchy_depth_weight=20.0 landmarks=0 cleanup=true turncosts=true threshold=0.1 seed=456 comp_iterations=10 perf_iterations=100 quick=false
         long start = nanoTime();
         PMap map = PMap.read(args);
         GraphHopperConfig ghConfig = new GraphHopperConfig(map);
         LOGGER.info("Running analysis with parameters {}", ghConfig);
-        String osmFile = ghConfig.getString("map", "local/maps/unterfranken-latest.osm.pbf");
+        String osmFile = ghConfig.getString("map", "map-matching/files/leipzig_germany.osm.pbf");
         ghConfig.putObject("datareader.file", osmFile);
         final String statsFile = ghConfig.getString("stats_file", null);
         final int periodicUpdates = ghConfig.getInt("period_updates", 0);
         final int lazyUpdates = ghConfig.getInt("lazy_updates", 100);
-        final int neighborUpdates = ghConfig.getInt("neighbor_updates", 0);
+        final int neighborUpdates = ghConfig.getInt("neighbor_updates", 50);
+        final int maxNeighborUpdates = ghConfig.getInt("max_neighbor_updates", 3);
         final int contractedNodes = ghConfig.getInt("contract_nodes", 100);
         final int logMessages = ghConfig.getInt("log_messages", 20);
-        final float edgeQuotientWeight = ghConfig.getFloat("edge_quotient_weight", 1.0f);
-        final float origEdgeQuotientWeight = ghConfig.getFloat("orig_edge_quotient_weight", 3.0f);
-        final float hierarchyDepthWeight = ghConfig.getFloat("hierarchy_depth_weight", 2.0f);
-        final double sigmaFactor = ghConfig.getFloat("sigma_factor", 3.0f);
-        final int minMaxSettledEdges = ghConfig.getInt("min_max_settled_edges", 100);
-        final int resetInterval = ghConfig.getInt("reset_interval", 10_000);
+        final float edgeQuotientWeight = ghConfig.getFloat("edge_quotient_weight", 100.0f);
+        final float origEdgeQuotientWeight = ghConfig.getFloat("orig_edge_quotient_weight", 100.0f);
+        final float hierarchyDepthWeight = ghConfig.getFloat("hierarchy_depth_weight", 20.0f);
+        final int pollFactorHeuristic = ghConfig.getInt("poll_factor_heur", 5);
+        final int pollFactorContraction = ghConfig.getInt("poll_factor_contr", 200);
         final int landmarks = ghConfig.getInt("landmarks", 0);
         final boolean cleanup = ghConfig.getBool("cleanup", true);
         final boolean withTurnCosts = ghConfig.getBool("turncosts", true);
-        final int uTurnCosts = ghConfig.getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
+        final int uTurnCosts = ghConfig.getInt(Parameters.Routing.U_TURN_COSTS, 80);
         final double errorThreshold = ghConfig.getDouble("threshold", 0.1);
         final long seed = ghConfig.getLong("seed", 456);
         final int compIterations = ghConfig.getInt("comp_iterations", 100);
@@ -90,7 +89,7 @@ public class CHMeasurement {
         if (withTurnCosts) {
             ghConfig.putObject("graph.flag_encoders", "car|turn_costs=true");
             ghConfig.setProfiles(Collections.singletonList(
-                    new Profile(profile).setVehicle("car").setWeighting("fastest").setTurnCosts(true)
+                    new Profile(profile).setVehicle("car").setWeighting("fastest").setTurnCosts(true).putHint(Parameters.Routing.U_TURN_COSTS, uTurnCosts)
             ));
             ghConfig.setCHProfiles(Collections.singletonList(
                     new CHProfile(profile)
@@ -111,14 +110,19 @@ public class CHMeasurement {
         ghConfig.putObject(PERIODIC_UPDATES, periodicUpdates);
         ghConfig.putObject(LAST_LAZY_NODES_UPDATES, lazyUpdates);
         ghConfig.putObject(NEIGHBOR_UPDATES, neighborUpdates);
+        ghConfig.putObject(NEIGHBOR_UPDATES_MAX, maxNeighborUpdates);
         ghConfig.putObject(CONTRACTED_NODES, contractedNodes);
         ghConfig.putObject(LOG_MESSAGES, logMessages);
-        ghConfig.putObject(EDGE_QUOTIENT_WEIGHT, edgeQuotientWeight);
-        ghConfig.putObject(ORIGINAL_EDGE_QUOTIENT_WEIGHT, origEdgeQuotientWeight);
-        ghConfig.putObject(HIERARCHY_DEPTH_WEIGHT, hierarchyDepthWeight);
-        ghConfig.putObject(SIGMA_FACTOR, sigmaFactor);
-        ghConfig.putObject(MIN_MAX_SETTLED_EDGES, minMaxSettledEdges);
-        ghConfig.putObject(SETTLED_EDGES_RESET_INTERVAL, resetInterval);
+        if (withTurnCosts) {
+            ghConfig.putObject(EDGE_QUOTIENT_WEIGHT, edgeQuotientWeight);
+            ghConfig.putObject(ORIGINAL_EDGE_QUOTIENT_WEIGHT, origEdgeQuotientWeight);
+            ghConfig.putObject(HIERARCHY_DEPTH_WEIGHT, hierarchyDepthWeight);
+            ghConfig.putObject(MAX_POLL_FACTOR_HEURISTIC_EDGE, pollFactorHeuristic);
+            ghConfig.putObject(MAX_POLL_FACTOR_CONTRACTION_EDGE, pollFactorContraction);
+        } else {
+            ghConfig.putObject(MAX_POLL_FACTOR_HEURISTIC_NODE, pollFactorHeuristic);
+            ghConfig.putObject(MAX_POLL_FACTOR_CONTRACTION_NODE, pollFactorContraction);
+        }
 
         LOGGER.info("Initializing graph hopper with args: {}", ghConfig);
         graphHopper.init(ghConfig);
@@ -178,7 +182,7 @@ public class CHMeasurement {
             sb.append(key).append(":").append(resultMap.get(key)).append(";");
         }
         sb.deleteCharAt(sb.lastIndexOf(";"));
-        System.out.println(sb.toString());
+        System.out.println(sb);
 
         LOGGER.info("Total time: {}s", fmt((nanoTime() - start) * 1.e-9));
     }
@@ -235,7 +239,7 @@ public class CHMeasurement {
                     results.putObject("_" + algo + ".deviations", chDeviations);
                 }
                 GHRequest req = buildRandomRequest(random, numNodes, nodeAccess);
-                req.getHints().putObject(Parameters.Routing.EDGE_BASED, withTurnCosts);
+                req.setProfile("car_profile");
                 req.getHints().putObject(Parameters.CH.DISABLE, false);
                 req.getHints().putObject(Parameters.Landmark.DISABLE, true);
                 req.getHints().putObject(Parameters.Routing.U_TURN_COSTS, uTurnCosts);
@@ -311,7 +315,6 @@ public class CHMeasurement {
                     results.putObject("_" + algo + ".time_ch", avg);
                 }
                 GHRequest req = buildRandomRequest(random, numNodes, nodeAccess);
-                req.putHint(Parameters.Routing.EDGE_BASED, withTurnCosts);
                 req.putHint(Parameters.CH.DISABLE, lm);
                 req.putHint(Parameters.Landmark.DISABLE, !lm);
                 req.setProfile("car_profile");

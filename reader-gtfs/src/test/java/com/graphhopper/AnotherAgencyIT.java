@@ -25,6 +25,9 @@ import com.graphhopper.util.TranslationMap;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
 
 import java.io.File;
 import java.time.Duration;
@@ -36,8 +39,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.graphhopper.gtfs.GtfsHelper.time;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static com.graphhopper.util.Parameters.Details.EDGE_KEY;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class AnotherAgencyIT {
 
@@ -151,20 +154,24 @@ public class AnotherAgencyIT {
         );
         ghRequest.setIgnoreTransfers(true);
         ghRequest.setWalkSpeedKmH(0.5); // Prevent walk solution
+        ghRequest.setPathDetails(Arrays.asList(EDGE_KEY));
         GHResponse route = ptRouter.route(ghRequest);
 
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
+
         ResponsePath transitSolution = route.getBest();
-        List<Trip.Leg> ptLegs = transitSolution.getLegs().stream().filter(l -> l instanceof Trip.PtLeg).collect(Collectors.toList());
-        assertEquals("JUSTICE_COURT,MUSEUM", ((Trip.PtLeg) ptLegs.get(0)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
-        assertEquals("EMSI,DADAN", ((Trip.PtLeg) ptLegs.get(1)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
-        // TODO: write down 10 min transfer time
         assertEquals(4500000L, transitSolution.getTime());
         assertEquals(4500000.0, transitSolution.getRouteWeight());
-
-        // TODO: We probably want something like a transfer leg here
         assertEquals(time(1, 15), transitSolution.getTime(), "Expected total travel time == scheduled travel time + wait time");
+
+        assertEquals("JUSTICE_COURT,MUSEUM", ((Trip.PtLeg) transitSolution.getLegs().get(0)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
+        Instant walkDepartureTime = Instant.ofEpochMilli(transitSolution.getLegs().get(1).getDepartureTime().getTime());
+        assertEquals("10:00", LocalDateTime.ofInstant(walkDepartureTime, zoneId).toLocalTime().toString());
+        assertEquals(readWktLineString("LINESTRING (-116.76164 36.906093, -116.761812 36.905928, -116.76217 36.905659)"), transitSolution.getLegs().get(1).geometry);
+        Instant walkArrivalTime = Instant.ofEpochMilli(transitSolution.getLegs().get(1).getArrivalTime().getTime());
+        assertEquals("10:08:06.660", LocalDateTime.ofInstant(walkArrivalTime, zoneId).toLocalTime().toString());
+        assertEquals("EMSI,DADAN", ((Trip.PtLeg) transitSolution.getLegs().get(2)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
     }
 
     @Test
@@ -182,7 +189,19 @@ public class AnotherAgencyIT {
         ResponsePath walkRoute = route.getBest();
         assertEquals(1, walkRoute.getLegs().size());
         assertEquals(486660, walkRoute.getTime()); // < 10 min, so the transfer in test above works ^^
+        assertEquals(readWktLineString("LINESTRING (-116.76164 36.906093, -116.761812 36.905928, -116.76217 36.905659)"), walkRoute.getLegs().get(0).geometry);
         assertFalse(route.hasErrors());
+    }
+
+    private LineString readWktLineString(String wkt) {
+        WKTReader wktReader = new WKTReader();
+        LineString expectedGeometry = null;
+        try {
+            expectedGeometry = (LineString) wktReader.read(wkt);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return expectedGeometry;
     }
 
 }

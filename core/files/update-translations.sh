@@ -7,7 +7,7 @@ translations="en_US SKIP SKIP ar ast bg bn_BN ca cs_CZ da_DK de_DE el eo es fa f
 file=$1
 
 # You can execute the following
-# curl 'https://docs.google.com/spreadsheets/d/10HKSFmxGVEIO92loVQetVmjXT0qpf3EA2jxuQSSYTdU/export?format=tsv&id=10HKSFmxGVEIO92loVQetVmjXT0qpf3EA2jxuQSSYTdU&gid=0' > tmp.tsv
+# curl -L 'https://docs.google.com/spreadsheets/d/10HKSFmxGVEIO92loVQetVmjXT0qpf3EA2jxuQSSYTdU/export?format=tsv&gid=0' > tmp.tsv
 # ./files/update-translations.sh tmp.tsv && rm tmp.tsv
 
 INDEX=1
