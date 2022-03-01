@@ -314,10 +314,15 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
                 wayTypeSpeed = (smoothnessSpeedFactor <= smoothnessFactorPushingSectionThreshold) ?
                         PUSHING_SECTION_SPEED : Math.round(smoothnessSpeedFactor * wayTypeSpeed);
             }
-            handleSpeed(edgeFlags, way, wayTypeSpeed);
+            avgSpeedEnc.setDecimal(false, edgeFlags, wayTypeSpeed);
+            if (speedTwoDirections)
+                avgSpeedEnc.setDecimal(true, edgeFlags, wayTypeSpeed);
+            handleAccess(edgeFlags, way);
         } else {
             double ferrySpeed = ferrySpeedCalc.getSpeed(way);
-            handleSpeed(edgeFlags, way, ferrySpeed);
+            avgSpeedEnc.setDecimal(false, edgeFlags, ferrySpeed);
+            if (speedTwoDirections)
+                avgSpeedEnc.setDecimal(true, edgeFlags, ferrySpeed);
             accessEnc.setBool(false, edgeFlags, true);
             accessEnc.setBool(true, edgeFlags, true);
             priorityFromRelation = SLIGHT_AVOID.getValue();
@@ -519,9 +524,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         }
     }
 
-    protected void handleSpeed(IntsRef edgeFlags, ReaderWay way, double speed) {
-        avgSpeedEnc.setDecimal(false, edgeFlags, speed);
-
+    protected void handleAccess(IntsRef edgeFlags, ReaderWay way) {
         // handle oneways
         // oneway=-1 requires special handling
         boolean isOneway = way.hasTag("oneway", oneways) && !way.hasTag("oneway", "-1") && !way.hasTag("bicycle:backward", intendedValues)
