@@ -53,7 +53,7 @@ public class CHQueryWithTurnCostsTest {
 
     private static class Fixture {
         private final int maxCost = 10;
-        private final FlagEncoder encoder = new CarFlagEncoder(5, 5, maxCost).setSpeedTwoDirections(true);
+        private final FlagEncoder encoder = new CarFlagEncoder(5, 5, maxCost, true);
         private final EncodingManager encodingManager = EncodingManager.create(encoder);
         private final GraphHopperStorage graph;
         private final CHConfig chConfig;

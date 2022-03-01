@@ -28,7 +28,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
 
-import static com.graphhopper.routing.util.PriorityCode.*;
+import static com.graphhopper.routing.util.PriorityCode.AVOID;
+import static com.graphhopper.routing.util.PriorityCode.VERY_NICE;
 
 /**
  * A flag encoder for wheelchairs.
@@ -55,7 +56,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     }
 
     protected WheelchairFlagEncoder(int speedBits, double speedFactor) {
-        super(speedBits, speedFactor);
+        super(speedBits, speedFactor, true);
 
         restrictions.add("wheelchair");
 
@@ -98,7 +99,6 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         allowedSacScale.clear();
 
         maxPossibleSpeed = FERRY_SPEED;
-        speedTwoDirections = true;
     }
 
     /**
