@@ -38,8 +38,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
     }
 
     public Bike2WeightFlagEncoder(PMap properties) {
-        super(properties);
-        speedTwoDirections = true;
+        super(new PMap(properties).putObject("speed_two_directions", true));
     }
 
     protected void handleSpeed(IntsRef edgeFlags, ReaderWay way, double speed) {

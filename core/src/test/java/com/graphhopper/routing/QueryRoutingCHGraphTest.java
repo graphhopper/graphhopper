@@ -50,7 +50,7 @@ class QueryRoutingCHGraphTest {
 
     @BeforeEach
     public void setup() {
-        encoder = new CarFlagEncoder(5, 5, 5).setSpeedTwoDirections(true);
+        encoder = new CarFlagEncoder(5, 5, 5, true);
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager).create();
         weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()));

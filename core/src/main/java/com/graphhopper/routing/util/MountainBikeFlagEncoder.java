@@ -47,7 +47,7 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
     }
 
     protected MountainBikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
-        super(speedBits, speedFactor, maxTurnCosts);
+        super(speedBits, speedFactor, maxTurnCosts, false);
         setTrackTypeSpeed("grade1", 18); // paved
         setTrackTypeSpeed("grade2", 16); // now unpaved ...
         setTrackTypeSpeed("grade3", 12);

@@ -18,8 +18,8 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -35,7 +35,7 @@ import java.util.*;
 public class CarFlagEncoder extends AbstractFlagEncoder {
     protected final Map<String, Integer> trackTypeSpeedMap = new HashMap<>();
     protected final Set<String> badSurfaceSpeedMap = new HashSet<>();
-    private boolean speedTwoDirections;
+    private final boolean speedTwoDirections;
     // This value determines the maximal possible on roads with bad surfaces
     protected int badSurfaceSpeed;
 
@@ -51,8 +51,12 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     }
 
     public CarFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
+        this(speedBits, speedFactor, maxTurnCosts, false);
+    }
+
+    public CarFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
         this(new PMap().putObject("speed_bits", speedBits).putObject("speed_factor", speedFactor).
-                putObject("max_turn_costs", maxTurnCosts));
+                putObject("max_turn_costs", maxTurnCosts).putObject("speed_two_directions", speedTwoDirections));
     }
 
     public CarFlagEncoder(PMap properties) {
@@ -71,7 +75,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
-        setSpeedTwoDirections(properties.getBool("speed_two_directions", false));
+        speedTwoDirections = properties.getBool("speed_two_directions", false);
 
         intendedValues.add("yes");
         intendedValues.add("designated");
@@ -140,11 +144,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         // limit speed on bad surfaces to 30 km/h
         badSurfaceSpeed = 30;
         maxPossibleSpeed = 140;
-    }
-
-    public CarFlagEncoder setSpeedTwoDirections(boolean value) {
-        speedTwoDirections = value;
-        return this;
     }
 
     @Override

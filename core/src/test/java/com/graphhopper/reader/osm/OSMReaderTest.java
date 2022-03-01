@@ -643,7 +643,7 @@ public class OSMReaderTest {
                 return "truck";
             }
         };
-        BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24);
+        BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24, false);
 
         GraphHopper hopper = new GraphHopper();
         hopper.getEncodingManagerBuilder().add(bike).add(truck).add(car);
@@ -949,7 +949,7 @@ public class OSMReaderTest {
             BikeFlagEncoder bikeEncoder;
             if (turnCosts) {
                 carEncoder = new CarFlagEncoder(5, 5, 1);
-                bikeEncoder = new BikeFlagEncoder(4, 2, 1);
+                bikeEncoder = new BikeFlagEncoder(4, 2, 1, false);
             } else {
                 carEncoder = new CarFlagEncoder();
                 bikeEncoder = new BikeFlagEncoder();

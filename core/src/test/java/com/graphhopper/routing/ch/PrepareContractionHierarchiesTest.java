@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Peter Karich
  */
 public class PrepareContractionHierarchiesTest {
-    private final CarFlagEncoder carEncoder = new CarFlagEncoder().setSpeedTwoDirections(true);
+    private final CarFlagEncoder carEncoder = new CarFlagEncoder(new PMap().putObject("speed_two_directions", true));
     private final EncodingManager encodingManager = EncodingManager.create(carEncoder);
     private final Weighting weighting = new ShortestWeighting(carEncoder);
     private final CHConfig chConfig = CHConfig.nodeBased("c", weighting);
