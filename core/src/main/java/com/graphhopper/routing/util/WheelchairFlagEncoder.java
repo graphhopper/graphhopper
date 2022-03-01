@@ -56,7 +56,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     }
 
     protected WheelchairFlagEncoder(int speedBits, double speedFactor) {
-        super(speedBits, speedFactor);
+        super(speedBits, speedFactor, true);
 
         restrictions.add("wheelchair");
 
@@ -258,7 +258,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     }
 
     @Override
-    public String toString() {
+    public String getName() {
         return "wheelchair";
     }
 }

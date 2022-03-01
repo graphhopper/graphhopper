@@ -20,7 +20,6 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.Roundabout;
 import com.graphhopper.routing.ev.RouteNetwork;
 import com.graphhopper.storage.IntsRef;
@@ -82,7 +81,7 @@ public class EncodingManagerTest {
             }
 
             @Override
-            public String toString() {
+            public String getName() {
                 return "new_encoder";
             }
         };
@@ -108,7 +107,7 @@ public class EncodingManagerTest {
             }
 
             @Override
-            public String toString() {
+            public String getName() {
                 return "less_relations_bits";
             }
         };
@@ -220,18 +219,18 @@ public class EncodingManagerTest {
             way.setTag("junction", "roundabout");
             IntsRef edgeFlags = manager.handleWayTags(way, manager.createRelationFlags());
             assertTrue(accessEnc.getBool(false, edgeFlags));
-            if (!encoder.toString().equals("foot"))
-                assertFalse(accessEnc.getBool(true, edgeFlags), encoder.toString());
-            assertTrue(roundaboutEnc.getBool(false, edgeFlags), encoder.toString());
+            if (!encoder.getName().equals("foot"))
+                assertFalse(accessEnc.getBool(true, edgeFlags), encoder.getName());
+            assertTrue(roundaboutEnc.getBool(false, edgeFlags), encoder.getName());
 
             way.clearTags();
             way.setTag("highway", "tertiary");
             way.setTag("junction", "circular");
             edgeFlags = manager.handleWayTags(way, manager.createRelationFlags());
             assertTrue(accessEnc.getBool(false, edgeFlags));
-            if (!encoder.toString().equals("foot"))
-                assertFalse(accessEnc.getBool(true, edgeFlags), encoder.toString());
-            assertTrue(roundaboutEnc.getBool(false, edgeFlags), encoder.toString());
+            if (!encoder.getName().equals("foot"))
+                assertFalse(accessEnc.getBool(true, edgeFlags), encoder.getName());
+            assertTrue(roundaboutEnc.getBool(false, edgeFlags), encoder.getName());
         }
     }
 

@@ -109,10 +109,11 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
      * Define the place of the speedBits in the edge flags for car.
      */
     @Override
-    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix) {
+    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue) {
         // first two bits are reserved for route handling in superclass
-        super.createEncodedValues(registerNewEncodedValue, prefix);
+        super.createEncodedValues(registerNewEncodedValue);
 
+        String prefix = getName();
         registerNewEncodedValue.add(priorityWayEncoder = new DecimalEncodedValueImpl(getKey(prefix, "priority"), 4, PriorityCode.getFactor(1), false));
         registerNewEncodedValue.add(curvatureEncoder = new DecimalEncodedValueImpl(getKey(prefix, "curvature"), 4, 0.1, false));
     }
@@ -288,7 +289,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
     }
 
     @Override
-    public String toString() {
+    public String getName() {
         return "motorcycle";
     }
 }

@@ -648,7 +648,7 @@ public class CarFlagEncoderTest {
         EncodingManager.create(lowFactorCar);
         List<EncodedValue> list = new ArrayList<>();
         lowFactorCar.setEncodedValueLookup(em);
-        lowFactorCar.createEncodedValues(list, "car");
+        lowFactorCar.createEncodedValues(list);
         assertEquals(2.5, encoder.ferrySpeedCalc.getSpeed(way), .1);
         assertEquals(.5, lowFactorCar.ferrySpeedCalc.getSpeed(way), .1);
     }

@@ -50,7 +50,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     protected static final double smoothnessFactorPushingSectionThreshold = 0.3d;
     private final Map<Smoothness, Double> smoothnessFactor = new HashMap<>();
     private final Map<String, Integer> highwaySpeeds = new HashMap<>();
-    protected boolean speedTwoDirections;
+    protected final boolean speedTwoDirections;
     DecimalEncodedValue priorityEnc;
     // Car speed limit which switches the preference from UNCHANGED to AVOID_IF_POSSIBLE
     private int avoidSpeedLimit;
@@ -61,8 +61,10 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     // This is the specific bicycle class
     private String classBicycleKey;
 
-    protected BikeCommonFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
+    protected BikeCommonFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
         super(speedBits, speedFactor, maxTurnCosts);
+        this.speedTwoDirections = speedTwoDirections;
+        avgSpeedEnc = new DecimalEncodedValueImpl(getKey(getName(), "average_speed"), speedBits, speedFactor, speedTwoDirections);
 
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
@@ -195,10 +197,11 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix) {
+    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue) {
         // first two bits are reserved for route handling in superclass
-        super.createEncodedValues(registerNewEncodedValue, prefix);
-        registerNewEncodedValue.add(avgSpeedEnc = new DecimalEncodedValueImpl(getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
+        super.createEncodedValues(registerNewEncodedValue);
+        String prefix = getName();
+        registerNewEncodedValue.add(avgSpeedEnc);
         registerNewEncodedValue.add(priorityEnc = new DecimalEncodedValueImpl(getKey(prefix, "priority"), 4, PriorityCode.getFactor(1), false));
 
         bikeRouteEnc = getEnumEncodedValue(RouteNetwork.key("bike"), RouteNetwork.class);
@@ -523,11 +526,11 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
         // handle oneways
         // oneway=-1 requires special handling
-        boolean isOneway = (way.hasTag("oneway", oneways) && !way.hasTag("oneway", "-1") && !way.hasTag("bicycle:backward", intendedValues))
-                || (way.hasTag("oneway", "-1") && !way.hasTag("bicycle:forward", intendedValues))
+        boolean isOneway = way.hasTag("oneway", oneways) && !way.hasTag("oneway", "-1") && !way.hasTag("bicycle:backward", intendedValues)
+                || way.hasTag("oneway", "-1") && !way.hasTag("bicycle:forward", intendedValues)
                 || way.hasTag("oneway:bicycle", oneways)
-                || (way.hasTag("vehicle:backward", restrictedValues) && !way.hasTag("bicycle:forward", intendedValues))
-                || (way.hasTag("vehicle:forward", restrictedValues) && !way.hasTag("bicycle:backward", intendedValues))
+                || way.hasTag("vehicle:backward", restrictedValues) && !way.hasTag("bicycle:forward", intendedValues)
+                || way.hasTag("vehicle:forward", restrictedValues) && !way.hasTag("bicycle:backward", intendedValues)
                 || way.hasTag("bicycle:forward", restrictedValues)
                 || way.hasTag("bicycle:backward", restrictedValues);
 
