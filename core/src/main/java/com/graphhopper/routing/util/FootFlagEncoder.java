@@ -68,6 +68,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     protected FootFlagEncoder(int speedBits, double speedFactor, boolean speedTwoDirections) {
         super(speedBits, speedFactor, 0);
         this.speedTwoDirections = speedTwoDirections;
+        avgSpeedEnc = new DecimalEncodedValueImpl(getKey(getName(), "average_speed"), speedBits, speedFactor, speedTwoDirections);
 
         restrictedValues.add("no");
         restrictedValues.add("restricted");
@@ -146,7 +147,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         super.createEncodedValues(registerNewEncodedValue);
         // larger value required - ferries are faster than pedestrians
         String prefix = getName();
-        registerNewEncodedValue.add(avgSpeedEnc = new DecimalEncodedValueImpl(getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
+        registerNewEncodedValue.add(avgSpeedEnc);
         registerNewEncodedValue.add(priorityWayEncoder = new DecimalEncodedValueImpl(getKey(prefix, "priority"), 4, PriorityCode.getFactor(1), false));
 
         footRouteEnc = getEnumEncodedValue(RouteNetwork.key("foot"), RouteNetwork.class);

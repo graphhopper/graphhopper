@@ -64,6 +64,10 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
                 properties.getDouble("speed_factor", 5),
                 properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0));
 
+        speedTwoDirections = properties.getBool("speed_two_directions", false);
+        String prefix = getName();
+        avgSpeedEnc = new DecimalEncodedValueImpl(EncodingManager.getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections);
+
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
         restrictedValues.add("no");
@@ -75,7 +79,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
-        speedTwoDirections = properties.getBool("speed_two_directions", false);
 
         intendedValues.add("yes");
         intendedValues.add("designated");
@@ -158,8 +161,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     public void createEncodedValues(List<EncodedValue> registerNewEncodedValue) {
         // first two bits are reserved for route handling in superclass
         super.createEncodedValues(registerNewEncodedValue);
-        String prefix = getName();
-        registerNewEncodedValue.add(avgSpeedEnc = new DecimalEncodedValueImpl(EncodingManager.getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
+        registerNewEncodedValue.add(avgSpeedEnc);
     }
 
     protected double getSpeed(ReaderWay way) {
