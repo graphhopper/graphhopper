@@ -427,7 +427,7 @@ public class EncodingManager implements EncodedValueLookup {
     private void addEncoder(AbstractFlagEncoder encoder) {
         encoder.setEncodedValueLookup(this);
         List<EncodedValue> list = new ArrayList<>();
-        encoder.createEncodedValues(list, encoder.toString());
+        encoder.createEncodedValues(list);
         for (EncodedValue ev : list)
             addEncodedValue(ev, true);
         edgeEncoders.add(encoder);

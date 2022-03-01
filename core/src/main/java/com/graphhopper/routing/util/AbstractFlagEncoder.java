@@ -129,8 +129,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     /**
      * Defines bits used for edge flags used for access, speed etc.
      */
-    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix) {
+    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue) {
         // define the first 2 bits in flags for access
+        String prefix = toString();
         registerNewEncodedValue.add(accessEnc = new SimpleBooleanEncodedValue(EncodingManager.getKey(prefix, "access"), true));
         roundaboutEnc = getBooleanEncodedValue(Roundabout.KEY);
     }
