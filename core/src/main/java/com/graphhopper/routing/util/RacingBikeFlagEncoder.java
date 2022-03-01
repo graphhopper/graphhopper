@@ -151,7 +151,7 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
     }
 
     @Override
-    public String toString() {
+    public String getName() {
         return "racingbike";
     }
 }

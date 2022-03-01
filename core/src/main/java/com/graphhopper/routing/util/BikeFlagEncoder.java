@@ -80,7 +80,7 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
     }
 
     @Override
-    public String toString() {
+    public String getName() {
         return "bike";
     }
 }

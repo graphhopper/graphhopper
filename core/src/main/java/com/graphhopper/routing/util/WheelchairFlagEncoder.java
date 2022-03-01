@@ -254,7 +254,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     }
 
     @Override
-    public String toString() {
+    public String getName() {
         return "wheelchair";
     }
 }

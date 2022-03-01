@@ -19,7 +19,7 @@ public class RoadsFlagEncoder extends AbstractFlagEncoder {
     @Override
     public void createEncodedValues(List<EncodedValue> registerNewEncodedValue) {
         super.createEncodedValues(registerNewEncodedValue);
-        String prefix = toString();
+        String prefix = getName();
         registerNewEncodedValue.add(avgSpeedEnc = new DecimalEncodedValueImpl(EncodingManager.getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
     }
 
@@ -48,7 +48,7 @@ public class RoadsFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public String toString() {
+    public String getName() {
         return "roads";
     }
 }

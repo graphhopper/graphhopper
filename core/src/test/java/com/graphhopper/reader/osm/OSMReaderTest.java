@@ -639,7 +639,7 @@ public class OSMReaderTest {
             }
 
             @Override
-            public String toString() {
+            public String getName() {
                 return "truck";
             }
         };

@@ -218,13 +218,13 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
 
     public final DecimalEncodedValue getAverageSpeedEnc() {
         if (avgSpeedEnc == null)
-            throw new NullPointerException("FlagEncoder " + toString() + " not yet initialized");
+            throw new NullPointerException("FlagEncoder " + getName() + " not yet initialized");
         return avgSpeedEnc;
     }
 
     public final BooleanEncodedValue getAccessEnc() {
         if (accessEnc == null)
-            throw new NullPointerException("FlagEncoder " + toString() + " not yet initialized");
+            throw new NullPointerException("FlagEncoder " + getName() + " not yet initialized");
         return accessEnc;
     }
 
@@ -312,5 +312,12 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
 
     public final List<String> getRestrictions() {
         return restrictions;
+    }
+
+    public abstract String getName();
+
+    @Override
+    public String toString() {
+        return getName();
     }
 }

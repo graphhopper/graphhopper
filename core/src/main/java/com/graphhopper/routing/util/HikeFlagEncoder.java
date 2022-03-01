@@ -130,7 +130,7 @@ public class HikeFlagEncoder extends FootFlagEncoder {
     }
 
     @Override
-    public String toString() {
+    public String getName() {
         return "hike";
     }
 }

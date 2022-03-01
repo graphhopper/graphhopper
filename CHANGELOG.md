@@ -1,5 +1,6 @@
 ### 5.0 [not yet released]
 
+- added FlagEncoder#getName (use just like toString() before)
 - faster edge-based CH preparation, especially with large u-turn costs and GermanyCountryRule (many large weight edges
   due to access=destination on tracks) (#2522)
 - consider subnetworks when evaluating curbside constraints (#2502)
