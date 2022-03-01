@@ -63,21 +63,6 @@ public class PathMerger {
         this.weighting = weighting;
     }
 
-    // ORS-GH MOD START
-    // TODO ORS (minor): provide reason for this addition
-    protected PathProcessor[] pathProcessor = {PathProcessor.DEFAULT};
-
-    public PathMerger setPathProcessor(PathProcessor[] pathProcessor) {
-        this.pathProcessor = pathProcessor;
-        return this;
-    }
-
-    private int ppIndex = 0;
-    public void setPathProcessorIndex(int newIndex) {
-        ppIndex = newIndex;
-    }
-    // ORS MOD END
-
     public PathMerger setCalcPoints(boolean calcPoints) {
         this.calcPoints = calcPoints;
         return this;
@@ -105,6 +90,12 @@ public class PathMerger {
     }
 
     public ResponsePath doWork(PointList waypoints, List<Path> paths, EncodedValueLookup evLookup, Translation tr) {
+        // ORS-GH MOD - change signature to pass PathProcessor
+        return doWork(waypoints, paths, evLookup, tr,  PathProcessor.DEFAULT);
+    }
+
+    public ResponsePath doWork(PointList waypoints, List<Path> paths, EncodedValueLookup evLookup, Translation tr, PathProcessor pathProcessor) {
+        // ORS-GH MOD END
         ResponsePath responsePath = new ResponsePath();
         int origPoints = 0;
         long fullTimeInMillis = 0;
@@ -127,10 +118,9 @@ public class PathMerger {
             fullWeight += path.getWeight();
             if (enableInstructions) {
                 // ORS-GH MOD START
-                // TODO ORS (major): integrate or re-implement pathprocessor
-                // GH orig: InstructionList il = InstructionsFromEdges.calcInstructions(path, graph, weighting, evLookup, tr);
-                // ORS orig: InstructionList il = path.calcInstructions(roundaboutEnc, tr, pathProcessor[ppIndex]);
-                InstructionList il = InstructionsFromEdges.calcInstructions(path, graph, weighting, evLookup, tr/*TODO ORS:, pathProcessor[ppIndex]*/);
+                // TODO ORS (major refactoring): integrate or re-implement pathprocessor
+                // InstructionList il = InstructionsFromEdges.calcInstructions(path, graph, weighting, evLookup, tr);
+                InstructionList il = InstructionsFromEdges.calcInstructions(path, graph, weighting, evLookup, tr, pathProcessor);
                 // ORS-GH MOD END
 
                 if (!il.isEmpty()) {
@@ -165,7 +155,7 @@ public class PathMerger {
 
         if (!fullPoints.isEmpty()) {
             // ORS-GH MOD START
-            fullPoints = pathProcessor[ppIndex].processPoints(fullPoints);
+            fullPoints = pathProcessor.processPoints(fullPoints);
             // ORS-GH MOD END
             responsePath.addDebugInfo("simplify (" + origPoints + "->" + fullPoints.size() + ")");
             if (fullPoints.is3D)

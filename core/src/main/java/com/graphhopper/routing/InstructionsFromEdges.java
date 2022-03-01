@@ -92,20 +92,20 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private static final int MAX_U_TURN_DISTANCE = 35;
     protected GHLongArrayList times; // ORS-GH MOD - additional field
     // ORS-GH MOD - additional field
-    // TODO ORS: is this still needed?
-    private PathProcessor mPathProcessor = PathProcessor.DEFAULT;
+    private PathProcessor mPathProcessor;
 
     // ORS-GH MOD - wrapper mimicking old signature
     public InstructionsFromEdges(Graph graph, Weighting weighting, EncodedValueLookup evLookup,
                                  InstructionList ways) {
-        this(graph, weighting, evLookup, ways, null);
+        this(graph, weighting, evLookup, ways, null, PathProcessor.DEFAULT);
     }
 
     // ORS-GH MOD - change signature to permit time dependent routing
     //public InstructionsFromEdges(Graph graph, Weighting weighting, EncodedValueLookup evLookup,
     //                             InstructionList ways) {
     public InstructionsFromEdges(Graph graph, Weighting weighting, EncodedValueLookup evLookup,
-                                 InstructionList ways, GHLongArrayList times) {
+                                 InstructionList ways, GHLongArrayList times, PathProcessor pathProcessor) {
+        this.mPathProcessor = pathProcessor;
     // ORS-GH MOD END
         this.encoder = weighting.getFlagEncoder();
         this.weighting = weighting;
@@ -128,13 +128,19 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
      * @return the list of instructions for this path.
      */
     public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting, EncodedValueLookup evLookup, final Translation tr) {
+    // ORS-GH MOD - change signature to pass PathProcessor
+        return calcInstructions(path, graph, weighting, evLookup, tr, PathProcessor.DEFAULT);
+    }
+
+    public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting, EncodedValueLookup evLookup, final Translation tr, PathProcessor pathProcessor) {
+    // ORS-GH MOD END
         final InstructionList ways = new InstructionList(tr);
         if (path.isFound()) {
             if (path.getEdgeCount() == 0) {
                 ways.add(new FinishInstruction(graph.getNodeAccess(), path.getEndNode()));
             } else {
-                // ORS-GH MOD - additional parameter
-                path.forEveryEdge(new InstructionsFromEdges(graph, weighting, evLookup, ways, path.times));
+                // ORS-GH MOD - additional parameters
+                path.forEveryEdge(new InstructionsFromEdges(graph, weighting, evLookup, ways, path.times, pathProcessor));
             }
         }
         return ways;

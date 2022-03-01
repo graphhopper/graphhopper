@@ -251,9 +251,6 @@ public class Router {
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
         // ORS-GH MOD START - additional code
         checkMaxSearchDistances(request, ghRsp, snaps);
-        for (int c = 0; c < request.getHints().getInt("alternative_route.max_paths", 1); c++) {
-            ghRsp.addReturnObject(pathProcessorFactory.createPathProcessor(request.getAdditionalHints(), encodingManager.getEncoder(request.getEncoderName()), ghStorage));
-        }
         // ORS-GH MOD END
         QueryGraph queryGraph = QueryGraph.create(ghStorage, snaps);
         PathCalculator pathCalculator = solver.createPathCalculator(queryGraph);
@@ -272,7 +269,12 @@ public class Router {
         PathMerger pathMerger = createPathMerger(request, solver.weighting, queryGraph);
         for (Path path : result.paths) {
             PointList waypoints = getWaypoints(snaps);
-            ResponsePath responsePath = pathMerger.doWork(waypoints, Collections.singletonList(path), encodingManager, translationMap.getWithFallBack(request.getLocale()));
+            // ORS-GH MOD START - create and pass PathProcessor
+            PathProcessor pathProcessor = pathProcessorFactory.createPathProcessor(request.getAdditionalHints(), encodingManager.getEncoder(request.getEncoderName()), ghStorage);
+//            ResponsePath responsePath = pathMerger.doWork(waypoints, Collections.singletonList(path), encodingManager, translationMap.getWithFallBack(request.getLocale()));
+            ResponsePath responsePath = pathMerger.doWork(waypoints, Collections.singletonList(path), encodingManager, translationMap.getWithFallBack(request.getLocale()), pathProcessor);
+            ghRsp.addReturnObject(pathProcessor);
+            // ORS-GH MOD END
             ghRsp.add(responsePath);
         }
         ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
@@ -287,7 +289,6 @@ public class Router {
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
         // ORS-GH MOD START - additional code
         checkMaxSearchDistances(request, ghRsp, snaps);
-        ghRsp.addReturnObject(pathProcessorFactory.createPathProcessor(request.getAdditionalHints(), encodingManager.getEncoder(request.getEncoderName()), ghStorage));
         // ORS-GH MOD END
         // (base) query graph used to resolve headings, curbsides etc. this is not necessarily the same thing as
         // the (possibly implementation specific) query graph used by PathCalculator
@@ -300,8 +301,14 @@ public class Router {
         if (request.getPoints().size() != result.paths.size() + 1)
             throw new RuntimeException("There should be exactly one more point than paths. points:" + request.getPoints().size() + ", paths:" + result.paths.size());
 
+        // ORS-GH MOD START - create and pass PathProcessor
+        PathProcessor pathProcessor = pathProcessorFactory.createPathProcessor(request.getAdditionalHints(), encodingManager.getEncoder(request.getEncoderName()), ghStorage);
         // here each path represents one leg of the via-route and we merge them all together into one response path
-        ResponsePath responsePath = concatenatePaths(request, solver.weighting, queryGraph, result.paths, getWaypoints(snaps));
+//        ResponsePath responsePath = concatenatePaths(request, solver.weighting, queryGraph, result.paths, getWaypoints(snaps));
+        ResponsePath responsePath = concatenatePaths(request, solver.weighting, queryGraph, result.paths, getWaypoints(snaps), pathProcessor);
+        ghRsp.addReturnObject(pathProcessor);
+        // ORS-GH MOD END
+
         responsePath.addDebugInfo(result.debug);
         ghRsp.add(responsePath);
         ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
@@ -323,9 +330,6 @@ public class Router {
                 setDouglasPeucker(peucker).
                 setEnableInstructions(enableInstructions).
                 setPathDetailsBuilders(pathDetailsBuilderFactory, request.getPathDetails()).
-                // ORS MOD START - TODO ORS: where to get ppList from?
-                // setPathProcessor(ppList.toArray(new PathProcessor[]{})).
-                // ORS MOD END
                 setSimplifyResponse(routerConfig.isSimplifyResponse() && wayPointMaxDistance > 0);
 
         if (!request.getHeadings().isEmpty())
@@ -337,6 +341,13 @@ public class Router {
         PathMerger pathMerger = createPathMerger(request, weighting, queryGraph);
         return pathMerger.doWork(waypoints, paths, encodingManager, translationMap.getWithFallBack(request.getLocale()));
     }
+
+    // ORS-GH MOD START - pass PathProcessor
+    private ResponsePath concatenatePaths(GHRequest request, Weighting weighting, QueryGraph queryGraph, List<Path> paths, PointList waypoints, PathProcessor pathProcessor) {
+        PathMerger pathMerger = createPathMerger(request, weighting, queryGraph);
+        return pathMerger.doWork(waypoints, paths, encodingManager, translationMap.getWithFallBack(request.getLocale()), pathProcessor);
+    }
+    // ORS-GH MOD END
 
     private PointList getWaypoints(List<Snap> snaps) {
         PointList pointList = new PointList(snaps.size(), true);
