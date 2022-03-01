@@ -41,11 +41,6 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
         super(new PMap(properties).putObject("speed_two_directions", true));
     }
 
-    protected void handleSpeed(IntsRef edgeFlags, ReaderWay way, double speed) {
-        avgSpeedEnc.setDecimal(true, edgeFlags, speed);
-        super.handleSpeed(edgeFlags, way, speed);
-    }
-
     @Override
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
         PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
