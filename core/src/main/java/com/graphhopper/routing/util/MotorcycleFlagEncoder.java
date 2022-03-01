@@ -74,9 +74,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
         preferSet.add("secondary");
         preferSet.add("tertiary");
 
-        maxPossibleSpeed = 120;
-        // todo: would like to do it like this but avgSpeedEnc is not created yet
-//        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(120);
+        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(120);
 
         // autobahn
         defaultSpeedMap.put("motorway", 100);

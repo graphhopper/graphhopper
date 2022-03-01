@@ -98,11 +98,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
 
         allowedSacScale.clear();
 
-        maxPossibleSpeed = FERRY_SPEED;
-        // todo: would like to do it like this but avgSpeedEnc is not created yet
-//        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(FERRY_SPEED);
-
-        speedTwoDirections = true;
+        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(FERRY_SPEED);
     }
 
     /**
