@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 
 public class FerrySpeedCalculator {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private static final Logger LOGGER = LoggerFactory.getLogger(FerrySpeedCalculator.class);
     private final double speedFactor;
     private final double unknownSpeed, longSpeed, shortSpeed, maxSpeed;
 
@@ -22,13 +22,8 @@ public class FerrySpeedCalculator {
      * Special handling for ferry ways.
      */
     public double getSpeed(ReaderWay way) {
-        long duration = 0;
-
-        try {
-            // During the reader process we have converted the duration value into a artificial tag called "duration:seconds".
-            duration = Long.parseLong(way.getTag("duration:seconds"));
-        } catch (Exception ex) {
-        }
+        // During the reader process we have converted the duration value into an artificial tag called "duration:seconds".
+        Long duration = way.getTag("duration:seconds", 0L);
         // seconds to hours
         double durationInHours = duration / 60d / 60d;
         // Check if our graphhopper specific artificially created estimated_distance way tag is present
@@ -56,7 +51,7 @@ public class FerrySpeedCalculator {
                         long lastId = way.getNodes().isEmpty() ? -1 : way.getNodes().get(way.getNodes().size() - 1);
                         long firstId = way.getNodes().isEmpty() ? -1 : way.getNodes().get(0);
                         if (firstId != lastId)
-                            logger.warn("Unrealistic long duration ignored in way with way ID=" + way.getId() + " : Duration tag value="
+                            LOGGER.warn("Unrealistic long duration ignored in way with way ID=" + way.getId() + " : Duration tag value="
                                     + way.getTag("duration") + " (=" + Math.round(duration / 60d) + " minutes)");
                         durationInHours = 0;
                     }

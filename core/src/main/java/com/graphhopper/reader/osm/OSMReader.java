@@ -209,9 +209,8 @@ public class OSMReader {
         way.removeTag("duration:seconds");
         if (way.getTag("duration") != null) {
             try {
-                long dur = OSMReaderUtility.parseDuration(way.getTag("duration"));
-                // Provide the duration value in seconds in an artificial graphhopper specific tag:
-                way.setTag("duration:seconds", Long.toString(dur));
+                long durationInSeconds = OSMReaderUtility.parseDuration(way.getTag("duration"));
+                way.setTag("duration:seconds", durationInSeconds);
             } catch (Exception ex) {
                 LOGGER.warn("Parsing error in way with OSMID=" + way.getId() + " : " + ex.getMessage());
             }

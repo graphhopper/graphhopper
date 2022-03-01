@@ -27,10 +27,10 @@ import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.text.DateFormat;
 import java.util.Date;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -249,7 +249,7 @@ public class FootFlagEncoderTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("route", "ferry");
         // a bit longer than an hour
-        way.setTag("duration:seconds", "4000");
+        way.setTag("duration:seconds", 4000);
         assertEquals(30, footEncoder.ferrySpeedCalc.getSpeed(way), .1);
         IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way);
         assertEquals(15, footAvgSpeedEnc.getDecimal(false, flags), .1);

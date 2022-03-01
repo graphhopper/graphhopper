@@ -459,7 +459,7 @@ public class CarFlagEncoderTest {
         way.setTag("motorcar", "yes");
         way.setTag("bicycle", "no");
         // Provide the duration value in seconds:
-        way.setTag("duration:seconds", Long.toString(35 * 60));
+        way.setTag("duration:seconds", 35 * 60);
         way.setTag("estimated_distance", 50000);
         // accept
         assertTrue(encoder.getAccess(way).isFerry());
@@ -471,7 +471,7 @@ public class CarFlagEncoderTest {
         way.setTag("route", "ferry");
         way.setTag("motorcar", "yes");
         // Provide the duration of 12 minutes in seconds:
-        way.setTag("duration:seconds", Long.toString(12 * 60));
+        way.setTag("duration:seconds", 12 * 60);
         way.setTag("estimated_distance", 100);
         // accept
         assertTrue(encoder.getAccess(way).isFerry());
@@ -487,7 +487,7 @@ public class CarFlagEncoderTest {
         way.setTag("route", "ferry");
         way.setTag("motorcar", "yes");
         // Provide the duration of 2 months in seconds:
-        way.setTag("duration:seconds", Long.toString(87900 * 60));
+        way.setTag("duration:seconds", 87900 * 60);
         way.setTag("estimated_distance", 100);
         // accept
         assertTrue(encoder.getAccess(way).isFerry());

@@ -36,29 +36,29 @@ class FerrySpeedCalculatorTest {
 
         // no distance -> speed only depends on duration (distinguish between missing/short/long duration)
         checkSpeed(c, null, null, unknownSpeed);
-        checkSpeed(c, "0", null, unknownSpeed);
-        checkSpeed(c, "1800", null, shortSpeed);
-        checkSpeed(c, "7200", null, longSpeed);
+        checkSpeed(c, 0L, null, unknownSpeed);
+        checkSpeed(c, 1800L, null, shortSpeed);
+        checkSpeed(c, 7200L, null, longSpeed);
         // no duration -> speed depends on distance
         checkSpeed(c, null, 100.0, speedFactor / 2);
-        checkSpeed(c, "0", 100.0, speedFactor / 2);
+        checkSpeed(c, 0L, 100.0, speedFactor / 2);
         checkSpeed(c, null, 1000.0, unknownSpeed);
-        checkSpeed(c, "0", 1000.0, unknownSpeed);
+        checkSpeed(c, 0L, 1000.0, unknownSpeed);
 
         // valid
-        checkSpeed(c, "3600", 30000.0, Math.round(30 / 1.4));
-        checkSpeed(c, "7200", 30000.0, Math.round(15 / 1.4));
+        checkSpeed(c, 3600L, 30000.0, Math.round(30 / 1.4));
+        checkSpeed(c, 7200L, 30000.0, Math.round(15 / 1.4));
         // above max (capped to max)
-        checkSpeed(c, "3600", 90000.0, maxSpeed);
+        checkSpeed(c, 3600L, 90000.0, maxSpeed);
         // below smallest storable non-zero value
-        checkSpeed(c, "7200", 1000.0, speedFactor / 2);
+        checkSpeed(c, 7200L, 1000.0, speedFactor / 2);
 
         // suspicious slow speed (still depends on distance)
-        checkSpeed(c, "180000", 100.0, speedFactor / 2);
-        checkSpeed(c, "1800000", 1000.0, unknownSpeed);
+        checkSpeed(c, 180000L, 100.0, speedFactor / 2);
+        checkSpeed(c, 1800000L, 1000.0, unknownSpeed);
     }
 
-    private void checkSpeed(FerrySpeedCalculator calc, String duration, Double distance, double expected) {
+    private void checkSpeed(FerrySpeedCalculator calc, Long duration, Double distance, double expected) {
         ReaderWay way = new ReaderWay(0L);
         if (duration != null)
             way.setTag("duration:seconds", duration);
