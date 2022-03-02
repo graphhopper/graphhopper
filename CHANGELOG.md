@@ -1,5 +1,7 @@
 ### 5.0 [not yet released]
 
+- the artificial tag duration:seconds is now a long, not a string
+- added FlagEncoder#getName (use just like toString() before), commit 86f6a8b5209ad8ef47c24d935f5746e7694eb11c
 - faster edge-based CH preparation, especially with large u-turn costs and GermanyCountryRule (many large weight edges
   due to access=destination on tracks) (#2522)
 - consider subnetworks when evaluating curbside constraints (#2502)
