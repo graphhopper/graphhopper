@@ -22,9 +22,9 @@ public class FerrySpeedCalculator {
     public double getSpeed(ReaderWay way) {
         // todo: we should re-consider whether we should deal with ferries by determining (only) a speed at all.
         //       for example this way we cannot account for waiting times for short ferries (speed is too low) or
-        //       'fast' ferries that exceed the max speed for e.g. the foot encoder. Maybe we should add an additional
-        //       encoded value that stores the ferry waiting time and add a more possible speed values to account
-        //       for high ferry speeds for the slow vehicles like foot.
+        //       'fast' ferries that exceed the max speed for e.g. the foot encoder. Maybe we could add an additional
+        //       encoded value that stores the ferry waiting time (maybe just short/medium/long or so) and add a few
+        //       more possible speed values to account for high ferry speeds for the slow vehicles like foot.
 
         // During the reader process we have added the artificial "road_distance" tag and converted the duration tag to
         // an artificial tag called "duration:seconds"
