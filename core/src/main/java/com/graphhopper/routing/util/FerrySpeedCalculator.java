@@ -20,7 +20,13 @@ public class FerrySpeedCalculator {
      * Special handling for ferry ways.
      */
     public double getSpeed(ReaderWay way) {
-        // During the reader process we have added the artificial "point_list" tag and converted the duration tag to
+        // todo: we should re-consider whether we should deal with ferries by determining (only) a speed at all.
+        //       for example this way we cannot account for waiting times for short ferries (speed is too low) or
+        //       'fast' ferries that exceed the max speed for e.g. the foot encoder. Maybe we should add an additional
+        //       encoded value that stores the ferry waiting time and add a more possible speed values to account
+        //       for high ferry speeds for the slow vehicles like foot.
+
+        // During the reader process we have added the artificial "road_distance" tag and converted the duration tag to
         // an artificial tag called "duration:seconds"
         double distanceInKm = way.getTag("road_distance", -1.0) / 1000;
         if (distanceInKm < 0)
