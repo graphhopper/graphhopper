@@ -30,10 +30,8 @@ class FerrySpeedCalculatorTest {
     void testSpeed() {
         double speedFactor = 2;
         double maxSpeed = 55;
-        double longSpeed = 30;
-        double shortSpeed = 20;
         double unknownSpeed = 5;
-        FerrySpeedCalculator c = new FerrySpeedCalculator(speedFactor, maxSpeed, longSpeed, shortSpeed, unknownSpeed);
+        FerrySpeedCalculator c = new FerrySpeedCalculator(speedFactor, maxSpeed, unknownSpeed);
 
         // no distance -> should never happen
         IllegalStateException e = assertThrows(IllegalStateException.class, () -> c.getSpeed(new ReaderWay(0L)));

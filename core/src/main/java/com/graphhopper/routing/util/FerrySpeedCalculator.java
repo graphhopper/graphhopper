@@ -8,13 +8,11 @@ public class FerrySpeedCalculator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FerrySpeedCalculator.class);
     private final double speedFactor;
-    private final double unknownSpeed, longSpeed, shortSpeed, maxSpeed;
+    private final double unknownSpeed, maxSpeed;
 
-    public FerrySpeedCalculator(double speedFactor, double maxSpeed, double longSpeed, double shortSpeed, double unknownSpeed) {
+    public FerrySpeedCalculator(double speedFactor, double maxSpeed, double unknownSpeed) {
         this.speedFactor = speedFactor;
         this.unknownSpeed = unknownSpeed;
-        this.longSpeed = longSpeed;
-        this.shortSpeed = shortSpeed;
         this.maxSpeed = maxSpeed;
     }
 
@@ -28,7 +26,6 @@ public class FerrySpeedCalculator {
         if (distanceInKm < 0)
             throw new IllegalStateException("The artificial 'road_distance' tag is missing for way: " + way.getId());
         Long duration = way.getTag("duration:seconds", 0L);
-        // seconds to hours
         double durationInHours = duration / 60d / 60d;
         if (durationInHours > 0) {
             // If duration is available we can calculate the speed. We make it slower by a factor of 1.4 to account
@@ -52,21 +49,14 @@ public class FerrySpeedCalculator {
                 if (firstId != lastId)
                     LOGGER.warn("Unrealistic long duration ignored in way with way ID=" + way.getId() + " : Duration tag value="
                             + way.getTag("duration") + " (=" + Math.round(duration / 60d) + " minutes)");
-                durationInHours = 0;
             }
         }
 
-        if (durationInHours == 0) {
-            if (distanceInKm <= 0.3)
-                return speedFactor / 2;
+        // duration was not present or calculated trip speed was too small
+        if (distanceInKm <= 0.3)
+            return speedFactor / 2;
+        else
             // unknown speed -> put penalty on ferry transport
             return unknownSpeed;
-        } else if (durationInHours > 1) {
-            // todo: can never happen because the road_distance is always there... -> longSpeed and shortSpeed are never used!
-            // lengthy ferries should be faster than short trip ferry
-            return longSpeed;
-        } else {
-            return shortSpeed;
-        }
     }
 }
