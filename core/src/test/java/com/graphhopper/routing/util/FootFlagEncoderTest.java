@@ -250,7 +250,9 @@ public class FootFlagEncoderTest {
         way.setTag("route", "ferry");
         // a bit longer than an hour
         way.setTag("duration:seconds", 4000L);
-        assertEquals(30, footEncoder.ferrySpeedCalc.getSpeed(way), .1);
+        way.setTag("road_distance", 30000.0);
+        // the speed is truncated to maxspeed (=15)
+        assertEquals(15, footEncoder.ferrySpeedCalc.getSpeed(way), .1);
         IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way);
         assertEquals(15, footAvgSpeedEnc.getDecimal(false, flags), .1);
     }

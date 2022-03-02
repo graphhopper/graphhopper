@@ -44,11 +44,8 @@ public class FerrySpeedCalculator {
 
                 return Math.round(calculatedTripSpeed);
             } else {
-                long lastId = way.getNodes().isEmpty() ? -1 : way.getNodes().get(way.getNodes().size() - 1);
-                long firstId = way.getNodes().isEmpty() ? -1 : way.getNodes().get(0);
-                if (firstId != lastId)
-                    LOGGER.warn("Unrealistic long duration ignored in way with way ID=" + way.getId() + " : Duration tag value="
-                            + way.getTag("duration") + " (=" + Math.round(duration / 60d) + " minutes)");
+                LOGGER.warn("Unrealistic long duration ignored in way with way ID=" + way.getId() + " : Duration tag value="
+                        + way.getTag("duration") + " (=" + Math.round(duration / 60d) + " minutes)");
             }
         }
 

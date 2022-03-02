@@ -199,7 +199,7 @@ public class OSMReader {
         double firstLat = pointList.getLat(0), firstLon = pointList.getLon(0);
         double lastLat = pointList.getLat(pointList.size() - 1), lastLon = pointList.getLon(pointList.size() - 1);
         way.setTag("beeline_distance", distCalc.calcDist(firstLat, firstLon, lastLat, lastLon));
-        way.setTag("total_distance", distance);
+        way.setTag("road_distance", distance);
         way.setTag("point_list", pointList);
 
         // we have to remove existing artificial tags, because we modify the way even though there can be multiple edges
