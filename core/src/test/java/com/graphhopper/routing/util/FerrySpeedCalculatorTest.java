@@ -22,6 +22,7 @@ import com.graphhopper.reader.ReaderWay;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class FerrySpeedCalculatorTest {
 
@@ -34,11 +35,10 @@ class FerrySpeedCalculatorTest {
         double unknownSpeed = 5;
         FerrySpeedCalculator c = new FerrySpeedCalculator(speedFactor, maxSpeed, longSpeed, shortSpeed, unknownSpeed);
 
-        // no distance -> speed only depends on duration (distinguish between missing/short/long duration)
-        checkSpeed(c, null, null, unknownSpeed);
-        checkSpeed(c, 0L, null, unknownSpeed);
-        checkSpeed(c, 1800L, null, shortSpeed);
-        checkSpeed(c, 7200L, null, longSpeed);
+        // no distance -> should never happen
+        IllegalStateException e = assertThrows(IllegalStateException.class, () -> c.getSpeed(new ReaderWay(0L)));
+        assertEquals("The artificial 'road_distance' tag is missing for way: 0", e.getMessage());
+
         // no duration -> speed depends on distance
         checkSpeed(c, null, 100.0, speedFactor / 2);
         checkSpeed(c, 0L, 100.0, speedFactor / 2);
@@ -63,7 +63,7 @@ class FerrySpeedCalculatorTest {
         if (duration != null)
             way.setTag("duration:seconds", duration);
         if (distance != null)
-            way.setTag("estimated_distance", distance);
+            way.setTag("road_distance", distance);
         assertEquals(expected, calc.getSpeed(way));
     }
 

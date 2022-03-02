@@ -235,7 +235,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
     }
 
     private double getBeelineDistance(ReaderWay way) {
-        return way.getTag("estimated_distance", Double.POSITIVE_INFINITY);
+        return way.getTag("beeline_distance", Double.POSITIVE_INFINITY);
     }
 
     /**

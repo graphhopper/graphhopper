@@ -163,10 +163,10 @@ public class MotorcycleFlagEncoderTest {
         assertTrue(bendinessOfCurvyWay < bendinessOfStraightWay, "The bendiness of the straight road is smaller than the one of the curvy road");
     }
 
-    private double getBendiness(EdgeIteratorState edge, double estimatedDistance) {
+    private double getBendiness(EdgeIteratorState edge, double beelineDistance) {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
-        way.setTag("estimated_distance", estimatedDistance);
+        way.setTag("beeline_distance", beelineDistance);
         assertTrue(encoder.getAccess(way).isWay());
         IntsRef flags = encoder.handleWayTags(em.createEdgeFlags(), way);
         edge.setFlags(flags);
