@@ -270,10 +270,14 @@ public class Router {
         for (Path path : result.paths) {
             PointList waypoints = getWaypoints(snaps);
             // ORS-GH MOD START - create and pass PathProcessor
-            PathProcessor pathProcessor = pathProcessorFactory.createPathProcessor(request.getAdditionalHints(), encodingManager.getEncoder(request.getEncoderName()), ghStorage);
-//            ResponsePath responsePath = pathMerger.doWork(waypoints, Collections.singletonList(path), encodingManager, translationMap.getWithFallBack(request.getLocale()));
-            ResponsePath responsePath = pathMerger.doWork(waypoints, Collections.singletonList(path), encodingManager, translationMap.getWithFallBack(request.getLocale()), pathProcessor);
-            ghRsp.addReturnObject(pathProcessor);
+            ResponsePath responsePath;
+            if (request.getEncoderName() != null && !request.getEncoderName().isEmpty()) {
+                PathProcessor pathProcessor = pathProcessorFactory.createPathProcessor(request.getAdditionalHints(), encodingManager.getEncoder(request.getEncoderName()), ghStorage);
+                ghRsp.addReturnObject(pathProcessor);
+                responsePath = pathMerger.doWork(waypoints, Collections.singletonList(path), encodingManager, translationMap.getWithFallBack(request.getLocale()), pathProcessor);
+            } else {
+                responsePath = pathMerger.doWork(waypoints, Collections.singletonList(path), encodingManager, translationMap.getWithFallBack(request.getLocale()));
+            }
             // ORS-GH MOD END
             ghRsp.add(responsePath);
         }
@@ -301,12 +305,16 @@ public class Router {
         if (request.getPoints().size() != result.paths.size() + 1)
             throw new RuntimeException("There should be exactly one more point than paths. points:" + request.getPoints().size() + ", paths:" + result.paths.size());
 
+        ResponsePath responsePath;
         // ORS-GH MOD START - create and pass PathProcessor
-        PathProcessor pathProcessor = pathProcessorFactory.createPathProcessor(request.getAdditionalHints(), encodingManager.getEncoder(request.getEncoderName()), ghStorage);
-        // here each path represents one leg of the via-route and we merge them all together into one response path
-//        ResponsePath responsePath = concatenatePaths(request, solver.weighting, queryGraph, result.paths, getWaypoints(snaps));
-        ResponsePath responsePath = concatenatePaths(request, solver.weighting, queryGraph, result.paths, getWaypoints(snaps), pathProcessor);
-        ghRsp.addReturnObject(pathProcessor);
+        if (request.getEncoderName() != null && !request.getEncoderName().isEmpty()) {
+            PathProcessor pathProcessor = pathProcessorFactory.createPathProcessor(request.getAdditionalHints(), encodingManager.getEncoder(request.getEncoderName()), ghStorage);
+            responsePath = concatenatePaths(request, solver.weighting, queryGraph, result.paths, getWaypoints(snaps), pathProcessor);
+            ghRsp.addReturnObject(pathProcessor);
+        } else {
+            // here each path represents one leg of the via-route and we merge them all together into one response path
+            responsePath = concatenatePaths(request, solver.weighting, queryGraph, result.paths, getWaypoints(snaps));
+        }
         // ORS-GH MOD END
 
         responsePath.addDebugInfo(result.debug);
