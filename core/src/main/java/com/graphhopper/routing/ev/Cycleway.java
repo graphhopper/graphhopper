@@ -12,14 +12,16 @@ public enum Cycleway {
   ASL("asl"),
   CROSSING("crossing"),
   LANE("lane"), OPPOSITE_LANE("opposite_lane"),
-  NO("no"),
+  NO("no"),YES("yes"),
   OPPOSITE("opposite"),
   SEPARATE("separate"),
   SHARE_BUSWAY("share_busway"), OPPOSITE_SHARE_BUSWAY("opposite_share_busway"),
   SHARED_LANE("shared_lane"),
   SHARED("shared"),
   SHOULDER("shoulder"),
-  TRACK("track"), OPPOSITE_TRACK("opposite_track");
+  TRACK("track"), OPPOSITE_TRACK("opposite_track"),
+  RIGHT("right"), LEFT("left"), BOTH("both"),
+  SIDEPATH("sidepath");
 
   public static final String KEY = "cycleway";
 
