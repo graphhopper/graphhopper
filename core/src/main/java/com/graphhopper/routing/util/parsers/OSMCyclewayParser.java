@@ -10,30 +10,30 @@ import com.graphhopper.storage.IntsRef;
 import java.util.List;
 
 public class OSMCyclewayParser implements TagParser {
-  
+
   private final EnumEncodedValue<Cycleway> cyclewayEnc;
 
   public OSMCyclewayParser() {
-      this(new EnumEncodedValue<>(Cycleway.KEY, Cycleway.class));
+    this(new EnumEncodedValue<>(Cycleway.KEY, Cycleway.class));
   }
 
   public OSMCyclewayParser(EnumEncodedValue<Cycleway> cyclewayEnc) {
-      this.cyclewayEnc = cyclewayEnc;
+    this.cyclewayEnc = cyclewayEnc;
   }
 
   @Override
   public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> list) {
-      list.add(cyclewayEnc);
+    list.add(cyclewayEnc);
   }
 
   @Override
   public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
-      String cyclewayTag = readerWay.getTag("cycleway");
-      if (cyclewayTag == null)
-        return edgeFlags;
-      Cycleway cycleway = Cycleway.find(cyclewayTag);
-
-      cyclewayEnc.setEnum(false, edgeFlags, cycleway);
+    String cyclewayTag = readerWay.getTag("cycleway");
+    Cycleway cycleway = Cycleway.find(cyclewayTag);
+    if (cycleway == Cycleway.MISSING)
       return edgeFlags;
+
+    cyclewayEnc.setEnum(false, edgeFlags, cycleway);
+    return edgeFlags;
   }
 }
