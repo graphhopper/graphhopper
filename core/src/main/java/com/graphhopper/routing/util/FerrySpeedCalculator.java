@@ -25,11 +25,11 @@ public class FerrySpeedCalculator {
         //       encoded value that stores the ferry waiting time (maybe just short/medium/long or so) and add a few
         //       more possible speed values to account for high ferry speeds for the slow vehicles like foot.
 
-        // During the reader process we have added the artificial "road_distance" tag and converted the duration tag to
+        // During the reader process we have added the artificial "edge_distance" tag and converted the duration tag to
         // an artificial tag called "duration:seconds"
-        double distanceInKm = way.getTag("road_distance", -1.0) / 1000;
+        double distanceInKm = way.getTag("edge_distance", -1.0) / 1000;
         if (distanceInKm < 0)
-            throw new IllegalStateException("The artificial 'road_distance' tag is missing for way: " + way.getId());
+            throw new IllegalStateException("The artificial 'edge_distance' tag is missing for way: " + way.getId());
         Long duration = way.getTag("duration:seconds", 0L);
         double durationInHours = duration / 60d / 60d;
         if (durationInHours > 0) {

@@ -35,7 +35,7 @@ class FerrySpeedCalculatorTest {
 
         // no distance -> should never happen
         IllegalStateException e = assertThrows(IllegalStateException.class, () -> c.getSpeed(new ReaderWay(0L)));
-        assertEquals("The artificial 'road_distance' tag is missing for way: 0", e.getMessage());
+        assertEquals("The artificial 'edge_distance' tag is missing for way: 0", e.getMessage());
 
         // no duration -> speed depends on distance
         checkSpeed(c, null, 100.0, minSpeed);
@@ -61,7 +61,7 @@ class FerrySpeedCalculatorTest {
         if (duration != null)
             way.setTag("duration:seconds", duration);
         if (distance != null)
-            way.setTag("road_distance", distance);
+            way.setTag("edge_distance", distance);
         assertEquals(expected, calc.getSpeed(way));
     }
 

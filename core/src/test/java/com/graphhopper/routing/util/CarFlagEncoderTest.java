@@ -460,10 +460,10 @@ public class CarFlagEncoderTest {
         way.setTag("bicycle", "no");
         // Provide the duration value in seconds:
         way.setTag("duration:seconds", 35L * 60);
-        way.setTag("road_distance", 50000.0);
+        way.setTag("edge_distance", 50000.0);
         // accept
         assertTrue(encoder.getAccess(way).isFerry());
-        // calculate speed from road_distance and duration
+        // calculate speed from edge_distance and duration
         assertEquals(61, encoder.ferrySpeedCalc.getSpeed(way), 1e-1);
 
         //Test for very short and slow 0.5km/h still realisitic ferry
@@ -472,7 +472,7 @@ public class CarFlagEncoderTest {
         way.setTag("motorcar", "yes");
         // Provide the duration of 12 minutes in seconds:
         way.setTag("duration:seconds", 12L * 60);
-        way.setTag("road_distance", 100.0);
+        way.setTag("edge_distance", 100.0);
         // accept
         assertTrue(encoder.getAccess(way).isFerry());
         // We can't store 0.5km/h, but we expect the lowest possible speed (5km/h)
@@ -488,7 +488,7 @@ public class CarFlagEncoderTest {
         way.setTag("motorcar", "yes");
         // Provide the duration of 2 months in seconds:
         way.setTag("duration:seconds", 87900L * 60);
-        way.setTag("road_distance", 100.0);
+        way.setTag("edge_distance", 100.0);
         // accept
         assertTrue(encoder.getAccess(way).isFerry());
         // We have ignored the unrealisitc long duration and take the unknown speed
@@ -642,7 +642,7 @@ public class CarFlagEncoderTest {
     public void testIssue_1256() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("route", "ferry");
-        way.setTag("road_distance", 257.0);
+        way.setTag("edge_distance", 257.0);
 
         CarFlagEncoder lowFactorCar = new CarFlagEncoder(10, 1, 0);
         EncodingManager.create(lowFactorCar);

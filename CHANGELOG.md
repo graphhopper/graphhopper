@@ -1,6 +1,6 @@
 ### 5.0 [not yet released]
 
-- OSMReader no longer sets the artificial estimated_distance tag, but sets beeline_distance, road_distance and
+- OSMReader no longer sets the artificial estimated_distance tag, but sets beeline_distance, edge_distance and
   point_list instead.
 - the artificial tag duration:seconds is now a long, not a string, commit 6d81d8ae8de52987522991edd835e42c8d2046cf
 - added FlagEncoder#getName (use just like toString() before), commit 86f6a8b5209ad8ef47c24d935f5746e7694eb11c
