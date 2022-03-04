@@ -38,20 +38,14 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
     }
 
     public Bike2WeightFlagEncoder(PMap properties) {
-        super(properties);
-        speedTwoDirections = true;
-    }
-
-    protected void handleSpeed(IntsRef edgeFlags, ReaderWay way, double speed) {
-        avgSpeedEnc.setDecimal(true, edgeFlags, speed);
-        super.handleSpeed(edgeFlags, way, speed);
+        super(new PMap(properties).putObject("speed_two_directions", true));
     }
 
     @Override
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
         PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
         if (!pl.is3D())
-            throw new IllegalStateException(toString() + " requires elevation data to improve speed calculation based on it. Please enable it in config via e.g. graph.elevation.provider: srtm");
+            throw new IllegalStateException(getName() + " requires elevation data to improve speed calculation based on it. Please enable it in config via e.g. graph.elevation.provider: srtm");
 
         IntsRef intsRef = edge.getFlags();
         if (way.hasTag("tunnel", "yes") || way.hasTag("bridge", "yes") || way.hasTag("highway", "steps"))
@@ -111,7 +105,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
     }
 
     @Override
-    public String toString() {
+    public String getName() {
         return "bike2";
     }
 }

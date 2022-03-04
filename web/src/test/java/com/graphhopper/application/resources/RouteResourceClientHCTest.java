@@ -46,6 +46,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -328,5 +329,28 @@ public class RouteResourceClientHCTest {
         req.setPointHints(Arrays.asList("Carrer Bonaventura Armengol", ""));
         response = gh.route(req);
         isBetween(520, 550, response.getBest().getDistance());
+    }
+
+
+    @ParameterizedTest
+    @EnumSource(value = TestParam.class)
+    public void testHeadings(TestParam p) {
+        GraphHopperWeb gh = createGH(p);
+        GHRequest req = new GHRequest().
+                addPoint(new GHPoint(42.509331, 1.536965)).
+                addPoint(new GHPoint(42.507065, 1.532443)).
+                setProfile("my_bike").
+                putHint("ch.disable", true);
+
+
+        // starting in eastern direction results in a longer way
+        req.setHeadings(Collections.singletonList(90.0));
+        GHResponse response = gh.route(req);
+        assertEquals(945, response.getBest().getDistance(), 5);
+
+        // ... than going west
+        req.setHeadings(Arrays.asList(270.0));
+        response = gh.route(req);
+        assertEquals(553, response.getBest().getDistance(), 5);
     }
 }

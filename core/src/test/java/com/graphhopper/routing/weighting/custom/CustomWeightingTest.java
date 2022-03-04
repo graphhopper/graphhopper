@@ -14,10 +14,7 @@ import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.CustomModel;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.JsonFeature;
+import com.graphhopper.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -40,7 +37,7 @@ class CustomWeightingTest {
 
     @BeforeEach
     public void setup() {
-        carFE = new CarFlagEncoder().setSpeedTwoDirections(true);
+        carFE = new CarFlagEncoder(new PMap().putObject("speed_two_directions", true));
         encodingManager = new EncodingManager.Builder().add(carFE).add(new OSMTollParser()).add(new OSMHazmatParser()).add(new OSMBikeNetworkTagParser()).build();
         avSpeedEnc = carFE.getAverageSpeedEnc();
         accessEnc = carFE.getAccessEnc();

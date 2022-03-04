@@ -40,7 +40,7 @@ public class ShortcutUnpackerTest {
 
         Fixture(boolean edgeBased) {
             this.edgeBased = edgeBased;
-            encoder = new CarFlagEncoder(5, 5, 10).setSpeedTwoDirections(true);
+            encoder = new CarFlagEncoder(5, 5, 10, true);
             encodingManager = EncodingManager.create(encoder);
             graph = new GraphBuilder(encodingManager).create();
         }

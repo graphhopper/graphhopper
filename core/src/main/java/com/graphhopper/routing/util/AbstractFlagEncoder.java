@@ -129,8 +129,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     /**
      * Defines bits used for edge flags used for access, speed etc.
      */
-    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix) {
+    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue) {
         // define the first 2 bits in flags for access
+        String prefix = toString();
         registerNewEncodedValue.add(accessEnc = new SimpleBooleanEncodedValue(EncodingManager.getKey(prefix, "access"), true));
         roundaboutEnc = getBooleanEncodedValue(Roundabout.KEY);
     }
@@ -217,13 +218,13 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
 
     public final DecimalEncodedValue getAverageSpeedEnc() {
         if (avgSpeedEnc == null)
-            throw new NullPointerException("FlagEncoder " + toString() + " not yet initialized");
+            throw new NullPointerException("FlagEncoder " + getName() + " not yet initialized");
         return avgSpeedEnc;
     }
 
     public final BooleanEncodedValue getAccessEnc() {
         if (accessEnc == null)
-            throw new NullPointerException("FlagEncoder " + toString() + " not yet initialized");
+            throw new NullPointerException("FlagEncoder " + getName() + " not yet initialized");
         return accessEnc;
     }
 
@@ -311,5 +312,12 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
 
     public final List<String> getRestrictions() {
         return restrictions;
+    }
+
+    public abstract String getName();
+
+    @Override
+    public String toString() {
+        return getName();
     }
 }

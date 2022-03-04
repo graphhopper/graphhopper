@@ -27,6 +27,9 @@ import com.graphhopper.util.PMap;
 public class DefaultFlagEncoderFactory implements FlagEncoderFactory {
     @Override
     public FlagEncoder createFlagEncoder(String name, PMap configuration) {
+        if (name.equals(ROADS))
+            return new RoadsFlagEncoder();
+
         if (name.equals(CAR))
             return new CarFlagEncoder(configuration);
 
