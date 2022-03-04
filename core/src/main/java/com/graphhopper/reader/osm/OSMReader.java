@@ -196,9 +196,6 @@ public class OSMReader {
      * the given OSM way with additional tags before it is passed on to the tag parsers.
      */
     protected void setArtificialWayTags(PointList pointList, ReaderWay way, double distance) {
-        double firstLat = pointList.getLat(0), firstLon = pointList.getLon(0);
-        double lastLat = pointList.getLat(pointList.size() - 1), lastLon = pointList.getLon(pointList.size() - 1);
-        way.setTag("beeline_distance", distCalc.calcDist(firstLat, firstLon, lastLat, lastLon));
         way.setTag("edge_distance", distance);
         way.setTag("point_list", pointList);
 
@@ -227,6 +224,8 @@ public class OSMReader {
                 middleLat = pointList.getLat(pointList.size() / 2);
                 middleLon = pointList.getLon(pointList.size() / 2);
             } else {
+                double firstLat = pointList.getLat(0), firstLon = pointList.getLon(0);
+                double lastLat = pointList.getLat(pointList.size() - 1), lastLon = pointList.getLon(pointList.size() - 1);
                 middleLat = (firstLat + lastLat) / 2;
                 middleLon = (firstLon + lastLon) / 2;
             }
