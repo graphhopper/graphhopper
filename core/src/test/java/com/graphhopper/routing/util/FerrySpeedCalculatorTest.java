@@ -28,18 +28,18 @@ class FerrySpeedCalculatorTest {
 
     @Test
     void testSpeed() {
-        double speedFactor = 2;
+        double minSpeed = 1;
         double maxSpeed = 55;
         double unknownSpeed = 5;
-        FerrySpeedCalculator c = new FerrySpeedCalculator(speedFactor, maxSpeed, unknownSpeed);
+        FerrySpeedCalculator c = new FerrySpeedCalculator(minSpeed, maxSpeed, unknownSpeed);
 
         // no distance -> should never happen
         IllegalStateException e = assertThrows(IllegalStateException.class, () -> c.getSpeed(new ReaderWay(0L)));
         assertEquals("The artificial 'road_distance' tag is missing for way: 0", e.getMessage());
 
         // no duration -> speed depends on distance
-        checkSpeed(c, null, 100.0, speedFactor / 2);
-        checkSpeed(c, 0L, 100.0, speedFactor / 2);
+        checkSpeed(c, null, 100.0, minSpeed);
+        checkSpeed(c, 0L, 100.0, minSpeed);
         checkSpeed(c, null, 1000.0, unknownSpeed);
         checkSpeed(c, 0L, 1000.0, unknownSpeed);
 
@@ -49,10 +49,10 @@ class FerrySpeedCalculatorTest {
         // above max (capped to max)
         checkSpeed(c, 3600L, 90000.0, maxSpeed);
         // below smallest storable non-zero value
-        checkSpeed(c, 7200L, 1000.0, speedFactor / 2);
+        checkSpeed(c, 7200L, 1000.0, minSpeed);
 
         // suspicious slow speed (still depends on distance)
-        checkSpeed(c, 180000L, 100.0, speedFactor / 2);
+        checkSpeed(c, 180000L, 100.0, minSpeed);
         checkSpeed(c, 1800000L, 1000.0, unknownSpeed);
     }
 

@@ -7,13 +7,12 @@ import org.slf4j.LoggerFactory;
 public class FerrySpeedCalculator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FerrySpeedCalculator.class);
-    private final double speedFactor;
-    private final double unknownSpeed, maxSpeed;
+    private final double unknownSpeed, minSpeed, maxSpeed;
 
-    public FerrySpeedCalculator(double speedFactor, double maxSpeed, double unknownSpeed) {
-        this.speedFactor = speedFactor;
-        this.unknownSpeed = unknownSpeed;
+    public FerrySpeedCalculator(double minSpeed, double maxSpeed, double unknownSpeed) {
+        this.minSpeed = minSpeed;
         this.maxSpeed = maxSpeed;
+        this.unknownSpeed = unknownSpeed;
     }
 
     /**
@@ -40,14 +39,11 @@ public class FerrySpeedCalculator {
             // Plausibility check especially for the case of wrongly used PxM format with the intention to
             // specify the duration in minutes, but actually using months
             if (calculatedTripSpeed > 0.01d) {
-                if (calculatedTripSpeed > maxSpeed) {
+                if (calculatedTripSpeed > maxSpeed)
                     return maxSpeed;
-                }
                 // If the speed is lower than the speed we can store, we have to set it to the minSpeed, but > 0
-                if (Math.round(calculatedTripSpeed) < speedFactor / 2) {
-                    return speedFactor / 2;
-                }
-
+                if (Math.round(calculatedTripSpeed) < minSpeed)
+                    return minSpeed;
                 return Math.round(calculatedTripSpeed);
             } else {
                 LOGGER.warn("Unrealistic long duration ignored in way with way ID=" + way.getId() + " : Duration tag value="
@@ -57,7 +53,7 @@ public class FerrySpeedCalculator {
 
         // duration was not present or calculated trip speed was too small
         if (distanceInKm <= 0.3)
-            return speedFactor / 2;
+            return minSpeed;
         else
             // unknown speed -> put penalty on ferry transport
             return unknownSpeed;
