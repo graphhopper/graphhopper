@@ -659,7 +659,7 @@ public abstract class AbstractGraphStorageTester {
         List<FlagEncoder> list = new ArrayList<>();
         list.add(new CarFlagEncoder(29, 0.001, 0) {
             @Override
-            public String toString() {
+            public String getName() {
                 return "car0";
             }
         });
@@ -702,14 +702,14 @@ public abstract class AbstractGraphStorageTester {
         list.clear();
         list.add(new CarFlagEncoder(29, 0.001, 0) {
             @Override
-            public String toString() {
+            public String getName() {
                 return "car0";
             }
         });
         list.add(new CarFlagEncoder(29, 0.001, 0));
         list.add(new CarFlagEncoder(30, 0.001, 0) {
             @Override
-            public String toString() {
+            public String getName() {
                 return "car2";
             }
         });

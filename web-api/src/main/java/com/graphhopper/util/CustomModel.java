@@ -176,7 +176,7 @@ public class CustomModel {
         // are applied one after the other.
         List<List<Statement>> blocks = splitIntoBlocks(statements);
         for (List<Statement> block : blocks) max = findMaxForBlock(block, max);
-        if (max <= 0) throw new IllegalArgumentException(type + " cannot be negative or 0");
+        if (max <= 0) throw new IllegalArgumentException(type + " cannot be negative or 0 (was " + max + ")");
         return max;
     }
 

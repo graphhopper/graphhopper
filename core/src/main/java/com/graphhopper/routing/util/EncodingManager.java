@@ -318,7 +318,13 @@ public class EncodingManager implements EncodedValueLookup {
                 dateRangeParser = new DateRangeParser(DateRangeParser.createCalendar());
 
             for (AbstractFlagEncoder encoder : flagEncoderMap.values()) {
-                if (encoder instanceof BikeCommonFlagEncoder) {
+                if (encoder instanceof RoadsFlagEncoder) {
+                    // TODO Later these EncodedValues can be added independently of RoadsFlagEncoder. Maybe add a foot_access and hgv_access? and remove the others "xy$access"
+                    if (!em.hasEncodedValue("car_access"))
+                        _addEdgeTagParser(new DefaultTagParserFactory().create("car_access", new PMap()), false);
+                    if (!em.hasEncodedValue("bike_access"))
+                        _addEdgeTagParser(new DefaultTagParserFactory().create("bike_access", new PMap()), false);
+                } else if (encoder instanceof BikeCommonFlagEncoder) {
                     if (!em.hasEncodedValue(RouteNetwork.key("bike")))
                         _addRelationTagParser(new OSMBikeNetworkTagParser());
                     if (!em.hasEncodedValue(GetOffBike.KEY))
@@ -423,7 +429,7 @@ public class EncodingManager implements EncodedValueLookup {
     private void addEncoder(AbstractFlagEncoder encoder) {
         encoder.setEncodedValueLookup(this);
         List<EncodedValue> list = new ArrayList<>();
-        encoder.createEncodedValues(list, encoder.toString());
+        encoder.createEncodedValues(list);
         for (EncodedValue ev : list)
             addEncodedValue(ev, true);
         edgeEncoders.add(encoder);
