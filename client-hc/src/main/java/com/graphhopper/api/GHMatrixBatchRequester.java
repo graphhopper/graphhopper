@@ -46,13 +46,11 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
     public GHMatrixBatchRequester(String serviceUrl) {
         this(serviceUrl, new OkHttpClient.Builder().
                 connectTimeout(5, TimeUnit.SECONDS).
-                readTimeout(5, TimeUnit.SECONDS).
-                addInterceptor(new GzipRequestInterceptor()). // gzip the request
-                build());
+                readTimeout(5, TimeUnit.SECONDS).build(), true);
     }
 
-    public GHMatrixBatchRequester(String serviceUrl, OkHttpClient client) {
-        super(serviceUrl, client);
+    public GHMatrixBatchRequester(String serviceUrl, OkHttpClient client, boolean doRequestGzip) {
+        super(serviceUrl, client, doRequestGzip);
     }
 
     /**

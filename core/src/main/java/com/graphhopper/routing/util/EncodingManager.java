@@ -313,16 +313,18 @@ public class EncodingManager implements EncodedValueLookup {
                 // TODO introduce road_access for different vehicles? But how to create it in DefaultTagParserFactory?
                 _addEdgeTagParser(new OSMRoadAccessParser(), false);
             }
-            if (!em.hasEncodedValue("car_access"))
-                _addEdgeTagParser(new DefaultTagParserFactory().create("car_access", new PMap()), false);
-            if (!em.hasEncodedValue("bike_access"))
-                _addEdgeTagParser(new DefaultTagParserFactory().create("bike_access", new PMap()), false);
 
             if (dateRangeParser == null)
                 dateRangeParser = new DateRangeParser(DateRangeParser.createCalendar());
 
             for (AbstractFlagEncoder encoder : flagEncoderMap.values()) {
-                if (encoder instanceof BikeCommonFlagEncoder) {
+                if (encoder instanceof RoadsFlagEncoder) {
+                    // TODO Later these EncodedValues can be added independently of RoadsFlagEncoder. Maybe add a foot_access and hgv_access? and remove the others "xy$access"
+                    if (!em.hasEncodedValue("car_access"))
+                        _addEdgeTagParser(new DefaultTagParserFactory().create("car_access", new PMap()), false);
+                    if (!em.hasEncodedValue("bike_access"))
+                        _addEdgeTagParser(new DefaultTagParserFactory().create("bike_access", new PMap()), false);
+                } else if (encoder instanceof BikeCommonFlagEncoder) {
                     if (!em.hasEncodedValue(RouteNetwork.key("bike")))
                         _addRelationTagParser(new OSMBikeNetworkTagParser());
                     if (!em.hasEncodedValue(GetOffBike.KEY))
