@@ -146,7 +146,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
         // limit speed on bad surfaces to 30 km/h
         badSurfaceSpeed = 30;
-        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(140);
+        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(properties.getDouble("max_speed", 140));
     }
 
     @Override
