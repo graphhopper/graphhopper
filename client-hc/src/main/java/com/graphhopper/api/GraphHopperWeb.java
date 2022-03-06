@@ -125,7 +125,7 @@ public class GraphHopperWeb {
     }
 
     public GraphHopperWeb setKey(String key) {
-        Objects.requireNonNull(key,"Key must not be null");
+        Objects.requireNonNull(key, "Key must not be null");
         if (key.isEmpty()) {
             throw new IllegalArgumentException("Key must not be empty");
         }
@@ -237,6 +237,8 @@ public class GraphHopperWeb {
         requestJson.putArray("points").addAll(createPointList(ghRequest.getPoints()));
         if (!ghRequest.getPointHints().isEmpty())
             requestJson.putArray("point_hints").addAll(createStringList(ghRequest.getPointHints()));
+        if (!ghRequest.getHeadings().isEmpty())
+            requestJson.putArray("headings").addAll(createDoubleList(ghRequest.getHeadings()));
         if (!ghRequest.getCurbsides().isEmpty())
             requestJson.putArray("curbsides").addAll(createStringList(ghRequest.getCurbsides()));
         if (!ghRequest.getSnapPreventions().isEmpty())
@@ -290,15 +292,15 @@ public class GraphHopperWeb {
 
         String places = "";
         for (GHPoint p : ghRequest.getPoints()) {
-            places += "point=" + round6(p.lat) + "," + round6(p.lon) + "&";
+            places += "&point=" + round6(p.lat) + "," + round6(p.lon);
         }
 
         String type = ghRequest.getHints().getString("type", "json");
 
         String url = routeServiceUrl
                 + "?"
+                + "profile=" + ghRequest.getProfile()
                 + places
-                + "&profile=" + ghRequest.getProfile()
                 + "&type=" + type
                 + "&instructions=" + tmpInstructions
                 + "&points_encoded=true"
@@ -312,25 +314,22 @@ public class GraphHopperWeb {
             url += "&" + Parameters.Details.PATH_DETAILS + "=" + details;
         }
 
-        // append *all* point hints only if at least *one* is not empty
-        for (String checkEmptyHint : ghRequest.getPointHints()) {
-            if (!checkEmptyHint.isEmpty()) {
-                for (String hint : ghRequest.getPointHints()) {
-                    url += "&" + Parameters.Routing.POINT_HINT + "=" + encodeURL(hint);
-                }
-                break;
-            }
-        }
+        // append *all* point hints if at least one is not empty
+        if (ghRequest.getPointHints().stream().anyMatch(h -> !h.isEmpty()))
+            for (String hint : ghRequest.getPointHints())
+                url += "&" + Parameters.Routing.POINT_HINT + "=" + encodeURL(hint);
 
-        // append *all* curbsides only if at least *one* is not empty
-        for (String checkEitherSide : ghRequest.getCurbsides()) {
-            if (!checkEitherSide.isEmpty()) {
-                for (String curbside : ghRequest.getCurbsides()) {
-                    url += "&" + Parameters.Routing.CURBSIDE + "=" + encodeURL(curbside);
-                }
-                break;
-            }
-        }
+
+        // append *all* curbsides if at least one is not empty
+        if (ghRequest.getCurbsides().stream().anyMatch(c -> !c.isEmpty()))
+            for (String curbside : ghRequest.getCurbsides())
+                url += "&" + Parameters.Routing.CURBSIDE + "=" + encodeURL(curbside);
+
+        // append *all* headings only if at least *one* is not NaN
+        if (ghRequest.getHeadings().stream().anyMatch(h -> !Double.isNaN(h)))
+            for (Double heading : ghRequest.getHeadings())
+                url += "&heading=" + heading;
+
 
         for (String snapPrevention : ghRequest.getSnapPreventions()) {
             url += "&" + Parameters.Routing.SNAP_PREVENTION + "=" + encodeURL(snapPrevention);
@@ -376,6 +375,14 @@ public class GraphHopperWeb {
         ArrayNode outList = objectMapper.createArrayNode();
         for (String str : list) {
             outList.add(str);
+        }
+        return outList;
+    }
+
+    private ArrayNode createDoubleList(List<Double> list) {
+        ArrayNode outList = objectMapper.createArrayNode();
+        for (Double d : list) {
+            outList.add(d);
         }
         return outList;
     }

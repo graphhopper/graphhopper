@@ -13,8 +13,8 @@ public class RoadsFlagEncoder extends AbstractFlagEncoder {
 
     public RoadsFlagEncoder() {
         super(7, 2, 3);
-        maxPossibleSpeed = 254;
         avgSpeedEnc = new DecimalEncodedValueImpl(EncodingManager.getKey(getName(), "average_speed"), speedBits, speedFactor, speedTwoDirections);
+        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(254);
     }
 
     @Override

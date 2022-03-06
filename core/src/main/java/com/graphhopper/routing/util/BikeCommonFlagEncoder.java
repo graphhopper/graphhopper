@@ -107,7 +107,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         unpavedSurfaceTags.add("sand");
         unpavedSurfaceTags.add("wood");
 
-        maxPossibleSpeed = 30;
+        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(30);
 
         setTrackTypeSpeed("grade1", 18); // paved
         setTrackTypeSpeed("grade2", 12); // now unpaved ...

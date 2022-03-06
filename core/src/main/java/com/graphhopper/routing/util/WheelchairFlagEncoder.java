@@ -98,7 +98,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
 
         allowedSacScale.clear();
 
-        maxPossibleSpeed = FERRY_SPEED;
+        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(FERRY_SPEED);
     }
 
     /**
