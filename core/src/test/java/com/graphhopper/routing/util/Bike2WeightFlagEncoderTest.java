@@ -21,6 +21,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -73,6 +74,7 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
         assertEquals(oldFlags, edge.getFlags());
     }
 
+    @Disabled
     @Test
     public void testSetSpeed0_issue367() {
         IntsRef edgeFlags = GHUtility.setSpeed(10, 10, encoder, encodingManager.createEdgeFlags());

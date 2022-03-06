@@ -28,6 +28,7 @@ import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.text.DateFormat;
@@ -380,6 +381,7 @@ public class CarFlagEncoderTest {
         assertEquals(10, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
     }
 
+    @Disabled
     @Test
     public void testSetSpeed0_issue367() {
         IntsRef edgeFlags = em.createEdgeFlags();

@@ -231,7 +231,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected void setSpeed(boolean reverse, IntsRef edgeFlags, double speed) {
         if (speed < speedFactor / 2) {
             avgSpeedEnc.setDecimal(reverse, edgeFlags, 0);
-            accessEnc.setBool(reverse, edgeFlags, false);
+            // we started doing this in #367, but do we really need it? If we do not do this here it will be easier to
+            // separate access and speed EVs, so we can turn them into normal encoded values (#2463)
+//            accessEnc.setBool(reverse, edgeFlags, false);
         } else {
             avgSpeedEnc.setDecimal(reverse, edgeFlags, speed > getMaxSpeed() ? getMaxSpeed() : speed);
         }

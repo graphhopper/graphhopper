@@ -24,6 +24,7 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.text.DateFormat;
@@ -134,6 +135,7 @@ public class MotorcycleFlagEncoderTest {
         assertEquals(20, encoder.avgSpeedEnc.getDecimal(true, edgeFlags), .1);
     }
 
+    @Disabled
     @Test
     public void testSetSpeed0_issue367() {
         IntsRef edgeFlags = em.createEdgeFlags();
