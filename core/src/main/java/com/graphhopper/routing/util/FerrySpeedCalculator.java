@@ -47,7 +47,7 @@ public class FerrySpeedCalculator {
                 return Math.round(calculatedTripSpeed);
             } else {
                 LOGGER.warn("Unrealistic long duration ignored in way with way ID=" + way.getId() + " : Duration tag value="
-                        + way.getTag("duration") + " (=" + Math.round(duration / 60d) + " minutes)");
+                        + way.getTag("duration") + " (=" + Math.round(duration / 60d) + " minutes), distance=" + distanceInKm + "km");
             }
         }
 
