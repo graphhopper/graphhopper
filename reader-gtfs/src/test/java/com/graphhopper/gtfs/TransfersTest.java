@@ -29,6 +29,9 @@ import org.junit.jupiter.api.TestInstance;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -72,11 +75,12 @@ public class TransfersTest {
     public void testInternalTransfersByToRouteIfRouteSpecific() {
         List<Transfer> transfersToStop = sampleFeed.getTransfersToStop("BEATTY_AIRPORT", "AB");
         assertEquals(5, transfersToStop.size());
-        assertEquals("AB", transfersToStop.get(0).from_route_id);
-        assertEquals("FUNNY_BLOCK_AB", transfersToStop.get(1).from_route_id);
-        assertEquals("STBA", transfersToStop.get(2).from_route_id);
-        assertEquals("AAMV", transfersToStop.get(3).from_route_id);
-        assertEquals("ABBFC", transfersToStop.get(4).from_route_id);
+        Set<String> ids = new HashSet<>(Arrays.asList("AB", "FUNNY_BLOCK_AB", "STBA", "AAMV", "ABBFC")); 
+        assertTrue(ids.remove(transfersToStop.get(0).from_route_id));
+        assertTrue(ids.remove(transfersToStop.get(1).from_route_id));
+        assertTrue(ids.remove(transfersToStop.get(2).from_route_id));
+        assertTrue(ids.remove(transfersToStop.get(3).from_route_id));
+        assertTrue(ids.remove(transfersToStop.get(4).from_route_id));
     }
 
 }
