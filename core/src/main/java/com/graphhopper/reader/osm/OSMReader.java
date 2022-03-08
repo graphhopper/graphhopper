@@ -352,6 +352,12 @@ public class OSMReader {
                     + ", difference: " + (edgeDistance - geometryDistance));
     }
 
+    /**
+     * This method is called for each way during the second pass and before the way is split into edges.
+     * We currently use it to calculate the distance of a way and determine the speed based on the duration tag when
+     * it is present. This cannot be done on a per-edge basis, because the duration tag refers to the duration of the
+     * entire way.
+     */
     protected void preprocessWay(ReaderWay way, WaySegmentParser.CoordinateSupplier coordinateSupplier) {
         if (!isCalculateWayDistance(way))
             return;

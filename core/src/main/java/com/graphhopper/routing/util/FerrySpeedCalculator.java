@@ -31,7 +31,8 @@ public class FerrySpeedCalculator {
             double speedWithWaitingTime = speedInKmPerHour / 1.4;
             return Math.round(Math.max(minSpeed, Math.min(speedWithWaitingTime, maxSpeed)));
         } else {
-            // the speed cannot be derived from the duration tag, we have to take a guess based on the distance.
+            // we have no speed value to work with because there was no valid duration tag.
+            // we have to take a guess based on the distance.
             double wayDistance = way.getTag("way_distance", Double.NaN);
             if (Double.isNaN(wayDistance))
                 // we don't know the distance of this way either. probably a broken way at the border of the map.
