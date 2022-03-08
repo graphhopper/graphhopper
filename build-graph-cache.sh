@@ -7,7 +7,7 @@ echo 'Fetching gtfs...';
 curl -J "http://proxy-cache-svc.$POD_NAMESPACE/511$API_511_PATH" -o $API_511_FILE_NAME --silent;
 echo 'Finished downloading gtfs.';
 
-exec java -Xmx1000m -Xms1000m -jar -jar *.jar import /graphhopper/bay-area/config.yml
+exec java -jar *.jar import /graphhopper/bay-area/config.yml
 
 tar -zvcf "graph-cache.tar.gz" ./graph-cache
 
