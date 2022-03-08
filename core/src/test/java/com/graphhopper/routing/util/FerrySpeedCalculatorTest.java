@@ -46,7 +46,8 @@ class FerrySpeedCalculatorTest {
         // unknown speed for longer ones
         checkSpeed(c, null, 1000.0, unknownSpeed);
 
-        // no speed, no distance -> unknown
+        // no speed, no distance -> unknown. this can also happen when the duration tag is valid, but no distance could
+        // be calculated (-> no speed)
         checkSpeed(c, null, null, unknownSpeed);
     }
 
