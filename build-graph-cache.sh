@@ -10,7 +10,7 @@ echo 'Finished downloading gtfs.';
 ls -halt
 
 echo 'Building graph-cache...';
-exec java -jar *.jar import /graphhopper/bay-area/config.yml
+java -jar *.jar import /graphhopper/bay-area/config.yml
 echo 'Finished graph-cache.';
 
 ls -halt
