@@ -1,12 +1,12 @@
 FROM maven:3.6.3-jdk-8 as build
 RUN apt-get update
-RUN apt-get install -y wget awscli
+RUN apt-get install -y wget
 WORKDIR /graphhopper
 COPY . .
 RUN mvn clean install -DskipTests
 
 FROM openjdk:11.0-jre
-
+RUN apt-get install -y awscli
 RUN mkdir -p /data
 
 WORKDIR /graphhopper
