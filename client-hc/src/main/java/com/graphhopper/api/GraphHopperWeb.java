@@ -17,6 +17,7 @@
  */
 package com.graphhopper.api;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -227,12 +228,27 @@ public class GraphHopperWeb {
         return client;
     }
 
-    private Request createPostRequest(GHRequest ghRequest) {
+    Request createPostRequest(GHRequest ghRequest) {
         String tmpServiceURL = ghRequest.getHints().getString(SERVICE_URL, routeServiceUrl);
         String url = tmpServiceURL + "?";
         if (!Helper.isEmpty(key))
             url += "key=" + key;
 
+        ObjectNode requestJson = requestToJson(ghRequest);
+        String body;
+        try {
+            body = objectMapper.writeValueAsString(requestJson);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Could not write request body", e);
+        }
+        Request.Builder builder = new Request.Builder().url(url).post(RequestBody.create(MT_JSON, body));
+        // force avoiding our GzipRequestInterceptor for smaller requests ~30 locations
+        if (body.length() < maxUnzippedLength)
+            builder.header("Content-Encoding", "identity");
+        return builder.build();
+    }
+
+    ObjectNode requestToJson(GHRequest ghRequest) {
         ObjectNode requestJson = objectMapper.createObjectNode();
         requestJson.putArray("points").addAll(createPointList(ghRequest.getPoints()));
         if (!ghRequest.getPointHints().isEmpty())
@@ -257,6 +273,8 @@ public class GraphHopperWeb {
         requestJson.put(CALC_POINTS, ghRequest.getHints().getBool(CALC_POINTS, calcPoints));
         requestJson.put("elevation", ghRequest.getHints().getBool("elevation", elevation));
         requestJson.put("optimize", ghRequest.getHints().getString("optimize", optimize));
+        if (ghRequest.getCustomModel() != null)
+            requestJson.putPOJO("custom_model", ghRequest.getCustomModel());
 
         Map<String, Object> hintsMap = ghRequest.getHints().toMap();
         for (Map.Entry<String, Object> entry : hintsMap.entrySet()) {
@@ -270,15 +288,13 @@ public class GraphHopperWeb {
             else
                 requestJson.putPOJO(hintKey, entry.getValue());
         }
-        String stringData = requestJson.toString();
-        Request.Builder builder = new Request.Builder().url(url).post(RequestBody.create(MT_JSON, stringData));
-        // force avoiding our GzipRequestInterceptor for smaller requests ~30 locations
-        if (stringData.length() < maxUnzippedLength)
-            builder.header("Content-Encoding", "identity");
-        return builder.build();
+        return requestJson;
     }
 
     Request createGetRequest(GHRequest ghRequest) {
+        if (ghRequest.getCustomModel() != null)
+            throw new IllegalArgumentException("Custom models cannot be used for GET requests. Use setPostRequest(true)");
+
         boolean tmpInstructions = ghRequest.getHints().getBool(INSTRUCTIONS, instructions);
         boolean tmpCalcPoints = ghRequest.getHints().getBool(CALC_POINTS, calcPoints);
         String tmpOptimize = ghRequest.getHints().getString("optimize", optimize);
