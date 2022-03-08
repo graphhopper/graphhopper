@@ -18,7 +18,6 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMTurnRelation;
-import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
@@ -35,6 +34,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.graphhopper.util.Helper.toLowerCase;
+import static java.util.Collections.emptyMap;
 
 /**
  * Manager class to register encoder, assign their flag values and check objects with all encoders
@@ -526,6 +526,10 @@ public class EncodingManager implements EncodedValueLookup {
         }
         for (AbstractFlagEncoder encoder : edgeEncoders) {
             encoder.handleWayTags(edgeFlags, way);
+            if (!edgeFlags.isEmpty()) {
+                Map<String, Object> nodeTags = way.getTag("node_tags", emptyMap());
+                encoder.handleNodeTags(edgeFlags, nodeTags);
+            }
         }
         return edgeFlags;
     }
@@ -596,23 +600,6 @@ public class EncodingManager implements EncodedValueLookup {
     @Override
     public int hashCode() {
         return Objects.hash(edgeEncoders, encodedValueMap, enableInstructions, preferredLanguage);
-    }
-
-    /**
-     * Updates the given edge flags based on node tags
-     */
-    public IntsRef handleNodeTags(Map<String, Object> nodeTags, IntsRef edgeFlags) {
-        for (AbstractFlagEncoder encoder : edgeEncoders) {
-            // for now we just create a dummy reader node, because our encoders do not make use of the coordinates anyway
-            ReaderNode readerNode = new ReaderNode(0, 0, 0, nodeTags);
-            // block access for all encoders that treat this node as a barrier
-            if (encoder.isBarrier(readerNode)) {
-                BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-                accessEnc.setBool(false, edgeFlags, false);
-                accessEnc.setBool(true, edgeFlags, false);
-            }
-        }
-        return edgeFlags;
     }
 
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {

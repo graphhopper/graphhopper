@@ -195,13 +195,15 @@ public class OSMReader {
      * This method is called during the second pass of {@link WaySegmentParser} and provides an entry point to enrich
      * the given OSM way with additional tags before it is passed on to the tag parsers.
      */
-    protected void setArtificialWayTags(PointList pointList, ReaderWay way, double distance) {
+    protected void setArtificialWayTags(PointList pointList, ReaderWay way, double distance, Map<String, Object> nodeTags) {
+        way.setTag("node_tags", nodeTags);
         way.setTag("edge_distance", distance);
         way.setTag("point_list", pointList);
 
         // we have to remove existing artificial tags, because we modify the way even though there can be multiple edges
         // per way. sooner or later we should separate the artificial ('edge') tags from the way, see discussion here:
         // https://github.com/graphhopper/graphhopper/pull/2457#discussion_r751155404
+        way.removeTag("estimated_distance");
         way.removeTag("duration:seconds");
         if (way.getTag("duration") != null) {
             try {
@@ -310,15 +312,11 @@ public class OSMReader {
             distance = maxDistance;
         }
 
-        setArtificialWayTags(pointList, way, distance);
+        setArtificialWayTags(pointList, way, distance, nodeTags);
         IntsRef relationFlags = getRelFlagsMap(way.getId());
         IntsRef edgeFlags = encodingManager.handleWayTags(way, relationFlags);
         if (edgeFlags.isEmpty())
             return;
-
-        // update edge flags to potentially block access in case there are node tags
-        if (!nodeTags.isEmpty())
-            edgeFlags = encodingManager.handleNodeTags(nodeTags, edgeFlags);
 
         EdgeIteratorState iter = ghStorage.edge(fromIndex, toIndex).setDistance(distance).setFlags(edgeFlags);
 
