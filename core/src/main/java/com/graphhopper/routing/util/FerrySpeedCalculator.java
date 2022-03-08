@@ -41,7 +41,6 @@ public class FerrySpeedCalculator {
                 // use the slowest possible speed for very short ferries
                 return minSpeed;
             else {
-                LOGGER.warn("Long ferry OSM way without valid duration: " + way.getId() + ", distance: " + wayDistance);
                 // todonow: use the unknown speed for now, but check how many such ferries actually exist and maybe use a
                 //          faster speed for longer ones
                 return unknownSpeed;

@@ -198,6 +198,10 @@ public class OSMReader {
      * @return true if the length of the way shall be calculated and added as an artificial way tag
      */
     protected boolean isCalculateWayDistance(ReaderWay way) {
+        return isFerry(way);
+    }
+
+    private boolean isFerry(ReaderWay way) {
         return way.hasTag("route", "ferry", "shuttle_train");
     }
 
@@ -364,9 +368,8 @@ public class OSMReader {
 
         double distance = calcDistance(way, coordinateSupplier);
         if (Double.isNaN(distance)) {
-            // Some nodes were missing, and we cannot determine the distance. This can happen e.g. when ferry routes
-            // are only included partially in an OSM extract. In this case the duration tag is useless and we simply
-            // ignore it.
+            // Some nodes were missing, and we cannot determine the distance. This can happen when ways are only
+            // included partially in an OSM extract. In this case we cannot calculate the speed either, so we return.
             LOGGER.warn("Could not determine distance for OSM way: " + way.getId());
             return;
         }
@@ -376,9 +379,12 @@ public class OSMReader {
         // the duration tag is only valid for the entire way, and it would be wrong to use it after splitting the way
         // into edges.
         String durationTag = way.getTag("duration");
-        if (durationTag == null)
+        if (durationTag == null) {
             // no duration tag -> we cannot derive speed
+            if (isFerry(way))
+                LOGGER.warn("Long ferry OSM way without duration tag: " + way.getId() + ", distance: " + distance / 1000.0 + "m");
             return;
+        }
         long durationInSeconds;
         try {
             durationInSeconds = OSMReaderUtility.parseDuration(durationTag);
