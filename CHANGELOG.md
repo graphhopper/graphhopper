@@ -1,6 +1,8 @@
 ### 5.0 [not yet released]
 
-- OSMReader no longer sets the artificial estimated_distance tag, but sets the edge_distance and point_list tags instead.
+- OSMReader no longer sets the artificial estimated_distance tag, but sets the edge_distance and point_list tags for all
+  edges, the way_distance for selected ways and additionally the duration:seconds and speed_from_duration tags when the
+  duration tag is present (#2528)
 - request gzipping for matrix and route clients (#2511)
 - bugfix: client-hc now considers headings (#2009)
 - the artificial tag duration:seconds is now a long, no longer a string, commit 6d81d8ae8de52987522991edd835e42c8d2046cf
