@@ -202,7 +202,8 @@ public class OSMReader {
      * This method is called during the second pass of {@link WaySegmentParser} and provides an entry point to enrich
      * the given OSM way with additional tags before it is passed on to the tag parsers.
      */
-    protected void setArtificialWayTags(PointList pointList, ReaderWay way) {
+    protected void setArtificialWayTags(PointList pointList, ReaderWay way, Map<String, Object> nodeTags) {
+        way.setTag("node_tags", nodeTags);
         // Estimate length of ways containing a route tag e.g. for ferry speed calculation
         double firstLat = pointList.getLat(0), firstLon = pointList.getLon(0);
         double lastLat = pointList.getLat(pointList.size() - 1), lastLon = pointList.getLon(pointList.size() - 1);
@@ -297,39 +298,35 @@ public class OSMReader {
         if (config.getMaxWayPointDistance() > 0 && pointList.size() > 2)
             simplifyAlgo.simplify(pointList);
 
-        double towerNodeDistance = distCalc.calcDistance(pointList);
+        double distance = distCalc.calcDistance(pointList);
 
-        if (towerNodeDistance < 0.001) {
+        if (distance < 0.001) {
             // As investigation shows often two paths should have crossed via one identical point
             // but end up in two very close points.
             zeroCounter++;
-            towerNodeDistance = 0.001;
+            distance = 0.001;
         }
 
         double maxDistance = (Integer.MAX_VALUE - 1) / 1000d;
-        if (Double.isNaN(towerNodeDistance)) {
-            LOGGER.warn("Bug in OSM or GraphHopper. Illegal tower node distance " + towerNodeDistance + " reset to 1m, osm way " + way.getId());
-            towerNodeDistance = 1;
+        if (Double.isNaN(distance)) {
+            LOGGER.warn("Bug in OSM or GraphHopper. Illegal tower node distance " + distance + " reset to 1m, osm way " + way.getId());
+            distance = 1;
         }
 
-        if (Double.isInfinite(towerNodeDistance) || towerNodeDistance > maxDistance) {
+        if (Double.isInfinite(distance) || distance > maxDistance) {
             // Too large is very rare and often the wrong tagging. See #435
             // so we can avoid the complexity of splitting the way for now (new towernodes would be required, splitting up geometry etc)
-            LOGGER.warn("Bug in OSM or GraphHopper. Too big tower node distance " + towerNodeDistance + " reset to large value, osm way " + way.getId());
-            towerNodeDistance = maxDistance;
+            LOGGER.warn("Bug in OSM or GraphHopper. Too big tower node distance " + distance + " reset to large value, osm way " + way.getId());
+            distance = maxDistance;
         }
 
-        setArtificialWayTags(pointList, way);
+        setArtificialWayTags(pointList, way, nodeTags);
         IntsRef relationFlags = getRelFlagsMap(way.getId());
         IntsRef edgeFlags = encodingManager.handleWayTags(way, relationFlags);
         if (edgeFlags.isEmpty())
             return;
 
-        // update edge flags to potentially block access in case there are node tags
-        if (!nodeTags.isEmpty())
-            edgeFlags = encodingManager.handleNodeTags(nodeTags, edgeFlags);
-
-        EdgeIteratorState iter = ghStorage.edge(fromIndex, toIndex).setDistance(towerNodeDistance).setFlags(edgeFlags);
+        EdgeIteratorState iter = ghStorage.edge(fromIndex, toIndex).setDistance(distance).setFlags(edgeFlags);
 
         // If the entire way is just the first and last point, do not waste space storing an empty way geometry
         if (pointList.size() > 2) {

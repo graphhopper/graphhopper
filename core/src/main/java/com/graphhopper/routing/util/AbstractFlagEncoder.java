@@ -57,7 +57,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected DecimalEncodedValue avgSpeedEnc;
     // This value determines the maximal possible speed of any road regardless of the maxspeed value
     // lower values allow more compact representation of the routing graph
-    protected int maxPossibleSpeed;
+    protected double maxPossibleSpeed;
     private boolean blockFords = true;
     private boolean registered;
     protected EncodedValueLookup encodedValueLookup;
@@ -141,6 +141,23 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      * parsing step.
      */
     public abstract IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way);
+
+    /**
+     * Updates the given edge flags based on node tags
+     */
+    public IntsRef handleNodeTags(IntsRef edgeFlags, Map<String, Object> nodeTags) {
+        if (!nodeTags.isEmpty()) {
+            // for now we just create a dummy reader node, because our encoders do not make use of the coordinates anyway
+            ReaderNode readerNode = new ReaderNode(0, 0, 0, nodeTags);
+            // block access for barriers
+            if (isBarrier(readerNode)) {
+                BooleanEncodedValue accessEnc = getAccessEnc();
+                accessEnc.setBool(false, edgeFlags, false);
+                accessEnc.setBool(true, edgeFlags, false);
+            }
+        }
+        return edgeFlags;
+    }
 
     public int getMaxTurnCosts() {
         return maxTurnCosts;

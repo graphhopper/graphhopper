@@ -1,14 +1,26 @@
 package com.graphhopper.api;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHRequest;
+import com.graphhopper.jackson.Jackson;
+import com.graphhopper.json.Statement;
+import com.graphhopper.util.CustomModel;
+import com.graphhopper.util.JsonFeature;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * This class unit tests the class. For integration tests against a real server see RouteResourceClientHCTest.
@@ -48,5 +60,57 @@ public class GraphHopperWebTest {
                 setProfile("car");
         assertEquals("http://localhost:8080/route?profile=car&point=42.509225,1.534728&point=42.512602,1.551558&type=json&instructions=true&points_encoded=true" +
                 "&calc_points=true&algorithm=&locale=en_US&elevation=false&optimize=false&heading=10.0&heading=-90.0", hopper.createGetRequest(req).url().toString());
+    }
+
+    @Test
+    public void customModel() throws JsonProcessingException {
+        GraphHopperWeb client = new GraphHopperWeb("http://localhost:8080/route");
+        LinkedHashMap<String, JsonFeature> areas = new LinkedHashMap<>();
+        Coordinate[] area_1_coordinates = new Coordinate[]{
+                new Coordinate(48.019324184801185, 11.28021240234375),
+                new Coordinate(48.019324184801185, 11.53564453125),
+                new Coordinate(48.11843396091691, 11.53564453125),
+                new Coordinate(48.11843396091691, 11.28021240234375),
+                new Coordinate(48.019324184801185, 11.28021240234375),
+        };
+        Coordinate[] area_2_coordinates = new Coordinate[]{
+                new Coordinate(48.15509285476017, 11.53289794921875),
+                new Coordinate(48.15509285476017, 11.8212890625),
+                new Coordinate(48.281365151571755, 11.8212890625),
+                new Coordinate(48.281365151571755, 11.53289794921875),
+                new Coordinate(48.15509285476017, 11.53289794921875),
+        };
+        areas.put("area_1", new JsonFeature("area_1",
+                "Feature",
+                null,
+                new GeometryFactory().createPolygon(area_1_coordinates),
+                new HashMap<>()));
+        areas.put("area_2", new JsonFeature("area_2",
+                "Feature",
+                null,
+                new GeometryFactory().createPolygon(area_2_coordinates),
+                new HashMap<>()));
+        CustomModel customModel = new CustomModel()
+                .addToSpeed(Statement.If("road_class == MOTORWAY", Statement.Op.LIMIT, 80))
+                .addToPriority(Statement.If("surface == DIRT", Statement.Op.MULTIPLY, 0.7))
+                .addToPriority(Statement.If("surface == SAND", Statement.Op.MULTIPLY, 0.6))
+                .setDistanceInfluence(69)
+                .setHeadingPenalty(22)
+                .setAreas(areas);
+        GHRequest req = new GHRequest(new GHPoint(42.509225, 1.534728), new GHPoint(42.512602, 1.551558))
+                .setCustomModel(customModel)
+                .setProfile("car");
+
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> client.createGetRequest(req));
+        assertEquals("Custom models cannot be used for GET requests. Use setPostRequest(true)", e.getMessage());
+
+        ObjectNode postRequest = client.requestToJson(req);
+        JsonNode customModelJson = postRequest.get("custom_model");
+        String jsonString = Jackson.newObjectMapper().writeValueAsString(customModelJson);
+        assertEquals("{\"distance_influence\":69.0,\"heading_penalty\":22.0,\"internal\":false,\"areas\":{" +
+                "\"area_1\":{\"id\":\"area_1\",\"type\":\"Feature\",\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[48.019324184801185,11.28021240234375],[48.019324184801185,11.53564453125],[48.11843396091691,11.53564453125],[48.11843396091691,11.28021240234375],[48.019324184801185,11.28021240234375]]]},\"properties\":{}}," +
+                "\"area_2\":{\"id\":\"area_2\",\"type\":\"Feature\",\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[48.15509285476017,11.53289794921875],[48.15509285476017,11.8212890625],[48.281365151571755,11.8212890625],[48.281365151571755,11.53289794921875],[48.15509285476017,11.53289794921875]]]},\"properties\":{}}}," +
+                "\"speed\":[{\"if\":\"road_class == MOTORWAY\",\"limit_to\":80.0}]," +
+                "\"priority\":[{\"if\":\"surface == DIRT\",\"multiply_by\":0.7},{\"if\":\"surface == SAND\",\"multiply_by\":0.6}]}", jsonString);
     }
 }
