@@ -195,7 +195,8 @@ public class OSMReader {
      * This method is called during the second pass of {@link WaySegmentParser} and provides an entry point to enrich
      * the given OSM way with additional tags before it is passed on to the tag parsers.
      */
-    protected void setArtificialWayTags(PointList pointList, ReaderWay way) {
+    protected void setArtificialWayTags(PointList pointList, ReaderWay way, Map<String, Object> nodeTags) {
+        way.setTag("node_tags", nodeTags);
         // Estimate length of ways containing a route tag e.g. for ferry speed calculation
         double firstLat = pointList.getLat(0), firstLon = pointList.getLon(0);
         double lastLat = pointList.getLat(pointList.size() - 1), lastLon = pointList.getLon(pointList.size() - 1);
@@ -312,15 +313,11 @@ public class OSMReader {
             distance = maxDistance;
         }
 
-        setArtificialWayTags(pointList, way);
+        setArtificialWayTags(pointList, way, nodeTags);
         IntsRef relationFlags = getRelFlagsMap(way.getId());
         IntsRef edgeFlags = encodingManager.handleWayTags(way, relationFlags);
         if (edgeFlags.isEmpty())
             return;
-
-        // update edge flags to potentially block access in case there are node tags
-        if (!nodeTags.isEmpty())
-            edgeFlags = encodingManager.handleNodeTags(nodeTags, edgeFlags);
 
         EdgeIteratorState iter = ghStorage.edge(fromIndex, toIndex).setDistance(distance).setFlags(edgeFlags);
 
