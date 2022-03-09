@@ -8,6 +8,7 @@ import com.graphhopper.routing.ev.Cycleway;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
+import java.util.Arrays;
 
 public class OSMCyclewayParser implements TagParser {
 
@@ -28,7 +29,8 @@ public class OSMCyclewayParser implements TagParser {
 
   @Override
   public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
-    String cyclewayTag = readerWay.getTag("cycleway");
+    String cyclewayTag = readerWay
+        .getFirstPriorityTag(Arrays.asList("cycleway", "cycleway:both", "cycleway:left", "cycleway:right"));
     Cycleway cycleway = Cycleway.find(cyclewayTag);
     if (cycleway == Cycleway.MISSING)
       return edgeFlags;

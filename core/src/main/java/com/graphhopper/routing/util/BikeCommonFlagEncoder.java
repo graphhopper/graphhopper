@@ -469,7 +469,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
                 weightToPrioMap.put(50d, AVOID_MORE.getValue());
         }
 
-        String cycleway = way.getFirstPriorityTag(Arrays.asList("cycleway", "cycleway:left", "cycleway:right"));
+        String cycleway = way.getFirstPriorityTag(Arrays.asList("cycleway", "cycleway:both", "cycleway:left", "cycleway:right"));
         if (Arrays.asList("lane", "shared_lane", "share_busway", "shoulder").contains(cycleway)) {
             weightToPrioMap.put(100d, UNCHANGED.getValue());
         } else if ("track".equals(cycleway)) {
