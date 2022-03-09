@@ -15,13 +15,10 @@ public class FerrySpeedCalculator {
     }
 
     public double getSpeed(ReaderWay way) {
-        // todo: We currently face twe problems related to ferry speeds:
-        //       1) We cannot account for waiting times for short ferries (makes the ferry speed slower than we can store)
+        // todo: We currently face two problems related to ferry speeds:
+        //       1) We cannot account for waiting times for short ferries (when we do the ferry speed is slower than the slowest we can store)
         //       2) When the ferry speed is larger than the maximum speed of the encoder (like 15km/h for foot) the
-        //          ferry speed will be faster than we can store.
-        //       Maybe we could add an additional encoded value that stores the ferry waiting time
-        //       (maybe just short/medium/long or so) and add a few more possible speed values to account for high ferry
-        //       speeds for the slow vehicles like foot.
+        //          ferry speed will be faster than what we can store.
 
         // OSMReader adds the artificial 'speed_from_duration', 'duration:seconds' and 'way_distance' tags that we can
         // use to set the ferry speed. Otherwise we need to use fallback values.
@@ -41,8 +38,7 @@ public class FerrySpeedCalculator {
                 // use the slowest possible speed for very short ferries
                 return minSpeed;
             else {
-                // todonow: use the unknown speed for now, but check how many such ferries actually exist and maybe use a
-                //          faster speed for longer ones
+                // todo: distinguish speed based on the distance of the ferry, see #2532
                 return unknownSpeed;
             }
         }

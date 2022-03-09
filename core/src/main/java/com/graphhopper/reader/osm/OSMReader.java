@@ -394,8 +394,9 @@ public class OSMReader {
         }
 
         double speedInKmPerHour = distance / 1000 / (durationInSeconds / 60.0 / 60.0);
-        if (speedInKmPerHour < 0.01d) {
-            LOGGER.warn("Unrealistic low speed calculated from duration. Maybe duration is too long for OSM way: "
+        if (speedInKmPerHour < 0.1d) {
+            // often there are mapping errors like duration=30:00 (30h) instead of duration=00:30 (30min)
+            LOGGER.warn("Unrealistic low speed calculated from duration. Maybe the duration is too long, or it is applied to a way that only represents a part of the connection? OSM way: "
                     + way.getId() + ". duration=" + durationTag + " (= " + Math.round(durationInSeconds / 60.0) +
                     " + minutes), distance=" + Math.round(distance / 1000.0) + "km");
             return;
