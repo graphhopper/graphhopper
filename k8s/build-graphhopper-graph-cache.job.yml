@@ -1,0 +1,52 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: graphhopper-graph-cache-builder
+spec:
+  schedule: "0 8,20 * * *"
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  concurrencyPolicy: Replace
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      template:
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: "kubernetes.io/arch"
+                    operator: In
+                    values: ["amd64"]
+          containers:
+          - name: graphhopper-graph-cache-builder
+            image: ghcr.io/bikehopper/graphhopper-graph-cache-builder@sha256:cdaea5c2010d54c2f1d1636c556967abdc989f17bdbcdcd51cccab35d07eaa3c
+            resources:
+              requests:
+                memory: "6Gi"
+                cpu: "3000m"
+            envFrom:
+            - secretRef:
+                name: minio-graphhopper-staging
+            env:
+            - name: GEOFABRIK_PATH
+              value: /north-america/us/california/norcal-latest.osm.pbf
+            - name: OSM_PBF_FILE_NAME
+              value: current-norcal-latest.osm.pbf
+            - name: API_511_PATH
+              value: /transit/datafeeds?api_key=02a6fde6-e10a-49ce-a96e-5ad9404f137f&operator_id=RG
+            - name: API_511_FILE_NAME
+              value: current-GTFSTransitData_RG.zip
+            - name: BUCKET_NAME
+              value: bikehopper-graphhopper
+            - name: MINIO_HOST
+              value: minio
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          imagePullSecrets:
+          - name: dockerconfigjson-github-com
+          restartPolicy: Never
