@@ -3,4 +3,4 @@ AWS_ACCESS_KEY_ID=$ACCESS_KEY AWS_SECRET_ACCESS_KEY=$SECRET_KEY aws s3api get-ob
 
 tar -xvzf graph-cache.tar.gz
 
-exec java -Ddw.graphhopper.graph.location=./graph-cache -jar *.jar server /graphhopper/bay-area/config.yml
+exec java $JVM_ARGS -Ddw.graphhopper.graph.location=./graph-cache -jar *.jar server /graphhopper/bay-area/config.yml
