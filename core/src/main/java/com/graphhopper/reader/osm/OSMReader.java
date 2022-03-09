@@ -382,7 +382,7 @@ public class OSMReader {
         if (durationTag == null) {
             // no duration tag -> we cannot derive speed
             if (isFerry(way) && distance > 20_000)
-                LOGGER.warn("Long ferry OSM way without duration tag: " + way.getId() + ", distance: " + Math.round(distance / 1000.0) + "m");
+                LOGGER.warn("Long ferry OSM way without duration tag: " + way.getId() + ", distance: " + Math.round(distance / 1000.0) + " km");
             return;
         }
         long durationInSeconds;
