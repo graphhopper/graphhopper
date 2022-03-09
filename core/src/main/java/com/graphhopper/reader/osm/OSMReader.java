@@ -394,11 +394,12 @@ public class OSMReader {
         }
 
         double speedInKmPerHour = distance / 1000 / (durationInSeconds / 60.0 / 60.0);
-        if (speedInKmPerHour < 0.01d)
+        if (speedInKmPerHour < 0.01d) {
             LOGGER.warn("Unrealistic low speed calculated from duration. Maybe duration is too long for OSM way: "
                     + way.getId() + ". duration=" + durationTag + " (= " + Math.round(durationInSeconds / 60.0) +
-                    " + minutes), distance=" + (distance / 1000.0) + "km");
-
+                    " + minutes), distance=" + Math.round(distance / 1000.0) + "km");
+            return;
+        }
         // These tags will be present if 1) isCalculateWayDistance was true for this way, 2) no OSM nodes were missing
         // such that the distance could actually be calculated, 3) there was a duration tag we could parse, and 4) the
         // derived speed was not unrealistically slow.
