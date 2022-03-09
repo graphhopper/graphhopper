@@ -1,5 +1,5 @@
 FROM maven:3.6.3-jdk-8 as build
-RUN apt-get update
+
 RUN apt-get install -y wget
 WORKDIR /graphhopper
 COPY . .
