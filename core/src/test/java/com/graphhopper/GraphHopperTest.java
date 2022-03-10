@@ -1196,7 +1196,7 @@ public class GraphHopperTest {
         assertEquals(103, res.getPoints().size());
 
         InstructionList il = res.getInstructions();
-        assertEquals(19, il.size());
+        assertEquals(21, il.size());
 
         assertEquals("continue onto Obere Landstraße", il.get(0).getTurnDescription(tr));
         assertEquals(69.28, (Double) il.get(0).getExtraInfoJSON().get("heading"), .01);

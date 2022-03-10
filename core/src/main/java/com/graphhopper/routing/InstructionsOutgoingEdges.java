@@ -21,7 +21,7 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
@@ -63,14 +63,14 @@ class InstructionsOutgoingEdges {
     // All outgoing edges, including oneways in the wrong direction
     private final List<EdgeIteratorState> visibleAlternativeTurns;
     private final DecimalEncodedValue maxSpeedEnc;
-    private final DecimalEncodedValue avgSpeedEnc;
     private final EnumEncodedValue<RoadClass> roadClassEnc;
     private final BooleanEncodedValue roadClassLinkEnc;
     private final NodeAccess nodeAccess;
+    private final Weighting weighting;
 
     public InstructionsOutgoingEdges(EdgeIteratorState prevEdge,
                                      EdgeIteratorState currentEdge,
-                                     FlagEncoder encoder,
+                                     Weighting weighting,
                                      DecimalEncodedValue maxSpeedEnc,
                                      EnumEncodedValue<RoadClass> roadClassEnc,
                                      BooleanEncodedValue roadClassLinkEnc,
@@ -81,9 +81,8 @@ class InstructionsOutgoingEdges {
                                      int adjNode) {
         this.prevEdge = prevEdge;
         this.currentEdge = currentEdge;
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+        this.weighting = weighting;
         this.maxSpeedEnc = maxSpeedEnc;
-        this.avgSpeedEnc = encoder.getAverageSpeedEnc();
         this.roadClassEnc = roadClassEnc;
         this.roadClassLinkEnc = roadClassLinkEnc;
         this.nodeAccess = nodeAccess;
@@ -97,7 +96,7 @@ class InstructionsOutgoingEdges {
             if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
                 tmpEdge = edgeIter.detach(false);
                 visibleAlternativeTurns.add(tmpEdge);
-                if (tmpEdge.get(accessEnc)) {
+                if (Double.isFinite(weighting.calcEdgeWeightWithAccess(tmpEdge, false))) {
                     allowedAlternativeTurns.add(tmpEdge);
                 }
             }
@@ -136,7 +135,7 @@ class InstructionsOutgoingEdges {
 
         double maxSurroundingSpeed = -1;
 
-        for (EdgeIteratorState edge : visibleAlternativeTurns) {
+        for (EdgeIteratorState edge : allowedAlternativeTurns) {
             tmpSpeed = getSpeed(edge);
             if (tmpSpeed > maxSurroundingSpeed) {
                 maxSurroundingSpeed = tmpSpeed;
@@ -154,7 +153,7 @@ class InstructionsOutgoingEdges {
     private double getSpeed(EdgeIteratorState edge) {
         double maxSpeed = edge.get(maxSpeedEnc);
         if (Double.isInfinite(maxSpeed))
-            return edge.get(avgSpeedEnc);
+            return edge.getDistance() / weighting.calcEdgeMillis(edge, false) * 3600;
         return maxSpeed;
     }
 
