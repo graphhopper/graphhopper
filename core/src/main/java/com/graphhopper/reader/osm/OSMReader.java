@@ -18,6 +18,7 @@
 package com.graphhopper.reader.osm;
 
 import com.carrotsearch.hppc.IntLongMap;
+import com.carrotsearch.hppc.LongArrayList;
 import com.graphhopper.coll.GHIntLongHashMap;
 import com.graphhopper.coll.GHLongHashSet;
 import com.graphhopper.coll.GHLongLongHashMap;
@@ -39,6 +40,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.shapes.GHPoint3D;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -145,6 +147,7 @@ public class OSMReader {
                 .setElevationProvider(eleProvider)
                 .setWayFilter(this::acceptWay)
                 .setSplitNodeFilter(this::isBarrierNode)
+                .setWayPreprocessor(this::preprocessWay)
                 .setRelationPreprocessor(this::preprocessRelations)
                 .setRelationProcessor(this::processRelation)
                 .setEdgeHandler(this::addEdge)
@@ -192,35 +195,32 @@ public class OSMReader {
     }
 
     /**
+     * @return true if the length of the way shall be calculated and added as an artificial way tag
+     */
+    protected boolean isCalculateWayDistance(ReaderWay way) {
+        return isFerry(way);
+    }
+
+    private boolean isFerry(ReaderWay way) {
+        return way.hasTag("route", "ferry", "shuttle_train");
+    }
+
+    /**
      * This method is called during the second pass of {@link WaySegmentParser} and provides an entry point to enrich
      * the given OSM way with additional tags before it is passed on to the tag parsers.
      */
-    protected void setArtificialWayTags(PointList pointList, ReaderWay way, Map<String, Object> nodeTags) {
+    protected void setArtificialWayTags(PointList pointList, ReaderWay way, double distance, Map<String, Object> nodeTags) {
         way.setTag("node_tags", nodeTags);
-        // Estimate length of ways containing a route tag e.g. for ferry speed calculation
-        double firstLat = pointList.getLat(0), firstLon = pointList.getLon(0);
-        double lastLat = pointList.getLat(pointList.size() - 1), lastLon = pointList.getLon(pointList.size() - 1);
+        way.setTag("edge_distance", distance);
+        way.setTag("point_list", pointList);
+
         // we have to remove existing artificial tags, because we modify the way even though there can be multiple edges
         // per way. sooner or later we should separate the artificial ('edge') tags from the way, see discussion here:
         // https://github.com/graphhopper/graphhopper/pull/2457#discussion_r751155404
-        way.removeTag("estimated_distance");
-        double estimatedDist = distCalc.calcDist(firstLat, firstLon, lastLat, lastLon);
-        way.setTag("estimated_distance", estimatedDist);
-
-        way.removeTag("duration:seconds");
-        if (way.getTag("duration") != null) {
-            try {
-                long durationInSeconds = OSMReaderUtility.parseDuration(way.getTag("duration"));
-                way.setTag("duration:seconds", durationInSeconds);
-            } catch (Exception ex) {
-                LOGGER.warn("Parsing error in way with OSMID=" + way.getId() + " : " + ex.getMessage());
-            }
-        }
-
         way.removeTag("country");
         way.removeTag("country_rule");
         way.removeTag("custom_areas");
-        
+
         List<CustomArea> customAreas;
         if (areaIndex != null) {
             double middleLat;
@@ -229,6 +229,8 @@ public class OSMReader {
                 middleLat = pointList.getLat(pointList.size() / 2);
                 middleLon = pointList.getLon(pointList.size() / 2);
             } else {
+                double firstLat = pointList.getLat(0), firstLon = pointList.getLon(0);
+                double lastLat = pointList.getLat(pointList.size() - 1), lastLon = pointList.getLon(pointList.size() - 1);
                 middleLat = (firstLat + lastLat) / 2;
                 middleLon = (firstLon + lastLon) / 2;
             }
@@ -313,13 +315,13 @@ public class OSMReader {
             distance = maxDistance;
         }
 
-        setArtificialWayTags(pointList, way, nodeTags);
+        setArtificialWayTags(pointList, way, distance, nodeTags);
         IntsRef relationFlags = getRelFlagsMap(way.getId());
         IntsRef edgeFlags = encodingManager.handleWayTags(way, relationFlags);
         if (edgeFlags.isEmpty())
             return;
 
-        EdgeIteratorState iter = ghStorage.edge(fromIndex, toIndex).setDistance(distance).setFlags(edgeFlags);
+        EdgeIteratorState edge = ghStorage.edge(fromIndex, toIndex).setDistance(distance).setFlags(edgeFlags);
 
         // If the entire way is just the first and last point, do not waste space storing an empty way geometry
         if (pointList.size() > 2) {
@@ -327,13 +329,13 @@ public class OSMReader {
             // are equal to the tower node coordinates
             checkCoordinates(fromIndex, pointList.get(0));
             checkCoordinates(toIndex, pointList.get(pointList.size() - 1));
-            iter.setWayGeometry(pointList.shallowCopy(1, pointList.size() - 1, false));
+            edge.setWayGeometry(pointList.shallowCopy(1, pointList.size() - 1, false));
         }
-        encodingManager.applyWayTags(way, iter);
+        encodingManager.applyWayTags(way, edge);
 
-        checkDistance(iter);
+        checkDistance(edge);
         if (osmWayIdSet.contains(way.getId())) {
-            getEdgeIdToOsmWayIdMap().put(iter.getEdge(), way.getId());
+            getEdgeIdToOsmWayIdMap().put(edge.getEdge(), way.getId());
         }
     }
 
@@ -352,6 +354,84 @@ public class OSMReader {
         else if (Math.abs(edgeDistance - geometryDistance) > tolerance)
             throw new IllegalStateException("Suspicious distance for edge: " + edge + " " + edgeDistance + " vs. " + geometryDistance
                     + ", difference: " + (edgeDistance - geometryDistance));
+    }
+
+    /**
+     * This method is called for each way during the second pass and before the way is split into edges.
+     * We currently use it to calculate the distance of a way and determine the speed based on the duration tag when
+     * it is present. This cannot be done on a per-edge basis, because the duration tag refers to the duration of the
+     * entire way.
+     */
+    protected void preprocessWay(ReaderWay way, WaySegmentParser.CoordinateSupplier coordinateSupplier) {
+        if (!isCalculateWayDistance(way))
+            return;
+
+        double distance = calcDistance(way, coordinateSupplier);
+        if (Double.isNaN(distance)) {
+            // Some nodes were missing, and we cannot determine the distance. This can happen when ways are only
+            // included partially in an OSM extract. In this case we cannot calculate the speed either, so we return.
+            LOGGER.warn("Could not determine distance for OSM way: " + way.getId());
+            return;
+        }
+        way.setTag("way_distance", distance);
+
+        // For ways with a duration tag we determine the average speed. This is needed for e.g. ferry routes, because
+        // the duration tag is only valid for the entire way, and it would be wrong to use it after splitting the way
+        // into edges.
+        String durationTag = way.getTag("duration");
+        if (durationTag == null) {
+            // no duration tag -> we cannot derive speed. happens very frequently for short ferries, but also for some long ones, see: #2532
+            if (isFerry(way) && distance > 500_000)
+                LOGGER.warn("Long ferry OSM way without duration tag: " + way.getId() + ", distance: " + Math.round(distance / 1000.0) + " km");
+            return;
+        }
+        long durationInSeconds;
+        try {
+            durationInSeconds = OSMReaderUtility.parseDuration(durationTag);
+        } catch (Exception e) {
+            LOGGER.warn("Could not parse duration tag '" + durationTag + "' in OSM way: " + way.getId());
+            return;
+        }
+
+        double speedInKmPerHour = distance / 1000 / (durationInSeconds / 60.0 / 60.0);
+        if (speedInKmPerHour < 0.1d) {
+            // Often there are mapping errors like duration=30:00 (30h) instead of duration=00:30 (30min). In this case we
+            // ignore the duration tag. If no such cases show up anymore, because they were fixed, maybe raise the limit to find some more.
+            LOGGER.warn("Unrealistic low speed calculated from duration. Maybe the duration is too long, or it is applied to a way that only represents a part of the connection? OSM way: "
+                    + way.getId() + ". duration=" + durationTag + " (= " + Math.round(durationInSeconds / 60.0) +
+                    " + minutes), distance=" + Math.round(distance / 1000.0) + "km");
+            return;
+        }
+        // These tags will be present if 1) isCalculateWayDistance was true for this way, 2) no OSM nodes were missing
+        // such that the distance could actually be calculated, 3) there was a duration tag we could parse, and 4) the
+        // derived speed was not unrealistically slow.
+        way.setTag("speed_from_duration", speedInKmPerHour);
+        way.setTag("duration:seconds", durationInSeconds);
+    }
+
+    /**
+     * @return the distance of the given way or NaN if some nodes were missing
+     */
+    private double calcDistance(ReaderWay way, WaySegmentParser.CoordinateSupplier coordinateSupplier) {
+        LongArrayList nodes = way.getNodes();
+        // every way has at least two nodes according to our acceptWay function
+        GHPoint3D prevPoint = coordinateSupplier.getCoordinate(nodes.get(0));
+        if (prevPoint == null)
+            return Double.NaN;
+        boolean is3D = !Double.isNaN(prevPoint.ele);
+        double distance = 0;
+        for (int i = 1; i < nodes.size(); i++) {
+            GHPoint3D point = coordinateSupplier.getCoordinate(nodes.get(i));
+            if (point == null)
+                return Double.NaN;
+            if (Double.isNaN(point.ele) == is3D)
+                throw new IllegalStateException("There should be elevation data for either all points or no points at all. OSM way: " + way.getId());
+            distance += is3D
+                    ? distCalc.calcDist3D(prevPoint.lat, prevPoint.lon, prevPoint.ele, point.lat, point.lon, point.ele)
+                    : distCalc.calcDist(prevPoint.lat, prevPoint.lon, point.lat, point.lon);
+            prevPoint = point;
+        }
+        return distance;
     }
 
     /**

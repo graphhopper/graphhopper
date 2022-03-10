@@ -249,11 +249,13 @@ public class FootFlagEncoderTest {
     public void testFerrySpeed() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("route", "ferry");
-        // a bit longer than an hour
-        way.setTag("duration:seconds", 4000L);
-        assertEquals(30, footEncoder.ferrySpeedCalc.getSpeed(way), .1);
-        IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way);
-        assertEquals(15, footAvgSpeedEnc.getDecimal(false, flags), .1);
+        way.setTag("duration:seconds", 1800L);
+        way.setTag("way_distance", 30000.0);
+        way.setTag("speed_from_duration", 30 / 0.5);
+        // the speed is truncated to maxspeed (=15)
+        IntsRef edgeFlags = encodingManager.createEdgeFlags();
+        footEncoder.handleWayTags(edgeFlags, way);
+        assertEquals(15, footEncoder.getAverageSpeedEnc().getDecimal(false, edgeFlags));
     }
 
     @Test

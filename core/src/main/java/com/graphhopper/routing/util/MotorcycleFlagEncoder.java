@@ -25,8 +25,10 @@ import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.routing.weighting.CurvatureWeighting;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
+import com.graphhopper.util.PointList;
 
 import java.util.HashSet;
 import java.util.List;
@@ -235,7 +237,12 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
     }
 
     private double getBeelineDistance(ReaderWay way) {
-        return way.getTag("estimated_distance", Double.POSITIVE_INFINITY);
+        PointList pointList = way.getTag("point_list", null);
+        if (pointList == null)
+            throw new IllegalStateException("The artificial 'point_list' tag is missing for way: " + way.getId());
+        if (pointList.size() < 2)
+            throw new IllegalStateException("The artificial 'point_list' tag contained less than two points for way: " + way.getId());
+        return DistanceCalcEarth.DIST_EARTH.calcDist(pointList.getLat(0), pointList.getLon(0), pointList.getLat(pointList.size() - 1), pointList.getLon(pointList.size() - 1));
     }
 
     /**

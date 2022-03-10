@@ -21,9 +21,8 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
 
 import java.text.DateFormat;
@@ -163,10 +162,17 @@ public class MotorcycleFlagEncoderTest {
         assertTrue(bendinessOfCurvyWay < bendinessOfStraightWay, "The bendiness of the straight road is smaller than the one of the curvy road");
     }
 
-    private double getBendiness(EdgeIteratorState edge, double estimatedDistance) {
+    private double getBendiness(EdgeIteratorState edge, double beelineDistance) {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
-        way.setTag("estimated_distance", estimatedDistance);
+        // set point_list such that it yields the requested beelineDistance
+        GHPoint point = new GHPoint(11.3, 45.2);
+        GHPoint toPoint = DistanceCalcEarth.DIST_EARTH.projectCoordinate(point.lat, point.lon, beelineDistance, 90);
+        PointList pointList = new PointList();
+        pointList.add(point);
+        pointList.add(toPoint);
+        way.setTag("point_list", pointList);
+
         assertTrue(encoder.getAccess(way).isWay());
         IntsRef flags = encoder.handleWayTags(em.createEdgeFlags(), way);
         edge.setFlags(flags);
