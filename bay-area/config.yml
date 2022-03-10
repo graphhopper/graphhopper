@@ -52,6 +52,8 @@ graphhopper:
     - name: bike2
       vehicle: bike2
       weighting: fastest
+      turn_costs: true
+      u_turn_costs: 10
     - name: foot
       vehicle: foot
       weighting: fastest
@@ -124,14 +126,14 @@ graphhopper:
 
   # To make CH preparation faster for multiple profiles you can increase the default threads if you have enough RAM.
   # Change this setting only if you know what you are doing and if the default worked for you.
-  # prepare.ch.threads: 1
+  prepare.ch.threads: 2
 
   # To tune the performance vs. memory usage for the hybrid mode use
   # prepare.lm.landmarks: 16
 
   # Make landmark preparation parallel if you have enough RAM. Change this only if you know what you are doing and if
   # the default worked for you.
-  # prepare.lm.threads: 1
+  prepare.lm.threads: 2
 
   # In many cases the road network consists of independent components without any routes going in between. In
   # the most simple case you can imagine an island without a bridge or ferry connection. The following parameter
