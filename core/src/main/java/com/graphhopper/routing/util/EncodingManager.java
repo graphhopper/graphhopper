@@ -393,7 +393,7 @@ public class EncodingManager implements EncodedValueLookup {
         return evObject;
     }
 
-    private TagParser parseEncodedValueString(TagParserFactory factory, String tagParserString) {
+    private static TagParser parseEncodedValueString(TagParserFactory factory, String tagParserString) {
         if (!tagParserString.equals(toLowerCase(tagParserString)))
             throw new IllegalArgumentException("Use lower case for TagParser: " + tagParserString);
 

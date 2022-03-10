@@ -124,8 +124,9 @@ public class CustomModel {
         return distanceInfluence == null ? DEFAULT_DISTANCE_INFLUENCE : distanceInfluence;
     }
 
-    public void setHeadingPenalty(double headingPenalty) {
+    public CustomModel setHeadingPenalty(double headingPenalty) {
         this.headingPenalty = headingPenalty;
+        return this;
     }
 
     public double getHeadingPenalty() {
