@@ -256,7 +256,6 @@ public class WaySegmentParser {
             splitWayAtJunctionsAndEmptySections(segment, way);
         }
 
-
         private void splitWayAtJunctionsAndEmptySections(List<SegmentNode> fullSegment, ReaderWay way) {
             List<SegmentNode> segment = new ArrayList<>();
             for (SegmentNode node : fullSegment) {

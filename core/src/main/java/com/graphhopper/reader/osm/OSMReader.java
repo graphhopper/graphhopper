@@ -380,7 +380,7 @@ public class OSMReader {
         // into edges.
         String durationTag = way.getTag("duration");
         if (durationTag == null) {
-            // no duration tag -> we cannot derive speed.
+            // no duration tag -> we cannot derive speed. happens very frequently for short ferries, but also for some long ones, see: #2532
             if (isFerry(way) && distance > 500_000)
                 LOGGER.warn("Long ferry OSM way without duration tag: " + way.getId() + ", distance: " + Math.round(distance / 1000.0) + " km");
             return;
@@ -395,7 +395,8 @@ public class OSMReader {
 
         double speedInKmPerHour = distance / 1000 / (durationInSeconds / 60.0 / 60.0);
         if (speedInKmPerHour < 0.1d) {
-            // often there are mapping errors like duration=30:00 (30h) instead of duration=00:30 (30min). If there are none anymore, maybe raise the limit to find more cases.
+            // Often there are mapping errors like duration=30:00 (30h) instead of duration=00:30 (30min). In this case we
+            // ignore the duration tag. If no such cases show up anymore, because they were fixed, maybe raise the limit to find some more.
             LOGGER.warn("Unrealistic low speed calculated from duration. Maybe the duration is too long, or it is applied to a way that only represents a part of the connection? OSM way: "
                     + way.getId() + ". duration=" + durationTag + " (= " + Math.round(durationInSeconds / 60.0) +
                     " + minutes), distance=" + Math.round(distance / 1000.0) + "km");

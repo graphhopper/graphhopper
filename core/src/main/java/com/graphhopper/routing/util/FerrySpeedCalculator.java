@@ -1,11 +1,8 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class FerrySpeedCalculator {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FerrySpeedCalculator.class);
     private final double unknownSpeed, minSpeed, maxSpeed;
 
     public FerrySpeedCalculator(double minSpeed, double maxSpeed, double unknownSpeed) {
