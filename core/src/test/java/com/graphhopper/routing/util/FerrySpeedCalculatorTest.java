@@ -27,43 +27,36 @@ class FerrySpeedCalculatorTest {
 
     @Test
     void testSpeed() {
-        double speedFactor = 2;
+        double minSpeed = 1;
         double maxSpeed = 55;
-        double longSpeed = 30;
-        double shortSpeed = 20;
         double unknownSpeed = 5;
-        FerrySpeedCalculator c = new FerrySpeedCalculator(speedFactor, maxSpeed, longSpeed, shortSpeed, unknownSpeed);
+        FerrySpeedCalculator c = new FerrySpeedCalculator(minSpeed, maxSpeed, unknownSpeed);
 
-        // no distance -> speed only depends on duration (distinguish between missing/short/long duration)
-        checkSpeed(c, null, null, unknownSpeed);
-        checkSpeed(c, 0L, null, unknownSpeed);
-        checkSpeed(c, 1800L, null, shortSpeed);
-        checkSpeed(c, 7200L, null, longSpeed);
-        // no duration -> speed depends on distance
-        checkSpeed(c, null, 100.0, speedFactor / 2);
-        checkSpeed(c, 0L, 100.0, speedFactor / 2);
-        checkSpeed(c, null, 1000.0, unknownSpeed);
-        checkSpeed(c, 0L, 1000.0, unknownSpeed);
-
-        // valid
-        checkSpeed(c, 3600L, 30000.0, Math.round(30 / 1.4));
-        checkSpeed(c, 7200L, 30000.0, Math.round(15 / 1.4));
-        // above max (capped to max)
-        checkSpeed(c, 3600L, 90000.0, maxSpeed);
+        // speed_from_duration is set (way_distance is not even needed)
+        checkSpeed(c, 30.0, null, Math.round(30 / 1.4));
+        checkSpeed(c, 45.0, null, Math.round(45 / 1.4));
+        // above max (when including waiting time) (capped to max)
+        checkSpeed(c, 100.0, null, maxSpeed);
         // below smallest storable non-zero value
-        checkSpeed(c, 7200L, 1000.0, speedFactor / 2);
+        checkSpeed(c, 0.5, null, minSpeed);
 
-        // suspicious slow speed (still depends on distance)
-        checkSpeed(c, 180000L, 100.0, speedFactor / 2);
-        checkSpeed(c, 1800000L, 1000.0, unknownSpeed);
+        // no speed_from_duration, but way_distance is present
+        // minimum speed for short ferries
+        checkSpeed(c, null, 100.0, minSpeed);
+        // unknown speed for longer ones
+        checkSpeed(c, null, 1000.0, unknownSpeed);
+
+        // no speed, no distance -> unknown. this can also happen when the duration tag is valid, but no distance could
+        // be calculated (-> no speed)
+        checkSpeed(c, null, null, unknownSpeed);
     }
 
-    private void checkSpeed(FerrySpeedCalculator calc, Long duration, Double distance, double expected) {
+    private void checkSpeed(FerrySpeedCalculator calc, Double speedFromDuration, Double wayDistance, double expected) {
         ReaderWay way = new ReaderWay(0L);
-        if (duration != null)
-            way.setTag("duration:seconds", duration);
-        if (distance != null)
-            way.setTag("estimated_distance", distance);
+        if (speedFromDuration != null)
+            way.setTag("speed_from_duration", speedFromDuration);
+        if (wayDistance != null)
+            way.setTag("way_distance", wayDistance);
         assertEquals(expected, calc.getSpeed(way));
     }
 

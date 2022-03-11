@@ -21,7 +21,6 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.Roundabout;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.IntsRef;
@@ -31,9 +30,7 @@ import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
 import java.text.DateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -459,40 +456,45 @@ public class CarFlagEncoderTest {
         way.setTag("motorcar", "yes");
         way.setTag("bicycle", "no");
         // Provide the duration value in seconds:
+        way.setTag("way_distance", 50000.0);
+        way.setTag("speed_from_duration", 50 / (35.0 / 60));
         way.setTag("duration:seconds", 35L * 60);
-        way.setTag("estimated_distance", 50000);
         // accept
         assertTrue(encoder.getAccess(way).isFerry());
-        // calculate speed from estimated_distance and duration
-        assertEquals(61, encoder.ferrySpeedCalc.getSpeed(way), 1e-1);
+        IntsRef edgeFlags = em.createEdgeFlags();
+        // calculate speed from tags: speed_from_duration * 1.4 (+ rounded using the speed factor)
+        encoder.handleWayTags(edgeFlags, way);
+        assertEquals(60, encoder.getAverageSpeedEnc().getDecimal(false, edgeFlags));
 
-        //Test for very short and slow 0.5km/h still realisitic ferry
+        //Test for very short and slow 0.5km/h still realistic ferry
         way = new ReaderWay(1);
         way.setTag("route", "ferry");
         way.setTag("motorcar", "yes");
         // Provide the duration of 12 minutes in seconds:
         way.setTag("duration:seconds", 12L * 60);
-        way.setTag("estimated_distance", 100);
+        way.setTag("way_distance", 100.0);
+        way.setTag("speed_from_duration", 0.1 / (12.0 / 60));
         // accept
         assertTrue(encoder.getAccess(way).isFerry());
         // We can't store 0.5km/h, but we expect the lowest possible speed (5km/h)
-        assertEquals(2.5, encoder.ferrySpeedCalc.getSpeed(way), 1e-1);
+        edgeFlags = em.createEdgeFlags();
+        encoder.handleWayTags(edgeFlags, way);
+        assertEquals(5, encoder.getAverageSpeedEnc().getDecimal(false, edgeFlags));
 
-        IntsRef edgeFlags = em.createEdgeFlags();
+        edgeFlags = em.createEdgeFlags();
         avSpeedEnc.setDecimal(false, edgeFlags, 2.5);
         assertEquals(5, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
 
-        //Test for an unrealisitic long duration
+        //Test for missing duration
         way = new ReaderWay(1);
         way.setTag("route", "ferry");
         way.setTag("motorcar", "yes");
-        // Provide the duration of 2 months in seconds:
-        way.setTag("duration:seconds", 87900L * 60);
-        way.setTag("estimated_distance", 100);
+        way.setTag("way_distance", 100.0);
         // accept
         assertTrue(encoder.getAccess(way).isFerry());
-        // We have ignored the unrealisitc long duration and take the unknown speed
-        assertEquals(2.5, encoder.ferrySpeedCalc.getSpeed(way), 1e-1);
+        encoder.handleWayTags(edgeFlags, way);
+        // We use the unknown speed
+        assertEquals(5, encoder.getAverageSpeedEnc().getDecimal(false, edgeFlags));
 
         way.clearTags();
         way.setTag("route", "ferry");
@@ -642,14 +644,18 @@ public class CarFlagEncoderTest {
     public void testIssue_1256() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("route", "ferry");
-        way.setTag("estimated_distance", 257);
+        way.setTag("way_distance", 257.0);
 
+        // default is 5km/h minimum speed for car
+        IntsRef edgeFlags = em.createEdgeFlags();
+        encoder.handleWayTags(edgeFlags, way);
+        assertEquals(5, encoder.getAverageSpeedEnc().getDecimal(false, edgeFlags), .1);
+
+        // for a smaller speed factor the minimum speed is also smaller
         CarFlagEncoder lowFactorCar = new CarFlagEncoder(10, 1, 0);
-        EncodingManager.create(lowFactorCar);
-        List<EncodedValue> list = new ArrayList<>();
-        lowFactorCar.setEncodedValueLookup(em);
-        lowFactorCar.createEncodedValues(list);
-        assertEquals(2.5, encoder.ferrySpeedCalc.getSpeed(way), .1);
-        assertEquals(.5, lowFactorCar.ferrySpeedCalc.getSpeed(way), .1);
+        EncodingManager lowFactorEm = EncodingManager.create(lowFactorCar);
+        edgeFlags = lowFactorEm.createEdgeFlags();
+        lowFactorCar.handleWayTags(edgeFlags, way);
+        assertEquals(1, lowFactorCar.getAverageSpeedEnc().getDecimal(false, edgeFlags), .1);
     }
 }
