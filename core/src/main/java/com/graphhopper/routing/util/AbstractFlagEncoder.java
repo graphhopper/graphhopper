@@ -87,17 +87,16 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     protected void init(DateRangeParser dateRangeParser) {
-        ferrySpeedCalc = new FerrySpeedCalculator(speedFactor / 2, maxPossibleSpeed, 5);
+        if (registered)
+            throw new IllegalStateException("You must not register a FlagEncoder (" + this + ") twice or for two EncodingManagers!");
+        registered = true;
 
+        ferrySpeedCalc = new FerrySpeedCalculator(speedFactor / 2, maxPossibleSpeed, 5);
         setConditionalTagInspector(new ConditionalOSMTagInspector(Collections.singletonList(dateRangeParser),
                 restrictions, restrictedValues, intendedValues, false));
     }
 
     protected void setConditionalTagInspector(ConditionalTagInspector inspector) {
-        if (conditionalTagInspector != null)
-            throw new IllegalStateException("You must not register a FlagEncoder (" + toString() + ") twice or for two EncodingManagers!");
-
-        registered = true;
         conditionalTagInspector = inspector;
     }
 
