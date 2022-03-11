@@ -1005,7 +1005,7 @@ public class PathTest {
 
         EdgeIteratorState tmpEdge;
         tmpEdge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(5)).setName("1-2");
-        assertNotEquals(EncodingManager.Access.CAN_SKIP, ((AbstractFlagEncoder) encoder).getAccess(w));
+        assertNotEquals(EncodingManager.Access.CAN_SKIP, ((CarFlagEncoder) encoder).getAccess(w));
         IntsRef relFlags = carManager.createRelationFlags();
         tmpEdge.setFlags(carManager.handleWayTags(w, relFlags));
         tmpEdge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 5).setDistance(5)).setName("4-5");
