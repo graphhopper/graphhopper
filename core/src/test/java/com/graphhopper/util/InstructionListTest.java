@@ -21,11 +21,14 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.ShortestWeighting;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.NodeAccess;
@@ -37,15 +40,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
  */
 public class InstructionListTest {
-    private final TranslationMap trMap = TranslationMapTest.SINGLETON;
-    private final Translation usTR = trMap.getWithFallBack(Locale.US);
+    private static final TranslationMap trMap = TranslationMapTest.SINGLETON;
+    private static final Translation usTR = trMap.getWithFallBack(Locale.US);
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
     private EncodingManager carManager;
     private FlagEncoder carEncoder;
@@ -56,11 +58,11 @@ public class InstructionListTest {
         carManager = EncodingManager.create(carEncoder);
     }
 
-    private List<String> getTurnDescriptions(InstructionList instructionList) {
+    public static List<String> getTurnDescriptions(InstructionList instructionList) {
         return getTurnDescriptions(instructionList, usTR);
     }
 
-    private List<String> getTurnDescriptions(InstructionList instructionList, Translation tr) {
+    private static List<String> getTurnDescriptions(InstructionList instructionList, Translation tr) {
         List<String> list = new ArrayList<>();
         for (Instruction instruction : instructionList) {
             list.add(instruction.getTurnDescription(tr));
@@ -120,7 +122,7 @@ public class InstructionListTest {
     public void testWayList() {
         Graph g = createTestGraph();
 
-        ShortestWeighting weighting = new ShortestWeighting(carEncoder);
+        FastestWeighting weighting = new FastestWeighting(carEncoder);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(0, 10);
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
         List<String> tmpList = getTurnDescriptions(wayList);
@@ -189,7 +191,7 @@ public class InstructionListTest {
         list.add(10.20, 10.05);
         iter.setWayGeometry(list);
 
-        ShortestWeighting weighting = new ShortestWeighting(carEncoder);
+        FastestWeighting weighting = new FastestWeighting(carEncoder);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(2, 3);
 
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
@@ -204,7 +206,6 @@ public class InstructionListTest {
                 tmpList);
     }
 
-    // TODO is this problem fixed with the new instructions?
     // problem: we normally don't want instructions if streetname stays but here it is suboptimal:
     @Test
     public void testNoInstructionIfSameStreet() {
@@ -229,7 +230,7 @@ public class InstructionListTest {
         list.add(10.20, 10.05);
         iter.setWayGeometry(list);
 
-        ShortestWeighting weighting = new ShortestWeighting(carEncoder);
+        FastestWeighting weighting = new FastestWeighting(carEncoder);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(2, 3);
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
         List<String> tmpList = getTurnDescriptions(wayList);
@@ -258,7 +259,7 @@ public class InstructionListTest {
         GHUtility.setSpeed(60, true, true, carEncoder, g.edge(2, 3).setDistance(10));
         GHUtility.setSpeed(60, true, true, carEncoder, g.edge(2, 4).setDistance(10));
 
-        ShortestWeighting weighting = new ShortestWeighting(carEncoder);
+        FastestWeighting weighting = new FastestWeighting(carEncoder);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 3);
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
         List<String> tmpList = getTurnDescriptions(wayList);
@@ -287,7 +288,7 @@ public class InstructionListTest {
         GHUtility.setSpeed(60, true, true, carEncoder, g.edge(2, 3).setDistance(10));
         GHUtility.setSpeed(60, true, true, carEncoder, g.edge(2, 4).setDistance(10));
 
-        ShortestWeighting weighting = new ShortestWeighting(carEncoder);
+        FastestWeighting weighting = new FastestWeighting(carEncoder);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 3);
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
         List<String> tmpList = getTurnDescriptions(wayList);
@@ -295,10 +296,132 @@ public class InstructionListTest {
     }
 
     @Test
+    public void testNoInstructionIfSlightTurnAndAlternativeIsSharp3() {
+        BikeFlagEncoder bike = new BikeFlagEncoder();
+        EncodingManager tmpEM = new EncodingManager.Builder().add(bike).build();
+        EnumEncodedValue<RoadClass> rcEV = tmpEM.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        Graph g = new GraphBuilder(tmpEM).create();
+        // Real World Example: https://graphhopper.com/maps/?point=48.411549,15.599567&point=48.411663%2C15.600527&profile=bike
+        // From 1 to 3
+
+        //          3
+        //         /
+        // 1 ---- 2
+        //        \
+        //         4
+
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(1, 48.411392, 15.599713);
+        na.setNode(2, 48.411457, 15.600410);
+        na.setNode(3, 48.411610, 15.600409);
+        na.setNode(4, 48.411322, 15.600459);
+
+        GHUtility.setSpeed(18, true, true, bike, g.edge(1, 2).setDistance(20));
+        GHUtility.setSpeed(18, true, true, bike, g.edge(2, 3).setDistance(20));
+        GHUtility.setSpeed(4, true, true, bike, g.edge(2, 4).setDistance(20));
+
+        g.edge(1, 2).set(rcEV, RoadClass.RESIDENTIAL).setName("pfarr");
+        g.edge(2, 3).set(rcEV, RoadClass.RESIDENTIAL).setName("pfarr");
+        g.edge(2, 4).set(rcEV, RoadClass.PEDESTRIAN).setName("markt");
+
+        FastestWeighting weighting = new FastestWeighting(bike);
+        Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 3);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
+        List<String> tmpList = getTurnDescriptions(wayList);
+        assertEquals(Arrays.asList("continue", "turn left", "arrive at destination"), tmpList);
+        assertEquals(3, wayList.size());
+        assertEquals(20, wayList.get(1).getDistance());
+    }
+
+    @Test
+    public void testInstructionIfTurn() {
+        BikeFlagEncoder bike = new BikeFlagEncoder();
+        EncodingManager tmpEM = new EncodingManager.Builder().add(bike).build();
+        EnumEncodedValue<RoadClass> rcEV = tmpEM.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        Graph g = new GraphBuilder(tmpEM).create();
+        // Real World Example: https://graphhopper.com/maps/?point=48.412169%2C15.604888&point=48.412251%2C15.60543&profile=bike
+        // From 1 to 4
+
+        //      3
+        //       \
+        //      - 2
+        //  1_ /   \
+        //          4
+
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(1, 48.412169, 15.604888);
+        na.setNode(2, 48.412411, 15.605189);
+        na.setNode(3, 48.412614, 15.604872);
+        na.setNode(4, 48.412148, 15.605543);
+
+        GHUtility.setSpeed(18, true, true, bike, g.edge(1, 2).setDistance(20));
+        GHUtility.setSpeed(18, true, true, bike, g.edge(2, 3).setDistance(20));
+        GHUtility.setSpeed(18, true, true, bike, g.edge(2, 4).setDistance(20));
+
+        g.edge(1, 2).set(rcEV, RoadClass.RESIDENTIAL).setName("land");
+        g.edge(2, 3).set(rcEV, RoadClass.SECONDARY).setName("ring");
+        g.edge(2, 4).set(rcEV, RoadClass.SECONDARY).setName("ring");
+
+        FastestWeighting weighting = new FastestWeighting(bike);
+        Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 4);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
+        List<String> tmpList = getTurnDescriptions(wayList);
+        assertEquals(Arrays.asList("continue", "turn right", "arrive at destination"), tmpList);
+        assertEquals(3, wayList.size());
+        assertEquals(20, wayList.get(1).getDistance());
+    }
+
+    @Test
+    public void testInstructionIfSlightTurnForCustomProfile() {
+        FootFlagEncoder foot = new FootFlagEncoder();
+        EncodingManager tmpEM = new EncodingManager.Builder().add(foot).build();
+        Graph g = new GraphBuilder(tmpEM).create();
+        // Real World Example: https://graphhopper.com/maps/?point=43.729379%252C7.417697&point=43.729798%252C7.417263&profile=foot
+        // From 4 to 3 and 4 to 1
+
+        //    1  3
+        //     \ \
+        //      \2
+        //        \
+        //         .
+        //          \
+        //           4
+
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(1, 43.72977, 7.417209);
+        na.setNode(2, 43.7297585, 7.4173079);
+        na.setNode(3, 43.729821, 7.41725);
+        na.setNode(4, 43.729476, 7.417633);
+
+        DecimalEncodedValue priorityEnc = tmpEM.getDecimalEncodedValue(EncodingManager.getKey(foot.getName(), "priority")); // default is priority=0 so set it to 1
+        GHUtility.setSpeed(5, true, true, foot, g.edge(1, 2).setDistance(20).setName("myroad").set(priorityEnc, 1));
+        GHUtility.setSpeed(5, true, true, foot, g.edge(2, 3).setDistance(20).setName("myroad").set(priorityEnc, 1));
+        PointList pointList = new PointList();
+        pointList.add(43.729627, 7.41749);
+        GHUtility.setSpeed(5, true, true, foot, g.edge(2, 4).setDistance(20).setName("myroad").set(priorityEnc, 1).setWayGeometry(pointList));
+
+        Weighting weighting = CustomModelParser.createWeighting(foot, tmpEM, DefaultTurnCostProvider.NO_TURN_COST_PROVIDER, new CustomModel().setDistanceInfluence(0));
+        Path p = new Dijkstra(g, weighting, tMode).calcPath(4, 3);
+        assertTrue(p.isFound());
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
+        List<String> tmpList = getTurnDescriptions(wayList);
+        assertEquals(Arrays.asList("continue onto myroad", "keep right onto myroad", "arrive at destination"), tmpList);
+        assertEquals(3, wayList.size());
+        assertEquals(20, wayList.get(1).getDistance());
+
+        p = new Dijkstra(g, weighting, tMode).calcPath(4, 1);
+        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
+        tmpList = getTurnDescriptions(wayList);
+        assertEquals(Arrays.asList("continue onto myroad", "keep left onto myroad", "arrive at destination"), tmpList);
+        assertEquals(3, wayList.size());
+        assertEquals(20, wayList.get(1).getDistance());
+    }
+
+    @Test
     public void testEmptyList() {
         Graph g = new GraphBuilder(carManager).create();
         g.getNodeAccess().setNode(1, 0, 0);
-        ShortestWeighting weighting = new ShortestWeighting(carEncoder);
+        FastestWeighting weighting = new FastestWeighting(carEncoder);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(0, 1);
         InstructionList il = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
         assertEquals(0, il.size());
@@ -330,7 +453,7 @@ public class InstructionListTest {
         GHUtility.setSpeed(60, true, true, carEncoder, g.edge(3, 7).setDistance(10000)).setName("3-7");
         GHUtility.setSpeed(60, true, true, carEncoder, g.edge(4, 5).setDistance(10000)).setName("4-5");
 
-        ShortestWeighting weighting = new ShortestWeighting(carEncoder);
+        FastestWeighting weighting = new FastestWeighting(carEncoder);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 5);
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
 

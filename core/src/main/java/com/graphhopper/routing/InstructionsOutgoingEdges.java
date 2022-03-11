@@ -128,8 +128,8 @@ class InstructionsOutgoingEdges {
         double tmpSpeed = getSpeed(currentEdge);
         double pathSpeed = getSpeed(prevEdge);
 
-        // Speed-Change on the path indicates, that we change road types, show instruction
-        if (pathSpeed != tmpSpeed || pathSpeed < 1) {
+        // speed change indicates that we change road types
+        if (Math.abs(pathSpeed - tmpSpeed) >= 1) {
             return false;
         }
 
@@ -142,8 +142,8 @@ class InstructionsOutgoingEdges {
             }
         }
 
-        // Surrounding streets need to be slower by a factor
-        return maxSurroundingSpeed * factor < pathSpeed;
+        // surrounding streets need to be slower by a factor and call round() so that tiny differences are ignored
+        return Math.round(maxSurroundingSpeed * factor) < Math.round(pathSpeed);
     }
 
     /**

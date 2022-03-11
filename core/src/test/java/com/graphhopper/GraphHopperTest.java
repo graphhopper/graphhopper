@@ -1196,7 +1196,7 @@ public class GraphHopperTest {
         assertEquals(103, res.getPoints().size());
 
         InstructionList il = res.getInstructions();
-        assertEquals(21, il.size());
+        assertEquals(19, il.size());
 
         assertEquals("continue onto Obere Landstraße", il.get(0).getTurnDescription(tr));
         assertEquals(69.28, (Double) il.get(0).getExtraInfoJSON().get("heading"), .01);
@@ -1206,6 +1206,7 @@ public class GraphHopperTest {
         assertEquals("turn right onto Margarethenstraße", il.get(3).getTurnDescription(tr));
         assertEquals("keep left onto Hoher Markt", il.get(4).getTurnDescription(tr));
         assertEquals("turn right onto Wegscheid", il.get(6).getTurnDescription(tr));
+        assertEquals("continue onto Wegscheid", il.get(7).getTurnDescription(tr));
         assertEquals("turn right onto Ringstraße, L73", il.get(8).getTurnDescription(tr));
         assertEquals("keep left onto Eyblparkstraße", il.get(9).getTurnDescription(tr));
         assertEquals("keep left onto Austraße", il.get(10).getTurnDescription(tr));

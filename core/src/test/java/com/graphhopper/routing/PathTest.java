@@ -88,18 +88,13 @@ public class PathTest {
         assertEquals(3000.0, tmp.getDistance(), 0.0);
         assertEquals(504000L, tmp.getTime());
         assertEquals("continue", tmp.getTurnDescription(tr));
-//        assertEquals("[0, 6]", tmp.get("interval").toString());
         assertEquals(6, tmp.getLength());
-//        System.out.println(tmp.getPoints());
-
 
         tmp = instr.get(1);
         assertEquals(0.0, tmp.getDistance(), 0.0);
         assertEquals(0L, tmp.getTime());
         assertEquals("arrive at destination", tmp.getTurnDescription(tr));
-//        assertEquals("[6, 6]", tmp.get("interval").toString());
         assertEquals(0, tmp.getLength());
-//        System.out.println(tmp.getPoints());
 
         int acc = 0;
         for (Instruction instruction : instr) {
