@@ -240,7 +240,7 @@ public class InstructionListTest {
     @Test
     public void testNoInstructionIfSlightTurnAndAlternativeIsSharp() {
         Graph g = new GraphBuilder(carManager).create();
-        // Real World Example: https://graphhopper.com/maps/?point=51.734514%2C9.225571&point=51.734643%2C9.22541
+        // real world example: https://graphhopper.com/maps/?point=51.734514%2C9.225571&point=51.734643%2C9.22541
         // https://github.com/graphhopper/graphhopper/issues/1441
         // From 1 to 3
         //
@@ -269,7 +269,7 @@ public class InstructionListTest {
     @Test
     public void testNoInstructionIfSlightTurnAndAlternativeIsSharp2() {
         Graph g = new GraphBuilder(carManager).create();
-        // Real World Example: https://graphhopper.com/maps/?point=48.748493%2C9.322455&point=48.748776%2C9.321889
+        // real world example: https://graphhopper.com/maps/?point=48.748493%2C9.322455&point=48.748776%2C9.321889
         // https://github.com/graphhopper/graphhopper/issues/1441
         // From 1 to 3
         //
@@ -301,7 +301,7 @@ public class InstructionListTest {
         EncodingManager tmpEM = new EncodingManager.Builder().add(bike).build();
         EnumEncodedValue<RoadClass> rcEV = tmpEM.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         Graph g = new GraphBuilder(tmpEM).create();
-        // Real World Example: https://graphhopper.com/maps/?point=48.411549,15.599567&point=48.411663%2C15.600527&profile=bike
+        // real world example: https://graphhopper.com/maps/?point=48.411549,15.599567&point=48.411663%2C15.600527&profile=bike
         // From 1 to 3
 
         //          3
@@ -339,7 +339,7 @@ public class InstructionListTest {
         EncodingManager tmpEM = new EncodingManager.Builder().add(bike).build();
         EnumEncodedValue<RoadClass> rcEV = tmpEM.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         Graph g = new GraphBuilder(tmpEM).create();
-        // Real World Example: https://graphhopper.com/maps/?point=48.412169%2C15.604888&point=48.412251%2C15.60543&profile=bike
+        // real world example: https://graphhopper.com/maps/?point=48.412169%2C15.604888&point=48.412251%2C15.60543&profile=bike
         // From 1 to 4
 
         //      3
@@ -376,7 +376,7 @@ public class InstructionListTest {
         FootFlagEncoder foot = new FootFlagEncoder();
         EncodingManager tmpEM = new EncodingManager.Builder().add(foot).build();
         Graph g = new GraphBuilder(tmpEM).create();
-        // Real World Example: https://graphhopper.com/maps/?point=43.729379,7.417697&point=43.729798,7.417263&profile=foot
+        // real world example: https://graphhopper.com/maps/?point=43.729379,7.417697&point=43.729798,7.417263&profile=foot
         // From 4 to 3 and 4 to 1
 
         //    1  3
