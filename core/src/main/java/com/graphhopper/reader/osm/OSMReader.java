@@ -19,6 +19,7 @@ package com.graphhopper.reader.osm;
 
 import com.carrotsearch.hppc.IntLongMap;
 import com.carrotsearch.hppc.LongArrayList;
+import com.carrotsearch.hppc.cursors.LongCursor;
 import com.graphhopper.coll.GHIntLongHashMap;
 import com.graphhopper.coll.GHLongHashSet;
 import com.graphhopper.coll.GHLongLongHashMap;
@@ -48,6 +49,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.LongToIntFunction;
+import java.util.stream.Collectors;
 
 import static com.graphhopper.util.Helper.nf;
 import static java.util.Collections.emptyList;
@@ -383,6 +385,7 @@ public class OSMReader {
             // no duration tag -> we cannot derive speed. happens very frequently for short ferries, but also for some long ones, see: #2532
             if (isFerry(way) && distance > 500_000)
                 LOGGER.warn("Long ferry OSM way without duration tag: " + way.getId() + ", distance: " + Math.round(distance / 1000.0) + " km");
+            traceLogWay(way, coordinateSupplier, distance, "", Double.NaN, Double.NaN);
             return;
         }
         long durationInSeconds;
@@ -402,11 +405,24 @@ public class OSMReader {
                     " + minutes), distance=" + Math.round(distance / 1000.0) + "km");
             return;
         }
+
+        traceLogWay(way, coordinateSupplier, distance, durationTag, durationInSeconds, speedInKmPerHour);
+
         // These tags will be present if 1) isCalculateWayDistance was true for this way, 2) no OSM nodes were missing
         // such that the distance could actually be calculated, 3) there was a duration tag we could parse, and 4) the
         // derived speed was not unrealistically slow.
         way.setTag("speed_from_duration", speedInKmPerHour);
         way.setTag("duration:seconds", durationInSeconds);
+    }
+
+    private void traceLogWay(ReaderWay way, WaySegmentParser.CoordinateSupplier coordinateSupplier, double distance, String durationTag, double durationInSeconds, double speedInKmPerHour) {
+        if (LOGGER.isTraceEnabled()) {
+            List<GHPoint> points = new ArrayList<>();
+            for (LongCursor node : way.getNodes())
+                points.add(coordinateSupplier.getCoordinate(node.value));
+            LOGGER.trace("FERRY SPEED: way={};speed_kmh={};duration_h={};distance_km={};from={};to={};duration_tag={};points={}",
+                    way.getId(), speedInKmPerHour, durationInSeconds / 60.0 / 60.0, distance / 1000.0, points.get(0), points.get(points.size() - 1), durationTag, points.stream().map(p -> "(" + p.toShortString() + ")").collect(Collectors.toList()));
+        }
     }
 
     /**
