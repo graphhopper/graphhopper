@@ -399,7 +399,7 @@ public class OSMReader {
             // ignore the duration tag. If no such cases show up anymore, because they were fixed, maybe raise the limit to find some more.
             LOGGER.warn("Unrealistic low speed calculated from duration. Maybe the duration is too long, or it is applied to a way that only represents a part of the connection? OSM way: "
                     + way.getId() + ". duration=" + durationTag + " (= " + Math.round(durationInSeconds / 60.0) +
-                    " + minutes), distance=" + Math.round(distance / 1000.0) + "km");
+                    " minutes), distance=" + distance + " m");
             return;
         }
         // These tags will be present if 1) isCalculateWayDistance was true for this way, 2) no OSM nodes were missing
