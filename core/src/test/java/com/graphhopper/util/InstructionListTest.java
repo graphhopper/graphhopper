@@ -58,7 +58,7 @@ public class InstructionListTest {
         carManager = EncodingManager.create(carEncoder);
     }
 
-    public static List<String> getTurnDescriptions(InstructionList instructionList) {
+    private static List<String> getTurnDescriptions(InstructionList instructionList) {
         return getTurnDescriptions(instructionList, usTR);
     }
 
@@ -376,7 +376,7 @@ public class InstructionListTest {
         FootFlagEncoder foot = new FootFlagEncoder();
         EncodingManager tmpEM = new EncodingManager.Builder().add(foot).build();
         Graph g = new GraphBuilder(tmpEM).create();
-        // Real World Example: https://graphhopper.com/maps/?point=43.729379%252C7.417697&point=43.729798%252C7.417263&profile=foot
+        // Real World Example: https://graphhopper.com/maps/?point=43.729379,7.417697&point=43.729798,7.417263&profile=foot
         // From 4 to 3 and 4 to 1
 
         //    1  3
