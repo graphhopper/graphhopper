@@ -87,7 +87,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     protected void init(DateRangeParser dateRangeParser) {
-        ferrySpeedCalc = new FerrySpeedCalculator(speedFactor, maxPossibleSpeed, 30, 20, 5);
+        ferrySpeedCalc = new FerrySpeedCalculator(speedFactor / 2, maxPossibleSpeed, 5);
 
         setConditionalTagInspector(new ConditionalOSMTagInspector(Collections.singletonList(dateRangeParser),
                 restrictions, restrictedValues, intendedValues, false));
