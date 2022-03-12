@@ -2120,7 +2120,7 @@ public class GraphHopperTest {
     public void simplifyWithInstructionsAndPathDetails() {
         final String profile = "profile";
         GraphHopper hopper = new GraphHopper();
-        hopper.getEncodingManagerBuilder().setEnableInstructions(true)
+        hopper.getEncodingManagerBuilder()
                 .add(new OSMMaxSpeedParser())
                 .add(new CarFlagEncoder());
         hopper.setOSMFile(BAYREUTH).
