@@ -184,53 +184,52 @@ public class EncodingManagerTest {
         String flagEncoderStrings = "car,bike,foot";
         EncodingManager manager = EncodingManager.create(new DefaultFlagEncoderFactory(), flagEncoderStrings);
 
-        assertFalse(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
-        assertFalse(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());
-        assertFalse(((AbstractFlagEncoder) manager.getEncoder("foot")).isBlockFords());
+        assertFalse(((CarFlagEncoder) manager.getEncoder("car")).isBlockFords());
+        assertFalse(((BikeFlagEncoder) manager.getEncoder("bike")).isBlockFords());
+        assertFalse(((FootFlagEncoder) manager.getEncoder("foot")).isBlockFords());
 
         // 2) two encoders crossing fords
         flagEncoderStrings = "car, bike|block_fords=true, foot|block_fords=false";
         manager = EncodingManager.create(new DefaultFlagEncoderFactory(), flagEncoderStrings);
 
-        assertFalse(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
-        assertTrue(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());
-        assertFalse(((AbstractFlagEncoder) manager.getEncoder("foot")).isBlockFords());
+        assertFalse(((CarFlagEncoder) manager.getEncoder("car")).isBlockFords());
+        assertTrue(((BikeFlagEncoder) manager.getEncoder("bike")).isBlockFords());
+        assertFalse(((FootFlagEncoder) manager.getEncoder("foot")).isBlockFords());
 
         // 2) Try combined with another tag
         flagEncoderStrings = "car|turn_costs=true|block_fords=true, bike, foot|block_fords=false";
         manager = EncodingManager.create(new DefaultFlagEncoderFactory(), flagEncoderStrings);
 
-        assertTrue(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
-        assertFalse(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());
-        assertFalse(((AbstractFlagEncoder) manager.getEncoder("foot")).isBlockFords());
+        assertTrue(((CarFlagEncoder) manager.getEncoder("car")).isBlockFords());
+        assertFalse(((BikeFlagEncoder) manager.getEncoder("bike")).isBlockFords());
+        assertFalse(((FootFlagEncoder) manager.getEncoder("foot")).isBlockFords());
     }
 
     @Test
     public void testSharedEncodedValues() {
         EncodingManager manager = EncodingManager.create("car,foot,bike,motorcycle,mtb");
 
+        BooleanEncodedValue roundaboutEnc = manager.getBooleanEncodedValue(Roundabout.KEY);
         for (FlagEncoder tmp : manager.fetchEdgeEncoders()) {
-            AbstractFlagEncoder encoder = (AbstractFlagEncoder) tmp;
-            BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-            BooleanEncodedValue roundaboutEnc = manager.getBooleanEncodedValue(Roundabout.KEY);
+            BooleanEncodedValue accessEnc = tmp.getAccessEnc();
 
             ReaderWay way = new ReaderWay(1);
             way.setTag("highway", "primary");
             way.setTag("junction", "roundabout");
             IntsRef edgeFlags = manager.handleWayTags(way, manager.createRelationFlags());
             assertTrue(accessEnc.getBool(false, edgeFlags));
-            if (!encoder.getName().equals("foot"))
-                assertFalse(accessEnc.getBool(true, edgeFlags), encoder.getName());
-            assertTrue(roundaboutEnc.getBool(false, edgeFlags), encoder.getName());
+            if (!(tmp instanceof FootFlagEncoder))
+                assertFalse(accessEnc.getBool(true, edgeFlags), tmp.toString());
+            assertTrue(roundaboutEnc.getBool(false, edgeFlags), tmp.toString());
 
             way.clearTags();
             way.setTag("highway", "tertiary");
             way.setTag("junction", "circular");
             edgeFlags = manager.handleWayTags(way, manager.createRelationFlags());
             assertTrue(accessEnc.getBool(false, edgeFlags));
-            if (!encoder.getName().equals("foot"))
-                assertFalse(accessEnc.getBool(true, edgeFlags), encoder.getName());
-            assertTrue(roundaboutEnc.getBool(false, edgeFlags), encoder.getName());
+            if (!(tmp instanceof FootFlagEncoder))
+                assertFalse(accessEnc.getBool(true, edgeFlags), tmp.toString());
+            assertTrue(roundaboutEnc.getBool(false, edgeFlags), tmp.toString());
         }
     }
 

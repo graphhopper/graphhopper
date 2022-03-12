@@ -623,7 +623,7 @@ public class CarFlagEncoderTest {
         way.setTag("sac_scale", "hiking");
 
         assertEquals(EncodingManager.Access.CAN_SKIP, encoder.getAccess(way));
-        assertNotEquals(EncodingManager.Access.CAN_SKIP, ((AbstractFlagEncoder) em.getEncoder("bike")).getAccess(way));
+        assertNotEquals(EncodingManager.Access.CAN_SKIP, ((BikeFlagEncoder) em.getEncoder("bike")).getAccess(way));
         IntsRef edgeFlags = em.handleWayTags(way, em.createRelationFlags());
         assertFalse(accessEnc.getBool(true, edgeFlags));
         assertFalse(accessEnc.getBool(false, edgeFlags));
