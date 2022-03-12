@@ -45,14 +45,12 @@ import static java.util.Collections.emptyMap;
  * @author Nop
  */
 public class EncodingManager implements EncodedValueLookup {
+    private final EVCollection evCollection = new EVCollection();
     private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<>();
-    private final Map<String, EncodedValue> encodedValueMap = new LinkedHashMap<>();
     private final List<RelationTagParser> relationTagParsers = new ArrayList<>();
     private final List<TagParser> edgeTagParsers = new ArrayList<>();
     private final Map<String, TurnCostParser> turnCostParsers = new LinkedHashMap<>();
-    private final EncodedValue.InitializerConfig turnCostConfig;
     private final EncodedValue.InitializerConfig relationConfig;
-    private final EncodedValue.InitializerConfig edgeConfig;
 
     /**
      * Instantiate manager with the given list of encoders. The manager knows several default
@@ -113,9 +111,7 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     private EncodingManager() {
-        this.turnCostConfig = new EncodedValue.InitializerConfig();
         this.relationConfig = new EncodedValue.InitializerConfig();
-        this.edgeConfig = new EncodedValue.InitializerConfig();
     }
 
     public void releaseParsers() {
@@ -162,7 +158,7 @@ public class EncodingManager implements EncodedValueLookup {
             tagParserString = tagParserString.trim();
             if (tagParserString.isEmpty()) return false;
 
-            TagParser tagParser = em.parseEncodedValueString(factory, tagParserString);
+            TagParser tagParser = parseEncodedValueString(factory, tagParserString);
             return tagParserSet.add(tagParser);
         }
 
@@ -223,18 +219,16 @@ public class EncodingManager implements EncodedValueLookup {
 
             List<EncodedValue> list = new ArrayList<>();
             tagParser.createEncodedValues(em, list);
-            for (EncodedValue ev : list) {
+            for (EncodedValue ev : list)
                 em.addEncodedValue(ev, withNamespace);
-            }
             em.edgeTagParsers.add(tagParser);
         }
 
         private void _addRelationTagParser(RelationTagParser tagParser) {
             List<EncodedValue> list = new ArrayList<>();
             tagParser.createRelationEncodedValues(em, list);
-            for (EncodedValue ev : list) {
+            for (EncodedValue ev : list)
                 ev.init(em.relationConfig);
-            }
             em.relationTagParsers.add(tagParser);
 
             _addEdgeTagParser(tagParser, false);
@@ -243,13 +237,8 @@ public class EncodingManager implements EncodedValueLookup {
         private void _addTurnCostParser(TurnCostParser parser) {
             List<EncodedValue> list = new ArrayList<>();
             parser.createTurnCostEncodedValues(em, list);
-            for (EncodedValue ev : list) {
-                ev.init(em.turnCostConfig);
-                if (em.encodedValueMap.containsKey(ev.getName()))
-                    throw new IllegalArgumentException("Already defined: " + ev.getName() + ". Please note that " +
-                            "EncodedValues for edges and turn cost are in the same namespace.");
-                em.encodedValueMap.put(ev.getName(), ev);
-            }
+            for (EncodedValue ev : list)
+                em.evCollection.addTurnCostEncodedValue(ev);
             em.turnCostParsers.put(parser.getName(), parser);
         }
 
@@ -321,7 +310,7 @@ public class EncodingManager implements EncodedValueLookup {
                     _addTurnCostParser(new OSMTurnRelationParser(encoder.toString(), encoder.getMaxTurnCosts(), encoder.getRestrictions()));
             }
 
-            if (em.encodedValueMap.isEmpty())
+            if (em.evCollection.isEmpty())
                 throw new IllegalStateException("No EncodedValues found");
 
             EncodingManager tmp = em;
@@ -371,7 +360,7 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public int getIntsForFlags() {
-        return (int) Math.ceil((double) edgeConfig.getRequiredBits() / 32.0);
+        return evCollection.getIntsForFlags();
     }
 
     private void addEncoder(AbstractFlagEncoder encoder) {
@@ -384,19 +373,11 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     private void addEncodedValue(EncodedValue ev, boolean withNamespace) {
-        String normalizedKey = ev.getName().replaceAll(SPECIAL_SEPARATOR, "_");
-        if (hasEncodedValue(normalizedKey))
-            throw new IllegalStateException("EncodedValue " + ev.getName() + " collides with " + normalizedKey);
-        if (!withNamespace && !isSharedEncodedValues(ev))
-            throw new IllegalArgumentException("EncodedValue " + ev.getName() + " must not contain namespace character '" + SPECIAL_SEPARATOR + "'");
-        if (withNamespace && isSharedEncodedValues(ev))
-            throw new IllegalArgumentException("EncodedValue " + ev.getName() + " must contain namespace character '" + SPECIAL_SEPARATOR + "'");
-        ev.init(edgeConfig);
-        encodedValueMap.put(ev.getName(), ev);
+        evCollection.addEncodedValue(ev, withNamespace);
     }
 
     public boolean hasEncodedValue(String key) {
-        return encodedValueMap.get(key) != null;
+        return evCollection.hasEncodedValue(key);
     }
 
     /**
@@ -510,18 +491,7 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public String toEncodedValuesAsString() {
-        StringBuilder str = new StringBuilder();
-        for (EncodedValue ev : encodedValueMap.values()) {
-            if (!isSharedEncodedValues(ev))
-                continue;
-
-            if (str.length() > 0)
-                str.append(",");
-
-            str.append(ev.toString());
-        }
-
-        return str.toString();
+        return evCollection.getSharedEncodedValuesString();
     }
 
     // TODO hide IntsRef even more in a later version: https://gist.github.com/karussell/f4c2b2b1191be978d7ee9ec8dd2cd48f
@@ -540,12 +510,12 @@ public class EncodingManager implements EncodedValueLookup {
         if (o == null || getClass() != o.getClass()) return false;
         EncodingManager that = (EncodingManager) o;
         return edgeEncoders.equals(that.edgeEncoders) &&
-                encodedValueMap.equals(that.encodedValueMap);
+                evCollection.equals(that.evCollection);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(edgeEncoders, encodedValueMap);
+        return Objects.hash(edgeEncoders, evCollection);
     }
 
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
@@ -567,47 +537,38 @@ public class EncodingManager implements EncodedValueLookup {
 
     @Override
     public List<EncodedValue> getEncodedValues() {
-        return Collections.unmodifiableList(new ArrayList<>(encodedValueMap.values()));
+        return evCollection.getEncodedValues();
     }
 
     @Override
     public BooleanEncodedValue getBooleanEncodedValue(String key) {
-        return getEncodedValue(key, BooleanEncodedValue.class);
+        return evCollection.getBooleanEncodedValue(key);
     }
 
     @Override
     public IntEncodedValue getIntEncodedValue(String key) {
-        return getEncodedValue(key, IntEncodedValue.class);
+        return evCollection.getIntEncodedValue(key);
     }
 
     @Override
     public DecimalEncodedValue getDecimalEncodedValue(String key) {
-        return getEncodedValue(key, DecimalEncodedValue.class);
+        return evCollection.getDecimalEncodedValue(key);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public <T extends Enum<?>> EnumEncodedValue<T> getEnumEncodedValue(String key, Class<T> type) {
-        return getEncodedValue(key, EnumEncodedValue.class);
+        return evCollection.getEnumEncodedValue(key, type);
     }
 
     @Override
     public StringEncodedValue getStringEncodedValue(String key) {
-        return getEncodedValue(key, StringEncodedValue.class);
+        return evCollection.getStringEncodedValue(key);
     }
 
     @Override
     public <T extends EncodedValue> T getEncodedValue(String key, Class<T> encodedValueType) {
-        EncodedValue ev = encodedValueMap.get(key);
-        if (ev == null)
-            throw new IllegalArgumentException("Cannot find EncodedValue " + key + " in collection: " + ev);
-        return (T) ev;
-    }
-
-    private static final String SPECIAL_SEPARATOR = "$";
-
-    private static boolean isSharedEncodedValues(EncodedValue ev) {
-        return isValidEncodedValue(ev.getName()) && !ev.getName().contains(SPECIAL_SEPARATOR);
+        return evCollection.getEncodedValue(key, encodedValueType);
     }
 
     /**
@@ -619,7 +580,8 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public static String getKey(String prefix, String str) {
-        return prefix + SPECIAL_SEPARATOR + str;
+        // todonow: probably move to EVCollection
+        return prefix + EVCollection.SPECIAL_SEPARATOR + str;
     }
 
     // copied from janino

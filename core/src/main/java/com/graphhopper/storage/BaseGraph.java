@@ -40,7 +40,7 @@ import static com.graphhopper.util.Helper.nf;
  * Life cycle: (1) object creation, (2) configuration via setters & getters, (3) create or
  * loadExisting, (4) usage, (5) flush, (6) close
  */
-class BaseGraph implements Graph {
+public class BaseGraph implements Graph {
     private final static String STRING_IDX_NAME_KEY = "name";
     final BaseGraphNodesAndEdges store;
     final NodeAccess nodeAccess;
