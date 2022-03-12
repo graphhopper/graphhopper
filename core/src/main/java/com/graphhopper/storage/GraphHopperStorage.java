@@ -66,24 +66,7 @@ public final class GraphHopperStorage implements Graph, Closeable {
     }
 
     public CHStorage createCHStorage(String name, boolean edgeBased) {
-        if (!isFrozen())
-            throw new IllegalStateException("graph must be frozen before we can create ch graphs");
-        CHStorage store = new CHStorage(dir, name, segmentSize, edgeBased);
-        store.setLowShortcutWeightConsumer(s -> {
-            // we just log these to find mapping errors
-            NodeAccess nodeAccess = baseGraph.getNodeAccess();
-            LOGGER.warn("Setting weights smaller than " + s.minWeight + " is not allowed. " +
-                    "You passed: " + s.weight + " for the shortcut " +
-                    " nodeA (" + nodeAccess.getLat(s.nodeA) + "," + nodeAccess.getLon(s.nodeA) +
-                    " nodeB " + nodeAccess.getLat(s.nodeB) + "," + nodeAccess.getLon(s.nodeB));
-        });
-        store.create();
-        // we use a rather small value here. this might result in more allocations later, but they should
-        // not matter that much. if we expect a too large value the shortcuts DataAccess will end up
-        // larger than needed, because we do not do something like trimToSize in the end.
-        double expectedShortcuts = 0.3 * baseGraph.getEdges();
-        store.init(baseGraph.getNodes(), (int) expectedShortcuts);
-        return store;
+        return CHStorage.fromBaseGraph(baseGraph, name, edgeBased);
     }
 
     public CHStorage loadCHStorage(String chGraphName, boolean edgeBased) {

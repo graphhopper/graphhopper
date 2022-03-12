@@ -33,18 +33,16 @@ import static org.junit.jupiter.api.Assertions.*;
 public class RoutingCHGraphImplTest {
     @Test
     public void testBaseAndCHEdges() {
-        CarFlagEncoder carEncoder = new CarFlagEncoder();
-        EncodingManager em = EncodingManager.create(carEncoder);
-        GraphHopperStorage graph = new GraphBuilder(em).create();
+        RoutingFlagEncoder carEncoder = RoutingFlagEncoder.forTest("car");
+        BaseGraph graph = BaseGraph.inMemoryGraph(carEncoder.getEvCollection().getIntsForFlags());
         graph.edge(1, 0);
         graph.edge(8, 9);
         graph.freeze();
 
-        CHConfig chConfig = CHConfig.nodeBased("p", new FastestWeighting(carEncoder));
-        CHStorage store = graph.createCHStorage(chConfig);
+        CHStorage store = CHStorage.fromBaseGraph(graph, "p", false);
         CHStorageBuilder chBuilder = new CHStorageBuilder(store);
         chBuilder.setIdentityLevels();
-        RoutingCHGraph chGraph = graph.createCHGraph(store, chConfig);
+        RoutingCHGraphImpl chGraph = new RoutingCHGraphImpl(graph, store, new FastestWeighting(carEncoder));
 
         assertEquals(1, GHUtility.count(graph.createEdgeExplorer().setBaseNode(1)));
         // routing ch graph does not see edges without access
@@ -71,22 +69,20 @@ public class RoutingCHGraphImplTest {
         //   4 ------ 1 > 0
         //            ^ \
         //            3  2
-        CarFlagEncoder encoder = new CarFlagEncoder();
-        EncodingManager em = EncodingManager.create(encoder);
-        GraphHopperStorage graph = new GraphBuilder(em).create();
+        RoutingFlagEncoder encoder = RoutingFlagEncoder.forTest("car");
+        BaseGraph graph = BaseGraph.inMemoryGraph(encoder.getEvCollection().getIntsForFlags());
         EdgeExplorer baseCarOutExplorer = graph.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc()));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 1).setDistance(30));
         graph.freeze();
 
-        CHConfig chConfig = CHConfig.nodeBased("ch", new FastestWeighting(encoder));
-        CHStorage store = graph.createCHStorage(chConfig);
+        CHStorage store = CHStorage.fromBaseGraph(graph, "ch", false);
         CHStorageBuilder chBuilder = new CHStorageBuilder(store);
         chBuilder.setIdentityLevels();
         chBuilder.addShortcutNodeBased(0, 1, PrepareEncoder.getScBwdDir(), 10, 12, 13);
         chBuilder.addShortcutNodeBased(1, 2, PrepareEncoder.getScDirMask(), 10, 10, 11);
         chBuilder.addShortcutNodeBased(1, 3, PrepareEncoder.getScBwdDir(), 10, 14, 15);
 
-        RoutingCHGraph lg = graph.createCHGraph(store, chConfig);
+        RoutingCHGraph lg = new RoutingCHGraphImpl(graph, store, new FastestWeighting(encoder));
         RoutingCHEdgeExplorer chOutExplorer = lg.createOutEdgeExplorer();
         RoutingCHEdgeExplorer chInExplorer = lg.createInEdgeExplorer();
         // shortcuts are only visible from the lower level node, for example we do not see node 1 from node 2, or node

@@ -52,17 +52,31 @@ public class BaseGraph implements Graph {
     // as we use integer index in 'edges' area => 'geometry' area is limited to 4GB (we use pos&neg values!)
     private final DataAccess wayGeometry;
     private final Directory dir;
+    private final int segmentSize;
     private boolean initialized = false;
     private long maxGeoRef;
 
+    public static BaseGraph inMemoryGraph(int intsForFlags) {
+        return new BaseGraph(new RAMDirectory(), intsForFlags, false, false, -1);
+    }
+
     public BaseGraph(Directory dir, int intsForFlags, boolean withElevation, boolean withTurnCosts, int segmentSize) {
         this.dir = dir;
+        this.segmentSize = segmentSize;
         this.bitUtil = BitUtil.LITTLE;
         this.wayGeometry = dir.create("geometry", segmentSize);
         this.stringIndex = new StringIndex(dir, 1000, segmentSize);
         this.store = new BaseGraphNodesAndEdges(dir, intsForFlags, withElevation, withTurnCosts, segmentSize);
         this.nodeAccess = new GHNodeAccess(store);
         turnCostStorage = withTurnCosts ? new TurnCostStorage(this, dir.create("turn_costs", segmentSize)) : null;
+    }
+
+    public Directory getDirectory() {
+        return dir;
+    }
+
+    public int getSegmentSize() {
+        return segmentSize;
     }
 
     private int getOtherNode(int nodeThis, long edgePointer) {
@@ -134,7 +148,7 @@ public class BaseGraph implements Graph {
         return store.getBounds();
     }
 
-    synchronized void freeze() {
+    public synchronized void freeze() {
         if (isFrozen())
             throw new IllegalStateException("base graph already frozen");
         store.setFrozen(true);

@@ -28,11 +28,27 @@ public class RoutingFlagEncoder implements FlagEncoder {
     private final TransportationMode transportationMode;
     private final double maxSpeed;
 
+    public static RoutingFlagEncoder forTest(String prefix) {
+        EVCollection evCollection = new EVCollection();
+        // road_access is required by FastestWeighting, so we add it here
+        EnumEncodedValue<RoadAccess> roadAccessEnc = new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class);
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl(EncodingManager.getKey(prefix, "average_speed"), 5, 5, true);
+        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue(EncodingManager.getKey(prefix, "access"), true);
+        evCollection.addEncodedValue(roadAccessEnc, false);
+        evCollection.addEncodedValue(speedEnc, true);
+        evCollection.addEncodedValue(accessEnc, true);
+        return new RoutingFlagEncoder(evCollection, prefix, TransportationMode.CAR, 140);
+    }
+
     public RoutingFlagEncoder(EVCollection evCollection, String prefix, TransportationMode transportationMode, double maxSpeed) {
         this.evCollection = evCollection;
         this.prefix = prefix;
         this.transportationMode = transportationMode;
         this.maxSpeed = maxSpeed;
+    }
+
+    public EVCollection getEvCollection() {
+        return evCollection;
     }
 
     @Override
