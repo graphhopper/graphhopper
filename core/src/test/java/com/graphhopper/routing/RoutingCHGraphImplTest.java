@@ -33,8 +33,9 @@ import static org.junit.jupiter.api.Assertions.*;
 public class RoutingCHGraphImplTest {
     @Test
     public void testBaseAndCHEdges() {
-        RoutingFlagEncoder carEncoder = RoutingFlagEncoder.forTest("car");
-        BaseGraph graph = BaseGraph.inMemoryGraph(carEncoder.getEvCollection().getIntsForFlags());
+        EVCollection evCollection = new EVCollection();
+        RoutingFlagEncoder carEncoder = RoutingFlagEncoder.forTest("car", evCollection);
+        BaseGraph graph = BaseGraph.inMemoryGraph(evCollection.getIntsForFlags());
         graph.edge(1, 0);
         graph.edge(8, 9);
         graph.freeze();
@@ -69,8 +70,9 @@ public class RoutingCHGraphImplTest {
         //   4 ------ 1 > 0
         //            ^ \
         //            3  2
-        RoutingFlagEncoder encoder = RoutingFlagEncoder.forTest("car");
-        BaseGraph graph = BaseGraph.inMemoryGraph(encoder.getEvCollection().getIntsForFlags());
+        EVCollection evCollection = new EVCollection();
+        RoutingFlagEncoder encoder = RoutingFlagEncoder.forTest("car", evCollection);
+        BaseGraph graph = BaseGraph.inMemoryGraph(evCollection.getIntsForFlags());
         EdgeExplorer baseCarOutExplorer = graph.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc()));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 1).setDistance(30));
         graph.freeze();

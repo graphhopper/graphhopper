@@ -15,8 +15,8 @@ public class TryAPITest {
 
     @Test
     void testAPI() {
-        RoutingFlagEncoder encoder = RoutingFlagEncoder.forTest("car");
-        EVCollection evCollection = encoder.getEvCollection();
+        EVCollection evCollection = new EVCollection();
+        RoutingFlagEncoder encoder = RoutingFlagEncoder.forTest("car", evCollection);
         BaseGraph graph = BaseGraph.inMemoryGraph(evCollection.getIntsForFlags());
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 1).setDistance(1000));
         FastestWeighting weighting = new FastestWeighting(encoder);
