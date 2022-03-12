@@ -18,6 +18,7 @@
 package com.graphhopper.util;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.json.Statement;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
@@ -27,6 +28,7 @@ import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.Graph;
@@ -415,6 +417,42 @@ public class InstructionListTest {
         assertEquals(Arrays.asList("continue onto myroad", "keep left onto myroad", "arrive at destination"), tmpList);
         assertEquals(3, wayList.size());
         assertEquals(20, wayList.get(1).getDistance());
+    }
+
+    @Test
+    public void testInstructionWithHighlyCustomProfileWithRoadsBase() {
+        RoadsFlagEncoder roads = new RoadsFlagEncoder();
+        EncodingManager tmpEM = EncodingManager.create(roads);
+        EnumEncodedValue<RoadClass> rcEV = tmpEM.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        Graph g = new GraphBuilder(tmpEM).create();
+        // real world example: https://graphhopper.com/maps/?point=55.691214%2C12.57065&point=55.689957%2C12.570387
+        // From 3 to 4
+        //
+        //       3
+        //         \
+        //          2--- 1
+        //          | \
+        //          5  4
+
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(1, 55.690951, 12.571127);
+        na.setNode(2, 55.69109, 12.5708);
+        na.setNode(3, 55.691214, 12.57065);
+        na.setNode(4, 55.690849, 12.571004);
+        na.setNode(5, 55.690864, 12.570886);
+
+        GHUtility.setSpeed(50, true, true, roads, g.edge(3, 2).setDistance(10));
+        GHUtility.setSpeed(40, true, true, roads, g.edge(2, 4).setDistance(10));
+        GHUtility.setSpeed(40, true, true, roads, g.edge(2, 1).setDistance(10));
+        GHUtility.setSpeed(10, true, true, roads, g.edge(2, 5).setDistance(10).set(rcEV, RoadClass.PEDESTRIAN));
+
+        CustomModel customModel = new CustomModel();
+        customModel.addToPriority(Statement.If("road_class == PEDESTRIAN", Statement.Op.MULTIPLY, 0));
+        Weighting weighting = CustomModelParser.createWeighting(roads, tmpEM, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
+        Path p = new Dijkstra(g, weighting, tMode).calcPath(3, 4);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
+        List<String> tmpList = getTurnDescriptions(wayList);
+        assertEquals(Arrays.asList("continue", "keep right", "arrive at destination"), tmpList);
     }
 
     @Test
