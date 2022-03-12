@@ -1,36 +1,39 @@
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EVCollection;
-import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.List;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TryAPITest {
 
     @Test
-    void bla() {
-        CarFlagEncoder encoder = new CarFlagEncoder();
+    void testAPI() {
         EVCollection evCollection = new EVCollection();
-        encoder.setEncodedValueLookup(evCollection);
-        List<EncodedValue> encodedValues = new ArrayList<>();
-        encoder.createEncodedValues(encodedValues);
-        for (EncodedValue ev : encodedValues)
-            evCollection.addEncodedValue(ev, true);
+        String prefix = "car";
+        // road_access is required by FastestWeighting
+        EnumEncodedValue<RoadAccess> roadAccessEnc = new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class);
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl(EncodingManager.getKey(prefix, "average_speed"), 5, 5, true);
+        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue(EncodingManager.getKey(prefix, "access"), true);
+        evCollection.addEncodedValue(roadAccessEnc, false);
+        evCollection.addEncodedValue(speedEnc, true);
+        evCollection.addEncodedValue(accessEnc, true);
 
         BaseGraph baseGraph = new BaseGraph(new RAMDirectory(), evCollection.getIntsForFlags(), false, false, -1);
-        EdgeIteratorState edge = baseGraph.edge(0, 1);
-        edge.set(encoder.getAverageSpeedEnc(), 10);
+        EdgeIteratorState edge = baseGraph.edge(0, 1).setDistance(1000);
+        edge.set(speedEnc, 10);
+        edge.set(accessEnc, true);
+        RoutingFlagEncoder encoder = new RoutingFlagEncoder(evCollection, prefix, TransportationMode.CAR, 140);
         FastestWeighting weighting = new FastestWeighting(encoder);
         Dijkstra dijkstra = new Dijkstra(baseGraph, weighting, TraversalMode.NODE_BASED);
         Path path = dijkstra.calcPath(0, 1);
-        System.out.println(path.getDistance());
+        assertTrue(path.isFound());
+        assertEquals(1000, path.getDistance());
     }
 }
