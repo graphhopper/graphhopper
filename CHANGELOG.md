@@ -1,7 +1,7 @@
 ### 5.0 [not yet released]
 
 - Use routing.instructions to disable instructions on the server side. datareader.instructions is used to disable the
-  name parsing.
+  name parsing (#2537)
 - OSMReader no longer sets the artificial estimated_distance tag, but sets the edge_distance and point_list tags for all
   edges, the way_distance for selected ways and additionally the duration:seconds and speed_from_duration tags when the
   duration tag is present (#2528)
