@@ -22,8 +22,6 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
-import com.graphhopper.routing.weighting.CurvatureWeighting;
-import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.EdgeIteratorState;
@@ -279,18 +277,6 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
     @Override
     public TransportationMode getTransportationMode() {
         return TransportationMode.MOTORCYCLE;
-    }
-
-    @Override
-    public boolean supports(Class<?> feature) {
-        if (super.supports(feature))
-            return true;
-
-        if (CurvatureWeighting.class.isAssignableFrom(feature)) {
-            return true;
-        }
-
-        return PriorityWeighting.class.isAssignableFrom(feature);
     }
 
     @Override

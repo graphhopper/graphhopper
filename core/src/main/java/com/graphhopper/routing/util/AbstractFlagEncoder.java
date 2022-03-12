@@ -317,11 +317,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     @Override
-    public boolean supports(Class<?> feature) {
-        return false;
-    }
-
-    @Override
     public boolean hasEncodedValue(String key) {
         return encodedValueLookup.hasEncodedValue(key);
     }

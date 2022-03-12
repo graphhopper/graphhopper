@@ -18,7 +18,6 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 
@@ -119,14 +118,6 @@ public class HikeFlagEncoder extends FootFlagEncoder {
             double newSpeed = Math.sqrt(1 + slope * slope) / (slope + 1 / 5.4);
             edge.set(avgSpeedEnc, Helper.keepIn(newSpeed, 1, 5));
         }
-    }
-
-    @Override
-    public boolean supports(Class<?> feature) {
-        if (super.supports(feature))
-            return true;
-
-        return PriorityWeighting.class.isAssignableFrom(feature);
     }
 
     @Override

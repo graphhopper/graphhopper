@@ -49,12 +49,6 @@ public interface FlagEncoder extends EncodedValueLookup {
     boolean supportsTurnCosts();
 
     /**
-     * Returns true if the feature class is supported like TurnWeighting or PriorityWeighting.
-     * Use support(String) instead.
-     */
-    boolean supports(Class<?> feature);
-
-    /**
      * @return true if already registered in an EncodingManager
      */
     boolean isRegistered();

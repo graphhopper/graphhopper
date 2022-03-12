@@ -19,7 +19,6 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 
@@ -576,14 +575,6 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
     void addPushingSection(String highway) {
         pushingSectionsHighways.add(highway);
-    }
-
-    @Override
-    public boolean supports(Class<?> feature) {
-        if (super.supports(feature))
-            return true;
-
-        return PriorityWeighting.class.isAssignableFrom(feature);
     }
 
     void setAvoidSpeedLimit(int limit) {
