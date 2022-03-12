@@ -420,8 +420,10 @@ public class OSMReader {
             List<GHPoint> points = new ArrayList<>();
             for (LongCursor node : way.getNodes())
                 points.add(coordinateSupplier.getCoordinate(node.value));
-            LOGGER.trace("FERRY SPEED: way={};speed_kmh={};duration_h={};distance_km={};from={};to={};duration_tag={};points={}",
-                    way.getId(), speedInKmPerHour, durationInSeconds / 60.0 / 60.0, distance / 1000.0, points.get(0), points.get(points.size() - 1), durationTag, points.stream().map(p -> "(" + p.toShortString() + ")").collect(Collectors.toList()));
+
+            double beelineDistance = distCalc.calcDist(points.get(0).lat, points.get(0).lon, points.get(points.size() - 1).lat, points.get(points.size() - 1).lon);
+            LOGGER.trace("FERRY SPEED: way={};speed_kmh={};duration_h={};distance_km={};beeline_distance_km={};from={};to={};duration_tag={};points={}",
+                    way.getId(), speedInKmPerHour, durationInSeconds / 60.0 / 60.0, distance / 1000.0, beelineDistance / 1000.0, points.get(0), points.get(points.size() - 1), durationTag, points.stream().map(p -> "(" + p.toShortString() + ")").collect(Collectors.toList()));
         }
     }
 
