@@ -62,6 +62,7 @@ class InstructionsOutgoingEdges {
     private final List<EdgeIteratorState> allowedAlternativeTurns;
     // All outgoing edges, including oneways in the wrong direction
     private final List<EdgeIteratorState> visibleAlternativeTurns;
+    private final DecimalEncodedValue avgSpeedEnc;
     private final DecimalEncodedValue maxSpeedEnc;
     private final EnumEncodedValue<RoadClass> roadClassEnc;
     private final BooleanEncodedValue roadClassLinkEnc;
@@ -82,6 +83,7 @@ class InstructionsOutgoingEdges {
         this.prevEdge = prevEdge;
         this.currentEdge = currentEdge;
         this.weighting = weighting;
+        this.avgSpeedEnc = weighting.getFlagEncoder().getAverageSpeedEnc();
         this.maxSpeedEnc = maxSpeedEnc;
         this.roadClassEnc = roadClassEnc;
         this.roadClassLinkEnc = roadClassLinkEnc;
@@ -153,7 +155,7 @@ class InstructionsOutgoingEdges {
     private double getSpeed(EdgeIteratorState edge) {
         double maxSpeed = edge.get(maxSpeedEnc);
         if (Double.isInfinite(maxSpeed))
-            return edge.getDistance() / weighting.calcEdgeMillis(edge, false) * 3600;
+            return edge.get(avgSpeedEnc); // TODO NOW PERF edge.getDistance() / weighting.calcEdgeMillis(edge, false) * 3600;
         return maxSpeed;
     }
 

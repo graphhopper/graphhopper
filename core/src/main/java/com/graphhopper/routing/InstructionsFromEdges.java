@@ -18,16 +18,12 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.FiniteWeightFilter;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
-
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 
 /**
  * This class calculates instructions from the edges in a Path.
