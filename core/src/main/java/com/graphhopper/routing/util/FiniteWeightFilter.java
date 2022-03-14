@@ -18,6 +18,7 @@
 
 package com.graphhopper.routing.util;
 
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -26,13 +27,17 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 public class FiniteWeightFilter implements EdgeFilter {
     private final Weighting weighting;
+//    private final BooleanEncodedValue accessEnc;
 
     public FiniteWeightFilter(Weighting weighting) {
         this.weighting = weighting;
+//        this.accessEnc = weighting.getFlagEncoder().getAccessEnc();
     }
 
     @Override
     public final boolean accept(EdgeIteratorState edgeState) {
+//        return edgeState.get(accessEnc) && Double.isFinite(weighting.calcEdgeWeight(edgeState, false))
+//                || edgeState.getReverse(accessEnc) && Double.isFinite(weighting.calcEdgeWeight(edgeState, true));
         return Double.isFinite(weighting.calcEdgeWeightWithAccess(edgeState, false)) ||
                 Double.isFinite(weighting.calcEdgeWeightWithAccess(edgeState, true));
     }
