@@ -277,15 +277,10 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     }
 
     /**
-     * Apply maxspeed: In contrast to the implementation of the AbstractFlagEncoder, we assume that
-     * we can reach the maxspeed for bicycles in case that the road type speed is higher and not
-     * just only 90%.
-     *
      * @param way   needed to retrieve tags
      * @param speed speed guessed e.g. from the road type or other tags
      * @return The assumed average speed.
      */
-    @Override
     protected double applyMaxSpeed(ReaderWay way, double speed) {
         double maxSpeed = getMaxSpeed(way);
         // We strictly obey speed limits, see #600

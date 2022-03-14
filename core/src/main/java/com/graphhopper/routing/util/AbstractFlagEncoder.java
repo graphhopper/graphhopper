@@ -253,21 +253,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         }
     }
 
-    /**
-     * @param way   needed to retrieve tags
-     * @param speed speed guessed e.g. from the road type or other tags
-     * @return The assumed speed.
-     */
-    protected double applyMaxSpeed(ReaderWay way, double speed) {
-        double maxSpeed = getMaxSpeed(way);
-        // We obey speed limits
-        if (isValidSpeed(maxSpeed)) {
-            // We assume that the average speed is 90% of the allowed maximum
-            return maxSpeed * 0.9;
-        }
-        return speed;
-    }
-
     protected String getPropertiesString() {
         return "speed_factor=" + speedFactor + "|speed_bits=" + speedBits + "|turn_costs=" + (maxTurnCosts > 0);
     }

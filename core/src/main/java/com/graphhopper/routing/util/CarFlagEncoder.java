@@ -271,6 +271,21 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     }
 
     /**
+     * @param way   needed to retrieve tags
+     * @param speed speed guessed e.g. from the road type or other tags
+     * @return The assumed speed.
+     */
+    protected double applyMaxSpeed(ReaderWay way, double speed) {
+        double maxSpeed = getMaxSpeed(way);
+        // We obey speed limits
+        if (isValidSpeed(maxSpeed)) {
+            // We assume that the average speed is 90% of the allowed maximum
+            return maxSpeed * 0.9;
+        }
+        return speed;
+    }
+
+    /**
      * make sure that isOneway is called before
      */
     protected boolean isBackwardOneway(ReaderWay way) {
