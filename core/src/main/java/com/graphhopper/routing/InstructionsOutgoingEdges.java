@@ -74,7 +74,7 @@ class InstructionsOutgoingEdges {
                                      DecimalEncodedValue maxSpeedEnc,
                                      EnumEncodedValue<RoadClass> roadClassEnc,
                                      BooleanEncodedValue roadClassLinkEnc,
-                                     EdgeExplorer crossingExplorer,
+                                     EdgeExplorer allExplorer,
                                      NodeAccess nodeAccess,
                                      int prevNode,
                                      int baseNode,
@@ -87,17 +87,17 @@ class InstructionsOutgoingEdges {
         this.roadClassLinkEnc = roadClassLinkEnc;
         this.nodeAccess = nodeAccess;
 
-        EdgeIteratorState tmpEdge;
-
         visibleAlternativeTurns = new ArrayList<>();
         allowedAlternativeTurns = new ArrayList<>();
-        EdgeIterator edgeIter = crossingExplorer.setBaseNode(baseNode);
+        EdgeIterator edgeIter = allExplorer.setBaseNode(baseNode);
         while (edgeIter.next()) {
             if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
-                tmpEdge = edgeIter.detach(false);
-                visibleAlternativeTurns.add(tmpEdge);
-                if (Double.isFinite(weighting.calcEdgeWeightWithAccess(tmpEdge, false))) {
+                if (Double.isFinite(weighting.calcEdgeWeightWithAccess(edgeIter, false))) {
+                    EdgeIteratorState tmpEdge = edgeIter.detach(false);
                     allowedAlternativeTurns.add(tmpEdge);
+                    visibleAlternativeTurns.add(tmpEdge);
+                } else if (Double.isFinite(weighting.calcEdgeWeightWithAccess(edgeIter, true))) {
+                    visibleAlternativeTurns.add(edgeIter.detach(false));
                 }
             }
         }
@@ -113,12 +113,11 @@ class InstructionsOutgoingEdges {
 
     /**
      * This method calculates the number of all outgoing edges, which could be considered the number of roads you see
-     * at the intersection. This excludes the road your are coming from.
+     * at the intersection. This excludes the road you are coming from and also inaccessible roads.
      */
     public int getVisibleTurns() {
         return 1 + visibleAlternativeTurns.size();
     }
-
 
     /**
      * Checks if the outgoing edges are slower by the provided factor. If they are, this indicates, that we are staying

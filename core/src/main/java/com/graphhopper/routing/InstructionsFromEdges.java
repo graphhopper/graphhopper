@@ -18,7 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.AccessFilter;
+import com.graphhopper.routing.util.FiniteWeightFilter;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -39,7 +39,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
     private final InstructionList ways;
     private final EdgeExplorer outEdgeExplorer;
-    private final EdgeExplorer crossingExplorer;
+    private final EdgeExplorer allExplorer;
     private final BooleanEncodedValue roundaboutEnc;
     private final BooleanEncodedValue roadClassLinkEnc;
     private final EnumEncodedValue<RoadClass> roadClassEnc;
@@ -92,8 +92,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevInRoundabout = false;
         prevName = null;
         outEdgeExplorer = graph.createEdgeExplorer(edge -> Double.isFinite(weighting.calcEdgeWeightWithAccess(edge, false)));
-//        crossingExplorer = graph.createEdgeExplorer(new FiniteWeightFilter(weighting));
-        crossingExplorer = graph.createEdgeExplorer(AccessFilter.allEdges(weighting.getFlagEncoder().getAccessEnc()));
+        allExplorer = graph.createEdgeExplorer();
     }
 
     /**
@@ -201,7 +200,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         } else if (prevInRoundabout) //previously in roundabout but not anymore
         {
-
             prevInstruction.setName(name);
 
             // calc angle between roundabout entrance and exit
@@ -325,7 +323,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         int sign = InstructionsHelper.calculateSign(prevLat, prevLon, lat, lon, prevOrientation);
 
         InstructionsOutgoingEdges outgoingEdges = new InstructionsOutgoingEdges(prevEdge, edge, weighting, maxSpeedEnc,
-                roadClassEnc, roadClassLinkEnc, crossingExplorer, nodeAccess, prevNode, baseNode, adjNode);
+                roadClassEnc, roadClassLinkEnc, allExplorer, nodeAccess, prevNode, baseNode, adjNode);
         int nrOfPossibleTurns = outgoingEdges.getAllowedTurns();
 
         // there is no other turn possible
