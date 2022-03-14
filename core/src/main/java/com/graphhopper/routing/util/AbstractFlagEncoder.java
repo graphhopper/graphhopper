@@ -47,7 +47,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected final Set<String> ferries = new HashSet<>(5);
     protected final Set<String> oneways = new HashSet<>(5);
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
-    protected final Set<String> blockByDefaultBarriers = new HashSet<>(5); // barrier which needs to be explicitly allowed, otherwise it blocks
+    protected final Set<String> barriers = new HashSet<>(5);
     protected final int speedBits;
     protected final double speedFactor;
     private final int maxTurnCosts;
@@ -179,7 +179,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
             return true;
         else if (intendedValues.contains(firstValue))
             return false;
-        else if (node.hasTag("barrier", blockByDefaultBarriers))
+        else if (node.hasTag("barrier", barriers))
             return true;
         else
             return blockFords && (node.hasTag("highway", "ford") || node.hasTag("ford", "yes"));

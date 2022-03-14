@@ -55,8 +55,8 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
     public MotorcycleFlagEncoder(PMap properties) {
         super(properties.putObject("speed_two_directions", true));
 
-        blockByDefaultBarriers.remove("bus_trap");
-        blockByDefaultBarriers.remove("sump_buster");
+        barriers.remove("bus_trap");
+        barriers.remove("sump_buster");
 
         trackTypeSpeedMap.clear();
         defaultSpeedMap.clear();
