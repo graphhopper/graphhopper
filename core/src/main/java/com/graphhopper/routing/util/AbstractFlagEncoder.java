@@ -174,27 +174,16 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      * @return true if the given OSM node blocks access for this vehicle, false otherwise
      */
     public boolean isBarrier(ReaderNode node) {
-        boolean blockByDefault = node.hasTag("barrier", blockByDefaultBarriers);
-        if (blockByDefault || node.hasTag("barrier", passByDefaultBarriers)) {
-            boolean locked = node.hasTag("locked", "yes");
-
-            for (String res : restrictions) {
-                if (!locked && node.hasTag(res, intendedValues))
-                    return false;
-
-                if (node.hasTag(res, restrictedValues))
-                    return true;
-            }
-
-            return blockByDefault;
-        }
-
-        if ((node.hasTag("highway", "ford") || node.hasTag("ford", "yes"))
-                && (blockFords && !node.hasTag(restrictions, intendedValues) || node.hasTag(restrictions, restrictedValues))) {
+        // note that this method will be only called for nodes that are considered to be a 'barrier' by the OSMReader!
+        String firstValue = node.getFirstPriorityTag(restrictions);
+        if (restrictedValues.contains(firstValue) || node.hasTag("locked", "yes"))
             return true;
-        }
-
-        return false;
+        else if (intendedValues.contains(firstValue))
+            return false;
+        else if (node.hasTag("barrier", blockByDefaultBarriers))
+            return true;
+        else
+            return blockFords && (node.hasTag("highway", "ford") || node.hasTag("ford", "yes"));
     }
 
     @Override
