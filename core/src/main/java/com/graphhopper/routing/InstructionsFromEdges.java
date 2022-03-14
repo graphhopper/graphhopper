@@ -18,7 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.FiniteWeightFilter;
+import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -92,7 +92,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevInRoundabout = false;
         prevName = null;
         outEdgeExplorer = graph.createEdgeExplorer(edge -> Double.isFinite(weighting.calcEdgeWeightWithAccess(edge, false)));
-        crossingExplorer = graph.createEdgeExplorer(new FiniteWeightFilter(weighting));
+//        crossingExplorer = graph.createEdgeExplorer(new FiniteWeightFilter(weighting));
+        crossingExplorer = graph.createEdgeExplorer(AccessFilter.allEdges(weighting.getFlagEncoder().getAccessEnc()));
     }
 
     /**
