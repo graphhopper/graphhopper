@@ -182,7 +182,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         else if (node.hasTag("barrier", barriers))
             return true;
         else
-            return blockFords && (node.hasTag("highway", "ford") || node.hasTag("ford", "yes"));
+            return blockFords && node.hasTag("ford", "yes");
     }
 
     @Override

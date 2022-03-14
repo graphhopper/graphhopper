@@ -6,7 +6,7 @@
     </node>
     <node id="30" lat="53" lon="9.4" version="1"/>
     <node id="40" lat="54" lon="9.4" version="1">
-        <tag k="highway" v="ford"/>
+        <tag k="ford" v="yes"/>
     </node>
     <node id="50" lat="55" lon="9.4" version="1"/>
     <!--    b       b
