@@ -97,7 +97,7 @@ class InstructionsOutgoingEdges {
                     allowedAlternativeTurns.add(tmpEdge);
                     visibleAlternativeTurns.add(tmpEdge);
                 } else if (Double.isFinite(weighting.calcEdgeWeightWithAccess(edgeIter, true))) {
-                    visibleAlternativeTurns.add(edgeIter.detach(false));
+                    visibleAlternativeTurns.add(edgeIter.detach(false)); // TODO detach in reverse direction?
                 }
             }
         }
