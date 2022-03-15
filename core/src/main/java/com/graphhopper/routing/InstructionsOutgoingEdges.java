@@ -92,13 +92,12 @@ class InstructionsOutgoingEdges {
         EdgeIterator edgeIter = allExplorer.setBaseNode(baseNode);
         while (edgeIter.next()) {
             if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
-                
-                EdgeIteratorState tmpEdge = edgeIter.detach(false);
-                if (Double.isFinite(weighting.calcEdgeWeightWithAccess(tmpEdge, false))) {
+                if (Double.isFinite(weighting.calcEdgeWeightWithAccess(edgeIter, false))) {
+                    EdgeIteratorState tmpEdge = edgeIter.detach(false);
                     allowedAlternativeTurns.add(tmpEdge);
                     visibleAlternativeTurns.add(tmpEdge);
-                } else if (Double.isFinite(weighting.calcEdgeWeightWithAccess(tmpEdge, true))) {
-                    visibleAlternativeTurns.add(tmpEdge);
+                } else if (Double.isFinite(weighting.calcEdgeWeightWithAccess(edgeIter, true))) {
+                    visibleAlternativeTurns.add(edgeIter.detach(false));
                 }
             }
         }
