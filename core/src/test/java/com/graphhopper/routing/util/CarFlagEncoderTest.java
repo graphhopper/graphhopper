@@ -489,7 +489,7 @@ public class CarFlagEncoderTest {
         way = new ReaderWay(1);
         way.setTag("route", "ferry");
         way.setTag("motorcar", "yes");
-        way.setTag("way_distance", 100.0);
+        way.setTag("edge_distance", 100.0);
         // accept
         assertTrue(encoder.getAccess(way).isFerry());
         encoder.handleWayTags(edgeFlags, way);
@@ -644,7 +644,7 @@ public class CarFlagEncoderTest {
     public void testIssue_1256() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("route", "ferry");
-        way.setTag("way_distance", 257.0);
+        way.setTag("edge_distance", 257.0);
 
         // default is 5km/h minimum speed for car
         IntsRef edgeFlags = em.createEdgeFlags();
