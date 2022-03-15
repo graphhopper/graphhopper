@@ -250,7 +250,7 @@ public class FootFlagEncoderTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("route", "ferry");
         way.setTag("duration:seconds", 1800L);
-        way.setTag("way_distance", 30000.0);
+        way.setTag("edge_distance", 30000.0);
         way.setTag("speed_from_duration", 30 / 0.5);
         // the speed is truncated to maxspeed (=15)
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
