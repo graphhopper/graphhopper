@@ -1,5 +1,7 @@
 ### 5.0 [not yet released]
 
+- no more explicit passByDefaultBarriers in FlagEncoders, blockByDefaultBarriers was renamed to just barriers, no more
+  handling of highway=ford (#2538)
 - OSMReader no longer sets the artificial estimated_distance tag, but sets the edge_distance and point_list tags for all
   edges, the way_distance for selected ways and additionally the duration:seconds and speed_from_duration tags when the
   duration tag is present (#2528)

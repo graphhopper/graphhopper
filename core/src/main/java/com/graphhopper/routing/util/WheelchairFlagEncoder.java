@@ -60,14 +60,11 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
 
         restrictions.add("wheelchair");
 
-        blockByDefaultBarriers.add("handrail");
-        blockByDefaultBarriers.add("wall");
-        blockByDefaultBarriers.add("turnstile");
-        blockByDefaultBarriers.add("kissing_gate");
-        blockByDefaultBarriers.add("stile");
-        passByDefaultBarriers.add("kerb");
-        passByDefaultBarriers.add("cattle_grid");
-        passByDefaultBarriers.add("motorcycle_barrier");
+        barriers.add("handrail");
+        barriers.add("wall");
+        barriers.add("turnstile");
+        barriers.add("kissing_gate");
+        barriers.add("stile");
 
         safeHighwayTags.add("footway");
         safeHighwayTags.add("pedestrian");

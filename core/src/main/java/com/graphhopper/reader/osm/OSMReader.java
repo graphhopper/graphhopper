@@ -191,7 +191,7 @@ public class OSMReader {
      * junction between different ways this will be ignored and no artificial edge will be created.
      */
     protected boolean isBarrierNode(ReaderNode node) {
-        return node.getTags().containsKey("barrier");
+        return node.getTags().containsKey("barrier") || node.getTags().containsKey("ford");
     }
 
     /**
