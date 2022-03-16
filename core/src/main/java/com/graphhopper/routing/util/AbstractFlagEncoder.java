@@ -47,8 +47,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected final Set<String> ferries = new HashSet<>(5);
     protected final Set<String> oneways = new HashSet<>(5);
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
-    protected final Set<String> blockByDefaultBarriers = new HashSet<>(5); // barrier which needs to be explicitly allowed, otherwise it blocks
-    protected final Set<String> passByDefaultBarriers = new HashSet<>(5);  // barrier which may be explicitly forbidden, otherwise it is allowed
+    protected final Set<String> barriers = new HashSet<>(5);
     protected final int speedBits;
     protected final double speedFactor;
     private final int maxTurnCosts;
@@ -174,27 +173,16 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      * @return true if the given OSM node blocks access for this vehicle, false otherwise
      */
     public boolean isBarrier(ReaderNode node) {
-        boolean blockByDefault = node.hasTag("barrier", blockByDefaultBarriers);
-        if (blockByDefault || node.hasTag("barrier", passByDefaultBarriers)) {
-            boolean locked = node.hasTag("locked", "yes");
-
-            for (String res : restrictions) {
-                if (!locked && node.hasTag(res, intendedValues))
-                    return false;
-
-                if (node.hasTag(res, restrictedValues))
-                    return true;
-            }
-
-            return blockByDefault;
-        }
-
-        if ((node.hasTag("highway", "ford") || node.hasTag("ford", "yes"))
-                && (blockFords && !node.hasTag(restrictions, intendedValues) || node.hasTag(restrictions, restrictedValues))) {
+        // note that this method will be only called for certain nodes as defined by OSMReader!
+        String firstValue = node.getFirstPriorityTag(restrictions);
+        if (restrictedValues.contains(firstValue) || node.hasTag("locked", "yes"))
             return true;
-        }
-
-        return false;
+        else if (intendedValues.contains(firstValue))
+            return false;
+        else if (node.hasTag("barrier", barriers))
+            return true;
+        else
+            return blockFords && node.hasTag("ford", "yes");
     }
 
     @Override
@@ -251,21 +239,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         } else {
             avgSpeedEnc.setDecimal(reverse, edgeFlags, speed > getMaxSpeed() ? getMaxSpeed() : speed);
         }
-    }
-
-    /**
-     * @param way   needed to retrieve tags
-     * @param speed speed guessed e.g. from the road type or other tags
-     * @return The assumed speed.
-     */
-    protected double applyMaxSpeed(ReaderWay way, double speed) {
-        double maxSpeed = getMaxSpeed(way);
-        // We obey speed limits
-        if (isValidSpeed(maxSpeed)) {
-            // We assume that the average speed is 90% of the allowed maximum
-            return maxSpeed * 0.9;
-        }
-        return speed;
     }
 
     protected String getPropertiesString() {

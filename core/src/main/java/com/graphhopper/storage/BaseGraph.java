@@ -212,13 +212,9 @@ class BaseGraph implements Graph {
         return maxGeoRef;
     }
 
-    void loadExisting(String dim) {
+    void loadExisting() {
         if (!store.loadExisting())
             throw new IllegalStateException("Cannot load edges or nodes. corrupt file or directory? " + dir);
-
-        if (!dim.equalsIgnoreCase("" + nodeAccess.getDimension()))
-            throw new IllegalStateException("Configured dimension (" + nodeAccess.getDimension() + ") is not equal "
-                    + "to dimension of loaded graph (" + dim + ")");
 
         if (!wayGeometry.loadExisting())
             throw new IllegalStateException("Cannot load geometry. corrupt file or directory? " + dir);

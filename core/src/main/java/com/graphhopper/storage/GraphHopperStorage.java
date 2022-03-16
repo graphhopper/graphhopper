@@ -115,7 +115,6 @@ public final class GraphHopperStorage implements Graph, Closeable {
         properties.create(100);
         properties.put("graph.encoded_values", encodingManager.toEncodedValuesAsString());
         properties.put("graph.flag_encoders", encodingManager.toFlagEncodersAsString());
-        properties.put("graph.dimension", baseGraph.nodeAccess.getDimension());
 
         baseGraph.create(Math.max(byteCount, 100));
         return this;
@@ -152,10 +151,7 @@ public final class GraphHopperStorage implements Graph, Closeable {
                         + "\nGraph: " + encodedValueStr
                         + "\nChange configuration to match the graph or delete " + dir.getLocation());
             }
-
-            String dim = properties.get("graph.dimension");
-            baseGraph.loadExisting(dim);
-
+            baseGraph.loadExisting();
             return true;
         }
         return false;

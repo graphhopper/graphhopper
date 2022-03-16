@@ -27,12 +27,14 @@ public class FerrySpeedCalculator {
         } else {
             // we have no speed value to work with because there was no valid duration tag.
             // we have to take a guess based on the distance.
-            double wayDistance = way.getTag("way_distance", Double.NaN);
+            double wayDistance = way.getTag("edge_distance", Double.NaN);
             if (Double.isNaN(wayDistance))
-                // we don't know the distance of this way either. probably a broken way at the border of the map.
-                return unknownSpeed;
-            else if (wayDistance < 300)
-                // use the slowest possible speed for very short ferries
+                throw new IllegalStateException("No 'edge_distance' set for edge created for way: " + way.getId());
+            else if (wayDistance < 500)
+                // Use the slowest possible speed for very short ferries. Note that sometimes these aren't really ferries
+                // that take you from one harbour to another, but rather ways that only represent the beginning of a
+                // longer ferry connection and that are used by multiple different connections, like here: https://www.openstreetmap.org/way/107913687
+                // It should not matter much which speed we use in this case, so we have no special handling for these.
                 return minSpeed;
             else {
                 // todo: distinguish speed based on the distance of the ferry, see #2532

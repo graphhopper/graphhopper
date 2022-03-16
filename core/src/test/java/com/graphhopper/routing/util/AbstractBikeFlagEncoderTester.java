@@ -367,6 +367,21 @@ public abstract class AbstractBikeFlagEncoderTester {
     }
 
     @Test
+    public void testLockedGate() {
+        ReaderNode node = new ReaderNode(1, -1, -1);
+        node.setTag("barrier", "gate");
+        node.setTag("locked", "yes");
+        assertTrue(encoder.isBarrier(node));
+    }
+
+    @Test
+    public void testNoBike() {
+        ReaderNode node = new ReaderNode(1, -1, -1);
+        node.setTag("bicycle", "no");
+        assertTrue(encoder.isBarrier(node));
+    }
+
+    @Test
     public void testBarrierAccess() {
         // by default allow access through the gate for bike & foot!
         ReaderNode node = new ReaderNode(1, -1, -1);

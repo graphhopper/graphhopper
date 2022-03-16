@@ -84,23 +84,16 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         intendedValues.add("designated");
         intendedValues.add("permissive");
 
-        passByDefaultBarriers.add("gate");
-        passByDefaultBarriers.add("lift_gate");
-        passByDefaultBarriers.add("swing_gate");
-        passByDefaultBarriers.add("cattle_grid");
-        passByDefaultBarriers.add("chain");
-        passByDefaultBarriers.add("yes"); // see #2400
-
-        blockByDefaultBarriers.add("kissing_gate");
-        blockByDefaultBarriers.add("fence");
-        blockByDefaultBarriers.add("bollard");
-        blockByDefaultBarriers.add("stile");
-        blockByDefaultBarriers.add("turnstile");
-        blockByDefaultBarriers.add("cycle_barrier");
-        blockByDefaultBarriers.add("motorcycle_barrier");
-        blockByDefaultBarriers.add("block");
-        blockByDefaultBarriers.add("bus_trap");
-        blockByDefaultBarriers.add("sump_buster");
+        barriers.add("kissing_gate");
+        barriers.add("fence");
+        barriers.add("bollard");
+        barriers.add("stile");
+        barriers.add("turnstile");
+        barriers.add("cycle_barrier");
+        barriers.add("motorcycle_barrier");
+        barriers.add("block");
+        barriers.add("bus_trap");
+        barriers.add("sump_buster");
 
         badSurfaceSpeedMap.add("cobblestone");
         badSurfaceSpeedMap.add("grass_paver");
@@ -268,6 +261,21 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         }
 
         return edgeFlags;
+    }
+
+    /**
+     * @param way   needed to retrieve tags
+     * @param speed speed guessed e.g. from the road type or other tags
+     * @return The assumed speed.
+     */
+    protected double applyMaxSpeed(ReaderWay way, double speed) {
+        double maxSpeed = getMaxSpeed(way);
+        // We obey speed limits
+        if (isValidSpeed(maxSpeed)) {
+            // We assume that the average speed is 90% of the allowed maximum
+            return maxSpeed * 0.9;
+        }
+        return speed;
     }
 
     /**
