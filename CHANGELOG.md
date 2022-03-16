@@ -1,4 +1,4 @@
-### 5.0 [not yet released]
+### 5.0 [23 Mar 2022]
 
 - Use routing.instructions to disable instructions on the server side. datareader.instructions is used to disable the
   name parsing (#2537)
