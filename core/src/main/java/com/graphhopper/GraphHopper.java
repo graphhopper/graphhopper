@@ -491,8 +491,8 @@ public class GraphHopper {
         lmPreparationHandler.init(ghConfig);
 
         // osm import
-        osmReaderConfig.setParseWayNames(ghConfig.getBool("datareader.instructions", true));
-        osmReaderConfig.setPreferredLanguage(ghConfig.getString("datareader.preferred_language", ""));
+        osmReaderConfig.setParseWayNames(ghConfig.getBool("datareader.instructions", osmReaderConfig.isParseWayNames()));
+        osmReaderConfig.setPreferredLanguage(ghConfig.getString("datareader.preferred_language", osmReaderConfig.getPreferredLanguage()));
         osmReaderConfig.setMaxWayPointDistance(ghConfig.getDouble(Routing.INIT_WAY_POINT_MAX_DISTANCE, osmReaderConfig.getMaxWayPointDistance()));
         osmReaderConfig.setWorkerThreads(ghConfig.getInt("datareader.worker_threads", osmReaderConfig.getWorkerThreads()));
 
