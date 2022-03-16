@@ -21,7 +21,7 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
@@ -63,42 +63,41 @@ class InstructionsOutgoingEdges {
     // All outgoing edges, including oneways in the wrong direction
     private final List<EdgeIteratorState> visibleAlternativeTurns;
     private final DecimalEncodedValue maxSpeedEnc;
-    private final DecimalEncodedValue avgSpeedEnc;
     private final EnumEncodedValue<RoadClass> roadClassEnc;
     private final BooleanEncodedValue roadClassLinkEnc;
     private final NodeAccess nodeAccess;
+    private final Weighting weighting;
 
     public InstructionsOutgoingEdges(EdgeIteratorState prevEdge,
                                      EdgeIteratorState currentEdge,
-                                     FlagEncoder encoder,
+                                     Weighting weighting,
                                      DecimalEncodedValue maxSpeedEnc,
                                      EnumEncodedValue<RoadClass> roadClassEnc,
                                      BooleanEncodedValue roadClassLinkEnc,
-                                     EdgeExplorer crossingExplorer,
+                                     EdgeExplorer allExplorer,
                                      NodeAccess nodeAccess,
                                      int prevNode,
                                      int baseNode,
                                      int adjNode) {
         this.prevEdge = prevEdge;
         this.currentEdge = currentEdge;
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+        this.weighting = weighting;
         this.maxSpeedEnc = maxSpeedEnc;
-        this.avgSpeedEnc = encoder.getAverageSpeedEnc();
         this.roadClassEnc = roadClassEnc;
         this.roadClassLinkEnc = roadClassLinkEnc;
         this.nodeAccess = nodeAccess;
 
-        EdgeIteratorState tmpEdge;
-
         visibleAlternativeTurns = new ArrayList<>();
         allowedAlternativeTurns = new ArrayList<>();
-        EdgeIterator edgeIter = crossingExplorer.setBaseNode(baseNode);
+        EdgeIterator edgeIter = allExplorer.setBaseNode(baseNode);
         while (edgeIter.next()) {
             if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
-                tmpEdge = edgeIter.detach(false);
-                visibleAlternativeTurns.add(tmpEdge);
-                if (tmpEdge.get(accessEnc)) {
+                if (Double.isFinite(weighting.calcEdgeWeightWithAccess(edgeIter, false))) {
+                    EdgeIteratorState tmpEdge = edgeIter.detach(false);
                     allowedAlternativeTurns.add(tmpEdge);
+                    visibleAlternativeTurns.add(tmpEdge);
+                } else if (Double.isFinite(weighting.calcEdgeWeightWithAccess(edgeIter, true))) {
+                    visibleAlternativeTurns.add(edgeIter.detach(false));
                 }
             }
         }
@@ -114,12 +113,11 @@ class InstructionsOutgoingEdges {
 
     /**
      * This method calculates the number of all outgoing edges, which could be considered the number of roads you see
-     * at the intersection. This excludes the road your are coming from.
+     * at the intersection. This excludes the road you are coming from and also inaccessible roads.
      */
     public int getVisibleTurns() {
         return 1 + visibleAlternativeTurns.size();
     }
-
 
     /**
      * Checks if the outgoing edges are slower by the provided factor. If they are, this indicates, that we are staying
@@ -129,22 +127,22 @@ class InstructionsOutgoingEdges {
         double tmpSpeed = getSpeed(currentEdge);
         double pathSpeed = getSpeed(prevEdge);
 
-        // Speed-Change on the path indicates, that we change road types, show instruction
-        if (pathSpeed != tmpSpeed || pathSpeed < 1) {
+        // speed change indicates that we change road types
+        if (Math.abs(pathSpeed - tmpSpeed) >= 1) {
             return false;
         }
 
         double maxSurroundingSpeed = -1;
 
-        for (EdgeIteratorState edge : visibleAlternativeTurns) {
+        for (EdgeIteratorState edge : allowedAlternativeTurns) {
             tmpSpeed = getSpeed(edge);
             if (tmpSpeed > maxSurroundingSpeed) {
                 maxSurroundingSpeed = tmpSpeed;
             }
         }
 
-        // Surrounding streets need to be slower by a factor
-        return maxSurroundingSpeed * factor < pathSpeed;
+        // surrounding streets need to be slower by a factor and call round() so that tiny differences are ignored
+        return Math.round(maxSurroundingSpeed * factor) < Math.round(pathSpeed);
     }
 
     /**
@@ -154,7 +152,7 @@ class InstructionsOutgoingEdges {
     private double getSpeed(EdgeIteratorState edge) {
         double maxSpeed = edge.get(maxSpeedEnc);
         if (Double.isInfinite(maxSpeed))
-            return edge.get(avgSpeedEnc);
+            return edge.getDistance() / weighting.calcEdgeMillis(edge, false) * 3600;
         return maxSpeed;
     }
 
