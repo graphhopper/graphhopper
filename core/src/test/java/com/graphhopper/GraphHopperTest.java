@@ -1206,6 +1206,7 @@ public class GraphHopperTest {
         assertEquals("turn right onto Margarethenstraße", il.get(3).getTurnDescription(tr));
         assertEquals("keep left onto Hoher Markt", il.get(4).getTurnDescription(tr));
         assertEquals("turn right onto Wegscheid", il.get(6).getTurnDescription(tr));
+        assertEquals("continue onto Wegscheid", il.get(7).getTurnDescription(tr));
         assertEquals("turn right onto Ringstraße, L73", il.get(8).getTurnDescription(tr));
         assertEquals("keep left onto Eyblparkstraße", il.get(9).getTurnDescription(tr));
         assertEquals("keep left onto Austraße", il.get(10).getTurnDescription(tr));
