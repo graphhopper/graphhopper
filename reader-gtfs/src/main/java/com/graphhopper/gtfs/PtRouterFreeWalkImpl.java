@@ -170,7 +170,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
             StopWatch stopWatch = new StopWatch().start();
             PtLocationSnapper.Result result = new PtLocationSnapper(graphHopperStorage, locationIndex, gtfsStorage).snapAll(Arrays.asList(enter, exit), Arrays.asList(connectingSnapFilter, connectingSnapFilter));
             queryGraph = result.queryGraph;
-            response.addDebugInfo("idLookup:" + stopWatch.stop().getSeconds() + "s");
+            response.addDebugInfo("idLookup time", stopWatch.stop().getSeconds());
 
             Label.NodeId startNode;
             Label.NodeId destNode;
@@ -230,7 +230,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
                 paths.add(path);
             }
 
-            response.addDebugInfo("routing:" + stopWatch.stop().getSeconds() + "s");
+            response.addDebugInfo("routing time", stopWatch.stop().getSeconds());
             if (discoveredSolutions.isEmpty() && visitedNodes >= maxVisitedNodesForRequest) {
                 response.addError(new MaximumNodesExceededException("No path found - maximum number of nodes exceeded: " + maxVisitedNodesForRequest, maxVisitedNodesForRequest));
             }

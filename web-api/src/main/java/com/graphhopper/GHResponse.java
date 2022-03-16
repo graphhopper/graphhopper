@@ -21,6 +21,7 @@ import com.graphhopper.util.PMap;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Wrapper containing path and error output of GraphHopper.
@@ -32,7 +33,7 @@ public class GHResponse {
     private final List<Throwable> errors = new ArrayList<>(4);
     private final PMap hintsMap = new PMap();
     private final List<ResponsePath> responsePaths = new ArrayList<>(5);
-    private String debugInfo = "";
+    private PMap debugInfo = new PMap();
 
     public GHResponse() {
     }
@@ -65,25 +66,20 @@ public class GHResponse {
         return responsePaths.size() > 1;
     }
 
-    public void addDebugInfo(String debugInfo) {
+    public void addDebugInfo(String key, Object debugInfo) {
         if (debugInfo == null)
             throw new IllegalStateException("Debug information has to be none null");
 
-        if (!this.debugInfo.isEmpty())
-            this.debugInfo += "; ";
-
-        this.debugInfo += debugInfo;
+        this.debugInfo.putObject(key, debugInfo);
     }
 
-    public String getDebugInfo() {
-        String str = debugInfo;
+    public PMap getDebugInfo() {
+        ArrayList<Map<String, Object>> responsePathDebugs = new ArrayList<>();
         for (ResponsePath p : responsePaths) {
-            if (!str.isEmpty())
-                str += "; ";
-
-            str += p.getDebugInfo();
+            responsePathDebugs.add(p.getDebugInfo().toMap());
         }
-        return str;
+        this.debugInfo.putObject("responsePathDebugs", responsePathDebugs);
+        return debugInfo;
     }
 
     /**

@@ -168,7 +168,7 @@ public final class PtRouterImpl implements PtRouter {
             StopWatch stopWatch = new StopWatch().start();
             PtLocationSnapper.Result result = new PtLocationSnapper(graphHopperStorage, locationIndex, gtfsStorage).snapAll(Arrays.asList(enter, exit), Arrays.asList(connectingSnapFilter, connectingSnapFilter));
             queryGraph = result.queryGraph;
-            response.addDebugInfo("idLookup:" + stopWatch.stop().getSeconds() + "s");
+            response.addDebugInfo("idLookup time", stopWatch.stop().getSeconds());
 
             Label.NodeId startNode;
             Label.NodeId destNode;
@@ -179,7 +179,7 @@ public final class PtRouterImpl implements PtRouter {
                 startNode = result.nodes.get(0);
                 destNode = result.nodes.get(1);
             }
-            List<List<Label.Transition>> solutions = findPaths(startNode, destNode);
+            List<List<Label.Transition>> solutions = findPaths(startNode, destNode, response);
             parseSolutionsAndAddToResponse(solutions, result.points);
             return response;
         }
@@ -198,7 +198,7 @@ public final class PtRouterImpl implements PtRouter {
             response.getAll().sort(c.thenComparing(d));
         }
 
-        private List<List<Label.Transition>> findPaths(Label.NodeId startNode, Label.NodeId destNode) {
+        private List<List<Label.Transition>> findPaths(Label.NodeId startNode, Label.NodeId destNode, GHResponse response) {
             StopWatch stopWatch = new StopWatch().start();
             boolean isEgress = !arriveBy;
             final GraphExplorer accessEgressGraphExplorer = new GraphExplorer(queryGraph, ptGraph, connectingWeighting, gtfsStorage, realtimeFeed, isEgress, true, false, connectingProfile.isBike(), false, blockedRouteTypes);
@@ -328,7 +328,7 @@ public final class PtRouterImpl implements PtRouter {
                 }
             }
 
-            response.addDebugInfo("routing:" + stopWatch.stop().getSeconds() + "s");
+            response.addDebugInfo("routing time",stopWatch.stop().getSeconds());
             if (discoveredSolutions.isEmpty() && visitedNodes >= maxVisitedNodesForRequest) {
                 response.addError(new MaximumNodesExceededException("No path found - maximum number of nodes exceeded: " + maxVisitedNodesForRequest, maxVisitedNodesForRequest));
             }

@@ -69,7 +69,7 @@ public class PathExtractor {
     }
 
     private void setExtractionTime(long nanos) {
-        path.setDebugInfo("path extraction: " + nanos / 1000 + " μs");
+        path.getDebugInfo().putObject("path extraction time (μs)", nanos/ 1000);
     }
 
     protected void onEdge(int edge, int adjNode, int prevEdge) {

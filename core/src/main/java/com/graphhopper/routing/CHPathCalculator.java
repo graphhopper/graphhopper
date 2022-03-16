@@ -32,7 +32,7 @@ import static com.graphhopper.util.Parameters.Routing.MAX_VISITED_NODES;
 public class CHPathCalculator implements PathCalculator {
     private final CHRoutingAlgorithmFactory algoFactory;
     private final PMap algoOpts;
-    private String debug;
+    private PMap debug = new PMap();
     private int visitedNodes;
 
     public CHPathCalculator(CHRoutingAlgorithmFactory algoFactory, PMap algoOpts) {
@@ -51,7 +51,7 @@ public class CHPathCalculator implements PathCalculator {
     private BidirRoutingAlgorithm createAlgo() {
         StopWatch sw = new StopWatch().start();
         BidirRoutingAlgorithm algo = algoFactory.createAlgo(algoOpts);
-        debug = ", algoInit:" + (sw.stop().getNanos() / 1000) + " μs";
+        debug.putObject("algoInit (μs)", sw.stop().getNanos() / 1000);
         return algo;
     }
 
@@ -71,12 +71,12 @@ public class CHPathCalculator implements PathCalculator {
         if (algo.getVisitedNodes() >= maxVisitedNodes)
             throw new MaximumNodesExceededException("No path found due to maximum nodes exceeded " + maxVisitedNodes, maxVisitedNodes);
         visitedNodes = algo.getVisitedNodes();
-        debug += ", " + algo.getName() + "-routing:" + sw.stop().getMillis() + " ms";
+        debug.putObject(algo.getName() + "-routing (ms)", sw.stop().getMillis());
         return paths;
     }
 
     @Override
-    public String getDebugString() {
+    public PMap getDebug() {
         return debug;
     }
 

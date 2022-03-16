@@ -89,6 +89,7 @@ public class ResponsePathSerializer {
     public static ObjectNode jsonObject(GHResponse ghRsp, boolean enableInstructions, boolean calcPoints, boolean enableElevation, boolean pointsEncoded, float took) {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
         json.putPOJO("hints", ghRsp.getHints().toMap());
+        json.putPOJO("debug", ghRsp.getDebugInfo().toMap());
         final ObjectNode info = json.putObject("info");
         info.putPOJO("copyrights", COPYRIGHTS);
         info.put("took", Math.round(took));

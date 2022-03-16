@@ -201,7 +201,7 @@ public class Router {
         double startHeading = request.getHeadings().isEmpty() ? Double.NaN : request.getHeadings().get(0);
         RoundTripRouting.Params params = new RoundTripRouting.Params(request.getHints(), startHeading, routerConfig.getMaxRoundTripRetries());
         List<Snap> snaps = RoundTripRouting.lookup(request.getPoints(), solver.createSnapFilter(), locationIndex, params);
-        ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
+        ghRsp.addDebugInfo("idLookup time", sw.stop().getSeconds());
 
         QueryGraph queryGraph = QueryGraph.create(ghStorage, snaps);
         FlexiblePathCalculator pathCalculator = solver.createPathCalculator(queryGraph);
@@ -223,7 +223,7 @@ public class Router {
         DirectedEdgeFilter directedEdgeFilter = solver.createDirectedEdgeFilter();
         List<Snap> snaps = ViaRouting.lookup(encodingManager, request.getPoints(), solver.createSnapFilter(), locationIndex,
                 request.getSnapPreventions(), request.getPointHints(), directedEdgeFilter, request.getHeadings());
-        ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
+        ghRsp.addDebugInfo("idLookup time", sw.stop().getSeconds());
         QueryGraph queryGraph = QueryGraph.create(ghStorage, snaps);
         PathCalculator pathCalculator = solver.createPathCalculator(queryGraph);
         boolean passThrough = getPassThrough(request.getHints());
@@ -255,7 +255,7 @@ public class Router {
         DirectedEdgeFilter directedEdgeFilter = solver.createDirectedEdgeFilter();
         List<Snap> snaps = ViaRouting.lookup(encodingManager, request.getPoints(), solver.createSnapFilter(), locationIndex,
                 request.getSnapPreventions(), request.getPointHints(), directedEdgeFilter, request.getHeadings());
-        ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
+        ghRsp.addDebugInfo("idLookup time", sw.stop().getSeconds());
         // (base) query graph used to resolve headings, curbsides etc. this is not necessarily the same thing as
         // the (possibly implementation specific) query graph used by PathCalculator
         QueryGraph queryGraph = QueryGraph.create(ghStorage, snaps);
@@ -270,7 +270,7 @@ public class Router {
 
         // here each path represents one leg of the via-route and we merge them all together into one response path
         ResponsePath responsePath = concatenatePaths(request, solver.weighting, queryGraph, result.paths, getWaypoints(snaps));
-        responsePath.addDebugInfo(result.debug);
+        responsePath.getDebugInfo().putAll(result.debug);
         ghRsp.add(responsePath);
         ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
         ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (snaps.size() - 1));
