@@ -957,6 +957,12 @@ public class OSMReaderTest {
         assertEquals(Country.BGR, iter.get(countryEnc));
     }
 
+    @Test
+    public void testFixWayName() {
+        assertEquals("B8, B12", OSMReader.fixWayName("B8;B12"));
+        assertEquals("B8, B12", OSMReader.fixWayName("B8; B12"));
+    }
+
     private AreaIndex<CustomArea> createCountryIndex() {
         return new AreaIndex<>(readCountries());
     }
@@ -986,8 +992,8 @@ public class OSMReaderTest {
             }
 
             footEncoder = new FootFlagEncoder();
-            getEncodingManagerBuilder().add(footEncoder).add(carEncoder).add(bikeEncoder).
-                    setPreferredLanguage(prefLang);
+            getEncodingManagerBuilder().add(footEncoder).add(carEncoder).add(bikeEncoder);
+            getReaderConfig().setPreferredLanguage(prefLang);
         }
 
         @Override

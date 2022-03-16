@@ -30,7 +30,6 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.graphhopper.util.Helper.toLowerCase;
@@ -46,17 +45,14 @@ import static java.util.Collections.emptyMap;
  * @author Nop
  */
 public class EncodingManager implements EncodedValueLookup {
-    private static final Pattern WAY_NAME_PATTERN = Pattern.compile("; *");
     private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<>();
     private final Map<String, EncodedValue> encodedValueMap = new LinkedHashMap<>();
     private final List<RelationTagParser> relationTagParsers = new ArrayList<>();
     private final List<TagParser> edgeTagParsers = new ArrayList<>();
     private final Map<String, TurnCostParser> turnCostParsers = new LinkedHashMap<>();
-    private boolean enableInstructions = true;
-    private String preferredLanguage = "";
-    private EncodedValue.InitializerConfig turnCostConfig;
-    private EncodedValue.InitializerConfig relationConfig;
-    private EncodedValue.InitializerConfig edgeConfig;
+    private final EncodedValue.InitializerConfig turnCostConfig;
+    private final EncodedValue.InitializerConfig relationConfig;
+    private final EncodedValue.InitializerConfig edgeConfig;
 
     /**
      * Instantiate manager with the given list of encoders. The manager knows several default
@@ -139,33 +135,6 @@ public class EncodingManager implements EncodedValueLookup {
 
         public Builder() {
             em = new EncodingManager();
-        }
-
-        /**
-         * This method specifies the preferred language for way names during import.
-         * <p>
-         * Language code as defined in ISO 639-1 or ISO 639-2.
-         * <ul>
-         * <li>If no preferred language is specified, only the default language with no tag will be
-         * imported.</li>
-         * <li>If a language is specified, it will be imported if its tag is found, otherwise fall back
-         * to default language.</li>
-         * </ul>
-         */
-        public Builder setPreferredLanguage(String language) {
-            check();
-            em.setPreferredLanguage(language);
-            return this;
-        }
-
-        /**
-         * This method specifies if the import should include way names to be able to return
-         * instructions for a route.
-         */
-        public Builder setEnableInstructions(boolean enable) {
-            check();
-            em.setEnableInstructions(enable);
-            return this;
         }
 
         public boolean addIfAbsent(FlagEncoderFactory factory, String flagEncoderString) {
@@ -401,29 +370,8 @@ public class EncodingManager implements EncodedValueLookup {
         return factory.create(tagParserString, map);
     }
 
-    static String fixWayName(String str) {
-        if (str == null)
-            return "";
-        return WAY_NAME_PATTERN.matcher(str).replaceAll(", ");
-    }
-
     public int getIntsForFlags() {
         return (int) Math.ceil((double) edgeConfig.getRequiredBits() / 32.0);
-    }
-
-    private void setEnableInstructions(boolean enableInstructions) {
-        this.enableInstructions = enableInstructions;
-    }
-
-    public boolean isEnableInstructions() {
-        return enableInstructions;
-    }
-
-    private void setPreferredLanguage(String preferredLanguage) {
-        if (preferredLanguage == null)
-            throw new IllegalArgumentException("preferred language cannot be null");
-
-        this.preferredLanguage = preferredLanguage;
     }
 
     private void addEncoder(AbstractFlagEncoder encoder) {
@@ -591,44 +539,18 @@ public class EncodingManager implements EncodedValueLookup {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         EncodingManager that = (EncodingManager) o;
-        return enableInstructions == that.enableInstructions &&
-                edgeEncoders.equals(that.edgeEncoders) &&
-                encodedValueMap.equals(that.encodedValueMap) &&
-                preferredLanguage.equals(that.preferredLanguage);
+        return edgeEncoders.equals(that.edgeEncoders) &&
+                encodedValueMap.equals(that.encodedValueMap);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(edgeEncoders, encodedValueMap, enableInstructions, preferredLanguage);
+        return Objects.hash(edgeEncoders, encodedValueMap);
     }
 
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
-        // storing the road name does not yet depend on the flagEncoder so manage it directly
-        if (enableInstructions) {
-            // String wayInfo = carFlagEncoder.getWayInfo(way);
-            // http://wiki.openstreetmap.org/wiki/Key:name
-            String name = "";
-            if (!preferredLanguage.isEmpty())
-                name = fixWayName(way.getTag("name:" + preferredLanguage));
-            if (name.isEmpty())
-                name = fixWayName(way.getTag("name"));
-            // http://wiki.openstreetmap.org/wiki/Key:ref
-            String refName = fixWayName(way.getTag("ref"));
-            if (!refName.isEmpty()) {
-                if (name.isEmpty())
-                    name = refName;
-                else
-                    name += ", " + refName;
-            }
-
-            edge.setName(name);
-        }
-
-        if (Double.isInfinite(edge.getDistance()))
-            throw new IllegalStateException("Infinite distance should not happen due to #435. way ID=" + way.getId());
-        for (AbstractFlagEncoder encoder : edgeEncoders) {
+        for (AbstractFlagEncoder encoder : edgeEncoders)
             encoder.applyWayTags(way, edge);
-        }
     }
 
     public List<FlagEncoder> fetchEdgeEncoders() {

@@ -19,11 +19,39 @@
 package com.graphhopper.routing;
 
 public class OSMReaderConfig {
+    private boolean parseWayNames = true;
+    private String preferredLanguage = "";
     private double maxWayPointDistance = 1;
     private double elevationMaxWayPointDistance = Double.MAX_VALUE;
     private boolean smoothElevation = false;
     private double longEdgeSamplingDistance = Double.MAX_VALUE;
     private int workerThreads = 2;
+
+    public String getPreferredLanguage() {
+        return preferredLanguage;
+    }
+
+    /**
+     * Sets the language used to parse way names. For example if this is set to 'en' we will use the 'name:en' tag
+     * rather than the 'name' tag if it is present. The language code should be given as defined in ISO 639-1 or ISO 639-2.
+     * This setting becomes irrelevant if parseWayNames is set to false.
+     */
+    public OSMReaderConfig setPreferredLanguage(String preferredLanguage) {
+        this.preferredLanguage = preferredLanguage;
+        return this;
+    }
+
+    public boolean isParseWayNames() {
+        return parseWayNames;
+    }
+
+    /**
+     * Enables/disables the parsing of the name and ref tags to set the name of the graph edges
+     */
+    public OSMReaderConfig setParseWayNames(boolean parseWayNames) {
+        this.parseWayNames = parseWayNames;
+        return this;
+    }
 
     public double getMaxWayPointDistance() {
         return maxWayPointDistance;

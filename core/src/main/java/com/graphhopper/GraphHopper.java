@@ -463,8 +463,6 @@ public class GraphHopper {
 
         if (encodingManager != null)
             throw new IllegalStateException("Cannot call init twice. EncodingManager was already initialized.");
-        emBuilder.setEnableInstructions(ghConfig.getBool("datareader.instructions", true));
-        emBuilder.setPreferredLanguage(ghConfig.getString("datareader.preferred_language", ""));
         emBuilder.setDateRangeParser(DateRangeParser.createInstance(ghConfig.getString("datareader.date_range_parser_day", "")));
         setProfiles(ghConfig.getProfiles());
         encodingManager = buildEncodingManager(ghConfig);
@@ -493,6 +491,8 @@ public class GraphHopper {
         lmPreparationHandler.init(ghConfig);
 
         // osm import
+        osmReaderConfig.setParseWayNames(ghConfig.getBool("datareader.instructions", osmReaderConfig.isParseWayNames()));
+        osmReaderConfig.setPreferredLanguage(ghConfig.getString("datareader.preferred_language", osmReaderConfig.getPreferredLanguage()));
         osmReaderConfig.setMaxWayPointDistance(ghConfig.getDouble(Routing.INIT_WAY_POINT_MAX_DISTANCE, osmReaderConfig.getMaxWayPointDistance()));
         osmReaderConfig.setWorkerThreads(ghConfig.getInt("datareader.worker_threads", osmReaderConfig.getWorkerThreads()));
 
@@ -504,6 +504,7 @@ public class GraphHopper {
         routerConfig.setMaxVisitedNodes(ghConfig.getInt(Routing.INIT_MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes()));
         routerConfig.setMaxRoundTripRetries(ghConfig.getInt(RoundTrip.INIT_MAX_RETRIES, routerConfig.getMaxRoundTripRetries()));
         routerConfig.setNonChMaxWaypointDistance(ghConfig.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, routerConfig.getNonChMaxWaypointDistance()));
+        routerConfig.setInstructionsEnabled(ghConfig.getBool(Routing.INIT_INSTRUCTIONS, routerConfig.isInstructionsEnabled()));
         int activeLandmarkCount = ghConfig.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.min(8, lmPreparationHandler.getLandmarks()));
         if (activeLandmarkCount > lmPreparationHandler.getLandmarks())
             throw new IllegalArgumentException("Default value for active landmarks " + activeLandmarkCount

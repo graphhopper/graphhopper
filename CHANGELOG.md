@@ -1,5 +1,7 @@
 ### 5.0 [not yet released]
 
+- Use routing.instructions to disable instructions on the server side. datareader.instructions is used to disable the
+  name parsing (#2537)
 - no more explicit passByDefaultBarriers in FlagEncoders, blockByDefaultBarriers was renamed to just barriers, no more
   handling of highway=ford (#2538)
 - OSMReader no longer sets the artificial estimated_distance tag, but sets the edge_distance and point_list tags for all

@@ -148,12 +148,6 @@ public class EncodingManagerTest {
     }
 
     @Test
-    public void testFixWayName() {
-        assertEquals("B8, B12", EncodingManager.fixWayName("B8;B12"));
-        assertEquals("B8, B12", EncodingManager.fixWayName("B8; B12"));
-    }
-
-    @Test
     public void testCompatibilityBug() {
         EncodingManager manager2 = EncodingManager.create(new DefaultFlagEncoderFactory(), "bike2");
         ReaderWay osmWay = new ReaderWay(1);
