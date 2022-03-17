@@ -611,7 +611,7 @@ public class LocationIndexTreeTest {
         idx = (LocationIndexTree) createIndexNoPrepare(g, 500000).prepareIndex();
         FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
         assertEquals(2, idx.findClosest(1, -1, AccessFilter.allEdges(footEncoder.getAccessEnc())).getClosestNode());
-        Helper.close((Closeable) g);
+        g.close();
     }
 
     @ParameterizedTest
