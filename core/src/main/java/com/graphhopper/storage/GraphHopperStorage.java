@@ -25,8 +25,6 @@ import com.graphhopper.util.Constants;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.BBox;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 
@@ -40,7 +38,6 @@ import java.io.Closeable;
  * @author Peter Karich
  */
 public final class GraphHopperStorage implements Graph, Closeable {
-    private static final Logger LOGGER = LoggerFactory.getLogger(GraphHopperStorage.class);
     private final Directory dir;
     private final EncodingManager encodingManager;
     private final StorableProperties properties;
@@ -61,29 +58,9 @@ public final class GraphHopperStorage implements Graph, Closeable {
         baseGraph = new BaseGraph(dir, encodingManager.getIntsForFlags(), withElevation, withTurnCosts, segmentSize);
     }
 
+    @Deprecated
     public CHStorage createCHStorage(CHConfig chConfig) {
-        return createCHStorage(chConfig.getName(), chConfig.isEdgeBased());
-    }
-
-    public CHStorage createCHStorage(String name, boolean edgeBased) {
-        if (!isFrozen())
-            throw new IllegalStateException("graph must be frozen before we can create ch graphs");
-        CHStorage store = new CHStorage(dir, name, segmentSize, edgeBased);
-        store.setLowShortcutWeightConsumer(s -> {
-            // we just log these to find mapping errors
-            NodeAccess nodeAccess = baseGraph.getNodeAccess();
-            LOGGER.warn("Setting weights smaller than " + s.minWeight + " is not allowed. " +
-                    "You passed: " + s.weight + " for the shortcut " +
-                    " nodeA (" + nodeAccess.getLat(s.nodeA) + "," + nodeAccess.getLon(s.nodeA) +
-                    " nodeB " + nodeAccess.getLat(s.nodeB) + "," + nodeAccess.getLon(s.nodeB));
-        });
-        store.create();
-        // we use a rather small value here. this might result in more allocations later, but they should
-        // not matter that much. if we expect a too large value the shortcuts DataAccess will end up
-        // larger than needed, because we do not do something like trimToSize in the end.
-        double expectedShortcuts = 0.3 * baseGraph.getEdges();
-        store.init(baseGraph.getNodes(), (int) expectedShortcuts);
-        return store;
+        return CHStorage.fromGraph(this, chConfig);
     }
 
     public CHStorage loadCHStorage(String chGraphName, boolean edgeBased) {
@@ -91,8 +68,9 @@ public final class GraphHopperStorage implements Graph, Closeable {
         return store.loadExisting() ? store : null;
     }
 
+    @Deprecated
     public RoutingCHGraph createCHGraph(CHStorage store, CHConfig chConfig) {
-        return new RoutingCHGraphImpl(baseGraph, store, chConfig.getWeighting());
+        return RoutingCHGraphImpl.fromGraph(this, store, chConfig);
     }
 
     /**
@@ -218,7 +196,7 @@ public final class GraphHopperStorage implements Graph, Closeable {
     // Graph g = storage.getBaseGraph();
     // instead directly the storage can be used to traverse the base graph
     @Override
-    public Graph getBaseGraph() {
+    public BaseGraph getBaseGraph() {
         return baseGraph;
     }
 

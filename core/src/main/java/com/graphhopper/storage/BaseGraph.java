@@ -40,7 +40,7 @@ import static com.graphhopper.util.Helper.nf;
  * Life cycle: (1) object creation, (2) configuration via setters & getters, (3) create or
  * loadExisting, (4) usage, (5) flush, (6) close
  */
-class BaseGraph implements Graph {
+public class BaseGraph implements Graph {
     private final static String STRING_IDX_NAME_KEY = "name";
     final BaseGraphNodesAndEdges store;
     final NodeAccess nodeAccess;
@@ -52,6 +52,7 @@ class BaseGraph implements Graph {
     // as we use integer index in 'edges' area => 'geometry' area is limited to 4GB (we use pos&neg values!)
     private final DataAccess wayGeometry;
     private final Directory dir;
+    private final int segmentSize;
     private boolean initialized = false;
     private long maxGeoRef;
 
@@ -62,6 +63,7 @@ class BaseGraph implements Graph {
         this.stringIndex = new StringIndex(dir, 1000, segmentSize);
         this.store = new BaseGraphNodesAndEdges(dir, intsForFlags, withElevation, withTurnCosts, segmentSize);
         this.nodeAccess = new GHNodeAccess(store);
+        this.segmentSize = segmentSize;
         turnCostStorage = withTurnCosts ? new TurnCostStorage(this, dir.create("turn_costs", segmentSize)) : null;
     }
 
@@ -81,7 +83,7 @@ class BaseGraph implements Graph {
     }
 
     @Override
-    public Graph getBaseGraph() {
+    public BaseGraph getBaseGraph() {
         return this;
     }
 
@@ -134,13 +136,13 @@ class BaseGraph implements Graph {
         return store.getBounds();
     }
 
-    synchronized void freeze() {
+    public synchronized void freeze() {
         if (isFrozen())
             throw new IllegalStateException("base graph already frozen");
         store.setFrozen(true);
     }
 
-    synchronized boolean isFrozen() {
+    public synchronized boolean isFrozen() {
         return store.getFrozen();
     }
 
@@ -467,6 +469,14 @@ class BaseGraph implements Graph {
 
     public boolean isClosed() {
         return store.isClosed();
+    }
+
+    public Directory getDirectory() {
+        return dir;
+    }
+
+    public int getSegmentSize() {
+        return segmentSize;
     }
 
     protected static class EdgeIteratorImpl extends EdgeIteratorStateImpl implements EdgeExplorer, EdgeIterator {
