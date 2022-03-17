@@ -55,7 +55,7 @@ public class CHQueryWithTurnCostsTest {
         private final int maxCost = 10;
         private final FlagEncoder encoder = new CarFlagEncoder(5, 5, maxCost, true);
         private final EncodingManager encodingManager = EncodingManager.create(encoder);
-        private final GraphHopperStorage graph;
+        private final BaseGraph graph;
         private final CHConfig chConfig;
         private final String algoString;
         private CHStorage chStore;
@@ -63,7 +63,7 @@ public class CHQueryWithTurnCostsTest {
 
         public Fixture(String algoString) {
             this.algoString = algoString;
-            graph = new GraphBuilder(encodingManager).create();
+            graph = new BaseGraph.Builder(encodingManager).create();
             chConfig = CHConfig.edgeBased("profile", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage())));
         }
 

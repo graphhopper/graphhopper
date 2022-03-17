@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class AccessFilterTest {
     private final CarFlagEncoder encoder = new CarFlagEncoder();
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
-    private final GraphHopperStorage graph = new GraphBuilder(encodingManager)
+    private final BaseGraph graph = new BaseGraph.Builder(encodingManager)
             .withTurnCosts(true)
             .create();
 

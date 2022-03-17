@@ -35,7 +35,7 @@ public class RoutingCHGraphImplTest {
     public void testBaseAndCHEdges() {
         CarFlagEncoder carEncoder = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(carEncoder);
-        GraphHopperStorage graph = new GraphBuilder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
         graph.edge(1, 0);
         graph.edge(8, 9);
         graph.freeze();
@@ -73,7 +73,7 @@ public class RoutingCHGraphImplTest {
         //            3  2
         CarFlagEncoder encoder = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(encoder);
-        GraphHopperStorage graph = new GraphBuilder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
         EdgeExplorer baseCarOutExplorer = graph.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc()));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 1).setDistance(30));
         graph.freeze();
@@ -110,7 +110,7 @@ public class RoutingCHGraphImplTest {
     public void testGetWeight() {
         CarFlagEncoder encoder = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(encoder);
-        GraphHopperStorage graph = new GraphBuilder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
         EdgeIteratorState edge1 = graph.edge(0, 1);
         EdgeIteratorState edge2 = graph.edge(1, 2);
         graph.freeze();
@@ -137,7 +137,7 @@ public class RoutingCHGraphImplTest {
     public void testGetWeightIfAdvancedEncoder() {
         FlagEncoder customEncoder = new Bike2WeightFlagEncoder();
         EncodingManager em = EncodingManager.create(customEncoder);
-        GraphHopperStorage ghStorage = new GraphBuilder(em).create();
+        BaseGraph ghStorage = new BaseGraph.Builder(em).create();
         ghStorage.edge(0, 3);
         ghStorage.freeze();
 
@@ -164,7 +164,7 @@ public class RoutingCHGraphImplTest {
     public void testWeightExact() {
         CarFlagEncoder encoder = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(encoder);
-        GraphHopperStorage graph = new GraphBuilder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 1).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(1));
         graph.freeze();
@@ -188,7 +188,7 @@ public class RoutingCHGraphImplTest {
     public void testSimpleShortcutCreationAndTraversal() {
         CarFlagEncoder encoder = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(encoder);
-        GraphHopperStorage graph = new GraphBuilder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
 
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 3).setDistance(10));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(10));
@@ -212,7 +212,7 @@ public class RoutingCHGraphImplTest {
     public void testAddShortcutSkippedEdgesWriteRead() {
         CarFlagEncoder carEncoder = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(carEncoder);
-        GraphHopperStorage graph = new GraphBuilder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
         final EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 3).setDistance(10));
         final EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 4).setDistance(10));
         graph.freeze();
@@ -233,7 +233,7 @@ public class RoutingCHGraphImplTest {
     public void testSkippedEdges() {
         CarFlagEncoder carEncoder = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(carEncoder);
-        GraphHopperStorage graph = new GraphBuilder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
         final EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 3).setDistance(10));
         final EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 4).setDistance(10));
         graph.freeze();
@@ -252,7 +252,7 @@ public class RoutingCHGraphImplTest {
     public void testAddShortcut_edgeBased_throwsIfNotConfiguredForEdgeBased() {
         CarFlagEncoder carEncoder = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(carEncoder);
-        GraphHopperStorage graph = new GraphBuilder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
 
         GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(0, 1).setDistance(1));
         GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(1, 2).setDistance(1));
@@ -270,7 +270,7 @@ public class RoutingCHGraphImplTest {
         // 0 -> 1 -> 2
         CarFlagEncoder carEncoder = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(carEncoder);
-        GraphHopperStorage graph = new GraphBuilder(em).set3D(true).create();
+        BaseGraph graph = new BaseGraph.Builder(em).set3D(true).create();
         GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(0, 1).setDistance(1));
         GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(1, 2).setDistance(3));
         graph.freeze();
@@ -290,7 +290,7 @@ public class RoutingCHGraphImplTest {
     public void outOfBounds() {
         CarFlagEncoder carEncoder = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(carEncoder);
-        GraphHopperStorage graph = new GraphBuilder(em).set3D(true).create();
+        BaseGraph graph = new BaseGraph.Builder(em).set3D(true).create();
         graph.freeze();
         FastestWeighting weighting = new FastestWeighting(carEncoder);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
@@ -303,7 +303,7 @@ public class RoutingCHGraphImplTest {
     public void testGetEdgeIterator() {
         CarFlagEncoder carEncoder = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(carEncoder);
-        GraphHopperStorage graph = new GraphBuilder(em).set3D(true).create();
+        BaseGraph graph = new BaseGraph.Builder(em).set3D(true).create();
         GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(0, 1).setDistance(1));
         GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(1, 2).setDistance(1));
         graph.freeze();

@@ -48,7 +48,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class EdgeBasedNodeContractorTest {
     private final int maxCost = 10;
     private CarFlagEncoder encoder;
-    private GraphHopperStorage graph;
+    private BaseGraph graph;
     private Weighting weighting;
     private CHStorage chStore;
     private CHStorageBuilder chBuilder;
@@ -63,7 +63,7 @@ public class EdgeBasedNodeContractorTest {
     private void initialize() {
         encoder = new CarFlagEncoder(5, 5, maxCost);
         EncodingManager encodingManager = EncodingManager.create(encoder);
-        graph = new GraphBuilder(encodingManager).create();
+        graph = new BaseGraph.Builder(encodingManager).create();
         chConfigs = Arrays.asList(
                 CHConfig.edgeBased("p1", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()))),
                 CHConfig.edgeBased("p2", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage(), 60)))

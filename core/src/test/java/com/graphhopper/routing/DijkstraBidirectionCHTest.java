@@ -58,15 +58,15 @@ public class DijkstraBidirectionCHTest {
 
     @Test
     public void testBaseGraph() {
-        GraphHopperStorage ghStorage = createGHStorage();
-        RoutingAlgorithmTest.initDirectedAndDiffSpeed(ghStorage, carEncoder);
+        BaseGraph graph = createGHStorage();
+        RoutingAlgorithmTest.initDirectedAndDiffSpeed(graph, carEncoder);
 
         // do CH preparation for car
         ShortestWeighting weighting = new ShortestWeighting(carEncoder);
-        prepareCH(ghStorage, CHConfig.nodeBased(weighting.getName(), weighting));
+        prepareCH(graph, CHConfig.nodeBased(weighting.getName(), weighting));
 
         // use base graph for solving normal Dijkstra
-        Path p1 = new RoutingAlgorithmFactorySimple().createAlgo(ghStorage, weighting, new AlgorithmOptions()).calcPath(0, 3);
+        Path p1 = new RoutingAlgorithmFactorySimple().createAlgo(graph, weighting, new AlgorithmOptions()).calcPath(0, 3);
         assertEquals(IntArrayList.from(0, 1, 5, 2, 3), p1.calcNodes());
         assertEquals(402.30, p1.getDistance(), 1e-2, p1.toString());
         assertEquals(144829, p1.getTime(), p1.toString());
@@ -81,7 +81,7 @@ public class DijkstraBidirectionCHTest {
         FastestWeighting carWeighting = new FastestWeighting(carEncoder);
 
         CHConfig carConfig = CHConfig.nodeBased("p_car", carWeighting);
-        GraphHopperStorage g = new GraphBuilder(em).create();
+        BaseGraph g = new BaseGraph.Builder(em).create();
         RoutingAlgorithmTest.initFootVsCar(carEncoder, footEncoder, g);
 
         // do CH preparation for car
@@ -115,7 +115,7 @@ public class DijkstraBidirectionCHTest {
     // 4----------3--/
     @Test
     public void testStallingNodesReducesNumberOfVisitedNodes() {
-        GraphHopperStorage graph = createGHStorage();
+        BaseGraph graph = createGHStorage();
         GHUtility.setSpeed(60, 0, carEncoder,
                 graph.edge(8, 9).setDistance(100),
                 graph.edge(8, 3).setDistance(2),
@@ -177,7 +177,7 @@ public class DijkstraBidirectionCHTest {
     }
 
     private void runTestWithDirectionDependentEdgeSpeed(double speed, double revSpeed, int from, int to, IntArrayList expectedPath, FlagEncoder encoder) {
-        GraphHopperStorage graph = createGHStorage();
+        BaseGraph graph = createGHStorage();
         EdgeIteratorState edge = GHUtility.setSpeed(encoder.getMaxSpeed() / 2, true, true, encoder, graph.edge(0, 1).setDistance(2));
         DecimalEncodedValue avSpeedEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(encoder, "average_speed"));
         edge.set(avSpeedEnc, speed, revSpeed);
@@ -195,15 +195,15 @@ public class DijkstraBidirectionCHTest {
         assertEquals(expectedPath, p.calcNodes(), p.toString());
     }
 
-    private GraphHopperStorage createGHStorage() {
-        return new GraphBuilder(encodingManager).create();
+    private BaseGraph createGHStorage() {
+        return new BaseGraph.Builder(encodingManager).create();
     }
 
-    private RoutingCHGraph prepareCH(GraphHopperStorage graphHopperStorage, CHConfig chConfig) {
-        graphHopperStorage.freeze();
-        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraph(graphHopperStorage, chConfig);
+    private RoutingCHGraph prepareCH(BaseGraph graph, CHConfig chConfig) {
+        graph.freeze();
+        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraph(graph, chConfig);
         PrepareContractionHierarchies.Result res = pch.doWork();
-        return RoutingCHGraphImpl.fromGraph(graphHopperStorage, res.getCHStorage(), res.getCHConfig());
+        return RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
     }
 
     private RoutingAlgorithm createCHAlgo(RoutingCHGraph chGraph, boolean withSOD) {

@@ -34,7 +34,7 @@ public class ShortcutUnpackerTest {
         private final boolean edgeBased;
         private final EncodingManager encodingManager;
         private final FlagEncoder encoder;
-        private final GraphHopperStorage graph;
+        private final BaseGraph graph;
         private CHStorageBuilder chBuilder;
         private RoutingCHGraph routingCHGraph;
 
@@ -42,7 +42,7 @@ public class ShortcutUnpackerTest {
             this.edgeBased = edgeBased;
             encoder = new CarFlagEncoder(5, 5, 10, true);
             encodingManager = EncodingManager.create(encoder);
-            graph = new GraphBuilder(encodingManager).create();
+            graph = new BaseGraph.Builder(encodingManager).create();
         }
 
         @Override

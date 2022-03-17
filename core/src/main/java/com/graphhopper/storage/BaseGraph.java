@@ -20,6 +20,7 @@ package com.graphhopper.storage;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.search.StringIndex;
 import com.graphhopper.util.*;
@@ -477,6 +478,66 @@ public class BaseGraph implements Graph {
 
     public int getSegmentSize() {
         return segmentSize;
+    }
+
+    public static class Builder {
+        private final int intsForFlags;
+        private Directory directory = new RAMDirectory();
+        private boolean withElevation = false;
+        private boolean withTurnCosts = false;
+        private long bytes = 100;
+        private int segmentSize = -1;
+
+        /**
+         * @deprecated Used for GraphHopperStorage -> BaseGraph migration, but will be removed
+         */
+        @Deprecated
+        public Builder(EncodingManager em) {
+            this(em.getIntsForFlags());
+            withTurnCosts(em.needsTurnCostsSupport());
+        }
+
+        public Builder(int intsForFlags) {
+            this.intsForFlags = intsForFlags;
+        }
+
+        // todo: maybe rename later, but for now this makes it easier to replace GraphBuilder
+        public Builder setDir(Directory directory) {
+            this.directory = directory;
+            return this;
+        }
+
+        // todo: maybe rename later, but for now this makes it easier to replace GraphBuilder
+        public Builder set3D(boolean withElevation) {
+            this.withElevation = withElevation;
+            return this;
+        }
+
+        // todo: maybe rename later, but for now this makes it easier to replace GraphBuilder
+        public Builder withTurnCosts(boolean withTurnCosts) {
+            this.withTurnCosts = withTurnCosts;
+            return this;
+        }
+
+        public Builder setSegmentSize(int segmentSize) {
+            this.segmentSize = segmentSize;
+            return this;
+        }
+
+        public Builder setBytes(long bytes) {
+            this.bytes = bytes;
+            return this;
+        }
+
+        public BaseGraph build() {
+            return new BaseGraph(directory, intsForFlags, withElevation, withTurnCosts, segmentSize);
+        }
+
+        public BaseGraph create() {
+            BaseGraph baseGraph = build();
+            baseGraph.create(bytes);
+            return baseGraph;
+        }
     }
 
     protected static class EdgeIteratorImpl extends EdgeIteratorStateImpl implements EdgeExplorer, EdgeIterator {

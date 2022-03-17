@@ -69,14 +69,6 @@ public class CHStorage {
     // use this to report shortcuts with too small weights
     private Consumer<LowWeightShortcut> lowShortcutWeightConsumer;
 
-    /**
-     * @deprecated currently we use this only for easier GraphHopperStorage -> BaseGraph migration
-     */
-    @Deprecated
-    public static CHStorage fromGraph(Graph graph, CHConfig chConfig) {
-        return fromGraph(graph.getBaseGraph(), chConfig);
-    }
-
     public static CHStorage fromGraph(BaseGraph baseGraph, CHConfig chConfig) {
         String name = chConfig.getName();
         boolean edgeBased = chConfig.isEdgeBased();

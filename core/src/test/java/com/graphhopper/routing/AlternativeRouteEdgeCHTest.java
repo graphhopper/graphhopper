@@ -43,8 +43,8 @@ public class AlternativeRouteEdgeCHTest {
     private final FlagEncoder carFE = new CarFlagEncoder(new PMap().putObject("turn_costs", true));
     private final EncodingManager em = EncodingManager.create(carFE);
 
-    public GraphHopperStorage createTestGraph(EncodingManager tmpEM) {
-        final GraphHopperStorage graph = new GraphBuilder(tmpEM).withTurnCosts(true).create();
+    public BaseGraph createTestGraph(EncodingManager tmpEM) {
+        final BaseGraph graph = new BaseGraph.Builder(tmpEM).withTurnCosts(true).create();
 
         /*
 
@@ -88,7 +88,7 @@ public class AlternativeRouteEdgeCHTest {
         return graph;
     }
 
-    private RoutingCHGraph prepareCH(GraphHopperStorage graph) {
+    private RoutingCHGraph prepareCH(BaseGraph graph) {
         TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(carFE, graph.getTurnCostStorage());
         CHConfig chConfig = CHConfig.edgeBased("profile", new FastestWeighting(carFE, turnCostProvider));
         PrepareContractionHierarchies contractionHierarchies = PrepareContractionHierarchies.fromGraph(graph, chConfig);
@@ -98,7 +98,7 @@ public class AlternativeRouteEdgeCHTest {
 
     @Test
     public void testAssumptions() {
-        GraphHopperStorage g = createTestGraph(em);
+        BaseGraph g = createTestGraph(em);
         TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(carFE, g.getTurnCostStorage());
         CHConfig chConfig = CHConfig.edgeBased("profile", new FastestWeighting(carFE, turnCostProvider));
         CHStorage chStorage = CHStorage.fromGraph(g, chConfig);
@@ -122,7 +122,7 @@ public class AlternativeRouteEdgeCHTest {
 
     @Test
     public void testCalcAlternatives() {
-        GraphHopperStorage g = createTestGraph(em);
+        BaseGraph g = createTestGraph(em);
         PMap hints = new PMap();
         hints.putObject("alternative_route.max_weight_factor", 4);
         hints.putObject("alternative_route.local_optimality_factor", 0.5);
@@ -139,7 +139,7 @@ public class AlternativeRouteEdgeCHTest {
 
     @Test
     public void testCalcOtherAlternatives() {
-        GraphHopperStorage g = createTestGraph(em);
+        BaseGraph g = createTestGraph(em);
         PMap hints = new PMap();
         hints.putObject("alternative_route.max_weight_factor", 4);
         hints.putObject("alternative_route.local_optimality_factor", 0.5);

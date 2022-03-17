@@ -45,14 +45,14 @@ class QueryRoutingCHGraphTest {
     private CarFlagEncoder encoder;
     private EncodingManager encodingManager;
     private FastestWeighting weighting;
-    private GraphHopperStorage graph;
+    private BaseGraph graph;
     private NodeAccess na;
 
     @BeforeEach
     public void setup() {
         encoder = new CarFlagEncoder(5, 5, 5, true);
         encodingManager = EncodingManager.create(encoder);
-        graph = new GraphBuilder(encodingManager).create();
+        graph = new BaseGraph.Builder(encodingManager).create();
         weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()));
         na = graph.getNodeAccess();
     }
