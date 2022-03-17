@@ -27,41 +27,30 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.graphhopper.routing.ev.RoadAccess.NO;
 import static com.graphhopper.routing.ev.RoadAccess.YES;
 
-// TODO rename to car_restricted or car_allowed?
-//  if car_allowed == false
-//  if car_access == false
+/**
+ * This class defines the access of a single TransportationMode. It feeds an EncodedValue named [transportation_mode]_access.
+ */
 public class OSMAccessParser implements TagParser {
 
     private final BooleanEncodedValue accessEnc;
     private final List<String> restrictions;
     private final TransportationMode transportationMode;
-    private final Set<String> restrictedValues = new HashSet<>(10);
-    private final Set<String> oneways = new HashSet<>(5);
     private final HashSet<String> oppositeLanes = new HashSet<>();
-    private BooleanEncodedValue roundaboutEnc;
 
-    private Set<String> intendedValues = new HashSet<>(5);
+    private final Set<String> fwdOneway = new HashSet<>(5);
+    private final Set<String> intendedValues = new HashSet<>(5);
 
-    public OSMAccessParser(String name, List<String> restrictions, TransportationMode transportationMode) {
+    public OSMAccessParser(String name, TransportationMode transportationMode) {
         this.accessEnc = new SimpleBooleanEncodedValue(name, true);
-        this.restrictions = restrictions;
         this.transportationMode = transportationMode;
+        this.restrictions = OSMRoadAccessParser.toOSMRestrictions(transportationMode);
 
-        restrictedValues.add("agricultural");
-        restrictedValues.add("forestry");
-        restrictedValues.add("no");
-        restrictedValues.add("restricted");
-        restrictedValues.add("delivery");
-        restrictedValues.add("military");
-        restrictedValues.add("emergency");
-        restrictedValues.add("private");
-
-        oneways.add("yes");
-        oneways.add("true");
-        oneways.add("1");
-        oneways.add("-1");
+        fwdOneway.add("yes");
+        fwdOneway.add("true");
+        fwdOneway.add("1");
 
         intendedValues.add("yes");
         intendedValues.add("designated");
@@ -76,89 +65,56 @@ public class OSMAccessParser implements TagParser {
     @Override
     public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> list) {
         list.add(accessEnc);
-        roundaboutEnc = lookup.getBooleanEncodedValue(Roundabout.KEY);
     }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         RoadAccess accessValue = YES;
-        RoadAccess tmpAccessValue;
-        for (String restriction : restrictions) {
-            tmpAccessValue = RoadAccess.find(way.getTag(restriction, "yes"));
-            if (tmpAccessValue != null && tmpAccessValue.ordinal() > accessValue.ordinal()) {
-                accessValue = tmpAccessValue;
-            }
-        }
+        String restrictionTag = way.getFirstPriorityTag(restrictions);
+        if (!intendedValues.contains(restrictionTag) && !restrictionTag.isEmpty())
+            accessValue = RoadAccess.find(restrictionTag);
 
         CountryRule countryRule = way.getTag("country_rule", null);
         if (countryRule != null)
             accessValue = countryRule.getAccess(way, transportationMode, accessValue);
 
-        boolean access = accessValue != RoadAccess.NO;
-        accessEnc.setBool(false, edgeFlags, access);
+        if (accessValue == NO) return edgeFlags;
 
-        if (access) {
-            boolean isRoundabout = roundaboutEnc.getBool(false, edgeFlags);
-            if (transportationMode.isMotorVehicle() && (isOneway(way) || isRoundabout)) {
-                if (isForwardOneway(way))
-                    accessEnc.setBool(false, edgeFlags, true);
-                if (isBackwardOneway(way))
-                    accessEnc.setBool(true, edgeFlags, true);
-            } else if (transportationMode == TransportationMode.BIKE
-                    && (isBikeOneway(way) || isRoundabout && !way.hasTag("oneway:bicycle", "no")
-                    && !way.hasTag("cycleway", oppositeLanes)
-                    && !way.hasTag("cycleway:left", oppositeLanes)
-                    && !way.hasTag("cycleway:right", oppositeLanes)
-                    && !way.hasTag("cycleway:left:oneway", "-1")
-                    && !way.hasTag("cycleway:right:oneway", "-1"))) {
-                boolean isBackward = way.hasTag("oneway", "-1")
-                        || way.hasTag("oneway:bicycle", "-1")
-                        || way.hasTag("vehicle:forward", restrictedValues)
-                        || way.hasTag("bicycle:forward", restrictedValues);
-                accessEnc.setBool(isBackward, edgeFlags, true);
+        if (transportationMode.isMotorVehicle()) {
+            if (way.hasTag("oneway", fwdOneway) || way.hasTag("vehicle:backward", "no") || way.hasTag("motor_vehicle:backward", "no")
+                    || transportationMode == TransportationMode.HGV && way.hasTag("hgv:backward", "no")) {
+                accessEnc.setBool(false, edgeFlags, true);
+            } else if (way.hasTag("oneway", "-1") || way.hasTag("vehicle:forward", "no") || way.hasTag("motor_vehicle:forward", "no")
+                    || transportationMode == TransportationMode.HGV && way.hasTag("hgv:forward", "no")) {
+                accessEnc.setBool(true, edgeFlags, true);
             } else {
                 accessEnc.setBool(false, edgeFlags, true);
                 accessEnc.setBool(true, edgeFlags, true);
             }
+        } else if (transportationMode == TransportationMode.BIKE) {
+            // note the special tag "oneway:bicycle=no" which marks valid access in both directions
+            boolean ignoreOneway = way.hasTag("oneway:bicycle", "no")
+                    || way.hasTag("cycleway", oppositeLanes)
+                    || way.hasTag("cycleway:left", oppositeLanes)
+                    || way.hasTag("cycleway:right", oppositeLanes);
+
+            if ((way.hasTag("oneway", fwdOneway) || way.hasTag("vehicle:backward", "no") || way.hasTag("bicycle:backward", "no")
+                    || way.hasTag("oneway:bicycle", fwdOneway) /* oneway=yes should be preferred over oneway:bicycle, still for forward direction too common (>45k) */)
+                    && !way.hasTag("bicycle:backward", intendedValues) && !ignoreOneway) {
+                accessEnc.setBool(false, edgeFlags, true);
+            } else if ((way.hasTag("oneway", "-1") || way.hasTag("vehicle:forward", "no") || way.hasTag("bicycle:forward", "no"))
+                    && !way.hasTag("bicycle:forward", intendedValues) && !ignoreOneway) {
+                accessEnc.setBool(true, edgeFlags, true);
+            } else {
+                accessEnc.setBool(false, edgeFlags, true);
+                accessEnc.setBool(true, edgeFlags, true);
+            }
+        } else if (transportationMode == TransportationMode.FOOT) {
+            accessEnc.setBool(false, edgeFlags, true);
+            accessEnc.setBool(true, edgeFlags, true);
+        } else {
+            throw new IllegalArgumentException("TransportationMode " + transportationMode + " not yet supported");
         }
-
         return edgeFlags;
-    }
-
-    /**
-     * make sure that isOneway is called before
-     */
-    protected boolean isBackwardOneway(ReaderWay way) {
-        return way.hasTag("oneway", "-1")
-                || way.hasTag("vehicle:forward", restrictedValues)
-                || way.hasTag("motor_vehicle:forward", restrictedValues);
-    }
-
-    /**
-     * make sure that isOneway is called before
-     */
-    protected boolean isForwardOneway(ReaderWay way) {
-        return !way.hasTag("oneway", "-1")
-                && !way.hasTag("vehicle:forward", restrictedValues)
-                && !way.hasTag("motor_vehicle:forward", restrictedValues);
-    }
-
-    protected boolean isOneway(ReaderWay way) {
-        return way.hasTag("oneway", oneways)
-                || way.hasTag("vehicle:backward", restrictedValues)
-                || way.hasTag("vehicle:forward", restrictedValues)
-                || way.hasTag("motor_vehicle:backward", restrictedValues)
-                || way.hasTag("motor_vehicle:forward", restrictedValues);
-    }
-
-
-    boolean isBikeOneway(ReaderWay way) {
-        return way.hasTag("oneway", oneways) && !way.hasTag("oneway", "-1") && !way.hasTag("bicycle:backward", intendedValues)
-                || way.hasTag("oneway", "-1") && !way.hasTag("bicycle:forward", intendedValues)
-                || way.hasTag("oneway:bicycle", oneways)
-                || way.hasTag("vehicle:backward", restrictedValues) && !way.hasTag("bicycle:forward", intendedValues)
-                || way.hasTag("vehicle:forward", restrictedValues) && !way.hasTag("bicycle:backward", intendedValues)
-                || way.hasTag("bicycle:forward", restrictedValues)
-                || way.hasTag("bicycle:backward", restrictedValues);
     }
 }
