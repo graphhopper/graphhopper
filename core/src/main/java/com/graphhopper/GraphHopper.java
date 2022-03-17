@@ -686,7 +686,7 @@ public class GraphHopper {
         AreaIndex<CustomArea> areaIndex = new AreaIndex<>(customAreas);
 
         logger.info("start creating graph from " + osmFile);
-        OSMReader reader = new OSMReader(ghStorage, osmReaderConfig).setFile(_getOSMFile()).
+        OSMReader reader = new OSMReader(ghStorage.getBaseGraph(), encodingManager, osmReaderConfig).setFile(_getOSMFile()).
                 setAreaIndex(areaIndex).
                 setElevationProvider(eleProvider).
                 setCountryRuleFactory(countryRuleFactory);

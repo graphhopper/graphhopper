@@ -920,8 +920,8 @@ public class OSMReaderTest {
     public void testCountries() throws IOException {
         EncodingManager em = EncodingManager.create("car");
         EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
-        GraphHopperStorage graph = new GraphBuilder(em).build();
-        OSMReader reader = new OSMReader(graph, new OSMReaderConfig());
+        BaseGraph graph = new BaseGraph.Builder(em).build();
+        OSMReader reader = new OSMReader(graph, em, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
         reader.setAreaIndex(createCountryIndex());
         // there are two edges, both with highway=track, one in Berlin, one in Paris
@@ -945,8 +945,8 @@ public class OSMReaderTest {
                 .add(new CountryParser())
                 .build();
         EnumEncodedValue<Country> countryEnc = em.getEnumEncodedValue(Country.KEY, Country.class);
-        GraphHopperStorage graph = new GraphBuilder(em).build();
-        OSMReader reader = new OSMReader(graph, new OSMReaderConfig());
+        BaseGraph graph = new BaseGraph.Builder(em).build();
+        OSMReader reader = new OSMReader(graph, em, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
         reader.setAreaIndex(createCountryIndex());
         reader.setFile(new File(getClass().getResource("test-osm12.xml").getFile()));

@@ -7,9 +7,8 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.AfterEach;
@@ -62,12 +61,12 @@ public class ShortestPathTreeTest {
 
     private final EncodingManager encodingManager = EncodingManager.create("car");
     private final FlagEncoder carEncoder = encodingManager.getEncoder("car");
-    private GraphHopperStorage graph;
+    private BaseGraph graph;
 
 
     @BeforeEach
     public void setUp() {
-        graph = new GraphBuilder(encodingManager).create();
+        graph = new BaseGraph.Builder(encodingManager).create();
 
         //         8
         //        /
@@ -99,7 +98,7 @@ public class ShortestPathTreeTest {
         GHUtility.setSpeed(20, true, true, carEncoder, ((Graph) graph).edge(3, 8).setDistance(25));
     }
 
-    private int countDirectedEdges(GraphHopperStorage graph) {
+    private int countDirectedEdges(BaseGraph graph) {
         BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
         int result = 0;
         AllEdgesIterator iter = graph.getAllEdges();

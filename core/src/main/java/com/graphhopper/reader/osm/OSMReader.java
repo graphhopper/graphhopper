@@ -34,7 +34,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.TurnCostParser;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.TurnCostStorage;
@@ -68,7 +68,7 @@ public class OSMReader {
     private static final Pattern WAY_NAME_PATTERN = Pattern.compile("; *");
 
     private final OSMReaderConfig config;
-    private final GraphHopperStorage ghStorage;
+    private final BaseGraph baseGraph;
     private final NodeAccess nodeAccess;
     private final TurnCostStorage turnCostStorage;
     private final EncodingManager encodingManager;
@@ -88,15 +88,15 @@ public class OSMReader {
     private GHLongHashSet osmWayIdSet = new GHLongHashSet();
     private IntLongMap edgeIdToOsmWayIdMap;
 
-    public OSMReader(GraphHopperStorage ghStorage, OSMReaderConfig config) {
-        this.ghStorage = ghStorage;
+    public OSMReader(BaseGraph baseGraph, EncodingManager encodingManager, OSMReaderConfig config) {
+        this.baseGraph = baseGraph;
         this.config = config;
-        this.nodeAccess = ghStorage.getNodeAccess();
-        this.encodingManager = ghStorage.getEncodingManager();
+        this.nodeAccess = baseGraph.getNodeAccess();
+        this.encodingManager = encodingManager;
 
         simplifyAlgo.setMaxDistance(config.getMaxWayPointDistance());
         simplifyAlgo.setElevationMaxDistance(config.getElevationMaxWayPointDistance());
-        turnCostStorage = ghStorage.getTurnCostStorage();
+        turnCostStorage = baseGraph.getTurnCostStorage();
 
         tempRelFlags = encodingManager.createRelationFlags();
         if (tempRelFlags.length != 2)
@@ -145,8 +145,8 @@ public class OSMReader {
         if (!osmFile.exists())
             throw new IllegalStateException("Your specified OSM file does not exist:" + osmFile.getAbsolutePath());
 
-        WaySegmentParser waySegmentParser = new WaySegmentParser.Builder(ghStorage.getNodeAccess())
-                .setDirectory(ghStorage.getDirectory())
+        WaySegmentParser waySegmentParser = new WaySegmentParser.Builder(baseGraph.getNodeAccess())
+                .setDirectory(baseGraph.getDirectory())
                 .setElevationProvider(eleProvider)
                 .setWayFilter(this::acceptWay)
                 .setSplitNodeFilter(this::isBarrierNode)
@@ -156,13 +156,13 @@ public class OSMReader {
                 .setEdgeHandler(this::addEdge)
                 .setWorkerThreads(config.getWorkerThreads())
                 .build();
-        ghStorage.create(100);
+        baseGraph.create(100);
         waySegmentParser.readOSM(osmFile);
         osmDataDate = waySegmentParser.getTimeStamp();
-        if (ghStorage.getNodes() == 0)
+        if (baseGraph.getNodes() == 0)
             throw new RuntimeException("Graph after reading OSM must not be empty");
         LOGGER.info("Finished reading OSM file: {}, nodes: {}, edges: {}, zero distance edges: {}",
-                osmFile.getAbsolutePath(), nf(ghStorage.getNodes()), nf(ghStorage.getEdges()), nf(zeroCounter));
+                osmFile.getAbsolutePath(), nf(baseGraph.getNodes()), nf(baseGraph.getEdges()), nf(zeroCounter));
         finishedReading();
     }
 
@@ -326,7 +326,7 @@ public class OSMReader {
             return;
 
         String name = way.getTag("way_name", "");
-        EdgeIteratorState edge = ghStorage.edge(fromIndex, toIndex).setDistance(distance).setFlags(edgeFlags).setName(name);
+        EdgeIteratorState edge = baseGraph.edge(fromIndex, toIndex).setDistance(distance).setFlags(edgeFlags).setName(name);
 
         // If the entire way is just the first and last point, do not waste space storing an empty way geometry
         if (pointList.size() > 2) {
@@ -517,7 +517,7 @@ public class OSMReader {
                 int viaNode = map.getInternalNodeIdOfOsmNode(turnRelation.getViaOsmNodeId());
                 // street with restriction was not included (access or tag limits etc)
                 if (viaNode >= 0)
-                    encodingManager.handleTurnRelationTags(turnRelation, map, ghStorage);
+                    encodingManager.handleTurnRelationTags(turnRelation, map, baseGraph);
             }
         }
     }
