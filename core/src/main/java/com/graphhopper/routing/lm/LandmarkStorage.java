@@ -95,10 +95,6 @@ public class LandmarkStorage {
      */
     static final long PRECISION = 1 << 16;
 
-    public LandmarkStorage(GraphHopperStorage graph, Directory dir, final LMConfig lmConfig, int landmarks) {
-        this(graph.getBaseGraph(), dir, lmConfig, landmarks);
-    }
-
     public LandmarkStorage(BaseGraph graph, Directory dir, final LMConfig lmConfig, int landmarks) {
         this.graph = graph;
         this.na = graph.getNodeAccess();

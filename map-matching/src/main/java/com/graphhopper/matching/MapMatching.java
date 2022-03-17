@@ -37,6 +37,7 @@ import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
@@ -73,7 +74,7 @@ public class MapMatching {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final Graph graph;
+    private final BaseGraph graph;
     private final LandmarkStorage landmarks;
     private final LocationIndexTree locationIndex;
     private double measurementErrorSigma = 50.0;
@@ -128,7 +129,7 @@ public class MapMatching {
         } else {
             landmarks = null;
         }
-        graph = graphHopper.getGraphHopperStorage();
+        graph = graphHopper.getGraphHopperStorage().getBaseGraph();
         unwrappedWeighting = graphHopper.createWeighting(profile, hints);
         inSubnetworkEnc = graphHopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profileStr));
         this.maxVisitedNodes = hints.getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);

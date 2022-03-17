@@ -6,9 +6,8 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
@@ -28,13 +27,13 @@ public class BlockAreaWeightingTest {
 
     private FlagEncoder encoder = new CarFlagEncoder();
     private EncodingManager em;
-    private GraphHopperStorage graph;
+    private BaseGraph graph;
 
     @BeforeEach
     public void setUp() {
         encoder = new CarFlagEncoder();
         em = EncodingManager.create(Arrays.asList(encoder));
-        graph = new GraphBuilder(em).create();
+        graph = new BaseGraph.Builder(em).create();
         // 0-1
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1));
         updateDistancesFor(graph, 0, 0.00, 0.00);

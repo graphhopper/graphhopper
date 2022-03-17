@@ -23,12 +23,12 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.util.Set;
 import java.util.TreeSet;
 
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * @author Peter Karich
@@ -39,7 +39,7 @@ public class GraphEdgeIdFinderTest {
     public void testParseStringHints() {
         FlagEncoder encoder = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(encoder);
-        GraphHopperStorage graph = new GraphBuilder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
         // 0-1-2
         // | |
         // 3-4
@@ -71,7 +71,7 @@ public class GraphEdgeIdFinderTest {
     public void testBlockAreasWithPolygon() {
         FlagEncoder encoder = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(encoder);
-        GraphHopperStorage graph = new GraphBuilder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
 
         // 00-01-02-03
         // |  |

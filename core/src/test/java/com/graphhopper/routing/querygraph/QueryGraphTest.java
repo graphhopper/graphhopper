@@ -52,13 +52,13 @@ import static org.junit.jupiter.api.Assertions.*;
 public class QueryGraphTest {
     private EncodingManager encodingManager;
     private FlagEncoder encoder;
-    private GraphHopperStorage g;
+    private BaseGraph g;
 
     @BeforeEach
     public void setUp() {
         encoder = new CarFlagEncoder();
         encodingManager = EncodingManager.create(encoder);
-        g = new GraphBuilder(encodingManager).create();
+        g = new BaseGraph.Builder(encodingManager).create();
     }
 
     @AfterEach
@@ -270,7 +270,7 @@ public class QueryGraphTest {
     @Test
     public void testUseMeanElevation() {
         g.close();
-        g = new GraphBuilder(encodingManager).set3D(true).create();
+        g = new BaseGraph.Builder(encodingManager).set3D(true).create();
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0, 0, 0);
         na.setNode(1, 0, 0.0001, 20);
@@ -497,7 +497,7 @@ public class QueryGraphTest {
     public void testTurnCostsProperlyPropagated_Issue282() {
         FlagEncoder encoder = new CarFlagEncoder(5, 5, 15);
         EncodingManager em = EncodingManager.create(encoder);
-        GraphHopperStorage graphWithTurnCosts = new GraphBuilder(em).withTurnCosts(true).create();
+        BaseGraph graphWithTurnCosts = new BaseGraph.Builder(em).withTurnCosts(true).create();
         TurnCostStorage turnExt = graphWithTurnCosts.getTurnCostStorage();
         DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(TurnCost.key(encoder.toString()));
         NodeAccess na = graphWithTurnCosts.getNodeAccess();
@@ -827,7 +827,7 @@ public class QueryGraphTest {
         FlagEncoder encoder = new CarFlagEncoder(new PMap().putObject("speed_two_directions", true));
         EncodingManager encodingManager = EncodingManager.create(encoder);
         DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
-        Graph g = new GraphBuilder(encodingManager).create();
+        BaseGraph g = new BaseGraph.Builder(encodingManager).create();
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 50.00, 10.10);
         na.setNode(1, 50.00, 10.20);
@@ -901,7 +901,7 @@ public class QueryGraphTest {
         FlagEncoder encoder = new CarFlagEncoder(new PMap().putObject("speed_two_directions", true));
         EncodingManager encodingManager = EncodingManager.create(encoder);
         DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
-        Graph g = new GraphBuilder(encodingManager).create();
+        BaseGraph g = new BaseGraph.Builder(encodingManager).create();
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 50.00, 10.10);
         na.setNode(1, 50.00, 10.20);

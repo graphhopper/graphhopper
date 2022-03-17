@@ -19,12 +19,11 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.AccessFilter;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
@@ -34,10 +33,9 @@ import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import static com.graphhopper.routing.DirectionResolverResult.*;
 import static com.graphhopper.util.Helper.createPointList;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Tests {@link DirectionResolver} on a simple graph (no {@link QueryGraph}.
@@ -46,13 +44,13 @@ import static com.graphhopper.util.Helper.createPointList;
  */
 public class DirectionResolverTest {
     private FlagEncoder encoder;
-    private GraphHopperStorage graph;
+    private BaseGraph graph;
     private NodeAccess na;
 
     @BeforeEach
     public void setup() {
         encoder = new CarFlagEncoder();
-        graph = new GraphBuilder(EncodingManager.create(encoder)).create();
+        graph = new BaseGraph.Builder(EncodingManager.create(encoder)).create();
         na = graph.getNodeAccess();
     }
 

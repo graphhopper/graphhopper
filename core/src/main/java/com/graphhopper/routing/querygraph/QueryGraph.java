@@ -67,6 +67,10 @@ public class QueryGraph implements Graph {
         return QueryGraph.create(graph, Collections.singletonList(snap));
     }
 
+    /**
+     * @deprecated currently we use this only for easier GraphHopperStorage -> BaseGraph migration
+     * instead of just calling graph.getBaseGraph() better try to convert graph to a BaseGraph
+     */
     @Deprecated
     public static QueryGraph create(Graph graph, Snap snap) {
         return create(graph.getBaseGraph(), snap);
@@ -76,6 +80,10 @@ public class QueryGraph implements Graph {
         return QueryGraph.create(graph.getBaseGraph(), Arrays.asList(fromSnap, toSnap));
     }
 
+    /**
+     * @deprecated currently we use this only for easier GraphHopperStorage -> BaseGraph migration
+     * instead of just calling graph.getBaseGraph() better try to convert graph to a BaseGraph
+     */
     @Deprecated
     public static QueryGraph create(Graph graph, Snap fromSnap, Snap toSnap) {
         return create(graph.getBaseGraph(), fromSnap, toSnap);
@@ -83,11 +91,6 @@ public class QueryGraph implements Graph {
 
     public static QueryGraph create(BaseGraph graph, List<Snap> snaps) {
         return new QueryGraph(graph, snaps);
-    }
-
-    @Deprecated
-    public static QueryGraph create(Graph graph, List<Snap> snaps) {
-        return create(graph.getBaseGraph(), snaps);
     }
 
     private QueryGraph(BaseGraph graph, List<Snap> snaps) {

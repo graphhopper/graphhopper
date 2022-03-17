@@ -142,7 +142,7 @@ public class LMPreparationHandler {
      *
      * @return the loaded landmark storages
      */
-    public List<LandmarkStorage> load(List<LMConfig> lmConfigs, GraphHopperStorage ghStorage) {
+    public List<LandmarkStorage> load(List<LMConfig> lmConfigs, BaseGraph baseGraph) {
         List<LandmarkStorage> loaded = Collections.synchronizedList(new ArrayList<>());
         List<Callable<String>> loadingCallables = lmConfigs.stream()
                 .map(lmConfig -> (Callable<String>) () -> {
@@ -150,7 +150,7 @@ public class LMPreparationHandler {
                     //       is load the landmark data and these parameters are only needed to calculate the landmarks.
                     //       we should also work towards a separation of the storage and preparation related code in
                     //       landmark storage
-                    LandmarkStorage lms = new LandmarkStorage(ghStorage, ghStorage.getDirectory(), lmConfig, landmarkCount);
+                    LandmarkStorage lms = new LandmarkStorage(baseGraph, baseGraph.getDirectory(), lmConfig, landmarkCount);
                     if (lms.loadExisting())
                         loaded.add(lms);
                     else {
@@ -158,8 +158,8 @@ public class LMPreparationHandler {
                         //       we need to remove the DAs from the directory. This is because otherwise we cannot
                         //       create these DataAccess again when we actually prepare the landmarks that don't exist
                         //       yet.
-                        ghStorage.getDirectory().remove("landmarks_" + lmConfig.getName());
-                        ghStorage.getDirectory().remove("landmarks_subnetwork_" + lmConfig.getName());
+                        baseGraph.getDirectory().remove("landmarks_" + lmConfig.getName());
+                        baseGraph.getDirectory().remove("landmarks_subnetwork_" + lmConfig.getName());
                     }
                     return lmConfig.getName();
                 })

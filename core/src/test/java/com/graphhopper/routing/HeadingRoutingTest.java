@@ -280,8 +280,8 @@ class HeadingRoutingTest {
         locationIndex.prepareIndex();
         Map<String, Profile> profilesByName = new HashMap<>();
         profilesByName.put("profile", new Profile("profile").setVehicle("car").setWeighting("fastest"));
-        return new Router(graph, locationIndex, profilesByName, new PathDetailsBuilderFactory(), new TranslationMap().doImport(), new RouterConfig(),
-                new DefaultWeightingFactory(graph, graph.getEncodingManager()), Collections.emptyMap(), Collections.emptyMap());
+        return new Router(graph.getBaseGraph(), graph.getEncodingManager(), locationIndex, profilesByName, new PathDetailsBuilderFactory(), new TranslationMap().doImport(), new RouterConfig(),
+                new DefaultWeightingFactory(graph.getBaseGraph(), graph.getEncodingManager()), Collections.emptyMap(), Collections.emptyMap());
     }
 
     private GraphHopperStorage createSquareGraph() {

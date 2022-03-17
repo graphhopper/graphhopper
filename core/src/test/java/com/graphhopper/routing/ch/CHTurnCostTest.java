@@ -918,7 +918,7 @@ public class CHTurnCostTest {
         }
 
         automaticPrepareCH();
-        QueryGraph queryGraph = QueryGraph.create(chGraph.getBaseGraph(), snaps);
+        QueryGraph queryGraph = QueryGraph.create(graph, snaps);
         RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(chGraph, queryGraph).createAlgo(new PMap().putObject(ALGORITHM, algo));
         Path path = chAlgo.calcPath(5, 6);
         // there should not be a path from 5 to 6, because first we cannot go directly 5-4-6, so we need to go left

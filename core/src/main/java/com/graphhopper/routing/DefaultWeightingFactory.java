@@ -25,7 +25,7 @@ import com.graphhopper.routing.weighting.*;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
@@ -35,11 +35,11 @@ import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.toLowerCase;
 
 public class DefaultWeightingFactory implements WeightingFactory {
-    private final GraphHopperStorage ghStorage;
+    private final BaseGraph graph;
     private final EncodingManager encodingManager;
 
-    public DefaultWeightingFactory(GraphHopperStorage ghStorage, EncodingManager encodingManager) {
-        this.ghStorage = ghStorage;
+    public DefaultWeightingFactory(BaseGraph graph, EncodingManager encodingManager) {
+        this.graph = graph;
         this.encodingManager = encodingManager;
     }
 
@@ -60,7 +60,7 @@ public class DefaultWeightingFactory implements WeightingFactory {
             if (!encoder.supportsTurnCosts())
                 throw new IllegalArgumentException("Encoder " + encoder + " does not support turn costs");
             int uTurnCosts = hints.getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
-            turnCostProvider = new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCosts);
+            turnCostProvider = new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage(), uTurnCosts);
         } else {
             turnCostProvider = NO_TURN_COST_PROVIDER;
         }

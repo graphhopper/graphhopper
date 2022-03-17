@@ -27,6 +27,7 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
 
     /**
      * @deprecated currently we use this only for easier GraphHopperStorage -> BaseGraph migration
+     *             instead of just calling graph.getBaseGraph() better try to convert graph to a BaseGraph
      */
     @Deprecated
     public static RoutingCHGraph fromGraph(Graph graph, CHStorage chStorage, CHConfig chConfig) {

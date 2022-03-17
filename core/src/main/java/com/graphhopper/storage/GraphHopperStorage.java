@@ -42,7 +42,6 @@ public final class GraphHopperStorage implements Graph, Closeable {
     private final EncodingManager encodingManager;
     private final StorableProperties properties;
     private final BaseGraph baseGraph;
-    private final int segmentSize;
 
     /**
      * Use {@link GraphBuilder} to create a graph
@@ -54,13 +53,7 @@ public final class GraphHopperStorage implements Graph, Closeable {
         this.encodingManager = encodingManager;
         this.dir = dir;
         this.properties = new StorableProperties(dir);
-        this.segmentSize = segmentSize;
         baseGraph = new BaseGraph(dir, encodingManager.getIntsForFlags(), withElevation, withTurnCosts, segmentSize);
-    }
-
-    public CHStorage loadCHStorage(String chGraphName, boolean edgeBased) {
-        CHStorage store = new CHStorage(dir, chGraphName, segmentSize, edgeBased);
-        return store.loadExisting() ? store : null;
     }
 
     /**

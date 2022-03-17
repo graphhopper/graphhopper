@@ -595,7 +595,7 @@ public class LocationIndexTreeTest {
     @Test
     public void testDifferentVehicles() {
         final EncodingManager encodingManager = EncodingManager.create("car,foot");
-        GraphHopperStorage g = new GraphBuilder(encodingManager).create();
+        BaseGraph g = new BaseGraph.Builder(encodingManager).create();
         initSimpleGraph(g, encodingManager);
         LocationIndexTree idx = (LocationIndexTree) createIndexNoPrepare(g, 500000).prepareIndex();
         assertEquals(0, findClosestEdge(idx, 1, -1));
@@ -618,7 +618,7 @@ public class LocationIndexTreeTest {
     @ValueSource(booleans = {true, false})
     public void closeToTowerNode(boolean snapAtBase) {
         // 0 - 1
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 51.985500, 19.254000);
         na.setNode(1, 51.986000, 19.255000);
@@ -642,7 +642,7 @@ public class LocationIndexTreeTest {
     @Test
     public void queryBehindBeforeOrBehindLastTowerNode() {
         // 0 -x- 1
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 51.985000, 19.254000);
         na.setNode(1, 51.986000, 19.255000);

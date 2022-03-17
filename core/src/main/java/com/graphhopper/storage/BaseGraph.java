@@ -147,7 +147,7 @@ public class BaseGraph implements Graph {
         return store.getFrozen();
     }
 
-    void create(long initSize) {
+    public void create(long initSize) {
         store.create(initSize);
 
         initSize = Math.min(initSize, 2000);
@@ -206,7 +206,7 @@ public class BaseGraph implements Graph {
         }
     }
 
-    long getCapacity() {
+    public long getCapacity() {
         return store.getCapacity() + stringIndex.getCapacity()
                 + wayGeometry.getCapacity() + (supportsTurnCosts() ? turnCostStorage.getCapacity() : 0);
     }

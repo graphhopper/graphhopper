@@ -25,11 +25,9 @@ import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -42,7 +40,7 @@ public abstract class EdgeElevationInterpolatorTest {
     protected ReaderWay interpolatableWay;
     protected ReaderWay normalWay;
 
-    protected GraphHopperStorage graph;
+    protected BaseGraph graph;
     protected EnumEncodedValue<RoadEnvironment> roadEnvEnc;
     protected EncodingManager encodingManager;
     protected IntsRef relFlags;
@@ -51,7 +49,7 @@ public abstract class EdgeElevationInterpolatorTest {
     @SuppressWarnings("resource")
     @BeforeEach
     public void setUp() {
-        graph = new GraphBuilder(
+        graph = new BaseGraph.Builder(
                 encodingManager = new EncodingManager.Builder().add(new CarFlagEncoder()).add(new FootFlagEncoder()).build()
         ).set3D(true).create();
         roadEnvEnc = encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
@@ -64,7 +62,7 @@ public abstract class EdgeElevationInterpolatorTest {
 
     @AfterEach
     public void tearDown() {
-        Helper.close(graph);
+        graph.close();
     }
 
     protected abstract ReaderWay createInterpolatableWay();
@@ -76,7 +74,7 @@ public abstract class EdgeElevationInterpolatorTest {
     protected void gatherOuterAndInnerNodeIdsOfStructure(EdgeIteratorState edge,
                                                          final GHIntHashSet outerNodeIds, final GHIntHashSet innerNodeIds) {
         edgeElevationInterpolator.gatherOuterAndInnerNodeIds(
-                edgeElevationInterpolator.getStorage().createEdgeExplorer(), edge,
+                edgeElevationInterpolator.getGraph().createEdgeExplorer(), edge,
                 new GHBitSetImpl(), outerNodeIds, innerNodeIds);
     }
 }

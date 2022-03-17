@@ -29,8 +29,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
@@ -49,8 +48,8 @@ import static org.junit.jupiter.api.Assertions.fail;
  */
 public class PrepareRoutingSubnetworksTest {
 
-    private static GraphHopperStorage createSubnetworkTestStorage(EncodingManager encodingManager) {
-        GraphHopperStorage g = new GraphBuilder(encodingManager).create();
+    private static BaseGraph createSubnetworkTestStorage(EncodingManager encodingManager) {
+        BaseGraph g = new BaseGraph.Builder(encodingManager).create();
         //         5 - 6
         //         | /
         //         4
@@ -87,7 +86,7 @@ public class PrepareRoutingSubnetworksTest {
     public void testPrepareSubnetworks_oneVehicle() {
         EncodingManager em = createEncodingManager("car");
         FlagEncoder encoder = em.getEncoder("car");
-        GraphHopperStorage g = createSubnetworkTestStorage(em);
+        BaseGraph g = createSubnetworkTestStorage(em);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(createJob(em, encoder, NO_TURN_COST_PROVIDER)));
         // this will make the upper small network a subnetwork
         instance.setMinNetworkSize(4);
@@ -107,7 +106,7 @@ public class PrepareRoutingSubnetworksTest {
         EncodingManager em = createEncodingManager("car,bike");
         FlagEncoder carEncoder = em.getEncoder("car");
         FlagEncoder bikeEncoder = em.getEncoder("bike");
-        GraphHopperStorage g = createSubnetworkTestStorage(em);
+        BaseGraph g = createSubnetworkTestStorage(em);
 
         // first we only block the middle edge for cars. this way a subnetwork should be created but only for car
         EdgeIteratorState edge = GHUtility.getEdge(g, 3, 4);
@@ -141,7 +140,7 @@ public class PrepareRoutingSubnetworksTest {
         FlagEncoder encoder = em.fetchEdgeEncoders().iterator().next();
 
         // since the middle edge is blocked the upper component is a subnetwork (regardless of turn costs)
-        GraphHopperStorage g = createSubnetworkTestStorage(em);
+        BaseGraph g = createSubnetworkTestStorage(em);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(
                 createJob(em, encoder, new DefaultTurnCostProvider(encoder, g.getTurnCostStorage(), 0))));
         instance.setMinNetworkSize(4);
@@ -175,10 +174,10 @@ public class PrepareRoutingSubnetworksTest {
     }
 
 
-    private GraphHopperStorage createSubnetworkTestStorageWithOneWays(EncodingManager em, FlagEncoder encoder) {
+    private BaseGraph createSubnetworkTestStorageWithOneWays(EncodingManager em, FlagEncoder encoder) {
         if (em.fetchEdgeEncoders().size() > 1)
             fail("Warning: This method only sets access/speed for a single encoder, but the given encoding manager has multiple encoders");
-        GraphHopperStorage g = new GraphBuilder(em).create();
+        BaseGraph g = new BaseGraph.Builder(em).create();
         // 0 - 1 - 2 - 3 - 4 <- 5 - 6
         GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(1));
         GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 2).setDistance(1));
@@ -198,10 +197,10 @@ public class PrepareRoutingSubnetworksTest {
     public void testPrepareSubnetworks_withOneWays() {
         EncodingManager em = createEncodingManager("car");
         FlagEncoder encoder = em.fetchEdgeEncoders().iterator().next();
-        GraphHopperStorage g = createSubnetworkTestStorageWithOneWays(em, encoder);
+        BaseGraph g = createSubnetworkTestStorageWithOneWays(em, encoder);
         assertEquals(11, g.getNodes());
 
-        PrepareRoutingSubnetworks.PrepareJob job = createJob(g.getEncodingManager(), encoder, NO_TURN_COST_PROVIDER);
+        PrepareRoutingSubnetworks.PrepareJob job = createJob(em, encoder, NO_TURN_COST_PROVIDER);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(job)).
                 setMinNetworkSize(2);
         int subnetworkEdges = instance.doWork();
@@ -228,15 +227,16 @@ public class PrepareRoutingSubnetworksTest {
     @Test
     public void testNodeOrderingRegression() {
         // 1 -> 2 -> 0 - 3 - 4 - 5
-        GraphHopperStorage g = new GraphBuilder(createEncodingManager("car")).create();
-        FlagEncoder encoder = g.getEncodingManager().fetchEdgeEncoders().iterator().next();
+        EncodingManager em = createEncodingManager("car");
+        BaseGraph g = new BaseGraph.Builder(em).create();
+        FlagEncoder encoder = em.fetchEdgeEncoders().iterator().next();
         GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 0).setDistance(1));
         GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 3).setDistance(1));
         GHUtility.setSpeed(60, true, true, encoder, g.edge(3, 4).setDistance(1));
         GHUtility.setSpeed(60, true, true, encoder, g.edge(4, 5).setDistance(1));
 
-        PrepareRoutingSubnetworks.PrepareJob job = createJob(g.getEncodingManager(), encoder, NO_TURN_COST_PROVIDER);
+        PrepareRoutingSubnetworks.PrepareJob job = createJob(em, encoder, NO_TURN_COST_PROVIDER);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(job)).
                 setMinNetworkSize(2);
         int subnetworkEdges = instance.doWork();
@@ -244,8 +244,8 @@ public class PrepareRoutingSubnetworksTest {
         assertEquals(IntArrayList.from(0, 1), getSubnetworkEdges(g, encoder));
     }
 
-    private static IntArrayList getSubnetworkEdges(GraphHopperStorage graph, FlagEncoder encoder) {
-        BooleanEncodedValue subnetworkEnc = graph.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(encoder.toString()));
+    private static IntArrayList getSubnetworkEdges(BaseGraph graph, FlagEncoder encoder) {
+        BooleanEncodedValue subnetworkEnc = encoder.getBooleanEncodedValue(Subnetwork.key(encoder.toString()));
         IntArrayList result = new IntArrayList();
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {

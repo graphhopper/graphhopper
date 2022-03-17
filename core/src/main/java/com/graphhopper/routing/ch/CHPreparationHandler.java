@@ -96,17 +96,17 @@ public class CHPreparationHandler {
         this.preparationThreads = preparationThreads;
     }
 
-    public Map<String, RoutingCHGraph> load(GraphHopperStorage ghStorage, List<CHConfig> chConfigs) {
+    public Map<String, RoutingCHGraph> load(BaseGraph graph, List<CHConfig> chConfigs) {
         Map<String, RoutingCHGraph> loaded = Collections.synchronizedMap(new LinkedHashMap<>());
         List<Callable<String>> callables = chConfigs.stream()
                 .map(c -> (Callable<String>) () -> {
-                    CHStorage chStorage = ghStorage.loadCHStorage(c.getName(), c.isEdgeBased());
-                    if (chStorage != null)
-                        loaded.put(c.getName(), RoutingCHGraphImpl.fromGraph(ghStorage, chStorage, c));
+                    CHStorage chStorage = new CHStorage(graph.getDirectory(), c.getName(), graph.getSegmentSize(), c.isEdgeBased());
+                    if (chStorage.loadExisting())
+                        loaded.put(c.getName(), RoutingCHGraphImpl.fromGraph(graph, chStorage, c));
                     else {
                         // todo: this is ugly, see comments in LMPreparationHandler
-                        ghStorage.getDirectory().remove("nodes_ch_" + c.getName());
-                        ghStorage.getDirectory().remove("shortcuts_" + c.getName());
+                        graph.getDirectory().remove("nodes_ch_" + c.getName());
+                        graph.getDirectory().remove("shortcuts_" + c.getName());
                     }
                     return c.getName();
                 })
@@ -149,7 +149,7 @@ public class CHPreparationHandler {
     }
 
     private PrepareContractionHierarchies createCHPreparation(GraphHopperStorage ghStorage, CHConfig chConfig) {
-        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraph(ghStorage, chConfig);
+        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraph(ghStorage.getBaseGraph(), chConfig);
         pch.setParams(pMap);
         return pch;
     }
