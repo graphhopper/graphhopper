@@ -90,7 +90,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         f.ghStorage.freeze();
 
         // create CH
-        PrepareContractionHierarchies basePch = PrepareContractionHierarchies.fromGraphHopperStorage(f.ghStorage, f.baseCHConfig);
+        PrepareContractionHierarchies basePch = PrepareContractionHierarchies.fromGraph(f.ghStorage, f.baseCHConfig);
         PrepareContractionHierarchies.Result res = basePch.doWork();
 
         // check correctness & performance
@@ -98,7 +98,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         runPerformanceTest(f.ghStorage, res.getCHStorage(), f.baseCHConfig, seed, numQueries);
 
         // now we re-use the contraction order from the previous contraction and re-run it with the traffic weighting
-        PrepareContractionHierarchies trafficPch = PrepareContractionHierarchies.fromGraphHopperStorage(f.ghStorage, f.trafficCHConfig)
+        PrepareContractionHierarchies trafficPch = PrepareContractionHierarchies.fromGraph(f.ghStorage, f.trafficCHConfig)
                 .useFixedNodeOrdering(res.getCHStorage().getNodeOrderingProvider());
         res = trafficPch.doWork();
 

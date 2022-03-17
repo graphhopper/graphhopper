@@ -201,7 +201,7 @@ public class DijkstraBidirectionCHTest {
 
     private RoutingCHGraph prepareCH(GraphHopperStorage graphHopperStorage, CHConfig chConfig) {
         graphHopperStorage.freeze();
-        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graphHopperStorage, chConfig);
+        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraph(graphHopperStorage, chConfig);
         PrepareContractionHierarchies.Result res = pch.doWork();
         return RoutingCHGraphImpl.fromGraph(graphHopperStorage, res.getCHStorage(), res.getCHConfig());
     }

@@ -1220,7 +1220,7 @@ public class RoutingAlgorithmTest {
             RoutingCHGraph routingCHGraph = routingCHGraphs.computeIfAbsent(chGraphName, name -> {
                 graph.freeze();
                 CHConfig chConfig = new CHConfig(name, weighting, traversalMode.isEdgeBased());
-                PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
+                PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraph(graph, chConfig);
                 PrepareContractionHierarchies.Result res = pch.doWork();
                 return RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
             });
@@ -1246,7 +1246,7 @@ public class RoutingAlgorithmTest {
             RoutingCHGraph routingCHGraph = routingCHGraphs.computeIfAbsent(chGraphName, name -> {
                 graph.freeze();
                 CHConfig chConfig = new CHConfig(name, weighting, traversalMode.isEdgeBased());
-                PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
+                PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraph(graph, chConfig);
                 PrepareContractionHierarchies.Result res = pch.doWork();
                 return RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
             });

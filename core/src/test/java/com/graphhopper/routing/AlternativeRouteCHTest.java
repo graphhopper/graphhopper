@@ -79,7 +79,7 @@ public class AlternativeRouteCHTest {
         // 5 ---> 11 will be reachable via shortcuts, as 11 is on shortest path 5 --> 12
         final int[] nodeOrdering = new int[]{0, 10, 12, 4, 3, 2, 5, 1, 6, 7, 8, 9, 11};
         CHConfig chConfig = CHConfig.nodeBased("p", new FastestWeighting(carFE));
-        PrepareContractionHierarchies contractionHierarchies = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
+        PrepareContractionHierarchies contractionHierarchies = PrepareContractionHierarchies.fromGraph(graph, chConfig);
         contractionHierarchies.useFixedNodeOrdering(NodeOrderingProvider.fromArray(nodeOrdering));
         PrepareContractionHierarchies.Result res = contractionHierarchies.doWork();
         return RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());

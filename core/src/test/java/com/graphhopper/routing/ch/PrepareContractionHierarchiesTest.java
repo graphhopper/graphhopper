@@ -529,7 +529,7 @@ public class PrepareContractionHierarchiesTest {
 
         // create CH for cars
         StopWatch sw = new StopWatch().start();
-        PrepareContractionHierarchies carPch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, carConfig);
+        PrepareContractionHierarchies carPch = PrepareContractionHierarchies.fromGraph(ghStorage, carConfig);
         PrepareContractionHierarchies.Result res = carPch.doWork();
         long timeCar = sw.stop().getMillis();
 
@@ -538,7 +538,7 @@ public class PrepareContractionHierarchiesTest {
         sw = new StopWatch().start();
         CHStorage chStore = res.getCHStorage();
         NodeOrderingProvider nodeOrderingProvider = chStore.getNodeOrderingProvider();
-        PrepareContractionHierarchies motorCyclePch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, motorCycleConfig)
+        PrepareContractionHierarchies motorCyclePch = PrepareContractionHierarchies.fromGraph(ghStorage, motorCycleConfig)
                 .useFixedNodeOrdering(nodeOrderingProvider);
         PrepareContractionHierarchies.Result resMotorCycle = motorCyclePch.doWork();
         RoutingCHGraph motorCycleCH = RoutingCHGraphImpl.fromGraph(ghStorage, resMotorCycle.getCHStorage(), resMotorCycle.getCHConfig());
@@ -577,7 +577,7 @@ public class PrepareContractionHierarchiesTest {
 
     private PrepareContractionHierarchies createPrepareContractionHierarchies(GraphHopperStorage g, CHConfig p) {
         g.freeze();
-        return PrepareContractionHierarchies.fromGraphHopperStorage(g, p);
+        return PrepareContractionHierarchies.fromGraph(g, p);
     }
 
     private void useNodeOrdering(PrepareContractionHierarchies prepare, int[] nodeOrdering) {

@@ -149,7 +149,7 @@ public class CHPreparationHandler {
     }
 
     private PrepareContractionHierarchies createCHPreparation(GraphHopperStorage ghStorage, CHConfig chConfig) {
-        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, chConfig);
+        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraph(ghStorage, chConfig);
         pch.setParams(pMap);
         return pch;
     }

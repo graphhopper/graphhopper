@@ -1225,7 +1225,7 @@ public class CHTurnCostTest {
         LOGGER.debug("Calculating CH with contraction order {}", contractionOrder);
         graph.freeze();
         NodeOrderingProvider nodeOrderingProvider = NodeOrderingProvider.fromArray(contractionOrder);
-        PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig)
+        PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraph(graph, chConfig)
                 .useFixedNodeOrdering(nodeOrderingProvider);
         PrepareContractionHierarchies.Result res = ch.doWork();
         chGraph = RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
@@ -1237,7 +1237,7 @@ public class CHTurnCostTest {
         pMap.putObject(LAST_LAZY_NODES_UPDATES, 100);
         pMap.putObject(NEIGHBOR_UPDATES, 4);
         pMap.putObject(LOG_MESSAGES, 10);
-        PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
+        PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraph(graph, chConfig);
         ch.setParams(pMap);
         PrepareContractionHierarchies.Result res = ch.doWork();
         chGraph = RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());

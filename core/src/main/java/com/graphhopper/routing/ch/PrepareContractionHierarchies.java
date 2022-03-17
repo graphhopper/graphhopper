@@ -60,7 +60,7 @@ public class PrepareContractionHierarchies {
     private final StopWatch neighborUpdateSW = new StopWatch();
     private final StopWatch contractionSW = new StopWatch();
     private final Params params;
-    private final GraphHopperStorage graph;
+    private final BaseGraph graph;
     private NodeContractor nodeContractor;
     private final int nodes;
     private NodeOrderingProvider nodeOrderingProvider;
@@ -71,21 +71,29 @@ public class PrepareContractionHierarchies {
     private int checkCounter;
     private boolean prepared = false;
 
-    public static PrepareContractionHierarchies fromGraphHopperStorage(GraphHopperStorage ghStorage, CHConfig chConfig) {
-        return new PrepareContractionHierarchies(ghStorage, chConfig);
+    /**
+     * @deprecated currently we use this only for easier GraphHopperStorage -> BaseGraph migration
+     */
+    @Deprecated
+    public static PrepareContractionHierarchies fromGraph(Graph graph, CHConfig chConfig) {
+        return new PrepareContractionHierarchies(graph.getBaseGraph(), chConfig);
     }
 
-    private PrepareContractionHierarchies(GraphHopperStorage ghStorage, CHConfig chConfig) {
-        graph = ghStorage;
+    public static PrepareContractionHierarchies fromGraph(BaseGraph graph, CHConfig chConfig) {
+        return new PrepareContractionHierarchies(graph.getBaseGraph(), chConfig);
+    }
+
+    private PrepareContractionHierarchies(BaseGraph graph, CHConfig chConfig) {
         if (!graph.isFrozen())
             throw new IllegalStateException("BaseGraph must be frozen before creating CHs");
-        chStore = CHStorage.fromGraph(ghStorage, chConfig);
+        this.graph = graph;
+        chStore = CHStorage.fromGraph(graph, chConfig);
         chBuilder = new CHStorageBuilder(chStore);
         this.chConfig = chConfig;
         params = Params.forTraversalMode(chConfig.getTraversalMode());
-        nodes = ghStorage.getNodes();
+        nodes = graph.getNodes();
         if (chConfig.getTraversalMode().isEdgeBased()) {
-            TurnCostStorage turnCostStorage = ghStorage.getTurnCostStorage();
+            TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
             if (turnCostStorage == null) {
                 throw new IllegalArgumentException("For edge-based CH you need a turn cost storage");
             }

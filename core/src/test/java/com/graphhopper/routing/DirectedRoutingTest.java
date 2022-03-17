@@ -119,7 +119,7 @@ public class DirectedRoutingTest {
                 return;
             }
             if (prepareCH) {
-                PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
+                PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraph(graph, chConfig);
                 PrepareContractionHierarchies.Result res = pch.doWork();
                 routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
             }
