@@ -72,7 +72,7 @@ public class EdgeBasedNodeContractorTest {
 
     private void freeze() {
         graph.freeze();
-        chStore = graph.createCHStorage(chConfigs.get(0));
+        chStore = CHStorage.fromGraph(graph, chConfigs.get(0));
         chBuilder = new CHStorageBuilder(chStore);
         weighting = graph.createCHGraph(chStore, chConfigs.get(0)).getWeighting();
     }
@@ -1135,7 +1135,7 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(200));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 1).setDistance(100));
         freeze();
-        chStore = graph.createCHStorage(chConfigs.get(1));
+        chStore = CHStorage.fromGraph(graph, chConfigs.get(1));
         chBuilder = new CHStorageBuilder(chStore);
         weighting = graph.createCHGraph(chStore, chConfigs.get(1)).getWeighting();
         setMaxLevelOnAllNodes();

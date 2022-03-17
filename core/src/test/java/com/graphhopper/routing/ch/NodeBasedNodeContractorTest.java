@@ -64,7 +64,7 @@ public class NodeBasedNodeContractorTest {
 
     private void freeze() {
         graph.freeze();
-        store = graph.createCHStorage(chConfig);
+        store = CHStorage.fromGraph(graph, chConfig);
     }
 
     @ParameterizedTest
@@ -281,7 +281,7 @@ public class NodeBasedNodeContractorTest {
         graph.freeze();
         Weighting weighting = new FastestWeighting(encoder);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
-        CHStorage chStore = graph.createCHStorage(chConfig);
+        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         setMaxLevelOnAllNodes(chStore);
 
         // perform CH contraction
@@ -318,7 +318,7 @@ public class NodeBasedNodeContractorTest {
         graph.freeze();
         Weighting weighting = new FastestWeighting(encoder);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
-        CHStorage chStore = graph.createCHStorage(chConfig);
+        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         setMaxLevelOnAllNodes(chStore);
         NodeContractor nodeContractor = createNodeContractor(graph, chStore, chConfig);
         nodeContractor.contractNode(0);

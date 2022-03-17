@@ -101,7 +101,7 @@ public class AlternativeRouteEdgeCHTest {
         GraphHopperStorage g = createTestGraph(em);
         TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(carFE, g.getTurnCostStorage());
         CHConfig chConfig = CHConfig.edgeBased("profile", new FastestWeighting(carFE, turnCostProvider));
-        CHStorage chStorage = g.createCHStorage(chConfig);
+        CHStorage chStorage = CHStorage.fromGraph(g, chConfig);
         RoutingCHGraph chGraph = g.createCHGraph(chStorage, chConfig);
         DijkstraBidirectionEdgeCHNoSOD router = new DijkstraBidirectionEdgeCHNoSOD(chGraph);
         Path path = router.calcPath(5, 10);

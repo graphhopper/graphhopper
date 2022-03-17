@@ -134,7 +134,7 @@ public class DijkstraBidirectionCHTest {
 
         ShortestWeighting weighting = new ShortestWeighting(carEncoder);
         CHConfig chConfig = CHConfig.nodeBased(weighting.getName(), weighting);
-        CHStorage store = graph.createCHStorage(chConfig);
+        CHStorage store = CHStorage.fromGraph(graph, chConfig);
 
         // explicitly set the node levels equal to the node ids
         // the graph contraction with this ordering yields no shortcuts
@@ -186,7 +186,7 @@ public class DijkstraBidirectionCHTest {
         graph.freeze();
         FastestWeighting weighting = new FastestWeighting(encoder);
         CHConfig chConfig = CHConfig.nodeBased(weighting.getName(), weighting);
-        CHStorage chStore = graph.createCHStorage(chConfig);
+        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         new CHStorageBuilder(chStore).setIdentityLevels();
         RoutingCHGraph routingCHGraph = graph.createCHGraph(chStore, chConfig);
         RoutingAlgorithm algo = createCHAlgo(routingCHGraph, true);

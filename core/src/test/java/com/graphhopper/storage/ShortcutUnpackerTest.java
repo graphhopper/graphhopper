@@ -54,7 +54,7 @@ public class ShortcutUnpackerTest {
             graph.freeze();
             TurnCostProvider turnCostProvider = edgeBased ? new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()) : NO_TURN_COST_PROVIDER;
             CHConfig chConfig = new CHConfig("profile", new FastestWeighting(encoder, turnCostProvider), edgeBased);
-            CHStorage chStore = graph.createCHStorage(chConfig);
+            CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
             chBuilder = new CHStorageBuilder(chStore);
             routingCHGraph = graph.createCHGraph(chStore, chConfig);
         }

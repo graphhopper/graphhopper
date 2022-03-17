@@ -79,7 +79,7 @@ public class PrepareContractionHierarchies {
         graph = ghStorage;
         if (!graph.isFrozen())
             throw new IllegalStateException("BaseGraph must be frozen before creating CHs");
-        chStore = ghStorage.createCHStorage(chConfig);
+        chStore = CHStorage.fromGraph(ghStorage, chConfig);
         chBuilder = new CHStorageBuilder(chStore);
         this.chConfig = chConfig;
         params = Params.forTraversalMode(chConfig.getTraversalMode());

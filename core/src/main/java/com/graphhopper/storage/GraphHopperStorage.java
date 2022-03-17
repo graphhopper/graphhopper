@@ -58,11 +58,6 @@ public final class GraphHopperStorage implements Graph, Closeable {
         baseGraph = new BaseGraph(dir, encodingManager.getIntsForFlags(), withElevation, withTurnCosts, segmentSize);
     }
 
-    @Deprecated
-    public CHStorage createCHStorage(CHConfig chConfig) {
-        return CHStorage.fromGraph(this, chConfig);
-    }
-
     public CHStorage loadCHStorage(String chGraphName, boolean edgeBased) {
         CHStorage store = new CHStorage(dir, chGraphName, segmentSize, edgeBased);
         return store.loadExisting() ? store : null;

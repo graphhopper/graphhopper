@@ -41,7 +41,7 @@ public class RoutingCHGraphImplTest {
         graph.freeze();
 
         CHConfig chConfig = CHConfig.nodeBased("p", new FastestWeighting(carEncoder));
-        CHStorage store = graph.createCHStorage(chConfig);
+        CHStorage store = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(store);
         chBuilder.setIdentityLevels();
         RoutingCHGraph chGraph = graph.createCHGraph(store, chConfig);
@@ -79,7 +79,7 @@ public class RoutingCHGraphImplTest {
         graph.freeze();
 
         CHConfig chConfig = CHConfig.nodeBased("ch", new FastestWeighting(encoder));
-        CHStorage store = graph.createCHStorage(chConfig);
+        CHStorage store = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(store);
         chBuilder.setIdentityLevels();
         chBuilder.addShortcutNodeBased(0, 1, PrepareEncoder.getScBwdDir(), 10, 12, 13);
@@ -116,7 +116,7 @@ public class RoutingCHGraphImplTest {
         graph.freeze();
 
         CHConfig chConfig = CHConfig.nodeBased("ch", new FastestWeighting(encoder));
-        CHStorage store = graph.createCHStorage(chConfig);
+        CHStorage store = CHStorage.fromGraph(graph, chConfig);
         RoutingCHGraph g = graph.createCHGraph(store, chConfig);
         assertFalse(g.getEdgeIteratorState(edge1.getEdge(), Integer.MIN_VALUE).isShortcut());
         assertFalse(g.getEdgeIteratorState(edge2.getEdge(), Integer.MIN_VALUE).isShortcut());
@@ -143,7 +143,7 @@ public class RoutingCHGraphImplTest {
 
         FastestWeighting weighting = new FastestWeighting(customEncoder);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
-        CHStorage chStore = ghStorage.createCHStorage(chConfig);
+        CHStorage chStore = CHStorage.fromGraph(ghStorage, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
         chBuilder.setIdentityLevels();
         int sc1 = ghStorage.getEdges() + chBuilder.addShortcutNodeBased(0, 1, PrepareEncoder.getScFwdDir(), 100.123, NO_EDGE, NO_EDGE);
@@ -170,7 +170,7 @@ public class RoutingCHGraphImplTest {
         graph.freeze();
 
         CHConfig chConfig = CHConfig.nodeBased("ch", new FastestWeighting(encoder));
-        CHStorage store = graph.createCHStorage(chConfig);
+        CHStorage store = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(store);
         chBuilder.setIdentityLevels();
 
@@ -196,7 +196,7 @@ public class RoutingCHGraphImplTest {
 
         FastestWeighting weighting = new FastestWeighting(encoder);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
-        CHStorage chStore = graph.createCHStorage(chConfig);
+        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
 
         chBuilder.setIdentityLevels();
@@ -219,7 +219,7 @@ public class RoutingCHGraphImplTest {
 
         FastestWeighting weighting = new FastestWeighting(carEncoder);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
-        CHStorage chStore = graph.createCHStorage(chConfig);
+        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
         chBuilder.setIdentityLevels();
         chBuilder.addShortcutNodeBased(1, 4, PrepareEncoder.getScDirMask(), 10, NO_EDGE, NO_EDGE);
@@ -240,7 +240,7 @@ public class RoutingCHGraphImplTest {
 
         FastestWeighting weighting = new FastestWeighting(carEncoder);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
-        CHStorage chStore = graph.createCHStorage(chConfig);
+        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
         chBuilder.setIdentityLevels();
         chBuilder.addShortcutNodeBased(1, 4, PrepareEncoder.getScDirMask(), 10, edge1.getEdge(), edge2.getEdge());
@@ -260,7 +260,7 @@ public class RoutingCHGraphImplTest {
 
         FastestWeighting weighting = new FastestWeighting(carEncoder);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
-        CHStorage chStore = graph.createCHStorage(chConfig);
+        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
         assertThrows(IllegalArgumentException.class, () -> chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 10, 0, 1, 0, 1));
     }
@@ -277,7 +277,7 @@ public class RoutingCHGraphImplTest {
 
         FastestWeighting weighting = new FastestWeighting(carEncoder);
         CHConfig chConfig = CHConfig.edgeBased("p1", weighting);
-        CHStorage chStore = graph.createCHStorage(chConfig);
+        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
 
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
         chBuilder.setIdentityLevels();
@@ -294,7 +294,7 @@ public class RoutingCHGraphImplTest {
         graph.freeze();
         FastestWeighting weighting = new FastestWeighting(carEncoder);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
-        CHStorage chStore = graph.createCHStorage(chConfig);
+        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         RoutingCHGraph lg = graph.createCHGraph(chStore, chConfig);
         assertThrows(IllegalArgumentException.class, () -> lg.getEdgeIteratorState(0, Integer.MIN_VALUE));
     }
@@ -310,7 +310,7 @@ public class RoutingCHGraphImplTest {
 
         FastestWeighting weighting = new FastestWeighting(carEncoder);
         CHConfig chConfig = CHConfig.edgeBased("p1", weighting);
-        CHStorage store = graph.createCHStorage(chConfig);
+        CHStorage store = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(store);
         chBuilder.setIdentityLevels();
         chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 10, 0, 1, 0, 1);

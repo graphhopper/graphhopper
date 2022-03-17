@@ -80,7 +80,7 @@ public class CHQueryWithTurnCostsTest {
 
         private void freeze() {
             graph.freeze();
-            chStore = graph.createCHStorage(chConfig);
+            chStore = CHStorage.fromGraph(graph, chConfig);
             chBuilder = new CHStorageBuilder(chStore);
         }
 
