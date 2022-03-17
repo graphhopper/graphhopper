@@ -26,7 +26,10 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -39,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class LMIssueTest {
     private Directory dir;
-    private GraphHopperStorage graph;
+    private BaseGraph graph;
     private FlagEncoder encoder;
     private Weighting weighting;
     private LandmarkStorage lm;
@@ -58,7 +61,7 @@ public class LMIssueTest {
         dir = new RAMDirectory();
         encoder = new CarFlagEncoder(5, 5, 1);
         EncodingManager encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
-        graph = new GraphBuilder(encodingManager)
+        graph = new BaseGraph.Builder(encodingManager)
                 .setDir(dir)
                 .create();
         weighting = new FastestWeighting(encoder);

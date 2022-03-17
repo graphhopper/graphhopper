@@ -19,9 +19,8 @@ package com.graphhopper.routing.lm;
 
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
@@ -38,13 +37,13 @@ import java.util.List;
  */
 public class PrepareLandmarks {
     private static final Logger LOGGER = LoggerFactory.getLogger(PrepareLandmarks.class);
-    private final Graph graph;
+    private final BaseGraph graph;
     private final LandmarkStorage lms;
     private final LMConfig lmConfig;
     private long totalPrepareTime;
     private boolean prepared = false;
 
-    public PrepareLandmarks(Directory dir, GraphHopperStorage graph, LMConfig lmConfig, int landmarks) {
+    public PrepareLandmarks(Directory dir, BaseGraph graph, LMConfig lmConfig, int landmarks) {
         this.graph = graph;
         this.lmConfig = lmConfig;
         lms = new LandmarkStorage(graph, dir, lmConfig, landmarks);

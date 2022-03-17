@@ -96,7 +96,7 @@ public class RandomizedRoutingTest {
         private final boolean prepareLM;
         private final TraversalMode traversalMode;
         private final Directory dir;
-        private final GraphHopperStorage graph;
+        private final BaseGraph graph;
         private final List<CHConfig> chConfigs;
         private final LMConfig lmConfig;
         private final FlagEncoder encoder;
@@ -119,7 +119,7 @@ public class RandomizedRoutingTest {
             // only for loops instead?
             encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
             encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
-            graph = new GraphBuilder(encodingManager)
+            graph = new BaseGraph.Builder(encodingManager)
                     .setDir(dir)
                     .create();
             turnCostStorage = graph.getTurnCostStorage();

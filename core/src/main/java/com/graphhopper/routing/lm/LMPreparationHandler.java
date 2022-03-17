@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.routing.util.AreaIndex;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.GHUtility;
@@ -171,7 +172,7 @@ public class LMPreparationHandler {
      * Prepares the landmark data for all given configs
      */
     public List<PrepareLandmarks> prepare(List<LMConfig> lmConfigs, GraphHopperStorage ghStorage, LocationIndex locationIndex, final boolean closeEarly) {
-        List<PrepareLandmarks> preparations = createPreparations(lmConfigs, ghStorage, locationIndex);
+        List<PrepareLandmarks> preparations = createPreparations(lmConfigs, ghStorage.getBaseGraph(), locationIndex);
         List<Callable<String>> prepareCallables = new ArrayList<>();
         for (int i = 0; i < preparations.size(); i++) {
             PrepareLandmarks prepare = preparations.get(i);
@@ -196,7 +197,7 @@ public class LMPreparationHandler {
     /**
      * This method creates the landmark storages ready for landmark creation.
      */
-    List<PrepareLandmarks> createPreparations(List<LMConfig> lmConfigs, GraphHopperStorage ghStorage, LocationIndex locationIndex) {
+    List<PrepareLandmarks> createPreparations(List<LMConfig> lmConfigs, BaseGraph ghStorage, LocationIndex locationIndex) {
         LOGGER.info("Creating LM preparations, {}", getMemInfo());
         List<LandmarkSuggestion> lmSuggestions = new ArrayList<>(lmSuggestionsLocations.size());
         if (!lmSuggestionsLocations.isEmpty()) {

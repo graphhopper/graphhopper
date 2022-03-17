@@ -76,7 +76,7 @@ public class DirectedRoutingTest {
         private final boolean prepareCH;
         private final boolean prepareLM;
         private final Directory dir;
-        private final GraphHopperStorage graph;
+        private final BaseGraph graph;
         private final CHConfig chConfig;
         private final LMConfig lmConfig;
         private final FlagEncoder encoder;
@@ -100,7 +100,7 @@ public class DirectedRoutingTest {
             // only for loops instead?
             encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
             encodingManager = EncodingManager.create(encoder);
-            graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).create();
+            graph = new BaseGraph.Builder(encodingManager).setDir(dir).withTurnCosts(true).create();
             turnCostStorage = graph.getTurnCostStorage();
             weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts));
             chConfig = CHConfig.edgeBased("p1", weighting);

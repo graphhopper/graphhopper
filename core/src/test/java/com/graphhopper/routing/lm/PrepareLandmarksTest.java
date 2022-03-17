@@ -28,9 +28,8 @@ import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
@@ -57,8 +56,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Peter Karich
  */
 public class PrepareLandmarksTest {
-    private GraphHopperStorage graph;
-    private EncodingManager encodingManager;
+    private BaseGraph graph;
     private FlagEncoder encoder;
     private TraversalMode tm;
 
@@ -66,8 +64,8 @@ public class PrepareLandmarksTest {
     public void setUp() {
         encoder = new CarFlagEncoder();
         tm = TraversalMode.NODE_BASED;
-        encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
-        graph = new GraphBuilder(encodingManager).create();
+        EncodingManager encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
+        graph = new BaseGraph.Builder(encodingManager).create();
     }
 
     @Test

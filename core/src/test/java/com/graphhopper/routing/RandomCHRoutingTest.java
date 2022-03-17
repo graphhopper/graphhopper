@@ -47,7 +47,7 @@ public class RandomCHRoutingTest {
         private final CarFlagEncoder encoder;
         private final EncodingManager encodingManager;
         private Weighting weighting;
-        private GraphHopperStorage graph;
+        private BaseGraph graph;
         private CHConfig chConfig;
 
         Fixture(TraversalMode traversalMode, int uTurnCosts) {
@@ -57,7 +57,7 @@ public class RandomCHRoutingTest {
             dir = new RAMDirectory();
             encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
             encodingManager = EncodingManager.create(encoder);
-            graph = new GraphBuilder(encodingManager).create();
+            graph = new BaseGraph.Builder(encodingManager).create();
         }
 
         void freeze() {

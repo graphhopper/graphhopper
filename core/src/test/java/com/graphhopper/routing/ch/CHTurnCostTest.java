@@ -70,7 +70,7 @@ public class CHTurnCostTest {
     private int maxCost;
     private CarFlagEncoder encoder;
     private EncodingManager encodingManager;
-    private GraphHopperStorage graph;
+    private BaseGraph graph;
     private TurnCostStorage turnCostStorage;
     private List<CHConfig> chConfigs;
     private CHConfig chConfig;
@@ -82,7 +82,7 @@ public class CHTurnCostTest {
         maxCost = 10;
         encoder = new CarFlagEncoder(5, 5, maxCost);
         encodingManager = EncodingManager.create(encoder);
-        graph = new GraphBuilder(encodingManager).build();
+        graph = new BaseGraph.Builder(encodingManager).build();
         turnCostStorage = graph.getTurnCostStorage();
         chConfigs = createCHConfigs();
         // the default CH profile with infinite u-turn costs, can be reset in tests that should run with finite u-turn
@@ -1223,7 +1223,8 @@ public class CHTurnCostTest {
 
     private void prepareCH(int... contractionOrder) {
         LOGGER.debug("Calculating CH with contraction order {}", contractionOrder);
-        graph.freeze();
+        if (!graph.isFrozen())
+            graph.freeze();
         NodeOrderingProvider nodeOrderingProvider = NodeOrderingProvider.fromArray(contractionOrder);
         PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraph(graph, chConfig)
                 .useFixedNodeOrdering(nodeOrderingProvider);
