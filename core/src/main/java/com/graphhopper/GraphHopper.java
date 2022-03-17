@@ -691,6 +691,7 @@ public class GraphHopper {
                 setElevationProvider(eleProvider).
                 setCountryRuleFactory(countryRuleFactory);
         logger.info("using " + ghStorage.toString() + ", memory:" + getMemInfo());
+        ghStorage.create(100);
         try {
             reader.readGraph();
         } catch (IOException ex) {

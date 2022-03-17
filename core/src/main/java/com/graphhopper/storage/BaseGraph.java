@@ -88,9 +88,13 @@ public class BaseGraph implements Graph {
         return this;
     }
 
+    public boolean isInitialized() {
+        return initialized;
+    }
+
     void checkNotInitialized() {
         if (initialized)
-            throw new IllegalStateException("You cannot configure this GraphStorage "
+            throw new IllegalStateException("You cannot configure this BaseGraph "
                     + "after calling create or loadExisting. Calling one of the methods twice is also not allowed.");
     }
 

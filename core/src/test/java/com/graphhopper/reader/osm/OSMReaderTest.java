@@ -920,7 +920,7 @@ public class OSMReaderTest {
     public void testCountries() throws IOException {
         EncodingManager em = EncodingManager.create("car");
         EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
-        BaseGraph graph = new BaseGraph.Builder(em).build();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
         OSMReader reader = new OSMReader(graph, em, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
         reader.setAreaIndex(createCountryIndex());
@@ -945,7 +945,7 @@ public class OSMReaderTest {
                 .add(new CountryParser())
                 .build();
         EnumEncodedValue<Country> countryEnc = em.getEnumEncodedValue(Country.KEY, Country.class);
-        BaseGraph graph = new BaseGraph.Builder(em).build();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
         OSMReader reader = new OSMReader(graph, em, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
         reader.setAreaIndex(createCountryIndex());

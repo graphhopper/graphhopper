@@ -145,6 +145,9 @@ public class OSMReader {
         if (!osmFile.exists())
             throw new IllegalStateException("Your specified OSM file does not exist:" + osmFile.getAbsolutePath());
 
+        if (!baseGraph.isInitialized())
+            throw new IllegalStateException("BaseGraph must be initialize before we can read OSM");
+
         WaySegmentParser waySegmentParser = new WaySegmentParser.Builder(baseGraph.getNodeAccess())
                 .setDirectory(baseGraph.getDirectory())
                 .setElevationProvider(eleProvider)
@@ -156,7 +159,6 @@ public class OSMReader {
                 .setEdgeHandler(this::addEdge)
                 .setWorkerThreads(config.getWorkerThreads())
                 .build();
-        baseGraph.create(100);
         waySegmentParser.readOSM(osmFile);
         osmDataDate = waySegmentParser.getTimeStamp();
         if (baseGraph.getNodes() == 0)
