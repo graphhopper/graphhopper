@@ -139,7 +139,7 @@ public class DijkstraBidirectionCHTest {
         // explicitly set the node levels equal to the node ids
         // the graph contraction with this ordering yields no shortcuts
         new CHStorageBuilder(store).setIdentityLevels();
-        RoutingCHGraph routingCHGraph = graph.createCHGraph(store, chConfig);
+        RoutingCHGraph routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, store, chConfig);
         RoutingAlgorithm algo = createCHAlgo(routingCHGraph, true);
         Path p = algo.calcPath(1, 0);
         // node 3 will be stalled and nodes 4-7 won't be explored --> we visit 7 nodes
@@ -188,7 +188,7 @@ public class DijkstraBidirectionCHTest {
         CHConfig chConfig = CHConfig.nodeBased(weighting.getName(), weighting);
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         new CHStorageBuilder(chStore).setIdentityLevels();
-        RoutingCHGraph routingCHGraph = graph.createCHGraph(chStore, chConfig);
+        RoutingCHGraph routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
         RoutingAlgorithm algo = createCHAlgo(routingCHGraph, true);
         Path p = algo.calcPath(from, to);
         assertEquals(3, p.getDistance(), 1.e-3);
@@ -203,7 +203,7 @@ public class DijkstraBidirectionCHTest {
         graphHopperStorage.freeze();
         PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graphHopperStorage, chConfig);
         PrepareContractionHierarchies.Result res = pch.doWork();
-        return graphHopperStorage.createCHGraph(res.getCHStorage(), res.getCHConfig());
+        return RoutingCHGraphImpl.fromGraph(graphHopperStorage, res.getCHStorage(), res.getCHConfig());
     }
 
     private RoutingAlgorithm createCHAlgo(RoutingCHGraph chGraph, boolean withSOD) {

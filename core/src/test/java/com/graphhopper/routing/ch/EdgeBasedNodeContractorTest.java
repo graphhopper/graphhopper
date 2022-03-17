@@ -74,7 +74,7 @@ public class EdgeBasedNodeContractorTest {
         graph.freeze();
         chStore = CHStorage.fromGraph(graph, chConfigs.get(0));
         chBuilder = new CHStorageBuilder(chStore);
-        weighting = graph.createCHGraph(chStore, chConfigs.get(0)).getWeighting();
+        weighting = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfigs.get(0)).getWeighting();
     }
 
     @Test
@@ -1137,7 +1137,7 @@ public class EdgeBasedNodeContractorTest {
         freeze();
         chStore = CHStorage.fromGraph(graph, chConfigs.get(1));
         chBuilder = new CHStorageBuilder(chStore);
-        weighting = graph.createCHGraph(chStore, chConfigs.get(1)).getWeighting();
+        weighting = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfigs.get(1)).getWeighting();
         setMaxLevelOnAllNodes();
         setRestriction(0, 3, 1);
         contractNodes(4, 0, 1, 2, 3);

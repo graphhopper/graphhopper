@@ -19,10 +19,7 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.CHProfile;
-import com.graphhopper.storage.CHConfig;
-import com.graphhopper.storage.CHStorage;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RoutingCHGraph;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.CH;
@@ -105,7 +102,7 @@ public class CHPreparationHandler {
                 .map(c -> (Callable<String>) () -> {
                     CHStorage chStorage = ghStorage.loadCHStorage(c.getName(), c.isEdgeBased());
                     if (chStorage != null)
-                        loaded.put(c.getName(), ghStorage.createCHGraph(chStorage, c));
+                        loaded.put(c.getName(), RoutingCHGraphImpl.fromGraph(ghStorage, chStorage, c));
                     else {
                         // todo: this is ugly, see comments in LMPreparationHandler
                         ghStorage.getDirectory().remove("nodes_ch_" + c.getName());

@@ -165,7 +165,7 @@ public class RandomCHRoutingTest {
         f.freeze();
         PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(f.graph, f.chConfig);
         PrepareContractionHierarchies.Result res = pch.doWork();
-        RoutingCHGraph chGraph = f.graph.createCHGraph(res.getCHStorage(), res.getCHConfig());
+        RoutingCHGraph chGraph = RoutingCHGraphImpl.fromGraph(f.graph, res.getCHStorage(), res.getCHConfig());
 
         int numQueryGraph = 25;
         for (int j = 0; j < numQueryGraph; j++) {

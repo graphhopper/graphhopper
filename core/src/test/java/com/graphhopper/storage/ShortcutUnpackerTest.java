@@ -56,7 +56,7 @@ public class ShortcutUnpackerTest {
             CHConfig chConfig = new CHConfig("profile", new FastestWeighting(encoder, turnCostProvider), edgeBased);
             CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
             chBuilder = new CHStorageBuilder(chStore);
-            routingCHGraph = graph.createCHGraph(chStore, chConfig);
+            routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
         }
 
         private void setCHLevels(int... order) {

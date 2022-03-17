@@ -23,10 +23,7 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.storage.CHConfig;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RoutingCHGraph;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
@@ -85,7 +82,7 @@ public class AlternativeRouteCHTest {
         PrepareContractionHierarchies contractionHierarchies = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
         contractionHierarchies.useFixedNodeOrdering(NodeOrderingProvider.fromArray(nodeOrdering));
         PrepareContractionHierarchies.Result res = contractionHierarchies.doWork();
-        return graph.createCHGraph(res.getCHStorage(), res.getCHConfig());
+        return RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
     }
 
     @Test

@@ -44,7 +44,7 @@ public class RoutingCHGraphImplTest {
         CHStorage store = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(store);
         chBuilder.setIdentityLevels();
-        RoutingCHGraph chGraph = graph.createCHGraph(store, chConfig);
+        RoutingCHGraph chGraph = RoutingCHGraphImpl.fromGraph(graph, store, chConfig);
 
         assertEquals(1, GHUtility.count(graph.createEdgeExplorer().setBaseNode(1)));
         // routing ch graph does not see edges without access
@@ -86,7 +86,7 @@ public class RoutingCHGraphImplTest {
         chBuilder.addShortcutNodeBased(1, 2, PrepareEncoder.getScDirMask(), 10, 10, 11);
         chBuilder.addShortcutNodeBased(1, 3, PrepareEncoder.getScBwdDir(), 10, 14, 15);
 
-        RoutingCHGraph lg = graph.createCHGraph(store, chConfig);
+        RoutingCHGraph lg = RoutingCHGraphImpl.fromGraph(graph, store, chConfig);
         RoutingCHEdgeExplorer chOutExplorer = lg.createOutEdgeExplorer();
         RoutingCHEdgeExplorer chInExplorer = lg.createInEdgeExplorer();
         // shortcuts are only visible from the lower level node, for example we do not see node 1 from node 2, or node
@@ -117,7 +117,7 @@ public class RoutingCHGraphImplTest {
 
         CHConfig chConfig = CHConfig.nodeBased("ch", new FastestWeighting(encoder));
         CHStorage store = CHStorage.fromGraph(graph, chConfig);
-        RoutingCHGraph g = graph.createCHGraph(store, chConfig);
+        RoutingCHGraph g = RoutingCHGraphImpl.fromGraph(graph, store, chConfig);
         assertFalse(g.getEdgeIteratorState(edge1.getEdge(), Integer.MIN_VALUE).isShortcut());
         assertFalse(g.getEdgeIteratorState(edge2.getEdge(), Integer.MIN_VALUE).isShortcut());
 
@@ -147,7 +147,7 @@ public class RoutingCHGraphImplTest {
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
         chBuilder.setIdentityLevels();
         int sc1 = ghStorage.getEdges() + chBuilder.addShortcutNodeBased(0, 1, PrepareEncoder.getScFwdDir(), 100.123, NO_EDGE, NO_EDGE);
-        RoutingCHGraph lg = ghStorage.createCHGraph(chStore, chConfig);
+        RoutingCHGraph lg = RoutingCHGraphImpl.fromGraph(ghStorage, chStore, chConfig);
         assertEquals(1, lg.getEdgeIteratorState(sc1, 1).getAdjNode());
         assertEquals(0, lg.getEdgeIteratorState(sc1, 1).getBaseNode());
         assertEquals(100.123, lg.getEdgeIteratorState(sc1, 1).getWeight(false), 1e-3);
@@ -178,7 +178,7 @@ public class RoutingCHGraphImplTest {
         // 1.004+1.006 = 2.09999999999. we make sure this does not become 2.09 instead of 2.10 (due to truncation)
         double x1 = 1.004;
         double x2 = 1.006;
-        RoutingCHGraph rg = graph.createCHGraph(store, chConfig);
+        RoutingCHGraph rg = RoutingCHGraphImpl.fromGraph(graph, store, chConfig);
         chBuilder.addShortcutNodeBased(0, 2, PrepareEncoder.getScFwdDir(), x1 + x2, 0, 1);
         RoutingCHEdgeIteratorState sc = rg.getEdgeIteratorState(2, 2);
         assertEquals(2.01, sc.getWeight(false), 1.e-6);
@@ -202,7 +202,7 @@ public class RoutingCHGraphImplTest {
         chBuilder.setIdentityLevels();
         chBuilder.addShortcutNodeBased(1, 4, PrepareEncoder.getScFwdDir(), 3, NO_EDGE, NO_EDGE);
 
-        RoutingCHGraph lg = graph.createCHGraph(chStore, chConfig);
+        RoutingCHGraph lg = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
         RoutingCHEdgeExplorer exp = lg.createOutEdgeExplorer();
         // iteration should result in same nodes even if reusing the iterator
         assertEquals(GHUtility.asSet(3, 4), GHUtility.getNeighbors(exp.setBaseNode(1)));
@@ -295,7 +295,7 @@ public class RoutingCHGraphImplTest {
         FastestWeighting weighting = new FastestWeighting(carEncoder);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
-        RoutingCHGraph lg = graph.createCHGraph(chStore, chConfig);
+        RoutingCHGraph lg = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
         assertThrows(IllegalArgumentException.class, () -> lg.getEdgeIteratorState(0, Integer.MIN_VALUE));
     }
 
@@ -315,7 +315,7 @@ public class RoutingCHGraphImplTest {
         chBuilder.setIdentityLevels();
         chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 10, 0, 1, 0, 1);
 
-        RoutingCHGraph lg = graph.createCHGraph(store, chConfig);
+        RoutingCHGraph lg = RoutingCHGraphImpl.fromGraph(graph, store, chConfig);
 
         RoutingCHEdgeIteratorState sc02 = lg.getEdgeIteratorState(2, 2);
         assertNotNull(sc02);

@@ -63,11 +63,6 @@ public final class GraphHopperStorage implements Graph, Closeable {
         return store.loadExisting() ? store : null;
     }
 
-    @Deprecated
-    public RoutingCHGraph createCHGraph(CHStorage store, CHConfig chConfig) {
-        return RoutingCHGraphImpl.fromGraph(this, store, chConfig);
-    }
-
     /**
      * @return the directory where this graph is stored.
      */

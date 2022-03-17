@@ -143,7 +143,7 @@ public class RandomizedRoutingTest {
                 CHConfig chConfig = !traversalMode.isEdgeBased() ? chConfigs.get(0) : chConfigs.get(1);
                 PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
                 PrepareContractionHierarchies.Result res = pch.doWork();
-                routingCHGraph = graph.createCHGraph(res.getCHStorage(), res.getCHConfig());
+                routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
             }
             if (prepareLM) {
                 PrepareLandmarks prepare = new PrepareLandmarks(dir, graph, lmConfig, 16);

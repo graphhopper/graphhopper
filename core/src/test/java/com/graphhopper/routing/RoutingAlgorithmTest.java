@@ -1222,7 +1222,7 @@ public class RoutingAlgorithmTest {
                 CHConfig chConfig = new CHConfig(name, weighting, traversalMode.isEdgeBased());
                 PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
                 PrepareContractionHierarchies.Result res = pch.doWork();
-                return graph.createCHGraph(res.getCHStorage(), res.getCHConfig());
+                return RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
             });
             RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(routingCHGraph).createAlgo(new PMap()
                     .putObject(ALGORITHM, getAlgorithm())
@@ -1248,7 +1248,7 @@ public class RoutingAlgorithmTest {
                 CHConfig chConfig = new CHConfig(name, weighting, traversalMode.isEdgeBased());
                 PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
                 PrepareContractionHierarchies.Result res = pch.doWork();
-                return graph.createCHGraph(res.getCHStorage(), res.getCHConfig());
+                return RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
             });
             QueryGraph queryGraph = QueryGraph.create(graph, Arrays.asList(from, to));
             QueryRoutingCHGraph queryRoutingCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);

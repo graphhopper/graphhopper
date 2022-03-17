@@ -163,7 +163,7 @@ public class PrepareContractionHierarchiesTest {
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         PrepareContractionHierarchies.Result result = prepare.doWork();
         assertEquals(2, result.getShortcuts());
-        RoutingCHGraph routingCHGraph = g.createCHGraph(result.getCHStorage(), result.getCHConfig());
+        RoutingCHGraph routingCHGraph = RoutingCHGraphImpl.fromGraph(g, result.getCHStorage(), result.getCHConfig());
         assertEquals(6 + 2, routingCHGraph.getEdges());
         RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(routingCHGraph).createAlgo(new PMap());
         Path p = algo.calcPath(4, 2);
@@ -185,7 +185,7 @@ public class PrepareContractionHierarchiesTest {
         long numShortcuts = 9;
         assertEquals(numShortcuts, result.getShortcuts());
         assertEquals(oldCount, g.getEdges());
-        RoutingCHGraph routingCHGraph = g.createCHGraph(result.getCHStorage(), result.getCHConfig());
+        RoutingCHGraph routingCHGraph = RoutingCHGraphImpl.fromGraph(g, result.getCHStorage(), result.getCHConfig());
         assertEquals(oldCount + numShortcuts, routingCHGraph.getEdges());
         RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(routingCHGraph).createAlgo(new PMap());
         Path p = algo.calcPath(0, 10);
@@ -252,7 +252,7 @@ public class PrepareContractionHierarchiesTest {
         useNodeOrdering(prepare, new int[]{26, 6, 12, 13, 2, 3, 8, 9, 10, 11, 14, 15, 16, 17, 18, 20, 21, 23, 24, 25, 19, 22, 27, 5, 29, 30, 31, 28, 7, 1, 0, 4});
         PrepareContractionHierarchies.Result res = prepare.doWork();
         assertEquals(oldCount, g.getEdges());
-        RoutingCHGraph routingCHGraph = g.createCHGraph(res.getCHStorage(), res.getCHConfig());
+        RoutingCHGraph routingCHGraph = RoutingCHGraphImpl.fromGraph(g, res.getCHStorage(), res.getCHConfig());
         assertEquals(oldCount, routingCHGraph.getBaseGraph().getEdges());
         assertEquals(oldCount + 23, routingCHGraph.getEdges());
         RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(routingCHGraph).createAlgo(new PMap());
@@ -284,7 +284,7 @@ public class PrepareContractionHierarchiesTest {
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g)
                 .useFixedNodeOrdering(NodeOrderingProvider.identity(g.getNodes()));
         PrepareContractionHierarchies.Result res = prepare.doWork();
-        RoutingCHGraph routingCHGraph = g.createCHGraph(res.getCHStorage(), res.getCHConfig());
+        RoutingCHGraph routingCHGraph = RoutingCHGraphImpl.fromGraph(g, res.getCHStorage(), res.getCHConfig());
         RoutingCHEdgeExplorer outExplorer = routingCHGraph.createOutEdgeExplorer();
         RoutingCHEdgeExplorer inExplorer = routingCHGraph.createInEdgeExplorer();
         // shortcuts leading to or coming from lower level nodes are not visible
@@ -364,7 +364,7 @@ public class PrepareContractionHierarchiesTest {
         // prepare ch, use node ids as levels
         PrepareContractionHierarchies pch = createPrepareContractionHierarchies(g, chConfig);
         PrepareContractionHierarchies.Result res = pch.useFixedNodeOrdering(NodeOrderingProvider.identity(g.getNodes())).doWork();
-        RoutingCHGraph routingCHGraph = g.createCHGraph(res.getCHStorage(), res.getCHConfig());
+        RoutingCHGraph routingCHGraph = RoutingCHGraphImpl.fromGraph(g, res.getCHStorage(), res.getCHConfig());
         assertEquals(2, routingCHGraph.getEdges() - g.getEdges(), "there should be exactly two (bidirectional) shortcuts (2-3) and (3-4)");
 
         // insert virtual node and edges
@@ -541,7 +541,7 @@ public class PrepareContractionHierarchiesTest {
         PrepareContractionHierarchies motorCyclePch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, motorCycleConfig)
                 .useFixedNodeOrdering(nodeOrderingProvider);
         PrepareContractionHierarchies.Result resMotorCycle = motorCyclePch.doWork();
-        RoutingCHGraph motorCycleCH = ghStorage.createCHGraph(resMotorCycle.getCHStorage(), resMotorCycle.getCHConfig());
+        RoutingCHGraph motorCycleCH = RoutingCHGraphImpl.fromGraph(ghStorage, resMotorCycle.getCHStorage(), resMotorCycle.getCHConfig());
 
         // run a few sample queries to check correctness
         for (int i = 0; i < numQueries; ++i) {
@@ -564,7 +564,7 @@ public class PrepareContractionHierarchiesTest {
         useNodeOrdering(prepare, nodeOrdering);
         PrepareContractionHierarchies.Result result = prepare.doWork();
         assertEquals(expShortcuts, result.getShortcuts(), c.toString());
-        RoutingCHGraph lg = g.createCHGraph(result.getCHStorage(), result.getCHConfig());
+        RoutingCHGraph lg = RoutingCHGraphImpl.fromGraph(g, result.getCHStorage(), result.getCHConfig());
         RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(lg).createAlgo(new PMap());
         Path path = algo.calcPath(3, 12);
         assertEquals(expDistance, path.getDistance(), 1e-5, path.toString());

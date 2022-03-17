@@ -93,7 +93,7 @@ public class LowLevelAPIExample {
         graph.freeze();
         PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
         PrepareContractionHierarchies.Result pchRes = pch.doWork();
-        RoutingCHGraph chGraph = graph.createCHGraph(pchRes.getCHStorage(), pchRes.getCHConfig());
+        RoutingCHGraph chGraph = RoutingCHGraphImpl.fromGraph(graph, pchRes.getCHStorage(), pchRes.getCHConfig());
 
         // create location index
         LocationIndexTree index = new LocationIndexTree(graph, graph.getDirectory());

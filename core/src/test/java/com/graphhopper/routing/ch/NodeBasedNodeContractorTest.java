@@ -56,7 +56,7 @@ public class NodeBasedNodeContractorTest {
 
     private static NodeContractor createNodeContractor(GraphHopperStorage g, CHStorage store, CHConfig chConfig) {
         CHPreparationGraph prepareGraph = CHPreparationGraph.nodeBased(g.getNodes(), g.getEdges());
-        CHPreparationGraph.buildFromGraph(prepareGraph, g, g.createCHGraph(store, chConfig).getWeighting());
+        CHPreparationGraph.buildFromGraph(prepareGraph, g, RoutingCHGraphImpl.fromGraph(g, store, chConfig).getWeighting());
         NodeContractor nodeContractor = new NodeBasedNodeContractor(prepareGraph, new CHStorageBuilder(store), new PMap());
         nodeContractor.initFromGraph();
         return nodeContractor;
@@ -122,7 +122,7 @@ public class NodeBasedNodeContractorTest {
         //       \      |
         //        --<----
 
-        RoutingCHGraph lg = graph.createCHGraph(store, chConfig);
+        RoutingCHGraph lg = RoutingCHGraphImpl.fromGraph(graph, store, chConfig);
         checkShortcuts(
                 expectedShortcut(4, 1, iter3to4, iter1to3, true, true),
                 expectedShortcut(4, 6, iter8to4, iter6to8, false, true),
@@ -243,7 +243,7 @@ public class NodeBasedNodeContractorTest {
         Dijkstra dikstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED);
         Path dijkstraPath = dikstra.calcPath(from, to);
 
-        RoutingCHGraph lg = graph.createCHGraph(store, chConfig);
+        RoutingCHGraph lg = RoutingCHGraphImpl.fromGraph(graph, store, chConfig);
         DijkstraBidirectionCH ch = new DijkstraBidirectionCH(lg);
         Path chPath = ch.calcPath(from, to);
         assertEquals(dijkstraPath.calcNodes(), chPath.calcNodes());
@@ -293,7 +293,7 @@ public class NodeBasedNodeContractorTest {
         Dijkstra dikstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED);
         Path dijkstraPath = dikstra.calcPath(from, to);
 
-        DijkstraBidirectionCH ch = new DijkstraBidirectionCH(graph.createCHGraph(chStore, chConfig));
+        DijkstraBidirectionCH ch = new DijkstraBidirectionCH(RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig));
         Path chPath = ch.calcPath(from, to);
         assertEquals(dijkstraPath.calcNodes(), chPath.calcNodes());
         assertEquals(dijkstraPath.getDistance(), chPath.getDistance(), 1.e-6);

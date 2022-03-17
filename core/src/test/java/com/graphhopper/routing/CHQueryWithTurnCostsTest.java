@@ -74,8 +74,8 @@ public class CHQueryWithTurnCostsTest {
 
         private AbstractBidirectionEdgeCHNoSOD createAlgo() {
             return "astar".equals(algoString) ?
-                    new AStarBidirectionEdgeCHNoSOD(graph.createCHGraph(chStore, chConfig)) :
-                    new DijkstraBidirectionEdgeCHNoSOD(graph.createCHGraph(chStore, chConfig));
+                    new AStarBidirectionEdgeCHNoSOD(RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig)) :
+                    new DijkstraBidirectionEdgeCHNoSOD(RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig));
         }
 
         private void freeze() {

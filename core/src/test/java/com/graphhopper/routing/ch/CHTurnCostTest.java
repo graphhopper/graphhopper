@@ -1228,7 +1228,7 @@ public class CHTurnCostTest {
         PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig)
                 .useFixedNodeOrdering(nodeOrderingProvider);
         PrepareContractionHierarchies.Result res = ch.doWork();
-        chGraph = graph.createCHGraph(res.getCHStorage(), res.getCHConfig());
+        chGraph = RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
     }
 
     private void automaticPrepareCH() {
@@ -1240,7 +1240,7 @@ public class CHTurnCostTest {
         PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
         ch.setParams(pMap);
         PrepareContractionHierarchies.Result res = ch.doWork();
-        chGraph = graph.createCHGraph(res.getCHStorage(), res.getCHConfig());
+        chGraph = RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
     }
 
     private void automaticCompareCHWithDijkstra(int numQueries) {

@@ -1043,7 +1043,7 @@ public class GraphHopper {
             else if (prepared.containsKey(profile.getProfile())) {
                 setCHProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
                 PrepareContractionHierarchies.Result res = prepared.get(profile.getProfile());
-                chGraphs.put(profile.getProfile(), ghStorage.createCHGraph(res.getCHStorage(), res.getCHConfig()));
+                chGraphs.put(profile.getProfile(), RoutingCHGraphImpl.fromGraph(ghStorage, res.getCHStorage(), res.getCHConfig()));
             } else if (loaded.containsKey(profile.getProfile())) {
                 chGraphs.put(profile.getProfile(), loaded.get(profile.getProfile()));
             } else

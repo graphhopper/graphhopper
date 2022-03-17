@@ -93,7 +93,7 @@ public class AlternativeRouteEdgeCHTest {
         CHConfig chConfig = CHConfig.edgeBased("profile", new FastestWeighting(carFE, turnCostProvider));
         PrepareContractionHierarchies contractionHierarchies = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
         PrepareContractionHierarchies.Result res = contractionHierarchies.doWork();
-        return graph.createCHGraph(res.getCHStorage(), res.getCHConfig());
+        return RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
     }
 
     @Test
@@ -102,7 +102,7 @@ public class AlternativeRouteEdgeCHTest {
         TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(carFE, g.getTurnCostStorage());
         CHConfig chConfig = CHConfig.edgeBased("profile", new FastestWeighting(carFE, turnCostProvider));
         CHStorage chStorage = CHStorage.fromGraph(g, chConfig);
-        RoutingCHGraph chGraph = g.createCHGraph(chStorage, chConfig);
+        RoutingCHGraph chGraph = RoutingCHGraphImpl.fromGraph(g, chStorage, chConfig);
         DijkstraBidirectionEdgeCHNoSOD router = new DijkstraBidirectionEdgeCHNoSOD(chGraph);
         Path path = router.calcPath(5, 10);
         assertTrue(path.isFound());

@@ -109,7 +109,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
 
     private static void checkCorrectness(GraphHopperStorage ghStorage, CHStorage chStorage, CHConfig chConfig, long seed, long numQueries) {
         LOGGER.info("checking correctness");
-        RoutingCHGraph chGraph = ghStorage.createCHGraph(chStorage, chConfig);
+        RoutingCHGraph chGraph = RoutingCHGraphImpl.fromGraph(ghStorage, chStorage, chConfig);
         Random rnd = new Random(seed);
         int numFails = 0;
         for (int i = 0; i < numQueries; ++i) {
@@ -132,7 +132,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
 
     private static void runPerformanceTest(final GraphHopperStorage ghStorage, CHStorage chStorage, CHConfig chConfig, long seed, final int iterations) {
         final int numNodes = ghStorage.getNodes();
-        RoutingCHGraph chGraph = ghStorage.createCHGraph(chStorage, chConfig);
+        RoutingCHGraph chGraph = RoutingCHGraphImpl.fromGraph(ghStorage, chStorage, chConfig);
         final Random random = new Random(seed);
 
         LOGGER.info("Running performance test, seed = {}", seed);
