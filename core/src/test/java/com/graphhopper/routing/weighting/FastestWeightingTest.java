@@ -24,9 +24,9 @@ import com.graphhopper.routing.util.Bike2WeightFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Routing;
@@ -88,10 +88,11 @@ public class FastestWeightingTest {
     @Test
     public void testTime() {
         FlagEncoder tmpEnc = new Bike2WeightFlagEncoder();
-        GraphHopperStorage g = new GraphBuilder(EncodingManager.create(tmpEnc)).create();
+        EncodingManager em = EncodingManager.create(tmpEnc);
+        BaseGraph g = new BaseGraph.Builder(em).create();
         Weighting w = new FastestWeighting(tmpEnc);
 
-        IntsRef edgeFlags = GHUtility.setSpeed(15, 15, tmpEnc, g.getEncodingManager().createEdgeFlags());
+        IntsRef edgeFlags = GHUtility.setSpeed(15, 15, tmpEnc, em.createEdgeFlags());
         tmpEnc.getAverageSpeedEnc().setDecimal(true, edgeFlags, 10.0);
 
         EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(100000, edgeFlags);

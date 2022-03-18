@@ -493,7 +493,7 @@ public class WheelchairFlagEncoderTest {
 
     @Test
     public void testApplyWayTags() {
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).set3D(true).create();
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).set3D(true).create();
         NodeAccess na = graph.getNodeAccess();
         // incline of 5% over all
         na.setNode(0, 51.1, 12.0010, 50);

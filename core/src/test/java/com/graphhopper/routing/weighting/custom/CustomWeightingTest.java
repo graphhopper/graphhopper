@@ -9,8 +9,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,8 +22,7 @@ import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PR
 import static org.junit.jupiter.api.Assertions.*;
 
 class CustomWeightingTest {
-
-    GraphHopperStorage graph;
+    BaseGraph graph;
     DecimalEncodedValue avSpeedEnc;
     BooleanEncodedValue accessEnc;
     DecimalEncodedValue maxSpeedEnc;
@@ -44,7 +42,7 @@ class CustomWeightingTest {
         accessEnc = carFE.getAccessEnc();
         maxSpeedEnc = encodingManager.getDecimalEncodedValue(MaxSpeed.KEY);
         roadClassEnc = encodingManager.getEnumEncodedValue(KEY, RoadClass.class);
-        graph = new GraphBuilder(encodingManager).create();
+        graph = new BaseGraph.Builder(encodingManager).create();
     }
 
     @Test
@@ -124,7 +122,7 @@ class CustomWeightingTest {
         BooleanEncodedValue specialEnc = new SimpleBooleanEncodedValue("special", true);
         encodingManager = new EncodingManager.Builder().add(carFE).add(specialEnc).build();
         avSpeedEnc = carFE.getAverageSpeedEnc();
-        graph = new GraphBuilder(encodingManager).create();
+        graph = new BaseGraph.Builder(encodingManager).create();
 
         BooleanEncodedValue accessEnc = carFE.getAccessEnc();
         EdgeIteratorState edge = graph.edge(0, 1).set(accessEnc, true).setReverse(accessEnc, true).

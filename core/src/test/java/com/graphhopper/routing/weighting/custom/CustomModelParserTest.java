@@ -21,9 +21,9 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.JsonFeature;
@@ -67,7 +67,7 @@ class CustomModelParserTest {
         CustomWeighting.EdgeToDoubleMapping priorityMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager,
                 avgSpeedEnc, encoder.getMaxSpeed(), null).getEdgeToPriorityMapping();
 
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(100).set(roadClassEnc, RoadClass.PRIMARY);
         EdgeIteratorState edge2 = graph.edge(1, 2).setDistance(100).set(roadClassEnc, RoadClass.SECONDARY);
 

@@ -29,8 +29,7 @@ import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.DistanceCalcEarth;
@@ -46,7 +45,7 @@ public class PriorityRoutingTest {
     void testMaxPriority() {
         BikeFlagEncoder encoder = new BikeFlagEncoder();
         EncodingManager em = EncodingManager.create(encoder);
-        GraphHopperStorage graph = new GraphBuilder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 48.0, 11.0);
         na.setNode(1, 48.1, 11.1);
@@ -102,7 +101,7 @@ public class PriorityRoutingTest {
         }
     }
 
-    private EdgeIteratorState maxSpeedEdge(EncodingManager em, GraphHopperStorage graph, int p, int q, FlagEncoder encoder, double prio) {
+    private EdgeIteratorState maxSpeedEdge(EncodingManager em, BaseGraph graph, int p, int q, FlagEncoder encoder, double prio) {
         BooleanEncodedValue accessEnc = encoder.getAccessEnc();
         DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
         DecimalEncodedValue priorityEnc = em.getDecimalEncodedValue(EncodingManager.getKey(encoder, "priority"));
@@ -115,7 +114,7 @@ public class PriorityRoutingTest {
                 .setDistance(calcDist(graph, p, q));
     }
 
-    private double calcDist(GraphHopperStorage graph, int p, int q) {
+    private double calcDist(BaseGraph graph, int p, int q) {
         NodeAccess na = graph.getNodeAccess();
         return DistanceCalcEarth.DIST_EARTH.calcDist(na.getLat(p), na.getLon(p), na.getLat(q), na.getLon(q));
     }

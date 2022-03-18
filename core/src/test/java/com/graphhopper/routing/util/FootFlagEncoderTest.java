@@ -21,9 +21,9 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import org.junit.jupiter.api.Test;
@@ -466,7 +466,7 @@ public class FootFlagEncoderTest {
         // be stored. In fact, when we set the speed of an edge to 15 and call the getter afterwards we get a value of 16
         // because of the internal (scaled) integer representation:
         EncodingManager em = EncodingManager.create(encoder);
-        GraphHopperStorage graph = new GraphBuilder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(100).set(encoder.getAverageSpeedEnc(), 15);
         assertEquals(16, edge.get(encoder.getAverageSpeedEnc()));
 
