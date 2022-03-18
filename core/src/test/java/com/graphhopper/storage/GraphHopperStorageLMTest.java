@@ -7,7 +7,6 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.EncodingManager.Access;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.Test;
@@ -57,7 +56,7 @@ public class GraphHopperStorageLMTest {
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         // does lm preparation
         hopper.importOrLoad();
-        EncodingManager em = hopper.getEncodingManager();
+        EncodingManager em = hopper.getTagParserManager().getEncodingManager();
         assertNotNull(em);
         assertEquals(1, em.fetchEdgeEncoders().size());
         assertEquals(16, hopper.getLMPreparationHandler().getLandmarks());

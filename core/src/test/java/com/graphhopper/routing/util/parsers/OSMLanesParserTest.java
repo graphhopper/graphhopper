@@ -20,7 +20,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.Lanes;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TagParserManager;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,29 +29,29 @@ import org.junit.jupiter.api.Test;
 class OSMLanesParserTest {
 
     private OSMLanesParser parser;
-    private EncodingManager em;
+    private TagParserManager tpm;
 
     @BeforeEach
     void setup() {
         parser = new OSMLanesParser();
-        em = new EncodingManager.Builder().add(parser).build();
+        tpm = new TagParserManager.Builder().add(parser).build();
     }
 
     @Test
     void basic() {
         ReaderWay readerWay = new ReaderWay(1);
-        IntsRef intsRef = em.createEdgeFlags();
+        IntsRef intsRef = tpm.createEdgeFlags();
         readerWay.setTag("lanes", "4");
-        parser.handleWayTags(intsRef, readerWay, em.createRelationFlags());
-        Assertions.assertEquals(4, em.getIntEncodedValue(Lanes.KEY).getInt(false, intsRef));
+        parser.handleWayTags(intsRef, readerWay, tpm.createRelationFlags());
+        Assertions.assertEquals(4, tpm.getIntEncodedValue(Lanes.KEY).getInt(false, intsRef));
     }
 
     @Test
     void notTagged() {
         ReaderWay readerWay = new ReaderWay(1);
-        IntsRef intsRef = em.createEdgeFlags();
-        parser.handleWayTags(intsRef, readerWay, em.createRelationFlags());
-        Assertions.assertEquals(1, em.getIntEncodedValue(Lanes.KEY).getInt(false, intsRef));
+        IntsRef intsRef = tpm.createEdgeFlags();
+        parser.handleWayTags(intsRef, readerWay, tpm.createRelationFlags());
+        Assertions.assertEquals(1, tpm.getIntEncodedValue(Lanes.KEY).getInt(false, intsRef));
     }
 
 }

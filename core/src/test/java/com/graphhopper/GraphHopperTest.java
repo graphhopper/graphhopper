@@ -1048,7 +1048,7 @@ public class GraphHopperTest {
                 setStoreOnFlush(true);
 
         if (!withTunnelInterpolation) {
-            hopper.getEncodingManagerBuilder().add(new OSMRoadEnvironmentParser() {
+            hopper.getTagParserManagerBuilder().add(new OSMRoadEnvironmentParser() {
                 @Override
                 public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
                     // do not change RoadEnvironment to avoid triggering tunnel interpolation
@@ -1322,7 +1322,7 @@ public class GraphHopperTest {
                 new CHProfile(profile2)
         );
         hopper.importOrLoad();
-        String str = hopper.getEncodingManager().toString();
+        String str = hopper.getTagParserManager().toString();
         GHResponse rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setProfile("profile2"));
         ResponsePath res = rsp.getBest();
@@ -2121,7 +2121,7 @@ public class GraphHopperTest {
     public void simplifyWithInstructionsAndPathDetails() {
         final String profile = "profile";
         GraphHopper hopper = new GraphHopper();
-        hopper.getEncodingManagerBuilder()
+        hopper.getTagParserManagerBuilder()
                 .add(new OSMMaxSpeedParser())
                 .add(new CarFlagEncoder());
         hopper.setOSMFile(BAYREUTH).
@@ -2278,7 +2278,7 @@ public class GraphHopperTest {
                 setMinNetworkSize(200);
         hopper.importOrLoad();
         Weighting weighting = hopper.createWeighting(hopper.getProfile(profile), new PMap());
-        EdgeFilter edgeFilter = new DefaultSnapFilter(weighting, hopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profile)));
+        EdgeFilter edgeFilter = new DefaultSnapFilter(weighting, hopper.getTagParserManager().getBooleanEncodedValue(Subnetwork.key(profile)));
         LocationIndexTree locationIndex = ((LocationIndexTree) hopper.getLocationIndex());
         locationIndex.setMaxRegionSearch(6); // have to increase the default search radius to find our snap
         Snap snap = locationIndex.findClosest(51.229248, 12.328892, edgeFilter);
@@ -2301,7 +2301,7 @@ public class GraphHopperTest {
                 setMinNetworkSize(200);
         hopper.importOrLoad();
         Weighting weighting = hopper.createWeighting(hopper.getProfile(profile), new PMap());
-        EdgeFilter edgeFilter = new DefaultSnapFilter(weighting, hopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profile)));
+        EdgeFilter edgeFilter = new DefaultSnapFilter(weighting, hopper.getTagParserManager().getBooleanEncodedValue(Subnetwork.key(profile)));
         Snap snap = hopper.getLocationIndex().findClosest(51.229248, 12.328892, edgeFilter);
         if (snap.isValid()) {
             assertTrue(snap.getQueryDistance() < 3_000);

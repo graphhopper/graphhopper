@@ -401,7 +401,7 @@ public class OSMReaderTest {
     public void testFords() {
         CarFlagEncoder car = new CarFlagEncoder(new PMap("block_fords=true"));
         GraphHopper hopper = new GraphHopper();
-        hopper.getEncodingManagerBuilder().add(car);
+        hopper.getTagParserManagerBuilder().add(car);
         hopper.setOSMFile(getClass().getResource("test-barriers3.xml").getFile()).
                 setGraphHopperLocation(dir).
                 setProfiles(
@@ -412,7 +412,7 @@ public class OSMReaderTest {
         Graph graph = hopper.getGraphHopperStorage();
         // our way is split into five edges, because there are two ford nodes
         assertEquals(5, graph.getEdges());
-        FlagEncoder encoder = hopper.getEncodingManager().fetchEdgeEncoders().get(0);
+        FlagEncoder encoder = hopper.getTagParserManager().fetchEdgeEncoders().get(0);
         int blocked = 0;
         int notBlocked = 0;
         AllEdgesIterator edge = graph.getAllEdges();
@@ -495,7 +495,7 @@ public class OSMReaderTest {
 
     @Test
     public void testRelation() {
-        EncodingManager manager = EncodingManager.create("bike");
+        TagParserManager manager = TagParserManager.create("bike");
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 1, ""));
         osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 2, ""));
@@ -549,7 +549,7 @@ public class OSMReaderTest {
         // (2-3)->(3-4) only_straight_on = (2-3)->(3-8) restricted
         // (4-3)->(3-8) no_right_turn = (4-3)->(3-8) restricted
         // (2-3)->(3-8) no_entry = (2-3)->(3-8) restricted
-        DecimalEncodedValue carTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("car"));
+        DecimalEncodedValue carTCEnc = hopper.getTagParserManager().getDecimalEncodedValue(TurnCost.key("car"));
         assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_8) > 0);
         assertTrue(tcStorage.get(carTCEnc, edge4_3, n3, edge3_8) > 0);
         assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_8) > 0);
@@ -571,7 +571,7 @@ public class OSMReaderTest {
         assertTrue(tcStorage.get(carTCEnc, edge4_5, n5, edge5_6) == 0);
         assertTrue(tcStorage.get(carTCEnc, edge4_5, n5, edge5_1) > 0);
 
-        DecimalEncodedValue bikeTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("bike"));
+        DecimalEncodedValue bikeTCEnc = hopper.getTagParserManager().getDecimalEncodedValue(TurnCost.key("bike"));
         assertTrue(tcStorage.get(bikeTCEnc, edge4_5, n5, edge5_6) == 0);
 
         int n10 = AbstractGraphStorageTester.getIdOf(graph, 40, 10);
@@ -592,12 +592,12 @@ public class OSMReaderTest {
     public void testRoadAttributes() {
         String fileRoadAttributes = "test-road-attributes.xml";
         GraphHopper hopper = new GraphHopperFacade(fileRoadAttributes);
-        hopper.getEncodingManagerBuilder().add(new OSMMaxWidthParser()).add(new OSMMaxHeightParser()).add(new OSMMaxWeightParser());
+        hopper.getTagParserManagerBuilder().add(new OSMMaxWidthParser()).add(new OSMMaxHeightParser()).add(new OSMMaxWeightParser());
         hopper.importOrLoad();
 
-        DecimalEncodedValue widthEnc = hopper.getEncodingManager().getDecimalEncodedValue(MaxWidth.KEY);
-        DecimalEncodedValue heightEnc = hopper.getEncodingManager().getDecimalEncodedValue(MaxHeight.KEY);
-        DecimalEncodedValue weightEnc = hopper.getEncodingManager().getDecimalEncodedValue(MaxWeight.KEY);
+        DecimalEncodedValue widthEnc = hopper.getTagParserManager().getDecimalEncodedValue(MaxWidth.KEY);
+        DecimalEncodedValue heightEnc = hopper.getTagParserManager().getDecimalEncodedValue(MaxHeight.KEY);
+        DecimalEncodedValue weightEnc = hopper.getTagParserManager().getDecimalEncodedValue(MaxWeight.KEY);
 
         Graph graph = hopper.getGraphHopperStorage();
         assertEquals(5, graph.getNodes());
@@ -676,7 +676,7 @@ public class OSMReaderTest {
         BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24, false);
 
         GraphHopper hopper = new GraphHopper();
-        hopper.getEncodingManagerBuilder().add(bike).add(truck).add(car);
+        hopper.getTagParserManagerBuilder().add(bike).add(truck).add(car);
         hopper.setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
                 setGraphHopperLocation(dir).
                 setProfiles(
@@ -685,7 +685,7 @@ public class OSMReaderTest {
                         new Profile("truck").setVehicle("truck").setWeighting("fastest")
                 ).
                 importOrLoad();
-        EncodingManager manager = hopper.getEncodingManager();
+        EncodingManager manager = hopper.getTagParserManager().getEncodingManager();
         DecimalEncodedValue carTCEnc = manager.getDecimalEncodedValue(TurnCost.key("car"));
         DecimalEncodedValue truckTCEnc = manager.getDecimalEncodedValue(TurnCost.key("truck"));
         DecimalEncodedValue bikeTCEnc = manager.getDecimalEncodedValue(TurnCost.key("bike"));
@@ -750,7 +750,7 @@ public class OSMReaderTest {
         // (2-3)->(3-4) only_straight_on except bicycle = (2-3)->(3-8) restricted for car
         // (4-3)->(3-8) no_right_turn dedicated to motorcar = (4-3)->(3-8) restricted for car
 
-        DecimalEncodedValue carTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("car"));
+        DecimalEncodedValue carTCEnc = hopper.getTagParserManager().getDecimalEncodedValue(TurnCost.key("car"));
         assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_8) > 0);
         assertTrue(tcStorage.get(carTCEnc, edge4_3, n3, edge3_8) > 0);
         assertEquals(0, tcStorage.get(carTCEnc, edge2_3, n3, edge3_4), .1);
@@ -759,7 +759,7 @@ public class OSMReaderTest {
         assertEquals(0, tcStorage.get(carTCEnc, edge4_3, n3, edge3_2), .1);
         assertEquals(0, tcStorage.get(carTCEnc, edge8_3, n3, edge3_2), .1);
 
-        DecimalEncodedValue bikeTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("bike"));
+        DecimalEncodedValue bikeTCEnc = hopper.getTagParserManager().getDecimalEncodedValue(TurnCost.key("bike"));
         assertEquals(0, tcStorage.get(bikeTCEnc, edge2_3, n3, edge3_8), .1);
         assertEquals(0, tcStorage.get(bikeTCEnc, edge4_3, n3, edge3_8), .1);
         assertEquals(0, tcStorage.get(bikeTCEnc, edge2_3, n3, edge3_4), .1);
@@ -806,8 +806,8 @@ public class OSMReaderTest {
         int edge4_5 = GHUtility.getEdge(graph, n4, n5).getEdge();
         int edge5_1 = GHUtility.getEdge(graph, n5, n1).getEdge();
 
-        DecimalEncodedValue carTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("car"));
-        DecimalEncodedValue bikeTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("bike"));
+        DecimalEncodedValue carTCEnc = hopper.getTagParserManager().getDecimalEncodedValue(TurnCost.key("car"));
+        DecimalEncodedValue bikeTCEnc = hopper.getTagParserManager().getDecimalEncodedValue(TurnCost.key("bike"));
 
         // (1-2)->(2-3) no_right_turn for motorcar and bus
         assertTrue(tcStorage.get(carTCEnc, edge1_2, n2, edge2_3) > 0);
@@ -918,9 +918,9 @@ public class OSMReaderTest {
 
     @Test
     public void testCountries() throws IOException {
-        EncodingManager em = EncodingManager.create("car");
+        TagParserManager em = TagParserManager.create("car");
         EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
-        BaseGraph graph = new BaseGraph.Builder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em.getEncodingManager()).create();
         OSMReader reader = new OSMReader(graph, em, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
         reader.setAreaIndex(createCountryIndex());
@@ -940,12 +940,12 @@ public class OSMReaderTest {
     @Test
     public void testCurvedWayAlongBorder() throws IOException {
         // see https://discuss.graphhopper.com/t/country-of-way-is-wrong-on-road-near-border-with-curvature/6908/2
-        EncodingManager em = EncodingManager.start()
+        TagParserManager em = TagParserManager.start()
                 .add(new CarFlagEncoder())
                 .add(new CountryParser())
                 .build();
         EnumEncodedValue<Country> countryEnc = em.getEnumEncodedValue(Country.KEY, Country.class);
-        BaseGraph graph = new BaseGraph.Builder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em.getEncodingManager()).create();
         OSMReader reader = new OSMReader(graph, em, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
         reader.setAreaIndex(createCountryIndex());
@@ -992,13 +992,13 @@ public class OSMReaderTest {
             }
 
             footEncoder = new FootFlagEncoder();
-            getEncodingManagerBuilder().add(footEncoder).add(carEncoder).add(bikeEncoder);
+            getTagParserManagerBuilder().add(footEncoder).add(carEncoder).add(bikeEncoder);
             getReaderConfig().setPreferredLanguage(prefLang);
         }
 
         @Override
         protected void importOSM() {
-            GraphHopperStorage tmpGraph = new GraphBuilder(getEncodingManager()).set3D(hasElevation()).withTurnCosts(getEncodingManager().needsTurnCostsSupport()).build();
+            GraphHopperStorage tmpGraph = new GraphBuilder(getTagParserManager().getEncodingManager()).set3D(hasElevation()).withTurnCosts(getTagParserManager().needsTurnCostsSupport()).build();
             setGraphHopperStorage(tmpGraph);
             super.importOSM();
             carAccessEnc = carEncoder.getAccessEnc();

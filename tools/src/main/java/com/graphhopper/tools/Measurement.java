@@ -176,7 +176,7 @@ public class Measurement {
         hopper.importOrLoad();
 
         GraphHopperStorage g = hopper.getGraphHopperStorage();
-        EncodingManager encodingManager = hopper.getEncodingManager();
+        EncodingManager encodingManager = hopper.getTagParserManager().getEncodingManager();
         if (encodingManager.fetchEdgeEncoders().size() != 1) {
             throw new IllegalArgumentException("There has to be exactly one encoder for each measurement");
         }
@@ -538,7 +538,7 @@ public class Measurement {
 
         String profileName = querySettings.edgeBased ? "profile_tc" : "profile_no_tc";
         Weighting weighting = hopper.createWeighting(hopper.getProfile(profileName), new PMap());
-        final EdgeFilter edgeFilter = new DefaultSnapFilter(weighting, hopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profileName)));
+        final EdgeFilter edgeFilter = new DefaultSnapFilter(weighting, hopper.getTagParserManager().getBooleanEncodedValue(Subnetwork.key(profileName)));
         final EdgeExplorer edgeExplorer = g.createEdgeExplorer(edgeFilter);
         final AtomicLong visitedNodesSum = new AtomicLong(0);
         final AtomicLong maxVisitedNodes = new AtomicLong(0);

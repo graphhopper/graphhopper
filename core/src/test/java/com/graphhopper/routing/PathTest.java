@@ -44,7 +44,8 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class PathTest {
     private final FlagEncoder encoder = new CarFlagEncoder();
-    private final EncodingManager carManager = EncodingManager.create(encoder);
+    private final TagParserManager tagParserManager = TagParserManager.create(encoder);
+    private final EncodingManager carManager = tagParserManager.getEncodingManager();
     private final BooleanEncodedValue carAccessEnc = encoder.getAccessEnc();
     private final DecimalEncodedValue carAvSpeedEnv = encoder.getAverageSpeedEnc();
     private final EncodingManager mixedEncoders = EncodingManager.create(new CarFlagEncoder(), new FootFlagEncoder());
@@ -1001,21 +1002,21 @@ public class PathTest {
         EdgeIteratorState tmpEdge;
         tmpEdge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(5)).setName("1-2");
         assertNotEquals(EncodingManager.Access.CAN_SKIP, ((CarFlagEncoder) encoder).getAccess(w));
-        IntsRef relFlags = carManager.createRelationFlags();
-        tmpEdge.setFlags(carManager.handleWayTags(w, relFlags));
+        IntsRef relFlags = tagParserManager.createRelationFlags();
+        tmpEdge.setFlags(tagParserManager.handleWayTags(w, relFlags));
         tmpEdge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 5).setDistance(5)).setName("4-5");
-        tmpEdge.setFlags(carManager.handleWayTags(w, relFlags));
+        tmpEdge.setFlags(tagParserManager.handleWayTags(w, relFlags));
 
         w.setTag("maxspeed", "100");
         tmpEdge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(5)).setName("2-3");
-        tmpEdge.setFlags(carManager.handleWayTags(w, relFlags));
+        tmpEdge.setFlags(tagParserManager.handleWayTags(w, relFlags));
 
         w.setTag("maxspeed", "10");
         tmpEdge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(10)).setName("3-4");
-        tmpEdge.setFlags(carManager.handleWayTags(w, relFlags));
+        tmpEdge.setFlags(tagParserManager.handleWayTags(w, relFlags));
 
         tmpEdge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 6).setDistance(0.01)).setName("3-4");
-        tmpEdge.setFlags(carManager.handleWayTags(w, relFlags));
+        tmpEdge.setFlags(tagParserManager.handleWayTags(w, relFlags));
 
         return graph;
     }

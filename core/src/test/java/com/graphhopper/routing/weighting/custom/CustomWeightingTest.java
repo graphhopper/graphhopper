@@ -7,9 +7,6 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.parsers.OSMBikeNetworkTagParser;
-import com.graphhopper.routing.util.parsers.OSMHazmatParser;
-import com.graphhopper.routing.util.parsers.OSMTollParser;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.GraphBuilder;
@@ -38,7 +35,11 @@ class CustomWeightingTest {
     @BeforeEach
     public void setup() {
         carFE = new CarFlagEncoder(new PMap().putObject("speed_two_directions", true));
-        encodingManager = new EncodingManager.Builder().add(carFE).add(new OSMTollParser()).add(new OSMHazmatParser()).add(new OSMBikeNetworkTagParser()).build();
+        encodingManager = new EncodingManager.Builder().add(carFE)
+                .add(new EnumEncodedValue<>(Toll.KEY, Toll.class))
+                .add(new EnumEncodedValue<>(Hazmat.KEY, Hazmat.class))
+                .add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class))
+                .build();
         avSpeedEnc = carFE.getAverageSpeedEnc();
         accessEnc = carFE.getAccessEnc();
         maxSpeedEnc = encodingManager.getDecimalEncodedValue(MaxSpeed.KEY);

@@ -97,7 +97,7 @@ public class IsochroneResource {
         LocationIndex locationIndex = graphHopper.getLocationIndex();
         Graph graph = graphHopper.getGraphHopperStorage();
         Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
-        BooleanEncodedValue inSubnetworkEnc = graphHopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profileName));
+        BooleanEncodedValue inSubnetworkEnc = graphHopper.getTagParserManager().getBooleanEncodedValue(Subnetwork.key(profileName));
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA)) {
             GraphEdgeIdFinder.BlockArea blockArea = GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
                     Collections.singletonList(point.get()), hintsMap, new FiniteWeightFilter(weighting));

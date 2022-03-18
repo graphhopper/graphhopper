@@ -254,7 +254,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
         hopper = new GraphHopper();
         // load via explicitly configured FlagEncoders then we can define only one profile
-        hopper.getEncodingManagerBuilder().add(createCarFlagEncoder()).add(new BikeFlagEncoder());
+        hopper.getTagParserManagerBuilder().add(createCarFlagEncoder()).add(new BikeFlagEncoder());
         hopper.setProfiles(Collections.singletonList(new Profile("p_car").setVehicle("car").setWeighting("fastest")));
         hopper.setGraphHopperLocation(defaultGraphLoc);
         assertTrue(hopper.load());

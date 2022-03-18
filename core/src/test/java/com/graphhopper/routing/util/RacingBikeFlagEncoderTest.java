@@ -208,7 +208,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
                 return WAY;
             }
         };
-        EncodingManager encodingManager = EncodingManager.create(encoder);
+        TagParserManager encodingManager = TagParserManager.create(encoder);
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "tertiary");
         osmWay.setTag("maxspeed", "50");
@@ -256,7 +256,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         assertPriorityAndSpeed(encodingManager, UNCHANGED.getValue(), 4, osmWay);
     }
 
-    private void assertPriorityAndSpeed(EncodingManager encodingManager, int expectedPrio, double expectedSpeed, ReaderWay way) {
+    private void assertPriorityAndSpeed(TagParserManager encodingManager, int expectedPrio, double expectedSpeed, ReaderWay way) {
         IntsRef edgeFlags = encodingManager.handleWayTags(way, encodingManager.createRelationFlags());
         FlagEncoder encoder = encodingManager.fetchEdgeEncoders().iterator().next();
         DecimalEncodedValue enc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(encoder.toString(), "priority"));

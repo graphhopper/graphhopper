@@ -100,7 +100,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
 
         @Override
         public EncodingManager provide() {
-            return graphHopper.getEncodingManager();
+            return graphHopper.getTagParserManager().getEncodingManager();
         }
 
         @Override
@@ -132,7 +132,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
 
         @Override
         public ProfileResolver provide() {
-            return new ProfileResolver(graphHopper.getEncodingManager(),
+            return new ProfileResolver(graphHopper.getTagParserManager().getEncodingManager(),
                     graphHopper.getProfiles(),
                     graphHopper.getCHPreparationHandler().getCHProfiles(),
                     graphHopper.getLMPreparationHandler().getLMProfiles()
