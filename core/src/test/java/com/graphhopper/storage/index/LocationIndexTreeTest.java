@@ -28,7 +28,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import java.io.Closeable;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -450,7 +449,7 @@ public class LocationIndexTreeTest {
         assertEquals(3, findClosestEdge(idx, 1.5, 2));
         assertEquals(1, findClosestEdge(idx, -1, -1));
         assertEquals(4, findClosestEdge(idx, 4, 0));
-        Helper.close((Closeable) g);
+        g.close();
     }
 
     @Test
@@ -468,12 +467,12 @@ public class LocationIndexTreeTest {
         assertEquals(4, findClosestEdge(idx, 4, 0));
         assertEquals(6, findClosestNode(idx, 4, -2));
         assertEquals(5, findClosestEdge(idx, 3, 3));
-        Helper.close((Closeable) g);
+        g.close();
     }
 
     @Test
     public void testSinglePoints120() {
-        Graph g = createSampleGraph(EncodingManager.create("car"));
+        BaseGraph g = createSampleGraph(EncodingManager.create("car"));
         LocationIndexTree idx = (LocationIndexTree) createIndexNoPrepare(g, 500000).prepareIndex();
 
         assertEquals(3, findClosestEdge(idx, 1.637, 2.23));
@@ -483,19 +482,19 @@ public class LocationIndexTreeTest {
 
         assertEquals(15, findClosestEdge(idx, 3.8, 0));
         assertEquals(15, findClosestEdge(idx, 3.8466, 0.021));
-        Helper.close((Closeable) g);
+        g.close();
     }
 
     @Test
     public void testSinglePoints32() {
-        Graph g = createSampleGraph(EncodingManager.create("car"));
+        BaseGraph g = createSampleGraph(EncodingManager.create("car"));
         LocationIndexTree idx = (LocationIndexTree) createIndexNoPrepare(g, 500000).prepareIndex();
 
         assertEquals(10, findClosestEdge(idx, 3.649, 1.375));
         assertEquals(15, findClosestEdge(idx, 3.8465748, 0.021762699));
         assertEquals(4, findClosestEdge(idx, 2.485, 1.373));
         assertEquals(0, findClosestEdge(idx, 0.64628404, 0.53006625));
-        Helper.close((Closeable) g);
+        g.close();
     }
 
     @Test
@@ -509,10 +508,10 @@ public class LocationIndexTreeTest {
             na.setNode(i, (float) rand.nextDouble() * 10 + 10, (float) rand.nextDouble() * 10 + 10);
         }
         createIndexNoPrepare(g, 200).prepareIndex();
-        Helper.close((Closeable) g);
+        g.close();
     }
 
-    public Graph createSampleGraph(EncodingManager encodingManager) {
+    public BaseGraph createSampleGraph(EncodingManager encodingManager) {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         // length does not matter here but lat,lon and outgoing edges do!
 
