@@ -38,7 +38,7 @@ import static com.graphhopper.util.Helper.toLowerCase;
  * @author Nop
  */
 public class EncodingManager implements EncodedValueLookup {
-    private final List<AbstractFlagEncoder> edgeEncoders;
+    private final List<FlagEncoder> edgeEncoders;
     private final Map<String, EncodedValue> encodedValueMap;
     private final Map<String, TurnCostParser> turnCostParsers;
     private final EncodedValue.InitializerConfig turnCostConfig;
@@ -87,7 +87,7 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public EncodingManager(
-            List<AbstractFlagEncoder> edgeEncoders,
+            List<FlagEncoder> edgeEncoders,
             Map<String, EncodedValue> encodedValueMap,
             Map<String, TurnCostParser> turnCostParsers,
             EncodedValue.InitializerConfig turnCostConfig,
@@ -187,7 +187,7 @@ public class EncodingManager implements EncodedValueLookup {
             if (dateRangeParser == null)
                 dateRangeParser = new DateRangeParser(DateRangeParser.createCalendar());
 
-            for (AbstractFlagEncoder encoder : flagEncoderMap.values()) {
+            for (FlagEncoder encoder : flagEncoderMap.values()) {
                 if (encoder instanceof RoadsFlagEncoder) {
                     // TODO Later these EncodedValues can be added independently of RoadsFlagEncoder. Maybe add a foot_access and hgv_access? and remove the others "xy$access"
                     if (!em.hasEncodedValue("car_access"))
@@ -290,7 +290,7 @@ public class EncodingManager implements EncodedValueLookup {
                 return encoder;
         }
         if (throwExc)
-            throw new IllegalArgumentException("FlagEncoder for " + name + " not found. Existing: " + toFlagEncodersAsString());
+            throw new IllegalArgumentException("FlagEncoder for " + name + " not found. Existing: " + edgeEncoders.stream().map(FlagEncoder::toString).collect(Collectors.joining(",")));
         return null;
     }
 
@@ -322,35 +322,6 @@ public class EncodingManager implements EncodedValueLookup {
                 str.append(",");
 
             str.append(encoder.toString());
-        }
-
-        return str.toString();
-    }
-
-    public String toFlagEncodersAsString() {
-        StringBuilder str = new StringBuilder();
-        for (AbstractFlagEncoder encoder : edgeEncoders) {
-            if (str.length() > 0)
-                str.append(",");
-
-            str.append(encoder.toString())
-                    .append("|")
-                    .append(encoder.getPropertiesString());
-        }
-
-        return str.toString();
-    }
-
-    public String toEncodedValuesAsString() {
-        StringBuilder str = new StringBuilder();
-        for (EncodedValue ev : encodedValueMap.values()) {
-            if (!isSharedEncodedValues(ev))
-                continue;
-
-            if (str.length() > 0)
-                str.append(",");
-
-            str.append(ev.toString());
         }
 
         return str.toString();

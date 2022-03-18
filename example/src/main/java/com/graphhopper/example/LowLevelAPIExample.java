@@ -31,7 +31,7 @@ public class LowLevelAPIExample {
 
     public static void createAndSaveGraph() {
         FlagEncoder encoder = new CarFlagEncoder();
-        EncodingManager em = EncodingManager.create(encoder);
+        TagParserManager em = TagParserManager.create(encoder);
         GraphHopperStorage graph = new GraphBuilder(em).setRAM(graphLocation, true).create();
         // Make a weighted edge between two nodes and set average speed to 50km/h
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(1234).set(encoder.getAverageSpeedEnc(), 50);
@@ -78,8 +78,8 @@ public class LowLevelAPIExample {
         EncodingManager em = EncodingManager.create(encoder);
         Weighting weighting = new FastestWeighting(encoder);
         CHConfig chConfig = CHConfig.nodeBased("my_profile", weighting);
-        GraphHopperStorage graph = new GraphBuilder(em)
-                .setRAM(graphLocation, true)
+        BaseGraph graph = new BaseGraph.Builder(em)
+                .setDir(new RAMDirectory(graphLocation, true))
                 .create();
         graph.flush();
 

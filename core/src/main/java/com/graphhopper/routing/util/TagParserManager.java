@@ -32,6 +32,7 @@ import com.graphhopper.util.PMap;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.graphhopper.routing.util.EncodingManager.isValidEncodedValue;
 import static com.graphhopper.util.Helper.toLowerCase;
 import static java.util.Collections.emptyMap;
 
@@ -329,7 +330,7 @@ public class TagParserManager implements EncodedValueLookup {
             if (em.encodedValueMap.isEmpty())
                 throw new IllegalStateException("No EncodedValues found");
 
-            em.encodingManager = new EncodingManager(em.edgeEncoders, em.encodedValueMap,
+            em.encodingManager = new EncodingManager(new ArrayList<>(em.edgeEncoders), em.encodedValueMap,
                     em.turnCostParsers, em.turnCostConfig, em.edgeConfig);
 
             TagParserManager tmp = em;
@@ -598,68 +599,4 @@ public class TagParserManager implements EncodedValueLookup {
         return isValidEncodedValue(ev.getName()) && !ev.getName().contains(SPECIAL_SEPARATOR);
     }
 
-    /**
-     * All EncodedValue names that are created from a FlagEncoder should use this method to mark them as
-     * "none-shared" across the other FlagEncoders.
-     */
-    public static String getKey(FlagEncoder encoder, String str) {
-        return getKey(encoder.toString(), str);
-    }
-
-    public static String getKey(String prefix, String str) {
-        return prefix + SPECIAL_SEPARATOR + str;
-    }
-
-    // copied from janino
-    private static final Set<String> KEYWORDS = new HashSet<>(Arrays.asList(
-            "first_match",
-            "abstract", "assert",
-            "boolean", "break", "byte",
-            "case", "catch", "char", "class", "const", "continue",
-            "default", "do", "double",
-            "else", "enum", "extends",
-            "false", "final", "finally", "float", "for",
-            "goto",
-            "if", "implements", "import", "instanceof", "int", "interface",
-            "long",
-            "native", "new", "non-sealed", "null",
-            "package", "permits", "private", "protected", "public",
-            "record", "return",
-            "sealed", "short", "static", "strictfp", "super", "switch", "synchronized",
-            "this", "throw", "throws", "transient", "true", "try",
-            "var", "void", "volatile",
-            "while",
-            "yield",
-            "_"
-    ));
-
-    public static boolean isValidEncodedValue(String name) {
-        // first character must be a lower case letter
-        if (name.isEmpty() || !isLowerLetter(name.charAt(0)) || KEYWORDS.contains(name)) return false;
-
-        int dollarCount = 0, underscoreCount = 0;
-        for (int i = 1; i < name.length(); i++) {
-            char c = name.charAt(i);
-            if (c == '$') {
-                if (dollarCount > 0) return false;
-                dollarCount++;
-            } else if (c == '_') {
-                if (underscoreCount > 0) return false;
-                underscoreCount++;
-            } else if (!isLowerLetter(c) && !isNumber(c)) {
-                return false;
-            } else {
-                underscoreCount = 0;
-            }
-        }
-        return true;
-    }
-
-    private static boolean isNumber(char c) {
-        return c >= '0' && c <= '9';
-    }
-
-    private static boolean isLowerLetter(char c) {
-        return c >= 'a' && c <= 'z';
-    }
 }
