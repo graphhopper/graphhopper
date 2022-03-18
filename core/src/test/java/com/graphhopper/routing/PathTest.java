@@ -23,7 +23,10 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
@@ -1019,7 +1022,7 @@ public class PathTest {
     }
 
     private static class RoundaboutGraph {
-        final Graph g;
+        final BaseGraph g;
         final NodeAccess na;
         final EdgeIteratorState edge3to6, edge3to9;
         final EncodingManager em;
@@ -1028,7 +1031,7 @@ public class PathTest {
 
         private RoundaboutGraph(EncodingManager em) {
             this.em = em;
-            g = new GraphBuilder(em).create();
+            g = new BaseGraph.Builder(em).create();
             na = g.getNodeAccess();
             //                                       18
             //      8                 14              |
