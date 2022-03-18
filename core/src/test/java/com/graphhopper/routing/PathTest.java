@@ -23,10 +23,7 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.IntsRef;
-import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
@@ -56,7 +53,7 @@ public class PathTest {
 
     @Test
     public void testFound() {
-        Graph g = new GraphBuilder(carManager).create();
+        BaseGraph g = new BaseGraph.Builder(carManager).create();
         Path p = new Path(g);
         assertFalse(p.isFound());
         assertEquals(0, p.getDistance(), 1e-7);
@@ -65,7 +62,7 @@ public class PathTest {
 
     @Test
     public void testWayList() {
-        Graph g = new GraphBuilder(carManager).create();
+        BaseGraph g = new BaseGraph.Builder(carManager).create();
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0.0, 0.1);
         na.setNode(1, 1.0, 0.1);
@@ -160,7 +157,7 @@ public class PathTest {
 
     @Test
     public void testFindInstruction() {
-        Graph g = new GraphBuilder(carManager).create();
+        BaseGraph g = new BaseGraph.Builder(carManager).create();
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0.0, 0.0);
         na.setNode(1, 5.0, 0.0);
@@ -468,7 +465,7 @@ public class PathTest {
 
     @Test
     public void testCalcInstructionsRoundaboutIssue353() {
-        final Graph graph = new GraphBuilder(carManager).create();
+        final BaseGraph graph = new BaseGraph.Builder(carManager).create();
         final NodeAccess na = graph.getNodeAccess();
 
         //
@@ -579,7 +576,7 @@ public class PathTest {
 
     @Test
     public void testCalcInstructionForForkWithSameName() {
-        final Graph graph = new GraphBuilder(carManager).create();
+        final BaseGraph graph = new BaseGraph.Builder(carManager).create();
         final NodeAccess na = graph.getNodeAccess();
 
         // Actual example: point=48.982618%2C13.122021&point=48.982336%2C13.121002
@@ -611,7 +608,7 @@ public class PathTest {
 
     @Test
     public void testCalcInstructionForMotorwayFork() {
-        final Graph graph = new GraphBuilder(carManager).create();
+        final BaseGraph graph = new BaseGraph.Builder(carManager).create();
         final NodeAccess na = graph.getNodeAccess();
 
         // Actual example: point=48.909071%2C8.647136&point=48.908789%2C8.649244
@@ -643,7 +640,7 @@ public class PathTest {
 
     @Test
     public void testCalcInstructionsEnterMotorway() {
-        final Graph graph = new GraphBuilder(carManager).create();
+        final BaseGraph graph = new BaseGraph.Builder(carManager).create();
         final NodeAccess na = graph.getNodeAccess();
 
         // Actual example: point=48.630533%2C9.459416&point=48.630544%2C9.459829
@@ -672,7 +669,7 @@ public class PathTest {
 
     @Test
     public void testCalcInstructionsMotorwayJunction() {
-        final Graph g = new GraphBuilder(carManager).create();
+        final BaseGraph g = new BaseGraph.Builder(carManager).create();
         final NodeAccess na = g.getNodeAccess();
 
         // Actual example: point=48.70672%2C9.164266&point=48.706805%2C9.162995
@@ -702,7 +699,7 @@ public class PathTest {
 
     @Test
     public void testCalcInstructionsOntoOneway() {
-        final Graph g = new GraphBuilder(carManager).create();
+        final BaseGraph g = new BaseGraph.Builder(carManager).create();
         final NodeAccess na = g.getNodeAccess();
 
         // Actual example: point=-33.824566%2C151.187834&point=-33.82441%2C151.188231
@@ -731,7 +728,7 @@ public class PathTest {
 
     @Test
     public void testCalcInstructionIssue1047() {
-        final Graph g = new GraphBuilder(carManager).create();
+        final BaseGraph g = new BaseGraph.Builder(carManager).create();
         final NodeAccess na = g.getNodeAccess();
 
         // Actual example: point=51.367105%2C14.491246&point=51.369048%2C14.483092
@@ -772,7 +769,7 @@ public class PathTest {
 
     @Test
     public void testCalcInstructionContinueLeavingStreet() {
-        final Graph g = new GraphBuilder(carManager).create();
+        final BaseGraph g = new BaseGraph.Builder(carManager).create();
         final NodeAccess na = g.getNodeAccess();
 
         // When leaving the current street via a Continue, we should show it
@@ -800,7 +797,7 @@ public class PathTest {
 
     @Test
     public void testCalcInstructionSlightTurn() {
-        final Graph g = new GraphBuilder(carManager).create();
+        final BaseGraph g = new BaseGraph.Builder(carManager).create();
         final NodeAccess na = g.getNodeAccess();
 
         // Real Situation: point=48.411927%2C15.599197&point=48.412094%2C15.598816
@@ -830,7 +827,7 @@ public class PathTest {
 
     @Test
     public void testUTurnLeft() {
-        final Graph g = new GraphBuilder(carManager).create();
+        final BaseGraph g = new BaseGraph.Builder(carManager).create();
         final NodeAccess na = g.getNodeAccess();
 
         // Real Situation: point=48.402116%2C9.994367&point=48.402198%2C9.99507
@@ -868,7 +865,7 @@ public class PathTest {
 
     @Test
     public void testUTurnRight() {
-        final Graph g = new GraphBuilder(carManager).create();
+        final BaseGraph g = new BaseGraph.Builder(carManager).create();
         final NodeAccess na = g.getNodeAccess();
 
         // Real Situation: point=-33.885758,151.181472&point=-33.885692,151.181445
@@ -936,7 +933,7 @@ public class PathTest {
 
     @Test
     public void testCalcInstructionsForSlightTurnOntoDifferentStreet() {
-        final Graph g = new GraphBuilder(carManager).create();
+        final BaseGraph g = new BaseGraph.Builder(carManager).create();
         final NodeAccess na = g.getNodeAccess();
 
         // Actual example: point=48.76445%2C8.679054&point=48.764152%2C8.678722
@@ -985,7 +982,7 @@ public class PathTest {
     }
 
     private Graph generatePathDetailsGraph() {
-        final Graph graph = new GraphBuilder(carManager).create();
+        final BaseGraph graph = new BaseGraph.Builder(carManager).create();
         final NodeAccess na = graph.getNodeAccess();
 
         na.setNode(1, 52.514, 13.348);

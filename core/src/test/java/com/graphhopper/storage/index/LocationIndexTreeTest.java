@@ -90,7 +90,7 @@ public class LocationIndexTreeTest {
     // 2-------/
     Graph createTestGraph(EncodingManager em) {
         FlagEncoder encoder = em.getEncoder("car");
-        Graph graph = new GraphBuilder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 0.5, -0.5);
         na.setNode(1, -0.5, -0.5);
@@ -150,7 +150,7 @@ public class LocationIndexTreeTest {
     @Test
     public void testMoreReal() {
         FlagEncoder encoder = new CarFlagEncoder();
-        Graph graph = new GraphBuilder(EncodingManager.create(encoder)).create();
+        BaseGraph graph = new BaseGraph.Builder(EncodingManager.create(encoder)).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(1, 51.2492152, 9.4317166);
         na.setNode(0, 52, 9);
@@ -174,7 +174,7 @@ public class LocationIndexTreeTest {
     //-1|  2---------/
     //  |
     private Graph createTestGraphWithWayGeometry() {
-        Graph graph = new GraphBuilder(encodingManager).create();
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         FlagEncoder encoder = encodingManager.getEncoder("car");
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 0.5, -0.5);
@@ -205,7 +205,7 @@ public class LocationIndexTreeTest {
 
     @Test
     public void testFindingWayGeometry() {
-        Graph g = new GraphBuilder(encodingManager).create();
+        BaseGraph g = new BaseGraph.Builder(encodingManager).create();
         FlagEncoder encoder = encodingManager.getEncoder("car");
         NodeAccess na = g.getNodeAccess();
         na.setNode(10, 51.2492152, 9.4317166);
@@ -232,7 +232,7 @@ public class LocationIndexTreeTest {
     // see testgraph2.jpg
     Graph createTestGraph2() {
         FlagEncoder encoder = encodingManager.getEncoder("car");
-        Graph graph = new GraphBuilder(encodingManager).create();
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         NodeAccess na = graph.getNodeAccess();
 
         na.setNode(0, 49.94653, 11.57114);
@@ -341,7 +341,7 @@ public class LocationIndexTreeTest {
         BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
 
         EncodingManager tmpEM = EncodingManager.create(carEncoder, bikeEncoder);
-        Graph graph = new GraphBuilder(tmpEM).create();
+        BaseGraph graph = new BaseGraph.Builder(tmpEM).create();
         NodeAccess na = graph.getNodeAccess();
 
         // distance from point to point is roughly 1 km
@@ -389,7 +389,7 @@ public class LocationIndexTreeTest {
     @Test
     public void testCrossBoundaryNetwork_issue667() {
         FlagEncoder encoder = encodingManager.getEncoder("car");
-        Graph graph = new GraphBuilder(encodingManager).create();
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 0.1, 179.5);
         na.setNode(1, 0.1, 179.9);
@@ -442,7 +442,7 @@ public class LocationIndexTreeTest {
     @Test
     public void testSimpleGraph() {
         EncodingManager em = EncodingManager.create("car");
-        Graph g = new GraphBuilder(em).create();
+        BaseGraph g = new BaseGraph.Builder(em).create();
         initSimpleGraph(g, em);
 
         LocationIndexTree idx = (LocationIndexTree) createIndexNoPrepare(g, 500000).prepareIndex();
@@ -456,7 +456,7 @@ public class LocationIndexTreeTest {
     @Test
     public void testSimpleGraph2() {
         EncodingManager em = EncodingManager.create("car");
-        Graph g = new GraphBuilder(em).create();
+        BaseGraph g = new BaseGraph.Builder(em).create();
         initSimpleGraph(g, em);
 
         LocationIndexTree idx = (LocationIndexTree) createIndexNoPrepare(g, 500000).prepareIndex();
@@ -502,7 +502,7 @@ public class LocationIndexTreeTest {
     public void testNoErrorOnEdgeCase_lastIndex() {
         final EncodingManager encodingManager = EncodingManager.create("car");
         int locs = 10000;
-        Graph g = new GraphBuilder(encodingManager).create();
+        BaseGraph g = new BaseGraph.Builder(encodingManager).create();
         NodeAccess na = g.getNodeAccess();
         Random rand = new Random(12);
         for (int i = 0; i < locs; i++) {
@@ -513,7 +513,7 @@ public class LocationIndexTreeTest {
     }
 
     public Graph createSampleGraph(EncodingManager encodingManager) {
-        Graph graph = new GraphBuilder(encodingManager).create();
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         // length does not matter here but lat,lon and outgoing edges do!
 
 //

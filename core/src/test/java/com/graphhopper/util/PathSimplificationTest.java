@@ -27,8 +27,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TagParserManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.details.PathDetail;
@@ -61,7 +60,7 @@ public class PathSimplificationTest {
 
     @Test
     public void testScenario() {
-        Graph g = new GraphBuilder(carManager.getEncodingManager()).create();
+        BaseGraph g = new BaseGraph.Builder(carManager.getEncodingManager()).create();
         // 0-1-2
         // | | |
         // 3-4-5  9-10

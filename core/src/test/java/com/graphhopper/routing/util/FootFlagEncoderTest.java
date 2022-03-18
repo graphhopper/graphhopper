@@ -22,8 +22,6 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import org.junit.jupiter.api.Test;
@@ -67,7 +65,7 @@ public class FootFlagEncoderTest {
 
     @Test
     public void testCombined() {
-        Graph g = new GraphBuilder(encodingManager).create();
+        BaseGraph g = new BaseGraph.Builder(encodingManager).create();
         EdgeIteratorState edge = g.edge(0, 1);
         edge.set(footAvgSpeedEnc, 10.0).set(footAccessEnc, true, true);
         edge.set(carAvSpeedEnc, 100.0).set(carAccessEnc, true, false);
@@ -89,7 +87,7 @@ public class FootFlagEncoderTest {
 
     @Test
     public void testGraph() {
-        Graph g = new GraphBuilder(encodingManager).create();
+        BaseGraph g = new BaseGraph.Builder(encodingManager).create();
         g.edge(0, 1).setDistance(10).set(footAvgSpeedEnc, 10.0).set(footAccessEnc, true, true);
         g.edge(0, 2).setDistance(10).set(footAvgSpeedEnc, 5.0).set(footAccessEnc, true, true);
         g.edge(1, 3).setDistance(10).set(footAvgSpeedEnc, 10.0).set(footAccessEnc, true, true);

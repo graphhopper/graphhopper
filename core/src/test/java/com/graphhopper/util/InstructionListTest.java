@@ -31,8 +31,8 @@ import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.NodeAccess;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,7 +73,7 @@ public class InstructionListTest {
     }
 
     Graph createTestGraph() {
-        Graph g = new GraphBuilder(carManager).create();
+        BaseGraph g = new BaseGraph.Builder(carManager).create();
         // 0-1-2
         // | | |
         // 3-4-5  9-10
@@ -172,7 +172,7 @@ public class InstructionListTest {
 
     @Test
     public void testWayList2() {
-        Graph g = new GraphBuilder(carManager).create();
+        BaseGraph g = new BaseGraph.Builder(carManager).create();
         //   2
         //    \.  5
         //      \/
@@ -211,7 +211,7 @@ public class InstructionListTest {
     // problem: we normally don't want instructions if streetname stays but here it is suboptimal:
     @Test
     public void testNoInstructionIfSameStreet() {
-        Graph g = new GraphBuilder(carManager).create();
+        BaseGraph g = new BaseGraph.Builder(carManager).create();
         //   2
         //    \.  5
         //      \/
@@ -241,7 +241,7 @@ public class InstructionListTest {
 
     @Test
     public void testNoInstructionIfSlightTurnAndAlternativeIsSharp() {
-        Graph g = new GraphBuilder(carManager).create();
+        BaseGraph g = new BaseGraph.Builder(carManager).create();
         // real world example: https://graphhopper.com/maps/?point=51.734514%2C9.225571&point=51.734643%2C9.22541
         // https://github.com/graphhopper/graphhopper/issues/1441
         // From 1 to 3
@@ -270,7 +270,7 @@ public class InstructionListTest {
 
     @Test
     public void testNoInstructionIfSlightTurnAndAlternativeIsSharp2() {
-        Graph g = new GraphBuilder(carManager).create();
+        BaseGraph g = new BaseGraph.Builder(carManager).create();
         // real world example: https://graphhopper.com/maps/?point=48.748493%2C9.322455&point=48.748776%2C9.321889
         // https://github.com/graphhopper/graphhopper/issues/1441
         // From 1 to 3
@@ -302,7 +302,7 @@ public class InstructionListTest {
         BikeFlagEncoder bike = new BikeFlagEncoder();
         EncodingManager tmpEM = new EncodingManager.Builder().add(bike).build();
         EnumEncodedValue<RoadClass> rcEV = tmpEM.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
-        Graph g = new GraphBuilder(tmpEM).create();
+        BaseGraph g = new BaseGraph.Builder(tmpEM).create();
         // real world example: https://graphhopper.com/maps/?point=48.411549,15.599567&point=48.411663%2C15.600527&profile=bike
         // From 1 to 3
 
@@ -340,7 +340,7 @@ public class InstructionListTest {
         BikeFlagEncoder bike = new BikeFlagEncoder();
         EncodingManager tmpEM = new EncodingManager.Builder().add(bike).build();
         EnumEncodedValue<RoadClass> rcEV = tmpEM.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
-        Graph g = new GraphBuilder(tmpEM).create();
+        BaseGraph g = new BaseGraph.Builder(tmpEM).create();
         // real world example: https://graphhopper.com/maps/?point=48.412169%2C15.604888&point=48.412251%2C15.60543&profile=bike
         // From 1 to 4
 
@@ -377,7 +377,7 @@ public class InstructionListTest {
     public void testInstructionIfSlightTurnForCustomProfile() {
         FootFlagEncoder foot = new FootFlagEncoder();
         EncodingManager tmpEM = new EncodingManager.Builder().add(foot).build();
-        Graph g = new GraphBuilder(tmpEM).create();
+        BaseGraph g = new BaseGraph.Builder(tmpEM).create();
         // real world example: https://graphhopper.com/maps/?point=43.729379,7.417697&point=43.729798,7.417263&profile=foot
         // From 4 to 3 and 4 to 1
 
@@ -424,7 +424,7 @@ public class InstructionListTest {
         RoadsFlagEncoder roads = new RoadsFlagEncoder();
         EncodingManager tmpEM = EncodingManager.create(roads);
         EnumEncodedValue<RoadClass> rcEV = tmpEM.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
-        Graph g = new GraphBuilder(tmpEM).create();
+        BaseGraph g = new BaseGraph.Builder(tmpEM).create();
         // real world example: https://graphhopper.com/maps/?point=55.691214%2C12.57065&point=55.689957%2C12.570387
         // From 3 to 4
         //
@@ -457,7 +457,7 @@ public class InstructionListTest {
 
     @Test
     public void testEmptyList() {
-        Graph g = new GraphBuilder(carManager).create();
+        BaseGraph g = new BaseGraph.Builder(carManager).create();
         g.getNodeAccess().setNode(1, 0, 0);
         FastestWeighting weighting = new FastestWeighting(carEncoder);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(0, 1);
@@ -467,7 +467,7 @@ public class InstructionListTest {
 
     @Test
     public void testFind() {
-        Graph g = new GraphBuilder(carManager).create();
+        BaseGraph g = new BaseGraph.Builder(carManager).create();
         //   n-4-5   (n: pillar node)
         //   |
         // 7-3-2-6
