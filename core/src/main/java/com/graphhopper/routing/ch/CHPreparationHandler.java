@@ -122,7 +122,7 @@ public class CHPreparationHandler {
         }
         LOGGER.info("Creating CH preparations, {}", getMemInfo());
         List<PrepareContractionHierarchies> preparations = chConfigs.stream()
-                .map(c -> createCHPreparation(ghStorage, c))
+                .map(c -> createCHPreparation(ghStorage.getBaseGraph(), c))
                 .collect(Collectors.toList());
         Map<String, PrepareContractionHierarchies.Result> results = Collections.synchronizedMap(new LinkedHashMap<>());
         List<Callable<String>> callables = new ArrayList<>(preparations.size());
@@ -148,8 +148,8 @@ public class CHPreparationHandler {
         return results;
     }
 
-    private PrepareContractionHierarchies createCHPreparation(GraphHopperStorage ghStorage, CHConfig chConfig) {
-        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraph(ghStorage.getBaseGraph(), chConfig);
+    private PrepareContractionHierarchies createCHPreparation(BaseGraph graph, CHConfig chConfig) {
+        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraph(graph, chConfig);
         pch.setParams(pMap);
         return pch;
     }

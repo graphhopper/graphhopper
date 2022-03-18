@@ -87,8 +87,8 @@ public class GraphHopper {
     private String customAreasDirectory = "";
     // for graph:
     private GraphHopperStorage ghStorage;
-    private final EncodingManager.Builder emBuilder = new EncodingManager.Builder();
-    private EncodingManager encodingManager;
+    private final TagParserManager.Builder emBuilder = new TagParserManager.Builder();
+    private TagParserManager tagParserManager;
     private int defaultSegmentSize = -1;
     private String ghLocation = "";
     private DAType dataAccessDefaultType = DAType.RAM_STORE;
@@ -122,14 +122,14 @@ public class GraphHopper {
     private TagParserFactory tagParserFactory = new DefaultTagParserFactory();
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
-    public EncodingManager.Builder getEncodingManagerBuilder() {
+    public TagParserManager.Builder getTagParserManagerBuilder() {
         return emBuilder;
     }
 
-    public EncodingManager getEncodingManager() {
-        if (encodingManager == null)
+    public TagParserManager getTagParserManager() {
+        if (tagParserManager == null)
             throw new IllegalStateException("EncodingManager not yet built");
-        return encodingManager;
+        return tagParserManager;
     }
 
     public ElevationProvider getElevationProvider() {
@@ -221,7 +221,7 @@ public class GraphHopper {
     public GraphHopper setProfiles(List<Profile> profiles) {
         if (!profilesByName.isEmpty())
             throw new IllegalArgumentException("Cannot initialize profiles multiple times");
-        if (encodingManager != null)
+        if (tagParserManager != null)
             throw new IllegalArgumentException("Cannot set profiles after EncodingManager was built");
         for (Profile profile : profiles) {
             Profile previous = this.profilesByName.put(profile.getName(), profile);
@@ -461,11 +461,11 @@ public class GraphHopper {
         if (!ghConfig.getString("spatial_rules.max_bbox", "").isEmpty())
             throw new IllegalArgumentException("spatial_rules.max_bbox has been deprecated. There is no replacement, all custom areas will be considered.");
 
-        if (encodingManager != null)
+        if (tagParserManager != null)
             throw new IllegalStateException("Cannot call init twice. EncodingManager was already initialized.");
         emBuilder.setDateRangeParser(DateRangeParser.createInstance(ghConfig.getString("datareader.date_range_parser_day", "")));
         setProfiles(ghConfig.getProfiles());
-        encodingManager = buildEncodingManager(ghConfig);
+        tagParserManager = buildEncodingManager(ghConfig);
 
         if (ghConfig.getString("graph.locktype", "native").equals("simple"))
             lockFactory = new SimpleFSLockFactory();
@@ -514,7 +514,7 @@ public class GraphHopper {
         return this;
     }
 
-    private EncodingManager buildEncodingManager(GraphHopperConfig ghConfig) {
+    private TagParserManager buildEncodingManager(GraphHopperConfig ghConfig) {
         if (profilesByName.isEmpty())
             throw new IllegalStateException("no profiles exist but assumed to create EncodingManager. E.g. provide them in GraphHopperConfig when calling GraphHopper.init");
 
@@ -686,7 +686,7 @@ public class GraphHopper {
         AreaIndex<CustomArea> areaIndex = new AreaIndex<>(customAreas);
 
         logger.info("start creating graph from " + osmFile);
-        OSMReader reader = new OSMReader(ghStorage.getBaseGraph(), encodingManager, osmReaderConfig).setFile(_getOSMFile()).
+        OSMReader reader = new OSMReader(ghStorage.getBaseGraph(), tagParserManager, osmReaderConfig).setFile(_getOSMFile()).
                 setAreaIndex(areaIndex).
                 setElevationProvider(eleProvider).
                 setCountryRuleFactory(countryRuleFactory);
@@ -757,19 +757,19 @@ public class GraphHopper {
 
         if (!allowWrites && dataAccessDefaultType.isMMap())
             dataAccessDefaultType = DAType.MMAP_RO;
-        if (encodingManager == null) {
+        if (tagParserManager == null) {
             StorableProperties properties = new StorableProperties(new GHDirectory(ghLocation, dataAccessDefaultType));
-            encodingManager = properties.loadExisting()
-                    ? EncodingManager.create(emBuilder, encodedValueFactory, flagEncoderFactory, properties)
+            tagParserManager = properties.loadExisting()
+                    ? TagParserManager.create(emBuilder, encodedValueFactory, flagEncoderFactory, properties)
                     : buildEncodingManager(new GraphHopperConfig());
         }
 
         GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
         directory.configure(dataAccessConfig);
-        ghStorage = new GraphBuilder(encodingManager)
+        ghStorage = new GraphBuilder(tagParserManager)
                 .setDir(directory)
                 .set3D(hasElevation())
-                .withTurnCosts(encodingManager.needsTurnCostsSupport())
+                .withTurnCosts(tagParserManager.needsTurnCostsSupport())
                 .setSegmentSize(defaultSegmentSize)
                 .build();
         checkProfilesConsistency();
@@ -802,7 +802,7 @@ public class GraphHopper {
     }
 
     private void checkProfilesConsistency() {
-        EncodingManager encodingManager = getEncodingManager();
+        TagParserManager encodingManager = getTagParserManager();
         for (Profile profile : profilesByName.values()) {
             if (!encodingManager.hasEncoder(profile.getVehicle())) {
                 throw new IllegalArgumentException("Unknown vehicle '" + profile.getVehicle() + "' in profile: " + profile + ". Make sure all vehicles used in 'profiles' exist in 'graph.flag_encoders'");
@@ -959,7 +959,7 @@ public class GraphHopper {
     }
 
     protected WeightingFactory createWeightingFactory() {
-        return new DefaultWeightingFactory(ghStorage.getBaseGraph(), getEncodingManager());
+        return new DefaultWeightingFactory(ghStorage.getBaseGraph(), getTagParserManager().getEncodingManager());
     }
 
     public GHResponse route(GHRequest request) {
@@ -1114,7 +1114,7 @@ public class GraphHopper {
         for (Profile profile : profilesByName.values()) {
             // if turn costs are enabled use u-turn costs of zero as we only want to make sure the graph is fully connected assuming finite u-turn costs
             Weighting weighting = createWeighting(profile, new PMap().putObject(Parameters.Routing.U_TURN_COSTS, 0));
-            jobs.add(new PrepareJob(encodingManager.getBooleanEncodedValue(Subnetwork.key(profile.getName())), weighting));
+            jobs.add(new PrepareJob(tagParserManager.getBooleanEncodedValue(Subnetwork.key(profile.getName())), weighting));
         }
         return jobs;
     }

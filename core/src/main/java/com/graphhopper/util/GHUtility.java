@@ -417,7 +417,7 @@ public class GHUtility {
     public static GraphHopperStorage newStorage(GraphHopperStorage store) {
         Directory outdir = guessDirectory(store);
         boolean is3D = store.getNodeAccess().is3D();
-        return new GraphBuilder(store.getEncodingManager())
+        return new GraphBuilder(store.getTagParserManager())
                 .withTurnCosts(store.getTurnCostStorage() != null)
                 .set3D(is3D)
                 .setDir(outdir)

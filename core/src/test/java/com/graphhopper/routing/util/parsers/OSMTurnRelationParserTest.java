@@ -3,12 +3,10 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TagParserManager;
 import com.graphhopper.routing.util.TransportationMode;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.Test;
@@ -33,8 +31,9 @@ public class OSMTurnRelationParserTest {
         internalToOSMEdge.put(4, 4L);
 
         OSMTurnRelationParser parser = new OSMTurnRelationParser(encoder.toString(), 1, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR));
-        GraphHopperStorage ghStorage = new GraphBuilder(new EncodingManager.Builder().add(encoder).addTurnCostParser(parser).build()).create();
-        initGraph(ghStorage, encoder);
+        TagParserManager tagParserManager = new TagParserManager.Builder().add(encoder).addTurnCostParser(parser).build();
+        BaseGraph graph = new BaseGraph.Builder(tagParserManager.getEncodingManager()).withTurnCosts(true).create();
+        initGraph(graph, encoder);
         TurnCostParser.ExternalInternalMap map = new TurnCostParser.ExternalInternalMap() {
 
             @Override
@@ -53,9 +52,9 @@ public class OSMTurnRelationParserTest {
 
         // TYPE == ONLY
         OSMTurnRelation instance = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.ONLY);
-        parser.addRelationToTCStorage(instance, map, ghStorage);
+        parser.addRelationToTCStorage(instance, map, graph);
 
-        TurnCostStorage tcs = ghStorage.getTurnCostStorage();
+        TurnCostStorage tcs = graph.getTurnCostStorage();
         DecimalEncodedValue tce = parser.getTurnCostEnc();
         assertTrue(Double.isInfinite(tcs.get(tce, 4, 3, 6)));
         assertEquals(0, tcs.get(tce, 4, 3, 3), .1);
@@ -63,7 +62,7 @@ public class OSMTurnRelationParserTest {
 
         // TYPE == NOT
         instance = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.NOT);
-        parser.addRelationToTCStorage(instance, map, ghStorage);
+        parser.addRelationToTCStorage(instance, map, graph);
         assertTrue(Double.isInfinite(tcs.get(tce, 4, 3, 3)));
     }
 
@@ -72,7 +71,7 @@ public class OSMTurnRelationParserTest {
     // 2--3--4
     // |  |  |
     // 5--6--7
-    private static void initGraph(Graph graph, FlagEncoder encoder) {
+    private static void initGraph(BaseGraph graph, FlagEncoder encoder) {
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(3));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 2).setDistance(1));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 3).setDistance(1));

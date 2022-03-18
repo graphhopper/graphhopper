@@ -6,7 +6,7 @@ import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.GetOffBike;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.util.BikeFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TagParserManager;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class OSMGetOffBikeParserTest {
 
-    private EncodingManager em = EncodingManager.start().add(new BikeFlagEncoder()).build();
+    private TagParserManager em = TagParserManager.start().add(new BikeFlagEncoder()).build();
     private BooleanEncodedValue offBikeEnc = em.getBooleanEncodedValue(GetOffBike.KEY);
     private EnumEncodedValue<RoadClass> roadClassEnc = em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
 

@@ -38,14 +38,14 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public abstract class AbstractBikeFlagEncoderTester {
     protected BikeCommonFlagEncoder encoder;
-    protected EncodingManager encodingManager;
+    protected TagParserManager encodingManager;
     protected BooleanEncodedValue roundaboutEnc;
     protected DecimalEncodedValue priorityEnc;
     protected DecimalEncodedValue avgSpeedEnc;
 
     @BeforeEach
     public void setUp() {
-        encodingManager = EncodingManager.create(encoder = createBikeEncoder());
+        encodingManager = TagParserManager.create(encoder = createBikeEncoder());
         roundaboutEnc = encodingManager.getBooleanEncodedValue(Roundabout.KEY);
         priorityEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(encoder, "priority"));
         avgSpeedEnc = encoder.getAverageSpeedEnc();

@@ -21,7 +21,9 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -55,7 +57,7 @@ public class WheelchairFlagEncoderTest {
 
     @Test
     public void testCombined() {
-        Graph g = new GraphBuilder(encodingManager).create();
+        BaseGraph g = new BaseGraph.Builder(encodingManager).create();
         FlagEncoder carEncoder = encodingManager.getEncoder("car");
         EdgeIteratorState edge = g.edge(0, 1);
         edge.set(wheelchairAvSpeedEnc, 10.0).set(wheelchairAccessEnc, true, true);
@@ -78,7 +80,7 @@ public class WheelchairFlagEncoderTest {
 
     @Test
     public void testGraph() {
-        Graph g = new GraphBuilder(encodingManager).create();
+        BaseGraph g = new BaseGraph.Builder(encodingManager).create();
         g.edge(0, 1).setDistance(10).set(wheelchairAvSpeedEnc, 10.0).set(wheelchairAccessEnc, true, true);
         g.edge(0, 2).setDistance(10).set(wheelchairAvSpeedEnc, 5.0).set(wheelchairAccessEnc, true, true);
         g.edge(1, 3).setDistance(10).set(wheelchairAvSpeedEnc, 10.0).set(wheelchairAccessEnc, true, true);
@@ -493,7 +495,7 @@ public class WheelchairFlagEncoderTest {
 
     @Test
     public void testApplyWayTags() {
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).set3D(true).create();
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).set3D(true).create();
         NodeAccess na = graph.getNodeAccess();
         // incline of 5% over all
         na.setNode(0, 51.1, 12.0010, 50);
