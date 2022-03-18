@@ -17,12 +17,10 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
@@ -380,11 +378,6 @@ public class EncodingManager implements EncodedValueLookup {
     @Override
     public int hashCode() {
         return Objects.hash(edgeEncoders, encodedValueMap);
-    }
-
-    public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
-        for (AbstractFlagEncoder encoder : edgeEncoders)
-            encoder.applyWayTags(way, edge);
     }
 
     public List<FlagEncoder> fetchEdgeEncoders() {
