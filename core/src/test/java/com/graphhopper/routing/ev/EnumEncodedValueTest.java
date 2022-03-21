@@ -1,5 +1,9 @@
 package com.graphhopper.routing.ev;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.Test;
 
@@ -32,4 +36,19 @@ public class EnumEncodedValueTest {
         assertEquals(4, 32 - Integer.numberOfLeadingZeros(16 - 1));
         assertEquals(5, 32 - Integer.numberOfLeadingZeros(17 - 1));
     }
+
+    @Test
+    public void serializationAndDeserialization() throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE);
+        mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
+
+        EnumEncodedValue<RoadClass> roadClass = new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class);
+        String roadClassString = mapper.writeValueAsString(roadClass);
+        System.out.println(roadClassString);
+        EnumEncodedValue encodedValue = mapper.readValue(roadClassString, EnumEncodedValue.class);
+        EnumEncodedValue<RoadClass> roadClass2 = (EnumEncodedValue) encodedValue;
+        System.out.println(roadClass2);
+    }
+
 }

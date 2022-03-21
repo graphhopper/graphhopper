@@ -36,22 +36,26 @@ import java.util.Objects;
  */
 public class IntEncodedValueImpl implements IntEncodedValue {
 
-    private final String name;
+    private String name;
 
     /**
      * There are multiple int values possible per edge. Here we specify the index into this integer array.
      */
     private int fwdDataIndex;
     private int bwdDataIndex;
-    private final boolean storeTwoDirections;
-    final int bits;
-    final boolean negateReverseDirection;
-    final int minValue;
-    final int maxValue;
+    private boolean storeTwoDirections;
+    int bits;
+    boolean negateReverseDirection;
+    int minValue;
+    int maxValue;
     int fwdShift = -1;
     int bwdShift = -1;
     int fwdMask;
     int bwdMask;
+
+    IntEncodedValueImpl() {
+        // for jackson
+    }
 
     /**
      * @see #IntEncodedValueImpl(String, int, int, boolean, boolean)

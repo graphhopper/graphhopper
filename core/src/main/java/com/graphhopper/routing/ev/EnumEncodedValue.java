@@ -17,6 +17,9 @@
  */
 package com.graphhopper.routing.ev;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.util.StdConverter;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Arrays;
@@ -24,8 +27,15 @@ import java.util.Arrays;
 /**
  * This class allows to store distinct values via an enum. I.e. it stores just the indices
  */
+@JsonDeserialize(converter = EnumEncodedValue.EnumConstantsSetter.class)
 public final class EnumEncodedValue<E extends Enum> extends IntEncodedValueImpl {
-    private final E[] arr;
+    public Class<E> enumType;
+    @JsonIgnore
+    public E[] arr;
+
+    EnumEncodedValue() {
+        // for jackson
+    }
 
     public EnumEncodedValue(String name, Class<E> enumType) {
         this(name, enumType, false);
@@ -33,6 +43,7 @@ public final class EnumEncodedValue<E extends Enum> extends IntEncodedValueImpl 
 
     public EnumEncodedValue(String name, Class<E> enumType, boolean storeTwoDirections) {
         super(name, 32 - Integer.numberOfLeadingZeros(enumType.getEnumConstants().length - 1), storeTwoDirections);
+        this.enumType = enumType;
         arr = enumType.getEnumConstants();
     }
 
@@ -60,5 +71,13 @@ public final class EnumEncodedValue<E extends Enum> extends IntEncodedValueImpl 
     @Override
     public int getVersion() {
         return 31 * super.getVersion() + staticHashCode(arr);
+    }
+
+    public static class EnumConstantsSetter<T extends Enum> extends StdConverter<EnumEncodedValue<T>, EnumEncodedValue<T>> {
+        @Override
+        public EnumEncodedValue<T> convert(EnumEncodedValue<T> value) {
+            value.arr = value.enumType.getEnumConstants();
+            return value;
+        }
     }
 }
