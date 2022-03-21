@@ -21,7 +21,9 @@ package com.graphhopper.routing.ev;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class EncodedValueSerializer {
     private final static ObjectMapper MAPPER = new ObjectMapper();
@@ -33,7 +35,9 @@ public class EncodedValueSerializer {
 
     public static String serializeEncodedValue(EncodedValue encodedValue) {
         try {
-            return MAPPER.writeValueAsString(encodedValue);
+            JsonNode tree = MAPPER.valueToTree(encodedValue);
+            ((ObjectNode) tree).put("version", encodedValue.getVersion());
+            return MAPPER.writeValueAsString(tree);
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Could not serialize encoded value: " + encodedValue + ", error: " + e.getMessage());
         }
@@ -41,7 +45,14 @@ public class EncodedValueSerializer {
 
     public static EncodedValue deserializeEncodedValue(String serializedEncodedValue) {
         try {
-            return MAPPER.readValue(serializedEncodedValue, EncodedValue.class);
+            JsonNode jsonNode = MAPPER.readTree(serializedEncodedValue);
+            int storedVersion = jsonNode.get("version").asInt();
+            ((ObjectNode) jsonNode).remove("version");
+            EncodedValue encodedValue = MAPPER.treeToValue(jsonNode, EncodedValue.class);
+            if (storedVersion != encodedValue.getVersion())
+                throw new IllegalStateException("Version does not match. Cannot properly read encoded value: " + encodedValue.getName() + ". " +
+                        "You need to use the same version of GraphHopper you used to import the data");
+            return encodedValue;
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Could not deserialize encoded value: " + serializedEncodedValue + ", error: " + e.getMessage());
         }

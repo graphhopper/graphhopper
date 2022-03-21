@@ -24,8 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class EncodedValueSerializerTest {
     @Test
@@ -62,5 +61,16 @@ class EncodedValueSerializerTest {
         assertEquals("get_off_bike", deserializedGetOffBike.getName());
         assertEquals("names", deserializedNames.getName());
         assertTrue(deserializedNames.getValues().contains("jim"));
+    }
+
+    @Test
+    void wrongVersion() {
+        String serializedEV = "{\"className\":\"com.graphhopper.routing.ev.EnumEncodedValue\",\"name\":\"road_class\",\"bits\":5," +
+                "\"minValue\":0,\"maxValue\":31,\"negateReverseDirection\":false,\"storeTwoDirections\":false," +
+                "\"enumType\":\"com.graphhopper.routing.ev.RoadClass\",\"version\":";
+        // this fails, because the version is wrong
+        assertThrows(IllegalStateException.class, () -> EncodedValueSerializer.deserializeEncodedValue(serializedEV + "404}"));
+        // this works
+        assertEquals("road_class", EncodedValueSerializer.deserializeEncodedValue(serializedEV + "979560347}").getName());
     }
 }
