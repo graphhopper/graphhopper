@@ -1,16 +1,7 @@
 package com.graphhopper.routing.ev;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.Test;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -42,47 +33,4 @@ public class EnumEncodedValueTest {
         assertEquals(5, 32 - Integer.numberOfLeadingZeros(17 - 1));
     }
 
-    @Test
-    public void serializationAndDeserialization() throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE);
-        mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-
-        List<EncodedValue> encodedValues = new ArrayList<>();
-        // add enum, int, decimal and boolean encoded values
-        encodedValues.add(new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class));
-        encodedValues.add(Lanes.create());
-        encodedValues.add(MaxWidth.create());
-        encodedValues.add(GetOffBike.create());
-        StringEncodedValue namesEnc = new StringEncodedValue("names", 3, Arrays.asList("jim", "joe", "kate"), false);
-        encodedValues.add(namesEnc);
-
-        // serialize
-        List<String> serializedEVs = new ArrayList<>();
-        for (EncodedValue e : encodedValues) {
-            String s = mapper.writeValueAsString(e);
-            serializedEVs.add(s);
-        }
-
-        // deserialize
-        List<EncodedValue> deserializedEVs = new ArrayList<>();
-        for (String s : serializedEVs) {
-            JsonNode jsonNode = mapper.readTree(s);
-            deserializedEVs.add(mapper.treeToValue(jsonNode, EncodedValue.class));
-        }
-
-        System.out.println(deserializedEVs);
-
-        // look, it's all there!
-        EnumEncodedValue<RoadClass> deserializedRoadClass = (EnumEncodedValue<RoadClass>) deserializedEVs.get(0);
-        IntEncodedValue deserializedLanes = (IntEncodedValue) deserializedEVs.get(1);
-        DecimalEncodedValue deserializedMaxWidth = (DecimalEncodedValue) deserializedEVs.get(2);
-        BooleanEncodedValue deserializedGetOffBike = (BooleanEncodedValue) deserializedEVs.get(3);
-        StringEncodedValue deserializedNames = (StringEncodedValue) deserializedEVs.get(4);
-        System.out.println(deserializedRoadClass.getName() + ": " + Arrays.toString(deserializedRoadClass.getValues()));
-        System.out.println(deserializedLanes.getName());
-        System.out.println(deserializedMaxWidth.getName());
-        System.out.println(deserializedGetOffBike.getName());
-        System.out.println(deserializedNames.getName() + ": " + deserializedNames.getValues());
-    }
 }
