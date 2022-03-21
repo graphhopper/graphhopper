@@ -86,9 +86,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     public PrepareContractionHierarchies(GraphHopperStorage ghStorage, CHConfig chConfig) {
 // ORS-GH MOD END
         graph = ghStorage;
-        chStore = ghStorage.getCHStore(chConfig.getName());
-        if (chStore == null)
-            throw new IllegalArgumentException("There is no CH graph '" + chConfig.getName() + "', existing: " + ghStorage.getCHGraphNames());
+// ORS-GH MOD START abstract to method in order to allow overriding in ORS
+        chStore = getCHStore(chConfig);
+// ORS-GH MOD END
         chBuilder = new CHStorageBuilder(chStore);
         this.chConfig = chConfig;
         params = Params.forTraversalMode(chConfig.getTraversalMode());
@@ -100,6 +100,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
             }
         }
     }
+
+// ORS-GH MOD START method which can be overridden in ORS
+    public CHStorage getCHStore (CHConfig chConfig) {
+        CHStorage chStore = graph.getCHStore(chConfig.getName());
+        if (chStore == null)
+            throw new IllegalArgumentException("There is no CH graph '" + chConfig.getName() + "', existing: " + graph.getCHGraphNames());
+        return chStore;
+    }
+// ORS-GH MOD END
 
     public PrepareContractionHierarchies setParams(PMap pMap) {
         this.pMap = pMap;

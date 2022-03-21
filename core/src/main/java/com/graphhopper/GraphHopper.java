@@ -29,7 +29,6 @@ import com.graphhopper.routing.DefaultWeightingFactory;
 import com.graphhopper.routing.Router;
 import com.graphhopper.routing.RouterConfig;
 import com.graphhopper.routing.WeightingFactory;
-import com.graphhopper.routing.calt.CaltPreparationHandler;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.lm.LMConfig;
@@ -83,7 +82,9 @@ import static java.util.Collections.emptyList;
  */
 public class GraphHopper {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final Map<String, Profile> profilesByName = new LinkedHashMap<>();
+// ORS-GH MOD START change access private -> protected
+    protected final Map<String, Profile> profilesByName = new LinkedHashMap<>();
+// ORS-GH MOD END
     private final String fileLockName = "gh.lock";
     // utils
     private final TranslationMap trMap = new TranslationMap().doImport();
@@ -118,9 +119,6 @@ public class GraphHopper {
     // preparation handlers
     private final LMPreparationHandler lmPreparationHandler = new LMPreparationHandler();
     private final CHPreparationHandler chPreparationHandler = new CHPreparationHandler();
-    // ORS-GH MOD START - additional field to support CALT routing algorithm
-    private final CaltPreparationHandler caltPreparationHandler = new CaltPreparationHandler();
-    // ORS-GH MOD END
 
     // for data reader
     private String osmFile;
@@ -857,7 +855,9 @@ public class GraphHopper {
 
         ghStorage.addCHGraphs(chConfigs);
 
-        // TODO ORS: add calt here
+// ORS-GH MOD START add preparation hook
+        loadORS();
+// ORS-GH MOD START
 
         if (!new File(graphHopperFolder).exists())
             return false;
@@ -884,6 +884,10 @@ public class GraphHopper {
                 lock.release();
         }
     }
+
+// ORS-GH MOD START add preparation hook
+    protected void loadORS() {}
+// ORS-GH MOD START
 
     private void checkProfilesConsistency() {
         EncodingManager encodingManager = getEncodingManager();

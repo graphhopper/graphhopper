@@ -49,7 +49,9 @@ import java.util.Iterator;
  * @author Peter Karich
  * @see GraphBuilder to create a (CH)Graph easier
  */
-public final class GraphHopperStorage implements Graph, Closeable {
+// ORS-GH MOD START remove final in order to allow for ORS subclass
+public class GraphHopperStorage implements Graph, Closeable {
+// ORS-GH END
     private static final Logger LOGGER = LoggerFactory.getLogger(GraphHopperStorage.class);
     private final Directory dir;
     private final EncodingManager encodingManager;
@@ -138,6 +140,13 @@ public final class GraphHopperStorage implements Graph, Closeable {
      * or {@link #loadExisting()}.
      */
     public GraphHopperStorage addCHGraph(CHConfig chConfig) {
+// ORS-GH MOD START allow overriding in ORS
+        chEntries.add(createCHEntry(chConfig));
+        return this;
+    }
+
+    protected CHEntry createCHEntry(CHConfig chConfig) {
+// ORS-GH MOD END
         baseGraph.checkNotInitialized();
         if (getCHConfigs().contains(chConfig))
             throw new IllegalArgumentException("For the given CH profile a CHStorage already exists: '" + chConfig.getName() + "'");
@@ -156,8 +165,7 @@ public final class GraphHopperStorage implements Graph, Closeable {
                     " nodeB " + nodeAccess.getLat(s.nodeB) + "," + nodeAccess.getLon(s.nodeB));
         });
 
-        chEntries.add(new CHEntry(chConfig, store, new RoutingCHGraphImpl(baseGraph, store, chConfig.getWeighting())));
-        return this;
+        return new CHEntry(chConfig, store, new RoutingCHGraphImpl(baseGraph, store, chConfig.getWeighting()));
     }
 
     /**
@@ -386,10 +394,18 @@ public final class GraphHopperStorage implements Graph, Closeable {
                     throw new IllegalStateException("Cannot load " + cg);
             });
 
+// ORS-GH MOD START add ORS hook
+            loadExistingORS();
+// ORS-GH MOD END
+
             return true;
         }
         return false;
     }
+
+// ORS-GH MOD START add ORS hook
+    public void loadExistingORS() {};
+// ORS-GH MOD END
 
     private void checkIfConfiguredAndLoadedWeightingsCompatible() {
         String loadedStr = properties.get("graph.ch.profiles");
@@ -578,10 +594,12 @@ public final class GraphHopperStorage implements Graph, Closeable {
         baseGraph.flushAndCloseGeometryAndNameStorage();
     }
 
-    private static class CHEntry {
-        CHConfig chConfig;
-        CHStorage chStore;
-        RoutingCHGraphImpl chGraph;
+// ORS-GH MOD START change to public in order to be able to access it from ORSGraphHopperStorage subclass
+    public static class CHEntry {
+        public CHConfig chConfig;
+        public CHStorage chStore;
+        public RoutingCHGraphImpl chGraph;
+// ORS-GH MOD END
 
         public CHEntry(CHConfig chConfig, CHStorage chStore, RoutingCHGraphImpl chGraph) {
             this.chConfig = chConfig;
