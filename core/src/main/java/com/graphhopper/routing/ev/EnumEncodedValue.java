@@ -17,9 +17,9 @@
  */
 package com.graphhopper.routing.ev;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.util.StdConverter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Arrays;
@@ -27,22 +27,32 @@ import java.util.Arrays;
 /**
  * This class allows to store distinct values via an enum. I.e. it stores just the indices
  */
-@JsonDeserialize(converter = EnumEncodedValue.EnumConstantsSetter.class)
 public final class EnumEncodedValue<E extends Enum> extends IntEncodedValueImpl {
-    public Class<E> enumType;
+    public final Class<E> enumType;
     @JsonIgnore
     public E[] arr;
-
-    EnumEncodedValue() {
-        // for jackson
-    }
 
     public EnumEncodedValue(String name, Class<E> enumType) {
         this(name, enumType, false);
     }
 
     public EnumEncodedValue(String name, Class<E> enumType, boolean storeTwoDirections) {
-        super(name, 32 - Integer.numberOfLeadingZeros(enumType.getEnumConstants().length - 1), storeTwoDirections);
+        this(name, getBits(enumType.getEnumConstants().length), 0, (1 << getBits(enumType.getEnumConstants().length)) - 1, false, storeTwoDirections, enumType);
+    }
+
+    private static int getBits(int length) {
+        return 32 - Integer.numberOfLeadingZeros(length - 1);
+    }
+
+    @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+    public EnumEncodedValue(@JsonProperty("name") String name,
+                            @JsonProperty("bits") int bits,
+                            @JsonProperty("minValue") int minValue,
+                            @JsonProperty("maxValue") int maxValue,
+                            @JsonProperty("negateReverseDirection") boolean negateReverseDirection,
+                            @JsonProperty("storeTwoDirections") boolean storeTwoDirections,
+                            @JsonProperty("enumType") Class<E> enumType) {
+        super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections);
         this.enumType = enumType;
         arr = enumType.getEnumConstants();
     }
@@ -71,13 +81,5 @@ public final class EnumEncodedValue<E extends Enum> extends IntEncodedValueImpl 
     @Override
     public int getVersion() {
         return 31 * super.getVersion() + staticHashCode(arr);
-    }
-
-    public static class EnumConstantsSetter<T extends Enum> extends StdConverter<EnumEncodedValue<T>, EnumEncodedValue<T>> {
-        @Override
-        public EnumEncodedValue<T> convert(EnumEncodedValue<T> value) {
-            value.arr = value.enumType.getEnumConstants();
-            return value;
-        }
     }
 }

@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.ev;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.storage.IntsRef;
 
 /**
@@ -24,12 +26,9 @@ import com.graphhopper.storage.IntsRef;
  * number of bits that determine the maximum value.
  */
 public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implements DecimalEncodedValue {
-    private double factor;
-    private boolean defaultIsInfinity;
-    private boolean useMaximumAsInfinity;
-
-    DecimalEncodedValueImpl() {
-    }
+    private final double factor;
+    private final boolean defaultIsInfinity;
+    private final boolean useMaximumAsInfinity;
 
     /**
      * @see #DecimalEncodedValueImpl(String, int, double, double, boolean, boolean, boolean, boolean)
@@ -69,6 +68,22 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
             throw new IllegalArgumentException("defaultIsInfinity and useMaximumAsInfinity cannot be both true");
         if (defaultIsInfinity && minValue < 0)
             throw new IllegalArgumentException("defaultIsInfinity cannot be true when minValue is negative");
+    }
+
+    @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+    public DecimalEncodedValueImpl(@JsonProperty("name") String name,
+                                   @JsonProperty("bits") int bits,
+                                   @JsonProperty("minValue") int minValue,
+                                   @JsonProperty("maxValue") int maxValue,
+                                   @JsonProperty("negateReverseDirection") boolean negateReverseDirection,
+                                   @JsonProperty("storeTwoDirections") boolean storeTwoDirections,
+                                   @JsonProperty("factor") double factor,
+                                   @JsonProperty("defaultIsInfinity") boolean defaultIsInfinity,
+                                   @JsonProperty("useMaximumAsInfinity") boolean useMaximumAsInfinity) {
+        super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections);
+        this.factor = factor;
+        this.defaultIsInfinity = defaultIsInfinity;
+        this.useMaximumAsInfinity = useMaximumAsInfinity;
     }
 
     @Override

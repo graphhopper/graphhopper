@@ -2,6 +2,8 @@ package com.graphhopper.routing.ev;
 
 import com.carrotsearch.hppc.ObjectIntHashMap;
 import com.carrotsearch.hppc.ObjectIntMap;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.ArrayList;
@@ -47,6 +49,26 @@ public final class StringEncodedValue extends IntEncodedValueImpl {
         for (String value : values) {
             indexMap.put(value, index++);
         }
+    }
+
+    @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+    public StringEncodedValue(
+            @JsonProperty("name") String name,
+            @JsonProperty("bits") int bits,
+            @JsonProperty("minValue") int minValue,
+            @JsonProperty("maxValue") int maxValue,
+            @JsonProperty("negateReverseDirection") boolean negateReverseDirection,
+            @JsonProperty("storeTwoDirections") boolean storeTwoDirections,
+            @JsonProperty("maxValues") int maxValues,
+            @JsonProperty("values") List<String> values,
+            @JsonProperty("indexMap") ObjectIntMap<String> indexMap) {
+        super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections);
+        if (values.size() > maxValues)
+            throw new IllegalArgumentException("Number of values is higher than the maximum value count: "
+                    + values.size() + " > " + maxValues);
+        this.maxValues = maxValues;
+        this.values = values;
+        this.indexMap = indexMap;
     }
 
     public final void setString(boolean reverse, IntsRef ref, String value) {
