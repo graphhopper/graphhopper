@@ -18,7 +18,6 @@
 
 package com.graphhopper.routing.ev;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -30,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class EncodedValueSerializerTest {
     @Test
-    public void serializationAndDeserialization() throws JsonProcessingException {
+    public void serializationAndDeserialization() {
         List<EncodedValue> encodedValues = new ArrayList<>();
         // add enum, int, decimal and boolean encoded values
         encodedValues.add(new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class));
