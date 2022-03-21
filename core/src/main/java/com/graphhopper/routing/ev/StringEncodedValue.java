@@ -71,7 +71,7 @@ public final class StringEncodedValue extends IntEncodedValueImpl {
             super.setInt(reverse, ref, 0);
             return;
         }
-        int index = indexMap.get(value);
+        int index = indexMap.getOrDefault(value, 0);
         if (index == 0) {
             if (values.size() == maxValues)
                 throw new IllegalStateException("Maximum number of values reached for " + getName() + ": " + maxValues);
@@ -104,7 +104,7 @@ public final class StringEncodedValue extends IntEncodedValueImpl {
      * @return the non-zero index of the String or <i>0</i> if it couldn't be found
      */
     public int indexOf(String value) {
-        return indexMap.get(value);
+        return indexMap.getOrDefault(value, 0);
     }
 
     /**
