@@ -131,7 +131,7 @@ public class MapMatching {
         }
         graph = graphHopper.getGraphHopperStorage().getBaseGraph();
         unwrappedWeighting = graphHopper.createWeighting(profile, hints);
-        inSubnetworkEnc = graphHopper.getTagParserManager().getBooleanEncodedValue(Subnetwork.key(profileStr));
+        inSubnetworkEnc = graphHopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profileStr));
         this.maxVisitedNodes = hints.getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
     }
 

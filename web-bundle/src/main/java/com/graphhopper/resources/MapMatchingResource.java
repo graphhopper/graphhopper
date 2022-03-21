@@ -137,7 +137,7 @@ public class MapMatchingResource {
                     setDouglasPeucker(peucker).
                     setSimplifyResponse(minPathPrecision > 0);
             ResponsePath responsePath = pathMerger.doWork(PointList.EMPTY, Collections.singletonList(matchResult.getMergedPath()),
-                    graphHopper.getTagParserManager(), tr);
+                    graphHopper.getEncodingManager(), tr);
 
             // GraphHopper thinks an empty path is an invalid path, and further that an invalid path is still a path but
             // marked with a non-empty list of Exception objects. I disagree, so I clear it.

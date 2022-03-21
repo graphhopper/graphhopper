@@ -117,7 +117,7 @@ public class MiniGraphUI {
     public MiniGraphUI(GraphHopper hopper, boolean debug, boolean useCH) {
         this.graph = hopper.getGraphHopperStorage().getBaseGraph();
         this.na = graph.getNodeAccess();
-        encoder = hopper.getTagParserManager().fetchEdgeEncoders().get(0);
+        encoder = hopper.getEncodingManager().fetchEdgeEncoders().get(0);
         avSpeedEnc = encoder.getAverageSpeedEnc();
         accessEnc = encoder.getAccessEnc();
         this.useCH = useCH;
