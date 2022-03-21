@@ -24,9 +24,12 @@ import com.graphhopper.storage.IntsRef;
  * number of bits that determine the maximum value.
  */
 public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implements DecimalEncodedValue {
-    private final double factor;
-    private final boolean defaultIsInfinity;
-    private final boolean useMaximumAsInfinity;
+    private double factor;
+    private boolean defaultIsInfinity;
+    private boolean useMaximumAsInfinity;
+
+    DecimalEncodedValueImpl() {
+    }
 
     /**
      * @see #DecimalEncodedValueImpl(String, int, double, double, boolean, boolean, boolean, boolean)
