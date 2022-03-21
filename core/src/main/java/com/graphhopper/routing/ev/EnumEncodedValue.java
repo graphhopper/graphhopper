@@ -28,9 +28,10 @@ import java.util.Arrays;
  * This class allows to store distinct values via an enum. I.e. it stores just the indices
  */
 public final class EnumEncodedValue<E extends Enum> extends IntEncodedValueImpl {
-    public final Class<E> enumType;
     @JsonIgnore
-    public E[] arr;
+    private final E[] arr;
+    // needed for Jackson
+    private final Class<E> enumType;
 
     public EnumEncodedValue(String name, Class<E> enumType) {
         this(name, enumType, false);
