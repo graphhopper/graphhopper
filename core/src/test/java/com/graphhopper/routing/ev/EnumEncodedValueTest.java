@@ -9,6 +9,7 @@ import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -54,22 +55,30 @@ public class EnumEncodedValueTest {
         encodedValues.add(MaxWidth.create());
         encodedValues.add(GetOffBike.create());
 
-        String serializedEVs = mapper.writeValueAsString(encodedValues);
-        System.out.println(serializedEVs);
-
-        List<EncodedValue> deserializedEVs = new ArrayList<>();
-        JsonNode jsonNode = mapper.readTree(serializedEVs);
-        for (JsonNode jsonEV : jsonNode) {
-            if (jsonEV.has("enumType"))
-                deserializedEVs.add(mapper.treeToValue(jsonEV, EnumEncodedValue.class));
-            else if (jsonEV.has("factor"))
-                deserializedEVs.add(mapper.treeToValue(jsonEV, DecimalEncodedValueImpl.class));
-            else if (jsonEV.has("type") && "simple_boolean".equals(jsonEV.get("type").asText()))
-                deserializedEVs.add(mapper.treeToValue(jsonEV, SimpleBooleanEncodedValue.class));
-            else
-                deserializedEVs.add(mapper.treeToValue(jsonEV, IntEncodedValueImpl.class));
+        // serialize
+        List<String> serializedEVs = new ArrayList<>();
+        for (EncodedValue e : encodedValues) {
+            String s = mapper.writeValueAsString(e);
+            serializedEVs.add(s);
         }
-        System.out.println(deserializedEVs);
-    }
 
+        // deserialize
+        List<EncodedValue> deserializedEVs = new ArrayList<>();
+        for (String s : serializedEVs) {
+            JsonNode jsonNode = mapper.readTree(s);
+            deserializedEVs.add(mapper.treeToValue(jsonNode, EncodedValue.class));
+        }
+
+        System.out.println(deserializedEVs);
+
+        // look, it's all there!
+        EnumEncodedValue<RoadClass> deserializedRoadClass = (EnumEncodedValue<RoadClass>) deserializedEVs.get(0);
+        IntEncodedValue deserializedLanes = (IntEncodedValue) deserializedEVs.get(1);
+        DecimalEncodedValue deserializedMaxWidth = (DecimalEncodedValue) deserializedEVs.get(2);
+        BooleanEncodedValue deserializedGetOffBike = (BooleanEncodedValue) deserializedEVs.get(3);
+        System.out.println(deserializedRoadClass.getName() + ": " + Arrays.toString(deserializedRoadClass.getValues()));
+        System.out.println(deserializedLanes.getName());
+        System.out.println(deserializedMaxWidth.getName());
+        System.out.println(deserializedGetOffBike.getName());
+    }
 }

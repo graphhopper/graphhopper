@@ -23,8 +23,6 @@ import com.graphhopper.storage.IntsRef;
  * This class implements a simple boolean storage via an UnsignedIntEncodedValue with 1 bit.
  */
 public final class SimpleBooleanEncodedValue extends IntEncodedValueImpl implements BooleanEncodedValue {
-    private final String type = "simple_boolean";
-
     SimpleBooleanEncodedValue() {
     }
 
