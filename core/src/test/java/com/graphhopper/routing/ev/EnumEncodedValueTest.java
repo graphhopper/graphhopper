@@ -54,6 +54,8 @@ public class EnumEncodedValueTest {
         encodedValues.add(Lanes.create());
         encodedValues.add(MaxWidth.create());
         encodedValues.add(GetOffBike.create());
+        StringEncodedValue namesEnc = new StringEncodedValue("names", 3, Arrays.asList("jim", "joe", "kate"), false);
+        encodedValues.add(namesEnc);
 
         // serialize
         List<String> serializedEVs = new ArrayList<>();
@@ -76,9 +78,11 @@ public class EnumEncodedValueTest {
         IntEncodedValue deserializedLanes = (IntEncodedValue) deserializedEVs.get(1);
         DecimalEncodedValue deserializedMaxWidth = (DecimalEncodedValue) deserializedEVs.get(2);
         BooleanEncodedValue deserializedGetOffBike = (BooleanEncodedValue) deserializedEVs.get(3);
+        StringEncodedValue deserializedNames = (StringEncodedValue) deserializedEVs.get(4);
         System.out.println(deserializedRoadClass.getName() + ": " + Arrays.toString(deserializedRoadClass.getValues()));
         System.out.println(deserializedLanes.getName());
         System.out.println(deserializedMaxWidth.getName());
         System.out.println(deserializedGetOffBike.getName());
+        System.out.println(deserializedNames.getName() + ": " + deserializedNames.getValues());
     }
 }

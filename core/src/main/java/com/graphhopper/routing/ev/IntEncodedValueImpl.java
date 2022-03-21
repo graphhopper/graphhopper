@@ -74,13 +74,25 @@ public class IntEncodedValueImpl implements IntEncodedValue {
      * @param storeTwoDirections     true if forward and backward direction of the edge should get two independent values.
      */
     public IntEncodedValueImpl(String name, int bits, int minValue, boolean negateReverseDirection, boolean storeTwoDirections) {
-        this(name, getBitsForNegateReverse(bits, negateReverseDirection),
-                getMinValueForNegateReverse(bits2Max(bits), minValue, negateReverseDirection),
-                getMaxValueForNegateReverse(bits2Max(bits), minValue, negateReverseDirection),
-                negateReverseDirection, storeTwoDirections);
+        if (!EncodingManager.isValidEncodedValue(name))
+            throw new IllegalArgumentException("EncodedValue name wasn't valid: " + name + ". Use lower case letters, underscore and numbers only.");
+        if (bits <= 0)
+            throw new IllegalArgumentException(name + ": bits cannot be zero or negative");
+        if (bits > 31)
+            throw new IllegalArgumentException(name + ": at the moment the number of reserved bits cannot be more than 31");
         if (negateReverseDirection && (minValue != 0 || storeTwoDirections))
             throw new IllegalArgumentException(name + ": negating value for reverse direction only works for minValue == 0 " +
                     "and !storeTwoDirections but was minValue=" + minValue + ", storeTwoDirections=" + storeTwoDirections);
+
+        this.name = name;
+        this.storeTwoDirections = storeTwoDirections;
+        int max = (1 << bits) - 1;
+        // negateReverseDirection: store the negative value only once, but for that we need the same range as maxValue for negative values
+        this.minValue = negateReverseDirection ? -max : minValue;
+        this.maxValue = max + minValue;
+        // negateReverseDirection: we need twice the integer range, i.e. 1 more bit
+        this.bits = negateReverseDirection ? bits + 1 : bits;
+        this.negateReverseDirection = negateReverseDirection;
     }
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
@@ -90,36 +102,12 @@ public class IntEncodedValueImpl implements IntEncodedValue {
                                @JsonProperty("maxValue") int maxValue,
                                @JsonProperty("negateReverseDirection") boolean negateReverseDirection,
                                @JsonProperty("storeTwoDirections") boolean storeTwoDirections) {
-        if (!EncodingManager.isValidEncodedValue(name))
-            throw new IllegalArgumentException("EncodedValue name wasn't valid: " + name + ". Use lower case letters, underscore and numbers only.");
-        if (bits <= 0)
-            throw new IllegalArgumentException(name + ": bits cannot be zero or negative");
-        if (bits > 31)
-            throw new IllegalArgumentException(name + ": at the moment the number of reserved bits cannot be more than 31");
         this.name = name;
         this.storeTwoDirections = storeTwoDirections;
         this.bits = bits;
         this.negateReverseDirection = negateReverseDirection;
         this.minValue = minValue;
         this.maxValue = maxValue;
-    }
-
-    private static int getBitsForNegateReverse(int bits, boolean negateReverseDirection) {
-        // negateReverseDirection: we need twice the integer range, i.e. 1 more bit
-        return negateReverseDirection ? bits + 1 : bits;
-    }
-
-    private static int getMinValueForNegateReverse(int max, int minValue, boolean negateReverseDirection) {
-        // negateReverseDirection: store the negative value only once, but for that we need the same range as maxValue for negative values
-        return negateReverseDirection ? -max : minValue;
-    }
-
-    private static int getMaxValueForNegateReverse(int max, int minValue, boolean negateReverseDirection) {
-        return max + getMinValueForNegateReverse(max, minValue, negateReverseDirection);
-    }
-
-    private static int bits2Max(int bits) {
-        return (1 << bits) - 1;
     }
 
     @Override

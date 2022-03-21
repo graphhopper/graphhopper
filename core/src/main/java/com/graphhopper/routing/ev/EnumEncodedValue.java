@@ -37,11 +37,9 @@ public final class EnumEncodedValue<E extends Enum> extends IntEncodedValueImpl 
     }
 
     public EnumEncodedValue(String name, Class<E> enumType, boolean storeTwoDirections) {
-        this(name, getBits(enumType.getEnumConstants().length), 0, (1 << getBits(enumType.getEnumConstants().length)) - 1, false, storeTwoDirections, enumType);
-    }
-
-    private static int getBits(int length) {
-        return 32 - Integer.numberOfLeadingZeros(length - 1);
+        super(name, 32 - Integer.numberOfLeadingZeros(enumType.getEnumConstants().length - 1), storeTwoDirections);
+        this.enumType = enumType;
+        arr = enumType.getEnumConstants();
     }
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
