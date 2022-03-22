@@ -66,10 +66,11 @@ class EncodedValueSerializerTest {
     @Test
     void wrongVersion() {
         String serializedEV = "{\"className\":\"com.graphhopper.routing.ev.EnumEncodedValue\",\"name\":\"road_class\",\"bits\":5," +
-                "\"minValue\":0,\"maxValue\":31,\"negateReverseDirection\":false,\"storeTwoDirections\":false," +
-                "\"enumType\":\"com.graphhopper.routing.ev.RoadClass\",\"version\":";
+                "\"min_value\":0,\"max_value\":31,\"negate_reverse_direction\":false,\"store_two_directions\":false," +
+                "\"enum_type\":\"com.graphhopper.routing.ev.RoadClass\",\"version\":";
         // this fails, because the version is wrong
-        assertThrows(IllegalStateException.class, () -> EncodedValueSerializer.deserializeEncodedValue(serializedEV + "404}"));
+        IllegalStateException e = assertThrows(IllegalStateException.class, () -> EncodedValueSerializer.deserializeEncodedValue(serializedEV + "404}"));
+        assertTrue(e.getMessage().contains("Version does not match"), e.getMessage());
         // this works
         assertEquals("road_class", EncodedValueSerializer.deserializeEncodedValue(serializedEV + "979560347}").getName());
     }

@@ -50,13 +50,13 @@ public final class StringEncodedValue extends IntEncodedValueImpl {
     StringEncodedValue(
             @JsonProperty("name") String name,
             @JsonProperty("bits") int bits,
-            @JsonProperty("minValue") int minValue,
-            @JsonProperty("maxValue") int maxValue,
-            @JsonProperty("negateReverseDirection") boolean negateReverseDirection,
-            @JsonProperty("storeTwoDirections") boolean storeTwoDirections,
-            @JsonProperty("maxValues") int maxValues,
+            @JsonProperty("min_value") int minValue,
+            @JsonProperty("max_value") int maxValue,
+            @JsonProperty("negate_reverse_direction") boolean negateReverseDirection,
+            @JsonProperty("store_two_directions") boolean storeTwoDirections,
+            @JsonProperty("max_values") int maxValues,
             @JsonProperty("values") List<String> values,
-            @JsonProperty("indexMap") HashMap<String, Integer> indexMap) {
+            @JsonProperty("index_map") HashMap<String, Integer> indexMap) {
         // we need this constructor for Jackson
         super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections);
         if (values.size() > maxValues)
