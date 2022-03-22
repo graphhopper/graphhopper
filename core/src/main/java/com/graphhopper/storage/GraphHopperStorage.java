@@ -141,19 +141,17 @@ public class GraphHopperStorage implements Graph, Closeable {
      */
     public GraphHopperStorage addCHGraph(CHConfig chConfig) {
 // ORS-GH MOD START allow overriding in ORS
+        if (getCHConfigs().contains(chConfig))
+            throw new IllegalArgumentException("For the given CH profile a CHStorage already exists: '" + chConfig.getName() + "'");
         chEntries.add(createCHEntry(chConfig));
         return this;
     }
 
     protected CHEntry createCHEntry(CHConfig chConfig) {
-// ORS-GH MOD END
         baseGraph.checkNotInitialized();
-        if (getCHConfigs().contains(chConfig))
-            throw new IllegalArgumentException("For the given CH profile a CHStorage already exists: '" + chConfig.getName() + "'");
         if (chConfig.getWeighting() == null)
             throw new IllegalStateException("Weighting for CHConfig must not be null");
 
-// ORS-GH MOD START
         CHStorage store = new CHStorage(dir, chConfig.getName(), segmentSize, chConfig.isEdgeBased(), chConfig.getType());
 // ORS-GH MOD END
         store.setLowShortcutWeightConsumer(s -> {
