@@ -19,7 +19,7 @@ public class IsochroneExample {
         String relDir = args.length == 1 ? args[0] : "";
         GraphHopper hopper = createGraphHopperInstance(relDir + "core/files/andorra.osm.pbf");
         // get encoder from GraphHopper instance
-        EncodingManager encodingManager = hopper.getTagParserManager().getEncodingManager();
+        EncodingManager encodingManager = hopper.getEncodingManager();
         FlagEncoder encoder = encodingManager.getEncoder("car");
 
         // snap some GPS coordinates to the routing graph and build a query graph

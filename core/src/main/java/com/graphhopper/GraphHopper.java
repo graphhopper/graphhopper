@@ -132,6 +132,10 @@ public class GraphHopper {
         return tagParserManager;
     }
 
+    public EncodingManager getEncodingManager() {
+        return getTagParserManager().getEncodingManager();
+    }
+
     public ElevationProvider getElevationProvider() {
         return eleProvider;
     }
@@ -959,7 +963,7 @@ public class GraphHopper {
     }
 
     protected WeightingFactory createWeightingFactory() {
-        return new DefaultWeightingFactory(ghStorage.getBaseGraph(), getTagParserManager().getEncodingManager());
+        return new DefaultWeightingFactory(ghStorage.getBaseGraph(), getEncodingManager());
     }
 
     public GHResponse route(GHRequest request) {

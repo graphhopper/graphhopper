@@ -277,7 +277,7 @@ public class GraphHopperMultimodalIT {
     @Test
     public void testSubnetworkRemoval() {
         Profile foot = graphHopperGtfs.getProfile("foot");
-        BooleanEncodedValue footSub = graphHopperGtfs.getTagParserManager().getBooleanEncodedValue(Subnetwork.key(foot.getName()));
+        BooleanEncodedValue footSub = graphHopperGtfs.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(foot.getName()));
 
         // Go through all edges on removed foot subnetworks, and check that we can get to our destination station from there
         List<GHResponse> responses = new ArrayList<>();

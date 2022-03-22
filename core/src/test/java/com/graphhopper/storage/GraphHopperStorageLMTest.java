@@ -57,7 +57,7 @@ public class GraphHopperStorageLMTest {
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         // does lm preparation
         hopper.importOrLoad();
-        EncodingManager em = hopper.getTagParserManager().getEncodingManager();
+        EncodingManager em = hopper.getEncodingManager();
         assertNotNull(em);
         assertEquals(1, em.fetchEdgeEncoders().size());
         assertEquals(16, hopper.getLMPreparationHandler().getLandmarks());
