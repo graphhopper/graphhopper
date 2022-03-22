@@ -75,7 +75,7 @@ public class DefaultWeightingFactory implements WeightingFactory {
                 throw new IllegalArgumentException("custom weighting requires a CustomProfile but was profile=" + profile.getName());
             CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
             CustomProfile customProfile = (CustomProfile) profile;
-            if (queryCustomModel != null)
+            if (queryCustomModel != null && !requestHints.getBool("lm.disable", false))
                 queryCustomModel.checkLMConstraints(customProfile.getCustomModel());
 
             queryCustomModel = CustomModel.merge(customProfile.getCustomModel(), queryCustomModel);

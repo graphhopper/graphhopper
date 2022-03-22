@@ -1597,7 +1597,7 @@ public class GraphHopperTest {
 
         GHResponse response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setProfile("p1").putHint("lm.disable", false));
-        assertEquals(636, response.getBest().getRouteWeight(), 1);
+        assertEquals(3587, response.getBest().getDistance(), 1);
 
         // use smaller distance influence to force violating the LM constraint
         final CustomModel customModel = new CustomModel().setDistanceInfluence(0);
@@ -1612,7 +1612,7 @@ public class GraphHopperTest {
                 setCustomModel(customModel).
                 setProfile("p1").putHint("lm.disable", true));
         assertFalse(response.hasErrors());
-        assertEquals(636, response.getBest().getRouteWeight(), 1);
+        assertEquals(3587, response.getBest().getDistance(), 1);
     }
 
     @Test
