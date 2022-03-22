@@ -71,15 +71,16 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
     }
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
-    public DecimalEncodedValueImpl(@JsonProperty("name") String name,
-                                   @JsonProperty("bits") int bits,
-                                   @JsonProperty("minValue") int minValue,
-                                   @JsonProperty("maxValue") int maxValue,
-                                   @JsonProperty("negateReverseDirection") boolean negateReverseDirection,
-                                   @JsonProperty("storeTwoDirections") boolean storeTwoDirections,
-                                   @JsonProperty("factor") double factor,
-                                   @JsonProperty("defaultIsInfinity") boolean defaultIsInfinity,
-                                   @JsonProperty("useMaximumAsInfinity") boolean useMaximumAsInfinity) {
+    DecimalEncodedValueImpl(@JsonProperty("name") String name,
+                            @JsonProperty("bits") int bits,
+                            @JsonProperty("minValue") int minValue,
+                            @JsonProperty("maxValue") int maxValue,
+                            @JsonProperty("negateReverseDirection") boolean negateReverseDirection,
+                            @JsonProperty("storeTwoDirections") boolean storeTwoDirections,
+                            @JsonProperty("factor") double factor,
+                            @JsonProperty("defaultIsInfinity") boolean defaultIsInfinity,
+                            @JsonProperty("useMaximumAsInfinity") boolean useMaximumAsInfinity) {
+        // we need this constructor for Jackson
         super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections);
         this.factor = factor;
         this.defaultIsInfinity = defaultIsInfinity;

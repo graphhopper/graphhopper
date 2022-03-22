@@ -47,7 +47,7 @@ public final class StringEncodedValue extends IntEncodedValueImpl {
     }
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
-    public StringEncodedValue(
+    StringEncodedValue(
             @JsonProperty("name") String name,
             @JsonProperty("bits") int bits,
             @JsonProperty("minValue") int minValue,
@@ -57,6 +57,7 @@ public final class StringEncodedValue extends IntEncodedValueImpl {
             @JsonProperty("maxValues") int maxValues,
             @JsonProperty("values") List<String> values,
             @JsonProperty("indexMap") HashMap<String, Integer> indexMap) {
+        // we need this constructor for Jackson
         super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections);
         if (values.size() > maxValues)
             throw new IllegalArgumentException("Number of values is higher than the maximum value count: "

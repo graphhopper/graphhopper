@@ -44,13 +44,14 @@ public final class EnumEncodedValue<E extends Enum> extends IntEncodedValueImpl 
     }
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
-    public EnumEncodedValue(@JsonProperty("name") String name,
-                            @JsonProperty("bits") int bits,
-                            @JsonProperty("minValue") int minValue,
-                            @JsonProperty("maxValue") int maxValue,
-                            @JsonProperty("negateReverseDirection") boolean negateReverseDirection,
-                            @JsonProperty("storeTwoDirections") boolean storeTwoDirections,
-                            @JsonProperty("enumType") Class<E> enumType) {
+    EnumEncodedValue(@JsonProperty("name") String name,
+                     @JsonProperty("bits") int bits,
+                     @JsonProperty("minValue") int minValue,
+                     @JsonProperty("maxValue") int maxValue,
+                     @JsonProperty("negateReverseDirection") boolean negateReverseDirection,
+                     @JsonProperty("storeTwoDirections") boolean storeTwoDirections,
+                     @JsonProperty("enumType") Class<E> enumType) {
+        // we need this constructor for Jackson
         super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections);
         this.enumType = enumType;
         arr = enumType.getEnumConstants();

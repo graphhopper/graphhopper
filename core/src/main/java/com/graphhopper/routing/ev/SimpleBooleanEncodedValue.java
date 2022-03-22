@@ -34,7 +34,7 @@ public final class SimpleBooleanEncodedValue extends IntEncodedValueImpl impleme
     }
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
-    public SimpleBooleanEncodedValue(
+    SimpleBooleanEncodedValue(
             @JsonProperty("name") String name,
             @JsonProperty("bits") int bits,
             @JsonProperty("minValue") int minValue,
@@ -42,6 +42,7 @@ public final class SimpleBooleanEncodedValue extends IntEncodedValueImpl impleme
             @JsonProperty("negateReverseDirection") boolean negateReverseDirection,
             @JsonProperty("storeTwoDirections") boolean storeTwoDirections
     ) {
+        // we need this constructor for Jackson
         super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections);
     }
 

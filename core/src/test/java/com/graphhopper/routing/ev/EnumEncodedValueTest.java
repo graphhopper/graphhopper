@@ -32,5 +32,4 @@ public class EnumEncodedValueTest {
         assertEquals(4, 32 - Integer.numberOfLeadingZeros(16 - 1));
         assertEquals(5, 32 - Integer.numberOfLeadingZeros(17 - 1));
     }
-
 }

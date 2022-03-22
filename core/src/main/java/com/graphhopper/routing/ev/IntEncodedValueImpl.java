@@ -105,12 +105,13 @@ public class IntEncodedValueImpl implements IntEncodedValue {
     }
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
-    public IntEncodedValueImpl(@JsonProperty("name") String name,
-                               @JsonProperty("bits") int bits,
-                               @JsonProperty("minValue") int minValue,
-                               @JsonProperty("maxValue") int maxValue,
-                               @JsonProperty("negateReverseDirection") boolean negateReverseDirection,
-                               @JsonProperty("storeTwoDirections") boolean storeTwoDirections) {
+    IntEncodedValueImpl(@JsonProperty("name") String name,
+                        @JsonProperty("bits") int bits,
+                        @JsonProperty("minValue") int minValue,
+                        @JsonProperty("maxValue") int maxValue,
+                        @JsonProperty("negateReverseDirection") boolean negateReverseDirection,
+                        @JsonProperty("storeTwoDirections") boolean storeTwoDirections) {
+        // we need this constructor for Jackson
         this.name = name;
         this.storeTwoDirections = storeTwoDirections;
         this.bits = bits;
