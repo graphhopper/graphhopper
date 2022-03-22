@@ -1588,7 +1588,9 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
-                setProfiles(new CustomProfile("p1").setCustomModel(new CustomModel().setDistanceInfluence(100)).setVehicle("car")).
+                setProfiles(
+                        new CustomProfile("p1").setCustomModel(new CustomModel().setDistanceInfluence(100)).setVehicle("car"),
+                        new CustomProfile("p2").setCustomModel(new CustomModel().setDistanceInfluence(100)).setVehicle("car")).
                 setStoreOnFlush(true);
 
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("p1"));
@@ -1604,14 +1606,21 @@ public class GraphHopperTest {
         response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setCustomModel(customModel).
                 setProfile("p1").putHint("lm.disable", false));
-        assertTrue(response.hasErrors());
+        assertTrue(response.hasErrors(), response.getErrors().toString());
         assertEquals(IllegalArgumentException.class, response.getErrors().get(0).getClass());
 
         // but disabling LM must make it working as no LM is used
         response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setCustomModel(customModel).
                 setProfile("p1").putHint("lm.disable", true));
-        assertFalse(response.hasErrors());
+        assertFalse(response.hasErrors(), response.getErrors().toString());
+        assertEquals(3587, response.getBest().getDistance(), 1);
+
+        // no need to disable LM for p2
+        response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
+                setCustomModel(customModel).
+                setProfile("p2"));
+        assertFalse(response.hasErrors(), response.getErrors().toString());
         assertEquals(3587, response.getBest().getDistance(), 1);
     }
 

@@ -186,9 +186,9 @@ public class Router {
     protected Solver createSolver(GHRequest request) {
         final boolean disableCH = getDisableCH(request.getHints());
         final boolean disableLM = getDisableLM(request.getHints());
-        if (chEnabled && !disableCH) {
+        if (chEnabled && !disableCH && chGraphs.containsKey(request.getProfile())) {
             return new CHSolver(request, profilesByName, routerConfig, encodingManager, chGraphs);
-        } else if (lmEnabled && !disableLM) {
+        } else if (lmEnabled && !disableLM && landmarks.containsKey(request.getProfile())) {
             return new LMSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, graph, locationIndex, landmarks);
         } else {
             return new FlexSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, graph, locationIndex);
@@ -563,6 +563,14 @@ public class Router {
                         "\navailable LM profiles: " + landmarks.keySet());
             RoutingAlgorithmFactory routingAlgorithmFactory = new LMRoutingAlgorithmFactory(landmarkStorage).setDefaultActiveLandmarks(routerConfig.getActiveLandmarkCount());
             return new FlexiblePathCalculator(queryGraph, routingAlgorithmFactory, weighting, getAlgoOpts());
+        }
+
+        @Override
+        protected void checkProfileCompatibility() {
+            super.checkProfileCompatibility();
+            if (profile instanceof CustomProfile && request.getCustomModel() != null
+                    && !request.getHints().getBool("lm.disable", false))
+                request.getCustomModel().checkLMConstraints(((CustomProfile) profile).getCustomModel());
         }
     }
 }
