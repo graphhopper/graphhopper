@@ -1616,10 +1616,16 @@ public class GraphHopperTest {
         assertFalse(response.hasErrors(), response.getErrors().toString());
         assertEquals(3587, response.getBest().getDistance(), 1);
 
-        // no need to disable LM for p2
+        // currently required to disable LM for p2 too, see #1904 (default is LM for *all* profiles once LM preparation is enabled for any profile)
         response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setCustomModel(customModel).
                 setProfile("p2"));
+        assertTrue(response.getErrors().get(0).toString().contains("Cannot find LM preparation for the requested profile: 'p2'"), response.getErrors().toString());
+        assertEquals(IllegalArgumentException.class, response.getErrors().get(0).getClass());
+
+        response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
+                setCustomModel(customModel).
+                setProfile("p2").putHint("lm.disable", true));
         assertFalse(response.hasErrors(), response.getErrors().toString());
         assertEquals(3587, response.getBest().getDistance(), 1);
     }

@@ -186,9 +186,9 @@ public class Router {
     protected Solver createSolver(GHRequest request) {
         final boolean disableCH = getDisableCH(request.getHints());
         final boolean disableLM = getDisableLM(request.getHints());
-        if (chEnabled && !disableCH && chGraphs.containsKey(request.getProfile())) {
+        if (chEnabled && !disableCH) {
             return new CHSolver(request, profilesByName, routerConfig, encodingManager, chGraphs);
-        } else if (lmEnabled && !disableLM && landmarks.containsKey(request.getProfile())) {
+        } else if (lmEnabled && !disableLM) {
             return new LMSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, graph, locationIndex, landmarks);
         } else {
             return new FlexSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, graph, locationIndex);
@@ -561,16 +561,11 @@ public class Router {
                 throw new IllegalArgumentException("Cannot find LM preparation for the requested profile: '" + profile.getName() + "'" +
                         "\nYou can try disabling LM using " + Parameters.Landmark.DISABLE + "=true" +
                         "\navailable LM profiles: " + landmarks.keySet());
-            RoutingAlgorithmFactory routingAlgorithmFactory = new LMRoutingAlgorithmFactory(landmarkStorage).setDefaultActiveLandmarks(routerConfig.getActiveLandmarkCount());
-            return new FlexiblePathCalculator(queryGraph, routingAlgorithmFactory, weighting, getAlgoOpts());
-        }
-
-        @Override
-        protected void checkProfileCompatibility() {
-            super.checkProfileCompatibility();
             if (profile instanceof CustomProfile && request.getCustomModel() != null
                     && !request.getHints().getBool("lm.disable", false))
                 request.getCustomModel().checkLMConstraints(((CustomProfile) profile).getCustomModel());
+            RoutingAlgorithmFactory routingAlgorithmFactory = new LMRoutingAlgorithmFactory(landmarkStorage).setDefaultActiveLandmarks(routerConfig.getActiveLandmarkCount());
+            return new FlexiblePathCalculator(queryGraph, routingAlgorithmFactory, weighting, getAlgoOpts());
         }
     }
 }
