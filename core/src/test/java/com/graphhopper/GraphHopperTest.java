@@ -1540,7 +1540,6 @@ public class GraphHopperTest {
         final String profile1 = "p1";
         final String profile2 = "p2";
         final String profile3 = "p3";
-        final String vehicle = "car";
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
@@ -1582,6 +1581,38 @@ public class GraphHopperTest {
         assertEquals(expectedWeight, response.getBest().getRouteWeight(), 0.1);
         int visitedNodes = response.getHints().getInt("visited_nodes.sum", 0);
         assertEquals(expectedVisitedNodes, visitedNodes);
+    }
+
+    @Test
+    public void testLMConstraintsForCustomProfiles() {
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile(MONACO).
+                setProfiles(new CustomProfile("p1").setCustomModel(new CustomModel().setDistanceInfluence(100)).setVehicle("car")).
+                setStoreOnFlush(true);
+
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("p1"));
+        hopper.setMinNetworkSize(0);
+        hopper.importOrLoad();
+
+        GHResponse response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
+                setProfile("p1").putHint("lm.disable", false));
+        assertEquals(636, response.getBest().getRouteWeight(), 1);
+
+        // use smaller distance influence to force violating the LM constraint
+        final CustomModel customModel = new CustomModel().setDistanceInfluence(0);
+        response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
+                setCustomModel(customModel).
+                setProfile("p1").putHint("lm.disable", false));
+        assertTrue(response.hasErrors());
+        assertEquals(IllegalArgumentException.class, response.getErrors().get(0).getClass());
+
+        // but disabling LM must make it working as no LM is used
+        response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
+                setCustomModel(customModel).
+                setProfile("p1").putHint("lm.disable", true));
+        assertFalse(response.hasErrors());
+        assertEquals(636, response.getBest().getRouteWeight(), 1);
     }
 
     @Test
