@@ -24,12 +24,12 @@ import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.BaseGraph;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author jansoe
@@ -65,7 +65,7 @@ public class DepthFirstSearchTest {
 
         EncodingManager em = EncodingManager.create("car");
         FlagEncoder encoder = em.getEncoder("car");
-        Graph g = new GraphBuilder(em).create();
+        BaseGraph g = new BaseGraph.Builder(em).create();
         GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 5).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 4).setDistance(1));
@@ -100,7 +100,7 @@ public class DepthFirstSearchTest {
 
         EncodingManager em = EncodingManager.create("car");
         FlagEncoder encoder = em.getEncoder("car");
-        Graph g = new GraphBuilder(em).create();
+        BaseGraph g = new BaseGraph.Builder(em).create();
         GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(1));
         GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 4).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 3).setDistance(1));

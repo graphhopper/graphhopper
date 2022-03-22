@@ -22,7 +22,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TagParserManager;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.Test;
 
@@ -34,14 +34,14 @@ class OSMRoadEnvironmentParserTest {
     void ferry() {
         OSMRoadEnvironmentParser parser = new OSMRoadEnvironmentParser();
         CarFlagEncoder carEncoder = new CarFlagEncoder();
-        EncodingManager em = new EncodingManager.Builder()
+        TagParserManager tpm = new TagParserManager.Builder()
                 .add(carEncoder)
                 .add(parser).build();
-        EnumEncodedValue<RoadEnvironment> roadEnvironmentEnc = em.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
-        IntsRef edgeFlags = em.createEdgeFlags();
+        EnumEncodedValue<RoadEnvironment> roadEnvironmentEnc = tpm.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
+        IntsRef edgeFlags = tpm.createEdgeFlags();
         ReaderWay way = new ReaderWay(0);
         way.setTag("route", "shuttle_train");
-        parser.handleWayTags(edgeFlags, way, em.createRelationFlags());
+        parser.handleWayTags(edgeFlags, way, tpm.createRelationFlags());
         RoadEnvironment roadEnvironment = roadEnvironmentEnc.getEnum(false, edgeFlags);
         assertEquals(RoadEnvironment.FERRY, roadEnvironment);
     }

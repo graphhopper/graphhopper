@@ -175,7 +175,7 @@ public class Measurement {
 
         hopper.importOrLoad();
 
-        GraphHopperStorage g = hopper.getGraphHopperStorage();
+        BaseGraph g = hopper.getGraphHopperStorage().getBaseGraph();
         EncodingManager encodingManager = hopper.getEncodingManager();
         if (encodingManager.fetchEdgeEncoders().size() != 1) {
             throw new IllegalArgumentException("There has to be exactly one encoder for each measurement");
@@ -410,7 +410,7 @@ public class Measurement {
         }
     }
 
-    private void printGraphDetails(GraphHopperStorage g, String vehicleStr) {
+    private void printGraphDetails(BaseGraph g, String vehicleStr) {
         // graph size (edge, node and storage size)
         put("graph.nodes", g.getNodes());
         put("graph.edges", g.getAllEdges().length());

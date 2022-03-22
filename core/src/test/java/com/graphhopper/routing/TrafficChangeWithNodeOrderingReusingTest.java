@@ -4,8 +4,8 @@ import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TagParserManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -45,17 +45,17 @@ public class TrafficChangeWithNodeOrderingReusingTest {
     private static class Fixture {
         private final int maxDeviationPercentage;
         private final BaseGraph graph;
-        private final EncodingManager em;
+        private final TagParserManager em;
         private final CHConfig baseCHConfig;
         private final CHConfig trafficCHConfig;
 
         public Fixture(int maxDeviationPercentage) {
             this.maxDeviationPercentage = maxDeviationPercentage;
             FlagEncoder encoder = new CarFlagEncoder();
-            em = EncodingManager.create(encoder);
+            em = TagParserManager.create(encoder);
             baseCHConfig = CHConfig.nodeBased("base", new FastestWeighting(encoder));
             trafficCHConfig = CHConfig.nodeBased("traffic", new RandomDeviationWeighting(baseCHConfig.getWeighting(), maxDeviationPercentage));
-            graph = new BaseGraph.Builder(em).create();
+            graph = new BaseGraph.Builder(em.getEncodingManager()).create();
         }
 
         @Override

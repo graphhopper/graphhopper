@@ -30,7 +30,7 @@ import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CustomArea;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TagParserManager;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.TurnCostParser;
@@ -71,7 +71,7 @@ public class OSMReader {
     private final BaseGraph baseGraph;
     private final NodeAccess nodeAccess;
     private final TurnCostStorage turnCostStorage;
-    private final EncodingManager encodingManager;
+    private final TagParserManager tagParserManager;
     private final DistanceCalc distCalc = DistanceCalcEarth.DIST_EARTH;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private AreaIndex<CustomArea> areaIndex;
@@ -88,17 +88,17 @@ public class OSMReader {
     private GHLongHashSet osmWayIdSet = new GHLongHashSet();
     private IntLongMap edgeIdToOsmWayIdMap;
 
-    public OSMReader(BaseGraph baseGraph, EncodingManager encodingManager, OSMReaderConfig config) {
+    public OSMReader(BaseGraph baseGraph, TagParserManager tagParserManager, OSMReaderConfig config) {
         this.baseGraph = baseGraph;
         this.config = config;
         this.nodeAccess = baseGraph.getNodeAccess();
-        this.encodingManager = encodingManager;
+        this.tagParserManager = tagParserManager;
 
         simplifyAlgo.setMaxDistance(config.getMaxWayPointDistance());
         simplifyAlgo.setElevationMaxDistance(config.getElevationMaxWayPointDistance());
         turnCostStorage = baseGraph.getTurnCostStorage();
 
-        tempRelFlags = encodingManager.createRelationFlags();
+        tempRelFlags = tagParserManager.createRelationFlags();
         if (tempRelFlags.length != 2)
             throw new IllegalArgumentException("Cannot use relation flags with != 2 integers");
     }
@@ -136,7 +136,7 @@ public class OSMReader {
     }
 
     public void readGraph() throws IOException {
-        if (encodingManager == null)
+        if (tagParserManager == null)
             throw new IllegalStateException("Encoding manager was not set.");
 
         if (osmFile == null)
@@ -188,7 +188,7 @@ public class OSMReader {
         if (!way.hasTags())
             return false;
 
-        return encodingManager.acceptWay(way);
+        return tagParserManager.acceptWay(way);
     }
 
     /**
@@ -323,7 +323,7 @@ public class OSMReader {
 
         setArtificialWayTags(pointList, way, distance, nodeTags);
         IntsRef relationFlags = getRelFlagsMap(way.getId());
-        IntsRef edgeFlags = encodingManager.handleWayTags(way, relationFlags);
+        IntsRef edgeFlags = tagParserManager.handleWayTags(way, relationFlags);
         if (edgeFlags.isEmpty())
             return;
 
@@ -338,7 +338,7 @@ public class OSMReader {
             checkCoordinates(toIndex, pointList.get(pointList.size() - 1));
             edge.setWayGeometry(pointList.shallowCopy(1, pointList.size() - 1, false));
         }
-        encodingManager.applyWayTags(way, edge);
+        tagParserManager.applyWayTags(way, edge);
 
         checkDistance(edge);
         if (osmWayIdSet.contains(way.getId())) {
@@ -480,7 +480,7 @@ public class OSMReader {
                 if (member.getType() != ReaderRelation.Member.WAY)
                     continue;
                 IntsRef oldRelationFlags = getRelFlagsMap(member.getRef());
-                IntsRef newRelationFlags = encodingManager.handleRelationTags(relation, oldRelationFlags);
+                IntsRef newRelationFlags = tagParserManager.handleRelationTags(relation, oldRelationFlags);
                 putRelFlagsMap(member.getRef(), newRelationFlags);
             }
         }
@@ -519,7 +519,7 @@ public class OSMReader {
                 int viaNode = map.getInternalNodeIdOfOsmNode(turnRelation.getViaOsmNodeId());
                 // street with restriction was not included (access or tag limits etc)
                 if (viaNode >= 0)
-                    encodingManager.handleTurnRelationTags(turnRelation, map, baseGraph);
+                    tagParserManager.handleTurnRelationTags(turnRelation, map, baseGraph);
             }
         }
     }
@@ -598,7 +598,7 @@ public class OSMReader {
     }
 
     private void finishedReading() {
-        encodingManager.releaseParsers();
+        tagParserManager.releaseParsers();
         eleProvider.release();
         osmWayIdToRelationFlagsMap = null;
         osmWayIdSet = null;

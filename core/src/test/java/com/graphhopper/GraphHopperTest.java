@@ -1048,7 +1048,7 @@ public class GraphHopperTest {
                 setStoreOnFlush(true);
 
         if (!withTunnelInterpolation) {
-            hopper.getEncodingManagerBuilder().add(new OSMRoadEnvironmentParser() {
+            hopper.getTagParserManagerBuilder().add(new OSMRoadEnvironmentParser() {
                 @Override
                 public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
                     // do not change RoadEnvironment to avoid triggering tunnel interpolation
@@ -2121,7 +2121,7 @@ public class GraphHopperTest {
     public void simplifyWithInstructionsAndPathDetails() {
         final String profile = "profile";
         GraphHopper hopper = new GraphHopper();
-        hopper.getEncodingManagerBuilder()
+        hopper.getTagParserManagerBuilder()
                 .add(new OSMMaxSpeedParser())
                 .add(new CarFlagEncoder());
         hopper.setOSMFile(BAYREUTH).
