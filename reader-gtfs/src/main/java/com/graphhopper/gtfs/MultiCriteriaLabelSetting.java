@@ -72,8 +72,8 @@ public class MultiCriteriaLabelSetting {
         this.betaTransfers = betaTransfers;
     }
 
-    void setBetaStreetTime(double betaWalkTime) {
-        this.betaStreetTime = betaWalkTime;
+    void setBetaStreetTime(double betaStreetTime) {
+        this.betaStreetTime = betaStreetTime;
     }
 
     void setBoardingPenaltyByRouteType(IntToLongFunction transferPenaltiesByRouteType) {

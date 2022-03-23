@@ -90,6 +90,7 @@ public class ResponsePathSerializer {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
         json.putPOJO("hints", ghRsp.getHints().toMap());
         json.putPOJO("debug", ghRsp.getDebugInfo().toMap());
+        json.putPOJO("errors", ghRsp.getErrors());
         final ObjectNode info = json.putObject("info");
         info.putPOJO("copyrights", COPYRIGHTS);
         info.put("took", Math.round(took));
