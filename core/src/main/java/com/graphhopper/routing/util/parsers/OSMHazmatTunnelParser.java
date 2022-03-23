@@ -24,8 +24,13 @@ public class OSMHazmatTunnelParser implements TagParser {
     private final EnumEncodedValue<HazmatTunnel> hazTunnelEnc;
 
     public OSMHazmatTunnelParser() {
-        this.hazTunnelEnc = new EnumEncodedValue<>(HazmatTunnel.KEY, HazmatTunnel.class);
+        this(new EnumEncodedValue<>(HazmatTunnel.KEY, HazmatTunnel.class));
     }
+
+    public OSMHazmatTunnelParser(EnumEncodedValue<HazmatTunnel> hazTunnelEnc) {
+        this.hazTunnelEnc = hazTunnelEnc;
+    }
+
 
     @Override
     public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
