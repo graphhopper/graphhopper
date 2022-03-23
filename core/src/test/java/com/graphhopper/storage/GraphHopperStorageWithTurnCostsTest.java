@@ -39,13 +39,13 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
     }
 
     @Override
-    protected GraphHopperStorage newGHStorage(Directory dir, boolean is3D) {
+    protected BaseGraph newGHStorage(Directory dir, boolean is3D) {
         return newGHStorage(dir, is3D, -1);
     }
 
     @Override
-    protected GraphHopperStorage newGHStorage(Directory dir, boolean enabled3D, int segmentSize) {
-        return GraphBuilder.start(encodingManager).setDir(dir).set3D(enabled3D).withTurnCosts(true).setSegmentSize(segmentSize).build();
+    protected BaseGraph newGHStorage(Directory dir, boolean enabled3D, int segmentSize) {
+        return new BaseGraph.Builder(encodingManager).setDir(dir).set3D(enabled3D).withTurnCosts(true).setSegmentSize(segmentSize).build();
     }
 
     @Override
@@ -78,7 +78,7 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
         graph.close();
 
         graph = newGHStorage(new MMapDirectory(defaultGraphLoc), true);
-        assertTrue(graph.loadExisting());
+        graph.loadExisting();
 
         assertEquals(12, graph.getNodes());
         checkGraph(graph);

@@ -50,7 +50,7 @@ public abstract class AbstractGraphStorageTester {
     protected DecimalEncodedValue carAvSpeedEnc = carEncoder.getAverageSpeedEnc();
     protected FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
     protected BooleanEncodedValue footAccessEnc = footEncoder.getAccessEnc();
-    protected GraphHopperStorage graph;
+    protected BaseGraph graph;
     EdgeFilter carOutFilter = AccessFilter.outEdges(carEncoder.getAccessEnc());
     EdgeFilter carInFilter = AccessFilter.inEdges(carEncoder.getAccessEnc());
     EdgeExplorer carOutExplorer;
@@ -91,15 +91,15 @@ public abstract class AbstractGraphStorageTester {
         return new CarFlagEncoder(5, 5, 0);
     }
 
-    protected GraphHopperStorage createGHStorage() {
-        GraphHopperStorage g = createGHStorage(defaultGraphLoc, false);
+    protected BaseGraph createGHStorage() {
+        BaseGraph g = createGHStorage(defaultGraphLoc, false);
         carOutExplorer = g.createEdgeExplorer(carOutFilter);
         carInExplorer = g.createEdgeExplorer(carInFilter);
         carAllExplorer = g.createEdgeExplorer();
         return g;
     }
 
-    abstract GraphHopperStorage createGHStorage(String location, boolean is3D);
+    abstract BaseGraph createGHStorage(String location, boolean is3D);
 
     @BeforeEach
     public void setUp() {
@@ -663,7 +663,7 @@ public abstract class AbstractGraphStorageTester {
         list.add(new CarFlagEncoder("car0", 29, 0.001, 0));
         list.add(new CarFlagEncoder(29, 0.001, 0));
         EncodingManager manager = EncodingManager.create(list);
-        graph = new GraphBuilder(manager).create();
+        graph = new BaseGraph.Builder(manager).create();
 
         EdgeIteratorState edge = graph.edge(0, 1);
         IntsRef intsRef = manager.createEdgeFlags();
@@ -673,7 +673,7 @@ public abstract class AbstractGraphStorageTester {
         assertEquals(Integer.MAX_VALUE / 3, edge.getFlags().ints[0]);
         graph.close();
 
-        graph = new GraphBuilder(manager).create();
+        graph = new BaseGraph.Builder(manager).create();
 
         DecimalEncodedValue avSpeed0Enc = manager.getDecimalEncodedValue(getKey("car0", "average_speed"));
         BooleanEncodedValue access0Enc = manager.getBooleanEncodedValue(getKey("car0", "access"));
@@ -702,7 +702,7 @@ public abstract class AbstractGraphStorageTester {
         list.add(new CarFlagEncoder(29, 0.001, 0));
         list.add(new CarFlagEncoder("car2", 30, 0.001, 0));
         manager = EncodingManager.create(list);
-        graph = new GraphBuilder(manager).create();
+        graph = new BaseGraph.Builder(manager).create();
         edgeIter = graph.edge(0, 1).set(access0Enc, true, false);
         assertTrue(edgeIter.get(access0Enc));
         assertFalse(edgeIter.getReverse(access0Enc));
