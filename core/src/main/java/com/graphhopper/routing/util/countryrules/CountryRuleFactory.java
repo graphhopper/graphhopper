@@ -33,6 +33,7 @@ public class CountryRuleFactory {
     public CountryRuleFactory() {
         rules.put(AUT, new AustriaCountryRule());
         rules.put(DEU, new GermanyCountryRule());
+        rules.put(USA, new UnitedStatesCountryRule());
     }
 
     public CountryRule getCountryRule(Country country) {

@@ -19,6 +19,7 @@
 package com.graphhopper.routing.util.countryrules;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.DrivingSide;
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.Toll;
 import com.graphhopper.routing.util.TransportationMode;
@@ -37,5 +38,9 @@ public interface CountryRule {
     
     default Toll getToll(ReaderWay readerWay, TransportationMode transportationMode, Toll currentToll) {
         return currentToll;
+    }
+
+    default DrivingSide getDrivingSide(ReaderWay readerWay, DrivingSide currentDrivingSide) {
+        return currentDrivingSide;
     }
 }

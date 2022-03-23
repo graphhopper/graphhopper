@@ -21,7 +21,7 @@ graphhopper:
   # Default values are: road_class,road_class_link,road_environment,max_speed,road_access (since #1805)
   # More are: surface,smoothness,max_width,max_height,max_weight,max_axle_load,max_length,hazmat,hazmat_tunnel,hazmat_water,toll,track_type,
   #           mtb_rating, hiking_rating,horse_rating,lanes
-  # graph.encoded_values: surface,toll,track_type
+  graph.encoded_values: country
 
   ##### Routing Profiles ####
 
@@ -177,9 +177,9 @@ graphhopper:
   # custom_areas.directory: path/to/custom_areas
 
   ##### Country Rules #####
-  # GraphHopper applies country-specific routing rules (enabled by default) during import.
-  # Use this flag to disable these rules (you need to repeat the import for changes to take effect)
-  # country_rules.enable: false
+  # GraphHopper applies country-specific routing rules (disabled by default) during import.
+  # Use this flag to enable these rules (you need to repeat the import for changes to take effect)
+  country_rules.enabled: true
 
 # Dropwizard server configuration
 server:
