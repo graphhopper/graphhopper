@@ -128,6 +128,7 @@ public class CustomModelParser {
 
     private static Class<?> createClazz(CustomModel customModel, EncodedValueLookup lookup, double globalMaxSpeed) {
         try {
+
             HashSet<String> priorityVariables = new LinkedHashSet<>();
             List<Java.BlockStatement> priorityStatements = createGetPriorityStatements(priorityVariables, customModel, lookup);
             HashSet<String> speedVariables = new LinkedHashSet<>();
@@ -325,9 +326,9 @@ public class CustomModelParser {
                                                                List<Statement> list, EncodedValueLookup lookup,
                                                                String lastStmt) throws Exception {
         // allow variables, all encoded values, constants
-        ExpressionVisitor.NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
+        NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
                 || name.toUpperCase(Locale.ROOT).equals(name) || isValidVariableName(name);
-        ExpressionVisitor.parseExpressions(expressions, nameInConditionValidator, info, createObjects, list, lookup, lastStmt);
+        ConditionalExpressionVisitor.parseExpressions(expressions, nameInConditionValidator, info, createObjects, list, lookup, lastStmt);
         return new Parser(new org.codehaus.janino.Scanner(info, new StringReader(expressions.toString()))).
                 parseBlockStatements();
     }

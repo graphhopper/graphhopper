@@ -137,6 +137,11 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
     }
 
     @Override
+    public double getMinDecimal() {
+        return minValue * factor;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (!super.equals(o)) return false;
         DecimalEncodedValueImpl that = (DecimalEncodedValueImpl) o;
