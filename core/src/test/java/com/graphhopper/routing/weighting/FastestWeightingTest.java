@@ -23,7 +23,6 @@ import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.Bike2WeightFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
@@ -39,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @author Peter Karich
  */
 public class FastestWeightingTest {
-    private final FlagEncoder encoder = new CarFlagEncoder(5, 5, 10);
+    private final CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 10);
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
 
     @Test
@@ -86,7 +85,7 @@ public class FastestWeightingTest {
 
     @Test
     public void testTime() {
-        FlagEncoder tmpEnc = new Bike2WeightFlagEncoder();
+        Bike2WeightFlagEncoder tmpEnc = new Bike2WeightFlagEncoder();
         EncodingManager em = EncodingManager.create(tmpEnc);
         BaseGraph g = new BaseGraph.Builder(em).create();
         Weighting w = new FastestWeighting(tmpEnc);

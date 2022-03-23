@@ -56,7 +56,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class EdgeBasedRoutingAlgorithmTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedRoutingAlgorithmTest.class);
-    private FlagEncoder carEncoder;
+    private CarFlagEncoder carEncoder;
     private DecimalEncodedValue turnCostEnc;
     private TurnCostStorage tcs;
 

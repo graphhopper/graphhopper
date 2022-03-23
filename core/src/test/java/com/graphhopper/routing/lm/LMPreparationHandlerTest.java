@@ -5,7 +5,6 @@ import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.BaseGraph;
@@ -35,7 +34,7 @@ public class LMPreparationHandlerTest {
                 new LMProfile("conf1").setMaximumLMWeight(65_000),
                 new LMProfile("conf2").setMaximumLMWeight(20_000)
         );
-        FlagEncoder car = new CarFlagEncoder();
+        CarFlagEncoder car = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(car);
         List<LMConfig> lmConfigs = Arrays.asList(
                 new LMConfig("conf1", new FastestWeighting(car)),

@@ -19,7 +19,10 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.PrepareEncoder;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.AccessFilter;
+import com.graphhopper.routing.util.Bike2WeightFlagEncoder;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeExplorer;
@@ -135,7 +138,7 @@ public class RoutingCHGraphImplTest {
 
     @Test
     public void testGetWeightIfAdvancedEncoder() {
-        FlagEncoder customEncoder = new Bike2WeightFlagEncoder();
+        Bike2WeightFlagEncoder customEncoder = new Bike2WeightFlagEncoder();
         EncodingManager em = EncodingManager.create(customEncoder);
         BaseGraph ghStorage = new BaseGraph.Builder(em).create();
         ghStorage.edge(0, 3);

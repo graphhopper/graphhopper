@@ -43,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Peter Karich
  */
 public class PathTest {
-    private final FlagEncoder encoder = new CarFlagEncoder();
+    private final CarFlagEncoder encoder = new CarFlagEncoder();
     private final TagParserManager tagParserManager = TagParserManager.create(encoder);
     private final EncodingManager carManager = tagParserManager.getEncodingManager();
     private final BooleanEncodedValue carAccessEnc = encoder.getAccessEnc();
@@ -1001,7 +1001,7 @@ public class PathTest {
 
         EdgeIteratorState tmpEdge;
         tmpEdge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(5)).setName("1-2");
-        assertNotEquals(EncodingManager.Access.CAN_SKIP, ((CarFlagEncoder) encoder).getAccess(w));
+        assertNotEquals(EncodingManager.Access.CAN_SKIP, encoder.getAccess(w));
         IntsRef relFlags = tagParserManager.createRelationFlags();
         tmpEdge.setFlags(tagParserManager.handleWayTags(w, relFlags));
         tmpEdge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 5).setDistance(5)).setName("4-5");

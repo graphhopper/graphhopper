@@ -22,7 +22,6 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.Snap;
@@ -43,7 +42,7 @@ class HeadingResolverTest {
         // 7 -- 8 --- 3
         //     /|\
         //    6 5 4
-        FlagEncoder encoder = new CarFlagEncoder();
+        CarFlagEncoder encoder = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(encoder);
         BaseGraph graph = new BaseGraph.Builder(em).create();
         NodeAccess na = graph.getNodeAccess();
@@ -85,7 +84,7 @@ class HeadingResolverTest {
         //    1 -|
         // |- 0 -|
         // |- 2
-        FlagEncoder encoder = new CarFlagEncoder();
+        CarFlagEncoder encoder = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(encoder);
         BaseGraph graph = new BaseGraph.Builder(em).create();
         NodeAccess na = graph.getNodeAccess();
@@ -108,7 +107,7 @@ class HeadingResolverTest {
     public void withQueryGraph() {
         //    2
         // 0 -x- 1
-        FlagEncoder encoder = new CarFlagEncoder();
+        CarFlagEncoder encoder = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(encoder);
         BaseGraph graph = new BaseGraph.Builder(em).create();
         NodeAccess na = graph.getNodeAccess();

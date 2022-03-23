@@ -25,7 +25,6 @@ import com.graphhopper.routing.subnetwork.TarjanSCCTest.IntWithArray;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.RepeatedTest;
@@ -39,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class EdgeBasedTarjanSCCTest {
-    private final FlagEncoder encoder = new CarFlagEncoder(5, 5, 1);
+    private final CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 1);
     private final EncodingManager em = EncodingManager.create(encoder);
     private final EdgeBasedTarjanSCC.EdgeTransitionFilter fwdAccessFilter = (prev, edge) -> edge.get(encoder.getAccessEnc());
 

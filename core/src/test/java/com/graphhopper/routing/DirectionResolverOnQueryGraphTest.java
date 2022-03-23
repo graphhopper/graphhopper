@@ -20,7 +20,10 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.AccessFilter;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
@@ -48,7 +51,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 public class DirectionResolverOnQueryGraphTest {
     private QueryGraph queryGraph;
     private NodeAccess na;
-    private FlagEncoder encoder;
+    private CarFlagEncoder encoder;
     private BaseGraph graph;
     private LocationIndexTree locationIndex;
 

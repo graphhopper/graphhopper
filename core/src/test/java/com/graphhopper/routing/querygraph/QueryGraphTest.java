@@ -23,7 +23,10 @@ import com.graphhopper.routing.HeadingResolver;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.TurnCost;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.AccessFilter;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -51,7 +54,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class QueryGraphTest {
     private EncodingManager encodingManager;
-    private FlagEncoder encoder;
+    private CarFlagEncoder encoder;
     private BaseGraph g;
 
     @BeforeEach
@@ -495,7 +498,7 @@ public class QueryGraphTest {
 
     @Test
     public void testTurnCostsProperlyPropagated_Issue282() {
-        FlagEncoder encoder = new CarFlagEncoder(5, 5, 15);
+        CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 15);
         EncodingManager em = EncodingManager.create(encoder);
         BaseGraph graphWithTurnCosts = new BaseGraph.Builder(em).withTurnCosts(true).create();
         TurnCostStorage turnExt = graphWithTurnCosts.getTurnCostStorage();
@@ -824,7 +827,7 @@ public class QueryGraphTest {
         // virtual nodes:     2
         //                0 - x - 1
         // virtual edges:   1   2
-        FlagEncoder encoder = new CarFlagEncoder(new PMap().putObject("speed_two_directions", true));
+        CarFlagEncoder encoder = new CarFlagEncoder(new PMap().putObject("speed_two_directions", true));
         EncodingManager encodingManager = EncodingManager.create(encoder);
         DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
         BaseGraph g = new BaseGraph.Builder(encodingManager).create();
@@ -898,7 +901,7 @@ public class QueryGraphTest {
         // virtual nodes:     2
         //                0 - x - 1
         // virtual edges:   1   2
-        FlagEncoder encoder = new CarFlagEncoder(new PMap().putObject("speed_two_directions", true));
+        CarFlagEncoder encoder = new CarFlagEncoder(new PMap().putObject("speed_two_directions", true));
         EncodingManager encodingManager = EncodingManager.create(encoder);
         DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
         BaseGraph g = new BaseGraph.Builder(encodingManager).create();

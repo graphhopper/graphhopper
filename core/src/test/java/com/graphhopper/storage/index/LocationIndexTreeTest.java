@@ -148,7 +148,7 @@ public class LocationIndexTreeTest {
 
     @Test
     public void testMoreReal() {
-        FlagEncoder encoder = new CarFlagEncoder();
+        CarFlagEncoder encoder = new CarFlagEncoder();
         BaseGraph graph = new BaseGraph.Builder(EncodingManager.create(encoder)).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(1, 51.2492152, 9.4317166);

@@ -52,7 +52,7 @@ public class InstructionListTest {
     private static final Translation usTR = trMap.getWithFallBack(Locale.US);
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
     private EncodingManager carManager;
-    private FlagEncoder carEncoder;
+    private CarFlagEncoder carEncoder;
 
     @BeforeEach
     public void setUp() {

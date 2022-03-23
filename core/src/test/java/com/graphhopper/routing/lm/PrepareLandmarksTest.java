@@ -25,7 +25,10 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
@@ -57,7 +60,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class PrepareLandmarksTest {
     private BaseGraph graph;
-    private FlagEncoder encoder;
+    private CarFlagEncoder encoder;
     private TraversalMode tm;
 
     @BeforeEach

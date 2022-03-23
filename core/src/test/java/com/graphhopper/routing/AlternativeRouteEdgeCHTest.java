@@ -40,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class AlternativeRouteEdgeCHTest {
-    private final FlagEncoder carFE = new CarFlagEncoder(new PMap().putObject("turn_costs", true));
+    private final CarFlagEncoder carFE = new CarFlagEncoder(new PMap().putObject("turn_costs", true));
     private final EncodingManager em = EncodingManager.create(carFE);
 
     public BaseGraph createTestGraph(EncodingManager tmpEM) {

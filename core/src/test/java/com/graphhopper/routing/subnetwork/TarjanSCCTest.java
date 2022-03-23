@@ -20,7 +20,10 @@ package com.graphhopper.routing.subnetwork;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.AccessFilter;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.RepeatedTest;
@@ -32,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TarjanSCCTest {
-    private final FlagEncoder encoder = new CarFlagEncoder();
+    private final CarFlagEncoder encoder = new CarFlagEncoder();
     private final EncodingManager em = EncodingManager.create(encoder);
     private final EdgeFilter edgeFilter = AccessFilter.outEdges(encoder.getAccessEnc());
 

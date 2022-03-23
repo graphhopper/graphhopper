@@ -24,7 +24,6 @@ import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
@@ -48,7 +47,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class LandmarkStorageTest {
     private BaseGraph graph;
-    private FlagEncoder encoder;
+    private CarFlagEncoder encoder;
     private BooleanEncodedValue subnetworkEnc;
 
     @BeforeEach

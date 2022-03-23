@@ -79,7 +79,7 @@ class HeadingRoutingTest {
     @Test
     public void headingTest2() {
         // Test enforce south start direction and east end direction
-        FlagEncoder carEncoder = new CarFlagEncoder();
+        CarFlagEncoder carEncoder = new CarFlagEncoder();
         EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager);
         Router router = createRouter(graph, encodingManager);
@@ -106,7 +106,7 @@ class HeadingRoutingTest {
 
     @Test
     public void headingTest3() {
-        FlagEncoder carEncoder = new CarFlagEncoder();
+        CarFlagEncoder carEncoder = new CarFlagEncoder();
         EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager);
         Router router = createRouter(graph, encodingManager);
@@ -131,7 +131,7 @@ class HeadingRoutingTest {
     @Test
     public void headingTest4() {
         // Test straight via routing
-        FlagEncoder carEncoder = new CarFlagEncoder();
+        CarFlagEncoder carEncoder = new CarFlagEncoder();
         EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager);
         Router router = createRouter(graph, encodingManager);
@@ -156,7 +156,7 @@ class HeadingRoutingTest {
     @Test
     public void headingTest5() {
         // Test independence of previous enforcement for subsequent paths
-        FlagEncoder carEncoder = new CarFlagEncoder();
+        CarFlagEncoder carEncoder = new CarFlagEncoder();
         EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager);
         Router router = createRouter(graph, encodingManager);
@@ -180,7 +180,7 @@ class HeadingRoutingTest {
 
     @Test
     public void testHeadingWithSnapFilter() {
-        FlagEncoder carEncoder = new CarFlagEncoder();
+        CarFlagEncoder carEncoder = new CarFlagEncoder();
         EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraphWithTunnel(encodingManager);
         Router router = createRouter(graph, encodingManager);
@@ -242,7 +242,7 @@ class HeadingRoutingTest {
 
     @Test
     public void testHeadingWithSnapFilter2() {
-        FlagEncoder carEncoder = new CarFlagEncoder();
+        CarFlagEncoder carEncoder = new CarFlagEncoder();
         EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraphWithTunnel(encodingManager);
         Router router = createRouter(graph, encodingManager);
@@ -275,7 +275,7 @@ class HeadingRoutingTest {
     @Test
     public void headingTest6() {
         // Test if snaps at tower nodes are ignored
-        FlagEncoder carEncoder = new CarFlagEncoder();
+        CarFlagEncoder carEncoder = new CarFlagEncoder();
         EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager);
         Router router = createRouter(graph, encodingManager);

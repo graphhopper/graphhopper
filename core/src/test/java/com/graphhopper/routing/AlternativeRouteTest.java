@@ -48,7 +48,7 @@ public class AlternativeRouteTest {
         final Weighting weighting;
         final TraversalMode traversalMode;
         final BaseGraph graph;
-        final FlagEncoder carFE;
+        final CarFlagEncoder carFE;
 
         public Fixture(TraversalMode tMode) {
             this.traversalMode = tMode;

@@ -43,8 +43,8 @@ public class TurnCostStorageTest {
 
     @BeforeEach
     public void setup() {
-        FlagEncoder carEncoder = new CarFlagEncoder(5, 5, 3);
-        FlagEncoder bikeEncoder = new BikeFlagEncoder(5, 5, 3, false);
+        CarFlagEncoder carEncoder = new CarFlagEncoder(5, 5, 3);
+        BikeFlagEncoder bikeEncoder = new BikeFlagEncoder(5, 5, 3, false);
         manager = EncodingManager.create(carEncoder, bikeEncoder);
     }
 

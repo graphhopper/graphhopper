@@ -8,7 +8,6 @@ import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
@@ -33,7 +32,7 @@ public class ShortcutUnpackerTest {
     private static final class Fixture {
         private final boolean edgeBased;
         private final EncodingManager encodingManager;
-        private final FlagEncoder encoder;
+        private final CarFlagEncoder encoder;
         private final BaseGraph graph;
         private CHStorageBuilder chBuilder;
         private RoutingCHGraph routingCHGraph;

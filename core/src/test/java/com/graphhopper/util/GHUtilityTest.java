@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Peter Karich
  */
 public class GHUtilityTest {
-    private final FlagEncoder carEncoder = new CarFlagEncoder();
+    private final CarFlagEncoder carEncoder = new CarFlagEncoder();
     private final EncodingManager encodingManager = EncodingManager.create(carEncoder);
 
     BaseGraph createGraph() {
