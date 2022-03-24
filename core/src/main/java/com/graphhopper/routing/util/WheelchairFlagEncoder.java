@@ -56,7 +56,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     }
 
     protected WheelchairFlagEncoder(int speedBits, double speedFactor) {
-        super(speedBits, speedFactor, true);
+        super("wheelchair", speedBits, speedFactor, true);
 
         restrictions.add("wheelchair");
 
@@ -248,10 +248,5 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         }
 
         return weightToPrioMap.lastEntry().getValue();
-    }
-
-    @Override
-    public String getName() {
-        return "wheelchair";
     }
 }

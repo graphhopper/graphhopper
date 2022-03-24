@@ -30,6 +30,8 @@ import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.*;
 
+import static com.graphhopper.routing.util.EncodingManager.getKey;
+
 /**
  * Abstract class which handles flag decoding and encoding. Every encoder should be registered to a
  * EncodingManager to be usable. If you want the full long to be stored you need to enable this in
@@ -40,6 +42,7 @@ import java.util.*;
  * @see EncodingManager
  */
 public abstract class AbstractFlagEncoder implements FlagEncoder {
+    private final String name;
     protected final Set<String> intendedValues = new HashSet<>(5);
     // order is important
     protected final List<String> restrictions = new ArrayList<>(5);
@@ -51,9 +54,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected final int speedBits;
     protected final double speedFactor;
     private final int maxTurnCosts;
-    protected BooleanEncodedValue accessEnc;
+    protected final BooleanEncodedValue accessEnc;
+    protected final DecimalEncodedValue avgSpeedEnc;
     protected BooleanEncodedValue roundaboutEnc;
-    protected DecimalEncodedValue avgSpeedEnc;
     // This value determines the maximal possible speed of any road regardless of the maxspeed value
     // lower values allow more compact representation of the routing graph
     protected double maxPossibleSpeed;
@@ -65,15 +68,20 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
 
     /**
      * @param speedBits    specify the number of bits used for speed
-     * @param speedFactor  specify the factor to multiple the stored value (can be used to increase
+     * @param speedFactor  specify the factor to multiply the stored value (can be used to increase
      *                     or decrease accuracy of speed value)
      * @param maxTurnCosts specify the maximum value used for turn costs, if this value is reached a
      *                     turn is forbidden and results in costs of positive infinity.
      */
-    protected AbstractFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
+    protected AbstractFlagEncoder(String name, int speedBits, double speedFactor, boolean speedTwoDirections, int maxTurnCosts) {
+        this.name = name;
         this.maxTurnCosts = maxTurnCosts <= 0 ? 0 : maxTurnCosts;
         this.speedBits = speedBits;
         this.speedFactor = speedFactor;
+
+        this.accessEnc = new SimpleBooleanEncodedValue(getKey(name, "access"), true);
+        this.avgSpeedEnc = new DecimalEncodedValueImpl(getKey(name, "average_speed"), speedBits, speedFactor, speedTwoDirections);
+
         oneways.add("yes");
         oneways.add("true");
         oneways.add("1");
@@ -128,9 +136,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      * Defines bits used for edge flags used for access, speed etc.
      */
     public void createEncodedValues(List<EncodedValue> registerNewEncodedValue) {
-        // define the first 2 bits in flags for access
-        String prefix = toString();
-        registerNewEncodedValue.add(accessEnc = new SimpleBooleanEncodedValue(EncodingManager.getKey(prefix, "access"), true));
+        registerNewEncodedValue.add(accessEnc);
+        registerNewEncodedValue.add(avgSpeedEnc);
         roundaboutEnc = getBooleanEncodedValue(Roundabout.KEY);
     }
 
@@ -303,7 +310,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         return restrictions;
     }
 
-    public abstract String getName();
+    public final String getName() {
+        return name;
+    }
 
     @Override
     public String toString() {

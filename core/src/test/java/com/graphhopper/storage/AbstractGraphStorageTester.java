@@ -657,12 +657,7 @@ public abstract class AbstractGraphStorageTester {
     @Test
     public void test8AndMoreBytesForEdgeFlags() {
         List<CarFlagEncoder> list = new ArrayList<>();
-        list.add(new CarFlagEncoder(29, 0.001, 0) {
-            @Override
-            public String getName() {
-                return "car0";
-            }
-        });
+        list.add(new CarFlagEncoder("car0", 29, 0.001, 0));
         list.add(new CarFlagEncoder(29, 0.001, 0));
         TagParserManager manager = TagParserManager.create(list);
         graph = new GraphBuilder(manager).create();
@@ -700,19 +695,9 @@ public abstract class AbstractGraphStorageTester {
         assertTrue(edgeIter.getReverse(access1Enc));
 
         list.clear();
-        list.add(new CarFlagEncoder(29, 0.001, 0) {
-            @Override
-            public String getName() {
-                return "car0";
-            }
-        });
+        list.add(new CarFlagEncoder("car0", 29, 0.001, 0));
         list.add(new CarFlagEncoder(29, 0.001, 0));
-        list.add(new CarFlagEncoder(30, 0.001, 0) {
-            @Override
-            public String getName() {
-                return "car2";
-            }
-        });
+        list.add(new CarFlagEncoder("car2", 30, 0.001, 0));
         manager = TagParserManager.create(list);
         graph = new GraphBuilder(manager).create();
         edgeIter = graph.edge(0, 1).set(access0Enc, true, false);

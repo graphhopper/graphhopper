@@ -46,7 +46,7 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
     }
 
     protected RacingBikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
-        super(speedBits, speedFactor, maxTurnCosts, false);
+        super("racingbike", speedBits, speedFactor, maxTurnCosts, false);
         preferHighwayTags.add("road");
         preferHighwayTags.add("secondary");
         preferHighwayTags.add("secondary_link");
@@ -148,10 +148,5 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
             else if (trackType == null || trackType.startsWith("grade"))
                 weightToPrioMap.put(110d, AVOID_MORE.getValue());
         }
-    }
-
-    @Override
-    public String getName() {
-        return "racingbike";
     }
 }

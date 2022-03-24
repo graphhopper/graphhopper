@@ -18,13 +18,14 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
-import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Defines bit layout for cars. (speed, access, ferries, ...)
@@ -35,7 +36,6 @@ import java.util.*;
 public class CarFlagEncoder extends AbstractFlagEncoder {
     protected final Map<String, Integer> trackTypeSpeedMap = new HashMap<>();
     protected final Set<String> badSurfaceSpeedMap = new HashSet<>();
-    private final boolean speedTwoDirections;
     // This value determines the maximal possible on roads with bad surfaces
     protected int badSurfaceSpeed;
 
@@ -51,22 +51,28 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     }
 
     public CarFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
-        this(speedBits, speedFactor, maxTurnCosts, false);
+        this("car", speedBits, speedFactor, maxTurnCosts);
+    }
+
+    public CarFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts) {
+        this(name, speedBits, speedFactor, maxTurnCosts, false);
     }
 
     public CarFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
-        this(new PMap().putObject("speed_bits", speedBits).putObject("speed_factor", speedFactor).
+        this("car", speedBits, speedFactor, maxTurnCosts, speedTwoDirections);
+    }
+
+    public CarFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
+        this(new PMap().putObject("name", name).putObject("speed_bits", speedBits).putObject("speed_factor", speedFactor).
                 putObject("max_turn_costs", maxTurnCosts).putObject("speed_two_directions", speedTwoDirections));
     }
 
     public CarFlagEncoder(PMap properties) {
-        super(properties.getInt("speed_bits", 5),
+        super(properties.getString("name", "car"),
+                properties.getInt("speed_bits", 5),
                 properties.getDouble("speed_factor", 5),
+                properties.getBool("speed_two_directions", false),
                 properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0));
-
-        speedTwoDirections = properties.getBool("speed_two_directions", false);
-        String prefix = getName();
-        avgSpeedEnc = new DecimalEncodedValueImpl(EncodingManager.getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections);
 
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
@@ -145,16 +151,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     @Override
     public TransportationMode getTransportationMode() {
         return TransportationMode.CAR;
-    }
-
-    /**
-     * Define the place of the speedBits in the edge flags for car.
-     */
-    @Override
-    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue) {
-        // first two bits are reserved for route handling in superclass
-        super.createEncodedValues(registerNewEncodedValue);
-        registerNewEncodedValue.add(avgSpeedEnc);
     }
 
     protected double getSpeed(ReaderWay way) {
@@ -237,7 +233,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             speed = applyBadSurfaceSpeed(way, speed);
 
             setSpeed(false, edgeFlags, speed);
-            if (speedTwoDirections)
+            if (avgSpeedEnc.isStoreTwoDirections())
                 setSpeed(true, edgeFlags, speed);
 
             boolean isRoundabout = roundaboutEnc.getBool(false, edgeFlags);
@@ -256,7 +252,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             accessEnc.setBool(false, edgeFlags, true);
             accessEnc.setBool(true, edgeFlags, true);
             setSpeed(false, edgeFlags, ferrySpeed);
-            if (speedTwoDirections)
+            if (avgSpeedEnc.isStoreTwoDirections())
                 setSpeed(true, edgeFlags, ferrySpeed);
         }
 
@@ -314,10 +310,5 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         if (badSurfaceSpeed > 0 && isValidSpeed(speed) && speed > badSurfaceSpeed && way.hasTag("surface", badSurfaceSpeedMap))
             speed = badSurfaceSpeed;
         return speed;
-    }
-
-    @Override
-    public String getName() {
-        return "car";
     }
 }

@@ -38,7 +38,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
     }
 
     public Bike2WeightFlagEncoder(PMap properties) {
-        super(new PMap(properties).putObject("speed_two_directions", true));
+        super(new PMap(properties).putObject("speed_two_directions", true).putObject("name", properties.getString("name", "bike2")));
     }
 
     @Override
@@ -104,8 +104,4 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
         edge.setFlags(intsRef);
     }
 
-    @Override
-    public String getName() {
-        return "bike2";
-    }
 }
