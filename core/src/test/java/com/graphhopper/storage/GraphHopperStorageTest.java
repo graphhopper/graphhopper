@@ -17,18 +17,11 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.GraphHopper;
-import com.graphhopper.config.Profile;
-import com.graphhopper.routing.util.BikeFlagEncoder;
-import com.graphhopper.routing.util.TagParserManager;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
 
 import static com.graphhopper.util.EdgeIteratorState.REVERSE_STATE;
 import static com.graphhopper.util.FetchMode.*;
@@ -222,48 +215,6 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
         assertEquals(44, iter.getFlags().ints[0]);
         assertEquals(13, edge1.getFlags().ints[0]);
-    }
-
-    @Test
-    public void testLoadGraph_implicitEncodedValues_issue1862() {
-        Helper.removeDir(new File(defaultGraphLoc));
-        tagParserManager = new TagParserManager.Builder().add(createCarFlagEncoder()).add(new BikeFlagEncoder()).build();
-        graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), false).create(defaultSize);
-        NodeAccess na = graph.getNodeAccess();
-        na.setNode(0, 12, 23);
-        na.setNode(1, 8, 13);
-        na.setNode(2, 2, 10);
-        na.setNode(3, 5, 9);
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 2).setDistance(10));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 3).setDistance(10));
-        int nodes = graph.getNodes();
-        int edges = graph.getAllEdges().length();
-        graph.flush();
-        Helper.close(graph);
-
-        // load without configured FlagEncoders
-        GraphHopper hopper = new GraphHopper();
-        hopper.setProfiles(Arrays.asList(new Profile("p_car").setVehicle("car").setWeighting("fastest"),
-                new Profile("p_bike").setVehicle("bike").setWeighting("fastest")));
-        hopper.setGraphHopperLocation(defaultGraphLoc);
-        assertTrue(hopper.load());
-        graph = hopper.getGraphHopperStorage();
-        assertEquals(nodes, graph.getNodes());
-        assertEquals(edges, graph.getAllEdges().length());
-        Helper.close(graph);
-
-        hopper = new GraphHopper();
-        // load via explicitly configured FlagEncoders then we can define only one profile
-        hopper.getTagParserManagerBuilder().add(createCarFlagEncoder()).add(new BikeFlagEncoder());
-        hopper.setProfiles(Collections.singletonList(new Profile("p_car").setVehicle("car").setWeighting("fastest")));
-        hopper.setGraphHopperLocation(defaultGraphLoc);
-        assertTrue(hopper.load());
-        graph = hopper.getGraphHopperStorage();
-        assertEquals(nodes, graph.getNodes());
-        assertEquals(edges, graph.getAllEdges().length());
-        Helper.close(graph);
-
-        Helper.removeDir(new File(defaultGraphLoc));
     }
 
     @Test

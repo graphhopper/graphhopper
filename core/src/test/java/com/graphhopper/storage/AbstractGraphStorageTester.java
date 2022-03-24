@@ -656,7 +656,7 @@ public abstract class AbstractGraphStorageTester {
 
     @Test
     public void test8AndMoreBytesForEdgeFlags() {
-        List<FlagEncoder> list = new ArrayList<>();
+        List<CarFlagEncoder> list = new ArrayList<>();
         list.add(new CarFlagEncoder(29, 0.001, 0) {
             @Override
             public String getName() {
