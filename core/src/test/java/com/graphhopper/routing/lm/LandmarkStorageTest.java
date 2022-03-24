@@ -55,8 +55,7 @@ public class LandmarkStorageTest {
         encoder = new CarFlagEncoder();
         subnetworkEnc = Subnetwork.create("car");
         EncodingManager encodingManager = new EncodingManager.Builder().add(encoder).add(subnetworkEnc).build();
-        graph = new BaseGraph.Builder(encodingManager).build();
-        graph.create(1000);
+        graph = new BaseGraph.Builder(encodingManager).create();
     }
 
     @AfterEach
