@@ -30,46 +30,53 @@ public class LowLevelAPIExample {
     private static final String graphLocation = "target/lowlevel-graph";
 
     public static void createAndSaveGraph() {
-        CarFlagEncoder encoder = new CarFlagEncoder();
-        TagParserManager em = TagParserManager.create(encoder);
-        GraphHopperStorage graph = new GraphBuilder(em).setRAM(graphLocation, true).create();
-        // Make a weighted edge between two nodes and set average speed to 50km/h
-        EdgeIteratorState edge = graph.edge(0, 1).setDistance(1234).set(encoder.getAverageSpeedEnc(), 50);
+        {
+            CarFlagEncoder encoder = new CarFlagEncoder();
+            TagParserManager em = TagParserManager.create(encoder);
+            GraphHopperStorage graph = new GraphBuilder(em).setRAM(graphLocation, true).create();
+            // Make a weighted edge between two nodes and set average speed to 50km/h
+            EdgeIteratorState edge = graph.edge(0, 1).setDistance(1234).set(encoder.getAverageSpeedEnc(), 50);
 
-        // Set node coordinates and build location index
-        NodeAccess na = graph.getNodeAccess();
-        graph.edge(0, 1).set(encoder.getAccessEnc(), true).set(encoder.getAverageSpeedEnc(), 10).setDistance(1530);
-        na.setNode(0, 15.15, 20.20);
-        na.setNode(1, 15.25, 20.21);
-        LocationIndexTree index = new LocationIndexTree(graph, graph.getDirectory());
-        index.prepareIndex();
+            // Set node coordinates and build location index
+            NodeAccess na = graph.getNodeAccess();
+            graph.edge(0, 1).set(encoder.getAccessEnc(), true).set(encoder.getAverageSpeedEnc(), 10).setDistance(1530);
+            na.setNode(0, 15.15, 20.20);
+            na.setNode(1, 15.25, 20.21);
+            LocationIndexTree index = new LocationIndexTree(graph, graph.getDirectory());
+            index.prepareIndex();
 
-        // Flush the graph and location index to disk
-        graph.flush();
-        index.flush();
-        graph.close();
-        index.close();
+            // Flush the graph and location index to disk
+            graph.flush();
+            index.flush();
+            graph.close();
+            index.close();
+        }
 
-        // Load the graph ... can be also in a different code location
-        graph = new GraphBuilder(em).setRAM(graphLocation, true).build();
-        graph.loadExisting();
+        {
+            // Load the graph ... can be also in a different code location
+            // note that the TagParserManager must be the same
+            CarFlagEncoder encoder = new CarFlagEncoder();
+            TagParserManager em = TagParserManager.create(encoder);
+            GraphHopperStorage graph = new GraphBuilder(em).setRAM(graphLocation, true).build();
+            graph.loadExisting();
 
-        // Load the location index
-        index = new LocationIndexTree(graph.getBaseGraph(), graph.getDirectory());
-        if (!index.loadExisting())
-            throw new IllegalStateException("location index cannot be loaded!");
+            // Load the location index
+            LocationIndexTree index = new LocationIndexTree(graph.getBaseGraph(), graph.getDirectory());
+            if (!index.loadExisting())
+                throw new IllegalStateException("location index cannot be loaded!");
 
-        // calculate with location index
-        Snap fromSnap = index.findClosest(15.15, 20.20, EdgeFilter.ALL_EDGES);
-        Snap toSnap = index.findClosest(15.25, 20.21, EdgeFilter.ALL_EDGES);
-        QueryGraph queryGraph = QueryGraph.create(graph, fromSnap, toSnap);
-        Weighting weighting = new FastestWeighting(encoder);
-        Path path = new Dijkstra(queryGraph, weighting, TraversalMode.NODE_BASED).calcPath(fromSnap.getClosestNode(), toSnap.getClosestNode());
-        assert Helper.round(path.getDistance(), -2) == 1500;
+            // calculate with location index
+            Snap fromSnap = index.findClosest(15.15, 20.20, EdgeFilter.ALL_EDGES);
+            Snap toSnap = index.findClosest(15.25, 20.21, EdgeFilter.ALL_EDGES);
+            QueryGraph queryGraph = QueryGraph.create(graph, fromSnap, toSnap);
+            Weighting weighting = new FastestWeighting(encoder);
+            Path path = new Dijkstra(queryGraph, weighting, TraversalMode.NODE_BASED).calcPath(fromSnap.getClosestNode(), toSnap.getClosestNode());
+            assert Helper.round(path.getDistance(), -2) == 1500;
 
-        // calculate without location index (get the fromId and toId nodes from other code parts)
-        path = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(0, 1);
-        assert Helper.round(path.getDistance(), -2) == 1500;
+            // calculate without location index (get the fromId and toId nodes from other code parts)
+            path = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(0, 1);
+            assert Helper.round(path.getDistance(), -2) == 1500;
+        }
     }
 
     public static void useContractionHierarchiesToMakeQueriesFaster() {

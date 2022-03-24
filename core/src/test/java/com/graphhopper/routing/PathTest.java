@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -25,7 +24,6 @@ import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
@@ -44,8 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class PathTest {
     private final CarFlagEncoder encoder = new CarFlagEncoder();
-    private final TagParserManager tagParserManager = TagParserManager.create(encoder);
-    private final EncodingManager carManager = tagParserManager.getEncodingManager();
+    private final EncodingManager carManager = EncodingManager.create(encoder);
     private final BooleanEncodedValue carAccessEnc = encoder.getAccessEnc();
     private final DecimalEncodedValue carAvSpeedEnv = encoder.getAverageSpeedEnc();
     private final EncodingManager mixedEncoders = EncodingManager.create(new CarFlagEncoder(), new FootFlagEncoder());
@@ -995,29 +992,11 @@ public class PathTest {
         na.setNode(5, 52.516, 13.3452);
         na.setNode(6, 52.516, 13.344);
 
-        ReaderWay w = new ReaderWay(1);
-        w.setTag("highway", "tertiary");
-        w.setTag("maxspeed", "50");
-
-        EdgeIteratorState tmpEdge;
-        tmpEdge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(5)).setName("1-2");
-        assertNotEquals(EncodingManager.Access.CAN_SKIP, encoder.getAccess(w));
-        IntsRef relFlags = tagParserManager.createRelationFlags();
-        tmpEdge.setFlags(tagParserManager.handleWayTags(w, relFlags));
-        tmpEdge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 5).setDistance(5)).setName("4-5");
-        tmpEdge.setFlags(tagParserManager.handleWayTags(w, relFlags));
-
-        w.setTag("maxspeed", "100");
-        tmpEdge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(5)).setName("2-3");
-        tmpEdge.setFlags(tagParserManager.handleWayTags(w, relFlags));
-
-        w.setTag("maxspeed", "10");
-        tmpEdge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(10)).setName("3-4");
-        tmpEdge.setFlags(tagParserManager.handleWayTags(w, relFlags));
-
-        tmpEdge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 6).setDistance(0.01)).setName("3-4");
-        tmpEdge.setFlags(tagParserManager.handleWayTags(w, relFlags));
-
+        GHUtility.setSpeed(45, true, true, encoder, graph.edge(1, 2).setDistance(5)).setName("1-2");
+        GHUtility.setSpeed(45, true, true, encoder, graph.edge(4, 5).setDistance(5)).setName("4-5");
+        GHUtility.setSpeed(90, true, true, encoder, graph.edge(2, 3).setDistance(5)).setName("2-3");
+        GHUtility.setSpeed(9, true, true, encoder, graph.edge(3, 4).setDistance(10)).setName("3-4");
+        GHUtility.setSpeed(9, true, true, encoder, graph.edge(5, 6).setDistance(0.01)).setName("3-4");
         return graph;
     }
 

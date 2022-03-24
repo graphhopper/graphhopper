@@ -224,7 +224,7 @@ public class BaseGraph implements Graph, Closeable {
         return maxGeoRef;
     }
 
-    void loadExisting() {
+    public void loadExisting() {
         checkNotInitialized();
 
         if (!store.loadExisting())
