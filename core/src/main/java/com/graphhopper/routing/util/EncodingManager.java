@@ -317,6 +317,35 @@ public class EncodingManager implements EncodedValueLookup {
         }
     }
 
+    public String toFlagEncodersAsString() {
+        StringBuilder str = new StringBuilder();
+        for (FlagEncoder encoder : edgeEncoders) {
+            if (str.length() > 0)
+                str.append(",");
+
+            str.append(encoder.toString())
+                    .append("|")
+                    .append(((AbstractFlagEncoder) encoder).getPropertiesString());
+        }
+
+        return str.toString();
+    }
+
+    public String toEncodedValuesAsString() {
+        StringBuilder str = new StringBuilder();
+        for (EncodedValue ev : encodedValueMap.values()) {
+            if (!isSharedEncodedValues(ev))
+                continue;
+
+            if (str.length() > 0)
+                str.append(",");
+
+            str.append(ev.toString());
+        }
+
+        return str.toString();
+    }
+
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder();

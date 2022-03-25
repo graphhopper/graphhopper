@@ -44,7 +44,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     }
 
     protected GraphHopperStorage newGHStorage(Directory dir, boolean enabled3D, int segmentSize) {
-        return GraphBuilder.start(tagParserManager).setDir(dir).set3D(enabled3D).setSegmentSize(segmentSize).build();
+        return GraphBuilder.start(encodingManager).setDir(dir).set3D(enabled3D).setSegmentSize(segmentSize).build();
     }
 
     @Test
@@ -153,7 +153,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
     @Test
     public void testIdentical() {
-        GraphHopperStorage store = new GraphBuilder(tagParserManager).set3D(true).build();
+        GraphHopperStorage store = new GraphBuilder(encodingManager).set3D(true).build();
         assertEquals(store.getNodes(), store.getBaseGraph().getNodes());
         assertEquals(store.getEdges(), store.getBaseGraph().getEdges());
     }
@@ -199,7 +199,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     public void testDecoupledEdgeIteratorStates() {
         GraphHopperStorage storage = createGHStorage();
         Graph graph = storage.getBaseGraph();
-        IntsRef ref = tagParserManager.createEdgeFlags();
+        IntsRef ref = encodingManager.createEdgeFlags();
         ref.ints[0] = 12;
         GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 2).setDistance(10)).setFlags(ref);
         ref.ints[0] = 13;
@@ -219,7 +219,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
     @Test
     public void testEdgeKey() {
-        GraphHopperStorage g = new GraphBuilder(tagParserManager).create();
+        GraphHopperStorage g = new GraphBuilder(encodingManager).create();
         GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 1).setDistance(10));
         // storage direction
         assertEdge(g.getEdgeIteratorState(0, Integer.MIN_VALUE), 0, 1, false, 0, 0);
@@ -233,7 +233,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
     @Test
     public void testEdgeKey_loop() {
-        GraphHopperStorage g = new GraphBuilder(tagParserManager).create();
+        GraphHopperStorage g = new GraphBuilder(encodingManager).create();
         GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 0).setDistance(10));
         // storage direction
         assertEdge(g.getEdgeIteratorState(0, Integer.MIN_VALUE), 0, 0, false, 0, 0);

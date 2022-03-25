@@ -45,10 +45,10 @@ public abstract class AbstractGraphStorageTester {
     protected int defaultSize = 100;
     protected String defaultGraphLoc = "./target/graphstorage/default";
     protected CarFlagEncoder carEncoder = createCarFlagEncoder();
-    protected TagParserManager tagParserManager = new TagParserManager.Builder().add(carEncoder).add(new FootFlagEncoder()).build();
+    protected EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(new FootFlagEncoder()).build();
     protected BooleanEncodedValue carAccessEnc = carEncoder.getAccessEnc();
     protected DecimalEncodedValue carAvSpeedEnc = carEncoder.getAverageSpeedEnc();
-    protected FootFlagEncoder footEncoder = (FootFlagEncoder) tagParserManager.getEncoder("foot");
+    protected FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
     protected GraphHopperStorage graph;
     EdgeFilter carOutFilter = AccessFilter.outEdges(carEncoder.getAccessEnc());
     EdgeFilter carInFilter = AccessFilter.inEdges(carEncoder.getAccessEnc());
@@ -659,7 +659,7 @@ public abstract class AbstractGraphStorageTester {
         List<CarFlagEncoder> list = new ArrayList<>();
         list.add(new CarFlagEncoder("car0", 29, 0.001, 0));
         list.add(new CarFlagEncoder(29, 0.001, 0));
-        TagParserManager manager = TagParserManager.create(list);
+        EncodingManager manager = EncodingManager.create(list);
         graph = new GraphBuilder(manager).create();
 
         EdgeIteratorState edge = graph.edge(0, 1);
@@ -698,7 +698,7 @@ public abstract class AbstractGraphStorageTester {
         list.add(new CarFlagEncoder("car0", 29, 0.001, 0));
         list.add(new CarFlagEncoder(29, 0.001, 0));
         list.add(new CarFlagEncoder("car2", 30, 0.001, 0));
-        manager = TagParserManager.create(list);
+        manager = EncodingManager.create(list);
         graph = new GraphBuilder(manager).create();
         edgeIter = graph.edge(0, 1).set(access0Enc, true, false);
         assertTrue(edgeIter.get(access0Enc));

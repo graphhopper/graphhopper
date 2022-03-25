@@ -770,7 +770,7 @@ public class GraphHopper {
 
         GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
         directory.configure(dataAccessConfig);
-        ghStorage = new GraphBuilder(tagParserManager)
+        ghStorage = new GraphBuilder(getEncodingManager())
                 .setDir(directory)
                 .set3D(hasElevation())
                 .withTurnCosts(tagParserManager.needsTurnCostsSupport())

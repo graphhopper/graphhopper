@@ -53,7 +53,7 @@ class TagParserManagerTest {
             }
         };
 
-        TagParserManager subject = TagParserManager.create(encoder);
+        EncodingManager subject = EncodingManager.create(encoder);
 
         assertEquals("new_encoder|my_properties", subject.toFlagEncodersAsString());
     }
