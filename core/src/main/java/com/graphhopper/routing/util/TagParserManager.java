@@ -325,7 +325,7 @@ public class TagParserManager implements EncodedValueLookup {
             for (AbstractFlagEncoder encoder : flagEncoderMap.values()) {
                 if (encoder.supportsTurnCosts() && !em.turnCostParsers.containsKey(TurnCost.key(encoder.toString()))) {
                     BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-                    DecimalEncodedValue turnCostEnc = TurnCost.create(encoder.toString(), encoder.getMaxTurnCosts());
+                    DecimalEncodedValue turnCostEnc = encoder.getTurnCostEnc();
                     _addTurnCostParser(new OSMTurnRelationParser(accessEnc, turnCostEnc, encoder.getRestrictions()));
                 }
             }
@@ -334,7 +334,7 @@ public class TagParserManager implements EncodedValueLookup {
                 throw new IllegalStateException("No EncodedValues found");
 
             em.encodingManager = new EncodingManager(new ArrayList<>(em.edgeEncoders), em.encodedValueMap,
-                    em.turnCostParsers, em.turnCostConfig, em.edgeConfig);
+                    em.turnCostConfig, em.edgeConfig);
 
             TagParserManager tmp = em;
             em = null;
