@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Peter Karich
  */
-public class MotorcycleFlagEncoderTest {
+public class MotorcycleTagParserTest {
     private final EncodingManager em = EncodingManager.create("motorcycle,foot");
     private final MotorcycleFlagEncoder encoder = (MotorcycleFlagEncoder) em.getEncoder("motorcycle");
     private final BooleanEncodedValue accessEnc = encoder.getAccessEnc();

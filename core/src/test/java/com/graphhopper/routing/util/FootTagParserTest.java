@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Peter Karich
  */
-public class FootFlagEncoderTest {
+public class FootTagParserTest {
     private final EncodingManager encodingManager = EncodingManager.create("car,bike,foot");
     private final FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
     private final DecimalEncodedValue footAvgSpeedEnc = footEncoder.getAverageSpeedEnc();
