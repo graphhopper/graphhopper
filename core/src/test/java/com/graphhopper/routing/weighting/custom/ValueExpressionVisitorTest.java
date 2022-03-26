@@ -62,30 +62,34 @@ class ValueExpressionVisitorTest {
         IntEncodedValueImpl prio2 = new IntEncodedValueImpl("my_priority2", 5, -5, false, false);
         EncodedValueLookup lookup = new EncodingManager.Builder().add(prio1).add(prio2).build();
 
-        String msg = assertThrows(IllegalArgumentException.class, () -> findMax("unknown*3", lookup)).getMessage();
+        String msg = assertThrows(IllegalArgumentException.class, () -> findMinMax("unknown*3", lookup)).getMessage();
         assertTrue(msg.contains("identifier unknown invalid"), msg);
 
-        msg = assertThrows(IllegalArgumentException.class, () -> findMax("my_priority - my_priority2 * 3", lookup)).getMessage();
+        msg = assertThrows(IllegalArgumentException.class, () -> findMinMax("my_priority - my_priority2 * 3", lookup)).getMessage();
         assertTrue(msg.contains("only a single EncodedValue"), msg);
         // unary minus is also a minus operator
-        msg = assertThrows(IllegalArgumentException.class, () -> findMax("-my_priority + my_priority2 * 3", lookup)).getMessage();
+        msg = assertThrows(IllegalArgumentException.class, () -> findMinMax("-my_priority + my_priority2 * 3", lookup)).getMessage();
         assertTrue(msg.contains("only a single EncodedValue"), msg);
 
-        assertEquals(2418, findMax("my_priority*my_priority2 * 3", lookup), 0.1);
+        assertInterval(0, 2418, "my_priority*my_priority2 * 3", lookup);
 
-        assertEquals(2, findMax("2", lookup), 0.1);
-        // from max value
-        assertEquals(62, findMax("2*my_priority", lookup), 0.1);
-        // from min value
-        assertEquals(10, findMax("-2*my_priority2", lookup), 0.1);
+        assertInterval(2, 2, "2", lookup);
 
-        // for a single expression we allow this "unlimited maximum" but if it stays unlimited at the end of the speed or priority list => error
-        // => TODO NOW loop over the speed or priority list in reverse order
-        assertEquals(Double.POSITIVE_INFINITY, findMax("1/my_priority", lookup), 0.1);
+        assertInterval(0, 62, "2*my_priority", lookup);
+
+        assertInterval(-52, 10, "-2*my_priority2", lookup);
+
+        // for a single expression we allow this "unlimited maximum" for a list we throw an error if this is the overall outcome
+        assertInterval(0, Double.POSITIVE_INFINITY, "1/my_priority", lookup);
     }
 
-    // TODO NOW rewrite to "double[] findMinMax"
-    double findMax(String valueExpression, EncodedValueLookup lookup) {
+    void assertInterval(double min, double max, String expression, EncodedValueLookup lookup) {
+        double[] minmax = findMinMax(expression, lookup);
+        assertEquals(min, minmax[0], 0.1, expression);
+        assertEquals(max, minmax[1], 0.1, expression);
+    }
+
+    double[] findMinMax(String valueExpression, EncodedValueLookup lookup) {
         ParseResult result = parse(valueExpression, lookup::hasEncodedValue);
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
@@ -102,8 +106,10 @@ class ValueExpressionVisitorTest {
             }
             ee.setParameters(names.toArray(new String[0]), values.toArray(new Class[0]));
             ee.cook(valueExpression);
-            if (result.guessedVariables.isEmpty())
-                return ((Number) ee.evaluate()).doubleValue(); // constant - no EncodedValues
+            if (result.guessedVariables.isEmpty()) { // constant - no EncodedValues
+                double val = ((Number) ee.evaluate()).doubleValue();
+                return new double[]{val, val};
+            }
 
             List<Object> args = new ArrayList<>();
             for (String var : result.guessedVariables) {
@@ -128,7 +134,7 @@ class ValueExpressionVisitorTest {
                     throw new IllegalArgumentException("Cannot use non-number data in value expression");
             }
             Number val2 = (Number) ee.evaluate(args.toArray());
-            return Math.max(val1.doubleValue(), val2.doubleValue());
+            return new double[]{Math.min(val1.doubleValue(), val2.doubleValue()), Math.max(val1.doubleValue(), val2.doubleValue())};
         } catch (CompileException | InvocationTargetException ex) {
             throw new IllegalArgumentException(ex);
         }
