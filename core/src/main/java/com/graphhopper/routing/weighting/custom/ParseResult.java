@@ -7,4 +7,5 @@ class ParseResult {
     boolean ok;
     String invalidMessage;
     Set<String> guessedVariables;
+    Set<String> operators;
 }

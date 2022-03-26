@@ -56,6 +56,10 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         if (rv instanceof Java.Literal) {
             return true;
         } else if (rv instanceof Java.UnaryOperation) {
+            Java.UnaryOperation uop = (Java.UnaryOperation) rv;
+            result.operators.add(uop.operator);
+            if (uop.operator.equals("-"))
+                return uop.operand.accept(this);
             return false;
         } else if (rv instanceof Java.MethodInvocation) {
             Java.MethodInvocation mi = (Java.MethodInvocation) rv;
@@ -73,8 +77,11 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             return ((Java.ParenthesizedExpression) rv).value.accept(this);
         } else if (rv instanceof Java.BinaryOperation) {
             Java.BinaryOperation binOp = (Java.BinaryOperation) rv;
-            if (binOp.operator.equals("*") || binOp.operator.equals("/"))
+            String op = binOp.operator;
+            result.operators.add(op);
+            if (op.equals("*") || op.equals("/") || op.equals("+") || binOp.operator.equals("-")) {
                 return binOp.lhs.accept(this) && binOp.rhs.accept(this);
+            }
             return false;
         }
         return false;
@@ -102,6 +109,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             Java.Atom atom = parser.parseConditionalExpression();
             if (parser.peek().type == TokenType.END_OF_INPUT) {
                 result.guessedVariables = new LinkedHashSet<>();
+                result.operators = new LinkedHashSet<>();
                 ValueExpressionVisitor visitor = new ValueExpressionVisitor(result, validator);
                 result.ok = atom.accept(visitor);
                 result.invalidMessage = visitor.invalidMessage;

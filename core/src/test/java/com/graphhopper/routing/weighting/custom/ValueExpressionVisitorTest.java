@@ -59,37 +59,51 @@ class ValueExpressionVisitorTest {
     @Test
     public void runMaxMin() {
         DecimalEncodedValue prio1 = new DecimalEncodedValueImpl("my_priority", 5, 1, false);
-        DecimalEncodedValue prio2 = new DecimalEncodedValueImpl("my_priority2", 5, 1, false);
+        IntEncodedValueImpl prio2 = new IntEncodedValueImpl("my_priority2", 5, -5, false, false);
         EncodedValueLookup lookup = new EncodingManager.Builder().add(prio1).add(prio2).build();
 
         String msg = assertThrows(IllegalArgumentException.class, () -> findMax("unknown*3", lookup)).getMessage();
         assertTrue(msg.contains("identifier unknown invalid"), msg);
 
-        msg = assertThrows(IllegalArgumentException.class, () -> findMax("my_priority*my_priority2 * 3", lookup)).getMessage();
+        msg = assertThrows(IllegalArgumentException.class, () -> findMax("my_priority - my_priority2 * 3", lookup)).getMessage();
+        assertTrue(msg.contains("only a single EncodedValue"), msg);
+        // unary minus is also a minus operator
+        msg = assertThrows(IllegalArgumentException.class, () -> findMax("-my_priority + my_priority2 * 3", lookup)).getMessage();
         assertTrue(msg.contains("only a single EncodedValue"), msg);
 
-        assertEquals(2, findMax("2", lookup), 0.1);
-        assertEquals(62, findMax("2*my_priority", lookup), 0.1);
+        assertEquals(2418, findMax("my_priority*my_priority2 * 3", lookup), 0.1);
 
-        // TODO NOW should we allow this "unlimited maximum"?
+        assertEquals(2, findMax("2", lookup), 0.1);
+        // from max value
+        assertEquals(62, findMax("2*my_priority", lookup), 0.1);
+        // from min value
+        assertEquals(10, findMax("-2*my_priority2", lookup), 0.1);
+
+        // for a single expression we allow this "unlimited maximum" but if it stays unlimited at the end of the speed or priority list => error
+        // => TODO NOW loop over the speed or priority list in reverse order
         assertEquals(Double.POSITIVE_INFINITY, findMax("1/my_priority", lookup), 0.1);
     }
 
+    // TODO NOW rewrite to "double[] findMinMax"
     double findMax(String valueExpression, EncodedValueLookup lookup) {
         ParseResult result = parse(valueExpression, lookup::hasEncodedValue);
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
-        if (result.guessedVariables.size() > 1)
-            throw new IllegalArgumentException("Currently only a single EncodedValue in the value expression is allowed but was " + valueExpression);
+        if ((result.operators.contains("-") || result.operators.contains("/")) && result.guessedVariables.size() > 1)
+            throw new IllegalArgumentException("Currently only a single EncodedValue in the value expression is allowed when expression contains \"/\" or \"-\". " + valueExpression);
 
         try {
             ExpressionEvaluator ee = new ExpressionEvaluator();
+            List<String> names = new ArrayList<>(result.guessedVariables.size());
+            List<Class> values = new ArrayList<>(result.guessedVariables.size());
             for (String var : result.guessedVariables) {
-                ee.setParameters(new String[]{var}, new Class[]{double.class});
+                names.add(var);
+                values.add(double.class);
             }
+            ee.setParameters(names.toArray(new String[0]), values.toArray(new Class[0]));
             ee.cook(valueExpression);
             if (result.guessedVariables.isEmpty())
-                return ((Number) ee.evaluate()).doubleValue();
+                return ((Number) ee.evaluate()).doubleValue(); // constant - no EncodedValues
 
             List<Object> args = new ArrayList<>();
             for (String var : result.guessedVariables) {
