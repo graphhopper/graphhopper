@@ -26,7 +26,10 @@ import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -76,10 +79,10 @@ public class DirectedRoutingTest {
         private final boolean prepareCH;
         private final boolean prepareLM;
         private final Directory dir;
-        private final GraphHopperStorage graph;
+        private final BaseGraph graph;
         private final CHConfig chConfig;
         private final LMConfig lmConfig;
-        private final FlagEncoder encoder;
+        private final CarFlagEncoder encoder;
         private final TurnCostStorage turnCostStorage;
         private final int maxTurnCosts;
         private final Weighting weighting;
@@ -100,7 +103,7 @@ public class DirectedRoutingTest {
             // only for loops instead?
             encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
             encodingManager = EncodingManager.create(encoder);
-            graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).create();
+            graph = new BaseGraph.Builder(encodingManager).setDir(dir).withTurnCosts(true).create();
             turnCostStorage = graph.getTurnCostStorage();
             weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts));
             chConfig = CHConfig.edgeBased("p1", weighting);
@@ -119,9 +122,9 @@ public class DirectedRoutingTest {
                 return;
             }
             if (prepareCH) {
-                PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
+                PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraph(graph, chConfig);
                 PrepareContractionHierarchies.Result res = pch.doWork();
-                routingCHGraph = graph.createCHGraph(res.getCHStorage(), res.getCHConfig());
+                routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
             }
             if (prepareLM) {
                 PrepareLandmarks prepare = new PrepareLandmarks(dir, graph, lmConfig, 16);

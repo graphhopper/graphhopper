@@ -21,9 +21,7 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import org.junit.jupiter.api.Test;
@@ -67,7 +65,7 @@ public class FootFlagEncoderTest {
 
     @Test
     public void testCombined() {
-        Graph g = new GraphBuilder(encodingManager).create();
+        BaseGraph g = new BaseGraph.Builder(encodingManager).create();
         EdgeIteratorState edge = g.edge(0, 1);
         edge.set(footAvgSpeedEnc, 10.0).set(footAccessEnc, true, true);
         edge.set(carAvSpeedEnc, 100.0).set(carAccessEnc, true, false);
@@ -89,7 +87,7 @@ public class FootFlagEncoderTest {
 
     @Test
     public void testGraph() {
-        Graph g = new GraphBuilder(encodingManager).create();
+        BaseGraph g = new BaseGraph.Builder(encodingManager).create();
         g.edge(0, 1).setDistance(10).set(footAvgSpeedEnc, 10.0).set(footAccessEnc, true, true);
         g.edge(0, 2).setDistance(10).set(footAvgSpeedEnc, 5.0).set(footAccessEnc, true, true);
         g.edge(1, 3).setDistance(10).set(footAvgSpeedEnc, 10.0).set(footAccessEnc, true, true);
@@ -250,7 +248,7 @@ public class FootFlagEncoderTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("route", "ferry");
         way.setTag("duration:seconds", 1800L);
-        way.setTag("way_distance", 30000.0);
+        way.setTag("edge_distance", 30000.0);
         way.setTag("speed_from_duration", 30 / 0.5);
         // the speed is truncated to maxspeed (=15)
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
@@ -466,7 +464,7 @@ public class FootFlagEncoderTest {
         // be stored. In fact, when we set the speed of an edge to 15 and call the getter afterwards we get a value of 16
         // because of the internal (scaled) integer representation:
         EncodingManager em = EncodingManager.create(encoder);
-        GraphHopperStorage graph = new GraphBuilder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(100).set(encoder.getAverageSpeedEnc(), 15);
         assertEquals(16, edge.get(encoder.getAverageSpeedEnc()));
 

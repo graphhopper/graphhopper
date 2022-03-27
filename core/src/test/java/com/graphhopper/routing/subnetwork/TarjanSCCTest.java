@@ -20,9 +20,11 @@ package com.graphhopper.routing.subnetwork;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
-import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.routing.util.AccessFilter;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
@@ -33,13 +35,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TarjanSCCTest {
-    private final FlagEncoder encoder = new CarFlagEncoder();
+    private final CarFlagEncoder encoder = new CarFlagEncoder();
     private final EncodingManager em = EncodingManager.create(encoder);
     private final EdgeFilter edgeFilter = AccessFilter.outEdges(encoder.getAccessEnc());
 
     @Test
     public void testFindComponents() {
-        GraphHopperStorage graph = new GraphBuilder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
         // big network (has two components actually, because 9->12 is a one-way)
         //    ---
         //  /     \
@@ -93,7 +95,7 @@ class TarjanSCCTest {
         // 0->1->3->4->5->6->7
         //  \ |      \<-----/
         //    2
-        GraphHopperStorage graph = new GraphBuilder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 1).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 0).setDistance(1));
@@ -130,7 +132,7 @@ class TarjanSCCTest {
 
     @Test
     public void testTarjan_issue761() {
-        GraphHopperStorage graph = new GraphBuilder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
         //     11-10-9
         //     |     |
         // 0-1-2->3->4->5
@@ -185,7 +187,7 @@ class TarjanSCCTest {
     }
 
     private void doImplicitVsExplicit(boolean excludeSingle) {
-        GraphHopperStorage g = new GraphBuilder(em).create();
+        BaseGraph g = new BaseGraph.Builder(em).create();
         long seed = System.nanoTime();
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(g, rnd, 1_000, 2, true, true,

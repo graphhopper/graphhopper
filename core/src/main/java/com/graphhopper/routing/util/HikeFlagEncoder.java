@@ -39,14 +39,22 @@ public class HikeFlagEncoder extends FootFlagEncoder {
     }
 
     public HikeFlagEncoder(PMap properties) {
-        this(properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 1), properties.getBool("speed_two_directions", false));
+        this(
+                properties.getString("name", "hike"),
+                properties.getInt("speed_bits", 4),
+                properties.getDouble("speed_factor", 1),
+                properties.getBool("speed_two_directions", false));
 
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
     protected HikeFlagEncoder(int speedBits, double speedFactor, boolean speedTwoDirections) {
-        super(speedBits, speedFactor, speedTwoDirections);
+        this("hike", speedBits, speedFactor, speedTwoDirections);
+    }
+
+    protected HikeFlagEncoder(String name, int speedBits, double speedFactor, boolean speedTwoDirections) {
+        super(name, speedBits, speedFactor, speedTwoDirections);
 
         routeMap.put(INTERNATIONAL, BEST.getValue());
         routeMap.put(NATIONAL, BEST.getValue());
@@ -129,8 +137,4 @@ public class HikeFlagEncoder extends FootFlagEncoder {
         return PriorityWeighting.class.isAssignableFrom(feature);
     }
 
-    @Override
-    public String getName() {
-        return "hike";
-    }
 }

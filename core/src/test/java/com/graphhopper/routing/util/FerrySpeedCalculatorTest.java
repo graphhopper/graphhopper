@@ -22,6 +22,7 @@ import com.graphhopper.reader.ReaderWay;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class FerrySpeedCalculatorTest {
 
@@ -32,7 +33,7 @@ class FerrySpeedCalculatorTest {
         double unknownSpeed = 5;
         FerrySpeedCalculator c = new FerrySpeedCalculator(minSpeed, maxSpeed, unknownSpeed);
 
-        // speed_from_duration is set (way_distance is not even needed)
+        // speed_from_duration is set (edge_distance is not even needed)
         checkSpeed(c, 30.0, null, Math.round(30 / 1.4));
         checkSpeed(c, 45.0, null, Math.round(45 / 1.4));
         // above max (when including waiting time) (capped to max)
@@ -40,23 +41,22 @@ class FerrySpeedCalculatorTest {
         // below smallest storable non-zero value
         checkSpeed(c, 0.5, null, minSpeed);
 
-        // no speed_from_duration, but way_distance is present
+        // no speed_from_duration, but edge_distance is present
         // minimum speed for short ferries
         checkSpeed(c, null, 100.0, minSpeed);
         // unknown speed for longer ones
         checkSpeed(c, null, 1000.0, unknownSpeed);
 
-        // no speed, no distance -> unknown. this can also happen when the duration tag is valid, but no distance could
-        // be calculated (-> no speed)
-        checkSpeed(c, null, null, unknownSpeed);
+        // no speed, no distance -> error. this should never happen as we always set the edge distance.
+        assertThrows(IllegalStateException.class, () -> checkSpeed(c, null, null, unknownSpeed));
     }
 
-    private void checkSpeed(FerrySpeedCalculator calc, Double speedFromDuration, Double wayDistance, double expected) {
+    private void checkSpeed(FerrySpeedCalculator calc, Double speedFromDuration, Double edgeDistance, double expected) {
         ReaderWay way = new ReaderWay(0L);
         if (speedFromDuration != null)
             way.setTag("speed_from_duration", speedFromDuration);
-        if (wayDistance != null)
-            way.setTag("way_distance", wayDistance);
+        if (edgeDistance != null)
+            way.setTag("edge_distance", edgeDistance);
         assertEquals(expected, calc.getSpeed(way));
     }
 

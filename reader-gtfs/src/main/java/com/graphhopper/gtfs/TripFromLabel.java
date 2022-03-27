@@ -32,7 +32,6 @@ import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
@@ -399,7 +398,7 @@ class TripFromLabel {
             pathh.setFromNode(path.get(0).label.node.streetNode);
             pathh.setEndNode(path.get(path.size()-1).label.node.streetNode);
             pathh.setFound(true);
-            Map<String, List<PathDetail>> pathDetails = PathDetailsFromEdges.calcDetails(pathh, ((GraphHopperStorage) this.graph.getBaseGraph()).getEncodingManager(), weighting, requestedPathDetails, pathDetailsBuilderFactory, 0);
+            Map<String, List<PathDetail>> pathDetails = PathDetailsFromEdges.calcDetails(pathh, weighting.getFlagEncoder(), weighting, requestedPathDetails, pathDetailsBuilderFactory, 0);
 
             final Instant departureTime = Instant.ofEpochMilli(path.get(0).label.currentTime);
             final Instant arrivalTime = Instant.ofEpochMilli(path.get(path.size() - 1).label.currentTime);

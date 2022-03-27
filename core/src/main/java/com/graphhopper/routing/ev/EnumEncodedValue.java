@@ -17,6 +17,9 @@
  */
 package com.graphhopper.routing.ev;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Arrays;
@@ -25,7 +28,10 @@ import java.util.Arrays;
  * This class allows to store distinct values via an enum. I.e. it stores just the indices
  */
 public final class EnumEncodedValue<E extends Enum> extends IntEncodedValueImpl {
+    @JsonIgnore
     private final E[] arr;
+    // needed for Jackson
+    private final Class<E> enumType;
 
     public EnumEncodedValue(String name, Class<E> enumType) {
         this(name, enumType, false);
@@ -33,6 +39,21 @@ public final class EnumEncodedValue<E extends Enum> extends IntEncodedValueImpl 
 
     public EnumEncodedValue(String name, Class<E> enumType, boolean storeTwoDirections) {
         super(name, 32 - Integer.numberOfLeadingZeros(enumType.getEnumConstants().length - 1), storeTwoDirections);
+        this.enumType = enumType;
+        arr = enumType.getEnumConstants();
+    }
+
+    @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+    EnumEncodedValue(@JsonProperty("name") String name,
+                     @JsonProperty("bits") int bits,
+                     @JsonProperty("min_value") int minValue,
+                     @JsonProperty("max_value") int maxValue,
+                     @JsonProperty("negate_reverse_direction") boolean negateReverseDirection,
+                     @JsonProperty("store_two_directions") boolean storeTwoDirections,
+                     @JsonProperty("enum_type") Class<E> enumType) {
+        // we need this constructor for Jackson
+        super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections);
+        this.enumType = enumType;
         arr = enumType.getEnumConstants();
     }
 

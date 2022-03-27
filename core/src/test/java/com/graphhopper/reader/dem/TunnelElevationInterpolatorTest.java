@@ -18,9 +18,8 @@
 package com.graphhopper.reader.dem;
 
 import com.graphhopper.coll.GHIntHashSet;
-import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.RoadEnvironment;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -34,11 +33,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class TunnelElevationInterpolatorTest extends EdgeElevationInterpolatorTest {
 
     @Override
-    protected ReaderWay createInterpolatableWay() {
-        ReaderWay tunnelWay = new ReaderWay(0);
-        tunnelWay.setTag("highway", "primary");
-        tunnelWay.setTag("tunnel", "yes");
-        return tunnelWay;
+    protected IntsRef createInterpolatableFlags() {
+        IntsRef edgeFlags = new IntsRef(1);
+        roadEnvEnc.setEnum(false, edgeFlags, RoadEnvironment.TUNNEL);
+        return edgeFlags;
     }
 
     @Override
@@ -63,14 +61,13 @@ public class TunnelElevationInterpolatorTest extends EdgeElevationInterpolatorTe
         na.setNode(3, 30, 0, 20);
         na.setNode(4, 40, 0, 0);
 
-        FlagEncoder encoder = encodingManager.getEncoder("car");
         EdgeIteratorState edge01 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10));
         EdgeIteratorState edge12 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(10));
         EdgeIteratorState edge34 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(10));
 
-        edge01.setFlags(encodingManager.handleWayTags(interpolatableWay, relFlags));
-        edge12.setFlags(encodingManager.handleWayTags(interpolatableWay, relFlags));
-        edge34.setFlags(encodingManager.handleWayTags(interpolatableWay, relFlags));
+        edge01.setFlags(interpolatableFlags);
+        edge12.setFlags(interpolatableFlags);
+        edge34.setFlags(interpolatableFlags);
 
         final GHIntHashSet outerNodeIds = new GHIntHashSet();
         final GHIntHashSet innerNodeIds = new GHIntHashSet();
@@ -103,16 +100,15 @@ public class TunnelElevationInterpolatorTest extends EdgeElevationInterpolatorTe
         na.setNode(3, 30, 0, 20);
         na.setNode(4, 40, 0, 00);
 
-        FlagEncoder encoder = encodingManager.getEncoder("car");
         EdgeIteratorState edge01 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10));
         EdgeIteratorState edge12 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(10));
         EdgeIteratorState edge23 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(10));
         EdgeIteratorState edge34 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(10));
 
-        edge01.setFlags(encodingManager.handleWayTags(interpolatableWay, relFlags));
-        edge12.setFlags(encodingManager.handleWayTags(interpolatableWay, relFlags));
-        edge23.setFlags(encodingManager.handleWayTags(normalWay, relFlags));
-        edge34.setFlags(encodingManager.handleWayTags(interpolatableWay, relFlags));
+        edge01.setFlags(interpolatableFlags);
+        edge12.setFlags(interpolatableFlags);
+        edge23.setFlags(normalFlags);
+        edge34.setFlags(interpolatableFlags);
 
         final GHIntHashSet outerNodeIds = new GHIntHashSet();
         final GHIntHashSet innerNodeIds = new GHIntHashSet();
@@ -145,16 +141,15 @@ public class TunnelElevationInterpolatorTest extends EdgeElevationInterpolatorTe
         na.setNode(3, 30, 0, 30);
         na.setNode(4, 40, 0, 40);
 
-        FlagEncoder encoder = encodingManager.getEncoder("car");
         EdgeIteratorState edge01 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10));
         EdgeIteratorState edge12 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(10));
         EdgeIteratorState edge23 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(10));
         EdgeIteratorState edge34 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(10));
 
-        edge01.setFlags(encodingManager.handleWayTags(normalWay, relFlags));
-        edge12.setFlags(encodingManager.handleWayTags(interpolatableWay, relFlags));
-        edge23.setFlags(encodingManager.handleWayTags(interpolatableWay, relFlags));
-        edge34.setFlags(encodingManager.handleWayTags(normalWay, relFlags));
+        edge01.setFlags(normalFlags);
+        edge12.setFlags(interpolatableFlags);
+        edge23.setFlags(interpolatableFlags);
+        edge34.setFlags(normalFlags);
 
         final GHIntHashSet outerNodeIds = new GHIntHashSet();
         final GHIntHashSet innerNodeIds = new GHIntHashSet();
@@ -196,7 +191,6 @@ public class TunnelElevationInterpolatorTest extends EdgeElevationInterpolatorTe
         na.setNode(6, 30, 10, 30);
         na.setNode(7, 40, 10, 40);
 
-        FlagEncoder encoder = encodingManager.getEncoder("car");
         EdgeIteratorState edge01 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10));
         EdgeIteratorState edge12 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(10));
         EdgeIteratorState edge23 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(10));
@@ -205,13 +199,13 @@ public class TunnelElevationInterpolatorTest extends EdgeElevationInterpolatorTe
         EdgeIteratorState edge56 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 6).setDistance(10));
         EdgeIteratorState edge67 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 7).setDistance(10));
 
-        edge01.setFlags(encodingManager.handleWayTags(normalWay, relFlags));
-        edge12.setFlags(encodingManager.handleWayTags(interpolatableWay, relFlags));
-        edge23.setFlags(encodingManager.handleWayTags(interpolatableWay, relFlags));
-        edge34.setFlags(encodingManager.handleWayTags(normalWay, relFlags));
-        edge25.setFlags(encodingManager.handleWayTags(interpolatableWay, relFlags));
-        edge56.setFlags(encodingManager.handleWayTags(interpolatableWay, relFlags));
-        edge67.setFlags(encodingManager.handleWayTags(normalWay, relFlags));
+        edge01.setFlags(normalFlags);
+        edge12.setFlags(interpolatableFlags);
+        edge23.setFlags(interpolatableFlags);
+        edge34.setFlags(normalFlags);
+        edge25.setFlags(interpolatableFlags);
+        edge56.setFlags(interpolatableFlags);
+        edge67.setFlags(normalFlags);
 
         final GHIntHashSet outerNodeIds = new GHIntHashSet();
         final GHIntHashSet innerNodeIds = new GHIntHashSet();
@@ -258,7 +252,6 @@ public class TunnelElevationInterpolatorTest extends EdgeElevationInterpolatorTe
         na.setNode(8, 30, 10, 10);
         na.setNode(9, 40, 10, 0);
 
-        FlagEncoder encoder = encodingManager.getEncoder("car");
         EdgeIteratorState edge01, edge12, edge23, edge34, edge56, edge67, edge78, edge89, edge27;
         GHUtility.setSpeed(60, 60, encoder,
                 edge01 = graph.edge(0, 1).setDistance(10),
@@ -271,17 +264,17 @@ public class TunnelElevationInterpolatorTest extends EdgeElevationInterpolatorTe
                 edge89 = graph.edge(8, 9).setDistance(10),
                 edge27 = graph.edge(2, 7).setDistance(10));
 
-        edge01.setFlags(encodingManager.handleWayTags(normalWay, relFlags));
-        edge12.setFlags(encodingManager.handleWayTags(interpolatableWay, relFlags));
-        edge23.setFlags(encodingManager.handleWayTags(interpolatableWay, relFlags));
-        edge34.setFlags(encodingManager.handleWayTags(normalWay, relFlags));
+        edge01.setFlags(normalFlags);
+        edge12.setFlags(interpolatableFlags);
+        edge23.setFlags(interpolatableFlags);
+        edge34.setFlags(normalFlags);
 
-        edge56.setFlags(encodingManager.handleWayTags(normalWay, relFlags));
-        edge67.setFlags(encodingManager.handleWayTags(interpolatableWay, relFlags));
-        edge78.setFlags(encodingManager.handleWayTags(interpolatableWay, relFlags));
-        edge89.setFlags(encodingManager.handleWayTags(normalWay, relFlags));
+        edge56.setFlags(normalFlags);
+        edge67.setFlags(interpolatableFlags);
+        edge78.setFlags(interpolatableFlags);
+        edge89.setFlags(normalFlags);
 
-        edge27.setFlags(encodingManager.handleWayTags(interpolatableWay, relFlags));
+        edge27.setFlags(interpolatableFlags);
 
         final GHIntHashSet outerNodeIds = new GHIntHashSet();
         final GHIntHashSet innerNodeIds = new GHIntHashSet();

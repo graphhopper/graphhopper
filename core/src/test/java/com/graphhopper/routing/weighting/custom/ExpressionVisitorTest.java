@@ -4,7 +4,6 @@ import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.StringEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +24,7 @@ public class ExpressionVisitorTest {
     @BeforeEach
     public void before() {
         StringEncodedValue sev = new StringEncodedValue("country", 10);
-        lookup = new GraphBuilder(new EncodingManager.Builder().add(sev).build()).create().getEncodingManager();
+        lookup = new EncodingManager.Builder().add(sev).build();
         sev.setString(false, new IntsRef(1), "DEU");
     }
 

@@ -27,9 +27,8 @@ import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -48,14 +47,14 @@ public class AlternativeRouteTest {
     private static final class Fixture {
         final Weighting weighting;
         final TraversalMode traversalMode;
-        final GraphHopperStorage graph;
-        final FlagEncoder carFE;
+        final BaseGraph graph;
+        final CarFlagEncoder carFE;
 
         public Fixture(TraversalMode tMode) {
             this.traversalMode = tMode;
             carFE = new CarFlagEncoder();
             EncodingManager em = EncodingManager.create(carFE);
-            graph = new GraphBuilder(em).withTurnCosts(true).create();
+            graph = new BaseGraph.Builder(em).withTurnCosts(true).create();
             TurnCostProvider turnCostProvider = tMode.isEdgeBased()
                     ? new DefaultTurnCostProvider(carFE, graph.getTurnCostStorage())
                     : TurnCostProvider.NO_TURN_COST_PROVIDER;

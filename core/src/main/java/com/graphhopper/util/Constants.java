@@ -66,7 +66,7 @@ public class Constants {
     private static final int JVM_MAJOR_VERSION;
     private static final int JVM_MINOR_VERSION;
 
-    public static final int VERSION_NODE = 8;
+    public static final int VERSION_NODE = 9;
     public static final int VERSION_EDGE = 21;
     public static final int VERSION_SHORTCUT = 8;
     public static final int VERSION_NODE_CH = 0;

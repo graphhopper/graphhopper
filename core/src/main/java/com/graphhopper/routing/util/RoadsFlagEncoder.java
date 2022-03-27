@@ -1,26 +1,13 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
-import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.storage.IntsRef;
-
-import java.util.List;
 
 public class RoadsFlagEncoder extends AbstractFlagEncoder {
 
-    final boolean speedTwoDirections = true;
-
     public RoadsFlagEncoder() {
-        super(7, 2, 3);
-        avgSpeedEnc = new DecimalEncodedValueImpl(EncodingManager.getKey(getName(), "average_speed"), speedBits, speedFactor, speedTwoDirections);
+        super("roads", 7, 2, true, 3);
         maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(254);
-    }
-
-    @Override
-    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue) {
-        super.createEncodedValues(registerNewEncodedValue);
-        registerNewEncodedValue.add(avgSpeedEnc);
     }
 
     @Override
@@ -30,7 +17,7 @@ public class RoadsFlagEncoder extends AbstractFlagEncoder {
         accessEnc.setBool(true, edgeFlags, true);
         accessEnc.setBool(false, edgeFlags, true);
         setSpeed(false, edgeFlags, speed);
-        if (speedTwoDirections)
+        if (avgSpeedEnc.isStoreTwoDirections())
             setSpeed(true, edgeFlags, speed);
         return edgeFlags;
     }
@@ -47,8 +34,4 @@ public class RoadsFlagEncoder extends AbstractFlagEncoder {
         return TransportationMode.VEHICLE;
     }
 
-    @Override
-    public String getName() {
-        return "roads";
-    }
 }

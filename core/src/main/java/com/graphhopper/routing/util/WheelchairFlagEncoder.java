@@ -56,18 +56,15 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     }
 
     protected WheelchairFlagEncoder(int speedBits, double speedFactor) {
-        super(speedBits, speedFactor, true);
+        super("wheelchair", speedBits, speedFactor, true);
 
         restrictions.add("wheelchair");
 
-        blockByDefaultBarriers.add("handrail");
-        blockByDefaultBarriers.add("wall");
-        blockByDefaultBarriers.add("turnstile");
-        blockByDefaultBarriers.add("kissing_gate");
-        blockByDefaultBarriers.add("stile");
-        passByDefaultBarriers.add("kerb");
-        passByDefaultBarriers.add("cattle_grid");
-        passByDefaultBarriers.add("motorcycle_barrier");
+        barriers.add("handrail");
+        barriers.add("wall");
+        barriers.add("turnstile");
+        barriers.add("kissing_gate");
+        barriers.add("stile");
 
         safeHighwayTags.add("footway");
         safeHighwayTags.add("pedestrian");
@@ -251,10 +248,5 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         }
 
         return weightToPrioMap.lastEntry().getValue();
-    }
-
-    @Override
-    public String getName() {
-        return "wheelchair";
     }
 }

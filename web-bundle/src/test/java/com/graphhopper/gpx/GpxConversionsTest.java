@@ -23,11 +23,9 @@ import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,7 +48,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class GpxConversionsTest {
 
     private EncodingManager carManager;
-    private FlagEncoder carEncoder;
+    private CarFlagEncoder carEncoder;
     private TranslationMap trMap;
 
     @BeforeEach
@@ -62,7 +60,7 @@ public class GpxConversionsTest {
 
     @Test
     public void testInstructionsWithTimeAndPlace() {
-        Graph g = new GraphBuilder(carManager).create();
+        BaseGraph g = new BaseGraph.Builder(carManager).create();
         //   n-4-5   (n: pillar node)
         //   |
         // 7-3-2-6

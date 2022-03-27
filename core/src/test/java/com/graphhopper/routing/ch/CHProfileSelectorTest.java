@@ -25,7 +25,6 @@ import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,8 +55,8 @@ public class CHProfileSelectorTest {
 
     @BeforeEach
     public void setup() {
-        FlagEncoder carEncoder = new CarFlagEncoder();
-        FlagEncoder bikeEncoder = new BikeFlagEncoder();
+        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
         encodingManager = EncodingManager.create(carEncoder, bikeEncoder);
         fastCar = new Profile("fast_car").setWeighting("fastest").setVehicle("car").setTurnCosts(false);
         fastCarEdge = new Profile("fast_car_edge").setWeighting("fastest").setVehicle("car").setTurnCosts(true);

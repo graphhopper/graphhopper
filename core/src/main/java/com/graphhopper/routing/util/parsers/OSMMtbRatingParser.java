@@ -37,7 +37,11 @@ public class OSMMtbRatingParser implements TagParser {
     private final IntEncodedValue mtbRatingEnc;
 
     public OSMMtbRatingParser() {
-        this.mtbRatingEnc = MtbRating.create();
+        this(MtbRating.create());
+    }
+
+    public OSMMtbRatingParser(IntEncodedValue mtbRatingEnc) {
+        this.mtbRatingEnc = mtbRatingEnc;
     }
 
     @Override

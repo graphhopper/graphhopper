@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.ev;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.storage.IntsRef;
 
 /**
@@ -66,6 +68,23 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
             throw new IllegalArgumentException("defaultIsInfinity and useMaximumAsInfinity cannot be both true");
         if (defaultIsInfinity && minValue < 0)
             throw new IllegalArgumentException("defaultIsInfinity cannot be true when minValue is negative");
+    }
+
+    @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+    DecimalEncodedValueImpl(@JsonProperty("name") String name,
+                            @JsonProperty("bits") int bits,
+                            @JsonProperty("min_value") int minValue,
+                            @JsonProperty("max_value") int maxValue,
+                            @JsonProperty("negate_reverse_direction") boolean negateReverseDirection,
+                            @JsonProperty("store_two_directions") boolean storeTwoDirections,
+                            @JsonProperty("factor") double factor,
+                            @JsonProperty("default_is_infinity") boolean defaultIsInfinity,
+                            @JsonProperty("use_maximum_as_infinity") boolean useMaximumAsInfinity) {
+        // we need this constructor for Jackson
+        super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections);
+        this.factor = factor;
+        this.defaultIsInfinity = defaultIsInfinity;
+        this.useMaximumAsInfinity = useMaximumAsInfinity;
     }
 
     @Override

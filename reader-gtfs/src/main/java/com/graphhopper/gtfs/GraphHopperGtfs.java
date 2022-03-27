@@ -108,7 +108,7 @@ public class GraphHopperGtfs extends GraphHopper {
         LOGGER.info("Looking for transfers");
         final int maxTransferWalkTimeSeconds = ghConfig.getInt("gtfs.max_transfer_interpolation_walk_time_seconds", 120);
         GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
-        QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, Collections.emptyList());
+        QueryGraph queryGraph = QueryGraph.create(graphHopperStorage.getBaseGraph(), Collections.emptyList());
         Weighting transferWeighting = createWeighting(getProfile("foot"), new PMap());
         final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, ptGraph, transferWeighting, getGtfsStorage(), RealtimeFeed.empty(), true, true, false, 5.0, false, 0);
         getGtfsStorage().getStationNodes().values().stream().distinct().map(n -> {

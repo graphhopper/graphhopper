@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class AccessFilterTest {
     private final CarFlagEncoder encoder = new CarFlagEncoder();
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
-    private final GraphHopperStorage graph = new GraphBuilder(encodingManager)
+    private final BaseGraph graph = new BaseGraph.Builder(encodingManager)
             .withTurnCosts(true)
             .create();
 
@@ -46,11 +46,11 @@ public class AccessFilterTest {
         graph.freeze();
         // add loop shortcut in 'fwd' direction
         CHConfig chConfig = CHConfig.edgeBased("profile", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage())));
-        CHStorage chStore = graph.createCHStorage(chConfig);
+        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
         chBuilder.setIdentityLevels();
         chBuilder.addShortcutEdgeBased(0, 0, PrepareEncoder.getScFwdDir(), 5, 0, 2, 0, 2);
-        RoutingCHGraph chGraph = graph.createCHGraph(chStore, chConfig);
+        RoutingCHGraph chGraph = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
         RoutingCHEdgeExplorer outExplorer = chGraph.createOutEdgeExplorer();
         RoutingCHEdgeExplorer inExplorer = chGraph.createInEdgeExplorer();
 

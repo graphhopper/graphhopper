@@ -80,7 +80,7 @@ public class PtLocationSnapper {
                 points.add(stopSnap.getQueryPoint().lat, stopSnap.getQueryPoint().lon);
             }
         }
-        QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, pointSnaps); // modifies pointSnaps!
+        QueryGraph queryGraph = QueryGraph.create(graphHopperStorage.getBaseGraph(), pointSnaps); // modifies pointSnaps!
 
         List<Label.NodeId> nodes = new ArrayList<>();
         for (Supplier<Label.NodeId> supplier : allSnaps) {

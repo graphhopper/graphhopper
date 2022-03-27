@@ -48,7 +48,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class EdgeBasedNodeContractorTest {
     private final int maxCost = 10;
     private CarFlagEncoder encoder;
-    private GraphHopperStorage graph;
+    private BaseGraph graph;
     private Weighting weighting;
     private CHStorage chStore;
     private CHStorageBuilder chBuilder;
@@ -63,7 +63,7 @@ public class EdgeBasedNodeContractorTest {
     private void initialize() {
         encoder = new CarFlagEncoder(5, 5, maxCost);
         EncodingManager encodingManager = EncodingManager.create(encoder);
-        graph = new GraphBuilder(encodingManager).create();
+        graph = new BaseGraph.Builder(encodingManager).create();
         chConfigs = Arrays.asList(
                 CHConfig.edgeBased("p1", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()))),
                 CHConfig.edgeBased("p2", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage(), 60)))
@@ -72,9 +72,9 @@ public class EdgeBasedNodeContractorTest {
 
     private void freeze() {
         graph.freeze();
-        chStore = graph.createCHStorage(chConfigs.get(0));
+        chStore = CHStorage.fromGraph(graph, chConfigs.get(0));
         chBuilder = new CHStorageBuilder(chStore);
-        weighting = graph.createCHGraph(chStore, chConfigs.get(0)).getWeighting();
+        weighting = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfigs.get(0)).getWeighting();
     }
 
     @Test
@@ -1135,9 +1135,9 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(200));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 1).setDistance(100));
         freeze();
-        chStore = graph.createCHStorage(chConfigs.get(1));
+        chStore = CHStorage.fromGraph(graph, chConfigs.get(1));
         chBuilder = new CHStorageBuilder(chStore);
-        weighting = graph.createCHGraph(chStore, chConfigs.get(1)).getWeighting();
+        weighting = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfigs.get(1)).getWeighting();
         setMaxLevelOnAllNodes();
         setRestriction(0, 3, 1);
         contractNodes(4, 0, 1, 2, 3);

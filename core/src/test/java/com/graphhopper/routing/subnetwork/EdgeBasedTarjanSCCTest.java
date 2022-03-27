@@ -22,12 +22,10 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.subnetwork.EdgeBasedTarjanSCC.ConnectedComponents;
 import com.graphhopper.routing.subnetwork.TarjanSCCTest.IntWithArray;
+import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
@@ -40,13 +38,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class EdgeBasedTarjanSCCTest {
-    private final FlagEncoder encoder = new CarFlagEncoder(5, 5, 1);
+    private final CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 1);
     private final EncodingManager em = EncodingManager.create(encoder);
     private final EdgeBasedTarjanSCC.EdgeTransitionFilter fwdAccessFilter = (prev, edge) -> edge.get(encoder.getAccessEnc());
 
     @Test
     public void linearSingle() {
-        GraphHopperStorage g = new GraphBuilder(em).create();
+        BaseGraph g = new BaseGraph.Builder(em).create();
         // 0 - 1
         GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(1));
         ConnectedComponents result = EdgeBasedTarjanSCC.findComponentsRecursive(g, fwdAccessFilter, false);
@@ -60,7 +58,7 @@ class EdgeBasedTarjanSCCTest {
 
     @Test
     public void linearSimple() {
-        GraphHopperStorage g = new GraphBuilder(em).create();
+        BaseGraph g = new BaseGraph.Builder(em).create();
         // 0 - 1 - 2
         GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(1));
         GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 2).setDistance(1));
@@ -75,7 +73,7 @@ class EdgeBasedTarjanSCCTest {
 
     @Test
     public void linearOneWay() {
-        GraphHopperStorage g = new GraphBuilder(em).create();
+        BaseGraph g = new BaseGraph.Builder(em).create();
         // 0 -> 1 -> 2
         GHUtility.setSpeed(60, true, false, encoder, g.edge(0, 1).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(1));
@@ -91,7 +89,7 @@ class EdgeBasedTarjanSCCTest {
 
     @Test
     public void linearBidirectionalEdge() {
-        GraphHopperStorage g = new GraphBuilder(em).create();
+        BaseGraph g = new BaseGraph.Builder(em).create();
         // 0 -> 1 - 2 <- 3
         GHUtility.setSpeed(60, true, false, encoder, g.edge(0, 1).setDistance(1));
         GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 2).setDistance(1));
@@ -108,7 +106,7 @@ class EdgeBasedTarjanSCCTest {
 
     @Test
     public void oneWayBridges() {
-        GraphHopperStorage g = new GraphBuilder(em).create();
+        BaseGraph g = new BaseGraph.Builder(em).create();
         // 0 - 1 -> 2 - 3
         //          |   |
         //          4 - 5 -> 6 - 7
@@ -132,7 +130,7 @@ class EdgeBasedTarjanSCCTest {
 
     @Test
     public void tree() {
-        GraphHopperStorage g = new GraphBuilder(em).create();
+        BaseGraph g = new BaseGraph.Builder(em).create();
         // 0 - 1 - 2 - 4 - 5
         //     |    \- 6 - 7
         //     3        \- 8
@@ -155,7 +153,7 @@ class EdgeBasedTarjanSCCTest {
 
     @Test
     public void smallGraphWithLoops() {
-        GraphHopperStorage g = new GraphBuilder(em).create();
+        BaseGraph g = new BaseGraph.Builder(em).create();
         // 3<-0->2-1o
         //    o
         GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 0).setDistance(1));// edge-keys 0,1
@@ -178,7 +176,7 @@ class EdgeBasedTarjanSCCTest {
 
     @Test
     public void biggerGraph() {
-        GraphHopperStorage g = new GraphBuilder(em).create();
+        BaseGraph g = new BaseGraph.Builder(em).create();
         // this graph has two bigger components (nodes 0, 1, 3 and the others). Still there are some (directed) edges
         // that do not belong to these components but rather represent isolated single-edge components
         // 0 - 1 < 2 - 4 > 5
@@ -209,7 +207,7 @@ class EdgeBasedTarjanSCCTest {
 
     @Test
     public void withTurnRestriction() {
-        GraphHopperStorage g = new GraphBuilder(em).create();
+        BaseGraph g = new BaseGraph.Builder(em).create();
         // here 0-1-2-3 would be a circle and thus belong to same connected component. but if there is a
         // turn restriction for going 0->2->3 this splits the graph into multiple components
         // 0->1
@@ -251,7 +249,7 @@ class EdgeBasedTarjanSCCTest {
     }
 
     private void doImplicitVsExplicit(boolean excludeSingle) {
-        GraphHopperStorage g = new GraphBuilder(em).create();
+        BaseGraph g = new BaseGraph.Builder(em).create();
         long seed = System.nanoTime();
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(g, rnd, 500, 2, true, true,
@@ -269,7 +267,7 @@ class EdgeBasedTarjanSCCTest {
         // 0 - 1   4 - 5 - 6 - 7
         // |   |
         // 3 - 2   8 - 9
-        GraphHopperStorage g = new GraphBuilder(em).create();
+        BaseGraph g = new BaseGraph.Builder(em).create();
         GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(10));
         GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 2).setDistance(10));
         GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 3).setDistance(10));
@@ -300,7 +298,7 @@ class EdgeBasedTarjanSCCTest {
     @RepeatedTest(20)
     public void withStartEdges_comparison() {
         // we test the case where we specify all start edges (in this case the behavior should be the same for both methods)
-        GraphHopperStorage g = new GraphBuilder(em).create();
+        BaseGraph g = new BaseGraph.Builder(em).create();
         long seed = System.nanoTime();
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(g, rnd, 500, 2, true, true,
@@ -314,7 +312,7 @@ class EdgeBasedTarjanSCCTest {
         compareResults(g, seed, components, componentsForStartEdges);
     }
 
-    private void compareResults(GraphHopperStorage g, long seed, ConnectedComponents expected, ConnectedComponents given) {
+    private void compareResults(BaseGraph g, long seed, ConnectedComponents expected, ConnectedComponents given) {
         assertEquals(expected.getEdgeKeys(), given.getEdgeKeys());
         // Unfortunately the results are not always expected to be identical because the edges are traversed in reversed
         // order for the explicit stack version. To make sure the components are the same we need to check for every

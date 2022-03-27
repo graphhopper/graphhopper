@@ -70,7 +70,7 @@ public class CHTurnCostTest {
     private int maxCost;
     private CarFlagEncoder encoder;
     private EncodingManager encodingManager;
-    private GraphHopperStorage graph;
+    private BaseGraph graph;
     private TurnCostStorage turnCostStorage;
     private List<CHConfig> chConfigs;
     private CHConfig chConfig;
@@ -82,7 +82,7 @@ public class CHTurnCostTest {
         maxCost = 10;
         encoder = new CarFlagEncoder(5, 5, maxCost);
         encodingManager = EncodingManager.create(encoder);
-        graph = new GraphBuilder(encodingManager).build();
+        graph = new BaseGraph.Builder(encodingManager).build();
         turnCostStorage = graph.getTurnCostStorage();
         chConfigs = createCHConfigs();
         // the default CH profile with infinite u-turn costs, can be reset in tests that should run with finite u-turn
@@ -918,7 +918,7 @@ public class CHTurnCostTest {
         }
 
         automaticPrepareCH();
-        QueryGraph queryGraph = QueryGraph.create(chGraph.getBaseGraph(), snaps);
+        QueryGraph queryGraph = QueryGraph.create(graph, snaps);
         RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(chGraph, queryGraph).createAlgo(new PMap().putObject(ALGORITHM, algo));
         Path path = chAlgo.calcPath(5, 6);
         // there should not be a path from 5 to 6, because first we cannot go directly 5-4-6, so we need to go left
@@ -1223,12 +1223,13 @@ public class CHTurnCostTest {
 
     private void prepareCH(int... contractionOrder) {
         LOGGER.debug("Calculating CH with contraction order {}", contractionOrder);
-        graph.freeze();
+        if (!graph.isFrozen())
+            graph.freeze();
         NodeOrderingProvider nodeOrderingProvider = NodeOrderingProvider.fromArray(contractionOrder);
-        PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig)
+        PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraph(graph, chConfig)
                 .useFixedNodeOrdering(nodeOrderingProvider);
         PrepareContractionHierarchies.Result res = ch.doWork();
-        chGraph = graph.createCHGraph(res.getCHStorage(), res.getCHConfig());
+        chGraph = RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
     }
 
     private void automaticPrepareCH() {
@@ -1237,10 +1238,10 @@ public class CHTurnCostTest {
         pMap.putObject(LAST_LAZY_NODES_UPDATES, 100);
         pMap.putObject(NEIGHBOR_UPDATES, 4);
         pMap.putObject(LOG_MESSAGES, 10);
-        PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
+        PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraph(graph, chConfig);
         ch.setParams(pMap);
         PrepareContractionHierarchies.Result res = ch.doWork();
-        chGraph = graph.createCHGraph(res.getCHStorage(), res.getCHConfig());
+        chGraph = RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
     }
 
     private void automaticCompareCHWithDijkstra(int numQueries) {

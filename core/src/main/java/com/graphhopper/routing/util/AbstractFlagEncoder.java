@@ -30,6 +30,8 @@ import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.*;
 
+import static com.graphhopper.routing.util.EncodingManager.getKey;
+
 /**
  * Abstract class which handles flag decoding and encoding. Every encoder should be registered to a
  * EncodingManager to be usable. If you want the full long to be stored you need to enable this in
@@ -40,6 +42,7 @@ import java.util.*;
  * @see EncodingManager
  */
 public abstract class AbstractFlagEncoder implements FlagEncoder {
+    private final String name;
     protected final Set<String> intendedValues = new HashSet<>(5);
     // order is important
     protected final List<String> restrictions = new ArrayList<>(5);
@@ -47,14 +50,13 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected final Set<String> ferries = new HashSet<>(5);
     protected final Set<String> oneways = new HashSet<>(5);
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
-    protected final Set<String> blockByDefaultBarriers = new HashSet<>(5); // barrier which needs to be explicitly allowed, otherwise it blocks
-    protected final Set<String> passByDefaultBarriers = new HashSet<>(5);  // barrier which may be explicitly forbidden, otherwise it is allowed
+    protected final Set<String> barriers = new HashSet<>(5);
     protected final int speedBits;
     protected final double speedFactor;
     private final int maxTurnCosts;
-    protected BooleanEncodedValue accessEnc;
+    protected final BooleanEncodedValue accessEnc;
+    protected final DecimalEncodedValue avgSpeedEnc;
     protected BooleanEncodedValue roundaboutEnc;
-    protected DecimalEncodedValue avgSpeedEnc;
     // This value determines the maximal possible speed of any road regardless of the maxspeed value
     // lower values allow more compact representation of the routing graph
     protected double maxPossibleSpeed;
@@ -66,15 +68,20 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
 
     /**
      * @param speedBits    specify the number of bits used for speed
-     * @param speedFactor  specify the factor to multiple the stored value (can be used to increase
+     * @param speedFactor  specify the factor to multiply the stored value (can be used to increase
      *                     or decrease accuracy of speed value)
      * @param maxTurnCosts specify the maximum value used for turn costs, if this value is reached a
      *                     turn is forbidden and results in costs of positive infinity.
      */
-    protected AbstractFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
+    protected AbstractFlagEncoder(String name, int speedBits, double speedFactor, boolean speedTwoDirections, int maxTurnCosts) {
+        this.name = name;
         this.maxTurnCosts = maxTurnCosts <= 0 ? 0 : maxTurnCosts;
         this.speedBits = speedBits;
         this.speedFactor = speedFactor;
+
+        this.accessEnc = new SimpleBooleanEncodedValue(getKey(name, "access"), true);
+        this.avgSpeedEnc = new DecimalEncodedValueImpl(getKey(name, "average_speed"), speedBits, speedFactor, speedTwoDirections);
+
         oneways.add("yes");
         oneways.add("true");
         oneways.add("1");
@@ -87,17 +94,16 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     protected void init(DateRangeParser dateRangeParser) {
-        ferrySpeedCalc = new FerrySpeedCalculator(speedFactor / 2, maxPossibleSpeed, 5);
+        if (registered)
+            throw new IllegalStateException("You must not register a FlagEncoder (" + this + ") twice or for two EncodingManagers!");
+        registered = true;
 
+        ferrySpeedCalc = new FerrySpeedCalculator(speedFactor / 2, maxPossibleSpeed, 5);
         setConditionalTagInspector(new ConditionalOSMTagInspector(Collections.singletonList(dateRangeParser),
                 restrictions, restrictedValues, intendedValues, false));
     }
 
     protected void setConditionalTagInspector(ConditionalTagInspector inspector) {
-        if (conditionalTagInspector != null)
-            throw new IllegalStateException("You must not register a FlagEncoder (" + toString() + ") twice or for two EncodingManagers!");
-
-        registered = true;
         conditionalTagInspector = inspector;
     }
 
@@ -130,9 +136,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      * Defines bits used for edge flags used for access, speed etc.
      */
     public void createEncodedValues(List<EncodedValue> registerNewEncodedValue) {
-        // define the first 2 bits in flags for access
-        String prefix = toString();
-        registerNewEncodedValue.add(accessEnc = new SimpleBooleanEncodedValue(EncodingManager.getKey(prefix, "access"), true));
+        registerNewEncodedValue.add(accessEnc);
+        registerNewEncodedValue.add(avgSpeedEnc);
         roundaboutEnc = getBooleanEncodedValue(Roundabout.KEY);
     }
 
@@ -175,27 +180,16 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      * @return true if the given OSM node blocks access for this vehicle, false otherwise
      */
     public boolean isBarrier(ReaderNode node) {
-        boolean blockByDefault = node.hasTag("barrier", blockByDefaultBarriers);
-        if (blockByDefault || node.hasTag("barrier", passByDefaultBarriers)) {
-            boolean locked = node.hasTag("locked", "yes");
-
-            for (String res : restrictions) {
-                if (!locked && node.hasTag(res, intendedValues))
-                    return false;
-
-                if (node.hasTag(res, restrictedValues))
-                    return true;
-            }
-
-            return blockByDefault;
-        }
-
-        if ((node.hasTag("highway", "ford") || node.hasTag("ford", "yes"))
-                && (blockFords && !node.hasTag(restrictions, intendedValues) || node.hasTag(restrictions, restrictedValues))) {
+        // note that this method will be only called for certain nodes as defined by OSMReader!
+        String firstValue = node.getFirstPriorityTag(restrictions);
+        if (restrictedValues.contains(firstValue) || node.hasTag("locked", "yes"))
             return true;
-        }
-
-        return false;
+        else if (intendedValues.contains(firstValue))
+            return false;
+        else if (node.hasTag("barrier", barriers))
+            return true;
+        else
+            return blockFords && node.hasTag("ford", "yes");
     }
 
     @Override
@@ -252,21 +246,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         } else {
             avgSpeedEnc.setDecimal(reverse, edgeFlags, speed > getMaxSpeed() ? getMaxSpeed() : speed);
         }
-    }
-
-    /**
-     * @param way   needed to retrieve tags
-     * @param speed speed guessed e.g. from the road type or other tags
-     * @return The assumed speed.
-     */
-    protected double applyMaxSpeed(ReaderWay way, double speed) {
-        double maxSpeed = getMaxSpeed(way);
-        // We obey speed limits
-        if (isValidSpeed(maxSpeed)) {
-            // We assume that the average speed is 90% of the allowed maximum
-            return maxSpeed * 0.9;
-        }
-        return speed;
     }
 
     protected String getPropertiesString() {
@@ -331,7 +310,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         return restrictions;
     }
 
-    public abstract String getName();
+    public final String getName() {
+        return name;
+    }
 
     @Override
     public String toString() {

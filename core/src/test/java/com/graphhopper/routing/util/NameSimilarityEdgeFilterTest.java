@@ -17,9 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
@@ -84,7 +82,7 @@ public class NameSimilarityEdgeFilterTest {
     @Test
     public void testDistanceFiltering() {
         CarFlagEncoder encoder = new CarFlagEncoder();
-        Graph g = new GraphBuilder(EncodingManager.create(encoder)).create();
+        BaseGraph g = new BaseGraph.Builder(EncodingManager.create(encoder)).create();
         NodeAccess na = g.getNodeAccess();
 
         GHPoint pointFarAway = new GHPoint(49.458629, 11.146124);
@@ -276,7 +274,7 @@ public class NameSimilarityEdgeFilterTest {
         //    2 -- 3
         CarFlagEncoder encoder = new CarFlagEncoder(new PMap().putObject("speed_two_directions", true));
         EncodingManager em = EncodingManager.create(encoder);
-        GraphHopperStorage graph = new GraphBuilder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
         PointList pointList = new PointList(20, false);
         pointList.add(43.844377, -79.264005);
         pointList.add(43.843771, -79.263824);
