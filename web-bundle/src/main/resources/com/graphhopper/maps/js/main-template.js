@@ -759,17 +759,17 @@ function createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom) {
            }
 
            var tempDistance = translate.createDistanceString(path.distance, request.useMiles);
+           var tmpDuration = translate.createTimeString(path.time);
            var tempRouteInfo;
            if(request.isPublicTransit()) {
                var tempArrTime = moment(ghRequest.getEarliestDepartureTime())
                                        .add(path.time, 'milliseconds')
                                        .format('LT');
                if(path.transfers >= 0)
-                   tempRouteInfo = translate.tr("pt_route_info", [tempArrTime, path.transfers, tempDistance]);
+                   tempRouteInfo = translate.tr("pt_route_info", [tempArrTime, tmpDuration, path.transfers, tempDistance]);
                else
-                   tempRouteInfo = translate.tr("pt_route_info_walking", [tempArrTime, tempDistance]);
+                   tempRouteInfo = translate.tr("pt_route_info_no_transit", [tempArrTime, tmpDuration, tempDistance]);
            } else {
-               var tmpDuration = translate.createTimeString(path.time);
                tempRouteInfo = translate.tr("route_info", [tempDistance, tmpDuration]);
            }
 

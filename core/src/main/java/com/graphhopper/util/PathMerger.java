@@ -143,7 +143,7 @@ public class PathMerger {
         }
 
         if (!fullPoints.isEmpty()) {
-            responsePath.addDebugInfo("simplify (" + origPoints + "->" + fullPoints.size() + ")");
+            responsePath.addDebugInfo("simplify", origPoints + "->" + fullPoints.size());
             if (fullPoints.is3D)
                 calcAscendDescend(responsePath, fullPoints);
         }

@@ -24,6 +24,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.PointList;
 
 import java.util.ArrayList;
@@ -50,7 +51,7 @@ public class Path {
     private int endNode = -1;
     private List<String> description;
     private boolean found;
-    private String debugInfo = "";
+    private PMap debugInfo = new PMap();
 
     public Path(Graph graph) {
         this.graph = graph;
@@ -177,11 +178,7 @@ public class Path {
         return graph.getEdgeIteratorState(edgeIds.get(edgeIds.size() - 1), endNode);
     }
 
-    public void setDebugInfo(String debugInfo) {
-        this.debugInfo = debugInfo;
-    }
-
-    public String getDebugInfo() {
+    public PMap getDebugInfo() {
         return debugInfo;
     }
 

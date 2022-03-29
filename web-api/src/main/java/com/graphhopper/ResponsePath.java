@@ -18,6 +18,7 @@
 package com.graphhopper;
 
 import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.details.PathDetail;
 import org.locationtech.jts.geom.Envelope;
@@ -39,7 +40,7 @@ public class ResponsePath {
     private double descend;
     private double routeWeight;
     private long time;
-    private String debugInfo = "";
+    private PMap debugInfo = new PMap();
     private InstructionList instructions;
     private PointList waypointList = PointList.EMPTY;
     private PointList pointList = PointList.EMPTY;
@@ -65,18 +66,15 @@ public class ResponsePath {
         return this;
     }
 
-    public ResponsePath addDebugInfo(String debugInfo) {
+    public ResponsePath addDebugInfo(String key, Object object) {
         if (debugInfo == null)
             throw new IllegalStateException("Debug information has to be none null");
 
-        if (!this.debugInfo.isEmpty())
-            this.debugInfo += ";";
-
-        this.debugInfo += debugInfo;
+        this.debugInfo.putObject(key, object);
         return this;
     }
 
-    public String getDebugInfo() {
+    public PMap getDebugInfo() {
         return debugInfo;
     }
 

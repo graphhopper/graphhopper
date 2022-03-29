@@ -1,0 +1,93 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: graphhopper-deployment
+  labels:
+    app: graphhopper
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: graphhopper
+  template:
+    metadata:
+      labels:
+        app: graphhopper
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: "kubernetes.io/arch"
+                operator: In
+                values: ["amd64"]
+      containers:
+      - name: graphhopper
+        image: ghcr.io/bikehopper/graphhopper@sha256:8ebf0ccc910c4830b32965a978358b2b8ef5491de5736932862793715a3fdd3e
+        ports:
+          - containerPort: 8989
+          - name: health-port
+            containerPort: 8989
+        resources:
+          requests:
+            memory: "6Gi"
+            cpu: "3000m"
+          limits:
+            memory: "12Gi"
+            cpu: "8000m"
+        envFrom:
+          - secretRef:
+              name: minio-graphhopper-staging
+        env:
+        - name: JVM_ARGS
+          value: -Xms5g -Xmx10g
+        - name: GEOFABRIK_PATH
+          value: /north-america/us/california/norcal-latest.osm.pbf
+        - name: OSM_PBF_FILE_NAME
+          value: current-norcal-latest.osm.pbf
+        - name: API_511_PATH
+          value: /transit/datafeeds?api_key=02a6fde6-e10a-49ce-a96e-5ad9404f137f&operator_id=RG
+        - name: API_511_FILE_NAME
+          value: current-GTFSTransitData_RG.zip
+        - name: BUCKET_NAME
+          value: bikehopper-graphhopper
+        - name: MINIO_HOST
+          value: minio
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: health-port
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 20
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: health-port
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: graphhopper-svc
+  labels:
+    run: graphhopper
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8989
+    protocol: TCP
+    name: http
+  selector:
+    app: graphhopper

@@ -19,8 +19,11 @@
 package com.graphhopper.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.model.Agency;
+import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.StopTime;
+
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -71,22 +74,22 @@ class TripFromLabel {
         this.walkSpeedKmH = walkSpeedKmH;
     }
 
-    ResponsePath createResponsePath(Translation tr, PointList waypoints, Graph queryGraph, Weighting accessWeighting, Weighting egressWeighting, List<Label.Transition> solution, List<String> requestedPathDetails) {
+    ResponsePath createResponsePath(Translation tr, PointList waypoints, Graph queryGraph, Weighting connectingWeighting, List<Label.Transition> solution, List<String> requestedPathDetails, String connectingVehicle, boolean includeElevation) {
         final List<List<Label.Transition>> partitions = parsePathToPartitions(solution);
 
         final List<Trip.Leg> legs = new ArrayList<>();
         for (int i = 0; i < partitions.size(); i++) {
-            legs.addAll(parsePartitionToLegs(partitions.get(i), queryGraph, i == partitions.size() - 1 ? egressWeighting : accessWeighting, tr, requestedPathDetails));
+            legs.addAll(parsePartitionToLegs(partitions.get(i), queryGraph, connectingWeighting, tr, requestedPathDetails, connectingVehicle, includeElevation));
         }
 
-        if (legs.size() > 1 && legs.get(0) instanceof Trip.WalkLeg) {
-            final Trip.WalkLeg accessLeg = (Trip.WalkLeg) legs.get(0);
-            legs.set(0, new Trip.WalkLeg(accessLeg.departureLocation, new Date(legs.get(1).getDepartureTime().getTime() - (accessLeg.getArrivalTime().getTime() - accessLeg.getDepartureTime().getTime())),
+        if (legs.size() > 1 && legs.get(0) instanceof Trip.ConnectingLeg) {
+            final Trip.ConnectingLeg accessLeg = (Trip.ConnectingLeg) legs.get(0);
+            legs.set(0, new Trip.ConnectingLeg(accessLeg.type, accessLeg.departureLocation, new Date(legs.get(1).getDepartureTime().getTime() - (accessLeg.getArrivalTime().getTime() - accessLeg.getDepartureTime().getTime())),
                     accessLeg.geometry, accessLeg.distance, accessLeg.instructions, accessLeg.details, legs.get(1).getDepartureTime()));
         }
-        if (legs.size() > 1 && legs.get(legs.size() - 1) instanceof Trip.WalkLeg) {
-            final Trip.WalkLeg egressLeg = (Trip.WalkLeg) legs.get(legs.size() - 1);
-            legs.set(legs.size() - 1, new Trip.WalkLeg(egressLeg.departureLocation, legs.get(legs.size() - 2).getArrivalTime(),
+        if (legs.size() > 1 && legs.get(legs.size() - 1) instanceof Trip.ConnectingLeg) {
+            final Trip.ConnectingLeg egressLeg = (Trip.ConnectingLeg) legs.get(legs.size() - 1);
+            legs.set(legs.size() - 1, new Trip.ConnectingLeg(egressLeg.type, egressLeg.departureLocation, legs.get(legs.size() - 2).getArrivalTime(),
                     egressLeg.geometry, egressLeg.distance, egressLeg.instructions,
                     egressLeg.details, new Date(legs.get(legs.size() - 2).getArrivalTime().getTime() + (egressLeg.getArrivalTime().getTime() - egressLeg.getDepartureTime().getTime()))));
         }
@@ -100,15 +103,15 @@ class TripFromLabel {
         Map<String, List<PathDetail>> pathDetails = new HashMap<>();
         for (int i = 0; i < path.getLegs().size(); ++i) {
             Trip.Leg leg = path.getLegs().get(i);
-            if (leg instanceof Trip.WalkLeg) {
-                final Trip.WalkLeg walkLeg = ((Trip.WalkLeg) leg);
-                List<Instruction> theseInstructions = walkLeg.instructions.subList(0, i < path.getLegs().size() - 1 ? walkLeg.instructions.size() - 1 : walkLeg.instructions.size());
+            if (leg instanceof Trip.ConnectingLeg) {
+                final Trip.ConnectingLeg connectingLeg = ((Trip.ConnectingLeg) leg);
+                List<Instruction> theseInstructions = connectingLeg.instructions.subList(0, i < path.getLegs().size() - 1 ? connectingLeg.instructions.size() - 1 : connectingLeg.instructions.size());
                 int previousPointsCount = pointsList.size();
                 for (Instruction instruction : theseInstructions) {
                     pointsList.add(instruction.getPoints());
                 }
                 instructions.addAll(theseInstructions);
-                Map<String, List<PathDetail>> shiftedLegPathDetails = shift(((Trip.WalkLeg) leg).details, previousPointsCount);
+                Map<String, List<PathDetail>> shiftedLegPathDetails = shift(((Trip.ConnectingLeg) leg).details, previousPointsCount);
                 shiftedLegPathDetails.forEach((k, v) -> pathDetails.merge(k, shiftedLegPathDetails.get(k), (a,b) -> Lists.newArrayList(Iterables.concat(a, b))));
             } else if (leg instanceof Trip.PtLeg) {
                 final Trip.PtLeg ptLeg = ((Trip.PtLeg) leg);
@@ -326,7 +329,7 @@ class TripFromLabel {
     // One could argue that one should never write a parser
     // by hand, because it is always ugly, but use a parser library.
     // The code would then read like a specification of what paths through the graph mean.
-    private List<Trip.Leg> parsePartitionToLegs(List<Label.Transition> path, Graph graph, Weighting weighting, Translation tr, List<String> requestedPathDetails) {
+    private List<Trip.Leg> parsePartitionToLegs(List<Label.Transition> path, Graph graph, Weighting weighting, Translation tr, List<String> requestedPathDetails, String connectingVehicle, boolean includeElevation) {
         if (path.size() <= 1) {
             return Collections.emptyList();
         }
@@ -353,12 +356,20 @@ class TripFromLabel {
                             .forEach(stopsFromBoardHopDwellEdges::next);
                     stopsFromBoardHopDwellEdges.finish();
                     List<Trip.Stop> stops = stopsFromBoardHopDwellEdges.stops;
+                    GTFSFeed feed = gtfsStorage.getGtfsFeeds().get(feedId);
+                    com.conveyal.gtfs.model.Trip trip = feed.trips.get(tripDescriptor.getTripId());
+                    Route route = feed.routes.get(trip.route_id);
+                    Agency agency = feed.agency.get(route.agency_id);
 
                     result.add(new Trip.PtLeg(
                             feedId, partition.get(0).edge.getTransfers() == 0,
                             tripDescriptor.getTripId(),
                             tripDescriptor.getRouteId(),
-                            Optional.ofNullable(gtfsStorage.getGtfsFeeds().get(feedId).trips.get(tripDescriptor.getTripId())).map(t -> t.trip_headsign).orElse("extra"),
+                            Optional.ofNullable(trip).map(t -> t.trip_headsign).orElse("extra"),
+                            route.route_color,
+                            route.route_short_name,
+                            trip.bikes_allowed,
+                            agency.agency_name,
                             stops,
                             partition.stream().mapToDouble(t -> t.edge.getDistance()).sum(),
                             path.get(i - 1).label.currentTime - boardTime,
@@ -402,10 +413,11 @@ class TripFromLabel {
 
             final Instant departureTime = Instant.ofEpochMilli(path.get(0).label.currentTime);
             final Instant arrivalTime = Instant.ofEpochMilli(path.get(path.size() - 1).label.currentTime);
-            return Collections.singletonList(new Trip.WalkLeg(
-                    "Walk",
+            return Collections.singletonList(new Trip.ConnectingLeg(
+                    connectingVehicle,
+                    connectingVehicle,
                     Date.from(departureTime),
-                    lineStringFromInstructions(instructions),
+                    lineStringFromInstructions(instructions, includeElevation),
                     edges(path).mapToDouble(edgeLabel -> edgeLabel.getDistance()).sum(),
                     instructions,
                     pathDetails,
@@ -421,13 +433,13 @@ class TripFromLabel {
     private Stream<GraphExplorer.MultiModalEdge> edges(List<Label.Transition> path) {
         return path.stream().filter(t -> t.edge != null).map(t -> t.edge);
     }
-
-    private Geometry lineStringFromInstructions(InstructionList instructions) {
+  
+    private Geometry lineStringFromInstructions(InstructionList instructions, boolean includeElevation) {
         final PointList pointsList = new PointList();
         for (Instruction instruction : instructions) {
             pointsList.add(instruction.getPoints());
         }
-        return pointsList.toLineString(false);
+        return pointsList.toLineString(includeElevation);
     }
 
 }

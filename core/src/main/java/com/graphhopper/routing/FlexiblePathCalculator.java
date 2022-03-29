@@ -21,6 +21,7 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.exceptions.MaximumNodesExceededException;
@@ -35,7 +36,7 @@ public class FlexiblePathCalculator implements PathCalculator {
     private final RoutingAlgorithmFactory algoFactory;
     private Weighting weighting;
     private final AlgorithmOptions algoOpts;
-    private String debug;
+    private PMap debug;
     private int visitedNodes;
 
     public FlexiblePathCalculator(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, Weighting weighting, AlgorithmOptions algoOpts) {
@@ -54,7 +55,7 @@ public class FlexiblePathCalculator implements PathCalculator {
     private RoutingAlgorithm createAlgo() {
         StopWatch sw = new StopWatch().start();
         RoutingAlgorithm algo = algoFactory.createAlgo(queryGraph, weighting, algoOpts);
-        debug = ", algoInit:" + (sw.stop().getNanos() / 1000) + " μs";
+        debug.putObject("algoInit (μs)", sw.stop().getNanos() / 1000);
         return algo;
     }
 
@@ -87,12 +88,12 @@ public class FlexiblePathCalculator implements PathCalculator {
         if (algo.getVisitedNodes() >= algoOpts.getMaxVisitedNodes())
             throw new MaximumNodesExceededException("No path found due to maximum nodes exceeded " + algoOpts.getMaxVisitedNodes(), algoOpts.getMaxVisitedNodes());
         visitedNodes = algo.getVisitedNodes();
-        debug += ", " + algo.getName() + "-routing:" + sw.stop().getMillis() + " ms";
+        debug.putObject(algo.getName() + "-routing (ms)", sw.stop().getMillis());
         return paths;
     }
 
     @Override
-    public String getDebugString() {
+    public PMap getDebug() {
         return debug;
     }
 

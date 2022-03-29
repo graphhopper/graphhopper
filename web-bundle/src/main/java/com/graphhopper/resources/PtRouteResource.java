@@ -64,8 +64,11 @@ public class PtRouteResource {
                             @QueryParam("pt.limit_solutions") Integer limitSolutions,
                             @QueryParam("pt.limit_trip_time") DurationParam limitTripTime,
                             @QueryParam("pt.limit_street_time") DurationParam limitStreetTime,
-                            @QueryParam("pt.access_profile") String accessProfile,
-                            @QueryParam("pt.egress_profile") String egressProfile) {
+                            @QueryParam("pt.connecting_profile") String connectingProfile,
+                            @QueryParam("pt.beta_transfers") Double betaTransfers,
+                            @QueryParam("pt.beta_street_time") Double betaStreetTime,
+                            @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
+                            @QueryParam("details") List<String> pathDetails) {
         StopWatch stopWatch = new StopWatch().start();
         List<GHLocation> points = requestPoints.stream().map(AbstractParam::get).collect(toList());
         Instant departureTime = departureTimeParam.get().toInstant();
@@ -79,11 +82,14 @@ public class PtRouteResource {
         Optional.ofNullable(limitSolutions).ifPresent(request::setLimitSolutions);
         Optional.ofNullable(limitTripTime.get()).ifPresent(request::setLimitTripTime);
         Optional.ofNullable(limitStreetTime.get()).ifPresent(request::setLimitStreetTime);
-        Optional.ofNullable(accessProfile).ifPresent(request::setAccessProfile);
-        Optional.ofNullable(egressProfile).ifPresent(request::setEgressProfile);
+        Optional.ofNullable(connectingProfile).ifPresent(request::setConnectingProfile);
+        Optional.ofNullable(betaTransfers).ifPresent(request::setBetaTransfers);
+        Optional.ofNullable(betaStreetTime).ifPresent(request::setBetaStreetTime);
+        Optional.ofNullable(enableElevation).ifPresent(request::setEnableElevation);
+        Optional.ofNullable(pathDetails).ifPresent(request::setPathDetails);
 
         GHResponse route = ptRouter.route(request);
-        return ResponsePathSerializer.jsonObject(route, true, true, false, false, stopWatch.stop().getMillis());
+        return ResponsePathSerializer.jsonObject(route, true, true, enableElevation, false, stopWatch.stop().getMillis());
     }
 
 }

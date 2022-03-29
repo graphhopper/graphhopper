@@ -20,13 +20,15 @@ package com.graphhopper.routing;
 
 import java.util.List;
 
+import com.graphhopper.util.PMap;
+
 /**
  * Implementations of this class allow repeatedly calculating paths for different start/target nodes and edge restrictions
  */
 public interface PathCalculator {
     List<Path> calcPaths(int from, int to, EdgeRestrictions edgeRestrictions);
 
-    String getDebugString();
+    PMap getDebug();
 
     int getVisitedNodes();
 

@@ -92,7 +92,7 @@ public class DefaultBidirPathExtractor implements BidirPathExtractor {
     }
 
     protected void setExtractionTime(long nanos) {
-        path.setDebugInfo("path extraction: " + nanos / 1000 + " μs");
+        path.getDebugInfo().putObject("path extraction time (μs)", nanos/ 1000);
     }
 
     protected int getIncEdge(SPTEntry entry) {

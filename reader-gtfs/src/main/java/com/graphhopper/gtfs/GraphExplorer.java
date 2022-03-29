@@ -40,32 +40,34 @@ public final class GraphExplorer {
     private final GtfsStorage gtfsStorage;
     private final RealtimeFeed realtimeFeed;
     private final boolean reverse;
-    private final Weighting accessEgressWeighting;
+    private final Weighting connectingWeighting;
     private final BooleanEncodedValue accessEnc;
-    private final boolean walkOnly;
+    private final boolean connectOnly;
     private final boolean ptOnly;
-    private final double walkSpeedKmH;
+    private final boolean isBike;
     private final boolean ignoreValidities;
+    private final boolean ignoreBikesAllowed;
     private final int blockedRouteTypes;
     private final PtGraph ptGraph;
     private final Graph graph;
 
-    public GraphExplorer(Graph graph, PtGraph ptGraph, Weighting accessEgressWeighting, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, boolean walkOnly, boolean ptOnly, double walkSpeedKmh, boolean ignoreValidities, int blockedRouteTypes) {
+    public GraphExplorer(Graph graph, PtGraph ptGraph, Weighting connectingWeighting, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, boolean connectOnly, boolean ptOnly, boolean isBike, boolean ignoreValidities, int blockedRouteTypes) {
         this.graph = graph;
         this.ptGraph = ptGraph;
-        this.accessEgressWeighting = accessEgressWeighting;
-        this.accessEnc = accessEgressWeighting.getFlagEncoder().getAccessEnc();
+        this.connectingWeighting = connectingWeighting;
+        this.accessEnc = connectingWeighting.getFlagEncoder().getAccessEnc();
         this.ignoreValidities = ignoreValidities;
+        this.ignoreBikesAllowed = true;
         this.blockedRouteTypes = blockedRouteTypes;
-        AccessFilter accessEgressIn = AccessFilter.inEdges(accessEgressWeighting.getFlagEncoder().getAccessEnc());
-        AccessFilter accessEgressOut = AccessFilter.outEdges(accessEgressWeighting.getFlagEncoder().getAccessEnc());
+        AccessFilter accessEgressIn = AccessFilter.inEdges(connectingWeighting.getFlagEncoder().getAccessEnc());
+        AccessFilter accessEgressOut = AccessFilter.outEdges(connectingWeighting.getFlagEncoder().getAccessEnc());
         this.edgeExplorer = graph.createEdgeExplorer(reverse ? accessEgressIn : accessEgressOut);
         this.gtfsStorage = gtfsStorage;
         this.realtimeFeed = realtimeFeed;
         this.reverse = reverse;
-        this.walkOnly = walkOnly;
+        this.connectOnly = connectOnly;
         this.ptOnly = ptOnly;
-        this.walkSpeedKmH = walkSpeedKmh;
+        this.isBike = isBike;
     }
 
     Iterable<MultiModalEdge> exploreEdgesAround(Label label) {
@@ -108,17 +110,20 @@ public final class GraphExplorer {
                     // off the priority queue. Additionally, when only walking,
                     // don't bother finding the enterEdge, because we are not going to enter.
                     if (edgeType == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK) {
-                        if (walkOnly) {
+                        if (connectOnly) {
                             return false;
                         } else {
                             action.accept(new MultiModalEdge(findEnterEdge(edge))); // fully consumes edgeIterator
                             return true;
                         }
                     }
-                    if (walkOnly && edgeType != (reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT)) {
+                    if (connectOnly && edgeType != (reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT)) {
                         continue;
                     }
                     if (!(ignoreValidities || isValidOn(edge, currentTime))) {
+                        continue;
+                    }
+                    if (isBike && !ignoreBikesAllowed && !edge.getAttrs().validity.bikesAllowed) {
                         continue;
                     }
                     if (edgeType == GtfsStorage.EdgeType.WAIT_ARRIVAL && !reverse) {
@@ -164,7 +169,7 @@ public final class GraphExplorer {
             public boolean tryAdvance(Consumer<? super MultiModalEdge> action) {
                 while (e.next()) {
                     if (reverse ? e.getReverse(accessEnc) : e.get(accessEnc)) {
-                        action.accept(new MultiModalEdge(e.getEdge(), e.getBaseNode(), e.getAdjNode(), (long) (accessEgressWeighting.calcEdgeMillis(e.detach(false), reverse) * (5.0 / walkSpeedKmH)), e.getDistance()));
+                        action.accept(new MultiModalEdge(e.getEdge(), e.getBaseNode(), e.getAdjNode(), (long) (connectingWeighting.calcEdgeMillis(e.detach(false), reverse)), e.getDistance()));
                         return true;
                     }
                 }

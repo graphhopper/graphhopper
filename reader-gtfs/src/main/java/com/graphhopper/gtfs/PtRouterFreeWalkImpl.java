@@ -125,6 +125,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         private final GHLocation exit;
         private final Translation translation;
         private final List<String> requestedPathDetails;
+        private boolean includeElevation;
 
         private final GHResponse response = new GHResponse();
         private final long limitTripTime;
@@ -133,12 +134,9 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         private int visitedNodes;
         private MultiCriteriaLabelSetting router;
 
-        private final Profile accessProfile;
-        private final EdgeFilter accessSnapFilter;
-        private final Weighting accessWeighting;
-        private final Profile egressProfile;
-        private final EdgeFilter egressSnapFilter;
-        private final Weighting egressWeighting;
+        private final Profile connectingProfile;
+        private final EdgeFilter connectingSnapFilter;
+        private final Weighting connectingWeighting;
 
         RequestHandler(Request request) {
             maxVisitedNodesForRequest = request.getMaxVisitedNodes();
@@ -159,19 +157,18 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
             limitTripTime = request.getLimitTripTime() != null ? request.getLimitTripTime().toMillis() : Long.MAX_VALUE;
             limitStreetTime = request.getLimitStreetTime() != null ? request.getLimitStreetTime().toMillis() : Long.MAX_VALUE;
             requestedPathDetails = request.getPathDetails();
-            accessProfile = config.getProfiles().stream().filter(p -> p.getName().equals(request.getAccessProfile())).findFirst().get();
-            accessWeighting = weightingFactory.createWeighting(accessProfile, new PMap(), false);
-            accessSnapFilter = new DefaultSnapFilter(new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder(accessProfile.getVehicle())), graphHopperStorage.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(accessProfile.getVehicle())));
-            egressProfile = config.getProfiles().stream().filter(p -> p.getName().equals(request.getEgressProfile())).findFirst().get();
-            egressWeighting = weightingFactory.createWeighting(egressProfile, new PMap(), false);
-            egressSnapFilter = new DefaultSnapFilter(new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder(egressProfile.getVehicle())), graphHopperStorage.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(egressProfile.getVehicle())));
+            String connectingProfileName = request.getConnectingProfile() != null ? request.getConnectingProfile() : config.getString("pt.connecting_profile", "foot");
+            connectingProfile = config.getProfileByName(connectingProfileName).get();
+            connectingWeighting = weightingFactory.createWeighting(connectingProfile, new PMap(), false);
+            connectingSnapFilter = new DefaultSnapFilter(new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder(connectingProfile.getVehicle())), graphHopperStorage.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(connectingProfile.getVehicle())));
+            includeElevation = request.getEnableElevation();
         }
 
         GHResponse route() {
             StopWatch stopWatch = new StopWatch().start();
-            PtLocationSnapper.Result result = new PtLocationSnapper(graphHopperStorage, locationIndex, gtfsStorage).snapAll(Arrays.asList(enter, exit), Arrays.asList(accessSnapFilter, egressSnapFilter));
+            PtLocationSnapper.Result result = new PtLocationSnapper(graphHopperStorage, locationIndex, gtfsStorage).snapAll(Arrays.asList(enter, exit), Arrays.asList(connectingSnapFilter, connectingSnapFilter));
             queryGraph = result.queryGraph;
-            response.addDebugInfo("idLookup:" + stopWatch.stop().getSeconds() + "s");
+            response.addDebugInfo("idLookup time", stopWatch.stop().getSeconds());
 
             Label.NodeId startNode;
             Label.NodeId destNode;
@@ -190,7 +187,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         private void parseSolutionsAndAddToResponse(List<List<Label.Transition>> solutions, PointList waypoints) {
             TripFromLabel tripFromLabel = new TripFromLabel(queryGraph, gtfsStorage, realtimeFeed, pathDetailsBuilderFactory, walkSpeedKmH);
             for (List<Label.Transition> solution : solutions) {
-                final ResponsePath responsePath = tripFromLabel.createResponsePath(translation, waypoints, queryGraph, accessWeighting, egressWeighting, solution, requestedPathDetails);
+                final ResponsePath responsePath = tripFromLabel.createResponsePath(translation, waypoints, queryGraph, connectingWeighting, solution, requestedPathDetails, connectingProfile.getVehicle(), includeElevation);
                 responsePath.setImpossible(solution.stream().anyMatch(t -> t.label.impossible));
                 responsePath.setTime((solution.get(solution.size() - 1).label.currentTime - solution.get(0).label.currentTime));
                 responsePath.setRouteWeight(router.weight(solution.get(solution.size() - 1).label));
@@ -204,7 +201,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         private List<List<Label.Transition>> findPaths(Label.NodeId startNode, Label.NodeId destNode) {
             StopWatch stopWatch = new StopWatch().start();
 
-            GraphExplorer graphExplorer = new GraphExplorer(queryGraph, ptGraph, accessEgressWeighting, gtfsStorage, realtimeFeed, arriveBy, false, false, walkSpeedKmH, false, blockedRouteTypes);
+            GraphExplorer graphExplorer = new GraphExplorer(queryGraph, ptGraph, accessEgressWeighting, gtfsStorage, realtimeFeed, arriveBy, false, false, connectingProfile.isBike(), false, blockedRouteTypes);
             List<Label> discoveredSolutions = new ArrayList<>();
             router = new MultiCriteriaLabelSetting(graphExplorer, arriveBy, !ignoreTransfers, profileQuery, maxProfileDuration, discoveredSolutions);
             router.setBetaTransfers(betaTransfers);
@@ -231,7 +228,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
                 paths.add(path);
             }
 
-            response.addDebugInfo("routing:" + stopWatch.stop().getSeconds() + "s");
+            response.addDebugInfo("routing time", stopWatch.stop().getSeconds());
             if (discoveredSolutions.isEmpty() && visitedNodes >= maxVisitedNodesForRequest) {
                 response.addError(new MaximumNodesExceededException("No path found - maximum number of nodes exceeded: " + maxVisitedNodesForRequest, maxVisitedNodesForRequest));
             }

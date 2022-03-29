@@ -28,7 +28,7 @@ import java.util.*;
 public class Request {
     private List<GHLocation> points;
     private Instant earliestDepartureTime;
-    private int maxVisitedNodes = 1_000_000;
+    private int maxVisitedNodes = 10_000_000;
     private boolean profileQuery;
     private Boolean ignoreTransfers;
     private double betaTransfers = 0.0;
@@ -43,8 +43,8 @@ public class Request {
     private Duration limitStreetTime;
     private Duration maxProfileDuration = Duration.ofDays(1);
     private List<String> pathDetails = new ArrayList<>();
-    private String accessProfile = "foot";
-    private String egressProfile = "foot";
+    private String connectingProfile;
+    private boolean enableElevation = false;
 
     public Request(List<GHLocation> points, Instant departureTime) {
         this.points = points;
@@ -187,19 +187,20 @@ public class Request {
         this.pathDetails = pathDetails;
     }
 
-    public String getAccessProfile() {
-        return accessProfile;
+    public String getConnectingProfile() {
+        return connectingProfile;
     }
 
-    public void setAccessProfile(String accessProfile) {
-        this.accessProfile = accessProfile;
+    public void setConnectingProfile(String accessProfile) {
+        this.connectingProfile = accessProfile;
     }
 
-    public String getEgressProfile() {
-        return egressProfile;
+    public boolean getEnableElevation() {
+        return enableElevation;
     }
 
-    public void setEgressProfile(String egressProfile) {
-        this.egressProfile = egressProfile;
+    public void setEnableElevation(boolean enableElevation) {
+        this.enableElevation = enableElevation;
     }
+
 }

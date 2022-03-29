@@ -86,7 +86,9 @@ public class GraphHopperGtfs extends GraphHopper {
                 getGtfsStorage().getGtfsFeeds().forEach((id, gtfsFeed) -> {
                     Transfers transfers = new Transfers(gtfsFeed);
                     allTransfers.put(id, transfers);
-                    GtfsReader gtfsReader = new GtfsReader(id, getGraphHopperStorage(), ptGraph, ptGraph, getGtfsStorage(), getLocationIndex(), transfers, indexBuilder);
+                    String connectingProfileName = ghConfig.getString("pt.connecting_profile", "foot");
+                    String connectingVehicle = ghConfig.getProfileByName(connectingProfileName).get().getVehicle();
+                    GtfsReader gtfsReader = new GtfsReader(id, getGraphHopperStorage(), ptGraph, ptGraph, getGtfsStorage(), connectingVehicle, getLocationIndex(), transfers, indexBuilder);
                     gtfsReader.connectStopsToStreetNetwork();
                     LOGGER.info("Building transit graph for feed {}", gtfsFeed.feedId);
                     gtfsReader.buildPtNetwork();
@@ -109,8 +111,9 @@ public class GraphHopperGtfs extends GraphHopper {
         final int maxTransferWalkTimeSeconds = ghConfig.getInt("gtfs.max_transfer_interpolation_walk_time_seconds", 120);
         GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
         QueryGraph queryGraph = QueryGraph.create(graphHopperStorage.getBaseGraph(), Collections.emptyList());
-        Weighting transferWeighting = createWeighting(getProfile("foot"), new PMap());
-        final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, ptGraph, transferWeighting, getGtfsStorage(), RealtimeFeed.empty(), true, true, false, 5.0, false, 0);
+        String transferProfileName = ghConfig.getString("pt.transfer_profile", "foot");
+        Weighting transferWeighting = createWeighting(getProfile(transferProfileName), new PMap());
+        final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, ptGraph, transferWeighting, getGtfsStorage(), RealtimeFeed.empty(), true, true, false, false, false, 0);
         getGtfsStorage().getStationNodes().values().stream().distinct().map(n -> {
             int streetNode = Optional.ofNullable(gtfsStorage.getPtToStreet().get(n)).orElse(-1);
             return new Label.NodeId(streetNode, n);

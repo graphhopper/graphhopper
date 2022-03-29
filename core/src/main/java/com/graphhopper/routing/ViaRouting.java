@@ -28,10 +28,12 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
@@ -100,7 +102,9 @@ public class ViaRouting {
 
         final int legs = snaps.size() - 1;
         Result result = new Result(legs);
+        ArrayList<Map<String, Object>> legDebugs = new ArrayList<>();
         for (int leg = 0; leg < legs; ++leg) {
+            PMap legDebug = new PMap();
             Snap fromSnap = snaps.get(leg);
             Snap toSnap = snaps.get(leg + 1);
 
@@ -134,23 +138,29 @@ public class ViaRouting {
 
             // calculate paths
             List<Path> paths = pathCalculator.calcPaths(fromSnap.getClosestNode(), toSnap.getClosestNode(), edgeRestrictions);
-            result.debug += pathCalculator.getDebugString();
+            legDebug.putObject("pathCalculatorDebug", pathCalculator.getDebug().toMap());
 
             // for alternative routing we get multiple paths and add all of them (which is ok, because we do not allow
             // via-points for alternatives at the moment). otherwise we would have to return a list<list<path>> and find
             // a good method to decide how to combine the different legs
+
+            ArrayList<Map<String, Object>> pathDebugs = new ArrayList<>();
+
             for (int i = 0; i < paths.size(); i++) {
                 Path path = paths.get(i);
                 if (path.getTime() < 0)
                     throw new RuntimeException("Time was negative " + path.getTime() + " for index " + i);
 
                 result.paths.add(path);
-                result.debug += ", " + path.getDebugInfo();
+                pathDebugs.add(path.getDebugInfo().toMap());
             }
+            legDebug.putObject("pathDebugs", pathDebugs);
 
             result.visitedNodes += pathCalculator.getVisitedNodes();
-            result.debug += "visited nodes sum: " + result.visitedNodes;
+            legDebug.putObject("visited nodes sum", result.visitedNodes);
+            legDebugs.add(legDebug.toMap());
         }
+        result.debug.putObject("legDebugs", legDebugs);
 
         return result;
     }
@@ -158,7 +168,7 @@ public class ViaRouting {
     public static class Result {
         public List<Path> paths;
         public long visitedNodes;
-        public String debug = "";
+        public PMap debug = new PMap();
 
         Result(int legs) {
             paths = new ArrayList<>(legs);

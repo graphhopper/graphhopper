@@ -19,6 +19,7 @@
 package com.graphhopper.routing.util.countryrules;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.DrivingSide;
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.Toll;
@@ -72,7 +73,7 @@ public class AustriaCountryRule implements CountryRule {
                 return RoadAccess.YES;
         }
     }
-    
+
     @Override
     public Toll getToll(ReaderWay readerWay, TransportationMode transportationMode, Toll currentToll) {
         if (!transportationMode.isMotorVehicle() || currentToll != Toll.MISSING) {
@@ -83,7 +84,16 @@ public class AustriaCountryRule implements CountryRule {
         if (roadClass == RoadClass.MOTORWAY || roadClass == RoadClass.TRUNK) {
             return Toll.ALL;
         }
-        
+
         return currentToll;
+    }
+
+    @Override
+    public DrivingSide getDrivingSide(ReaderWay readerWay, DrivingSide currentDrivingSide) {
+        if (currentDrivingSide != DrivingSide.MISSING) {
+            return currentDrivingSide;
+        }
+
+        return DrivingSide.RIGHT;
     }
 }
