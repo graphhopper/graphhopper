@@ -379,7 +379,8 @@ class TripFromLabel {
                         feedId = edge.getPlatformDescriptor().feed_id;
                         int[] skippedEdgesForTransfer = gtfsStorage.getSkippedEdgesForTransfer().get(edge.getId());
                         if (skippedEdgesForTransfer != null) {
-                            List<Trip.Leg> legs = parsePartitionToLegs(transferPath(skippedEdgesForTransfer, weighting, path.get(i - 1).label.currentTime), graph, weighting, tr, requestedPathDetails);
+                            boolean isBike = connectingVehicle.contains("bike");
+                            List<Trip.Leg> legs = parsePartitionToLegs(transferPath(skippedEdgesForTransfer, weighting, path.get(i - 1).label.currentTime, isBike), graph, weighting, tr, requestedPathDetails, connectingVehicle, includeElevation);
                             result.add(legs.get(0));
                         }
                     }
@@ -425,8 +426,8 @@ class TripFromLabel {
         }
     }
 
-    private List<Label.Transition> transferPath(int[] skippedEdgesForTransfer, Weighting accessEgressWeighting, long currentTime) {
-        GraphExplorer graphExplorer = new GraphExplorer(graph, gtfsStorage.getPtGraph(), accessEgressWeighting, gtfsStorage, realtimeFeed, false, true, false, walkSpeedKmH, false, 0);
+    private List<Label.Transition> transferPath(int[] skippedEdgesForTransfer, Weighting connectingWeighting, long currentTime, boolean isBike) {
+        GraphExplorer graphExplorer = new GraphExplorer(graph, gtfsStorage.getPtGraph(), connectingWeighting, gtfsStorage, realtimeFeed, false, true, false, isBike, false, 0);
         return graphExplorer.walkPath(skippedEdgesForTransfer, currentTime);
     }
 
