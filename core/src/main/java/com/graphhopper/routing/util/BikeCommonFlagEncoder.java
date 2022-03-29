@@ -28,6 +28,7 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
+import static com.graphhopper.routing.ev.Cycleway.*;
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.routing.util.PriorityCode.*;
 
@@ -47,6 +48,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     protected final Set<String> preferHighwayTags = new HashSet<>();
     protected final Set<String> avoidHighwayTags = new HashSet<>();
     protected final Set<String> unpavedSurfaceTags = new HashSet<>();
+    protected final Set<Cycleway> withTrafficCyclewayTags = new HashSet<>();
     private final Map<String, Integer> trackTypeSpeeds = new HashMap<>();
     private final Map<String, Integer> surfaceSpeeds = new HashMap<>();
     protected static final double smoothnessFactorPushingSectionThreshold = 0.3d;
@@ -60,7 +62,8 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     EnumEncodedValue<RouteNetwork> bikeRouteEnc;
     EnumEncodedValue<Smoothness> smoothnessEnc;
     Map<RouteNetwork, Integer> routeMap = new HashMap<>();
-    Map<String, Integer> cyclewayMap = new HashMap<>();
+    Map<Cycleway, Integer> cyclewayMap = new EnumMap<>(Cycleway.class);
+    Map<String, Integer> highwayMap = new HashMap<>();
 
     // This is the specific bicycle class
     private String classBicycleKey;
@@ -147,10 +150,10 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         final int CYCLEWAY_SPEED = 18;  // Make sure cycleway and path use same speed value, see #634
         setHighwaySpeed("cycleway", CYCLEWAY_SPEED);
         setHighwaySpeed("path", 10);
-        setHighwaySpeed("footway", 6);
+        setHighwaySpeed("footway", 14);
         setHighwaySpeed("platform", 6);
-        setHighwaySpeed("pedestrian", 6);
-        setHighwaySpeed("track", 12);
+        setHighwaySpeed("pedestrian", 14);
+        setHighwaySpeed("track", 18);
         setHighwaySpeed("service", 14);
         setHighwaySpeed("residential", 18);
         // no other highway applies:
@@ -181,11 +184,40 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         routeMap.put(REGIONAL, VERY_NICE.getValue());
         routeMap.put(LOCAL, PREFER.getValue());
 
-        cyclewayMap.put("lane", UNCHANGED.getValue());
-        cyclewayMap.put("shared_lane", UNCHANGED.getValue());
-        cyclewayMap.put("share_busway", UNCHANGED.getValue());
-        cyclewayMap.put("shoulder", UNCHANGED.getValue());
-        cyclewayMap.put("track", PREFER.getValue());
+        cyclewayMap.put(SEPARATE, SLIGHT_AVOID.getValue());
+        cyclewayMap.put(SHOULDER, UNCHANGED.getValue());
+        cyclewayMap.put(SHARED_LANE, SLIGHT_PREFER.getValue());
+        cyclewayMap.put(SHARE_BUSWAY, SLIGHT_PREFER.getValue());
+        cyclewayMap.put(LANE, PREFER.getValue());
+        cyclewayMap.put(TRACK, VERY_NICE.getValue());
+        withTrafficCyclewayTags.add(SHARED_LANE);
+        withTrafficCyclewayTags.add(SHOULDER);
+
+        // Difficult to use ways
+        highwayMap.put("bridleway", REACH_DESTINATION.getValue());
+        highwayMap.put("steps", REACH_DESTINATION.getValue());
+        highwayMap.put("platform", REACH_DESTINATION.getValue());
+        // Busy ways
+        highwayMap.put("motorway", REACH_DESTINATION.getValue());
+        highwayMap.put("motorway_link", REACH_DESTINATION.getValue());
+        highwayMap.put("trunk", REACH_DESTINATION.getValue());
+        highwayMap.put("trunk_link", REACH_DESTINATION.getValue());
+        highwayMap.put("primary", VERY_BAD.getValue());
+        highwayMap.put("primary_link", VERY_BAD.getValue());
+        highwayMap.put("secondary", AVOID_MORE.getValue());
+        highwayMap.put("secondary_link", AVOID_MORE.getValue());
+        highwayMap.put("tertiary", AVOID.getValue());
+        highwayMap.put("tertiary_link", AVOID.getValue());
+        // Pedestrian ways
+        highwayMap.put("footway", SLIGHT_AVOID.getValue());
+        highwayMap.put("pedestrian", SLIGHT_AVOID.getValue());
+        highwayMap.put("path", SLIGHT_AVOID.getValue());
+        // Quiet ways
+        highwayMap.put("residential", SLIGHT_PREFER.getValue());
+        highwayMap.put("service", SLIGHT_PREFER.getValue());
+        highwayMap.put("unclassified", SLIGHT_PREFER.getValue());
+        // Bike ways
+        highwayMap.put("cycleway", BEST.getValue());
 
         setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.MISSING, 1.0d);
         setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.OTHER, 0.7d);
@@ -444,72 +476,31 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
      *                        subclasses to 'insert' more important priorities as well as overwrite determined priorities.
      */
     void collect(IntsRef edgeFlags, ReaderWay way, double wayTypeSpeed, BidirectionalTreeMap weightToPrioMap) {
+        final double SPEED_KEY = 40d;
+        final double HIGHWAY_KEY = 50d;
+        final double CYCLE_INFRA_KEY = 100d;
         String service = way.getTag("service");
         String highway = way.getTag("highway");
-        if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official")) {
-            if ("path".equals(highway))
-                weightToPrioMap.put(100d, VERY_NICE.getValue());
-            else
-                weightToPrioMap.put(100d, PREFER.getValue());
-        }
 
-        if ("cycleway".equals(highway)) {
-            if (way.hasTag("foot", intendedValues) && !way.hasTag("segregated", "yes"))
-                weightToPrioMap.put(100d, PREFER.getValue());
-            else
-                weightToPrioMap.put(100d, VERY_NICE.getValue());
-        }
-
+        // Associate priority with way speed
         double maxSpeed = getMaxSpeed(way);
-        if (preferHighwayTags.contains(highway) || (isValidSpeed(maxSpeed) && maxSpeed <= 30)) {
-            if (!isValidSpeed(maxSpeed) || maxSpeed < avoidSpeedLimit) {
-                weightToPrioMap.put(40d, PREFER.getValue());
-                if (way.hasTag("tunnel", intendedValues))
-                    weightToPrioMap.put(40d, UNCHANGED.getValue());
-            }
-        } else if (avoidHighwayTags.contains(highway)
-                || isValidSpeed(maxSpeed) && maxSpeed >= avoidSpeedLimit && !"track".equals(highway)) {
-            weightToPrioMap.put(50d, AVOID.getValue());
-            if (way.hasTag("tunnel", intendedValues))
-                weightToPrioMap.put(50d, AVOID_MORE.getValue());
-        }
-
-        // Determine the forward cycleway side from country rules
-        DrivingSide drivingSide = DrivingSide.find(way.getTag("driving_side"));
-        CountryRule countryRule = way.getTag("country_rule", null);
-        if (countryRule != null) {
-            drivingSide = countryRule.getDrivingSide(way, drivingSide);
-        }
-
-        String cycleway = way.getFirstPriorityTag(Arrays.asList("cycleway", "cycleway:both")),
-                cyclewayForward = way.getTag("cycleway:" + drivingSide.toString()),
-                cyclewayBackward = way.getTag("cycleway:" + DrivingSide.reverse(drivingSide).toString());
-
-        Integer cyclewayPriority = cyclewayMap.get(cycleway),
-                cyclewayForwardPriority = cyclewayMap.get(cyclewayForward),
-                cyclewayBackwardPriority = cyclewayMap.get(cyclewayBackward);
-
-        if (Objects.nonNull(cyclewayPriority)) {
-            weightToPrioMap.put(100d, cyclewayPriority);
-        }
-        if (isOneway(way) || roundaboutEnc.getBool(false, edgeFlags)) {
-            // On oneway streets, any accessible infrastructure works
-            Stream.of(cyclewayForwardPriority, cyclewayBackwardPriority)
-                    .filter(Objects::nonNull)
-                    .forEach(p -> weightToPrioMap.put(100d, p));
-        } else {
-            if (Objects.nonNull(cyclewayForwardPriority)) {
-                weightToPrioMap.put(false, 100d, cyclewayForwardPriority);
-            }
-            if (Objects.nonNull(cyclewayBackwardPriority)) {
-                weightToPrioMap.put(true, 100d, cyclewayBackwardPriority);
+        if (isValidSpeed(maxSpeed)) {
+            if (maxSpeed <= avoidSpeedLimit) {
+                weightToPrioMap.put(SPEED_KEY, PREFER.getValue());
+            } else {
+                weightToPrioMap.put(SPEED_KEY, AVOID.getValue());
             }
         }
 
-        if (way.hasTag("bicycle", "use_sidepath")) {
-            weightToPrioMap.put(100d, REACH_DESTINATION.getValue());
+        // Associate priority with highway infrastructure
+        Integer highwayPriority = highwayMap.get(highway);
+        if (Objects.isNull(highwayPriority)) {
+            highwayPriority = SLIGHT_AVOID.getValue();
         }
-
+        weightToPrioMap.put(HIGHWAY_KEY, highwayPriority);
+        if (way.hasTag("tunnel", intendedValues)) {
+            weightToPrioMap.put(HIGHWAY_KEY, AVOID_MORE.getValue());
+        }
         if (pushingSectionsHighways.contains(highway)
                 || "parking_aisle".equals(service)) {
             int pushingSectionPrio = SLIGHT_AVOID.getValue();
@@ -522,27 +513,72 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
                 if (way.hasTag("segregated", "yes"))
                     pushingSectionPrio = Math.min(pushingSectionPrio + 1, BEST.getValue());
             }
-            weightToPrioMap.put(100d, pushingSectionPrio);
+            weightToPrioMap.put(HIGHWAY_KEY, pushingSectionPrio);
+        }
+        if (way.hasTag("railway", "tram"))
+            weightToPrioMap.put(HIGHWAY_KEY, AVOID_MORE.getValue());
+
+        // Associate priority with cycle infrastructure
+        if (way.hasTag("bicycle", "designated", "official")) {
+            if ("path".equals(highway))
+                weightToPrioMap.put(CYCLE_INFRA_KEY, VERY_NICE.getValue());
+            else
+                weightToPrioMap.put(CYCLE_INFRA_KEY, PREFER.getValue());
+        }
+        if (way.hasTag("bicycle", "use_sidepath")) {
+            weightToPrioMap.put(CYCLE_INFRA_KEY, REACH_DESTINATION.getValue());
+        }
+        if (way.hasTag("cyclestreet", intendedValues)) {
+            weightToPrioMap.put(CYCLE_INFRA_KEY, cyclewayMap.get(SHARED_LANE));
         }
 
-        if (way.hasTag("railway", "tram"))
-            weightToPrioMap.put(50d, AVOID_MORE.getValue());
+        DrivingSide drivingSide = DrivingSide.find(way.getTag("driving_side"));
+        CountryRule countryRule = way.getTag("country_rule", null);
+        if (countryRule != null) {
+            drivingSide = countryRule.getDrivingSide(way, drivingSide);
+        }
+
+        Cycleway cycleway = Cycleway.find(way.getFirstPriorityTag(Arrays.asList("cycleway", "cycleway:both"))),
+                cyclewayForward = Cycleway.find(way.getTag("cycleway:" + drivingSide.toString())),
+                cyclewayBackward = Cycleway.find(way.getTag("cycleway:" + DrivingSide.reverse(drivingSide).toString()));
+
+        Integer cyclewayPriority = cyclewayMap.get(cycleway),
+                cyclewayForwardPriority = cyclewayMap.get(cyclewayForward),
+                cyclewayBackwardPriority = cyclewayMap.get(cyclewayBackward);
+
+        if (withTrafficCyclewayTags.contains(cycleway))
+            cyclewayPriority = highwayPriority + 1;
+        if (withTrafficCyclewayTags.contains(cyclewayForward))
+            cyclewayForwardPriority = highwayPriority + 1;
+        if (withTrafficCyclewayTags.contains(cyclewayBackward))
+            cyclewayBackwardPriority = highwayPriority + 1;
+
+        if (Objects.nonNull(cyclewayPriority)) {
+            weightToPrioMap.put(CYCLE_INFRA_KEY, cyclewayPriority);
+        }
+        if (isOneway(way) || roundaboutEnc.getBool(false, edgeFlags)) {
+            // On oneway streets, any accessible infrastructure works
+            Stream.of(cyclewayForwardPriority, cyclewayBackwardPriority)
+                    .filter(Objects::nonNull)
+                    .forEach(p -> weightToPrioMap.put(CYCLE_INFRA_KEY, p));
+        } else {
+            if (Objects.nonNull(cyclewayForwardPriority)) {
+                weightToPrioMap.put(false, CYCLE_INFRA_KEY, cyclewayForwardPriority);
+            }
+            if (Objects.nonNull(cyclewayBackwardPriority)) {
+                weightToPrioMap.put(true, CYCLE_INFRA_KEY, cyclewayBackwardPriority);
+            }
+        }
 
         String classBicycleValue = way.getTag(classBicycleKey);
         if (classBicycleValue != null) {
-            // We assume that humans are better in classifying preferences compared to our algorithm above -> weight = 100
-            weightToPrioMap.put(100d, convertClassValueToPriority(classBicycleValue).getValue());
+            // We assume that humans are better in classifying preferences compared to our
+            // algorithm above
+            weightToPrioMap.put(CYCLE_INFRA_KEY, convertClassValueToPriority(classBicycleValue).getValue());
         } else {
             String classBicycle = way.getTag("class:bicycle");
             if (classBicycle != null)
-                weightToPrioMap.put(100d, convertClassValueToPriority(classBicycle).getValue());
-        }
-
-        // Increase the priority for scenic routes or in case that maxspeed limits our average speed as compensation. See #630
-        if (way.hasTag("scenic", "yes") || maxSpeed > 0 && maxSpeed < wayTypeSpeed) {
-            if (weightToPrioMap.lastEntry(false).getValue() < BEST.getValue())
-                // Increase the prio by one step
-                weightToPrioMap.put(110d, weightToPrioMap.lastEntry(false).getValue() + 1);
+                weightToPrioMap.put(CYCLE_INFRA_KEY, convertClassValueToPriority(classBicycle).getValue());
         }
     }
 
