@@ -8,7 +8,6 @@ import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
@@ -33,16 +32,16 @@ public class ShortcutUnpackerTest {
     private static final class Fixture {
         private final boolean edgeBased;
         private final EncodingManager encodingManager;
-        private final FlagEncoder encoder;
-        private final GraphHopperStorage graph;
+        private final CarFlagEncoder encoder;
+        private final BaseGraph graph;
         private CHStorageBuilder chBuilder;
         private RoutingCHGraph routingCHGraph;
 
         Fixture(boolean edgeBased) {
             this.edgeBased = edgeBased;
-            encoder = new CarFlagEncoder(5, 5, 10).setSpeedTwoDirections(true);
+            encoder = new CarFlagEncoder(5, 5, 10, true);
             encodingManager = EncodingManager.create(encoder);
-            graph = new GraphBuilder(encodingManager).create();
+            graph = new BaseGraph.Builder(encodingManager).create();
         }
 
         @Override
@@ -54,9 +53,9 @@ public class ShortcutUnpackerTest {
             graph.freeze();
             TurnCostProvider turnCostProvider = edgeBased ? new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()) : NO_TURN_COST_PROVIDER;
             CHConfig chConfig = new CHConfig("profile", new FastestWeighting(encoder, turnCostProvider), edgeBased);
-            CHStorage chStore = graph.createCHStorage(chConfig);
+            CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
             chBuilder = new CHStorageBuilder(chStore);
-            routingCHGraph = graph.createCHGraph(chStore, chConfig);
+            routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
         }
 
         private void setCHLevels(int... order) {

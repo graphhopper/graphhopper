@@ -26,9 +26,8 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.*;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
@@ -50,7 +49,7 @@ public class LMApproximatorTest {
         Directory dir = new RAMDirectory();
         CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 1);
         EncodingManager encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).create();
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).setDir(dir).withTurnCosts(true).create();
 
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true,

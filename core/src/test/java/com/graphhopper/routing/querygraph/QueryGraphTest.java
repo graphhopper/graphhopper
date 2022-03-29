@@ -23,7 +23,10 @@ import com.graphhopper.routing.HeadingResolver;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.TurnCost;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.AccessFilter;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -51,14 +54,14 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class QueryGraphTest {
     private EncodingManager encodingManager;
-    private FlagEncoder encoder;
-    private GraphHopperStorage g;
+    private CarFlagEncoder encoder;
+    private BaseGraph g;
 
     @BeforeEach
     public void setUp() {
         encoder = new CarFlagEncoder();
         encodingManager = EncodingManager.create(encoder);
-        g = new GraphBuilder(encodingManager).create();
+        g = new BaseGraph.Builder(encodingManager).create();
     }
 
     @AfterEach
@@ -270,7 +273,7 @@ public class QueryGraphTest {
     @Test
     public void testUseMeanElevation() {
         g.close();
-        g = new GraphBuilder(encodingManager).set3D(true).create();
+        g = new BaseGraph.Builder(encodingManager).set3D(true).create();
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0, 0, 0);
         na.setNode(1, 0, 0.0001, 20);
@@ -495,9 +498,9 @@ public class QueryGraphTest {
 
     @Test
     public void testTurnCostsProperlyPropagated_Issue282() {
-        FlagEncoder encoder = new CarFlagEncoder(5, 5, 15);
+        CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 15);
         EncodingManager em = EncodingManager.create(encoder);
-        GraphHopperStorage graphWithTurnCosts = new GraphBuilder(em).withTurnCosts(true).create();
+        BaseGraph graphWithTurnCosts = new BaseGraph.Builder(em).withTurnCosts(true).create();
         TurnCostStorage turnExt = graphWithTurnCosts.getTurnCostStorage();
         DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(TurnCost.key(encoder.toString()));
         NodeAccess na = graphWithTurnCosts.getNodeAccess();
@@ -824,10 +827,10 @@ public class QueryGraphTest {
         // virtual nodes:     2
         //                0 - x - 1
         // virtual edges:   1   2
-        FlagEncoder encoder = new CarFlagEncoder().setSpeedTwoDirections(true);
+        CarFlagEncoder encoder = new CarFlagEncoder(new PMap().putObject("speed_two_directions", true));
         EncodingManager encodingManager = EncodingManager.create(encoder);
         DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
-        Graph g = new GraphBuilder(encodingManager).create();
+        BaseGraph g = new BaseGraph.Builder(encodingManager).create();
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 50.00, 10.10);
         na.setNode(1, 50.00, 10.20);
@@ -898,10 +901,10 @@ public class QueryGraphTest {
         // virtual nodes:     2
         //                0 - x - 1
         // virtual edges:   1   2
-        FlagEncoder encoder = new CarFlagEncoder().setSpeedTwoDirections(true);
+        CarFlagEncoder encoder = new CarFlagEncoder(new PMap().putObject("speed_two_directions", true));
         EncodingManager encodingManager = EncodingManager.create(encoder);
         DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
-        Graph g = new GraphBuilder(encodingManager).create();
+        BaseGraph g = new BaseGraph.Builder(encodingManager).create();
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 50.00, 10.10);
         na.setNode(1, 50.00, 10.20);

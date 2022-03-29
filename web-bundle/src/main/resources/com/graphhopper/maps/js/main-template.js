@@ -283,7 +283,7 @@ $(document).ready(function (e) {
                     const categories = {};
                     Object.keys(json.encoded_values).forEach((k) => {
                         const v = json.encoded_values[k];
-                        if (v.length == 2 && v[0] === 'true' && v[1] === 'false') {
+                        if (v.length === 2 && v[0] === 'true' && v[1] === 'false') {
                             categories[k] = {type: 'boolean'};
                         } else if (v.length === 2 && v[0] === '>number' && v[1] === '<number') {
                             categories[k] = {type: 'numeric'};

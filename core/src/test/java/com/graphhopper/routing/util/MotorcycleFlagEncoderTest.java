@@ -20,10 +20,12 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.storage.*;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
+import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
 
 import java.text.DateFormat;
@@ -40,7 +42,7 @@ public class MotorcycleFlagEncoderTest {
     private final BooleanEncodedValue accessEnc = encoder.getAccessEnc();
 
     private Graph initExampleGraph() {
-        GraphHopperStorage gs = new GraphBuilder(em).set3D(true).create();
+        BaseGraph gs = new BaseGraph.Builder(em).set3D(true).create();
         NodeAccess na = gs.getNodeAccess();
         // 50--(0.0001)-->49--(0.0004)-->55--(0.0005)-->60
         na.setNode(0, 51.1, 12.001, 50);
@@ -163,15 +165,22 @@ public class MotorcycleFlagEncoderTest {
         assertTrue(bendinessOfCurvyWay < bendinessOfStraightWay, "The bendiness of the straight road is smaller than the one of the curvy road");
     }
 
-    private double getBendiness(EdgeIteratorState edge, double estimatedDistance) {
+    private double getBendiness(EdgeIteratorState edge, double beelineDistance) {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
-        way.setTag("estimated_distance", estimatedDistance);
+        // set point_list such that it yields the requested beelineDistance
+        GHPoint point = new GHPoint(11.3, 45.2);
+        GHPoint toPoint = DistanceCalcEarth.DIST_EARTH.projectCoordinate(point.lat, point.lon, beelineDistance, 90);
+        PointList pointList = new PointList();
+        pointList.add(point);
+        pointList.add(toPoint);
+        way.setTag("point_list", pointList);
+
         assertTrue(encoder.getAccess(way).isWay());
         IntsRef flags = encoder.handleWayTags(em.createEdgeFlags(), way);
         edge.setFlags(flags);
         encoder.applyWayTags(way, edge);
         DecimalEncodedValue curvatureEnc = encoder.getDecimalEncodedValue(EncodingManager.getKey(encoder, "curvature"));
-        return curvatureEnc.getDecimal(false, edge.getFlags());
+        return edge.get(curvatureEnc);
     }
 }

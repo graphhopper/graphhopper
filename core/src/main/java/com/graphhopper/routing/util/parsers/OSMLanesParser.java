@@ -34,7 +34,11 @@ public class OSMLanesParser implements TagParser {
     private final IntEncodedValue lanesEnc;
 
     public OSMLanesParser() {
-        this.lanesEnc = Lanes.create();
+        this(Lanes.create());
+    }
+
+    public OSMLanesParser(IntEncodedValue lanesEnc) {
+        this.lanesEnc = lanesEnc;
     }
 
     @Override

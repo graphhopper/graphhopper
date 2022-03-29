@@ -212,20 +212,23 @@ class GtfsReader {
         });
     }
 
-    public void insertTransferEdges(int arrivalPlatformNode, int minTransferTime, GtfsStorage.PlatformDescriptor departurePlatform) {
-        insertTransferEdges(arrivalPlatformNode, minTransferTime, departureTimelinesByStop.get(departurePlatform.stop_id).get(departurePlatform), departurePlatform);
+    public ArrayList<Integer> insertTransferEdges(int arrivalPlatformNode, int minTransferTime, GtfsStorage.PlatformDescriptor departurePlatform) {
+        return insertTransferEdges(arrivalPlatformNode, minTransferTime, departureTimelinesByStop.get(departurePlatform.stop_id).get(departurePlatform), departurePlatform);
     }
 
-    private void insertTransferEdges(int arrivalPlatformNode, int minTransferTime, NavigableMap<Integer, Integer> departureTimeline, GtfsStorage.PlatformDescriptor departurePlatform) {
+    private ArrayList<Integer> insertTransferEdges(int arrivalPlatformNode, int minTransferTime, NavigableMap<Integer, Integer> departureTimeline, GtfsStorage.PlatformDescriptor departurePlatform) {
+        ArrayList<Integer> result = new ArrayList<>();
         for (PtGraph.PtEdge e : ptGraph.backEdgesAround(arrivalPlatformNode)) {
             if (e.getType() == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK) {
                 int arrivalTime = e.getTime();
                 SortedMap<Integer, Integer> tailSet = departureTimeline.tailMap(arrivalTime + minTransferTime);
                 if (!tailSet.isEmpty()) {
-                    out.createEdge(e.getAdjNode(), tailSet.get(tailSet.firstKey()), new PtEdgeAttributes(GtfsStorage.EdgeType.TRANSFER, tailSet.firstKey() - arrivalTime, null, routeType(departurePlatform), null, 0, -1, null, departurePlatform));
+                    int id = out.createEdge(e.getAdjNode(), tailSet.get(tailSet.firstKey()), new PtEdgeAttributes(GtfsStorage.EdgeType.TRANSFER, tailSet.firstKey() - arrivalTime, null, routeType(departurePlatform), null, 0, -1, null, departurePlatform));
+                    result.add(id);
                 }
             }
         }
+        return result;
     }
 
     void wireUpAdditionalDeparturesAndArrivals(ZoneId zoneId) {

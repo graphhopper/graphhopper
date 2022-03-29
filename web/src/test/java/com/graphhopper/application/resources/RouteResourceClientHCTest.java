@@ -27,10 +27,9 @@ import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.application.util.TestUtils;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Instruction;
-import com.graphhopper.util.InstructionList;
-import com.graphhopper.util.RoundaboutInstruction;
+import com.graphhopper.json.Statement;
+import com.graphhopper.routing.weighting.custom.CustomProfile;
+import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
@@ -39,6 +38,7 @@ import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -46,6 +46,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -68,8 +69,11 @@ public class RouteResourceClientHCTest {
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
                 putObject("graph.location", DIR)
-                .setProfiles(Arrays.asList(new Profile("my_car").setVehicle("car").setWeighting("fastest"),
-                        new Profile("my_bike").setVehicle("bike").setWeighting("fastest")))
+                .setProfiles(Arrays.asList(
+                        new Profile("my_car").setVehicle("car").setWeighting("fastest"),
+                        new Profile("my_bike").setVehicle("bike").setWeighting("fastest"),
+                        new CustomProfile("my_custom_car").setCustomModel(new CustomModel()).setVehicle("car")
+                ))
                 .setCHProfiles(Arrays.asList(new CHProfile("my_car"), new CHProfile("my_bike")));
         return config;
     }
@@ -137,7 +141,7 @@ public class RouteResourceClientHCTest {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.505041, 1.521864)).
                 addPoint(new GHPoint(42.509074, 1.537936)).
-                putHint("vehicle", "car").
+                setProfile("my_car").
                 setAlgorithm("alternative_route").
                 putHint("instructions", true).
                 putHint("calc_points", true).
@@ -328,5 +332,50 @@ public class RouteResourceClientHCTest {
         req.setPointHints(Arrays.asList("Carrer Bonaventura Armengol", ""));
         response = gh.route(req);
         isBetween(520, 550, response.getBest().getDistance());
+    }
+
+
+    @ParameterizedTest
+    @EnumSource(value = TestParam.class)
+    public void testHeadings(TestParam p) {
+        GraphHopperWeb gh = createGH(p);
+        GHRequest req = new GHRequest().
+                addPoint(new GHPoint(42.509331, 1.536965)).
+                addPoint(new GHPoint(42.507065, 1.532443)).
+                setProfile("my_bike").
+                putHint("ch.disable", true);
+
+
+        // starting in eastern direction results in a longer way
+        req.setHeadings(Collections.singletonList(90.0));
+        GHResponse response = gh.route(req);
+        assertEquals(945, response.getBest().getDistance(), 5);
+
+        // ... than going west
+        req.setHeadings(Arrays.asList(270.0));
+        response = gh.route(req);
+        assertEquals(553, response.getBest().getDistance(), 5);
+    }
+
+    @Test
+    public void testCustomModel() {
+        GraphHopperWeb gh = createGH(TestParam.POST_MAX_UNZIPPED_0);
+        GHRequest req = new GHRequest().
+                addPoint(new GHPoint(42.5179, 1.555574)).
+                addPoint(new GHPoint(42.532022, 1.519504)).
+                setCustomModel(new CustomModel()
+                        // we reduce the speed in the long tunnel
+                        .addToSpeed(Statement.If("road_environment == TUNNEL", Statement.Op.MULTIPLY, 0.1))).
+                setProfile("my_custom_car").
+                putHint("ch.disable", true);
+        GHResponse rsp = gh.route(req);
+        assertFalse(rsp.hasErrors(), "errors:" + rsp.getErrors().toString());
+        assertEquals(1_638_000, rsp.getBest().getTime(), 1000);
+
+        // ... and again without the custom model, using the tunnel -> we are much faster
+        req.setCustomModel(null);
+        rsp = gh.route(req);
+        assertFalse(rsp.hasErrors(), "errors:" + rsp.getErrors().toString());
+        assertEquals(218_000, rsp.getBest().getTime(), 1000);
     }
 }

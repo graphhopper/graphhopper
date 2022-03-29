@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.util.PMap;
 
 import static com.graphhopper.util.Helper.toLowerCase;
@@ -39,6 +40,10 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMRoadEnvironmentParser();
         else if (name.equals(RoadAccess.KEY))
             return new OSMRoadAccessParser();
+        else if (name.equals("car_access"))
+            return new OSMAccessParser("car_access", OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR), TransportationMode.CAR);
+        else if (name.equals("bike_access"))
+            return new OSMAccessParser("bike_access", OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE), TransportationMode.BIKE);
         else if (name.equals(MaxSpeed.KEY))
             return new OSMMaxSpeedParser();
         else if (name.equals(MaxWeight.KEY))

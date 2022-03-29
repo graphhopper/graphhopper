@@ -17,6 +17,9 @@
  */
 package com.graphhopper.routing.ev;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
@@ -35,22 +38,29 @@ import java.util.Objects;
  * and is used to save storage space.
  */
 public class IntEncodedValueImpl implements IntEncodedValue {
-
     private final String name;
-
-    /**
-     * There are multiple int values possible per edge. Here we specify the index into this integer array.
-     */
-    private int fwdDataIndex;
-    private int bwdDataIndex;
     private final boolean storeTwoDirections;
     final int bits;
     final boolean negateReverseDirection;
     final int minValue;
     final int maxValue;
+
+    // the following fields will be set by the init() method and we do not store them on disk, because they will be
+    // set again when we create the EncodingManager
+    /**
+     * There are multiple int values possible per edge. Here we specify the index into this integer array.
+     */
+    @JsonIgnore
+    private int fwdDataIndex;
+    @JsonIgnore
+    private int bwdDataIndex;
+    @JsonIgnore
     int fwdShift = -1;
+    @JsonIgnore
     int bwdShift = -1;
+    @JsonIgnore
     int fwdMask;
+    @JsonIgnore
     int bwdMask;
 
     /**
@@ -92,6 +102,22 @@ public class IntEncodedValueImpl implements IntEncodedValue {
         // negateReverseDirection: we need twice the integer range, i.e. 1 more bit
         this.bits = negateReverseDirection ? bits + 1 : bits;
         this.negateReverseDirection = negateReverseDirection;
+    }
+
+    @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+    IntEncodedValueImpl(@JsonProperty("name") String name,
+                        @JsonProperty("bits") int bits,
+                        @JsonProperty("min_value") int minValue,
+                        @JsonProperty("max_value") int maxValue,
+                        @JsonProperty("negate_reverse_direction") boolean negateReverseDirection,
+                        @JsonProperty("store_two_directions") boolean storeTwoDirections) {
+        // we need this constructor for Jackson
+        this.name = name;
+        this.storeTwoDirections = storeTwoDirections;
+        this.bits = bits;
+        this.negateReverseDirection = negateReverseDirection;
+        this.minValue = minValue;
+        this.maxValue = maxValue;
     }
 
     @Override

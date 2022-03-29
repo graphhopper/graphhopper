@@ -24,12 +24,10 @@ import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -48,18 +46,16 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Peter Karich
  */
 public class LandmarkStorageTest {
-    private GraphHopperStorage graph;
-    private FlagEncoder encoder;
-    private EncodingManager encodingManager;
+    private BaseGraph graph;
+    private CarFlagEncoder encoder;
     private BooleanEncodedValue subnetworkEnc;
 
     @BeforeEach
     public void setUp() {
         encoder = new CarFlagEncoder();
         subnetworkEnc = Subnetwork.create("car");
-        encodingManager = new EncodingManager.Builder().add(encoder).add(subnetworkEnc).build();
-        graph = new GraphBuilder(encodingManager).build();
-        graph.create(1000);
+        EncodingManager encodingManager = new EncodingManager.Builder().add(encoder).add(subnetworkEnc).build();
+        graph = new BaseGraph.Builder(encodingManager).create();
     }
 
     @AfterEach

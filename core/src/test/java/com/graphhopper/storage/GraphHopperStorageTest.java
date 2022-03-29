@@ -17,18 +17,11 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.GraphHopper;
-import com.graphhopper.config.Profile;
-import com.graphhopper.routing.util.BikeFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
 
 import static com.graphhopper.util.EdgeIteratorState.REVERSE_STATE;
 import static com.graphhopper.util.FetchMode.*;
@@ -51,7 +44,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     }
 
     protected GraphHopperStorage newGHStorage(Directory dir, boolean enabled3D, int segmentSize) {
-        return GraphBuilder.start(encodingManager).setDir(dir).set3D(enabled3D).setSegmentSize(segmentSize).build();
+        return GraphBuilder.start(tagParserManager).setDir(dir).set3D(enabled3D).setSegmentSize(segmentSize).build();
     }
 
     @Test
@@ -160,7 +153,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
     @Test
     public void testIdentical() {
-        GraphHopperStorage store = new GraphBuilder(encodingManager).set3D(true).build();
+        GraphHopperStorage store = new GraphBuilder(tagParserManager).set3D(true).build();
         assertEquals(store.getNodes(), store.getBaseGraph().getNodes());
         assertEquals(store.getEdges(), store.getBaseGraph().getEdges());
     }
@@ -206,7 +199,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     public void testDecoupledEdgeIteratorStates() {
         GraphHopperStorage storage = createGHStorage();
         Graph graph = storage.getBaseGraph();
-        IntsRef ref = encodingManager.createEdgeFlags();
+        IntsRef ref = tagParserManager.createEdgeFlags();
         ref.ints[0] = 12;
         GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 2).setDistance(10)).setFlags(ref);
         ref.ints[0] = 13;
@@ -225,50 +218,8 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     }
 
     @Test
-    public void testLoadGraph_implicitEncodedValues_issue1862() {
-        Helper.removeDir(new File(defaultGraphLoc));
-        encodingManager = new EncodingManager.Builder().add(createCarFlagEncoder()).add(new BikeFlagEncoder()).build();
-        graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), false).create(defaultSize);
-        NodeAccess na = graph.getNodeAccess();
-        na.setNode(0, 12, 23);
-        na.setNode(1, 8, 13);
-        na.setNode(2, 2, 10);
-        na.setNode(3, 5, 9);
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 2).setDistance(10));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 3).setDistance(10));
-        int nodes = graph.getNodes();
-        int edges = graph.getAllEdges().length();
-        graph.flush();
-        Helper.close(graph);
-
-        // load without configured FlagEncoders
-        GraphHopper hopper = new GraphHopper();
-        hopper.setProfiles(Arrays.asList(new Profile("p_car").setVehicle("car").setWeighting("fastest"),
-                new Profile("p_bike").setVehicle("bike").setWeighting("fastest")));
-        hopper.setGraphHopperLocation(defaultGraphLoc);
-        assertTrue(hopper.load());
-        graph = hopper.getGraphHopperStorage();
-        assertEquals(nodes, graph.getNodes());
-        assertEquals(edges, graph.getAllEdges().length());
-        Helper.close(graph);
-
-        hopper = new GraphHopper();
-        // load via explicitly configured FlagEncoders then we can define only one profile
-        hopper.getEncodingManagerBuilder().add(createCarFlagEncoder()).add(new BikeFlagEncoder());
-        hopper.setProfiles(Collections.singletonList(new Profile("p_car").setVehicle("car").setWeighting("fastest")));
-        hopper.setGraphHopperLocation(defaultGraphLoc);
-        assertTrue(hopper.load());
-        graph = hopper.getGraphHopperStorage();
-        assertEquals(nodes, graph.getNodes());
-        assertEquals(edges, graph.getAllEdges().length());
-        Helper.close(graph);
-
-        Helper.removeDir(new File(defaultGraphLoc));
-    }
-
-    @Test
     public void testEdgeKey() {
-        GraphHopperStorage g = new GraphBuilder(encodingManager).create();
+        GraphHopperStorage g = new GraphBuilder(tagParserManager).create();
         GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 1).setDistance(10));
         // storage direction
         assertEdge(g.getEdgeIteratorState(0, Integer.MIN_VALUE), 0, 1, false, 0, 0);
@@ -282,7 +233,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
     @Test
     public void testEdgeKey_loop() {
-        GraphHopperStorage g = new GraphBuilder(encodingManager).create();
+        GraphHopperStorage g = new GraphBuilder(tagParserManager).create();
         GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 0).setDistance(10));
         // storage direction
         assertEdge(g.getEdgeIteratorState(0, Integer.MIN_VALUE), 0, 0, false, 0, 0);

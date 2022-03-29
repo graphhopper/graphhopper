@@ -23,7 +23,7 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
@@ -58,12 +58,12 @@ import java.util.List;
  */
 public class PrepareRoutingSubnetworks {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final GraphHopperStorage ghStorage;
+    private final BaseGraph graph;
     private final List<PrepareJob> prepareJobs;
     private int minNetworkSize = 200;
 
-    public PrepareRoutingSubnetworks(GraphHopperStorage ghStorage, List<PrepareJob> prepareJobs) {
-        this.ghStorage = ghStorage;
+    public PrepareRoutingSubnetworks(BaseGraph graph, List<PrepareJob> prepareJobs) {
+        this.graph = graph;
         this.prepareJobs = prepareJobs;
     }
 
@@ -88,7 +88,7 @@ public class PrepareRoutingSubnetworks {
         }
         StopWatch sw = new StopWatch().start();
         logger.info("Start marking subnetworks, prepare.min_network_size: " + minNetworkSize + ", nodes: " +
-                Helper.nf(ghStorage.getNodes()) + ", edges: " + Helper.nf(ghStorage.getEdges()) + ", jobs: " + prepareJobs + ", " + Helper.getMemInfo());
+                Helper.nf(graph.getNodes()) + ", edges: " + Helper.nf(graph.getEdges()) + ", jobs: " + prepareJobs + ", " + Helper.getMemInfo());
         int total = 0;
         for (PrepareJob job : prepareJobs)
             total += setSubnetworks(job.weighting, job.subnetworkEnc);
@@ -99,7 +99,7 @@ public class PrepareRoutingSubnetworks {
     private int setSubnetworks(Weighting weighting, BooleanEncodedValue subnetworkEnc) {
         // partition graph into strongly connected components using Tarjan's algorithm
         StopWatch sw = new StopWatch().start();
-        EdgeBasedTarjanSCC.ConnectedComponents ccs = EdgeBasedTarjanSCC.findComponents(ghStorage,
+        EdgeBasedTarjanSCC.ConnectedComponents ccs = EdgeBasedTarjanSCC.findComponents(graph,
                 (prev, edge) -> Double.isFinite(GHUtility.calcWeightWithTurnWeightWithAccess(weighting, edge, false, prev)),
                 false);
         List<IntArrayList> components = ccs.getComponents();
@@ -142,9 +142,9 @@ public class PrepareRoutingSubnetworks {
             smallestNonSubnetwork = Math.min(smallestNonSubnetwork, 1);
         }
 
-        int allowedMarked = ghStorage.getEdges() / 2;
+        int allowedMarked = graph.getEdges() / 2;
         if (markedEdges / 2 > allowedMarked)
-            throw new IllegalStateException("Too many total (directed) edges were marked as subnetwork edges: " + markedEdges + " out of " + (2 * ghStorage.getEdges()) + "\n" +
+            throw new IllegalStateException("Too many total (directed) edges were marked as subnetwork edges: " + markedEdges + " out of " + (2 * graph.getEdges()) + "\n" +
                     "The maximum number of subnetwork edges is: " + (2 * allowedMarked));
 
         logger.info(subnetworkEnc.getName().replaceAll("_subnetwork", "") + " - Marked " + subnetworks + " subnetworks (biggest: " + biggestSubnetwork + " edges) -> " +
@@ -155,11 +155,11 @@ public class PrepareRoutingSubnetworks {
 
     private int setSubnetworkEdge(int edgeKey, Weighting weighting, BooleanEncodedValue subnetworkEnc) {
         // edges that are not accessible anyway are not marked as subnetworks additionally
-        if (!Double.isFinite(weighting.calcEdgeWeightWithAccess(ghStorage.getEdgeIteratorStateForKey(edgeKey), false)))
+        if (!Double.isFinite(weighting.calcEdgeWeightWithAccess(graph.getEdgeIteratorStateForKey(edgeKey), false)))
             return 0;
 
         // now get edge again but in stored direction so that subnetwork EV is not overwritten (as it is unidirectional)
-        EdgeIteratorState edgeState = ghStorage.getEdgeIteratorState(EdgeBasedTarjanSCC.getEdgeFromKey(edgeKey), Integer.MIN_VALUE);
+        EdgeIteratorState edgeState = graph.getEdgeIteratorState(EdgeBasedTarjanSCC.getEdgeFromKey(edgeKey), Integer.MIN_VALUE);
         if (!edgeState.get(subnetworkEnc)) {
             edgeState.set(subnetworkEnc, true);
             return 1;

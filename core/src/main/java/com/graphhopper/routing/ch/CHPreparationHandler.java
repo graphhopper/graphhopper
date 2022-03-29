@@ -19,10 +19,7 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.CHProfile;
-import com.graphhopper.storage.CHConfig;
-import com.graphhopper.storage.CHStorage;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RoutingCHGraph;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.CH;
@@ -99,17 +96,17 @@ public class CHPreparationHandler {
         this.preparationThreads = preparationThreads;
     }
 
-    public Map<String, RoutingCHGraph> load(GraphHopperStorage ghStorage, List<CHConfig> chConfigs) {
+    public Map<String, RoutingCHGraph> load(BaseGraph graph, List<CHConfig> chConfigs) {
         Map<String, RoutingCHGraph> loaded = Collections.synchronizedMap(new LinkedHashMap<>());
         List<Callable<String>> callables = chConfigs.stream()
                 .map(c -> (Callable<String>) () -> {
-                    CHStorage chStorage = ghStorage.loadCHStorage(c.getName(), c.isEdgeBased());
-                    if (chStorage != null)
-                        loaded.put(c.getName(), ghStorage.createCHGraph(chStorage, c));
+                    CHStorage chStorage = new CHStorage(graph.getDirectory(), c.getName(), graph.getSegmentSize(), c.isEdgeBased());
+                    if (chStorage.loadExisting())
+                        loaded.put(c.getName(), RoutingCHGraphImpl.fromGraph(graph, chStorage, c));
                     else {
                         // todo: this is ugly, see comments in LMPreparationHandler
-                        ghStorage.getDirectory().remove("nodes_ch_" + c.getName());
-                        ghStorage.getDirectory().remove("shortcuts_" + c.getName());
+                        graph.getDirectory().remove("nodes_ch_" + c.getName());
+                        graph.getDirectory().remove("shortcuts_" + c.getName());
                     }
                     return c.getName();
                 })
@@ -125,7 +122,7 @@ public class CHPreparationHandler {
         }
         LOGGER.info("Creating CH preparations, {}", getMemInfo());
         List<PrepareContractionHierarchies> preparations = chConfigs.stream()
-                .map(c -> createCHPreparation(ghStorage, c))
+                .map(c -> createCHPreparation(ghStorage.getBaseGraph(), c))
                 .collect(Collectors.toList());
         Map<String, PrepareContractionHierarchies.Result> results = Collections.synchronizedMap(new LinkedHashMap<>());
         List<Callable<String>> callables = new ArrayList<>(preparations.size());
@@ -151,8 +148,8 @@ public class CHPreparationHandler {
         return results;
     }
 
-    private PrepareContractionHierarchies createCHPreparation(GraphHopperStorage ghStorage, CHConfig chConfig) {
-        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, chConfig);
+    private PrepareContractionHierarchies createCHPreparation(BaseGraph graph, CHConfig chConfig) {
+        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraph(graph, chConfig);
         pch.setParams(pMap);
         return pch;
     }

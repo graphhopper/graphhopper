@@ -20,8 +20,6 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
@@ -36,54 +34,44 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
     }
 
     @Test
-    public void testGetSpeed() {
-        IntsRef intsRef = GHUtility.setSpeed(10, 0, encoder, encodingManager.createEdgeFlags());
-        assertEquals(10, avgSpeedEnc.getDecimal(false, intsRef), 1e-1);
+    public void testSpeedAndPriority() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
-        assertEquals(18, encoder.getSpeed(way));
-        assertPriority(AVOID.getValue(), way);
+        assertPriorityAndSpeed(AVOID.getValue(), 18, way);
 
         way.setTag("highway", "residential");
-        assertEquals(16, encoder.getSpeed(way));
-        assertPriority(PREFER.getValue(), way);
+        assertPriorityAndSpeed(PREFER.getValue(), 16, way);
 
         // Test pushing section speeds
         way.setTag("highway", "footway");
-        assertEquals(4, encoder.getSpeed(way));
-        assertPriority(SLIGHT_AVOID.getValue(), way);
+        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), 4, way);
 
         way.setTag("highway", "track");
-        assertEquals(18, encoder.getSpeed(way));
-        assertPriority(PREFER.getValue(), way);
+        assertPriorityAndSpeed(PREFER.getValue(), 18, way);
 
         way.setTag("highway", "steps");
-        assertEquals(4, encoder.getSpeed(way));
-        assertPriority(SLIGHT_AVOID.getValue(), way);
+        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), 4, way);
         way.clearTags();
 
         // test speed for allowed pushing section types
         way.setTag("highway", "track");
         way.setTag("bicycle", "yes");
-        assertEquals(18, encoder.getSpeed(way));
-        assertPriority(PREFER.getValue(), way);
+        assertPriorityAndSpeed(PREFER.getValue(), 18, way);
 
         way.setTag("highway", "track");
         way.setTag("bicycle", "yes");
         way.setTag("tracktype", "grade3");
-        assertPriority(VERY_NICE.getValue(), way);
+        assertPriorityAndSpeed(VERY_NICE.getValue(), 12, way);
 
         way.setTag("surface", "paved");
-        assertEquals(18, encoder.getSpeed(way));
-        assertPriority(VERY_NICE.getValue(), way);
+        assertPriorityAndSpeed(VERY_NICE.getValue(), 18, way);
 
         way.clearTags();
         way.setTag("highway", "path");
         way.setTag("surface", "ground");
-        assertEquals(16, encoder.getSpeed(way));
-        assertPriority(PREFER.getValue(), way);
+        assertPriorityAndSpeed(PREFER.getValue(), 16, way);
     }
-    
+
     @Test
     public void testSmoothness() {
         ReaderWay way = new ReaderWay(1);
@@ -145,34 +133,21 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         osmWay.setTag("highway", "track");
 
         ReaderRelation osmRel = new ReaderRelation(1);
-        IntsRef relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
         // unchanged
-        IntsRef flags = encodingManager.handleWayTags(osmWay, relFlags);
-        assertEquals(18, avgSpeedEnc.getDecimal(false, flags), 1e-1);
-        assertPriority(PriorityCode.PREFER.getValue(), osmWay);
+        assertPriorityAndSpeed(PriorityCode.PREFER.getValue(), 18, osmWay);
 
         // relation code is PREFER
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
-        flags = encodingManager.handleWayTags(osmWay, relFlags);
-        assertEquals(18, avgSpeedEnc.getDecimal(false, flags), 1e-1);
-        assertPriority(PriorityCode.PREFER.getValue(), osmWay);
+        assertPriorityAndSpeed(PriorityCode.PREFER.getValue(), 18, osmWay);
 
         // relation code is PREFER
         osmRel.setTag("network", "rcn");
-
-        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
-        flags = encodingManager.handleWayTags(osmWay, relFlags);
-        assertPriority(PriorityCode.PREFER.getValue(), osmWay);
-        assertEquals(18, avgSpeedEnc.getDecimal(false, flags), 1e-1);
+        assertPriorityAndSpeed(PriorityCode.PREFER.getValue(), 18, osmWay);
 
         // relation code is PREFER
         osmRel.setTag("network", "ncn");
-        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
-        flags = encodingManager.handleWayTags(osmWay, relFlags);
-        assertPriority(PriorityCode.PREFER.getValue(), osmWay);
-        assertEquals(18, avgSpeedEnc.getDecimal(false, flags), 1e-1);
+        assertPriorityAndSpeed(PriorityCode.PREFER.getValue(), 18, osmWay);
 
         // PREFER relation, but tertiary road
         // => no pushing section but road wayTypeCode and faster
@@ -181,10 +156,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
 
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
-        flags = encodingManager.handleWayTags(osmWay, relFlags);
-        assertEquals(18, avgSpeedEnc.getDecimal(false, flags), 1e-1);
-        assertPriority(PriorityCode.PREFER.getValue(), osmWay);
+        assertPriorityAndSpeed(PriorityCode.PREFER.getValue(), 18, osmWay);
     }
 
     // Issue 407 : Always block kissing_gate execpt for mountainbikes

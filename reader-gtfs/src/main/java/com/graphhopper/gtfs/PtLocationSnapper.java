@@ -65,25 +65,22 @@ public class PtLocationSnapper {
                             Stop stop = gtfsStorage.getGtfsFeeds().get(e.getKey().feedId).stops.get(e.getKey().stopId);
                             final Snap stopSnap = new Snap(stop.stop_lat, stop.stop_lon);
                             stopSnap.setClosestNode(stopNodeId.value);
-                            int streetNode = Optional.ofNullable(gtfsStorage.getPtToStreet().get(stopSnap.getClosestNode())).orElse(-1);
-                            allSnaps.add(() -> new Label.NodeId(streetNode, stopSnap.getClosestNode()));
+                            allSnaps.add(() -> new Label.NodeId(Optional.ofNullable(gtfsStorage.getPtToStreet().get(stopSnap.getClosestNode())).orElse(-1), stopSnap.getClosestNode()));
                             points.add(stopSnap.getQueryPoint().lat, stopSnap.getQueryPoint().lon);
                         }
                     }
                 } else {
                     pointSnaps.add(closest);
-                    int ptNode = Optional.ofNullable(gtfsStorage.getStreetToPt().get(closest.getClosestNode())).orElse(-1);
-                    allSnaps.add(() -> new Label.NodeId(closest.getClosestNode(), ptNode));
+                    allSnaps.add(() -> new Label.NodeId(closest.getClosestNode(), Optional.ofNullable(gtfsStorage.getStreetToPt().get(closest.getClosestNode())).orElse(-1)));
                     points.add(closest.getSnappedPoint());
                 }
             } else if (location instanceof GHStationLocation) {
                 final Snap stopSnap = findByStopId((GHStationLocation) location, i);
-                int streetNode = Optional.ofNullable(gtfsStorage.getPtToStreet().get(stopSnap.getClosestNode())).orElse(-1);
-                allSnaps.add(() -> new Label.NodeId(streetNode, stopSnap.getClosestNode()));
+                allSnaps.add(() -> new Label.NodeId(Optional.ofNullable(gtfsStorage.getPtToStreet().get(stopSnap.getClosestNode())).orElse(-1), stopSnap.getClosestNode()));
                 points.add(stopSnap.getQueryPoint().lat, stopSnap.getQueryPoint().lon);
             }
         }
-        QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, pointSnaps); // modifies pointSnaps!
+        QueryGraph queryGraph = QueryGraph.create(graphHopperStorage.getBaseGraph(), pointSnaps); // modifies pointSnaps!
 
         List<Label.NodeId> nodes = new ArrayList<>();
         for (Supplier<Label.NodeId> supplier : allSnaps) {

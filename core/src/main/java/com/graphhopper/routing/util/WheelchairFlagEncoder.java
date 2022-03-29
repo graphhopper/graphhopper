@@ -28,7 +28,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
 
-import static com.graphhopper.routing.util.PriorityCode.*;
+import static com.graphhopper.routing.util.PriorityCode.AVOID;
+import static com.graphhopper.routing.util.PriorityCode.VERY_NICE;
 
 /**
  * A flag encoder for wheelchairs.
@@ -55,18 +56,15 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     }
 
     protected WheelchairFlagEncoder(int speedBits, double speedFactor) {
-        super(speedBits, speedFactor);
+        super("wheelchair", speedBits, speedFactor, true);
 
         restrictions.add("wheelchair");
 
-        blockByDefaultBarriers.add("handrail");
-        blockByDefaultBarriers.add("wall");
-        blockByDefaultBarriers.add("turnstile");
-        blockByDefaultBarriers.add("kissing_gate");
-        blockByDefaultBarriers.add("stile");
-        passByDefaultBarriers.add("kerb");
-        passByDefaultBarriers.add("cattle_grid");
-        passByDefaultBarriers.add("motorcycle_barrier");
+        barriers.add("handrail");
+        barriers.add("wall");
+        barriers.add("turnstile");
+        barriers.add("kissing_gate");
+        barriers.add("stile");
 
         safeHighwayTags.add("footway");
         safeHighwayTags.add("pedestrian");
@@ -97,8 +95,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
 
         allowedSacScale.clear();
 
-        maxPossibleSpeed = FERRY_SPEED;
-        speedTwoDirections = true;
+        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(FERRY_SPEED);
     }
 
     /**
@@ -251,10 +248,5 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         }
 
         return weightToPrioMap.lastEntry().getValue();
-    }
-
-    @Override
-    public String toString() {
-        return "wheelchair";
     }
 }

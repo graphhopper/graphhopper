@@ -35,7 +35,6 @@ import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
@@ -65,12 +64,14 @@ class TripFromLabel {
     private final RealtimeFeed realtimeFeed;
     private final GeometryFactory geometryFactory = new GeometryFactory();
     private final PathDetailsBuilderFactory pathDetailsBuilderFactory;
+    private final double walkSpeedKmH;
 
-    TripFromLabel(Graph graph, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
+    TripFromLabel(Graph graph, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory, double walkSpeedKmH) {
         this.graph = graph;
         this.gtfsStorage = gtfsStorage;
         this.realtimeFeed = realtimeFeed;
         this.pathDetailsBuilderFactory = pathDetailsBuilderFactory;
+        this.walkSpeedKmH = walkSpeedKmH;
     }
 
     ResponsePath createResponsePath(Translation tr, PointList waypoints, Graph queryGraph, Weighting connectingWeighting, List<Label.Transition> solution, List<String> requestedPathDetails, String connectingVehicle, boolean includeElevation) {
@@ -375,7 +376,12 @@ class TripFromLabel {
                             geometryFactory.createLineString(stops.stream().map(s -> s.geometry.getCoordinate()).toArray(Coordinate[]::new))));
                     partition = null;
                     if (edge.getType() == GtfsStorage.EdgeType.TRANSFER) {
-                        feedId = edge.getPlatformDescriptor().feed_id;;
+                        feedId = edge.getPlatformDescriptor().feed_id;
+                        int[] skippedEdgesForTransfer = gtfsStorage.getSkippedEdgesForTransfer().get(edge.getId());
+                        if (skippedEdgesForTransfer != null) {
+                            List<Trip.Leg> legs = parsePartitionToLegs(transferPath(skippedEdgesForTransfer, weighting, path.get(i - 1).label.currentTime), graph, weighting, tr, requestedPathDetails);
+                            result.add(legs.get(0));
+                        }
                     }
                 }
             }
@@ -403,7 +409,7 @@ class TripFromLabel {
             pathh.setFromNode(path.get(0).label.node.streetNode);
             pathh.setEndNode(path.get(path.size()-1).label.node.streetNode);
             pathh.setFound(true);
-            Map<String, List<PathDetail>> pathDetails = PathDetailsFromEdges.calcDetails(pathh, ((GraphHopperStorage) this.graph.getBaseGraph()).getEncodingManager(), weighting, requestedPathDetails, pathDetailsBuilderFactory, 0);
+            Map<String, List<PathDetail>> pathDetails = PathDetailsFromEdges.calcDetails(pathh, weighting.getFlagEncoder(), weighting, requestedPathDetails, pathDetailsBuilderFactory, 0);
 
             final Instant departureTime = Instant.ofEpochMilli(path.get(0).label.currentTime);
             final Instant arrivalTime = Instant.ofEpochMilli(path.get(path.size() - 1).label.currentTime);
@@ -419,10 +425,15 @@ class TripFromLabel {
         }
     }
 
+    private List<Label.Transition> transferPath(int[] skippedEdgesForTransfer, Weighting accessEgressWeighting, long currentTime) {
+        GraphExplorer graphExplorer = new GraphExplorer(graph, gtfsStorage.getPtGraph(), accessEgressWeighting, gtfsStorage, realtimeFeed, false, true, false, walkSpeedKmH, false, 0);
+        return graphExplorer.walkPath(skippedEdgesForTransfer, currentTime);
+    }
+
     private Stream<GraphExplorer.MultiModalEdge> edges(List<Label.Transition> path) {
         return path.stream().filter(t -> t.edge != null).map(t -> t.edge);
     }
-
+  
     private Geometry lineStringFromInstructions(InstructionList instructions, boolean includeElevation) {
         final PointList pointsList = new PointList();
         for (Instruction instruction : instructions) {
@@ -430,16 +441,5 @@ class TripFromLabel {
         }
         return pointsList.toLineString(includeElevation);
     }
-
-    private static List<Coordinate> toCoordinateArray(PointList pointList) {
-        List<Coordinate> coordinates = new ArrayList<>(pointList.size());
-        for (int i = 0; i < pointList.size(); i++) {
-            coordinates.add(pointList.getDimension() == 3 ?
-                    new Coordinate(pointList.getLon(i), pointList.getLat(i)) :
-                    new Coordinate(pointList.getLon(i), pointList.getLat(i), pointList.getEle(i)));
-        }
-        return coordinates;
-    }
-
 
 }

@@ -24,7 +24,6 @@ import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.*;
@@ -53,9 +52,9 @@ public class CHQueryWithTurnCostsTest {
 
     private static class Fixture {
         private final int maxCost = 10;
-        private final FlagEncoder encoder = new CarFlagEncoder(5, 5, maxCost).setSpeedTwoDirections(true);
+        private final CarFlagEncoder encoder = new CarFlagEncoder(5, 5, maxCost, true);
         private final EncodingManager encodingManager = EncodingManager.create(encoder);
-        private final GraphHopperStorage graph;
+        private final BaseGraph graph;
         private final CHConfig chConfig;
         private final String algoString;
         private CHStorage chStore;
@@ -63,7 +62,7 @@ public class CHQueryWithTurnCostsTest {
 
         public Fixture(String algoString) {
             this.algoString = algoString;
-            graph = new GraphBuilder(encodingManager).create();
+            graph = new BaseGraph.Builder(encodingManager).create();
             chConfig = CHConfig.edgeBased("profile", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage())));
         }
 
@@ -74,13 +73,13 @@ public class CHQueryWithTurnCostsTest {
 
         private AbstractBidirectionEdgeCHNoSOD createAlgo() {
             return "astar".equals(algoString) ?
-                    new AStarBidirectionEdgeCHNoSOD(graph.createCHGraph(chStore, chConfig)) :
-                    new DijkstraBidirectionEdgeCHNoSOD(graph.createCHGraph(chStore, chConfig));
+                    new AStarBidirectionEdgeCHNoSOD(RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig)) :
+                    new DijkstraBidirectionEdgeCHNoSOD(RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig));
         }
 
         private void freeze() {
             graph.freeze();
-            chStore = graph.createCHStorage(chConfig);
+            chStore = CHStorage.fromGraph(graph, chConfig);
             chBuilder = new CHStorageBuilder(chStore);
         }
 

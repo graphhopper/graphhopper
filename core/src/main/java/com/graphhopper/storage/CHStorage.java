@@ -23,6 +23,8 @@ import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Locale;
 import java.util.function.Consumer;
@@ -39,6 +41,7 @@ import static com.graphhopper.util.Helper.nf;
  * @see CHStorageBuilder to build a valid storage that can be used for routing
  */
 public class CHStorage {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CHStorage.class);
     // we store double weights as integers (rounded to three decimal digits)
     private static final double WEIGHT_FACTOR = 1000;
     // the maximum integer value we can store
@@ -65,6 +68,29 @@ public class CHStorage {
 
     // use this to report shortcuts with too small weights
     private Consumer<LowWeightShortcut> lowShortcutWeightConsumer;
+
+    public static CHStorage fromGraph(BaseGraph baseGraph, CHConfig chConfig) {
+        String name = chConfig.getName();
+        boolean edgeBased = chConfig.isEdgeBased();
+        if (!baseGraph.isFrozen())
+            throw new IllegalStateException("graph must be frozen before we can create ch graphs");
+        CHStorage store = new CHStorage(baseGraph.getDirectory(), name, baseGraph.getSegmentSize(), edgeBased);
+        store.setLowShortcutWeightConsumer(s -> {
+            // we just log these to find mapping errors
+            NodeAccess nodeAccess = baseGraph.getNodeAccess();
+            LOGGER.warn("Setting weights smaller than " + s.minWeight + " is not allowed. " +
+                    "You passed: " + s.weight + " for the shortcut " +
+                    " nodeA (" + nodeAccess.getLat(s.nodeA) + "," + nodeAccess.getLon(s.nodeA) +
+                    " nodeB " + nodeAccess.getLat(s.nodeB) + "," + nodeAccess.getLon(s.nodeB));
+        });
+        store.create();
+        // we use a rather small value here. this might result in more allocations later, but they should
+        // not matter that much. if we expect a too large value the shortcuts DataAccess will end up
+        // larger than needed, because we do not do something like trimToSize in the end.
+        double expectedShortcuts = 0.3 * baseGraph.getEdges();
+        store.init(baseGraph.getNodes(), (int) expectedShortcuts);
+        return store;
+    }
 
     public CHStorage(Directory dir, String name, int segmentSize, boolean edgeBased) {
         this.edgeBased = edgeBased;

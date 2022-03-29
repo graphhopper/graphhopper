@@ -23,9 +23,7 @@ import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.BaseGraph;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -62,8 +60,8 @@ public class BreadthFirstSearchTest {
             }
         };
 
-        FlagEncoder encoder = new CarFlagEncoder();
-        Graph g = new GraphBuilder(EncodingManager.create(encoder)).create();
+        CarFlagEncoder encoder = new CarFlagEncoder();
+        BaseGraph g = new BaseGraph.Builder(EncodingManager.create(encoder)).create();
         GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(85));
         GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 2).setDistance(217));
         GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 3).setDistance(173));
@@ -102,8 +100,8 @@ public class BreadthFirstSearchTest {
             }
         };
 
-        FlagEncoder encoder = new CarFlagEncoder();
-        Graph g = new GraphBuilder(EncodingManager.create(encoder)).create();
+        CarFlagEncoder encoder = new CarFlagEncoder();
+        BaseGraph g = new BaseGraph.Builder(EncodingManager.create(encoder)).create();
         GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 3).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, g.edge(3, 4).setDistance(1));

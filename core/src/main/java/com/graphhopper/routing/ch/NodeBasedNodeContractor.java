@@ -58,8 +58,8 @@ class NodeBasedNodeContractor implements NodeContractor {
     private void extractParams(PMap pMap) {
         params.edgeDifferenceWeight = pMap.getFloat(EDGE_DIFFERENCE_WEIGHT, params.edgeDifferenceWeight);
         params.originalEdgesCountWeight = pMap.getFloat(ORIGINAL_EDGE_COUNT_WEIGHT, params.originalEdgesCountWeight);
-        params.maxVisitedNodesHeuristic = pMap.getInt(MAX_VISITED_NODES_HEURISTIC, params.maxVisitedNodesHeuristic);
-        params.maxVisitedNodesContraction = pMap.getInt(MAX_VISITED_NODES_CONTRACTION, params.maxVisitedNodesContraction);
+        params.maxPollFactorHeuristic = pMap.getDouble(MAX_POLL_FACTOR_HEURISTIC_NODE, params.maxPollFactorHeuristic);
+        params.maxPollFactorContraction = pMap.getDouble(MAX_POLL_FACTOR_CONTRACTION_NODE, params.maxPollFactorContraction);
     }
 
     @Override
@@ -97,7 +97,7 @@ class NodeBasedNodeContractor implements NodeContractor {
         // originalEdgesCount = σ(v) := sum_{ (u,w) ∈ shortcuts(v) } of r(u, w)
         shortcutsCount = 0;
         originalEdgesCount = 0;
-        findAndHandleShortcuts(node, this::countShortcuts, params.maxVisitedNodesHeuristic);
+        findAndHandleShortcuts(node, this::countShortcuts, (int) (meanDegree * params.maxPollFactorHeuristic));
 
         // from shortcuts we can compute the edgeDifference
         // # low influence: with it the shortcut creation is slightly faster
@@ -116,7 +116,7 @@ class NodeBasedNodeContractor implements NodeContractor {
 
     @Override
     public IntContainer contractNode(int node) {
-        long degree = findAndHandleShortcuts(node, this::addOrUpdateShortcut, params.maxVisitedNodesContraction);
+        long degree = findAndHandleShortcuts(node, this::addOrUpdateShortcut, (int) (meanDegree * params.maxPollFactorContraction));
         insertShortcuts(node);
         // put weight factor on meanDegree instead of taking the average => meanDegree is more stable
         meanDegree = (meanDegree * 2 + degree) / 3;
@@ -289,11 +289,6 @@ class NodeBasedNodeContractor implements NodeContractor {
     }
 
     @Override
-    public long getDijkstraCount() {
-        return dijkstraCount;
-    }
-
-    @Override
     public float getDijkstraSeconds() {
         return dijkstraSW.getCurrentSeconds();
     }
@@ -310,11 +305,10 @@ class NodeBasedNodeContractor implements NodeContractor {
         private float edgeDifferenceWeight = 10;
         private float originalEdgesCountWeight = 1;
         // these values seemed to work best for planet (fast prep without compromising too much for the query time)
-        // higher values can further decrease the number of shortcuts and improve the query time, but only by a few
-        // percent and at the cost of a longer preparation. for smaller maps smaller values can work even better, i.e.
-        // try 20/100 or similar.
-        private int maxVisitedNodesHeuristic = 30;
-        private int maxVisitedNodesContraction = 200;
+        // higher values can further decrease the number of shortcuts and improve the query time, but normally at the
+        // cost of a longer preparation (see #2514)
+        private double maxPollFactorHeuristic = 5;
+        private double maxPollFactorContraction = 200;
     }
 
     private static class Shortcut {

@@ -45,10 +45,10 @@ public abstract class AbstractGraphStorageTester {
     protected int defaultSize = 100;
     protected String defaultGraphLoc = "./target/graphstorage/default";
     protected CarFlagEncoder carEncoder = createCarFlagEncoder();
-    protected EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(new FootFlagEncoder()).build();
+    protected TagParserManager tagParserManager = new TagParserManager.Builder().add(carEncoder).add(new FootFlagEncoder()).build();
     protected BooleanEncodedValue carAccessEnc = carEncoder.getAccessEnc();
     protected DecimalEncodedValue carAvSpeedEnc = carEncoder.getAverageSpeedEnc();
-    protected FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
+    protected FootFlagEncoder footEncoder = (FootFlagEncoder) tagParserManager.getEncoder("foot");
     protected GraphHopperStorage graph;
     EdgeFilter carOutFilter = AccessFilter.outEdges(carEncoder.getAccessEnc());
     EdgeFilter carInFilter = AccessFilter.inEdges(carEncoder.getAccessEnc());
@@ -656,15 +656,10 @@ public abstract class AbstractGraphStorageTester {
 
     @Test
     public void test8AndMoreBytesForEdgeFlags() {
-        List<FlagEncoder> list = new ArrayList<>();
-        list.add(new CarFlagEncoder(29, 0.001, 0) {
-            @Override
-            public String toString() {
-                return "car0";
-            }
-        });
+        List<CarFlagEncoder> list = new ArrayList<>();
+        list.add(new CarFlagEncoder("car0", 29, 0.001, 0));
         list.add(new CarFlagEncoder(29, 0.001, 0));
-        EncodingManager manager = EncodingManager.create(list);
+        TagParserManager manager = TagParserManager.create(list);
         graph = new GraphBuilder(manager).create();
 
         EdgeIteratorState edge = graph.edge(0, 1);
@@ -700,20 +695,10 @@ public abstract class AbstractGraphStorageTester {
         assertTrue(edgeIter.getReverse(access1Enc));
 
         list.clear();
-        list.add(new CarFlagEncoder(29, 0.001, 0) {
-            @Override
-            public String toString() {
-                return "car0";
-            }
-        });
+        list.add(new CarFlagEncoder("car0", 29, 0.001, 0));
         list.add(new CarFlagEncoder(29, 0.001, 0));
-        list.add(new CarFlagEncoder(30, 0.001, 0) {
-            @Override
-            public String toString() {
-                return "car2";
-            }
-        });
-        manager = EncodingManager.create(list);
+        list.add(new CarFlagEncoder("car2", 30, 0.001, 0));
+        manager = TagParserManager.create(list);
         graph = new GraphBuilder(manager).create();
         edgeIter = graph.edge(0, 1).set(access0Enc, true, false);
         assertTrue(edgeIter.get(access0Enc));

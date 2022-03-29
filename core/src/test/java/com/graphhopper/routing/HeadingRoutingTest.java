@@ -25,7 +25,11 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.*;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -52,8 +56,10 @@ class HeadingRoutingTest {
     @Test
     public void headingTest1() {
         // Test enforce start direction
-        GraphHopperStorage graph = createSquareGraph();
-        Router router = createRouter(graph);
+        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
+        BaseGraph graph = createSquareGraph(encodingManager);
+        Router router = createRouter(graph, encodingManager);
 
         // Start in middle of edge 4-5
         GHPoint start = new GHPoint(0.0015, 0.002);
@@ -73,8 +79,10 @@ class HeadingRoutingTest {
     @Test
     public void headingTest2() {
         // Test enforce south start direction and east end direction
-        GraphHopperStorage graph = createSquareGraph();
-        Router router = createRouter(graph);
+        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
+        BaseGraph graph = createSquareGraph(encodingManager);
+        Router router = createRouter(graph, encodingManager);
 
         // Start in middle of edge 4-5
         GHPoint start = new GHPoint(0.0015, 0.002);
@@ -98,8 +106,10 @@ class HeadingRoutingTest {
 
     @Test
     public void headingTest3() {
-        GraphHopperStorage graph = createSquareGraph();
-        Router router = createRouter(graph);
+        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
+        BaseGraph graph = createSquareGraph(encodingManager);
+        Router router = createRouter(graph, encodingManager);
 
         // Start in middle of edge 4-5
         GHPoint start = new GHPoint(0.0015, 0.002);
@@ -121,8 +131,10 @@ class HeadingRoutingTest {
     @Test
     public void headingTest4() {
         // Test straight via routing
-        GraphHopperStorage graph = createSquareGraph();
-        Router router = createRouter(graph);
+        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
+        BaseGraph graph = createSquareGraph(encodingManager);
+        Router router = createRouter(graph, encodingManager);
 
         // Start in middle of edge 4-5
         GHPoint start = new GHPoint(0.0015, 0.002);
@@ -144,8 +156,10 @@ class HeadingRoutingTest {
     @Test
     public void headingTest5() {
         // Test independence of previous enforcement for subsequent paths
-        GraphHopperStorage graph = createSquareGraph();
-        Router router = createRouter(graph);
+        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
+        BaseGraph graph = createSquareGraph(encodingManager);
+        Router router = createRouter(graph, encodingManager);
 
         // Start in middle of edge 4-5
         GHPoint start = new GHPoint(0.0015, 0.002);
@@ -166,8 +180,10 @@ class HeadingRoutingTest {
 
     @Test
     public void testHeadingWithSnapFilter() {
-        GraphHopperStorage graph = createSquareGraphWithTunnel();
-        Router router = createRouter(graph);
+        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
+        BaseGraph graph = createSquareGraphWithTunnel(encodingManager);
+        Router router = createRouter(graph, encodingManager);
         // Start at 8 (slightly north to make it independent on some edge ordering and always use 8-3 or 3-8 as fallback)
         GHPoint start = new GHPoint(0.0011, 0.001);
         // End at middle of edge 2-3
@@ -226,8 +242,10 @@ class HeadingRoutingTest {
 
     @Test
     public void testHeadingWithSnapFilter2() {
-        GraphHopperStorage graph = createSquareGraphWithTunnel();
-        Router router = createRouter(graph);
+        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
+        BaseGraph graph = createSquareGraphWithTunnel(encodingManager);
+        Router router = createRouter(graph, encodingManager);
         // Start at 8 (slightly east to snap to edge 1->5 per default)
         GHPoint start = new GHPoint(0.001, 0.0011);
         // End at middle of edge 2-3
@@ -257,8 +275,10 @@ class HeadingRoutingTest {
     @Test
     public void headingTest6() {
         // Test if snaps at tower nodes are ignored
-        GraphHopperStorage graph = createSquareGraph();
-        Router router = createRouter(graph);
+        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
+        BaseGraph graph = createSquareGraph(encodingManager);
+        Router router = createRouter(graph, encodingManager);
 
         // QueryPoints directly on TowerNodes
         GHPoint start = new GHPoint(0, 0);
@@ -275,19 +295,18 @@ class HeadingRoutingTest {
         assertArrayEquals(new int[]{0, 1, 2, 3, 4}, calcNodes(graph, response.getAll().get(0)));
     }
 
-    private Router createRouter(GraphHopperStorage graph) {
+    private Router createRouter(BaseGraph graph, EncodingManager encodingManager) {
         LocationIndexTree locationIndex = new LocationIndexTree(graph, new RAMDirectory());
         locationIndex.prepareIndex();
         Map<String, Profile> profilesByName = new HashMap<>();
         profilesByName.put("profile", new Profile("profile").setVehicle("car").setWeighting("fastest"));
-        return new Router(graph, locationIndex, profilesByName, new PathDetailsBuilderFactory(), new TranslationMap().doImport(), new RouterConfig(),
-                new DefaultWeightingFactory(graph, graph.getEncodingManager()), Collections.emptyMap(), Collections.emptyMap());
+        return new Router(graph.getBaseGraph(), encodingManager, locationIndex, profilesByName, new PathDetailsBuilderFactory(), new TranslationMap().doImport(), new RouterConfig(),
+                new DefaultWeightingFactory(graph.getBaseGraph(), encodingManager), Collections.emptyMap(), Collections.emptyMap());
     }
 
-    private GraphHopperStorage createSquareGraph() {
-        CarFlagEncoder carEncoder = new CarFlagEncoder();
-        EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
-        GraphHopperStorage g = new GraphBuilder(encodingManager).create();
+    private BaseGraph createSquareGraph(EncodingManager encodingManager) {
+        BaseGraph g = new BaseGraph.Builder(encodingManager).create();
+        FlagEncoder carEncoder = encodingManager.getEncoder("car");
 
         // 2---3---4
         // |   |   |
@@ -322,10 +341,9 @@ class HeadingRoutingTest {
         return g;
     }
 
-    private GraphHopperStorage createSquareGraphWithTunnel() {
-        CarFlagEncoder carEncoder = new CarFlagEncoder();
-        EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
-        GraphHopperStorage g = new GraphBuilder(encodingManager).create();
+    private BaseGraph createSquareGraphWithTunnel(EncodingManager encodingManager) {
+        BaseGraph g = new BaseGraph.Builder(encodingManager).create();
+        FlagEncoder carEncoder = encodingManager.getEncoder("car");
 
         // 2----3---4
         // |    |   |

@@ -18,29 +18,25 @@
 package com.graphhopper.util;
 
 import com.graphhopper.ResponsePath;
-import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.details.PathDetailsFromEdges;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
 import static com.graphhopper.util.Parameters.Details.AVERAGE_SPEED;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Robin Boldt
@@ -50,18 +46,12 @@ public class PathSimplificationTest {
     private final TranslationMap trMap = TranslationMapTest.SINGLETON;
     private final Translation usTR = trMap.getWithFallBack(Locale.US);
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
-    private EncodingManager carManager;
-    private CarFlagEncoder carEncoder;
-
-    @BeforeEach
-    public void setUp() {
-        carEncoder = new CarFlagEncoder();
-        carManager = EncodingManager.create(carEncoder);
-    }
 
     @Test
     public void testScenario() {
-        Graph g = new GraphBuilder(carManager).create();
+        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        EncodingManager carManager = EncodingManager.create(carEncoder);
+        BaseGraph g = new BaseGraph.Builder(carManager).create();
         // 0-1-2
         // | | |
         // 3-4-5  9-10
@@ -81,50 +71,28 @@ public class PathSimplificationTest {
         na.setNode(7, 1.0, 1.1);
         na.setNode(8, 1.0, 1.2);
 
-        ReaderWay w = new ReaderWay(1);
-        w.setTag("highway", "tertiary");
-        w.setTag("maxspeed", "10");
+        GHUtility.setSpeed(9, true, true, carEncoder, g.edge(0, 1).setDistance(10000)).setName("0-1");
+        GHUtility.setSpeed(9, true, true, carEncoder, g.edge(1, 2).setDistance(11000)).setName("1-2");
 
-        IntsRef relFlags = carManager.createRelationFlags();
-        EdgeIteratorState tmpEdge;
-        tmpEdge = GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 1).setDistance(10000)).setName("0-1");
-        assertNotEquals(EncodingManager.Access.CAN_SKIP, carEncoder.getAccess(w));
-        tmpEdge.setFlags(carManager.handleWayTags(w, relFlags));
-        tmpEdge = GHUtility.setSpeed(60, true, true, carEncoder, g.edge(1, 2).setDistance(11000)).setName("1-2");
-        tmpEdge.setFlags(carManager.handleWayTags(w, relFlags));
+        GHUtility.setSpeed(18, true, true, carEncoder, g.edge(0, 3).setDistance(11000));
+        GHUtility.setSpeed(18, true, true, carEncoder, g.edge(1, 4).setDistance(10000)).setName("1-4");
+        GHUtility.setSpeed(18, true, true, carEncoder, g.edge(2, 5).setDistance(11000)).setName("5-2");
 
-        w.setTag("maxspeed", "20");
-        tmpEdge = GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 3).setDistance(11000));
-        tmpEdge.setFlags(carManager.handleWayTags(w, relFlags));
-        tmpEdge = GHUtility.setSpeed(60, true, true, carEncoder, g.edge(1, 4).setDistance(10000)).setName("1-4");
-        tmpEdge.setFlags(carManager.handleWayTags(w, relFlags));
-        tmpEdge = GHUtility.setSpeed(60, true, true, carEncoder, g.edge(2, 5).setDistance(11000)).setName("5-2");
-        tmpEdge.setFlags(carManager.handleWayTags(w, relFlags));
+        GHUtility.setSpeed(27, true, true, carEncoder, g.edge(3, 6).setDistance(11000)).setName("3-6");
+        GHUtility.setSpeed(27, true, true, carEncoder, g.edge(4, 7).setDistance(10000)).setName("4-7");
+        GHUtility.setSpeed(27, true, true, carEncoder, g.edge(5, 8).setDistance(10000)).setName("5-8");
 
-        w.setTag("maxspeed", "30");
-        tmpEdge = GHUtility.setSpeed(60, true, true, carEncoder, g.edge(3, 6).setDistance(11000)).setName("3-6");
-        tmpEdge.setFlags(carManager.handleWayTags(w, relFlags));
-        tmpEdge = GHUtility.setSpeed(60, true, true, carEncoder, g.edge(4, 7).setDistance(10000)).setName("4-7");
-        tmpEdge.setFlags(carManager.handleWayTags(w, relFlags));
-        tmpEdge = GHUtility.setSpeed(60, true, true, carEncoder, g.edge(5, 8).setDistance(10000)).setName("5-8");
-        tmpEdge.setFlags(carManager.handleWayTags(w, relFlags));
-
-        w.setTag("maxspeed", "40");
-        tmpEdge = GHUtility.setSpeed(60, true, true, carEncoder, g.edge(6, 7).setDistance(11000)).setName("6-7");
-        tmpEdge.setFlags(carManager.handleWayTags(w, relFlags));
-        tmpEdge = GHUtility.setSpeed(60, true, true, carEncoder, g.edge(7, 8).setDistance(10000));
+        GHUtility.setSpeed(36, true, true, carEncoder, g.edge(6, 7).setDistance(11000)).setName("6-7");
+        EdgeIteratorState tmpEdge = GHUtility.setSpeed(36, true, true, carEncoder, g.edge(7, 8).setDistance(10000));
         PointList list = new PointList();
         list.add(1.0, 1.15);
         list.add(1.0, 1.16);
         tmpEdge.setWayGeometry(list);
         tmpEdge.setName("7-8");
-        tmpEdge.setFlags(carManager.handleWayTags(w, relFlags));
 
-        w.setTag("maxspeed", "50");
         // missing edge name
-        tmpEdge = GHUtility.setSpeed(60, true, true, carEncoder, g.edge(9, 10).setDistance(10000));
-        tmpEdge.setFlags(carManager.handleWayTags(w, relFlags));
-        tmpEdge = GHUtility.setSpeed(60, true, true, carEncoder, g.edge(8, 9).setDistance(20000));
+        GHUtility.setSpeed(45, true, true, carEncoder, g.edge(9, 10).setDistance(10000));
+        tmpEdge = GHUtility.setSpeed(45, true, true, carEncoder, g.edge(8, 9).setDistance(20000));
         list.clear();
         list.add(1.0, 1.3);
         list.add(1.0, 1.3001);
@@ -132,7 +100,6 @@ public class PathSimplificationTest {
         list.add(1.0, 1.3003);
         tmpEdge.setName("8-9");
         tmpEdge.setWayGeometry(list);
-        tmpEdge.setFlags(carManager.handleWayTags(w, relFlags));
 
         // Path is: [0 0-1, 3 1-4, 6 4-7, 9 7-8, 11 8-9, 10 9-10]
         ShortestWeighting weighting = new ShortestWeighting(carEncoder);

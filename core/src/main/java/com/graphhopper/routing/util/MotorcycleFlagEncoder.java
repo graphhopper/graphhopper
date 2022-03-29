@@ -19,14 +19,16 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.routing.weighting.CurvatureWeighting;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
+import com.graphhopper.util.PointList;
 
 import java.util.HashSet;
 import java.util.List;
@@ -43,18 +45,21 @@ import static com.graphhopper.routing.util.EncodingManager.getKey;
 public class MotorcycleFlagEncoder extends CarFlagEncoder {
     private final HashSet<String> avoidSet = new HashSet<>();
     private final HashSet<String> preferSet = new HashSet<>();
-    private DecimalEncodedValue priorityWayEncoder;
-    private DecimalEncodedValue curvatureEncoder;
+    private final DecimalEncodedValue priorityWayEncoder;
+    private final DecimalEncodedValue curvatureEncoder;
 
     public MotorcycleFlagEncoder() {
         this(new PMap());
     }
 
     public MotorcycleFlagEncoder(PMap properties) {
-        super(properties.putObject("speed_two_directions", true));
+        super(properties.putObject("name", "motorcycle").putObject("speed_two_directions", true));
 
-        blockByDefaultBarriers.remove("bus_trap");
-        blockByDefaultBarriers.remove("sump_buster");
+        priorityWayEncoder = new DecimalEncodedValueImpl(getKey(getName(), "priority"), 4, PriorityCode.getFactor(1), false);
+        curvatureEncoder = new DecimalEncodedValueImpl(getKey(getName(), "curvature"), 4, 0.1, false);
+
+        barriers.remove("bus_trap");
+        barriers.remove("sump_buster");
 
         trackTypeSpeedMap.clear();
         defaultSpeedMap.clear();
@@ -74,7 +79,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
         preferSet.add("secondary");
         preferSet.add("tertiary");
 
-        maxPossibleSpeed = 120;
+        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(properties.getDouble("max_speed", 120));
 
         // autobahn
         defaultSpeedMap.put("motorway", 100);
@@ -107,12 +112,10 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
      * Define the place of the speedBits in the edge flags for car.
      */
     @Override
-    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix) {
-        // first two bits are reserved for route handling in superclass
-        super.createEncodedValues(registerNewEncodedValue, prefix);
-
-        registerNewEncodedValue.add(priorityWayEncoder = new DecimalEncodedValueImpl(getKey(prefix, "priority"), 4, PriorityCode.getFactor(1), false));
-        registerNewEncodedValue.add(curvatureEncoder = new DecimalEncodedValueImpl(getKey(prefix, "curvature"), 4, 0.1, false));
+    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue) {
+        super.createEncodedValues(registerNewEncodedValue);
+        registerNewEncodedValue.add(priorityWayEncoder);
+        registerNewEncodedValue.add(curvatureEncoder);
     }
 
     @Override
@@ -234,7 +237,12 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
     }
 
     private double getBeelineDistance(ReaderWay way) {
-        return way.getTag("estimated_distance", Double.POSITIVE_INFINITY);
+        PointList pointList = way.getTag("point_list", null);
+        if (pointList == null)
+            throw new IllegalStateException("The artificial 'point_list' tag is missing for way: " + way.getId());
+        if (pointList.size() < 2)
+            throw new IllegalStateException("The artificial 'point_list' tag contained less than two points for way: " + way.getId());
+        return DistanceCalcEarth.DIST_EARTH.calcDist(pointList.getLat(0), pointList.getLon(0), pointList.getLat(pointList.size() - 1), pointList.getLon(pointList.size() - 1));
     }
 
     /**
@@ -285,8 +293,4 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
         return PriorityWeighting.class.isAssignableFrom(feature);
     }
 
-    @Override
-    public String toString() {
-        return "motorcycle";
-    }
 }

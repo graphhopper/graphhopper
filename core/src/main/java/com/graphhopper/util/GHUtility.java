@@ -181,7 +181,9 @@ public class GHUtility {
         int from = fwd ? edge.getBaseNode() : edge.getAdjNode();
         int to = fwd ? edge.getAdjNode() : edge.getBaseNode();
         System.out.printf(Locale.ROOT,
-                "graph.edge(%d, %d, %f, %s); // edgeId=%s\n", from, to, edge.getDistance(), fwd && bwd ? "true" : "false", edge.getEdge());
+                "GHUtility.setSpeed(%f, %f, encoder, graph.edge(%d, %d).setDistance(%f)); // edgeId=%s\n",
+                fwd ? edge.get(encoder.getAverageSpeedEnc()) : 0, bwd ? edge.getReverse(encoder.getAverageSpeedEnc()) : 0,
+                from, to, edge.getDistance(), edge.getEdge());
     }
 
     /**
@@ -415,7 +417,7 @@ public class GHUtility {
     public static GraphHopperStorage newStorage(GraphHopperStorage store) {
         Directory outdir = guessDirectory(store);
         boolean is3D = store.getNodeAccess().is3D();
-        return new GraphBuilder(store.getEncodingManager())
+        return new GraphBuilder(store.getTagParserManager())
                 .withTurnCosts(store.getTurnCostStorage() != null)
                 .set3D(is3D)
                 .setDir(outdir)

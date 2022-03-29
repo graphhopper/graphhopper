@@ -21,9 +21,7 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.JsonFeature;
@@ -44,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class CustomModelParserTest {
 
     CarFlagEncoder encoder;
-    Graph graph;
+    BaseGraph graph;
     EncodingManager encodingManager;
     EnumEncodedValue<RoadClass> roadClassEnc;
     DecimalEncodedValue avgSpeedEnc;
@@ -55,7 +53,7 @@ class CustomModelParserTest {
         encoder = new CarFlagEncoder();
         countryEnc = new StringEncodedValue("country", 10);
         encodingManager = new EncodingManager.Builder().add(encoder).add(countryEnc).add(new EnumEncodedValue<>(Surface.KEY, Surface.class)).build();
-        graph = new GraphBuilder(encodingManager).create();
+        graph = new BaseGraph.Builder(encodingManager).create();
         avgSpeedEnc = encoder.getAverageSpeedEnc();
         roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
     }
@@ -67,7 +65,7 @@ class CustomModelParserTest {
         CustomWeighting.EdgeToDoubleMapping priorityMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager,
                 avgSpeedEnc, encoder.getMaxSpeed(), null).getEdgeToPriorityMapping();
 
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(100).set(roadClassEnc, RoadClass.PRIMARY);
         EdgeIteratorState edge2 = graph.edge(1, 2).setDistance(100).set(roadClassEnc, RoadClass.SECONDARY);
 

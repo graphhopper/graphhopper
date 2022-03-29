@@ -398,6 +398,36 @@ public class OSMReaderTest {
     }
 
     @Test
+    public void testFords() {
+        CarFlagEncoder car = new CarFlagEncoder(new PMap("block_fords=true"));
+        GraphHopper hopper = new GraphHopper();
+        hopper.getTagParserManagerBuilder().add(car);
+        hopper.setOSMFile(getClass().getResource("test-barriers3.xml").getFile()).
+                setGraphHopperLocation(dir).
+                setProfiles(
+                        new Profile("car").setVehicle("car").setWeighting("fastest")
+                ).
+                setMinNetworkSize(0).
+                importOrLoad();
+        Graph graph = hopper.getGraphHopperStorage();
+        // our way is split into five edges, because there are two ford nodes
+        assertEquals(5, graph.getEdges());
+        FlagEncoder encoder = hopper.getEncodingManager().fetchEdgeEncoders().get(0);
+        int blocked = 0;
+        int notBlocked = 0;
+        AllEdgesIterator edge = graph.getAllEdges();
+        while (edge.next()) {
+            if (!edge.get(encoder.getAccessEnc()))
+                blocked++;
+            else
+                notBlocked++;
+        }
+        // two blocked edges and three accessible edges
+        assertEquals(2, blocked);
+        assertEquals(3, notBlocked);
+    }
+
+    @Test
     public void avoidsLoopEdges_1525() {
         // loops in OSM should be avoided by adding additional tower node (see #1525, #1531)
         //     C - D
@@ -465,7 +495,7 @@ public class OSMReaderTest {
 
     @Test
     public void testRelation() {
-        EncodingManager manager = EncodingManager.create("bike");
+        TagParserManager manager = TagParserManager.create("bike");
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 1, ""));
         osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 2, ""));
@@ -562,7 +592,7 @@ public class OSMReaderTest {
     public void testRoadAttributes() {
         String fileRoadAttributes = "test-road-attributes.xml";
         GraphHopper hopper = new GraphHopperFacade(fileRoadAttributes);
-        hopper.getEncodingManagerBuilder().add(new OSMMaxWidthParser()).add(new OSMMaxHeightParser()).add(new OSMMaxWeightParser());
+        hopper.getTagParserManagerBuilder().add(new OSMMaxWidthParser()).add(new OSMMaxHeightParser()).add(new OSMMaxWeightParser());
         hopper.importOrLoad();
 
         DecimalEncodedValue widthEnc = hopper.getEncodingManager().getDecimalEncodedValue(MaxWidth.KEY);
@@ -632,21 +662,16 @@ public class OSMReaderTest {
     @Test
     public void testTurnFlagCombination() {
         CarFlagEncoder car = new CarFlagEncoder(5, 5, 24);
-        CarFlagEncoder truck = new CarFlagEncoder(5, 5, 24) {
+        CarFlagEncoder truck = new CarFlagEncoder("truck", 5, 5, 24) {
             @Override
             public TransportationMode getTransportationMode() {
                 return TransportationMode.HGV;
             }
-
-            @Override
-            public String toString() {
-                return "truck";
-            }
         };
-        BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24);
+        BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24, false);
 
         GraphHopper hopper = new GraphHopper();
-        hopper.getEncodingManagerBuilder().add(bike).add(truck).add(car);
+        hopper.getTagParserManagerBuilder().add(bike).add(truck).add(car);
         hopper.setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
                 setGraphHopperLocation(dir).
                 setProfiles(
@@ -888,10 +913,10 @@ public class OSMReaderTest {
 
     @Test
     public void testCountries() throws IOException {
-        EncodingManager em = EncodingManager.create("car");
+        TagParserManager em = TagParserManager.create("car");
         EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
-        GraphHopperStorage graph = new GraphBuilder(em).build();
-        OSMReader reader = new OSMReader(graph, new OSMReaderConfig());
+        BaseGraph graph = new BaseGraph.Builder(em.getEncodingManager()).create();
+        OSMReader reader = new OSMReader(graph, em, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
         reader.setAreaIndex(createCountryIndex());
         // there are two edges, both with highway=track, one in Berlin, one in Paris
@@ -910,13 +935,13 @@ public class OSMReaderTest {
     @Test
     public void testCurvedWayAlongBorder() throws IOException {
         // see https://discuss.graphhopper.com/t/country-of-way-is-wrong-on-road-near-border-with-curvature/6908/2
-        EncodingManager em = EncodingManager.start()
+        TagParserManager em = TagParserManager.start()
                 .add(new CarFlagEncoder())
                 .add(new CountryParser())
                 .build();
         EnumEncodedValue<Country> countryEnc = em.getEnumEncodedValue(Country.KEY, Country.class);
-        GraphHopperStorage graph = new GraphBuilder(em).build();
-        OSMReader reader = new OSMReader(graph, new OSMReaderConfig());
+        BaseGraph graph = new BaseGraph.Builder(em.getEncodingManager()).create();
+        OSMReader reader = new OSMReader(graph, em, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
         reader.setAreaIndex(createCountryIndex());
         reader.setFile(new File(getClass().getResource("test-osm12.xml").getFile()));
@@ -925,6 +950,12 @@ public class OSMReaderTest {
         AllEdgesIterator iter = graph.getAllEdges();
         iter.next();
         assertEquals(Country.BGR, iter.get(countryEnc));
+    }
+
+    @Test
+    public void testFixWayName() {
+        assertEquals("B8, B12", OSMReader.fixWayName("B8;B12"));
+        assertEquals("B8, B12", OSMReader.fixWayName("B8; B12"));
     }
 
     private AreaIndex<CustomArea> createCountryIndex() {
@@ -949,20 +980,20 @@ public class OSMReaderTest {
             BikeFlagEncoder bikeEncoder;
             if (turnCosts) {
                 carEncoder = new CarFlagEncoder(5, 5, 1);
-                bikeEncoder = new BikeFlagEncoder(4, 2, 1);
+                bikeEncoder = new BikeFlagEncoder(4, 2, 1, false);
             } else {
                 carEncoder = new CarFlagEncoder();
                 bikeEncoder = new BikeFlagEncoder();
             }
 
             footEncoder = new FootFlagEncoder();
-            getEncodingManagerBuilder().add(footEncoder).add(carEncoder).add(bikeEncoder).
-                    setPreferredLanguage(prefLang);
+            getTagParserManagerBuilder().add(footEncoder).add(carEncoder).add(bikeEncoder);
+            getReaderConfig().setPreferredLanguage(prefLang);
         }
 
         @Override
         protected void importOSM() {
-            GraphHopperStorage tmpGraph = new GraphBuilder(getEncodingManager()).set3D(hasElevation()).withTurnCosts(getEncodingManager().needsTurnCostsSupport()).build();
+            GraphHopperStorage tmpGraph = new GraphBuilder(getTagParserManager()).set3D(hasElevation()).withTurnCosts(getTagParserManager().needsTurnCostsSupport()).build();
             setGraphHopperStorage(tmpGraph);
             super.importOSM();
             carAccessEnc = carEncoder.getAccessEnc();

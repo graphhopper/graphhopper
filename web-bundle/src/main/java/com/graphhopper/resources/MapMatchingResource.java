@@ -24,12 +24,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
+import com.graphhopper.gpx.GpxConversions;
+import com.graphhopper.jackson.Gpx;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.matching.*;
-import com.graphhopper.jackson.Gpx;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.util.*;
-import com.graphhopper.gpx.GpxConversions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

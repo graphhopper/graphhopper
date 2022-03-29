@@ -59,9 +59,9 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
     private final PtGraph ptGraph;
 
     @Inject
-    public PtRouterFreeWalkImpl(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage, PtGraph ptGraph, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
+    public PtRouterFreeWalkImpl(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
         this.config = config;
-        this.weightingFactory = new DefaultWeightingFactory(graphHopperStorage, graphHopperStorage.getEncodingManager());
+        this.weightingFactory = new DefaultWeightingFactory(graphHopperStorage.getBaseGraph(), graphHopperStorage.getEncodingManager());
         this.accessEgressWeighting = new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder("foot"));
         this.translationMap = translationMap;
         this.graphHopperStorage = graphHopperStorage;
@@ -69,7 +69,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         this.gtfsStorage = gtfsStorage;
         this.realtimeFeed = realtimeFeed;
         this.pathDetailsBuilderFactory = pathDetailsBuilderFactory;
-        this.ptGraph = ptGraph;
+        this.ptGraph = gtfsStorage.getPtGraph();
     }
 
     @Override
@@ -81,16 +81,14 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         private final GraphHopperConfig config;
         private final TranslationMap translationMap;
         private final GraphHopperStorage graphHopperStorage;
-        private PtGraph ptGraph;
         private final LocationIndex locationIndex;
         private final GtfsStorage gtfsStorage;
         private final Map<String, Transfers> transfers;
 
-        public Factory(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, PtGraph ptGraph, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
+        public Factory(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
             this.config = config;
             this.translationMap = translationMap;
             this.graphHopperStorage = graphHopperStorage;
-            this.ptGraph = ptGraph;
             this.locationIndex = locationIndex;
             this.gtfsStorage = gtfsStorage;
             this.transfers = new HashMap<>();
@@ -102,11 +100,11 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         public PtRouter createWith(GtfsRealtime.FeedMessage realtimeFeed) {
             Map<String, GtfsRealtime.FeedMessage> realtimeFeeds = new HashMap<>();
             realtimeFeeds.put("gtfs_0", realtimeFeed);
-            return new PtRouterFreeWalkImpl(config, translationMap, graphHopperStorage, locationIndex, gtfsStorage, ptGraph, RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, this.transfers, realtimeFeeds), new PathDetailsBuilderFactory());
+            return new PtRouterFreeWalkImpl(config, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, this.transfers, realtimeFeeds), new PathDetailsBuilderFactory());
         }
 
         public PtRouter createWithoutRealtimeFeed() {
-            return new PtRouterFreeWalkImpl(config, translationMap, graphHopperStorage, locationIndex, gtfsStorage, ptGraph, RealtimeFeed.empty(), new PathDetailsBuilderFactory());
+            return new PtRouterFreeWalkImpl(config, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty(), new PathDetailsBuilderFactory());
         }
     }
 
@@ -187,7 +185,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         }
 
         private void parseSolutionsAndAddToResponse(List<List<Label.Transition>> solutions, PointList waypoints) {
-            TripFromLabel tripFromLabel = new TripFromLabel(queryGraph, gtfsStorage, realtimeFeed, pathDetailsBuilderFactory);
+            TripFromLabel tripFromLabel = new TripFromLabel(queryGraph, gtfsStorage, realtimeFeed, pathDetailsBuilderFactory, walkSpeedKmH);
             for (List<Label.Transition> solution : solutions) {
                 final ResponsePath responsePath = tripFromLabel.createResponsePath(translation, waypoints, queryGraph, connectingWeighting, solution, requestedPathDetails, connectingProfile.getVehicle(), includeElevation);
                 responsePath.setImpossible(solution.stream().anyMatch(t -> t.label.impossible));

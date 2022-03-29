@@ -40,11 +40,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class AlternativeRouteEdgeCHTest {
-    private final FlagEncoder carFE = new CarFlagEncoder(new PMap().putObject("turn_costs", true));
+    private final CarFlagEncoder carFE = new CarFlagEncoder(new PMap().putObject("turn_costs", true));
     private final EncodingManager em = EncodingManager.create(carFE);
 
-    public GraphHopperStorage createTestGraph(EncodingManager tmpEM) {
-        final GraphHopperStorage graph = new GraphBuilder(tmpEM).withTurnCosts(true).create();
+    public BaseGraph createTestGraph(EncodingManager tmpEM) {
+        final BaseGraph graph = new BaseGraph.Builder(tmpEM).withTurnCosts(true).create();
 
         /*
 
@@ -88,21 +88,21 @@ public class AlternativeRouteEdgeCHTest {
         return graph;
     }
 
-    private RoutingCHGraph prepareCH(GraphHopperStorage graph) {
+    private RoutingCHGraph prepareCH(BaseGraph graph) {
         TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(carFE, graph.getTurnCostStorage());
         CHConfig chConfig = CHConfig.edgeBased("profile", new FastestWeighting(carFE, turnCostProvider));
-        PrepareContractionHierarchies contractionHierarchies = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
+        PrepareContractionHierarchies contractionHierarchies = PrepareContractionHierarchies.fromGraph(graph, chConfig);
         PrepareContractionHierarchies.Result res = contractionHierarchies.doWork();
-        return graph.createCHGraph(res.getCHStorage(), res.getCHConfig());
+        return RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
     }
 
     @Test
     public void testAssumptions() {
-        GraphHopperStorage g = createTestGraph(em);
+        BaseGraph g = createTestGraph(em);
         TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(carFE, g.getTurnCostStorage());
         CHConfig chConfig = CHConfig.edgeBased("profile", new FastestWeighting(carFE, turnCostProvider));
-        CHStorage chStorage = g.createCHStorage(chConfig);
-        RoutingCHGraph chGraph = g.createCHGraph(chStorage, chConfig);
+        CHStorage chStorage = CHStorage.fromGraph(g, chConfig);
+        RoutingCHGraph chGraph = RoutingCHGraphImpl.fromGraph(g, chStorage, chConfig);
         DijkstraBidirectionEdgeCHNoSOD router = new DijkstraBidirectionEdgeCHNoSOD(chGraph);
         Path path = router.calcPath(5, 10);
         assertTrue(path.isFound());
@@ -122,7 +122,7 @@ public class AlternativeRouteEdgeCHTest {
 
     @Test
     public void testCalcAlternatives() {
-        GraphHopperStorage g = createTestGraph(em);
+        BaseGraph g = createTestGraph(em);
         PMap hints = new PMap();
         hints.putObject("alternative_route.max_weight_factor", 4);
         hints.putObject("alternative_route.local_optimality_factor", 0.5);
@@ -139,7 +139,7 @@ public class AlternativeRouteEdgeCHTest {
 
     @Test
     public void testCalcOtherAlternatives() {
-        GraphHopperStorage g = createTestGraph(em);
+        BaseGraph g = createTestGraph(em);
         PMap hints = new PMap();
         hints.putObject("alternative_route.max_weight_factor", 4);
         hints.putObject("alternative_route.local_optimality_factor", 0.5);
@@ -147,10 +147,9 @@ public class AlternativeRouteEdgeCHTest {
         RoutingCHGraph routingCHGraph = prepareCH(g);
         AlternativeRouteEdgeCH altDijkstra = new AlternativeRouteEdgeCH(routingCHGraph, hints);
         List<AlternativeRouteEdgeCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(10, 5);
-        assertEquals(3, pathInfos.size());
+        assertEquals(2, pathInfos.size());
         assertEquals(IntArrayList.from(10, 4, 3, 6, 5), pathInfos.get(0).path.calcNodes());
-        assertEquals(IntArrayList.from(10, 4, 8, 7, 6, 5), pathInfos.get(1).path.calcNodes());
-        assertEquals(IntArrayList.from(10, 4, 8, 7, 6, 3, 2, 9, 1, 5), pathInfos.get(2).path.calcNodes());
+        assertEquals(IntArrayList.from(10, 12, 11, 4, 3, 6, 5), pathInfos.get(1).path.calcNodes());
         // The shortest path works (no restrictions on the way back
     }
 

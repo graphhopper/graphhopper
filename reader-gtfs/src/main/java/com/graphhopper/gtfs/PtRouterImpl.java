@@ -62,7 +62,7 @@ public final class PtRouterImpl implements PtRouter {
     @Inject
     public PtRouterImpl(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
         this.config = config;
-        this.weightingFactory = new DefaultWeightingFactory(graphHopperStorage, graphHopperStorage.getEncodingManager());
+        this.weightingFactory = new DefaultWeightingFactory(graphHopperStorage.getBaseGraph(), graphHopperStorage.getEncodingManager());
         this.translationMap = translationMap;
         this.graphHopperStorage = graphHopperStorage;
         this.locationIndex = locationIndex;
@@ -185,7 +185,7 @@ public final class PtRouterImpl implements PtRouter {
         }
 
         private void parseSolutionsAndAddToResponse(List<List<Label.Transition>> solutions, PointList waypoints) {
-            TripFromLabel tripFromLabel = new TripFromLabel(queryGraph, gtfsStorage, realtimeFeed, pathDetailsBuilderFactory);
+            TripFromLabel tripFromLabel = new TripFromLabel(queryGraph, gtfsStorage, realtimeFeed, pathDetailsBuilderFactory, walkSpeedKmH);
             for (List<Label.Transition> solution : solutions) {
                 final ResponsePath responsePath = tripFromLabel.createResponsePath(translation, waypoints, queryGraph, connectingWeighting, solution, requestedPathDetails, connectingProfile.getVehicle(), includeElevation);
                 responsePath.setImpossible(solution.stream().anyMatch(t -> t.label.impossible));

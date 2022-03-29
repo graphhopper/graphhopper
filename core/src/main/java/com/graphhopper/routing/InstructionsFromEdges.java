@@ -18,15 +18,12 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.AccessFilter;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FiniteWeightFilter;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
-
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 
 /**
  * This class calculates instructions from the edges in a Path.
@@ -38,14 +35,12 @@ import static com.graphhopper.routing.util.EncodingManager.getKey;
 public class InstructionsFromEdges implements Path.EdgeVisitor {
 
     private final Weighting weighting;
-    private final FlagEncoder encoder;
     private final NodeAccess nodeAccess;
 
     private final InstructionList ways;
     private final EdgeExplorer outEdgeExplorer;
-    private final EdgeExplorer crossingExplorer;
+    private final EdgeExplorer allExplorer;
     private final BooleanEncodedValue roundaboutEnc;
-    private final BooleanEncodedValue accessEnc;
     private final BooleanEncodedValue roadClassLinkEnc;
     private final EnumEncodedValue<RoadClass> roadClassEnc;
     private final DecimalEncodedValue maxSpeedEnc;
@@ -86,9 +81,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
     public InstructionsFromEdges(Graph graph, Weighting weighting, EncodedValueLookup evLookup,
                                  InstructionList ways) {
-        this.encoder = weighting.getFlagEncoder();
         this.weighting = weighting;
-        this.accessEnc = evLookup.getBooleanEncodedValue(getKey(encoder.toString(), "access"));
         this.roundaboutEnc = evLookup.getBooleanEncodedValue(Roundabout.KEY);
         this.roadClassEnc = evLookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         this.roadClassLinkEnc = evLookup.getBooleanEncodedValue(RoadClassLink.KEY);
@@ -98,8 +91,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevNode = -1;
         prevInRoundabout = false;
         prevName = null;
-        outEdgeExplorer = graph.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc()));
-        crossingExplorer = graph.createEdgeExplorer(AccessFilter.allEdges(encoder.getAccessEnc()));
+        outEdgeExplorer = graph.createEdgeExplorer(edge -> Double.isFinite(weighting.calcEdgeWeightWithAccess(edge, false)));
+        allExplorer = graph.createEdgeExplorer();
     }
 
     /**
@@ -199,7 +192,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             // out of the roundabout
             EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(edge.getAdjNode());
             while (edgeIter.next()) {
-                if (!roundaboutEnc.getBool(false, edgeIter.getFlags())) {
+                if (!edgeIter.get(roundaboutEnc)) {
                     ((RoundaboutInstruction) prevInstruction).increaseExitNumber();
                     break;
                 }
@@ -207,7 +200,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         } else if (prevInRoundabout) //previously in roundabout but not anymore
         {
-
             prevInstruction.setName(name);
 
             // calc angle between roundabout entrance and exit
@@ -252,7 +244,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                         && (sign < 0) == (prevInstruction.getSign() < 0)
                         && (Math.abs(sign) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(sign) == Instruction.TURN_RIGHT || Math.abs(sign) == Instruction.TURN_SHARP_RIGHT)
                         && (Math.abs(prevInstruction.getSign()) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_SHARP_RIGHT)
-                        && edge.get(accessEnc) != edge.getReverse(accessEnc)
+                        && Double.isFinite(weighting.calcEdgeWeightWithAccess(edge, false)) != Double.isFinite(weighting.calcEdgeWeightWithAccess(edge, true))
                         && InstructionsHelper.isNameSimilar(prevInstructionName, name)) {
                     // Chances are good that this is a u-turn, we only need to check if the orientation matches
                     GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
@@ -330,7 +322,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevOrientation = AngleCalc.ANGLE_CALC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
         int sign = InstructionsHelper.calculateSign(prevLat, prevLon, lat, lon, prevOrientation);
 
-        InstructionsOutgoingEdges outgoingEdges = new InstructionsOutgoingEdges(prevEdge, edge, encoder, maxSpeedEnc, roadClassEnc, roadClassLinkEnc, crossingExplorer, nodeAccess, prevNode, baseNode, adjNode);
+        InstructionsOutgoingEdges outgoingEdges = new InstructionsOutgoingEdges(prevEdge, edge, weighting, maxSpeedEnc,
+                roadClassEnc, roadClassLinkEnc, allExplorer, nodeAccess, prevNode, baseNode, adjNode);
         int nrOfPossibleTurns = outgoingEdges.getAllowedTurns();
 
         // there is no other turn possible

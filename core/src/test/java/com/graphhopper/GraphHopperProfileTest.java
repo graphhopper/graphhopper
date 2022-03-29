@@ -62,7 +62,7 @@ public class GraphHopperProfileTest {
     @Test
     public void vehicleDoesNotExist_error() {
         final GraphHopper hopper = new GraphHopper();
-        hopper.getEncodingManagerBuilder().add(new CarFlagEncoder());
+        hopper.getTagParserManagerBuilder().add(new CarFlagEncoder());
         hopper.setGraphHopperLocation(GH_LOCATION).setStoreOnFlush(false).
                 setProfiles(new Profile("profile").setVehicle("your_car"));
         assertIllegalArgument(hopper::load, "entry in encoder list not supported: your_car");

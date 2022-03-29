@@ -77,7 +77,7 @@ public class LandmarkStorage {
     private final List<int[]> landmarkIDs;
     private double factor = -1;
     private final static double DOUBLE_MLTPL = 1e6;
-    private final GraphHopperStorage graph;
+    private final BaseGraph graph;
     private final NodeAccess na;
     private final FlagEncoder encoder;
     private final Weighting weighting;
@@ -95,7 +95,7 @@ public class LandmarkStorage {
      */
     static final long PRECISION = 1 << 16;
 
-    public LandmarkStorage(GraphHopperStorage graph, Directory dir, final LMConfig lmConfig, int landmarks) {
+    public LandmarkStorage(BaseGraph graph, Directory dir, final LMConfig lmConfig, int landmarks) {
         this.graph = graph;
         this.na = graph.getNodeAccess();
         this.minimumNodes = Math.min(graph.getNodes() / 2, 500_000);
@@ -245,12 +245,12 @@ public class LandmarkStorage {
         String snKey = Subnetwork.key(lmConfig.getName());
         // TODO We could use EdgeBasedTarjanSCC instead of node-based TarjanSCC here to get the small networks directly,
         //  instead of using the subnetworkEnc from PrepareRoutingSubnetworks.
-        if (!graph.getEncodingManager().hasEncodedValue(snKey))
+        if (!encoder.hasEncodedValue(snKey))
             throw new IllegalArgumentException("EncodedValue '" + snKey + "' does not exist. For Landmarks this is " +
                     "currently required (also used in PrepareRoutingSubnetworks). See #2256");
 
         // Exclude edges that we previously marked in PrepareRoutingSubnetworks to avoid problems like "connection not found".
-        final BooleanEncodedValue edgeInSubnetworkEnc = graph.getEncodingManager().getBooleanEncodedValue(snKey);
+        final BooleanEncodedValue edgeInSubnetworkEnc = encoder.getBooleanEncodedValue(snKey);
         final IntHashSet blockedEdges;
         // We use the areaIndex to split certain areas from each other but do not permanently change the base graph
         // so that other algorithms still can route through these regions. This is done to increase the density of

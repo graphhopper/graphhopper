@@ -4,8 +4,7 @@ import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TagParserManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -44,17 +43,18 @@ public class TrafficChangeWithNodeOrderingReusingTest {
 
     private static class Fixture {
         private final int maxDeviationPercentage;
-        private final GraphHopperStorage ghStorage;
+        private final BaseGraph graph;
+        private final TagParserManager em;
         private final CHConfig baseCHConfig;
         private final CHConfig trafficCHConfig;
 
         public Fixture(int maxDeviationPercentage) {
             this.maxDeviationPercentage = maxDeviationPercentage;
-            FlagEncoder encoder = new CarFlagEncoder();
-            EncodingManager em = EncodingManager.create(encoder);
+            CarFlagEncoder encoder = new CarFlagEncoder();
+            em = TagParserManager.create(encoder);
             baseCHConfig = CHConfig.nodeBased("base", new FastestWeighting(encoder));
             trafficCHConfig = CHConfig.nodeBased("traffic", new RandomDeviationWeighting(baseCHConfig.getWeighting(), maxDeviationPercentage));
-            ghStorage = new GraphBuilder(em).build();
+            graph = new BaseGraph.Builder(em.getEncodingManager()).create();
         }
 
         @Override
@@ -84,41 +84,40 @@ public class TrafficChangeWithNodeOrderingReusingTest {
 
         LOGGER.info("Running performance test, max deviation percentage: " + f.maxDeviationPercentage);
         // read osm
-        OSMReader reader = new OSMReader(f.ghStorage, new OSMReaderConfig());
+        OSMReader reader = new OSMReader(f.graph, f.em, new OSMReaderConfig());
         reader.setFile(new File(OSM_FILE));
         reader.readGraph();
-        f.ghStorage.freeze();
+        f.graph.freeze();
 
         // create CH
-        PrepareContractionHierarchies basePch = PrepareContractionHierarchies.fromGraphHopperStorage(f.ghStorage, f.baseCHConfig);
-        basePch.doWork();
+        PrepareContractionHierarchies basePch = PrepareContractionHierarchies.fromGraph(f.graph, f.baseCHConfig);
+        PrepareContractionHierarchies.Result res = basePch.doWork();
 
         // check correctness & performance
-        checkCorrectness(f.ghStorage, f.baseCHConfig, seed, 100);
-        runPerformanceTest(f.ghStorage, f.baseCHConfig, seed, numQueries);
+        checkCorrectness(f.graph, res.getCHStorage(), f.baseCHConfig, seed, 100);
+        runPerformanceTest(f.graph, res.getCHStorage(), f.baseCHConfig, seed, numQueries);
 
         // now we re-use the contraction order from the previous contraction and re-run it with the traffic weighting
-        CHStorage chStore = f.ghStorage.createCHStorage(f.baseCHConfig);
-        PrepareContractionHierarchies trafficPch = PrepareContractionHierarchies.fromGraphHopperStorage(f.ghStorage, f.trafficCHConfig)
-                .useFixedNodeOrdering(chStore.getNodeOrderingProvider());
-        trafficPch.doWork();
+        PrepareContractionHierarchies trafficPch = PrepareContractionHierarchies.fromGraph(f.graph, f.trafficCHConfig)
+                .useFixedNodeOrdering(res.getCHStorage().getNodeOrderingProvider());
+        res = trafficPch.doWork();
 
         // check correctness & performance
-        checkCorrectness(f.ghStorage, f.trafficCHConfig, seed, 100);
-        runPerformanceTest(f.ghStorage, f.trafficCHConfig, seed, numQueries);
+        checkCorrectness(f.graph, res.getCHStorage(), f.trafficCHConfig, seed, 100);
+        runPerformanceTest(f.graph, res.getCHStorage(), f.trafficCHConfig, seed, numQueries);
     }
 
-    private static void checkCorrectness(GraphHopperStorage ghStorage, CHConfig chConfig, long seed, long numQueries) {
+    private static void checkCorrectness(BaseGraph graph, CHStorage chStorage, CHConfig chConfig, long seed, long numQueries) {
         LOGGER.info("checking correctness");
-        RoutingCHGraph chGraph = ghStorage.createCHGraph(ghStorage.createCHStorage(chConfig), chConfig);
+        RoutingCHGraph chGraph = RoutingCHGraphImpl.fromGraph(graph, chStorage, chConfig);
         Random rnd = new Random(seed);
         int numFails = 0;
         for (int i = 0; i < numQueries; ++i) {
-            Dijkstra dijkstra = new Dijkstra(ghStorage, chConfig.getWeighting(), TraversalMode.NODE_BASED);
+            Dijkstra dijkstra = new Dijkstra(graph, chConfig.getWeighting(), TraversalMode.NODE_BASED);
             RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(new PMap());
 
-            int from = rnd.nextInt(ghStorage.getNodes());
-            int to = rnd.nextInt(ghStorage.getNodes());
+            int from = rnd.nextInt(graph.getNodes());
+            int to = rnd.nextInt(graph.getNodes());
             double dijkstraWeight = dijkstra.calcPath(from, to).getWeight();
             double chWeight = chAlgo.calcPath(from, to).getWeight();
             double error = Math.abs(dijkstraWeight - chWeight);
@@ -131,9 +130,9 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         assertEquals(0, numFails);
     }
 
-    private static void runPerformanceTest(final GraphHopperStorage ghStorage, CHConfig chConfig, long seed, final int iterations) {
-        final int numNodes = ghStorage.getNodes();
-        RoutingCHGraph chGraph = ghStorage.createCHGraph(ghStorage.createCHStorage(chConfig), chConfig);
+    private static void runPerformanceTest(final BaseGraph graph, CHStorage chStorage, CHConfig chConfig, long seed, final int iterations) {
+        final int numNodes = graph.getNodes();
+        RoutingCHGraph chGraph = RoutingCHGraphImpl.fromGraph(graph, chStorage, chConfig);
         final Random random = new Random(seed);
 
         LOGGER.info("Running performance test, seed = {}", seed);

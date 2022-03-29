@@ -17,19 +17,33 @@
  */
 package com.graphhopper.routing.ev;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.storage.IntsRef;
 
 /**
  * This class implements a simple boolean storage via an UnsignedIntEncodedValue with 1 bit.
  */
 public final class SimpleBooleanEncodedValue extends IntEncodedValueImpl implements BooleanEncodedValue {
-
     public SimpleBooleanEncodedValue(String name) {
         this(name, false);
     }
 
     public SimpleBooleanEncodedValue(String name, boolean storeBothDirections) {
         super(name, 1, storeBothDirections);
+    }
+
+    @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+    SimpleBooleanEncodedValue(
+            @JsonProperty("name") String name,
+            @JsonProperty("bits") int bits,
+            @JsonProperty("minValue") int minValue,
+            @JsonProperty("maxValue") int maxValue,
+            @JsonProperty("negateReverseDirection") boolean negateReverseDirection,
+            @JsonProperty("storeTwoDirections") boolean storeTwoDirections
+    ) {
+        // we need this constructor for Jackson
+        super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections);
     }
 
     @Override

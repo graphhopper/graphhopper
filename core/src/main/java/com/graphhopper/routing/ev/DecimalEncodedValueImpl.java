@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.ev;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.storage.IntsRef;
 
 /**
@@ -68,6 +70,23 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
             throw new IllegalArgumentException("defaultIsInfinity cannot be true when minValue is negative");
     }
 
+    @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+    DecimalEncodedValueImpl(@JsonProperty("name") String name,
+                            @JsonProperty("bits") int bits,
+                            @JsonProperty("min_value") int minValue,
+                            @JsonProperty("max_value") int maxValue,
+                            @JsonProperty("negate_reverse_direction") boolean negateReverseDirection,
+                            @JsonProperty("store_two_directions") boolean storeTwoDirections,
+                            @JsonProperty("factor") double factor,
+                            @JsonProperty("default_is_infinity") boolean defaultIsInfinity,
+                            @JsonProperty("use_maximum_as_infinity") boolean useMaximumAsInfinity) {
+        // we need this constructor for Jackson
+        super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections);
+        this.factor = factor;
+        this.defaultIsInfinity = defaultIsInfinity;
+        this.useMaximumAsInfinity = useMaximumAsInfinity;
+    }
+
     @Override
     public void setDecimal(boolean reverse, IntsRef ref, double value) {
         if (!isInitialized())
@@ -87,9 +106,9 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
 
         value /= factor;
         if (value > maxValue)
-            throw new IllegalArgumentException(getName() + " value too large for encoding: " + value + ", maxValue:" + maxValue);
+            throw new IllegalArgumentException(getName() + " value too large for encoding: " + value + ", maxValue:" + maxValue + ", factor: " + factor);
         if (value < minValue)
-            throw new IllegalArgumentException(getName() + " value too small for encoding " + value + ", minValue:" + minValue);
+            throw new IllegalArgumentException(getName() + " value too small for encoding " + value + ", minValue:" + minValue + ", factor: " + factor);
 
         super.uncheckedSet(reverse, ref, (int) Math.round(value));
     }
@@ -100,6 +119,16 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
         if (useMaximumAsInfinity && value == maxValue || defaultIsInfinity && value == 0)
             return Double.POSITIVE_INFINITY;
         return value * factor;
+    }
+
+    @Override
+    public double getNextStorableValue(double value) {
+        if (!useMaximumAsInfinity && value > getMaxDecimal())
+            throw new IllegalArgumentException(getName() + ": There is no next storable value for " + value + ". max:" + getMaxDecimal());
+        else if (useMaximumAsInfinity && value > getMaxDecimal())
+            return Double.POSITIVE_INFINITY;
+        else
+            return (factor * (int) Math.ceil(value / factor));
     }
 
     @Override
