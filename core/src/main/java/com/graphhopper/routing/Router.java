@@ -108,6 +108,9 @@ public class Router {
             checkNoBlockAreaWithCustomModel(request);
 
             Solver solver = createSolver(request);
+            // ORS GH-MOD START: way to inject additional edgeFilters to router
+            solver.setEdgeFilterFactory(edgeFilterFactory);
+            // ORS GH-MOD END
             solver.checkRequest();
             solver.init();
 
@@ -195,12 +198,7 @@ public class Router {
         } else if (lmEnabled && !disableLM) {
             return new LMSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, ghStorage, locationIndex, landmarks);
         } else {
-            // ORS GH-MOD START: way to inject additional edgeFilters to router
-            // return new FlexSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, ghStorage, locationIndex);
-            FlexSolver solver = new FlexSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, ghStorage, locationIndex);
-            solver.setEdgeFilterFactory(edgeFilterFactory);
-            return solver;
-            // ORS GH-MOD END
+            return new FlexSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, ghStorage, locationIndex);
         }
     }
 

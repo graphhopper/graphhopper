@@ -53,6 +53,9 @@ public class FlexiblePathCalculator implements PathCalculator {
     private RoutingAlgorithm createAlgo() {
         StopWatch sw = new StopWatch().start();
         RoutingAlgorithm algo = algoFactory.createAlgo(queryGraph, weighting, algoOpts);
+        // ORS-GH MOD START: pass edgeFilter to algorithm
+        algo.setEdgeFilter(algoOpts.getEdgeFilter());
+        // ORS-GH MOD END
         debug = ", algoInit:" + (sw.stop().getNanos() / 1000) + " μs";
         return algo;
     }
