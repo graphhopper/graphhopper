@@ -576,13 +576,6 @@ public class Router {
         @Override
         protected FlexiblePathCalculator createPathCalculator(QueryGraph queryGraph) {
             RoutingAlgorithmFactory algorithmFactory = new RoutingAlgorithmFactorySimple();
-            // ORS-GH MOD START: initialize edgeFilter
-            if (edgeFilterFactory != null) {
-                AlgorithmOptions algoOpts = getAlgoOpts();
-                algoOpts.setEdgeFilter(edgeFilterFactory.createEdgeFilter(request.getAdditionalHints(), weighting.getFlagEncoder(), ghStorage));
-                return new FlexiblePathCalculator(queryGraph, algorithmFactory, weighting, algoOpts);
-            }
-            // ORS MOD END
             return new FlexiblePathCalculator(queryGraph, algorithmFactory, weighting, getAlgoOpts());
         }
 
@@ -598,6 +591,10 @@ public class Router {
                 algoOpts.setAlgorithm(Parameters.Algorithms.ASTAR_BI);
                 algoOpts.getHints().putObject(Parameters.Algorithms.AStarBi.EPSILON, 2);
             }
+// ORS-GH MOD START: initialize edgeFilter
+            if (edgeFilterFactory != null)
+                algoOpts.setEdgeFilter(edgeFilterFactory.createEdgeFilter(request.getAdditionalHints(), weighting.getFlagEncoder(), ghStorage));
+// ORS MOD END
             return algoOpts;
         }
 
