@@ -121,6 +121,30 @@ public class DecimalEncodedValueImplTest {
     }
 
     @Test
+    public void smallestNonZeroValue() {
+        assertSmallestNonZeroValue(new DecimalEncodedValueImpl("test", 5, 10, true), 10);
+        assertSmallestNonZeroValue(new DecimalEncodedValueImpl("test", 10, 10, true), 10);
+        assertSmallestNonZeroValue(new DecimalEncodedValueImpl("test", 5, 5, true), 5);
+        assertSmallestNonZeroValue(new DecimalEncodedValueImpl("test", 5, 1, true), 1);
+        assertSmallestNonZeroValue(new DecimalEncodedValueImpl("test", 5, 0.5, true), 0.5);
+        assertSmallestNonZeroValue(new DecimalEncodedValueImpl("test", 5, 0.1, true), 0.1);
+
+        assertTrue(assertThrows(IllegalStateException.class,
+                () -> new DecimalEncodedValueImpl("test", 5, 0, 5, false, true, false, false).getSmallestNonZeroValue())
+                .getMessage().contains("getting the smallest non-zero value is not possible"));
+    }
+
+    private void assertSmallestNonZeroValue(DecimalEncodedValueImpl enc, double expected) {
+        enc.init(new EncodedValue.InitializerConfig());
+        assertEquals(expected, enc.getSmallestNonZeroValue());
+        IntsRef intsRef = new IntsRef(1);
+        enc.setDecimal(false, intsRef, enc.getSmallestNonZeroValue());
+        assertEquals(expected, enc.getDecimal(false, intsRef));
+        enc.setDecimal(false, intsRef, enc.getSmallestNonZeroValue() / 2 - 0.01);
+        assertEquals(0, enc.getDecimal(false, intsRef));
+    }
+
+    @Test
     public void testNextStorableValue_maxInfinity() {
         DecimalEncodedValueImpl enc = new DecimalEncodedValueImpl("test", 4, 0, 3, false, false, false, true);
         enc.init(new EncodedValue.InitializerConfig());
