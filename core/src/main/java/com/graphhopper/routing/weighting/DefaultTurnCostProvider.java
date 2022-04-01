@@ -36,11 +36,20 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         this(encoder, turnCostStorage, Weighting.INFINITE_U_TURN_COSTS);
     }
 
+    public DefaultTurnCostProvider(DecimalEncodedValue turnCostEnc, TurnCostStorage turnCostStorage) {
+        this(turnCostEnc, turnCostStorage, INFINITE_U_TURN_COSTS);
+    }
+
+    public DefaultTurnCostProvider(FlagEncoder encoder, TurnCostStorage turnCostStorage, int uTurnCosts) {
+        this(encoder.hasEncodedValue(TurnCost.key(encoder.toString())) ? encoder.getDecimalEncodedValue(TurnCost.key(encoder.toString())) : null,
+                turnCostStorage, uTurnCosts);
+    }
+
     /**
      * @param uTurnCosts the costs of a u-turn in seconds, for {@link Weighting#INFINITE_U_TURN_COSTS} the u-turn costs
      *                   will be infinite
      */
-    public DefaultTurnCostProvider(FlagEncoder encoder, TurnCostStorage turnCostStorage, int uTurnCosts) {
+    public DefaultTurnCostProvider(DecimalEncodedValue turnCostEnc, TurnCostStorage turnCostStorage, int uTurnCosts) {
         if (uTurnCosts < 0 && uTurnCosts != INFINITE_U_TURN_COSTS) {
             throw new IllegalArgumentException("u-turn costs must be positive, or equal to " + INFINITE_U_TURN_COSTS + " (=infinite costs)");
         }
@@ -49,9 +58,9 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         if (turnCostStorage == null) {
             throw new IllegalArgumentException("No storage set to calculate turn weight");
         }
-        String key = TurnCost.key(encoder.toString());
+
         // if null the TurnCostProvider can be still useful for edge-based routing
-        this.turnCostEnc = encoder.hasEncodedValue(key) ? encoder.getDecimalEncodedValue(key) : null;
+        this.turnCostEnc = turnCostEnc;
         this.turnCostStorage = turnCostStorage;
     }
 
