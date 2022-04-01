@@ -36,6 +36,11 @@ public interface Weighting {
      */
     double getMinWeight(double distance);
 
+    /**
+     * @return true if the edge is not accessible in the given direction or when it is a loop and is not accessible in
+     * either direction. Note that when false is returned it does **not** mean the weight is finite! But when true is
+     * returned the weight must be infinite as well.
+     */
     boolean edgeHasNoAccess(EdgeIteratorState edgeState, boolean reverse);
 
     /**

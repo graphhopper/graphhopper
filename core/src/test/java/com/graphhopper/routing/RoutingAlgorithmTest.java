@@ -1094,7 +1094,7 @@ public class RoutingAlgorithmTest {
     }
 
     private static String getCHGraphName(Weighting weighting) {
-        return weighting.getName() + "_" + System.identityHashCode(weighting);
+        return weighting.getName() + "_" + weighting.hashCode();
     }
 
     private static void assertPathFromEqualsTo(Path p, int node) {
