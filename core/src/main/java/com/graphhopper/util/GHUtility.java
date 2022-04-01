@@ -654,6 +654,17 @@ public class GHUtility {
         return edge;
     }
 
+    public static void setAccess(boolean fwd, boolean bwd, BooleanEncodedValue accessEnc, EdgeIteratorState... edges) {
+        setAccess(fwd, bwd, accessEnc, Arrays.asList(edges));
+    }
+
+    public static void setAccess(boolean fwd, boolean bwd, BooleanEncodedValue accessEnc, Collection<EdgeIteratorState> edges) {
+        for (EdgeIteratorState edge : edges) {
+            edge.set(accessEnc, fwd);
+            edge.setReverse(accessEnc, bwd);
+        }
+    }
+
     public static void updateDistancesFor(Graph g, int node, double lat, double lon) {
         NodeAccess na = g.getNodeAccess();
         na.setNode(node, lat, lon);

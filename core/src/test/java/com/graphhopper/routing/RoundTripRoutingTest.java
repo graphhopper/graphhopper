@@ -18,16 +18,21 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.EncodedValue;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.FiniteWeightFilter;
+import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.TestWeighting;
+import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.GHPoint;
@@ -46,18 +51,23 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * @author Peter Karich
  */
 public class RoundTripRoutingTest {
-    private final CarFlagEncoder carFE = new CarFlagEncoder();
-    private final EncodingManager em = EncodingManager.create(carFE);
-    private final Weighting fastestWeighting = new FastestWeighting(carFE);
+    private final BooleanEncodedValue accessEnc;
+    private final Weighting weighting;
     // TODO private final TraversalMode tMode = TraversalMode.EDGE_BASED;
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
     private final GHPoint ghPoint1 = new GHPoint(0, 0);
     private final GHPoint ghPoint2 = new GHPoint(1, 1);
 
+    public RoundTripRoutingTest() {
+        accessEnc = new SimpleBooleanEncodedValue("access", true);
+        accessEnc.init(new EncodedValue.InitializerConfig());
+        weighting = new TestWeighting(accessEnc, TurnCostProvider.NO_TURN_COST_PROVIDER);
+    }
+
     @Test
     public void lookup_throwsIfNumberOfPointsNotOne() {
         assertThrows(IllegalArgumentException.class, () -> RoundTripRouting.lookup(Arrays.asList(ghPoint1, ghPoint2),
-                new FiniteWeightFilter(fastestWeighting), null, new RoundTripRouting.Params()));
+                new FiniteWeightFilter(weighting), null, new RoundTripRouting.Params()));
     }
 
     @Test
@@ -74,7 +84,7 @@ public class RoundTripRoutingTest {
         hints.putObject(Parameters.Algorithms.RoundTrip.DISTANCE, roundTripDistance);
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
         List<Snap> stagePoints = RoundTripRouting.lookup(Collections.singletonList(start),
-                new FiniteWeightFilter(fastestWeighting), locationIndex,
+                new FiniteWeightFilter(weighting), locationIndex,
                 new RoundTripRouting.Params(hints, heading, 3));
         assertEquals(3, stagePoints.size());
         assertEquals(0, stagePoints.get(0).getClosestNode());
@@ -83,7 +93,7 @@ public class RoundTripRoutingTest {
 
         QueryGraph queryGraph = QueryGraph.create(g, stagePoints);
         List<Path> paths = RoundTripRouting.calcPaths(stagePoints, new FlexiblePathCalculator(queryGraph,
-                new RoutingAlgorithmFactorySimple(), fastestWeighting, new AlgorithmOptions().setAlgorithm(DIJKSTRA_BI).setTraversalMode(tMode))).paths;
+                new RoutingAlgorithmFactorySimple(), weighting, new AlgorithmOptions().setAlgorithm(DIJKSTRA_BI).setTraversalMode(tMode))).paths;
         // make sure the resulting paths are connected and form a round trip starting and ending at the start node 0
         assertEquals(2, paths.size());
         assertEquals(IntArrayList.from(0, 7, 6, 5), paths.get(0).calcNodes());
@@ -105,7 +115,7 @@ public class RoundTripRoutingTest {
         QueryGraph qGraph = QueryGraph.create(g, Arrays.asList(snap4, snap5));
 
         FlexiblePathCalculator pathCalculator = new FlexiblePathCalculator(
-                qGraph, new RoutingAlgorithmFactorySimple(), fastestWeighting, new AlgorithmOptions().setAlgorithm(DIJKSTRA_BI).setTraversalMode(tMode));
+                qGraph, new RoutingAlgorithmFactorySimple(), weighting, new AlgorithmOptions().setAlgorithm(DIJKSTRA_BI).setTraversalMode(tMode));
         List<Path> paths = RoundTripRouting.calcPaths(Arrays.asList(snap5, snap4, snap5), pathCalculator).paths;
         assertEquals(2, paths.size());
         assertEquals(IntArrayList.from(5, 6, 3), paths.get(0).calcNodes());
@@ -113,7 +123,7 @@ public class RoundTripRoutingTest {
 
         qGraph = QueryGraph.create(g, Arrays.asList(snap4, snap6));
         pathCalculator = new FlexiblePathCalculator(
-                qGraph, new RoutingAlgorithmFactorySimple(), fastestWeighting, new AlgorithmOptions().setAlgorithm(DIJKSTRA_BI).setTraversalMode(tMode));
+                qGraph, new RoutingAlgorithmFactorySimple(), weighting, new AlgorithmOptions().setAlgorithm(DIJKSTRA_BI).setTraversalMode(tMode));
         paths = RoundTripRouting.calcPaths(Arrays.asList(snap6, snap4, snap6), pathCalculator).paths;
         assertEquals(2, paths.size());
         assertEquals(IntArrayList.from(6, 3), paths.get(0).calcNodes());
@@ -121,8 +131,8 @@ public class RoundTripRoutingTest {
     }
 
     private BaseGraph createTestGraph() {
-        BaseGraph graph = new BaseGraph.Builder(em).withTurnCosts(true).create();
-        AlternativeRouteTest.initTestGraph(graph, carFE);
+        BaseGraph graph = new BaseGraph.Builder(1).withTurnCosts(true).create();
+        AlternativeRouteTest.initTestGraph(graph, accessEnc);
         return graph;
     }
 
@@ -133,10 +143,9 @@ public class RoundTripRoutingTest {
         // -1 | 6 5 4 
         // ---|------
         //    |-1 0 1
-        BaseGraph graph = new BaseGraph.Builder(em).create();
-        for (int i = 0; i < 8; ++i) {
-            GHUtility.setSpeed(60, true, true, carFE, graph.edge(i, (i + 1) % 8).setDistance(1));
-        }
+        BaseGraph graph = new BaseGraph.Builder(1).create();
+        for (int i = 0; i < 8; ++i)
+            graph.edge(i, (i + 1) % 8).setDistance(1).set(accessEnc, true, true);
         updateDistancesFor(graph, 0, 1, -1);
         updateDistancesFor(graph, 1, 1, 0);
         updateDistancesFor(graph, 2, 1, 1);
