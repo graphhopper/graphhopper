@@ -72,6 +72,11 @@ public interface Weighting {
 
     String getName();
 
+    default boolean getAccess(EdgeIteratorState edgeState, boolean reverse) {
+        BooleanEncodedValue accessEnc = getFlagEncoder().getAccessEnc();
+        return reverse ? edgeState.getReverse(accessEnc) : edgeState.get(accessEnc);
+    }
+
     default double calcEdgeWeightWithAccess(EdgeIteratorState edgeState, boolean reverse) {
         BooleanEncodedValue accessEnc = getFlagEncoder().getAccessEnc();
         if ((!reverse && !edgeState.get(accessEnc)) || (reverse && !edgeState.getReverse(accessEnc))) {
