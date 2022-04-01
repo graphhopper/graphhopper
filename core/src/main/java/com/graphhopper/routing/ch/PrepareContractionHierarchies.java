@@ -71,15 +71,6 @@ public class PrepareContractionHierarchies {
     private int checkCounter;
     private boolean prepared = false;
 
-    /**
-     * @deprecated currently we use this only for easier GraphHopperStorage -> BaseGraph migration,
-     * instead of just calling graph.getBaseGraph() better try to convert graph to a BaseGraph
-     */
-    @Deprecated
-    public static PrepareContractionHierarchies fromGraph(Graph graph, CHConfig chConfig) {
-        return new PrepareContractionHierarchies(graph.getBaseGraph(), chConfig);
-    }
-
     public static PrepareContractionHierarchies fromGraph(BaseGraph graph, CHConfig chConfig) {
         return new PrepareContractionHierarchies(graph.getBaseGraph(), chConfig);
     }

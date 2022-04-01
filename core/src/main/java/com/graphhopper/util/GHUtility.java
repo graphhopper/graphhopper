@@ -665,11 +665,10 @@ public class GHUtility {
     }
 
     public static double calcWeightWithTurnWeightWithAccess(Weighting weighting, EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-        BooleanEncodedValue accessEnc = weighting.getFlagEncoder().getAccessEnc();
         if (edgeState.getBaseNode() == edgeState.getAdjNode()) {
-            if (!edgeState.get(accessEnc) && !edgeState.getReverse(accessEnc))
+            if (weighting.edgeHasNoAccess(edgeState, false) && weighting.edgeHasNoAccess(edgeState, true))
                 return Double.POSITIVE_INFINITY;
-        } else if ((!reverse && !edgeState.get(accessEnc)) || (reverse && !edgeState.getReverse(accessEnc))) {
+        } else if (weighting.edgeHasNoAccess(edgeState, reverse)) {
             return Double.POSITIVE_INFINITY;
         }
         return calcWeightWithTurnWeight(weighting, edgeState, reverse, prevOrNextEdgeId);

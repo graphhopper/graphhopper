@@ -127,7 +127,7 @@ public class DirectedRoutingTest {
                 routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
             }
             if (prepareLM) {
-                PrepareLandmarks prepare = new PrepareLandmarks(dir, graph, lmConfig, 16);
+                PrepareLandmarks prepare = new PrepareLandmarks(dir, graph, encodingManager, lmConfig, 16);
                 prepare.setMaximumWeight(1000);
                 prepare.doWork();
                 lm = prepare.getLandmarkStorage();

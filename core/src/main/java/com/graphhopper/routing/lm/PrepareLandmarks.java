@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.lm;
 
+import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
@@ -43,10 +44,10 @@ public class PrepareLandmarks {
     private long totalPrepareTime;
     private boolean prepared = false;
 
-    public PrepareLandmarks(Directory dir, BaseGraph graph, LMConfig lmConfig, int landmarks) {
+    public PrepareLandmarks(Directory dir, BaseGraph graph, EncodedValueLookup encodedValueLookup, LMConfig lmConfig, int landmarks) {
         this.graph = graph;
         this.lmConfig = lmConfig;
-        lms = new LandmarkStorage(graph, dir, lmConfig, landmarks);
+        lms = new LandmarkStorage(graph, encodedValueLookup, dir, lmConfig, landmarks);
     }
 
     /**
