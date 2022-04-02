@@ -23,8 +23,8 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -43,7 +43,7 @@ import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static org.junit.jupiter.api.Assertions.*;
 
 class QueryRoutingCHGraphTest {
-    private CarFlagEncoder encoder;
+    private FlagEncoder encoder;
     private EncodingManager encodingManager;
     private FastestWeighting weighting;
     private BaseGraph graph;

@@ -48,7 +48,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 public class DirectionResolverOnQueryGraphTest {
     private QueryGraph queryGraph;
     private NodeAccess na;
-    private CarFlagEncoder encoder;
+    private FlagEncoder encoder;
     private BaseGraph graph;
     private LocationIndexTree locationIndex;
 

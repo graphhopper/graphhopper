@@ -2477,7 +2477,7 @@ public class GraphHopperTest {
 
     @Test
     public void testLoadGraph_implicitEncodedValues_issue1862() {
-        CarFlagEncoder carEncoder = FlagEncoders.createCar();
+        FlagEncoder carEncoder = FlagEncoders.createCar();
         EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(FlagEncoders.createBike()).build();
         GraphHopperStorage graph = new GraphBuilder(encodingManager).setDir(new RAMDirectory(GH_LOCATION, true)).create();
         NodeAccess na = graph.getNodeAccess();

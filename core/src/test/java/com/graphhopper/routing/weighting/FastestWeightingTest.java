@@ -23,7 +23,9 @@ import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
@@ -39,7 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @author Peter Karich
  */
 public class FastestWeightingTest {
-    private final CarFlagEncoder encoder = FlagEncoders.createCar(5, 5, 10);
+    private final FlagEncoder encoder = FlagEncoders.createCar(5, 5, 10);
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
 
     @Test
@@ -86,7 +88,7 @@ public class FastestWeightingTest {
 
     @Test
     public void testTime() {
-        Bike2WeightFlagEncoder tmpEnc = FlagEncoders.createBike2();
+        FlagEncoder tmpEnc = FlagEncoders.createBike2();
         EncodingManager em = EncodingManager.create(tmpEnc);
         BaseGraph g = new BaseGraph.Builder(em).create();
         Weighting w = new FastestWeighting(tmpEnc);
@@ -139,8 +141,8 @@ public class FastestWeightingTest {
 
     @Test
     public void testDestinationTag() {
-        CarFlagEncoder carEncoder = FlagEncoders.createCar();
-        BikeFlagEncoder bikeEncoder = FlagEncoders.createBike();
+        FlagEncoder carEncoder = FlagEncoders.createCar();
+        FlagEncoder bikeEncoder = FlagEncoders.createBike();
         EncodingManager em = EncodingManager.create(carEncoder, bikeEncoder);
         BaseGraph graph = new BaseGraph.Builder(em).create();
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(1000);
@@ -167,7 +169,7 @@ public class FastestWeightingTest {
 
     @Test
     public void testPrivateTag() {
-        CarFlagEncoder carEncoder = FlagEncoders.createCar();
+        FlagEncoder carEncoder = FlagEncoders.createCar();
         FlagEncoder bikeEncoder = FlagEncoders.createBike();
         EncodingManager em = EncodingManager.create(carEncoder, bikeEncoder);
         BaseGraph graph = new BaseGraph.Builder(em).create();

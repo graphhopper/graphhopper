@@ -51,7 +51,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class QueryGraphTest {
     private EncodingManager encodingManager;
-    private CarFlagEncoder encoder;
+    private FlagEncoder encoder;
     private BaseGraph g;
 
     @BeforeEach
@@ -495,7 +495,7 @@ public class QueryGraphTest {
 
     @Test
     public void testTurnCostsProperlyPropagated_Issue282() {
-        CarFlagEncoder encoder = FlagEncoders.createCar(5, 5, 15);
+        FlagEncoder encoder = FlagEncoders.createCar(5, 5, 15);
         EncodingManager em = EncodingManager.create(encoder);
         BaseGraph graphWithTurnCosts = new BaseGraph.Builder(em).withTurnCosts(true).create();
         TurnCostStorage turnExt = graphWithTurnCosts.getTurnCostStorage();
@@ -824,7 +824,7 @@ public class QueryGraphTest {
         // virtual nodes:     2
         //                0 - x - 1
         // virtual edges:   1   2
-        CarFlagEncoder encoder = FlagEncoders.createCar(new PMap().putObject("speed_two_directions", true));
+        FlagEncoder encoder = FlagEncoders.createCar(new PMap().putObject("speed_two_directions", true));
         EncodingManager encodingManager = EncodingManager.create(encoder);
         DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
         BaseGraph g = new BaseGraph.Builder(encodingManager).create();
@@ -898,7 +898,7 @@ public class QueryGraphTest {
         // virtual nodes:     2
         //                0 - x - 1
         // virtual edges:   1   2
-        CarFlagEncoder encoder = FlagEncoders.createCar(new PMap().putObject("speed_two_directions", true));
+        FlagEncoder encoder = FlagEncoders.createCar(new PMap().putObject("speed_two_directions", true));
         EncodingManager encodingManager = EncodingManager.create(encoder);
         DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
         BaseGraph g = new BaseGraph.Builder(encodingManager).create();

@@ -40,7 +40,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class NodeBasedNodeContractorTest {
-    private final CarFlagEncoder encoder = FlagEncoders.createCar();
+    private final FlagEncoder encoder = FlagEncoders.createCar();
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
     private final BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
@@ -262,7 +262,7 @@ public class NodeBasedNodeContractorTest {
      */
     @Test
     public void testNodeContraction_shortcutWeightRounding() {
-        CarFlagEncoder encoder = FlagEncoders.createCar();
+        FlagEncoder encoder = FlagEncoders.createCar();
         EncodingManager encodingManager = EncodingManager.create(encoder);
         BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         // 0 ------------> 4
@@ -301,7 +301,7 @@ public class NodeBasedNodeContractorTest {
     public void testNodeContraction_preventUnnecessaryShortcutWithLoop() {
         // there should not be shortcuts where one of the skipped edges is a loop at the node to be contracted,
         // see also #1583
-        CarFlagEncoder encoder = FlagEncoders.createCar();
+        FlagEncoder encoder = FlagEncoders.createCar();
         EncodingManager encodingManager = EncodingManager.create(encoder);
         BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         // 0 - 1 - 2 - 3

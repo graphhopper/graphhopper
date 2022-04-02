@@ -23,7 +23,6 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.Subnetwork;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoders;
@@ -57,7 +56,7 @@ class HeadingRoutingTest {
     @Test
     public void headingTest1() {
         // Test enforce start direction
-        CarFlagEncoder carEncoder = FlagEncoders.createCar();
+        FlagEncoder carEncoder = FlagEncoders.createCar();
         EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager);
         Router router = createRouter(graph, encodingManager);
@@ -80,7 +79,7 @@ class HeadingRoutingTest {
     @Test
     public void headingTest2() {
         // Test enforce south start direction and east end direction
-        CarFlagEncoder carEncoder = FlagEncoders.createCar();
+        FlagEncoder carEncoder = FlagEncoders.createCar();
         EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager);
         Router router = createRouter(graph, encodingManager);
@@ -107,7 +106,7 @@ class HeadingRoutingTest {
 
     @Test
     public void headingTest3() {
-        CarFlagEncoder carEncoder = FlagEncoders.createCar();
+        FlagEncoder carEncoder = FlagEncoders.createCar();
         EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager);
         Router router = createRouter(graph, encodingManager);
@@ -132,7 +131,7 @@ class HeadingRoutingTest {
     @Test
     public void headingTest4() {
         // Test straight via routing
-        CarFlagEncoder carEncoder = FlagEncoders.createCar();
+        FlagEncoder carEncoder = FlagEncoders.createCar();
         EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager);
         Router router = createRouter(graph, encodingManager);
@@ -157,7 +156,7 @@ class HeadingRoutingTest {
     @Test
     public void headingTest5() {
         // Test independence of previous enforcement for subsequent paths
-        CarFlagEncoder carEncoder = FlagEncoders.createCar();
+        FlagEncoder carEncoder = FlagEncoders.createCar();
         EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager);
         Router router = createRouter(graph, encodingManager);
@@ -181,7 +180,7 @@ class HeadingRoutingTest {
 
     @Test
     public void testHeadingWithSnapFilter() {
-        CarFlagEncoder carEncoder = FlagEncoders.createCar();
+        FlagEncoder carEncoder = FlagEncoders.createCar();
         EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraphWithTunnel(encodingManager);
         Router router = createRouter(graph, encodingManager);
@@ -243,7 +242,7 @@ class HeadingRoutingTest {
 
     @Test
     public void testHeadingWithSnapFilter2() {
-        CarFlagEncoder carEncoder = FlagEncoders.createCar();
+        FlagEncoder carEncoder = FlagEncoders.createCar();
         EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraphWithTunnel(encodingManager);
         Router router = createRouter(graph, encodingManager);
@@ -276,7 +275,7 @@ class HeadingRoutingTest {
     @Test
     public void headingTest6() {
         // Test if snaps at tower nodes are ignored
-        CarFlagEncoder carEncoder = FlagEncoders.createCar();
+        FlagEncoder carEncoder = FlagEncoders.createCar();
         EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager);
         Router router = createRouter(graph, encodingManager);

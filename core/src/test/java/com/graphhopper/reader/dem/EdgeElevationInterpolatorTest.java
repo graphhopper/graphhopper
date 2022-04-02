@@ -21,8 +21,8 @@ import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadEnvironment;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.IntsRef;
@@ -41,7 +41,7 @@ public abstract class EdgeElevationInterpolatorTest {
 
     protected BaseGraph graph;
     protected EnumEncodedValue<RoadEnvironment> roadEnvEnc;
-    protected CarFlagEncoder encoder;
+    protected FlagEncoder encoder;
     protected EncodingManager encodingManager;
     protected EdgeElevationInterpolator edgeElevationInterpolator;
 

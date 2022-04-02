@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     @Override
     protected BikeCommonFlagEncoder createBikeTagParser() {
-        return FlagEncoders.createRacingBike(new PMap("block_fords=true"));
+        return new RacingBikeFlagEncoder(new PMap("block_fords=true"));
     }
 
     @Test

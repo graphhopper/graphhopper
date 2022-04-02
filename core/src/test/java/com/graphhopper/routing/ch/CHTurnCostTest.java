@@ -68,7 +68,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class CHTurnCostTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(CHTurnCostTest.class);
     private int maxCost;
-    private CarFlagEncoder encoder;
+    private FlagEncoder encoder;
     private EncodingManager encodingManager;
     private BaseGraph graph;
     private TurnCostStorage turnCostStorage;

@@ -21,8 +21,8 @@ package com.graphhopper.routing.lm;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -43,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class LMIssueTest {
     private Directory dir;
     private BaseGraph graph;
-    private CarFlagEncoder encoder;
+    private FlagEncoder encoder;
     private Weighting weighting;
     private LandmarkStorage lm;
     private EncodingManager encodingManager;

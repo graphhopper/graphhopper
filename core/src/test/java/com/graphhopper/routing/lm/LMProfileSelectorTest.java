@@ -22,9 +22,8 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ProfileResolver;
-import com.graphhopper.routing.util.BikeFlagEncoder;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
@@ -51,8 +50,8 @@ public class LMProfileSelectorTest {
 
     @BeforeEach
     public void setup() {
-        CarFlagEncoder carEncoder = FlagEncoders.createCar();
-        BikeFlagEncoder bikeEncoder = FlagEncoders.createBike();
+        FlagEncoder carEncoder = FlagEncoders.createCar();
+        FlagEncoder bikeEncoder = FlagEncoders.createBike();
         encodingManager = EncodingManager.create(carEncoder, bikeEncoder);
         fastCar = new Profile("fast_car").setVehicle("car").setWeighting("fastest").setTurnCosts(false);
         fastCarEdge = new Profile("fast_car_edge").setVehicle("car").setWeighting("fastest").setTurnCosts(true);

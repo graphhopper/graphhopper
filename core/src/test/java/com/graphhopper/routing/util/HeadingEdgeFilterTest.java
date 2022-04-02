@@ -12,7 +12,7 @@ class HeadingEdgeFilterTest {
     @Test
     public void getHeading() {
         GHPoint point = new GHPoint(55.67093, 12.577294);
-        CarFlagEncoder carEncoder = FlagEncoders.createCar();
+        FlagEncoder carEncoder = FlagEncoders.createCar();
         EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).build();
         BaseGraph g = new BaseGraph.Builder(encodingManager).create();
         EdgeIteratorState edge = g.edge(0, 1);

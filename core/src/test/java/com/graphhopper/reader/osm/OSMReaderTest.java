@@ -63,7 +63,7 @@ public class OSMReaderTest {
     private final String file7 = "test-osm7.xml";
     private final String fileBarriers = "test-barriers.xml";
     private final String dir = "./target/tmp/test-db";
-    private CarFlagEncoder carEncoder;
+    private FlagEncoder carEncoder;
     private BooleanEncodedValue carAccessEnc;
     private FlagEncoder footEncoder;
     private EdgeExplorer carOutExplorer;
@@ -399,7 +399,7 @@ public class OSMReaderTest {
 
     @Test
     public void testFords() {
-        CarFlagEncoder car = FlagEncoders.createCar(new PMap("block_fords=true"));
+        FlagEncoder car = FlagEncoders.createCar(new PMap("block_fords=true"));
         GraphHopper hopper = new GraphHopper();
         hopper.getTagParserManagerBuilder().add(car);
         hopper.setOSMFile(getClass().getResource("test-barriers3.xml").getFile()).
@@ -661,14 +661,14 @@ public class OSMReaderTest {
      */
     @Test
     public void testTurnFlagCombination() {
-        CarFlagEncoder car = FlagEncoders.createCar(5, 5, 24);
+        FlagEncoder car = FlagEncoders.createCar(5, 5, 24);
         CarFlagEncoder truck = new CarFlagEncoder("truck", 5, 5, 24) {
             @Override
             public TransportationMode getTransportationMode() {
                 return TransportationMode.HGV;
             }
         };
-        BikeFlagEncoder bike = FlagEncoders.createBike(4, 2, 24, false);
+        FlagEncoder bike = FlagEncoders.createBike(4, 2, 24, false);
 
         GraphHopper hopper = new GraphHopper();
         hopper.getTagParserManagerBuilder().add(bike).add(truck).add(car);
@@ -977,7 +977,7 @@ public class OSMReaderTest {
                     new Profile("bike").setVehicle("bike").setWeighting("fastest")
             );
 
-            BikeFlagEncoder bikeEncoder;
+            FlagEncoder bikeEncoder;
             if (turnCosts) {
                 carEncoder = FlagEncoders.createCar(5, 5, 1);
                 bikeEncoder = FlagEncoders.createBike(4, 2, 1, false);

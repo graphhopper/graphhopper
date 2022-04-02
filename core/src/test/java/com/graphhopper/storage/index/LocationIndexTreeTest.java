@@ -148,7 +148,7 @@ public class LocationIndexTreeTest {
 
     @Test
     public void testMoreReal() {
-        CarFlagEncoder encoder = FlagEncoders.createCar();
+        FlagEncoder encoder = FlagEncoders.createCar();
         BaseGraph graph = new BaseGraph.Builder(EncodingManager.create(encoder)).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(1, 51.2492152, 9.4317166);
@@ -336,8 +336,8 @@ public class LocationIndexTreeTest {
 
     @Test
     public void testSearchWithFilter_issue318() {
-        CarFlagEncoder carEncoder = FlagEncoders.createCar();
-        BikeFlagEncoder bikeEncoder = FlagEncoders.createBike();
+        FlagEncoder carEncoder = FlagEncoders.createCar();
+        FlagEncoder bikeEncoder = FlagEncoders.createBike();
 
         EncodingManager tmpEM = EncodingManager.create(carEncoder, bikeEncoder);
         BaseGraph graph = new BaseGraph.Builder(tmpEM).create();

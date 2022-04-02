@@ -44,7 +44,7 @@ public class RandomCHRoutingTest {
         private final int maxTurnCosts;
         private final int uTurnCosts;
         private final Directory dir;
-        private final CarFlagEncoder encoder;
+        private final FlagEncoder encoder;
         private final EncodingManager encodingManager;
         private Weighting weighting;
         private BaseGraph graph;

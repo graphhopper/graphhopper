@@ -99,7 +99,7 @@ public class RandomizedRoutingTest {
         private final BaseGraph graph;
         private final List<CHConfig> chConfigs;
         private final LMConfig lmConfig;
-        private final CarFlagEncoder encoder;
+        private final FlagEncoder encoder;
         private final TurnCostStorage turnCostStorage;
         private final int maxTurnCosts;
         private final Weighting weighting;

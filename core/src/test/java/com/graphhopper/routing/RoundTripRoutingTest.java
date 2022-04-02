@@ -46,7 +46,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * @author Peter Karich
  */
 public class RoundTripRoutingTest {
-    private final CarFlagEncoder carFE = FlagEncoders.createCar();
+    private final FlagEncoder carFE = FlagEncoders.createCar();
     private final EncodingManager em = EncodingManager.create(carFE);
     private final Weighting fastestWeighting = new FastestWeighting(carFE);
     // TODO private final TraversalMode tMode = TraversalMode.EDGE_BASED;

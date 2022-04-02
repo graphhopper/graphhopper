@@ -79,7 +79,7 @@ public class DirectedRoutingTest {
         private final BaseGraph graph;
         private final CHConfig chConfig;
         private final LMConfig lmConfig;
-        private final CarFlagEncoder encoder;
+        private final FlagEncoder encoder;
         private final TurnCostStorage turnCostStorage;
         private final int maxTurnCosts;
         private final Weighting weighting;

@@ -19,8 +19,8 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.CustomModel;
@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CustomModelParserTest {
 
-    CarFlagEncoder encoder;
+    FlagEncoder encoder;
     BaseGraph graph;
     EncodingManager encodingManager;
     EnumEncodedValue<RoadClass> roadClassEnc;

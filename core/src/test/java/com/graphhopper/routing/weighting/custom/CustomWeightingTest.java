@@ -4,8 +4,8 @@ import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -28,7 +28,7 @@ class CustomWeightingTest {
     DecimalEncodedValue maxSpeedEnc;
     EnumEncodedValue<RoadClass> roadClassEnc;
     EncodingManager encodingManager;
-    CarFlagEncoder carFE;
+    FlagEncoder carFE;
 
     @BeforeEach
     public void setup() {

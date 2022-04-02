@@ -44,7 +44,7 @@ public class LMApproximatorTest {
 
     private void run(long seed) {
         Directory dir = new RAMDirectory();
-        CarFlagEncoder encoder = FlagEncoders.createCar(5, 5, 1);
+        FlagEncoder encoder = FlagEncoders.createCar(5, 5, 1);
         EncodingManager encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
         BaseGraph graph = new BaseGraph.Builder(encodingManager).setDir(dir).withTurnCosts(true).create();
 

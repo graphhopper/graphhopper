@@ -40,7 +40,7 @@ public class DirectedBidirectionalDijkstraTest {
     private TurnCostStorage turnCostStorage;
     private int maxTurnCosts;
     private BaseGraph graph;
-    private CarFlagEncoder encoder;
+    private FlagEncoder encoder;
     private EncodingManager encodingManager;
     private Weighting weighting;
     private DecimalEncodedValue turnCostEnc;

@@ -57,7 +57,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class PrepareLandmarksTest {
     private BaseGraph graph;
-    private CarFlagEncoder encoder;
+    private FlagEncoder encoder;
     private TraversalMode tm;
     private EncodingManager encodingManager;
 

@@ -44,7 +44,7 @@ public abstract class AbstractGraphStorageTester {
     private final String locationParent = "./target/graphstorage";
     protected int defaultSize = 100;
     protected String defaultGraphLoc = "./target/graphstorage/default";
-    protected CarFlagEncoder carEncoder = createCarFlagEncoder();
+    protected FlagEncoder carEncoder = createCarFlagEncoder();
     protected EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(FlagEncoders.createFoot()).build();
     protected BooleanEncodedValue carAccessEnc = carEncoder.getAccessEnc();
     protected DecimalEncodedValue carAvSpeedEnc = carEncoder.getAverageSpeedEnc();
@@ -87,7 +87,7 @@ public abstract class AbstractGraphStorageTester {
         throw new IllegalArgumentException("did not find node with location " + (float) latitude + "," + (float) longitude);
     }
 
-    CarFlagEncoder createCarFlagEncoder() {
+    FlagEncoder createCarFlagEncoder() {
         return FlagEncoders.createCar(5, 5, 0);
     }
 
@@ -659,7 +659,7 @@ public abstract class AbstractGraphStorageTester {
 
     @Test
     public void test8AndMoreBytesForEdgeFlags() {
-        List<CarFlagEncoder> list = new ArrayList<>();
+        List<FlagEncoder> list = new ArrayList<>();
         list.add(FlagEncoders.createCar("car0", 29, 0.001, 0));
         list.add(FlagEncoders.createCar(29, 0.001, 0));
         EncodingManager manager = EncodingManager.create(list);

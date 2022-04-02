@@ -18,7 +18,10 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoders;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -41,7 +44,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Peter Karich
  */
 public class PathTest {
-    private final CarFlagEncoder encoder = FlagEncoders.createCar();
+    private final FlagEncoder encoder = FlagEncoders.createCar();
     private final EncodingManager carManager = EncodingManager.create(encoder);
     private final BooleanEncodedValue carAccessEnc = encoder.getAccessEnc();
     private final DecimalEncodedValue carAvSpeedEnv = encoder.getAverageSpeedEnc();

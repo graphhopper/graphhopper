@@ -21,7 +21,6 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.TurnCost;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoders;
@@ -41,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class AlternativeRouteEdgeCHTest {
-    private final CarFlagEncoder carFE = FlagEncoders.createCar(new PMap().putObject("turn_costs", true));
+    private final FlagEncoder carFE = FlagEncoders.createCar(new PMap().putObject("turn_costs", true));
     private final EncodingManager em = EncodingManager.create(carFE);
 
     public BaseGraph createTestGraph(EncodingManager tmpEM) {

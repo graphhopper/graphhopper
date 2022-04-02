@@ -2,9 +2,9 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class BlockAreaWeightingTest {
 
-    private CarFlagEncoder encoder = FlagEncoders.createCar();
+    private FlagEncoder encoder = FlagEncoders.createCar();
     private EncodingManager em;
     private BaseGraph graph;
 
