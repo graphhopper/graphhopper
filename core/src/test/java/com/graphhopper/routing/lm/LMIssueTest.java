@@ -45,6 +45,7 @@ public class LMIssueTest {
     private CarFlagEncoder encoder;
     private Weighting weighting;
     private LandmarkStorage lm;
+    private EncodingManager encodingManager;
 
     private enum Algo {
         DIJKSTRA,
@@ -59,7 +60,7 @@ public class LMIssueTest {
     public void init() {
         dir = new RAMDirectory();
         encoder = new CarFlagEncoder(5, 5, 1);
-        EncodingManager encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
+        encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
         graph = new BaseGraph.Builder(encodingManager)
                 .setDir(dir)
                 .create();
@@ -68,7 +69,7 @@ public class LMIssueTest {
 
     private void preProcessGraph() {
         graph.freeze();
-        PrepareLandmarks prepare = new PrepareLandmarks(dir, graph, new LMConfig("car", weighting), 16);
+        PrepareLandmarks prepare = new PrepareLandmarks(dir, graph, encodingManager, new LMConfig("car", weighting), 16);
         prepare.setMaximumWeight(10000);
         prepare.doWork();
         lm = prepare.getLandmarkStorage();

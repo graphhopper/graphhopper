@@ -17,8 +17,6 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
@@ -37,6 +35,12 @@ public interface Weighting {
      * way the return value is 'distance/max_velocity'
      */
     double getMinWeight(double distance);
+
+    /**
+     * @return true if the edge is not accessible in the given direction. Note that when false is returned it does
+     * **not** mean the weight is finite! But when true is returned the weight must be infinite as well.
+     */
+    boolean edgeHasNoAccess(EdgeIteratorState edgeState, boolean reverse);
 
     /**
      * This method calculates the weight of a given {@link EdgeIteratorState}. E.g. a high value indicates that the edge
@@ -68,15 +72,11 @@ public interface Weighting {
      */
     boolean hasTurnCosts();
 
-    FlagEncoder getFlagEncoder();
-
     String getName();
 
     default double calcEdgeWeightWithAccess(EdgeIteratorState edgeState, boolean reverse) {
-        BooleanEncodedValue accessEnc = getFlagEncoder().getAccessEnc();
-        if ((!reverse && !edgeState.get(accessEnc)) || (reverse && !edgeState.getReverse(accessEnc))) {
+        if (edgeHasNoAccess(edgeState, reverse))
             return Double.POSITIVE_INFINITY;
-        }
         return calcEdgeWeight(edgeState, reverse);
     }
 

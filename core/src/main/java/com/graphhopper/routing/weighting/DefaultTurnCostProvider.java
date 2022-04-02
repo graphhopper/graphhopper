@@ -36,6 +36,10 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         this(encoder, turnCostStorage, Weighting.INFINITE_U_TURN_COSTS);
     }
 
+    public DecimalEncodedValue getTurnCostEnc() {
+        return turnCostEnc;
+    }
+
     /**
      * @param uTurnCosts the costs of a u-turn in seconds, for {@link Weighting#INFINITE_U_TURN_COSTS} the u-turn costs
      *                   will be infinite
