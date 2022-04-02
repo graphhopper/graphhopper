@@ -35,7 +35,7 @@ public class Bike2WeightTagParserTest extends BikeTagParserTest {
 
     @Override
     protected BikeCommonFlagEncoder createBikeTagParser() {
-        return new Bike2WeightFlagEncoder(new PMap("block_fords=true"));
+        return FlagEncoders.createBike2(new PMap("block_fords=true"));
     }
 
     private Graph initExampleGraph() {

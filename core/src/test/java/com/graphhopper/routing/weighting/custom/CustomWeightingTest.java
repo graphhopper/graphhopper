@@ -6,6 +6,7 @@ import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
@@ -31,7 +32,7 @@ class CustomWeightingTest {
 
     @BeforeEach
     public void setup() {
-        carFE = new CarFlagEncoder(new PMap().putObject("speed_two_directions", true));
+        carFE = FlagEncoders.createCar(new PMap().putObject("speed_two_directions", true));
         encodingManager = new EncodingManager.Builder().add(carFE)
                 .add(new EnumEncodedValue<>(Toll.KEY, Toll.class))
                 .add(new EnumEncodedValue<>(Hazmat.KEY, Hazmat.class))
@@ -117,7 +118,7 @@ class CustomWeightingTest {
 
     @Test
     public void testBoolean() {
-        carFE = new CarFlagEncoder();
+        carFE = FlagEncoders.createCar();
         BooleanEncodedValue specialEnc = new SimpleBooleanEncodedValue("special", true);
         encodingManager = new EncodingManager.Builder().add(carFE).add(specialEnc).build();
         avSpeedEnc = carFE.getAverageSpeedEnc();

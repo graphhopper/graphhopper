@@ -56,7 +56,7 @@ public class InstructionListTest {
 
     @BeforeEach
     public void setUp() {
-        carEncoder = new CarFlagEncoder();
+        carEncoder = FlagEncoders.createCar();
         carManager = EncodingManager.create(carEncoder);
     }
 
@@ -299,7 +299,7 @@ public class InstructionListTest {
 
     @Test
     public void testNoInstructionIfSlightTurnAndAlternativeIsSharp3() {
-        BikeFlagEncoder bike = new BikeFlagEncoder();
+        BikeFlagEncoder bike = FlagEncoders.createBike();
         EncodingManager tmpEM = new EncodingManager.Builder().add(bike).build();
         EnumEncodedValue<RoadClass> rcEV = tmpEM.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         BaseGraph g = new BaseGraph.Builder(tmpEM).create();
@@ -337,7 +337,7 @@ public class InstructionListTest {
 
     @Test
     public void testInstructionIfTurn() {
-        BikeFlagEncoder bike = new BikeFlagEncoder();
+        BikeFlagEncoder bike = FlagEncoders.createBike();
         EncodingManager tmpEM = new EncodingManager.Builder().add(bike).build();
         EnumEncodedValue<RoadClass> rcEV = tmpEM.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         BaseGraph g = new BaseGraph.Builder(tmpEM).create();
@@ -375,7 +375,7 @@ public class InstructionListTest {
 
     @Test
     public void testInstructionIfSlightTurnForCustomProfile() {
-        FootFlagEncoder foot = new FootFlagEncoder();
+        FootFlagEncoder foot = FlagEncoders.createFoot();
         EncodingManager tmpEM = new EncodingManager.Builder().add(foot).build();
         BaseGraph g = new BaseGraph.Builder(tmpEM).create();
         // real world example: https://graphhopper.com/maps/?point=43.729379,7.417697&point=43.729798,7.417263&profile=foot
@@ -421,7 +421,7 @@ public class InstructionListTest {
 
     @Test
     public void testInstructionWithHighlyCustomProfileWithRoadsBase() {
-        RoadsFlagEncoder roads = new RoadsFlagEncoder();
+        RoadsFlagEncoder roads = FlagEncoders.createRoadsFlagEncoder();
         EncodingManager tmpEM = EncodingManager.create(roads);
         EnumEncodedValue<RoadClass> rcEV = tmpEM.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         BaseGraph g = new BaseGraph.Builder(tmpEM).create();

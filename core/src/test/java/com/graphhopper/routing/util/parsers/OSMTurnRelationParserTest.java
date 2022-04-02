@@ -6,6 +6,7 @@ import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.GHUtility;
@@ -21,7 +22,7 @@ public class OSMTurnRelationParserTest {
 
     @Test
     public void testGetRestrictionAsEntries() {
-        CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 1);
+        CarFlagEncoder encoder = FlagEncoders.createCar(5, 5, 1);
         final Map<Long, Integer> osmNodeToInternal = new HashMap<>();
         final Map<Integer, Long> internalToOSMEdge = new HashMap<>();
 

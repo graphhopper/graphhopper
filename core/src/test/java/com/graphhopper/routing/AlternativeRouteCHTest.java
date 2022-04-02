@@ -21,6 +21,7 @@ import com.graphhopper.routing.ch.NodeOrderingProvider;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.CHConfig;
@@ -35,7 +36,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class AlternativeRouteCHTest {
-    private final CarFlagEncoder carFE = new CarFlagEncoder();
+    private final CarFlagEncoder carFE = FlagEncoders.createCar();
     private final EncodingManager em = EncodingManager.create(carFE);
 
     public BaseGraph createTestGraph(EncodingManager tmpEM) {

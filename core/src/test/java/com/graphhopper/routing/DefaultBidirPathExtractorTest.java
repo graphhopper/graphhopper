@@ -22,6 +22,7 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.BaseGraph;
@@ -38,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @author easbar
  */
 public class DefaultBidirPathExtractorTest {
-    private final CarFlagEncoder carEncoder = new CarFlagEncoder(5, 5, 10);
+    private final CarFlagEncoder carEncoder = FlagEncoders.createCar(5, 5, 10);
     private final EncodingManager encodingManager = EncodingManager.create(carEncoder);
 
     BaseGraph createGraph() {

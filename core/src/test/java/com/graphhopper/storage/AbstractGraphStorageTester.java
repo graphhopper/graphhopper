@@ -45,7 +45,7 @@ public abstract class AbstractGraphStorageTester {
     protected int defaultSize = 100;
     protected String defaultGraphLoc = "./target/graphstorage/default";
     protected CarFlagEncoder carEncoder = createCarFlagEncoder();
-    protected EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(new FootFlagEncoder()).build();
+    protected EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(FlagEncoders.createFoot()).build();
     protected BooleanEncodedValue carAccessEnc = carEncoder.getAccessEnc();
     protected DecimalEncodedValue carAvSpeedEnc = carEncoder.getAverageSpeedEnc();
     protected FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
@@ -88,7 +88,7 @@ public abstract class AbstractGraphStorageTester {
     }
 
     CarFlagEncoder createCarFlagEncoder() {
-        return new CarFlagEncoder(5, 5, 0);
+        return FlagEncoders.createCar(5, 5, 0);
     }
 
     protected BaseGraph createGHStorage() {
@@ -660,8 +660,8 @@ public abstract class AbstractGraphStorageTester {
     @Test
     public void test8AndMoreBytesForEdgeFlags() {
         List<CarFlagEncoder> list = new ArrayList<>();
-        list.add(new CarFlagEncoder("car0", 29, 0.001, 0));
-        list.add(new CarFlagEncoder(29, 0.001, 0));
+        list.add(FlagEncoders.createCar("car0", 29, 0.001, 0));
+        list.add(FlagEncoders.createCar(29, 0.001, 0));
         EncodingManager manager = EncodingManager.create(list);
         graph = new BaseGraph.Builder(manager).create();
 
@@ -698,9 +698,9 @@ public abstract class AbstractGraphStorageTester {
         assertTrue(edgeIter.getReverse(access1Enc));
 
         list.clear();
-        list.add(new CarFlagEncoder("car0", 29, 0.001, 0));
-        list.add(new CarFlagEncoder(29, 0.001, 0));
-        list.add(new CarFlagEncoder("car2", 30, 0.001, 0));
+        list.add(FlagEncoders.createCar("car0", 29, 0.001, 0));
+        list.add(FlagEncoders.createCar(29, 0.001, 0));
+        list.add(FlagEncoders.createCar("car2", 30, 0.001, 0));
         manager = EncodingManager.create(list);
         graph = new BaseGraph.Builder(manager).create();
         edgeIter = graph.edge(0, 1).set(access0Enc, true, false);

@@ -399,7 +399,7 @@ public class OSMReaderTest {
 
     @Test
     public void testFords() {
-        CarFlagEncoder car = new CarFlagEncoder(new PMap("block_fords=true"));
+        CarFlagEncoder car = FlagEncoders.createCar(new PMap("block_fords=true"));
         GraphHopper hopper = new GraphHopper();
         hopper.getTagParserManagerBuilder().add(car);
         hopper.setOSMFile(getClass().getResource("test-barriers3.xml").getFile()).
@@ -661,14 +661,14 @@ public class OSMReaderTest {
      */
     @Test
     public void testTurnFlagCombination() {
-        CarFlagEncoder car = new CarFlagEncoder(5, 5, 24);
+        CarFlagEncoder car = FlagEncoders.createCar(5, 5, 24);
         CarFlagEncoder truck = new CarFlagEncoder("truck", 5, 5, 24) {
             @Override
             public TransportationMode getTransportationMode() {
                 return TransportationMode.HGV;
             }
         };
-        BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24, false);
+        BikeFlagEncoder bike = FlagEncoders.createBike(4, 2, 24, false);
 
         GraphHopper hopper = new GraphHopper();
         hopper.getTagParserManagerBuilder().add(bike).add(truck).add(car);
@@ -936,7 +936,7 @@ public class OSMReaderTest {
     public void testCurvedWayAlongBorder() throws IOException {
         // see https://discuss.graphhopper.com/t/country-of-way-is-wrong-on-road-near-border-with-curvature/6908/2
         TagParserManager em = TagParserManager.start()
-                .add(new CarFlagEncoder())
+                .add(FlagEncoders.createCar())
                 .add(new CountryParser())
                 .build();
         EnumEncodedValue<Country> countryEnc = em.getEnumEncodedValue(Country.KEY, Country.class);
@@ -979,14 +979,14 @@ public class OSMReaderTest {
 
             BikeFlagEncoder bikeEncoder;
             if (turnCosts) {
-                carEncoder = new CarFlagEncoder(5, 5, 1);
-                bikeEncoder = new BikeFlagEncoder(4, 2, 1, false);
+                carEncoder = FlagEncoders.createCar(5, 5, 1);
+                bikeEncoder = FlagEncoders.createBike(4, 2, 1, false);
             } else {
-                carEncoder = new CarFlagEncoder();
-                bikeEncoder = new BikeFlagEncoder();
+                carEncoder = FlagEncoders.createCar();
+                bikeEncoder = FlagEncoders.createBike();
             }
 
-            footEncoder = new FootFlagEncoder();
+            footEncoder = FlagEncoders.createFoot();
             getTagParserManagerBuilder().add(footEncoder).add(carEncoder).add(bikeEncoder);
             getReaderConfig().setPreferredLanguage(prefLang);
         }

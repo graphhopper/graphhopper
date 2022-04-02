@@ -23,7 +23,7 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.FlagEncoders;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -62,7 +62,7 @@ public class GraphHopperProfileTest {
     @Test
     public void vehicleDoesNotExist_error() {
         final GraphHopper hopper = new GraphHopper();
-        hopper.getTagParserManagerBuilder().add(new CarFlagEncoder());
+        hopper.getTagParserManagerBuilder().add(FlagEncoders.createCar());
         hopper.setGraphHopperLocation(GH_LOCATION).setStoreOnFlush(false).
                 setProfiles(new Profile("profile").setVehicle("your_car"));
         assertIllegalArgument(hopper::load, "entry in encoder list not supported: your_car");

@@ -2123,7 +2123,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper();
         hopper.getTagParserManagerBuilder()
                 .add(new OSMMaxSpeedParser())
-                .add(new CarFlagEncoder());
+                .add(FlagEncoders.createCar());
         hopper.setOSMFile(BAYREUTH).
                 setProfiles(new Profile(profile).setVehicle("car").setWeighting("fastest")).
                 setGraphHopperLocation(GH_LOCATION);
@@ -2477,8 +2477,8 @@ public class GraphHopperTest {
 
     @Test
     public void testLoadGraph_implicitEncodedValues_issue1862() {
-        CarFlagEncoder carEncoder = new CarFlagEncoder();
-        EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(new BikeFlagEncoder()).build();
+        CarFlagEncoder carEncoder = FlagEncoders.createCar();
+        EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(FlagEncoders.createBike()).build();
         GraphHopperStorage graph = new GraphBuilder(encodingManager).setDir(new RAMDirectory(GH_LOCATION, true)).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 12, 23);
@@ -2505,7 +2505,7 @@ public class GraphHopperTest {
 
         // load via explicitly configured FlagEncoders then we can define only one profile
         hopper = new GraphHopper();
-        hopper.getTagParserManagerBuilder().add(new CarFlagEncoder()).add(new BikeFlagEncoder());
+        hopper.getTagParserManagerBuilder().add(FlagEncoders.createCar()).add(FlagEncoders.createBike());
         hopper.setProfiles(Collections.singletonList(new Profile("p_car").setVehicle("car").setWeighting("fastest")));
         hopper.setGraphHopperLocation(GH_LOCATION);
         assertTrue(hopper.load());

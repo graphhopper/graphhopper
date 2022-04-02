@@ -17,10 +17,7 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.util.AccessFilter;
-import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.GHUtility;
@@ -40,7 +37,7 @@ public class GraphEdgeIdFinderTest {
 
     @Test
     public void testParseStringHints() {
-        CarFlagEncoder encoder = new CarFlagEncoder();
+        CarFlagEncoder encoder = FlagEncoders.createCar();
         EncodingManager em = EncodingManager.create(encoder);
         BaseGraph graph = new BaseGraph.Builder(em).create();
         // 0-1-2
@@ -72,7 +69,7 @@ public class GraphEdgeIdFinderTest {
 
     @Test
     public void testBlockAreasWithPolygon() {
-        CarFlagEncoder encoder = new CarFlagEncoder();
+        CarFlagEncoder encoder = FlagEncoders.createCar();
         EncodingManager em = EncodingManager.create(encoder);
         BaseGraph graph = new BaseGraph.Builder(em).create();
 

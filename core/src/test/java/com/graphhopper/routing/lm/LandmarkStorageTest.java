@@ -24,6 +24,7 @@ import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
@@ -53,7 +54,7 @@ public class LandmarkStorageTest {
 
     @BeforeEach
     public void setUp() {
-        encoder = new CarFlagEncoder();
+        encoder = FlagEncoders.createCar();
         subnetworkEnc = Subnetwork.create("car");
         encodingManager = new EncodingManager.Builder().add(encoder).add(subnetworkEnc).build();
         graph = new BaseGraph.Builder(encodingManager).create();

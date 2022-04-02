@@ -39,14 +39,14 @@ public class CarTagParserTest {
     final CarFlagEncoder parser = createParser();
     private final TagParserManager em = new TagParserManager.Builder().
             add(parser).
-            add(new BikeFlagEncoder()).add(new FootFlagEncoder()).build();
+            add(FlagEncoders.createBike()).add(FlagEncoders.createFoot()).build();
 
     private final BooleanEncodedValue roundaboutEnc = em.getBooleanEncodedValue(Roundabout.KEY);
     private final DecimalEncodedValue avSpeedEnc = parser.getAverageSpeedEnc();
     private final BooleanEncodedValue accessEnc = parser.getAccessEnc();
 
     CarFlagEncoder createParser() {
-        return new CarFlagEncoder(new PMap("speed_two_directions=true|block_fords=true"));
+        return FlagEncoders.createCar(new PMap("speed_two_directions=true|block_fords=true"));
     }
 
     @Test
@@ -148,7 +148,7 @@ public class CarTagParserTest {
         assertTrue(parser.getAccess(way).canSkip());
         assertTrue(parser.isBarrier(node));
 
-        CarFlagEncoder tmpEncoder = new CarFlagEncoder(new PMap("block_fords=false"));
+        CarFlagEncoder tmpEncoder = FlagEncoders.createCar(new PMap("block_fords=false"));
         EncodingManager.create(tmpEncoder);
         assertTrue(tmpEncoder.getAccess(way).isWay());
         assertFalse(tmpEncoder.isBarrier(node));
@@ -495,7 +495,7 @@ public class CarTagParserTest {
         // barrier!
         assertTrue(parser.isBarrier(node));
 
-        CarFlagEncoder tmpEncoder = new CarFlagEncoder();
+        CarFlagEncoder tmpEncoder = FlagEncoders.createCar();
         EncodingManager.create(tmpEncoder);
 
         // Test if cattle_grid is not blocking
@@ -518,7 +518,7 @@ public class CarTagParserTest {
 
     @Test
     public void testMaxValue() {
-        CarFlagEncoder instance = new CarFlagEncoder(10, 0.5, 0);
+        CarFlagEncoder instance = FlagEncoders.createCar(10, 0.5, 0);
         EncodingManager em = EncodingManager.create(instance);
         DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(EncodingManager.getKey(instance, "average_speed"));
         ReaderWay way = new ReaderWay(1);
@@ -541,7 +541,7 @@ public class CarTagParserTest {
 
     @Test
     public void testRegisterOnlyOnceAllowed() {
-        CarFlagEncoder instance = new CarFlagEncoder(10, 0.5, 0);
+        CarFlagEncoder instance = FlagEncoders.createCar(10, 0.5, 0);
         EncodingManager tmpEM = EncodingManager.create(instance);
         try {
             tmpEM = EncodingManager.create(instance);
@@ -593,7 +593,7 @@ public class CarTagParserTest {
         assertEquals(5, parser.getAverageSpeedEnc().getDecimal(false, edgeFlags), .1);
 
         // for a smaller speed factor the minimum speed is also smaller
-        CarFlagEncoder lowFactorCar = new CarFlagEncoder(10, 1, 0);
+        CarFlagEncoder lowFactorCar = FlagEncoders.createCar(10, 1, 0);
         EncodingManager lowFactorEm = EncodingManager.create(lowFactorCar);
         edgeFlags = lowFactorEm.createEdgeFlags();
         lowFactorCar.handleWayTags(edgeFlags, way);

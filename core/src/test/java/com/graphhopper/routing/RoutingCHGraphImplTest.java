@@ -19,10 +19,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.PrepareEncoder;
-import com.graphhopper.routing.util.AccessFilter;
-import com.graphhopper.routing.util.Bike2WeightFlagEncoder;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeExplorer;
@@ -36,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class RoutingCHGraphImplTest {
     @Test
     public void testBaseAndCHEdges() {
-        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        CarFlagEncoder carEncoder = FlagEncoders.createCar();
         EncodingManager em = EncodingManager.create(carEncoder);
         BaseGraph graph = new BaseGraph.Builder(em).create();
         graph.edge(1, 0);
@@ -74,7 +71,7 @@ public class RoutingCHGraphImplTest {
         //   4 ------ 1 > 0
         //            ^ \
         //            3  2
-        CarFlagEncoder encoder = new CarFlagEncoder();
+        CarFlagEncoder encoder = FlagEncoders.createCar();
         EncodingManager em = EncodingManager.create(encoder);
         BaseGraph graph = new BaseGraph.Builder(em).create();
         EdgeExplorer baseCarOutExplorer = graph.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc()));
@@ -111,7 +108,7 @@ public class RoutingCHGraphImplTest {
 
     @Test
     public void testGetWeight() {
-        CarFlagEncoder encoder = new CarFlagEncoder();
+        CarFlagEncoder encoder = FlagEncoders.createCar();
         EncodingManager em = EncodingManager.create(encoder);
         BaseGraph graph = new BaseGraph.Builder(em).create();
         EdgeIteratorState edge1 = graph.edge(0, 1);
@@ -138,7 +135,7 @@ public class RoutingCHGraphImplTest {
 
     @Test
     public void testGetWeightIfAdvancedEncoder() {
-        Bike2WeightFlagEncoder customEncoder = new Bike2WeightFlagEncoder();
+        Bike2WeightFlagEncoder customEncoder = FlagEncoders.createBike2();
         EncodingManager em = EncodingManager.create(customEncoder);
         BaseGraph ghStorage = new BaseGraph.Builder(em).create();
         ghStorage.edge(0, 3);
@@ -165,7 +162,7 @@ public class RoutingCHGraphImplTest {
 
     @Test
     public void testWeightExact() {
-        CarFlagEncoder encoder = new CarFlagEncoder();
+        CarFlagEncoder encoder = FlagEncoders.createCar();
         EncodingManager em = EncodingManager.create(encoder);
         BaseGraph graph = new BaseGraph.Builder(em).create();
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 1).setDistance(1));
@@ -189,7 +186,7 @@ public class RoutingCHGraphImplTest {
 
     @Test
     public void testSimpleShortcutCreationAndTraversal() {
-        CarFlagEncoder encoder = new CarFlagEncoder();
+        CarFlagEncoder encoder = FlagEncoders.createCar();
         EncodingManager em = EncodingManager.create(encoder);
         BaseGraph graph = new BaseGraph.Builder(em).create();
 
@@ -213,7 +210,7 @@ public class RoutingCHGraphImplTest {
 
     @Test
     public void testAddShortcutSkippedEdgesWriteRead() {
-        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        CarFlagEncoder carEncoder = FlagEncoders.createCar();
         EncodingManager em = EncodingManager.create(carEncoder);
         BaseGraph graph = new BaseGraph.Builder(em).create();
         final EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 3).setDistance(10));
@@ -234,7 +231,7 @@ public class RoutingCHGraphImplTest {
 
     @Test
     public void testSkippedEdges() {
-        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        CarFlagEncoder carEncoder = FlagEncoders.createCar();
         EncodingManager em = EncodingManager.create(carEncoder);
         BaseGraph graph = new BaseGraph.Builder(em).create();
         final EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 3).setDistance(10));
@@ -253,7 +250,7 @@ public class RoutingCHGraphImplTest {
 
     @Test
     public void testAddShortcut_edgeBased_throwsIfNotConfiguredForEdgeBased() {
-        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        CarFlagEncoder carEncoder = FlagEncoders.createCar();
         EncodingManager em = EncodingManager.create(carEncoder);
         BaseGraph graph = new BaseGraph.Builder(em).create();
 
@@ -271,7 +268,7 @@ public class RoutingCHGraphImplTest {
     @Test
     public void testAddShortcut_edgeBased() {
         // 0 -> 1 -> 2
-        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        CarFlagEncoder carEncoder = FlagEncoders.createCar();
         EncodingManager em = EncodingManager.create(carEncoder);
         BaseGraph graph = new BaseGraph.Builder(em).set3D(true).create();
         GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(0, 1).setDistance(1));
@@ -291,7 +288,7 @@ public class RoutingCHGraphImplTest {
 
     @Test
     public void outOfBounds() {
-        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        CarFlagEncoder carEncoder = FlagEncoders.createCar();
         EncodingManager em = EncodingManager.create(carEncoder);
         BaseGraph graph = new BaseGraph.Builder(em).set3D(true).create();
         graph.freeze();
@@ -304,7 +301,7 @@ public class RoutingCHGraphImplTest {
 
     @Test
     public void testGetEdgeIterator() {
-        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        CarFlagEncoder carEncoder = FlagEncoders.createCar();
         EncodingManager em = EncodingManager.create(carEncoder);
         BaseGraph graph = new BaseGraph.Builder(em).set3D(true).create();
         GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(0, 1).setDistance(1));

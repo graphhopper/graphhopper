@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class AccessFilterTest {
-    private final CarFlagEncoder encoder = new CarFlagEncoder();
+    private final CarFlagEncoder encoder = FlagEncoders.createCar();
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final BaseGraph graph = new BaseGraph.Builder(encodingManager)
             .withTurnCosts(true)

@@ -7,6 +7,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,7 @@ public class GraphHopperStorageLMTest {
     public void testLoad() {
         String defaultGraphLoc = "./target/ghstorage_lm";
         Helper.removeDir(new File(defaultGraphLoc));
-        CarFlagEncoder carFlagEncoder = new CarFlagEncoder();
+        CarFlagEncoder carFlagEncoder = FlagEncoders.createCar();
         EncodingManager encodingManager = new EncodingManager.Builder().add(carFlagEncoder).add(Subnetwork.create("my_profile")).build();
         GraphHopperStorage graph = GraphBuilder.start(encodingManager).setRAM(defaultGraphLoc, true).create();
 

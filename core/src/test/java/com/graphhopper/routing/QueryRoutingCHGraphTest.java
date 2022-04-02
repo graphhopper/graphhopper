@@ -25,6 +25,7 @@ import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
@@ -50,7 +51,7 @@ class QueryRoutingCHGraphTest {
 
     @BeforeEach
     public void setup() {
-        encoder = new CarFlagEncoder(5, 5, 5, true);
+        encoder = FlagEncoders.createCar(5, 5, 5, true);
         encodingManager = EncodingManager.create(encoder);
         graph = new BaseGraph.Builder(encodingManager).create();
         weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()));

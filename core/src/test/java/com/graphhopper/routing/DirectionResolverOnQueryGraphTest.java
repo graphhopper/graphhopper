@@ -20,10 +20,7 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.AccessFilter;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
@@ -57,7 +54,7 @@ public class DirectionResolverOnQueryGraphTest {
 
     @BeforeEach
     public void setup() {
-        encoder = new CarFlagEncoder();
+        encoder = FlagEncoders.createCar();
         graph = new BaseGraph.Builder(EncodingManager.create(encoder)).create();
         na = graph.getNodeAccess();
     }

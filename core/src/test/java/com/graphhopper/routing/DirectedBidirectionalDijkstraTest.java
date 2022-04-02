@@ -5,10 +5,7 @@ import com.carrotsearch.hppc.IntHashSet;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.AvoidEdgesWeighting;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -51,7 +48,7 @@ public class DirectedBidirectionalDijkstraTest {
     @BeforeEach
     public void setup() {
         maxTurnCosts = 10;
-        encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
+        encoder = FlagEncoders.createCar(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
         graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         turnCostStorage = graph.getTurnCostStorage();

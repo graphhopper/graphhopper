@@ -81,7 +81,7 @@ public class NameSimilarityEdgeFilterTest {
 
     @Test
     public void testDistanceFiltering() {
-        CarFlagEncoder encoder = new CarFlagEncoder();
+        CarFlagEncoder encoder = FlagEncoders.createCar();
         BaseGraph g = new BaseGraph.Builder(EncodingManager.create(encoder)).create();
         NodeAccess na = g.getNodeAccess();
 
@@ -272,7 +272,7 @@ public class NameSimilarityEdgeFilterTest {
         // -----
         //
         //    2 -- 3
-        CarFlagEncoder encoder = new CarFlagEncoder(new PMap().putObject("speed_two_directions", true));
+        CarFlagEncoder encoder = FlagEncoders.createCar(new PMap().putObject("speed_two_directions", true));
         EncodingManager em = EncodingManager.create(encoder);
         BaseGraph graph = new BaseGraph.Builder(em).create();
         PointList pointList = new PointList(20, false);

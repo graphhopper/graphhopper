@@ -26,10 +26,7 @@ import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -101,7 +98,7 @@ public class DirectedRoutingTest {
             // todo: this test only works with speedTwoDirections=false (as long as loops are enabled), otherwise it will
             // fail sometimes for edge-based algorithms, #1631, but maybe we can should disable different fwd/bwd speeds
             // only for loops instead?
-            encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
+            encoder = FlagEncoders.createCar(5, 5, maxTurnCosts);
             encodingManager = EncodingManager.create(encoder);
             graph = new BaseGraph.Builder(encodingManager).setDir(dir).withTurnCosts(true).create();
             turnCostStorage = graph.getTurnCostStorage();

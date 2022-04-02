@@ -20,10 +20,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.TurnCost;
-import com.graphhopper.routing.util.BikeFlagEncoder;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,8 +40,8 @@ public class TurnCostStorageTest {
 
     @BeforeEach
     public void setup() {
-        CarFlagEncoder carEncoder = new CarFlagEncoder(5, 5, 3);
-        BikeFlagEncoder bikeEncoder = new BikeFlagEncoder(5, 5, 3, false);
+        CarFlagEncoder carEncoder = FlagEncoders.createCar(5, 5, 3);
+        BikeFlagEncoder bikeEncoder = FlagEncoders.createBike(5, 5, 3, false);
         manager = EncodingManager.create(carEncoder, bikeEncoder);
     }
 

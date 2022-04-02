@@ -404,7 +404,7 @@ public class WheelchairTagParserTest {
 
     @Test
     public void testBlockByDefault() {
-        WheelchairFlagEncoder tmpWheelchairEncoder = new WheelchairFlagEncoder();
+        WheelchairFlagEncoder tmpWheelchairEncoder = FlagEncoders.createWheelchair();
         EncodingManager.create(tmpWheelchairEncoder);
 
         ReaderNode node = new ReaderNode(1, -1, -1);

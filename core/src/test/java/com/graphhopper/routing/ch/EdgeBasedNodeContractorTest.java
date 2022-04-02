@@ -22,6 +22,7 @@ import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -61,7 +62,7 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private void initialize() {
-        encoder = new CarFlagEncoder(5, 5, maxCost);
+        encoder = FlagEncoders.createCar(5, 5, maxCost);
         EncodingManager encodingManager = EncodingManager.create(encoder);
         graph = new BaseGraph.Builder(encodingManager).create();
         chConfigs = Arrays.asList(

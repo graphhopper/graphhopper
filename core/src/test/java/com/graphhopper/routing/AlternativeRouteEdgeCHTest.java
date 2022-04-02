@@ -24,6 +24,7 @@ import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
@@ -40,7 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class AlternativeRouteEdgeCHTest {
-    private final CarFlagEncoder carFE = new CarFlagEncoder(new PMap().putObject("turn_costs", true));
+    private final CarFlagEncoder carFE = FlagEncoders.createCar(new PMap().putObject("turn_costs", true));
     private final EncodingManager em = EncodingManager.create(carFE);
 
     public BaseGraph createTestGraph(EncodingManager tmpEM) {

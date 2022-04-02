@@ -3,6 +3,7 @@ package com.graphhopper.routing.ev;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.Test;
 
@@ -22,7 +23,7 @@ public class DecimalEncodedValueTest {
 
     @Test
     public void testMaxValue() {
-        CarFlagEncoder carEncoder = new CarFlagEncoder(10, 0.5, 0);
+        CarFlagEncoder carEncoder = FlagEncoders.createCar(10, 0.5, 0);
         EncodingManager em = EncodingManager.create(carEncoder);
         DecimalEncodedValue carAverageSpeedEnc = em.getDecimalEncodedValue(EncodingManager.getKey(carEncoder, "average_speed"));
 

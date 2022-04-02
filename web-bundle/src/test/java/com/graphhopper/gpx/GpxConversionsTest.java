@@ -23,6 +23,7 @@ import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.BaseGraph;
@@ -53,7 +54,7 @@ public class GpxConversionsTest {
 
     @BeforeEach
     public void setUp() {
-        carEncoder = new CarFlagEncoder();
+        carEncoder = FlagEncoders.createCar();
         carManager = EncodingManager.create(carEncoder);
         trMap = new TranslationMap().doImport();
     }

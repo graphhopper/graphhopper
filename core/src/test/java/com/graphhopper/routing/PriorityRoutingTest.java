@@ -43,7 +43,7 @@ public class PriorityRoutingTest {
 
     @Test
     void testMaxPriority() {
-        BikeFlagEncoder encoder = new BikeFlagEncoder();
+        BikeFlagEncoder encoder = FlagEncoders.createBike();
         EncodingManager em = EncodingManager.create(encoder);
         BaseGraph graph = new BaseGraph.Builder(em).create();
         NodeAccess na = graph.getNodeAccess();

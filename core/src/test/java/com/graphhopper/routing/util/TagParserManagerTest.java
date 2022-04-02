@@ -64,7 +64,7 @@ class TagParserManagerTest {
         osmWay.setTag("highway", "track");
         ReaderRelation osmRel = new ReaderRelation(1);
 
-        BikeFlagEncoder defaultBike = new BikeFlagEncoder();
+        BikeFlagEncoder defaultBike = FlagEncoders.createBike();
         BikeFlagEncoder lessRelationCodes = new BikeFlagEncoder("less_relation_bits") {
             @Override
             public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
@@ -93,8 +93,8 @@ class TagParserManagerTest {
 
         ReaderRelation osmRel = new ReaderRelation(1);
 
-        BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
-        MountainBikeFlagEncoder mtbEncoder = new MountainBikeFlagEncoder();
+        BikeFlagEncoder bikeEncoder = FlagEncoders.createBike();
+        MountainBikeFlagEncoder mtbEncoder = FlagEncoders.createMountainBike();
         TagParserManager manager = TagParserManager.create(bikeEncoder, mtbEncoder);
 
         // relation code for network rcn is NICE for bike and PREFER for mountainbike

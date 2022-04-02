@@ -55,7 +55,7 @@ public class RandomCHRoutingTest {
             this.maxTurnCosts = 10;
             this.uTurnCosts = uTurnCosts;
             dir = new RAMDirectory();
-            encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
+            encoder = FlagEncoders.createCar(5, 5, maxTurnCosts);
             encodingManager = EncodingManager.create(encoder);
             graph = new BaseGraph.Builder(encodingManager).create();
         }

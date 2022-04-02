@@ -25,6 +25,7 @@ import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,8 +51,8 @@ public class LMProfileSelectorTest {
 
     @BeforeEach
     public void setup() {
-        CarFlagEncoder carEncoder = new CarFlagEncoder();
-        BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
+        CarFlagEncoder carEncoder = FlagEncoders.createCar();
+        BikeFlagEncoder bikeEncoder = FlagEncoders.createBike();
         encodingManager = EncodingManager.create(carEncoder, bikeEncoder);
         fastCar = new Profile("fast_car").setVehicle("car").setWeighting("fastest").setTurnCosts(false);
         fastCarEdge = new Profile("fast_car_edge").setVehicle("car").setWeighting("fastest").setTurnCosts(true);

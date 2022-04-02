@@ -36,7 +36,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
 
     @Override
     protected BikeCommonFlagEncoder createBikeTagParser() {
-        return new BikeFlagEncoder(new PMap("block_fords=true"));
+        return FlagEncoders.createBike(new PMap("block_fords=true"));
     }
 
     @Test
