@@ -56,13 +56,13 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         na.setNode(1, 11, 20, 1);
         na.setNode(2, 12, 12, 0.4);
 
-        EdgeIteratorState iter2 = GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 1).setDistance(100));
+        EdgeIteratorState iter2 = graph.edge(0, 1).setDistance(100).set(carAccessEnc, true, true);
         iter2.setWayGeometry(Helper.createPointList3D(1.5, 1, 0, 2, 3, 0));
-        EdgeIteratorState iter1 = GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 2).setDistance(200));
+        EdgeIteratorState iter1 = graph.edge(0, 2).setDistance(200).set(carAccessEnc, true, true);
         iter1.setWayGeometry(Helper.createPointList3D(3.5, 4.5, 0, 5, 6, 0));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(9, 10).setDistance(200));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(9, 11).setDistance(200));
-        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(1, 2).setDistance(120));
+        graph.edge(9, 10).setDistance(200).set(carAccessEnc, true, true);
+        graph.edge(9, 11).setDistance(200).set(carAccessEnc, true, true);
+        graph.edge(1, 2).setDistance(120).set(carAccessEnc, true, false);
 
         iter1.setName("named street1");
         iter2.setName("named street2");
@@ -163,8 +163,8 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         // a typical usage where we create independent EdgeIteratorState's BUT due to the IntsRef reference they are no more independent
         GraphHopperStorage storage = createGHStorage();
         Graph graph = storage.getBaseGraph();
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 1).setDistance(10));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 2).setDistance(10));
+        graph.edge(0, 1).setDistance(10).set(carAccessEnc, true, true);
+        graph.edge(1, 2).setDistance(10).set(carAccessEnc, true, true);
 
         EdgeIteratorState edge0 = graph.getEdgeIteratorState(0, Integer.MIN_VALUE);
         EdgeIteratorState edge1 = graph.getEdgeIteratorState(1, Integer.MIN_VALUE);
