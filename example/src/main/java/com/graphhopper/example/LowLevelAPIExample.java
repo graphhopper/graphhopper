@@ -6,7 +6,10 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
@@ -32,7 +35,7 @@ public class LowLevelAPIExample {
     public static void createAndSaveGraph() {
         {
             CarFlagEncoder encoder = new CarFlagEncoder();
-            TagParserManager em = TagParserManager.create(encoder);
+            EncodingManager em = EncodingManager.create(encoder);
             GraphHopperStorage graph = new GraphBuilder(em).setRAM(graphLocation, true).create();
             // Make a weighted edge between two nodes and set average speed to 50km/h
             EdgeIteratorState edge = graph.edge(0, 1).setDistance(1234).set(encoder.getAverageSpeedEnc(), 50);
@@ -54,9 +57,9 @@ public class LowLevelAPIExample {
 
         {
             // Load the graph ... can be also in a different code location
-            // note that the TagParserManager must be the same
+            // note that the EncodingManager must be the same
             CarFlagEncoder encoder = new CarFlagEncoder();
-            TagParserManager em = TagParserManager.create(encoder);
+            EncodingManager em = EncodingManager.create(encoder);
             GraphHopperStorage graph = new GraphBuilder(em).setRAM(graphLocation, true).build();
             graph.loadExisting();
 

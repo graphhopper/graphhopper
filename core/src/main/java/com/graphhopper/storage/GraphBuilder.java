@@ -17,7 +17,7 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.util.TagParserManager;
+import com.graphhopper.routing.util.EncodingManager;
 
 /**
  * Used to build {@link GraphHopperStorage}
@@ -26,20 +26,20 @@ import com.graphhopper.routing.util.TagParserManager;
  * @author easbar
  */
 public class GraphBuilder {
-    private final TagParserManager tagParserManager;
+    private final EncodingManager encodingManager;
     private Directory dir = new RAMDirectory();
     private boolean elevation;
     private boolean turnCosts;
     private long bytes = 100;
     private int segmentSize = -1;
 
-    public static GraphBuilder start(TagParserManager tagParserManager) {
-        return new GraphBuilder(tagParserManager);
+    public static GraphBuilder start(EncodingManager encodingManager) {
+        return new GraphBuilder(encodingManager);
     }
 
-    public GraphBuilder(TagParserManager tagParserManager) {
-        this.tagParserManager = tagParserManager;
-        this.turnCosts = tagParserManager.needsTurnCostsSupport();
+    public GraphBuilder(EncodingManager encodingManager) {
+        this.encodingManager = encodingManager;
+        this.turnCosts = encodingManager.needsTurnCostsSupport();
     }
 
     public GraphBuilder setDir(Directory dir) {
@@ -84,7 +84,7 @@ public class GraphBuilder {
      * {@link #create} directly.
      */
     public GraphHopperStorage build() {
-        return new GraphHopperStorage(dir, tagParserManager, elevation, turnCosts, segmentSize);
+        return new GraphHopperStorage(dir, encodingManager, elevation, turnCosts, segmentSize);
     }
 
     /**

@@ -80,5 +80,9 @@ public interface EncodedValue {
         public int getRequiredBits() {
             return (dataIndex) * 32 + nextShift;
         }
+
+        public int getRequiredInts() {
+            return (int) Math.ceil((double) getRequiredBits() / 32.0);
+        }
     }
 }

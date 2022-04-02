@@ -325,7 +325,7 @@ public class TagParserManager implements EncodedValueLookup {
             for (AbstractFlagEncoder encoder : flagEncoderMap.values()) {
                 if (encoder.supportsTurnCosts() && !em.turnCostParsers.containsKey(TurnCost.key(encoder.toString()))) {
                     BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-                    DecimalEncodedValue turnCostEnc = TurnCost.create(encoder.toString(), encoder.getMaxTurnCosts());
+                    DecimalEncodedValue turnCostEnc = encoder.getTurnCostEnc();
                     _addTurnCostParser(new OSMTurnRelationParser(accessEnc, turnCostEnc, encoder.getRestrictions()));
                 }
             }
@@ -334,7 +334,7 @@ public class TagParserManager implements EncodedValueLookup {
                 throw new IllegalStateException("No EncodedValues found");
 
             em.encodingManager = new EncodingManager(new ArrayList<>(em.edgeEncoders), em.encodedValueMap,
-                    em.turnCostParsers, em.turnCostConfig, em.edgeConfig);
+                    em.turnCostConfig, em.edgeConfig);
 
             TagParserManager tmp = em;
             em = null;
@@ -383,7 +383,7 @@ public class TagParserManager implements EncodedValueLookup {
     }
 
     public int getIntsForFlags() {
-        return (int) Math.ceil((double) edgeConfig.getRequiredBits() / 32.0);
+       return edgeConfig.getRequiredInts();
     }
 
     private void addEncoder(AbstractFlagEncoder encoder) {
@@ -428,7 +428,7 @@ public class TagParserManager implements EncodedValueLookup {
                 return encoder;
         }
         if (throwExc)
-            throw new IllegalArgumentException("FlagEncoder for " + name + " not found. Existing: " + toFlagEncodersAsString());
+            throw new IllegalArgumentException("FlagEncoder for " + name + " not found. Existing: " + edgeEncoders.stream().map(FlagEncoder::toString).collect(Collectors.toList()));
         return null;
     }
 
@@ -482,35 +482,6 @@ public class TagParserManager implements EncodedValueLookup {
                 str.append(",");
 
             str.append(encoder.toString());
-        }
-
-        return str.toString();
-    }
-
-    public String toFlagEncodersAsString() {
-        StringBuilder str = new StringBuilder();
-        for (AbstractFlagEncoder encoder : edgeEncoders) {
-            if (str.length() > 0)
-                str.append(",");
-
-            str.append(encoder.toString())
-                    .append("|")
-                    .append(encoder.getPropertiesString());
-        }
-
-        return str.toString();
-    }
-
-    public String toEncodedValuesAsString() {
-        StringBuilder str = new StringBuilder();
-        for (EncodedValue ev : encodedValueMap.values()) {
-            if (!isSharedEncodedValues(ev))
-                continue;
-
-            if (str.length() > 0)
-                str.append(",");
-
-            str.append(ev.toString());
         }
 
         return str.toString();

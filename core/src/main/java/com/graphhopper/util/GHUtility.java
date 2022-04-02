@@ -150,11 +150,19 @@ public class GHUtility {
     }
 
     public static void printGraphForUnitTest(Graph g, FlagEncoder encoder) {
-        printGraphForUnitTest(g, encoder, new BBox(
+        printGraphForUnitTest(g, encoder.getAccessEnc(), encoder.getAverageSpeedEnc());
+    }
+
+    public static void printGraphForUnitTest(Graph g, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
+        printGraphForUnitTest(g, accessEnc, speedEnc, new BBox(
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY));
     }
 
     public static void printGraphForUnitTest(Graph g, FlagEncoder encoder, BBox bBox) {
+        printGraphForUnitTest(g, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), bBox);
+    }
+
+    public static void printGraphForUnitTest(Graph g, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, BBox bBox) {
         System.out.println("WARNING: printGraphForUnitTest does not pay attention to custom edge speeds at the moment");
         NodeAccess na = g.getNodeAccess();
         for (int node = 0; node < g.getNodes(); ++node) {
@@ -166,13 +174,12 @@ public class GHUtility {
         while (iter.next()) {
             if (bBox.contains(na.getLat(iter.getBaseNode()), na.getLon(iter.getBaseNode())) &&
                     bBox.contains(na.getLat(iter.getAdjNode()), na.getLon(iter.getAdjNode()))) {
-                printUnitTestEdge(encoder, iter);
+                printUnitTestEdge(accessEnc, speedEnc, iter);
             }
         }
     }
 
-    private static void printUnitTestEdge(FlagEncoder encoder, EdgeIteratorState edge) {
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+    private static void printUnitTestEdge(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, EdgeIteratorState edge) {
         boolean fwd = edge.get(accessEnc);
         boolean bwd = edge.getReverse(accessEnc);
         if (!fwd && !bwd) {
@@ -180,10 +187,17 @@ public class GHUtility {
         }
         int from = fwd ? edge.getBaseNode() : edge.getAdjNode();
         int to = fwd ? edge.getAdjNode() : edge.getBaseNode();
-        System.out.printf(Locale.ROOT,
-                "GHUtility.setSpeed(%f, %f, encoder, graph.edge(%d, %d).setDistance(%f)); // edgeId=%s\n",
-                fwd ? edge.get(encoder.getAverageSpeedEnc()) : 0, bwd ? edge.getReverse(encoder.getAverageSpeedEnc()) : 0,
-                from, to, edge.getDistance(), edge.getEdge());
+        if (speedEnc != null) {
+            System.out.printf(Locale.ROOT,
+                    "GHUtility.setSpeed(%f, %f, encoder, graph.edge(%d, %d).setDistance(%f)); // edgeId=%s\n",
+                    fwd ? edge.get(speedEnc) : 0, bwd ? edge.getReverse(speedEnc) : 0,
+                    from, to, edge.getDistance(), edge.getEdge());
+        } else {
+            System.out.printf(Locale.ROOT,
+                    "graph.edge(%d, %d).setDistance(%f).set(accessEnc, %b, %b); // edgeId=%s\n",
+                    from, to, edge.getDistance(),
+                    edge.get(accessEnc), edge.getReverse(accessEnc), edge.getEdge());
+        }
     }
 
     /**
@@ -233,9 +247,11 @@ public class GHUtility {
             if (speed != null) {
                 fwdSpeed = bwdSpeed = speed;
             }
-            edge.set(speedEnc, fwdSpeed);
-            if (speedEnc.isStoreTwoDirections())
-                edge.setReverse(speedEnc, bwdSpeed);
+            if (speedEnc != null) {
+                edge.set(speedEnc, fwdSpeed);
+                if (speedEnc.isStoreTwoDirections())
+                    edge.setReverse(speedEnc, bwdSpeed);
+            }
             numEdges++;
         }
         LOGGER.debug(String.format(Locale.ROOT, "Finished building random graph" +
@@ -252,14 +268,19 @@ public class GHUtility {
     }
 
     public static void addRandomTurnCosts(Graph graph, long seed, EncodingManager em, FlagEncoder encoder, int maxTurnCost, TurnCostStorage turnCostStorage) {
+        DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(TurnCost.key(encoder.toString()));
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+        addRandomTurnCosts(graph, seed, accessEnc, turnCostEnc, maxTurnCost, turnCostStorage);
+    }
+
+    public static void addRandomTurnCosts(Graph graph, long seed, BooleanEncodedValue accessEnc, DecimalEncodedValue turnCostEnc, int maxTurnCost, TurnCostStorage turnCostStorage) {
         Random random = new Random(seed);
         double pNodeHasTurnCosts = 0.3;
         double pEdgePairHasTurnCosts = 0.6;
         double pCostIsRestriction = 0.1;
 
-        DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(TurnCost.key(encoder.toString()));
-        EdgeExplorer inExplorer = graph.createEdgeExplorer(AccessFilter.inEdges(encoder.getAccessEnc()));
-        EdgeExplorer outExplorer = graph.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc()));
+        EdgeExplorer inExplorer = graph.createEdgeExplorer(AccessFilter.inEdges(accessEnc));
+        EdgeExplorer outExplorer = graph.createEdgeExplorer(AccessFilter.outEdges(accessEnc));
         for (int node = 0; node < graph.getNodes(); ++node) {
             if (random.nextDouble() < pNodeHasTurnCosts) {
                 EdgeIterator inIter = inExplorer.setBaseNode(node);
@@ -417,7 +438,7 @@ public class GHUtility {
     public static GraphHopperStorage newStorage(GraphHopperStorage store) {
         Directory outdir = guessDirectory(store);
         boolean is3D = store.getNodeAccess().is3D();
-        return new GraphBuilder(store.getTagParserManager())
+        return new GraphBuilder(store.getEncodingManager())
                 .withTurnCosts(store.getTurnCostStorage() != null)
                 .set3D(is3D)
                 .setDir(outdir)
@@ -665,11 +686,10 @@ public class GHUtility {
     }
 
     public static double calcWeightWithTurnWeightWithAccess(Weighting weighting, EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-        BooleanEncodedValue accessEnc = weighting.getFlagEncoder().getAccessEnc();
         if (edgeState.getBaseNode() == edgeState.getAdjNode()) {
-            if (!edgeState.get(accessEnc) && !edgeState.getReverse(accessEnc))
+            if (weighting.edgeHasNoAccess(edgeState, false) && weighting.edgeHasNoAccess(edgeState, true))
                 return Double.POSITIVE_INFINITY;
-        } else if ((!reverse && !edgeState.get(accessEnc)) || (reverse && !edgeState.getReverse(accessEnc))) {
+        } else if (weighting.edgeHasNoAccess(edgeState, reverse)) {
             return Double.POSITIVE_INFINITY;
         }
         return calcWeightWithTurnWeight(weighting, edgeState, reverse, prevOrNextEdgeId);

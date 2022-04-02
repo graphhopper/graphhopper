@@ -770,7 +770,7 @@ public class GraphHopper {
 
         GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
         directory.configure(dataAccessConfig);
-        ghStorage = new GraphBuilder(tagParserManager)
+        ghStorage = new GraphBuilder(getEncodingManager())
                 .setDir(directory)
                 .set3D(hasElevation())
                 .withTurnCosts(tagParserManager.needsTurnCostsSupport())
@@ -1074,7 +1074,7 @@ public class GraphHopper {
 
         // we load landmark storages that already exist and prepare the other ones
         List<LMConfig> lmConfigs = createLMConfigs(lmPreparationHandler.getLMProfiles());
-        List<LandmarkStorage> loaded = lmPreparationHandler.load(lmConfigs, ghStorage.getBaseGraph());
+        List<LandmarkStorage> loaded = lmPreparationHandler.load(lmConfigs, ghStorage.getBaseGraph(), ghStorage.getEncodingManager());
         List<LMConfig> loadedConfigs = loaded.stream().map(LandmarkStorage::getLMConfig).collect(Collectors.toList());
         List<LMConfig> configsToPrepare = lmConfigs.stream().filter(c -> !loadedConfigs.contains(c)).collect(Collectors.toList());
         List<PrepareLandmarks> prepared = prepareLM(closeEarly, configsToPrepare);

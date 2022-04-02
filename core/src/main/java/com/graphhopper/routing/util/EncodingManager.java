@@ -19,7 +19,6 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
@@ -40,7 +39,6 @@ import static com.graphhopper.util.Helper.toLowerCase;
 public class EncodingManager implements EncodedValueLookup {
     private final List<FlagEncoder> edgeEncoders;
     private final Map<String, EncodedValue> encodedValueMap;
-    private final Map<String, TurnCostParser> turnCostParsers;
     private final EncodedValue.InitializerConfig turnCostConfig;
     private final EncodedValue.InitializerConfig edgeConfig;
 
@@ -89,12 +87,10 @@ public class EncodingManager implements EncodedValueLookup {
     public EncodingManager(
             List<FlagEncoder> edgeEncoders,
             Map<String, EncodedValue> encodedValueMap,
-            Map<String, TurnCostParser> turnCostParsers,
             EncodedValue.InitializerConfig turnCostConfig,
             EncodedValue.InitializerConfig edgeConfig) {
         this.edgeEncoders = edgeEncoders;
         this.encodedValueMap = encodedValueMap;
-        this.turnCostParsers = turnCostParsers;
         this.turnCostConfig = turnCostConfig;
         this.edgeConfig = edgeConfig;
     }
@@ -102,7 +98,7 @@ public class EncodingManager implements EncodedValueLookup {
     private EncodingManager() {
         this(
                 new ArrayList<>(), new LinkedHashMap<>(),
-                new LinkedHashMap<>(), new EncodedValue.InitializerConfig(),
+                new EncodedValue.InitializerConfig(),
                 new EncodedValue.InitializerConfig()
         );
     }
@@ -138,30 +134,6 @@ public class EncodingManager implements EncodedValueLookup {
                 throw new IllegalStateException("Cannot call method after Builder.build() was called");
         }
 
-        private void _addEdgeTagParser(TagParser tagParser, boolean withNamespace) {
-            if (!em.edgeEncoders.isEmpty())
-                throw new IllegalStateException("Avoid mixing encoded values from FlagEncoder with shared encoded values until we have a more clever mechanism, see #1862");
-
-            List<EncodedValue> list = new ArrayList<>();
-            tagParser.createEncodedValues(em, list);
-            for (EncodedValue ev : list) {
-                em.addEncodedValue(ev, withNamespace);
-            }
-        }
-
-        private void _addTurnCostParser(TurnCostParser parser) {
-            List<EncodedValue> list = new ArrayList<>();
-            parser.createTurnCostEncodedValues(em, list);
-            for (EncodedValue ev : list) {
-                ev.init(em.turnCostConfig);
-                if (em.encodedValueMap.containsKey(ev.getName()))
-                    throw new IllegalArgumentException("Already defined: " + ev.getName() + ". Please note that " +
-                            "EncodedValues for edges and turn cost are in the same namespace.");
-                em.encodedValueMap.put(ev.getName(), ev);
-            }
-            em.turnCostParsers.put(parser.getName(), parser);
-        }
-
         public EncodingManager build() {
             check();
 
@@ -170,18 +142,17 @@ public class EncodingManager implements EncodedValueLookup {
             }
 
             if (!em.hasEncodedValue(Roundabout.KEY))
-                _addEdgeTagParser(new OSMRoundaboutParser(), false);
+                em.addEncodedValue(Roundabout.create(), false);
             if (!em.hasEncodedValue(RoadClass.KEY))
-                _addEdgeTagParser(new OSMRoadClassParser(), false);
+                em.addEncodedValue(new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class), false);
             if (!em.hasEncodedValue(RoadClassLink.KEY))
-                _addEdgeTagParser(new OSMRoadClassLinkParser(), false);
+                em.addEncodedValue(new SimpleBooleanEncodedValue(RoadClassLink.KEY), false);
             if (!em.hasEncodedValue(RoadEnvironment.KEY))
-                _addEdgeTagParser(new OSMRoadEnvironmentParser(), false);
+                em.addEncodedValue(new EnumEncodedValue<>(RoadEnvironment.KEY, RoadEnvironment.class), false);
             if (!em.hasEncodedValue(MaxSpeed.KEY))
-                _addEdgeTagParser(new OSMMaxSpeedParser(), false);
+                em.addEncodedValue(MaxSpeed.create(), false);
             if (!em.hasEncodedValue(RoadAccess.KEY)) {
-                // TODO introduce road_access for different vehicles? But how to create it in DefaultTagParserFactory?
-                _addEdgeTagParser(new OSMRoadAccessParser(), false);
+                em.addEncodedValue(new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class), false);
             }
 
             if (dateRangeParser == null)
@@ -191,34 +162,25 @@ public class EncodingManager implements EncodedValueLookup {
                 if (encoder instanceof RoadsFlagEncoder) {
                     // TODO Later these EncodedValues can be added independently of RoadsFlagEncoder. Maybe add a foot_access and hgv_access? and remove the others "xy$access"
                     if (!em.hasEncodedValue("car_access"))
-                        _addEdgeTagParser(new DefaultTagParserFactory().create("car_access", new PMap()), false);
+                        em.addEncodedValue(new SimpleBooleanEncodedValue("car_access"), false);
                     if (!em.hasEncodedValue("bike_access"))
-                        _addEdgeTagParser(new DefaultTagParserFactory().create("bike_access", new PMap()), false);
+                        em.addEncodedValue(new SimpleBooleanEncodedValue("bike_access"), false);
                 } else if (encoder instanceof BikeCommonFlagEncoder) {
                     if (!em.hasEncodedValue(RouteNetwork.key("bike")))
-                        _addEdgeTagParser(new OSMBikeNetworkTagParser(), false);
+                        em.addEncodedValue(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class), false);
                     if (!em.hasEncodedValue(GetOffBike.KEY))
-                        _addEdgeTagParser(new OSMGetOffBikeParser(), false);
+                        em.addEncodedValue(GetOffBike.create(), false);
                     if (!em.hasEncodedValue(Smoothness.KEY))
-                        _addEdgeTagParser(new OSMSmoothnessParser(), false);
+                        em.addEncodedValue(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class), false);
                 } else if (encoder instanceof FootFlagEncoder) {
                     if (!em.hasEncodedValue(RouteNetwork.key("foot")))
-                        _addEdgeTagParser(new OSMFootNetworkTagParser(), false);
+                        em.addEncodedValue(new EnumEncodedValue<>(FootNetwork.KEY, RouteNetwork.class), false);
                 }
             }
 
             for (AbstractFlagEncoder encoder : flagEncoderMap.values()) {
                 encoder.init(dateRangeParser);
                 em.addEncoder(encoder);
-            }
-
-            // FlagEncoder can demand TurnCostParsers => add them after the explicitly added ones
-            for (AbstractFlagEncoder encoder : flagEncoderMap.values()) {
-                if (encoder.supportsTurnCosts() && !em.turnCostParsers.containsKey(TurnCost.key(encoder.toString()))) {
-                    BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-                    DecimalEncodedValue turnCostEnc = TurnCost.create(encoder.toString(), encoder.getMaxTurnCosts());
-                    _addTurnCostParser(new OSMTurnRelationParser(accessEnc, turnCostEnc, encoder.getRestrictions()));
-                }
             }
 
             if (em.encodedValueMap.isEmpty())
@@ -248,7 +210,7 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public int getIntsForFlags() {
-        return (int) Math.ceil((double) edgeConfig.getRequiredBits() / 32.0);
+        return edgeConfig.getRequiredInts();
     }
 
     private void addEncoder(AbstractFlagEncoder encoder) {
@@ -257,6 +219,10 @@ public class EncodingManager implements EncodedValueLookup {
         encoder.createEncodedValues(list);
         for (EncodedValue ev : list)
             addEncodedValue(ev, true);
+        list = new ArrayList<>();
+        encoder.createTurnCostEncodedValues(list);
+        for (EncodedValue ev : list)
+            addTurnCostEncodedValue(ev);
         edgeEncoders.add(encoder);
     }
 
@@ -270,6 +236,14 @@ public class EncodingManager implements EncodedValueLookup {
             throw new IllegalArgumentException("EncodedValue " + ev.getName() + " must contain namespace character '" + SPECIAL_SEPARATOR + "'");
         ev.init(edgeConfig);
         encodedValueMap.put(ev.getName(), ev);
+    }
+
+    private void addTurnCostEncodedValue(EncodedValue turnCostEnc) {
+        if (encodedValueMap.containsKey(turnCostEnc.getName()))
+            throw new IllegalArgumentException("Already defined: " + turnCostEnc.getName() + ". Please note that " +
+                    "EncodedValues for edges and turn cost are in the same namespace.");
+        turnCostEnc.init(turnCostConfig);
+        encodedValueMap.put(turnCostEnc.getName(), turnCostEnc);
     }
 
     public boolean hasEncodedValue(String key) {
@@ -315,6 +289,35 @@ public class EncodingManager implements EncodedValueLookup {
         public boolean canSkip() {
             return this.ordinal() == CAN_SKIP.ordinal();
         }
+    }
+
+    public String toFlagEncodersAsString() {
+        StringBuilder str = new StringBuilder();
+        for (FlagEncoder encoder : edgeEncoders) {
+            if (str.length() > 0)
+                str.append(",");
+
+            str.append(encoder.toString())
+                    .append("|")
+                    .append(((AbstractFlagEncoder) encoder).getPropertiesString());
+        }
+
+        return str.toString();
+    }
+
+    public String toEncodedValuesAsString() {
+        StringBuilder str = new StringBuilder();
+        for (EncodedValue ev : encodedValueMap.values()) {
+            if (!isSharedEncodedValues(ev))
+                continue;
+
+            if (str.length() > 0)
+                str.append(",");
+
+            str.append(ev.toString());
+        }
+
+        return str.toString();
     }
 
     @Override

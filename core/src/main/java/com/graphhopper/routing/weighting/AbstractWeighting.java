@@ -29,7 +29,6 @@ import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PR
  * @author Peter Karich
  */
 public abstract class AbstractWeighting implements Weighting {
-    protected final FlagEncoder flagEncoder;
     protected final DecimalEncodedValue avSpeedEnc;
     protected final BooleanEncodedValue accessEnc;
     private final TurnCostProvider turnCostProvider;
@@ -39,15 +38,21 @@ public abstract class AbstractWeighting implements Weighting {
     }
 
     protected AbstractWeighting(FlagEncoder encoder, TurnCostProvider turnCostProvider) {
-        this.flagEncoder = encoder;
-        if (!flagEncoder.isRegistered())
-            throw new IllegalStateException("Make sure you add the FlagEncoder " + flagEncoder + " to an EncodingManager before using it elsewhere");
+        this(encoder.getAverageSpeedEnc(), encoder.getAccessEnc(), turnCostProvider);
+    }
+
+    protected AbstractWeighting(DecimalEncodedValue avSpeedEnc, BooleanEncodedValue accessEnc, TurnCostProvider turnCostProvider) {
         if (!isValidName(getName()))
             throw new IllegalStateException("Not a valid name for a Weighting: " + getName());
 
-        avSpeedEnc = encoder.getAverageSpeedEnc();
-        accessEnc = encoder.getAccessEnc();
+        this.avSpeedEnc = avSpeedEnc;
+        this.accessEnc = accessEnc;
         this.turnCostProvider = turnCostProvider;
+    }
+
+    @Override
+    public boolean edgeHasNoAccess(EdgeIteratorState edgeState, boolean reverse) {
+        return reverse ? !edgeState.getReverse(accessEnc) : !edgeState.get(accessEnc);
     }
 
     /**
@@ -94,26 +99,8 @@ public abstract class AbstractWeighting implements Weighting {
         return turnCostProvider != NO_TURN_COST_PROVIDER;
     }
 
-    @Override
-    public FlagEncoder getFlagEncoder() {
-        return flagEncoder;
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 71 * hash + toString().hashCode();
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        final Weighting other = (Weighting) obj;
-        return toString().equals(other.toString());
+    public TurnCostProvider getTurnCostProvider() {
+        return turnCostProvider;
     }
 
     static boolean isValidName(String name) {
@@ -125,6 +112,7 @@ public abstract class AbstractWeighting implements Weighting {
 
     @Override
     public String toString() {
-        return getName() + "|" + flagEncoder;
+        return getName() + "|" + avSpeedEnc.getName().split("$")[0];
     }
+
 }

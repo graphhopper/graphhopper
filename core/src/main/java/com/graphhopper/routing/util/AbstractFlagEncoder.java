@@ -53,9 +53,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected final Set<String> barriers = new HashSet<>(5);
     protected final int speedBits;
     protected final double speedFactor;
-    private final int maxTurnCosts;
     protected final BooleanEncodedValue accessEnc;
     protected final DecimalEncodedValue avgSpeedEnc;
+    private final DecimalEncodedValue turnCostEnc;
     protected BooleanEncodedValue roundaboutEnc;
     // This value determines the maximal possible speed of any road regardless of the maxspeed value
     // lower values allow more compact representation of the routing graph
@@ -75,12 +75,12 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      */
     protected AbstractFlagEncoder(String name, int speedBits, double speedFactor, boolean speedTwoDirections, int maxTurnCosts) {
         this.name = name;
-        this.maxTurnCosts = maxTurnCosts <= 0 ? 0 : maxTurnCosts;
         this.speedBits = speedBits;
         this.speedFactor = speedFactor;
 
         this.accessEnc = new SimpleBooleanEncodedValue(getKey(name, "access"), true);
         this.avgSpeedEnc = new DecimalEncodedValueImpl(getKey(name, "average_speed"), speedBits, speedFactor, speedTwoDirections);
+        this.turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;
 
         oneways.add("yes");
         oneways.add("true");
@@ -141,6 +141,11 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         roundaboutEnc = getBooleanEncodedValue(Roundabout.KEY);
     }
 
+    public void createTurnCostEncodedValues(List<EncodedValue> registerNewTurnCostEncodedValues) {
+        if (supportsTurnCosts())
+            registerNewTurnCostEncodedValues.add(turnCostEnc);
+    }
+
     /**
      * Analyze properties of a way and create the edge flags. This method is called in the second
      * parsing step.
@@ -162,10 +167,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
             }
         }
         return edgeFlags;
-    }
-
-    public int getMaxTurnCosts() {
-        return maxTurnCosts;
     }
 
     /**
@@ -249,7 +250,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     protected String getPropertiesString() {
-        return "speed_factor=" + speedFactor + "|speed_bits=" + speedBits + "|turn_costs=" + (maxTurnCosts > 0);
+        return "speed_factor=" + speedFactor + "|speed_bits=" + speedBits + "|turn_costs=" + supportsTurnCosts();
     }
 
     @Override
@@ -293,7 +294,11 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
 
     @Override
     public boolean supportsTurnCosts() {
-        return maxTurnCosts > 0;
+        return turnCostEnc != null;
+    }
+
+    public DecimalEncodedValue getTurnCostEnc() {
+        return turnCostEnc;
     }
 
     @Override
