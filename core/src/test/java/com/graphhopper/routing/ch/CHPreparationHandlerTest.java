@@ -18,16 +18,10 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.config.CHProfile;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.CHConfig;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Peter Karich

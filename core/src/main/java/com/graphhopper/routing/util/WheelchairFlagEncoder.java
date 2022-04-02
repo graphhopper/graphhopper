@@ -39,7 +39,6 @@ import static com.graphhopper.routing.util.PriorityCode.VERY_NICE;
 public class WheelchairFlagEncoder extends FootFlagEncoder {
     private final Set<String> excludeSurfaces = new HashSet<>();
     private final Set<String> excludeSmoothness = new HashSet<>();
-    private final Set<String> excludeHighwayTags = new HashSet<>();
     private final int maxInclinePercent = 6;
 
     /**
@@ -57,17 +56,15 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     }
 
     protected WheelchairFlagEncoder(int speedBits, double speedFactor) {
-        super(speedBits, speedFactor);
+        super("wheelchair", speedBits, speedFactor, true);
 
         restrictions.add("wheelchair");
-        blockByDefaultBarriers.add("handrail");
-        blockByDefaultBarriers.add("wall");
-        blockByDefaultBarriers.add("turnstile");
-        blockByDefaultBarriers.add("kissing_gate");
-        blockByDefaultBarriers.add("stile");
-        passByDefaultBarriers.add("kerb");
-        passByDefaultBarriers.add("cattle_grid");
-        passByDefaultBarriers.add("motorcycle_barrier");
+
+        barriers.add("handrail");
+        barriers.add("wall");
+        barriers.add("turnstile");
+        barriers.add("kissing_gate");
+        barriers.add("stile");
 
         safeHighwayTags.add("footway");
         safeHighwayTags.add("pedestrian");
@@ -76,16 +73,15 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         safeHighwayTags.add("service");
         safeHighwayTags.add("platform");
 
-        excludeHighwayTags.add("trunk");
-        excludeHighwayTags.add("trunk_link");
-        excludeHighwayTags.add("primary");
-        excludeHighwayTags.add("primary_link");
-        excludeHighwayTags.add("secondary");
-        excludeHighwayTags.add("secondary_link");
-        excludeHighwayTags.add("tertiary");
-        excludeHighwayTags.add("tertiary_link");
-        excludeHighwayTags.add("steps");
-        excludeHighwayTags.add("track");
+        safeHighwayTags.remove("steps");
+        safeHighwayTags.remove("track");
+
+        allowedHighwayTags.clear();
+        allowedHighwayTags.addAll(safeHighwayTags);
+        allowedHighwayTags.addAll(avoidHighwayTags);
+        allowedHighwayTags.add("cycleway");
+        allowedHighwayTags.add("unclassified");
+        allowedHighwayTags.add("road");
 
         excludeSurfaces.add("cobblestone");
         excludeSurfaces.add("gravel");
@@ -97,13 +93,9 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         excludeSmoothness.add("very_horrible");
         excludeSmoothness.add("impassable");
 
-        allowedHighwayTags.addAll(safeHighwayTags);
-        allowedHighwayTags.add("cycleway");
-        allowedHighwayTags.add("unclassified");
-        allowedHighwayTags.add("road");
+        allowedSacScale.clear();
 
-        maxPossibleSpeed = FERRY_SPEED;
-        speedTwoDirections = true;
+        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(FERRY_SPEED);
     }
 
     /**
@@ -111,18 +103,6 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
      */
     @Override
     public EncodingManager.Access getAccess(ReaderWay way) {
-        if (way.hasTag("wheelchair", intendedValues)) {
-            return EncodingManager.Access.WAY;
-        }
-
-        if (way.getTag("sac_scale") != null) {
-            return EncodingManager.Access.CAN_SKIP;
-        }
-
-        if (way.hasTag("highway", excludeHighwayTags) && !way.hasTag("sidewalk", sidewalkValues)) {
-            return EncodingManager.Access.CAN_SKIP;
-        }
-
         if (way.hasTag("surface", excludeSurfaces)) {
             if (!way.hasTag("sidewalk", sidewalkValues)) {
                 return EncodingManager.Access.CAN_SKIP;
@@ -162,9 +142,8 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
             }
         }
 
-        if (way.hasTag("kerb", "raised")) {
+        if (way.hasTag("kerb", "raised"))
             return EncodingManager.Access.CAN_SKIP;
-        }
 
         if (way.hasTag("kerb")) {
             String tagValue = way.getTag("kerb");
@@ -190,9 +169,8 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         EncodingManager.Access access = getAccess(way);
-        if (access.canSkip()) {
+        if (access.canSkip())
             return edgeFlags;
-        }
 
         accessEnc.setBool(false, edgeFlags, true);
         accessEnc.setBool(true, edgeFlags, true);
@@ -203,6 +181,8 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
             setSpeed(edgeFlags, true, true, ferrySpeed);
         }
 
+        Integer priorityFromRelation = routeMap.get(footRouteEnc.getEnum(false, edgeFlags));
+        priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, priorityFromRelation)));
         return edgeFlags;
     }
 
@@ -214,44 +194,39 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     @Override
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
         PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
+        double fullDist2D = edge.getDistance();
+        if (Double.isInfinite(fullDist2D))
+            throw new IllegalStateException("Infinite distance should not happen due to #435. way ID=" + way.getId());
+
+        // skip elevation data adjustment for too short segments, TODO improve the elevation data handling and/or use the same mechanism as in bike2
+        if (fullDist2D < 20 || !pl.is3D())
+            return;
 
         double prevEle = pl.getEle(0);
-        double fullDist2D = edge.getDistance();
-
-        if (Double.isInfinite(fullDist2D)) {
-            throw new IllegalStateException("Infinite distance should not happen due to #435. way ID=" + way.getId());
-        }
-
-        if (fullDist2D < 1) {
-            return;
-        }
-
         double eleDelta = pl.getEle(pl.size() - 1) - prevEle;
         double elePercent = eleDelta / fullDist2D * 100;
         int smallInclinePercent = 3;
+        double fwdSpeed = 0, bwdSpeed = 0;
         if (elePercent > smallInclinePercent && elePercent < maxInclinePercent) {
-            setFwdBwdSpeed(edge, SLOW_SPEED, MEAN_SPEED);
+            fwdSpeed = SLOW_SPEED;
+            bwdSpeed = MEAN_SPEED;
         } else if (elePercent < -smallInclinePercent && elePercent > -maxInclinePercent) {
-            setFwdBwdSpeed(edge, MEAN_SPEED, SLOW_SPEED);
+            fwdSpeed = MEAN_SPEED;
+            bwdSpeed = SLOW_SPEED;
         } else if (elePercent > maxInclinePercent || elePercent < -maxInclinePercent) {
-            edge.set(accessEnc, false);
-            edge.setReverse(accessEnc, false);
+            // it can be problematic to exclude roads due to potential bad elevation data (e.g.delta for narrow nodes could be too high)
+            // so exclude only when we are certain
+            if (fullDist2D > 50) edge.set(accessEnc, false, false);
+
+            fwdSpeed = SLOW_SPEED;
+            bwdSpeed = SLOW_SPEED;
+            edge.set(priorityWayEncoder, PriorityCode.getValue(PriorityCode.REACH_DESTINATION.getValue()));
         }
-    }
 
-    /**
-     * Sets the given speed values to the given edge depending on the forward and backward accessibility of the edge.
-     *
-     * @param edge     the edge to set speed for
-     * @param fwdSpeed speed value in forward direction
-     * @param bwdSpeed speed value in backward direction
-     */
-    private void setFwdBwdSpeed(EdgeIteratorState edge, int fwdSpeed, int bwdSpeed) {
-        if (edge.get(accessEnc))
-            edge.set(avgSpeedEnc, fwdSpeed);
-
-        if (edge.getReverse(accessEnc))
-            edge.setReverse(avgSpeedEnc, bwdSpeed);
+        if (fwdSpeed > 0 && edge.get(accessEnc))
+            setSpeed(edge.getFlags(), true, false, fwdSpeed);
+        if (bwdSpeed > 0 && edge.getReverse(accessEnc))
+            setSpeed(edge.getFlags(), false, true, bwdSpeed);
     }
 
     /**
@@ -273,10 +248,5 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         }
 
         return weightToPrioMap.lastEntry().getValue();
-    }
-
-    @Override
-    public String toString() {
-        return "wheelchair";
     }
 }

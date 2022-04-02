@@ -28,9 +28,8 @@ import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
@@ -57,17 +56,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Peter Karich
  */
 public class PrepareLandmarksTest {
-    private GraphHopperStorage graph;
-    private EncodingManager encodingManager;
+    private BaseGraph graph;
     private FlagEncoder encoder;
     private TraversalMode tm;
+    private EncodingManager encodingManager;
 
     @BeforeEach
     public void setUp() {
-        encoder = new CarFlagEncoder();
+        encoder = FlagEncoders.createCar();
         tm = TraversalMode.NODE_BASED;
         encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
-        graph = new GraphBuilder(encodingManager).create();
+        graph = new BaseGraph.Builder(encodingManager).create();
     }
 
     @Test
@@ -103,7 +102,7 @@ public class PrepareLandmarksTest {
         int lm = 5, activeLM = 2;
         Weighting weighting = new FastestWeighting(encoder);
         LMConfig lmConfig = new LMConfig("car", weighting);
-        LandmarkStorage store = new LandmarkStorage(graph, dir, lmConfig, lm);
+        LandmarkStorage store = new LandmarkStorage(graph, encodingManager, dir, lmConfig, lm);
         store.setMinimumNodes(2);
         store.createLandmarks();
 
@@ -139,7 +138,7 @@ public class PrepareLandmarksTest {
         // TODO should better select 0 and 224?
         assertEquals(Arrays.asList(224, 70), list);
 
-        PrepareLandmarks prepare = new PrepareLandmarks(new RAMDirectory(), graph, lmConfig, 4);
+        PrepareLandmarks prepare = new PrepareLandmarks(new RAMDirectory(), graph, encodingManager, lmConfig, 4);
         prepare.setMinimumNodes(2);
         prepare.doWork();
         LandmarkStorage lms = prepare.getLandmarkStorage();
@@ -193,7 +192,7 @@ public class PrepareLandmarksTest {
         Directory dir = new RAMDirectory(fileStr, true).create();
         Weighting weighting = new FastestWeighting(encoder);
         LMConfig lmConfig = new LMConfig("car", weighting);
-        PrepareLandmarks plm = new PrepareLandmarks(dir, graph, lmConfig, 2);
+        PrepareLandmarks plm = new PrepareLandmarks(dir, graph, encodingManager, lmConfig, 2);
         plm.setMinimumNodes(2);
         plm.doWork();
 
@@ -205,7 +204,7 @@ public class PrepareLandmarksTest {
         assertEquals(4800, Math.round(plm.getLandmarkStorage().getFromWeight(0, 1) * expectedFactor));
 
         dir = new RAMDirectory(fileStr, true);
-        plm = new PrepareLandmarks(dir, graph, lmConfig, 2);
+        plm = new PrepareLandmarks(dir, graph, encodingManager, lmConfig, 2);
         assertTrue(plm.loadExisting());
         assertEquals(expectedFactor, plm.getLandmarkStorage().getFactor(), 1e-6);
         assertEquals(Arrays.toString(new int[]{

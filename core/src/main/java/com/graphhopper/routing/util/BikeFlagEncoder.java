@@ -27,20 +27,30 @@ import com.graphhopper.util.PMap;
  */
 public class BikeFlagEncoder extends BikeCommonFlagEncoder {
     public BikeFlagEncoder() {
-        this(4, 2, 0);
+        this("bike");
+    }
+
+    public BikeFlagEncoder(String name) {
+        this(name, 4, 2, 0, false);
     }
 
     public BikeFlagEncoder(PMap properties) {
-        this(properties.getInt("speed_bits", 4),
+        this(properties.getString("name", "bike"),
+                properties.getInt("speed_bits", 4),
                 properties.getInt("speed_factor", 2),
-                properties.getBool("turn_costs", false) ? 1 : 0);
+                properties.getBool("turn_costs", false) ? 1 : 0,
+                properties.getBool("speed_two_directions", false));
 
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
-    public BikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
-        super(speedBits, speedFactor, maxTurnCosts);
+    public BikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
+        this("bike", speedBits, speedFactor, maxTurnCosts, speedTwoDirections);
+    }
+
+    public BikeFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
+        super(name, speedBits, speedFactor, maxTurnCosts, speedTwoDirections);
         addPushingSection("path");
         addPushingSection("footway");
         addPushingSection("pedestrian");
@@ -71,15 +81,10 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
         // SmoothnessSpeed <= smoothnessFactorPushingSectionThreshold gets mapped to speed PUSHING_SECTION_SPEED
         setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.IMPASSABLE, smoothnessFactorPushingSectionThreshold);
 
-        blockByDefaultBarriers.add("kissing_gate");
-        blockByDefaultBarriers.add("stile");
-        blockByDefaultBarriers.add("turnstile");
+        barriers.add("kissing_gate");
+        barriers.add("stile");
+        barriers.add("turnstile");
 
         setSpecificClassBicycle("touring");
-    }
-
-    @Override
-    public String toString() {
-        return "bike";
     }
 }

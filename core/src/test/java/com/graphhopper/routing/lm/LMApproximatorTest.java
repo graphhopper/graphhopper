@@ -21,14 +21,10 @@ package com.graphhopper.routing.lm;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.Subnetwork;
-import com.graphhopper.routing.util.AccessFilter;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.*;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
@@ -48,9 +44,9 @@ public class LMApproximatorTest {
 
     private void run(long seed) {
         Directory dir = new RAMDirectory();
-        CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 1);
+        FlagEncoder encoder = FlagEncoders.createCar(5, 5, 1);
         EncodingManager encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).create();
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).setDir(dir).withTurnCosts(true).create();
 
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true,
@@ -58,7 +54,7 @@ public class LMApproximatorTest {
 
         Weighting weighting = new FastestWeighting(encoder);
 
-        PrepareLandmarks lm = new PrepareLandmarks(dir, graph, new LMConfig("car", weighting), 16);
+        PrepareLandmarks lm = new PrepareLandmarks(dir, graph, encodingManager, new LMConfig("car", weighting), 16);
         lm.setMaximumWeight(10000);
         lm.doWork();
         LandmarkStorage landmarkStorage = lm.getLandmarkStorage();

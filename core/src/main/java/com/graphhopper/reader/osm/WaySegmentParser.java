@@ -30,6 +30,7 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointAccess;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.shapes.GHPoint3D;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -251,7 +252,7 @@ public class WaySegmentParser {
             List<SegmentNode> segment = new ArrayList<>(way.getNodes().size());
             for (LongCursor node : way.getNodes())
                 segment.add(new SegmentNode(node.value, nodeData.getId(node.value)));
-            wayPreprocessor.preprocessWay(way);
+            wayPreprocessor.preprocessWay(way, osmNodeId -> nodeData.getCoordinates(nodeData.getId(osmNodeId)));
             splitWayAtJunctionsAndEmptySections(segment, way);
         }
 
@@ -411,7 +412,7 @@ public class WaySegmentParser {
         private ElevationProvider elevationProvider = ElevationProvider.NOOP;
         private Predicate<ReaderWay> wayFilter = way -> true;
         private Predicate<ReaderNode> splitNodeFilter = node -> false;
-        private WayPreprocessor wayPreprocessor = way -> {
+        private WayPreprocessor wayPreprocessor = (way, supplier) -> {
         };
         private Consumer<ReaderRelation> relationPreprocessor = relation -> {
         };
@@ -462,7 +463,7 @@ public class WaySegmentParser {
         }
 
         /**
-         * @param wayPreprocessor callback function that is called for each accepted OSM way during the first pass
+         * @param wayPreprocessor callback function that is called for each accepted OSM way during the second pass
          */
         public Builder setWayPreprocessor(WayPreprocessor wayPreprocessor) {
             this.wayPreprocessor = wayPreprocessor;
@@ -554,6 +555,15 @@ public class WaySegmentParser {
     }
 
     public interface WayPreprocessor {
-        void preprocessWay(ReaderWay way);
+        /**
+         * @param coordinateSupplier maps an OSM node ID (as it can be obtained by way.getNodes()) to the coordinates
+         *                           of this node. If elevation is disabled it will be NaN. Returns null if no such OSM
+         *                           node exists.
+         */
+        void preprocessWay(ReaderWay way, CoordinateSupplier coordinateSupplier);
+    }
+
+    public interface CoordinateSupplier {
+        GHPoint3D getCoordinate(long osmNodeId);
     }
 }

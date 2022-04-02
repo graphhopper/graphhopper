@@ -76,7 +76,7 @@ public class DirectedRoutingTest {
         private final boolean prepareCH;
         private final boolean prepareLM;
         private final Directory dir;
-        private final GraphHopperStorage graph;
+        private final BaseGraph graph;
         private final CHConfig chConfig;
         private final LMConfig lmConfig;
         private final FlagEncoder encoder;
@@ -98,9 +98,9 @@ public class DirectedRoutingTest {
             // todo: this test only works with speedTwoDirections=false (as long as loops are enabled), otherwise it will
             // fail sometimes for edge-based algorithms, #1631, but maybe we can should disable different fwd/bwd speeds
             // only for loops instead?
-            encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
+            encoder = FlagEncoders.createCar(5, 5, maxTurnCosts);
             encodingManager = EncodingManager.create(encoder);
-            graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).create();
+            graph = new BaseGraph.Builder(encodingManager).setDir(dir).withTurnCosts(true).create();
             turnCostStorage = graph.getTurnCostStorage();
             weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts));
             chConfig = CHConfig.edgeBased("p1", weighting);
@@ -119,12 +119,12 @@ public class DirectedRoutingTest {
                 return;
             }
             if (prepareCH) {
-                PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
+                PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraph(graph, chConfig);
                 PrepareContractionHierarchies.Result res = pch.doWork();
-                routingCHGraph = graph.createCHGraph(res.getCHStorage(), res.getCHConfig());
+                routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
             }
             if (prepareLM) {
-                PrepareLandmarks prepare = new PrepareLandmarks(dir, graph, lmConfig, 16);
+                PrepareLandmarks prepare = new PrepareLandmarks(dir, graph, encodingManager, lmConfig, 16);
                 prepare.setMaximumWeight(1000);
                 prepare.doWork();
                 lm = prepare.getLandmarkStorage();

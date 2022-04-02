@@ -33,7 +33,11 @@ public class OSMRoadClassParser implements TagParser {
     private final EnumEncodedValue<RoadClass> roadClassEnc;
 
     public OSMRoadClassParser() {
-        this.roadClassEnc = new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class);
+        this(new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class));
+    }
+
+    public OSMRoadClassParser(EnumEncodedValue<RoadClass> roadClassEnc) {
+        this.roadClassEnc = roadClassEnc;
     }
 
     @Override

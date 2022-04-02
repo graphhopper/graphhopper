@@ -22,9 +22,10 @@ import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.sorting.IndirectComparator;
 import com.carrotsearch.hppc.sorting.IndirectSort;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.weighting.AbstractWeighting;
+import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostStorage;
@@ -37,6 +38,8 @@ import static com.graphhopper.util.ArrayUtil.zero;
 /**
  * Graph data structure used for CH preparation. It allows caching weights, and edges that are not needed anymore
  * (those adjacent to contracted nodes) can be removed (see {@link #disconnect}.
+ *
+ * @author easbar
  */
 public class CHPreparationGraph {
     private final int nodes;
@@ -84,7 +87,7 @@ public class CHPreparationGraph {
         shortcutsByPrepareEdges = new IntArrayList();
         degrees = new int[nodes];
         origGraphBuilder = edgeBased ? new OrigGraph.Builder() : null;
-        neighborSet = new IntHashSet();
+        neighborSet = new IntScatterSet();
         nextShortcutId = edges;
     }
 
@@ -105,18 +108,17 @@ public class CHPreparationGraph {
     }
 
     /**
-     * Builds a turn cost function for a given graph('s turn cost storage) and a weighting.
-     * The trivial implementation would be simply returning {@link Weighting#calcTurnWeight}. However, it turned out
-     * that reading all turn costs for the current encoder and then storing them in separate arrays upfront speeds up
-     * edge-based CH preparation by about 25%. See #2084
+     * Builds a turn cost function for a given graph('s turn cost storage) and given uTurnCosts.
+     * The trivial implementation would be simply using {@link Weighting#calcTurnWeight}. However, it turned out
+     * that storing all turn costs in separate arrays upfront speeds up edge-based CH preparation by about 25%. See #2084
      */
     public static TurnCostFunction buildTurnCostFunctionFromTurnCostStorage(Graph graph, Weighting weighting) {
-        FlagEncoder encoder = weighting.getFlagEncoder();
-        String key = TurnCost.key(encoder.toString());
-        if (!encoder.hasEncodedValue(key))
-            return (inEdge, viaNode, outEdge) -> 0;
-
-        DecimalEncodedValue turnCostEnc = encoder.getDecimalEncodedValue(key);
+        if (!(weighting instanceof AbstractWeighting))
+            return weighting::calcTurnWeight;
+        TurnCostProvider turnCostProvider = ((AbstractWeighting) weighting).getTurnCostProvider();
+        if (!(turnCostProvider instanceof DefaultTurnCostProvider))
+            return weighting::calcTurnWeight;
+        DecimalEncodedValue turnCostEnc = ((DefaultTurnCostProvider) turnCostProvider).getTurnCostEnc();
         TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
         // we maintain a list of inEdge/outEdge/turn-cost triples (we use two arrays for this) that is sorted by nodes
         LongArrayList turnCostEdgePairs = new LongArrayList();
@@ -261,7 +263,6 @@ public class CHPreparationGraph {
         // we use this neighbor set to guarantee a deterministic order of the returned
         // node ids
         neighborSet.clear();
-        IntArrayList neighbors = new IntArrayList(getDegree(node));
         PrepareEdge currOut = prepareEdgesOut[node];
         while (currOut != null) {
             int adjNode = currOut.getNodeB();
@@ -273,8 +274,7 @@ public class CHPreparationGraph {
                 continue;
             }
             removeInEdge(adjNode, currOut);
-            if (neighborSet.add(adjNode))
-                neighbors.add(adjNode);
+            neighborSet.add(adjNode);
             currOut = currOut.getNextOut(node);
         }
         PrepareEdge currIn = prepareEdgesIn[node];
@@ -288,14 +288,13 @@ public class CHPreparationGraph {
                 continue;
             }
             removeOutEdge(adjNode, currIn);
-            if (neighborSet.add(adjNode))
-                neighbors.add(adjNode);
+            neighborSet.add(adjNode);
             currIn = currIn.getNextIn(node);
         }
         prepareEdgesOut[node] = null;
         prepareEdgesIn[node] = null;
         degrees[node] = 0;
-        return neighbors;
+        return neighborSet;
     }
 
     private void removeOutEdge(int node, PrepareEdge prepareEdge) {
@@ -1002,6 +1001,11 @@ public class CHPreparationGraph {
             } else {
                 return (e & 0b10) == 0b10;
             }
+        }
+
+        @Override
+        public String toString() {
+            return getBaseNode() + "-" + getAdjNode() + "(" + getOrigEdgeKeyFirst() + ")";
         }
     }
 

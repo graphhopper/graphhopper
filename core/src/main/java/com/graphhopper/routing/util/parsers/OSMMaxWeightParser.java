@@ -30,7 +30,7 @@ import java.util.List;
 
 public class OSMMaxWeightParser implements TagParser {
 
-    private DecimalEncodedValue weightEncoder;
+    private final DecimalEncodedValue weightEncoder;
 
     public OSMMaxWeightParser() {
         this(MaxWeight.create());

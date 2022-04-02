@@ -23,8 +23,9 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
@@ -42,17 +43,17 @@ import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static org.junit.jupiter.api.Assertions.*;
 
 class QueryRoutingCHGraphTest {
-    private CarFlagEncoder encoder;
+    private FlagEncoder encoder;
     private EncodingManager encodingManager;
     private FastestWeighting weighting;
-    private GraphHopperStorage graph;
+    private BaseGraph graph;
     private NodeAccess na;
 
     @BeforeEach
     public void setup() {
-        encoder = new CarFlagEncoder(5, 5, 5).setSpeedTwoDirections(true);
+        encoder = FlagEncoders.createCar(5, 5, 5, true);
         encodingManager = EncodingManager.create(encoder);
-        graph = new GraphBuilder(encodingManager).create();
+        graph = new BaseGraph.Builder(encodingManager).create();
         weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()));
         na = graph.getNodeAccess();
     }
@@ -66,8 +67,8 @@ class QueryRoutingCHGraphTest {
         assertEquals(2, graph.getEdges());
 
         CHConfig chConfig = CHConfig.edgeBased("x", weighting);
-        CHStorage chStore = graph.createCHStorage(chConfig);
-        RoutingCHGraph routingCHGraph = graph.createCHGraph(chStore, chConfig);
+        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
+        RoutingCHGraph routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
 
         QueryGraph queryGraph = QueryGraph.create(graph, Collections.<Snap>emptyList());
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
@@ -104,8 +105,8 @@ class QueryRoutingCHGraphTest {
         assertEquals(2, graph.getEdges());
 
         CHConfig chConfig = CHConfig.edgeBased("x", weighting);
-        CHStorage chStore = graph.createCHStorage(chConfig);
-        RoutingCHGraph routingCHGraph = graph.createCHGraph(chStore, chConfig);
+        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
+        RoutingCHGraph routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
 
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
         chBuilder.setIdentityLevels();
@@ -146,8 +147,8 @@ class QueryRoutingCHGraphTest {
         assertEquals(2, graph.getEdges());
 
         CHConfig chConfig = CHConfig.edgeBased("x", weighting);
-        CHStorage chStore = graph.createCHStorage(chConfig);
-        RoutingCHGraph routingCHGraph = graph.createCHGraph(chStore, chConfig);
+        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
+        RoutingCHGraph routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
 
         Snap snap = new Snap(50.00, 10.05);
         snap.setClosestEdge(edge);
@@ -214,8 +215,8 @@ class QueryRoutingCHGraphTest {
         assertEquals(2, graph.getEdges());
 
         CHConfig chConfig = CHConfig.edgeBased("x", weighting);
-        CHStorage chStore = graph.createCHStorage(chConfig);
-        RoutingCHGraph routingCHGraph = graph.createCHGraph(chStore, chConfig);
+        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
+        RoutingCHGraph routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
 
         chBuilder.setIdentityLevels();
@@ -268,8 +269,8 @@ class QueryRoutingCHGraphTest {
         graph.freeze();
 
         CHConfig chConfig = CHConfig.edgeBased("x", weighting);
-        CHStorage chStore = graph.createCHStorage(chConfig);
-        RoutingCHGraph routingCHGraph = graph.createCHGraph(chStore, chConfig);
+        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
+        RoutingCHGraph routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
 
         QueryGraph queryGraph = QueryGraph.create(graph, Collections.<Snap>emptyList());
         assertSame(graph.getBaseGraph(), routingCHGraph.getBaseGraph());
@@ -290,8 +291,8 @@ class QueryRoutingCHGraphTest {
         graph.freeze();
 
         CHConfig chConfig = CHConfig.edgeBased("x", weighting);
-        CHStorage chStore = graph.createCHStorage(chConfig);
-        RoutingCHGraph routingCHGraph = graph.createCHGraph(chStore, chConfig);
+        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
+        RoutingCHGraph routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
 
         chBuilder.setIdentityLevels();
@@ -321,8 +322,8 @@ class QueryRoutingCHGraphTest {
         QueryGraph queryGraph = QueryGraph.create(graph, Collections.<Snap>emptyList());
 
         CHConfig chConfig = CHConfig.edgeBased("x", weighting);
-        CHStorage chStore = graph.createCHStorage(chConfig);
-        RoutingCHGraph routingCHGraph = graph.createCHGraph(chStore, chConfig);
+        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
+        RoutingCHGraph routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
 
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
         // maybe query CH graph should return query graph weighting instead?
@@ -338,8 +339,8 @@ class QueryRoutingCHGraphTest {
         graph.freeze();
 
         CHConfig chConfig = CHConfig.edgeBased("x", weighting);
-        CHStorage chStore = graph.createCHStorage(chConfig);
-        RoutingCHGraph routingCHGraph = graph.createCHGraph(chStore, chConfig);
+        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
+        RoutingCHGraph routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
 
         chBuilder.setLevel(0, 5);
@@ -373,8 +374,8 @@ class QueryRoutingCHGraphTest {
         graph.freeze();
 
         CHConfig chConfig = CHConfig.edgeBased("x", weighting);
-        CHStorage chStore = graph.createCHStorage(chConfig);
-        RoutingCHGraph routingCHGraph = graph.createCHGraph(chStore, chConfig);
+        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
+        RoutingCHGraph routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
 
         chBuilder.setIdentityLevels();
@@ -474,8 +475,8 @@ class QueryRoutingCHGraphTest {
         graph.freeze();
 
         CHConfig chConfig = CHConfig.edgeBased("x", weighting);
-        CHStorage chStore = graph.createCHStorage(chConfig);
-        RoutingCHGraph routingCHGraph = graph.createCHGraph(chStore, chConfig);
+        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
+        RoutingCHGraph routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
 
         // without query graph
         // 0->1
@@ -553,8 +554,8 @@ class QueryRoutingCHGraphTest {
         graph.freeze();
 
         CHConfig chConfig = CHConfig.edgeBased("x", weighting);
-        CHStorage chStore = graph.createCHStorage(chConfig);
-        RoutingCHGraph routingCHGraph = graph.createCHGraph(chStore, chConfig);
+        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
+        RoutingCHGraph routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
 
         chBuilder.setIdentityLevels();

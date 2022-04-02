@@ -2,21 +2,21 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.GetOffBike;
-import com.graphhopper.routing.ev.RoadClass;
-import com.graphhopper.routing.util.BikeFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class OSMGetOffBikeParserTest {
+    private final BooleanEncodedValue offBikeEnc = GetOffBike.create();
+    private final OSMGetOffBikeParser parser = new OSMGetOffBikeParser(offBikeEnc);
 
-    private EncodingManager em = EncodingManager.start().add(new BikeFlagEncoder()).build();
-    private BooleanEncodedValue offBikeEnc = em.getBooleanEncodedValue(GetOffBike.KEY);
-    private EnumEncodedValue<RoadClass> roadClassEnc = em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+    public OSMGetOffBikeParserTest() {
+        offBikeEnc.init(new EncodedValue.InitializerConfig());
+    }
 
     @Test
     public void testHandleCommonWayTags() {
@@ -40,9 +40,6 @@ public class OSMGetOffBikeParserTest {
         assertFalse(isGetOffBike(way));
 
         way = new ReaderWay(1);
-        way.setTag("highway", "cycleway");
-        assertEquals(getRoadClass(way), RoadClass.CYCLEWAY);
-
         way.setTag("highway", "footway");
         way.setTag("surface", "grass");
         assertTrue(isGetOffBike(way));
@@ -101,13 +98,10 @@ public class OSMGetOffBikeParserTest {
         assertTrue(isGetOffBike(way));
     }
 
-    private RoadClass getRoadClass(ReaderWay way) {
-        IntsRef edgeFlags = em.handleWayTags(way, em.createRelationFlags());
-        return roadClassEnc.getEnum(false, edgeFlags);
-    }
-
     private boolean isGetOffBike(ReaderWay way) {
-        IntsRef edgeFlags = em.handleWayTags(way, em.createRelationFlags());
+        IntsRef edgeFlags = new IntsRef(1);
+        IntsRef relationFlags = new IntsRef(1);
+        parser.handleWayTags(edgeFlags, way, relationFlags);
         return offBikeEnc.getBool(false, edgeFlags);
     }
 }

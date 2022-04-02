@@ -17,12 +17,20 @@
  */
 package com.graphhopper.routing.ch;
 
-public class PrepareCHEntry {
+public class PrepareCHEntry implements Comparable<PrepareCHEntry> {
     /**
-     * The edge key of the incoming original edge at this shortest path tree entry. For original edges this is the same
+     * The edge key of the incoming edge at this shortest path tree entry. For original edges this is the same
      * as the edge key, but for shortcuts this is the edge key of the last original edge of the shortcut.
      */
     public int incEdgeKey;
+    /**
+     * The first edge key of the incoming edge
+     **/
+    public int firstEdgeKey;
+    /**
+     * The number of original edges this (potential) shortcut represents. Will be one for original edges
+     */
+    public int origEdges;
     /**
      * The ID of the edge associated with this entry in the prepare graph (this is not the same number that will later
      * be the ID of the edge/shortcut in the CHGraph.
@@ -32,11 +40,13 @@ public class PrepareCHEntry {
     public double weight;
     public PrepareCHEntry parent;
 
-    public PrepareCHEntry(int prepareEdge, int incEdgeKey, int adjNode, double weight) {
+    public PrepareCHEntry(int prepareEdge, int firstEdgeKey, int incEdgeKey, int adjNode, double weight, int origEdges) {
         this.prepareEdge = prepareEdge;
+        this.firstEdgeKey = firstEdgeKey;
+        this.incEdgeKey = incEdgeKey;
         this.adjNode = adjNode;
         this.weight = weight;
-        this.incEdgeKey = incEdgeKey;
+        this.origEdges = origEdges;
     }
 
     public PrepareCHEntry getParent() {
@@ -46,6 +56,15 @@ public class PrepareCHEntry {
     @Override
     public String toString() {
         return (adjNode + " (" + prepareEdge + ") weight: " + weight) + ", incEdgeKey: " + incEdgeKey;
+    }
+
+    @Override
+    public int compareTo(PrepareCHEntry o) {
+        if (weight < o.weight)
+            return -1;
+
+        // assumption no NaN and no -0
+        return weight > o.weight ? 1 : 0;
     }
 
 }

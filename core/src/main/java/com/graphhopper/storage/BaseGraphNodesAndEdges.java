@@ -108,11 +108,16 @@ class BaseGraphNodesAndEdges {
         bounds.maxLon = Helper.intToDegree(nodes.getHeader(4 * 4));
         bounds.minLat = Helper.intToDegree(nodes.getHeader(5 * 4));
         bounds.maxLat = Helper.intToDegree(nodes.getHeader(6 * 4));
+        boolean hasElevation = nodes.getHeader(7 * 4) == 1;
+        if (hasElevation != withElevation)
+            // :( we should load data from disk to create objects, not the other way around!
+            throw new IllegalStateException("Configured dimension elevation=" + withElevation + " is not equal "
+                    + "to dimension of loaded graph elevation =" + hasElevation);
         if (withElevation) {
-            bounds.minEle = Helper.intToEle(nodes.getHeader(7 * 4));
-            bounds.maxEle = Helper.intToEle(nodes.getHeader(8 * 4));
+            bounds.minEle = Helper.intToEle(nodes.getHeader(8 * 4));
+            bounds.maxEle = Helper.intToEle(nodes.getHeader(9 * 4));
         }
-        frozen = nodes.getHeader(9 * 4) == 1;
+        frozen = nodes.getHeader(10 * 4) == 1;
 
         final int edgesVersion = edges.getHeader(0 * 4);
         GHUtility.checkDAVersion("edges", Constants.VERSION_EDGE, edgesVersion);
@@ -129,11 +134,12 @@ class BaseGraphNodesAndEdges {
         nodes.setHeader(4 * 4, Helper.degreeToInt(bounds.maxLon));
         nodes.setHeader(5 * 4, Helper.degreeToInt(bounds.minLat));
         nodes.setHeader(6 * 4, Helper.degreeToInt(bounds.maxLat));
+        nodes.setHeader(7 * 4, withElevation ? 1 : 0);
         if (withElevation) {
-            nodes.setHeader(7 * 4, Helper.eleToInt(bounds.minEle));
-            nodes.setHeader(8 * 4, Helper.eleToInt(bounds.maxEle));
+            nodes.setHeader(8 * 4, Helper.eleToInt(bounds.minEle));
+            nodes.setHeader(9 * 4, Helper.eleToInt(bounds.maxEle));
         }
-        nodes.setHeader(9 * 4, frozen ? 1 : 0);
+        nodes.setHeader(10 * 4, frozen ? 1 : 0);
 
         edges.setHeader(0 * 4, Constants.VERSION_EDGE);
         edges.setHeader(1 * 4, edgeEntryBytes);

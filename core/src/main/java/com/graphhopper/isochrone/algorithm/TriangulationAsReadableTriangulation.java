@@ -22,11 +22,11 @@ import org.locationtech.jts.triangulate.quadedge.QuadEdge;
 
 import java.util.Collection;
 
-class TriangulationAsReadableTriangulation implements ReadableTriangulation {
+public class TriangulationAsReadableTriangulation implements ReadableTriangulation {
 
     private final Triangulation triangulation;
 
-    TriangulationAsReadableTriangulation(Triangulation triangulation) {
+    public TriangulationAsReadableTriangulation(Triangulation triangulation) {
         this.triangulation = triangulation;
     }
 

@@ -20,11 +20,13 @@ package com.graphhopper.storage;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.search.StringIndex;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
+import java.io.Closeable;
 import java.util.Collections;
 
 import static com.graphhopper.util.Helper.nf;
@@ -40,7 +42,7 @@ import static com.graphhopper.util.Helper.nf;
  * Life cycle: (1) object creation, (2) configuration via setters & getters, (3) create or
  * loadExisting, (4) usage, (5) flush, (6) close
  */
-class BaseGraph implements Graph {
+public class BaseGraph implements Graph, Closeable {
     private final static String STRING_IDX_NAME_KEY = "name";
     final BaseGraphNodesAndEdges store;
     final NodeAccess nodeAccess;
@@ -52,6 +54,7 @@ class BaseGraph implements Graph {
     // as we use integer index in 'edges' area => 'geometry' area is limited to 4GB (we use pos&neg values!)
     private final DataAccess wayGeometry;
     private final Directory dir;
+    private final int segmentSize;
     private boolean initialized = false;
     private long maxGeoRef;
 
@@ -62,6 +65,7 @@ class BaseGraph implements Graph {
         this.stringIndex = new StringIndex(dir, 1000, segmentSize);
         this.store = new BaseGraphNodesAndEdges(dir, intsForFlags, withElevation, withTurnCosts, segmentSize);
         this.nodeAccess = new GHNodeAccess(store);
+        this.segmentSize = segmentSize;
         turnCostStorage = withTurnCosts ? new TurnCostStorage(this, dir.create("turn_costs", segmentSize)) : null;
     }
 
@@ -81,13 +85,17 @@ class BaseGraph implements Graph {
     }
 
     @Override
-    public Graph getBaseGraph() {
+    public BaseGraph getBaseGraph() {
         return this;
+    }
+
+    public boolean isInitialized() {
+        return initialized;
     }
 
     void checkNotInitialized() {
         if (initialized)
-            throw new IllegalStateException("You cannot configure this GraphStorage "
+            throw new IllegalStateException("You cannot configure this BaseGraph "
                     + "after calling create or loadExisting. Calling one of the methods twice is also not allowed.");
     }
 
@@ -134,17 +142,19 @@ class BaseGraph implements Graph {
         return store.getBounds();
     }
 
-    synchronized void freeze() {
+    public synchronized void freeze() {
         if (isFrozen())
             throw new IllegalStateException("base graph already frozen");
         store.setFrozen(true);
     }
 
-    synchronized boolean isFrozen() {
+    public synchronized boolean isFrozen() {
         return store.getFrozen();
     }
 
-    void create(long initSize) {
+    public BaseGraph create(long initSize) {
+        checkNotInitialized();
+        dir.create();
         store.create(initSize);
 
         initSize = Math.min(initSize, 2000);
@@ -156,6 +166,7 @@ class BaseGraph implements Graph {
         setInitialized();
         // 0 stands for no separate geoRef
         maxGeoRef = 4;
+        return this;
     }
 
     String toDetailsString() {
@@ -192,6 +203,7 @@ class BaseGraph implements Graph {
         }
     }
 
+    @Override
     public void close() {
         if (!wayGeometry.isClosed())
             wayGeometry.close();
@@ -203,7 +215,7 @@ class BaseGraph implements Graph {
         }
     }
 
-    long getCapacity() {
+    public long getCapacity() {
         return store.getCapacity() + stringIndex.getCapacity()
                 + wayGeometry.getCapacity() + (supportsTurnCosts() ? turnCostStorage.getCapacity() : 0);
     }
@@ -212,13 +224,11 @@ class BaseGraph implements Graph {
         return maxGeoRef;
     }
 
-    void loadExisting(String dim) {
+    public void loadExisting() {
+        checkNotInitialized();
+
         if (!store.loadExisting())
             throw new IllegalStateException("Cannot load edges or nodes. corrupt file or directory? " + dir);
-
-        if (!dim.equalsIgnoreCase("" + nodeAccess.getDimension()))
-            throw new IllegalStateException("Configured dimension (" + nodeAccess.getDimension() + ") is not equal "
-                    + "to dimension of loaded graph (" + dim + ")");
 
         if (!wayGeometry.loadExisting())
             throw new IllegalStateException("Cannot load geometry. corrupt file or directory? " + dir);
@@ -471,6 +481,74 @@ class BaseGraph implements Graph {
 
     public boolean isClosed() {
         return store.isClosed();
+    }
+
+    public Directory getDirectory() {
+        return dir;
+    }
+
+    public int getSegmentSize() {
+        return segmentSize;
+    }
+
+    public static class Builder {
+        private final int intsForFlags;
+        private Directory directory = new RAMDirectory();
+        private boolean withElevation = false;
+        private boolean withTurnCosts = false;
+        private long bytes = 100;
+        private int segmentSize = -1;
+
+        /**
+         * @deprecated Used for GraphHopperStorage -> BaseGraph migration, but will be removed
+         */
+        @Deprecated
+        public Builder(EncodingManager em) {
+            this(em.getIntsForFlags());
+            withTurnCosts(em.needsTurnCostsSupport());
+        }
+
+        public Builder(int intsForFlags) {
+            this.intsForFlags = intsForFlags;
+        }
+
+        // todo: maybe rename later, but for now this makes it easier to replace GraphBuilder
+        public Builder setDir(Directory directory) {
+            this.directory = directory;
+            return this;
+        }
+
+        // todo: maybe rename later, but for now this makes it easier to replace GraphBuilder
+        public Builder set3D(boolean withElevation) {
+            this.withElevation = withElevation;
+            return this;
+        }
+
+        // todo: maybe rename later, but for now this makes it easier to replace GraphBuilder
+        public Builder withTurnCosts(boolean withTurnCosts) {
+            this.withTurnCosts = withTurnCosts;
+            return this;
+        }
+
+        public Builder setSegmentSize(int segmentSize) {
+            this.segmentSize = segmentSize;
+            return this;
+        }
+
+        public Builder setBytes(long bytes) {
+            this.bytes = bytes;
+            return this;
+        }
+
+        public BaseGraph build() {
+            return new BaseGraph(directory, intsForFlags, withElevation, withTurnCosts, segmentSize);
+        }
+
+        public BaseGraph create() {
+            BaseGraph baseGraph = build();
+            baseGraph.create(bytes);
+            return baseGraph;
+        }
     }
 
     protected static class EdgeIteratorImpl extends EdgeIteratorStateImpl implements EdgeExplorer, EdgeIterator {

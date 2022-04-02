@@ -96,7 +96,7 @@ public class RandomizedRoutingTest {
         private final boolean prepareLM;
         private final TraversalMode traversalMode;
         private final Directory dir;
-        private final GraphHopperStorage graph;
+        private final BaseGraph graph;
         private final List<CHConfig> chConfigs;
         private final LMConfig lmConfig;
         private final FlagEncoder encoder;
@@ -117,9 +117,9 @@ public class RandomizedRoutingTest {
             // todo: this test only works with speedTwoDirections=false (as long as loops are enabled), otherwise it will
             // fail sometimes for edge-based algorithms, #1631, but maybe we can should disable different fwd/bwd speeds
             // only for loops instead?
-            encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
+            encoder = FlagEncoders.createCar(5, 5, maxTurnCosts);
             encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
-            graph = new GraphBuilder(encodingManager)
+            graph = new BaseGraph.Builder(encodingManager)
                     .setDir(dir)
                     .create();
             turnCostStorage = graph.getTurnCostStorage();
@@ -141,12 +141,12 @@ public class RandomizedRoutingTest {
             graph.freeze();
             if (prepareCH) {
                 CHConfig chConfig = !traversalMode.isEdgeBased() ? chConfigs.get(0) : chConfigs.get(1);
-                PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
+                PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraph(graph, chConfig);
                 PrepareContractionHierarchies.Result res = pch.doWork();
-                routingCHGraph = graph.createCHGraph(res.getCHStorage(), res.getCHConfig());
+                routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
             }
             if (prepareLM) {
-                PrepareLandmarks prepare = new PrepareLandmarks(dir, graph, lmConfig, 16);
+                PrepareLandmarks prepare = new PrepareLandmarks(dir, graph, encodingManager, lmConfig, 16);
                 prepare.setMaximumWeight(10000);
                 prepare.doWork();
                 lm = prepare.getLandmarkStorage();
