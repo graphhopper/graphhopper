@@ -48,7 +48,7 @@ public abstract class AbstractGraphStorageTester {
     protected EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(FlagEncoders.createFoot()).build();
     protected BooleanEncodedValue carAccessEnc = carEncoder.getAccessEnc();
     protected DecimalEncodedValue carAvSpeedEnc = carEncoder.getAverageSpeedEnc();
-    protected FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
+    protected FlagEncoder footEncoder = encodingManager.getEncoder("foot");
     protected BooleanEncodedValue footAccessEnc = footEncoder.getAccessEnc();
     protected BaseGraph graph;
     EdgeFilter carOutFilter = AccessFilter.outEdges(carEncoder.getAccessEnc());

@@ -608,7 +608,7 @@ public class LocationIndexTreeTest {
         }
 
         idx = (LocationIndexTree) createIndexNoPrepare(g, 500000).prepareIndex();
-        FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
+        FlagEncoder footEncoder = encodingManager.getEncoder("foot");
         assertEquals(2, idx.findClosest(1, -1, AccessFilter.allEdges(footEncoder.getAccessEnc())).getClosestNode());
         g.close();
     }

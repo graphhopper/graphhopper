@@ -571,7 +571,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         assertPriorityAndSpeed(PREFER.getValue(), 16, way);
     }
 
-    // Issue 407 : Always block kissing_gate execpt for mountainbikes
+    // Issue 407 : Always block kissing_gate except for mountainbikes
     @Test
     @Override
     public void testBarrierAccess() {

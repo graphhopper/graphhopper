@@ -201,7 +201,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     /**
      * @return {@link Double#NaN} if no maxspeed found
      */
-    protected double getMaxSpeed(ReaderWay way) {
+    protected static double getMaxSpeed(ReaderWay way) {
         double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
         double fwdSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:forward"));
         if (isValidSpeed(fwdSpeed) && (!isValidSpeed(maxSpeed) || fwdSpeed < maxSpeed))
@@ -217,7 +217,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     /**
      * @return <i>true</i> if the given speed is not {@link Double#NaN}
      */
-    protected boolean isValidSpeed(double speed) {
+    protected static boolean isValidSpeed(double speed) {
         return !Double.isNaN(speed);
     }
 
@@ -229,14 +229,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     public final DecimalEncodedValue getAverageSpeedEnc() {
-        if (avgSpeedEnc == null)
-            throw new NullPointerException("FlagEncoder " + getName() + " not yet initialized");
         return avgSpeedEnc;
     }
 
     public final BooleanEncodedValue getAccessEnc() {
-        if (accessEnc == null)
-            throw new NullPointerException("FlagEncoder " + getName() + " not yet initialized");
         return accessEnc;
     }
 
