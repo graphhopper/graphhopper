@@ -210,6 +210,7 @@ class GtfsReader {
                     }
                 }
             } else {
+                Stop stop = gtfsStorage.getGtfsFeeds().get(stopId.feedId).stops.get(stopId.stopId);
                 LOGGER.warn("Stop {} has no station node", stopId);
             }
         });
