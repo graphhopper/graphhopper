@@ -155,7 +155,7 @@ public class GTFSFeed implements Cloneable, Closeable {
         new Transfer.Loader(this).loadTable(zip);
         new Trip.Loader(this).loadTable(zip);
         new Frequency.Loader(this).loadTable(zip);
-        new StopTime.Loader(this).loadTable(zip); // comment out this line for quick testing using NL feed
+        new StopTime.Loader(this).loadTable(zip);
         loaded = true;
     }
 
