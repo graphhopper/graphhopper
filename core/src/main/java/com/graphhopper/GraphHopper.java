@@ -467,7 +467,6 @@ public class GraphHopper {
 
         if (tagParserManager != null)
             throw new IllegalStateException("Cannot call init twice. EncodingManager was already initialized.");
-        emBuilder.setDateRangeParser(DateRangeParser.createInstance(ghConfig.getString("datareader.date_range_parser_day", "")));
         setProfiles(ghConfig.getProfiles());
         tagParserManager = buildEncodingManager(ghConfig);
 
@@ -522,6 +521,7 @@ public class GraphHopper {
         if (profilesByName.isEmpty())
             throw new IllegalStateException("no profiles exist but assumed to create EncodingManager. E.g. provide them in GraphHopperConfig when calling GraphHopper.init");
 
+        emBuilder.setDateRangeParser(DateRangeParser.createInstance(ghConfig.getString("datareader.date_range_parser_day", "")));
         String flagEncodersStr = ghConfig.getString("graph.flag_encoders", "");
         Map<String, String> flagEncoderMap = new LinkedHashMap<>();
         for (String encoderStr : flagEncodersStr.split(",")) {
