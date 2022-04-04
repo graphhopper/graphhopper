@@ -463,7 +463,9 @@ public class Router {
             return turnCostProfiles;
         }
 
-        int getMaxVisitedNodes(PMap hints) {
+        // ORS GH-MOD START: change access
+        protected int getMaxVisitedNodes(PMap hints) {
+        // ORS GH-MOD END
             return hints.getInt(Parameters.Routing.MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes());
         }
 
