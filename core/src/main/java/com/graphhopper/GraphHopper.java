@@ -521,7 +521,7 @@ public class GraphHopper {
                 flagEncoderMap.put(key, encoderStr);
             }
         }
-        Map<String, String> implicitFlagEncoderMap = new HashMap<>();
+        Map<String, String> implicitFlagEncoderMap = new LinkedHashMap<>();
         for (Profile profile : profiles) {
             emBuilder.add(Subnetwork.create(profile.getName()));
             if (!flagEncoderMap.containsKey(profile.getVehicle())
