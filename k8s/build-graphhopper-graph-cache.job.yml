@@ -22,7 +22,7 @@ spec:
                     values: ["amd64"]
           containers:
           - name: graphhopper-graph-cache-builder
-            image: ghcr.io/bikehopper/graphhopper-graph-cache-builder@sha256:c5fe7124a8f122765de70685d62dd8035695116df9bac1da5123e2f7c13f4c8f
+            image: ghcr.io/bikehopper/graphhopper-graph-cache-builder@sha256:008d6c3200d695bacc33f7b767040c0e7d7376937faa9b6f55d03babfbba51d5
             resources:
               requests:
                 memory: "6Gi"
