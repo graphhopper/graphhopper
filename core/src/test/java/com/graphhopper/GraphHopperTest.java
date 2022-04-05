@@ -25,7 +25,10 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.SkadiProvider;
 import com.graphhopper.routing.ev.Subnetwork;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.DefaultSnapFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
 import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
@@ -1054,7 +1057,7 @@ public class GraphHopperTest {
                     // do not change RoadEnvironment to avoid triggering tunnel interpolation
                     return edgeFlags;
                 }
-            }).addIfAbsent(new DefaultFlagEncoderFactory(), vehicle);
+            });
         }
 
         hopper.setElevationProvider(new SRTMProvider(DIR));

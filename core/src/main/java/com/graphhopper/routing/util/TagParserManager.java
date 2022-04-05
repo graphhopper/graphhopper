@@ -25,7 +25,6 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
@@ -92,22 +91,6 @@ public class TagParserManager implements EncodedValueLookup {
     }
 
     /**
-     * Create the EncodingManager from the provided GraphHopper location. Throws an
-     * IllegalStateException if it fails. Used if no EncodingManager specified on load.
-     */
-    public static TagParserManager create(TagParserManager.Builder builder, EncodedValueFactory evFactory, FlagEncoderFactory flagEncoderFactory, StorableProperties properties) {
-        String encodedValuesStr = properties.get("graph.encoded_values");
-        for (String evString : encodedValuesStr.split(",")) {
-            builder.addIfAbsent(evFactory, evString);
-        }
-        String flagEncoderValuesStr = properties.get("graph.flag_encoders");
-        for (String encoderString : flagEncoderValuesStr.split(",")) {
-            builder.addIfAbsent(flagEncoderFactory, encoderString);
-        }
-        return builder.build();
-    }
-
-    /**
      * Starts the build process of an EncodingManager
      */
     public static Builder start() {
@@ -150,16 +133,6 @@ public class TagParserManager implements EncodedValueLookup {
                 return false;
             FlagEncoder fe = parseEncoderString(factory, flagEncoderString);
             flagEncoderMap.put(fe.toString(), (AbstractFlagEncoder) fe);
-            return true;
-        }
-
-        public boolean addIfAbsent(EncodedValueFactory factory, String encodedValueString) {
-            check();
-            String key = encodedValueString.split("\\|")[0].trim();
-            if (encodedValueMap.containsKey(key))
-                return false;
-            EncodedValue ev = parseEncodedValueString(factory, encodedValueString);
-            encodedValueMap.put(ev.getName(), ev);
             return true;
         }
 
@@ -357,21 +330,6 @@ public class TagParserManager implements EncodedValueLookup {
         }
         PMap configuration = new PMap(entryVal);
         return factory.createFlagEncoder(encoderString, configuration);
-    }
-
-    static EncodedValue parseEncodedValueString(EncodedValueFactory factory, String encodedValueString) {
-        if (!encodedValueString.equals(toLowerCase(encodedValueString)))
-            throw new IllegalArgumentException("Use lower case for EncodedValues: " + encodedValueString);
-
-        encodedValueString = encodedValueString.trim();
-        if (encodedValueString.isEmpty())
-            throw new IllegalArgumentException("EncodedValue cannot be empty. " + encodedValueString);
-
-        EncodedValue evObject = factory.create(encodedValueString);
-        PMap map = new PMap(encodedValueString);
-        if (!map.has("version"))
-            throw new IllegalArgumentException("EncodedValue must have a version specified but it was " + encodedValueString);
-        return evObject;
     }
 
     private static TagParser parseEncodedValueString(TagParserFactory factory, String tagParserString) {
