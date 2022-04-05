@@ -595,60 +595,40 @@ public class GraphHopperOSMTest {
     public void testFailsForMissingParameters() {
         // missing load of graph
         instance = new GraphHopper();
-        try {
-            instance.setOSMFile(testOsm);
-            instance.importOrLoad();
-            fail();
-        } catch (IllegalStateException ex) {
-            assertEquals("GraphHopperLocation is not specified. Call setGraphHopperLocation or init before", ex.getMessage());
-        }
+        instance.setOSMFile(testOsm);
+        Exception ex = assertThrows(IllegalStateException.class, instance::importOrLoad);
+        assertEquals("GraphHopperLocation is not specified. Call setGraphHopperLocation or init before", ex.getMessage());
 
         // missing graph location
         instance = new GraphHopper();
-        try {
-            instance.importOrLoad();
-            fail();
-        } catch (IllegalStateException ex) {
-            assertEquals("GraphHopperLocation is not specified. Call setGraphHopperLocation or init before", ex.getMessage());
-        }
+        ex = assertThrows(IllegalStateException.class, instance::importOrLoad);
+        assertEquals("GraphHopperLocation is not specified. Call setGraphHopperLocation or init before", ex.getMessage());
 
         // missing OSM file to import
         instance = new GraphHopper().
                 setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest")).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(ghLoc);
-        try {
-            instance.importOrLoad();
-            fail();
-        } catch (IllegalStateException ex) {
-            assertEquals("Couldn't load from existing folder: " + ghLoc
-                    + " but also cannot use file for DataReader as it wasn't specified!", ex.getMessage());
-        }
+        ex = assertThrows(IllegalStateException.class, instance::importOrLoad);
+        assertEquals("Couldn't load from existing folder: " + ghLoc
+                + " but also cannot use file for DataReader as it wasn't specified!", ex.getMessage());
 
-        // missing encoding manager          
+        // missing profiles
         instance = new GraphHopper().
                 setStoreOnFlush(true).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm3);
-        try {
-            instance.importOrLoad();
-            fail();
-        } catch (IllegalStateException ex) {
-            assertTrue(ex.getMessage().startsWith("no profiles exist but assumed to create EncodingManager"), ex.getMessage());
-        }
+        ex = assertThrows(IllegalArgumentException.class, instance::importOrLoad);
+        assertTrue(ex.getMessage().startsWith("There has to be at least one profile"), ex.getMessage());
 
         // Import is possible even if no storeOnFlush is specified BUT here we miss the OSM file
         instance = new GraphHopper().
                 setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest")).
                 setStoreOnFlush(false).
                 setGraphHopperLocation(ghLoc);
-        try {
-            instance.importOrLoad();
-            fail();
-        } catch (Exception ex) {
-            assertEquals("Couldn't load from existing folder: " + ghLoc
-                    + " but also cannot use file for DataReader as it wasn't specified!", ex.getMessage());
-        }
+        ex = assertThrows(IllegalStateException.class, instance::importOrLoad);
+        assertEquals("Couldn't load from existing folder: " + ghLoc
+                + " but also cannot use file for DataReader as it wasn't specified!", ex.getMessage());
     }
 
     @Test
@@ -717,7 +697,7 @@ public class GraphHopperOSMTest {
     @Test
     public void testMultipleCHPreparationsInParallel() {
         HashMap<String, Integer> shortcutCountMap = new HashMap<>();
-        // try all parallelization modes        
+        // try all parallelization modes
         for (int threadCount = 1; threadCount < 6; threadCount++) {
             GraphHopper hopper = new GraphHopper().
                     setStoreOnFlush(false).

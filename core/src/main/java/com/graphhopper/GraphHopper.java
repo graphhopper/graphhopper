@@ -518,9 +518,6 @@ public class GraphHopper {
     }
 
     private TagParserManager buildEncodingManager(GraphHopperConfig ghConfig) {
-        if (profilesByName.isEmpty())
-            throw new IllegalStateException("no profiles exist but assumed to create EncodingManager. E.g. provide them in GraphHopperConfig when calling GraphHopper.init");
-
         emBuilder.setDateRangeParser(DateRangeParser.createInstance(ghConfig.getString("datareader.date_range_parser_day", "")));
         String flagEncodersStr = ghConfig.getString("graph.flag_encoders", "");
         Map<String, String> flagEncoderMap = new LinkedHashMap<>();
@@ -818,6 +815,8 @@ public class GraphHopper {
     }
 
     private void checkProfilesConsistency() {
+        if (profilesByName.isEmpty())
+            throw new IllegalArgumentException("There has to be at least one profile");
         TagParserManager encodingManager = getTagParserManager();
         for (Profile profile : profilesByName.values()) {
             if (!encodingManager.hasEncoder(profile.getVehicle())) {
