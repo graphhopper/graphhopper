@@ -795,6 +795,14 @@ public class GraphHopper {
             if (!ghStorage.loadExisting())
                 return false;
 
+            String storedProfiles = ghStorage.getProperties().get("profiles");
+            String configuredProfiles = getProfilesString();
+            if (!storedProfiles.equals(configuredProfiles))
+                throw new IllegalStateException("Profiles do not match:"
+                        + "\nGraphhopper config: " + configuredProfiles
+                        + "\nGraph: " + storedProfiles
+                        + "\nChange configuration to match the graph or delete " + ghStorage.getDirectory().getLocation());
+
             postProcessing(false);
             directory.loadMMap();
             setFullyLoaded();
@@ -803,6 +811,10 @@ public class GraphHopper {
             if (lock != null)
                 lock.release();
         }
+    }
+
+    private String getProfilesString() {
+        return profilesByName.values().stream().map(p -> p.getName() + "|" + p.getVersion()).collect(Collectors.joining(","));
     }
 
     private void checkProfilesConsistency() {
@@ -1110,6 +1122,7 @@ public class GraphHopper {
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(ghStorage.getBaseGraph(), buildSubnetworkRemovalJobs());
         preparation.setMinNetworkSize(minNetworkSize);
         preparation.doWork();
+        ghStorage.getProperties().put("profiles", getProfilesString());
         logger.info("nodes: " + Helper.nf(ghStorage.getNodes()) + ", edges: " + Helper.nf(ghStorage.getEdges()));
     }
 

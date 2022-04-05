@@ -31,7 +31,7 @@ import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
 import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
@@ -2477,42 +2477,40 @@ public class GraphHopperTest {
 
     @Test
     public void testLoadGraph_implicitEncodedValues_issue1862() {
-        FlagEncoder carEncoder = FlagEncoders.createCar();
-        EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(FlagEncoders.createBike()).build();
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).setDir(new RAMDirectory(GH_LOCATION, true)).create();
-        NodeAccess na = graph.getNodeAccess();
-        na.setNode(0, 12, 23);
-        na.setNode(1, 8, 13);
-        na.setNode(2, 2, 10);
-        na.setNode(3, 5, 9);
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 2).setDistance(10));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 3).setDistance(10));
-        int nodes = graph.getNodes();
-        int edges = graph.getAllEdges().length();
-        graph.flush();
-        Helper.close(graph);
+        GraphHopper hopper = new GraphHopper()
+                .setProfiles(
+                        new Profile("p_car").setVehicle("car").setWeighting("fastest"),
+                        new Profile("p_bike").setVehicle("bike").setWeighting("fastest")
+                )
+                .setGraphHopperLocation(GH_LOCATION)
+                .setOSMFile(BAYREUTH);
+        hopper.importOrLoad();
+        int nodes = hopper.getGraphHopperStorage().getNodes();
+        hopper.close();
 
         // load without configured FlagEncoders
-        GraphHopper hopper = new GraphHopper();
-        hopper.setProfiles(Arrays.asList(new Profile("p_car").setVehicle("car").setWeighting("fastest"),
-                new Profile("p_bike").setVehicle("bike").setWeighting("fastest")));
+        hopper = new GraphHopper();
+        hopper.setProfiles(Arrays.asList(
+                new Profile("p_car").setVehicle("car").setWeighting("fastest"),
+                new Profile("p_bike").setVehicle("bike").setWeighting("fastest"))
+        );
         hopper.setGraphHopperLocation(GH_LOCATION);
         assertTrue(hopper.load());
-        graph = hopper.getGraphHopperStorage();
-        assertEquals(nodes, graph.getNodes());
-        assertEquals(edges, graph.getAllEdges().length());
-        Helper.close(graph);
+        hopper.getGraphHopperStorage();
+        assertEquals(nodes, hopper.getGraphHopperStorage().getNodes());
+        hopper.close();
 
-        // load via explicitly configured FlagEncoders then we can define only one profile
+        // load via explicitly configured FlagEncoders
         hopper = new GraphHopper();
         hopper.getTagParserManagerBuilder().add(FlagEncoders.createCar()).add(FlagEncoders.createBike());
-        hopper.setProfiles(Collections.singletonList(new Profile("p_car").setVehicle("car").setWeighting("fastest")));
+        hopper.setProfiles(Arrays.asList(
+                new Profile("p_car").setVehicle("car").setWeighting("fastest"),
+                new Profile("p_bike").setVehicle("bike").setWeighting("fastest"))
+        );
         hopper.setGraphHopperLocation(GH_LOCATION);
         assertTrue(hopper.load());
-        graph = hopper.getGraphHopperStorage();
-        assertEquals(nodes, graph.getNodes());
-        assertEquals(edges, graph.getAllEdges().length());
-        Helper.close(graph);
+        assertEquals(nodes, hopper.getGraphHopperStorage().getNodes());
+        hopper.close();
     }
 
 }
