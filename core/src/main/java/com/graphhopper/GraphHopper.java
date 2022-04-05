@@ -28,7 +28,9 @@ import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadEnvironment;
+import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.lm.LandmarkStorage;
@@ -118,7 +120,6 @@ public class GraphHopper {
     private String osmFile;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private FlagEncoderFactory flagEncoderFactory = new DefaultFlagEncoderFactory();
-    private EncodedValueFactory encodedValueFactory = new DefaultEncodedValueFactory();
     private TagParserFactory tagParserFactory = new DefaultTagParserFactory();
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
@@ -374,15 +375,6 @@ public class GraphHopper {
         return this;
     }
 
-    public EncodedValueFactory getEncodedValueFactory() {
-        return this.encodedValueFactory;
-    }
-
-    public GraphHopper setEncodedValueFactory(EncodedValueFactory factory) {
-        this.encodedValueFactory = factory;
-        return this;
-    }
-
     public TagParserFactory getTagParserFactory() {
         return this.tagParserFactory;
     }
@@ -468,7 +460,7 @@ public class GraphHopper {
         if (tagParserManager != null)
             throw new IllegalStateException("Cannot call init twice. EncodingManager was already initialized.");
         setProfiles(ghConfig.getProfiles());
-        tagParserManager = buildEncodingManager(ghConfig);
+        tagParserManager = buildEncodingManager(ghConfig.asPMap(), profilesByName.values());
 
         if (ghConfig.getString("graph.locktype", "native").equals("simple"))
             lockFactory = new SimpleFSLockFactory();
@@ -517,9 +509,9 @@ public class GraphHopper {
         return this;
     }
 
-    private TagParserManager buildEncodingManager(GraphHopperConfig ghConfig) {
-        emBuilder.setDateRangeParser(DateRangeParser.createInstance(ghConfig.getString("datareader.date_range_parser_day", "")));
-        String flagEncodersStr = ghConfig.getString("graph.flag_encoders", "");
+    private TagParserManager buildEncodingManager(PMap properties, Collection<Profile> profiles) {
+        emBuilder.setDateRangeParser(DateRangeParser.createInstance(properties.getString("datareader.date_range_parser_day", "")));
+        String flagEncodersStr = properties.getString("graph.flag_encoders", "");
         Map<String, String> flagEncoderMap = new LinkedHashMap<>();
         for (String encoderStr : flagEncodersStr.split(",")) {
             String key = encoderStr.split("\\|")[0];
@@ -530,7 +522,7 @@ public class GraphHopper {
             }
         }
         Map<String, String> implicitFlagEncoderMap = new HashMap<>();
-        for (Profile profile : profilesByName.values()) {
+        for (Profile profile : profiles) {
             emBuilder.add(Subnetwork.create(profile.getName()));
             if (!flagEncoderMap.containsKey(profile.getVehicle())
                     // overwrite key in implicit map if turn cost support required
@@ -540,7 +532,7 @@ public class GraphHopper {
         flagEncoderMap.putAll(implicitFlagEncoderMap);
         flagEncoderMap.values().forEach(s -> emBuilder.addIfAbsent(flagEncoderFactory, s));
 
-        String encodedValueStr = ghConfig.getString("graph.encoded_values", "");
+        String encodedValueStr = properties.getString("graph.encoded_values", "");
         for (String tpStr : encodedValueStr.split(",")) {
             if (!tpStr.isEmpty()) emBuilder.addIfAbsent(tagParserFactory, tpStr);
         }
@@ -758,12 +750,11 @@ public class GraphHopper {
 
         if (!allowWrites && dataAccessDefaultType.isMMap())
             dataAccessDefaultType = DAType.MMAP_RO;
-        if (tagParserManager == null) {
-            StorableProperties properties = new StorableProperties(new GHDirectory(ghLocation, dataAccessDefaultType));
-            tagParserManager = properties.loadExisting()
-                    ? TagParserManager.create(emBuilder, encodedValueFactory, flagEncoderFactory, properties)
-                    : buildEncodingManager(new GraphHopperConfig());
-        }
+        if (tagParserManager == null)
+            // we did not call init(), so we build the encoding manager based on the changes made to emBuilder
+            // and the current profiles.
+            // just like when calling init, users have to make sure they use the same setup for import and load
+            tagParserManager = buildEncodingManager(new PMap(), profilesByName.values());
 
         GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
         directory.configure(dataAccessConfig);
@@ -817,7 +808,7 @@ public class GraphHopper {
     private void checkProfilesConsistency() {
         if (profilesByName.isEmpty())
             throw new IllegalArgumentException("There has to be at least one profile");
-        TagParserManager encodingManager = getTagParserManager();
+        EncodingManager encodingManager = getEncodingManager();
         for (Profile profile : profilesByName.values()) {
             if (!encodingManager.hasEncoder(profile.getVehicle())) {
                 throw new IllegalArgumentException("Unknown vehicle '" + profile.getVehicle() + "' in profile: " + profile + ". Make sure all vehicles used in 'profiles' exist in 'graph.flag_encoders'");
