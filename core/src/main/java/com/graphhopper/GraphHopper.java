@@ -89,7 +89,6 @@ public class GraphHopper {
     private String customAreasDirectory = "";
     // for graph:
     private GraphHopperStorage ghStorage;
-    private final TagParserManager.Builder emBuilder = new TagParserManager.Builder();
     private TagParserManager tagParserManager;
     private int defaultSegmentSize = -1;
     private String ghLocation = "";
@@ -123,8 +122,18 @@ public class GraphHopper {
     private TagParserFactory tagParserFactory = new DefaultTagParserFactory();
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
-    public TagParserManager.Builder getTagParserManagerBuilder() {
-        return emBuilder;
+    private String dateRangeParserString = "";
+    private String encodedValuesString = "";
+    private String flagEncodersString = "";
+
+    public GraphHopper setEncodedValuesString(String encodedValuesString) {
+        this.encodedValuesString = encodedValuesString;
+        return this;
+    }
+
+    public GraphHopper setFlagEncodersString(String flagEncodersString) {
+        this.flagEncodersString = flagEncodersString;
+        return this;
     }
 
     public TagParserManager getTagParserManager() {
@@ -460,7 +469,10 @@ public class GraphHopper {
         if (tagParserManager != null)
             throw new IllegalStateException("Cannot call init twice. EncodingManager was already initialized.");
         setProfiles(ghConfig.getProfiles());
-        tagParserManager = buildEncodingManager(ghConfig.asPMap(), profilesByName.values());
+        String flagEncodersStr = ghConfig.getString("graph.flag_encoders", flagEncodersString);
+        String encodedValueStr = ghConfig.getString("graph.encoded_values", encodedValuesString);
+        String dateRangeParserStr = ghConfig.getString("datareader.date_range_parser_day", dateRangeParserString);
+        tagParserManager = buildEncodingManager(flagEncodersStr, encodedValueStr, dateRangeParserStr, profilesByName.values());
 
         if (ghConfig.getString("graph.locktype", "native").equals("simple"))
             lockFactory = new SimpleFSLockFactory();
@@ -509,9 +521,9 @@ public class GraphHopper {
         return this;
     }
 
-    private TagParserManager buildEncodingManager(PMap properties, Collection<Profile> profiles) {
-        emBuilder.setDateRangeParser(DateRangeParser.createInstance(properties.getString("datareader.date_range_parser_day", "")));
-        String flagEncodersStr = properties.getString("graph.flag_encoders", "");
+    private TagParserManager buildEncodingManager(String flagEncodersStr, String encodedValueStr, String dateRangeParserStr, Collection<Profile> profiles) {
+        TagParserManager.Builder emBuilder = new TagParserManager.Builder();
+        emBuilder.setDateRangeParser(DateRangeParser.createInstance(dateRangeParserStr));
         Map<String, String> flagEncoderMap = new LinkedHashMap<>();
         for (String encoderStr : flagEncodersStr.split(",")) {
             String key = encoderStr.split("\\|")[0];
@@ -532,7 +544,6 @@ public class GraphHopper {
         flagEncoderMap.putAll(implicitFlagEncoderMap);
         flagEncoderMap.values().forEach(s -> emBuilder.addIfAbsent(flagEncoderFactory, s));
 
-        String encodedValueStr = properties.getString("graph.encoded_values", "");
         for (String tpStr : encodedValueStr.split(",")) {
             if (!tpStr.isEmpty()) emBuilder.addIfAbsent(tagParserFactory, tpStr);
         }
@@ -754,7 +765,7 @@ public class GraphHopper {
             // we did not call init(), so we build the encoding manager based on the changes made to emBuilder
             // and the current profiles.
             // just like when calling init, users have to make sure they use the same setup for import and load
-            tagParserManager = buildEncodingManager(new PMap(), profilesByName.values());
+            tagParserManager = buildEncodingManager(flagEncodersString, encodedValuesString, dateRangeParserString, profilesByName.values());
 
         GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
         directory.configure(dataAccessConfig);
