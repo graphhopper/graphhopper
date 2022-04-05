@@ -11,13 +11,10 @@ env:
 
 matrix:
   include:
-    - jdk: openjdk8
-    - env: JDK='OpenJDK 11'
-      install: . ./install-jdk.sh -F 11 -C
-    - env: JDK='OpenJDK 17'
-      install: . ./install-jdk.sh -F 17 -C
-    - env: JDK='OpenJDK 18'
-      install: . ./install-jdk.sh -F ea -C
+    - env: JDKNAME='8.0.302-open'
+    - env: JDKNAME='11.0.12-open'
+    - env: JDKNAME='18-open'
+    - env: JDKNAME='19.ea.16-open'
 
 # avoid default dependency command for maven, 'true' means 'return true' and continue
 install: true
@@ -28,7 +25,10 @@ install: true
 before_install:
   - if [ ! -z "$GPG_SECRET_KEYS" ]; then echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import; fi
   - if [ ! -z "$GPG_OWNERTRUST" ]; then echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust; fi
-  - 'wget https://raw.githubusercontent.com/sormuras/bach/master/install-jdk.sh'
+  - curl -s "https://get.sdkman.io" | bash
+  - source "$HOME/.sdkman/bin/sdkman-init.sh"
+  - sdk install java $JDKNAME
+  - sdk use java $JDKNAME
 
 # Undo `_JAVA_OPTIONS` environment variable; see https://github.com/travis-ci/travis-ci/issues/8408
 before_script:
