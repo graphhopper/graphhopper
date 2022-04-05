@@ -41,7 +41,8 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
     private final Set<String> knownEncodedValues = new HashSet<>(Arrays.asList(
             Roundabout.KEY, "car_access", "bike_access", GetOffBike.KEY, RoadClass.KEY, RoadClassLink.KEY, RoadEnvironment.KEY,
             RoadAccess.KEY, MaxSpeed.KEY, MaxWeight.KEY, MaxWidth.KEY, MaxAxleLoad.KEY, MaxLength.KEY, Surface.KEY, Smoothness.KEY,
-            Toll.KEY, TrackType.KEY, BikeNetwork.KEY, FootNetwork.KEY, Hazmat.KEY, HazmatTunnel.KEY, HazmatWater.KEY
+            Toll.KEY, TrackType.KEY, BikeNetwork.KEY, FootNetwork.KEY, Hazmat.KEY, HazmatTunnel.KEY, HazmatWater.KEY,
+            Lanes.KEY, MtbRating.KEY, HikeRating.KEY, HorseRating.KEY, Country.KEY
     ));
 
     public ExpressionVisitor(ParseResult result, NameValidator nameValidator, EncodedValueLookup lookup) {
