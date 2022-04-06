@@ -18,7 +18,9 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.Statement;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.RouteNetwork;
+import com.graphhopper.routing.ev.StringEncodedValue;
 import com.graphhopper.util.Helper;
 import org.codehaus.janino.Scanner;
 import org.codehaus.janino.*;
@@ -68,7 +70,9 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
                     return true;
                 } else {
                     // e.g. like road_class
-                    return isValidIdentifier(arg);
+                    if (isValidIdentifier(arg)) return true;
+                    invalidMessage = "'" + arg + "' not available";
+                    return false;
                 }
             }
             invalidMessage = "identifier " + n + " invalid";
