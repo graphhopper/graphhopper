@@ -138,7 +138,7 @@ public class GraphHopper {
 
     public TagParserManager getTagParserManager() {
         if (tagParserManager == null)
-            throw new IllegalStateException("EncodingManager not yet built");
+            throw new IllegalStateException("TagParserManager not yet built");
         return tagParserManager;
     }
 
@@ -236,7 +236,7 @@ public class GraphHopper {
         if (!profilesByName.isEmpty())
             throw new IllegalArgumentException("Cannot initialize profiles multiple times");
         if (tagParserManager != null)
-            throw new IllegalArgumentException("Cannot set profiles after EncodingManager was built");
+            throw new IllegalArgumentException("Cannot set profiles after TagParserManager was built");
         for (Profile profile : profiles) {
             Profile previous = this.profilesByName.put(profile.getName(), profile);
             if (previous != null)
@@ -467,12 +467,12 @@ public class GraphHopper {
             throw new IllegalArgumentException("spatial_rules.max_bbox has been deprecated. There is no replacement, all custom areas will be considered.");
 
         if (tagParserManager != null)
-            throw new IllegalStateException("Cannot call init twice. EncodingManager was already initialized.");
+            throw new IllegalStateException("Cannot call init twice. TagParserManager was already initialized.");
         setProfiles(ghConfig.getProfiles());
         String flagEncodersStr = ghConfig.getString("graph.flag_encoders", flagEncodersString);
         String encodedValueStr = ghConfig.getString("graph.encoded_values", encodedValuesString);
         String dateRangeParserStr = ghConfig.getString("datareader.date_range_parser_day", dateRangeParserString);
-        tagParserManager = buildEncodingManager(flagEncodersStr, encodedValueStr, dateRangeParserStr, profilesByName.values());
+        tagParserManager = buildTagParserManager(flagEncodersStr, encodedValueStr, dateRangeParserStr, profilesByName.values());
 
         if (ghConfig.getString("graph.locktype", "native").equals("simple"))
             lockFactory = new SimpleFSLockFactory();
@@ -521,7 +521,7 @@ public class GraphHopper {
         return this;
     }
 
-    private TagParserManager buildEncodingManager(String flagEncodersStr, String encodedValueStr, String dateRangeParserStr, Collection<Profile> profiles) {
+    private TagParserManager buildTagParserManager(String flagEncodersStr, String encodedValueStr, String dateRangeParserStr, Collection<Profile> profiles) {
         TagParserManager.Builder emBuilder = new TagParserManager.Builder();
         emBuilder.setDateRangeParser(DateRangeParser.createInstance(dateRangeParserStr));
         Map<String, String> flagEncoderMap = new LinkedHashMap<>();
@@ -762,10 +762,10 @@ public class GraphHopper {
         if (!allowWrites && dataAccessDefaultType.isMMap())
             dataAccessDefaultType = DAType.MMAP_RO;
         if (tagParserManager == null)
-            // we did not call init(), so we build the encoding manager based on the changes made to emBuilder
+            // we did not call init(), so we build the tag parser manager based on the changes made to emBuilder
             // and the current profiles.
             // just like when calling init, users have to make sure they use the same setup for import and load
-            tagParserManager = buildEncodingManager(flagEncodersString, encodedValuesString, dateRangeParserString, profilesByName.values());
+            tagParserManager = buildTagParserManager(flagEncodersString, encodedValuesString, dateRangeParserString, profilesByName.values());
 
         GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
         directory.configure(dataAccessConfig);
