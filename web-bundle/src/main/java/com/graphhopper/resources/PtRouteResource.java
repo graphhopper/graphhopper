@@ -67,6 +67,7 @@ public class PtRouteResource {
                             @QueryParam("pt.connecting_profile") String connectingProfile,
                             @QueryParam("pt.beta_transfers") Double betaTransfers,
                             @QueryParam("pt.beta_street_time") Double betaStreetTime,
+                            @QueryParam("pt.beta_pt_edge_time") Double betaPtEdgeTime,
                             @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
                             @QueryParam("details") List<String> pathDetails) {
         StopWatch stopWatch = new StopWatch().start();
@@ -85,6 +86,7 @@ public class PtRouteResource {
         Optional.ofNullable(connectingProfile).ifPresent(request::setConnectingProfile);
         Optional.ofNullable(betaTransfers).ifPresent(request::setBetaTransfers);
         Optional.ofNullable(betaStreetTime).ifPresent(request::setBetaStreetTime);
+        Optional.ofNullable(betaPtEdgeTime).ifPresent(request::setBetaPtEdgeTime);
         Optional.ofNullable(enableElevation).ifPresent(request::setEnableElevation);
         Optional.ofNullable(pathDetails).ifPresent(request::setPathDetails);
 

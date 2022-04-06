@@ -33,6 +33,7 @@ public class Request {
     private Boolean ignoreTransfers;
     private double betaTransfers = 0.0;
     private double betaStreetTime = 1.0;
+    private double betaPtEdgeTime = 1.0;
     private Integer limitSolutions;
     private boolean arriveBy;
     private double walkSpeedKmH = 5.0;
@@ -93,6 +94,14 @@ public class Request {
 
     public void setBetaStreetTime(double betaStreetTime) {
         this.betaStreetTime = betaStreetTime;
+    }
+
+    public double getBetaPtEdgeTime() {
+        return betaPtEdgeTime;
+    }
+
+    public void setBetaPtEdgeTime(double betaPtEdgeTime) {
+        this.betaPtEdgeTime = betaPtEdgeTime;
     }
 
     public Integer getLimitSolutions() {
