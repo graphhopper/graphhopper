@@ -21,8 +21,9 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.BaseGraph;
@@ -49,7 +50,7 @@ public class PathSimplificationTest {
 
     @Test
     public void testScenario() {
-        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        FlagEncoder carEncoder = FlagEncoders.createCar();
         EncodingManager carManager = EncodingManager.create(carEncoder);
         BaseGraph g = new BaseGraph.Builder(carManager).create();
         // 0-1-2

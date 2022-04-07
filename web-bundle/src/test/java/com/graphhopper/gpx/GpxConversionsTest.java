@@ -21,8 +21,9 @@ package com.graphhopper.gpx;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.BaseGraph;
@@ -48,12 +49,12 @@ import static org.junit.jupiter.api.Assertions.*;
 public class GpxConversionsTest {
 
     private EncodingManager carManager;
-    private CarFlagEncoder carEncoder;
+    private FlagEncoder carEncoder;
     private TranslationMap trMap;
 
     @BeforeEach
     public void setUp() {
-        carEncoder = new CarFlagEncoder();
+        carEncoder = FlagEncoders.createCar();
         carManager = EncodingManager.create(carEncoder);
         trMap = new TranslationMap().doImport();
     }

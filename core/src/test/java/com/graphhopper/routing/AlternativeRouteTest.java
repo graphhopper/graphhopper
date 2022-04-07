@@ -19,9 +19,9 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.AlternativeRoute.AlternativeBidirSearch;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -48,11 +48,11 @@ public class AlternativeRouteTest {
         final Weighting weighting;
         final TraversalMode traversalMode;
         final BaseGraph graph;
-        final CarFlagEncoder carFE;
+        final FlagEncoder carFE;
 
         public Fixture(TraversalMode tMode) {
             this.traversalMode = tMode;
-            carFE = new CarFlagEncoder();
+            carFE = FlagEncoders.createCar();
             EncodingManager em = EncodingManager.create(carFE);
             graph = new BaseGraph.Builder(em).withTurnCosts(true).create();
             TurnCostProvider turnCostProvider = tMode.isEdgeBased()

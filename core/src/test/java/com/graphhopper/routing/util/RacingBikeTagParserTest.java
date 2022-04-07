@@ -34,9 +34,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * @author ratrun
  */
-public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
+public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     @Override
-    protected BikeCommonFlagEncoder createBikeEncoder() {
+    protected BikeCommonFlagEncoder createBikeTagParser() {
         return new RacingBikeFlagEncoder(new PMap("block_fords=true"));
     }
 
@@ -74,22 +74,22 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
         way.setTag("sac_scale", "mountain_hiking");
-        assertTrue(encoder.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.setTag("highway", "path");
         way.setTag("sac_scale", "hiking");
-        assertTrue(encoder.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
 
         // This looks to be tagging error:
         way.setTag("highway", "cycleway");
         way.setTag("sac_scale", "mountain_hiking");
         // we are cautious and disallow this
-        assertTrue(encoder.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
     }
 
     @Test
     public void testGetSpeed() {
-        IntsRef intsRef = GHUtility.setSpeed(10, 0, encoder, encodingManager.createEdgeFlags());
+        IntsRef intsRef = GHUtility.setSpeed(10, 0, parser, encodingManager.createEdgeFlags());
         assertEquals(10, avgSpeedEnc.getDecimal(false, intsRef), 1e-1);
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "track");

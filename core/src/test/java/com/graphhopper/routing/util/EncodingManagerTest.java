@@ -43,7 +43,7 @@ public class EncodingManagerTest {
     @Test
     public void testWrongEncoders() {
         try {
-            FootFlagEncoder foot = new FootFlagEncoder();
+            FlagEncoder foot = FlagEncoders.createFoot();
             EncodingManager.create(foot, foot);
             fail("There should have been an exception");
         } catch (Exception ex) {

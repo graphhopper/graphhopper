@@ -20,8 +20,9 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.TurnCost;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -47,7 +48,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class EdgeBasedNodeContractorTest {
     private final int maxCost = 10;
-    private CarFlagEncoder encoder;
+    private FlagEncoder encoder;
     private BaseGraph graph;
     private Weighting weighting;
     private CHStorage chStore;
@@ -61,7 +62,7 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private void initialize() {
-        encoder = new CarFlagEncoder(5, 5, maxCost);
+        encoder = FlagEncoders.createCar(5, 5, maxCost);
         EncodingManager encodingManager = EncodingManager.create(encoder);
         graph = new BaseGraph.Builder(encodingManager).create();
         chConfigs = Arrays.asList(

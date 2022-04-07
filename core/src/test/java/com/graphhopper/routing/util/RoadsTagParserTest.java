@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class RoadsFlagEncoderTest {
+class RoadsTagParserTest {
 
     private final EncodingManager encodingManager = EncodingManager.create("roads");
     private final RoadsFlagEncoder roadsEncoder = (RoadsFlagEncoder) encodingManager.getEncoder("roads");

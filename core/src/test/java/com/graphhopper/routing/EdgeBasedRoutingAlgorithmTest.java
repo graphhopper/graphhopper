@@ -21,9 +21,9 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.TurnCost;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -56,7 +56,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class EdgeBasedRoutingAlgorithmTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedRoutingAlgorithmTest.class);
-    private CarFlagEncoder carEncoder;
+    private FlagEncoder carEncoder;
     private DecimalEncodedValue turnCostEnc;
     private TurnCostStorage tcs;
 
@@ -94,7 +94,7 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     private EncodingManager createEncodingManager(boolean restrictedOnly) {
-        carEncoder = new CarFlagEncoder(5, 5, restrictedOnly ? 1 : 3);
+        carEncoder = FlagEncoders.createCar(5, 5, restrictedOnly ? 1 : 3);
         EncodingManager em = EncodingManager.create(carEncoder);
         turnCostEnc = getTurnCostEnc(carEncoder);
         return em;

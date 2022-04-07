@@ -27,9 +27,9 @@ import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PUSHING_SECTION
 import static com.graphhopper.routing.util.PriorityCode.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
+public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
     @Override
-    protected BikeCommonFlagEncoder createBikeEncoder() {
+    protected BikeCommonFlagEncoder createBikeTagParser() {
         return new MountainBikeFlagEncoder(new PMap("block_fords=true"));
     }
 
@@ -114,17 +114,17 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
         way.setTag("sac_scale", "hiking");
-        assertTrue(encoder.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
 
         way.setTag("highway", "service");
         way.setTag("sac_scale", "mountain_hiking");
-        assertTrue(encoder.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
 
         way.setTag("sac_scale", "alpine_hiking");
-        assertTrue(encoder.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
 
         way.setTag("sac_scale", "demanding_alpine_hiking");
-        assertTrue(encoder.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
     }
 
     @Test
@@ -167,21 +167,21 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "kissing_gate");
         // No barrier!
-        assertFalse(encoder.isBarrier(node));
+        assertFalse(parser.isBarrier(node));
 
         // kissing_gate with bicycle tag = no
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "kissing_gate");
         node.setTag("bicycle", "no");
         // barrier!
-        assertTrue(encoder.isBarrier(node));
+        assertTrue(parser.isBarrier(node));
 
         // kissing_gate with bicycle tag
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "kissing_gate");
         node.setTag("bicycle", "yes");
         // No barrier!
-        assertFalse(encoder.isBarrier(node));
+        assertFalse(parser.isBarrier(node));
     }
 
 }

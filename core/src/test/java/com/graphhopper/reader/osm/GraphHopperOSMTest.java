@@ -26,8 +26,7 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.RoutingCHGraph;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -273,12 +272,14 @@ public class GraphHopperOSMTest {
         instance1.importOrLoad();
 
         GraphHopper instance2 = new GraphHopper().
+                setProfiles(new Profile(vehicle).setVehicle(vehicle).setWeighting("fastest")).
                 setStoreOnFlush(true).
                 setOSMFile(testOsm).
                 setGraphHopperLocation(ghLoc);
         instance2.load();
 
         GraphHopper instance3 = new GraphHopper().
+                setProfiles(new Profile(vehicle).setVehicle(vehicle).setWeighting("fastest")).
                 setStoreOnFlush(true).
                 setOSMFile(testOsm).
                 setGraphHopperLocation(ghLoc);
@@ -594,60 +595,40 @@ public class GraphHopperOSMTest {
     public void testFailsForMissingParameters() {
         // missing load of graph
         instance = new GraphHopper();
-        try {
-            instance.setOSMFile(testOsm);
-            instance.importOrLoad();
-            fail();
-        } catch (IllegalStateException ex) {
-            assertEquals("GraphHopperLocation is not specified. Call setGraphHopperLocation or init before", ex.getMessage());
-        }
+        instance.setOSMFile(testOsm);
+        Exception ex = assertThrows(IllegalStateException.class, instance::importOrLoad);
+        assertEquals("GraphHopperLocation is not specified. Call setGraphHopperLocation or init before", ex.getMessage());
 
         // missing graph location
         instance = new GraphHopper();
-        try {
-            instance.importOrLoad();
-            fail();
-        } catch (IllegalStateException ex) {
-            assertEquals("GraphHopperLocation is not specified. Call setGraphHopperLocation or init before", ex.getMessage());
-        }
+        ex = assertThrows(IllegalStateException.class, instance::importOrLoad);
+        assertEquals("GraphHopperLocation is not specified. Call setGraphHopperLocation or init before", ex.getMessage());
 
         // missing OSM file to import
         instance = new GraphHopper().
                 setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest")).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(ghLoc);
-        try {
-            instance.importOrLoad();
-            fail();
-        } catch (IllegalStateException ex) {
-            assertEquals("Couldn't load from existing folder: " + ghLoc
-                    + " but also cannot use file for DataReader as it wasn't specified!", ex.getMessage());
-        }
+        ex = assertThrows(IllegalStateException.class, instance::importOrLoad);
+        assertEquals("Couldn't load from existing folder: " + ghLoc
+                + " but also cannot use file for DataReader as it wasn't specified!", ex.getMessage());
 
-        // missing encoding manager          
+        // missing profiles
         instance = new GraphHopper().
                 setStoreOnFlush(true).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm3);
-        try {
-            instance.importOrLoad();
-            fail();
-        } catch (IllegalStateException ex) {
-            assertTrue(ex.getMessage().startsWith("no profiles exist but assumed to create EncodingManager"), ex.getMessage());
-        }
+        ex = assertThrows(IllegalArgumentException.class, instance::importOrLoad);
+        assertTrue(ex.getMessage().startsWith("There has to be at least one profile"), ex.getMessage());
 
         // Import is possible even if no storeOnFlush is specified BUT here we miss the OSM file
         instance = new GraphHopper().
                 setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest")).
                 setStoreOnFlush(false).
                 setGraphHopperLocation(ghLoc);
-        try {
-            instance.importOrLoad();
-            fail();
-        } catch (Exception ex) {
-            assertEquals("Couldn't load from existing folder: " + ghLoc
-                    + " but also cannot use file for DataReader as it wasn't specified!", ex.getMessage());
-        }
+        ex = assertThrows(IllegalStateException.class, instance::importOrLoad);
+        assertEquals("Couldn't load from existing folder: " + ghLoc
+                + " but also cannot use file for DataReader as it wasn't specified!", ex.getMessage());
     }
 
     @Test
@@ -716,7 +697,7 @@ public class GraphHopperOSMTest {
     @Test
     public void testMultipleCHPreparationsInParallel() {
         HashMap<String, Integer> shortcutCountMap = new HashMap<>();
-        // try all parallelization modes        
+        // try all parallelization modes
         for (int threadCount = 1; threadCount < 6; threadCount++) {
             GraphHopper hopper = new GraphHopper().
                     setStoreOnFlush(false).
@@ -829,6 +810,70 @@ public class GraphHopperOSMTest {
     }
 
     @Test
+    public void testProfilesMustNotBeChanged() {
+        {
+            GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
+                    new Profile("car").setVehicle("car").setWeighting("fastest"),
+                    new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(3)).setVehicle("car")
+            ));
+            hopper.importOrLoad();
+            hopper.close();
+        }
+        {
+            // load without problem
+            GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
+                    new Profile("car").setVehicle("car").setWeighting("fastest"),
+                    new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(3)).setVehicle("car")
+            ));
+            hopper.importOrLoad();
+            hopper.close();
+        }
+        {
+            // problem: the profile changed (slightly). we do not allow this because we would potentially need to re-calculate the subnetworks
+            GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
+                    new Profile("car").setVehicle("car").setWeighting("fastest"),
+                    new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(80)).setVehicle("car")
+            ));
+            IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
+            assertTrue(e.getMessage().contains("Profiles do not match"), e.getMessage());
+            hopper.close();
+        }
+        {
+            // problem: we add another profile, which is not allowed, because there would be no subnetwork ev for it
+            GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
+                    new Profile("car").setVehicle("car").setWeighting("shortest"),
+                    new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(3)).setVehicle("car"),
+                    new Profile("car2").setVehicle("car").setWeighting("fastest")
+            ));
+            IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
+            // so far we get another error message in this case, because GraphHopperStorage checks the encoded values
+            // in loadExisting already
+            assertTrue(e.getMessage().contains("Encoded values do not match"), e.getMessage());
+            hopper.close();
+        }
+        {
+            // problem: we remove a profile, which would technically be possible, but does not save memory either. it
+            //          could be useful to disable a profile, but currently we just force a new import.
+            GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
+                    new Profile("car").setVehicle("car").setWeighting("shortest")
+            ));
+            IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
+            assertTrue(e.getMessage().contains("Encoded values do not match"), e.getMessage());
+            hopper.close();
+        }
+    }
+
+    private GraphHopper createHopperWithProfiles(List<Profile> profiles) {
+        GraphHopper hopper = new GraphHopper();
+        hopper.init(new GraphHopperConfig()
+                .putObject("graph.location", ghLoc)
+                .putObject("datareader.file", testOsm)
+                .setProfiles(profiles)
+        );
+        return hopper;
+    }
+
+    @Test
     public void testLoadingLMAndCHProfiles() {
         GraphHopper hopper = new GraphHopper()
                 .setGraphHopperLocation(ghLoc)
@@ -848,71 +893,30 @@ public class GraphHopperOSMTest {
         assertTrue(hopper.load());
         hopper.close();
 
-        // problem: changed weighting in profile although LM preparation was enabled
+        // we have to manipulate the props file to set up a situation where the LM/CH preparations do not match the
+        // profiles, because changing the profiles would be an error in itself
+        StorableProperties props = new StorableProperties(new GHDirectory(ghLoc, DAType.RAM_STORE));
+        props.loadExisting();
+        props.put("graph.profiles.ch.car.version", 404);
+        props.put("graph.profiles.lm.car.version", 505);
+        props.flush();
+
+        // problem: LM version does not match the actual profile
         hopper = new GraphHopper()
-                .setProfiles(new Profile("car").setVehicle("car").setWeighting("shortest"));
+                .setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("car"));
         hopper.setGraphHopperLocation(ghLoc);
-        // do not load CH
-        try {
-            assertFalse(hopper.load());
-            fail("load should fail");
-        } catch (Exception ex) {
-            assertEquals("LM preparation of car already exists in storage and doesn't match configuration", ex.getMessage());
-        } finally {
-            hopper.close();
-        }
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, hopper::load);
+        assertEquals("LM preparation of car already exists in storage and doesn't match configuration", ex.getMessage());
+        hopper.close();
 
-        // problem: changed weighting in profile although CH preparation was enabled
+        // problem: CH version does not match the actual profile
         hopper = new GraphHopper()
-                .setProfiles(new Profile("car").setVehicle("car").setWeighting("shortest"));
+                .setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));
         hopper.setGraphHopperLocation(ghLoc);
-        // do not load LM
-        try {
-            assertFalse(hopper.load());
-            fail("load should fail");
-        } catch (Exception ex) {
-            assertEquals("CH preparation of car already exists in storage and doesn't match configuration", ex.getMessage());
-        } finally {
-            hopper.close();
-        }
-    }
-
-    @Test
-    public void testLoadingCustomProfiles() {
-        CustomModel customModel = new CustomModel().setDistanceInfluence(123);
-        GraphHopper hopper = new GraphHopper()
-                .setGraphHopperLocation(ghLoc)
-                .setOSMFile(testOsm)
-                .setProfiles(new CustomProfile("car").setCustomModel(customModel));
-        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("car"));
-        hopper.importOrLoad();
+        ex = assertThrows(IllegalArgumentException.class, hopper::load);
+        assertEquals("CH preparation of car already exists in storage and doesn't match configuration", ex.getMessage());
         hopper.close();
-
-        // load without problem
-        hopper = new GraphHopper()
-                .setProfiles(new CustomProfile("car").setCustomModel(customModel));
-        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("car"));
-        hopper.setGraphHopperLocation(ghLoc);
-        assertTrue(hopper.load());
-        hopper.close();
-
-        // do not load changed CustomModel
-        customModel.setDistanceInfluence(100);
-        hopper = new GraphHopper()
-                .setProfiles(new CustomProfile("car").setCustomModel(customModel));
-        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("car"));
-        hopper.setGraphHopperLocation(ghLoc);
-        try {
-            assertFalse(hopper.load());
-            fail("load should fail");
-        } catch (Exception ex) {
-            assertEquals("LM preparation of car already exists in storage and doesn't match configuration", ex.getMessage());
-        } finally {
-            hopper.close();
-        }
     }
-
-
 }

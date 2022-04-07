@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Peter Karich
  */
 public class PrepareContractionHierarchiesTest {
-    private final CarFlagEncoder carEncoder = new CarFlagEncoder(new PMap().putObject("speed_two_directions", true));
+    private final FlagEncoder carEncoder = FlagEncoders.createCar(new PMap().putObject("speed_two_directions", true));
     private final EncodingManager encodingManager = EncodingManager.create(carEncoder);
     private final Weighting weighting = new ShortestWeighting(carEncoder);
     private final CHConfig chConfig = CHConfig.nodeBased("c", weighting);
@@ -464,8 +464,8 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testMultiplePreparationsIdenticalView() {
-        CarFlagEncoder tmpCarEncoder = new CarFlagEncoder();
-        BikeFlagEncoder tmpBikeEncoder = new BikeFlagEncoder();
+        FlagEncoder tmpCarEncoder = FlagEncoders.createCar();
+        FlagEncoder tmpBikeEncoder = FlagEncoders.createBike();
         EncodingManager tmpEncodingManager = EncodingManager.create(tmpCarEncoder, tmpBikeEncoder);
 
         // FastestWeighting would lead to different shortcuts due to different default speeds for bike and car
@@ -486,8 +486,8 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testMultiplePreparationsDifferentView() {
-        CarFlagEncoder tmpCarEncoder = new CarFlagEncoder();
-        BikeFlagEncoder tmpBikeEncoder = new BikeFlagEncoder();
+        FlagEncoder tmpCarEncoder = FlagEncoders.createCar();
+        FlagEncoder tmpBikeEncoder = FlagEncoders.createBike();
         EncodingManager tmpEncodingManager = EncodingManager.create(tmpCarEncoder, tmpBikeEncoder);
 
         CHConfig carConfig = CHConfig.nodeBased("c1", new FastestWeighting(tmpCarEncoder));
@@ -512,11 +512,11 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testReusingNodeOrdering() {
-        CarFlagEncoder carFlagEncoder = new CarFlagEncoder();
-        MotorcycleFlagEncoder motorCycleEncoder = new MotorcycleFlagEncoder();
-        EncodingManager em = EncodingManager.create(carFlagEncoder, motorCycleEncoder);
-        CHConfig carConfig = CHConfig.nodeBased("c1", new FastestWeighting(carFlagEncoder));
-        CHConfig motorCycleConfig = CHConfig.nodeBased("c2", new FastestWeighting(motorCycleEncoder));
+        FlagEncoder car1FlagEncoder = FlagEncoders.createCar("car1", 5, 5, 1, true);
+        FlagEncoder car2FlagEncoder = FlagEncoders.createCar("car2", 5, 5, 1, true);
+        EncodingManager em = EncodingManager.create(car1FlagEncoder, car2FlagEncoder);
+        CHConfig car1Config = CHConfig.nodeBased("c1", new FastestWeighting(car1FlagEncoder));
+        CHConfig car2Config = CHConfig.nodeBased("c2", new FastestWeighting(car2FlagEncoder));
         BaseGraph graph = new BaseGraph.Builder(em).create();
 
         int numNodes = 5_000;
@@ -524,29 +524,36 @@ public class PrepareContractionHierarchiesTest {
         long seed = System.nanoTime();
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, numNodes, 1.3, true, true,
-                carFlagEncoder.getAccessEnc(), carFlagEncoder.getAverageSpeedEnc(), null, 0.7, 0.9, 0.8);
+                car1FlagEncoder.getAccessEnc(), null, null, 0.7, 0.9, 0.8);
+        AllEdgesIterator iter = graph.getAllEdges();
+        while (iter.next()) {
+            iter.set(car1FlagEncoder.getAccessEnc(), rnd.nextDouble() > 0.05, rnd.nextDouble() > 0.05);
+            iter.set(car2FlagEncoder.getAccessEnc(), rnd.nextDouble() > 0.05, rnd.nextDouble() > 0.05);
+            iter.set(car1FlagEncoder.getAverageSpeedEnc(), rnd.nextDouble() * 100, rnd.nextDouble() * 100);
+            iter.set(car2FlagEncoder.getAverageSpeedEnc(), rnd.nextDouble() * 100, rnd.nextDouble() * 100);
+        }
         graph.freeze();
 
         // create CH for cars
-        StopWatch sw = new StopWatch().start();
-        PrepareContractionHierarchies carPch = PrepareContractionHierarchies.fromGraph(graph, carConfig);
-        PrepareContractionHierarchies.Result res = carPch.doWork();
-        long timeCar = sw.stop().getMillis();
+        PrepareContractionHierarchies car1Pch = PrepareContractionHierarchies.fromGraph(graph, car1Config);
+        PrepareContractionHierarchies.Result resCar1 = car1Pch.doWork();
 
         // create CH for motorcycles, re-use car contraction order
         // this speeds up contraction significantly, but can lead to slower queries
-        sw = new StopWatch().start();
-        CHStorage chStore = res.getCHStorage();
-        NodeOrderingProvider nodeOrderingProvider = chStore.getNodeOrderingProvider();
-        PrepareContractionHierarchies motorCyclePch = PrepareContractionHierarchies.fromGraph(graph, motorCycleConfig)
+        CHStorage car1CHStore = resCar1.getCHStorage();
+        NodeOrderingProvider nodeOrderingProvider = car1CHStore.getNodeOrderingProvider();
+        PrepareContractionHierarchies car2Pch = PrepareContractionHierarchies.fromGraph(graph, car2Config)
                 .useFixedNodeOrdering(nodeOrderingProvider);
-        PrepareContractionHierarchies.Result resMotorCycle = motorCyclePch.doWork();
-        RoutingCHGraph motorCycleCH = RoutingCHGraphImpl.fromGraph(graph, resMotorCycle.getCHStorage(), resMotorCycle.getCHConfig());
+        PrepareContractionHierarchies.Result resCar2 = car2Pch.doWork();
+        RoutingCHGraph car2CH = RoutingCHGraphImpl.fromGraph(graph, resCar2.getCHStorage(), resCar2.getCHConfig());
+
+        assertTrue(car1CHStore.getShortcuts() > 0 && resCar2.getCHStorage().getShortcuts() > 0);
+        assertNotEquals(car1CHStore.getShortcuts(), resCar2.getCHStorage().getShortcuts());
 
         // run a few sample queries to check correctness
         for (int i = 0; i < numQueries; ++i) {
-            Dijkstra dijkstra = new Dijkstra(graph, motorCycleConfig.getWeighting(), TraversalMode.NODE_BASED);
-            RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(motorCycleCH).createAlgo(new PMap());
+            Dijkstra dijkstra = new Dijkstra(graph, car2Config.getWeighting(), TraversalMode.NODE_BASED);
+            RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(car2CH).createAlgo(new PMap());
 
             int from = rnd.nextInt(numNodes);
             int to = rnd.nextInt(numNodes);
@@ -554,9 +561,6 @@ public class PrepareContractionHierarchiesTest {
             double chWeight = chAlgo.calcPath(from, to).getWeight();
             assertEquals(dijkstraWeight, chWeight, 1.e-1);
         }
-        long timeMotorCycle = sw.getMillis();
-
-        assertTrue(timeMotorCycle < 0.5 * timeCar, "reusing node ordering should speed up ch contraction");
     }
 
     private void checkPath(BaseGraph g, CHConfig c, int expShortcuts, double expDistance, IntIndexedContainer expNodes, int[] nodeOrdering) {

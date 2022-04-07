@@ -148,7 +148,7 @@ public class LocationIndexTreeTest {
 
     @Test
     public void testMoreReal() {
-        CarFlagEncoder encoder = new CarFlagEncoder();
+        FlagEncoder encoder = FlagEncoders.createCar();
         BaseGraph graph = new BaseGraph.Builder(EncodingManager.create(encoder)).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(1, 51.2492152, 9.4317166);
@@ -336,8 +336,8 @@ public class LocationIndexTreeTest {
 
     @Test
     public void testSearchWithFilter_issue318() {
-        CarFlagEncoder carEncoder = new CarFlagEncoder();
-        BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
+        FlagEncoder carEncoder = FlagEncoders.createCar();
+        FlagEncoder bikeEncoder = FlagEncoders.createBike();
 
         EncodingManager tmpEM = EncodingManager.create(carEncoder, bikeEncoder);
         BaseGraph graph = new BaseGraph.Builder(tmpEM).create();
@@ -608,7 +608,7 @@ public class LocationIndexTreeTest {
         }
 
         idx = (LocationIndexTree) createIndexNoPrepare(g, 500000).prepareIndex();
-        FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
+        FlagEncoder footEncoder = encodingManager.getEncoder("foot");
         assertEquals(2, idx.findClosest(1, -1, AccessFilter.allEdges(footEncoder.getAccessEnc())).getClosestNode());
         g.close();
     }

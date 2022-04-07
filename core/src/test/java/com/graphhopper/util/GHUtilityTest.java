@@ -19,9 +19,9 @@ package com.graphhopper.util;
 
 import com.graphhopper.coll.GHIntLongHashMap;
 import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Peter Karich
  */
 public class GHUtilityTest {
-    private final CarFlagEncoder carEncoder = new CarFlagEncoder();
+    private final FlagEncoder carEncoder = FlagEncoders.createCar();
     private final EncodingManager encodingManager = EncodingManager.create(carEncoder);
 
     BaseGraph createGraph() {

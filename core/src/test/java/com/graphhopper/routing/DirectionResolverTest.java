@@ -20,8 +20,9 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.AccessFilter;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
@@ -42,13 +43,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @see DirectionResolverOnQueryGraphTest for tests that include direction resolving for virtual nodes and edges
  */
 public class DirectionResolverTest {
-    private CarFlagEncoder encoder;
+    private FlagEncoder encoder;
     private BaseGraph graph;
     private NodeAccess na;
 
     @BeforeEach
     public void setup() {
-        encoder = new CarFlagEncoder();
+        encoder = FlagEncoders.createCar();
         graph = new BaseGraph.Builder(EncodingManager.create(encoder)).create();
         na = graph.getNodeAccess();
     }

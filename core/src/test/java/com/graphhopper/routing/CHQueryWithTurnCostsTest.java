@@ -22,8 +22,9 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.TurnCost;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.*;
@@ -52,7 +53,7 @@ public class CHQueryWithTurnCostsTest {
 
     private static class Fixture {
         private final int maxCost = 10;
-        private final CarFlagEncoder encoder = new CarFlagEncoder(5, 5, maxCost, true);
+        private final FlagEncoder encoder = FlagEncoders.createCar(5, 5, maxCost, true);
         private final EncodingManager encodingManager = EncodingManager.create(encoder);
         private final BaseGraph graph;
         private final CHConfig chConfig;

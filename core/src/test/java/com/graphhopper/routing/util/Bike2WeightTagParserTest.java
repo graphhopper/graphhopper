@@ -31,10 +31,10 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Peter Karich
  */
-public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
+public class Bike2WeightTagParserTest extends BikeTagParserTest {
 
     @Override
-    protected BikeCommonFlagEncoder createBikeEncoder() {
+    protected BikeFlagEncoder createBikeTagParser() {
         return new Bike2WeightFlagEncoder(new PMap("block_fords=true"));
     }
 
@@ -46,7 +46,7 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
         na.setNode(1, 51.1, 12.002, 60);
         EdgeIteratorState edge = gs.edge(0, 1).
                 setWayGeometry(Helper.createPointList3D(51.1, 12.0011, 49, 51.1, 12.0015, 55));
-        GHUtility.setSpeed(10, 15, encoder, edge.setDistance(100));
+        GHUtility.setSpeed(10, 15, parser, edge.setDistance(100));
         return gs;
     }
 
@@ -55,7 +55,7 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
         Graph graph = initExampleGraph();
         EdgeIteratorState edge = GHUtility.getEdge(graph, 0, 1);
         ReaderWay way = new ReaderWay(1);
-        encoder.applyWayTags(way, edge);
+        parser.applyWayTags(way, edge);
 
         IntsRef flags = edge.getFlags();
         // decrease speed
@@ -71,23 +71,23 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
         IntsRef oldFlags = IntsRef.deepCopyOf(edge.getFlags());
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "steps");
-        encoder.applyWayTags(way, edge);
+        parser.applyWayTags(way, edge);
 
         assertEquals(oldFlags, edge.getFlags());
     }
 
     @Test
     public void testSetSpeed0_issue367() {
-        IntsRef edgeFlags = GHUtility.setSpeed(10, 10, encoder, encodingManager.createEdgeFlags());
+        IntsRef edgeFlags = GHUtility.setSpeed(10, 10, parser, encodingManager.createEdgeFlags());
         assertEquals(10, avgSpeedEnc.getDecimal(false, edgeFlags), .1);
         assertEquals(10, avgSpeedEnc.getDecimal(true, edgeFlags), .1);
 
-        encoder.setSpeed(false, edgeFlags, 0);
+        parser.setSpeed(false, edgeFlags, 0);
 
         assertEquals(0, avgSpeedEnc.getDecimal(false, edgeFlags), .1);
         assertEquals(10, avgSpeedEnc.getDecimal(true, edgeFlags), .1);
-        assertFalse(encoder.getAccessEnc().getBool(false, edgeFlags));
-        assertTrue(encoder.getAccessEnc().getBool(true, edgeFlags));
+        assertFalse(parser.getAccessEnc().getBool(false, edgeFlags));
+        assertTrue(parser.getAccessEnc().getBool(true, edgeFlags));
     }
 
     @Test
@@ -97,11 +97,11 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
         way.setTag("route", "ferry");
         way.setTag("edge_distance", 500.0);
 
-        assertNotEquals(EncodingManager.Access.CAN_SKIP, encoder.getAccess(way));
+        assertNotEquals(EncodingManager.Access.CAN_SKIP, parser.getAccess(way));
         IntsRef wayFlags = encodingManager.handleWayTags(way, encodingManager.createRelationFlags());
         graph.edge(0, 1).setDistance(247).setFlags(wayFlags);
 
-        assertTrue(isGraphValid(graph, encoder));
+        assertTrue(isGraphValid(graph, parser));
     }
 
     private boolean isGraphValid(Graph graph, FlagEncoder encoder) {
