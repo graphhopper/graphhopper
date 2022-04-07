@@ -143,7 +143,7 @@ public class ExpressionVisitorTest {
                         validVariable, "[HERE]", new HashSet<>(),
                         Arrays.asList(If("max_weight > 10", Statement.Op.MULTIPLY, 0)),
                         lookup, ""));
-        assertTrue(ret.getMessage().startsWith("[HERE] invalid expression \"max_weight > 10\": encoded value 'max_weight' not available"), ret.getMessage());
+        assertTrue(ret.getMessage().startsWith("[HERE] invalid expression \"max_weight > 10\": 'max_weight' not available"), ret.getMessage());
 
         // invalid variable or constant (NameValidator returns false)
         ret = assertThrows(IllegalArgumentException.class,
@@ -151,7 +151,7 @@ public class ExpressionVisitorTest {
                         validVariable, "[HERE]", new HashSet<>(),
                         Arrays.asList(If("country == GERMANY", Statement.Op.MULTIPLY, 0)),
                         lookup, ""));
-        assertTrue(ret.getMessage().startsWith("[HERE] invalid expression \"country == GERMANY\": identifier GERMANY invalid"), ret.getMessage());
+        assertTrue(ret.getMessage().startsWith("[HERE] invalid expression \"country == GERMANY\": 'GERMANY' not available"), ret.getMessage());
 
         // not whitelisted method
         ret = assertThrows(IllegalArgumentException.class,
