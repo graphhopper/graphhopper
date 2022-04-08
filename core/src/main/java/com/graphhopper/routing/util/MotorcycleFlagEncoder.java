@@ -133,6 +133,10 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
             }
             return EncodingManager.Access.CAN_SKIP;
         }
+        
+        if ("service".equals(highwayValue) && "emergency_access".equals(way.getTag("service"))) {
+            return EncodingManager.Access.CAN_SKIP;
+        }
 
         if ("track".equals(highwayValue)) {
             String tt = way.getTag("tracktype");
