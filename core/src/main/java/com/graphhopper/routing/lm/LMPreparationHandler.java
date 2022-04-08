@@ -76,13 +76,22 @@ public class LMPreparationHandler {
     }
 
     public void init(GraphHopperConfig ghConfig) {
+// ORS-GH MOD START allow overriding fetching of lm profiles in order to use with core profiles
+        init(ghConfig, ghConfig.getLMProfiles());
+    }
+
+    protected void init(GraphHopperConfig ghConfig, List<LMProfile> lmProfiles) {
+// ORS-GH MOD END
         // throw explicit error for deprecated configs
         if (ghConfig.has("prepare.lm.weightings")) {
             throw new IllegalStateException("Use profiles_lm instead of prepare.lm.weightings, see #1922 and docs/core/profiles.md");
         }
 
         setPreparationThreads(ghConfig.getInt(PREPARE + "threads", getPreparationThreads()));
-        setLMProfiles(ghConfig.getLMProfiles());
+// ORS-GH MOD START
+        //setLMProfiles(ghConfig.getLMProfiles());
+        setLMProfiles(lmProfiles);
+// ORS-GH MOD END
 
         landmarkCount = ghConfig.getInt(COUNT, landmarkCount);
         logDetails = ghConfig.getBool(PREPARE + "log_details", false);
