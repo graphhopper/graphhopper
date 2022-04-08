@@ -1,5 +1,6 @@
 package com.graphhopper.routing.ch;
 
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.RoutingCHEdgeIteratorState;
 import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.util.EdgeIteratorState;
@@ -18,12 +19,14 @@ import static com.graphhopper.util.EdgeIterator.NO_EDGE;
  */
 public class ShortcutUnpacker {
     private final RoutingCHGraph graph;
+    private final BaseGraph.RandomAccessExplorer baseRAEE;
     private final Visitor visitor;
     private final boolean edgeBased;
     private boolean reverseOrder;
 
     public ShortcutUnpacker(RoutingCHGraph graph, Visitor visitor, boolean edgeBased) {
         this.graph = graph;
+        this.baseRAEE = graph.getBaseGraph().createRandomAccessExplorer();
         this.visitor = visitor;
         this.edgeBased = edgeBased;
     }
@@ -53,7 +56,7 @@ public class ShortcutUnpacker {
 
     private void expandEdge(RoutingCHEdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
         if (!edge.isShortcut()) {
-            visitor.visit(graph.getBaseGraph().getEdgeIteratorState(edge.getOrigEdge(), edge.getAdjNode()), reverse, prevOrNextEdgeId);
+            visitor.visit(baseRAEE.get(edge.getOrigEdge(), edge.getAdjNode()), reverse, prevOrNextEdgeId);
             return;
         }
         if (edgeBased) {

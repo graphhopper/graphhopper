@@ -292,6 +292,27 @@ public class BaseGraph implements Graph, Closeable {
         return edge;
     }
 
+    public RandomAccessExplorer createRandomAccessExplorer() {
+        return new RandomAccessExplorer(this);
+    }
+
+    public static class RandomAccessExplorer extends EdgeIteratorStateImpl {
+        public RandomAccessExplorer(BaseGraph graph) {
+            super(graph);
+        }
+
+        public EdgeIteratorState get(int edgeId, int adjNode) {
+            if (super.init(edgeId, adjNode))
+                return this;
+            return null;
+        }
+
+        public EdgeIteratorState get(int key) {
+            super.init(key);
+            return this;
+        }
+    }
+
     @Override
     public EdgeExplorer createEdgeExplorer(EdgeFilter filter) {
         return new EdgeIteratorImpl(this, filter);

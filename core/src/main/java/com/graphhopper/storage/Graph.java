@@ -99,6 +99,8 @@ public interface Graph {
      */
     AllEdgesIterator getAllEdges();
 
+    BaseGraph.RandomAccessExplorer createRandomAccessExplorer();
+
     /**
      * Returns an EdgeExplorer which makes it possible to traverse all filtered edges of a specific
      * node. Calling this method might be expensive, so e.g. create an explorer before a for loop!

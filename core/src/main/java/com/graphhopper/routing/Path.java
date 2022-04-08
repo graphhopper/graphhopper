@@ -19,6 +19,7 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIterator;
@@ -41,6 +42,7 @@ import java.util.List;
  */
 public class Path {
     final Graph graph;
+    final BaseGraph.RandomAccessExplorer exp;
     private final NodeAccess nodeAccess;
     private double weight = Double.MAX_VALUE;
     private double distance;
@@ -54,6 +56,7 @@ public class Path {
 
     public Path(Graph graph) {
         this.graph = graph;
+        this.exp = graph.createRandomAccessExplorer();
         this.nodeAccess = graph.getNodeAccess();
     }
 
@@ -174,7 +177,7 @@ public class Path {
      * Yields the final edge of the path
      */
     public EdgeIteratorState getFinalEdge() {
-        return graph.getEdgeIteratorState(edgeIds.get(edgeIds.size() - 1), endNode);
+        return exp.get(edgeIds.get(edgeIds.size() - 1), endNode);
     }
 
     public void setDebugInfo(String debugInfo) {

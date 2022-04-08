@@ -227,6 +227,29 @@ public class QueryGraph implements Graph {
         return 2 * (origEdgeId - baseEdges);
     }
 
+    public BaseGraph.RandomAccessExplorer createRandomAccessExplorer() {
+        BaseGraph.RandomAccessExplorer baseEx = this.getBaseGraph().createRandomAccessExplorer();
+
+        return new BaseGraph.RandomAccessExplorer(this.getBaseGraph()) {
+            public EdgeIteratorState get(int edgeId, int adjNode) {
+                if (isVirtualEdge(edgeId)) {
+                    return getEdgeIteratorState(edgeId, adjNode);
+                } else {
+                    return baseEx.get(edgeId, adjNode);
+                }
+            }
+
+            public EdgeIteratorState get(int key) {
+                int edge = GHUtility.getEdgeFromEdgeKey(key);
+                if (isVirtualEdge(edge)) {
+                    return getEdgeIteratorStateForKey(key);
+                } else {
+                    return baseEx.get(key);
+                }
+            }
+        };
+    }
+
     @Override
     public EdgeExplorer createEdgeExplorer(final EdgeFilter edgeFilter) {
         // re-use these objects between setBaseNode calls to prevent GC

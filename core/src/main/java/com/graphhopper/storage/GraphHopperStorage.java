@@ -209,6 +209,11 @@ public final class GraphHopperStorage implements Graph, Closeable {
     }
 
     @Override
+    public BaseGraph.RandomAccessExplorer createRandomAccessExplorer() {
+        return baseGraph.createRandomAccessExplorer();
+    }
+
+    @Override
     public EdgeIteratorState getEdgeIteratorState(int edgeId, int adjNode) {
         return baseGraph.getEdgeIteratorState(edgeId, adjNode);
     }
