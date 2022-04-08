@@ -1,5 +1,6 @@
 #!/bin/sh
-set -eu
+set -e
+set -u
 echo 'Fetching osm.pbf...';
 curl -J "http://proxy-cache-svc.$POD_NAMESPACE/geofabrik$GEOFABRIK_PATH" -o $OSM_PBF_FILE_NAME --silent;
 echo 'Finished downloading osm.pbf.';
