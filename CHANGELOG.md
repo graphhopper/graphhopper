@@ -1,4 +1,5 @@
 ### 6.0 [not yet released]
+- don't allow cars or motorcycles to use ways tagged with service=emergency_access (#2484) 
 
 ### 5.0 [23 Mar 2022]
 
