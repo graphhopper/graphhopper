@@ -6,7 +6,7 @@ curl -J "http://proxy-cache-svc.$POD_NAMESPACE/geofabrik$GEOFABRIK_PATH" -o $OSM
 echo 'Finished downloading osm.pbf.';
 
 echo 'Fetching gtfs...';
-curl -J "http://proxy-cache-svc.$POD_NAMESPACE/511$API_511_PATH" -o $API_511_FILE_NAME --silent;
+curl -J "http://proxy-cache-svc.$POD_NAMESPACE/511$API_511_PATH&api_key=$API_511_TOKEN" -o $API_511_FILE_NAME --silent;
 echo 'Finished downloading gtfs.';
 
 echo 'Building graph-cache...';

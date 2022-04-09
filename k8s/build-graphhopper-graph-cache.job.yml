@@ -30,13 +30,15 @@ spec:
             envFrom:
             - secretRef:
                 name: minio-graphhopper-staging
+            - secretRef:
+                name: api-511
             env:
             - name: GEOFABRIK_PATH
               value: /north-america/us/california/norcal-latest.osm.pbf
             - name: OSM_PBF_FILE_NAME
               value: current-norcal-latest.osm.pbf
             - name: API_511_PATH
-              value: /transit/datafeeds?api_key=02a6fde6-e10a-49ce-a96e-5ad9404f137f&operator_id=RG
+              value: /transit/datafeeds?operator_id=RG
             - name: API_511_FILE_NAME
               value: current-GTFSTransitData_RG.zip
             - name: BUCKET_NAME
