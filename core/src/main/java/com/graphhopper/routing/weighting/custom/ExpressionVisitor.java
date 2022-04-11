@@ -18,7 +18,9 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.Statement;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.RouteNetwork;
+import com.graphhopper.routing.ev.StringEncodedValue;
 import com.graphhopper.util.Helper;
 import org.codehaus.janino.Scanner;
 import org.codehaus.janino.*;
@@ -37,13 +39,6 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
     private final Set<String> allowedMethods = new HashSet<>(Arrays.asList("ordinal", "getDistance", "getName",
             "contains", "sqrt", "abs"));
     private String invalidMessage;
-    // todo: not sure if this is worth it just to slightly improve the error message
-    private final Set<String> knownEncodedValues = new HashSet<>(Arrays.asList(
-            Roundabout.KEY, "car_access", "bike_access", GetOffBike.KEY, RoadClass.KEY, RoadClassLink.KEY, RoadEnvironment.KEY,
-            RoadAccess.KEY, MaxSpeed.KEY, MaxWeight.KEY, MaxWidth.KEY, MaxAxleLoad.KEY, MaxLength.KEY, Surface.KEY, Smoothness.KEY,
-            Toll.KEY, TrackType.KEY, BikeNetwork.KEY, FootNetwork.KEY, Hazmat.KEY, HazmatTunnel.KEY, HazmatWater.KEY,
-            Lanes.KEY, MtbRating.KEY, HikeRating.KEY, HorseRating.KEY, Country.KEY
-    ));
 
     public ExpressionVisitor(ParseResult result, NameValidator nameValidator, EncodedValueLookup lookup) {
         this.result = result;
@@ -76,11 +71,8 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
                 } else {
                     // e.g. like road_class
                     if (isValidIdentifier(arg)) return true;
-                    if (isKnownEncodedValue(arg)) {
-                        // it is known, but not available -> slightly more detailed error message
-                        invalidMessage = "encoded value '" + arg + "' not available";
-                        return false;
-                    }
+                    invalidMessage = "'" + arg + "' not available";
+                    return false;
                 }
             }
             invalidMessage = "identifier " + n + " invalid";
@@ -137,10 +129,6 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
             return binOp.lhs.accept(this) && binOp.rhs.accept(this);
         }
         return false;
-    }
-
-    private boolean isKnownEncodedValue(String name) {
-        return knownEncodedValues.contains(name);
     }
 
     @Override
@@ -234,7 +222,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
         boolean isValid(String name);
     }
 
-    class Replacement {
+    static class Replacement {
         int start;
         int oldLength;
         String newString;
