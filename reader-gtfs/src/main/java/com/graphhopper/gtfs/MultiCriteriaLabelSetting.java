@@ -162,7 +162,7 @@ public class MultiCriteriaLabelSetting {
                         }
                     }
                     if (!reverse && edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK && residualDelay > 0) {
-                        Label newImpossibleLabelForDelayedTrip = new Label(nextTime, nextTime, edge, edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, true, label);
+                        Label newImpossibleLabelForDelayedTrip = new Label(nextWeight, nextTime, edge, edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, true, label);
                         insertIfNotDominated(newImpossibleLabelForDelayedTrip);
                         nextTime += residualDelay;
                         residualDelay = 0;
