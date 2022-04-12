@@ -124,6 +124,11 @@ public class MotorcycleTagParserTest {
         way.setTag("access", "no");
         way.setTag("access:conditional", "yes @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
         assertTrue(encoder.getAccess(way).isWay());
+
+        way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("service", "emergency_access");
+        assertTrue(encoder.getAccess(way).canSkip());
     }
 
     @Test
