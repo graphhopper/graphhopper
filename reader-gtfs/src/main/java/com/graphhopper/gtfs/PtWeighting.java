@@ -12,7 +12,7 @@ public class PtWeighting {
     }
     
     public double calcEdgeWeight(PtEdge edge) {
-        return edge.getTime() * betaPtEdgeTime;
+        return edge.getTime() * 1000 * betaPtEdgeTime;
     }
 
 }

@@ -189,7 +189,7 @@ public final class PtRouterImpl implements PtRouter {
         private void parseSolutionsAndAddToResponse(List<List<Label.Transition>> solutions, PointList waypoints) {
             TripFromLabel tripFromLabel = new TripFromLabel(queryGraph, gtfsStorage, realtimeFeed, pathDetailsBuilderFactory, walkSpeedKmH);
             for (List<Label.Transition> solution : solutions) {
-                final ResponsePath responsePath = tripFromLabel.createResponsePath(translation, waypoints, queryGraph, connectingWeighting, ptWeighting, solution, requestedPathDetails, connectingProfile.getVehicle(), includeElevation);
+                final ResponsePath responsePath = tripFromLabel.createResponsePath(translation, waypoints, router, queryGraph, connectingWeighting, ptWeighting, solution, requestedPathDetails, connectingProfile.getVehicle(), includeElevation);
                 responsePath.setImpossible(solution.stream().anyMatch(t -> t.label.impossible));
                 responsePath.setTime((solution.get(solution.size() - 1).label.currentTime - solution.get(0).label.currentTime));
                 responsePath.setRouteWeight(router.weight(solution.get(solution.size() - 1).label));
@@ -241,7 +241,8 @@ public final class PtRouterImpl implements PtRouter {
             } else {
                 smallestStationLabelWeight = Double.MAX_VALUE;
             }
-            Map<Label, Label> originalSolutions = new HashMap<>();
+            Map<Label, Label> forwardSolutions = new HashMap<>();
+            Map<Label, Label> backwardSolutions = new HashMap<>();
 
             Label accessEgressModeOnlySolution = null;
             double highestWeightForDominationTest = Double.MAX_VALUE;
@@ -284,7 +285,8 @@ public final class PtRouterImpl implements PtRouter {
                         }
                         discoveredSolutions.add(combinedSolution);
                         discoveredSolutions.sort(comparingLong(s -> Optional.ofNullable(s.departureTime).orElse(0L)));
-                        originalSolutions.put(combinedSolution, label);
+                        forwardSolutions.put(combinedSolution, label);
+                        backwardSolutions.put(combinedSolution, reverseLabel);
                         if (label.nTransfers == 0 && reverseLabel.nTransfers == 0) {
                             accessEgressModeOnlySolution = combinedSolution;
                         }
@@ -306,11 +308,13 @@ public final class PtRouterImpl implements PtRouter {
 
             List<List<Label.Transition>> paths = new ArrayList<>();
             for (Label discoveredSolution : discoveredSolutions) {
-                Label originalSolution = originalSolutions.get(discoveredSolution);
-                List<Label.Transition> pathToDestinationStop = Label.getTransitions(originalSolution, arriveBy);
+                Label forwardSolution = forwardSolutions.get(discoveredSolution);
+                Label backwardSolution = backwardSolutions.get(discoveredSolution);
+                long diff = forwardSolution.currentTime - backwardSolution.currentTime;
+                List<Label.Transition> pathToDestinationStop = Label.getTransitions(forwardSolution, arriveBy);
+                List<Label.Transition> pathFromStation = Label.getTransitions(backwardSolution, !arriveBy);
                 if (arriveBy) {
-                    List<Label.Transition> pathFromStation = Label.getTransitions(reverseSettledSet.get(pathToDestinationStop.get(0).label.node), false);
-                    long diff = pathToDestinationStop.get(0).label.currentTime - pathFromStation.get(pathFromStation.size() - 1).label.currentTime;
+                    // TODO: check if weights here are calculated correctly (probably not)
                     List<Label.Transition> patchedPathFromStation = pathFromStation.stream().map(t -> {
                         return new Label.Transition(new Label(t.label.edgeWeight, t.label.currentTime + diff, t.label.edge, t.label.node, t.label.nTransfers, t.label.departureTime, t.label.streetTime, t.label.extraWeight, t.label.residualDelay, t.label.impossible, null), t.edge);
                     }).collect(Collectors.toList());
@@ -318,11 +322,8 @@ public final class PtRouterImpl implements PtRouter {
                     pp.addAll(0, patchedPathFromStation);
                     paths.add(pp);
                 } else {
-                    Label destinationStopLabel = pathToDestinationStop.get(pathToDestinationStop.size() - 1).label;
-                    List<Label.Transition> pathFromStation = Label.getTransitions(reverseSettledSet.get(destinationStopLabel.node), true);
-                    long diff = destinationStopLabel.currentTime - pathFromStation.get(0).label.currentTime;
                     List<Label.Transition> patchedPathFromStation = pathFromStation.stream().map(t -> {
-                        return new Label.Transition(new Label(t.label.edgeWeight, t.label.currentTime + diff, t.label.edge, t.label.node, destinationStopLabel.nTransfers + t.label.nTransfers, t.label.departureTime, destinationStopLabel.streetTime + pathFromStation.get(0).label.streetTime, destinationStopLabel.extraWeight + t.label.extraWeight, t.label.residualDelay, t.label.impossible, null), t.edge);
+                        return new Label.Transition(new Label(forwardSolution.edgeWeight + backwardSolution.edgeWeight - t.label.edgeWeight, t.label.currentTime + diff, t.label.edge, t.label.node, forwardSolution.nTransfers + backwardSolution.nTransfers- t.label.nTransfers, t.label.departureTime, forwardSolution.streetTime + backwardSolution.streetTime - t.label.streetTime, forwardSolution.extraWeight + backwardSolution.extraWeight - t.label.extraWeight, t.label.residualDelay, t.label.impossible, null), t.edge);
                     }).collect(Collectors.toList());
                     List<Label.Transition> pp = new ArrayList<>(pathToDestinationStop);
                     pp.addAll(patchedPathFromStation.subList(1, pathFromStation.size()));
@@ -331,8 +332,8 @@ public final class PtRouterImpl implements PtRouter {
             }
 
             response.addDebugInfo("routing time",stopWatch.stop().getSeconds());
-            if (discoveredSolutions.isEmpty() && visitedNodes >= maxVisitedNodesForRequest) {
-                response.addError(new MaximumNodesExceededException("No path found - maximum number of nodes exceeded: " + maxVisitedNodesForRequest, maxVisitedNodesForRequest));
+            if (visitedNodes >= maxVisitedNodesForRequest) {
+                response.addError(new MaximumNodesExceededException("Maximum number of nodes exceeded: " + maxVisitedNodesForRequest, maxVisitedNodesForRequest));
             }
             response.getHints().putObject("visited_nodes.sum", visitedNodes);
             response.getHints().putObject("visited_nodes.average", visitedNodes);

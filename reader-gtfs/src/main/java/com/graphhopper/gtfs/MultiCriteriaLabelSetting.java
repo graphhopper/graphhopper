@@ -102,7 +102,7 @@ public class MultiCriteriaLabelSetting {
                 action.accept(label);
                 for (GraphExplorer.MultiModalEdge edge : explorer.exploreEdgesAround(label)) {
                     long nextTime;
-                    double nextWeight = label.edgeWeight + edge.getWeight();
+                    double nextEdgeWeight = label.edgeWeight + edge.getWeight();
                     if (reverse) {
                         nextTime = label.currentTime - explorer.calcTravelTimeMillis(edge, label.currentTime);
                     } else {
@@ -162,14 +162,14 @@ public class MultiCriteriaLabelSetting {
                         }
                     }
                     if (!reverse && edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK && residualDelay > 0) {
-                        Label newImpossibleLabelForDelayedTrip = new Label(nextWeight, nextTime, edge, edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, true, label);
+                        Label newImpossibleLabelForDelayedTrip = new Label(nextEdgeWeight, nextTime, edge, edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, true, label);
                         insertIfNotDominated(newImpossibleLabelForDelayedTrip);
                         nextTime += residualDelay;
                         residualDelay = 0;
-                        Label newLabel = new Label(nextWeight, nextTime, edge, edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, impossible, label);
+                        Label newLabel = new Label(nextEdgeWeight, nextTime, edge, edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, impossible, label);
                         insertIfNotDominated(newLabel);
                     } else {
-                        Label newLabel = new Label(nextWeight, nextTime, edge, edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, impossible, label);
+                        Label newLabel = new Label(nextEdgeWeight, nextTime, edge, edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, impossible, label);
                         insertIfNotDominated(newLabel);
                     }
                 }
@@ -241,7 +241,8 @@ public class MultiCriteriaLabelSetting {
     }
 
     double weight(Label label) {
-        return label.edgeWeight + label.extraWeight + (label.nTransfers * betaTransfers) + (label.streetTime * betaStreetTime);
+        // return label.edgeWeight;
+        return timeSinceStartTime(label) + (long) (label.nTransfers * betaTransfers) + (long) (label.streetTime * (betaStreetTime - 1.0)) + label.extraWeight;
     }
 
     long timeSinceStartTime(Label label) {

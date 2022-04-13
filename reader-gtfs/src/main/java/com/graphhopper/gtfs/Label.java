@@ -52,7 +52,6 @@ public class Label {
     public final long streetTime;
     public final long extraWeight;
 
-
     final long residualDelay;
     final boolean impossible;
 
