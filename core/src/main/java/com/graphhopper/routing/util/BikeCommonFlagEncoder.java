@@ -20,7 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.countryrules.CountryRule;
-import com.graphhopper.routing.weighting.PriorityWeighting;
+import com.graphhopper.routing.weighting.PenaltyWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 
@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.ev.Cycleway.*;
 import static com.graphhopper.routing.util.EncodingManager.getKey;
-import static com.graphhopper.routing.util.PriorityCode.*;
+import static com.graphhopper.routing.util.PenaltyCode.*;
 
 /**
  * Defines bit layout of bicycles (not motorcycles) for speed, access and relations (network).
@@ -54,9 +54,9 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     protected static final double smoothnessFactorPushingSectionThreshold = 0.3d;
     private final Map<Smoothness, Double> smoothnessFactor = new HashMap<>();
     private final Map<String, Integer> highwaySpeeds = new HashMap<>();
-    protected final boolean priorityTwoDirections = true;
+    protected final boolean penaltyTwoDirections = true;
     protected boolean speedTwoDirections;
-    protected final DecimalEncodedValue priorityEnc;
+    protected final DecimalEncodedValue penaltyEnc;
     // Car speed limit which switches the preference from UNCHANGED to AVOID_IF_POSSIBLE
     private int avoidSpeedLimit;
     EnumEncodedValue<RouteNetwork> bikeRouteEnc;
@@ -71,7 +71,8 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     protected BikeCommonFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
         super(name, speedBits, speedFactor, speedTwoDirections, maxTurnCosts);
 
-        priorityEnc = new DecimalEncodedValueImpl(getKey(name, "priority"), 4, PriorityCode.getFactor(1), priorityTwoDirections);
+        penaltyEnc = new DecimalEncodedValueImpl(getKey(name, "penalty"), 8, PenaltyCode.getFactor(1),
+                penaltyTwoDirections);
 
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
@@ -233,7 +234,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     @Override
     public void createEncodedValues(List<EncodedValue> registerNewEncodedValue) {
         super.createEncodedValues(registerNewEncodedValue);
-        registerNewEncodedValue.add(priorityEnc);
+        registerNewEncodedValue.add(penaltyEnc);
 
         bikeRouteEnc = getEnumEncodedValue(RouteNetwork.key("bike"), RouteNetwork.class);
         smoothnessEnc = getEnumEncodedValue(Smoothness.KEY, Smoothness.class);
@@ -331,7 +332,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         if (access.canSkip())
             return edgeFlags;
 
-        Integer priorityFromRelation = routeMap.get(bikeRouteEnc.getEnum(false, edgeFlags));
+        Integer penaltyFromRelation = routeMap.get(bikeRouteEnc.getEnum(false, edgeFlags));
         double wayTypeSpeed = getSpeed(way);
         if (!access.isFerry()) {
             wayTypeSpeed = applyMaxSpeed(way, wayTypeSpeed);
@@ -353,10 +354,10 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
                 avgSpeedEnc.setDecimal(true, edgeFlags, ferrySpeed);
             accessEnc.setBool(false, edgeFlags, true);
             accessEnc.setBool(true, edgeFlags, true);
-            priorityFromRelation = SLIGHT_AVOID.getValue();
+            penaltyFromRelation = SLIGHT_AVOID.getValue();
         }
 
-        handlePriority(edgeFlags, way, wayTypeSpeed, priorityFromRelation);
+        handlePenalty(edgeFlags, way, wayTypeSpeed, penaltyFromRelation);
         return edgeFlags;
     }
 
@@ -426,24 +427,25 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
      * In this method we prefer cycleways or roads with designated bike access and
      * avoid big roads or roads with trams or pedestrian.
      *
-     * Modifies priorityEnc with a new priority based on priorityFromRelation and on
+     * Modifies penaltyEnc with a new penalty based on penaltyFromRelation and on
      * the tags in ReaderWay.
      */
-    void handlePriority(IntsRef edgeFlags, ReaderWay way, double wayTypeSpeed, Integer priorityFromRelation) {
-        BidirectionalTreeMap weightToPrioMap = new BidirectionalTreeMap();
-        if (priorityFromRelation == null)
-            weightToPrioMap.put(0d, UNCHANGED.getValue());
+    void handlePenalty(IntsRef edgeFlags, ReaderWay way, double wayTypeSpeed, Integer penaltyFromRelation) {
+        BidirectionalTreeMap penaltyMap = new BidirectionalTreeMap();
+        if (penaltyFromRelation == null)
+            penaltyMap.put(0d, UNCHANGED.getValue());
         else
-            weightToPrioMap.put(110d, priorityFromRelation);
+            penaltyMap.put(110d, penaltyFromRelation);
 
-        collect(edgeFlags, way, wayTypeSpeed, weightToPrioMap);
+        collect(edgeFlags, way, wayTypeSpeed, penaltyMap);
 
-        priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getValue(weightToPrioMap.lastEntry(false).getValue()));
-        priorityEnc.setDecimal(true, edgeFlags, PriorityCode.getValue(weightToPrioMap.lastEntry(true).getValue()));
+        penaltyEnc.setDecimal(false, edgeFlags, PenaltyCode.getValue(penaltyMap.lastEntry(false).getValue()));
+        penaltyEnc.setDecimal(true, edgeFlags, PenaltyCode.getValue(penaltyMap.lastEntry(true).getValue()));
     }
 
-    // Conversion of class value to priority. See http://wiki.openstreetmap.org/wiki/Class:bicycle
-    private PriorityCode convertClassValueToPriority(String tagvalue) {
+    // Conversion of class value to penalty. See
+    // http://wiki.openstreetmap.org/wiki/Class:bicycle
+    private PenaltyCode convertClassValueToPenalty(String tagvalue) {
         int classvalue;
         try {
             classvalue = Integer.parseInt(tagvalue);
@@ -472,64 +474,65 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     }
 
     /**
-     * @param weightToPrioMap associate a weight with every priority. This sorted map allows
-     *                        subclasses to 'insert' more important priorities as well as overwrite determined priorities.
+     * @param penaltyMap associate a weight with every penalty. This sorted map
+     *                   allows subclasses to 'insert' more important penalties as
+     *                   well as overwrite determined penalties.
      */
-    void collect(IntsRef edgeFlags, ReaderWay way, double wayTypeSpeed, BidirectionalTreeMap weightToPrioMap) {
+    void collect(IntsRef edgeFlags, ReaderWay way, double wayTypeSpeed, BidirectionalTreeMap penaltyMap) {
         final double SPEED_KEY = 40d;
         final double HIGHWAY_KEY = 50d;
         final double CYCLE_INFRA_KEY = 100d;
         String service = way.getTag("service");
         String highway = way.getTag("highway");
 
-        // Associate priority with way speed
+        // Associate penalty with way speed
         double maxSpeed = getMaxSpeed(way);
         if (isValidSpeed(maxSpeed)) {
             if (maxSpeed <= avoidSpeedLimit) {
-                weightToPrioMap.put(SPEED_KEY, PREFER.getValue());
+                penaltyMap.put(SPEED_KEY, PREFER.getValue());
             } else {
-                weightToPrioMap.put(SPEED_KEY, AVOID.getValue());
+                penaltyMap.put(SPEED_KEY, AVOID.getValue());
             }
         }
 
-        // Associate priority with highway infrastructure
-        Integer highwayPriority = highwayMap.get(highway);
-        if (Objects.isNull(highwayPriority)) {
-            highwayPriority = SLIGHT_AVOID.getValue();
+        // Associate penalty with highway infrastructure
+        Integer highwayPenalty = highwayMap.get(highway);
+        if (Objects.isNull(highwayPenalty)) {
+            highwayPenalty = SLIGHT_AVOID.getValue();
         }
-        weightToPrioMap.put(HIGHWAY_KEY, highwayPriority);
+        penaltyMap.put(HIGHWAY_KEY, highwayPenalty);
         if (way.hasTag("tunnel", intendedValues)) {
-            weightToPrioMap.put(HIGHWAY_KEY, AVOID_MORE.getValue());
+            penaltyMap.put(HIGHWAY_KEY, AVOID_MORE.getValue());
         }
         if (pushingSectionsHighways.contains(highway)
                 || "parking_aisle".equals(service)) {
-            int pushingSectionPrio = SLIGHT_AVOID.getValue();
+            int pushingSectionPenalty = SLIGHT_AVOID.getValue();
             if (way.hasTag("bicycle", "yes") || way.hasTag("bicycle", "permissive"))
-                pushingSectionPrio = PREFER.getValue();
+                pushingSectionPenalty = PREFER.getValue();
             if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official"))
-                pushingSectionPrio = VERY_NICE.getValue();
+                pushingSectionPenalty = VERY_NICE.getValue();
             if (way.hasTag("foot", "yes")) {
-                pushingSectionPrio = Math.max(pushingSectionPrio - 1, BAD.getValue());
+                pushingSectionPenalty = Math.max(pushingSectionPenalty + 1, BAD.getValue());
                 if (way.hasTag("segregated", "yes"))
-                    pushingSectionPrio = Math.min(pushingSectionPrio + 1, BEST.getValue());
+                    pushingSectionPenalty = Math.min(pushingSectionPenalty - 1, BEST.getValue());
             }
-            weightToPrioMap.put(HIGHWAY_KEY, pushingSectionPrio);
+            penaltyMap.put(HIGHWAY_KEY, pushingSectionPenalty);
         }
         if (way.hasTag("railway", "tram"))
-            weightToPrioMap.put(HIGHWAY_KEY, AVOID_MORE.getValue());
+            penaltyMap.put(HIGHWAY_KEY, AVOID_MORE.getValue());
 
-        // Associate priority with cycle infrastructure
+        // Associate penalty with cycle infrastructure
         if (way.hasTag("bicycle", "designated", "official")) {
             if ("path".equals(highway))
-                weightToPrioMap.put(CYCLE_INFRA_KEY, VERY_NICE.getValue());
+                penaltyMap.put(CYCLE_INFRA_KEY, VERY_NICE.getValue());
             else
-                weightToPrioMap.put(CYCLE_INFRA_KEY, PREFER.getValue());
+                penaltyMap.put(CYCLE_INFRA_KEY, PREFER.getValue());
         }
         if (way.hasTag("bicycle", "use_sidepath")) {
-            weightToPrioMap.put(CYCLE_INFRA_KEY, REACH_DESTINATION.getValue());
+            penaltyMap.put(CYCLE_INFRA_KEY, REACH_DESTINATION.getValue());
         }
         if (way.hasTag("cyclestreet", intendedValues)) {
-            weightToPrioMap.put(CYCLE_INFRA_KEY, cyclewayMap.get(SHARED_LANE));
+            penaltyMap.put(CYCLE_INFRA_KEY, cyclewayMap.get(SHARED_LANE));
         }
 
         DrivingSide drivingSide = DrivingSide.find(way.getTag("driving_side"));
@@ -542,31 +545,31 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
                 cyclewayForward = Cycleway.find(way.getTag("cycleway:" + drivingSide.toString())),
                 cyclewayBackward = Cycleway.find(way.getTag("cycleway:" + DrivingSide.reverse(drivingSide).toString()));
 
-        Integer cyclewayPriority = cyclewayMap.get(cycleway),
-                cyclewayForwardPriority = cyclewayMap.get(cyclewayForward),
-                cyclewayBackwardPriority = cyclewayMap.get(cyclewayBackward);
+        Integer cyclewayPenalty = cyclewayMap.get(cycleway),
+                cyclewayForwardPenalty = cyclewayMap.get(cyclewayForward),
+                cyclewayBackwardPenalty = cyclewayMap.get(cyclewayBackward);
 
         if (withTrafficCyclewayTags.contains(cycleway))
-            cyclewayPriority = highwayPriority + 1;
+            cyclewayPenalty = highwayPenalty - 1;
         if (withTrafficCyclewayTags.contains(cyclewayForward))
-            cyclewayForwardPriority = highwayPriority + 1;
+            cyclewayForwardPenalty = highwayPenalty - 1;
         if (withTrafficCyclewayTags.contains(cyclewayBackward))
-            cyclewayBackwardPriority = highwayPriority + 1;
+            cyclewayBackwardPenalty = highwayPenalty - 1;
 
-        if (Objects.nonNull(cyclewayPriority)) {
-            weightToPrioMap.put(CYCLE_INFRA_KEY, cyclewayPriority);
+        if (Objects.nonNull(cyclewayPenalty)) {
+            penaltyMap.put(CYCLE_INFRA_KEY, cyclewayPenalty);
         }
         if (isOneway(way) || roundaboutEnc.getBool(false, edgeFlags)) {
             // On oneway streets, any accessible infrastructure works
-            Stream.of(cyclewayForwardPriority, cyclewayBackwardPriority)
+            Stream.of(cyclewayForwardPenalty, cyclewayBackwardPenalty)
                     .filter(Objects::nonNull)
-                    .forEach(p -> weightToPrioMap.put(CYCLE_INFRA_KEY, p));
+                    .forEach(p -> penaltyMap.put(CYCLE_INFRA_KEY, p));
         } else {
-            if (Objects.nonNull(cyclewayForwardPriority)) {
-                weightToPrioMap.put(false, CYCLE_INFRA_KEY, cyclewayForwardPriority);
+            if (Objects.nonNull(cyclewayForwardPenalty)) {
+                penaltyMap.put(false, CYCLE_INFRA_KEY, cyclewayForwardPenalty);
             }
-            if (Objects.nonNull(cyclewayBackwardPriority)) {
-                weightToPrioMap.put(true, CYCLE_INFRA_KEY, cyclewayBackwardPriority);
+            if (Objects.nonNull(cyclewayBackwardPenalty)) {
+                penaltyMap.put(true, CYCLE_INFRA_KEY, cyclewayBackwardPenalty);
             }
         }
 
@@ -574,11 +577,11 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         if (classBicycleValue != null) {
             // We assume that humans are better in classifying preferences compared to our
             // algorithm above
-            weightToPrioMap.put(CYCLE_INFRA_KEY, convertClassValueToPriority(classBicycleValue).getValue());
+            penaltyMap.put(CYCLE_INFRA_KEY, convertClassValueToPenalty(classBicycleValue).getValue());
         } else {
             String classBicycle = way.getTag("class:bicycle");
             if (classBicycle != null)
-                weightToPrioMap.put(CYCLE_INFRA_KEY, convertClassValueToPriority(classBicycle).getValue());
+                penaltyMap.put(CYCLE_INFRA_KEY, convertClassValueToPenalty(classBicycle).getValue());
         }
     }
 
@@ -622,7 +625,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         if (super.supports(feature))
             return true;
 
-        return PriorityWeighting.class.isAssignableFrom(feature);
+        return PenaltyWeighting.class.isAssignableFrom(feature);
     }
 
     void setAvoidSpeedLimit(int limit) {
