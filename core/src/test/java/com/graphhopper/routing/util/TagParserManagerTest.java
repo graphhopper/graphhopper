@@ -69,7 +69,7 @@ class TagParserManagerTest {
             @Override
             public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
                 if (bikeRouteEnc.getEnum(false, edgeFlags) != RouteNetwork.MISSING)
-                    priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getFactor(2));
+                    penaltyEnc.setDecimal(false, edgeFlags, PriorityCode.getFactor(2));
                 return edgeFlags;
             }
         };
@@ -81,8 +81,8 @@ class TagParserManagerTest {
         IntsRef relFlags = manager.handleRelationTags(osmRel, manager.createRelationFlags());
         IntsRef edgeFlags = manager.handleWayTags(osmWay, relFlags);
 
-        assertTrue(defaultBike.priorityEnc.getDecimal(false, edgeFlags)
-                > lessRelationCodes.priorityEnc.getDecimal(false, edgeFlags));
+        assertTrue(defaultBike.penaltyEnc.getDecimal(false, edgeFlags) > lessRelationCodes.penaltyEnc.getDecimal(false,
+                edgeFlags));
     }
 
     @Test
@@ -105,8 +105,8 @@ class TagParserManagerTest {
 
         // bike: uninfluenced speed for grade but via network => NICE
         // mtb: uninfluenced speed only PREFER
-        assertTrue(bikeEncoder.priorityEnc.getDecimal(false, edgeFlags)
-                > mtbEncoder.priorityEnc.getDecimal(false, edgeFlags));
+        assertTrue(bikeEncoder.penaltyEnc.getDecimal(false, edgeFlags) > mtbEncoder.penaltyEnc.getDecimal(false,
+                edgeFlags));
     }
 
     @Test

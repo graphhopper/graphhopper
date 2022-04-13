@@ -22,7 +22,11 @@ spec:
                     values: ["amd64"]
           containers:
           - name: graphhopper-graph-cache-builder
+<<<<<<< HEAD
             image: ghcr.io/bikehopper/graphhopper-graph-cache-builder@sha256:c3b39196545c60db85ea9c621569f35aff455035d5635f460220ab89ffdc0b19
+=======
+            image: ghcr.io/bikehopper/graphhopper-graph-cache-builder@sha256:3690143c15646d70ccd9d1e24547a2554ef0c9f724e665d387cf5da4522c50e5
+>>>>>>> master
             resources:
               requests:
                 memory: "6Gi"
@@ -30,13 +34,15 @@ spec:
             envFrom:
             - secretRef:
                 name: minio-graphhopper-staging
+            - secretRef:
+                name: api-511
             env:
             - name: GEOFABRIK_PATH
               value: /north-america/us/california/norcal-latest.osm.pbf
             - name: OSM_PBF_FILE_NAME
               value: current-norcal-latest.osm.pbf
             - name: API_511_PATH
-              value: /transit/datafeeds?api_key=02a6fde6-e10a-49ce-a96e-5ad9404f137f&operator_id=RG
+              value: /transit/datafeeds?operator_id=RG
             - name: API_511_FILE_NAME
               value: current-GTFSTransitData_RG.zip
             - name: BUCKET_NAME
