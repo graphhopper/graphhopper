@@ -118,7 +118,7 @@ public final class GraphExplorer {
                             return false;
                         } else {
                             PtEdge ptEdge = findEnterEdge(edge); // fully consumes edgeIterator
-                            action.accept(new MultiModalEdge(ptEdge, ptWeighting.calcEdgeWeight(ptEdge)));
+                            action.accept(new MultiModalEdge(ptEdge, calcTravelTimeMillis(ptEdge, currentTime)));
                             return true;
                         }
                     }
@@ -143,7 +143,7 @@ public final class GraphExplorer {
                     if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT || edgeType == GtfsStorage.EdgeType.TRANSFER) && (blockedRouteTypes & (1 << edge.getAttrs().route_type)) != 0) {
                         continue;
                     }
-                    action.accept(new MultiModalEdge(edge, ptWeighting.calcEdgeWeight(edge)));
+                    action.accept(new MultiModalEdge(edge, calcTravelTimeMillis(edge, currentTime)));
                     return true;
                 }
                 return false;
@@ -217,7 +217,7 @@ public final class GraphExplorer {
                     return 0;
                 }
             default:
-                return edge.getTime();
+                return edge.getTimeMillis();
         }
     }
 
@@ -315,7 +315,7 @@ public final class GraphExplorer {
         }
 
         public long getTime() {
-            return ptEdge != null ? ptEdge.getTime() * 1000L : time;
+            return ptEdge != null ? ptEdge.getTimeMillis() : time;
         }
 
         @Override

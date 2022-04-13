@@ -86,7 +86,7 @@ public class FastestWeighting extends AbstractWeighting {
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
 
-        double time = edgeState.getDistance() / speed * SPEED_CONV;
+        double time = edgeState.getDistance() / speed * SPEED_CONV * 1000;
         if (roadAccessEnc != null) {
             RoadAccess access = edgeState.get(roadAccessEnc);
             if (access == RoadAccess.DESTINATION)
