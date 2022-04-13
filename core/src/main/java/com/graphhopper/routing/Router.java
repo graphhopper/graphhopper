@@ -563,13 +563,6 @@ public class Router {
                         request.getPoints(), requestHints, new FiniteWeightFilter(weighting));
                 weighting = new BlockAreaWeighting(weighting, blockArea);
             }
-            // ORS-GH MOD START: configure vehicle-specific maximum speed limit
-            if (requestHints.has("maximum_speed")) {
-                    double maximumSpeedLowerBound = requestHints.getDouble("maximum_speed_lower_bound", 0);
-					double maximumSpeed = requestHints.getDouble("maximum_speed", maximumSpeedLowerBound);
-					weighting.setSpeedCalculator(new OrsMaximumSpeedCalculator(weighting.getSpeedCalculator(), maximumSpeed));
-			}
-            // ORS-GH MOD END
             return weighting;
         }
 

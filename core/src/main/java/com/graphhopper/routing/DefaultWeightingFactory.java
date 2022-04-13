@@ -118,20 +118,27 @@ public class DefaultWeightingFactory implements WeightingFactory {
         if (weighting == null)
             throw new IllegalArgumentException("Weighting '" + weightingStr + "' not supported");
 
+        // ORS-GH MOD START - hook for attaching speed calculators
+        setSpeedCalculator(weighting, hints);
+        // ORS-GH MOD END
+
         return weighting;
     }
 
     // ORS-GH MOD START - additional methods
+    protected void setSpeedCalculator(Weighting weighting, PMap hints) {
+        //TODO ORS: attach conditional speed calculator only for time-dependent queries
+        FlagEncoder encoder = weighting.getFlagEncoder();
+        if (encodingManager.hasEncodedValue(EncodingManager.getKey(encoder, ConditionalEdges.SPEED)))
+            weighting.setSpeedCalculator(new ConditionalSpeedCalculator(weighting.getSpeedCalculator(), ghStorage, encoder));
+    }
+
     private Weighting handleOrsWeightings(String weightingStr, PMap hints, FlagEncoder encoder, TurnCostProvider turnCostProvider) {
-        Weighting weighting = null;
         if ("td_fastest".equalsIgnoreCase(weightingStr)) {
-            weighting = new FastestWeighting(encoder, hints);
-            if (encodingManager.hasEncodedValue(EncodingManager.getKey(encoder, ConditionalEdges.SPEED)))
-                weighting.setSpeedCalculator(new ConditionalSpeedCalculator(weighting.getSpeedCalculator(), ghStorage, encoder));
+            return new FastestWeighting(encoder, hints);
         } else {
-            weighting = handleExternalOrsWeightings(weightingStr, hints, encoder, turnCostProvider);
+            return handleExternalOrsWeightings(weightingStr, hints, encoder, turnCostProvider);
         }
-        return weighting;
     }
 
     // Note: this method is only needed because ORS is split into two
