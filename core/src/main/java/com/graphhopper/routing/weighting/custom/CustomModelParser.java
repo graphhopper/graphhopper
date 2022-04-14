@@ -22,10 +22,7 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.TurnCostProvider;
-import com.graphhopper.util.CustomModel;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.JsonFeature;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
 import org.codehaus.commons.compiler.CompileException;
@@ -45,7 +42,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class CustomModelParser {
     private static final AtomicLong longVal = new AtomicLong(1);
     static final String IN_AREA_PREFIX = "in_";
-    private static final Set<String> allowedNames = new HashSet<>(Arrays.asList("edge", "Math"));
+    private static final Set<String> allowedConditionNames = new HashSet<>(Arrays.asList("edge", "Math"));
     private static final boolean JANINO_DEBUG = Boolean.getBoolean(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE);
     private static final String SCRIPT_FILE_DIR = System.getProperty(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_DIR, "./src/main/java/com/graphhopper/routing/weighting/custom");
 
@@ -131,16 +128,16 @@ public class CustomModelParser {
     private static Class<?> createClazz(CustomModel customModel, EncodedValueLookup lookup,
                                         double globalMaxSpeed, double globalMaxPriority) {
         try {
-            double maxPriority = FindMinMax.findMax(customModel.getPriority(), lookup, globalMaxPriority, "priority");
+            HashSet<String> priorityVariables = new LinkedHashSet<>();
+            double maxPriority = FindMinMax.findMax(priorityVariables, customModel.getPriority(), lookup, globalMaxPriority, "priority");
             if (maxPriority < 0)
                 throw new IllegalArgumentException("maximum priority has to be >=0 but was " + maxPriority);
-            double maxSpeed = FindMinMax.findMax(customModel.getSpeed(), lookup, globalMaxSpeed, "speed");
+            List<Java.BlockStatement> priorityStatements = createGetPriorityStatements(priorityVariables, customModel, lookup);
+
+            HashSet<String> speedVariables = new LinkedHashSet<>();
+            double maxSpeed = FindMinMax.findMax(speedVariables, customModel.getSpeed(), lookup, globalMaxSpeed, "speed");
             if (maxSpeed <= 0)
                 throw new IllegalArgumentException("maximum speed has to be >0 but was " + maxSpeed);
-
-            HashSet<String> priorityVariables = new LinkedHashSet<>();
-            List<Java.BlockStatement> priorityStatements = createGetPriorityStatements(priorityVariables, customModel, lookup);
-            HashSet<String> speedVariables = new LinkedHashSet<>();
             List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup, maxSpeed);
             // Create different class name, which is required only for debugging.
             // TODO does it improve performance too? I.e. it could be that the JIT is confused if different classes
@@ -155,8 +152,6 @@ public class CustomModelParser {
             return sc.getClassLoader().loadClass("com.graphhopper.routing.weighting.custom.JaninoCustomWeightingHelperSubclass" + counter);
         } catch (Exception ex) {
             String errString = "Cannot compile expression";
-            if (ex instanceof CompileException)
-                errString += ", in " + ((CompileException) ex).getLocation().getFileName();
             throw new IllegalArgumentException(errString + ": " + ex.getMessage(), ex);
         }
     }
@@ -168,10 +163,10 @@ public class CustomModelParser {
      */
     private static List<Java.BlockStatement> createGetSpeedStatements(Set<String> speedVariables,
                                                                       CustomModel customModel, EncodedValueLookup lookup,
-                                                                      double globalMaxSpeed) throws Exception {
+                                                                      double maxSpeed) throws Exception {
         List<Java.BlockStatement> speedStatements = new ArrayList<>();
-        speedStatements.addAll(verifyExpressions(new StringBuilder(), "in 'speed' entry, ", speedVariables,
-                customModel.getSpeed(), lookup, "return Math.min(value, " + globalMaxSpeed + ");\n"));
+        speedStatements.addAll(verifyExpressions(new StringBuilder(), "speed entry", speedVariables,
+                customModel.getSpeed(), lookup, "return Math.min(value, " + maxSpeed + ");\n"));
         String speedMethodStartBlock = "double value = super.getRawSpeed(edge, reverse);\n";
         // a bit inefficient to possibly define variables twice, but for now we have two separate methods
         for (String arg : speedVariables) {
@@ -190,7 +185,7 @@ public class CustomModelParser {
     private static List<Java.BlockStatement> createGetPriorityStatements(Set<String> priorityVariables,
                                                                          CustomModel customModel, EncodedValueLookup lookup) throws Exception {
         List<Java.BlockStatement> priorityStatements = new ArrayList<>();
-        priorityStatements.addAll(verifyExpressions(new StringBuilder(), "in 'priority' entry, ",
+        priorityStatements.addAll(verifyExpressions(new StringBuilder(), "priority entry, ",
                 priorityVariables, customModel.getPriority(), lookup, "return value;"));
         String priorityMethodStartBlock = "double value = super.getRawPriority(edge, reverse);\n";
         for (String arg : priorityVariables) {
@@ -202,7 +197,7 @@ public class CustomModelParser {
     }
 
     static boolean isValidVariableName(String name) {
-        return name.startsWith(IN_AREA_PREFIX) || allowedNames.contains(name);
+        return name.startsWith(IN_AREA_PREFIX) || allowedConditionNames.contains(name);
     }
 
     /**
@@ -249,7 +244,8 @@ public class CustomModelParser {
      * means that the source file is free from user input and could be directly compiled. Before we do this we still
      * have to inject that parsed and safe user expressions in a later step.
      */
-    private static String createClassTemplate(long counter, Set<String> priorityVariables, double maxPriority,
+    private static String createClassTemplate(long counter,
+                                              Set<String> priorityVariables, double maxPriority,
                                               Set<String> speedVariables, double maxSpeed,
                                               EncodedValueLookup lookup, Map<String, JsonFeature> areas) {
         final StringBuilder importSourceCode = new StringBuilder("import com.graphhopper.routing.ev.*;\n");
@@ -347,9 +343,44 @@ public class CustomModelParser {
         // allow variables, all encoded values, constants
         NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
                 || name.toUpperCase(Locale.ROOT).equals(name) || isValidVariableName(name);
-        ConditionalExpressionVisitor.parseExpressions(expressions, nameInConditionValidator, info, createObjects, list, lookup, lastStmt);
+
+        NameValidator nameInValueValidator = name -> lookup.hasEncodedValue(name); // TODO NOW add check: new ValueExpressionVisitor().isValidIdentifier(name)
+        parseExpressions(expressions, nameInConditionValidator, nameInValueValidator,
+                info, createObjects, list, lookup, lastStmt);
         return new Parser(new org.codehaus.janino.Scanner(info, new StringReader(expressions.toString()))).
                 parseBlockStatements();
+    }
+
+    static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator, NameValidator nameInValueValidator,
+                                 String exceptionInfo,
+                                 Set<String> createObjects, List<Statement> list, EncodedValueLookup lookup, String lastStmt) {
+
+        for (Statement statement : list) {
+            // TODO NOW avoid parsing again as we just did it to get the maximum value
+            ParseResult valueParseResult = ValueExpressionVisitor.parse(statement.getValue(), nameInValueValidator);
+            if (!valueParseResult.ok)
+                throw new IllegalArgumentException(exceptionInfo + " invalid value \"" + statement.getValue() + "\"" +
+                        (valueParseResult.invalidMessage == null ? "" : ": " + valueParseResult.invalidMessage));
+            createObjects.addAll(valueParseResult.guessedVariables);
+            if (statement.getKeyword() == Statement.Keyword.ELSE) {
+                if (!Helper.isEmpty(statement.getCondition()))
+                    throw new IllegalArgumentException("condition must be empty but was " + statement.getCondition());
+
+                expressions.append("else {" + statement.getOperation().build(statement.getValue()) + "; }\n");
+            } else if (statement.getKeyword() == Statement.Keyword.ELSEIF || statement.getKeyword() == Statement.Keyword.IF) {
+                ParseResult parseResult = ConditionalExpressionVisitor.parse(statement.getCondition(), nameInConditionValidator, lookup);
+                if (!parseResult.ok)
+                    throw new IllegalArgumentException(exceptionInfo + " invalid condition \"" + statement.getCondition() + "\"" +
+                            (parseResult.invalidMessage == null ? "" : ": " + parseResult.invalidMessage));
+                createObjects.addAll(parseResult.guessedVariables);
+                if (statement.getKeyword() == Statement.Keyword.ELSEIF)
+                    expressions.append("else ");
+                expressions.append("if (" + parseResult.converted + ") {" + statement.getOperation().build(statement.getValue()) + "; }\n");
+            } else {
+                throw new IllegalArgumentException("The statement must be either 'if', 'else_if' or 'else'");
+            }
+        }
+        expressions.append(lastStmt);
     }
 
     /**

@@ -31,13 +31,16 @@ import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 import static com.graphhopper.json.Statement.*;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.routing.ev.RoadClass.*;
+import static com.graphhopper.routing.weighting.custom.CustomModelParser.parseExpressions;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CustomModelParserTest {
@@ -53,7 +56,8 @@ class CustomModelParserTest {
     void setup() {
         encoder = FlagEncoders.createCar();
         countryEnc = new StringEncodedValue("country", 10);
-        encodingManager = new EncodingManager.Builder().add(encoder).add(countryEnc).add(new EnumEncodedValue<>(Surface.KEY, Surface.class)).build();
+        encodingManager = new EncodingManager.Builder().add(encoder).add(countryEnc).
+                add(MaxSpeed.create()).add(new EnumEncodedValue<>(Surface.KEY, Surface.class)).build();
         graph = new BaseGraph.Builder(encodingManager).create();
         avgSpeedEnc = encoder.getAverageSpeedEnc();
         roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
@@ -228,5 +232,63 @@ class CustomModelParserTest {
         assertThrows(IllegalArgumentException.class, () ->
                 CustomModelParser.createWeightingParameters(customModel2, encodingManager,
                         avgSpeedEnc, encoder.getMaxSpeed(), null));
+    }
+
+    @Test
+    public void parseValue() {
+        DecimalEncodedValue maxSpeed = encodingManager.getDecimalEncodedValue(MaxSpeed.KEY);
+        EdgeIteratorState maxLower = graph.edge(0, 1).setDistance(10).
+                set(maxSpeed, 60).set(avgSpeedEnc, 70).set(encoder.getAccessEnc(), true, true);
+        EdgeIteratorState maxSame = graph.edge(1, 2).setDistance(10).
+                set(maxSpeed, 70).set(avgSpeedEnc, 70).set(encoder.getAccessEnc(), true, true);
+
+        CustomModel customModel = new CustomModel();
+        customModel.addToSpeed(If("true", LIMIT, "max_speed"));
+
+        CustomWeighting.EdgeToDoubleMapping speedMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager,
+                avgSpeedEnc, encoder.getMaxSpeed(), null).getEdgeToSpeedMapping();
+
+        assertEquals(70.0, speedMapping.get(maxSame, false), 0.01);
+        assertEquals(60.0, speedMapping.get(maxLower, false), 0.01);
+    }
+
+    @Test
+    public void parseValueWithError() {
+        CustomModel customModel = new CustomModel();
+        customModel.addToSpeed(If("true", LIMIT, "unknown"));
+
+        IllegalArgumentException ret = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.createWeightingParameters(customModel, encodingManager,
+                        avgSpeedEnc, encoder.getMaxSpeed(), null).getEdgeToSpeedMapping());
+        assertTrue(ret.getMessage().startsWith("Cannot compile expression: 'unknown' not available"), ret.getMessage());
+    }
+
+    @Test
+    public void parseConditionWithError() {
+        NameValidator validVariable = s -> encodingManager.hasEncodedValue(s);
+
+        // existing encoded value but not added
+        IllegalArgumentException ret = assertThrows(IllegalArgumentException.class,
+                () -> parseExpressions(new StringBuilder(),
+                        validVariable, validVariable, "[HERE]", new HashSet<>(),
+                        Arrays.asList(If("max_weight > 10", MULTIPLY, "0")),
+                        encodingManager, ""));
+        assertTrue(ret.getMessage().startsWith("[HERE] invalid condition \"max_weight > 10\": 'max_weight' not available"), ret.getMessage());
+
+        // invalid variable or constant (NameValidator returns false)
+        ret = assertThrows(IllegalArgumentException.class,
+                () -> parseExpressions(new StringBuilder(),
+                        validVariable, validVariable, "[HERE]", new HashSet<>(),
+                        Arrays.asList(If("country == GERMANY", MULTIPLY, "0")),
+                        encodingManager, ""));
+        assertTrue(ret.getMessage().startsWith("[HERE] invalid condition \"country == GERMANY\": 'GERMANY' not available"), ret.getMessage());
+
+        // not whitelisted method
+        ret = assertThrows(IllegalArgumentException.class,
+                () -> parseExpressions(new StringBuilder(),
+                        validVariable, validVariable, "[HERE]", new HashSet<>(),
+                        Arrays.asList(If("edge.fetchWayGeometry().size() > 2", MULTIPLY, "0")),
+                        encodingManager, ""));
+        assertTrue(ret.getMessage().startsWith("[HERE] invalid condition \"edge.fetchWayGeometry().size() > 2\": size is illegal method"), ret.getMessage());
     }
 }

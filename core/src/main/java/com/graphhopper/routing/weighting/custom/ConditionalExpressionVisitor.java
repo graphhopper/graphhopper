@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.RouteNetwork;
 import com.graphhopper.routing.ev.StringEncodedValue;
@@ -146,31 +145,6 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
         return false;
     }
 
-    static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator, String exceptionInfo,
-                                 Set<String> createObjects, List<Statement> list, EncodedValueLookup lookup, String lastStmt) {
-
-        for (Statement statement : list) {
-            if (statement.getKeyword() == Statement.Keyword.ELSE) {
-                if (!Helper.isEmpty(statement.getCondition()))
-                    throw new IllegalArgumentException("expression must be empty but was " + statement.getCondition());
-
-                expressions.append("else {" + statement.getOperation().build(statement.getValue()) + "; }\n");
-            } else if (statement.getKeyword() == Statement.Keyword.ELSEIF || statement.getKeyword() == Statement.Keyword.IF) {
-                ParseResult parseResult = parseConditionalExpression(statement.getCondition(), nameInConditionValidator, lookup);
-                if (!parseResult.ok)
-                    throw new IllegalArgumentException(exceptionInfo + " invalid expression \"" + statement.getCondition() + "\"" +
-                            (parseResult.invalidMessage == null ? "" : ": " + parseResult.invalidMessage));
-                createObjects.addAll(parseResult.guessedVariables);
-                if (statement.getKeyword() == Statement.Keyword.ELSEIF)
-                    expressions.append("else ");
-                expressions.append("if (" + parseResult.converted + ") {" + statement.getOperation().build(statement.getValue()) + "; }\n");
-            } else {
-                throw new IllegalArgumentException("The statement must be either 'if', 'else_if' or 'else'");
-            }
-        }
-        expressions.append(lastStmt);
-    }
-
     /**
      * Enforce simple expressions of user input to increase security.
      *
@@ -178,7 +152,7 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
      * converted expression that includes class names for constants to avoid conflicts e.g. when doing "toll == Toll.NO"
      * instead of "toll == NO".
      */
-    static ParseResult parseConditionalExpression(String expression, NameValidator validator, EncodedValueLookup lookup) {
+    static ParseResult parse(String expression, NameValidator validator, EncodedValueLookup lookup) {
         ParseResult result = new ParseResult();
         try {
             Parser parser = new Parser(new Scanner("ignore", new StringReader(expression)));

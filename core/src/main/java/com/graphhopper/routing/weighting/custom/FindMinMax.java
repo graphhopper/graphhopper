@@ -5,7 +5,9 @@ import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.util.CustomModel;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.graphhopper.json.Statement.Keyword.ELSE;
 import static com.graphhopper.json.Statement.Keyword.IF;
@@ -26,7 +28,7 @@ public class FindMinMax {
                     ", given: " + queryModel.getDistanceInfluence());
 
         checkMultiplyValue(queryModel.getPriority(), lookup);
-        double maxPrio = FindMinMax.findMax(queryModel.getPriority(), lookup, 1, "priority");
+        double maxPrio = FindMinMax.findMax(new HashSet<>(), queryModel.getPriority(), lookup, 1, "priority");
         if (maxPrio > 1)
             throw new IllegalArgumentException("priority of CustomModel in query cannot be bigger than 1. Was: " + maxPrio);
 
@@ -34,30 +36,32 @@ public class FindMinMax {
     }
 
     private static void checkMultiplyValue(List<Statement> list, EncodedValueLookup lookup) {
+        Set<String> createdObjects = new HashSet<>();
         for (Statement statement : list) {
             // TODO NOW allow factor > 1 if last limits it to 1 again -> maybe just use findMax(queryModel.getSpeed(), 200) with a high speed?
-            if (statement.getOperation() == Statement.Op.MULTIPLY && ValueExpressionVisitor.findMinMax(statement.getValue(), lookup)[1] > 1)
+            if (statement.getOperation() == Statement.Op.MULTIPLY && ValueExpressionVisitor.findMinMax(createdObjects, statement.getValue(), lookup)[1] > 1)
                 throw new IllegalArgumentException("factor cannot be larger than 1 but was " + statement.getValue());
         }
     }
 
-    static double findMax(List<Statement> statements, EncodedValueLookup lookup, double max, String type) {
+    static double findMax(Set<String> createdObjects, List<Statement> statements, EncodedValueLookup lookup, double max, String type) {
         // we want to find the smallest value that cannot be exceeded by any edge. the 'blocks' of speed statements
         // are applied one after the other.
         List<List<Statement>> blocks = splitIntoBlocks(statements);
-        for (List<Statement> block : blocks) max = findMaxForBlock(block, lookup, max);
+        for (List<Statement> block : blocks) max = findMaxForBlock(createdObjects, block, lookup, max);
         if (max <= 0) throw new IllegalArgumentException(type + " cannot be negative or 0 (was " + max + ")");
         return max;
     }
 
-    static double findMaxForBlock(List<Statement> block, EncodedValueLookup lookup, final double max) {
+    static double findMaxForBlock(Set<String> createdObjects, List<Statement> block, EncodedValueLookup lookup, final double max) {
         if (block.isEmpty() || !IF.equals(block.get(0).getKeyword()))
             throw new IllegalArgumentException("Every block must start with an if-statement");
         if (block.get(0).getCondition().trim().equals("true"))
-            return block.get(0).getOperation().apply(max, ValueExpressionVisitor.findMinMax(block.get(0).getValue(), lookup)[1]);
+            return block.get(0).getOperation().apply(max, ValueExpressionVisitor.findMinMax(createdObjects, block.get(0).getValue(), lookup)[1]);
 
         double blockMax = block.stream()
-                .mapToDouble(statement -> statement.getOperation().apply(max, ValueExpressionVisitor.findMinMax(statement.getValue(), lookup)[1]))
+                .mapToDouble(statement -> statement.getOperation().apply(max, ValueExpressionVisitor.findMinMax(createdObjects,
+                        statement.getValue(), lookup)[1]))
                 .max()
                 .orElse(max);
         // if there is no 'else' statement it's like there is a 'neutral' branch that leaves the initial value as is

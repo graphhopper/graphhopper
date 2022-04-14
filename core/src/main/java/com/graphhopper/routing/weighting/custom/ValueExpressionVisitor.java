@@ -1,6 +1,9 @@
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.EncodedValue;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.IntEncodedValue;
 import org.codehaus.commons.compiler.CompileException;
 import org.codehaus.janino.Scanner;
 import org.codehaus.janino.*;
@@ -97,7 +100,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         return false;
     }
 
-    static ParseResult parseValueExpression(String expression, NameValidator validator) {
+    static ParseResult parse(String expression, NameValidator validator) {
         ParseResult result = new ParseResult();
         try {
             Parser parser = new Parser(new Scanner("ignore", new StringReader(expression)));
@@ -115,18 +118,19 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     }
 
     // TODO replace return type with record
-    static double[] findMinMax(String valueExpression, EncodedValueLookup lookup) {
-        // TODO is this faster? is this secure? (we leave out the ParseResult check)
+    static double[] findMinMax(Set<String> createdObjects, String valueExpression, EncodedValueLookup lookup) {
+        // TODO NOW is this faster? is this secure? (we leave out the ParseResult check)
 //        try {
 //            double val = Double.parseDouble(valueExpression);
 //            return val > 0 ? new double[]{0, val} : new double[]{val, 0};
 //        } catch (NumberFormatException ex) {
 //        }
-        ParseResult result = parseValueExpression(valueExpression, lookup::hasEncodedValue);
+        ParseResult result = parse(valueExpression, lookup::hasEncodedValue);
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
         if ((result.operators.contains("-") || result.operators.contains("/")) && result.guessedVariables.size() > 1)
             throw new IllegalArgumentException("Currently only a single EncodedValue in the value expression is allowed when expression contains \"/\" or \"-\". " + valueExpression);
+        createdObjects.addAll(result.guessedVariables);
 
         try {
             ExpressionEvaluator ee = new ExpressionEvaluator();

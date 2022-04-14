@@ -8,9 +8,11 @@ import com.graphhopper.routing.util.EncodingManager;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import static com.graphhopper.routing.weighting.custom.ValueExpressionVisitor.findMinMax;
-import static com.graphhopper.routing.weighting.custom.ValueExpressionVisitor.parseValueExpression;
+import static com.graphhopper.routing.weighting.custom.ValueExpressionVisitor.parse;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ValueExpressionVisitorTest {
@@ -22,34 +24,34 @@ class ValueExpressionVisitorTest {
                 "new Object(){}.toString().length", "{ 5}", "{ 5, 7 }", "Object.class", "System.out.println(\"\")",
                 "something.newInstance()", "e.getClass ( )", "edge.getDistance()*7/*test", "edge.getDistance()//*test",
                 "edge . getClass()", "(edge = edge) == edge", ") edge (", "in(area_blup(), edge)", "s -> truevalue")) {
-            ParseResult res = parseValueExpression(toParse, allNamesInvalid);
+            ParseResult res = parse(toParse, allNamesInvalid);
             assertFalse(res.ok, "should not be simple condition: " + toParse);
             assertTrue(res.guessedVariables == null || res.guessedVariables.isEmpty());
         }
 
-        assertFalse(parseValueExpression("edge; getClass()", allNamesInvalid).ok);
+        assertFalse(parse("edge; getClass()", allNamesInvalid).ok);
     }
 
     @Test
     public void isValidAndSimpleCondition() {
         NameValidator validVariable = s -> s.equals("edge") || s.equals("Math") || s.equals("priority");
-        ParseResult result = parseValueExpression("edge == edge", validVariable);
+        ParseResult result = parse("edge == edge", validVariable);
         assertFalse(result.ok);
 
-        result = parseValueExpression("Math.sqrt(2)", validVariable);
+        result = parse("Math.sqrt(2)", validVariable);
         assertTrue(result.ok);
         assertTrue(result.guessedVariables.isEmpty());
 
-        result = parseValueExpression("edge.getDistance()", validVariable);
+        result = parse("edge.getDistance()", validVariable);
         assertFalse(result.ok);
 
-        result = parseValueExpression("road_class == PRIMARY", validVariable);
+        result = parse("road_class == PRIMARY", validVariable);
         assertFalse(result.ok);
 
-        result = parseValueExpression("toll == Toll.NO", validVariable);
+        result = parse("toll == Toll.NO", validVariable);
         assertFalse(result.ok);
 
-        result = parseValueExpression("priority * 2", validVariable);
+        result = parse("priority * 2", validVariable);
         assertTrue(result.ok);
         assertEquals("[priority]", result.guessedVariables.toString());
 
@@ -60,17 +62,18 @@ class ValueExpressionVisitorTest {
 
     @Test
     public void runMaxMin() {
+        Set<String> objs = new HashSet<>();
         DecimalEncodedValue prio1 = new DecimalEncodedValueImpl("my_priority", 5, 1, false);
         IntEncodedValueImpl prio2 = new IntEncodedValueImpl("my_priority2", 5, -5, false, false);
         EncodedValueLookup lookup = new EncodingManager.Builder().add(prio1).add(prio2).build();
 
-        String msg = assertThrows(IllegalArgumentException.class, () -> findMinMax("unknown*3", lookup)).getMessage();
+        String msg = assertThrows(IllegalArgumentException.class, () -> findMinMax(objs, "unknown*3", lookup)).getMessage();
         assertTrue(msg.contains("'unknown' not available"), msg);
 
-        msg = assertThrows(IllegalArgumentException.class, () -> findMinMax("my_priority - my_priority2 * 3", lookup)).getMessage();
+        msg = assertThrows(IllegalArgumentException.class, () -> findMinMax(objs, "my_priority - my_priority2 * 3", lookup)).getMessage();
         assertTrue(msg.contains("only a single EncodedValue"), msg);
         // unary minus is also a minus operator
-        msg = assertThrows(IllegalArgumentException.class, () -> findMinMax("-my_priority + my_priority2 * 3", lookup)).getMessage();
+        msg = assertThrows(IllegalArgumentException.class, () -> findMinMax(objs, "-my_priority + my_priority2 * 3", lookup)).getMessage();
         assertTrue(msg.contains("only a single EncodedValue"), msg);
 
         assertInterval(0, 2418, "my_priority*my_priority2 * 3", lookup);
@@ -86,7 +89,7 @@ class ValueExpressionVisitorTest {
     }
 
     void assertInterval(double min, double max, String expression, EncodedValueLookup lookup) {
-        double[] minmax = findMinMax(expression, lookup);
+        double[] minmax = findMinMax(new HashSet<>(), expression, lookup);
         assertEquals(min, minmax[0], 0.1, expression);
         assertEquals(max, minmax[1], 0.1, expression);
     }
