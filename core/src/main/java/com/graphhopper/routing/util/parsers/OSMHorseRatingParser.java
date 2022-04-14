@@ -18,13 +18,8 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.HorseRating;
 import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.storage.IntsRef;
-
-import java.util.List;
 
 /**
  * Parses the horseback riding difficulty. Where common is mapped to 1, demanding to 2 until 6
@@ -35,13 +30,8 @@ public class OSMHorseRatingParser implements TagParser {
 
     private final IntEncodedValue horseScale;
 
-    public OSMHorseRatingParser() {
-        this.horseScale = HorseRating.create();
-    }
-
-    @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> link) {
-        link.add(horseScale);
+    public OSMHorseRatingParser(IntEncodedValue horseScale) {
+        this.horseScale = horseScale;
     }
 
     @Override
