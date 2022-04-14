@@ -68,9 +68,9 @@ public class FastestWeighting extends AbstractWeighting {
             throw new IllegalArgumentException("road_access is not available but expected for FastestWeighting");
 
         // ensure that we do not need to change getMinWeight, i.e. road_access_factor >= 1
-        double defaultDestinationFactor = encoder.getTransportationMode().isMotorVehicle() ? 10 : 1;
+        double defaultDestinationFactor = encoder.isMotorVehicle() ? 10 : 1;
         destinationPenalty = checkBounds("road_access_destination_factor", map.getDouble("road_access_destination_factor", defaultDestinationFactor), 1, 10);
-        double defaultPrivateFactor = encoder.getTransportationMode().isMotorVehicle() ? 10 : 1.2;
+        double defaultPrivateFactor = encoder.isMotorVehicle() ? 10 : 1.2;
         privatePenalty = checkBounds("road_access_private_factor", map.getDouble("road_access_private_factor", defaultPrivateFactor), 1, 10);
         roadAccessEnc = destinationPenalty > 1 || privatePenalty > 1 ? encoder.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class) : null;
     }
