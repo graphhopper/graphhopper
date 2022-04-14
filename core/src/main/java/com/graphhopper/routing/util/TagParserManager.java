@@ -136,12 +136,57 @@ public class TagParserManager implements EncodedValueLookup {
             return true;
         }
 
-        public boolean addIfAbsent(TagParserFactory factory, String tagParserString) {
+        public boolean addIfAbsent(EncodedValueFactory encodedValueFactory, TagParserFactory factory, String tagParserString) {
             check();
             tagParserString = tagParserString.trim();
             if (tagParserString.isEmpty()) return false;
 
-            TagParser tagParser = parseEncodedValueString(em, factory, tagParserString);
+            if (!tagParserString.equals(toLowerCase(tagParserString)))
+                throw new IllegalArgumentException("Use lower case for TagParser: " + tagParserString);
+
+            add(encodedValueFactory.create(tagParserString));
+
+            TagParser tagParser = factory.create(new EncodedValueLookup() {
+                @Override
+                public List<EncodedValue> getEncodedValues() {
+                    return new ArrayList<>(encodedValueMap.values());
+                }
+
+                @Override
+                public <T extends EncodedValue> T getEncodedValue(String key, Class<T> encodedValueType) {
+                    return (T) encodedValueMap.get(key);
+                }
+
+                @Override
+                public BooleanEncodedValue getBooleanEncodedValue(String key) {
+                    return (BooleanEncodedValue) encodedValueMap.get(key);
+                }
+
+                @Override
+                public IntEncodedValue getIntEncodedValue(String key) {
+                    return (IntEncodedValue) encodedValueMap.get(key);
+                }
+
+                @Override
+                public DecimalEncodedValue getDecimalEncodedValue(String key) {
+                    return (DecimalEncodedValue) encodedValueMap.get(key);
+                }
+
+                @Override
+                public <T extends Enum<?>> EnumEncodedValue<T> getEnumEncodedValue(String key, Class<T> enumType) {
+                    return (EnumEncodedValue<T>) encodedValueMap.get(key);
+                }
+
+                @Override
+                public StringEncodedValue getStringEncodedValue(String key) {
+                    return (StringEncodedValue) encodedValueMap.get(key);
+                }
+
+                @Override
+                public boolean hasEncodedValue(String key) {
+                    return encodedValueMap.containsKey(key);
+                }
+            }, tagParserString);
             return tagParserSet.add(tagParser);
         }
 
@@ -342,14 +387,8 @@ public class TagParserManager implements EncodedValueLookup {
         return factory.createFlagEncoder(encoderString, configuration);
     }
 
-    private static TagParser parseEncodedValueString(EncodedValueLookup lookup, TagParserFactory factory, String tagParserString) {
-        if (!tagParserString.equals(toLowerCase(tagParserString)))
-            throw new IllegalArgumentException("Use lower case for TagParser: " + tagParserString);
-        return factory.create(lookup, tagParserString);
-    }
-
     public int getIntsForFlags() {
-       return edgeConfig.getRequiredInts();
+        return edgeConfig.getRequiredInts();
     }
 
     private void addEncoder(AbstractFlagEncoder encoder) {
