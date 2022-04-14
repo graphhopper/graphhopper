@@ -92,9 +92,9 @@ public class GraphHopperWebTest {
                 new GeometryFactory().createPolygon(area_2_coordinates),
                 new HashMap<>()));
         CustomModel customModel = new CustomModel()
-                .addToSpeed(Statement.If("road_class == MOTORWAY", Statement.Op.LIMIT, 80))
-                .addToPriority(Statement.If("surface == DIRT", Statement.Op.MULTIPLY, 0.7))
-                .addToPriority(Statement.If("surface == SAND", Statement.Op.MULTIPLY, 0.6))
+                .addToSpeed(Statement.If("road_class == MOTORWAY", Statement.Op.LIMIT, "80"))
+                .addToPriority(Statement.If("surface == DIRT", Statement.Op.MULTIPLY, "0.7"))
+                .addToPriority(Statement.If("surface == SAND", Statement.Op.MULTIPLY, "0.6"))
                 .setDistanceInfluence(69)
                 .setHeadingPenalty(22)
                 .setAreas(areas);

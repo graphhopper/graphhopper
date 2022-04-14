@@ -65,11 +65,11 @@ public class CustomModelTest {
         car.addToPriority(ElseIf("road_class==tertiary", MULTIPLY, "0.8"));
 
         Iterator<Statement> iter = CustomModel.merge(emptyCar, car).getPriority().iterator();
-        assertEquals(0.5, iter.next().getValue());
-        assertEquals(0.8, iter.next().getValue());
+        assertEquals("0.5", iter.next().getValue());
+        assertEquals("0.8", iter.next().getValue());
 
         iter = CustomModel.merge(car, emptyCar).getPriority().iterator();
-        assertEquals(0.5, iter.next().getValue());
-        assertEquals(0.8, iter.next().getValue());
+        assertEquals("0.5", iter.next().getValue());
+        assertEquals("0.8", iter.next().getValue());
     }
 }

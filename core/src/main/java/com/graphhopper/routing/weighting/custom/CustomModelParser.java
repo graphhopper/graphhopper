@@ -94,7 +94,9 @@ public class CustomModelParser {
                                                                 DecimalEncodedValue priorityEnc) {
 
         double globalMaxPriority = priorityEnc == null ? 1 : priorityEnc.getMaxDecimal();
-        String key = customModel + ",avg_speed:" + avgSpeedEnc.getName() + ",global_max_priority:" + globalMaxPriority + ",global_max_speed:" + globalMaxSpeed;
+        // if the same custom model is used with a different base profile we cannot use the cached version
+        String key = customModel + ",speed:" + avgSpeedEnc.getName() + ",global_max_speed:" + globalMaxSpeed
+                + (priorityEnc == null ? "" : "prio:" + priorityEnc.getName() + ",global_max_priority:" + globalMaxPriority);
         if (key.length() > 100_000) throw new IllegalArgumentException("Custom Model too big: " + key.length());
 
         Class<?> clazz = customModel.isInternal() ? INTERNAL_CACHE.get(key) : null;
