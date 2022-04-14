@@ -16,6 +16,7 @@ public class Trip {
         public final Geometry geometry;
         public final double distance;
         public final double weight;
+        public boolean interpolated = false;
 
         public Leg(String type, String departureLocation, Geometry geometry, double distance, double weight) {
             this.type = type;
@@ -27,6 +28,10 @@ public class Trip {
 
         public double getDistance() {
             return distance;
+        }
+
+        public void flagAsInterpolated() {
+            this.interpolated = true;
         }
 
         public abstract Date getDepartureTime();

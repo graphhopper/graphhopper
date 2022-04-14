@@ -376,15 +376,17 @@ class TripFromLabel {
                             path.get(i - 1).label.currentTime - boardTime,
                             geometryFactory.createLineString(stops.stream().map(s -> s.geometry.getCoordinate()).toArray(Coordinate[]::new))));
                     partition = null;
-                    // if (edge.getType() == GtfsStorage.EdgeType.TRANSFER) {
-                    //     feedId = edge.getPlatformDescriptor().feed_id;
-                    //     int[] skippedEdgesForTransfer = gtfsStorage.getSkippedEdgesForTransfer().get(edge.getId());
-                    //     if (skippedEdgesForTransfer != null) {
-                    //         boolean isBike = connectingVehicle.contains("bike");
-                    //         List<Trip.Leg> legs = parsePartitionToLegs(transferPath(skippedEdgesForTransfer, weighting, ptWeighting, path.get(i - 1).label.currentTime, isBike), router, graph, weighting, ptWeighting, tr, requestedPathDetails, connectingVehicle, includeElevation);
-                    //         result.add(legs.get(0));
-                    //     }
-                    // }
+                    if (edge.getType() == GtfsStorage.EdgeType.TRANSFER) {
+                        feedId = edge.getPlatformDescriptor().feed_id;
+                        int[] skippedEdgesForTransfer = gtfsStorage.getSkippedEdgesForTransfer().get(edge.getId());
+                        if (skippedEdgesForTransfer != null) {
+                            boolean isBike = connectingVehicle.contains("bike");
+                            List<Trip.Leg> legs = parsePartitionToLegs(transferPath(skippedEdgesForTransfer, weighting, ptWeighting, path.get(i - 1).label.currentTime, isBike), router, graph, weighting, ptWeighting, tr, requestedPathDetails, connectingVehicle, includeElevation);
+                            Trip.Leg interpolatedLeg = legs.get(0);
+                            interpolatedLeg.flagAsInterpolated();
+                            result.add(interpolatedLeg);
+                        }
+                    }
                 }
             }
             return result;
