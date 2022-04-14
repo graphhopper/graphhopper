@@ -230,6 +230,9 @@ public abstract class Entity implements Serializable, Cloneable {
             V val = null;
             if (str != null) {
                 val = target.get(str);
+                if (val == null) {
+                    feed.errors.add(new ReferentialIntegrityError(tableName, row, column, str));
+                }
             }
             return val;
         }

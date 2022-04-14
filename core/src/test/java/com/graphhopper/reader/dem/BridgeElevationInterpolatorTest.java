@@ -18,7 +18,6 @@
 package com.graphhopper.reader.dem;
 
 import com.graphhopper.coll.GHIntHashSet;
-import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.IntsRef;
@@ -34,11 +33,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class BridgeElevationInterpolatorTest extends EdgeElevationInterpolatorTest {
 
     @Override
-    protected ReaderWay createInterpolatableWay() {
-        ReaderWay bridgeWay = new ReaderWay(0);
-        bridgeWay.setTag("highway", "primary");
-        bridgeWay.setTag("bridge", "yes");
-        return bridgeWay;
+    protected IntsRef createInterpolatableFlags() {
+        IntsRef edgeFlags = new IntsRef(1);
+        roadEnvEnc.setEnum(false, edgeFlags, RoadEnvironment.BRIDGE);
+        return edgeFlags;
     }
 
     @Override
@@ -73,7 +71,7 @@ public class BridgeElevationInterpolatorTest extends EdgeElevationInterpolatorTe
         na.setNode(8, 30, 10, 10);
         na.setNode(9, 40, 10, 0);
 
-        FlagEncoder encoder = tagParserManager.getEncoder("car");
+        FlagEncoder encoder = encodingManager.getEncoder("car");
         EdgeIteratorState edge01, edge12, edge23, edge34, edge56, edge67, edge78, edge89, edge17, edge27, edge37;
         GHUtility.setSpeed(60, 60, encoder,
                 edge01 = graph.edge(0, 1).setDistance(10),
@@ -90,20 +88,19 @@ public class BridgeElevationInterpolatorTest extends EdgeElevationInterpolatorTe
 
         edge17.setWayGeometry(Helper.createPointList3D(12, 2, 200, 14, 4, 400, 16, 6, 600, 18, 8, 800));
 
-        IntsRef relFlags = tagParserManager.createRelationFlags();
-        edge01.setFlags(tagParserManager.handleWayTags(normalWay, relFlags));
-        edge12.setFlags(tagParserManager.handleWayTags(normalWay, relFlags));
-        edge23.setFlags(tagParserManager.handleWayTags(normalWay, relFlags));
-        edge34.setFlags(tagParserManager.handleWayTags(normalWay, relFlags));
+        edge01.setFlags(normalFlags);
+        edge12.setFlags(normalFlags);
+        edge23.setFlags(normalFlags);
+        edge34.setFlags(normalFlags);
 
-        edge56.setFlags(tagParserManager.handleWayTags(normalWay, relFlags));
-        edge67.setFlags(tagParserManager.handleWayTags(interpolatableWay, relFlags));
-        edge78.setFlags(tagParserManager.handleWayTags(interpolatableWay, relFlags));
-        edge89.setFlags(tagParserManager.handleWayTags(normalWay, relFlags));
+        edge56.setFlags(normalFlags);
+        edge67.setFlags(interpolatableFlags);
+        edge78.setFlags(interpolatableFlags);
+        edge89.setFlags(normalFlags);
 
-        edge17.setFlags(tagParserManager.handleWayTags(interpolatableWay, relFlags));
-        edge27.setFlags(tagParserManager.handleWayTags(interpolatableWay, relFlags));
-        edge37.setFlags(tagParserManager.handleWayTags(interpolatableWay, relFlags));
+        edge17.setFlags(interpolatableFlags);
+        edge27.setFlags(interpolatableFlags);
+        edge37.setFlags(interpolatableFlags);
 
         final GHIntHashSet outerNodeIds = new GHIntHashSet();
         final GHIntHashSet innerNodeIds = new GHIntHashSet();

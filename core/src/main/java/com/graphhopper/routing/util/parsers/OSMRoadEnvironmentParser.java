@@ -18,13 +18,9 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.storage.IntsRef;
-
-import java.util.List;
 
 import static com.graphhopper.routing.ev.RoadEnvironment.*;
 
@@ -32,13 +28,8 @@ public class OSMRoadEnvironmentParser implements TagParser {
 
     private final EnumEncodedValue<RoadEnvironment> roadEnvEnc;
 
-    public OSMRoadEnvironmentParser() {
-        this.roadEnvEnc = new EnumEncodedValue<>(RoadEnvironment.KEY, RoadEnvironment.class);
-    }
-
-    @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> list) {
-        list.add(roadEnvEnc);
+    public OSMRoadEnvironmentParser(EnumEncodedValue<RoadEnvironment> roadEnvEnc) {
+        this.roadEnvEnc = roadEnvEnc;
     }
 
     @Override

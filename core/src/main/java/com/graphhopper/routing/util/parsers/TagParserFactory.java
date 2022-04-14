@@ -1,7 +1,7 @@
 package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.util.PMap;
+import com.graphhopper.routing.ev.EncodedValueLookup;
 
 public interface TagParserFactory {
-    TagParser create(String name, PMap configuration);
+    TagParser create(EncodedValueLookup lookup, String name);
 }

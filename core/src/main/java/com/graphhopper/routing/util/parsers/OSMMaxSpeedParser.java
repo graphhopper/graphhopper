@@ -19,15 +19,11 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
-
-import java.util.List;
 
 import static com.graphhopper.routing.ev.MaxSpeed.UNSET_SPEED;
 
@@ -35,20 +31,11 @@ public class OSMMaxSpeedParser implements TagParser {
 
     protected final DecimalEncodedValue carMaxSpeedEnc;
 
-    public OSMMaxSpeedParser() {
-        this(MaxSpeed.create());
-    }
-
     public OSMMaxSpeedParser(DecimalEncodedValue carMaxSpeedEnc) {
         if (!carMaxSpeedEnc.isStoreTwoDirections())
             throw new IllegalArgumentException("EncodedValue for maxSpeed must be able to store two directions");
 
         this.carMaxSpeedEnc = carMaxSpeedEnc;
-    }
-
-    @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> list) {
-        list.add(carMaxSpeedEnc);
     }
 
     @Override
@@ -81,7 +68,7 @@ public class OSMMaxSpeedParser implements TagParser {
         carMaxSpeedEnc.setDecimal(true, edgeFlags, bwdSpeed);
         return edgeFlags;
     }
-    
+
     /**
      * @return <i>true</i> if the given speed is not {@link Double#NaN}
      */

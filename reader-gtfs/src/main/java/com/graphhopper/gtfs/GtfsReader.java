@@ -196,16 +196,22 @@ class GtfsReader {
         LOGGER.debug("Creating transfers to stop {}, platform {}", toPlatformDescriptor.stop_id, toPlatformDescriptor);
         List<Transfer> transfersToPlatform = transfers.getTransfersToStop(toPlatformDescriptor.stop_id, routeIdOrNull(toPlatformDescriptor));
         transfersToPlatform.forEach(transfer -> {
-            int stationNode = gtfsStorage.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(id, transfer.from_stop_id));
-            for (PtGraph.PtEdge ptEdge : ptGraph.backEdgesAround(stationNode)) {
-                if (ptEdge.getType() == GtfsStorage.EdgeType.EXIT_PT) {
-                    GtfsStorage.PlatformDescriptor fromPlatformDescriptor = ptEdge.getAttrs().platformDescriptor;
-                    if (fromPlatformDescriptor.stop_id.equals(transfer.from_stop_id) &&
-                            (transfer.from_route_id == null && fromPlatformDescriptor instanceof GtfsStorage.RouteTypePlatform || transfer.from_route_id != null && GtfsStorage.PlatformDescriptor.route(id, transfer.from_stop_id, transfer.from_route_id).equals(fromPlatformDescriptor))) {
-                        LOGGER.debug("  Creating transfers from stop {}, platform {}", transfer.from_stop_id, fromPlatformDescriptor);
-                        insertTransferEdges(ptEdge.getAdjNode(), transfer.min_transfer_time, departureTimeline, toPlatformDescriptor);
+            GtfsStorage.FeedIdWithStopId stopId = new GtfsStorage.FeedIdWithStopId(id, transfer.from_stop_id);
+            Integer stationNode = gtfsStorage.getStationNodes().get(stopId);
+            if (stationNode != null) {
+                for (PtGraph.PtEdge ptEdge : ptGraph.backEdgesAround(stationNode)) {
+                    if (ptEdge.getType() == GtfsStorage.EdgeType.EXIT_PT) {
+                        GtfsStorage.PlatformDescriptor fromPlatformDescriptor = ptEdge.getAttrs().platformDescriptor;
+                        if (fromPlatformDescriptor.stop_id.equals(transfer.from_stop_id) &&
+                                (transfer.from_route_id == null && fromPlatformDescriptor instanceof GtfsStorage.RouteTypePlatform || transfer.from_route_id != null && GtfsStorage.PlatformDescriptor.route(id, transfer.from_stop_id, transfer.from_route_id).equals(fromPlatformDescriptor))) {
+                            LOGGER.debug("  Creating transfers from stop {}, platform {}", transfer.from_stop_id, fromPlatformDescriptor);
+                            insertTransferEdges(ptEdge.getAdjNode(), transfer.min_transfer_time, departureTimeline, toPlatformDescriptor);
+                        }
                     }
                 }
+            } else {
+                Stop stop = gtfsStorage.getGtfsFeeds().get(stopId.feedId).stops.get(stopId.stopId);
+                LOGGER.warn("Stop {} has no station node", stopId);
             }
         });
     }

@@ -24,11 +24,16 @@ import com.graphhopper.json.Statement;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.SkadiProvider;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.ev.Subnetwork;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.DefaultSnapFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
-import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
+import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
+import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.IntsRef;
@@ -1048,13 +1053,22 @@ public class GraphHopperTest {
                 setStoreOnFlush(true);
 
         if (!withTunnelInterpolation) {
-            hopper.getTagParserManagerBuilder().add(new OSMRoadEnvironmentParser() {
+            hopper.setTagParserFactory(new DefaultTagParserFactory() {
                 @Override
-                public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
-                    // do not change RoadEnvironment to avoid triggering tunnel interpolation
-                    return edgeFlags;
+                public TagParser create(EncodedValueLookup lookup, String name) {
+                    TagParser parser = super.create(lookup, name);
+                    if (name.equals("road_environment"))
+                        parser = new OSMRoadEnvironmentParser(lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class)) {
+                            @Override
+                            public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+                                // do not change RoadEnvironment to avoid triggering tunnel interpolation
+                                return edgeFlags;
+                            }
+                        };
+                    return parser;
                 }
-            }).addIfAbsent(new DefaultFlagEncoderFactory(), vehicle);
+            });
+            hopper.setEncodedValuesString("road_environment");
         }
 
         hopper.setElevationProvider(new SRTMProvider(DIR));
@@ -2167,9 +2181,6 @@ public class GraphHopperTest {
     public void simplifyWithInstructionsAndPathDetails() {
         final String profile = "profile";
         GraphHopper hopper = new GraphHopper();
-        hopper.getTagParserManagerBuilder()
-                .add(new OSMMaxSpeedParser())
-                .add(new CarFlagEncoder());
         hopper.setOSMFile(BAYREUTH).
                 setProfiles(new Profile(profile).setVehicle("car").setWeighting("fastest")).
                 setGraphHopperLocation(GH_LOCATION);
@@ -2519,6 +2530,44 @@ public class GraphHopperTest {
         assertFalse(response.hasErrors(), response.getErrors().toString());
         double distance = response.getBest().getDistance();
         assertEquals(467, distance, 1);
+    }
+
+    @Test
+    public void testLoadGraph_implicitEncodedValues_issue1862() {
+        GraphHopper hopper = new GraphHopper()
+                .setProfiles(
+                        new Profile("p_car").setVehicle("car").setWeighting("fastest"),
+                        new Profile("p_bike").setVehicle("bike").setWeighting("fastest")
+                )
+                .setGraphHopperLocation(GH_LOCATION)
+                .setOSMFile(BAYREUTH);
+        hopper.importOrLoad();
+        int nodes = hopper.getGraphHopperStorage().getNodes();
+        hopper.close();
+
+        // load without configured FlagEncoders
+        hopper = new GraphHopper();
+        hopper.setProfiles(Arrays.asList(
+                new Profile("p_car").setVehicle("car").setWeighting("fastest"),
+                new Profile("p_bike").setVehicle("bike").setWeighting("fastest"))
+        );
+        hopper.setGraphHopperLocation(GH_LOCATION);
+        assertTrue(hopper.load());
+        hopper.getGraphHopperStorage();
+        assertEquals(nodes, hopper.getGraphHopperStorage().getNodes());
+        hopper.close();
+
+        // load via explicitly configured FlagEncoders
+        hopper = new GraphHopper();
+        hopper.setFlagEncodersString("car,bike");
+        hopper.setProfiles(Arrays.asList(
+                new Profile("p_car").setVehicle("car").setWeighting("fastest"),
+                new Profile("p_bike").setVehicle("bike").setWeighting("fastest"))
+        );
+        hopper.setGraphHopperLocation(GH_LOCATION);
+        assertTrue(hopper.load());
+        assertEquals(nodes, hopper.getGraphHopperStorage().getNodes());
+        hopper.close();
     }
 
 }

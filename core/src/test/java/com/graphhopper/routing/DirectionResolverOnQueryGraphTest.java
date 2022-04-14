@@ -54,7 +54,7 @@ public class DirectionResolverOnQueryGraphTest {
 
     @BeforeEach
     public void setup() {
-        encoder = new CarFlagEncoder();
+        encoder = FlagEncoders.createCar();
         graph = new BaseGraph.Builder(EncodingManager.create(encoder)).create();
         na = graph.getNodeAccess();
     }

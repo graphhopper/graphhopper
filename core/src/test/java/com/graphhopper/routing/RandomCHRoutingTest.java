@@ -44,7 +44,7 @@ public class RandomCHRoutingTest {
         private final int maxTurnCosts;
         private final int uTurnCosts;
         private final Directory dir;
-        private final CarFlagEncoder encoder;
+        private final FlagEncoder encoder;
         private final EncodingManager encodingManager;
         private Weighting weighting;
         private BaseGraph graph;
@@ -55,7 +55,7 @@ public class RandomCHRoutingTest {
             this.maxTurnCosts = 10;
             this.uTurnCosts = uTurnCosts;
             dir = new RAMDirectory();
-            encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
+            encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", maxTurnCosts));
             encodingManager = EncodingManager.create(encoder);
             graph = new BaseGraph.Builder(encodingManager).create();
         }

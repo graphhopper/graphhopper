@@ -20,10 +20,7 @@ package com.graphhopper.routing.ch;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.DijkstraBidirectionCH;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -43,7 +40,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class NodeBasedNodeContractorTest {
-    private final CarFlagEncoder encoder = new CarFlagEncoder();
+    private final FlagEncoder encoder = FlagEncoders.createCar();
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
     private final BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
@@ -265,7 +262,7 @@ public class NodeBasedNodeContractorTest {
      */
     @Test
     public void testNodeContraction_shortcutWeightRounding() {
-        CarFlagEncoder encoder = new CarFlagEncoder();
+        FlagEncoder encoder = FlagEncoders.createCar();
         EncodingManager encodingManager = EncodingManager.create(encoder);
         BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         // 0 ------------> 4
@@ -304,7 +301,7 @@ public class NodeBasedNodeContractorTest {
     public void testNodeContraction_preventUnnecessaryShortcutWithLoop() {
         // there should not be shortcuts where one of the skipped edges is a loop at the node to be contracted,
         // see also #1583
-        CarFlagEncoder encoder = new CarFlagEncoder();
+        FlagEncoder encoder = FlagEncoders.createCar();
         EncodingManager encodingManager = EncodingManager.create(encoder);
         BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         // 0 - 1 - 2 - 3

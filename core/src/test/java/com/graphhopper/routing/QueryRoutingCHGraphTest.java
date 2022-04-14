@@ -23,8 +23,9 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
@@ -32,6 +33,7 @@ import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -42,7 +44,7 @@ import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static org.junit.jupiter.api.Assertions.*;
 
 class QueryRoutingCHGraphTest {
-    private CarFlagEncoder encoder;
+    private FlagEncoder encoder;
     private EncodingManager encodingManager;
     private FastestWeighting weighting;
     private BaseGraph graph;
@@ -50,7 +52,7 @@ class QueryRoutingCHGraphTest {
 
     @BeforeEach
     public void setup() {
-        encoder = new CarFlagEncoder(5, 5, 5, true);
+        encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", 5).putObject("speed_two_directions", true));
         encodingManager = EncodingManager.create(encoder);
         graph = new BaseGraph.Builder(encodingManager).create();
         weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()));

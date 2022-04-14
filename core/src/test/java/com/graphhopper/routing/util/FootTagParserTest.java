@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Peter Karich
  */
-public class FootFlagEncoderTest {
+public class FootTagParserTest {
     private final EncodingManager encodingManager = EncodingManager.create("car,bike,foot");
     private final FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
     private final DecimalEncodedValue footAvgSpeedEnc = footEncoder.getAverageSpeedEnc();
@@ -418,48 +418,41 @@ public class FootFlagEncoderTest {
 
     @Test
     public void testBlockByDefault() {
-        FootFlagEncoder tmpFootEncoder = new FootFlagEncoder();
-        EncodingManager.create(tmpFootEncoder);
-
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         // potential barriers are no barrier by default
-        assertFalse(tmpFootEncoder.isBarrier(node));
+        assertFalse(footEncoder.isBarrier(node));
         node.setTag("access", "no");
-        assertTrue(tmpFootEncoder.isBarrier(node));
+        assertTrue(footEncoder.isBarrier(node));
 
         // absolute barriers always block
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "fence");
-        assertTrue(tmpFootEncoder.isBarrier(node));
+        assertTrue(footEncoder.isBarrier(node));
         node.setTag("barrier", "fence");
         node.setTag("access", "yes");
-        assertFalse(tmpFootEncoder.isBarrier(node));
+        assertFalse(footEncoder.isBarrier(node));
 
         // pass potential barriers per default (if no other access tag exists)
-        tmpFootEncoder = new FootFlagEncoder();
-        EncodingManager.create(tmpFootEncoder);
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
-        assertFalse(tmpFootEncoder.isBarrier(node));
+        assertFalse(footEncoder.isBarrier(node));
         node.setTag("access", "yes");
-        assertFalse(tmpFootEncoder.isBarrier(node));
+        assertFalse(footEncoder.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "fence");
-        assertTrue(tmpFootEncoder.isBarrier(node));
+        assertTrue(footEncoder.isBarrier(node));
 
         // don't block potential barriers: barrier:cattle_grid should not block here
-        tmpFootEncoder = new FootFlagEncoder();
-        EncodingManager.create(tmpFootEncoder);
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "cattle_grid");
-        assertFalse(tmpFootEncoder.isBarrier(node));
+        assertFalse(footEncoder.isBarrier(node));
     }
 
     @Test
     public void maxSpeed() {
-        FootFlagEncoder encoder = new FootFlagEncoder(new PMap().putObject("speed_bits", 4).putObject("speed_factor", 2));
+        FlagEncoder encoder = FlagEncoders.createFoot(new PMap().putObject("speed_bits", 4).putObject("speed_factor", 2));
         // The foot max speed is supposed to be 15km/h, but for speed_bits=4,speed_factor=2 as we use here 15 cannot
         // be stored. In fact, when we set the speed of an edge to 15 and call the getter afterwards we get a value of 16
         // because of the internal (scaled) integer representation:

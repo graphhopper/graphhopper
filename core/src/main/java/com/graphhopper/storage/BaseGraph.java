@@ -26,6 +26,7 @@ import com.graphhopper.search.StringIndex;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
+import java.io.Closeable;
 import java.util.Collections;
 
 import static com.graphhopper.util.Helper.nf;
@@ -41,7 +42,7 @@ import static com.graphhopper.util.Helper.nf;
  * Life cycle: (1) object creation, (2) configuration via setters & getters, (3) create or
  * loadExisting, (4) usage, (5) flush, (6) close
  */
-public class BaseGraph implements Graph {
+public class BaseGraph implements Graph, Closeable {
     private final static String STRING_IDX_NAME_KEY = "name";
     final BaseGraphNodesAndEdges store;
     final NodeAccess nodeAccess;
@@ -151,7 +152,9 @@ public class BaseGraph implements Graph {
         return store.getFrozen();
     }
 
-    public void create(long initSize) {
+    public BaseGraph create(long initSize) {
+        checkNotInitialized();
+        dir.create();
         store.create(initSize);
 
         initSize = Math.min(initSize, 2000);
@@ -163,6 +166,7 @@ public class BaseGraph implements Graph {
         setInitialized();
         // 0 stands for no separate geoRef
         maxGeoRef = 4;
+        return this;
     }
 
     String toDetailsString() {
@@ -199,6 +203,7 @@ public class BaseGraph implements Graph {
         }
     }
 
+    @Override
     public void close() {
         if (!wayGeometry.isClosed())
             wayGeometry.close();
@@ -219,7 +224,9 @@ public class BaseGraph implements Graph {
         return maxGeoRef;
     }
 
-    void loadExisting() {
+    public void loadExisting() {
+        checkNotInitialized();
+
         if (!store.loadExisting())
             throw new IllegalStateException("Cannot load edges or nodes. corrupt file or directory? " + dir);
 

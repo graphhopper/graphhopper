@@ -41,9 +41,6 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     private final Set<String> excludeSmoothness = new HashSet<>();
     private final int maxInclinePercent = 6;
 
-    /**
-     * Should be only instantiated via EncodingManager
-     */
     public WheelchairFlagEncoder() {
         this(4, 1);
     }
@@ -56,7 +53,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     }
 
     protected WheelchairFlagEncoder(int speedBits, double speedFactor) {
-        super(speedBits, speedFactor, true);
+        super("wheelchair", speedBits, speedFactor, true);
 
         restrictions.add("wheelchair");
 
@@ -248,10 +245,5 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         }
 
         return weightToPrioMap.lastEntry().getValue();
-    }
-
-    @Override
-    public String getName() {
-        return "wheelchair";
     }
 }

@@ -42,6 +42,7 @@ import static com.graphhopper.routing.util.PriorityCode.*;
 public class FootFlagEncoder extends AbstractFlagEncoder {
     static final int SLOW_SPEED = 2;
     static final int MEAN_SPEED = 5;
+    // larger value required - ferries are faster than pedestrians
     static final int FERRY_SPEED = 15;
     final Set<String> safeHighwayTags = new HashSet<>();
     final Set<String> allowedHighwayTags = new HashSet<>();
@@ -49,8 +50,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     final Set<String> allowedSacScale = new HashSet<>();
     protected HashSet<String> sidewalkValues = new HashSet<>(5);
     protected HashSet<String> sidewalksNoValues = new HashSet<>(5);
-    protected final boolean speedTwoDirections;
-    protected DecimalEncodedValue priorityWayEncoder;
+    protected final DecimalEncodedValue priorityWayEncoder;
     protected EnumEncodedValue<RouteNetwork> footRouteEnc;
     protected Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
@@ -59,16 +59,22 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     }
 
     public FootFlagEncoder(PMap properties) {
-        this(properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 1), properties.getBool("speed_two_directions", false));
+        this(properties.getString("name", "foot"),
+                properties.getInt("speed_bits", 4),
+                properties.getDouble("speed_factor", 1),
+                properties.getBool("speed_two_directions", false));
 
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
     protected FootFlagEncoder(int speedBits, double speedFactor, boolean speedTwoDirections) {
-        super(speedBits, speedFactor, 0);
-        this.speedTwoDirections = speedTwoDirections;
-        avgSpeedEnc = new DecimalEncodedValueImpl(getKey(getName(), "average_speed"), speedBits, speedFactor, speedTwoDirections);
+        this("foot", speedBits, speedFactor, speedTwoDirections);
+    }
+
+    protected FootFlagEncoder(String name, int speedBits, double speedFactor, boolean speedTwoDirections) {
+        super(name, speedBits, speedFactor, speedTwoDirections, 0);
+        priorityWayEncoder = new DecimalEncodedValueImpl(getKey(name, "priority"), 4, PriorityCode.getFactor(1), false);
 
         restrictedValues.add("no");
         restrictedValues.add("restricted");
@@ -139,12 +145,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public void createEncodedValues(List<EncodedValue> registerNewEncodedValue) {
-        // first two bits are reserved for route handling in superclass
         super.createEncodedValues(registerNewEncodedValue);
-        // larger value required - ferries are faster than pedestrians
-        String prefix = getName();
-        registerNewEncodedValue.add(avgSpeedEnc);
-        registerNewEncodedValue.add(priorityWayEncoder = new DecimalEncodedValueImpl(getKey(prefix, "priority"), 4, PriorityCode.getFactor(1), false));
+        registerNewEncodedValue.add(priorityWayEncoder);
 
         footRouteEnc = getEnumEncodedValue(RouteNetwork.key("foot"), RouteNetwork.class);
     }
@@ -242,7 +244,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             speed = getMaxSpeed();
         if (fwd)
             avgSpeedEnc.setDecimal(false, edgeFlags, speed);
-        if (bwd && speedTwoDirections)
+        if (bwd && avgSpeedEnc.isStoreTwoDirections())
             avgSpeedEnc.setDecimal(true, edgeFlags, speed);
     }
 
@@ -292,10 +294,5 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             return true;
 
         return PriorityWeighting.class.isAssignableFrom(feature);
-    }
-
-    @Override
-    public String getName() {
-        return "foot";
     }
 }

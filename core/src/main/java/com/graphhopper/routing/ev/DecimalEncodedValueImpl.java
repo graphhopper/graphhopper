@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.ev;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.storage.IntsRef;
 
 /**
@@ -68,6 +70,23 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
             throw new IllegalArgumentException("defaultIsInfinity cannot be true when minValue is negative");
     }
 
+    @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+    DecimalEncodedValueImpl(@JsonProperty("name") String name,
+                            @JsonProperty("bits") int bits,
+                            @JsonProperty("min_value") int minValue,
+                            @JsonProperty("max_value") int maxValue,
+                            @JsonProperty("negate_reverse_direction") boolean negateReverseDirection,
+                            @JsonProperty("store_two_directions") boolean storeTwoDirections,
+                            @JsonProperty("factor") double factor,
+                            @JsonProperty("default_is_infinity") boolean defaultIsInfinity,
+                            @JsonProperty("use_maximum_as_infinity") boolean useMaximumAsInfinity) {
+        // we need this constructor for Jackson
+        super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections);
+        this.factor = factor;
+        this.defaultIsInfinity = defaultIsInfinity;
+        this.useMaximumAsInfinity = useMaximumAsInfinity;
+    }
+
     @Override
     public void setDecimal(boolean reverse, IntsRef ref, double value) {
         if (!isInitialized())
@@ -110,6 +129,13 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
             return Double.POSITIVE_INFINITY;
         else
             return (factor * (int) Math.ceil(value / factor));
+    }
+
+    @Override
+    public double getSmallestNonZeroValue() {
+        if (minValue != 0 || negateReverseDirection)
+            throw new IllegalStateException("getting the smallest non-zero value is not possible if minValue!=0 or negateReverseDirection");
+        return factor;
     }
 
     @Override

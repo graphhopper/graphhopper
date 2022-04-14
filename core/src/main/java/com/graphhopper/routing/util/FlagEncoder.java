@@ -29,6 +29,10 @@ import com.graphhopper.routing.ev.EncodedValueLookup;
  */
 public interface FlagEncoder extends EncodedValueLookup {
 
+    default boolean isMotorVehicle() {
+        return getTransportationMode().isMotorVehicle();
+    }
+
     TransportationMode getTransportationMode();
 
     /**

@@ -17,13 +17,15 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
-import com.graphhopper.routing.util.Bike2WeightFlagEncoder;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
@@ -39,7 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @author Peter Karich
  */
 public class FastestWeightingTest {
-    private final FlagEncoder encoder = new CarFlagEncoder(5, 5, 10);
+    private final FlagEncoder encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", 10));
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
 
     @Test
@@ -86,7 +88,7 @@ public class FastestWeightingTest {
 
     @Test
     public void testTime() {
-        FlagEncoder tmpEnc = new Bike2WeightFlagEncoder();
+        FlagEncoder tmpEnc = FlagEncoders.createBike2();
         EncodingManager em = EncodingManager.create(tmpEnc);
         BaseGraph g = new BaseGraph.Builder(em).create();
         Weighting w = new FastestWeighting(tmpEnc);
@@ -135,6 +137,65 @@ public class FastestWeightingTest {
         // to the weight? how much should they contribute ?
 //        assertEquals(105, AbstractWeighting.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
         assertEquals(6000 + 5000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
+    }
+
+    @Test
+    public void testDestinationTag() {
+        FlagEncoder carEncoder = FlagEncoders.createCar();
+        FlagEncoder bikeEncoder = FlagEncoders.createBike();
+        EncodingManager em = EncodingManager.create(carEncoder, bikeEncoder);
+        BaseGraph graph = new BaseGraph.Builder(em).create();
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance(1000);
+        for (FlagEncoder encoder : em.fetchEdgeEncoders()) {
+            edge.set(encoder.getAccessEnc(), true);
+            edge.setReverse(encoder.getAccessEnc(), true);
+        }
+        edge.set(carEncoder.getAverageSpeedEnc(), 60);
+        edge.set(bikeEncoder.getAverageSpeedEnc(), 18);
+        EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
+
+        FastestWeighting weighting = new FastestWeighting(carEncoder);
+        FastestWeighting bikeWeighting = new FastestWeighting(bikeEncoder);
+
+        edge.set(roadAccessEnc, RoadAccess.YES);
+        assertEquals(60, weighting.calcEdgeWeight(edge, false), 1.e-6);
+        assertEquals(200, bikeWeighting.calcEdgeWeight(edge, false), 1.e-6);
+
+        // the destination tag does not change the weight for bikes!
+        edge.set(roadAccessEnc, RoadAccess.DESTINATION);
+        assertEquals(600, weighting.calcEdgeWeight(edge, false), 0.1);
+        assertEquals(200, bikeWeighting.calcEdgeWeight(edge, false), 0.1);
+    }
+
+    @Test
+    public void testPrivateTag() {
+        FlagEncoder carEncoder = FlagEncoders.createCar();
+        FlagEncoder bikeEncoder = FlagEncoders.createBike();
+        EncodingManager em = EncodingManager.create(carEncoder, bikeEncoder);
+        BaseGraph graph = new BaseGraph.Builder(em).create();
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance(1000);
+        for (FlagEncoder encoder : em.fetchEdgeEncoders()) {
+            edge.set(encoder.getAccessEnc(), true);
+            edge.setReverse(encoder.getAccessEnc(), true);
+        }
+        edge.set(carEncoder.getAverageSpeedEnc(), 60);
+        edge.set(bikeEncoder.getAverageSpeedEnc(), 18);
+        EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
+
+        FastestWeighting weighting = new FastestWeighting(carEncoder);
+        FastestWeighting bikeWeighting = new FastestWeighting(bikeEncoder);
+
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "secondary");
+
+        edge.set(roadAccessEnc, RoadAccess.YES);
+        assertEquals(60, weighting.calcEdgeWeight(edge, false), 1.e-6);
+        assertEquals(200, bikeWeighting.calcEdgeWeight(edge, false), 1.e-6);
+
+        edge.set(roadAccessEnc, RoadAccess.PRIVATE);
+        assertEquals(600, weighting.calcEdgeWeight(edge, false), 1.e-6);
+        // private should influence bike only slightly
+        assertEquals(240, bikeWeighting.calcEdgeWeight(edge, false), 1.e-6);
     }
 
     private void setTurnCost(Graph graph, int from, int via, int to, double turnCost) {

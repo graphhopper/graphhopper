@@ -919,13 +919,12 @@ public class RoutingAlgorithmTest {
             private final Weighting tmpW = new FastestWeighting(f.carEncoder);
 
             @Override
-            public FlagEncoder getFlagEncoder() {
-                return f.carEncoder;
-            }
-
-            @Override
             public double getMinWeight(double distance) {
                 return 0.8 * distance;
+            }
+
+            public boolean edgeHasNoAccess(EdgeIteratorState edgeState, boolean reverse) {
+                return tmpW.edgeHasNoAccess(edgeState, reverse);
             }
 
             @Override
@@ -976,7 +975,7 @@ public class RoutingAlgorithmTest {
 
             @Override
             public String toString() {
-                return tmpW.getFlagEncoder().toString() + "_" + getName();
+                return getName();
             }
         };
 
@@ -1095,7 +1094,7 @@ public class RoutingAlgorithmTest {
     }
 
     private static String getCHGraphName(Weighting weighting) {
-        return weighting.getName() + "_" + weighting.getFlagEncoder().toString();
+        return weighting.getName() + "_" + weighting.hashCode();
     }
 
     private static void assertPathFromEqualsTo(Path p, int node) {

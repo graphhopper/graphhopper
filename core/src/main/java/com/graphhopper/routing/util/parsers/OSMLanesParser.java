@@ -19,13 +19,8 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.IntEncodedValue;
-import com.graphhopper.routing.ev.Lanes;
 import com.graphhopper.storage.IntsRef;
-
-import java.util.List;
 
 /**
  * https://wiki.openstreetmap.org/wiki/Key:lanes
@@ -33,13 +28,8 @@ import java.util.List;
 public class OSMLanesParser implements TagParser {
     private final IntEncodedValue lanesEnc;
 
-    public OSMLanesParser() {
-        this.lanesEnc = Lanes.create();
-    }
-
-    @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(lanesEnc);
+    public OSMLanesParser(IntEncodedValue lanesEnc) {
+        this.lanesEnc = lanesEnc;
     }
 
     @Override

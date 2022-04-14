@@ -25,7 +25,10 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoders;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
@@ -56,7 +59,7 @@ public class InstructionListTest {
 
     @BeforeEach
     public void setUp() {
-        carEncoder = new CarFlagEncoder();
+        carEncoder = FlagEncoders.createCar();
         carManager = EncodingManager.create(carEncoder);
     }
 
@@ -299,7 +302,7 @@ public class InstructionListTest {
 
     @Test
     public void testNoInstructionIfSlightTurnAndAlternativeIsSharp3() {
-        BikeFlagEncoder bike = new BikeFlagEncoder();
+        FlagEncoder bike = FlagEncoders.createBike();
         EncodingManager tmpEM = new EncodingManager.Builder().add(bike).build();
         EnumEncodedValue<RoadClass> rcEV = tmpEM.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         BaseGraph g = new BaseGraph.Builder(tmpEM).create();
@@ -337,7 +340,7 @@ public class InstructionListTest {
 
     @Test
     public void testInstructionIfTurn() {
-        BikeFlagEncoder bike = new BikeFlagEncoder();
+        FlagEncoder bike = FlagEncoders.createBike();
         EncodingManager tmpEM = new EncodingManager.Builder().add(bike).build();
         EnumEncodedValue<RoadClass> rcEV = tmpEM.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         BaseGraph g = new BaseGraph.Builder(tmpEM).create();
@@ -375,7 +378,7 @@ public class InstructionListTest {
 
     @Test
     public void testInstructionIfSlightTurnForCustomProfile() {
-        FootFlagEncoder foot = new FootFlagEncoder();
+        FlagEncoder foot = FlagEncoders.createFoot();
         EncodingManager tmpEM = new EncodingManager.Builder().add(foot).build();
         BaseGraph g = new BaseGraph.Builder(tmpEM).create();
         // real world example: https://graphhopper.com/maps/?point=43.729379,7.417697&point=43.729798,7.417263&profile=foot
@@ -395,7 +398,7 @@ public class InstructionListTest {
         na.setNode(3, 43.729821, 7.41725);
         na.setNode(4, 43.729476, 7.417633);
 
-        DecimalEncodedValue priorityEnc = tmpEM.getDecimalEncodedValue(EncodingManager.getKey(foot.getName(), "priority")); // default is priority=0 so set it to 1
+        DecimalEncodedValue priorityEnc = tmpEM.getDecimalEncodedValue(EncodingManager.getKey(foot.toString(), "priority")); // default is priority=0 so set it to 1
         GHUtility.setSpeed(5, true, true, foot, g.edge(1, 2).setDistance(20).setName("myroad").set(priorityEnc, 1));
         GHUtility.setSpeed(5, true, true, foot, g.edge(2, 3).setDistance(20).setName("myroad").set(priorityEnc, 1));
         PointList pointList = new PointList();
@@ -421,7 +424,7 @@ public class InstructionListTest {
 
     @Test
     public void testInstructionWithHighlyCustomProfileWithRoadsBase() {
-        RoadsFlagEncoder roads = new RoadsFlagEncoder();
+        FlagEncoder roads = FlagEncoders.createRoadsFlagEncoder();
         EncodingManager tmpEM = EncodingManager.create(roads);
         EnumEncodedValue<RoadClass> rcEV = tmpEM.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         BaseGraph g = new BaseGraph.Builder(tmpEM).create();

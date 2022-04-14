@@ -22,9 +22,9 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.AreaIndex;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
@@ -50,14 +50,14 @@ public class LandmarkStorageTest {
     private BaseGraph graph;
     private FlagEncoder encoder;
     private BooleanEncodedValue subnetworkEnc;
+    private EncodingManager encodingManager;
 
     @BeforeEach
     public void setUp() {
-        encoder = new CarFlagEncoder();
+        encoder = FlagEncoders.createCar();
         subnetworkEnc = Subnetwork.create("car");
-        EncodingManager encodingManager = new EncodingManager.Builder().add(encoder).add(subnetworkEnc).build();
-        graph = new BaseGraph.Builder(encodingManager).build();
-        graph.create(1000);
+        encodingManager = new EncodingManager.Builder().add(encoder).add(subnetworkEnc).build();
+        graph = new BaseGraph.Builder(encodingManager).create();
     }
 
     @AfterEach
@@ -70,7 +70,7 @@ public class LandmarkStorageTest {
     public void testInfiniteWeight() {
         Directory dir = new RAMDirectory();
         EdgeIteratorState edge = graph.edge(0, 1);
-        int res = new LandmarkStorage(graph, dir, new LMConfig("c1", new FastestWeighting(encoder) {
+        int res = new LandmarkStorage(graph, encodingManager, dir, new LMConfig("c1", new FastestWeighting(encoder) {
             @Override
             public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
                 return Integer.MAX_VALUE * 2L;
@@ -79,7 +79,7 @@ public class LandmarkStorageTest {
         assertEquals(Integer.MAX_VALUE, res);
 
         dir = new RAMDirectory();
-        res = new LandmarkStorage(graph, dir, new LMConfig("c2", new FastestWeighting(encoder) {
+        res = new LandmarkStorage(graph, encodingManager, dir, new LMConfig("c2", new FastestWeighting(encoder) {
             @Override
             public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
                 return Double.POSITIVE_INFINITY;
@@ -92,7 +92,7 @@ public class LandmarkStorageTest {
     public void testSetGetWeight() {
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(40.1));
         Directory dir = new RAMDirectory();
-        LandmarkStorage lms = new LandmarkStorage(graph, dir, new LMConfig("c1", new FastestWeighting(encoder)), 4).
+        LandmarkStorage lms = new LandmarkStorage(graph, encodingManager, dir, new LMConfig("c1", new FastestWeighting(encoder)), 4).
                 setMaximumWeight(LandmarkStorage.PRECISION);
         lms._getInternalDA().create(2000);
         // 2^16=65536, use -1 for infinity and -2 for maximum
@@ -127,7 +127,7 @@ public class LandmarkStorageTest {
         // 1 means => 2 allowed edge keys => excludes the node 6
         subnetworkRemoval(weighting, 1);
 
-        LandmarkStorage storage = new LandmarkStorage(graph, new RAMDirectory(), new LMConfig("car", weighting), 2);
+        LandmarkStorage storage = new LandmarkStorage(graph, encodingManager, new RAMDirectory(), new LMConfig("car", weighting), 2);
         storage.setMinimumNodes(2);
         storage.createLandmarks();
         assertEquals(3, storage.getSubnetworksWithLandmarks());
@@ -150,7 +150,7 @@ public class LandmarkStorageTest {
         // 3 nodes => 6 allowed edge keys but still do not exclude 3 & 4 as strongly connected and not a too small subnetwork!
         subnetworkRemoval(weighting, 4);
 
-        LandmarkStorage storage = new LandmarkStorage(graph, new RAMDirectory(), new LMConfig("car", weighting), 2);
+        LandmarkStorage storage = new LandmarkStorage(graph, encodingManager, new RAMDirectory(), new LMConfig("car", weighting), 2);
         storage.setMinimumNodes(3);
         storage.createLandmarks();
         assertEquals(2, storage.getSubnetworksWithLandmarks());
@@ -180,7 +180,7 @@ public class LandmarkStorageTest {
         // 1 allowed node => 2 allowed edge keys (exclude 2 and 3 because they are separate too small oneway subnetworks)
         subnetworkRemoval(weighting, 1);
 
-        LandmarkStorage storage = new LandmarkStorage(graph, new RAMDirectory(), new LMConfig("car", weighting), 2);
+        LandmarkStorage storage = new LandmarkStorage(graph, encodingManager, new RAMDirectory(), new LMConfig("car", weighting), 2);
         storage.setMinimumNodes(2);
         storage.createLandmarks();
 
@@ -196,7 +196,7 @@ public class LandmarkStorageTest {
         GHUtility.setSpeed(30, true, true, encoder, graph.edge(1, 2).setDistance(10));
         graph.edge(2, 3).setDistance(10.1).set(encoder.getAccessEnc(), true, true);
 
-        LandmarkStorage storage = new LandmarkStorage(graph, new RAMDirectory(), new LMConfig("car", new FastestWeighting(encoder)), 2);
+        LandmarkStorage storage = new LandmarkStorage(graph, encodingManager, new RAMDirectory(), new LMConfig("car", new FastestWeighting(encoder)), 2);
         storage.setMinimumNodes(2);
         storage.createLandmarks();
 
@@ -210,7 +210,7 @@ public class LandmarkStorageTest {
         graph.edge(2, 3).setDistance(10.1).set(encoder.getAccessEnc(), true, true);
         GHUtility.setSpeed(30, true, true, encoder, graph.edge(2, 3).setDistance(10));
 
-        LandmarkStorage storage = new LandmarkStorage(graph, new RAMDirectory(), new LMConfig("car", new FastestWeighting(encoder)), 2);
+        LandmarkStorage storage = new LandmarkStorage(graph, encodingManager, new RAMDirectory(), new LMConfig("car", new FastestWeighting(encoder)), 2);
         storage.setMinimumNodes(2);
         storage.createLandmarks();
 
@@ -223,7 +223,7 @@ public class LandmarkStorageTest {
     public void testWithBorderBlocking() {
         RoutingAlgorithmTest.initBiGraph(graph, encoder);
 
-        LandmarkStorage storage = new LandmarkStorage(graph, new RAMDirectory(), new LMConfig("car", new FastestWeighting(encoder)), 2);
+        LandmarkStorage storage = new LandmarkStorage(graph, encodingManager, new RAMDirectory(), new LMConfig("car", new FastestWeighting(encoder)), 2);
         final SplitArea right = new SplitArea(emptyList());
         final SplitArea left = new SplitArea(emptyList());
         final AreaIndex<SplitArea> areaIndex = new AreaIndex<SplitArea>(emptyList()) {

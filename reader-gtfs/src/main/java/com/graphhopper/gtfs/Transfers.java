@@ -45,7 +45,9 @@ public class Transfers {
                 .flatMap(t -> {
                     Stop fromStop = feed.stops.get(t.from_stop_id);
                     if (fromStop.location_type == 1) {
-                        return feed.stops.values().stream().filter(platform -> fromStop.stop_id.equals(platform.parent_station))
+                        return feed.stops.values().stream()
+                                .filter(location -> location.location_type == 0)
+                                .filter(stop -> fromStop.stop_id.equals(stop.parent_station))
                                 .map(platform -> {
                                     Transfer clone = t.clone();
                                     clone.from_stop_id = platform.stop_id;
@@ -58,7 +60,9 @@ public class Transfers {
                 .flatMap(t -> {
                     Stop toStop = feed.stops.get(t.to_stop_id);
                     if (toStop.location_type == 1) {
-                        return feed.stops.values().stream().filter(platform -> toStop.stop_id.equals(platform.parent_station))
+                        return feed.stops.values().stream()
+                                .filter(location -> location.location_type == 0)
+                                .filter(stop -> toStop.stop_id.equals(stop.parent_station))
                                 .map(platform -> {
                                     Transfer clone = t.clone();
                                     clone.to_stop_id = platform.stop_id;
