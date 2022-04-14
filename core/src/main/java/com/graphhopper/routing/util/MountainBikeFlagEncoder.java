@@ -22,7 +22,7 @@ import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
-import static com.graphhopper.routing.util.PriorityCode.*;
+import static com.graphhopper.routing.util.PenaltyCode.*;
 
 /**
  * Specifies the settings for mountain biking
@@ -140,7 +140,8 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
     }
 
     @Override
-    void collect(IntsRef edgeFlags, ReaderWay way, double wayTypeSpeed, BidirectionalTreeMap weightToPrioMap) {
+    void collect(IntsRef edgeFlags, ReaderWay way, double wayTypeSpeed,
+            BidirectionalTreeMap<Double, Double> weightToPrioMap) {
         super.collect(edgeFlags, way, wayTypeSpeed, weightToPrioMap);
 
         String highway = way.getTag("highway");

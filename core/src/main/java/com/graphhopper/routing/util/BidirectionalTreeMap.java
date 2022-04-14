@@ -21,19 +21,18 @@ import java.util.TreeMap;
 import java.util.Map.Entry;
 
 /**
- * A simple wrapper around two Maps that stores directionally-aware priority
- * values.
+ * A simple wrapper around two Maps that stores directionally-aware values.
  */
-public class BidirectionalTreeMap {
-  private TreeMap<Double, Integer> forward;
-  private TreeMap<Double, Integer> backward;
+public class BidirectionalTreeMap<Key, Value> {
+  private TreeMap<Key, Value> forward;
+  private TreeMap<Key, Value> backward;
 
   BidirectionalTreeMap() {
     this.forward = new TreeMap<>();
     this.backward = new TreeMap<>();
   }
 
-  public void put(boolean reverse, Double key, Integer value) {
+  public void put(boolean reverse, Key key, Value value) {
     if (reverse) {
       this.backward.put(key, value);
     } else {
@@ -41,12 +40,12 @@ public class BidirectionalTreeMap {
     }
   }
 
-  public void put(Double key, Integer value) {
+  public void put(Key key, Value value) {
     this.forward.put(key, value);
     this.backward.put(key, value);
   }
 
-  public Entry<Double, Integer> lastEntry(boolean reverse) {
+  public Entry<Key, Value> lastEntry(boolean reverse) {
     if (reverse) {
       return this.backward.lastEntry();
     }
