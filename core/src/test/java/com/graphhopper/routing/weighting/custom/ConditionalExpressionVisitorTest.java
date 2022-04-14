@@ -141,7 +141,7 @@ public class ConditionalExpressionVisitorTest {
         IllegalArgumentException ret = assertThrows(IllegalArgumentException.class,
                 () -> ConditionalExpressionVisitor.parseExpressions(new StringBuilder(),
                         validVariable, "[HERE]", new HashSet<>(),
-                        Arrays.asList(If("max_weight > 10", Statement.Op.MULTIPLY, 0)),
+                        Arrays.asList(If("max_weight > 10", Statement.Op.MULTIPLY, "0")),
                         lookup, ""));
         assertTrue(ret.getMessage().startsWith("[HERE] invalid expression \"max_weight > 10\": encoded value 'max_weight' not available"), ret.getMessage());
 
@@ -149,7 +149,7 @@ public class ConditionalExpressionVisitorTest {
         ret = assertThrows(IllegalArgumentException.class,
                 () -> ConditionalExpressionVisitor.parseExpressions(new StringBuilder(),
                         validVariable, "[HERE]", new HashSet<>(),
-                        Arrays.asList(If("country == GERMANY", Statement.Op.MULTIPLY, 0)),
+                        Arrays.asList(If("country == GERMANY", Statement.Op.MULTIPLY, "0")),
                         lookup, ""));
         assertTrue(ret.getMessage().startsWith("[HERE] invalid expression \"country == GERMANY\": identifier GERMANY invalid"), ret.getMessage());
 
@@ -157,7 +157,7 @@ public class ConditionalExpressionVisitorTest {
         ret = assertThrows(IllegalArgumentException.class,
                 () -> ConditionalExpressionVisitor.parseExpressions(new StringBuilder(),
                         validVariable, "[HERE]", new HashSet<>(),
-                        Arrays.asList(If("edge.fetchWayGeometry().size() > 2", Statement.Op.MULTIPLY, 0)),
+                        Arrays.asList(If("edge.fetchWayGeometry().size() > 2", Statement.Op.MULTIPLY, "0")),
                         lookup, ""));
         assertTrue(ret.getMessage().startsWith("[HERE] invalid expression \"edge.fetchWayGeometry().size() > 2\": size is illegal method"), ret.getMessage());
     }

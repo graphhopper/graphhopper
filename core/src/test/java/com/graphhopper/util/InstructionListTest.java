@@ -447,7 +447,7 @@ public class InstructionListTest {
         GHUtility.setSpeed(10, true, true, roads, g.edge(2, 5).setDistance(10).set(rcEV, RoadClass.PEDESTRIAN));
 
         CustomModel customModel = new CustomModel();
-        customModel.addToPriority(Statement.If("road_class == PEDESTRIAN", Statement.Op.MULTIPLY, 0));
+        customModel.addToPriority(Statement.If("road_class == PEDESTRIAN", Statement.Op.MULTIPLY, "0"));
         Weighting weighting = CustomModelParser.createWeighting(roads, tmpEM, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(3, 4);
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);

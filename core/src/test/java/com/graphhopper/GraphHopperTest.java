@@ -265,7 +265,7 @@ public class GraphHopperTest {
                     new Coordinate(7.4207, 43.7344),
                     new Coordinate(7.4174, 43.7345)}));
             CustomModel customModel = new CustomModel().setDistanceInfluence(0);
-            customModel.getPriority().add(Statement.If("in_area51", Statement.Op.MULTIPLY, 0.1));
+            customModel.getPriority().add(Statement.If("in_area51", Statement.Op.MULTIPLY, "0.1"));
             customModel.getAreas().put("area51", area51Feature);
             profile = new CustomProfile(profileName).setCustomModel(customModel).setVehicle(vehicle);
         }
@@ -630,7 +630,7 @@ public class GraphHopperTest {
         final String customCar = "custom_car";
         final String emptyCar = "empty_car";
         CustomModel customModel = new CustomModel();
-        customModel.addToSpeed(Statement.If("road_class == TERTIARY || road_class == TRACK", Statement.Op.MULTIPLY, 0.1));
+        customModel.addToSpeed(Statement.If("road_class == TERTIARY || road_class == TRACK", Statement.Op.MULTIPLY, "0.1"));
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
@@ -648,11 +648,11 @@ public class GraphHopperTest {
         assertDistance(hopper, emptyCar, new CustomModel(customModel), 13223);
         // now we prevent using unclassified roads as well and the route goes even further north
         CustomModel strictCustomModel = new CustomModel().addToSpeed(
-                Statement.If("road_class == TERTIARY || road_class == TRACK || road_class == UNCLASSIFIED", Statement.Op.MULTIPLY, 0.1));
+                Statement.If("road_class == TERTIARY || road_class == TRACK || road_class == UNCLASSIFIED", Statement.Op.MULTIPLY, "0.1"));
         assertDistance(hopper, emptyCar, strictCustomModel, 19289);
         // we can achieve the same by 'adding' a rule to the server-side custom model
         CustomModel customModelWithUnclassifiedRule = new CustomModel().addToSpeed(
-                Statement.If("road_class == UNCLASSIFIED", Statement.Op.MULTIPLY, 0.1)
+                Statement.If("road_class == UNCLASSIFIED", Statement.Op.MULTIPLY, "0.1")
         );
         assertDistance(hopper, customCar, customModelWithUnclassifiedRule, 19289);
         // now we use distance influence to avoid the detour

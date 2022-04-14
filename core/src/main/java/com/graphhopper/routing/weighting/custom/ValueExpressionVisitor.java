@@ -1,13 +1,13 @@
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.routing.ev.DefaultEncodedValueFactory;
+import com.graphhopper.routing.ev.*;
+import org.codehaus.commons.compiler.CompileException;
+import org.codehaus.janino.Scanner;
 import org.codehaus.janino.*;
 
 import java.io.StringReader;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
 
 /**
  * Expression visitor for right-hand side of e.g. limit_to and multiply_by
@@ -102,7 +102,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         return false;
     }
 
-    static ParseResult parse(String expression, NameValidator validator) {
+    static ParseResult parseValueExpression(String expression, NameValidator validator) {
         ParseResult result = new ParseResult();
         try {
             Parser parser = new Parser(new Scanner("ignore", new StringReader(expression)));
@@ -117,5 +117,63 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         } catch (Exception ex) {
         }
         return result;
+    }
+
+    // TODO replace return type with record
+    static double[] findMinMax(String valueExpression, EncodedValueLookup lookup) {
+        // TODO is this faster? is this secure? (we leave out the ParseResult check)
+//        try {
+//            double val = Double.parseDouble(valueExpression);
+//            return val > 0 ? new double[]{0, val} : new double[]{val, 0};
+//        } catch (NumberFormatException ex) {
+//        }
+        ParseResult result = parseValueExpression(valueExpression, lookup::hasEncodedValue);
+        if (!result.ok)
+            throw new IllegalArgumentException(result.invalidMessage);
+        if ((result.operators.contains("-") || result.operators.contains("/")) && result.guessedVariables.size() > 1)
+            throw new IllegalArgumentException("Currently only a single EncodedValue in the value expression is allowed when expression contains \"/\" or \"-\". " + valueExpression);
+
+        try {
+            ExpressionEvaluator ee = new ExpressionEvaluator();
+            List<String> names = new ArrayList<>(result.guessedVariables.size());
+            List<Class> values = new ArrayList<>(result.guessedVariables.size());
+            for (String var : result.guessedVariables) {
+                names.add(var);
+                values.add(double.class);
+            }
+            ee.setParameters(names.toArray(new String[0]), values.toArray(new Class[0]));
+            ee.cook(valueExpression);
+            if (result.guessedVariables.isEmpty()) { // constant - no EncodedValues
+                double val = ((Number) ee.evaluate()).doubleValue();
+                return new double[]{val, val};
+            }
+
+            List<Object> args = new ArrayList<>();
+            for (String var : result.guessedVariables) {
+                EncodedValue enc = lookup.getEncodedValue(var, EncodedValue.class);
+                if (enc instanceof DecimalEncodedValue)
+                    args.add(((DecimalEncodedValue) enc).getMaxDecimal());
+                else if (enc instanceof IntEncodedValue)
+                    args.add(((IntEncodedValue) enc).getMaxInt());
+                else
+                    throw new IllegalArgumentException("Cannot use non-number data in value expression");
+            }
+            Number val1 = (Number) ee.evaluate(args.toArray());
+
+            args.clear();
+            for (String var : result.guessedVariables) {
+                EncodedValue enc = lookup.getEncodedValue(var, EncodedValue.class);
+                if (enc instanceof DecimalEncodedValue)
+                    args.add(((DecimalEncodedValue) enc).getMinDecimal());
+                else if (enc instanceof IntEncodedValue)
+                    args.add(((IntEncodedValue) enc).getMinInt());
+                else
+                    throw new IllegalArgumentException("Cannot use non-number data in value expression");
+            }
+            Number val2 = (Number) ee.evaluate(args.toArray());
+            return new double[]{Math.min(val1.doubleValue(), val2.doubleValue()), Math.max(val1.doubleValue(), val2.doubleValue())};
+        } catch (CompileException | InvocationTargetException ex) {
+            throw new IllegalArgumentException(ex);
+        }
     }
 }

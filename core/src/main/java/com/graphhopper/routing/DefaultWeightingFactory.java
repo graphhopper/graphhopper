@@ -25,6 +25,7 @@ import com.graphhopper.routing.weighting.*;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
+import com.graphhopper.routing.weighting.custom.FindMinMax;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.PMap;
@@ -76,7 +77,7 @@ public class DefaultWeightingFactory implements WeightingFactory {
             CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
             CustomProfile customProfile = (CustomProfile) profile;
             if (queryCustomModel != null)
-                queryCustomModel.checkLMConstraints(customProfile.getCustomModel());
+                FindMinMax.checkLMConstraints(customProfile.getCustomModel(), queryCustomModel, encodingManager);
 
             queryCustomModel = CustomModel.merge(customProfile.getCustomModel(), queryCustomModel);
             weighting = CustomModelParser.createWeighting(encoder, encodingManager, turnCostProvider, queryCustomModel);

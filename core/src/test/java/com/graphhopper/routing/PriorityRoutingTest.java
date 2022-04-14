@@ -92,7 +92,7 @@ public class PriorityRoutingTest {
         {
             CustomModel customModel = new CustomModel();
             // now we even increase the priority in the custom model, which also needs to be accounted for in weighting.getMinWeight
-            customModel.addToPriority(Statement.If("road_class == MOTORWAY", Statement.Op.MULTIPLY, 3));
+            customModel.addToPriority(Statement.If("road_class == MOTORWAY", Statement.Op.MULTIPLY, "3"));
             CustomWeighting weighting = CustomModelParser.createWeighting(encoder, em, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
             Path pathDijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(0, 3);
             Path pathAStar = new AStar(graph, weighting, TraversalMode.NODE_BASED).calcPath(0, 3);

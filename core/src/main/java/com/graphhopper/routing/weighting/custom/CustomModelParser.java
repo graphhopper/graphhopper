@@ -86,29 +86,29 @@ public class CustomModelParser {
     /**
      * This method compiles a new subclass of CustomWeightingHelper composed from the provided CustomModel caches this
      * and returns an instance.
+     *
      * @param priorityEnc can be null
      */
     static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, EncodedValueLookup lookup,
                                                                 DecimalEncodedValue avgSpeedEnc, double globalMaxSpeed,
                                                                 DecimalEncodedValue priorityEnc) {
 
-        final double maxSpeed = customModel.findMaxSpeed(globalMaxSpeed); // globalMaxSpeed can be lower than avgSpeedEnc.getMaxDecimal()
-        final double maxPriority = customModel.findMaxPriority(priorityEnc == null ? 1 : priorityEnc.getMaxDecimal());
-        String key = customModel.toString() + ",maxSpeed:" + maxSpeed + ",maxPriority:" + maxPriority;
+        double globalMaxPriority = priorityEnc == null ? 1 : priorityEnc.getMaxDecimal();
+        String key = customModel + ",avg_speed:" + avgSpeedEnc.getName() + ",global_max_priority:" + globalMaxPriority + ",global_max_speed:" + globalMaxSpeed;
         if (key.length() > 100_000) throw new IllegalArgumentException("Custom Model too big: " + key.length());
 
         Class<?> clazz = customModel.isInternal() ? INTERNAL_CACHE.get(key) : null;
         if (CACHE_SIZE > 0 && clazz == null)
             clazz = CACHE.get(key);
         if (clazz == null) {
-            clazz = createClazz(customModel, lookup, maxSpeed);
+            clazz = createClazz(customModel, lookup, globalMaxSpeed, globalMaxPriority);
             if (customModel.isInternal()) {
                 INTERNAL_CACHE.put(key, clazz);
                 if (INTERNAL_CACHE.size() > 100) {
                     CACHE.putAll(INTERNAL_CACHE);
                     INTERNAL_CACHE.clear();
                     LoggerFactory.getLogger(CustomModelParser.class).warn("Internal cache must stay small but was "
-                            + INTERNAL_CACHE.size() + ". Cleared it. Misuse of CustomModel::__internal_cache?");
+                            + INTERNAL_CACHE.size() + ". Cleared it. Misuse of CustomModel::internal?");
                 }
             } else if (CACHE_SIZE > 0) {
                 CACHE.put(key, clazz);
@@ -119,25 +119,33 @@ public class CustomModelParser {
             // The class does not need to be thread-safe as we create an instance per request
             CustomWeightingHelper prio = (CustomWeightingHelper) clazz.getDeclaredConstructor().newInstance();
             prio.init(lookup, avgSpeedEnc, priorityEnc, customModel.getAreas());
-            return new CustomWeighting.Parameters(prio::getSpeed, prio::getPriority, maxSpeed, maxPriority,
+            return new CustomWeighting.Parameters(prio::getSpeed, prio::getPriority, prio.getMaxSpeed(), prio.getMaxPriority(),
                     customModel.getDistanceInfluence(), customModel.getHeadingPenalty());
         } catch (ReflectiveOperationException ex) {
             throw new IllegalArgumentException("Cannot compile expression " + ex.getMessage(), ex);
         }
     }
 
-    private static Class<?> createClazz(CustomModel customModel, EncodedValueLookup lookup, double globalMaxSpeed) {
+    private static Class<?> createClazz(CustomModel customModel, EncodedValueLookup lookup,
+                                        double globalMaxSpeed, double globalMaxPriority) {
         try {
+            double maxPriority = FindMinMax.findMax(customModel.getPriority(), lookup, globalMaxPriority, "priority");
+            if (maxPriority < 0)
+                throw new IllegalArgumentException("maximum priority has to be >=0 but was " + maxPriority);
+            double maxSpeed = FindMinMax.findMax(customModel.getSpeed(), lookup, globalMaxSpeed, "speed");
+            if (maxSpeed <= 0)
+                throw new IllegalArgumentException("maximum speed has to be >0 but was " + maxSpeed);
 
             HashSet<String> priorityVariables = new LinkedHashSet<>();
             List<Java.BlockStatement> priorityStatements = createGetPriorityStatements(priorityVariables, customModel, lookup);
             HashSet<String> speedVariables = new LinkedHashSet<>();
-            List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup, globalMaxSpeed);
+            List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup, maxSpeed);
             // Create different class name, which is required only for debugging.
             // TODO does it improve performance too? I.e. it could be that the JIT is confused if different classes
             //  have the same name and it mixes performance stats. See https://github.com/janino-compiler/janino/issues/137
             long counter = longVal.incrementAndGet();
-            String classTemplate = createClassTemplate(counter, priorityVariables, speedVariables, lookup, customModel);
+            String classTemplate = createClassTemplate(counter, priorityVariables, maxPriority, speedVariables, maxSpeed,
+                    lookup, customModel.getAreas());
             Java.CompilationUnit cu = (Java.CompilationUnit) new Parser(new Scanner("source", new StringReader(classTemplate))).
                     parseAbstractCompilationUnit();
             cu = injectStatements(priorityStatements, speedStatements, cu);
@@ -239,8 +247,9 @@ public class CustomModelParser {
      * means that the source file is free from user input and could be directly compiled. Before we do this we still
      * have to inject that parsed and safe user expressions in a later step.
      */
-    private static String createClassTemplate(long counter, Set<String> priorityVariables, Set<String> speedVariables,
-                                              EncodedValueLookup lookup, CustomModel customModel) {
+    private static String createClassTemplate(long counter, Set<String> priorityVariables, double maxPriority,
+                                              Set<String> speedVariables, double maxSpeed,
+                                              EncodedValueLookup lookup, Map<String, JsonFeature> areas) {
         final StringBuilder importSourceCode = new StringBuilder("import com.graphhopper.routing.ev.*;\n");
         importSourceCode.append("import java.util.Map;\n");
         final StringBuilder classSourceCode = new StringBuilder(100);
@@ -271,7 +280,7 @@ public class CustomModelParser {
                 String id = arg.substring(IN_AREA_PREFIX.length());
                 if (!EncodingManager.isValidEncodedValue(id))
                     throw new IllegalArgumentException("Area has invalid name: " + arg);
-                JsonFeature feature = customModel.getAreas().get(id);
+                JsonFeature feature = areas.get(id);
                 if (feature == null)
                     throw new IllegalArgumentException("Area '" + id + "' wasn't found");
                 if (feature.getGeometry() == null)
@@ -310,6 +319,14 @@ public class CustomModelParser {
                 + "   @Override\n"
                 + "   public double getSpeed(EdgeIteratorState edge, boolean reverse) {\n"
                 + "      return getRawSpeed(edge, reverse); //will be overwritten by code injected in DeepCopier\n"
+                + "   }\n"
+                + "   @Override\n"
+                + "   protected double getMaxSpeed() {\n"
+                + "      return " + maxSpeed + ";"
+                + "   }\n"
+                + "   @Override\n"
+                + "   protected double getMaxPriority() {\n"
+                + "      return " + maxPriority + ";"
                 + "   }\n"
                 + "}";
     }
