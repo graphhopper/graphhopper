@@ -2,9 +2,6 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.GetOffBike;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Arrays;
@@ -19,10 +16,6 @@ public class OSMGetOffBikeParser implements TagParser {
     private final List<String> accepted = Arrays.asList("designated", "yes", "official", "permissive");
     private final BooleanEncodedValue offBikeEnc;
 
-    public OSMGetOffBikeParser() {
-        this(GetOffBike.create());
-    }
-
     public OSMGetOffBikeParser(BooleanEncodedValue getOffBikeEnc) {
         // steps -> special handling
         this(getOffBikeEnc, Arrays.asList("path", "footway", "pedestrian", "platform"));
@@ -31,11 +24,6 @@ public class OSMGetOffBikeParser implements TagParser {
     public OSMGetOffBikeParser(BooleanEncodedValue getOffBikeEnc, List<String> pushBikeTags) {
         offBikeEnc = getOffBikeEnc;
         pushBikeHighwayTags.addAll(pushBikeTags);
-    }
-
-    @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(offBikeEnc);
     }
 
     @Override
