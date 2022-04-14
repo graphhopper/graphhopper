@@ -546,20 +546,16 @@ public class CarTagParserTest {
 
     @Test
     public void testRegisterOnlyOnceAllowed() {
-        FlagEncoder instance = FlagEncoders.createCar(10, 0.5, 0);
-        EncodingManager tmpEM = EncodingManager.create(instance);
-        try {
-            tmpEM = EncodingManager.create(instance);
-            assertTrue(false);
-        } catch (IllegalStateException ex) {
-        }
+        FlagEncoder instance = FlagEncoders.createCar();
+        EncodingManager.create(instance);
+        assertThrows(IllegalStateException.class, () -> EncodingManager.create(instance));
     }
 
     @Test
     public void testSetToMaxSpeed() {
         ReaderWay way = new ReaderWay(12);
         way.setTag("maxspeed", "90");
-        assertEquals(90, parser.getMaxSpeed(way), 1e-2);
+        assertEquals(90, AbstractFlagEncoder.getMaxSpeed(way), 1e-2);
     }
 
     @Test

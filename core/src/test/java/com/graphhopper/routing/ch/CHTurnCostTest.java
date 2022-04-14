@@ -80,7 +80,7 @@ public class CHTurnCostTest {
     @BeforeEach
     public void init() {
         maxCost = 10;
-        encoder = FlagEncoders.createCar(5, 5, maxCost);
+        encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", maxCost));
         encodingManager = EncodingManager.create(encoder);
         graph = new BaseGraph.Builder(encodingManager).build();
         turnCostStorage = graph.getTurnCostStorage();

@@ -41,7 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @author Peter Karich
  */
 public class FastestWeightingTest {
-    private final FlagEncoder encoder = FlagEncoders.createCar(5, 5, 10);
+    private final FlagEncoder encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", 10));
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
 
     @Test

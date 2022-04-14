@@ -28,6 +28,7 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.RepeatedTest;
 
 import java.util.Random;
@@ -44,7 +45,7 @@ public class LMApproximatorTest {
 
     private void run(long seed) {
         Directory dir = new RAMDirectory();
-        FlagEncoder encoder = FlagEncoders.createCar(5, 5, 1);
+        FlagEncoder encoder = FlagEncoders.createCar(new PMap("turn_costs=true"));
         EncodingManager encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
         BaseGraph graph = new BaseGraph.Builder(encodingManager).setDir(dir).withTurnCosts(true).create();
 

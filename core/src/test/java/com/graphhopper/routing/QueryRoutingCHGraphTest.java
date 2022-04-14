@@ -33,6 +33,7 @@ import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -51,7 +52,7 @@ class QueryRoutingCHGraphTest {
 
     @BeforeEach
     public void setup() {
-        encoder = FlagEncoders.createCar(5, 5, 5, true);
+        encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", 5).putObject("speed_two_directions", true));
         encodingManager = EncodingManager.create(encoder);
         graph = new BaseGraph.Builder(encodingManager).create();
         weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()));

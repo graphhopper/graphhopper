@@ -10,6 +10,7 @@ import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
@@ -22,7 +23,7 @@ public class OSMTurnRelationParserTest {
 
     @Test
     public void testGetRestrictionAsEntries() {
-        FlagEncoder encoder = FlagEncoders.createCar(5, 5, 1);
+        FlagEncoder encoder = FlagEncoders.createCar(new PMap("turn_costs=true"));
         final Map<Long, Integer> osmNodeToInternal = new HashMap<>();
         final Map<Integer, Long> internalToOSMEdge = new HashMap<>();
 

@@ -23,6 +23,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
 import java.util.Random;
@@ -36,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest {
     @Override
     FlagEncoder createCarFlagEncoder() {
-        return FlagEncoders.createCar(5, 5, 1400);
+        return FlagEncoders.createCar(new PMap().putObject("max_turn_costs", 1400));
     }
 
     @Override
