@@ -241,7 +241,7 @@ public class MultiCriteriaLabelSetting {
     }
 
     double weight(Label label) {
-        return label.edgeWeight;
+        return label.edgeWeight + label.nTransfers * 2 * 60 * 1000;
         // return timeSinceStartTime(label) + (long) (label.nTransfers * betaTransfers) + (long) (label.streetTime * (betaStreetTime - 1.0)) + label.extraWeight;
     }
 
