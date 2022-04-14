@@ -14,7 +14,7 @@ matrix:
     - env: JDKNAME='8.0.302-open'
     - env: JDKNAME='11.0.12-open'
     - env: JDKNAME='18-open'
-    - env: JDKNAME='19.ea.16-open'
+    - env: JDKNAME='19.ea.17-open'
 
 # avoid default dependency command for maven, 'true' means 'return true' and continue
 install: true
