@@ -51,8 +51,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected final Set<String> oneways = new HashSet<>(5);
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final Set<String> barriers = new HashSet<>(5);
-    protected final int speedBits;
-    protected final double speedFactor;
+    private final String propertiesString;
     protected final BooleanEncodedValue accessEnc;
     protected final DecimalEncodedValue avgSpeedEnc;
     private final DecimalEncodedValue turnCostEnc;
@@ -75,12 +74,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      */
     protected AbstractFlagEncoder(String name, int speedBits, double speedFactor, boolean speedTwoDirections, int maxTurnCosts) {
         this.name = name;
-        this.speedBits = speedBits;
-        this.speedFactor = speedFactor;
-
         this.accessEnc = new SimpleBooleanEncodedValue(getKey(name, "access"), true);
         this.avgSpeedEnc = new DecimalEncodedValueImpl(getKey(name, "average_speed"), speedBits, speedFactor, speedTwoDirections);
         this.turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;
+        this.propertiesString = "speed_factor=" + speedFactor + "|speed_bits=" + speedBits + "|turn_costs=" + (maxTurnCosts > 0);
 
         oneways.add("yes");
         oneways.add("true");
@@ -98,7 +95,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
             throw new IllegalStateException("You must not register a FlagEncoder (" + this + ") twice or for two EncodingManagers!");
         registered = true;
 
-        ferrySpeedCalc = new FerrySpeedCalculator(speedFactor / 2, maxPossibleSpeed, 5);
+        ferrySpeedCalc = new FerrySpeedCalculator(avgSpeedEnc.getSmallestNonZeroValue(), maxPossibleSpeed, 5);
         setConditionalTagInspector(new ConditionalOSMTagInspector(Collections.singletonList(dateRangeParser),
                 restrictions, restrictedValues, intendedValues, false));
     }
@@ -237,16 +234,16 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     protected void setSpeed(boolean reverse, IntsRef edgeFlags, double speed) {
-        if (speed < speedFactor / 2) {
+        if (speed < avgSpeedEnc.getSmallestNonZeroValue()) {
             avgSpeedEnc.setDecimal(reverse, edgeFlags, 0);
             accessEnc.setBool(reverse, edgeFlags, false);
         } else {
-            avgSpeedEnc.setDecimal(reverse, edgeFlags, speed > getMaxSpeed() ? getMaxSpeed() : speed);
+            avgSpeedEnc.setDecimal(reverse, edgeFlags, Math.min(speed, getMaxSpeed()));
         }
     }
 
     protected String getPropertiesString() {
-        return "speed_factor=" + speedFactor + "|speed_bits=" + speedBits + "|turn_costs=" + supportsTurnCosts();
+        return propertiesString;
     }
 
     @Override

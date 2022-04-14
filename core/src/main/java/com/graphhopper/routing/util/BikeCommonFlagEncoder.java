@@ -176,8 +176,8 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         routeMap.put(REGIONAL, VERY_NICE.getValue());
         routeMap.put(LOCAL, PREFER.getValue());
 
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.MISSING, 1.0d);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.OTHER, 0.7d);
+        setSmoothnessSpeedFactor(Smoothness.MISSING, 1.0d);
+        setSmoothnessSpeedFactor(Smoothness.OTHER, 0.7d);
 
         setAvoidSpeedLimit(71);
     }
