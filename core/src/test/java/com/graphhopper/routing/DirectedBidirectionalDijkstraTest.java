@@ -48,7 +48,7 @@ public class DirectedBidirectionalDijkstraTest {
     @BeforeEach
     public void setup() {
         maxTurnCosts = 10;
-        encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
+        encoder = FlagEncoders.createCar(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
         graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         turnCostStorage = graph.getTurnCostStorage();

@@ -15,7 +15,11 @@ public class OSMHazmatWaterParser implements TagParser {
     private final EnumEncodedValue<HazmatWater> hazWaterEnc;
 
     public OSMHazmatWaterParser() {
-        this.hazWaterEnc = new EnumEncodedValue<>(HazmatWater.KEY, HazmatWater.class);
+        this(new EnumEncodedValue<>(HazmatWater.KEY, HazmatWater.class));
+    }
+
+    public OSMHazmatWaterParser(EnumEncodedValue<HazmatWater> hazWaterEnc) {
+        this.hazWaterEnc = hazWaterEnc;
     }
 
     @Override

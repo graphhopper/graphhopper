@@ -28,7 +28,9 @@ import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadEnvironment;
+import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.lm.LandmarkStorage;
@@ -87,7 +89,6 @@ public class GraphHopper {
     private String customAreasDirectory = "";
     // for graph:
     private GraphHopperStorage ghStorage;
-    private final TagParserManager.Builder emBuilder = new TagParserManager.Builder();
     private TagParserManager tagParserManager;
     private int defaultSegmentSize = -1;
     private String ghLocation = "";
@@ -118,17 +119,26 @@ public class GraphHopper {
     private String osmFile;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private FlagEncoderFactory flagEncoderFactory = new DefaultFlagEncoderFactory();
-    private EncodedValueFactory encodedValueFactory = new DefaultEncodedValueFactory();
     private TagParserFactory tagParserFactory = new DefaultTagParserFactory();
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
-    public TagParserManager.Builder getTagParserManagerBuilder() {
-        return emBuilder;
+    private String dateRangeParserString = "";
+    private String encodedValuesString = "";
+    private String flagEncodersString = "";
+
+    public GraphHopper setEncodedValuesString(String encodedValuesString) {
+        this.encodedValuesString = encodedValuesString;
+        return this;
+    }
+
+    public GraphHopper setFlagEncodersString(String flagEncodersString) {
+        this.flagEncodersString = flagEncodersString;
+        return this;
     }
 
     public TagParserManager getTagParserManager() {
         if (tagParserManager == null)
-            throw new IllegalStateException("EncodingManager not yet built");
+            throw new IllegalStateException("TagParserManager not yet built");
         return tagParserManager;
     }
 
@@ -226,7 +236,7 @@ public class GraphHopper {
         if (!profilesByName.isEmpty())
             throw new IllegalArgumentException("Cannot initialize profiles multiple times");
         if (tagParserManager != null)
-            throw new IllegalArgumentException("Cannot set profiles after EncodingManager was built");
+            throw new IllegalArgumentException("Cannot set profiles after TagParserManager was built");
         for (Profile profile : profiles) {
             Profile previous = this.profilesByName.put(profile.getName(), profile);
             if (previous != null)
@@ -374,15 +384,6 @@ public class GraphHopper {
         return this;
     }
 
-    public EncodedValueFactory getEncodedValueFactory() {
-        return this.encodedValueFactory;
-    }
-
-    public GraphHopper setEncodedValueFactory(EncodedValueFactory factory) {
-        this.encodedValueFactory = factory;
-        return this;
-    }
-
     public TagParserFactory getTagParserFactory() {
         return this.tagParserFactory;
     }
@@ -466,10 +467,12 @@ public class GraphHopper {
             throw new IllegalArgumentException("spatial_rules.max_bbox has been deprecated. There is no replacement, all custom areas will be considered.");
 
         if (tagParserManager != null)
-            throw new IllegalStateException("Cannot call init twice. EncodingManager was already initialized.");
-        emBuilder.setDateRangeParser(DateRangeParser.createInstance(ghConfig.getString("datareader.date_range_parser_day", "")));
+            throw new IllegalStateException("Cannot call init twice. TagParserManager was already initialized.");
         setProfiles(ghConfig.getProfiles());
-        tagParserManager = buildEncodingManager(ghConfig);
+        String flagEncodersStr = ghConfig.getString("graph.flag_encoders", flagEncodersString);
+        String encodedValueStr = ghConfig.getString("graph.encoded_values", encodedValuesString);
+        String dateRangeParserStr = ghConfig.getString("datareader.date_range_parser_day", dateRangeParserString);
+        tagParserManager = buildTagParserManager(flagEncodersStr, encodedValueStr, dateRangeParserStr, profilesByName.values());
 
         if (ghConfig.getString("graph.locktype", "native").equals("simple"))
             lockFactory = new SimpleFSLockFactory();
@@ -518,11 +521,9 @@ public class GraphHopper {
         return this;
     }
 
-    private TagParserManager buildEncodingManager(GraphHopperConfig ghConfig) {
-        if (profilesByName.isEmpty())
-            throw new IllegalStateException("no profiles exist but assumed to create EncodingManager. E.g. provide them in GraphHopperConfig when calling GraphHopper.init");
-
-        String flagEncodersStr = ghConfig.getString("graph.flag_encoders", "");
+    private TagParserManager buildTagParserManager(String flagEncodersStr, String encodedValueStr, String dateRangeParserStr, Collection<Profile> profiles) {
+        TagParserManager.Builder emBuilder = new TagParserManager.Builder();
+        emBuilder.setDateRangeParser(DateRangeParser.createInstance(dateRangeParserStr));
         Map<String, String> flagEncoderMap = new LinkedHashMap<>();
         for (String encoderStr : flagEncodersStr.split(",")) {
             String key = encoderStr.split("\\|")[0];
@@ -532,8 +533,8 @@ public class GraphHopper {
                 flagEncoderMap.put(key, encoderStr);
             }
         }
-        Map<String, String> implicitFlagEncoderMap = new HashMap<>();
-        for (Profile profile : profilesByName.values()) {
+        Map<String, String> implicitFlagEncoderMap = new LinkedHashMap<>();
+        for (Profile profile : profiles) {
             emBuilder.add(Subnetwork.create(profile.getName()));
             if (!flagEncoderMap.containsKey(profile.getVehicle())
                     // overwrite key in implicit map if turn cost support required
@@ -543,7 +544,6 @@ public class GraphHopper {
         flagEncoderMap.putAll(implicitFlagEncoderMap);
         flagEncoderMap.values().forEach(s -> emBuilder.addIfAbsent(flagEncoderFactory, s));
 
-        String encodedValueStr = ghConfig.getString("graph.encoded_values", "");
         for (String tpStr : encodedValueStr.split(",")) {
             if (!tpStr.isEmpty()) emBuilder.addIfAbsent(tagParserFactory, tpStr);
         }
@@ -761,16 +761,15 @@ public class GraphHopper {
 
         if (!allowWrites && dataAccessDefaultType.isMMap())
             dataAccessDefaultType = DAType.MMAP_RO;
-        if (tagParserManager == null) {
-            StorableProperties properties = new StorableProperties(new GHDirectory(ghLocation, dataAccessDefaultType));
-            tagParserManager = properties.loadExisting()
-                    ? TagParserManager.create(emBuilder, encodedValueFactory, flagEncoderFactory, properties)
-                    : buildEncodingManager(new GraphHopperConfig());
-        }
+        if (tagParserManager == null)
+            // we did not call init(), so we build the tag parser manager based on the changes made to emBuilder
+            // and the current profiles.
+            // just like when calling init, users have to make sure they use the same setup for import and load
+            tagParserManager = buildTagParserManager(flagEncodersString, encodedValuesString, dateRangeParserString, profilesByName.values());
 
         GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
         directory.configure(dataAccessConfig);
-        ghStorage = new GraphBuilder(tagParserManager)
+        ghStorage = new GraphBuilder(getEncodingManager())
                 .setDir(directory)
                 .set3D(hasElevation())
                 .withTurnCosts(tagParserManager.needsTurnCostsSupport())
@@ -795,6 +794,14 @@ public class GraphHopper {
             if (!ghStorage.loadExisting())
                 return false;
 
+            String storedProfiles = ghStorage.getProperties().get("profiles");
+            String configuredProfiles = getProfilesString();
+            if (!storedProfiles.equals(configuredProfiles))
+                throw new IllegalStateException("Profiles do not match:"
+                        + "\nGraphhopper config: " + configuredProfiles
+                        + "\nGraph: " + storedProfiles
+                        + "\nChange configuration to match the graph or delete " + ghStorage.getDirectory().getLocation());
+
             postProcessing(false);
             directory.loadMMap();
             setFullyLoaded();
@@ -805,8 +812,14 @@ public class GraphHopper {
         }
     }
 
+    private String getProfilesString() {
+        return profilesByName.values().stream().map(p -> p.getName() + "|" + p.getVersion()).collect(Collectors.joining(","));
+    }
+
     private void checkProfilesConsistency() {
-        TagParserManager encodingManager = getTagParserManager();
+        if (profilesByName.isEmpty())
+            throw new IllegalArgumentException("There has to be at least one profile");
+        EncodingManager encodingManager = getEncodingManager();
         for (Profile profile : profilesByName.values()) {
             if (!encodingManager.hasEncoder(profile.getVehicle())) {
                 throw new IllegalArgumentException("Unknown vehicle '" + profile.getVehicle() + "' in profile: " + profile + ". Make sure all vehicles used in 'profiles' exist in 'graph.flag_encoders'");
@@ -1074,7 +1087,7 @@ public class GraphHopper {
 
         // we load landmark storages that already exist and prepare the other ones
         List<LMConfig> lmConfigs = createLMConfigs(lmPreparationHandler.getLMProfiles());
-        List<LandmarkStorage> loaded = lmPreparationHandler.load(lmConfigs, ghStorage.getBaseGraph());
+        List<LandmarkStorage> loaded = lmPreparationHandler.load(lmConfigs, ghStorage.getBaseGraph(), ghStorage.getEncodingManager());
         List<LMConfig> loadedConfigs = loaded.stream().map(LandmarkStorage::getLMConfig).collect(Collectors.toList());
         List<LMConfig> configsToPrepare = lmConfigs.stream().filter(c -> !loadedConfigs.contains(c)).collect(Collectors.toList());
         List<PrepareLandmarks> prepared = prepareLM(closeEarly, configsToPrepare);
@@ -1110,6 +1123,7 @@ public class GraphHopper {
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(ghStorage.getBaseGraph(), buildSubnetworkRemovalJobs());
         preparation.setMinNetworkSize(minNetworkSize);
         preparation.doWork();
+        ghStorage.getProperties().put("profiles", getProfilesString());
         logger.info("nodes: " + Helper.nf(ghStorage.getNodes()) + ", edges: " + Helper.nf(ghStorage.getEdges()));
     }
 

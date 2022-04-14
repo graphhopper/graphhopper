@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * @author Peter Karich
  */
-public class HikeFlagEncoderTest {
+public class HikeTagParserTest {
     private final EncodingManager encodingManager = EncodingManager.create("car,hike");
     private final HikeFlagEncoder hikeEncoder = (HikeFlagEncoder) encodingManager.getEncoder("hike");
 

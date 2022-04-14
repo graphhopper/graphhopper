@@ -38,4 +38,6 @@ public interface DecimalEncodedValue extends EncodedValue {
      * 6 not 5! The value returned by this method is guaranteed to be storable without such a modification.
      */
     double getNextStorableValue(double value);
+
+    double getSmallestNonZeroValue();
 }

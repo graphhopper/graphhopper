@@ -103,8 +103,8 @@ public class GraphHopperManaged implements Managed {
         graphHopper.importOrLoad();
         logger.info("loaded graph at:{}, data_reader_file:{}, encoded values:{}, {} ints for edge flags, {}",
                 graphHopper.getGraphHopperLocation(), graphHopper.getOSMFile(),
-                graphHopper.getTagParserManager().toEncodedValuesAsString(),
-                graphHopper.getTagParserManager().getIntsForFlags(),
+                graphHopper.getEncodingManager().toEncodedValuesAsString(),
+                graphHopper.getEncodingManager().getIntsForFlags(),
                 graphHopper.getGraphHopperStorage().toDetailsString());
     }
 

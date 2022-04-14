@@ -18,7 +18,6 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     private final NameValidator nameValidator;
     private final Set<String> allowedMethods = new HashSet<>(Arrays.asList("sqrt", "abs"));
     private String invalidMessage;
-    private DefaultEncodedValueFactory factory = new DefaultEncodedValueFactory();
 
     public ValueExpressionVisitor(ParseResult result, NameValidator nameValidator) {
         this.result = result;
@@ -43,12 +42,8 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
                 String arg = n.identifiers[0];
                 // e.g. like road_class
                 if (isValidIdentifier(arg)) return true;
-                try {
-                    factory.create(arg);
-                    invalidMessage = "encoded value '" + arg + "' not available";
-                    return false;
-                } catch (Exception ex) {
-                }
+                invalidMessage = "'" + arg + "' not available";
+                return false;
             }
             invalidMessage = "identifier " + n + " invalid";
             return false;

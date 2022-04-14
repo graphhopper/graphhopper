@@ -21,9 +21,9 @@ package com.graphhopper.routing.lm;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
@@ -46,6 +46,7 @@ public class LMIssueTest {
     private FlagEncoder encoder;
     private Weighting weighting;
     private LandmarkStorage lm;
+    private EncodingManager encodingManager;
 
     private enum Algo {
         DIJKSTRA,
@@ -59,8 +60,8 @@ public class LMIssueTest {
     @BeforeEach
     public void init() {
         dir = new RAMDirectory();
-        encoder = new CarFlagEncoder(5, 5, 1);
-        EncodingManager encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
+        encoder = FlagEncoders.createCar(5, 5, 1);
+        encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
         graph = new BaseGraph.Builder(encodingManager)
                 .setDir(dir)
                 .create();
@@ -69,7 +70,7 @@ public class LMIssueTest {
 
     private void preProcessGraph() {
         graph.freeze();
-        PrepareLandmarks prepare = new PrepareLandmarks(dir, graph, new LMConfig("car", weighting), 16);
+        PrepareLandmarks prepare = new PrepareLandmarks(dir, graph, encodingManager, new LMConfig("car", weighting), 16);
         prepare.setMaximumWeight(10000);
         prepare.doWork();
         lm = prepare.getLandmarkStorage();

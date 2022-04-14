@@ -19,6 +19,8 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.util.PMap;
 
+import static com.graphhopper.routing.ev.Smoothness.*;
+
 /**
  * Specifies the settings for cycletouring/trekking
  *
@@ -27,11 +29,16 @@ import com.graphhopper.util.PMap;
  */
 public class BikeFlagEncoder extends BikeCommonFlagEncoder {
     public BikeFlagEncoder() {
-        this(4, 2, 0, false);
+        this("bike");
+    }
+
+    public BikeFlagEncoder(String name) {
+        this(name, 4, 2, 0, false);
     }
 
     public BikeFlagEncoder(PMap properties) {
-        this(properties.getInt("speed_bits", 4),
+        this(properties.getString("name", "bike"),
+                properties.getInt("speed_bits", 4),
                 properties.getInt("speed_factor", 2),
                 properties.getBool("turn_costs", false) ? 1 : 0,
                 properties.getBool("speed_two_directions", false));
@@ -41,7 +48,11 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
     }
 
     public BikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
-        super(speedBits, speedFactor, maxTurnCosts, speedTwoDirections);
+        this("bike", speedBits, speedFactor, maxTurnCosts, speedTwoDirections);
+    }
+
+    public BikeFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
+        super(name, speedBits, speedFactor, maxTurnCosts, speedTwoDirections);
         addPushingSection("path");
         addPushingSection("footway");
         addPushingSection("pedestrian");
@@ -62,25 +73,20 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
         preferHighwayTags.add("residential");
         preferHighwayTags.add("unclassified");
 
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.EXCELLENT, 1.1d);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.GOOD, 1.0d);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.INTERMEDIATE, 0.9d);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.BAD, 0.7d);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.VERY_BAD, 0.6d);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.HORRIBLE, 0.5d);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.VERY_HORRIBLE, 0.4d);
+        setSmoothnessSpeedFactor(EXCELLENT, 1.1d);
+        setSmoothnessSpeedFactor(GOOD, 1.0d);
+        setSmoothnessSpeedFactor(INTERMEDIATE, 0.9d);
+        setSmoothnessSpeedFactor(BAD, 0.7d);
+        setSmoothnessSpeedFactor(VERY_BAD, 0.6d);
+        setSmoothnessSpeedFactor(HORRIBLE, 0.5d);
+        setSmoothnessSpeedFactor(VERY_HORRIBLE, 0.4d);
         // SmoothnessSpeed <= smoothnessFactorPushingSectionThreshold gets mapped to speed PUSHING_SECTION_SPEED
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.IMPASSABLE, smoothnessFactorPushingSectionThreshold);
+        setSmoothnessSpeedFactor(IMPASSABLE, smoothnessFactorPushingSectionThreshold);
 
         barriers.add("kissing_gate");
         barriers.add("stile");
         barriers.add("turnstile");
 
         setSpecificClassBicycle("touring");
-    }
-
-    @Override
-    public String getName() {
-        return "bike";
     }
 }

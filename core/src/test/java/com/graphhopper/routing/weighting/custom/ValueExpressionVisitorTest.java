@@ -65,7 +65,7 @@ class ValueExpressionVisitorTest {
         EncodedValueLookup lookup = new EncodingManager.Builder().add(prio1).add(prio2).build();
 
         String msg = assertThrows(IllegalArgumentException.class, () -> findMinMax("unknown*3", lookup)).getMessage();
-        assertTrue(msg.contains("identifier unknown invalid"), msg);
+        assertTrue(msg.contains("'unknown' not available"), msg);
 
         msg = assertThrows(IllegalArgumentException.class, () -> findMinMax("my_priority - my_priority2 * 3", lookup)).getMessage();
         assertTrue(msg.contains("only a single EncodedValue"), msg);

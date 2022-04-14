@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class TagParserManagerTest {
     @Test
     public void testToDetailsString() {
-        FlagEncoder encoder = new AbstractFlagEncoder(1, 2.0, 0) {
+        FlagEncoder encoder = new AbstractFlagEncoder("new_encoder", 1, 2.0, true, 0) {
             @Override
             public TransportationMode getTransportationMode() {
                 return TransportationMode.BIKE;
@@ -51,14 +51,9 @@ class TagParserManagerTest {
             public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
                 return edgeFlags;
             }
-
-            @Override
-            public String getName() {
-                return "new_encoder";
-            }
         };
 
-        TagParserManager subject = TagParserManager.create(encoder);
+        EncodingManager subject = EncodingManager.create(encoder);
 
         assertEquals("new_encoder|my_properties", subject.toFlagEncodersAsString());
     }
@@ -70,17 +65,12 @@ class TagParserManagerTest {
         ReaderRelation osmRel = new ReaderRelation(1);
 
         BikeFlagEncoder defaultBike = new BikeFlagEncoder();
-        BikeFlagEncoder lessRelationCodes = new BikeFlagEncoder() {
+        BikeFlagEncoder lessRelationCodes = new BikeFlagEncoder("less_relation_bits") {
             @Override
             public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
                 if (bikeRouteEnc.getEnum(false, edgeFlags) != RouteNetwork.MISSING)
                     priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getFactor(2));
                 return edgeFlags;
-            }
-
-            @Override
-            public String getName() {
-                return "less_relations_bits";
             }
         };
         TagParserManager manager = new TagParserManager.Builder().add(lessRelationCodes).add(defaultBike).build();

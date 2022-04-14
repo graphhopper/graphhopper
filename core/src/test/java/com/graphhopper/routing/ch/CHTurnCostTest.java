@@ -68,7 +68,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class CHTurnCostTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(CHTurnCostTest.class);
     private int maxCost;
-    private CarFlagEncoder encoder;
+    private FlagEncoder encoder;
     private EncodingManager encodingManager;
     private BaseGraph graph;
     private TurnCostStorage turnCostStorage;
@@ -80,7 +80,7 @@ public class CHTurnCostTest {
     @BeforeEach
     public void init() {
         maxCost = 10;
-        encoder = new CarFlagEncoder(5, 5, maxCost);
+        encoder = FlagEncoders.createCar(5, 5, maxCost);
         encodingManager = EncodingManager.create(encoder);
         graph = new BaseGraph.Builder(encodingManager).build();
         turnCostStorage = graph.getTurnCostStorage();

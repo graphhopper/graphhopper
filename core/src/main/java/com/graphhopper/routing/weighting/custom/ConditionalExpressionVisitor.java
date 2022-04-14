@@ -18,7 +18,6 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.Statement;
-import com.graphhopper.routing.ev.DefaultEncodedValueFactory;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.RouteNetwork;
 import com.graphhopper.routing.ev.StringEncodedValue;
@@ -40,7 +39,6 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
     private final Set<String> allowedMethods = new HashSet<>(Arrays.asList("ordinal", "getDistance", "getName",
             "contains", "sqrt", "abs"));
     private String invalidMessage;
-    private DefaultEncodedValueFactory factory = new DefaultEncodedValueFactory();
 
     public ConditionalExpressionVisitor(ParseResult result, NameValidator nameValidator, EncodedValueLookup lookup) {
         this.result = result;
@@ -73,12 +71,8 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
                 } else {
                     // e.g. like road_class
                     if (isValidIdentifier(arg)) return true;
-                    try {
-                        factory.create(arg);
-                        invalidMessage = "encoded value '" + arg + "' not available";
-                        return false;
-                    } catch (Exception ex) {
-                    }
+                    invalidMessage = "'" + arg + "' not available";
+                    return false;
                 }
             }
             invalidMessage = "identifier " + n + " invalid";

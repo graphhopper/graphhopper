@@ -38,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author don-philipe
  */
-public class WheelchairFlagEncoderTest {
+public class WheelchairTagParserTest {
     private final EncodingManager encodingManager = EncodingManager.create("car,wheelchair");
     private final WheelchairFlagEncoder wheelchairEncoder = (WheelchairFlagEncoder) encodingManager.getEncoder("wheelchair");
     private final DecimalEncodedValue wheelchairAvSpeedEnc = wheelchairEncoder.getAverageSpeedEnc();

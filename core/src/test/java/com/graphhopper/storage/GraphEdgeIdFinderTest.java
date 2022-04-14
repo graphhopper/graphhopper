@@ -37,7 +37,7 @@ public class GraphEdgeIdFinderTest {
 
     @Test
     public void testParseStringHints() {
-        FlagEncoder encoder = new CarFlagEncoder();
+        FlagEncoder encoder = FlagEncoders.createCar();
         EncodingManager em = EncodingManager.create(encoder);
         BaseGraph graph = new BaseGraph.Builder(em).create();
         // 0-1-2
@@ -69,7 +69,7 @@ public class GraphEdgeIdFinderTest {
 
     @Test
     public void testBlockAreasWithPolygon() {
-        FlagEncoder encoder = new CarFlagEncoder();
+        FlagEncoder encoder = FlagEncoders.createCar();
         EncodingManager em = EncodingManager.create(encoder);
         BaseGraph graph = new BaseGraph.Builder(em).create();
 

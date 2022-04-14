@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Peter Karich
  */
-public class MotorcycleFlagEncoderTest {
+public class MotorcycleTagParserTest {
     private final EncodingManager em = EncodingManager.create("motorcycle,foot");
     private final MotorcycleFlagEncoder encoder = (MotorcycleFlagEncoder) em.getEncoder("motorcycle");
     private final BooleanEncodedValue accessEnc = encoder.getAccessEnc();
@@ -124,6 +124,11 @@ public class MotorcycleFlagEncoderTest {
         way.setTag("access", "no");
         way.setTag("access:conditional", "yes @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
         assertTrue(encoder.getAccess(way).isWay());
+
+        way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("service", "emergency_access");
+        assertTrue(encoder.getAccess(way).canSkip());
     }
 
     @Test

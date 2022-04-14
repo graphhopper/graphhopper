@@ -110,6 +110,10 @@ public class StorableProperties {
         return ret;
     }
 
+    public synchronized Map<String, String> getAll() {
+        return map;
+    }
+
     public synchronized void close() {
         da.close();
     }

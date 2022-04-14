@@ -132,6 +132,13 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
     }
 
     @Override
+    public double getSmallestNonZeroValue() {
+        if (minValue != 0 || negateReverseDirection)
+            throw new IllegalStateException("getting the smallest non-zero value is not possible if minValue!=0 or negateReverseDirection");
+        return factor;
+    }
+
+    @Override
     public double getMaxDecimal() {
         return maxValue * factor;
     }

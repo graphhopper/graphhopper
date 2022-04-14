@@ -45,15 +45,18 @@ import static com.graphhopper.routing.util.EncodingManager.getKey;
 public class MotorcycleFlagEncoder extends CarFlagEncoder {
     private final HashSet<String> avoidSet = new HashSet<>();
     private final HashSet<String> preferSet = new HashSet<>();
-    private DecimalEncodedValue priorityWayEncoder;
-    private DecimalEncodedValue curvatureEncoder;
+    private final DecimalEncodedValue priorityWayEncoder;
+    private final DecimalEncodedValue curvatureEncoder;
 
     public MotorcycleFlagEncoder() {
         this(new PMap());
     }
 
     public MotorcycleFlagEncoder(PMap properties) {
-        super(properties.putObject("speed_two_directions", true));
+        super(properties.putObject("name", "motorcycle").putObject("speed_two_directions", true));
+
+        priorityWayEncoder = new DecimalEncodedValueImpl(getKey(getName(), "priority"), 4, PriorityCode.getFactor(1), false);
+        curvatureEncoder = new DecimalEncodedValueImpl(getKey(getName(), "curvature"), 4, 0.1, false);
 
         barriers.remove("bus_trap");
         barriers.remove("sump_buster");
@@ -110,12 +113,9 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
      */
     @Override
     public void createEncodedValues(List<EncodedValue> registerNewEncodedValue) {
-        // first two bits are reserved for route handling in superclass
         super.createEncodedValues(registerNewEncodedValue);
-
-        String prefix = getName();
-        registerNewEncodedValue.add(priorityWayEncoder = new DecimalEncodedValueImpl(getKey(prefix, "priority"), 4, PriorityCode.getFactor(1), false));
-        registerNewEncodedValue.add(curvatureEncoder = new DecimalEncodedValueImpl(getKey(prefix, "curvature"), 4, 0.1, false));
+        registerNewEncodedValue.add(priorityWayEncoder);
+        registerNewEncodedValue.add(curvatureEncoder);
     }
 
     @Override
@@ -131,6 +131,10 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
                         firstValue.isEmpty() && !way.hasTag("foot") && !way.hasTag("bicycle"))
                     return EncodingManager.Access.FERRY;
             }
+            return EncodingManager.Access.CAN_SKIP;
+        }
+        
+        if ("service".equals(highwayValue) && "emergency_access".equals(way.getTag("service"))) {
             return EncodingManager.Access.CAN_SKIP;
         }
 
@@ -293,8 +297,4 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
         return PriorityWeighting.class.isAssignableFrom(feature);
     }
 
-    @Override
-    public String getName() {
-        return "motorcycle";
-    }
 }
