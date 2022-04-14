@@ -1053,8 +1053,8 @@ public class GraphHopperTest {
         if (!withTunnelInterpolation) {
             hopper.setTagParserFactory(new DefaultTagParserFactory() {
                 @Override
-                public TagParser create(String name, PMap configuration) {
-                    TagParser parser = super.create(name, configuration);
+                public TagParser create(String name) {
+                    TagParser parser = super.create(name);
                     if (name.equals("road_environment"))
                         parser = new OSMRoadEnvironmentParser() {
                             @Override

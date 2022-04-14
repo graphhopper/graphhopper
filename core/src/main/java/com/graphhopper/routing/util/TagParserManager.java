@@ -269,9 +269,9 @@ public class TagParserManager implements EncodedValueLookup {
                 if (encoder instanceof RoadsFlagEncoder) {
                     // TODO Later these EncodedValues can be added independently of RoadsFlagEncoder. Maybe add a foot_access and hgv_access? and remove the others "xy$access"
                     if (!em.hasEncodedValue("car_access"))
-                        _addEdgeTagParser(new DefaultTagParserFactory().create("car_access", new PMap()), false);
+                        _addEdgeTagParser(new DefaultTagParserFactory().create("car_access"), false);
                     if (!em.hasEncodedValue("bike_access"))
-                        _addEdgeTagParser(new DefaultTagParserFactory().create("bike_access", new PMap()), false);
+                        _addEdgeTagParser(new DefaultTagParserFactory().create("bike_access"), false);
                 } else if (encoder instanceof BikeCommonFlagEncoder) {
                     if (!em.hasEncodedValue(RouteNetwork.key("bike")))
                         _addRelationTagParser(new OSMBikeNetworkTagParser());
@@ -335,9 +335,7 @@ public class TagParserManager implements EncodedValueLookup {
     private static TagParser parseEncodedValueString(TagParserFactory factory, String tagParserString) {
         if (!tagParserString.equals(toLowerCase(tagParserString)))
             throw new IllegalArgumentException("Use lower case for TagParser: " + tagParserString);
-
-        PMap map = new PMap(tagParserString);
-        return factory.create(tagParserString, map);
+        return factory.create(tagParserString);
     }
 
     public int getIntsForFlags() {
