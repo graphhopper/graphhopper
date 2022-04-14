@@ -314,11 +314,11 @@ public class TagParserManager implements EncodedValueLookup {
                     // TODO Later these EncodedValues can be added independently of RoadsFlagEncoder. Maybe add a foot_access and hgv_access? and remove the others "xy$access"
                     if (!em.hasEncodedValue("car_access")) {
                         em.addEncodedValue(new SimpleBooleanEncodedValue("car_access", true), false);
-                        _addEdgeTagParser(new DefaultTagParserFactory().create(em, "car_access"));
+                        _addEdgeTagParser(new OSMAccessParser(em.getBooleanEncodedValue("car_access"), em.getBooleanEncodedValue(Roundabout.KEY), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR), TransportationMode.CAR));
                     }
                     if (!em.hasEncodedValue("bike_access")) {
                         em.addEncodedValue(new SimpleBooleanEncodedValue("bike_access", true), false);
-                        _addEdgeTagParser(new DefaultTagParserFactory().create(em, "bike_access"));
+                        _addEdgeTagParser(new OSMAccessParser(em.getBooleanEncodedValue("bike_access"), em.getBooleanEncodedValue(Roundabout.KEY), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE), TransportationMode.BIKE));
                     }
                 } else if (encoder instanceof BikeCommonFlagEncoder) {
                     if (!em.hasEncodedValue(RouteNetwork.key("bike"))) {
