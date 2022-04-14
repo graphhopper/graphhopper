@@ -61,9 +61,9 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     private int avoidSpeedLimit;
     EnumEncodedValue<RouteNetwork> bikeRouteEnc;
     EnumEncodedValue<Smoothness> smoothnessEnc;
-    Map<RouteNetwork, Integer> routeMap = new HashMap<>();
-    Map<Cycleway, Integer> cyclewayMap = new EnumMap<>(Cycleway.class);
-    Map<String, Integer> highwayMap = new HashMap<>();
+    Map<RouteNetwork, Double> routeMap = new HashMap<>();
+    Map<Cycleway, Double> cyclewayMap = new EnumMap<>(Cycleway.class);
+    Map<String, Double> highwayMap = new HashMap<>();
 
     // This is the specific bicycle class
     private String classBicycleKey;
@@ -71,7 +71,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     protected BikeCommonFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
         super(name, speedBits, speedFactor, speedTwoDirections, maxTurnCosts);
 
-        penaltyEnc = new DecimalEncodedValueImpl(getKey(name, "penalty"), 8, PenaltyCode.getFactor(1),
+        penaltyEnc = new DecimalEncodedValueImpl(getKey(name, "penalty"), 4, PenaltyCode.getFactor(1),
                 penaltyTwoDirections);
 
         restrictedValues.add("agricultural");
@@ -185,7 +185,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         routeMap.put(REGIONAL, VERY_NICE.getValue());
         routeMap.put(LOCAL, PREFER.getValue());
 
-        cyclewayMap.put(SEPARATE, SLIGHT_AVOID.getValue());
+        cyclewayMap.put(SEPARATE, REACH_DESTINATION.getValue());
         cyclewayMap.put(SHOULDER, UNCHANGED.getValue());
         cyclewayMap.put(SHARED_LANE, SLIGHT_PREFER.getValue());
         cyclewayMap.put(SHARE_BUSWAY, SLIGHT_PREFER.getValue());
@@ -332,7 +332,6 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         if (access.canSkip())
             return edgeFlags;
 
-        Integer penaltyFromRelation = routeMap.get(bikeRouteEnc.getEnum(false, edgeFlags));
         double wayTypeSpeed = getSpeed(way);
         if (!access.isFerry()) {
             wayTypeSpeed = applyMaxSpeed(way, wayTypeSpeed);
@@ -354,10 +353,9 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
                 avgSpeedEnc.setDecimal(true, edgeFlags, ferrySpeed);
             accessEnc.setBool(false, edgeFlags, true);
             accessEnc.setBool(true, edgeFlags, true);
-            penaltyFromRelation = SLIGHT_AVOID.getValue();
         }
 
-        handlePenalty(edgeFlags, way, wayTypeSpeed, penaltyFromRelation);
+        handlePenalty(edgeFlags, way, wayTypeSpeed);
         return edgeFlags;
     }
 
@@ -427,15 +425,11 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
      * In this method we prefer cycleways or roads with designated bike access and
      * avoid big roads or roads with trams or pedestrian.
      *
-     * Modifies penaltyEnc with a new penalty based on penaltyFromRelation and on
-     * the tags in ReaderWay.
+     * Modifies penaltyEnc with a new penalty based on the tags in ReaderWay.
      */
-    void handlePenalty(IntsRef edgeFlags, ReaderWay way, double wayTypeSpeed, Integer penaltyFromRelation) {
-        BidirectionalTreeMap penaltyMap = new BidirectionalTreeMap();
-        if (penaltyFromRelation == null)
-            penaltyMap.put(0d, UNCHANGED.getValue());
-        else
-            penaltyMap.put(110d, penaltyFromRelation);
+    void handlePenalty(IntsRef edgeFlags, ReaderWay way, double wayTypeSpeed) {
+        BidirectionalTreeMap<Double, Double> penaltyMap = new BidirectionalTreeMap<>();
+        penaltyMap.put(0d, UNCHANGED.getValue());
 
         collect(edgeFlags, way, wayTypeSpeed, penaltyMap);
 
@@ -478,7 +472,8 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
      *                   allows subclasses to 'insert' more important penalties as
      *                   well as overwrite determined penalties.
      */
-    void collect(IntsRef edgeFlags, ReaderWay way, double wayTypeSpeed, BidirectionalTreeMap penaltyMap) {
+    void collect(IntsRef edgeFlags, ReaderWay way, double wayTypeSpeed,
+            BidirectionalTreeMap<Double, Double> penaltyMap) {
         final double SPEED_KEY = 40d;
         final double HIGHWAY_KEY = 50d;
         final double CYCLE_INFRA_KEY = 100d;
@@ -496,7 +491,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         }
 
         // Associate penalty with highway infrastructure
-        Integer highwayPenalty = highwayMap.get(highway);
+        Double highwayPenalty = highwayMap.get(highway);
         if (Objects.isNull(highwayPenalty)) {
             highwayPenalty = SLIGHT_AVOID.getValue();
         }
@@ -506,7 +501,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         }
         if (pushingSectionsHighways.contains(highway)
                 || "parking_aisle".equals(service)) {
-            int pushingSectionPenalty = SLIGHT_AVOID.getValue();
+            Double pushingSectionPenalty = SLIGHT_AVOID.getValue();
             if (way.hasTag("bicycle", "yes") || way.hasTag("bicycle", "permissive"))
                 pushingSectionPenalty = PREFER.getValue();
             if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official"))
@@ -545,7 +540,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
                 cyclewayForward = Cycleway.find(way.getTag("cycleway:" + drivingSide.toString())),
                 cyclewayBackward = Cycleway.find(way.getTag("cycleway:" + DrivingSide.reverse(drivingSide).toString()));
 
-        Integer cyclewayPenalty = cyclewayMap.get(cycleway),
+        Double cyclewayPenalty = cyclewayMap.get(cycleway),
                 cyclewayForwardPenalty = cyclewayMap.get(cyclewayForward),
                 cyclewayBackwardPenalty = cyclewayMap.get(cyclewayBackward);
 

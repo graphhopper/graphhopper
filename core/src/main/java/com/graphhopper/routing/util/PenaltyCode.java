@@ -24,34 +24,34 @@ package com.graphhopper.routing.util;
  * @author Hazel Court
  */
 public enum PenaltyCode {
-    EXCLUDE(511),
-    REACH_DESTINATION(15),
-    VERY_BAD(13),
-    BAD(12),
-    AVOID_MORE(11),
-    AVOID(10),
-    SLIGHT_AVOID(9),
-    UNCHANGED(8),
-    SLIGHT_PREFER(6),
-    PREFER(5),
-    VERY_NICE(3),
-    BEST(1);
+    EXCLUDE(15),
+    REACH_DESTINATION(12),
+    VERY_BAD(9.5),
+    BAD(9.0),
+    AVOID_MORE(8.5),
+    AVOID(8.0),
+    SLIGHT_AVOID(7.5),
+    UNCHANGED(5.0),
+    SLIGHT_PREFER(2.5),
+    PREFER(2.0),
+    VERY_NICE(1.5),
+    BEST(1.0);
 
-    private final int value;
+    private final double value;
 
-    PenaltyCode(int value) {
+    PenaltyCode(double value) {
         this.value = value;
     }
 
-    public int getValue() {
+    public double getValue() {
         return value;
     }
 
-    public static double getFactor(int value) {
+    public static double getFactor(double value) {
         return (double) value;
     }
 
-    public static double getValue(int value) {
+    public static double getValue(double value) {
         return getFactor(value);
     }
 }
