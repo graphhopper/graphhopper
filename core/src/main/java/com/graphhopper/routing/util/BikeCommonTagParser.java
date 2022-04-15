@@ -19,14 +19,12 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 
 import java.util.*;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
@@ -60,10 +58,13 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
     // This is the specific bicycle class
     private String classBicycleKey;
 
-    protected BikeCommonTagParser(String name, int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
-        super(name, speedBits, speedFactor, speedTwoDirections, maxTurnCosts);
-
-        priorityEnc = new DecimalEncodedValueImpl(getKey(name, "priority"), 4, PriorityCode.getFactor(1), false);
+    protected BikeCommonTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
+                                  EnumEncodedValue<RouteNetwork> bikeRouteEnc, EnumEncodedValue<Smoothness> smoothnessEnc,
+                                  String name, BooleanEncodedValue roundaboutEnc, DecimalEncodedValue turnCostEnc) {
+        super(accessEnc, speedEnc, name, roundaboutEnc, turnCostEnc, TransportationMode.BIKE, speedEnc.getNextStorableValue(30));
+        this.bikeRouteEnc = bikeRouteEnc;
+        this.smoothnessEnc = smoothnessEnc;
+        this.priorityEnc = priorityEnc;
 
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
@@ -99,8 +100,6 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
         unpavedSurfaceTags.add("salt");
         unpavedSurfaceTags.add("sand");
         unpavedSurfaceTags.add("wood");
-
-        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(30);
 
         setTrackTypeSpeed("grade1", 18); // paved
         setTrackTypeSpeed("grade2", 12); // now unpaved ...
@@ -180,20 +179,6 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
         setSmoothnessSpeedFactor(Smoothness.OTHER, 0.7d);
 
         setAvoidSpeedLimit(71);
-    }
-
-    @Override
-    public TransportationMode getTransportationMode() {
-        return TransportationMode.BIKE;
-    }
-
-    @Override
-    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue) {
-        super.createEncodedValues(registerNewEncodedValue);
-        registerNewEncodedValue.add(priorityEnc);
-
-        bikeRouteEnc = getEnumEncodedValue(RouteNetwork.key("bike"), RouteNetwork.class);
-        smoothnessEnc = getEnumEncodedValue(Smoothness.KEY, Smoothness.class);
     }
 
     @Override
@@ -561,14 +546,6 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
 
     void addPushingSection(String highway) {
         pushingSectionsHighways.add(highway);
-    }
-
-    @Override
-    public boolean supports(Class<?> feature) {
-        if (super.supports(feature))
-            return true;
-
-        return PriorityWeighting.class.isAssignableFrom(feature);
     }
 
     void setAvoidSpeedLimit(int limit) {

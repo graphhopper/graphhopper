@@ -1,13 +1,26 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.storage.IntsRef;
+
+import static com.graphhopper.routing.util.EncodingManager.getKey;
 
 public class RoadsTagParser extends VehicleTagParser {
 
-    public RoadsTagParser() {
-        super("roads", 7, 2, true, 3);
-        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(254);
+    public RoadsTagParser(EncodedValueLookup lookup) {
+        this(
+                lookup.getBooleanEncodedValue(getKey("roads", "access")),
+                lookup.getDecimalEncodedValue(getKey("roads", "average_speed")),
+                lookup.getDecimalEncodedValue(TurnCost.key("roads"))
+        );
+    }
+
+    public RoadsTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue turnCostEnc) {
+        super(accessEnc, speedEnc, "roads", null, turnCostEnc, TransportationMode.VEHICLE, speedEnc.getNextStorableValue(254));
     }
 
     @Override
@@ -27,11 +40,6 @@ public class RoadsTagParser extends VehicleTagParser {
         if (way.getTag("highway", "").isEmpty())
             return EncodingManager.Access.CAN_SKIP;
         return EncodingManager.Access.WAY;
-    }
-
-    @Override
-    public TransportationMode getTransportationMode() {
-        return TransportationMode.VEHICLE;
     }
 
 }

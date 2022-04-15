@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
@@ -105,8 +104,7 @@ public class EncodingManager implements EncodedValueLookup {
 
     public static class Builder {
         private EncodingManager em;
-        private DateRangeParser dateRangeParser;
-        private final Map<String, VehicleTagParser> flagEncoderMap = new LinkedHashMap<>();
+        private final Map<String, VehicleEncodedValues> flagEncoderMap = new LinkedHashMap<>();
         private final Map<String, EncodedValue> encodedValueMap = new LinkedHashMap<>();
 
         public Builder() {
@@ -117,7 +115,7 @@ public class EncodingManager implements EncodedValueLookup {
             check();
             if (flagEncoderMap.containsKey(encoder.toString()))
                 throw new IllegalArgumentException("FlagEncoder already exists: " + encoder);
-            flagEncoderMap.put(encoder.toString(), (VehicleTagParser) encoder);
+            flagEncoderMap.put(encoder.toString(), (VehicleEncodedValues) encoder);
             return this;
         }
 
@@ -155,31 +153,27 @@ public class EncodingManager implements EncodedValueLookup {
                 em.addEncodedValue(new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class), false);
             }
 
-            if (dateRangeParser == null)
-                dateRangeParser = new DateRangeParser(DateRangeParser.createCalendar());
-
-            for (FlagEncoder encoder : flagEncoderMap.values()) {
-                if (encoder instanceof RoadsTagParser) {
+            for (VehicleEncodedValues encoder : flagEncoderMap.values()) {
+                if (encoder.getName().equals("roads")) {
                     // TODO Later these EncodedValues can be added independently of RoadsFlagEncoder. Maybe add a foot_access and hgv_access? and remove the others "xy$access"
                     if (!em.hasEncodedValue("car_access"))
-                        em.addEncodedValue(new SimpleBooleanEncodedValue("car_access"), false);
+                        em.addEncodedValue(new SimpleBooleanEncodedValue("car_access", true), false);
                     if (!em.hasEncodedValue("bike_access"))
-                        em.addEncodedValue(new SimpleBooleanEncodedValue("bike_access"), false);
-                } else if (encoder instanceof BikeCommonTagParser) {
+                        em.addEncodedValue(new SimpleBooleanEncodedValue("bike_access", true), false);
+                } else if (encoder.getName().contains("bike") || encoder.getName().contains("mtb")) {
                     if (!em.hasEncodedValue(RouteNetwork.key("bike")))
                         em.addEncodedValue(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class), false);
                     if (!em.hasEncodedValue(GetOffBike.KEY))
                         em.addEncodedValue(GetOffBike.create(), false);
                     if (!em.hasEncodedValue(Smoothness.KEY))
                         em.addEncodedValue(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class), false);
-                } else if (encoder instanceof FootTagParser) {
+                } else if (encoder.getName().contains("foot") || encoder.getName().contains("hike") || encoder.getName().contains("wheelchair")) {
                     if (!em.hasEncodedValue(RouteNetwork.key("foot")))
                         em.addEncodedValue(new EnumEncodedValue<>(FootNetwork.KEY, RouteNetwork.class), false);
                 }
             }
 
-            for (VehicleTagParser encoder : flagEncoderMap.values()) {
-                encoder.init(dateRangeParser);
+            for (VehicleEncodedValues encoder : flagEncoderMap.values()) {
                 em.addEncoder(encoder);
             }
 
@@ -213,7 +207,7 @@ public class EncodingManager implements EncodedValueLookup {
         return edgeConfig.getRequiredInts();
     }
 
-    private void addEncoder(VehicleTagParser encoder) {
+    private void addEncoder(VehicleEncodedValues encoder) {
         encoder.setEncodedValueLookup(this);
         List<EncodedValue> list = new ArrayList<>();
         encoder.createEncodedValues(list);
@@ -299,7 +293,8 @@ public class EncodingManager implements EncodedValueLookup {
 
             str.append(encoder.toString())
                     .append("|")
-                    .append(((VehicleTagParser) encoder).getPropertiesString());
+                    // todonow: we used to include properties like speed_factor here. we probably should include this information in the encoded values' property strings instead
+                    .append(((VehicleEncodedValues) encoder).getName());
         }
 
         return str.toString();
@@ -404,7 +399,7 @@ public class EncodingManager implements EncodedValueLookup {
     public <T extends EncodedValue> T getEncodedValue(String key, Class<T> encodedValueType) {
         EncodedValue ev = encodedValueMap.get(key);
         if (ev == null)
-            throw new IllegalArgumentException("Cannot find EncodedValue " + key + " in collection: " + ev);
+            throw new IllegalArgumentException("Cannot find EncodedValue " + key + " in collection: " + encodedValueMap.keySet());
         return (T) ev;
     }
 

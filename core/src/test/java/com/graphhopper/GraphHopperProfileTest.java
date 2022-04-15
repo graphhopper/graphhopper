@@ -60,6 +60,7 @@ public class GraphHopperProfileTest {
 
     @Test
     public void vehicleDoesNotExist_error() {
+        // todonow: make sure this works for car
         final GraphHopper hopper = new GraphHopper();
         hopper.setGraphHopperLocation(GH_LOCATION).setStoreOnFlush(false).
                 setProfiles(new Profile("profile").setVehicle("your_car"));
