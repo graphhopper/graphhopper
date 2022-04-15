@@ -29,12 +29,11 @@ import com.graphhopper.matching.EdgeMatch;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.matching.Observation;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -216,8 +215,43 @@ public class MapMatchingTest {
         MapMatching mapMatching = new MapMatching(graphHopper, hints);
         mapMatching.setMeasurementErrorSigma(20);
         MatchResult mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
-        assertEquals(Arrays.asList("Weinligstraße", "Fechnerstraße"), fetchStreets(mr.getEdgeMatches()));
+        assertEquals(Arrays.asList("Marbachstraße", "Weinligstraße", "Fechnerstraße"), fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 11); // TODO: this should be around 300m according to Google ... need to check
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void testSimplification(PMap hints) throws IOException {
+        Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour3-with-long-edge.gpx"), Gpx.class);
+        MapMatching mapMatching = new MapMatching(graphHopper, hints);
+        mapMatching.setMeasurementErrorSigma(20);
+        List<Observation> observations = GpxConversions.getEntries(gpx.trk.get(0));
+        // Warning, this has to be calculated before filtering, because (of course) observations
+        // are mutable and are mutated.
+        double expectedLinearDistance = linearDistance(observations);
+
+        // This is the testee
+        List<Observation> filteredObservations = mapMatching.filterObservations(observations);
+
+        // Make sure something is actually filtered, i.e. filtered size is smaller, otherwise we are not
+        // testing anything.
+        assertEquals(7, observations.size());
+        assertEquals(5, filteredObservations.size());
+        assertEquals(expectedLinearDistance, linearDistance(filteredObservations));
+    }
+
+    private double linearDistance(List<Observation> observations) {
+        DistanceCalc distanceCalc = new DistancePlaneProjection();
+        double result = 0.0;
+        for (int i = 1; i < observations.size(); i++) {
+            Observation observation = observations.get(i);
+            Observation prevObservation = observations.get(i - 1);
+            result += distanceCalc.calcDist(
+                    prevObservation.getPoint().getLat(), prevObservation.getPoint().getLon(),
+                    observation.getPoint().getLat(), observation.getPoint().getLon());
+            result += observation.getAccumulatedLinearDistanceToPrevious();
+        }
+        return result;
     }
 
     /**
