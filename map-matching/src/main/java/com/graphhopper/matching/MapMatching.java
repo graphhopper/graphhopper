@@ -187,7 +187,7 @@ public class MapMatching {
      * Filters observations to only those which will be used for map matching (i.e. those which
      * are separated by at least 2 * measurementErrorSigman
      */
-    private List<Observation> filterObservations(List<Observation> observations) {
+    public List<Observation> filterObservations(List<Observation> observations) {
         List<Observation> filtered = new ArrayList<>();
         Observation prevEntry = null;
         double acc = 0.0;
@@ -206,6 +206,10 @@ public class MapMatching {
                             prevEntry.getPoint().getLat(), prevEntry.getPoint().getLon(),
                             observation.getPoint().getLat(), observation.getPoint().getLon());
                 }
+                // Here we store the meters of distance that we are missing because of the filtering,
+                // so that when we add these terms to the distances between the filtered points,
+                // the original total distance between the unfiltered points is conserved.
+                // (See test for kind of a specification.)
                 observation.setAccumulatedLinearDistanceToPrevious(acc);
                 filtered.add(observation);
                 prevEntry = observation;
@@ -215,7 +219,6 @@ public class MapMatching {
                 acc += distanceCalc.calcDist(
                         prevObservation.getPoint().getLat(), prevObservation.getPoint().getLon(),
                         observation.getPoint().getLat(), observation.getPoint().getLon());
-                logger.debug("Filter out observation: {}", i + 1);
             }
         }
         return filtered;
