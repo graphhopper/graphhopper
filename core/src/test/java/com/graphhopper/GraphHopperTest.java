@@ -24,6 +24,8 @@ import com.graphhopper.json.Statement;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.SkadiProvider;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.DefaultSnapFilter;
@@ -1054,10 +1056,10 @@ public class GraphHopperTest {
         if (!withTunnelInterpolation) {
             hopper.setTagParserFactory(new DefaultTagParserFactory() {
                 @Override
-                public TagParser create(String name, PMap configuration) {
-                    TagParser parser = super.create(name, configuration);
+                public TagParser create(EncodedValueLookup lookup, String name) {
+                    TagParser parser = super.create(lookup, name);
                     if (name.equals("road_environment"))
-                        parser = new OSMRoadEnvironmentParser() {
+                        parser = new OSMRoadEnvironmentParser(lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class)) {
                             @Override
                             public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
                                 // do not change RoadEnvironment to avoid triggering tunnel interpolation

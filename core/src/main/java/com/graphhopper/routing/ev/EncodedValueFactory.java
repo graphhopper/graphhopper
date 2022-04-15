@@ -15,16 +15,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.parsers;
+package com.graphhopper.routing.ev;
 
-import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.storage.IntsRef;
-
-/**
- * This interface defines how parts of the information from 'way' is converted into IntsRef. A TagParser usually
- * has one corresponding EncodedValue but more are possible too.
- */
-public interface TagParser {
-
-    IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags);
+public interface EncodedValueFactory {
+    /**
+     * This method assumes a string value with the key of an EncodedValue like "road_class" and returns an instance
+     * of it.
+     */
+    EncodedValue create(String encodedValueString);
 }

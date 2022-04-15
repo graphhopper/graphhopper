@@ -1,13 +1,9 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.HazmatTunnel;
 import com.graphhopper.storage.IntsRef;
-
-import java.util.List;
 
 public class OSMHazmatTunnelParser implements TagParser {
 
@@ -23,18 +19,8 @@ public class OSMHazmatTunnelParser implements TagParser {
 
     private final EnumEncodedValue<HazmatTunnel> hazTunnelEnc;
 
-    public OSMHazmatTunnelParser() {
-        this(new EnumEncodedValue<>(HazmatTunnel.KEY, HazmatTunnel.class));
-    }
-
     public OSMHazmatTunnelParser(EnumEncodedValue<HazmatTunnel> hazTunnelEnc) {
         this.hazTunnelEnc = hazTunnelEnc;
-    }
-
-
-    @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(hazTunnelEnc);
     }
 
     @Override

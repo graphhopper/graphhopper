@@ -512,8 +512,8 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testReusingNodeOrdering() {
-        FlagEncoder car1FlagEncoder = FlagEncoders.createCar("car1", 5, 5, 1, true);
-        FlagEncoder car2FlagEncoder = FlagEncoders.createCar("car2", 5, 5, 1, true);
+        FlagEncoder car1FlagEncoder = FlagEncoders.createCar(new PMap("name=car1|turn_costs=true|speed_two_directions=true"));
+        FlagEncoder car2FlagEncoder = FlagEncoders.createCar(new PMap("name=car2|turn_costs=true|speed_two_directions=true"));
         EncodingManager em = EncodingManager.create(car1FlagEncoder, car2FlagEncoder);
         CHConfig car1Config = CHConfig.nodeBased("c1", new FastestWeighting(car1FlagEncoder));
         CHConfig car2Config = CHConfig.nodeBased("c2", new FastestWeighting(car2FlagEncoder));

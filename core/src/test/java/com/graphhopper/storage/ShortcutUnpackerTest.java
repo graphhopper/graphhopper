@@ -14,6 +14,7 @@ import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -40,7 +41,7 @@ public class ShortcutUnpackerTest {
 
         Fixture(boolean edgeBased) {
             this.edgeBased = edgeBased;
-            encoder = FlagEncoders.createCar(5, 5, 10, true);
+            encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", 10).putObject("speed_two_directions", true));
             encodingManager = EncodingManager.create(encoder);
             graph = new BaseGraph.Builder(encodingManager).create();
         }

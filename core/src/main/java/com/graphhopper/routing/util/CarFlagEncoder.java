@@ -191,6 +191,10 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             }
             return EncodingManager.Access.CAN_SKIP;
         }
+        
+        if ("service".equals(highwayValue) && "emergency_access".equals(way.getTag("service"))) {
+            return EncodingManager.Access.CAN_SKIP;
+        }
 
         if ("track".equals(highwayValue) && trackTypeSpeedMap.get(way.getTag("tracktype")) == null)
             return EncodingManager.Access.CAN_SKIP;

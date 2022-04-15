@@ -41,9 +41,6 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     private final Set<String> excludeSmoothness = new HashSet<>();
     private final int maxInclinePercent = 6;
 
-    /**
-     * Should be only instantiated via EncodingManager
-     */
     public WheelchairFlagEncoder() {
         this(4, 1);
     }

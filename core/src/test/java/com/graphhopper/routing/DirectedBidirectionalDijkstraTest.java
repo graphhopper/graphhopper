@@ -18,6 +18,7 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
@@ -48,7 +49,7 @@ public class DirectedBidirectionalDijkstraTest {
     @BeforeEach
     public void setup() {
         maxTurnCosts = 10;
-        encoder = FlagEncoders.createCar(5, 5, maxTurnCosts);
+        encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", maxTurnCosts));
         encodingManager = EncodingManager.create(encoder);
         graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         turnCostStorage = graph.getTurnCostStorage();

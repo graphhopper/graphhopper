@@ -62,7 +62,7 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private void initialize() {
-        encoder = FlagEncoders.createCar(5, 5, maxCost);
+        encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", maxCost));
         EncodingManager encodingManager = EncodingManager.create(encoder);
         graph = new BaseGraph.Builder(encodingManager).create();
         chConfigs = Arrays.asList(

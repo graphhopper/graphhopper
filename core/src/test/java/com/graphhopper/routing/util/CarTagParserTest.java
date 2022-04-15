@@ -124,6 +124,11 @@ public class CarTagParserTest {
         way.setTag("access", "no");
         way.setTag("access:conditional", "yes @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
         assertTrue(parser.getAccess(way).isWay());
+
+        way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("service", "emergency_access");
+        assertTrue(parser.getAccess(way).canSkip());
     }
 
     @Test
@@ -324,7 +329,7 @@ public class CarTagParserTest {
         accessEnc.setBool(false, edgeFlags, true);
         accessEnc.setBool(true, edgeFlags, true);
 
-        parser.setSpeed(false, edgeFlags, parser.speedFactor * 0.49);
+        parser.setSpeed(false, edgeFlags, parser.avgSpeedEnc.getSmallestNonZeroValue() - 0.01);
 
         // one direction effects the other direction as one encoder for speed but this is not true for access
         assertEquals(0, avSpeedEnc.getDecimal(false, edgeFlags), .1);
@@ -333,7 +338,7 @@ public class CarTagParserTest {
         assertTrue(accessEnc.getBool(true, edgeFlags));
 
         // so always call this method with reverse=true too
-        parser.setSpeed(true, edgeFlags, parser.speedFactor * 0.49);
+        parser.setSpeed(true, edgeFlags, parser.avgSpeedEnc.getSmallestNonZeroValue() - 0.01);
         assertFalse(accessEnc.getBool(true, edgeFlags));
     }
 
@@ -541,20 +546,16 @@ public class CarTagParserTest {
 
     @Test
     public void testRegisterOnlyOnceAllowed() {
-        FlagEncoder instance = FlagEncoders.createCar(10, 0.5, 0);
-        EncodingManager tmpEM = EncodingManager.create(instance);
-        try {
-            tmpEM = EncodingManager.create(instance);
-            assertTrue(false);
-        } catch (IllegalStateException ex) {
-        }
+        FlagEncoder instance = FlagEncoders.createCar();
+        EncodingManager.create(instance);
+        assertThrows(IllegalStateException.class, () -> EncodingManager.create(instance));
     }
 
     @Test
     public void testSetToMaxSpeed() {
         ReaderWay way = new ReaderWay(12);
         way.setTag("maxspeed", "90");
-        assertEquals(90, parser.getMaxSpeed(way), 1e-2);
+        assertEquals(90, AbstractFlagEncoder.getMaxSpeed(way), 1e-2);
     }
 
     @Test

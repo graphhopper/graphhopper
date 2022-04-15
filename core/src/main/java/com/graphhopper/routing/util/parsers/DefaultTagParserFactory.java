@@ -19,67 +19,66 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.TransportationMode;
-import com.graphhopper.util.PMap;
 
 import static com.graphhopper.util.Helper.toLowerCase;
 
 public class DefaultTagParserFactory implements TagParserFactory {
     @Override
-    public TagParser create(String name, PMap configuration) {
+    public TagParser create(EncodedValueLookup lookup, String name) {
         name = name.trim();
         if (!name.equals(toLowerCase(name)))
             throw new IllegalArgumentException("Use lower case for TagParsers: " + name);
 
         if (Roundabout.KEY.equals(name))
-            return new OSMRoundaboutParser();
+            return new OSMRoundaboutParser(lookup.getBooleanEncodedValue(Roundabout.KEY));
         else if (name.equals(RoadClass.KEY))
-            return new OSMRoadClassParser();
+            return new OSMRoadClassParser(lookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class));
         else if (name.equals(RoadClassLink.KEY))
-            return new OSMRoadClassLinkParser();
+            return new OSMRoadClassLinkParser(lookup.getBooleanEncodedValue(RoadClassLink.KEY));
         else if (name.equals(RoadEnvironment.KEY))
-            return new OSMRoadEnvironmentParser();
+            return new OSMRoadEnvironmentParser(lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class));
         else if (name.equals(RoadAccess.KEY))
-            return new OSMRoadAccessParser();
+            return new OSMRoadAccessParser(lookup.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR));
         else if (name.equals("car_access"))
-            return new OSMAccessParser("car_access", OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR), TransportationMode.CAR);
+            return new OSMAccessParser(lookup.getBooleanEncodedValue("car_access"), lookup.getBooleanEncodedValue(Roundabout.KEY), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR), TransportationMode.CAR);
         else if (name.equals("bike_access"))
-            return new OSMAccessParser("bike_access", OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE), TransportationMode.BIKE);
+            return new OSMAccessParser(lookup.getBooleanEncodedValue("bike_access"), lookup.getBooleanEncodedValue(Roundabout.KEY), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE), TransportationMode.BIKE);
         else if (name.equals(MaxSpeed.KEY))
-            return new OSMMaxSpeedParser();
+            return new OSMMaxSpeedParser(lookup.getDecimalEncodedValue(MaxSpeed.KEY));
         else if (name.equals(MaxWeight.KEY))
-            return new OSMMaxWeightParser();
+            return new OSMMaxWeightParser(lookup.getDecimalEncodedValue(MaxWeight.KEY));
         else if (name.equals(MaxHeight.KEY))
-            return new OSMMaxHeightParser();
+            return new OSMMaxHeightParser(lookup.getDecimalEncodedValue(MaxHeight.KEY));
         else if (name.equals(MaxWidth.KEY))
-            return new OSMMaxWidthParser();
+            return new OSMMaxWidthParser(lookup.getDecimalEncodedValue(MaxWidth.KEY));
         else if (name.equals(MaxAxleLoad.KEY))
-            return new OSMMaxAxleLoadParser();
+            return new OSMMaxAxleLoadParser(lookup.getDecimalEncodedValue(MaxAxleLoad.KEY));
         else if (name.equals(MaxLength.KEY))
-            return new OSMMaxLengthParser();
+            return new OSMMaxLengthParser(lookup.getDecimalEncodedValue(MaxLength.KEY));
         else if (name.equals(Surface.KEY))
-            return new OSMSurfaceParser();
+            return new OSMSurfaceParser(lookup.getEnumEncodedValue(Surface.KEY, Surface.class));
         else if (name.equals(Smoothness.KEY))
-            return new OSMSmoothnessParser();
+            return new OSMSmoothnessParser(lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class));
         else if (name.equals(Toll.KEY))
-            return new OSMTollParser();
+            return new OSMTollParser(lookup.getEnumEncodedValue(Toll.KEY, Toll.class));
         else if (name.equals(TrackType.KEY))
-            return new OSMTrackTypeParser();
+            return new OSMTrackTypeParser(lookup.getEnumEncodedValue(TrackType.KEY, TrackType.class));
         else if (name.equals(Hazmat.KEY))
-            return new OSMHazmatParser();
+            return new OSMHazmatParser(lookup.getEnumEncodedValue(Hazmat.KEY, Hazmat.class));
         else if (name.equals(HazmatTunnel.KEY))
-            return new OSMHazmatTunnelParser();
+            return new OSMHazmatTunnelParser(lookup.getEnumEncodedValue(HazmatTunnel.KEY, HazmatTunnel.class));
         else if (name.equals(HazmatWater.KEY))
-            return new OSMHazmatWaterParser();
+            return new OSMHazmatWaterParser(lookup.getEnumEncodedValue(HazmatWater.KEY, HazmatWater.class));
         else if (name.equals(Lanes.KEY))
-            return new OSMLanesParser();
+            return new OSMLanesParser(lookup.getIntEncodedValue(Lanes.KEY));
         else if (name.equals(MtbRating.KEY))
-            return new OSMMtbRatingParser();
+            return new OSMMtbRatingParser(lookup.getIntEncodedValue(MtbRating.KEY));
         else if (name.equals(HikeRating.KEY))
-            return new OSMHikeRatingParser();
+            return new OSMHikeRatingParser(lookup.getIntEncodedValue(HikeRating.KEY));
         else if (name.equals(HorseRating.KEY))
-            return new OSMHorseRatingParser();
+            return new OSMHorseRatingParser(lookup.getIntEncodedValue(HorseRating.KEY));
         else if (name.equals(Country.KEY))
-            return new CountryParser();
+            return new CountryParser(lookup.getEnumEncodedValue(Country.KEY, Country.class));
 
         throw new IllegalArgumentException("DefaultTagParserFactory cannot find: " + name);
     }

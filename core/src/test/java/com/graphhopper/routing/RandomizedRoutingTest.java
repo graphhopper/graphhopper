@@ -117,7 +117,7 @@ public class RandomizedRoutingTest {
             // todo: this test only works with speedTwoDirections=false (as long as loops are enabled), otherwise it will
             // fail sometimes for edge-based algorithms, #1631, but maybe we can should disable different fwd/bwd speeds
             // only for loops instead?
-            encoder = FlagEncoders.createCar(5, 5, maxTurnCosts);
+            encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", maxTurnCosts));
             encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
             graph = new BaseGraph.Builder(encodingManager)
                     .setDir(dir)

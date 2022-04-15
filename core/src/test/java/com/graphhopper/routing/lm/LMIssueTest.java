@@ -31,6 +31,7 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -60,7 +61,7 @@ public class LMIssueTest {
     @BeforeEach
     public void init() {
         dir = new RAMDirectory();
-        encoder = FlagEncoders.createCar(5, 5, 1);
+        encoder = FlagEncoders.createCar(new PMap("turn_costs=true"));
         encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
         graph = new BaseGraph.Builder(encodingManager)
                 .setDir(dir)

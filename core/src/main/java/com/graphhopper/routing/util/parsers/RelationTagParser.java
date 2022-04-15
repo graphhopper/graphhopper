@@ -18,11 +18,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderRelation;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.storage.IntsRef;
-
-import java.util.List;
 
 /**
  * This interface serves the purpose of creating relation flags (max. 64 bits) from ReaderRelation in handleRelationTags
@@ -30,8 +26,6 @@ import java.util.List;
  * flags is not yet possible yet due to storage limitation of the 'supervisor' OSMReader. See #1775.
  */
 public interface RelationTagParser extends TagParser {
-
-    void createRelationEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue);
 
     /**
      * Analyze the tags of a relation and create the routing flags for the second read step.
