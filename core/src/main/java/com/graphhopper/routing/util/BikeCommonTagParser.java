@@ -36,7 +36,7 @@ import static com.graphhopper.routing.util.PriorityCode.*;
  * @author Nop
  * @author ratrun
  */
-abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
+abstract public class BikeCommonTagParser extends VehicleTagParser {
 
     protected static final int PUSHING_SECTION_SPEED = 4;
     // Pushing section highways are parts where you need to get off your bike and push it (German: Schiebestrecke)
@@ -60,7 +60,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     // This is the specific bicycle class
     private String classBicycleKey;
 
-    protected BikeCommonFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
+    protected BikeCommonTagParser(String name, int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
         super(name, speedBits, speedFactor, speedTwoDirections, maxTurnCosts);
 
         priorityEnc = new DecimalEncodedValueImpl(getKey(name, "priority"), 4, PriorityCode.getFactor(1), false);

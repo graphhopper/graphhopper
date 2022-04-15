@@ -40,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class WheelchairTagParserTest {
     private final EncodingManager encodingManager = EncodingManager.create("car,wheelchair");
-    private final WheelchairFlagEncoder wheelchairEncoder = (WheelchairFlagEncoder) encodingManager.getEncoder("wheelchair");
+    private final WheelchairTagParser wheelchairEncoder = (WheelchairTagParser) encodingManager.getEncoder("wheelchair");
     private final DecimalEncodedValue wheelchairAvSpeedEnc = wheelchairEncoder.getAverageSpeedEnc();
     private final BooleanEncodedValue wheelchairAccessEnc = wheelchairEncoder.getAccessEnc();
     private final DecimalEncodedValue carAvSpeedEnc = encodingManager.getEncoder("car").getAverageSpeedEnc();
@@ -404,7 +404,7 @@ public class WheelchairTagParserTest {
 
     @Test
     public void testBlockByDefault() {
-        WheelchairFlagEncoder tmpWheelchairEncoder = new WheelchairFlagEncoder();
+        WheelchairTagParser tmpWheelchairEncoder = new WheelchairTagParser();
         EncodingManager.create(tmpWheelchairEncoder);
 
         ReaderNode node = new ReaderNode(1, -1, -1);

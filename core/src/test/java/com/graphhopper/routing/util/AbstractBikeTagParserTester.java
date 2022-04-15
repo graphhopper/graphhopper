@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author ratrun
  */
 public abstract class AbstractBikeTagParserTester {
-    protected BikeCommonFlagEncoder parser;
+    protected BikeCommonTagParser parser;
     protected TagParserManager encodingManager;
     protected BooleanEncodedValue roundaboutEnc;
     protected DecimalEncodedValue priorityEnc;
@@ -51,7 +51,7 @@ public abstract class AbstractBikeTagParserTester {
         avgSpeedEnc = parser.getAverageSpeedEnc();
     }
 
-    protected abstract BikeCommonFlagEncoder createBikeTagParser();
+    protected abstract BikeCommonTagParser createBikeTagParser();
 
     protected void assertPriority(int expectedPrio, ReaderWay way) {
         IntsRef relFlags = encodingManager.handleRelationTags(new ReaderRelation(0), encodingManager.createRelationFlags());

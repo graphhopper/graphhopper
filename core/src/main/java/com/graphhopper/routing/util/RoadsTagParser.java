@@ -3,9 +3,9 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.storage.IntsRef;
 
-public class RoadsFlagEncoder extends AbstractFlagEncoder {
+public class RoadsTagParser extends VehicleTagParser {
 
-    public RoadsFlagEncoder() {
+    public RoadsTagParser() {
         super("roads", 7, 2, true, 3);
         maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(254);
     }

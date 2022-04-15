@@ -24,9 +24,9 @@ import com.graphhopper.util.PMap;
  *
  * @author zstadler
  */
-public class Car4WDFlagEncoder extends CarFlagEncoder {
+public class Car4WDTagParser extends CarTagParser {
 
-    public Car4WDFlagEncoder(PMap properties) {
+    public Car4WDTagParser(PMap properties) {
         super(new PMap(properties).putObject("name", properties.getString("name", "car4wd")));
         trackTypeSpeedMap.put("grade4", 5); // ... some hard or compressed materials
         trackTypeSpeedMap.put("grade5", 5); // ... no hard materials. soil/sand/grass

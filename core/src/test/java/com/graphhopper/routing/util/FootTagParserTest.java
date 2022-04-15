@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class FootTagParserTest {
     private final EncodingManager encodingManager = EncodingManager.create("car,bike,foot");
-    private final FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
+    private final FootTagParser footEncoder = (FootTagParser) encodingManager.getEncoder("foot");
     private final DecimalEncodedValue footAvgSpeedEnc = footEncoder.getAverageSpeedEnc();
     private final BooleanEncodedValue footAccessEnc = footEncoder.getAccessEnc();
     private final DecimalEncodedValue carAvSpeedEnc = encodingManager.getEncoder("car").getAverageSpeedEnc();
@@ -56,11 +56,11 @@ public class FootTagParserTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
         IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way);
-        assertEquals(FootFlagEncoder.MEAN_SPEED, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
+        assertEquals(FootTagParser.MEAN_SPEED, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
 
         way.setTag("highway", "steps");
         flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way);
-        assertTrue(FootFlagEncoder.MEAN_SPEED > footAvgSpeedEnc.getDecimal(false, flags));
+        assertTrue(FootTagParser.MEAN_SPEED > footAvgSpeedEnc.getDecimal(false, flags));
     }
 
     @Test
@@ -330,12 +330,12 @@ public class FootTagParserTest {
         way.setTag("highway", "track");
         way.setTag("sac_scale", "hiking");
         IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way);
-        assertEquals(FootFlagEncoder.MEAN_SPEED, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
+        assertEquals(FootTagParser.MEAN_SPEED, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
 
         way.setTag("highway", "track");
         way.setTag("sac_scale", "mountain_hiking");
         flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way);
-        assertEquals(FootFlagEncoder.SLOW_SPEED, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
+        assertEquals(FootTagParser.SLOW_SPEED, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
     }
 
     @Test
@@ -405,7 +405,7 @@ public class FootTagParserTest {
         node.setTag("foot", "no");
         assertTrue(footEncoder.isBarrier(node));
 
-        FootFlagEncoder tmpEncoder = new FootFlagEncoder(new PMap("block_fords=true"));
+        FootTagParser tmpEncoder = new FootTagParser(new PMap("block_fords=true"));
         EncodingManager.create(tmpEncoder);
         node = new ReaderNode(1, -1, -1);
         node.setTag("ford", "no");

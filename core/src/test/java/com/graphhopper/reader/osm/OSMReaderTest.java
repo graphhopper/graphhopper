@@ -660,7 +660,7 @@ public class OSMReaderTest {
         GraphHopper hopper = new GraphHopper();
         hopper.setFlagEncoderFactory((name, config) -> {
             if (name.equals("truck")) {
-                return new CarFlagEncoder(new PMap(config).putObject("name", "truck")) {
+                return new CarTagParser(new PMap(config).putObject("name", "truck")) {
                     @Override
                     public TransportationMode getTransportationMode() {
                         return TransportationMode.HGV;

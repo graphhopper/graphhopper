@@ -4,82 +4,82 @@ import com.graphhopper.util.PMap;
 
 public class FlagEncoders {
     public static FlagEncoder createFoot() {
-        return new FootFlagEncoder();
+        return new FootTagParser();
     }
 
     public static FlagEncoder createFoot(PMap properties) {
-        return new FootFlagEncoder(properties);
+        return new FootTagParser(properties);
     }
 
     public static FlagEncoder createHike() {
-        return new HikeFlagEncoder(new PMap());
+        return new HikeTagParser(new PMap());
     }
 
     public static FlagEncoder createHike(PMap properties) {
-        return new HikeFlagEncoder(properties);
+        return new HikeTagParser(properties);
     }
 
     public static FlagEncoder createWheelchair() {
-        return new WheelchairFlagEncoder();
+        return new WheelchairTagParser();
     }
 
     public static FlagEncoder createWheelchair(PMap properties) {
-        return new WheelchairFlagEncoder(properties);
+        return new WheelchairTagParser(properties);
     }
 
     public static FlagEncoder createCar() {
-        return new CarFlagEncoder();
+        return new CarTagParser();
     }
 
     public static FlagEncoder createCar(PMap properties) {
-        return new CarFlagEncoder(properties);
+        return new CarTagParser(properties);
     }
 
     public static FlagEncoder createMotorcycle() {
-        return new MotorcycleFlagEncoder();
+        return new MotorcycleTagParser();
     }
 
     public static FlagEncoder createMotorcycle(PMap properties) {
-        return new MotorcycleFlagEncoder(properties);
+        return new MotorcycleTagParser(properties);
     }
 
     public static FlagEncoder createCar4wd(PMap properties) {
-        return new Car4WDFlagEncoder(properties);
+        return new Car4WDTagParser(properties);
     }
 
     public static FlagEncoder createRacingBike() {
-        return new RacingBikeFlagEncoder();
+        return new RacingBikeTagParser();
     }
 
     public static FlagEncoder createRacingBike(PMap properties) {
-        return new RacingBikeFlagEncoder(properties);
+        return new RacingBikeTagParser(properties);
     }
 
     public static FlagEncoder createBike() {
-        return new BikeFlagEncoder();
+        return new BikeTagParser();
     }
 
     public static FlagEncoder createBike(PMap properties) {
-        return new BikeFlagEncoder(properties);
+        return new BikeTagParser(properties);
     }
 
     public static FlagEncoder createBike2() {
-        return new Bike2WeightFlagEncoder();
+        return new Bike2WeightTagParser();
     }
 
     public static FlagEncoder createBike2(PMap properties) {
-        return new Bike2WeightFlagEncoder(properties);
+        return new Bike2WeightTagParser(properties);
     }
 
     public static FlagEncoder createMountainBike() {
-        return new MountainBikeFlagEncoder();
+        return new MountainBikeTagParser();
     }
 
     public static FlagEncoder createMountainBike(PMap properties) {
-        return new MountainBikeFlagEncoder(properties);
+        return new MountainBikeTagParser(properties);
     }
 
-    public static FlagEncoder createRoadsFlagEncoder() {
-        return new RoadsFlagEncoder();
+    public static FlagEncoder createRoads() {
+        return new RoadsTagParser();
     }
 }
