@@ -28,19 +28,19 @@ public class FindMinMax {
                     ", given: " + queryModel.getDistanceInfluence());
 
         checkMultiplyValue(queryModel.getPriority(), lookup);
-        double maxPrio = FindMinMax.findMax(new HashSet<>(), queryModel.getPriority(), lookup, 1, "priority");
-        if (maxPrio > 1)
-            throw new IllegalArgumentException("priority of CustomModel in query cannot be bigger than 1. Was: " + maxPrio);
-
         checkMultiplyValue(queryModel.getSpeed(), lookup);
     }
 
     private static void checkMultiplyValue(List<Statement> list, EncodedValueLookup lookup) {
         Set<String> createdObjects = new HashSet<>();
         for (Statement statement : list) {
-            // TODO NOW allow factor > 1 if last limits it to 1 again -> maybe just use findMax(queryModel.getSpeed(), 200) with a high speed?
-            if (statement.getOperation() == Statement.Op.MULTIPLY && ValueExpressionVisitor.findMinMax(createdObjects, statement.getValue(), lookup)[1] > 1)
-                throw new IllegalArgumentException("factor cannot be larger than 1 but was " + statement.getValue());
+            if (statement.getOperation() == Statement.Op.MULTIPLY) {
+                double[] minMax = ValueExpressionVisitor.findMinMax(createdObjects, statement.getValue(), lookup);
+                if (minMax[1] > 1)
+                    throw new IllegalArgumentException("maximum of value '" + statement.getValue() + "'cannot be larger than 1 but was " + minMax[1]);
+                else if (minMax[0] < 0)
+                    throw new IllegalArgumentException("minimum of value '" + statement.getValue() + "' cannot be smaller than 0 but was " + minMax[0]);
+            }
         }
     }
 
