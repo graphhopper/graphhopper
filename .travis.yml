@@ -11,10 +11,10 @@ env:
 
 matrix:
   include:
-    - env: JDKNAME='8.0.302-open'
-    - env: JDKNAME='11.0.12-open'
-    - env: JDKNAME='18-open'
-    - env: JDKNAME='19.ea.17-open'
+    - env: JDK='8/ga' # for backward compatibility
+    - env: JDK='17/ga'# latest LTS
+    - env: JDK='18/ga'# latest
+    - env: JDK='19/ea'# latest early access
 
 # avoid default dependency command for maven, 'true' means 'return true' and continue
 install: true
@@ -25,10 +25,9 @@ install: true
 before_install:
   - if [ ! -z "$GPG_SECRET_KEYS" ]; then echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import; fi
   - if [ ! -z "$GPG_OWNERTRUST" ]; then echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust; fi
-  - curl -s "https://get.sdkman.io" | bash
-  - source "$HOME/.sdkman/bin/sdkman-init.sh"
-  - sdk install java $JDKNAME
-  - sdk use java $JDKNAME
+  - wget -q "https://api.adoptium.net/v3/binary/latest/$JDK/linux/x64/jdk/hotspot/normal/eclipse" -O java.tar.gz
+  - tar xzf java.tar.gz
+  - export JAVA_HOME=$(ls -d $PWD/jdk*); echo $JAVA_HOME
 
 # Undo `_JAVA_OPTIONS` environment variable; see https://github.com/travis-ci/travis-ci/issues/8408
 before_script:
