@@ -7,12 +7,15 @@ import com.graphhopper.util.CustomModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 
 import static com.graphhopper.json.Statement.*;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
-import static com.graphhopper.routing.weighting.custom.FindMinMax.findMax;
+import static com.graphhopper.routing.weighting.custom.FindMinMax.findMinMax;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -37,53 +40,55 @@ class FindMinMaxTest {
     @Test
     public void testFindMax() {
         List<Statement> statements = new ArrayList<>();
-        Set<String> objs = new HashSet<>();
         statements.add(If("true", LIMIT, "100"));
-        assertEquals(100, findMax(objs, statements, lookup, 120, "speed"));
+        assertEquals(100, findMinMax(new HashSet<>(), new double[]{0, 120}, statements, lookup)[1]);
 
         statements.add(Else(LIMIT, "20"));
-        assertEquals(100, findMax(objs, statements, lookup, 120, "speed"));
+        assertEquals(100, findMinMax(new HashSet<>(), new double[]{0, 120}, statements, lookup)[1]);
 
         statements = new ArrayList<>();
         statements.add(If("road_environment == BRIDGE", LIMIT, "85"));
         statements.add(Else(LIMIT, "100"));
-        assertEquals(100, findMax(objs, statements, lookup, 120, "speed"));
+        assertEquals(100, findMinMax(new HashSet<>(), new double[]{0, 120}, statements, lookup)[1]);
 
-        // find bigger speed than stored max_speed in server-side custom_models
-        double storedMaxSpeed = 30;
+        // find bigger speed than stored max_speed (30) in server-side custom_models
         statements = new ArrayList<>();
         statements.add(If("true", MULTIPLY, "2"));
         statements.add(If("true", LIMIT, "35"));
-        assertEquals(35, findMax(objs, statements, lookup, 30, "speed"));
+        assertEquals(35, findMinMax(new HashSet<>(), new double[]{0, 30}, statements, lookup)[1]);
     }
 
     @Test
     public void findMax_limitAndMultiply() {
-        Set<String> objs = new HashSet<>();
         List<Statement> statements = Arrays.asList(
                 If("road_class == TERTIARY", LIMIT, "90"),
                 ElseIf("road_class == SECONDARY", MULTIPLY, "1.0"),
                 ElseIf("road_class == PRIMARY", LIMIT, "30"),
                 Else(LIMIT, "3")
         );
-        assertEquals(140, findMax(objs, statements, lookup, 140, "speed"));
+        assertEquals(140, findMinMax(new HashSet<>(), new double[]{0, 140}, statements, lookup)[1]);
     }
 
     @Test
     public void testFindMaxPriority() {
-        Set<String> objs = new HashSet<>();
         List<Statement> statements = new ArrayList<>();
         statements.add(If("true", MULTIPLY, "2"));
-        assertEquals(2, findMax(objs, statements, lookup, 1, "priority"));
+        assertEquals(2, findMinMax(new HashSet<>(), new double[]{0, 1}, statements, lookup)[1]);
 
         statements = new ArrayList<>();
         statements.add(If("true", MULTIPLY, "0.5"));
-        assertEquals(0.5, findMax(objs, statements, lookup, 1, "priority"));
+        assertEquals(0.5, findMinMax(new HashSet<>(), new double[]{0, 1}, statements, lookup)[1]);
+
+        statements = new ArrayList<>();
+        statements.add(If("road_class == MOTORWAY", MULTIPLY, "0.5"));
+        statements.add(Else(MULTIPLY, "-0.5"));
+        double[] minMax = findMinMax(new HashSet<>(), new double[]{1, 1}, statements, lookup);
+        assertEquals(-0.5, minMax[0]);
+        assertEquals(0.5, minMax[1]);
     }
 
     @Test
     public void findMax_multipleBlocks() {
-        Set<String> objs = new HashSet<>();
         List<Statement> statements = Arrays.asList(
                 If("road_class == TERTIARY", MULTIPLY, "0.2"),
                 ElseIf("road_class == SECONDARY", LIMIT, "25"),
@@ -91,9 +96,9 @@ class FindMinMaxTest {
                 ElseIf("road_environment == BRIDGE", LIMIT, "50"),
                 Else(MULTIPLY, "0.8")
         );
-        assertEquals(120, findMax(objs, statements, lookup, 150, "speed"));
-        assertEquals(80, findMax(objs, statements, lookup, 100, "speed"));
-        assertEquals(60, findMax(objs, statements, lookup, 60, "speed"));
+        assertEquals(120, findMinMax(new HashSet<>(), new double[]{0, 150}, statements, lookup)[1]);
+        assertEquals(80, findMinMax(new HashSet<>(), new double[]{0, 100}, statements, lookup)[1]);
+        assertEquals(60, findMinMax(new HashSet<>(), new double[]{0, 60}, statements, lookup)[1]);
 
         statements = Arrays.asList(
                 If("road_class == TERTIARY", MULTIPLY, "0.2"),
@@ -102,7 +107,7 @@ class FindMinMaxTest {
                 If("road_environment == TUNNEL", MULTIPLY, "0.8"),
                 ElseIf("road_environment == BRIDGE", LIMIT, "30")
         );
-        assertEquals(40, findMax(objs, statements, lookup, 150, "speed"));
-        assertEquals(40, findMax(objs, statements, lookup, 40, "speed"));
+        assertEquals(40, findMinMax(new HashSet<>(), new double[]{0, 150}, statements, lookup)[1]);
+        assertEquals(40, findMinMax(new HashSet<>(), new double[]{0, 40}, statements, lookup)[1]);
     }
 }

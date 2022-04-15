@@ -254,13 +254,21 @@ class CustomModelParserTest {
 
     @Test
     public void parseValueWithError() {
-        CustomModel customModel = new CustomModel();
-        customModel.addToSpeed(If("true", LIMIT, "unknown"));
+        CustomModel customModel1 = new CustomModel();
+        customModel1.addToSpeed(If("true", LIMIT, "unknown"));
 
         IllegalArgumentException ret = assertThrows(IllegalArgumentException.class,
-                () -> CustomModelParser.createWeightingParameters(customModel, encodingManager,
+                () -> CustomModelParser.createWeightingParameters(customModel1, encodingManager,
                         avgSpeedEnc, encoder.getMaxSpeed(), null).getEdgeToSpeedMapping());
         assertTrue(ret.getMessage().startsWith("Cannot compile expression: 'unknown' not available"), ret.getMessage());
+
+        CustomModel customModel2 = new CustomModel();
+        customModel2.addToSpeed(If("road_class == PRIMARY", MULTIPLY, "0.5"));
+        customModel2.addToSpeed(Else(MULTIPLY, "-0.5"));
+        ret = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.createWeightingParameters(customModel2, encodingManager,
+                        avgSpeedEnc, encoder.getMaxSpeed(), null).getEdgeToSpeedMapping());
+        assertTrue(ret.getMessage().startsWith("Cannot compile expression: speed has to be >0 but can be <0"), ret.getMessage());
     }
 
     @Test

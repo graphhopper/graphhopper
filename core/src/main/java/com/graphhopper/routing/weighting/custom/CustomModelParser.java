@@ -129,21 +129,28 @@ public class CustomModelParser {
                                         double globalMaxSpeed, double globalMaxPriority) {
         try {
             HashSet<String> priorityVariables = new LinkedHashSet<>();
-            double maxPriority = FindMinMax.findMax(priorityVariables, customModel.getPriority(), lookup, globalMaxPriority, "priority");
-            if (maxPriority < 0)
-                throw new IllegalArgumentException("maximum priority has to be >=0 but was " + maxPriority);
+            // initial value of minimum has to be >0 so that multiple_by with a negative value leads to a negative value and not 0
+            double[] minMaxPriority = new double[]{1, globalMaxPriority};
+            FindMinMax.findMinMax(priorityVariables, minMaxPriority, customModel.getPriority(), lookup);
+            if (minMaxPriority[0] < 0)
+                throw new IllegalArgumentException("priority has to be >=0 but can be negative (" + minMaxPriority[0] + ")");
+            if (minMaxPriority[1] < 0)
+                throw new IllegalArgumentException("maximum priority has to be >=0 but was " + minMaxPriority[1]);
             List<Java.BlockStatement> priorityStatements = createGetPriorityStatements(priorityVariables, customModel, lookup);
 
             HashSet<String> speedVariables = new LinkedHashSet<>();
-            double maxSpeed = FindMinMax.findMax(speedVariables, customModel.getSpeed(), lookup, globalMaxSpeed, "speed");
-            if (maxSpeed <= 0)
-                throw new IllegalArgumentException("maximum speed has to be >0 but was " + maxSpeed);
-            List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup, maxSpeed);
+            double[] minMaxSpeed = new double[]{1, globalMaxSpeed};
+            FindMinMax.findMinMax(speedVariables, minMaxSpeed, customModel.getSpeed(), lookup);
+            if (minMaxSpeed[0] < 0)
+                throw new IllegalArgumentException("speed has to be >=0 but can be negative (" + minMaxSpeed[0] + ")");
+            if (minMaxSpeed[1] <= 0)
+                throw new IllegalArgumentException("maximum speed has to be >0 but was " + minMaxSpeed[1]);
+            List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup, minMaxSpeed[1]);
             // Create different class name, which is required only for debugging.
             // TODO does it improve performance too? I.e. it could be that the JIT is confused if different classes
             //  have the same name and it mixes performance stats. See https://github.com/janino-compiler/janino/issues/137
             long counter = longVal.incrementAndGet();
-            String classTemplate = createClassTemplate(counter, priorityVariables, maxPriority, speedVariables, maxSpeed,
+            String classTemplate = createClassTemplate(counter, priorityVariables, minMaxPriority[1], speedVariables, minMaxSpeed[1],
                     lookup, customModel.getAreas());
             Java.CompilationUnit cu = (Java.CompilationUnit) new Parser(new Scanner("source", new StringReader(classTemplate))).
                     parseAbstractCompilationUnit();
