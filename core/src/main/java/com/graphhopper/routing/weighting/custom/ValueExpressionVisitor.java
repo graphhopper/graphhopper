@@ -117,7 +117,6 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         return result;
     }
 
-    // TODO replace return type with record
     static double[] findMinMax(Set<String> createdObjects, String valueExpression, EncodedValueLookup lookup) {
         ParseResult result = parse(valueExpression, lookup::hasEncodedValue);
         if (!result.ok)

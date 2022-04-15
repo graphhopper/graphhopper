@@ -86,7 +86,7 @@ public class FindMinMax {
     /**
      * Splits the specified list into several list of statements starting with if
      */
-    static List<List<Statement>> splitIntoBlocks(List<Statement> statements) {
+    private static List<List<Statement>> splitIntoBlocks(List<Statement> statements) {
         List<List<Statement>> result = new ArrayList<>();
         List<Statement> block = null;
         for (Statement st : statements) {
