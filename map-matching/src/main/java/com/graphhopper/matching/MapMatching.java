@@ -190,15 +190,31 @@ public class MapMatching {
     private List<Observation> filterObservations(List<Observation> observations) {
         List<Observation> filtered = new ArrayList<>();
         Observation prevEntry = null;
+        double acc = 0.0;
         int last = observations.size() - 1;
         for (int i = 0; i <= last; i++) {
             Observation observation = observations.get(i);
             if (i == 0 || i == last || distanceCalc.calcDist(
                     prevEntry.getPoint().getLat(), prevEntry.getPoint().getLon(),
                     observation.getPoint().getLat(), observation.getPoint().getLon()) > 2 * measurementErrorSigma) {
+                if (i > 0) {
+                    Observation prevObservation = observations.get(i - 1);
+                    acc += distanceCalc.calcDist(
+                            prevObservation.getPoint().getLat(), prevObservation.getPoint().getLon(),
+                            observation.getPoint().getLat(), observation.getPoint().getLon());
+                    acc -= distanceCalc.calcDist(
+                            prevEntry.getPoint().getLat(), prevEntry.getPoint().getLon(),
+                            observation.getPoint().getLat(), observation.getPoint().getLon());
+                }
+                observation.setAccumulatedLinearDistanceToPrevious(acc);
                 filtered.add(observation);
                 prevEntry = observation;
+                acc = 0.0;
             } else {
+                Observation prevObservation = observations.get(i - 1);
+                acc += distanceCalc.calcDist(
+                        prevObservation.getPoint().getLat(), prevObservation.getPoint().getLon(),
+                        observation.getPoint().getLat(), observation.getPoint().getLon());
                 logger.debug("Filter out observation: {}", i + 1);
             }
         }
@@ -322,8 +338,9 @@ public class MapMatching {
             if (prevTimeStep == null) {
                 viterbi.startWithInitialObservation(timeStep.observation, timeStep.candidates, emissionLogProbabilities);
             } else {
-                final double linearDistance = distanceCalc.calcDist(prevTimeStep.observation.getPoint().lat,
-                        prevTimeStep.observation.getPoint().lon, timeStep.observation.getPoint().lat, timeStep.observation.getPoint().lon);
+                final double linearDistance = distanceCalc.calcDist(prevTimeStep.observation.getPoint().lat, prevTimeStep.observation.getPoint().lon,
+                        timeStep.observation.getPoint().lat, timeStep.observation.getPoint().lon)
+                        + timeStep.observation.getAccumulatedLinearDistanceToPrevious();
 
                 for (State from : prevTimeStep.candidates) {
                     for (State to : timeStep.candidates) {
