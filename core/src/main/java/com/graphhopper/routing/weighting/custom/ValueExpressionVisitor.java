@@ -130,23 +130,25 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             throw new IllegalArgumentException(result.invalidMessage);
         if ((result.operators.contains("-") || result.operators.contains("/")) && result.guessedVariables.size() > 1)
             throw new IllegalArgumentException("Currently only a single EncodedValue in the value expression is allowed when expression contains \"/\" or \"-\". " + valueExpression);
-        createdObjects.addAll(result.guessedVariables);
 
         try {
+            if (result.guessedVariables.isEmpty()) { // constant - no EncodedValues
+                ExpressionEvaluator ee = new ExpressionEvaluator();
+                ee.cook(valueExpression);
+                double val = ((Number) ee.evaluate()).doubleValue();
+                return new double[]{val, val};
+            }
+
+            createdObjects.addAll(result.guessedVariables);
             ExpressionEvaluator ee = new ExpressionEvaluator();
             List<String> names = new ArrayList<>(result.guessedVariables.size());
-            List<Class> values = new ArrayList<>(result.guessedVariables.size());
+            List<Class<?>> values = new ArrayList<>(result.guessedVariables.size());
             for (String var : result.guessedVariables) {
                 names.add(var);
                 values.add(double.class);
             }
             ee.setParameters(names.toArray(new String[0]), values.toArray(new Class[0]));
             ee.cook(valueExpression);
-            if (result.guessedVariables.isEmpty()) { // constant - no EncodedValues
-                double val = ((Number) ee.evaluate()).doubleValue();
-                return new double[]{val, val};
-            }
-
             List<Object> args = new ArrayList<>();
             for (String var : result.guessedVariables) {
                 EncodedValue enc = lookup.getEncodedValue(var, EncodedValue.class);

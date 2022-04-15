@@ -259,7 +259,7 @@ class CustomModelParserTest {
 
         IllegalArgumentException ret = assertThrows(IllegalArgumentException.class,
                 () -> CustomModelParser.createWeightingParameters(customModel1, encodingManager,
-                        avgSpeedEnc, encoder.getMaxSpeed(), null).getEdgeToSpeedMapping());
+                        avgSpeedEnc, encoder.getMaxSpeed(), null));
         assertTrue(ret.getMessage().startsWith("Cannot compile expression: 'unknown' not available"), ret.getMessage());
 
         CustomModel customModel2 = new CustomModel();
@@ -267,8 +267,8 @@ class CustomModelParserTest {
         customModel2.addToSpeed(Else(MULTIPLY, "-0.5"));
         ret = assertThrows(IllegalArgumentException.class,
                 () -> CustomModelParser.createWeightingParameters(customModel2, encodingManager,
-                        avgSpeedEnc, encoder.getMaxSpeed(), null).getEdgeToSpeedMapping());
-        assertTrue(ret.getMessage().startsWith("Cannot compile expression: speed has to be >0 but can be <0"), ret.getMessage());
+                        avgSpeedEnc, encoder.getMaxSpeed(), null));
+        assertTrue(ret.getMessage().startsWith("Cannot compile expression: speed has to be >=0 but can be negative (-0.5)"), ret.getMessage());
     }
 
     @Test
