@@ -38,8 +38,8 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class MotorcycleTagParserTest {
     private final EncodingManager em = EncodingManager.create("motorcycle,foot");
-    private final MotorcycleTagParser encoder = (MotorcycleTagParser) em.getEncoder("motorcycle");
-    private final BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+    private final MotorcycleTagParser parser = (MotorcycleTagParser) em.getEncoder("motorcycle");
+    private final BooleanEncodedValue accessEnc = parser.getAccessEnc();
 
     private Graph initExampleGraph() {
         BaseGraph gs = new BaseGraph.Builder(em).set3D(true).create();
@@ -51,94 +51,94 @@ public class MotorcycleTagParserTest {
                 setWayGeometry(Helper.createPointList3D(51.1, 12.0011, 49, 51.1, 12.0015, 55));
         edge.setDistance(100);
 
-        edge.set(accessEnc, true, true).set(encoder.getAverageSpeedEnc(), 10.0, 15.0);
+        edge.set(accessEnc, true, true).set(parser.getAverageSpeedEnc(), 10.0, 15.0);
         return gs;
     }
 
     @Test
     public void testAccess() {
         ReaderWay way = new ReaderWay(1);
-        assertTrue(encoder.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
         way.setTag("highway", "service");
-        assertTrue(encoder.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
         way.setTag("access", "no");
-        assertTrue(encoder.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("highway", "track");
-        assertTrue(encoder.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("access", "delivery");
-        assertTrue(encoder.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("highway", "unclassified");
         way.setTag("ford", "yes");
-        assertTrue(encoder.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
         way.setTag("motorcycle", "no");
-        assertTrue(encoder.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("route", "ferry");
-        assertTrue(encoder.getAccess(way).isFerry());
+        assertTrue(parser.getAccess(way).isFerry());
         way.setTag("motorcycle", "no");
-        assertTrue(encoder.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("route", "ferry");
         way.setTag("foot", "yes");
-        assertTrue(encoder.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("access", "yes");
         way.setTag("motor_vehicle", "no");
-        assertTrue(encoder.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("access", "yes");
         way.setTag("motor_vehicle", "no");
-        assertTrue(encoder.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("access", "emergency");
-        assertTrue(encoder.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("motor_vehicle", "emergency");
-        assertTrue(encoder.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         DateFormat simpleDateFormat = Helper.createFormatter("yyyy MMM dd");
 
         way.clearTags();
         way.setTag("highway", "road");
         way.setTag("access:conditional", "no @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
-        assertTrue(encoder.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("highway", "road");
         way.setTag("access", "no");
         way.setTag("access:conditional", "yes @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
-        assertTrue(encoder.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("service", "emergency_access");
-        assertTrue(encoder.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
     }
 
     @Test
     public void testHandleWayTags() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
-        assertTrue(encoder.getAccess(way).isWay());
-        IntsRef edgeFlags = encoder.handleWayTags(em.createEdgeFlags(), way);
-        assertEquals(20, encoder.avgSpeedEnc.getDecimal(false, edgeFlags), .1);
-        assertEquals(20, encoder.avgSpeedEnc.getDecimal(true, edgeFlags), .1);
+        assertTrue(parser.getAccess(way).isWay());
+        IntsRef edgeFlags = parser.handleWayTags(em.createEdgeFlags(), way);
+        assertEquals(20, parser.avgSpeedEnc.getDecimal(false, edgeFlags), .1);
+        assertEquals(20, parser.avgSpeedEnc.getDecimal(true, edgeFlags), .1);
     }
 
     @Test
@@ -146,15 +146,15 @@ public class MotorcycleTagParserTest {
         IntsRef edgeFlags = em.createEdgeFlags();
         accessEnc.setBool(false, edgeFlags, true);
         accessEnc.setBool(true, edgeFlags, true);
-        encoder.getAverageSpeedEnc().setDecimal(false, edgeFlags, 10);
-        encoder.getAverageSpeedEnc().setDecimal(true, edgeFlags, 10);
+        parser.getAverageSpeedEnc().setDecimal(false, edgeFlags, 10);
+        parser.getAverageSpeedEnc().setDecimal(true, edgeFlags, 10);
 
-        assertEquals(10, encoder.getAverageSpeedEnc().getDecimal(false, edgeFlags), .1);
-        assertEquals(10, encoder.getAverageSpeedEnc().getDecimal(true, edgeFlags), .1);
+        assertEquals(10, parser.getAverageSpeedEnc().getDecimal(false, edgeFlags), .1);
+        assertEquals(10, parser.getAverageSpeedEnc().getDecimal(true, edgeFlags), .1);
 
-        encoder.setSpeed(false, edgeFlags, 0);
-        assertEquals(0, encoder.avgSpeedEnc.getDecimal(false, edgeFlags), .1);
-        assertEquals(10, encoder.avgSpeedEnc.getDecimal(true, edgeFlags), .1);
+        parser.setSpeed(false, edgeFlags, 0);
+        assertEquals(0, parser.avgSpeedEnc.getDecimal(false, edgeFlags), .1);
+        assertEquals(10, parser.avgSpeedEnc.getDecimal(true, edgeFlags), .1);
         assertFalse(accessEnc.getBool(false, edgeFlags));
         assertTrue(accessEnc.getBool(true, edgeFlags));
     }
@@ -181,11 +181,11 @@ public class MotorcycleTagParserTest {
         pointList.add(toPoint);
         way.setTag("point_list", pointList);
 
-        assertTrue(encoder.getAccess(way).isWay());
-        IntsRef flags = encoder.handleWayTags(em.createEdgeFlags(), way);
+        assertTrue(parser.getAccess(way).isWay());
+        IntsRef flags = parser.handleWayTags(em.createEdgeFlags(), way);
         edge.setFlags(flags);
-        encoder.applyWayTags(way, edge);
-        DecimalEncodedValue curvatureEnc = encoder.getDecimalEncodedValue(EncodingManager.getKey(encoder, "curvature"));
+        parser.applyWayTags(way, edge);
+        DecimalEncodedValue curvatureEnc = parser.getDecimalEncodedValue(EncodingManager.getKey(parser, "curvature"));
         return edge.get(curvatureEnc);
     }
 }
