@@ -119,12 +119,6 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
 
     // TODO replace return type with record
     static double[] findMinMax(Set<String> createdObjects, String valueExpression, EncodedValueLookup lookup) {
-        // TODO NOW is this faster? is this secure? (we leave out the ParseResult check)
-//        try {
-//            double val = Double.parseDouble(valueExpression);
-//            return val > 0 ? new double[]{0, val} : new double[]{val, 0};
-//        } catch (NumberFormatException ex) {
-//        }
         ParseResult result = parse(valueExpression, lookup::hasEncodedValue);
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
@@ -132,7 +126,16 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             throw new IllegalArgumentException("Currently only a single EncodedValue in the value expression is allowed when expression contains \"/\" or \"-\". " + valueExpression);
 
         try {
-            if (result.guessedVariables.isEmpty()) { // constant - no EncodedValues
+            // Speed optimization for numbers only as its over 200x faster than ExpressionEvaluator+cook+evaluate!
+            // We still call the parse() method before as it is only ~3x slower and might increase security slightly. Because certain
+            // expressions are accepted from Double.parseDouble but parse() rejects them. With this call order we avoid unexpected security problems.
+            double val = Double.parseDouble(valueExpression);
+            return new double[]{val, val};
+        } catch (NumberFormatException ex) {
+        }
+
+        try {
+            if (result.guessedVariables.isEmpty()) { // expressions without encoded values
                 ExpressionEvaluator ee = new ExpressionEvaluator();
                 ee.cook(valueExpression);
                 double val = ((Number) ee.evaluate()).doubleValue();

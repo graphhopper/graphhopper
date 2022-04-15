@@ -363,12 +363,8 @@ public class CustomModelParser {
                                  Set<String> createObjects, List<Statement> list, EncodedValueLookup lookup, String lastStmt) {
 
         for (Statement statement : list) {
-            // TODO NOW avoid parsing again as we just did it to get the maximum value
-            ParseResult valueParseResult = ValueExpressionVisitor.parse(statement.getValue(), nameInValueValidator);
-            if (!valueParseResult.ok)
-                throw new IllegalArgumentException(exceptionInfo + " invalid value \"" + statement.getValue() + "\"" +
-                        (valueParseResult.invalidMessage == null ? "" : ": " + valueParseResult.invalidMessage));
-            createObjects.addAll(valueParseResult.guessedVariables);
+            // avoid parsing again as we just did it to get the maximum values
+            // ParseResult valueParseResult = ValueExpressionVisitor.parse(statement.getValue(), nameInValueValidator);
             if (statement.getKeyword() == Statement.Keyword.ELSE) {
                 if (!Helper.isEmpty(statement.getCondition()))
                     throw new IllegalArgumentException("condition must be empty but was " + statement.getCondition());
