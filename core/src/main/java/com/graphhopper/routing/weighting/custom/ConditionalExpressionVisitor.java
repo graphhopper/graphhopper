@@ -93,7 +93,7 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
                     if (n.identifiers.length == 2 && isValidIdentifier(n.identifiers[0])) return true;
                 }
             }
-            invalidMessage = mi.methodName + " is illegal method";
+            invalidMessage = mi.methodName + " is an illegal method";
             return false;
         } else if (rv instanceof Java.ParenthesizedExpression) {
             return ((Java.ParenthesizedExpression) rv).value.accept(this);

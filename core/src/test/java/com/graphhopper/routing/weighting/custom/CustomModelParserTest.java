@@ -243,13 +243,11 @@ class CustomModelParserTest {
                 set(maxSpeed, 70).set(avgSpeedEnc, 70).set(encoder.getAccessEnc(), true, true);
 
         CustomModel customModel = new CustomModel();
-        customModel.addToSpeed(If("true", LIMIT, "max_speed"));
-
+        customModel.addToSpeed(If("true", LIMIT, "max_speed * 1.1"));
         CustomWeighting.EdgeToDoubleMapping speedMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager,
                 avgSpeedEnc, encoder.getMaxSpeed(), null).getEdgeToSpeedMapping();
-
         assertEquals(70.0, speedMapping.get(maxSame, false), 0.01);
-        assertEquals(60.0, speedMapping.get(maxLower, false), 0.01);
+        assertEquals(66.0, speedMapping.get(maxLower, false), 0.01);
     }
 
     @Test
@@ -269,6 +267,14 @@ class CustomModelParserTest {
                 () -> CustomModelParser.createWeightingParameters(customModel2, encodingManager,
                         avgSpeedEnc, encoder.getMaxSpeed(), null));
         assertTrue(ret.getMessage().startsWith("Cannot compile expression: speed has to be >=0 but can be negative (-0.5)"), ret.getMessage());
+
+        CustomModel customModel3 = new CustomModel();
+        customModel3.addToSpeed(If("road_class == PRIMARY", MULTIPLY, "0.5"));
+        customModel3.addToSpeed(Else(MULTIPLY, "road_class"));
+        ret = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.createWeightingParameters(customModel3, encodingManager,
+                        avgSpeedEnc, encoder.getMaxSpeed(), null));
+        assertTrue(ret.getMessage().contains("Binary numeric promotion not possible on types \"double\" and \"java.lang.Enum\""), ret.getMessage());
     }
 
     @Test
@@ -278,25 +284,22 @@ class CustomModelParserTest {
         // existing encoded value but not added
         IllegalArgumentException ret = assertThrows(IllegalArgumentException.class,
                 () -> parseExpressions(new StringBuilder(),
-                        validVariable, validVariable, "[HERE]", new HashSet<>(),
-                        Arrays.asList(If("max_weight > 10", MULTIPLY, "0")),
-                        encodingManager, ""));
+                        validVariable, encodingManager, "[HERE]", new HashSet<>(),
+                        Arrays.asList(If("max_weight > 10", MULTIPLY, "0")), ""));
         assertTrue(ret.getMessage().startsWith("[HERE] invalid condition \"max_weight > 10\": 'max_weight' not available"), ret.getMessage());
 
         // invalid variable or constant (NameValidator returns false)
         ret = assertThrows(IllegalArgumentException.class,
                 () -> parseExpressions(new StringBuilder(),
-                        validVariable, validVariable, "[HERE]", new HashSet<>(),
-                        Arrays.asList(If("country == GERMANY", MULTIPLY, "0")),
-                        encodingManager, ""));
+                        validVariable, encodingManager, "[HERE]", new HashSet<>(),
+                        Arrays.asList(If("country == GERMANY", MULTIPLY, "0")), ""));
         assertTrue(ret.getMessage().startsWith("[HERE] invalid condition \"country == GERMANY\": 'GERMANY' not available"), ret.getMessage());
 
         // not whitelisted method
         ret = assertThrows(IllegalArgumentException.class,
                 () -> parseExpressions(new StringBuilder(),
-                        validVariable, validVariable, "[HERE]", new HashSet<>(),
-                        Arrays.asList(If("edge.fetchWayGeometry().size() > 2", MULTIPLY, "0")),
-                        encodingManager, ""));
-        assertTrue(ret.getMessage().startsWith("[HERE] invalid condition \"edge.fetchWayGeometry().size() > 2\": size is illegal method"), ret.getMessage());
+                        validVariable, encodingManager, "[HERE]", new HashSet<>(),
+                        Arrays.asList(If("edge.fetchWayGeometry().size() > 2", MULTIPLY, "0")), ""));
+        assertTrue(ret.getMessage().startsWith("[HERE] invalid condition \"edge.fetchWayGeometry().size() > 2\": size is an illegal method"), ret.getMessage());
     }
 }

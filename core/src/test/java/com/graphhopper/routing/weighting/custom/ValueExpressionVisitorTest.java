@@ -39,7 +39,7 @@ class ValueExpressionVisitorTest {
         assertFalse(result.ok);
 
         result = parse("Math.sqrt(2)", validVariable);
-        assertTrue(result.ok);
+        assertTrue(result.ok, result.invalidMessage);
         assertTrue(result.guessedVariables.isEmpty());
 
         result = parse("edge.getDistance()", validVariable);
@@ -52,12 +52,13 @@ class ValueExpressionVisitorTest {
         assertFalse(result.ok);
 
         result = parse("priority * 2", validVariable);
-        assertTrue(result.ok);
+        assertTrue(result.ok, result.invalidMessage);
         assertEquals("[priority]", result.guessedVariables.toString());
 
-        // LATER
-//        assertTrue(parse("road_class.ordinal()*2", validVariable).ok);
-//        assertTrue(parse("Math.sqrt(road_class.ordinal())", validVariable).ok);
+        // LATER but requires accepting also EnumEncodedValue for value expression
+        // result = parse("road_class.ordinal()*2", validVariable);
+        // assertTrue(result.ok, result.invalidMessage);
+        // assertTrue(parse("Math.sqrt(road_class.ordinal())", validVariable).ok);
     }
 
     @Test
