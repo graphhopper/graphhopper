@@ -4,138 +4,82 @@ import com.graphhopper.util.PMap;
 
 public class FlagEncoders {
     public static FlagEncoder createFoot() {
-        return new FootFlagEncoder();
+        return new FootTagParser();
     }
 
     public static FlagEncoder createFoot(PMap properties) {
-        return new FootFlagEncoder(properties);
-    }
-
-    protected static FlagEncoder createFoot(int speedBits, double speedFactor, boolean speedTwoDirections) {
-        return new FootFlagEncoder(speedBits, speedFactor, speedTwoDirections);
-    }
-
-    protected static FlagEncoder createFoot(String name, int speedBits, double speedFactor, boolean speedTwoDirections) {
-        return new FootFlagEncoder(name, speedBits, speedFactor, speedTwoDirections);
+        return new FootTagParser(properties);
     }
 
     public static FlagEncoder createHike() {
-        return new HikeFlagEncoder();
+        return new HikeTagParser(new PMap());
     }
 
     public static FlagEncoder createHike(PMap properties) {
-        return new HikeFlagEncoder(properties);
-    }
-
-    protected static FlagEncoder createHike(int speedBits, double speedFactor, boolean speedTwoDirections) {
-        return new HikeFlagEncoder(speedBits, speedFactor, speedTwoDirections);
-    }
-
-    protected static FlagEncoder createHike(String name, int speedBits, double speedFactor, boolean speedTwoDirections) {
-        return new HikeFlagEncoder(name, speedBits, speedFactor, speedTwoDirections);
+        return new HikeTagParser(properties);
     }
 
     public static FlagEncoder createWheelchair() {
-        return new WheelchairFlagEncoder();
+        return new WheelchairTagParser();
     }
 
     public static FlagEncoder createWheelchair(PMap properties) {
-        return new WheelchairFlagEncoder(properties);
-    }
-
-    protected static FlagEncoder createWheelchair(int speedBits, double speedFactor) {
-        return new WheelchairFlagEncoder(speedBits, speedFactor);
+        return new WheelchairTagParser(properties);
     }
 
     public static FlagEncoder createCar() {
-        return new CarFlagEncoder();
-    }
-
-    public static FlagEncoder createCar(int speedBits, double speedFactor, int maxTurnCosts) {
-        return new CarFlagEncoder(speedBits, speedFactor, maxTurnCosts);
-    }
-
-    public static FlagEncoder createCar(String name, int speedBits, double speedFactor, int maxTurnCosts) {
-        return new CarFlagEncoder(name, speedBits, speedFactor, maxTurnCosts);
-    }
-
-    public static FlagEncoder createCar(int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
-        return new CarFlagEncoder(speedBits, speedFactor, maxTurnCosts, speedTwoDirections);
-    }
-
-    public static FlagEncoder createCar(String name, int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
-        return new CarFlagEncoder(name, speedBits, speedFactor, maxTurnCosts, speedTwoDirections);
+        return new CarTagParser();
     }
 
     public static FlagEncoder createCar(PMap properties) {
-        return new CarFlagEncoder(properties);
+        return new CarTagParser(properties);
     }
 
     public static FlagEncoder createMotorcycle() {
-        return new MotorcycleFlagEncoder();
+        return new MotorcycleTagParser();
     }
 
     public static FlagEncoder createMotorcycle(PMap properties) {
-        return new MotorcycleFlagEncoder(properties);
+        return new MotorcycleTagParser(properties);
     }
 
     public static FlagEncoder createCar4wd(PMap properties) {
-        return new Car4WDFlagEncoder(properties);
+        return new Car4WDTagParser(properties);
     }
 
     public static FlagEncoder createRacingBike() {
-        return new RacingBikeFlagEncoder();
+        return new RacingBikeTagParser();
     }
 
     public static FlagEncoder createRacingBike(PMap properties) {
-        return new RacingBikeFlagEncoder(properties);
-    }
-
-    protected static FlagEncoder createRacingBike(int speedBits, double speedFactor, int maxTurnCosts) {
-        return new RacingBikeFlagEncoder(speedBits, speedFactor, maxTurnCosts);
+        return new RacingBikeTagParser(properties);
     }
 
     public static FlagEncoder createBike() {
-        return new BikeFlagEncoder();
-    }
-
-    public static FlagEncoder createBike(String name) {
-        return new BikeFlagEncoder(name);
+        return new BikeTagParser();
     }
 
     public static FlagEncoder createBike(PMap properties) {
-        return new BikeFlagEncoder(properties);
-    }
-
-    public static FlagEncoder createBike(int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
-        return new BikeFlagEncoder(speedBits, speedFactor, maxTurnCosts, speedTwoDirections);
-    }
-
-    public static FlagEncoder createBike(String name, int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
-        return new BikeFlagEncoder(name, speedBits, speedFactor, maxTurnCosts, speedTwoDirections);
+        return new BikeTagParser(properties);
     }
 
     public static FlagEncoder createBike2() {
-        return new Bike2WeightFlagEncoder();
+        return new Bike2WeightTagParser();
     }
 
     public static FlagEncoder createBike2(PMap properties) {
-        return new Bike2WeightFlagEncoder(properties);
+        return new Bike2WeightTagParser(properties);
     }
 
     public static FlagEncoder createMountainBike() {
-        return new MountainBikeFlagEncoder();
+        return new MountainBikeTagParser();
     }
 
     public static FlagEncoder createMountainBike(PMap properties) {
-        return new MountainBikeFlagEncoder(properties);
+        return new MountainBikeTagParser(properties);
     }
 
-    protected static FlagEncoder createMountainBike(int speedBits, double speedFactor, int maxTurnCosts) {
-        return new MountainBikeFlagEncoder(speedBits, speedFactor, maxTurnCosts);
-    }
-
-    public static FlagEncoder createRoadsFlagEncoder() {
-        return new RoadsFlagEncoder();
+    public static FlagEncoder createRoads() {
+        return new RoadsTagParser();
     }
 }

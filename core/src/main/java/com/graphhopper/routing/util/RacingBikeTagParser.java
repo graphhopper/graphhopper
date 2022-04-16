@@ -31,12 +31,12 @@ import static com.graphhopper.routing.util.PriorityCode.*;
  * @author ratrun
  * @author Peter Karich
  */
-public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
-    public RacingBikeFlagEncoder() {
+public class RacingBikeTagParser extends BikeCommonTagParser {
+    public RacingBikeTagParser() {
         this(4, 2, 0);
     }
 
-    public RacingBikeFlagEncoder(PMap properties) {
+    public RacingBikeTagParser(PMap properties) {
         this(properties.getInt("speed_bits", 4),
                 properties.getDouble("speed_factor", 2),
                 properties.getBool("turn_costs", false) ? 1 : 0);
@@ -45,7 +45,7 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
         blockFords(properties.getBool("block_fords", false));
     }
 
-    protected RacingBikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
+    protected RacingBikeTagParser(int speedBits, double speedFactor, int maxTurnCosts) {
         super("racingbike", speedBits, speedFactor, maxTurnCosts, false);
         preferHighwayTags.add("road");
         preferHighwayTags.add("secondary");

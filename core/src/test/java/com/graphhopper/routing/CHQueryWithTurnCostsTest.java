@@ -30,6 +30,7 @@ import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -53,7 +54,7 @@ public class CHQueryWithTurnCostsTest {
 
     private static class Fixture {
         private final int maxCost = 10;
-        private final FlagEncoder encoder = FlagEncoders.createCar(5, 5, maxCost, true);
+        private final FlagEncoder encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", maxCost).putObject("speed_two_directions", true));
         private final EncodingManager encodingManager = EncodingManager.create(encoder);
         private final BaseGraph graph;
         private final CHConfig chConfig;

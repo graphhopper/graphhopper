@@ -15,20 +15,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.ev;
 
-import com.graphhopper.util.PMap;
-
-/**
- * Defines bit layout for cars with four wheel drive
- *
- * @author zstadler
- */
-public class Car4WDFlagEncoder extends CarFlagEncoder {
-
-    public Car4WDFlagEncoder(PMap properties) {
-        super(new PMap(properties).putObject("name", properties.getString("name", "car4wd")));
-        trackTypeSpeedMap.put("grade4", 5); // ... some hard or compressed materials
-        trackTypeSpeedMap.put("grade5", 5); // ... no hard materials. soil/sand/grass
-    }
+public interface EncodedValueFactory {
+    /**
+     * This method assumes a string value with the key of an EncodedValue like "road_class" and returns an instance
+     * of it.
+     */
+    EncodedValue create(String encodedValueString);
 }

@@ -57,25 +57,25 @@ public class EncodingManagerTest {
         String flagEncoderStrings = "car,bike,foot";
         EncodingManager manager = EncodingManager.create(flagEncoderStrings);
 
-        assertFalse(((CarFlagEncoder) manager.getEncoder("car")).isBlockFords());
-        assertFalse(((BikeFlagEncoder) manager.getEncoder("bike")).isBlockFords());
-        assertFalse(((FootFlagEncoder) manager.getEncoder("foot")).isBlockFords());
+        assertFalse(((CarTagParser) manager.getEncoder("car")).isBlockFords());
+        assertFalse(((BikeTagParser) manager.getEncoder("bike")).isBlockFords());
+        assertFalse(((FootTagParser) manager.getEncoder("foot")).isBlockFords());
 
         // 2) two encoders crossing fords
         flagEncoderStrings = "car, bike|block_fords=true, foot|block_fords=false";
         manager = EncodingManager.create(flagEncoderStrings);
 
-        assertFalse(((CarFlagEncoder) manager.getEncoder("car")).isBlockFords());
-        assertTrue(((BikeFlagEncoder) manager.getEncoder("bike")).isBlockFords());
-        assertFalse(((FootFlagEncoder) manager.getEncoder("foot")).isBlockFords());
+        assertFalse(((CarTagParser) manager.getEncoder("car")).isBlockFords());
+        assertTrue(((BikeTagParser) manager.getEncoder("bike")).isBlockFords());
+        assertFalse(((FootTagParser) manager.getEncoder("foot")).isBlockFords());
 
         // 2) Try combined with another tag
         flagEncoderStrings = "car|turn_costs=true|block_fords=true, bike, foot|block_fords=false";
         manager = EncodingManager.create(flagEncoderStrings);
 
-        assertTrue(((CarFlagEncoder) manager.getEncoder("car")).isBlockFords());
-        assertFalse(((BikeFlagEncoder) manager.getEncoder("bike")).isBlockFords());
-        assertFalse(((FootFlagEncoder) manager.getEncoder("foot")).isBlockFords());
+        assertTrue(((CarTagParser) manager.getEncoder("car")).isBlockFords());
+        assertFalse(((BikeTagParser) manager.getEncoder("bike")).isBlockFords());
+        assertFalse(((FootTagParser) manager.getEncoder("foot")).isBlockFords());
     }
 
     @Test

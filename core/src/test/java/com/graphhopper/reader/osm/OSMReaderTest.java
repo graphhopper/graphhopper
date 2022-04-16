@@ -660,7 +660,7 @@ public class OSMReaderTest {
         GraphHopper hopper = new GraphHopper();
         hopper.setFlagEncoderFactory((name, config) -> {
             if (name.equals("truck")) {
-                return new CarFlagEncoder(new PMap(config).putObject("name", "truck")) {
+                return new CarTagParser(new PMap(config).putObject("name", "truck")) {
                     @Override
                     public TransportationMode getTransportationMode() {
                         return TransportationMode.HGV;
@@ -933,11 +933,12 @@ public class OSMReaderTest {
     @Test
     public void testCurvedWayAlongBorder() throws IOException {
         // see https://discuss.graphhopper.com/t/country-of-way-is-wrong-on-road-near-border-with-curvature/6908/2
+        EnumEncodedValue<Country> countryEnc = new EnumEncodedValue<>(Country.KEY, Country.class);
         TagParserManager em = TagParserManager.start()
                 .add(FlagEncoders.createCar())
-                .add(new CountryParser())
+                .add(countryEnc)
+                .add(new CountryParser(countryEnc))
                 .build();
-        EnumEncodedValue<Country> countryEnc = em.getEnumEncodedValue(Country.KEY, Country.class);
         BaseGraph graph = new BaseGraph.Builder(em.getEncodingManager()).create();
         OSMReader reader = new OSMReader(graph, em, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());

@@ -27,31 +27,31 @@ import static com.graphhopper.routing.ev.Smoothness.*;
  * @author ratrun
  * @author Peter Karich
  */
-public class BikeFlagEncoder extends BikeCommonFlagEncoder {
-    public BikeFlagEncoder() {
+public class BikeTagParser extends BikeCommonTagParser {
+    public BikeTagParser() {
         this("bike");
     }
 
-    public BikeFlagEncoder(String name) {
+    public BikeTagParser(String name) {
         this(name, 4, 2, 0, false);
     }
 
-    public BikeFlagEncoder(PMap properties) {
+    public BikeTagParser(PMap properties) {
         this(properties.getString("name", "bike"),
                 properties.getInt("speed_bits", 4),
                 properties.getInt("speed_factor", 2),
-                properties.getBool("turn_costs", false) ? 1 : 0,
+                properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0),
                 properties.getBool("speed_two_directions", false));
 
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
-    public BikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
+    public BikeTagParser(int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
         this("bike", speedBits, speedFactor, maxTurnCosts, speedTwoDirections);
     }
 
-    public BikeFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
+    public BikeTagParser(String name, int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
         super(name, speedBits, speedFactor, maxTurnCosts, speedTwoDirections);
         addPushingSection("path");
         addPushingSection("footway");

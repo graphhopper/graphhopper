@@ -495,7 +495,7 @@ public class QueryGraphTest {
 
     @Test
     public void testTurnCostsProperlyPropagated_Issue282() {
-        FlagEncoder encoder = FlagEncoders.createCar(5, 5, 15);
+        FlagEncoder encoder = FlagEncoders.createCar(new PMap("max_turn_costs=15"));
         EncodingManager em = EncodingManager.create(encoder);
         BaseGraph graphWithTurnCosts = new BaseGraph.Builder(em).withTurnCosts(true).create();
         TurnCostStorage turnExt = graphWithTurnCosts.getTurnCostStorage();

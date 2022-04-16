@@ -30,6 +30,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -39,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @author easbar
  */
 public class DefaultBidirPathExtractorTest {
-    private final FlagEncoder carEncoder = FlagEncoders.createCar(5, 5, 10);
+    private final FlagEncoder carEncoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", 10));
     private final EncodingManager encodingManager = EncodingManager.create(carEncoder);
 
     BaseGraph createGraph() {

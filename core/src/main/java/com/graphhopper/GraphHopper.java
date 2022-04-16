@@ -28,9 +28,7 @@ import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.RoadEnvironment;
-import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.lm.LandmarkStorage;
@@ -119,6 +117,7 @@ public class GraphHopper {
     private String osmFile;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private FlagEncoderFactory flagEncoderFactory = new DefaultFlagEncoderFactory();
+    private EncodedValueFactory encodedValueFactory = new DefaultEncodedValueFactory();
     private TagParserFactory tagParserFactory = new DefaultTagParserFactory();
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
@@ -384,6 +383,15 @@ public class GraphHopper {
         return this;
     }
 
+    public EncodedValueFactory getEncodedValueFactory() {
+        return this.encodedValueFactory;
+    }
+
+    public GraphHopper setEncodedValueFactory(EncodedValueFactory factory) {
+        this.encodedValueFactory = factory;
+        return this;
+    }
+
     public TagParserFactory getTagParserFactory() {
         return this.tagParserFactory;
     }
@@ -545,7 +553,7 @@ public class GraphHopper {
         flagEncoderMap.values().forEach(s -> emBuilder.addIfAbsent(flagEncoderFactory, s));
 
         for (String tpStr : encodedValueStr.split(",")) {
-            if (!tpStr.isEmpty()) emBuilder.addIfAbsent(tagParserFactory, tpStr);
+            if (!tpStr.isEmpty()) emBuilder.addIfAbsent(encodedValueFactory, tagParserFactory, tpStr);
         }
 
         return emBuilder.build();

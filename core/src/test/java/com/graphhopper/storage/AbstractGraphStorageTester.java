@@ -88,7 +88,7 @@ public abstract class AbstractGraphStorageTester {
     }
 
     FlagEncoder createCarFlagEncoder() {
-        return FlagEncoders.createCar(5, 5, 0);
+        return FlagEncoders.createCar();
     }
 
     protected BaseGraph createGHStorage() {
@@ -660,8 +660,8 @@ public abstract class AbstractGraphStorageTester {
     @Test
     public void test8AndMoreBytesForEdgeFlags() {
         List<FlagEncoder> list = new ArrayList<>();
-        list.add(FlagEncoders.createCar("car0", 29, 0.001, 0));
-        list.add(FlagEncoders.createCar(29, 0.001, 0));
+        list.add(FlagEncoders.createCar(new PMap("name=car0|speed_bits=29|speed_factor=0.001")));
+        list.add(FlagEncoders.createCar(new PMap("speed_bits=29|speed_factor=0.001")));
         EncodingManager manager = EncodingManager.create(list);
         graph = new BaseGraph.Builder(manager).create();
 
@@ -698,9 +698,9 @@ public abstract class AbstractGraphStorageTester {
         assertTrue(edgeIter.getReverse(access1Enc));
 
         list.clear();
-        list.add(FlagEncoders.createCar("car0", 29, 0.001, 0));
-        list.add(FlagEncoders.createCar(29, 0.001, 0));
-        list.add(FlagEncoders.createCar("car2", 30, 0.001, 0));
+        list.add(FlagEncoders.createCar(new PMap("name=car0|speed_bits=29|speed_factor=0.001")));
+        list.add(FlagEncoders.createCar(new PMap("speed_bits=29|speed_factor=0.001")));
+        list.add(FlagEncoders.createCar(new PMap("name=car2|speed_bits=30|speed_factor=0.001")));
         manager = EncodingManager.create(list);
         graph = new BaseGraph.Builder(manager).create();
         edgeIter = graph.edge(0, 1).set(access0Enc, true, false);

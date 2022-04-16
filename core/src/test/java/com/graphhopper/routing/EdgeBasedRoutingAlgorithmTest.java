@@ -33,6 +33,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -94,7 +95,7 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     private EncodingManager createEncodingManager(boolean restrictedOnly) {
-        carEncoder = FlagEncoders.createCar(5, 5, restrictedOnly ? 1 : 3);
+        carEncoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", restrictedOnly ? 1 : 3));
         EncodingManager em = EncodingManager.create(carEncoder);
         turnCostEnc = getTurnCostEnc(carEncoder);
         return em;

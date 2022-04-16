@@ -15,16 +15,20 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.parsers;
+package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.PMap;
 
 /**
- * This interface defines how parts of the information from 'way' is converted into IntsRef. A TagParser usually
- * has one corresponding EncodedValue but more are possible too.
+ * Defines bit layout for cars with four wheel drive
+ *
+ * @author zstadler
  */
-public interface TagParser {
+public class Car4WDTagParser extends CarTagParser {
 
-    IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags);
+    public Car4WDTagParser(PMap properties) {
+        super(new PMap(properties).putObject("name", properties.getString("name", "car4wd")));
+        trackTypeSpeedMap.put("grade4", 5); // ... some hard or compressed materials
+        trackTypeSpeedMap.put("grade5", 5); // ... no hard materials. soil/sand/grass
+    }
 }

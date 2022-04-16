@@ -39,7 +39,7 @@ import static com.graphhopper.routing.util.PriorityCode.*;
  * @author Nop
  * @author Karl Hübner
  */
-public class FootFlagEncoder extends AbstractFlagEncoder {
+public class FootTagParser extends VehicleTagParser {
     static final int SLOW_SPEED = 2;
     static final int MEAN_SPEED = 5;
     // larger value required - ferries are faster than pedestrians
@@ -54,11 +54,11 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     protected EnumEncodedValue<RouteNetwork> footRouteEnc;
     protected Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
-    public FootFlagEncoder() {
+    public FootTagParser() {
         this(4, 1, false);
     }
 
-    public FootFlagEncoder(PMap properties) {
+    public FootTagParser(PMap properties) {
         this(properties.getString("name", "foot"),
                 properties.getInt("speed_bits", 4),
                 properties.getDouble("speed_factor", 1),
@@ -68,11 +68,11 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         blockFords(properties.getBool("block_fords", false));
     }
 
-    protected FootFlagEncoder(int speedBits, double speedFactor, boolean speedTwoDirections) {
+    protected FootTagParser(int speedBits, double speedFactor, boolean speedTwoDirections) {
         this("foot", speedBits, speedFactor, speedTwoDirections);
     }
 
-    protected FootFlagEncoder(String name, int speedBits, double speedFactor, boolean speedTwoDirections) {
+    protected FootTagParser(String name, int speedBits, double speedFactor, boolean speedTwoDirections) {
         super(name, speedBits, speedFactor, speedTwoDirections, 0);
         priorityWayEncoder = new DecimalEncodedValueImpl(getKey(name, "priority"), 4, PriorityCode.getFactor(1), false);
 
