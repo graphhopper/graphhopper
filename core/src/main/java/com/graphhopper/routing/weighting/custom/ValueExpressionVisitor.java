@@ -134,7 +134,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         }
 
         try {
-            if (result.guessedVariables.isEmpty()) { // expressions without encoded values
+            if (result.guessedVariables.isEmpty()) { // without encoded values
                 ExpressionEvaluator ee = new ExpressionEvaluator();
                 ee.cook(valueExpression);
                 double val = ((Number) ee.evaluate()).doubleValue();
@@ -142,6 +142,12 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             }
 
             createdObjects.addAll(result.guessedVariables);
+            if (result.guessedVariables.size() == 1 && lookup.hasEncodedValue(valueExpression)) { // speed up for common case
+                EncodedValue enc = lookup.getEncodedValue(valueExpression, EncodedValue.class);
+                double min = getMin(enc), max = getMax(enc);
+                return new double[]{min, max};
+            }
+
             ExpressionEvaluator ee = new ExpressionEvaluator();
             List<String> names = new ArrayList<>(result.guessedVariables.size());
             List<Class<?>> values = new ArrayList<>(result.guessedVariables.size());
@@ -151,32 +157,34 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             }
             ee.setParameters(names.toArray(new String[0]), values.toArray(new Class[0]));
             ee.cook(valueExpression);
-            List<Object> args = new ArrayList<>();
+            List<Double> args = new ArrayList<>();
             for (String var : result.guessedVariables) {
-                EncodedValue enc = lookup.getEncodedValue(var, EncodedValue.class);
-                if (enc instanceof DecimalEncodedValue)
-                    args.add(((DecimalEncodedValue) enc).getMaxDecimal());
-                else if (enc instanceof IntEncodedValue)
-                    args.add(((IntEncodedValue) enc).getMaxInt());
-                else
-                    throw new IllegalArgumentException("Cannot use non-number data in value expression");
+                double max = getMax(lookup.getEncodedValue(var, EncodedValue.class));
+                args.add(max);
             }
             Number val1 = (Number) ee.evaluate(args.toArray());
 
             args.clear();
             for (String var : result.guessedVariables) {
-                EncodedValue enc = lookup.getEncodedValue(var, EncodedValue.class);
-                if (enc instanceof DecimalEncodedValue)
-                    args.add(((DecimalEncodedValue) enc).getMinDecimal());
-                else if (enc instanceof IntEncodedValue)
-                    args.add(((IntEncodedValue) enc).getMinInt());
-                else
-                    throw new IllegalArgumentException("Cannot use non-number data in value expression");
+                double min = getMin(lookup.getEncodedValue(var, EncodedValue.class));
+                args.add(min);
             }
             Number val2 = (Number) ee.evaluate(args.toArray());
             return new double[]{Math.min(val1.doubleValue(), val2.doubleValue()), Math.max(val1.doubleValue(), val2.doubleValue())};
         } catch (CompileException | InvocationTargetException ex) {
             throw new IllegalArgumentException(ex);
         }
+    }
+
+    static double getMin(EncodedValue enc) {
+        if (enc instanceof DecimalEncodedValue) return ((DecimalEncodedValue) enc).getMinDecimal();
+        else if (enc instanceof IntEncodedValue) return ((IntEncodedValue) enc).getMinInt();
+        throw new IllegalArgumentException("Cannot use non-number data '" + enc.getName() + "' in value expression");
+    }
+
+    static double getMax(EncodedValue enc) {
+        if (enc instanceof DecimalEncodedValue) return ((DecimalEncodedValue) enc).getMaxDecimal();
+        else if (enc instanceof IntEncodedValue) return ((IntEncodedValue) enc).getMaxInt();
+        throw new IllegalArgumentException("Cannot use non-number data '" + enc.getName() + "' in value expression");
     }
 }
