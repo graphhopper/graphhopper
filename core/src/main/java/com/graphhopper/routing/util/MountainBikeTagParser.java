@@ -32,12 +32,12 @@ import static com.graphhopper.routing.util.PriorityCode.*;
  * @author ratrun
  * @author Peter Karich
  */
-public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
-    public MountainBikeFlagEncoder() {
+public class MountainBikeTagParser extends BikeCommonTagParser {
+    public MountainBikeTagParser() {
         this(4, 2, 0);
     }
 
-    public MountainBikeFlagEncoder(PMap properties) {
+    public MountainBikeTagParser(PMap properties) {
         this(properties.getInt("speed_bits", 4),
                 properties.getDouble("speed_factor", 2),
                 properties.getBool("turn_costs", false) ? 1 : 0);
@@ -46,7 +46,7 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
         blockFords(properties.getBool("block_fords", false));
     }
 
-    protected MountainBikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
+    protected MountainBikeTagParser(int speedBits, double speedFactor, int maxTurnCosts) {
         super("mtb", speedBits, speedFactor, maxTurnCosts, false);
         setTrackTypeSpeed("grade1", 18); // paved
         setTrackTypeSpeed("grade2", 16); // now unpaved ...

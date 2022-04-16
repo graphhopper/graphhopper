@@ -31,13 +31,13 @@ import static com.graphhopper.util.Helper.keepIn;
  *
  * @author Peter Karich
  */
-public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
+public class Bike2WeightTagParser extends BikeTagParser {
 
-    public Bike2WeightFlagEncoder() {
+    public Bike2WeightTagParser() {
         this(new PMap());
     }
 
-    public Bike2WeightFlagEncoder(PMap properties) {
+    public Bike2WeightTagParser(PMap properties) {
         super(new PMap(properties).putObject("speed_two_directions", true).putObject("name", properties.getString("name", "bike2")));
     }
 

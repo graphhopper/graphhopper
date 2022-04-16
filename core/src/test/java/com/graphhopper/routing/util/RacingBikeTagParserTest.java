@@ -25,7 +25,7 @@ import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
-import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PUSHING_SECTION_SPEED;
+import static com.graphhopper.routing.util.BikeCommonTagParser.PUSHING_SECTION_SPEED;
 import static com.graphhopper.routing.util.EncodingManager.Access.WAY;
 import static com.graphhopper.routing.util.PriorityCode.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -36,8 +36,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     @Override
-    protected BikeCommonFlagEncoder createBikeTagParser() {
-        return new RacingBikeFlagEncoder(new PMap("block_fords=true"));
+    protected BikeCommonTagParser createBikeTagParser() {
+        return new RacingBikeTagParser(new PMap("block_fords=true"));
     }
 
     @Test
@@ -202,7 +202,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     public void testPriority_avoidanceOfHighMaxSpeed() {
         // here we test the priority that would be calculated if the way was accessible (even when it is not)
         // therefore we need a modified encoder that always yields access=WAY
-        BikeCommonFlagEncoder encoder = new RacingBikeFlagEncoder(new PMap("block_fords=true")) {
+        BikeCommonTagParser encoder = new RacingBikeTagParser(new PMap("block_fords=true")) {
             @Override
             public EncodingManager.Access getAccess(ReaderWay way) {
                 return WAY;

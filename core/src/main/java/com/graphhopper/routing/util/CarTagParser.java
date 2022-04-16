@@ -33,7 +33,7 @@ import java.util.Set;
  * @author Peter Karich
  * @author Nop
  */
-public class CarFlagEncoder extends AbstractFlagEncoder {
+public class CarTagParser extends VehicleTagParser {
     protected final Map<String, Integer> trackTypeSpeedMap = new HashMap<>();
     protected final Set<String> badSurfaceSpeedMap = new HashSet<>();
     // This value determines the maximal possible on roads with bad surfaces
@@ -46,28 +46,28 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
      */
     protected final Map<String, Integer> defaultSpeedMap = new HashMap<>();
 
-    public CarFlagEncoder() {
+    public CarTagParser() {
         this(new PMap());
     }
 
-    public CarFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
+    public CarTagParser(int speedBits, double speedFactor, int maxTurnCosts) {
         this("car", speedBits, speedFactor, maxTurnCosts);
     }
 
-    public CarFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts) {
+    public CarTagParser(String name, int speedBits, double speedFactor, int maxTurnCosts) {
         this(name, speedBits, speedFactor, maxTurnCosts, false);
     }
 
-    public CarFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
+    public CarTagParser(int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
         this("car", speedBits, speedFactor, maxTurnCosts, speedTwoDirections);
     }
 
-    public CarFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
+    public CarTagParser(String name, int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
         this(new PMap().putObject("name", name).putObject("speed_bits", speedBits).putObject("speed_factor", speedFactor).
                 putObject("max_turn_costs", maxTurnCosts).putObject("speed_two_directions", speedTwoDirections));
     }
 
-    public CarFlagEncoder(PMap properties) {
+    public CarTagParser(PMap properties) {
         super(properties.getString("name", "car"),
                 properties.getInt("speed_bits", 5),
                 properties.getDouble("speed_factor", 5),

@@ -36,23 +36,23 @@ import static com.graphhopper.routing.util.PriorityCode.VERY_NICE;
  *
  * @author don-philipe
  */
-public class WheelchairFlagEncoder extends FootFlagEncoder {
+public class WheelchairTagParser extends FootTagParser {
     private final Set<String> excludeSurfaces = new HashSet<>();
     private final Set<String> excludeSmoothness = new HashSet<>();
     private final int maxInclinePercent = 6;
 
-    public WheelchairFlagEncoder() {
+    public WheelchairTagParser() {
         this(4, 1);
     }
 
-    public WheelchairFlagEncoder(PMap properties) {
+    public WheelchairTagParser(PMap properties) {
         this(properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 1));
 
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
-    protected WheelchairFlagEncoder(int speedBits, double speedFactor) {
+    protected WheelchairTagParser(int speedBits, double speedFactor) {
         super("wheelchair", speedBits, speedFactor, true);
 
         restrictions.add("wheelchair");
@@ -227,7 +227,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     }
 
     /**
-     * First get priority from {@link FootFlagEncoder#handlePriority(ReaderWay, Integer)} then evaluate wheelchair specific
+     * First get priority from {@link FootTagParser#handlePriority(ReaderWay, Integer)} then evaluate wheelchair specific
      * tags.
      *
      * @return a priority for the given way

@@ -106,7 +106,7 @@ public class EncodingManager implements EncodedValueLookup {
     public static class Builder {
         private EncodingManager em;
         private DateRangeParser dateRangeParser;
-        private final Map<String, AbstractFlagEncoder> flagEncoderMap = new LinkedHashMap<>();
+        private final Map<String, VehicleTagParser> flagEncoderMap = new LinkedHashMap<>();
         private final Map<String, EncodedValue> encodedValueMap = new LinkedHashMap<>();
 
         public Builder() {
@@ -117,7 +117,7 @@ public class EncodingManager implements EncodedValueLookup {
             check();
             if (flagEncoderMap.containsKey(encoder.toString()))
                 throw new IllegalArgumentException("FlagEncoder already exists: " + encoder);
-            flagEncoderMap.put(encoder.toString(), (AbstractFlagEncoder) encoder);
+            flagEncoderMap.put(encoder.toString(), (VehicleTagParser) encoder);
             return this;
         }
 
@@ -159,26 +159,26 @@ public class EncodingManager implements EncodedValueLookup {
                 dateRangeParser = new DateRangeParser(DateRangeParser.createCalendar());
 
             for (FlagEncoder encoder : flagEncoderMap.values()) {
-                if (encoder instanceof RoadsFlagEncoder) {
+                if (encoder instanceof RoadsTagParser) {
                     // TODO Later these EncodedValues can be added independently of RoadsFlagEncoder. Maybe add a foot_access and hgv_access? and remove the others "xy$access"
                     if (!em.hasEncodedValue("car_access"))
                         em.addEncodedValue(new SimpleBooleanEncodedValue("car_access"), false);
                     if (!em.hasEncodedValue("bike_access"))
                         em.addEncodedValue(new SimpleBooleanEncodedValue("bike_access"), false);
-                } else if (encoder instanceof BikeCommonFlagEncoder) {
+                } else if (encoder instanceof BikeCommonTagParser) {
                     if (!em.hasEncodedValue(RouteNetwork.key("bike")))
                         em.addEncodedValue(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class), false);
                     if (!em.hasEncodedValue(GetOffBike.KEY))
                         em.addEncodedValue(GetOffBike.create(), false);
                     if (!em.hasEncodedValue(Smoothness.KEY))
                         em.addEncodedValue(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class), false);
-                } else if (encoder instanceof FootFlagEncoder) {
+                } else if (encoder instanceof FootTagParser) {
                     if (!em.hasEncodedValue(RouteNetwork.key("foot")))
                         em.addEncodedValue(new EnumEncodedValue<>(FootNetwork.KEY, RouteNetwork.class), false);
                 }
             }
 
-            for (AbstractFlagEncoder encoder : flagEncoderMap.values()) {
+            for (VehicleTagParser encoder : flagEncoderMap.values()) {
                 encoder.init(dateRangeParser);
                 em.addEncoder(encoder);
             }
@@ -213,7 +213,7 @@ public class EncodingManager implements EncodedValueLookup {
         return edgeConfig.getRequiredInts();
     }
 
-    private void addEncoder(AbstractFlagEncoder encoder) {
+    private void addEncoder(VehicleTagParser encoder) {
         encoder.setEncodedValueLookup(this);
         List<EncodedValue> list = new ArrayList<>();
         encoder.createEncodedValues(list);
@@ -299,7 +299,7 @@ public class EncodingManager implements EncodedValueLookup {
 
             str.append(encoder.toString())
                     .append("|")
-                    .append(((AbstractFlagEncoder) encoder).getPropertiesString());
+                    .append(((VehicleTagParser) encoder).getPropertiesString());
         }
 
         return str.toString();

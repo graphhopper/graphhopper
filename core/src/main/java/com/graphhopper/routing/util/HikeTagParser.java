@@ -32,13 +32,13 @@ import static com.graphhopper.routing.util.PriorityCode.*;
  *
  * @author Peter Karich
  */
-public class HikeFlagEncoder extends FootFlagEncoder {
+public class HikeTagParser extends FootTagParser {
 
-    public HikeFlagEncoder() {
+    public HikeTagParser() {
         this(4, 1, false);
     }
 
-    public HikeFlagEncoder(PMap properties) {
+    public HikeTagParser(PMap properties) {
         this(
                 properties.getString("name", "hike"),
                 properties.getInt("speed_bits", 4),
@@ -49,11 +49,11 @@ public class HikeFlagEncoder extends FootFlagEncoder {
         blockFords(properties.getBool("block_fords", false));
     }
 
-    protected HikeFlagEncoder(int speedBits, double speedFactor, boolean speedTwoDirections) {
+    protected HikeTagParser(int speedBits, double speedFactor, boolean speedTwoDirections) {
         this("hike", speedBits, speedFactor, speedTwoDirections);
     }
 
-    protected HikeFlagEncoder(String name, int speedBits, double speedFactor, boolean speedTwoDirections) {
+    protected HikeTagParser(String name, int speedBits, double speedFactor, boolean speedTwoDirections) {
         super(name, speedBits, speedFactor, speedTwoDirections);
 
         routeMap.put(INTERNATIONAL, BEST.getValue());

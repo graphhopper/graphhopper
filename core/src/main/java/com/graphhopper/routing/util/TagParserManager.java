@@ -45,7 +45,7 @@ import static java.util.Collections.emptyMap;
  * @author Nop
  */
 public class TagParserManager implements EncodedValueLookup {
-    private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<>();
+    private final List<VehicleTagParser> edgeEncoders = new ArrayList<>();
     private final Map<String, EncodedValue> encodedValueMap = new LinkedHashMap<>();
     private final List<RelationTagParser> relationTagParsers = new ArrayList<>();
     private final List<TagParser> edgeTagParsers = new ArrayList<>();
@@ -116,7 +116,7 @@ public class TagParserManager implements EncodedValueLookup {
     public static class Builder {
         private TagParserManager em;
         private DateRangeParser dateRangeParser;
-        private final Map<String, AbstractFlagEncoder> flagEncoderMap = new LinkedHashMap<>();
+        private final Map<String, VehicleTagParser> flagEncoderMap = new LinkedHashMap<>();
         private final Map<String, EncodedValue> encodedValueMap = new LinkedHashMap<>();
         private final Set<TagParser> tagParserSet = new LinkedHashSet<>();
         private final List<TurnCostParser> turnCostParsers = new ArrayList<>();
@@ -132,7 +132,7 @@ public class TagParserManager implements EncodedValueLookup {
             if (flagEncoderMap.containsKey(key))
                 return false;
             FlagEncoder fe = parseEncoderString(factory, flagEncoderString);
-            flagEncoderMap.put(fe.toString(), (AbstractFlagEncoder) fe);
+            flagEncoderMap.put(fe.toString(), (VehicleTagParser) fe);
             return true;
         }
 
@@ -206,7 +206,7 @@ public class TagParserManager implements EncodedValueLookup {
             check();
             if (flagEncoderMap.containsKey(encoder.toString()))
                 throw new IllegalArgumentException("FlagEncoder already exists: " + encoder);
-            flagEncoderMap.put(encoder.toString(), (AbstractFlagEncoder) encoder);
+            flagEncoderMap.put(encoder.toString(), (VehicleTagParser) encoder);
             return this;
         }
 
@@ -309,8 +309,8 @@ public class TagParserManager implements EncodedValueLookup {
             if (dateRangeParser == null)
                 dateRangeParser = new DateRangeParser(DateRangeParser.createCalendar());
 
-            for (AbstractFlagEncoder encoder : flagEncoderMap.values()) {
-                if (encoder instanceof RoadsFlagEncoder) {
+            for (VehicleTagParser encoder : flagEncoderMap.values()) {
+                if (encoder instanceof RoadsTagParser) {
                     // TODO Later these EncodedValues can be added independently of RoadsFlagEncoder. Maybe add a foot_access and hgv_access? and remove the others "xy$access"
                     if (!em.hasEncodedValue("car_access")) {
                         em.addEncodedValue(new SimpleBooleanEncodedValue("car_access", true), false);
@@ -320,7 +320,7 @@ public class TagParserManager implements EncodedValueLookup {
                         em.addEncodedValue(new SimpleBooleanEncodedValue("bike_access", true), false);
                         _addEdgeTagParser(new OSMAccessParser(em.getBooleanEncodedValue("bike_access"), em.getBooleanEncodedValue(Roundabout.KEY), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE), TransportationMode.BIKE));
                     }
-                } else if (encoder instanceof BikeCommonFlagEncoder) {
+                } else if (encoder instanceof BikeCommonTagParser) {
                     if (!em.hasEncodedValue(RouteNetwork.key("bike"))) {
                         em.addEncodedValue(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class), false);
                         _addRelationTagParser(new OSMBikeNetworkTagParser(em.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), em.relationConfig));
@@ -333,14 +333,14 @@ public class TagParserManager implements EncodedValueLookup {
                         em.addEncodedValue(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class), false);
                         _addEdgeTagParser(new OSMSmoothnessParser(em.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)));
                     }
-                } else if (encoder instanceof FootFlagEncoder) {
+                } else if (encoder instanceof FootTagParser) {
                     if (!em.hasEncodedValue(RouteNetwork.key("foot")))
                         em.addEncodedValue(new EnumEncodedValue<>(FootNetwork.KEY, RouteNetwork.class), false);
                     _addRelationTagParser(new OSMFootNetworkTagParser(em.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), em.relationConfig));
                 }
             }
 
-            for (AbstractFlagEncoder encoder : flagEncoderMap.values()) {
+            for (VehicleTagParser encoder : flagEncoderMap.values()) {
                 encoder.init(dateRangeParser);
                 em.addEncoder(encoder);
             }
@@ -350,7 +350,7 @@ public class TagParserManager implements EncodedValueLookup {
             }
 
             // FlagEncoder can demand TurnCostParsers => add them after the explicitly added ones
-            for (AbstractFlagEncoder encoder : flagEncoderMap.values()) {
+            for (VehicleTagParser encoder : flagEncoderMap.values()) {
                 if (encoder.supportsTurnCosts() && !em.turnCostParsers.containsKey(TurnCost.key(encoder.toString()))) {
                     BooleanEncodedValue accessEnc = encoder.getAccessEnc();
                     DecimalEncodedValue turnCostEnc = encoder.getTurnCostEnc();
@@ -391,7 +391,7 @@ public class TagParserManager implements EncodedValueLookup {
         return edgeConfig.getRequiredInts();
     }
 
-    private void addEncoder(AbstractFlagEncoder encoder) {
+    private void addEncoder(VehicleTagParser encoder) {
         encoder.setEncodedValueLookup(this);
         List<EncodedValue> list = new ArrayList<>();
         encoder.createEncodedValues(list);
@@ -469,7 +469,7 @@ public class TagParserManager implements EncodedValueLookup {
         for (TagParser parser : edgeTagParsers) {
             parser.handleWayTags(edgeFlags, way, relationFlags);
         }
-        for (AbstractFlagEncoder encoder : edgeEncoders) {
+        for (VehicleTagParser encoder : edgeEncoders) {
             encoder.handleWayTags(edgeFlags, way);
             if (!edgeFlags.isEmpty()) {
                 Map<String, Object> nodeTags = way.getTag("node_tags", emptyMap());
@@ -517,7 +517,7 @@ public class TagParserManager implements EncodedValueLookup {
     }
 
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
-        for (AbstractFlagEncoder encoder : edgeEncoders)
+        for (VehicleTagParser encoder : edgeEncoders)
             encoder.applyWayTags(way, edge);
     }
 

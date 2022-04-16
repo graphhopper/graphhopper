@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Peter Karich
  */
 public class CarTagParserTest {
-    final CarFlagEncoder parser = createParser();
+    final CarTagParser parser = createParser();
     private final TagParserManager em = new TagParserManager.Builder().
             add(parser).
             add(FlagEncoders.createBike()).add(FlagEncoders.createFoot()).build();
@@ -45,8 +45,8 @@ public class CarTagParserTest {
     private final DecimalEncodedValue avSpeedEnc = parser.getAverageSpeedEnc();
     private final BooleanEncodedValue accessEnc = parser.getAccessEnc();
 
-    CarFlagEncoder createParser() {
-        return new CarFlagEncoder(new PMap("speed_two_directions=true|block_fords=true"));
+    CarTagParser createParser() {
+        return new CarTagParser(new PMap("speed_two_directions=true|block_fords=true"));
     }
 
     @Test
@@ -153,7 +153,7 @@ public class CarTagParserTest {
         assertTrue(parser.getAccess(way).canSkip());
         assertTrue(parser.isBarrier(node));
 
-        CarFlagEncoder tmpEncoder = new CarFlagEncoder(new PMap("block_fords=false"));
+        CarTagParser tmpEncoder = new CarTagParser(new PMap("block_fords=false"));
         EncodingManager.create(tmpEncoder);
         assertTrue(tmpEncoder.getAccess(way).isWay());
         assertFalse(tmpEncoder.isBarrier(node));
@@ -500,7 +500,7 @@ public class CarTagParserTest {
         // barrier!
         assertTrue(parser.isBarrier(node));
 
-        CarFlagEncoder tmpEncoder = new CarFlagEncoder();
+        CarTagParser tmpEncoder = new CarTagParser();
         EncodingManager.create(tmpEncoder);
 
         // Test if cattle_grid is not blocking
@@ -523,7 +523,7 @@ public class CarTagParserTest {
 
     @Test
     public void testMaxValue() {
-        CarFlagEncoder instance = new CarFlagEncoder(10, 0.5, 0);
+        CarTagParser instance = new CarTagParser(10, 0.5, 0);
         EncodingManager em = EncodingManager.create(instance);
         DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(EncodingManager.getKey(instance, "average_speed"));
         ReaderWay way = new ReaderWay(1);
@@ -555,7 +555,7 @@ public class CarTagParserTest {
     public void testSetToMaxSpeed() {
         ReaderWay way = new ReaderWay(12);
         way.setTag("maxspeed", "90");
-        assertEquals(90, AbstractFlagEncoder.getMaxSpeed(way), 1e-2);
+        assertEquals(90, VehicleTagParser.getMaxSpeed(way), 1e-2);
     }
 
     @Test
@@ -565,7 +565,7 @@ public class CarTagParserTest {
         way.setTag("sac_scale", "hiking");
 
         assertEquals(EncodingManager.Access.CAN_SKIP, parser.getAccess(way));
-        assertNotEquals(EncodingManager.Access.CAN_SKIP, ((BikeFlagEncoder) em.getEncoder("bike")).getAccess(way));
+        assertNotEquals(EncodingManager.Access.CAN_SKIP, ((BikeTagParser) em.getEncoder("bike")).getAccess(way));
         IntsRef edgeFlags = em.handleWayTags(way, em.createRelationFlags());
         assertFalse(accessEnc.getBool(true, edgeFlags));
         assertFalse(accessEnc.getBool(false, edgeFlags));
@@ -594,7 +594,7 @@ public class CarTagParserTest {
         assertEquals(5, parser.getAverageSpeedEnc().getDecimal(false, edgeFlags), .1);
 
         // for a smaller speed factor the minimum speed is also smaller
-        CarFlagEncoder lowFactorCar = new CarFlagEncoder(10, 1, 0);
+        CarTagParser lowFactorCar = new CarTagParser(10, 1, 0);
         EncodingManager lowFactorEm = EncodingManager.create(lowFactorCar);
         edgeFlags = lowFactorEm.createEdgeFlags();
         lowFactorCar.handleWayTags(edgeFlags, way);

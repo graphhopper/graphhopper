@@ -41,7 +41,7 @@ import static com.graphhopper.routing.util.EncodingManager.getKey;
  * @author Nop
  * @see EncodingManager
  */
-public abstract class AbstractFlagEncoder implements FlagEncoder {
+public abstract class VehicleTagParser implements FlagEncoder {
     private final String name;
     protected final Set<String> intendedValues = new HashSet<>(5);
     // order is important
@@ -72,7 +72,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      * @param maxTurnCosts specify the maximum value used for turn costs, if this value is reached a
      *                     turn is forbidden and results in costs of positive infinity.
      */
-    protected AbstractFlagEncoder(String name, int speedBits, double speedFactor, boolean speedTwoDirections, int maxTurnCosts) {
+    protected VehicleTagParser(String name, int speedBits, double speedFactor, boolean speedTwoDirections, int maxTurnCosts) {
         this.name = name;
         this.accessEnc = new SimpleBooleanEncodedValue(getKey(name, "access"), true);
         this.avgSpeedEnc = new DecimalEncodedValueImpl(getKey(name, "average_speed"), speedBits, speedFactor, speedTwoDirections);

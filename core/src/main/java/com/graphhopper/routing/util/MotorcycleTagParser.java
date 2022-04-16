@@ -42,17 +42,17 @@ import static com.graphhopper.routing.util.EncodingManager.getKey;
  * @author Peter Karich
  * @author boldtrn
  */
-public class MotorcycleFlagEncoder extends CarFlagEncoder {
+public class MotorcycleTagParser extends CarTagParser {
     private final HashSet<String> avoidSet = new HashSet<>();
     private final HashSet<String> preferSet = new HashSet<>();
     private final DecimalEncodedValue priorityWayEncoder;
     private final DecimalEncodedValue curvatureEncoder;
 
-    public MotorcycleFlagEncoder() {
+    public MotorcycleTagParser() {
         this(new PMap());
     }
 
-    public MotorcycleFlagEncoder(PMap properties) {
+    public MotorcycleTagParser(PMap properties) {
         super(properties.putObject("name", "motorcycle").putObject("speed_two_directions", true));
 
         priorityWayEncoder = new DecimalEncodedValueImpl(getKey(getName(), "priority"), 4, PriorityCode.getFactor(1), false);
@@ -133,7 +133,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
             }
             return EncodingManager.Access.CAN_SKIP;
         }
-        
+
         if ("service".equals(highwayValue) && "emergency_access".equals(way.getTag("service"))) {
             return EncodingManager.Access.CAN_SKIP;
         }
