@@ -78,8 +78,8 @@ public class FlexiblePathCalculator implements PathCalculator {
         }
 
         // reset all direction enforcements in queryGraph to avoid influencing next path
-        // todo: is this correct? aren't we taking a second look at these edges later when we calc times or
-        // instructions etc.?
+        // note that afterwards for path processing (like instructions) there will not be a penalty for the unfavored
+        // edges so the edge weight calculated then will be different to the one we used when calculating the route
         queryGraph.clearUnfavoredStatus();
 
         if (paths.isEmpty())
