@@ -42,18 +42,19 @@ public class WheelchairTagParser extends FootTagParser {
     private final int maxInclinePercent = 6;
 
     public WheelchairTagParser() {
-        this(4, 1);
+        this(4, 1, 0);
     }
 
     public WheelchairTagParser(PMap properties) {
-        this(properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 1));
+        this(properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 1),
+                properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0));
 
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
-    protected WheelchairTagParser(int speedBits, double speedFactor) {
-        super("wheelchair", speedBits, speedFactor, true);
+    protected WheelchairTagParser(int speedBits, double speedFactor, int maxTurnCosts) {
+        super("wheelchair", speedBits, speedFactor, true, maxTurnCosts);
 
         restrictions.add("wheelchair");
 

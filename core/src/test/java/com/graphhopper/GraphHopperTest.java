@@ -950,7 +950,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
-                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true)).
                 setStoreOnFlush(true).
                 importOrLoad();
 

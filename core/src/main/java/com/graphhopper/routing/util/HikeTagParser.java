@@ -43,18 +43,19 @@ public class HikeTagParser extends FootTagParser {
                 properties.getString("name", "hike"),
                 properties.getInt("speed_bits", 4),
                 properties.getDouble("speed_factor", 1),
-                properties.getBool("speed_two_directions", false));
+                properties.getBool("speed_two_directions", false),
+                properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0));
 
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
     protected HikeTagParser(int speedBits, double speedFactor, boolean speedTwoDirections) {
-        this("hike", speedBits, speedFactor, speedTwoDirections);
+        this("hike", speedBits, speedFactor, speedTwoDirections, 0);
     }
 
-    protected HikeTagParser(String name, int speedBits, double speedFactor, boolean speedTwoDirections) {
-        super(name, speedBits, speedFactor, speedTwoDirections);
+    protected HikeTagParser(String name, int speedBits, double speedFactor, boolean speedTwoDirections, int maxTurnCosts) {
+        super(name, speedBits, speedFactor, speedTwoDirections, maxTurnCosts);
 
         routeMap.put(INTERNATIONAL, BEST.getValue());
         routeMap.put(NATIONAL, BEST.getValue());

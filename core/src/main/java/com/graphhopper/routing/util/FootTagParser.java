@@ -62,18 +62,19 @@ public class FootTagParser extends VehicleTagParser {
         this(properties.getString("name", "foot"),
                 properties.getInt("speed_bits", 4),
                 properties.getDouble("speed_factor", 1),
-                properties.getBool("speed_two_directions", false));
+                properties.getBool("speed_two_directions", false),
+                properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0));
 
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
     protected FootTagParser(int speedBits, double speedFactor, boolean speedTwoDirections) {
-        this("foot", speedBits, speedFactor, speedTwoDirections);
+        this("foot", speedBits, speedFactor, speedTwoDirections, 0);
     }
 
-    protected FootTagParser(String name, int speedBits, double speedFactor, boolean speedTwoDirections) {
-        super(name, speedBits, speedFactor, speedTwoDirections, 0);
+    protected FootTagParser(String name, int speedBits, double speedFactor, boolean speedTwoDirections, int maxTurnCosts) {
+        super(name, speedBits, speedFactor, speedTwoDirections, maxTurnCosts);
         priorityWayEncoder = new DecimalEncodedValueImpl(getKey(name, "priority"), 4, PriorityCode.getFactor(1), false);
 
         restrictedValues.add("no");
