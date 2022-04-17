@@ -23,6 +23,7 @@ import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
@@ -208,7 +209,7 @@ public class ViaRouting {
 
         // heading
         if (!Double.isNaN(fromHeading) || !Double.isNaN(toHeading)) {
-            // todo: for heading/pass_through with edge-based routing (especially CH) we have to find the edge closest
+            // todo: for heading with edge-based routing (especially CH) we have to find the edge closest
             // to the heading and use it as sourceOutEdge/targetInEdge here. the heading penalty will not be applied
             // this way (unless we implement this), but this is more or less ok as we can use finite u-turn costs
             // instead. maybe the hardest part is dealing with headings that cannot be fulfilled, like in one-way
@@ -226,8 +227,29 @@ public class ViaRouting {
         }
 
         // pass through
-        if (incomingEdge != NO_EDGE && passThrough)
-            edgeRestrictions.getUnfavoredEdges().add(incomingEdge);
+        if (passThrough && incomingEdge != NO_EDGE && queryGraph.isVirtualNode(fromSnap.getClosestNode())) {
+            List<VirtualEdgeIteratorState> virtualEdges = new ArrayList<>();
+            EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(fromSnap.getClosestNode());
+            while (iter.next()) {
+                if (!queryGraph.isVirtualEdge(iter.getEdge())) {
+                    throw new RuntimeException("Virtual nodes must only have virtual edges "
+                            + "to adjacent nodes.");
+                }
+                virtualEdges.add((VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(iter.getEdge(), iter.getAdjNode()));
+            }
+            if (virtualEdges.size() != 2) {
+                throw new RuntimeException("Each virtual node must have exactly 2 "
+                        + "virtual edges (reverse virtual edges are not returned by the "
+                        + "EdgeIterator");
+            }
+            if (incomingEdge == virtualEdges.get(0).getEdge()) {
+                edgeRestrictions.setSourceOutEdge(virtualEdges.get(1).getEdge());
+            } else if (incomingEdge == virtualEdges.get(1).getEdge()) {
+                edgeRestrictions.setSourceOutEdge(virtualEdges.get(0).getEdge());
+            } else {
+                throw new RuntimeException();
+            }
+        }
         return edgeRestrictions;
     }
 

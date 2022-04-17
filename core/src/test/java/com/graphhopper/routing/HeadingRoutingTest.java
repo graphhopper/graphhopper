@@ -31,10 +31,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Parameters;
-import com.graphhopper.util.TranslationMap;
+import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.shapes.GHPoint;
@@ -56,7 +53,7 @@ class HeadingRoutingTest {
     @Test
     public void headingTest1() {
         // Test enforce start direction
-        FlagEncoder carEncoder = FlagEncoders.createCar();
+        FlagEncoder carEncoder = FlagEncoders.createCar(new PMap("turn_costs=true"));
         EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager);
         Router router = createRouter(graph, encodingManager);
@@ -79,7 +76,7 @@ class HeadingRoutingTest {
     @Test
     public void headingTest2() {
         // Test enforce south start direction and east end direction
-        FlagEncoder carEncoder = FlagEncoders.createCar();
+        FlagEncoder carEncoder = FlagEncoders.createCar(new PMap("turn_costs=true"));
         EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager);
         Router router = createRouter(graph, encodingManager);
@@ -106,7 +103,7 @@ class HeadingRoutingTest {
 
     @Test
     public void headingTest3() {
-        FlagEncoder carEncoder = FlagEncoders.createCar();
+        FlagEncoder carEncoder = FlagEncoders.createCar(new PMap("turn_costs=true"));
         EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager);
         Router router = createRouter(graph, encodingManager);
@@ -131,7 +128,7 @@ class HeadingRoutingTest {
     @Test
     public void headingTest4() {
         // Test straight via routing
-        FlagEncoder carEncoder = FlagEncoders.createCar();
+        FlagEncoder carEncoder = FlagEncoders.createCar(new PMap("turn_costs=true"));
         EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager);
         Router router = createRouter(graph, encodingManager);
@@ -156,7 +153,7 @@ class HeadingRoutingTest {
     @Test
     public void headingTest5() {
         // Test independence of previous enforcement for subsequent paths
-        FlagEncoder carEncoder = FlagEncoders.createCar();
+        FlagEncoder carEncoder = FlagEncoders.createCar(new PMap("turn_costs=true"));
         EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager);
         Router router = createRouter(graph, encodingManager);
@@ -180,7 +177,7 @@ class HeadingRoutingTest {
 
     @Test
     public void testHeadingWithSnapFilter() {
-        FlagEncoder carEncoder = FlagEncoders.createCar();
+        FlagEncoder carEncoder = FlagEncoders.createCar(new PMap("turn_costs=true"));
         EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraphWithTunnel(encodingManager);
         Router router = createRouter(graph, encodingManager);
@@ -242,7 +239,7 @@ class HeadingRoutingTest {
 
     @Test
     public void testHeadingWithSnapFilter2() {
-        FlagEncoder carEncoder = FlagEncoders.createCar();
+        FlagEncoder carEncoder = FlagEncoders.createCar(new PMap("turn_costs=true"));
         EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraphWithTunnel(encodingManager);
         Router router = createRouter(graph, encodingManager);
@@ -275,7 +272,7 @@ class HeadingRoutingTest {
     @Test
     public void headingTest6() {
         // Test if snaps at tower nodes are ignored
-        FlagEncoder carEncoder = FlagEncoders.createCar();
+        FlagEncoder carEncoder = FlagEncoders.createCar(new PMap("turn_costs=true"));
         EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager);
         Router router = createRouter(graph, encodingManager);
@@ -299,7 +296,7 @@ class HeadingRoutingTest {
         LocationIndexTree locationIndex = new LocationIndexTree(graph, new RAMDirectory());
         locationIndex.prepareIndex();
         Map<String, Profile> profilesByName = new HashMap<>();
-        profilesByName.put("profile", new Profile("profile").setVehicle("car").setWeighting("fastest"));
+        profilesByName.put("profile", new Profile("profile").setVehicle("car").setWeighting("fastest").setTurnCosts(true));
         return new Router(graph.getBaseGraph(), encodingManager, locationIndex, profilesByName, new PathDetailsBuilderFactory(), new TranslationMap().doImport(), new RouterConfig(),
                 new DefaultWeightingFactory(graph.getBaseGraph(), encodingManager), Collections.emptyMap(), Collections.emptyMap());
     }

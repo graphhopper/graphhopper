@@ -961,7 +961,7 @@ public class GraphHopperTest {
                 setProfile(profile);
         rq.putHint(Routing.PASS_THROUGH, true);
         GHResponse rsp = hopper.route(rq);
-
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         ResponsePath res = rsp.getBest();
         assertEquals(297, res.getDistance(), 5.);
         assertEquals(23, res.getPoints().size());
