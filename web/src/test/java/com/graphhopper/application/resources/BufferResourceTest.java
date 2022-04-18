@@ -207,7 +207,14 @@ public class BufferResourceTest {
                 upstreamJson.get("features").get(2).get("geometry").get("coordinates"));
     }
 
+    @Test
+    public void testUnusualRoadNameFormat() {
+        final Response response = clientTarget(app, "/buffer?profile=my_car&"
+                + "point=42.54287,1.471&roadName=cG4-&threshholdDistance=2000").request()
+                .buildGet().invoke();
+        assertEquals(200, response.getStatus());
+    }
+
     // Roundabout test? Unnamed roundabout test?
     // More failed tests?
-    // Road name which doesn't entirely match (i.e. N Cg-4)
 }

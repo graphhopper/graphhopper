@@ -34,6 +34,7 @@ import com.graphhopper.util.JsonFeature;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
 
 import org.locationtech.jts.geom.Coordinate;
@@ -82,6 +83,7 @@ public class BufferResource {
 
         StopWatch sw = new StopWatch().start();
 
+        roadName = sanitizeRoadNames(roadName)[0];
         BufferFeature primaryStartFeature = calculatePrimaryStartFeature(point.get().lat, point.get().lon, roadName,
                 queryMultiplier);
         EdgeIteratorState state = graph.getEdgeIteratorState(primaryStartFeature.getEdge(), Integer.MIN_VALUE);
@@ -197,10 +199,9 @@ public class BufferResource {
     private String[] sanitizeRoadNames(String roadNames) {
         String[] separatedNames = roadNames.split(",");
 
-        // TODO: Add in removal of dashes, casing, and road directionality (i.e. E US-80
-        // -> us80)
+        // TODO: Add in removal of road directionality (i.e. N US-80)
         for (int i = 0; i < separatedNames.length; i++) {
-            separatedNames[i] = separatedNames[i].trim();
+            separatedNames[i] = separatedNames[i].trim().replace("-", "").toLowerCase();
         }
 
         return separatedNames;
@@ -301,12 +302,10 @@ public class BufferResource {
             if (currentEdge == -1) {
                 if (potentialEdges.size() > 0) {
 
-                    // The dreaded Michigan left 😱
+                    // The Michigan Left
                     if (potentialEdges.size() > 1) {
-                        // This logic is not very robust as it stands, but I couldn't think of anything
-                        // better
-                        // In the case of a michigan left, choose the edge that's longer as to not take
-                        // the left
+                        // This logic is not very robust as it stands, change it
+                        // In the case of a Michigan left, choose the edge that's further away
 
                         EdgeIteratorState tempState = graph.getEdgeIteratorState(potentialEdges.get(0),
                                 Integer.MIN_VALUE);
@@ -407,32 +406,25 @@ public class BufferResource {
             pointList.reverse();
         }
 
-        GHPoint3D pointCandidate = pointList.get(0);
+        Double currentDistance = finalEdge.getDistance();
+        GHPoint3D previousPoint = pointList.get(0);
 
-        for (GHPoint3D point : pointList) {
+        for (GHPoint3D currentPoint : pointList) {
             // Filter zero-points made by PointList() scaling
-            if (point.lat != 0 && point.lon != 0) {
-                // TODO: Make this use the same distance-along-road algorithm because it
-                // currently does bends incorrectly (and the reverse isn't doing anything
-                // without the along-road-method)
-                // Also, the logic could be totally changed to break on an exceeding distance
-                // (which is what it was doing before) but that requires that the logic above
-                // for reversal is *absolutely* correct
-
-                // Check between prevPoint and currentPoint to see which is closer to the
-                // threshholdDistance
-                if (Math.abs(DistancePlaneProjection.DIST_PLANE.calcDist(finalEdge.getPoint().getLat(),
-                        finalEdge.getPoint().getLon(), point.lat, point.lon)
-                        - (threshholdDistance - finalEdge.getDistance())) < Math
-                                .abs(DistancePlaneProjection.DIST_PLANE.calcDist(finalEdge.getPoint().getLat(),
-                                        finalEdge.getPoint().getLon(), pointCandidate.lat, pointCandidate.lon)
-                                        - (threshholdDistance - finalEdge.getDistance()))) {
-                    pointCandidate = point;
+            if (currentPoint.lat != 0 && currentPoint.lon != 0) {
+                // Check if exceeds threshholdDistance
+                currentDistance += DistancePlaneProjection.DIST_PLANE.calcDist(currentPoint.getLat(),
+                        currentPoint.getLon(), previousPoint.getLat(), previousPoint.getLon());
+                if (currentDistance >= threshholdDistance) {
+                    return currentPoint;
                 }
+
+                previousPoint = currentPoint;
             }
         }
 
-        return pointCandidate;
+        // Default to previous point in case of a miscalculation
+        return previousPoint;
     }
 
     private Boolean hasProperFlow(EdgeIteratorState currentState, EdgeIteratorState tempState, Boolean upstreamPath) {
