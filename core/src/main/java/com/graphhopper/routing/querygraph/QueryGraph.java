@@ -326,4 +326,22 @@ public class QueryGraph implements Graph {
         return new UnsupportedOperationException("QueryGraph cannot be modified.");
     }
 
+    public static List<VirtualEdgeIteratorState> getVirtualEdgePair(QueryGraph queryGraph, Snap snap) {
+        List<VirtualEdgeIteratorState> virtualEdges = new ArrayList<>();
+        EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(snap.getClosestNode());
+        while (iter.next()) {
+            if (!queryGraph.isVirtualEdge(iter.getEdge())) {
+                throw new RuntimeException("Virtual nodes must only have virtual edges "
+                        + "to adjacent nodes.");
+            }
+            virtualEdges.add((VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(iter.getEdge(), iter.getAdjNode()));
+        }
+        if (virtualEdges.size() != 2) {
+            throw new RuntimeException("Each virtual node must have exactly 2 "
+                    + "virtual edges (reverse virtual edges are not returned by the "
+                    + "EdgeIterator");
+        }
+        return virtualEdges;
+    }
+
 }

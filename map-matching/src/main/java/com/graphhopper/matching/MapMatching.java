@@ -287,20 +287,7 @@ public class MapMatching {
             List<State> candidates = new ArrayList<>();
             for (Snap split : splits) {
                 if (queryGraph.isVirtualNode(split.getClosestNode())) {
-                    List<VirtualEdgeIteratorState> virtualEdges = new ArrayList<>();
-                    EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(split.getClosestNode());
-                    while (iter.next()) {
-                        if (!queryGraph.isVirtualEdge(iter.getEdge())) {
-                            throw new RuntimeException("Virtual nodes must only have virtual edges "
-                                    + "to adjacent nodes.");
-                        }
-                        virtualEdges.add((VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(iter.getEdge(), iter.getAdjNode()));
-                    }
-                    if (virtualEdges.size() != 2) {
-                        throw new RuntimeException("Each virtual node must have exactly 2 "
-                                + "virtual edges (reverse virtual edges are not returned by the "
-                                + "EdgeIterator");
-                    }
+                    List<VirtualEdgeIteratorState> virtualEdges = QueryGraph.getVirtualEdgePair(queryGraph, split);
 
                     // Create a directed candidate for each of the two possible directions through
                     // the virtual node. We need to add candidates for both directions because
