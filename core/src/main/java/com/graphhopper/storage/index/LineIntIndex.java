@@ -237,11 +237,11 @@ public class LineIntIndex {
             int subqueryY = y + yreg;
             int subqueryXA = x - iteration;
             int subqueryXB = x + iteration;
-            if (subqueryXA >= 0 && subqueryY >= 0) { // TODO: Also don't walk off the _other_ side of the grid.
+            if (subqueryXA >= 0 && subqueryY >= 0 && subqueryXA < indexStructureInfo.getParts() && subqueryY < indexStructureInfo.getParts()) {
                 long keyPart = keyAlgo.encode(subqueryXA, subqueryY) << (64 - keyAlgo.getBits());
                 fillIDs(keyPart, foundEntries);
             }
-            if (iteration > 0 && subqueryXB >= 0 && subqueryY >= 0) {
+            if (iteration > 0 && subqueryXB >= 0 && subqueryY >= 0 && subqueryXB < indexStructureInfo.getParts() && subqueryY < indexStructureInfo.getParts()) {
                 long keyPart = keyAlgo.encode(subqueryXB, subqueryY) << (64 - keyAlgo.getBits());
                 fillIDs(keyPart, foundEntries);
             }
@@ -251,11 +251,11 @@ public class LineIntIndex {
             int subqueryX = x + xreg;
             int subqueryYA = y - iteration;
             int subqueryYB = y + iteration;
-            if (subqueryX >= 0 && subqueryYA >= 0) {
+            if (subqueryX >= 0 && subqueryYA >= 0 && subqueryX < indexStructureInfo.getParts() && subqueryYA < indexStructureInfo.getParts()) {
                 long keyPart = keyAlgo.encode(subqueryX, subqueryYA) << (64 - keyAlgo.getBits());
                 fillIDs(keyPart, foundEntries);
             }
-            if (subqueryX >= 0 && subqueryYB >= 0) {
+            if (subqueryX >= 0 && subqueryYB >= 0 && subqueryX < indexStructureInfo.getParts() && subqueryYB < indexStructureInfo.getParts()) {
                 long keyPart = keyAlgo.encode(subqueryX, subqueryYB) << (64 - keyAlgo.getBits());
                 fillIDs(keyPart, foundEntries);
             }
