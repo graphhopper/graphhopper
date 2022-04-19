@@ -24,7 +24,6 @@ import com.graphhopper.gtfs.PtGraph.PtEdge;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.gtfs.PtWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
@@ -43,7 +42,6 @@ public final class GraphExplorer {
     private final RealtimeFeed realtimeFeed;
     private final boolean reverse;
     private final Weighting connectingWeighting;
-    private final PtWeighting ptWeighting;
     private final BooleanEncodedValue accessEnc;
     private final boolean connectOnly;
     private final boolean ptOnly;
@@ -54,11 +52,10 @@ public final class GraphExplorer {
     private final PtGraph ptGraph;
     private final Graph graph;
 
-    public GraphExplorer(Graph graph, PtGraph ptGraph, Weighting connectingWeighting, PtWeighting ptWeighting, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, boolean connectOnly, boolean ptOnly, boolean isBike, boolean ignoreValidities, int blockedRouteTypes) {
+    public GraphExplorer(Graph graph, PtGraph ptGraph, Weighting connectingWeighting, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, boolean connectOnly, boolean ptOnly, boolean isBike, boolean ignoreValidities, int blockedRouteTypes) {
         this.graph = graph;
         this.ptGraph = ptGraph;
         this.connectingWeighting = connectingWeighting;
-        this.ptWeighting = ptWeighting;
         this.accessEnc = connectingWeighting.getFlagEncoder().getAccessEnc();
         this.ignoreValidities = ignoreValidities;
         this.ignoreBikesAllowed = true;

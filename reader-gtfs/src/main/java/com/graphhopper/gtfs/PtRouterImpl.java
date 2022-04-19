@@ -137,7 +137,6 @@ public final class PtRouterImpl implements PtRouter {
         private final Profile connectingProfile;
         private final EdgeFilter connectingSnapFilter;
         private final Weighting connectingWeighting;
-        private final PtWeighting ptWeighting;
 
         RequestHandler(Request request) {
             maxVisitedNodesForRequest = request.getMaxVisitedNodes();
@@ -162,7 +161,6 @@ public final class PtRouterImpl implements PtRouter {
             connectingProfile = config.getProfileByName(connectingProfileName).get();
             connectingWeighting = weightingFactory.createWeighting(connectingProfile, new PMap(), false);
             connectingSnapFilter = new DefaultSnapFilter(new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder(connectingProfile.getVehicle())), graphHopperStorage.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(connectingProfile.getVehicle())));
-            ptWeighting = new PtWeighting(request.getBetaPtEdgeTime());
             includeElevation = request.getEnableElevation();
         }
 
@@ -189,7 +187,7 @@ public final class PtRouterImpl implements PtRouter {
         private void parseSolutionsAndAddToResponse(List<List<Label.Transition>> solutions, PointList waypoints) {
             TripFromLabel tripFromLabel = new TripFromLabel(queryGraph, gtfsStorage, realtimeFeed, pathDetailsBuilderFactory, walkSpeedKmH);
             for (List<Label.Transition> solution : solutions) {
-                final ResponsePath responsePath = tripFromLabel.createResponsePath(translation, waypoints, router, queryGraph, connectingWeighting, ptWeighting, solution, requestedPathDetails, connectingProfile.getVehicle(), includeElevation);
+                final ResponsePath responsePath = tripFromLabel.createResponsePath(translation, waypoints, router, queryGraph, connectingWeighting, solution, requestedPathDetails, connectingProfile.getVehicle(), includeElevation);
                 responsePath.setImpossible(solution.stream().anyMatch(t -> t.label.impossible));
                 responsePath.setTime((solution.get(solution.size() - 1).label.currentTime - solution.get(0).label.currentTime));
                 responsePath.setRouteWeight(router.weight(solution.get(solution.size() - 1).label));
@@ -203,7 +201,7 @@ public final class PtRouterImpl implements PtRouter {
         private List<List<Label.Transition>> findPaths(Label.NodeId startNode, Label.NodeId destNode, GHResponse response) {
             StopWatch stopWatch = new StopWatch().start();
             boolean isEgress = !arriveBy;
-            final GraphExplorer accessEgressGraphExplorer = new GraphExplorer(queryGraph, ptGraph, connectingWeighting, ptWeighting, gtfsStorage, realtimeFeed, isEgress, true, false, connectingProfile.isBike(), false, blockedRouteTypes);
+            final GraphExplorer accessEgressGraphExplorer = new GraphExplorer(queryGraph, ptGraph, connectingWeighting, gtfsStorage, realtimeFeed, isEgress, true, false, connectingProfile.isBike(), false, blockedRouteTypes);
             GtfsStorage.EdgeType edgeType = isEgress ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT;
             MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, isEgress, false, false, maxProfileDuration, new ArrayList<>());
             stationRouter.setBetaStreetTime(betaStreetTime);
@@ -224,7 +222,7 @@ public final class PtRouterImpl implements PtRouter {
                 reverseSettledSet.put(stationLabel.node, stationLabel);
             }
 
-            GraphExplorer graphExplorer = new GraphExplorer(queryGraph, ptGraph, connectingWeighting, ptWeighting, gtfsStorage, realtimeFeed, arriveBy, false, true, connectingProfile.isBike(), false, blockedRouteTypes);
+            GraphExplorer graphExplorer = new GraphExplorer(queryGraph, ptGraph, connectingWeighting, gtfsStorage, realtimeFeed, arriveBy, false, true, connectingProfile.isBike(), false, blockedRouteTypes);
             List<Label> discoveredSolutions = new ArrayList<>();
             router = new MultiCriteriaLabelSetting(graphExplorer, arriveBy, !ignoreTransfers, profileQuery, maxProfileDuration, discoveredSolutions);
             router.setBetaTransfers(betaTransfers);

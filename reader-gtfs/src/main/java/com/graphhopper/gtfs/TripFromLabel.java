@@ -74,12 +74,12 @@ class TripFromLabel {
         this.walkSpeedKmH = walkSpeedKmH;
     }
 
-    ResponsePath createResponsePath(Translation tr, PointList waypoints, MultiCriteriaLabelSetting router, Graph queryGraph, Weighting connectingWeighting, PtWeighting ptWeighting, List<Label.Transition> solution, List<String> requestedPathDetails, String connectingVehicle, boolean includeElevation) {
+    ResponsePath createResponsePath(Translation tr, PointList waypoints, MultiCriteriaLabelSetting router, Graph queryGraph, Weighting connectingWeighting, List<Label.Transition> solution, List<String> requestedPathDetails, String connectingVehicle, boolean includeElevation) {
         final List<List<Label.Transition>> partitions = parsePathToPartitions(solution);
 
         final List<Trip.Leg> legs = new ArrayList<>();
         for (int i = 0; i < partitions.size(); i++) {
-            legs.addAll(parsePartitionToLegs(partitions.get(i), router, queryGraph, connectingWeighting, ptWeighting, tr, requestedPathDetails, connectingVehicle, includeElevation));
+            legs.addAll(parsePartitionToLegs(partitions.get(i), router, queryGraph, connectingWeighting, tr, requestedPathDetails, connectingVehicle, includeElevation));
         }
 
         if (legs.size() > 1 && legs.get(0) instanceof Trip.ConnectingLeg) {
@@ -329,7 +329,7 @@ class TripFromLabel {
     // One could argue that one should never write a parser
     // by hand, because it is always ugly, but use a parser library.
     // The code would then read like a specification of what paths through the graph mean.
-    private List<Trip.Leg> parsePartitionToLegs(List<Label.Transition> path, MultiCriteriaLabelSetting router, Graph graph, Weighting weighting, PtWeighting ptWeighting, Translation tr, List<String> requestedPathDetails, String connectingVehicle, boolean includeElevation) {
+    private List<Trip.Leg> parsePartitionToLegs(List<Label.Transition> path, MultiCriteriaLabelSetting router, Graph graph, Weighting weighting, Translation tr, List<String> requestedPathDetails, String connectingVehicle, boolean includeElevation) {
         if (path.size() <= 1) {
             return Collections.emptyList();
         }
@@ -381,7 +381,7 @@ class TripFromLabel {
                         int[] skippedEdgesForTransfer = gtfsStorage.getSkippedEdgesForTransfer().get(edge.getId());
                         if (skippedEdgesForTransfer != null) {
                             boolean isBike = connectingVehicle.contains("bike");
-                            List<Trip.Leg> legs = parsePartitionToLegs(transferPath(skippedEdgesForTransfer, weighting, ptWeighting, path.get(i - 1).label.currentTime, isBike), router, graph, weighting, ptWeighting, tr, requestedPathDetails, connectingVehicle, includeElevation);
+                            List<Trip.Leg> legs = parsePartitionToLegs(transferPath(skippedEdgesForTransfer, weighting, path.get(i - 1).label.currentTime, isBike), router, graph, weighting, tr, requestedPathDetails, connectingVehicle, includeElevation);
                             Trip.Leg interpolatedLeg = legs.get(0);
                             interpolatedLeg.flagAsInterpolated();
                             result.add(interpolatedLeg);
@@ -430,8 +430,8 @@ class TripFromLabel {
         }
     }
 
-    private List<Label.Transition> transferPath(int[] skippedEdgesForTransfer, Weighting connectingWeighting, PtWeighting ptWeighting, long currentTime, boolean isBike) {
-        GraphExplorer graphExplorer = new GraphExplorer(graph, gtfsStorage.getPtGraph(), connectingWeighting, ptWeighting, gtfsStorage, realtimeFeed, false, true, false, isBike, false, 0);
+    private List<Label.Transition> transferPath(int[] skippedEdgesForTransfer, Weighting connectingWeighting, long currentTime, boolean isBike) {
+        GraphExplorer graphExplorer = new GraphExplorer(graph, gtfsStorage.getPtGraph(), connectingWeighting, gtfsStorage, realtimeFeed, false, true, false, isBike, false, 0);
         return graphExplorer.walkPath(skippedEdgesForTransfer, currentTime);
     }
 

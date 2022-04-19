@@ -44,7 +44,7 @@ public class MultiCriteriaLabelSetting {
     private final boolean mindTransfers;
     private final boolean profileQuery;
     private final GraphExplorer explorer;
-    private double betaTransfers = 0.0;
+    private double betaTransfers = 5.0;
     private IntToLongFunction transferPenaltiesByRouteType = (routeType -> 0L);
     private double betaStreetTime = 1.0;
     private long limitTripTime = Long.MAX_VALUE;
@@ -241,8 +241,7 @@ public class MultiCriteriaLabelSetting {
     }
 
     double weight(Label label) {
-        return label.edgeWeight + label.nTransfers * 2 * 60 * 1000;
-        // return timeSinceStartTime(label) + (long) (label.nTransfers * betaTransfers) + (long) (label.streetTime * (betaStreetTime - 1.0)) + label.extraWeight;
+        return label.edgeWeight + label.nTransfers * betaTransfers * 60 * 1000;
     }
 
     long timeSinceStartTime(Label label) {
