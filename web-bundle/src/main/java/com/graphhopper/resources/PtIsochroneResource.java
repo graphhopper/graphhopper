@@ -97,13 +97,12 @@ public class PtIsochroneResource {
         GeometryFactory geometryFactory = new GeometryFactory();
         final FlagEncoder footEncoder = encodingManager.getEncoder(connectingProfileName);
         final Weighting weighting = new FastestWeighting(footEncoder);
-        final PtWeighting ptWeighting = new PtWeighting(PtWeighting.DEFAULT_BETA_PT_EDGE_TIME);
         DefaultSnapFilter snapFilter = new DefaultSnapFilter(weighting, graphHopperStorage.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(connectingProfileName)));
 
         boolean isBike = connectingProfileName.contains("bike");
 
         PtLocationSnapper.Result snapResult = new PtLocationSnapper(graphHopperStorage, locationIndex, gtfsStorage).snapAll(Arrays.asList(location), Arrays.asList(snapFilter));
-        GraphExplorer graphExplorer = new GraphExplorer(snapResult.queryGraph, gtfsStorage.getPtGraph(), weighting, ptWeighting, gtfsStorage, RealtimeFeed.empty(), reverseFlow, false, false, isBike, reverseFlow, blockedRouteTypes);
+        GraphExplorer graphExplorer = new GraphExplorer(snapResult.queryGraph, gtfsStorage.getPtGraph(), weighting, gtfsStorage, RealtimeFeed.empty(), reverseFlow, false, false, isBike, reverseFlow, blockedRouteTypes);
         MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, reverseFlow, false, false, 0, Collections.emptyList());
 
         Map<Coordinate, Double> z1 = new HashMap<>();

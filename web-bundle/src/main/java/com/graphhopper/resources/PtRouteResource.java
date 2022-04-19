@@ -86,7 +86,6 @@ public class PtRouteResource {
         Optional.ofNullable(connectingProfile).ifPresent(request::setConnectingProfile);
         Optional.ofNullable(betaTransfers).ifPresent(request::setBetaTransfers);
         Optional.ofNullable(betaStreetTime).ifPresent(request::setBetaStreetTime);
-        Optional.ofNullable(betaPtEdgeTime).ifPresent(request::setBetaPtEdgeTime);
         Optional.ofNullable(enableElevation).ifPresent(request::setEnableElevation);
         Optional.ofNullable(pathDetails).ifPresent(request::setPathDetails);
 

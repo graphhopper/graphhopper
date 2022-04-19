@@ -64,6 +64,7 @@ public abstract class AbstractWeighting implements Weighting {
             reverse = false;
         }
 
+        // TODO: find out why this is triggering on interpolated legs
         // if (reverse && !edgeState.getReverse(accessEnc) || !reverse && !edgeState.get(accessEnc))
         //     throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. " +
         //             "(" + edgeState.getBaseNode() + " - " + edgeState.getAdjNode() + ") "
