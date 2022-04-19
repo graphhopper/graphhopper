@@ -44,7 +44,7 @@ public class MultiCriteriaLabelSetting {
     private final boolean mindTransfers;
     private final boolean profileQuery;
     private final GraphExplorer explorer;
-    private double betaTransfers = 0.0;
+    private double betaTransfers = 5.0;
     private IntToLongFunction transferPenaltiesByRouteType = (routeType -> 0L);
     private double betaStreetTime = 1.0;
     private long limitTripTime = Long.MAX_VALUE;
@@ -84,7 +84,7 @@ public class MultiCriteriaLabelSetting {
 
         MultiCriteriaLabelSettingSpliterator(Label.NodeId from) {
             super(0, 0);
-            Label label = new Label(startTime, null, from, 0, null, 0, 0L, 0, false, null);
+            Label label = new Label(0, startTime, null, from, 0, null, 0, 0L, 0, false, null);
             ArrayList<Label> labels = new ArrayList<>(1);
             labels.add(label);
             fromMap.put(from, labels);
@@ -102,6 +102,7 @@ public class MultiCriteriaLabelSetting {
                 action.accept(label);
                 for (GraphExplorer.MultiModalEdge edge : explorer.exploreEdgesAround(label)) {
                     long nextTime;
+                    double nextEdgeWeight = label.edgeWeight + edge.getWeight();
                     if (reverse) {
                         nextTime = label.currentTime - explorer.calcTravelTimeMillis(edge, label.currentTime);
                     } else {
@@ -161,14 +162,14 @@ public class MultiCriteriaLabelSetting {
                         }
                     }
                     if (!reverse && edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK && residualDelay > 0) {
-                        Label newImpossibleLabelForDelayedTrip = new Label(nextTime, edge, edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, true, label);
+                        Label newImpossibleLabelForDelayedTrip = new Label(nextEdgeWeight, nextTime, edge, edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, true, label);
                         insertIfNotDominated(newImpossibleLabelForDelayedTrip);
                         nextTime += residualDelay;
                         residualDelay = 0;
-                        Label newLabel = new Label(nextTime, edge, edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, impossible, label);
+                        Label newLabel = new Label(nextEdgeWeight, nextTime, edge, edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, impossible, label);
                         insertIfNotDominated(newLabel);
                     } else {
-                        Label newLabel = new Label(nextTime, edge, edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, impossible, label);
+                        Label newLabel = new Label(nextEdgeWeight, nextTime, edge, edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, impossible, label);
                         insertIfNotDominated(newLabel);
                     }
                 }
@@ -239,8 +240,8 @@ public class MultiCriteriaLabelSetting {
         return queueComparator.compare(me, they) <= 0;
     }
 
-    long weight(Label label) {
-        return timeSinceStartTime(label) + (long) (label.nTransfers * betaTransfers) + (long) (label.streetTime * (betaStreetTime - 1.0)) + label.extraWeight;
+    double weight(Label label) {
+        return label.edgeWeight + label.nTransfers * betaTransfers * 60 * 1000;
     }
 
     long timeSinceStartTime(Label label) {
@@ -263,7 +264,7 @@ public class MultiCriteriaLabelSetting {
 
         @Override
         public int compare(Label o1, Label o2) {
-            int c = Long.compare(weight(o1), weight(o2));
+            int c = Double.compare(weight(o1), weight(o2));
             if (c != 0)
                 return c;
             c = Integer.compare(o1.nTransfers, o2.nTransfers);

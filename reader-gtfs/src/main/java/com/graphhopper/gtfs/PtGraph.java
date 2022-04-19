@@ -581,6 +581,10 @@ public class PtGraph implements GtfsReader.PtGraphOut {
             return attrs.time;
         }
 
+        public long getTimeMillis() {
+            return attrs.time * 1000L;
+        }
+
         public int getAdjNode() {
             return adjNode;
         }

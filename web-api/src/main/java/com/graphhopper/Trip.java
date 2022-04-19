@@ -15,16 +15,23 @@ public class Trip {
         public final String departureLocation;
         public final Geometry geometry;
         public final double distance;
+        public final double weight;
+        public boolean interpolated = false;
 
-        public Leg(String type, String departureLocation, Geometry geometry, double distance) {
+        public Leg(String type, String departureLocation, Geometry geometry, double distance, double weight) {
             this.type = type;
             this.departureLocation = departureLocation;
             this.geometry = geometry;
             this.distance = distance;
+            this.weight = weight;
         }
 
         public double getDistance() {
             return distance;
+        }
+
+        public void flagAsInterpolated() {
+            this.interpolated = true;
         }
 
         public abstract Date getDepartureTime();
@@ -75,8 +82,8 @@ public class Trip {
         private final Date departureTime;
         private final Date arrivalTime;
 
-        public ConnectingLeg(String type, String departureLocation, Date departureTime, Geometry geometry, double distance, InstructionList instructions, Map<String, List<PathDetail>> details, Date arrivalTime) {
-            super(type, departureLocation, geometry, distance);
+        public ConnectingLeg(String type, String departureLocation, Date departureTime, Geometry geometry, double distance, double weight, InstructionList instructions, Map<String, List<PathDetail>> details, Date arrivalTime) {
+            super(type, departureLocation, geometry, distance, weight);
             this.instructions = instructions;
             this.departureTime = departureTime;
             this.details = details;
@@ -108,8 +115,8 @@ public class Trip {
         public final String trip_id;
         public final String route_id;
 
-        public PtLeg(String feedId, boolean isInSameVehicleAsPrevious, String tripId, String routeId, String headsign, String color, String routeName, int bikesAllowed, String agencyName, List<Stop> stops, double distance, long travelTime, Geometry geometry) {
-            super("pt", stops.get(0).stop_name, geometry, distance);
+        public PtLeg(String feedId, boolean isInSameVehicleAsPrevious, String tripId, String routeId, String headsign, String color, String routeName, int bikesAllowed, String agencyName, List<Stop> stops, double distance, double weight, long travelTime, Geometry geometry) {
+            super("pt", stops.get(0).stop_name, geometry, distance, weight);
             this.feed_id = feedId;
             this.agency_name = agencyName;
             this.isInSameVehicleAsPrevious = isInSameVehicleAsPrevious;

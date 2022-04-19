@@ -86,20 +86,20 @@ public class FastestWeighting extends AbstractWeighting {
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
 
-        double time = edgeState.getDistance() / speed * SPEED_CONV;
+        double timeMillis = edgeState.getDistance() / speed * SPEED_CONV * 1000;
         if (roadAccessEnc != null) {
             RoadAccess access = edgeState.get(roadAccessEnc);
             if (access == RoadAccess.DESTINATION)
-                time *= destinationPenalty;
+                timeMillis *= destinationPenalty;
             else if (access == RoadAccess.PRIVATE)
-                time *= privatePenalty;
+                timeMillis *= privatePenalty;
         }
         // add direction penalties at start/stop/via points
         boolean unfavoredEdge = edgeState.get(EdgeIteratorState.UNFAVORED_EDGE);
         if (unfavoredEdge)
-            time += headingPenalty;
+            timeMillis += headingPenaltyMillis;
 
-        return time;
+        return timeMillis;
     }
 
     @Override

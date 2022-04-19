@@ -20,6 +20,7 @@ package com.graphhopper.gtfs;
 
 import com.google.common.collect.Iterators;
 import com.google.transit.realtime.GtfsRealtime;
+import com.graphhopper.gtfs.PtGraph.PtEdge;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.weighting.Weighting;
@@ -113,7 +114,8 @@ public final class GraphExplorer {
                         if (connectOnly) {
                             return false;
                         } else {
-                            action.accept(new MultiModalEdge(findEnterEdge(edge))); // fully consumes edgeIterator
+                            PtEdge ptEdge = findEnterEdge(edge); // fully consumes edgeIterator
+                            action.accept(new MultiModalEdge(ptEdge, calcTravelTimeMillis(ptEdge, currentTime)));
                             return true;
                         }
                     }
@@ -138,7 +140,7 @@ public final class GraphExplorer {
                     if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT || edgeType == GtfsStorage.EdgeType.TRANSFER) && (blockedRouteTypes & (1 << edge.getAttrs().route_type)) != 0) {
                         continue;
                     }
-                    action.accept(new MultiModalEdge(edge));
+                    action.accept(new MultiModalEdge(edge, calcTravelTimeMillis(edge, currentTime)));
                     return true;
                 }
                 return false;
@@ -169,7 +171,7 @@ public final class GraphExplorer {
             public boolean tryAdvance(Consumer<? super MultiModalEdge> action) {
                 while (e.next()) {
                     if (reverse ? e.getReverse(accessEnc) : e.get(accessEnc)) {
-                        action.accept(new MultiModalEdge(e.getEdge(), e.getBaseNode(), e.getAdjNode(), (long) (connectingWeighting.calcEdgeMillis(e.detach(false), reverse)), e.getDistance()));
+                        action.accept(new MultiModalEdge(e.getEdge(), e.getBaseNode(), e.getAdjNode(), (long) (connectingWeighting.calcEdgeMillis(e.detach(false), reverse)), connectingWeighting.calcEdgeWeight(e.detach(false), reverse), e.getDistance()));
                         return true;
                     }
                 }
@@ -212,7 +214,7 @@ public final class GraphExplorer {
                     return 0;
                 }
             default:
-                return edge.getTime();
+                return edge.getTimeMillis();
         }
     }
 
@@ -255,11 +257,11 @@ public final class GraphExplorer {
 
     public List<Label.Transition> walkPath(int[] skippedEdgesForTransfer, long currentTime) {
         EdgeIteratorState firstEdge = graph.getEdgeIteratorStateForKey(skippedEdgesForTransfer[0]);
-        Label label = new Label(currentTime, null, new Label.NodeId(firstEdge.getBaseNode(), -1), 0, null, 0, 0, 0, false, null);
+        Label label = new Label(0, currentTime, null, new Label.NodeId(firstEdge.getBaseNode(), -1), 0, null, 0, 0, 0, false, null);
         for (int i : skippedEdgesForTransfer) {
             EdgeIteratorState e = graph.getEdgeIteratorStateForKey(i);
-            MultiModalEdge multiModalEdge = new MultiModalEdge(e.getEdge(), e.getBaseNode(), e.getAdjNode(), (long) (connectingWeighting.calcEdgeMillis(e, reverse)), e.getDistance());
-            label = new Label(label.currentTime + multiModalEdge.time, multiModalEdge, new Label.NodeId(e.getAdjNode(), -1), 0, null, 0, 0, 0, false, label);
+            MultiModalEdge multiModalEdge = new MultiModalEdge(e.getEdge(), e.getBaseNode(), e.getAdjNode(), (long) (connectingWeighting.calcEdgeMillis(e, reverse)), connectingWeighting.calcEdgeWeight(e.detach(false), reverse), e.getDistance());
+            label = new Label(label.edgeWeight + multiModalEdge.weight, label.currentTime + multiModalEdge.time, multiModalEdge, new Label.NodeId(e.getAdjNode(), -1), 0, null, 0, 0, 0, false, label);
         }
         return Label.getTransitions(label, false);
     }
@@ -268,19 +270,22 @@ public final class GraphExplorer {
         private int baseNode;
         private int adjNode;
         private long time;
+        private double weight;
         private double distance;
         private int edge;
         private PtGraph.PtEdge ptEdge;
 
-        public MultiModalEdge(PtGraph.PtEdge ptEdge) {
+        public MultiModalEdge(PtGraph.PtEdge ptEdge, double weight) {
             this.ptEdge = ptEdge;
+            this.weight = weight;
         }
 
-        public MultiModalEdge(int edge, int baseNode, int adjNode, long time, double distance) {
+        public MultiModalEdge(int edge, int baseNode, int adjNode, long time, double weight, double distance) {
             this.edge = edge;
             this.baseNode = baseNode;
             this.adjNode = adjNode;
             this.time = time;
+            this.weight = weight;
             this.distance = distance;
         }
 
@@ -307,7 +312,7 @@ public final class GraphExplorer {
         }
 
         public long getTime() {
-            return ptEdge != null ? ptEdge.getTime() * 1000L : time;
+            return ptEdge != null ? ptEdge.getTimeMillis() : time;
         }
 
         @Override
@@ -317,6 +322,10 @@ public final class GraphExplorer {
                     ", edge=" + edge +
                     ", ptEdge=" + ptEdge +
                     '}';
+        }
+
+        public double getWeight() {
+            return weight;
         }
 
         public double getDistance() {

@@ -28,10 +28,10 @@ import java.util.*;
 public class Request {
     private List<GHLocation> points;
     private Instant earliestDepartureTime;
-    private int maxVisitedNodes = 10_000_000;
+    private int maxVisitedNodes = 3_000_000;
     private boolean profileQuery;
     private Boolean ignoreTransfers;
-    private double betaTransfers = 0.0;
+    private double betaTransfers = 5.0;
     private double betaStreetTime = 1.0;
     private Integer limitSolutions;
     private boolean arriveBy;
