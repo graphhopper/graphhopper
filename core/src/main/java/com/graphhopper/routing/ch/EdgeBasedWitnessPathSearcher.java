@@ -135,7 +135,13 @@ public class EdgeBasedWitnessPathSearcher {
         }
 
         // run the search
-        while (!dijkstraHeap.isEmpty() && numPolls < maxPolls && dijkstraHeap.peekKey() < acceptedWeight) {
+        while (!dijkstraHeap.isEmpty() && numPolls < maxPolls &&
+                // we *could* use dijkstraHeap.peekKey() instead, but since it is cast to float this might be smaller than
+                // the actual weight in which case the search might continue and find a false witness path when there is
+                // an adjacent zero weight edge *and* u-turn costs are zero. we could check this explicitly somewhere,,
+                // but we just use the exact weight here instead. #2564
+                weights[dijkstraHeap.peekElement()] < acceptedWeight
+        ) {
             int currKey = dijkstraHeap.poll();
             numPolls++;
             final int currNode = getAdjNode(currKey);
