@@ -58,7 +58,7 @@ public final class GraphExplorer {
         this.connectingWeighting = connectingWeighting;
         this.accessEnc = connectingWeighting.getFlagEncoder().getAccessEnc();
         this.ignoreValidities = ignoreValidities;
-        this.ignoreBikesAllowed = true;
+        this.ignoreBikesAllowed = false;
         this.blockedRouteTypes = blockedRouteTypes;
         AccessFilter accessEgressIn = AccessFilter.inEdges(connectingWeighting.getFlagEncoder().getAccessEnc());
         AccessFilter accessEgressOut = AccessFilter.outEdges(connectingWeighting.getFlagEncoder().getAccessEnc());
@@ -125,7 +125,8 @@ public final class GraphExplorer {
                     if (!(ignoreValidities || isValidOn(edge, currentTime))) {
                         continue;
                     }
-                    if (isBike && !ignoreBikesAllowed && !edge.getAttrs().validity.bikesAllowed) {
+                    if (isBike && !ignoreBikesAllowed && Objects.nonNull(edge.getAttrs().validity)
+                            && !edge.getAttrs().validity.bikesAllowed) {
                         continue;
                     }
                     if (edgeType == GtfsStorage.EdgeType.WAIT_ARRIVAL && !reverse) {

@@ -29,6 +29,7 @@ package com.conveyal.gtfs.model;
 import com.conveyal.gtfs.GTFSFeed;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 public class Trip extends Entity {
 
@@ -73,6 +74,18 @@ public class Trip extends Entity {
             t.wheelchair_accessible = getIntField("wheelchair_accessible", false, 0, 2);
             t.feed = feed;
             t.feed_id = feed.feedId;
+
+            // Bikes are not allowed on MUNI Metro, LRVs, cable cars, and historic vehicles
+            // TODO: no longer hardcode these
+            if (Arrays.asList("SF:J", "SF:KT", "SF:L", "SF:M", "SF:N", "SF:F", "SF:E", "SF:PH", "SF:C")
+                    .contains(t.route_id)) {
+                t.bikes_allowed = 2;
+            }
+            // Bikes are allowed on County Connection busses but the data is wrong
+            if (t.route_id.startsWith("CC:")) {
+                t.bikes_allowed = 1;
+            }
+
             feed.trips.put(t.trip_id, t);
 
             /*
