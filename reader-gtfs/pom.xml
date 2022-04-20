@@ -10,7 +10,7 @@
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>5.0</version>
+        <version>5.1</version>
     </parent>
 
     <dependencies>

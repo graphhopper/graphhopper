@@ -5,14 +5,14 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>graphhopper-nav</artifactId>
-    <version>5.0</version>
+    <version>5.1</version>
     <packaging>jar</packaging>
     <name>GraphHopper Navigation</name>
 
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>5.0</version>
+        <version>5.1</version>
     </parent>  
 
     <dependencies>
