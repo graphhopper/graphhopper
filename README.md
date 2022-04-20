@@ -23,7 +23,7 @@ We even have [good first issues](https://github.com/graphhopper/graphhopper/issu
 To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read through our documentation and install the GraphHopper Web Service locally.
 
 * 5.x: [documentation](https://github.com/graphhopper/graphhopper/blob/5.x/docs/index.md)
-  , [web service jar](https://github.com/graphhopper/graphhopper/releases/download/5.0/graphhopper-web-5.0.jar)
+  , [web service jar](https://github.com/graphhopper/graphhopper/releases/download/5.1/graphhopper-web-5.1.jar)
   , [announcement](https://www.graphhopper.com/blog/2022/03/23/graphhopper-routing-engine-5-0-released/)
 * unstable master: [documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)
 

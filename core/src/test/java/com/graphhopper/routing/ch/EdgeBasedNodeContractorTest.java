@@ -1398,7 +1398,7 @@ public class EdgeBasedNodeContractorTest {
     void issue_2564() {
         // 0-1-2-3-4-5
         GHUtility.setSpeed(60, 60, encoder, graph.edge(0, 1).setDistance(100));
-        GHUtility.setSpeed(60, 60, encoder, graph.edge(1, 2).setDistance(7.336));  // --> wrong! only one shortcut! we do not stop the search and find the fake witness
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(1, 2).setDistance(7.336));
         GHUtility.setSpeed(60, 60, encoder, graph.edge(2, 3).setDistance(10.161));
         GHUtility.setSpeed(60, 60, encoder, graph.edge(3, 4).setDistance(0));
         GHUtility.setSpeed(60, 60, encoder, graph.edge(4, 5).setDistance(100));
