@@ -31,14 +31,15 @@ public class SPTEntry implements Comparable<SPTEntry> {
     public double weight;
     public SPTEntry parent;
 
-    public SPTEntry(int edgeId, int adjNode, double weight) {
+    public SPTEntry(int node, double weight) {
+        this(EdgeIterator.NO_EDGE, node, weight, null);
+    }
+
+    public SPTEntry(int edgeId, int adjNode, double weight, SPTEntry parent) {
         this.edge = edgeId;
         this.adjNode = adjNode;
         this.weight = weight;
-    }
-
-    public SPTEntry(int node, double weight) {
-        this(EdgeIterator.NO_EDGE, node, weight);
+        this.parent = parent;
     }
 
     /**
