@@ -217,7 +217,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
                     long addedShortcutKey = BitUtil.LITTLE.combineIntsToLong(root.firstEdgeKey, bridgePath.value.chEntry.incEdgeKey);
                     if (!addedShortcuts.add(addedShortcutKey))
                         continue;
-                    double initialTurnCost = prepareGraph.getTurnWeight(getEdgeFromEdgeKey(origInKey), sourceNode, getEdgeFromEdgeKey(root.firstEdgeKey));
+                    double initialTurnCost = prepareGraph.getTurnWeight(origInKey, sourceNode, root.firstEdgeKey);
                     bridgePath.value.chEntry.weight -= initialTurnCost;
                     LOGGER.trace("Adding shortcuts for target entry {}", bridgePath.value.chEntry);
                     // todo: re-implement loop-avoidance heuristic as it existed in GH 1.0? it did not work the
