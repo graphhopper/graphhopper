@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.IntScatterSet;
+import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.routing.ch.CHEntry;
 import com.graphhopper.routing.ch.EdgeBasedCHBidirPathExtractor;
 import com.graphhopper.routing.util.TraversalMode;
@@ -34,6 +36,8 @@ import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
  */
 public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo {
     private final EdgeExplorer innerExplorer;
+    private final IntSet touchedNodesFwd = new IntScatterSet();
+    private final IntSet touchedNodesBwd = new IntScatterSet();
 
     public AbstractBidirectionEdgeCHNoSOD(RoutingCHGraph graph) {
         super(graph, TraversalMode.EDGE_BASED);
@@ -85,6 +89,15 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
                 return;
             }
         }
+
+        if (reverse) {
+            touchedNodesBwd.add(entry.adjNode);
+        } else {
+            touchedNodesFwd.add(entry.adjNode);
+        }
+
+        if (!(reverse ? touchedNodesFwd.contains(entry.adjNode) : touchedNodesBwd.contains(entry.adjNode)))
+            return;
 
         // todo: for a-star it should be possible to skip bridge node check at the beginning of the search as long as
         // the minimum source-target distance lies above total sum of fwd+bwd path candidates.
