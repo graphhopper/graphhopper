@@ -499,10 +499,6 @@ public class BaseGraph implements Graph, Closeable {
         private long bytes = 100;
         private int segmentSize = -1;
 
-        /**
-         * @deprecated Used for GraphHopperStorage -> BaseGraph migration, but will be removed
-         */
-        @Deprecated
         public Builder(EncodingManager em) {
             this(em.getIntsForFlags());
             withTurnCosts(em.needsTurnCostsSupport());
