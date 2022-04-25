@@ -274,16 +274,6 @@ class VirtualEdgeIterator implements EdgeIterator {
         return getCurrentEdge().copyPropertiesFrom(edge);
     }
 
-    @Override
-    public int getOrigEdgeFirst() {
-        return getCurrentEdge().getOrigEdgeFirst();
-    }
-
-    @Override
-    public int getOrigEdgeLast() {
-        return getCurrentEdge().getOrigEdgeLast();
-    }
-
     private EdgeIteratorState getCurrentEdge() {
         return edges.get(current);
     }

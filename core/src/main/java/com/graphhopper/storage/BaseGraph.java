@@ -949,16 +949,6 @@ public class BaseGraph implements Graph, Closeable {
         }
 
         @Override
-        public int getOrigEdgeFirst() {
-            return getEdge();
-        }
-
-        @Override
-        public int getOrigEdgeLast() {
-            return getEdge();
-        }
-
-        @Override
         public String getName() {
             int stringIndexRef = store.getNameRef(edgePointer);
             String name = baseGraph.stringIndex.get(stringIndexRef, STRING_IDX_NAME_KEY);

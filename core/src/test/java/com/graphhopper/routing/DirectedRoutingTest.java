@@ -317,14 +317,12 @@ public class DirectedRoutingTest {
         if (rnd.nextDouble() < 0.05) {
             return NO_EDGE;
         }
-        // use all edge explorer, sometimes we will find an edge we can restrict sometimes we do not
+        // use all edge explorer, sometimes we will find an edge we can restrict, sometimes we do not
         EdgeExplorer explorer = graph.createEdgeExplorer();
         EdgeIterator iter = explorer.setBaseNode(node);
         List<Integer> edgeIds = new ArrayList<>();
-        while (iter.next()) {
-            edgeIds.add(iter.getOrigEdgeFirst());
-            edgeIds.add(iter.getOrigEdgeLast());
-        }
+        while (iter.next())
+            edgeIds.add(iter.getEdge());
         return edgeIds.isEmpty() ? ANY_EDGE : edgeIds.get(rnd.nextInt(edgeIds.size()));
     }
 

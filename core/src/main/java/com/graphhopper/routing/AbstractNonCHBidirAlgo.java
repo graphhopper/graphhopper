@@ -77,7 +77,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         if (fromOutEdge == ANY_EDGE) {
             fillEdgesFrom();
         } else {
-            fillEdgesFromUsingFilter(edgeState -> edgeState.getOrigEdgeFirst() == fromOutEdge);
+            fillEdgesFromUsingFilter(edgeState -> edgeState.getEdge() == fromOutEdge);
         }
     }
 
@@ -85,7 +85,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         if (toInEdge == ANY_EDGE) {
             fillEdgesTo();
         } else {
-            fillEdgesToUsingFilter(edgeState -> edgeState.getOrigEdgeLast() == toInEdge);
+            fillEdgesToUsingFilter(edgeState -> edgeState.getEdge() == toInEdge);
         }
     }
 
