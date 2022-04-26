@@ -52,7 +52,7 @@ public class CHStorage {
 
     // shortcuts
     private final DataAccess shortcuts;
-    private final int S_NODEA, S_NODEB, S_WEIGHT, S_SKIP_EDGE1, S_SKIP_EDGE2, S_ORIG_FIRST, S_ORIG_LAST;
+    private final int S_NODEA, S_NODEB, S_WEIGHT, S_SKIP_EDGE1, S_SKIP_EDGE2, S_ORIG_KEY_FIRST, S_ORIG_KEY_LAST;
     private int shortcutEntryBytes;
     private int shortcutCount = 0;
 
@@ -103,9 +103,9 @@ public class CHStorage {
         S_WEIGHT = S_NODEB + 4;
         S_SKIP_EDGE1 = S_WEIGHT + 4;
         S_SKIP_EDGE2 = S_SKIP_EDGE1 + 4;
-        S_ORIG_FIRST = S_SKIP_EDGE2 + (edgeBased ? 4 : 0);
-        S_ORIG_LAST = S_ORIG_FIRST + (edgeBased ? 4 : 0);
-        shortcutEntryBytes = S_ORIG_LAST + 4;
+        S_ORIG_KEY_FIRST = S_SKIP_EDGE2 + (edgeBased ? 4 : 0);
+        S_ORIG_KEY_LAST = S_ORIG_KEY_FIRST + (edgeBased ? 4 : 0);
+        shortcutEntryBytes = S_ORIG_KEY_LAST + 4;
 
         // nodes/levels are stored consecutively using this layout:
         // LEVEL | N_LAST_SC
@@ -295,8 +295,8 @@ public class CHStorage {
     public void setOrigEdgeKeys(long shortcutPointer, int origKeyFirst, int origKeyLast) {
         if (!edgeBased)
             throw new IllegalArgumentException("Setting orig edge keys is only possible for edge-based CH");
-        shortcuts.setInt(shortcutPointer + S_ORIG_FIRST, origKeyFirst);
-        shortcuts.setInt(shortcutPointer + S_ORIG_LAST, origKeyLast);
+        shortcuts.setInt(shortcutPointer + S_ORIG_KEY_FIRST, origKeyFirst);
+        shortcuts.setInt(shortcutPointer + S_ORIG_KEY_LAST, origKeyLast);
     }
 
     public int getNodeA(long shortcutPointer) {
@@ -329,12 +329,12 @@ public class CHStorage {
 
     public int getOrigEdgeKeyFirst(long shortcutPointer) {
         assert edgeBased : "orig edge keys are only available for edge-based CH";
-        return shortcuts.getInt(shortcutPointer + S_ORIG_FIRST);
+        return shortcuts.getInt(shortcutPointer + S_ORIG_KEY_FIRST);
     }
 
     public int getOrigEdgeKeyLast(long shortcutPointer) {
         assert edgeBased : "orig edge keys are only available for edge-based CH";
-        return shortcuts.getInt(shortcutPointer + S_ORIG_LAST);
+        return shortcuts.getInt(shortcutPointer + S_ORIG_KEY_LAST);
     }
 
     public NodeOrderingProvider getNodeOrderingProvider() {
