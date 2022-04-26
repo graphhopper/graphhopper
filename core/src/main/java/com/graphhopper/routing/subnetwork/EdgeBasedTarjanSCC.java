@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+import static com.graphhopper.util.GHUtility.getEdgeFromEdgeKey;
 
 /**
  * Edge-based version of Tarjan's algorithm to find strongly connected components on a directed graph. Compared
@@ -147,7 +148,7 @@ public class EdgeBasedTarjanSCC {
     private void findComponentForEdgeKey(int p, int adjNode) {
         setupNextEdgeKey(p);
         // we have to create a new explorer on each iteration because of the nested edge iterations
-        final int edge = getEdgeFromKey(p);
+        final int edge = getEdgeFromEdgeKey(p);
         EdgeExplorer explorer = graph.createEdgeExplorer();
         EdgeIterator iter = explorer.setBaseNode(adjNode);
         while (iter.next()) {
@@ -265,7 +266,7 @@ public class EdgeBasedTarjanSCC {
                     setupNextEdgeKey(p);
                     // we push buildComponent first so it will run *after* we finished traversing the edges
                     pushBuildComponent(p);
-                    final int edge = getEdgeFromKey(p);
+                    final int edge = getEdgeFromEdgeKey(p);
                     EdgeIterator it = explorer.setBaseNode(adj);
                     while (it.next()) {
                         if (!edgeTransitionFilter.accept(edge, it))
@@ -342,14 +343,6 @@ public class EdgeBasedTarjanSCC {
         dfsStackAdj.addLast(adj);
     }
 
-    /**
-     * Use this method to return the edge for the specified edgeKeys that get returned by {@link #findComponents()}} etc.
-     * The implementation is like GHUtility.getEdgeFromEdgeKey but might be different in the future. See #2152.
-     */
-    public static int getEdgeFromKey(int edgeKey) {
-        return GHUtility.getEdgeFromEdgeKey(edgeKey);
-    }
-
     public static int createEdgeKey(EdgeIteratorState edgeState, boolean reverse) {
         return TraversalMode.EDGE_BASED.createTraversalId(edgeState, reverse);
     }
@@ -373,7 +366,7 @@ public class EdgeBasedTarjanSCC {
          * A list of arrays each containing the edge keys of a strongly connected component. Components with only a single
          * edge key are not included here, but need to be obtained using {@link #getSingleEdgeComponents()}.
          * The edge key is either 2*edgeId (if the edge direction corresponds to the storage order) or 2*edgeId+1 (for
-         * the opposite direction). Use {@link EdgeBasedTarjanSCC#getEdgeFromKey(int)} to convert edge keys back to
+         * the opposite direction). Use {@link GHUtility#getEdgeFromEdgeKey(int)} to convert edge keys back to
          * edge IDs.
          */
         public List<IntArrayList> getComponents() {
