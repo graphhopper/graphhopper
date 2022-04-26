@@ -201,11 +201,11 @@ public class CHStorage {
         return shortcut(nodeA, nodeB, accessFlags, weight, skip1, skip2);
     }
 
-    public int shortcutEdgeBased(int nodeA, int nodeB, int accessFlags, double weight, int skip1, int skip2, int origFirst, int origLast) {
+    public int shortcutEdgeBased(int nodeA, int nodeB, int accessFlags, double weight, int skip1, int skip2, int origKeyFirst, int origKeyLast) {
         if (!edgeBased)
             throw new IllegalArgumentException("Cannot add edge-based shortcuts to node-based CH");
         int shortcut = shortcut(nodeA, nodeB, accessFlags, weight, skip1, skip2);
-        setOrigEdges(toShortcutPointer(shortcut), origFirst, origLast);
+        setOrigEdgeKeys(toShortcutPointer(shortcut), origKeyFirst, origKeyLast);
         return shortcut;
     }
 
@@ -292,11 +292,11 @@ public class CHStorage {
         shortcuts.setInt(shortcutPointer + S_SKIP_EDGE2, edge2);
     }
 
-    public void setOrigEdges(long shortcutPointer, int origFirst, int origLast) {
+    public void setOrigEdgeKeys(long shortcutPointer, int origKeyFirst, int origKeyLast) {
         if (!edgeBased)
-            throw new IllegalArgumentException("Setting orig edges is only possible for edge-based CH");
-        shortcuts.setInt(shortcutPointer + S_ORIG_FIRST, origFirst);
-        shortcuts.setInt(shortcutPointer + S_ORIG_LAST, origLast);
+            throw new IllegalArgumentException("Setting orig edge keys is only possible for edge-based CH");
+        shortcuts.setInt(shortcutPointer + S_ORIG_FIRST, origKeyFirst);
+        shortcuts.setInt(shortcutPointer + S_ORIG_LAST, origKeyLast);
     }
 
     public int getNodeA(long shortcutPointer) {
@@ -327,13 +327,13 @@ public class CHStorage {
         return shortcuts.getInt(shortcutPointer + S_SKIP_EDGE2);
     }
 
-    public int getOrigEdgeFirst(long shortcutPointer) {
-        assert edgeBased : "orig edges are only available for edge-based CH";
+    public int getOrigEdgeKeyFirst(long shortcutPointer) {
+        assert edgeBased : "orig edge keys are only available for edge-based CH";
         return shortcuts.getInt(shortcutPointer + S_ORIG_FIRST);
     }
 
-    public int getOrigEdgeLast(long shortcutPointer) {
-        assert edgeBased : "orig edges are only available for edge-based CH";
+    public int getOrigEdgeKeyLast(long shortcutPointer) {
+        assert edgeBased : "orig edge keys are only available for edge-based CH";
         return shortcuts.getInt(shortcutPointer + S_ORIG_LAST);
     }
 
@@ -381,8 +381,8 @@ public class CHStorage {
                     getSkippedEdge2(ptr));
             if (edgeBased) {
                 edgeString += String.format(Locale.ROOT, formatShortcutExt,
-                        getOrigEdgeFirst(ptr),
-                        getOrigEdgeLast(ptr));
+                        getOrigEdgeKeyFirst(ptr),
+                        getOrigEdgeKeyLast(ptr));
             }
             System.out.println(edgeString);
         }

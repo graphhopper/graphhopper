@@ -265,7 +265,7 @@ public class RoutingCHGraphImplTest {
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
-        assertThrows(IllegalArgumentException.class, () -> chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 10, 0, 1, 0, 1));
+        assertThrows(IllegalArgumentException.class, () -> chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 10, 0, 1, 0, 2));
     }
 
     @Test
@@ -284,9 +284,9 @@ public class RoutingCHGraphImplTest {
 
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
         chBuilder.setIdentityLevels();
-        chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 10, 0, 1, 0, 1);
-        assertEquals(0, chStore.getOrigEdgeFirst(chStore.toShortcutPointer(0)));
-        assertEquals(1, chStore.getOrigEdgeLast(chStore.toShortcutPointer(0)));
+        chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 10, 0, 1, 0, 2);
+        assertEquals(0, chStore.getOrigEdgeKeyFirst(chStore.toShortcutPointer(0)));
+        assertEquals(2, chStore.getOrigEdgeKeyLast(chStore.toShortcutPointer(0)));
     }
 
     @Test
@@ -316,7 +316,7 @@ public class RoutingCHGraphImplTest {
         CHStorage store = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(store);
         chBuilder.setIdentityLevels();
-        chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 10, 0, 1, 0, 1);
+        chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 10, 0, 1, 0, 2);
 
         RoutingCHGraph lg = RoutingCHGraphImpl.fromGraph(graph, store, chConfig);
 
@@ -327,8 +327,8 @@ public class RoutingCHGraphImplTest {
         assertEquals(2, sc02.getEdge());
         assertEquals(0, sc02.getSkippedEdge1());
         assertEquals(1, sc02.getSkippedEdge2());
-        assertEquals(0, sc02.getOrigEdgeFirst());
-        assertEquals(1, sc02.getOrigEdgeLast());
+        assertEquals(0, sc02.getOrigEdgeKeyFirst());
+        assertEquals(2, sc02.getOrigEdgeKeyLast());
 
         RoutingCHEdgeIteratorState sc20 = lg.getEdgeIteratorState(2, 0);
         assertNotNull(sc20);
@@ -339,7 +339,7 @@ public class RoutingCHGraphImplTest {
         // is still edge 0 and the second skipped/last orig edge is edge 1
         assertEquals(0, sc20.getSkippedEdge1());
         assertEquals(1, sc20.getSkippedEdge2());
-        assertEquals(0, sc20.getOrigEdgeFirst());
-        assertEquals(1, sc20.getOrigEdgeLast());
+        assertEquals(0, sc20.getOrigEdgeKeyFirst());
+        assertEquals(2, sc20.getOrigEdgeKeyLast());
     }
 }

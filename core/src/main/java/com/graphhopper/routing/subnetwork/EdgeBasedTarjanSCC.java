@@ -23,9 +23,7 @@ import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -348,13 +346,13 @@ public class EdgeBasedTarjanSCC {
      * The implementation is like GHUtility.getEdgeFromEdgeKey but might be different in the future. See #2152.
      */
     public static int getEdgeFromKey(int edgeKey) {
-        return edgeKey / 2;
+        return GHUtility.getEdgeFromEdgeKey(edgeKey);
     }
 
     public static int createEdgeKey(EdgeIteratorState edgeState, boolean reverse) {
-        int edgeKey = edgeState.getEdge() << 1;
-        if (edgeState.get(EdgeIteratorState.REVERSE_STATE) == !reverse)
-            edgeKey++;
+        int edgeKey = edgeState.getEdgeKey();
+        if (reverse && edgeState.getBaseNode() != edgeState.getAdjNode())
+            edgeKey = GHUtility.reverseEdgeKey(edgeKey);
         return edgeKey;
     }
 

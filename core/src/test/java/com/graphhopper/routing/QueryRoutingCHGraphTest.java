@@ -111,7 +111,7 @@ class QueryRoutingCHGraphTest {
 
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
         chBuilder.setIdentityLevels();
-        chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1, 0, 1);
+        chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1, 0, 2);
 
         QueryGraph queryGraph = QueryGraph.create(graph, Collections.emptyList());
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
@@ -221,7 +221,7 @@ class QueryRoutingCHGraphTest {
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
 
         chBuilder.setIdentityLevels();
-        chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1, 0, 1);
+        chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1, 0, 2);
 
         Snap snap = new Snap(50.00, 10.05);
         snap.setClosestEdge(edge);
@@ -297,7 +297,7 @@ class QueryRoutingCHGraphTest {
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
 
         chBuilder.setIdentityLevels();
-        chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1, 0, 1);
+        chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1, 0, 2);
 
         Snap snap = new Snap(50.00, 10.05);
         snap.setClosestEdge(edge);
@@ -380,7 +380,7 @@ class QueryRoutingCHGraphTest {
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
 
         chBuilder.setIdentityLevels();
-        chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScDirMask(), 20, 0, 1, 0, 1);
+        chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScDirMask(), 20, 0, 1, 0, 2);
 
         // without query graph
         RoutingCHEdgeIterator iter = routingCHGraph.createOutEdgeExplorer().setBaseNode(0);
@@ -560,7 +560,7 @@ class QueryRoutingCHGraphTest {
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
 
         chBuilder.setIdentityLevels();
-        chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1, 0, 1);
+        chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1, 0, 2);
 
         // without virtual nodes
         assertEquals(5, routingCHGraph.getTurnWeight(0, 1, 1));

@@ -74,17 +74,17 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
     }
 
     @Override
-    public int getOrigEdgeFirst() {
+    public int getOrigEdgeKeyFirst() {
         if (!isShortcut() || !store.isEdgeBased())
-            return getEdge();
-        return store.getOrigEdgeFirst(shortcutPointer);
+            return edgeState().getEdgeKey();
+        return store.getOrigEdgeKeyFirst(shortcutPointer);
     }
 
     @Override
-    public int getOrigEdgeLast() {
+    public int getOrigEdgeKeyLast() {
         if (!isShortcut() || !store.isEdgeBased())
-            return getEdge();
-        return store.getOrigEdgeLast(shortcutPointer);
+            return edgeState().getEdgeKey();
+        return store.getOrigEdgeKeyLast(shortcutPointer);
     }
 
     @Override

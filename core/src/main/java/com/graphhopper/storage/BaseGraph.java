@@ -945,7 +945,7 @@ public class BaseGraph implements Graph, Closeable {
 
         @Override
         public int getEdgeKey() {
-            return GHUtility.createEdgeKey(edgeId, reverse);
+            return GHUtility.createEdgeKey(edgeId, baseNode == adjNode, reverse);
         }
 
         @Override
