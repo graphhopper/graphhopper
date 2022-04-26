@@ -21,6 +21,7 @@ package com.graphhopper.routing.subnetwork;
 import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.*;
@@ -350,10 +351,7 @@ public class EdgeBasedTarjanSCC {
     }
 
     public static int createEdgeKey(EdgeIteratorState edgeState, boolean reverse) {
-        int edgeKey = edgeState.getEdgeKey();
-        if (reverse && edgeState.getBaseNode() != edgeState.getAdjNode())
-            edgeKey = GHUtility.reverseEdgeKey(edgeKey);
-        return edgeKey;
+        return TraversalMode.EDGE_BASED.createTraversalId(edgeState, reverse);
     }
 
     public static class ConnectedComponents {
