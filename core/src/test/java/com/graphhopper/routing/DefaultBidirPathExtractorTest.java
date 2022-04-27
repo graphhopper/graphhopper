@@ -28,7 +28,6 @@ import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostStorage;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
@@ -51,9 +50,8 @@ public class DefaultBidirPathExtractorTest {
     public void testExtract() {
         Graph graph = createGraph();
         GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 2).setDistance(10));
-        SPTEntry fwdEntry = new SPTEntry(0, 2, 0);
-        fwdEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 10);
-        SPTEntry bwdEntry = new SPTEntry(EdgeIterator.NO_EDGE, 2, 0);
+        SPTEntry fwdEntry = new SPTEntry(0, 2, 0, new SPTEntry(1, 10));
+        SPTEntry bwdEntry = new SPTEntry(2, 0);
         Path p = DefaultBidirPathExtractor.extractPath(graph, new FastestWeighting(carEncoder), fwdEntry, bwdEntry, 0);
         assertEquals(IntArrayList.from(1, 2), p.calcNodes());
         assertEquals(10, p.getDistance(), 1e-4);
@@ -71,11 +69,8 @@ public class DefaultBidirPathExtractorTest {
         DecimalEncodedValue turnCostEnc = encodingManager.getDecimalEncodedValue(TurnCost.key(carEncoder.toString()));
         turnCostStorage.set(turnCostEnc, 0, 2, 1, 5);
 
-        SPTEntry fwdEntry = new SPTEntry(0, 2, 0.6);
-        fwdEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 0);
-
-        SPTEntry bwdEntry = new SPTEntry(1, 2, 1.2);
-        bwdEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 3, 0);
+        SPTEntry fwdEntry = new SPTEntry(0, 2, 0.6, new SPTEntry(1, 0));
+        SPTEntry bwdEntry = new SPTEntry(1, 2, 1.2, new SPTEntry(3, 0));
 
         Path p = DefaultBidirPathExtractor.extractPath(graph, new FastestWeighting(carEncoder, new DefaultTurnCostProvider(carEncoder, turnCostStorage)), fwdEntry, bwdEntry, 0);
         p.setWeight(5 + 1.8);

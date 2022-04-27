@@ -25,15 +25,6 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
     private final CHStorage chStorage;
     private final Weighting weighting;
 
-    /**
-     * @deprecated currently we use this only for easier GraphHopperStorage -> BaseGraph migration
-     *             instead of just calling graph.getBaseGraph() better try to convert graph to a BaseGraph
-     */
-    @Deprecated
-    public static RoutingCHGraph fromGraph(Graph graph, CHStorage chStorage, CHConfig chConfig) {
-        return fromGraph(graph.getBaseGraph(), chStorage, chConfig);
-    }
-
     public static RoutingCHGraph fromGraph(BaseGraph baseGraph, CHStorage chStorage, CHConfig chConfig) {
         return new RoutingCHGraphImpl(baseGraph, chStorage, chConfig.getWeighting());
     }

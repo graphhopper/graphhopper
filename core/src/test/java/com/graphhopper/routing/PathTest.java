@@ -77,9 +77,7 @@ public class PathTest {
         EdgeIteratorState edge2 = g.edge(2, 1).setDistance(2000).set(carAccessEnc, true, true).set(carAvSpeedEnv, 50.0);
         edge2.setWayGeometry(Helper.createPointList(11, 1, 10, 1));
 
-        SPTEntry e1 = new SPTEntry(edge2.getEdge(), 2, 1);
-        e1.parent = new SPTEntry(edge1.getEdge(), 1, 1);
-        e1.parent.parent = new SPTEntry(-1, 0, 1);
+        SPTEntry e1 = new SPTEntry(edge2.getEdge(), 2, 1, new SPTEntry(edge1.getEdge(), 1, 1, new SPTEntry(0, 1)));
         FastestWeighting weighting = new FastestWeighting(encoder);
         Path path = extractPath(g, weighting, e1);
         // 0-1-2
@@ -108,9 +106,11 @@ public class PathTest {
         na.setNode(3, 1.0, 1.0);
         g.edge(1, 3).setDistance(1000).set(carAccessEnc, true, true).set(carAvSpeedEnv, 10.0);
 
-        e1 = new SPTEntry(edge2.getEdge(), 2, 1);
-        e1.parent = new SPTEntry(edge1.getEdge(), 1, 1);
-        e1.parent.parent = new SPTEntry(-1, 0, 1);
+        e1 = new SPTEntry(edge2.getEdge(), 2, 1,
+                new SPTEntry(edge1.getEdge(), 1, 1,
+                        new SPTEntry(0, 1)
+                )
+        );
         path = extractPath(g, weighting, e1);
         instr = InstructionsFromEdges.calcInstructions(path, path.graph, weighting, carManager, tr);
 
@@ -132,9 +132,7 @@ public class PathTest {
         assertEquals(path.calcPoints().size() - 1, acc);
 
         // now reverse order
-        e1 = new SPTEntry(edge1.getEdge(), 0, 1);
-        e1.parent = new SPTEntry(edge2.getEdge(), 1, 1);
-        e1.parent.parent = new SPTEntry(-1, 2, 1);
+        e1 = new SPTEntry(edge1.getEdge(), 0, 1, new SPTEntry(edge2.getEdge(), 1, 1, new SPTEntry(2, 1)));
         path = extractPath(g, weighting, e1);
         // 2-1-0
         assertPList(Helper.createPointList(2, 0.1, 11, 1, 10, 1, 1, 0.1, 9, 1, 8, 1, 0, 0.1), path.calcPoints());
@@ -186,11 +184,13 @@ public class PathTest {
         g.edge(2, 5).setDistance(10000).set(carAccessEnc, true, true).set(carAvSpeedEnv, 50.0);
         g.edge(3, 5).setDistance(100000).set(carAccessEnc, true, true).set(carAvSpeedEnv, 50.0);
 
-        SPTEntry e1 = new SPTEntry(edge4.getEdge(), 4, 1);
-        e1.parent = new SPTEntry(edge3.getEdge(), 3, 1);
-        e1.parent.parent = new SPTEntry(edge2.getEdge(), 2, 1);
-        e1.parent.parent.parent = new SPTEntry(edge1.getEdge(), 1, 1);
-        e1.parent.parent.parent.parent = new SPTEntry(-1, 0, 1);
+        SPTEntry e1 =
+                new SPTEntry(edge4.getEdge(), 4, 1,
+                        new SPTEntry(edge3.getEdge(), 3, 1,
+                                new SPTEntry(edge2.getEdge(), 2, 1,
+                                        new SPTEntry(edge1.getEdge(), 1, 1,
+                                                new SPTEntry(0, 1)
+                                        ))));
         FastestWeighting weighting = new FastestWeighting(encoder);
         Path path = extractPath(g, weighting, e1);
 

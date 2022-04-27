@@ -105,7 +105,7 @@ public class AStar extends AbstractRoutingAlgorithm {
                     currWeightToGoal = weightApprox.approximate(neighborNode);
                     estimationFullWeight = tmpWeight + currWeightToGoal;
                     if (ase == null) {
-                        ase = new AStarEntry(iter.getEdge(), neighborNode, estimationFullWeight, tmpWeight);
+                        ase = new AStarEntry(iter.getEdge(), neighborNode, estimationFullWeight, tmpWeight, currEdge);
                         fromMap.put(traversalId, ase);
                     } else {
 //                        assert (ase.weight > 0.9999999 * estimationFullWeight) : "Inconsistent distance estimate. It is expected weight >= estimationFullWeight but was "
@@ -116,9 +116,9 @@ public class AStar extends AbstractRoutingAlgorithm {
                         ase.edge = iter.getEdge();
                         ase.weight = estimationFullWeight;
                         ase.weightOfVisitedPath = tmpWeight;
+                        ase.parent = currEdge;
                     }
 
-                    ase.parent = currEdge;
                     fromHeap.add(ase);
 
                     updateBestPath(iter, ase, traversalId);
@@ -159,7 +159,11 @@ public class AStar extends AbstractRoutingAlgorithm {
         double weightOfVisitedPath;
 
         public AStarEntry(int edgeId, int adjNode, double weightForHeap, double weightOfVisitedPath) {
-            super(edgeId, adjNode, weightForHeap);
+            this(edgeId, adjNode, weightForHeap, weightOfVisitedPath, null);
+        }
+
+        public AStarEntry(int edgeId, int adjNode, double weightForHeap, double weightOfVisitedPath, SPTEntry parent) {
+            super(edgeId, adjNode, weightForHeap, parent);
             this.weightOfVisitedPath = weightOfVisitedPath;
         }
 

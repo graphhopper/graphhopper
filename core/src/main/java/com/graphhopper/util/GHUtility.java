@@ -531,15 +531,6 @@ public class GHUtility {
                 return Helper.createPointList(0, 2, 6, 4);
             }
 
-            @Override
-            public int getOrigEdgeFirst() {
-                return origFirst;
-            }
-
-            @Override
-            public int getOrigEdgeLast() {
-                return origLast;
-            }
         };
     }
 
@@ -709,10 +700,9 @@ public class GHUtility {
         if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId)) {
             return edgeWeight;
         }
-        final int origEdgeId = reverse ? edgeState.getOrigEdgeLast() : edgeState.getOrigEdgeFirst();
         double turnWeight = reverse
-                ? weighting.calcTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
-                : weighting.calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
+                ? weighting.calcTurnWeight(edgeState.getEdge(), edgeState.getBaseNode(), prevOrNextEdgeId)
+                : weighting.calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), edgeState.getEdge());
         return edgeWeight + turnWeight;
     }
 
@@ -966,16 +956,6 @@ public class GHUtility {
 
         @Override
         public EdgeIteratorState copyPropertiesFrom(EdgeIteratorState edge) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public int getOrigEdgeFirst() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public int getOrigEdgeLast() {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
