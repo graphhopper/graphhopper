@@ -112,7 +112,14 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         if (pqOpenSetFrom.isEmpty()) {
             return false;
         }
-        currFrom = pqOpenSetFrom.poll();
+        while (!pqOpenSetFrom.isEmpty()) {
+            currFrom = pqOpenSetFrom.poll();
+            if (currFrom.adjNode < 0)
+                continue;
+            break;
+        }
+        if (currFrom.adjNode < 0)
+            return false;
         visitedCountFrom++;
         if (fromEntryCanBeSkipped()) {
             return true;
@@ -130,7 +137,14 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         if (pqOpenSetTo.isEmpty()) {
             return false;
         }
-        currTo = pqOpenSetTo.poll();
+        while (!pqOpenSetTo.isEmpty()) {
+            currTo = pqOpenSetTo.poll();
+            if (currTo.adjNode < 0)
+                continue;
+            break;
+        }
+        if (currTo.adjNode < 0)
+            return false;
         visitedCountTo++;
         if (toEntryCanBeSkipped()) {
             return true;
@@ -160,8 +174,10 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
                 bestWeightMap.put(traversalId, entry);
                 prioQueue.add(entry);
             } else if (entry.getWeightOfVisitedPath() > weight) {
-                prioQueue.remove(entry);
-                updateEntry(entry, iter, weight, currEdge, reverse);
+                // flagging this entry, so it will be ignored when it is polled the next time
+                entry.adjNode = -1;
+                entry = createEntry(iter, weight, currEdge, reverse);
+                bestWeightMap.put(traversalId, entry);
                 prioQueue.add(entry);
             } else
                 continue;
