@@ -26,7 +26,7 @@ import com.graphhopper.storage.IntsRef;
  * A mapping mtb:scale=0 corresponds to 1 and mtb:scale=1 to 2 until 7.
  *
  * @see <a href="https://wiki.openstreetmap.org/wiki/Key:mtb:scale">Key:mtb:scale</a> for details on OSM mountain biking difficulties.
- * @see <a href=""http://www.singletrail-skala.de/>Single Trail Scale</a>
+ * @see <a href="http://www.singletrail-skala.de/">Single Trail Scale</a>
  */
 public class OSMMtbRatingParser implements TagParser {
     private final IntEncodedValue mtbRatingEnc;

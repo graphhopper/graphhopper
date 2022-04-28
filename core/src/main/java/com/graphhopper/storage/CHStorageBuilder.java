@@ -23,7 +23,7 @@ import java.util.function.IntUnaryOperator;
 /**
  * Builds a valid {@link CHStorage}, i.e. makes sure that
  * - a valid level is already set for nodeA/B when adding a shortcut nodeA-nodeB
- * - level(nodeB) > level(nodeA) for all added shortcuts, unless nodeA == nodeB, then level(nodeA) == level(nodeB)
+ * - level(nodeB) &gt; level(nodeA) for all added shortcuts, unless nodeA == nodeB, then level(nodeA) == level(nodeB)
  * - shortcuts are added such that they are sorted by level(nodeA)
  * - the 'last shortcut' for node n points to the last shortcut for which nodeA == n
  */
@@ -63,9 +63,9 @@ public class CHStorageBuilder {
 
     /**
      * @param origFirst The first original edge that is skipped by this shortcut. For example for the following shortcut
-     *                  edge from x to y, which itself skips the shortcuts x->v and v->y the first original edge would
-     *                  be x->u: x->u->v->w->y
-     * @param origLast  like origFirst, but the last orig edge, i.e w->y in above example
+     *                  edge from x to y, which itself skips the shortcuts x-&gt;v and v-&gt;y the first original edge would
+     *                  be x-&gt;u: x-&gt;u-&gt;v-&gt;w-&gt;y
+     * @param origLast  like origFirst, but the last orig edge, i.e w-&gt;y in above example
      */
     public int addShortcutEdgeBased(int a, int b, int accessFlags, double weight, int skippedEdge1, int skippedEdge2,
                                     int origFirst, int origLast) {
