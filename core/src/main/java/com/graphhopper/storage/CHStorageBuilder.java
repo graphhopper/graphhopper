@@ -63,8 +63,8 @@ public class CHStorageBuilder {
 
     /**
      * @param origFirst The first original edge that is skipped by this shortcut. For example for the following shortcut
-     *                  edge from x to y, which itself skips the shortcuts x-&gt;v and v-&gt;y the first original edge would
-     *                  be x-&gt;u: x-&gt;u-&gt;v-&gt;w-&gt;y
+     *                  edge from x to y, which itself skips the shortcuts <code>x->v</code> and <code>v->y</code> the
+     *                  first original edge would be <code>x->u: x->u->v->w->y</code>
      * @param origLast  like origFirst, but the last orig edge, i.e w-&gt;y in above example
      */
     public int addShortcutEdgeBased(int a, int b, int accessFlags, double weight, int skippedEdge1, int skippedEdge2,
