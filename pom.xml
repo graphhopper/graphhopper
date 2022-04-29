@@ -18,8 +18,10 @@
 
         <maven.compiler.target>1.8</maven.compiler.target>
 
-        <!-- See issue 2569 -->
-	<additionalparam>-Xdoclint:none</additionalparam>
+        <!-- We always had this disabled as it is disabled by default in debian JDK builds, but when we
+             switched to another JDK on travis it was enabled implicitly. Our javadocs are not ready for this
+             so we disable it explicitly now -->
+        <doclint>none</doclint>
     </properties>
 
     <scm>
@@ -324,6 +326,7 @@
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <version>3.1.1</version>
                         <configuration>
+                            <!-- note that we disable doclint via properties globally, using <doclint>none</doclint> did not seem to work -->
                             <quiet>true</quiet>
                         </configuration>
                         <executions>
