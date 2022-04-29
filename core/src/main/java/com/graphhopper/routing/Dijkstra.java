@@ -86,8 +86,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
 
                 SPTEntry nEdge = fromMap.get(traversalId);
                 if (nEdge == null) {
-                    nEdge = new SPTEntry(iter.getEdge(), iter.getAdjNode(), tmpWeight);
-                    nEdge.parent = currEdge;
+                    nEdge = new SPTEntry(iter.getEdge(), iter.getAdjNode(), tmpWeight, currEdge);
                     fromMap.put(traversalId, nEdge);
                     fromHeap.add(nEdge);
                 } else if (nEdge.weight > tmpWeight) {

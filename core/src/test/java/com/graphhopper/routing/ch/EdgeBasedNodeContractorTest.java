@@ -67,7 +67,8 @@ public class EdgeBasedNodeContractorTest {
         graph = new BaseGraph.Builder(encodingManager).create();
         chConfigs = Arrays.asList(
                 CHConfig.edgeBased("p1", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()))),
-                CHConfig.edgeBased("p2", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage(), 60)))
+                CHConfig.edgeBased("p2", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage(), 60))),
+                CHConfig.edgeBased("p3", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage(), 0)))
         );
     }
 
@@ -1391,6 +1392,26 @@ public class EdgeBasedNodeContractorTest {
         nodeContractor.contractNode(0);
         assertTrue(nodeContractor.getNumPolledEdges() > 0, "no polled edges, something is wrong");
         assertTrue(nodeContractor.getNumPolledEdges() <= 8, "too many edges polled: " + nodeContractor.getNumPolledEdges());
+    }
+
+    @Test
+    void issue_2564() {
+        // 0-1-2-3-4-5
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(0, 1).setDistance(100));
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(1, 2).setDistance(7.336));
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(2, 3).setDistance(10.161));
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(3, 4).setDistance(0));
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(4, 5).setDistance(100));
+        freeze();
+        chStore = CHStorage.fromGraph(graph, chConfigs.get(2));
+        chBuilder = new CHStorageBuilder(chStore);
+        weighting = chConfigs.get(2).getWeighting();
+        setMaxLevelOnAllNodes();
+        contractNodes(0, 5, 2, 1, 3, 4);
+        checkShortcuts(
+                createShortcut(1, 3, 1, 2, 1, 2, 17.497, true, false),
+                createShortcut(1, 3, 2, 1, 2, 1, 17.497, false, true)
+        );
     }
 
     private void contractNode(NodeContractor nodeContractor, int node, int level) {

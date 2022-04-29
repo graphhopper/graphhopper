@@ -100,11 +100,13 @@ public class CHTurnCostTest {
         // the first one is always the one with infinite u-turn costs
         configs.add(CHConfig.edgeBased("p0", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, INFINITE_U_TURN_COSTS))));
         // this one we also always add
-        configs.add(CHConfig.edgeBased("p1", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, 50))));
+        configs.add(CHConfig.edgeBased("p1", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, 0))));
+        // ... and this one
+        configs.add(CHConfig.edgeBased("p2", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, 50))));
         // add more (distinct) profiles
         long seed = System.nanoTime();
         Random rnd = new Random(seed);
-        while (configs.size() < 5) {
+        while (configs.size() < 6) {
             int uTurnCosts = 10 + rnd.nextInt(90);
             configs.add(CHConfig.edgeBased("p" + configs.size(), new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts))));
         }
@@ -721,7 +723,7 @@ public class CHTurnCostTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 1).setDistance(100));
         setRestriction(0, 3, 1);
         graph.freeze();
-        chConfig = chConfigs.get(1);
+        chConfig = chConfigs.get(2);
         prepareCH(4, 0, 2, 3, 1);
         Path path = createAlgo().calcPath(0, 1);
         assertEquals(IntArrayList.from(0, 3, 4, 3, 1), path.calcNodes());
@@ -1048,7 +1050,7 @@ public class CHTurnCostTest {
         // not allowed to turn right at node 1 -> we have to take a u-turn at node 0 (or at the virtual node...)
         setRestriction(2, 1, 5);
         graph.freeze();
-        chConfig = chConfigs.get(1);
+        chConfig = chConfigs.get(2);
         prepareCH(0, 1, 2, 3, 4, 5, 6);
         LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
         index.prepareIndex();
@@ -1109,6 +1111,26 @@ public class CHTurnCostTest {
         assertEquals(IntArrayList.from(0, 2, 3, 4, 5), path.calcNodes());
     }
 
+    @Test
+    void testZeroUTurnCosts_atBarrier_issue2564() {
+        // lvl: 0 3 2 4 5 1
+        //  nd: 0-1-2-3-4-5
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(0, 1).setDistance(100));
+        // the original bug was sometimes hidden depending on the exact distance, so we use these odd numbers here
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(1, 2).setDistance(7.336));
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(2, 3).setDistance(10.161));
+        // a zero distance edge (like a passable barrier)!
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(3, 4).setDistance(0));
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(4, 5).setDistance(100));
+        graph.freeze();
+        // u-turn costs are zero!
+        chConfig = chConfigs.get(1);
+        // contracting node 2 is supposed to create the 1-3 shortcut for both directions, but before fixing #2564
+        // we accepted 1-2-3-4-3 as a witness path and thus no path was found
+        prepareCH(0, 5, 2, 1, 3, 4);
+        compareCHQueryWithDijkstra(0, 5);
+    }
+
     /**
      * This test runs on a random graph with random turn costs and a predefined (but random) contraction order.
      * It often produces exotic conditions that are hard to anticipate beforehand.
@@ -1125,7 +1147,15 @@ public class CHTurnCostTest {
     public void testFindPath_random_compareWithDijkstra_finiteUTurnCost() {
         long seed = System.nanoTime();
         LOGGER.info("Seed for testFindPath_random_compareWithDijkstra_finiteUTurnCost: {}, using weighting: {}", seed, chConfig.getWeighting());
-        chConfig = chConfigs.get(1 + new Random(seed).nextInt(chConfigs.size() - 1));
+        chConfig = chConfigs.get(2 + new Random(seed).nextInt(chConfigs.size() - 2));
+        compareWithDijkstraOnRandomGraph(seed);
+    }
+
+    @RepeatedTest(10)
+    public void testFindPath_random_compareWithDijkstra_zeroUTurnCost() {
+        long seed = System.nanoTime();
+        LOGGER.info("Seed for testFindPath_random_compareWithDijkstra_zeroUTurnCost: {}, using weighting: {}", seed, chConfig.getWeighting());
+        chConfig = chConfigs.get(1);
         compareWithDijkstraOnRandomGraph(seed);
     }
 
@@ -1155,7 +1185,7 @@ public class CHTurnCostTest {
     public void testFindPath_heuristic_compareWithDijkstra_finiteUTurnCost() {
         long seed = System.nanoTime();
         LOGGER.info("Seed for testFindPath_heuristic_compareWithDijkstra_finiteUTurnCost: {}, using weighting: {}", seed, chConfig.getWeighting());
-        chConfig = chConfigs.get(1 + new Random(seed).nextInt(chConfigs.size() - 1));
+        chConfig = chConfigs.get(2 + new Random(seed).nextInt(chConfigs.size() - 2));
         compareWithDijkstraOnRandomGraph_heuristic(seed);
     }
 
