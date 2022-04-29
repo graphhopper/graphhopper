@@ -17,6 +17,9 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <maven.compiler.target>1.8</maven.compiler.target>
+
+        <!-- See issue 2569 -->
+	<additionalparam>-Xdoclint:none</additionalparam>
     </properties>
 
     <scm>
