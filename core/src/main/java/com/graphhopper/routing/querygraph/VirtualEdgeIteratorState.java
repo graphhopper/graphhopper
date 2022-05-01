@@ -324,16 +324,6 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     }
 
     @Override
-    public int getOrigEdgeFirst() {
-        return getEdge();
-    }
-
-    @Override
-    public int getOrigEdgeLast() {
-        return getEdge();
-    }
-
-    @Override
     public EdgeIteratorState detach(boolean reverse) {
         if (reverse) {
             // update properties of reverse edge

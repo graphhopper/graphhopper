@@ -71,9 +71,7 @@ public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD 
     @Override
     protected SPTEntry createEntry(int edge, int adjNode, int incEdge, double weight, SPTEntry parent, boolean reverse) {
         double heapWeight = getHeapWeight(adjNode, reverse, weight);
-        AStarCHEntry entry = new AStarCHEntry(edge, incEdge, adjNode, heapWeight, weight);
-        entry.parent = parent;
-        return entry;
+        return new AStarCHEntry(edge, incEdge, adjNode, heapWeight, weight, parent);
     }
 
     @Override

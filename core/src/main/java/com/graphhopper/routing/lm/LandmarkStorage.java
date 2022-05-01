@@ -224,7 +224,7 @@ public class LandmarkStorage {
     }
 
     /**
-     * This method calculates the landmarks and initial weightings to & from them.
+     * This method calculates the landmarks and initial weightings to &amp; from them.
      */
     public void createLandmarks() {
         if (isInitialized())

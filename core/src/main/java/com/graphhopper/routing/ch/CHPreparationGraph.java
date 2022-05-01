@@ -254,8 +254,8 @@ public class CHPreparationGraph {
         return origGraph.createInOrigEdgeExplorer();
     }
 
-    public double getTurnWeight(int inEdge, int viaNode, int outEdge) {
-        return turnCostFunction.getTurnWeight(inEdge, viaNode, outEdge);
+    public double getTurnWeight(int inEdgeKey, int viaNode, int outEdgeKey) {
+        return turnCostFunction.getTurnWeight(GHUtility.getEdgeFromEdgeKey(inEdgeKey), viaNode, GHUtility.getEdgeFromEdgeKey(outEdgeKey));
     }
 
     public IntContainer disconnect(int node) {

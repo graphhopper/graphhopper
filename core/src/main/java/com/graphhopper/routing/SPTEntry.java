@@ -25,20 +25,21 @@ import com.graphhopper.util.EdgeIterator;
  *
  * @author Peter Karich
  */
-public class SPTEntry implements Cloneable, Comparable<SPTEntry> {
+public class SPTEntry implements Comparable<SPTEntry> {
     public int edge;
     public int adjNode;
     public double weight;
     public SPTEntry parent;
 
-    public SPTEntry(int edgeId, int adjNode, double weight) {
+    public SPTEntry(int node, double weight) {
+        this(EdgeIterator.NO_EDGE, node, weight, null);
+    }
+
+    public SPTEntry(int edgeId, int adjNode, double weight, SPTEntry parent) {
         this.edge = edgeId;
         this.adjNode = adjNode;
         this.weight = weight;
-    }
-
-    public SPTEntry(int node, double weight) {
-        this(EdgeIterator.NO_EDGE, node, weight);
+        this.parent = parent;
     }
 
     /**
@@ -52,23 +53,6 @@ public class SPTEntry implements Cloneable, Comparable<SPTEntry> {
 
     public SPTEntry getParent() {
         return parent;
-    }
-
-    @Override
-    public SPTEntry clone() {
-        return new SPTEntry(edge, adjNode, weight);
-    }
-
-    public SPTEntry cloneFull() {
-        SPTEntry de = clone();
-        SPTEntry tmpPrev = parent;
-        SPTEntry cl = de;
-        while (tmpPrev != null) {
-            cl.parent = tmpPrev.clone();
-            cl = cl.parent;
-            tmpPrev = tmpPrev.parent;
-        }
-        return de;
     }
 
     @Override

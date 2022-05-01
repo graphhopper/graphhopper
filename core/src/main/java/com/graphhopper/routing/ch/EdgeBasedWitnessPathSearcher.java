@@ -24,7 +24,6 @@ import com.graphhopper.util.GHUtility;
 import java.util.Arrays;
 import java.util.Locale;
 
-import static com.graphhopper.util.GHUtility.getEdgeFromEdgeKey;
 import static com.graphhopper.util.Helper.nf;
 
 /**
@@ -129,13 +128,19 @@ public class EdgeBasedWitnessPathSearcher {
             final int edgeKey = GHUtility.reverseEdgeKey(inIter.getOrigEdgeKeyLast());
             if (weights[edgeKey] == Double.POSITIVE_INFINITY)
                 continue;
-            double weight = weights[edgeKey] + calcTurnWeight(getEdgeFromEdgeKey(edgeKey), targetNode, getEdgeFromEdgeKey(targetEdgeKey));
+            double weight = weights[edgeKey] + calcTurnWeight(edgeKey, targetNode, targetEdgeKey);
             if (weight < acceptedWeight || (weight == acceptedWeight && (parents[edgeKey] < 0 || !isPathToCenter(parents[edgeKey]))))
                 return weight;
         }
 
         // run the search
-        while (!dijkstraHeap.isEmpty() && numPolls < maxPolls && dijkstraHeap.peekKey() < acceptedWeight) {
+        while (!dijkstraHeap.isEmpty() && numPolls < maxPolls &&
+                // we *could* use dijkstraHeap.peekKey() instead, but since it is cast to float this might be smaller than
+                // the actual weight in which case the search might continue and find a false witness path when there is
+                // an adjacent zero weight edge *and* u-turn costs are zero. we could check this explicitly somewhere,,
+                // but we just use the exact weight here instead. #2564
+                weights[dijkstraHeap.peekElement()] < acceptedWeight
+        ) {
             int currKey = dijkstraHeap.poll();
             numPolls++;
             final int currNode = getAdjNode(currKey);
@@ -146,7 +151,7 @@ public class EdgeBasedWitnessPathSearcher {
                 // being recognized as witnesses when there are double zero weight loops at the source node
                 if (currNode == sourceNode && iter.getAdjNode() == sourceNode && iter.getWeight() < MAX_ZERO_WEIGHT_LOOP)
                     continue;
-                final double weight = weights[currKey] + calcTurnWeight(getEdgeFromEdgeKey(currKey), currNode, getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst())) + iter.getWeight();
+                final double weight = weights[currKey] + calcTurnWeight(currKey, currNode, iter.getOrigEdgeKeyFirst()) + iter.getWeight();
                 if (Double.isInfinite(weight))
                     continue;
                 final int key = iter.getOrigEdgeKeyLast();
@@ -158,7 +163,7 @@ public class EdgeBasedWitnessPathSearcher {
                     changedEdges.add(key);
                     dijkstraHeap.insert(weight, key);
                     if (iter.getAdjNode() == targetNode && (!isPathToCenter(currKey) || parents[currKey] < 0))
-                        foundWeight = Math.min(foundWeight, weight + calcTurnWeight(getEdgeFromEdgeKey(key), targetNode, getEdgeFromEdgeKey(targetEdgeKey)));
+                        foundWeight = Math.min(foundWeight, weight + calcTurnWeight(key, targetNode, targetEdgeKey));
                 } else if (weight < weights[key]
                         // if weights are equal make sure we prefer witness paths over bridge paths
                         || (weight == weights[key] && !isPathToCenter(currKey))) {
@@ -168,7 +173,7 @@ public class EdgeBasedWitnessPathSearcher {
                     setAdjNodeAndPathToCenter(key, iter.getAdjNode(), isPathToCenter);
                     dijkstraHeap.update(weight, key);
                     if (iter.getAdjNode() == targetNode && (!isPathToCenter(currKey) || parents[currKey] < 0))
-                        foundWeight = Math.min(foundWeight, weight + calcTurnWeight(getEdgeFromEdgeKey(key), targetNode, getEdgeFromEdgeKey(targetEdgeKey)));
+                        foundWeight = Math.min(foundWeight, weight + calcTurnWeight(key, targetNode, targetEdgeKey));
                 }
             }
             if (foundWeight <= acceptedWeight)
@@ -252,8 +257,8 @@ public class EdgeBasedWitnessPathSearcher {
         setAdjNodeAndPathToCenter(key, NO_NODE, false);
     }
 
-    private double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-        return prepareGraph.getTurnWeight(inEdge, viaNode, outEdge);
+    private double calcTurnWeight(int inEdgeKey, int viaNode, int outEdgeKey) {
+        return prepareGraph.getTurnWeight(inEdgeKey, viaNode, outEdgeKey);
     }
 
     static class Stats {
