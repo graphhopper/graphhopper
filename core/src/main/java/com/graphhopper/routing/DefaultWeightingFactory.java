@@ -77,9 +77,6 @@ public class DefaultWeightingFactory implements WeightingFactory {
             CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
             CustomProfile customProfile = (CustomProfile) profile;
 
-            if (queryCustomModel != null)
-                FindMinMax.checkLMConstraints(customProfile.getCustomModel(), queryCustomModel, encodingManager);
-
             queryCustomModel = CustomModel.merge(customProfile.getCustomModel(), queryCustomModel);
             weighting = CustomModelParser.createWeighting(encoder, encodingManager, turnCostProvider, queryCustomModel);
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
