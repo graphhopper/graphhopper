@@ -39,7 +39,7 @@ import static com.graphhopper.util.Helper.nf;
  * Note: A RAM DataAccess Object is thread-safe in itself but if used in this Graph implementation
  * it is not write thread safe.
  * <p>
- * Life cycle: (1) object creation, (2) configuration via setters & getters, (3) create or
+ * Life cycle: (1) object creation, (2) configuration via setters &amp; getters, (3) create or
  * loadExisting, (4) usage, (5) flush, (6) close
  */
 public class BaseGraph implements Graph, Closeable {

@@ -30,12 +30,12 @@ import static com.graphhopper.util.Helper.*;
  */
 public class Constants {
     /**
-     * The value of <tt>System.getProperty("java.version")</tt>. *
+     * The value of <code>System.getProperty("java.version")</code>. *
      */
     public static final String JAVA_VERSION = System.getProperty("java.version");
 
     /**
-     * The value of <tt>System.getProperty("os.name")</tt>. *
+     * The value of <code>System.getProperty("os.name")</code>. *
      */
     public static final String OS_NAME = System.getProperty("os.name");
     /**
