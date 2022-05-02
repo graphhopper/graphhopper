@@ -10,6 +10,7 @@ import com.graphhopper.storage.IntsRef;
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 
 public class RoadsTagParser extends VehicleTagParser {
+    public static final double ROADS_MAX_SPEED = 254;
 
     public RoadsTagParser(EncodedValueLookup lookup) {
         this(
@@ -20,7 +21,7 @@ public class RoadsTagParser extends VehicleTagParser {
     }
 
     public RoadsTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue turnCostEnc) {
-        super(accessEnc, speedEnc, "roads", null, turnCostEnc, TransportationMode.VEHICLE, speedEnc.getNextStorableValue(254));
+        super(accessEnc, speedEnc, "roads", null, turnCostEnc, TransportationMode.VEHICLE, speedEnc.getNextStorableValue(ROADS_MAX_SPEED));
     }
 
     @Override

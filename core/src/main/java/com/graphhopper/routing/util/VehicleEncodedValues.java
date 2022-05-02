@@ -23,8 +23,12 @@ import com.graphhopper.util.PMap;
 
 import java.util.List;
 
+import static com.graphhopper.routing.util.BikeCommonTagParser.BIKE_MAX_SPEED;
+import static com.graphhopper.routing.util.CarTagParser.CAR_MAX_SPEED;
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.routing.util.FootTagParser.FERRY_SPEED;
+import static com.graphhopper.routing.util.MotorcycleTagParser.MOTOR_CYCLE_MAX_SPEED;
+import static com.graphhopper.routing.util.RoadsTagParser.ROADS_MAX_SPEED;
 
 public final class VehicleEncodedValues implements FlagEncoder {
     private final String name;
@@ -70,7 +74,7 @@ public final class VehicleEncodedValues implements FlagEncoder {
         double speedFactor = properties.getDouble("speed_factor", 2);
         boolean speedTwoDirections = properties.getBool("speed_two_directions", false);
         int maxTurnCosts = properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0);
-        double maxSpeed = properties.getDouble("max_speed", 30);
+        double maxSpeed = properties.getDouble("max_speed", BIKE_MAX_SPEED);
         BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue(getKey(name, "access"), true);
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl(getKey(name, "average_speed"), speedBits, speedFactor, speedTwoDirections);
         DecimalEncodedValue priorityEnc = new DecimalEncodedValueImpl(getKey(name, "priority"), 4, PriorityCode.getFactor(1), false);
@@ -101,7 +105,7 @@ public final class VehicleEncodedValues implements FlagEncoder {
         double speedFactor = properties.getDouble("speed_factor", 5);
         boolean speedTwoDirections = properties.getBool("speed_two_directions", false);
         int maxTurnCosts = properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0);
-        double maxSpeed = properties.getDouble("max_speed", 140);
+        double maxSpeed = properties.getDouble("max_speed", CAR_MAX_SPEED);
         BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue(getKey(name, "access"), true);
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl(getKey(name, "average_speed"), speedBits, speedFactor, speedTwoDirections);
         DecimalEncodedValue turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;
@@ -118,7 +122,7 @@ public final class VehicleEncodedValues implements FlagEncoder {
         double speedFactor = properties.getDouble("speed_factor", 5);
         boolean speedTwoDirections = properties.getBool("speed_two_directions", true);
         int maxTurnCosts = properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0);
-        double maxSpeed = properties.getDouble("max_speed", 120);
+        double maxSpeed = properties.getDouble("max_speed", MOTOR_CYCLE_MAX_SPEED);
         BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue(getKey(name, "access"), true);
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl(getKey(name, "average_speed"), speedBits, speedFactor, speedTwoDirections);
         DecimalEncodedValue priorityEnc = new DecimalEncodedValueImpl(getKey(name, "priority"), 4, PriorityCode.getFactor(1), false);
@@ -133,11 +137,10 @@ public final class VehicleEncodedValues implements FlagEncoder {
         double speedFactor = 2;
         boolean speedTwoDirections = true;
         int maxTurnCosts = 3;
-        double maxSpeed = 254;
         BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue(getKey(name, "access"), true);
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl(getKey(name, "average_speed"), speedBits, speedFactor, speedTwoDirections);
         DecimalEncodedValue turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;
-        return new VehicleEncodedValues(name, accessEnc, speedEnc, null, null, turnCostEnc, speedEnc.getNextStorableValue(maxSpeed), true);
+        return new VehicleEncodedValues(name, accessEnc, speedEnc, null, null, turnCostEnc, speedEnc.getNextStorableValue(ROADS_MAX_SPEED), true);
     }
 
     public VehicleEncodedValues(String name, BooleanEncodedValue accessEnc, DecimalEncodedValue avgSpeedEnc,

@@ -37,6 +37,7 @@ import static com.graphhopper.routing.util.EncodingManager.getKey;
  * @author Nop
  */
 public class CarTagParser extends VehicleTagParser {
+    public static final double CAR_MAX_SPEED = 140;
     protected final Map<String, Integer> trackTypeSpeedMap = new HashMap<>();
     protected final Set<String> badSurfaceSpeedMap = new HashSet<>();
     // This value determines the maximal possible on roads with bad surfaces
@@ -57,7 +58,7 @@ public class CarTagParser extends VehicleTagParser {
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
                 properties,
                 TransportationMode.CAR,
-                lookup.getDecimalEncodedValue(getKey(properties.getString("name", "car"), "average_speed")).getNextStorableValue(140)
+                lookup.getDecimalEncodedValue(getKey(properties.getString("name", "car"), "average_speed")).getNextStorableValue(CAR_MAX_SPEED)
         );
     }
 

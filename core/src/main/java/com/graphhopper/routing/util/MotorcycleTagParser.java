@@ -38,6 +38,7 @@ import static com.graphhopper.routing.util.EncodingManager.getKey;
  * @author boldtrn
  */
 public class MotorcycleTagParser extends CarTagParser {
+    public static final double MOTOR_CYCLE_MAX_SPEED = 120;
     private final HashSet<String> avoidSet = new HashSet<>();
     private final HashSet<String> preferSet = new HashSet<>();
     private final DecimalEncodedValue priorityWayEncoder;
@@ -59,7 +60,7 @@ public class MotorcycleTagParser extends CarTagParser {
     public MotorcycleTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue turnCostEnc,
                                BooleanEncodedValue roundaboutEnc,
                                DecimalEncodedValue priorityWayEncoder, DecimalEncodedValue curvatureEnc, PMap properties, TransportationMode transportationMode) {
-        super(accessEnc, speedEnc, turnCostEnc, roundaboutEnc, new PMap(properties).putObject("name", "motorcycle"), transportationMode, speedEnc.getNextStorableValue(120));
+        super(accessEnc, speedEnc, turnCostEnc, roundaboutEnc, new PMap(properties).putObject("name", "motorcycle"), transportationMode, speedEnc.getNextStorableValue(MOTOR_CYCLE_MAX_SPEED));
         this.priorityWayEncoder = priorityWayEncoder;
         this.curvatureEncoder = curvatureEnc;
 

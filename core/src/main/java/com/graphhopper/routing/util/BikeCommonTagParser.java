@@ -36,6 +36,8 @@ import static com.graphhopper.routing.util.PriorityCode.*;
  */
 abstract public class BikeCommonTagParser extends VehicleTagParser {
 
+    public static double BIKE_MAX_SPEED = 30;
+
     protected static final int PUSHING_SECTION_SPEED = 4;
     // Pushing section highways are parts where you need to get off your bike and push it (German: Schiebestrecke)
     protected final HashSet<String> pushingSectionsHighways = new HashSet<>();
@@ -61,7 +63,7 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
     protected BikeCommonTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
                                   EnumEncodedValue<RouteNetwork> bikeRouteEnc, EnumEncodedValue<Smoothness> smoothnessEnc,
                                   String name, BooleanEncodedValue roundaboutEnc, DecimalEncodedValue turnCostEnc) {
-        super(accessEnc, speedEnc, name, roundaboutEnc, turnCostEnc, TransportationMode.BIKE, speedEnc.getNextStorableValue(30));
+        super(accessEnc, speedEnc, name, roundaboutEnc, turnCostEnc, TransportationMode.BIKE, speedEnc.getNextStorableValue(BIKE_MAX_SPEED));
         this.bikeRouteEnc = bikeRouteEnc;
         this.smoothnessEnc = smoothnessEnc;
         this.priorityEnc = priorityEnc;
