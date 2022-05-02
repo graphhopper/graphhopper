@@ -40,7 +40,6 @@ public class BikeTagParser extends BikeCommonTagParser {
                 lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class),
                 properties.getString("name", "bike"),
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
-                // todonow: why do we not just return null when EV is missing? just like java.util.Map?
                 lookup.hasEncodedValue(TurnCost.key(properties.getString("name", "bike"))) ? lookup.getDecimalEncodedValue(TurnCost.key(properties.getString("name", "bike"))) : null
         );
         blockPrivate(properties.getBool("block_private", true));
