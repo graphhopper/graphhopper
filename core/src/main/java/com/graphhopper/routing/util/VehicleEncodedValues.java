@@ -22,6 +22,9 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.util.PMap;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.graphhopper.routing.util.BikeCommonTagParser.BIKE_MAX_SPEED;
 import static com.graphhopper.routing.util.CarTagParser.CAR_MAX_SPEED;
@@ -210,6 +213,13 @@ public final class VehicleEncodedValues implements FlagEncoder {
     @Override
     public DecimalEncodedValue getTurnCostEnc() {
         return turnCostEnc;
+    }
+
+    public String getSharedEncodedValueString() {
+        return Stream.of(accessEnc, avgSpeedEnc, priorityEnc, curvatureEnc, turnCostEnc)
+                .filter(Objects::nonNull)
+                .map(EncodedValueSerializer::serializeEncodedValue)
+                .collect(Collectors.joining(","));
     }
 
     @Override

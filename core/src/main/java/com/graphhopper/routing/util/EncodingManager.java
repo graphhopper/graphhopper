@@ -291,10 +291,10 @@ public class EncodingManager implements EncodedValueLookup {
             if (str.length() > 0)
                 str.append(",");
 
-            str.append(encoder.toString())
+            str
+                    .append(((VehicleEncodedValues) encoder).getName())
                     .append("|")
-                    // todonow: we used to include properties like speed_factor here. we probably should include this information in the encoded values' property strings instead
-                    .append(((VehicleEncodedValues) encoder).getName());
+                    .append(((VehicleEncodedValues) encoder).getSharedEncodedValueString());
         }
 
         return str.toString();
