@@ -194,11 +194,14 @@ public class Measurement {
             if (runSlow) {
                 boolean isCH = false;
                 boolean isLM = false;
-                measureRouting(hopper, new QuerySettings("routing", count / 50, isCH, isLM).
+                measureRouting(hopper, new QuerySettings("routing", count / 20, isCH, isLM).
                         withInstructions());
+                measureRouting(hopper, new QuerySettings("routing_alt", count / 1000, isCH, isLM).
+                        alternative());
                 if (encoder.supportsTurnCosts()) {
-                    measureRouting(hopper, new QuerySettings("routing_edge", count / 100, isCH, isLM).
+                    measureRouting(hopper, new QuerySettings("routing_edge", count / 20, isCH, isLM).
                             withInstructions().edgeBased());
+                    // unfortunately alt routes are so slow that we cannot really afford many iterations
                     measureRouting(hopper, new QuerySettings("routing_edge_alt", count / 1000, isCH, isLM).
                             edgeBased().alternative()
                     );
@@ -216,6 +219,8 @@ public class Measurement {
                         .mapToInt(Integer::parseInt).forEach(activeLMCount -> {
                             measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount, count / 20, isCH, isLM).
                                     withInstructions().activeLandmarks(activeLMCount));
+                            measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount + "_alt", count / 1000, isCH, isLM).
+                                    activeLandmarks(activeLMCount).alternative());
                             if (args.getBool("measurement.lm.edge_based", encoder.supportsTurnCosts())) {
                                 measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", count / 20, isCH, isLM).
                                         withInstructions().activeLandmarks(activeLMCount).edgeBased());
