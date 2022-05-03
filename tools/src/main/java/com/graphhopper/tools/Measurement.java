@@ -194,11 +194,15 @@ public class Measurement {
             if (runSlow) {
                 boolean isCH = false;
                 boolean isLM = false;
-                measureRouting(hopper, new QuerySettings("routing", count / 20, isCH, isLM).
+                measureRouting(hopper, new QuerySettings("routing", count / 50, isCH, isLM).
                         withInstructions());
-                if (encoder.supportsTurnCosts())
-                    measureRouting(hopper, new QuerySettings("routing_edge", count / 20, isCH, isLM).
+                if (encoder.supportsTurnCosts()) {
+                    measureRouting(hopper, new QuerySettings("routing_edge", count / 100, isCH, isLM).
                             withInstructions().edgeBased());
+                    measureRouting(hopper, new QuerySettings("routing_edge_alt", count / 1000, isCH, isLM).
+                            edgeBased().alternative()
+                    );
+                }
                 if (!blockAreaStr.isEmpty())
                     measureRouting(hopper, new QuerySettings("routing_block_area", count / 20, isCH, isLM).
                             withInstructions().blockArea(blockAreaStr));
@@ -210,13 +214,15 @@ public class Measurement {
                 boolean isLM = true;
                 Helper.parseList(args.getString("measurement.lm.active_counts", "[4,8,12,16]")).stream()
                         .mapToInt(Integer::parseInt).forEach(activeLMCount -> {
-                    measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount, count / 20, isCH, isLM).
-                            withInstructions().activeLandmarks(activeLMCount));
-                    if (args.getBool("measurement.lm.edge_based", encoder.supportsTurnCosts())) {
-                        measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", count / 20, isCH, isLM).
-                                withInstructions().activeLandmarks(activeLMCount).edgeBased());
-                    }
-                });
+                            measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount, count / 20, isCH, isLM).
+                                    withInstructions().activeLandmarks(activeLMCount));
+                            if (args.getBool("measurement.lm.edge_based", encoder.supportsTurnCosts())) {
+                                measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", count / 20, isCH, isLM).
+                                        withInstructions().activeLandmarks(activeLMCount).edgeBased());
+                                measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount + "_alt_edge", count / 1000, isCH, isLM).
+                                        activeLandmarks(activeLMCount).edgeBased().alternative());
+                            }
+                        });
 
                 final int activeLMCount = 8;
                 if (!blockAreaStr.isEmpty())
@@ -631,8 +637,12 @@ public class Measurement {
                     maxVisitedNodes.set(visitedNodes);
                 }
 
+                rsp.getAll().forEach(p -> {
+                    long dist = (long) p.getDistance();
+                    distSum.addAndGet(dist);
+                });
+
                 long dist = (long) responsePath.getDistance();
-                distSum.addAndGet(dist);
 
                 GHPoint prev = req.getPoints().get(0);
                 for (GHPoint point : req.getPoints()) {

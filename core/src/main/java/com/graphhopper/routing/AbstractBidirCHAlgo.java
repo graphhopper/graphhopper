@@ -133,17 +133,13 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
 
     @Override
     boolean fillEdgesFrom() {
-        if (pqOpenSetFrom.isEmpty()) {
-            return false;
-        }
-        while (!pqOpenSetFrom.isEmpty()) {
+        while (true) {
+            if (pqOpenSetFrom.isEmpty())
+                return false;
             currFrom = pqOpenSetFrom.poll();
-            if (currFrom.adjNode < 0)
-                continue;
-            break;
+            if (!currFrom.isDeleted())
+                break;
         }
-        if (currFrom.adjNode < 0)
-            return false;
         visitedCountFrom++;
         if (fromEntryCanBeSkipped()) {
             return true;
@@ -158,17 +154,13 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
 
     @Override
     boolean fillEdgesTo() {
-        if (pqOpenSetTo.isEmpty()) {
-            return false;
-        }
-        while (!pqOpenSetTo.isEmpty()) {
+        while (true) {
+            if (pqOpenSetTo.isEmpty())
+                return false;
             currTo = pqOpenSetTo.poll();
-            if (currTo.adjNode < 0)
-                continue;
-            break;
+            if (!currTo.isDeleted())
+                break;
         }
-        if (currTo.adjNode < 0)
-            return false;
         visitedCountTo++;
         if (toEntryCanBeSkipped()) {
             return true;
@@ -201,17 +193,19 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
                 prioQueue.add(entry);
             } else if (entry.getWeightOfVisitedPath() > weight) {
                 // flagging this entry, so it will be ignored when it is polled the next time
-                boolean best = reverse ? (entry == bestBwdEntry) : (entry == bestFwdEntry);
-                entry.adjNode = -1;
+                // this is faster than removing the entry from the queue and adding again, but for CH it does not really
+                // make a difference overall.
+                entry.setDeleted();
+                boolean isBestEntry = reverse ? (entry == bestBwdEntry) : (entry == bestFwdEntry);
                 entry = createEntry(iter.getEdge(), iter.getAdjNode(), origEdgeId, weight, currEdge, reverse);
                 bestWeightMap.put(traversalId, entry);
                 prioQueue.add(entry);
-                if (best) {
+                // if this is the best entry we need to update the best reference as well. somehow this is only needed for CH?
+                if (isBestEntry)
                     if (reverse)
                         bestBwdEntry = entry;
                     else
                         bestFwdEntry = entry;
-                }
             } else
                 continue;
 

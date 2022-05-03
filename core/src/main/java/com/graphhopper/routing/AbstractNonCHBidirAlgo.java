@@ -109,17 +109,13 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
 
     @Override
     boolean fillEdgesFrom() {
-        if (pqOpenSetFrom.isEmpty()) {
-            return false;
-        }
-        while (!pqOpenSetFrom.isEmpty()) {
+        while (true) {
+            if (pqOpenSetFrom.isEmpty())
+                return false;
             currFrom = pqOpenSetFrom.poll();
-            if (currFrom.adjNode < 0)
-                continue;
-            break;
+            if (!currFrom.isDeleted())
+                break;
         }
-        if (currFrom.adjNode < 0)
-            return false;
         visitedCountFrom++;
         if (fromEntryCanBeSkipped()) {
             return true;
@@ -134,17 +130,13 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
 
     @Override
     boolean fillEdgesTo() {
-        if (pqOpenSetTo.isEmpty()) {
-            return false;
-        }
-        while (!pqOpenSetTo.isEmpty()) {
+        while (true) {
+            if (pqOpenSetTo.isEmpty())
+                return false;
             currTo = pqOpenSetTo.poll();
-            if (currTo.adjNode < 0)
-                continue;
-            break;
+            if (!currTo.isDeleted())
+                break;
         }
-        if (currTo.adjNode < 0)
-            return false;
         visitedCountTo++;
         if (toEntryCanBeSkipped()) {
             return true;
@@ -175,7 +167,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
                 prioQueue.add(entry);
             } else if (entry.getWeightOfVisitedPath() > weight) {
                 // flagging this entry, so it will be ignored when it is polled the next time
-                entry.adjNode = -1;
+                entry.setDeleted();
                 entry = createEntry(iter, weight, currEdge, reverse);
                 bestWeightMap.put(traversalId, entry);
                 prioQueue.add(entry);
