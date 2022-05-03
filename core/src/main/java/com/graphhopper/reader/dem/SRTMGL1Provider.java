@@ -31,7 +31,7 @@ import static com.graphhopper.util.Helper.*;
  * <p>
  * When using this data we have to acknowledge:
  * This material is based on data services provided by the OpenTopography Facility with support from the
- * National Science Foundation under NSF Award Numbers 1226353 & 1225810
+ * National Science Foundation under NSF Award Numbers 1226353 &amp; 1225810
  * National Geospatial-Intelligence Agency (NGA) and the National Aeronautics and Space Administration (NASA), 2013,
  * SRTMGL1: NASA Shuttle Radar Topography Mission Global 1 arc second V003. [Version]. NASA EOSDIS Land Processes DAAC,
  * USGS Earth Resources Observation and Science (EROS) Center, Sioux Falls, South Dakota (https://lpdaac.usgs.gov),
