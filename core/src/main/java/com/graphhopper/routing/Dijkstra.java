@@ -58,16 +58,19 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
     public Path calcPath(int from, int to) {
         checkAlreadyRun();
         this.to = to;
-        currEdge = new SPTEntry(from, 0);
-        if (!traversalMode.isEdgeBased()) {
+        SPTEntry startEntry = new SPTEntry(from, 0);
+        fromHeap.add(startEntry);
+        if (!traversalMode.isEdgeBased())
             fromMap.put(from, currEdge);
-        }
         runAlgo();
         return extractPath();
     }
 
     protected void runAlgo() {
-        while (true) {
+        while (!fromHeap.isEmpty()) {
+            currEdge = fromHeap.poll();
+            if (currEdge.isDeleted())
+                continue;
             visitedNodes++;
             if (isMaxVisitedNodesExceeded() || finished())
                 break;
@@ -90,23 +93,15 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
                     fromMap.put(traversalId, nEdge);
                     fromHeap.add(nEdge);
                 } else if (nEdge.weight > tmpWeight) {
-                    fromHeap.remove(nEdge);
-                    nEdge.edge = iter.getEdge();
-                    nEdge.weight = tmpWeight;
-                    nEdge.parent = currEdge;
+                    nEdge.setDeleted();
+                    nEdge = new SPTEntry(iter.getEdge(), iter.getAdjNode(), tmpWeight, currEdge);
+                    fromMap.put(traversalId, nEdge);
                     fromHeap.add(nEdge);
                 } else
                     continue;
 
                 updateBestPath(iter, nEdge, traversalId);
             }
-
-            if (fromHeap.isEmpty())
-                break;
-
-            currEdge = fromHeap.poll();
-            if (currEdge == null)
-                throw new AssertionError("Empty edge cannot happen");
         }
     }
 
