@@ -184,12 +184,6 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         }
     }
 
-    protected void updateEntry(SPTEntry entry, EdgeIteratorState edge, double weight, SPTEntry parent, boolean reverse) {
-        entry.edge = edge.getEdge();
-        entry.weight = weight;
-        entry.parent = parent;
-    }
-
     protected double calcWeight(EdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {
         // note that for node-based routing the weights will be wrong in case the weighting is returning non-zero
         // turn weights, see discussion in #1960
