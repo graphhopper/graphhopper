@@ -95,14 +95,6 @@ public class AStarBidirection extends AbstractNonCHBidirAlgo {
     }
 
     @Override
-    protected void updateEntry(SPTEntry entry, EdgeIteratorState edge, double weight, SPTEntry parent, boolean reverse) {
-        entry.edge = edge.getEdge();
-        entry.weight = weight + weightApprox.approximate(edge.getAdjNode(), reverse);
-        ((AStarEntry) entry).weightOfVisitedPath = weight;
-        entry.parent = parent;
-    }
-
-    @Override
     protected double calcWeight(EdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {
         // TODO performance: check if the node is already existent in the opposite direction
         // then we could avoid the approximation as we already know the exact complete path!
