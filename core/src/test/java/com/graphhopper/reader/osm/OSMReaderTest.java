@@ -496,7 +496,7 @@ public class OSMReaderTest {
     public void testRelation() {
         EncodingManager manager = EncodingManager.create("bike");
         EnumEncodedValue<RouteNetwork> bikeNetworkEnc = manager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class);
-        TagParserBundle tagParserBundle = new TagParserBundle()
+        OSMParsers osmParsers = new OSMParsers()
                 .addRelationTagParser(relConf -> new OSMBikeNetworkTagParser(bikeNetworkEnc, relConf));
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 1, ""));
@@ -506,17 +506,17 @@ public class OSMReaderTest {
         osmRel.setTag("network", "lcn");
 
         IntsRef flags = manager.createRelationFlags();
-        tagParserBundle.handleRelationTags(osmRel, flags);
+        osmParsers.handleRelationTags(osmRel, flags);
         assertFalse(flags.isEmpty());
 
         // unchanged network
         IntsRef before = IntsRef.deepCopyOf(flags);
-        tagParserBundle.handleRelationTags(osmRel, flags);
+        osmParsers.handleRelationTags(osmRel, flags);
         assertEquals(before, flags);
 
         // overwrite network
         osmRel.setTag("network", "ncn");
-        tagParserBundle.handleRelationTags(osmRel, flags);
+        osmParsers.handleRelationTags(osmRel, flags);
         assertNotEquals(before, flags);
     }
 
@@ -928,13 +928,13 @@ public class OSMReaderTest {
     public void testCountries() throws IOException {
         EncodingManager em = EncodingManager.create("car");
         EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
-        TagParserBundle tagParserBundle = new TagParserBundle();
-        tagParserBundle.addWayTagParser(new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
+        OSMParsers osmParsers = new OSMParsers();
+        osmParsers.addWayTagParser(new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
         CarTagParser parser = new CarTagParser(em, new PMap());
         parser.init(new DateRangeParser());
-        tagParserBundle.addVehicleTagParser(parser);
+        osmParsers.addVehicleTagParser(parser);
         BaseGraph graph = new BaseGraph.Builder(em).create();
-        OSMReader reader = new OSMReader(graph, em, tagParserBundle, new OSMReaderConfig());
+        OSMReader reader = new OSMReader(graph, em, osmParsers, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
         reader.setAreaIndex(createCountryIndex());
         // there are two edges, both with highway=track, one in Berlin, one in Paris
@@ -960,11 +960,11 @@ public class OSMReaderTest {
                 .build();
         CarTagParser carParser = new CarTagParser(em, new PMap());
         carParser.init(new DateRangeParser());
-        TagParserBundle tagParserBundle = new TagParserBundle()
+        OSMParsers osmParsers = new OSMParsers()
                 .addWayTagParser(new CountryParser(countryEnc))
                 .addVehicleTagParser(carParser);
         BaseGraph graph = new BaseGraph.Builder(em).create();
-        OSMReader reader = new OSMReader(graph, em, tagParserBundle, new OSMReaderConfig());
+        OSMReader reader = new OSMReader(graph, em, osmParsers, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
         reader.setAreaIndex(createCountryIndex());
         reader.setFile(new File(getClass().getResource("test-osm12.xml").getFile()));

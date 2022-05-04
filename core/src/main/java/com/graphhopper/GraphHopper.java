@@ -87,7 +87,7 @@ public class GraphHopper {
     // for graph:
     private GraphHopperStorage ghStorage;
     private EncodingManager encodingManager;
-    private TagParserBundle tagParserBundle;
+    private OSMParsers osmParsers;
     private int defaultSegmentSize = -1;
     private String ghLocation = "";
     private DAType dataAccessDefaultType = DAType.RAM_STORE;
@@ -486,7 +486,7 @@ public class GraphHopper {
         flagEncodersString = ghConfig.getString("graph.flag_encoders", flagEncodersString);
         encodedValuesString = ghConfig.getString("graph.encoded_values", encodedValuesString);
         dateRangeParserString = ghConfig.getString("datareader.date_range_parser_day", dateRangeParserString);
-        buildEncodingManagerAndTagParserBundle(flagEncodersString, encodedValuesString, dateRangeParserString, profilesByName.values());
+        buildEncodingManagerAndOSMParsers(flagEncodersString, encodedValuesString, dateRangeParserString, profilesByName.values());
 
         if (ghConfig.getString("graph.locktype", "native").equals("simple"))
             lockFactory = new SimpleFSLockFactory();
@@ -535,7 +535,7 @@ public class GraphHopper {
         return this;
     }
 
-    private void buildEncodingManagerAndTagParserBundle(String flagEncodersStr, String encodedValuesStr, String dateRangeParserString, Collection<Profile> profiles) {
+    private void buildEncodingManagerAndOSMParsers(String flagEncodersStr, String encodedValuesStr, String dateRangeParserString, Collection<Profile> profiles) {
         Map<String, String> flagEncodersMap = new LinkedHashMap<>();
         for (String encoderStr : flagEncodersStr.split(",")) {
             String name = encoderStr.split("\\|")[0].trim();
@@ -566,23 +566,23 @@ public class GraphHopper {
         encodedValueStrings.forEach(s -> emBuilder.add(encodedValueFactory.create(s)));
         encodingManager = emBuilder.build();
 
-        tagParserBundle = new TagParserBundle();
-        encodedValueStrings.forEach(s -> tagParserBundle.addWayTagParser(tagParserFactory.create(encodingManager, s)));
+        osmParsers = new OSMParsers();
+        encodedValueStrings.forEach(s -> osmParsers.addWayTagParser(tagParserFactory.create(encodingManager, s)));
 
         // this needs to be in sync with the default EVs added in EncodingManager.Builder#build. ideally I would like to remove
         // all these defaults and just use the config as the single source of truth
         if (!encodedValueStrings.contains(Roundabout.KEY))
-            tagParserBundle.addWayTagParser(new OSMRoundaboutParser(encodingManager.getBooleanEncodedValue(Roundabout.KEY)));
+            osmParsers.addWayTagParser(new OSMRoundaboutParser(encodingManager.getBooleanEncodedValue(Roundabout.KEY)));
         if (!encodedValueStrings.contains(RoadClass.KEY))
-            tagParserBundle.addWayTagParser(new OSMRoadClassParser(encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class)));
+            osmParsers.addWayTagParser(new OSMRoadClassParser(encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class)));
         if (!encodedValueStrings.contains(RoadClassLink.KEY))
-            tagParserBundle.addWayTagParser(new OSMRoadClassLinkParser(encodingManager.getBooleanEncodedValue(RoadClassLink.KEY)));
+            osmParsers.addWayTagParser(new OSMRoadClassLinkParser(encodingManager.getBooleanEncodedValue(RoadClassLink.KEY)));
         if (!encodedValueStrings.contains(RoadEnvironment.KEY))
-            tagParserBundle.addWayTagParser(new OSMRoadEnvironmentParser(encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class)));
+            osmParsers.addWayTagParser(new OSMRoadEnvironmentParser(encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class)));
         if (!encodedValueStrings.contains(MaxSpeed.KEY))
-            tagParserBundle.addWayTagParser(new OSMMaxSpeedParser(encodingManager.getDecimalEncodedValue(MaxSpeed.KEY)));
+            osmParsers.addWayTagParser(new OSMMaxSpeedParser(encodingManager.getDecimalEncodedValue(MaxSpeed.KEY)));
         if (!encodedValueStrings.contains(RoadAccess.KEY))
-            tagParserBundle.addWayTagParser(new OSMRoadAccessParser(encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
+            osmParsers.addWayTagParser(new OSMRoadAccessParser(encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
 
         DateRangeParser dateRangeParser = DateRangeParser.createInstance(dateRangeParserString);
         flagEncodersMap.forEach((name, encoderStr) -> {
@@ -590,21 +590,21 @@ public class GraphHopper {
             vehicleTagParser.init(dateRangeParser);
             if (vehicleTagParser instanceof RoadsTagParser) {
                 if (encodingManager.hasEncodedValue("car_access") && !encodedValueStrings.contains("car_access"))
-                    tagParserBundle.addWayTagParser(new OSMAccessParser(encodingManager.getBooleanEncodedValue("car_access"), encodingManager.getBooleanEncodedValue(Roundabout.KEY), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR), TransportationMode.CAR));
+                    osmParsers.addWayTagParser(new OSMAccessParser(encodingManager.getBooleanEncodedValue("car_access"), encodingManager.getBooleanEncodedValue(Roundabout.KEY), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR), TransportationMode.CAR));
                 if (encodingManager.hasEncodedValue("bike_access") && !encodedValueStrings.contains("bike_access"))
-                    tagParserBundle.addWayTagParser(new OSMAccessParser(encodingManager.getBooleanEncodedValue("bike_access"), encodingManager.getBooleanEncodedValue(Roundabout.KEY), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE), TransportationMode.BIKE));
+                    osmParsers.addWayTagParser(new OSMAccessParser(encodingManager.getBooleanEncodedValue("bike_access"), encodingManager.getBooleanEncodedValue(Roundabout.KEY), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE), TransportationMode.BIKE));
             } else if (vehicleTagParser instanceof BikeCommonTagParser) {
                 if (encodingManager.hasEncodedValue(BikeNetwork.KEY))
-                    tagParserBundle.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig));
+                    osmParsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig));
                 if (encodingManager.hasEncodedValue(GetOffBike.KEY))
-                    tagParserBundle.addWayTagParser(new OSMGetOffBikeParser(encodingManager.getBooleanEncodedValue(GetOffBike.KEY)));
+                    osmParsers.addWayTagParser(new OSMGetOffBikeParser(encodingManager.getBooleanEncodedValue(GetOffBike.KEY)));
                 if (encodingManager.hasEncodedValue(Smoothness.KEY))
-                    tagParserBundle.addWayTagParser(new OSMSmoothnessParser(encodingManager.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)));
+                    osmParsers.addWayTagParser(new OSMSmoothnessParser(encodingManager.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)));
             } else if (vehicleTagParser instanceof FootTagParser) {
                 if (encodingManager.hasEncodedValue(FootNetwork.KEY))
-                    tagParserBundle.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
+                    osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
             }
-            tagParserBundle.addVehicleTagParser(vehicleTagParser);
+            osmParsers.addVehicleTagParser(vehicleTagParser);
         });
     }
 
@@ -747,7 +747,7 @@ public class GraphHopper {
         AreaIndex<CustomArea> areaIndex = new AreaIndex<>(customAreas);
 
         logger.info("start creating graph from " + osmFile);
-        OSMReader reader = new OSMReader(ghStorage.getBaseGraph(), encodingManager, tagParserBundle, osmReaderConfig).setFile(_getOSMFile()).
+        OSMReader reader = new OSMReader(ghStorage.getBaseGraph(), encodingManager, osmParsers, osmReaderConfig).setFile(_getOSMFile()).
                 setAreaIndex(areaIndex).
                 setElevationProvider(eleProvider).
                 setCountryRuleFactory(countryRuleFactory);
@@ -821,7 +821,7 @@ public class GraphHopper {
         if (encodingManager == null)
             // we did not call init(), so we build the encoding manager now.
             // just like when calling init, users have to make sure they use the same setup for import and load
-            buildEncodingManagerAndTagParserBundle(flagEncodersString, encodedValuesString, dateRangeParserString, profilesByName.values());
+            buildEncodingManagerAndOSMParsers(flagEncodersString, encodedValuesString, dateRangeParserString, profilesByName.values());
 
         GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
         directory.configure(dataAccessConfig);

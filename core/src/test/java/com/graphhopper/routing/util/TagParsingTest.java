@@ -60,7 +60,7 @@ class TagParsingTest {
             }
         };
         lessRelationCodesParser.init(new DateRangeParser());
-        TagParserBundle tagParserBundle = new TagParserBundle()
+        OSMParsers osmParsers = new OSMParsers()
                 .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(bikeNetworkEnc, relConfig))
                 .addWayTagParser(new OSMRoadClassParser(em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class)))
                 .addWayTagParser(defaultBikeParser)
@@ -69,10 +69,10 @@ class TagParsingTest {
         // relation code is PREFER
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        IntsRef relFlags = tagParserBundle.createRelationFlags();
-        relFlags = tagParserBundle.handleRelationTags(osmRel, relFlags);
+        IntsRef relFlags = osmParsers.createRelationFlags();
+        relFlags = osmParsers.handleRelationTags(osmRel, relFlags);
         IntsRef edgeFlags = em.createEdgeFlags();
-        edgeFlags = tagParserBundle.handleWayTags(edgeFlags, osmWay, relFlags);
+        edgeFlags = osmParsers.handleWayTags(edgeFlags, osmWay, relFlags);
         assertEquals(RouteNetwork.LOCAL, bikeNetworkEnc.getEnum(false, edgeFlags));
         assertTrue(defaultBike.getPriorityEnc().getDecimal(false, edgeFlags) > lessRelationCodes.getPriorityEnc().getDecimal(false, edgeFlags));
     }
@@ -94,7 +94,7 @@ class TagParsingTest {
         bikeTagParser.init(new DateRangeParser());
         MountainBikeTagParser mtbTagParser = new MountainBikeTagParser(manager, new PMap());
         mtbTagParser.init(new DateRangeParser());
-        TagParserBundle tagParserBundle = new TagParserBundle()
+        OSMParsers osmParsers = new OSMParsers()
                 .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(bikeNetworkEnc, relConfig))
                 .addWayTagParser(new OSMRoadClassParser(manager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class)))
                 .addWayTagParser(bikeTagParser)
@@ -103,10 +103,10 @@ class TagParsingTest {
         // relation code for network rcn is NICE for bike and PREFER for mountainbike
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "rcn");
-        IntsRef relFlags = tagParserBundle.createRelationFlags();
-        relFlags = tagParserBundle.handleRelationTags(osmRel, relFlags);
+        IntsRef relFlags = osmParsers.createRelationFlags();
+        relFlags = osmParsers.handleRelationTags(osmRel, relFlags);
         IntsRef edgeFlags = manager.createEdgeFlags();
-        edgeFlags = tagParserBundle.handleWayTags(edgeFlags, osmWay, relFlags);
+        edgeFlags = osmParsers.handleWayTags(edgeFlags, osmWay, relFlags);
         // bike: uninfluenced speed for grade but via network => NICE
         // mtb: uninfluenced speed only PREFER
         assertTrue(bikeEncoder.getPriorityEnc().getDecimal(false, edgeFlags) > mtbEncoder.getPriorityEnc().getDecimal(false, edgeFlags));

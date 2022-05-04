@@ -39,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public abstract class AbstractBikeTagParserTester {
     protected EncodingManager encodingManager;
     protected BikeCommonTagParser parser;
-    protected TagParserBundle parserBundle;
+    protected OSMParsers osmParsers;
     protected BooleanEncodedValue roundaboutEnc;
     protected DecimalEncodedValue priorityEnc;
     protected DecimalEncodedValue avgSpeedEnc;
@@ -50,7 +50,7 @@ public abstract class AbstractBikeTagParserTester {
         if (encodingManager.fetchEdgeEncoders().size() > 1)
             fail("currently we assume there is only one encoder per test");
         parser = createBikeTagParser(encodingManager);
-        parserBundle = createParserBundle(parser, encodingManager);
+        osmParsers = createOSMParsers(parser, encodingManager);
         roundaboutEnc = encodingManager.getBooleanEncodedValue(Roundabout.KEY);
         priorityEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(parser.getName(), "priority"));
         avgSpeedEnc = parser.getAverageSpeedEnc();
@@ -60,12 +60,12 @@ public abstract class AbstractBikeTagParserTester {
 
     protected abstract BikeCommonTagParser createBikeTagParser(EncodedValueLookup lookup);
 
-    protected abstract TagParserBundle createParserBundle(BikeCommonTagParser parser, EncodedValueLookup lookup);
+    protected abstract OSMParsers createOSMParsers(BikeCommonTagParser parser, EncodedValueLookup lookup);
 
     protected void assertPriority(int expectedPrio, ReaderWay way) {
-        IntsRef relFlags = parserBundle.handleRelationTags(new ReaderRelation(0), parserBundle.createRelationFlags());
+        IntsRef relFlags = osmParsers.handleRelationTags(new ReaderRelation(0), osmParsers.createRelationFlags());
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
-        edgeFlags = parserBundle.handleWayTags(edgeFlags, way, relFlags);
+        edgeFlags = osmParsers.handleWayTags(edgeFlags, way, relFlags);
         assertEquals(PriorityCode.getValue(expectedPrio), priorityEnc.getDecimal(false, edgeFlags), 0.01);
     }
 
@@ -74,9 +74,9 @@ public abstract class AbstractBikeTagParserTester {
     }
 
     protected void assertPriorityAndSpeed(int expectedPrio, double expectedSpeed, ReaderWay way, ReaderRelation rel) {
-        IntsRef relFlags = parserBundle.handleRelationTags(rel, parserBundle.createRelationFlags());
+        IntsRef relFlags = osmParsers.handleRelationTags(rel, osmParsers.createRelationFlags());
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
-        edgeFlags = parserBundle.handleWayTags(edgeFlags, way, relFlags);
+        edgeFlags = osmParsers.handleWayTags(edgeFlags, way, relFlags);
         DecimalEncodedValue enc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(parser.toString(), "priority"));
         assertEquals(PriorityCode.getValue(expectedPrio), enc.getDecimal(false, edgeFlags), 0.01);
         assertEquals(expectedSpeed, parser.getAverageSpeedEnc().getDecimal(false, edgeFlags), 0.1);
@@ -84,9 +84,9 @@ public abstract class AbstractBikeTagParserTester {
     }
 
     protected double getSpeedFromFlags(ReaderWay way) {
-        IntsRef relFlags = parserBundle.createRelationFlags();
+        IntsRef relFlags = osmParsers.createRelationFlags();
         IntsRef flags = encodingManager.createEdgeFlags();
-        flags = parserBundle.handleWayTags(flags, way, relFlags);
+        flags = osmParsers.handleWayTags(flags, way, relFlags);
         return avgSpeedEnc.getDecimal(false, flags);
     }
 
@@ -247,9 +247,9 @@ public abstract class AbstractBikeTagParserTester {
 
         // two relation tags => we currently cannot store a list, so pick the lower ordinal 'regional'
         // Example https://www.openstreetmap.org/way/213492914 => two hike 84544, 2768803 and two bike relations 3162932, 5254650
-        IntsRef relFlags = parserBundle.handleRelationTags(rel2, parserBundle.handleRelationTags(rel, parserBundle.createRelationFlags()));
+        IntsRef relFlags = osmParsers.handleRelationTags(rel2, osmParsers.handleRelationTags(rel, osmParsers.createRelationFlags()));
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
-        edgeFlags = parserBundle.handleWayTags(edgeFlags, way, relFlags);
+        edgeFlags = osmParsers.handleWayTags(edgeFlags, way, relFlags);
         EnumEncodedValue<RouteNetwork> enc = encodingManager.getEnumEncodedValue(RouteNetwork.key("bike"), RouteNetwork.class);
         assertEquals(RouteNetwork.REGIONAL, enc.getEnum(false, edgeFlags));
     }

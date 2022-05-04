@@ -49,8 +49,8 @@ public class Bike2WeightTagParserTest extends BikeTagParserTest {
     }
 
     @Override
-    protected TagParserBundle createParserBundle(BikeCommonTagParser parser, EncodedValueLookup lookup) {
-        return new TagParserBundle()
+    protected OSMParsers createOSMParsers(BikeCommonTagParser parser, EncodedValueLookup lookup) {
+        return new OSMParsers()
                 .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig))
                 .addWayTagParser(new OSMSmoothnessParser(lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)))
                 .addVehicleTagParser(parser);
@@ -121,7 +121,7 @@ public class Bike2WeightTagParserTest extends BikeTagParserTest {
 
         assertNotEquals(EncodingManager.Access.CAN_SKIP, parser.getAccess(way));
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
-        edgeFlags = parserBundle.handleWayTags(edgeFlags, way, encodingManager.createRelationFlags());
+        edgeFlags = osmParsers.handleWayTags(edgeFlags, way, encodingManager.createRelationFlags());
         graph.edge(0, 1).setDistance(247).setFlags(edgeFlags);
 
         assertTrue(isGraphValid(graph, parser.getAccessEnc()));

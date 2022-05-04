@@ -44,7 +44,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         private final int maxDeviationPercentage;
         private final BaseGraph graph;
         private final EncodingManager em;
-        private final TagParserBundle tagParserBundle;
+        private final OSMParsers osmParsers;
         private final CHConfig baseCHConfig;
         private final CHConfig trafficCHConfig;
 
@@ -54,7 +54,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
             em = EncodingManager.create(encoder);
             CarTagParser carParser = new CarTagParser(em, new PMap());
             carParser.init(new DateRangeParser());
-            tagParserBundle = new TagParserBundle()
+            osmParsers = new OSMParsers()
                     .addVehicleTagParser(carParser);
             baseCHConfig = CHConfig.nodeBased("base", new FastestWeighting(encoder));
             trafficCHConfig = CHConfig.nodeBased("traffic", new RandomDeviationWeighting(baseCHConfig.getWeighting(), encoder, maxDeviationPercentage));
@@ -88,7 +88,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
 
         LOGGER.info("Running performance test, max deviation percentage: " + f.maxDeviationPercentage);
         // read osm
-        OSMReader reader = new OSMReader(f.graph, f.em, f.tagParserBundle, new OSMReaderConfig());
+        OSMReader reader = new OSMReader(f.graph, f.em, f.osmParsers, new OSMReaderConfig());
         reader.setFile(new File(OSM_FILE));
         reader.readGraph();
         f.graph.freeze();

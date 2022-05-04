@@ -54,8 +54,8 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
     }
 
     @Override
-    protected TagParserBundle createParserBundle(BikeCommonTagParser parser, EncodedValueLookup lookup) {
-        return new TagParserBundle()
+    protected OSMParsers createOSMParsers(BikeCommonTagParser parser, EncodedValueLookup lookup) {
+        return new OSMParsers()
                 .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig))
                 .addWayTagParser(new OSMSmoothnessParser(lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)))
                 .addVehicleTagParser(parser);
@@ -549,9 +549,9 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "icn");
-        IntsRef relFlags = parserBundle.handleRelationTags(osmRel, parserBundle.createRelationFlags());
+        IntsRef relFlags = osmParsers.handleRelationTags(osmRel, osmParsers.createRelationFlags());
         IntsRef flags = encodingManager.createEdgeFlags();
-        flags = parserBundle.handleWayTags(flags, osmWay, relFlags);
+        flags = osmParsers.handleWayTags(flags, osmWay, relFlags);
         assertEquals(RouteNetwork.INTERNATIONAL, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, flags));
         assertEquals(PriorityCode.getValue(BEST.getValue()), priorityEnc.getDecimal(false, flags), .1);
 
@@ -560,7 +560,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "track");
         flags = encodingManager.createEdgeFlags();
-        flags = parserBundle.handleWayTags(flags, osmWay, parserBundle.createRelationFlags());
+        flags = osmParsers.handleWayTags(flags, osmWay, osmParsers.createRelationFlags());
         assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, flags));
         assertEquals(PriorityCode.getValue(UNCHANGED.getValue()), priorityEnc.getDecimal(false, flags), .1);
 
@@ -570,7 +570,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "whatever");
         flags = encodingManager.createEdgeFlags();
-        flags = parserBundle.handleWayTags(flags, osmWay, parserBundle.createRelationFlags());
+        flags = osmParsers.handleWayTags(flags, osmWay, osmParsers.createRelationFlags());
         assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, flags));
         assertEquals(EXCLUDE.getValue(), priorityEnc.getDecimal(false, flags), .1);
     }

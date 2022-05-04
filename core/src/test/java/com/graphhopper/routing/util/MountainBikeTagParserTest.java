@@ -48,8 +48,8 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
     }
 
     @Override
-    protected TagParserBundle createParserBundle(BikeCommonTagParser parser, EncodedValueLookup lookup) {
-        return new TagParserBundle()
+    protected OSMParsers createOSMParsers(BikeCommonTagParser parser, EncodedValueLookup lookup) {
+        return new OSMParsers()
                 .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig))
                 .addWayTagParser(new OSMSmoothnessParser(lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)))
                 .addVehicleTagParser(parser);

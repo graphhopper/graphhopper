@@ -34,42 +34,42 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-public class TagParserBundle {
+public class OSMParsers {
     private final List<TagParser> wayTagParsers;
     private final List<VehicleTagParser> vehicleTagParsers;
     private final List<RelationTagParser> relationTagParsers;
     private final List<TurnCostParser> turnCostParsers;
     private final EncodedValue.InitializerConfig relConfig = new EncodedValue.InitializerConfig();
 
-    public TagParserBundle() {
+    public OSMParsers() {
         this(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     }
 
-    public TagParserBundle(List<TagParser> wayTagParsers, List<VehicleTagParser> vehicleTagParsers, List<RelationTagParser> relationTagParsers, List<TurnCostParser> turnCostParsers) {
+    public OSMParsers(List<TagParser> wayTagParsers, List<VehicleTagParser> vehicleTagParsers, List<RelationTagParser> relationTagParsers, List<TurnCostParser> turnCostParsers) {
         this.wayTagParsers = wayTagParsers;
         this.vehicleTagParsers = vehicleTagParsers;
         this.relationTagParsers = relationTagParsers;
         this.turnCostParsers = turnCostParsers;
     }
 
-    public TagParserBundle addWayTagParser(TagParser tagParser) {
+    public OSMParsers addWayTagParser(TagParser tagParser) {
         wayTagParsers.add(tagParser);
         return this;
     }
 
-    public TagParserBundle addVehicleTagParser(VehicleTagParser vehicleTagParser) {
+    public OSMParsers addVehicleTagParser(VehicleTagParser vehicleTagParser) {
         vehicleTagParsers.add(vehicleTagParser);
         if (vehicleTagParser.supportsTurnCosts())
             turnCostParsers.add(new OSMTurnRelationParser(vehicleTagParser.getAccessEnc(), vehicleTagParser.getTurnCostEnc(), vehicleTagParser.getRestrictions()));
         return this;
     }
 
-    public TagParserBundle addRelationTagParser(Function<EncodedValue.InitializerConfig, RelationTagParser> createRelationTagParser) {
+    public OSMParsers addRelationTagParser(Function<EncodedValue.InitializerConfig, RelationTagParser> createRelationTagParser) {
         relationTagParsers.add(createRelationTagParser.apply(relConfig));
         return this;
     }
 
-    public TagParserBundle addTurnCostTagParser(TurnCostParser turnCostParser) {
+    public OSMParsers addTurnCostTagParser(TurnCostParser turnCostParser) {
         turnCostParsers.add(turnCostParser);
         return this;
     }
