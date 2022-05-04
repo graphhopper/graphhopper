@@ -69,7 +69,8 @@
         <module>client-hc</module>
         <module>navigation</module>
         <module>example</module>
-    </modules>
+      <module>jmh-test</module>
+  </modules>
     <dependencyManagement>
         <dependencies>
             <!-- provides compatible versions for jackson, guava, slf4j etc. -->

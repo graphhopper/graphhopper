@@ -66,13 +66,13 @@ public class GHResponse {
     }
 
     public void addDebugInfo(String debugInfo) {
-        if (debugInfo == null)
-            throw new IllegalStateException("Debug information has to be none null");
-
-        if (!this.debugInfo.isEmpty())
-            this.debugInfo += "; ";
-
-        this.debugInfo += debugInfo;
+//        if (debugInfo == null)
+//            throw new IllegalStateException("Debug information has to be none null");
+//
+//        if (!this.debugInfo.isEmpty())
+//            this.debugInfo += "; ";
+//
+//        this.debugInfo += debugInfo;
     }
 
     public String getDebugInfo() {
