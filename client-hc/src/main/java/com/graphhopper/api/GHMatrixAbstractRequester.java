@@ -79,13 +79,13 @@ public abstract class GHMatrixAbstractRequester {
         return downloader;
     }
 
-    protected Collection<String> createOutArrayList(GHMRequest ghRequest) {
-        return ghRequest.getOutArrays().isEmpty() ? Collections.singletonList("weights") : ghRequest.getOutArrays();
-    }
-
-    protected JsonNode createPostRequest(GHMRequest ghRequest, Collection<String> outArraysList) {
+    protected JsonNode createPostRequest(GHMRequest ghRequest) {
         ObjectNode requestJson = objectMapper.createObjectNode();
-        if (ghRequest.identicalLists) {
+        if (ghRequest.getFromPoints() == ghRequest.getToPoints()
+                && ghRequest.getFromPointHints() == ghRequest.getToPointHints()
+                && ghRequest.getFromCurbsides() == ghRequest.getToCurbsides()
+        ) {
+            // save some bandwidth when from/to points are equal
             putPoints(requestJson, "points", ghRequest.getFromPoints());
             putStrings(requestJson, "point_hints", ghRequest.getFromPointHints());
             putStrings(requestJson, "curbsides", ghRequest.getFromCurbsides());
@@ -101,8 +101,7 @@ public abstract class GHMatrixAbstractRequester {
         }
 
         putStrings(requestJson, "snap_preventions", ghRequest.getSnapPreventions());
-        putStrings(requestJson, "out_arrays", outArraysList);
-        // requestJson.put("elevation", ghRequest.getHints().getBool("elevation", false));
+        putStrings(requestJson, "out_arrays", ghRequest.getOutArrays());
         requestJson.put("fail_fast", ghRequest.getFailFast());
 
         Map<String, Object> hintsMap = ghRequest.getHints().toMap();

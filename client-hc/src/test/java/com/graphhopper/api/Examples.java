@@ -92,19 +92,18 @@ public class Examples {
         matrixClient.setKey(apiKey);
 
         GHMRequest ghmRequest = new GHMRequest();
-        ghmRequest.addOutArray("distances");
-        ghmRequest.addOutArray("times");
+        // todonow: or was this only dist+time before?
+        ghmRequest.setOutArrays(Arrays.asList("weights", "distances", "times"));
         ghmRequest.putHint("vehicle", "car");
 
+        // todonow: why was this commented out?
         // init points for a symmetric matrix
         // List<GHPoint> allPoints = Arrays.asList(new GHPoint(49.6724, 11.3494), new GHPoint(49.6550, 11.4180));
         // ghmRequest.addAllPoints(allPoints);
 
+        ghmRequest.setFromPoints(Arrays.asList(new GHPoint(49.6724, 11.3494)));
         // or init e.g. a one-to-many matrix:
-        ghmRequest.addFromPoint(new GHPoint(49.6724, 11.3494));
-        for (GHPoint to : Arrays.asList(new GHPoint(49.6724, 11.3494), new GHPoint(49.6550, 11.4180))) {
-            ghmRequest.addToPoint(to);
-        }
+        ghmRequest.setToPoints(Arrays.asList(new GHPoint(49.6724, 11.3494), new GHPoint(49.6550, 11.4180)));
 
         MatrixResponse response = matrixClient.route(ghmRequest);
         if (response.hasErrors())
