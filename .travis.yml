@@ -11,10 +11,8 @@ env:
 
 matrix:
   include:
-    - env: JDK='8/ga' # for backward compatibility and release
-    - env: JDK='17/ga'# latest LTS
-    - env: JDK='18/ga'# latest
-    - env: JDK='19/ea'# latest early access
+    - name: JDK8
+      env: JDK='8/ga' # for backward compatibility and release
 
 # avoid default dependency command for maven, 'true' means 'return true' and continue
 install: true
