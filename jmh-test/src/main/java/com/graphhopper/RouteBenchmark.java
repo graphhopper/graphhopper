@@ -19,18 +19,24 @@
 package com.graphhopper;
 
 import com.graphhopper.api.GraphHopperWeb;
-import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.resources.RouteResource;
+import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.MiniPerfTest;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.glassfish.jersey.internal.inject.AbstractBinder;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.servlet.ServletContainer;
 import org.openjdk.jmh.annotations.*;
 import org.slf4j.LoggerFactory;
 
@@ -51,9 +57,10 @@ public class RouteBenchmark {
     @Param({"bayern-220101-gh"})
     String graph_folder;
     private GraphHopper hopper;
+    private Server jettyServer;
 
     @Setup
-    public void setup() {
+    public void setup() throws Exception {
         PMap args = new PMap();
         String vehicleStr = "car";
         String weightingStr = "fastest";
@@ -75,6 +82,17 @@ public class RouteBenchmark {
                 47.9917,
                 48.3014
         );
+
+        jettyServer = new Server(8989);
+        startServer(jettyServer, hopper);
+    }
+
+    @TearDown
+    public void tearDown() throws Exception {
+        jettyServer.stop();
+        while (!jettyServer.isStopped()) {
+        }
+        jettyServer.destroy();
     }
 
     @State(Scope.Thread)
@@ -109,6 +127,7 @@ public class RouteBenchmark {
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public double measureRouteHttp(RouteState state) {
         GraphHopperWeb client = new GraphHopperWeb("http://localhost:8989/route");
+        client.setPostRequest(false);
         GHResponse response = client.route(state.ghRequest);
         if (response.hasErrors())
             throw new IllegalStateException("There should be no errors in Measurement, " + response.getErrors().toString());
@@ -148,19 +167,21 @@ public class RouteBenchmark {
         return points;
     }
 
-    public static void main(String[] args) {
-        // used to run/debug manually without JMH
-        RouteBenchmark b = new RouteBenchmark();
-        b.graph_folder = "bayern-220101-gh";
-        b.setup();
-        RouteState s = new RouteState();
-        s.numPoints = 2;
-        s.setup(b);
-
-        MiniPerfTest t1 = new MiniPerfTest().setIterations(100).start((warmup, run) -> (int) b.measureRoute(s));
-        System.out.println(t1.getReport());
-
-        MiniPerfTest t2 = new MiniPerfTest().setIterations(100).start((warmup, run) -> (int) b.measureRouteHttp(s));
-        System.out.println(t2.getReport());
+    public static void startServer(Server jettyServer, GraphHopper hopper) throws Exception {
+        ServletContextHandler handler = new ServletContextHandler(ServletContextHandler.SESSIONS);
+        handler.setContextPath("/");
+        ResourceConfig rc = new ResourceConfig();
+        rc.register(new AbstractBinder() {
+            @Override
+            public void configure() {
+                bind(new RouteResource(hopper,
+                        new ProfileResolver(hopper.getEncodingManager(), hopper.getProfiles(), hopper.getCHPreparationHandler().getCHProfiles(), hopper.getLMPreparationHandler().getLMProfiles()),
+                        hopper.hasElevation())).to(RouteResource.class);
+            }
+        });
+        rc.register(RouteResource.class);
+        handler.addServlet(new ServletHolder(new ServletContainer(rc)), "/*");
+        jettyServer.setHandler(handler);
+        jettyServer.start();
     }
 }
