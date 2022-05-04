@@ -247,21 +247,6 @@ public class GraphHopperStorage implements Graph, Closeable {
     // ORS-GH MOD START
     // CALT
     // TODO ORS: should calt provide its own classes instead of modifying ch?
-    public RoutingCHGraphImpl getCoreGraph(Weighting weighting) {
-        if (chEntries.isEmpty())
-            throw new IllegalStateException("Cannot find graph implementation");
-        Iterator<CHEntry> iterator = chEntries.iterator();
-        while(iterator.hasNext()){
-            CHEntry cg = iterator.next();
-             if(cg.chConfig.getType() == "core"
-                     && cg.chConfig.getWeighting().getName() == weighting.getName()
-                     && cg.chConfig.getWeighting().getFlagEncoder().toString() == weighting.getFlagEncoder().toString()) {
-                 return cg.chGraph;
-             }
-        }
-        throw new IllegalStateException("No core graph was found");
-    }
-
     public RoutingCHGraphImpl getIsochroneGraph(Weighting weighting) {
         if (chEntries.isEmpty())
             throw new IllegalStateException("Cannot find graph implementation");
