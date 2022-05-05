@@ -46,8 +46,8 @@ GraphHopper is able to handle coverage for the world-wide [OpenStreetMap road ne
 Without enabled CH the import step alone requires ~60GB RAM and takes ~3h for the import. If you can accept
 much slower import times (3 days!) this can be reduced to 31GB RAM when you set `datareader.dataaccess=MMAP` in the config file.
 
-With enabled CH for car (with turn cost) the import command needs ~120GB RAM and the additional CH preparation takes ~5 hours
-but heavily depends on the CPU and memory speed.
+With enabled CH for the car profile (with turn cost) the import command needs ~120GB RAM and the additional CH preparation takes ~25 hours
+but heavily depends on the CPU and memory speed. Without turn cost support e.g. sufficient for bike it takes much less (~5 hours).
 
 ### System tuning
 
