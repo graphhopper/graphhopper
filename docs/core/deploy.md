@@ -5,20 +5,27 @@ This guide is written for everyone interested in deploying graphhopper on a serv
 ## Basics
 
 See the [installation section](../../README.md#installation) on how to start the server.
-Embed this command in a shell script and use this from e.g. [Docker](../../README.md#docker) or systemd.
+
+Then you can embed these commands in a shell script and use this from e.g. [Docker](../../README.md#docker) or systemd.
 
 For production usage you have a web service included where you can use [this configuration](https://raw.githubusercontent.com/graphhopper/graphhopper/master/config-example.yml)
-Increase the -Xmx/-Xms values of your server accordingly.
+Increase the -Xmx/-Xms parameters of the command accordingly.
 
-If you use JDK11 you should try a different garbage collectors like G1, ZGC or Shenandoah.
-The G1 is the default but the other two GCs are better suited for JVMs with bigger heaps (>32GB) and low pauses.
+You can reduce the memory requirements for the import step when you run the
+"import" command explicitly before the "server" command:
+
+```
+java [options] -jar *.jar import config.yml
+java [options] -jar *.jar server config.yml # calls the import command implicitly, if not done before
+```
+
+Try a different garbage collectors (GCs) like ZGC or Shenandoah for serving the
+routing requests. The G1 is the default GC but the other two GCs are better suited for JVMs with bigger heaps (>32GB) and low pauses.
 You enabled them with `-XX:+UseZGC` or `-XX:+UseShenandoahGC`. Please note that especially ZGC and G1 require quite a
 bit memory additionally to the heap and so sometimes speed can be increased when you lower the `Xmx` value.
 
-Notes:
-
- * If you want to support none-CH requests you should at least enable landmarks or limit the request to a certain
- * distance otherwise it might require lots of RAM per request! See [#734](https://github.com/graphhopper/graphhopper/issues/734).
+If you want to support none-CH requests you should at least enable landmarks or limit the request to a
+certain distance otherwise it might require lots of RAM per request! See [#734](https://github.com/graphhopper/graphhopper/issues/734).
 
 ### API Tokens
 
@@ -34,11 +41,13 @@ To be able to use the autocomplete feature of the point inputs you have to:
 
 ## Worldwide Setup
 
-GraphHopper is able to handle coverage for the whole [OpenStreetMap road network](http://planet.osm.org/).
-It needs approximately 25GB RAM for the import (CAR only) and ~1 hour (plus ~5h for contraction).
-If you can accept slower import times this can be reduced to 14GB RAM - you'll need to set `datareader.dataaccess=MMAP` in the config file.
+GraphHopper is able to handle coverage for the world-wide [OpenStreetMap road network](http://planet.osm.org/).
 
-Then 'only' 15GB are necessary and without contraction hierarchy this can be further reduced to about 9GB.
+Without enabled CH the import step alone requires ~60GB RAM and takes ~3h for the import. If you can accept
+much slower import times (3 days!) this can be reduced to 31GB RAM when you set `datareader.dataaccess=MMAP` in the config file.
+
+With enabled CH for car (with turn cost) the import command needs ~120GB RAM and the additional CH preparation takes ~5 hours
+but heavily depends on the CPU and memory speed.
 
 ### System tuning
 
