@@ -48,20 +48,19 @@ public class RouteBenchmark {
     @Param({"5000000"})
     int numEdges;
     private BaseGraph baseGraph;
-    private FlagEncoder encoder;
     private Server jettyServer;
 
     @Setup
     public void setup() throws Exception {
         EncodingManager em = EncodingManager.create("car");
-        encoder = em.getEncoder("car");
+        FlagEncoder encoder = em.getEncoder("car");
         baseGraph = new BaseGraph.Builder(em).create();
         Random rnd = new Random(123);
         for (int i = 0; i < numEdges; i++)
             baseGraph.edge(i, i + 1).set(encoder.getAverageSpeedEnc(), rnd.nextDouble() * 100);
 
         jettyServer = new Server(8989);
-        startServer(jettyServer, baseGraph, encoder);
+        startServer(jettyServer, baseGraph);
     }
 
     @TearDown
@@ -86,14 +85,11 @@ public class RouteBenchmark {
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public double measureSumGraph(SumState state) {
-        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
         double result = 0;
         AllEdgesIterator iter = baseGraph.getAllEdges();
         while (iter.next()) {
-            double speed = iter.get(speedEnc);
-            if (Double.isInfinite(speed))
-                continue;
-            result += ((iter.getEdge() % 2 == 0) ? -1.0 : +1.0) * speed;
+            double diff = iter.getBaseNode() - iter.getAdjNode();
+            result += ((iter.getEdge() % 2 == 0) ? -1.0 : +1.0) * diff;
         }
         return state.checksum = result;
     }
@@ -131,14 +127,14 @@ public class RouteBenchmark {
         return state.checksum = Double.parseDouble(call.execute().body().string());
     }
 
-    public static void startServer(Server jettyServer, BaseGraph baseGraph, FlagEncoder encoder) throws Exception {
+    public static void startServer(Server jettyServer, BaseGraph baseGraph) throws Exception {
         ServletContextHandler handler = new ServletContextHandler(ServletContextHandler.SESSIONS);
         handler.setContextPath("/");
         ResourceConfig rc = new ResourceConfig();
         rc.register(new AbstractBinder() {
             @Override
             public void configure() {
-                bind(new SumGraphResource(baseGraph, encoder)).to(SumGraphResource.class);
+                bind(new SumGraphResource(baseGraph)).to(SumGraphResource.class);
             }
         });
         rc.register(SumGraphResource.class);
@@ -158,26 +154,20 @@ public class RouteBenchmark {
 
     @Path("sumgraph")
     public static class SumGraphResource {
-
         final BaseGraph baseGraph;
-        final FlagEncoder encoder;
 
-        public SumGraphResource(BaseGraph baseGraph, FlagEncoder encoder) {
+        public SumGraphResource(BaseGraph baseGraph) {
             this.baseGraph = baseGraph;
-            this.encoder = encoder;
         }
 
         @GET
         @Produces({MediaType.APPLICATION_JSON})
         public double sumGraph() {
-            DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
             double result = 0;
             AllEdgesIterator iter = baseGraph.getAllEdges();
             while (iter.next()) {
-                double speed = iter.get(speedEnc);
-                if (Double.isInfinite(speed))
-                    continue;
-                result += ((iter.getEdge() % 2 == 0) ? -1.0 : +1.0) * speed;
+                int diff = iter.getBaseNode() - iter.getAdjNode();
+                result += ((iter.getEdge() % 2 == 0) ? -1.0 : +1.0) * diff;
             }
             return result;
         }
