@@ -22,15 +22,21 @@ import com.graphhopper.api.GraphHopperWeb;
 import com.graphhopper.config.Profile;
 import com.graphhopper.resources.RouteResource;
 import com.graphhopper.routing.ProfileResolver;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
+import okhttp3.Call;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -40,6 +46,11 @@ import org.glassfish.jersey.servlet.ServletContainer;
 import org.openjdk.jmh.annotations.*;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -144,6 +155,32 @@ public class RouteBenchmark {
         return state.checksum = (long) (response.getBest().getRouteWeight() + response.getBest().getDistance() + response.getBest().getTime());
     }
 
+    @Benchmark
+    @BenchmarkMode({Mode.AverageTime})
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public double measureSumGraph(RouteState state) {
+        FlagEncoder encoder = hopper.getEncodingManager().getEncoder("car");
+        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+        double result = 0;
+        AllEdgesIterator iter = hopper.getGraphHopperStorage().getAllEdges();
+        while (iter.next()) {
+            double speed = iter.get(speedEnc);
+            if (Double.isInfinite(speed))
+                continue;
+            result += ((iter.getEdge() % 2 == 0) ? -1.0 : +1.0) * speed;
+        }
+        return state.checksum = (long) result;
+    }
+
+    @Benchmark
+    @BenchmarkMode({Mode.AverageTime})
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public double measureSumGraphHttp(RouteState state) throws IOException {
+        OkHttpClient client = new OkHttpClient.Builder().build();
+        Call call = client.newCall(new Request.Builder().url("http://localhost:8989/sumgraph").build());
+        return state.checksum = (long) Double.parseDouble(call.execute().body().string());
+    }
+
     private static List<GHPoint> generateRandomButValidPoints(GraphHopper hopper, BBox bBox, String profileName, int numPoints, Random rnd) {
         LocationIndex index = hopper.getLocationIndex();
         Weighting weighting = hopper.createWeighting(hopper.getProfile(profileName), new PMap());
@@ -180,8 +217,43 @@ public class RouteBenchmark {
             }
         });
         rc.register(RouteResource.class);
+
+        rc.register(new AbstractBinder() {
+            @Override
+            public void configure() {
+                bind(new SumGraphResource(hopper)).to(SumGraphResource.class);
+            }
+        });
+        rc.register(SumGraphResource.class);
+
         handler.addServlet(new ServletHolder(new ServletContainer(rc)), "/*");
         jettyServer.setHandler(handler);
         jettyServer.start();
+    }
+
+    @Path("sumgraph")
+    public static class SumGraphResource {
+
+        final GraphHopper hopper;
+
+        public SumGraphResource(GraphHopper hopper) {
+            this.hopper = hopper;
+        }
+
+        @GET
+        @Produces({MediaType.APPLICATION_JSON})
+        public double sumGraph() {
+            FlagEncoder encoder = hopper.getEncodingManager().getEncoder("car");
+            DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+            double result = 0;
+            AllEdgesIterator iter = hopper.getGraphHopperStorage().getAllEdges();
+            while (iter.next()) {
+                double speed = iter.get(speedEnc);
+                if (Double.isInfinite(speed))
+                    continue;
+                result += ((iter.getEdge() % 2 == 0) ? -1.0 : +1.0) * speed;
+            }
+            return result;
+        }
     }
 }
