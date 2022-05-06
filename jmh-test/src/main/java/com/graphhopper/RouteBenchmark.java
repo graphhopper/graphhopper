@@ -18,7 +18,6 @@
 
 package com.graphhopper;
 
-import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -48,6 +47,7 @@ public class RouteBenchmark {
     @Param({"5000000"})
     int numEdges;
     private BaseGraph baseGraph;
+    private int[] array;
     private Server jettyServer;
 
     @Setup
@@ -59,8 +59,13 @@ public class RouteBenchmark {
         for (int i = 0; i < numEdges; i++)
             baseGraph.edge(i, i + 1).set(encoder.getAverageSpeedEnc(), rnd.nextDouble() * 100);
 
+        rnd = new Random(123);
+        array = new int[5 * numEdges];
+        for (int i = 0; i < numEdges * 5; ++i)
+            array[i] = rnd.nextInt(100);
+
         jettyServer = new Server(8989);
-        startServer(jettyServer, baseGraph);
+        startServer(jettyServer, baseGraph, array);
     }
 
     @TearDown
@@ -79,6 +84,25 @@ public class RouteBenchmark {
         public void finish() {
             LoggerFactory.getLogger(RouteBenchmark.class).info("checksum: " + checksum);
         }
+    }
+
+    @Benchmark
+    @BenchmarkMode({Mode.AverageTime})
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public double measureSumArray(SumState state) {
+        double result = 0;
+        for (int i = 0; i < array.length; i++)
+            result += array[i] * ((i % 2 == 0) ? 1 : -1);
+        return state.checksum = result;
+    }
+
+    @Benchmark
+    @BenchmarkMode({Mode.AverageTime})
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public double measureSumArrayHttp(SumState state) throws IOException {
+        OkHttpClient client = new OkHttpClient.Builder().build();
+        Call call = client.newCall(new Request.Builder().url("http://localhost:8989/sumarray").build());
+        return state.checksum = Double.parseDouble(call.execute().body().string());
     }
 
     @Benchmark
@@ -127,7 +151,7 @@ public class RouteBenchmark {
         return state.checksum = Double.parseDouble(call.execute().body().string());
     }
 
-    public static void startServer(Server jettyServer, BaseGraph baseGraph) throws Exception {
+    public static void startServer(Server jettyServer, BaseGraph baseGraph, int[] array) throws Exception {
         ServletContextHandler handler = new ServletContextHandler(ServletContextHandler.SESSIONS);
         handler.setContextPath("/");
         ResourceConfig rc = new ResourceConfig();
@@ -146,6 +170,14 @@ public class RouteBenchmark {
             }
         });
         rc.register(SumFlagsResource.class);
+
+        rc.register(new AbstractBinder() {
+            @Override
+            public void configure() {
+                bind(new SumArrayResource(array)).to(SumArrayResource.class);
+            }
+        });
+        rc.register(SumArrayResource.class);
 
         handler.addServlet(new ServletHolder(new ServletContainer(rc)), "/*");
         jettyServer.setHandler(handler);
@@ -169,6 +201,24 @@ public class RouteBenchmark {
                 int diff = iter.getBaseNode() - iter.getAdjNode();
                 result += ((iter.getEdge() % 2 == 0) ? -1.0 : +1.0) * diff;
             }
+            return result;
+        }
+    }
+
+    @Path("sumarray")
+    public static class SumArrayResource {
+        final int[] array;
+
+        public SumArrayResource(int[] array) {
+            this.array = array;
+        }
+
+        @GET
+        @Produces({MediaType.APPLICATION_JSON})
+        public double sumArray() {
+            double result = 0;
+            for (int i = 0; i < array.length; i++)
+                result += array[i] * ((i % 2 == 0) ? 1 : -1);
             return result;
         }
     }
