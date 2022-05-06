@@ -21,6 +21,7 @@ package com.graphhopper;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.ResponseBody;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -43,6 +44,7 @@ public class RouteBenchmark {
     @Param({"10000000"})
     int size;
     private int[] array;
+    OkHttpClient client;
     private Server jettyServer;
 
     @Setup
@@ -52,6 +54,7 @@ public class RouteBenchmark {
         for (int i = 0; i < array.length; ++i)
             array[i] = rnd.nextInt(100);
 
+        client = new OkHttpClient.Builder().build();
         jettyServer = new Server(8989);
         startServer(jettyServer, array);
     }
@@ -77,6 +80,24 @@ public class RouteBenchmark {
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void measureBaseline() {
+        // do nothing
+    }
+
+    @Benchmark
+    @BenchmarkMode({Mode.AverageTime})
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public double measureBaselineHttp(SumState state) throws IOException {
+        Call call = client.newCall(new Request.Builder().url("http://localhost:8989/baseline").build());
+        ResponseBody body = call.execute().body();
+        double result = state.checksum = Double.parseDouble(body.string());
+        body.close();
+        return result;
+    }
+
+    @Benchmark
+    @BenchmarkMode({Mode.AverageTime})
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public double measureSumArray(SumState state) {
         double result = sumArray(array);
         return state.checksum = result;
@@ -86,9 +107,11 @@ public class RouteBenchmark {
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public double measureSumArrayHttp(SumState state) throws IOException {
-        OkHttpClient client = new OkHttpClient.Builder().build();
         Call call = client.newCall(new Request.Builder().url("http://localhost:8989/sumarray").build());
-        return state.checksum = Double.parseDouble(call.execute().body().string());
+        ResponseBody body = call.execute().body();
+        double result = state.checksum = Double.parseDouble(body.string());
+        body.close();
+        return result;
     }
 
     public static void startServer(Server jettyServer, int[] array) throws Exception {
@@ -102,6 +125,7 @@ public class RouteBenchmark {
             }
         });
         rc.register(SumArrayResource.class);
+        rc.register(BaselineResource.class);
 
         handler.addServlet(new ServletHolder(new ServletContainer(rc)), "/*");
         jettyServer.setHandler(handler);
@@ -120,6 +144,15 @@ public class RouteBenchmark {
         @Produces({MediaType.APPLICATION_JSON})
         public double sumArray() {
             return RouteBenchmark.sumArray(array);
+        }
+    }
+
+    @Path("baseline")
+    public static class BaselineResource {
+        @GET
+        @Produces({MediaType.APPLICATION_JSON})
+        public double baseline() {
+            return 42;
         }
     }
 
