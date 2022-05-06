@@ -31,9 +31,14 @@ import com.graphhopper.util.MiniPerfTest;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
+import okhttp3.Call;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.ResponseBody;
 import org.openjdk.jmh.annotations.*;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -51,6 +56,8 @@ public class RouteBenchmark {
     @Param({"bayern-220101-gh"})
     String graph_folder;
     private GraphHopper hopper;
+    private GraphHopperWeb ghClient;
+    private OkHttpClient client;
 
     @Setup
     public void setup() {
@@ -67,6 +74,9 @@ public class RouteBenchmark {
         hopper = new GraphHopper();
         hopper.init(ghConfig);
         hopper.importOrLoad();
+
+        ghClient = new GraphHopperWeb("http://localhost:8989/route");
+        client = ghClient.getDownloader();
 
         // Munich
         bBox = new BBox(
@@ -107,9 +117,20 @@ public class RouteBenchmark {
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public double measureInfoHttp(RouteState state) throws IOException {
+        Call call = client.newCall(new Request.Builder().url("http://localhost:8989/info").build());
+        ResponseBody body = call.execute().body();
+        double result = state.checksum = body.contentLength();
+        System.out.println(body.string());
+        body.close();
+        return result;
+    }
+
+    @Benchmark
+    @BenchmarkMode({Mode.AverageTime})
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public double measureRouteHttp(RouteState state) {
-        GraphHopperWeb client = new GraphHopperWeb("http://localhost:8989/route");
-        GHResponse response = client.route(state.ghRequest);
+        GHResponse response = ghClient.route(state.ghRequest);
         if (response.hasErrors())
             throw new IllegalStateException("There should be no errors in Measurement, " + response.getErrors().toString());
         return state.checksum = (long) (response.getBest().getRouteWeight() + response.getBest().getDistance() + response.getBest().getTime());
