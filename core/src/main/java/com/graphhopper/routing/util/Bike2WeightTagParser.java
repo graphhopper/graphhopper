@@ -18,12 +18,14 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.PointList;
 
+import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.util.Helper.keepIn;
 
 /**
@@ -33,12 +35,27 @@ import static com.graphhopper.util.Helper.keepIn;
  */
 public class Bike2WeightTagParser extends BikeTagParser {
 
-    public Bike2WeightTagParser() {
-        this(new PMap());
+    public Bike2WeightTagParser(EncodedValueLookup lookup, PMap properties) {
+        this(
+                lookup.getBooleanEncodedValue(getKey(properties.getString("name", "bike2"), "access")),
+                lookup.getDecimalEncodedValue(getKey(properties.getString("name", "bike2"), "average_speed")),
+                lookup.getDecimalEncodedValue(getKey(properties.getString("name", "bike2"), "priority")),
+                lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class),
+                lookup.getBooleanEncodedValue(Roundabout.KEY),
+                lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class),
+                lookup.hasEncodedValue(TurnCost.key(properties.getString("name", "bike2"))) ? lookup.getDecimalEncodedValue(TurnCost.key(properties.getString("name", "bike2"))) : null,
+                properties
+        );
     }
 
-    public Bike2WeightTagParser(PMap properties) {
-        super(new PMap(properties).putObject("speed_two_directions", true).putObject("name", properties.getString("name", "bike2")));
+    public Bike2WeightTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc,
+                                DecimalEncodedValue priorityEnc, EnumEncodedValue<RouteNetwork> bikeRouteEnc,
+                                BooleanEncodedValue roundaboutEnc,
+                                EnumEncodedValue<Smoothness> smoothnessEnc, DecimalEncodedValue turnCostEnc, PMap properties) {
+        super(accessEnc, speedEnc, priorityEnc, bikeRouteEnc, smoothnessEnc, properties.getString("name", "bike2"),
+                roundaboutEnc, turnCostEnc);
+        blockPrivate(properties.getBool("block_private", true));
+        blockFords(properties.getBool("block_fords", false));
     }
 
     @Override
