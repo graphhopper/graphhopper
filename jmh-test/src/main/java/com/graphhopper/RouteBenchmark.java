@@ -18,10 +18,6 @@
 
 package com.graphhopper;
 
-import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.BaseGraph;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -44,28 +40,20 @@ import java.util.concurrent.TimeUnit;
 
 @State(Scope.Benchmark)
 public class RouteBenchmark {
-    @Param({"5000000"})
-    int numEdges;
-    private BaseGraph baseGraph;
+    @Param({"10000000"})
+    int size;
     private int[] array;
     private Server jettyServer;
 
     @Setup
     public void setup() throws Exception {
-        EncodingManager em = EncodingManager.create("car");
-        FlagEncoder encoder = em.getEncoder("car");
-        baseGraph = new BaseGraph.Builder(em).create();
         Random rnd = new Random(123);
-        for (int i = 0; i < numEdges; i++)
-            baseGraph.edge(i, i + 1).set(encoder.getAverageSpeedEnc(), rnd.nextDouble() * 100);
-
-        rnd = new Random(123);
-        array = new int[5 * numEdges];
-        for (int i = 0; i < numEdges * 5; ++i)
+        array = new int[size];
+        for (int i = 0; i < array.length; ++i)
             array[i] = rnd.nextInt(100);
 
         jettyServer = new Server(8989);
-        startServer(jettyServer, baseGraph, array);
+        startServer(jettyServer, array);
     }
 
     @TearDown
@@ -90,9 +78,7 @@ public class RouteBenchmark {
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public double measureSumArray(SumState state) {
-        double result = 0;
-        for (int i = 0; i < array.length; i++)
-            result += array[i] * ((i % 2 == 0) ? 1 : -1);
+        double result = sumArray(array);
         return state.checksum = result;
     }
 
@@ -105,72 +91,10 @@ public class RouteBenchmark {
         return state.checksum = Double.parseDouble(call.execute().body().string());
     }
 
-    @Benchmark
-    @BenchmarkMode({Mode.AverageTime})
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public double measureSumGraph(SumState state) {
-        double result = 0;
-        AllEdgesIterator iter = baseGraph.getAllEdges();
-        while (iter.next()) {
-            double diff = iter.getBaseNode() - iter.getAdjNode();
-            result += ((iter.getEdge() % 2 == 0) ? -1.0 : +1.0) * diff;
-        }
-        return state.checksum = result;
-    }
-
-    @Benchmark
-    @BenchmarkMode({Mode.AverageTime})
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public double measureSumGraphHttp(SumState state) throws IOException {
-        OkHttpClient client = new OkHttpClient.Builder().build();
-        Call call = client.newCall(new Request.Builder().url("http://localhost:8989/sumgraph").build());
-        return state.checksum = Double.parseDouble(call.execute().body().string());
-    }
-
-    @Benchmark
-    @BenchmarkMode({Mode.AverageTime})
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public double measureSumFlags(SumState state) {
-        double result = 0;
-        AllEdgesIterator iter = baseGraph.getAllEdges();
-        while (iter.next()) {
-            int flag = iter.getFlags().ints[0];
-            if (Double.isInfinite(flag))
-                continue;
-            result += ((iter.getEdge() % 2 == 0) ? -1.0 : +1.0) * flag;
-        }
-        return state.checksum = result;
-    }
-
-    @Benchmark
-    @BenchmarkMode({Mode.AverageTime})
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public double measureSumFlagsHttp(SumState state) throws IOException {
-        OkHttpClient client = new OkHttpClient.Builder().build();
-        Call call = client.newCall(new Request.Builder().url("http://localhost:8989/sumflags").build());
-        return state.checksum = Double.parseDouble(call.execute().body().string());
-    }
-
-    public static void startServer(Server jettyServer, BaseGraph baseGraph, int[] array) throws Exception {
+    public static void startServer(Server jettyServer, int[] array) throws Exception {
         ServletContextHandler handler = new ServletContextHandler(ServletContextHandler.SESSIONS);
         handler.setContextPath("/");
         ResourceConfig rc = new ResourceConfig();
-        rc.register(new AbstractBinder() {
-            @Override
-            public void configure() {
-                bind(new SumGraphResource(baseGraph)).to(SumGraphResource.class);
-            }
-        });
-        rc.register(SumGraphResource.class);
-
-        rc.register(new AbstractBinder() {
-            @Override
-            public void configure() {
-                bind(new SumFlagsResource(baseGraph)).to(SumFlagsResource.class);
-            }
-        });
-        rc.register(SumFlagsResource.class);
-
         rc.register(new AbstractBinder() {
             @Override
             public void configure() {
@@ -184,27 +108,6 @@ public class RouteBenchmark {
         jettyServer.start();
     }
 
-    @Path("sumgraph")
-    public static class SumGraphResource {
-        final BaseGraph baseGraph;
-
-        public SumGraphResource(BaseGraph baseGraph) {
-            this.baseGraph = baseGraph;
-        }
-
-        @GET
-        @Produces({MediaType.APPLICATION_JSON})
-        public double sumGraph() {
-            double result = 0;
-            AllEdgesIterator iter = baseGraph.getAllEdges();
-            while (iter.next()) {
-                int diff = iter.getBaseNode() - iter.getAdjNode();
-                result += ((iter.getEdge() % 2 == 0) ? -1.0 : +1.0) * diff;
-            }
-            return result;
-        }
-    }
-
     @Path("sumarray")
     public static class SumArrayResource {
         final int[] array;
@@ -216,34 +119,14 @@ public class RouteBenchmark {
         @GET
         @Produces({MediaType.APPLICATION_JSON})
         public double sumArray() {
-            double result = 0;
-            for (int i = 0; i < array.length; i++)
-                result += array[i] * ((i % 2 == 0) ? 1 : -1);
-            return result;
+            return RouteBenchmark.sumArray(array);
         }
     }
 
-    @Path("sumflags")
-    public static class SumFlagsResource {
-
-        final BaseGraph baseGraph;
-
-        public SumFlagsResource(BaseGraph baseGraph) {
-            this.baseGraph = baseGraph;
-        }
-
-        @GET
-        @Produces({MediaType.APPLICATION_JSON})
-        public double sumGraph() {
-            double result = 0;
-            AllEdgesIterator iter = baseGraph.getAllEdges();
-            while (iter.next()) {
-                int flag = iter.getFlags().ints[0];
-                if (Double.isInfinite(flag))
-                    continue;
-                result += ((iter.getEdge() % 2 == 0) ? -1.0 : +1.0) * flag;
-            }
-            return result;
-        }
+    private static double sumArray(int[] array) {
+        double result = 0;
+        for (int i = 0; i < array.length; i++)
+            result += array[i] * ((i % 2 == 0) ? 1 : -1);
+        return result;
     }
 }
