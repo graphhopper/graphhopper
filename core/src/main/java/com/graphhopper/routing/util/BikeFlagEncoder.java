@@ -51,9 +51,7 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
 
     public BikeFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
         super(name, speedBits, speedFactor, maxTurnCosts, speedTwoDirections);
-        addPushingSection("path");
         addPushingSection("footway");
-        addPushingSection("pedestrian");
         addPushingSection("steps");
         addPushingSection("platform");
 

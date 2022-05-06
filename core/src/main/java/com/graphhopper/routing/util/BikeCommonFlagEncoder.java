@@ -150,11 +150,11 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
         final int CYCLEWAY_SPEED = 18;  // Make sure cycleway and path use same speed value, see #634
         setHighwaySpeed("cycleway", CYCLEWAY_SPEED);
-        setHighwaySpeed("path", 10);
+        setHighwaySpeed("path", CYCLEWAY_SPEED);
         setHighwaySpeed("footway", 14);
         setHighwaySpeed("platform", 6);
-        setHighwaySpeed("pedestrian", 14);
-        setHighwaySpeed("track", 18);
+        setHighwaySpeed("pedestrian", CYCLEWAY_SPEED);
+        setHighwaySpeed("track", CYCLEWAY_SPEED);
         setHighwaySpeed("service", 14);
         setHighwaySpeed("residential", 18);
         // no other highway applies:
@@ -210,9 +210,9 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         highwayMap.put("tertiary", AVOID.getValue());
         highwayMap.put("tertiary_link", AVOID.getValue());
         // Pedestrian ways
-        highwayMap.put("footway", SLIGHT_AVOID.getValue());
-        highwayMap.put("pedestrian", SLIGHT_AVOID.getValue());
-        highwayMap.put("path", SLIGHT_AVOID.getValue());
+        highwayMap.put("footway", UNCHANGED.getValue());
+        highwayMap.put("path", SLIGHT_PREFER.getValue());
+        highwayMap.put("pedestrian", VERY_NICE.getValue());
         // Quiet ways
         highwayMap.put("residential", SLIGHT_PREFER.getValue());
         highwayMap.put("service", SLIGHT_PREFER.getValue());
@@ -518,10 +518,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
         // Associate penalty with cycle infrastructure
         if (way.hasTag("bicycle", "designated", "official")) {
-            if ("path".equals(highway))
-                penaltyMap.put(CYCLE_INFRA_KEY, VERY_NICE.getValue());
-            else
-                penaltyMap.put(CYCLE_INFRA_KEY, PREFER.getValue());
+            penaltyMap.put(CYCLE_INFRA_KEY, VERY_NICE.getValue());
         }
         if (way.hasTag("bicycle", "use_sidepath")) {
             penaltyMap.put(CYCLE_INFRA_KEY, REACH_DESTINATION.getValue());
