@@ -2600,4 +2600,24 @@ public class GraphHopperTest {
         hopper.close();
     }
 
+    @Test
+    void testLoadingWithAnotherSpeedFactorFails() {
+        {
+            GraphHopper hopper = new GraphHopper()
+                    .setFlagEncodersString("car|speed_factor=7")
+                    .setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"))
+                    .setGraphHopperLocation(GH_LOCATION)
+                    .setOSMFile(BAYREUTH);
+            hopper.importOrLoad();
+        }
+        {
+            GraphHopper hopper = new GraphHopper()
+                    .setFlagEncodersString("car|speed_factor=9")
+                    .setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"))
+                    .setGraphHopperLocation(GH_LOCATION);
+            IllegalStateException ex = assertThrows(IllegalStateException.class, hopper::load);
+            assertTrue(ex.getMessage().contains("Flag encoders do not match"), ex.getMessage());
+        }
+    }
+
 }

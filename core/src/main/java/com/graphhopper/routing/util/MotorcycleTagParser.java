@@ -18,12 +18,8 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
-import com.graphhopper.routing.ev.EncodedValue;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
-import com.graphhopper.routing.weighting.CurvatureWeighting;
-import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.EdgeIteratorState;
@@ -31,7 +27,6 @@ import com.graphhopper.util.PMap;
 import com.graphhopper.util.PointList;
 
 import java.util.HashSet;
-import java.util.List;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 
@@ -43,20 +38,31 @@ import static com.graphhopper.routing.util.EncodingManager.getKey;
  * @author boldtrn
  */
 public class MotorcycleTagParser extends CarTagParser {
+    public static final double MOTOR_CYCLE_MAX_SPEED = 120;
     private final HashSet<String> avoidSet = new HashSet<>();
     private final HashSet<String> preferSet = new HashSet<>();
     private final DecimalEncodedValue priorityWayEncoder;
     private final DecimalEncodedValue curvatureEncoder;
 
-    public MotorcycleTagParser() {
-        this(new PMap());
+    public MotorcycleTagParser(EncodedValueLookup lookup, PMap properties) {
+        this(
+                lookup.getBooleanEncodedValue(getKey("motorcycle", "access")),
+                lookup.getDecimalEncodedValue(getKey("motorcycle", "average_speed")),
+                lookup.hasEncodedValue(TurnCost.key("motorcycle")) ? lookup.getDecimalEncodedValue(TurnCost.key("motorcycle")) : null,
+                lookup.getBooleanEncodedValue(Roundabout.KEY),
+                lookup.getDecimalEncodedValue(getKey("motorcycle", "priority")),
+                lookup.getDecimalEncodedValue(getKey("motorcycle", "curvature")),
+                new PMap(properties).putObject("name", "motorcycle"),
+                TransportationMode.MOTORCYCLE
+        );
     }
 
-    public MotorcycleTagParser(PMap properties) {
-        super(properties.putObject("name", "motorcycle").putObject("speed_two_directions", true));
-
-        priorityWayEncoder = new DecimalEncodedValueImpl(getKey(getName(), "priority"), 4, PriorityCode.getFactor(1), false);
-        curvatureEncoder = new DecimalEncodedValueImpl(getKey(getName(), "curvature"), 4, 0.1, false);
+    public MotorcycleTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue turnCostEnc,
+                               BooleanEncodedValue roundaboutEnc,
+                               DecimalEncodedValue priorityWayEncoder, DecimalEncodedValue curvatureEnc, PMap properties, TransportationMode transportationMode) {
+        super(accessEnc, speedEnc, turnCostEnc, roundaboutEnc, new PMap(properties).putObject("name", "motorcycle"), transportationMode, speedEnc.getNextStorableValue(MOTOR_CYCLE_MAX_SPEED));
+        this.priorityWayEncoder = priorityWayEncoder;
+        this.curvatureEncoder = curvatureEnc;
 
         barriers.remove("bus_trap");
         barriers.remove("sump_buster");
@@ -78,8 +84,6 @@ public class MotorcycleTagParser extends CarTagParser {
         preferSet.add("primary");
         preferSet.add("secondary");
         preferSet.add("tertiary");
-
-        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(properties.getDouble("max_speed", 120));
 
         // autobahn
         defaultSpeedMap.put("motorway", 100);
@@ -106,16 +110,6 @@ public class MotorcycleTagParser extends CarTagParser {
         defaultSpeedMap.put("road", 20);
         // forestry stuff
         defaultSpeedMap.put("track", 15);
-    }
-
-    /**
-     * Define the place of the speedBits in the edge flags for car.
-     */
-    @Override
-    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue) {
-        super.createEncodedValues(registerNewEncodedValue);
-        registerNewEncodedValue.add(priorityWayEncoder);
-        registerNewEncodedValue.add(curvatureEncoder);
     }
 
     @Override
@@ -278,23 +272,6 @@ public class MotorcycleTagParser extends CarTagParser {
      */
     protected double increaseBendinessImpact(double bendiness) {
         return (Math.pow(bendiness, 2));
-    }
-
-    @Override
-    public TransportationMode getTransportationMode() {
-        return TransportationMode.MOTORCYCLE;
-    }
-
-    @Override
-    public boolean supports(Class<?> feature) {
-        if (super.supports(feature))
-            return true;
-
-        if (CurvatureWeighting.class.isAssignableFrom(feature)) {
-            return true;
-        }
-
-        return PriorityWeighting.class.isAssignableFrom(feature);
     }
 
 }

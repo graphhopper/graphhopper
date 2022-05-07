@@ -30,7 +30,8 @@ import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CustomArea;
-import com.graphhopper.routing.util.TagParserManager;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.OSMParsers;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.TurnCostParser;
@@ -72,7 +73,8 @@ public class OSMReader {
     private final BaseGraph baseGraph;
     private final NodeAccess nodeAccess;
     private final TurnCostStorage turnCostStorage;
-    private final TagParserManager tagParserManager;
+    private final EncodingManager encodingManager;
+    private final OSMParsers osmParsers;
     private final DistanceCalc distCalc = DistanceCalcEarth.DIST_EARTH;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private AreaIndex<CustomArea> areaIndex;
@@ -94,19 +96,21 @@ public class OSMReader {
     private HashMap<Long, ArrayList<Long>> bicycleRouteWayMembers = new HashMap<Long, ArrayList<Long>>();
     private List<String> bicycleNetworks = Arrays.asList("lcn", "rcn", "ncn", "icn");
 
-    public OSMReader(BaseGraph baseGraph, TagParserManager tagParserManager, OSMReaderConfig config) {
+    public OSMReader(BaseGraph baseGraph, EncodingManager encodingManager, OSMParsers osmParsers, OSMReaderConfig config) {
         this.baseGraph = baseGraph;
+        this.encodingManager = encodingManager;
         this.config = config;
         this.nodeAccess = baseGraph.getNodeAccess();
-        this.tagParserManager = tagParserManager;
+        this.osmParsers = osmParsers;
 
         simplifyAlgo.setMaxDistance(config.getMaxWayPointDistance());
         simplifyAlgo.setElevationMaxDistance(config.getElevationMaxWayPointDistance());
         turnCostStorage = baseGraph.getTurnCostStorage();
 
-        tempRelFlags = tagParserManager.createRelationFlags();
+        tempRelFlags = osmParsers.createRelationFlags();
         if (tempRelFlags.length != 2)
-            throw new IllegalArgumentException("Cannot use relation flags with != 2 integers");
+            // we use a long to store relation flags currently, so the relation flags ints ref must have length 2
+            throw new IllegalArgumentException("OSMReader cannot use relation flags with != 2 integers");
     }
 
     /**
@@ -142,8 +146,8 @@ public class OSMReader {
     }
 
     public void readGraph() throws IOException {
-        if (tagParserManager == null)
-            throw new IllegalStateException("Encoding manager was not set.");
+        if (osmParsers == null)
+            throw new IllegalStateException("Tag parsers were not set.");
 
         if (osmFile == null)
             throw new IllegalStateException("No OSM file specified");
@@ -195,7 +199,7 @@ public class OSMReader {
         if (!way.hasTags())
             return false;
 
-        return tagParserManager.acceptWay(way);
+        return osmParsers.acceptWay(way);
     }
 
     /**
@@ -330,7 +334,8 @@ public class OSMReader {
 
         setArtificialWayTags(pointList, way, distance, nodeTags);
         IntsRef relationFlags = getRelFlagsMap(way.getId());
-        IntsRef edgeFlags = tagParserManager.handleWayTags(way, relationFlags);
+        IntsRef edgeFlags = encodingManager.createEdgeFlags();
+        edgeFlags = osmParsers.handleWayTags(edgeFlags, way, relationFlags);
         if (edgeFlags.isEmpty())
             return;
 
@@ -345,7 +350,7 @@ public class OSMReader {
             checkCoordinates(toIndex, pointList.get(pointList.size() - 1));
             edge.setWayGeometry(pointList.shallowCopy(1, pointList.size() - 1, false));
         }
-        tagParserManager.applyWayTags(way, edge);
+        osmParsers.applyWayTags(way, edge);
 
         checkDistance(edge);
         if (osmWayIdSet.contains(way.getId())) {
@@ -512,7 +517,7 @@ public class OSMReader {
                         for (Long wayID : bicycleRouteWayMembers.get(relatioinOSMId))  {
                             IntsRef oldRelationFlags = getRelFlagsMap(wayID);
                             ReaderRelation bikerelation = createReaderRelation(newNetwork);
-                            IntsRef newRelationFlags = tagParserManager.handleRelationTags(bikerelation, oldRelationFlags);
+                            IntsRef newRelationFlags = osmParsers.handleRelationTags(bikerelation, oldRelationFlags);
                             putRelFlagsMap(wayID, newRelationFlags);
                         }
                     }
@@ -533,9 +538,9 @@ public class OSMReader {
                 IntsRef oldRelationFlags = getRelFlagsMap(member.getRef());;
                 if (superRouteRouteMembers.containsKey(relationOSMId)) {
                     ReaderRelation bikerelation = createReaderRelation(superRouteRouteMembers.get(relationOSMId));
-                    oldRelationFlags = tagParserManager.handleRelationTags(bikerelation, oldRelationFlags);
+                    oldRelationFlags = osmParsers.handleRelationTags(bikerelation, oldRelationFlags);
                 }   
-                IntsRef newRelationFlags = tagParserManager.handleRelationTags(relation, oldRelationFlags);
+                IntsRef newRelationFlags = osmParsers.handleRelationTags(relation, oldRelationFlags);
                 putRelFlagsMap(member.getRef(), newRelationFlags);
                 if (wayMembersOfBicycleRelations.size() != 0)
                     bicycleRouteWayMembers.put(relation.getId(), wayMembersOfBicycleRelations);
@@ -576,13 +581,13 @@ public class OSMReader {
                 int viaNode = map.getInternalNodeIdOfOsmNode(turnRelation.getViaOsmNodeId());
                 // street with restriction was not included (access or tag limits etc)
                 if (viaNode >= 0)
-                    tagParserManager.handleTurnRelationTags(turnRelation, map, baseGraph);
+                    osmParsers.handleTurnRelationTags(turnRelation, map, baseGraph);
             }
         }
     }
 
     protected void pass1Finished()  {
-        LOGGER.info("pass1Finished bicycleRouteWayMembers.size(): " + bicycleRouteWayMembers.size() + " superRouteRouteMembers.size(): " + superRouteRouteMembers.size());        
+        LOGGER.info("pass1Finished bicycleRouteWayMembers.size(): " + bicycleRouteWayMembers.size() + " superRouteRouteMembers.size(): " + superRouteRouteMembers.size());
         bicycleRouteWayMembers = null;
         superRouteRouteMembers = null;
         bicycleNetworks = null;
@@ -662,7 +667,6 @@ public class OSMReader {
     }
 
     private void finishedReading() {
-        tagParserManager.releaseParsers();
         eleProvider.release();
         osmWayIdToRelationFlagsMap = null;
         osmWayIdSet = null;
