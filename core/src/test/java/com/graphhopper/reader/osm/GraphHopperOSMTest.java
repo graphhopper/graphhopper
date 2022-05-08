@@ -484,7 +484,7 @@ public class GraphHopperOSMTest {
             tmpGH.load();
             fail();
         } catch (Exception ex) {
-            assertTrue(ex.getMessage().startsWith("Encoding does not match"), ex.getMessage());
+            assertTrue(ex.getMessage().startsWith("Flag encoders do not match"), ex.getMessage());
         }
 
         // different order is no longer okay, see #350
@@ -502,7 +502,7 @@ public class GraphHopperOSMTest {
             tmpGH.load();
             fail();
         } catch (Exception ex) {
-            assertTrue(ex.getMessage().startsWith("Encoding does not match"), ex.getMessage());
+            assertTrue(ex.getMessage().startsWith("Flag encoders do not match"), ex.getMessage());
         }
 
         // different encoded values should fail to load
@@ -848,7 +848,7 @@ public class GraphHopperOSMTest {
             IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
             // so far we get another error message in this case, because GraphHopperStorage checks the encoded values
             // in loadExisting already
-            assertTrue(e.getMessage().contains("Encoded values do not match"), e.getMessage());
+            assertTrue(e.getMessage().contains("Flag encoders do not match"), e.getMessage());
             hopper.close();
         }
         {
@@ -858,7 +858,7 @@ public class GraphHopperOSMTest {
                     new Profile("car").setVehicle("car").setWeighting("shortest")
             ));
             IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
-            assertTrue(e.getMessage().contains("Encoded values do not match"), e.getMessage());
+            assertTrue(e.getMessage().contains("Flag encoders do not match"), e.getMessage());
             hopper.close();
         }
     }
