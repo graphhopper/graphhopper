@@ -33,7 +33,7 @@ import static com.graphhopper.routing.util.FootTagParser.FERRY_SPEED;
 import static com.graphhopper.routing.util.MotorcycleTagParser.MOTOR_CYCLE_MAX_SPEED;
 import static com.graphhopper.routing.util.RoadsTagParser.ROADS_MAX_SPEED;
 
-public final class VehicleEncodedValues implements FlagEncoder {
+public class VehicleEncodedValues implements FlagEncoder {
     private final String name;
     private final boolean isMotorVehicle;
     private final double maxPossibleSpeed;
@@ -188,7 +188,6 @@ public final class VehicleEncodedValues implements FlagEncoder {
     public double getMaxSpeed() {
         return maxPossibleSpeed;
     }
-
 
     @Override
     public BooleanEncodedValue getAccessEnc() {
