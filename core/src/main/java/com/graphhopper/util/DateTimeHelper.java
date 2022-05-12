@@ -25,7 +25,7 @@ public class DateTimeHelper {
         int node = iter.getBaseNode();
         double lat = nodeAccess.getLat(node);
         double lon = nodeAccess.getLon(node);
-        String timeZoneId = timeZoneMap.getOverlappingTimeZone(lat, lon).get().getZoneId();
+        String timeZoneId = timeZoneMap.getOverlappingTimeZone(lat, lon).getZoneId();
         ZoneId edgeZoneId = ZoneId.of(timeZoneId);
         Instant edgeEnterTime = Instant.ofEpochMilli(time);
         return ZonedDateTime.ofInstant(edgeEnterTime, edgeZoneId);
@@ -33,11 +33,11 @@ public class DateTimeHelper {
 
     public ZonedDateTime getZonedDateTime(double lat, double lon, String time) {
         LocalDateTime localDateTime = LocalDateTime.parse(time);
-        String timeZoneId = timeZoneMap.getOverlappingTimeZone(lat, lon).get().getZoneId();
+        String timeZoneId = timeZoneMap.getOverlappingTimeZone(lat, lon).getZoneId();
         return localDateTime.atZone(ZoneId.of(timeZoneId));
     }
 
     public String getZoneId(double lat, double lon) {
-        return timeZoneMap.getOverlappingTimeZone(lat, lon).get().getZoneId();
+        return timeZoneMap.getOverlappingTimeZone(lat, lon).getZoneId();
     }
 }

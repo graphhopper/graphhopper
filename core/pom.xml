@@ -119,7 +119,7 @@
         <dependency>
             <groupId>us.dustinj.timezonemap</groupId>
             <artifactId>timezonemap</artifactId>
-            <version>3.2</version>
+            <version>4.5</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
