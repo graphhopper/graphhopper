@@ -200,7 +200,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
                 entry = createEntry(iter.getEdge(), iter.getAdjNode(), origEdgeId, weight, currEdge, reverse);
                 bestWeightMap.put(traversalId, entry);
                 prioQueue.add(entry);
-                // if this is the best entry we need to update the best reference as well. somehow this is only needed for CH?
+                // if this is the best entry we need to update the best reference as well
                 if (isBestEntry)
                     if (reverse)
                         bestBwdEntry = entry;
