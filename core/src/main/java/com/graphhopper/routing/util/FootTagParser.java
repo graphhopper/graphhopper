@@ -24,6 +24,8 @@ import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.EncodingManager.getKey;
@@ -294,5 +296,13 @@ public class FootTagParser extends VehicleTagParser {
             return true;
 
         return PriorityWeighting.class.isAssignableFrom(feature);
+    }
+
+    @Override
+    public String getSharedEncodedValueString() {
+        return Stream.of(accessEnc, avgSpeedEnc, priorityWayEncoder, turnCostEnc)
+                .filter(Objects::nonNull)
+                .map(EncodedValueSerializer::serializeEncodedValue)
+                .collect(Collectors.joining(","));
     }
 }

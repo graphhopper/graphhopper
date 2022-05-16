@@ -807,7 +807,7 @@ public class GraphHopper {
             if (!storedProfiles.equals(configuredProfiles))
                 throw new IllegalStateException("Profiles do not match:"
                         + "\nGraphhopper config: " + configuredProfiles
-                        + "\nGraph: " + storedProfiles
+                        + "\nGraph:              " + storedProfiles
                         + "\nChange configuration to match the graph or delete " + ghStorage.getDirectory().getLocation());
 
             postProcessing(false);

@@ -29,34 +29,6 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TagParserManagerTest {
-    @Test
-    public void testToDetailsString() {
-        FlagEncoder encoder = new VehicleTagParser("new_encoder", 1, 2.0, true, 0) {
-            @Override
-            public TransportationMode getTransportationMode() {
-                return TransportationMode.BIKE;
-            }
-
-            @Override
-            protected String getPropertiesString() {
-                return "my_properties";
-            }
-
-            @Override
-            public EncodingManager.Access getAccess(ReaderWay way) {
-                return EncodingManager.Access.WAY;
-            }
-
-            @Override
-            public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
-                return edgeFlags;
-            }
-        };
-
-        EncodingManager subject = EncodingManager.create(encoder);
-
-        assertEquals("new_encoder|my_properties", subject.toFlagEncodersAsString());
-    }
 
     @Test
     public void testCombineRelations() {

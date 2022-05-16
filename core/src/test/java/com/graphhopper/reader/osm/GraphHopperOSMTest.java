@@ -848,7 +848,7 @@ public class GraphHopperOSMTest {
             IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
             // so far we get another error message in this case, because GraphHopperStorage checks the encoded values
             // in loadExisting already
-            assertTrue(e.getMessage().contains("Encoded values do not match"), e.getMessage());
+            assertTrue(e.getMessage().contains("Encoding does not match"), "Unexpected error message:\n" + e.getMessage());
             hopper.close();
         }
         {
@@ -858,7 +858,7 @@ public class GraphHopperOSMTest {
                     new Profile("car").setVehicle("car").setWeighting("shortest")
             ));
             IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
-            assertTrue(e.getMessage().contains("Encoded values do not match"), e.getMessage());
+            assertTrue(e.getMessage().contains("Encoding does not match"), "Unexpected error message:\n" + e.getMessage());
             hopper.close();
         }
     }

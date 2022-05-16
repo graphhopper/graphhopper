@@ -24,6 +24,8 @@ import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.EncodingManager.getKey;
@@ -577,5 +579,13 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
 
     void setSpecificClassBicycle(String subkey) {
         classBicycleKey = "class:bicycle:" + subkey;
+    }
+
+    @Override
+    public String getSharedEncodedValueString() {
+        return Stream.of(accessEnc, avgSpeedEnc, priorityEnc, turnCostEnc)
+                .filter(Objects::nonNull)
+                .map(EncodedValueSerializer::serializeEncodedValue)
+                .collect(Collectors.joining(","));
     }
 }

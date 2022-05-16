@@ -29,6 +29,8 @@ import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 
@@ -51,10 +53,9 @@ public abstract class VehicleTagParser implements FlagEncoder {
     protected final Set<String> oneways = new HashSet<>(5);
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final Set<String> barriers = new HashSet<>(5);
-    private final String propertiesString;
     protected final BooleanEncodedValue accessEnc;
     protected final DecimalEncodedValue avgSpeedEnc;
-    private final DecimalEncodedValue turnCostEnc;
+    protected final DecimalEncodedValue turnCostEnc;
     protected BooleanEncodedValue roundaboutEnc;
     // This value determines the maximal possible speed of any road regardless of the maxspeed value
     // lower values allow more compact representation of the routing graph
@@ -77,7 +78,6 @@ public abstract class VehicleTagParser implements FlagEncoder {
         this.accessEnc = new SimpleBooleanEncodedValue(getKey(name, "access"), true);
         this.avgSpeedEnc = new DecimalEncodedValueImpl(getKey(name, "average_speed"), speedBits, speedFactor, speedTwoDirections);
         this.turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;
-        this.propertiesString = "speed_factor=" + speedFactor + "|speed_bits=" + speedBits + "|turn_costs=" + (maxTurnCosts > 0);
 
         oneways.add("yes");
         oneways.add("true");
@@ -242,8 +242,11 @@ public abstract class VehicleTagParser implements FlagEncoder {
         }
     }
 
-    protected String getPropertiesString() {
-        return propertiesString;
+    public String getSharedEncodedValueString() {
+        return Stream.of(accessEnc, avgSpeedEnc, turnCostEnc)
+                .filter(Objects::nonNull)
+                .map(EncodedValueSerializer::serializeEncodedValue)
+                .collect(Collectors.joining(","));
     }
 
     @Override

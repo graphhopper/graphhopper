@@ -101,7 +101,7 @@ public final class GraphHopperStorage implements Graph, Closeable {
             if (!encodingManager.toFlagEncodersAsString().equalsIgnoreCase(flagEncodersStr)) {
                 throw new IllegalStateException("Encoding does not match:"
                         + "\nGraphhopper config: " + encodingManager.toFlagEncodersAsString()
-                        + "\nGraph: " + flagEncodersStr
+                        + "\nGraph:              " + flagEncodersStr
                         + "\nChange configuration to match the graph or delete " + dir.getLocation());
             }
 
@@ -109,7 +109,7 @@ public final class GraphHopperStorage implements Graph, Closeable {
             if (!encodingManager.toEncodedValuesAsString().equalsIgnoreCase(encodedValueStr)) {
                 throw new IllegalStateException("Encoded values do not match:"
                         + "\nGraphhopper config: " + encodingManager.toEncodedValuesAsString()
-                        + "\nGraph: " + encodedValueStr
+                        + "\nGraph:              " + encodedValueStr
                         + "\nChange configuration to match the graph or delete " + dir.getLocation());
             }
             baseGraph.loadExisting();

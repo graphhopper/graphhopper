@@ -21,6 +21,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
 import com.graphhopper.routing.ev.EncodedValue;
+import com.graphhopper.routing.ev.EncodedValueSerializer;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.routing.weighting.CurvatureWeighting;
 import com.graphhopper.routing.weighting.PriorityWeighting;
@@ -32,6 +33,9 @@ import com.graphhopper.util.PointList;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 
@@ -297,4 +301,11 @@ public class MotorcycleTagParser extends CarTagParser {
         return PriorityWeighting.class.isAssignableFrom(feature);
     }
 
+    @Override
+    public String getSharedEncodedValueString() {
+        return Stream.of(accessEnc, avgSpeedEnc, priorityWayEncoder, curvatureEncoder, turnCostEnc)
+                .filter(Objects::nonNull)
+                .map(EncodedValueSerializer::serializeEncodedValue)
+                .collect(Collectors.joining(","));
+    }
 }

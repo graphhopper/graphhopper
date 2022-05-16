@@ -299,7 +299,7 @@ public class EncodingManager implements EncodedValueLookup {
 
             str.append(encoder.toString())
                     .append("|")
-                    .append(((VehicleTagParser) encoder).getPropertiesString());
+                    .append(((VehicleTagParser) encoder).getSharedEncodedValueString());
         }
 
         return str.toString();
