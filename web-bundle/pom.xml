@@ -146,7 +146,8 @@
                             <goal>npm</goal>
                         </goals>
                         <configuration>
-                            <arguments>install</arguments>
+                            <!-- Travis fails when it is trying to create the package-lock.json file (and we do not use it anyway) -->
+                            <arguments>install --no-package-lock</arguments>
                         </configuration>
                     </execution>
                     <execution>
