@@ -142,6 +142,12 @@ public class GraphHopper {
         return encodingManager;
     }
 
+    public OSMParsers getOSMParsers() {
+        if (osmParsers == null)
+            throw new IllegalStateException("OSMParsers not yet built");
+        return osmParsers;
+    }
+
     public ElevationProvider getElevationProvider() {
         return eleProvider;
     }

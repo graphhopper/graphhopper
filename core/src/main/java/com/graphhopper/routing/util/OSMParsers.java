@@ -109,4 +109,8 @@ public class OSMParsers {
             throw new IllegalStateException("More than two ints are needed for relation flags, but OSMReader does not allow this");
         return new IntsRef(2);
     }
+
+    public List<VehicleTagParser> getVehicleTagParsers() {
+        return vehicleTagParsers;
+    }
 }
