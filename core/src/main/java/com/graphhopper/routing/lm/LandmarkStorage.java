@@ -733,8 +733,10 @@ public class LandmarkStorage {
                 throw new IllegalStateException("landmark weights loaded but not the subnetworks!?");
 
             int nodes = landmarkWeightDA.getHeader(0 * 4);
-            if (nodes != graph.getNodes())
-                throw new IllegalArgumentException("Cannot load landmark data as written for different graph storage with " + nodes + " nodes, not " + graph.getNodes());
+// ORS-GH MOD START: use getBaseNodes method in order to accommodate landmarks in the core subgraph
+            if (nodes != getBaseNodes())
+                throw new IllegalArgumentException("Cannot load landmark data as written for different graph storage with " + nodes + " nodes, not " + getBaseNodes());
+// ORS-GH MOD END
             landmarks = landmarkWeightDA.getHeader(1 * 4);
             int subnetworks = landmarkWeightDA.getHeader(2 * 4);
             factor = landmarkWeightDA.getHeader(3 * 4) / DOUBLE_MLTPL;
@@ -776,7 +778,9 @@ public class LandmarkStorage {
         return landmarkWeightDA.getCapacity() + subnetworkStorage.getCapacity();
     }
 
-    int getBaseNodes() {
+// ORS-GH MOD START: expose method to subclasses in order to allow overriding
+    protected int getBaseNodes() {
+// ORS-GH MOD END
         return graph.getNodes();
     }
 
