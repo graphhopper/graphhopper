@@ -240,8 +240,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
         // multiple restrictions needs special handling compared to foot and bike, see also motorcycle
         if (!firstValue.isEmpty()) {
-            if (restrictedValues.contains(firstValue) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
-                return EncodingManager.Access.CAN_SKIP;
+            if (restrictedValues.contains(firstValue))
+                return isRestrictedWayConditionallyPermitted(way);
             if (intendedValues.contains(firstValue))
                 return EncodingManager.Access.WAY;
         }
@@ -250,10 +250,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
             return EncodingManager.Access.CAN_SKIP;
 
-        if (getConditionalTagInspector().isPermittedWayConditionallyRestricted(way))
-            return EncodingManager.Access.CAN_SKIP;
-        else
-            return EncodingManager.Access.WAY;
+        return isPermittedWayConditionallyRestricted(way);
     }
 
     @Override
