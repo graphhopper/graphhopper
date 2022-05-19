@@ -81,15 +81,21 @@ public abstract class GHMatrixAbstractRequester {
 
     protected JsonNode createPostRequest(GHMRequest ghRequest) {
         ObjectNode requestJson = objectMapper.createObjectNode();
-        if (ghRequest.getFromPoints() == ghRequest.getToPoints()
-                && ghRequest.getFromPointHints() == ghRequest.getToPointHints()
-                && ghRequest.getFromCurbsides() == ghRequest.getToCurbsides()
-        ) {
-            // save some bandwidth when from/to points are equal
-            putPoints(requestJson, "points", ghRequest.getFromPoints());
-            putStrings(requestJson, "point_hints", ghRequest.getFromPointHints());
-            putStrings(requestJson, "curbsides", ghRequest.getFromCurbsides());
+        if (ghRequest.getPoints() != null) {
+            if (ghRequest.getFromPoints() != null)
+                throw new IllegalArgumentException("if points are set do not use setFromPoints");
+            if (ghRequest.getToPoints() != null)
+                throw new IllegalArgumentException("if points are set do not use setToPoints");
+
+            putPoints(requestJson, "points", ghRequest.getPoints());
+            putStrings(requestJson, "point_hints", ghRequest.getPointHints());
+            putStrings(requestJson, "curbsides", ghRequest.getCurbsides());
         } else {
+            if (ghRequest.getFromPoints() == null)
+                throw new IllegalArgumentException("if points are not set you have to use setFromPoints but was null");
+            if (ghRequest.getToPoints() == null)
+                throw new IllegalArgumentException("if points are not set you have to use setToPoints but was null");
+
             putPoints(requestJson, "from_points", ghRequest.getFromPoints());
             putStrings(requestJson, "from_point_hints", ghRequest.getFromPointHints());
 
@@ -308,7 +314,7 @@ public abstract class GHMatrixAbstractRequester {
     }
 
     private void putStrings(ObjectNode requestJson, String name, Collection<String> stringList) {
-        if (stringList.isEmpty())
+        if (stringList == null || stringList.isEmpty())
             return;
         ArrayNode outList = objectMapper.createArrayNode();
         for (String str : stringList) {

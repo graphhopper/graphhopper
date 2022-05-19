@@ -92,22 +92,29 @@ public class Examples {
         matrixClient.setKey(apiKey);
 
         GHMRequest ghmRequest = new GHMRequest();
-        // todonow: or was this only dist+time before?
-        ghmRequest.setOutArrays(Arrays.asList("weights", "distances", "times"));
+        ghmRequest.setOutArrays(Arrays.asList("distances", "times"));
         ghmRequest.putHint("vehicle", "car");
 
-        // todonow: why was this commented out?
-        // init points for a symmetric matrix
-        // List<GHPoint> allPoints = Arrays.asList(new GHPoint(49.6724, 11.3494), new GHPoint(49.6550, 11.4180));
-        // ghmRequest.addAllPoints(allPoints);
+        // Option 1: init points for a symmetric matrix
+        List<GHPoint> allPoints = Arrays.asList(new GHPoint(49.6724, 11.3494), new GHPoint(49.6550, 11.4180));
+        ghmRequest.setPoints(allPoints);
+        MatrixResponse responseSymm = matrixClient.route(ghmRequest);
+        if (responseSymm.hasErrors())
+            throw new RuntimeException(responseSymm.getErrors().toString());
+        // get time from first to second point:
+        // System.out.println(response.getTime(0, 1));
 
+        // Option 2: for an asymmetric matrix do:
+        ghmRequest = new GHMRequest();
+        ghmRequest.setOutArrays(Arrays.asList("distances", "times"));
+        ghmRequest.putHint("vehicle", "car");
         ghmRequest.setFromPoints(Arrays.asList(new GHPoint(49.6724, 11.3494)));
         // or init e.g. a one-to-many matrix:
         ghmRequest.setToPoints(Arrays.asList(new GHPoint(49.6724, 11.3494), new GHPoint(49.6550, 11.4180)));
 
-        MatrixResponse response = matrixClient.route(ghmRequest);
-        if (response.hasErrors())
-            throw new RuntimeException(response.getErrors().toString());
+        MatrixResponse responseAsymm = matrixClient.route(ghmRequest);
+        if (responseAsymm.hasErrors())
+            throw new RuntimeException(responseAsymm.getErrors().toString());
 
         // get time from first to second point:
         // System.out.println(response.getTime(0, 1));

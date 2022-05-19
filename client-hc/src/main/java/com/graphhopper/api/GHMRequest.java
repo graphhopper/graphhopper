@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.GHPoint;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -16,16 +16,18 @@ public class GHMRequest {
     private List<GHPoint> points;
     private List<GHPoint> fromPoints;
     private List<GHPoint> toPoints;
+
     private List<String> pointHints;
     private List<String> fromPointHints;
     private List<String> toPointHints;
+
     private List<String> curbsides;
     private List<String> fromCurbsides;
     private List<String> toCurbsides;
+
     private List<String> snapPreventions;
     private final PMap hints = new PMap();
-    // todonow: was it the default before? can there be defaults?
-    private List<String> outArrays = Arrays.asList("weights");
+    private List<String> outArrays = Collections.EMPTY_LIST;
     private boolean failFast = true;
 
     public GHMRequest setProfile(String profile) {
@@ -130,6 +132,9 @@ public class GHMRequest {
     // a good trick to serialize unknown properties into the HintsMap
     @JsonAnySetter
     public GHMRequest putHint(String fieldName, Object value) {
+        if (profile != null && "profile".equals(fieldName))
+            throw new IllegalArgumentException("use 'profile' only explicitly");
+
         hints.putObject(fieldName, value);
         return this;
     }

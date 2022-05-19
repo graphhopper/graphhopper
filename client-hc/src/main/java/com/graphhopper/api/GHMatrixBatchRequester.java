@@ -77,8 +77,9 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
         boolean withDistances = ghRequest.getOutArrays().contains("distances");
         boolean withWeights = ghRequest.getOutArrays().contains("weights");
         final MatrixResponse matrixResponse = new MatrixResponse(
-                ghRequest.getFromPoints().size(),
-                ghRequest.getToPoints().size(), withTimes, withDistances, withWeights);
+                ghRequest.getPoints() == null ? ghRequest.getFromPoints().size() : ghRequest.getPoints().size(),
+                ghRequest.getPoints() == null ? ghRequest.getToPoints().size() : ghRequest.getPoints().size(),
+                withTimes, withDistances, withWeights);
         try {
             String postUrl = buildURLNoHints("/calculate", ghRequest);
             String postResponseStr = postJson(postUrl, requestJson);

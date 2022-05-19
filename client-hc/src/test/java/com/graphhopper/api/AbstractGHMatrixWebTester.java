@@ -35,6 +35,7 @@ public abstract class AbstractGHMatrixWebTester {
                 new GHPoint(51.521241, -0.171833),
                 new GHPoint(51.473685, -0.211487)
         ));
+        req.setOutArrays(Arrays.asList("weights"));
         return req;
     }
 
@@ -187,8 +188,8 @@ public abstract class AbstractGHMatrixWebTester {
     @Test
     public void noVehicleWhenNotSpecified() {
         GHMatrixBatchRequester requester = new GHMatrixBatchRequester("url");
-        JsonNode json = requester.createPostRequest(new GHMRequest().setOutArrays(Collections.singletonList("weights")));
-        assertEquals("{\"out_arrays\":[\"weights\"],\"fail_fast\":true}", json.toString());
+        JsonNode json = requester.createPostRequest(new GHMRequest().setOutArrays(Collections.singletonList("weights")).setPoints(Arrays.asList(new GHPoint(11,12))));
+        assertEquals("{\"points\":[[12.0,11.0]],\"out_arrays\":[\"weights\"],\"fail_fast\":true}", json.toString());
     }
 
     @Test
@@ -197,8 +198,9 @@ public abstract class AbstractGHMatrixWebTester {
         GHMRequest ghmRequest = new GHMRequest();
         ghmRequest.putHint("vehicle", "my_car").putHint("profile", "my_profile");
         ghmRequest.setOutArrays(Collections.singletonList("weights"));
+        ghmRequest.setPoints(Arrays.asList(new GHPoint(11,12)));
         JsonNode json = requester.createPostRequest(ghmRequest);
-        assertEquals("{\"out_arrays\":[\"weights\"],\"fail_fast\":true,\"vehicle\":\"my_car\",\"profile\":\"my_profile\"}", json.toString());
+        assertEquals("{\"points\":[[12.0,11.0]],\"out_arrays\":[\"weights\"],\"fail_fast\":true,\"vehicle\":\"my_car\",\"profile\":\"my_profile\"}", json.toString());
     }
 
     public static String readFile(Reader simpleReader) throws IOException {
