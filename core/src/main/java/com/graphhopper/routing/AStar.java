@@ -72,17 +72,20 @@ public class AStar extends AbstractRoutingAlgorithm {
         this.to = to;
         weightApprox.setTo(to);
         double weightToGoal = weightApprox.approximate(from);
-        currEdge = new AStarEntry(EdgeIterator.NO_EDGE, from, 0 + weightToGoal, 0);
-        if (!traversalMode.isEdgeBased()) {
+        AStarEntry startEntry = new AStarEntry(EdgeIterator.NO_EDGE, from, 0 + weightToGoal, 0);
+        fromHeap.add(startEntry);
+        if (!traversalMode.isEdgeBased())
             fromMap.put(from, currEdge);
-        }
         runAlgo();
         return extractPath();
     }
 
     private void runAlgo() {
         double currWeightToGoal, estimationFullWeight;
-        while (true) {
+        while (!fromHeap.isEmpty()) {
+            currEdge = fromHeap.poll();
+            if (currEdge.isDeleted())
+                continue;
             visitedNodes++;
             if (isMaxVisitedNodesExceeded() || finished())
                 break;
@@ -111,26 +114,14 @@ public class AStar extends AbstractRoutingAlgorithm {
 //                        assert (ase.weight > 0.9999999 * estimationFullWeight) : "Inconsistent distance estimate. It is expected weight >= estimationFullWeight but was "
 //                                + ase.weight + " < " + estimationFullWeight + " (" + ase.weight / estimationFullWeight + "), and weightOfVisitedPath:"
 //                                + ase.weightOfVisitedPath + " vs. alreadyVisitedWeight:" + alreadyVisitedWeight + " (" + ase.weightOfVisitedPath / alreadyVisitedWeight + ")";
-
-                        fromHeap.remove(ase);
-                        ase.edge = iter.getEdge();
-                        ase.weight = estimationFullWeight;
-                        ase.weightOfVisitedPath = tmpWeight;
-                        ase.parent = currEdge;
+                        ase.setDeleted();
+                        ase = new AStarEntry(iter.getEdge(), neighborNode, estimationFullWeight, tmpWeight, currEdge);
+                        fromMap.put(traversalId, ase);
                     }
-
                     fromHeap.add(ase);
-
                     updateBestPath(iter, ase, traversalId);
                 }
             }
-
-            if (fromHeap.isEmpty())
-                break;
-
-            currEdge = fromHeap.poll();
-            if (currEdge == null)
-                throw new AssertionError("Empty edge cannot happen");
         }
     }
 
