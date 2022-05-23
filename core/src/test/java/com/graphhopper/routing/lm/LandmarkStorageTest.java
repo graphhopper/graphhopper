@@ -21,24 +21,26 @@ import com.graphhopper.routing.RoutingAlgorithmTest;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
-import com.graphhopper.routing.util.AreaIndex;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
+import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.*;
@@ -240,5 +242,74 @@ public class LandmarkStorageTest {
         storage.setMinimumNodes(2);
         storage.createLandmarks();
         assertEquals(3, storage.getSubnetworksWithLandmarks());
+    }
+
+    @RepeatedTest(100)
+    public void testFeasiblePotential_random() {
+        // A* routing with weighting w is equivalent to Dijkstra routing with the 'reduced' weighting w_red(s,t):=w(s,t)-h(s)+h(t)
+        // The heuristic h is 'feasible' iff w_red>=0
+        // let's see if this is fulfilled for some random graphs
+        long seed = System.nanoTime();
+        Random rnd = new Random(seed);
+        // todo: try with more nodes and also using one-ways (pBothDir<1) and different speeds (speed=null)
+        int nodes = 20;
+        GHUtility.buildRandomGraph(graph, rnd, nodes, 2.2, false, false, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), 60.0, 0, 1.0, 0);
+//        GHUtility.printGraphForUnitTest(graph, encoder);
+
+        // todo: try with more landmarks, but first make it work with one...
+        int landmarks = 1;
+        FastestWeighting weighting = new FastestWeighting(encoder);
+        LandmarkStorage storage = new LandmarkStorage(graph, encodingManager, new RAMDirectory(), new LMConfig("car", weighting), landmarks);
+        storage.setMinimumNodes(2);
+        storage.createLandmarks();
+
+        for (int target = 0; target < graph.getNodes(); target++) {
+            LMApproximator heuristic = LMApproximator.forLandmarks(graph, storage, landmarks);
+            // this works btw...
+//            BeelineWeightApproximator heuristic = new BeelineWeightApproximator(graph.getNodeAccess(), weighting);
+            heuristic.setTo(target);
+            AllEdgesIterator edge = graph.getAllEdges();
+            while (edge.next()) {
+                double reducedWeight = weighting.calcEdgeWeight(edge, false) - heuristic.approximate(edge.getBaseNode()) + heuristic.approximate(edge.getAdjNode());
+                if (reducedWeight < 0)
+                    throw new IllegalArgumentException("LM heuristic is not feasible. Negative reduced weight for edge " + edge + ": " + reducedWeight);
+            }
+        }
+    }
+
+    @Test
+    public void testFeasiblePotential_small() {
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 49.405204, 9.702107);
+        na.setNode(1, 49.401397, 9.709844);
+        na.setNode(2, 49.401145, 9.700108);
+        // 2=0-1
+        GHUtility.setSpeed(60.000000, 60.000000, encoder, graph.edge(0, 1).setDistance(701.830000));
+        GHUtility.setSpeed(60.000000, 60.000000, encoder, graph.edge(0, 2).setDistance(473.901000));
+        GHUtility.setSpeed(60.000000, 60.000000, encoder, graph.edge(2, 0).setDistance(473.901000));
+        int landmarks = 1;
+        FastestWeighting weighting = new FastestWeighting(encoder);
+        LandmarkStorage storage = new LandmarkStorage(graph, encodingManager, new RAMDirectory(), new LMConfig("car", weighting), landmarks);
+        storage.setMinimumNodes(2);
+        storage.createLandmarks();
+
+        double weight01 = weighting.calcEdgeWeight(graph.getEdgeIteratorStateForKey(0), false);
+        double weight02 = weighting.calcEdgeWeight(graph.getEdgeIteratorStateForKey(2), false);
+        double weight20 = weighting.calcEdgeWeight(graph.getEdgeIteratorStateForKey(4), false);
+
+        assertEquals(42.1098, weight01, 1.e-6);
+        assertEquals(28.43406, weight02, 1.e-6);
+        assertEquals(28.43406, weight20, 1.e-6);
+
+        for (int target = 0; target < graph.getNodes(); target++) {
+            WeightApproximator heuristic = LMApproximator.forLandmarks(graph, storage, landmarks);
+            heuristic.setTo(target);
+            double h0 = heuristic.approximate(0);
+            double h1 = heuristic.approximate(1);
+            double h2 = heuristic.approximate(2);
+            assertTrue(weight01 - h0 + h1 >= 0, "heuristic not feasible: w01=" + weight01 + " < h0-h1=" + (h0 - h1) + ", target=" + target);
+            assertTrue(weight02 - h0 + h2 >= 0, "heuristic not feasible: w02=" + weight02 + " < h0-h2=" + (h0 - h2) + ", target=" + target);
+            assertTrue(weight20 - h2 + h0 >= 0, "heuristic not feasible: w20=" + weight20 + " < h2-h0=" + (h2 - h0) + ", target=" + target);
+        }
     }
 }
