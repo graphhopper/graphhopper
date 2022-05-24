@@ -17,12 +17,13 @@
  */
 package com.graphhopper.routing.lm;
 
+import com.graphhopper.routing.Dijkstra;
+import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithmTest;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
@@ -247,8 +248,8 @@ public class LandmarkStorageTest {
     @RepeatedTest(100)
     public void testFeasiblePotential_random() {
         // A* routing with weighting w is equivalent to Dijkstra routing with the 'reduced' weighting w_red(s,t):=w(s,t)-h(s)+h(t)
-        // The heuristic h is 'feasible' iff w_red>=0
-        // let's see if this is fulfilled for some random graphs
+        // The heuristic h is 'feasible' (sometimes 'consistent' or 'monotone') iff w_red>=0.
+        // let's see if this is fulfilled for some random graphs:
         long seed = System.nanoTime();
         Random rnd = new Random(seed);
         // todo: try with more nodes and also using one-ways (pBothDir<1) and different speeds (speed=null)
@@ -268,11 +269,23 @@ public class LandmarkStorageTest {
             // this works btw...
 //            BeelineWeightApproximator heuristic = new BeelineWeightApproximator(graph.getNodeAccess(), weighting);
             heuristic.setTo(target);
+
+            // first check the weaker property: the heuristic must never overestimate the weight.
+            for (int source = 0; source < graph.getNodes(); source++) {
+                Dijkstra dijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED);
+                Path path = dijkstra.calcPath(source, target);
+                if (!path.isFound())
+                    continue;
+                double h = heuristic.approximate(source);
+                if (h > path.getWeight())
+                    throw new IllegalStateException("LM heuristic is not admissible. Heuristic overestimates distance from " + source + " to " + target + ": " + h + " vs. " + path.getWeight());
+            }
+
             AllEdgesIterator edge = graph.getAllEdges();
             while (edge.next()) {
                 double reducedWeight = weighting.calcEdgeWeight(edge, false) - heuristic.approximate(edge.getBaseNode()) + heuristic.approximate(edge.getAdjNode());
                 if (reducedWeight < 0)
-                    throw new IllegalArgumentException("LM heuristic is not feasible. Negative reduced weight for edge " + edge + ": " + reducedWeight);
+                    throw new IllegalStateException("LM heuristic is not feasible. Negative reduced weight for edge " + edge + ": " + reducedWeight);
             }
         }
     }
