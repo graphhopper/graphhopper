@@ -1131,6 +1131,21 @@ public class CHTurnCostTest {
         compareCHQueryWithDijkstra(0, 5);
     }
 
+    @Test
+    void testBestFwdBwdEntryUpdate() {
+        // 2-3
+        // | |
+        // 0-4-1
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(2, 0).setDistance(800.22));
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(3, 4).setDistance(478.84));
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(0, 4).setDistance(547.08));
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(4, 1).setDistance(288.95));
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(2, 3).setDistance(90));
+        graph.freeze();
+        prepareCH(1, 3, 0, 2, 4);
+        compareCHQueryWithDijkstra(1, 2);
+    }
+
     /**
      * This test runs on a random graph with random turn costs and a predefined (but random) contraction order.
      * It often produces exotic conditions that are hard to anticipate beforehand.

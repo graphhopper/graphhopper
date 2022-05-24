@@ -19,7 +19,6 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
@@ -32,7 +31,7 @@ import static com.graphhopper.routing.util.PriorityCode.*;
 /**
  * Defines bit layout for pedestrians (speed, access, surface, ...). Here we put a penalty on unsafe
  * roads only. If you wish to also prefer routes due to beauty like hiking routes use the
- * HikeFlagEncoder instead.
+ * HikeTagParser instead.
  * <p>
  *
  * @author Peter Karich
@@ -54,27 +53,23 @@ public class FootTagParser extends VehicleTagParser {
     protected EnumEncodedValue<RouteNetwork> footRouteEnc;
     protected Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
-    public FootTagParser() {
-        this(4, 1, false);
-    }
-
-    public FootTagParser(PMap properties) {
-        this(properties.getString("name", "foot"),
-                properties.getInt("speed_bits", 4),
-                properties.getDouble("speed_factor", 1),
-                properties.getBool("speed_two_directions", false));
-
+    public FootTagParser(EncodedValueLookup lookup, PMap properties) {
+        this(
+                lookup.getBooleanEncodedValue(getKey(properties.getString("name", "foot"), "access")),
+                lookup.getDecimalEncodedValue(getKey(properties.getString("name", "foot"), "average_speed")),
+                lookup.getDecimalEncodedValue(getKey(properties.getString("name", "foot"), "priority")),
+                lookup.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class),
+                "foot"
+        );
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
-    protected FootTagParser(int speedBits, double speedFactor, boolean speedTwoDirections) {
-        this("foot", speedBits, speedFactor, speedTwoDirections);
-    }
-
-    protected FootTagParser(String name, int speedBits, double speedFactor, boolean speedTwoDirections) {
-        super(name, speedBits, speedFactor, speedTwoDirections, 0);
-        priorityWayEncoder = new DecimalEncodedValueImpl(getKey(name, "priority"), 4, PriorityCode.getFactor(1), false);
+    protected FootTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
+                            EnumEncodedValue<RouteNetwork> footRouteEnc, String name) {
+        super(accessEnc, speedEnc, name, null, null, TransportationMode.FOOT, speedEnc.getNextStorableValue(FERRY_SPEED));
+        this.footRouteEnc = footRouteEnc;
+        priorityWayEncoder = priorityEnc;
 
         restrictedValues.add("no");
         restrictedValues.add("restricted");
@@ -134,21 +129,6 @@ public class FootTagParser extends VehicleTagParser {
         allowedSacScale.add("hiking");
         allowedSacScale.add("mountain_hiking");
         allowedSacScale.add("demanding_mountain_hiking");
-
-        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(FERRY_SPEED);
-    }
-
-    @Override
-    public TransportationMode getTransportationMode() {
-        return TransportationMode.FOOT;
-    }
-
-    @Override
-    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue) {
-        super.createEncodedValues(registerNewEncodedValue);
-        registerNewEncodedValue.add(priorityWayEncoder);
-
-        footRouteEnc = getEnumEncodedValue(RouteNetwork.key("foot"), RouteNetwork.class);
     }
 
     /**
@@ -286,13 +266,5 @@ public class FootTagParser extends VehicleTagParser {
 
         if (way.hasTag("bicycle", "official") || way.hasTag("bicycle", "designated"))
             weightToPrioMap.put(44d, SLIGHT_AVOID.getValue());
-    }
-
-    @Override
-    public boolean supports(Class<?> feature) {
-        if (super.supports(feature))
-            return true;
-
-        return PriorityWeighting.class.isAssignableFrom(feature);
     }
 }

@@ -82,12 +82,12 @@ public class DefaultWeightingFactory implements WeightingFactory {
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
             weighting = new ShortestWeighting(encoder, turnCostProvider);
         } else if ("fastest".equalsIgnoreCase(weightingStr)) {
-            if (encoder.supports(PriorityWeighting.class))
+            if (encoder.getPriorityEnc() != null)
                 weighting = new PriorityWeighting(encoder, hints, turnCostProvider);
             else
                 weighting = new FastestWeighting(encoder, hints, turnCostProvider);
         } else if ("curvature".equalsIgnoreCase(weightingStr)) {
-            if (encoder.supports(CurvatureWeighting.class))
+            if (encoder.getCurvatureEnc() != null)
                 weighting = new CurvatureWeighting(encoder, hints, turnCostProvider);
 
         } else if ("short_fastest".equalsIgnoreCase(weightingStr)) {

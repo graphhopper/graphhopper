@@ -18,11 +18,13 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.util.PMap;
 
 import java.util.TreeMap;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
+import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
@@ -32,21 +34,23 @@ import static com.graphhopper.routing.util.PriorityCode.*;
  * @author Peter Karich
  */
 public class RacingBikeTagParser extends BikeCommonTagParser {
-    public RacingBikeTagParser() {
-        this(4, 2, 0);
+
+    public RacingBikeTagParser(EncodedValueLookup lookup, PMap properties) {
+        this(
+                lookup.getBooleanEncodedValue(getKey("racingbike", "access")),
+                lookup.getDecimalEncodedValue(getKey("racingbike", "average_speed")),
+                lookup.getDecimalEncodedValue(getKey("racingbike", "priority")),
+                lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class),
+                lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class),
+                lookup.getBooleanEncodedValue(Roundabout.KEY),
+                lookup.hasEncodedValue(TurnCost.key("racingbike")) ? lookup.getDecimalEncodedValue(TurnCost.key("racingbike")) : null
+        );
     }
 
-    public RacingBikeTagParser(PMap properties) {
-        this(properties.getInt("speed_bits", 4),
-                properties.getDouble("speed_factor", 2),
-                properties.getBool("turn_costs", false) ? 1 : 0);
-
-        blockPrivate(properties.getBool("block_private", true));
-        blockFords(properties.getBool("block_fords", false));
-    }
-
-    protected RacingBikeTagParser(int speedBits, double speedFactor, int maxTurnCosts) {
-        super("racingbike", speedBits, speedFactor, maxTurnCosts, false);
+    protected RacingBikeTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
+                                  EnumEncodedValue<RouteNetwork> bikeRouteEnc, EnumEncodedValue<Smoothness> smoothnessEnc,
+                                  BooleanEncodedValue roundaboutEnc, DecimalEncodedValue turnCostEnc) {
+        super(accessEnc, speedEnc, priorityEnc, bikeRouteEnc, smoothnessEnc, "racingbike", roundaboutEnc, turnCostEnc);
         preferHighwayTags.add("road");
         preferHighwayTags.add("secondary");
         preferHighwayTags.add("secondary_link");
