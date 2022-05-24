@@ -206,8 +206,7 @@ public class EncodingManager implements EncodedValueLookup {
         List<EncodedValue> list = new ArrayList<>();
         encoder.createEncodedValues(list);
         for (EncodedValue ev : list) {
-            // these were previously so called "shared" encoded values
-            if (!encodedValueMap.containsKey(ev.getName())) addEncodedValue(ev);
+            addEncodedValue(ev);
         }
         list = new ArrayList<>();
         encoder.createTurnCostEncodedValues(list);
