@@ -19,13 +19,14 @@ java [options] -jar *.jar import config.yml
 java [options] -jar *.jar server config.yml # calls the import command implicitly, if not done before
 ```
 
-Try a different garbage collectors (GCs) like ZGC or Shenandoah for serving the
+Try different garbage collectors (GCs) like ZGC or Shenandoah for serving the
 routing requests. The G1 is the default GC but the other two GCs are better suited for JVMs with bigger heaps (>32GB) and low pauses.
-You enabled them with `-XX:+UseZGC` or `-XX:+UseShenandoahGC`. Please note that especially ZGC and G1 require quite a
+You enable them with `-XX:+UseZGC` or `-XX:+UseShenandoahGC`. Please note that especially ZGC and G1 require quite a
 bit memory additionally to the heap and so sometimes speed can be increased when you lower the `Xmx` value.
 
 If you want to support none-CH requests you should at least enable landmarks or limit the request to a
-certain distance otherwise it might require lots of RAM per request! See [#734](https://github.com/graphhopper/graphhopper/issues/734).
+certain distance via `routing.non_ch.max_waypoint_distance` (in meter, default is 1).
+Otherwise it might require lots of RAM per request! See [#734](https://github.com/graphhopper/graphhopper/issues/734).
 
 ### API Tokens
 
@@ -41,13 +42,21 @@ To be able to use the autocomplete feature of the point inputs you have to:
 
 ## Worldwide Setup
 
-GraphHopper is able to handle coverage for the world-wide [OpenStreetMap road network](http://planet.osm.org/).
+GraphHopper can handle the world-wide [OpenStreetMap road network](http://planet.osm.org/).
 
-Without enabled CH the import step alone requires ~60GB RAM and takes ~3h for the import. If you can accept
+Parsing this planet file and creating the GraphHopper base graph requires ~60GB RAM and takes ~3h for the import. If you can accept
 much slower import times (3 days!) this can be reduced to 31GB RAM when you set `datareader.dataaccess=MMAP` in the config file.
+As of May 2022 the graph has around 415M edges (150M for Europe, 86M for North America).
 
-With enabled CH for the car profile (with turn cost) the import command needs ~120GB RAM and the additional CH preparation takes ~25 hours
-but heavily depends on the CPU and memory speed. Without turn cost support e.g. sufficient for bike it takes much less (~5 hours).
+Running the CH preparation, required for best response times, needs ~120GB RAM and the additional CH preparation takes ~25 hours
+(for the car profile with turn cost) but heavily depends on the CPU and memory speed. Without turn cost
+support, e.g. sufficient for bike, it takes much less (~5 hours).
+
+Running the LM preparation for the car profile needs ~80GB RAM and
+the additional LM preparation takes ~4 hours.
+
+It is also possible to add CH/LM preparations for existing profiles after the initial import.
+Adding or modifying profiles is not possible and you need to run a new import instead.
 
 ### System tuning
 
