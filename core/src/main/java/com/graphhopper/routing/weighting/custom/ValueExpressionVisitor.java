@@ -77,9 +77,10 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             Java.BinaryOperation binOp = (Java.BinaryOperation) rv;
             String op = binOp.operator;
             result.operators.add(op);
-            if (op.equals("*") || op.equals("/") || op.equals("+") || binOp.operator.equals("-")) {
+            if (op.equals("*") || op.equals("+") || binOp.operator.equals("-")) {
                 return binOp.lhs.accept(this) && binOp.rhs.accept(this);
             }
+            invalidMessage = "invalid operation '" + op + "'";
             return false;
         }
         return false;
@@ -121,8 +122,8 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         ParseResult result = parse(valueExpression, lookup::hasEncodedValue);
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
-        if ((result.operators.contains("-") || result.operators.contains("/")) && result.guessedVariables.size() > 1)
-            throw new IllegalArgumentException("Currently only a single EncodedValue in the value expression is allowed when expression contains \"/\" or \"-\". " + valueExpression);
+        if (result.operators.contains("-") && result.guessedVariables.size() > 1)
+            throw new IllegalArgumentException("Operation '-' is only allowed when there is a single EncodedValue, but was " + result.guessedVariables.size() + ". Value expression: " + valueExpression);
 
         try {
             // Speed optimization for numbers only as its over 200x faster than ExpressionEvaluator+cook+evaluate!

@@ -61,8 +61,9 @@ class ValueExpressionVisitorTest {
         // assertTrue(parse("Math.sqrt(road_class.ordinal())", validVariable).ok);
     }
 
+
     @Test
-    public void runMaxMin() {
+    public void testErrors() {
         Set<String> objs = new HashSet<>();
         DecimalEncodedValue prio1 = new DecimalEncodedValueImpl("my_priority", 5, 1, false);
         IntEncodedValueImpl prio2 = new IntEncodedValueImpl("my_priority2", 5, -5, false, false);
@@ -72,10 +73,21 @@ class ValueExpressionVisitorTest {
         assertTrue(msg.contains("'unknown' not available"), msg);
 
         msg = assertThrows(IllegalArgumentException.class, () -> findMinMax(objs, "my_priority - my_priority2 * 3", lookup)).getMessage();
-        assertTrue(msg.contains("only a single EncodedValue"), msg);
+        assertTrue(msg.contains("a single EncodedValue"), msg);
         // unary minus is also a minus operator
         msg = assertThrows(IllegalArgumentException.class, () -> findMinMax(objs, "-my_priority + my_priority2 * 3", lookup)).getMessage();
-        assertTrue(msg.contains("only a single EncodedValue"), msg);
+        assertTrue(msg.contains("a single EncodedValue"), msg);
+
+        msg = assertThrows(IllegalArgumentException.class, () -> findMinMax(objs, "1/my_priority", lookup)).getMessage();
+        assertTrue(msg.contains("invalid operation '/'"), msg);
+    }
+
+    @Test
+    public void runMaxMin() {
+        Set<String> objs = new HashSet<>();
+        DecimalEncodedValue prio1 = new DecimalEncodedValueImpl("my_priority", 5, 1, false);
+        IntEncodedValueImpl prio2 = new IntEncodedValueImpl("my_priority2", 5, -5, false, false);
+        EncodedValueLookup lookup = new EncodingManager.Builder().add(prio1).add(prio2).build();
 
         assertInterval(0, 2418, "my_priority*my_priority2 * 3", lookup);
 
@@ -84,9 +96,6 @@ class ValueExpressionVisitorTest {
         assertInterval(0, 62, "2*my_priority", lookup);
 
         assertInterval(-52, 10, "-2*my_priority2", lookup);
-
-        // for a single expression we allow this "unlimited maximum" for a list we throw an error if this is the overall outcome
-        assertInterval(0, Double.POSITIVE_INFINITY, "1/my_priority", lookup);
     }
 
     void assertInterval(double min, double max, String expression, EncodedValueLookup lookup) {
