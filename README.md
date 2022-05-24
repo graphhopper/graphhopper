@@ -75,7 +75,7 @@ To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read 
 
 ## Installation
 
-To install the [GraphHopper Maps](https://graphhopper.com/maps/) UI and the web service locally you [need a JVM](https://adoptopenjdk.net/) (>= Java 8) and do:
+To install the [GraphHopper Maps](https://graphhopper.com/maps/) UI and the web service locally you [need a JVM](https://adoptium.net) (>= Java 8) and do:
 
 ```bash
 wget https://github.com/graphhopper/graphhopper/releases/download/5.3/graphhopper-web-5.3.jar https://raw.githubusercontent.com/graphhopper/graphhopper/5.x/config-example.yml http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
@@ -85,7 +85,8 @@ java -Ddw.graphhopper.datareader.file=berlin-latest.osm.pbf -jar *.jar server co
 After a while you see a log message with 'Server - Started', then go to http://localhost:8989/ and
 you'll see a map of Berlin. You should be able to right click on the map to create a route.
 
-For more details about the installation, see [here](./docs/web/quickstart.md).
+For more details about the installation, see [here](./docs/web/quickstart.md)
+and the [deployment guide](./docs/core/deploy.md).
 
 ### Docker
 
