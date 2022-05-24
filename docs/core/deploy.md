@@ -24,8 +24,9 @@ routing requests. The G1 is the default GC but the other two GCs are better suit
 You enable them with `-XX:+UseZGC` or `-XX:+UseShenandoahGC`. Please note that especially ZGC and G1 require quite a
 bit memory additionally to the heap and so sometimes speed can be increased when you lower the `Xmx` value.
 
-If you want to support none-CH requests you should at least enable landmarks or limit the request to a
-certain distance via `routing.non_ch.max_waypoint_distance` (in meter, default is 1).
+If you want to support none-CH requests you should consider enabling landmarks or limit requests to a
+certain distance via `routing.non_ch.max_waypoint_distance` (in meter, default is 1) or
+to a node count via `routing.max_visited_nodes`.
 Otherwise it might require lots of RAM per request! See [#734](https://github.com/graphhopper/graphhopper/issues/734).
 
 ### API Tokens
