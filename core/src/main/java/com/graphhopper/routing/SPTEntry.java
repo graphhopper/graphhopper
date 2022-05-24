@@ -42,6 +42,14 @@ public class SPTEntry implements Comparable<SPTEntry> {
         this.parent = parent;
     }
 
+    public void setDeleted() {
+        adjNode = Integer.MIN_VALUE;
+    }
+
+    public boolean isDeleted() {
+        return adjNode == Integer.MIN_VALUE;
+    }
+
     /**
      * This method returns the weight to the origin e.g. to the start for the forward SPT and to the
      * destination for the backward SPT. Where the variable 'weight' is used to let heap select

@@ -19,6 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.storage.BaseGraph;
@@ -36,11 +37,16 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class FootTagParserTest {
     private final EncodingManager encodingManager = EncodingManager.create("car,bike,foot");
-    private final FootTagParser footParser = (FootTagParser) encodingManager.getEncoder("foot");
-    private final DecimalEncodedValue footAvgSpeedEnc = footParser.getAverageSpeedEnc();
-    private final BooleanEncodedValue footAccessEnc = footParser.getAccessEnc();
+    private final FlagEncoder encoder = encodingManager.getEncoder("foot");
+    private final FootTagParser footParser = new FootTagParser(encodingManager, new PMap());
+    private final DecimalEncodedValue footAvgSpeedEnc = encoder.getAverageSpeedEnc();
+    private final BooleanEncodedValue footAccessEnc = encoder.getAccessEnc();
     private final DecimalEncodedValue carAvSpeedEnc = encodingManager.getEncoder("car").getAverageSpeedEnc();
     private final BooleanEncodedValue carAccessEnc = encodingManager.getEncoder("car").getAccessEnc();
+
+    public FootTagParserTest() {
+        footParser.init(new DateRangeParser());
+    }
 
     @Test
     public void testGetSpeed() {
@@ -91,7 +97,7 @@ public class FootTagParserTest {
         g.edge(0, 1).setDistance(10).set(footAvgSpeedEnc, 10.0).set(footAccessEnc, true, true);
         g.edge(0, 2).setDistance(10).set(footAvgSpeedEnc, 5.0).set(footAccessEnc, true, true);
         g.edge(1, 3).setDistance(10).set(footAvgSpeedEnc, 10.0).set(footAccessEnc, true, true);
-        EdgeExplorer out = g.createEdgeExplorer(AccessFilter.outEdges(footParser.getAccessEnc()));
+        EdgeExplorer out = g.createEdgeExplorer(AccessFilter.outEdges(footAccessEnc));
         assertEquals(GHUtility.asSet(1, 2), GHUtility.getNeighbors(out.setBaseNode(0)));
         assertEquals(GHUtility.asSet(0, 3), GHUtility.getNeighbors(out.setBaseNode(1)));
         assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(out.setBaseNode(2)));
@@ -405,15 +411,14 @@ public class FootTagParserTest {
         node.setTag("foot", "no");
         assertTrue(footParser.isBarrier(node));
 
-        FootTagParser tmpEncoder = new FootTagParser(new PMap("block_fords=true"));
-        EncodingManager.create(tmpEncoder);
+        FootTagParser blockFordsParser = new FootTagParser(encodingManager, new PMap("block_fords=true"));
         node = new ReaderNode(1, -1, -1);
         node.setTag("ford", "no");
-        assertFalse(tmpEncoder.isBarrier(node));
+        assertFalse(blockFordsParser.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("ford", "yes");
-        assertTrue(tmpEncoder.isBarrier(node));
+        assertTrue(blockFordsParser.isBarrier(node));
     }
 
     @Test

@@ -23,7 +23,7 @@ We even have [good first issues](https://github.com/graphhopper/graphhopper/issu
 To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read through our documentation and install the GraphHopper Web Service locally.
 
 * 5.x: [documentation](https://github.com/graphhopper/graphhopper/blob/5.x/docs/index.md)
-  , [web service jar](https://github.com/graphhopper/graphhopper/releases/download/5.1/graphhopper-web-5.1.jar)
+  , [web service jar](https://github.com/graphhopper/graphhopper/releases/download/5.3/graphhopper-web-5.3.jar)
   , [announcement](https://www.graphhopper.com/blog/2022/03/23/graphhopper-routing-engine-5-0-released/)
 * unstable master: [documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)
 
@@ -75,17 +75,18 @@ To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read 
 
 ## Installation
 
-To install the [GraphHopper Maps](https://graphhopper.com/maps/) UI and the web service locally you [need a JVM](https://adoptopenjdk.net/) (>= Java 8) and do:
+To install the [GraphHopper Maps](https://graphhopper.com/maps/) UI and the web service locally you [need a JVM](https://adoptium.net) (>= Java 8) and do:
 
 ```bash
-wget https://github.com/graphhopper/graphhopper/releases/download/5.1/graphhopper-web-5.1.jar https://raw.githubusercontent.com/graphhopper/graphhopper/5.x/config-example.yml http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
+wget https://github.com/graphhopper/graphhopper/releases/download/5.3/graphhopper-web-5.3.jar https://raw.githubusercontent.com/graphhopper/graphhopper/5.x/config-example.yml http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
 java -Ddw.graphhopper.datareader.file=berlin-latest.osm.pbf -jar *.jar server config-example.yml
 ```
 
 After a while you see a log message with 'Server - Started', then go to http://localhost:8989/ and
 you'll see a map of Berlin. You should be able to right click on the map to create a route.
 
-For more details about the installation, see [here](./docs/web/quickstart.md).
+For more details about the installation, see [here](./docs/web/quickstart.md)
+and the [deployment guide](./docs/core/deploy.md).
 
 ### Docker
 
