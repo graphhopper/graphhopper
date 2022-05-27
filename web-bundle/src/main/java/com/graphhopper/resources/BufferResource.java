@@ -34,24 +34,20 @@ import com.graphhopper.util.JsonFeature;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
+import com.graphhopper.buffer.BufferFeature;
 
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.PrecisionModel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Path("buffer")
 public class BufferResource {
-    private static final Logger logger = LoggerFactory.getLogger(BufferResource.class);
-
     private final LocationIndex locationIndex;
     private final NodeAccess nodeAccess;
     private final EdgeExplorer edgeExplorer;
-    private final FlagEncoder flagEncoder;
+    private final FlagEncoder carFlagEncoder;
     private final Graph graph;
 
     private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(1E8));
@@ -64,7 +60,7 @@ public class BufferResource {
         this.edgeExplorer = graph.createEdgeExplorer();
 
         EncodingManager encodingManager = graphHopper.getEncodingManager();
-        this.flagEncoder = encodingManager.getEncoder("car");
+        this.carFlagEncoder = encodingManager.getEncoder("car");
     }
 
     @GET
@@ -72,7 +68,7 @@ public class BufferResource {
     public Response doGet(
             @QueryParam("point") @NotNull GHPointParam point,
             @QueryParam("roadName") @NotNull String roadName,
-            @QueryParam("threshholdDistance") @NotNull Double threshholdDistance,
+            @QueryParam("thresholdDistance") @NotNull Double thresholdDistance,
             @QueryParam("queryMultiplier") @DefaultValue(".01") Double queryMultiplier,
             @QueryParam("upstream") @DefaultValue("false") Boolean upstream) {
         if (queryMultiplier > 1) {
@@ -87,24 +83,34 @@ public class BufferResource {
         BufferFeature primaryStartFeature = calculatePrimaryStartFeature(point.get().lat, point.get().lon, roadName,
                 queryMultiplier);
         EdgeIteratorState state = graph.getEdgeIteratorState(primaryStartFeature.getEdge(), Integer.MIN_VALUE);
-        List<Point> points = new ArrayList<Point>();
+        List<LineString> lineStrings = new ArrayList<LineString>();
 
         // Start feature edge is bidirectional. Simple
         if (isBidirectional(state)) {
-            points.addAll(computeBufferSegment(primaryStartFeature, roadName, threshholdDistance, upstream, true));
-            points.addAll(computeBufferSegment(primaryStartFeature, roadName, threshholdDistance, upstream, false));
+            lineStrings.add(computeBufferSegment(primaryStartFeature, roadName, thresholdDistance, upstream, true));
+            lineStrings.add(computeBufferSegment(primaryStartFeature, roadName, thresholdDistance, upstream, false));
         }
         // Start feature edge is unidirectional. Requires finding sister road
         else {
             BufferFeature secondaryStartFeature = calculateSecondaryStartFeature(primaryStartFeature, roadName, .005);
-            points.addAll(computeBufferSegment(primaryStartFeature, roadName, threshholdDistance, upstream, upstream));
-            points.addAll(
-                    computeBufferSegment(secondaryStartFeature, roadName, threshholdDistance, upstream, upstream));
+            lineStrings.add(computeBufferSegment(primaryStartFeature, roadName, thresholdDistance, upstream, upstream));
+            lineStrings.add(computeBufferSegment(secondaryStartFeature, roadName, thresholdDistance, upstream, upstream));
         }
 
-        return createGeoJsonResponse(points, sw);
+        return createGeoJsonResponse(lineStrings, sw);
     }
 
+
+    /**
+     * Given a lat/long, finds all nearby edges with a corresponding road name. Uses three expanding
+     * 'pulses' based off the queryMultiplier until at least a single matching edge is found.
+     *
+     * @param startLat latitude at center of query box
+     * @param startLon longitude at center of query box
+     * @param roadName name of road
+     * @param queryMultiplier base dimension of query box
+     * @return buffer feature closest to start lat/long
+    */
     private BufferFeature calculatePrimaryStartFeature(Double startLat, Double startLon, String roadName,
             Double queryMultiplier) {
         // Scale up query Bbox
@@ -122,6 +128,16 @@ public class BufferResource {
         throw new WebApplicationException("Could not find road with that name near the selection.");
     }
 
+    /**
+     * Given a buffer feature, finds all nearby edges with a corresponding road name which aren't along
+     * the same road segment as the given feature. Uses three expanding 'pulses' based off the queryMultiplier 
+     * until at least a single matching edge is found.
+     *
+     * @param primaryStartFeature buffer feature to query off of
+     * @param roadName name of road
+     * @param queryMultiplier base dimension of query box
+     * @return buffer feature closest to primary start feature
+    */
     private BufferFeature calculateSecondaryStartFeature(BufferFeature primaryStartFeature, String roadName,
             Double queryMultiplier) {
         Double startLat = primaryStartFeature.getPoint().lat;
@@ -157,6 +173,13 @@ public class BufferResource {
         throw new WebApplicationException("Could not find road with that name near the selection.");
     }
 
+    /**
+     * Filters out all edges within a bbox that don't have a matching road name
+     *
+     * @param bbox query zone
+     * @param roadName name of road
+     * @return all edges which have matching road name
+    */
     private List<Integer> queryBbox(BBox bbox, String roadName) {
         final List<Integer> filteredEdgesInBbox = new ArrayList<Integer>();
 
@@ -177,25 +200,37 @@ public class BufferResource {
         return filteredEdgesInBbox;
     }
 
-    private List<Point> computeBufferSegment(BufferFeature startFeature, String roadName, Double threshholdDistance,
+    /**
+     * Given a lat/long, finds all nearby edges with a corresponding road name. Uses three expanding
+     * 'pulses' based off the queryMultiplier until at least a single matching edge is found.
+     *
+     * @param startLat latitude at center of query box
+     * @param startLon longitude at center of query box
+     * @param roadName name of road
+     * @param queryMultiplier base dimension of query box
+     * @return lineString representing start -> end
+    */
+    private LineString computeBufferSegment(BufferFeature startFeature, String roadName, Double thresholdDistance,
             Boolean upstreamPath, Boolean upstreamStart) {
-        BufferFeature edgeAtThreshhold = computeEdgeAtDistanceThreshhold(startFeature, threshholdDistance, roadName,
+        BufferFeature edgeAtThreshold = computeEdgeAtDistanceThreshold(startFeature, thresholdDistance, roadName,
                 upstreamPath, upstreamStart);
-        GHPoint3D pointAtThreshhold = computePointAtDistanceThreshhold(startFeature, threshholdDistance,
-                edgeAtThreshhold, upstreamPath, upstreamStart);
+        GHPoint3D pointAtThreshold = computePointAtDistanceThreshold(startFeature, thresholdDistance,
+                edgeAtThreshold, upstreamPath, upstreamStart);
 
-        List<Point> points = new ArrayList<Point>() {
-            {
-                add(geometryFactory
-                        .createPoint(new Coordinate(pointAtThreshhold.getLon(), pointAtThreshhold.getLat())));
-                add(geometryFactory.createPoint(
-                        new Coordinate(startFeature.getPoint().getLon(), startFeature.getPoint().getLat())));
-            }
+        Coordinate[] coordinates = new Coordinate[]{
+            new Coordinate(pointAtThreshold.getLon(), pointAtThreshold.getLat()),
+            new Coordinate(startFeature.getPoint().getLon(), startFeature.getPoint().getLat())
         };
 
-        return points;
+        return geometryFactory.createLineString(coordinates);
     }
 
+    /**
+     * Splits a comma-separated list of road names, then removes any spaces, casing, and dashes
+     *
+     * @param roadNames comma-separated list of road names
+     * @return array of split road names
+    */
     private String[] sanitizeRoadNames(String roadNames) {
         String[] separatedNames = roadNames.split(",");
 
@@ -207,6 +242,14 @@ public class BufferResource {
         return separatedNames;
     }
 
+    /**
+     * Cycles through all nearby, matching roads, and selects the point which is closest to the given lat/lon
+     * 
+     * @param edgeList all nearby edges with proper road name
+     * @param startLat latitude at center of query box
+     * @param startLon longitude at center of query box
+     * @return closest point along road
+    */
     private BufferFeature computeStartFeature(List<Integer> edgeList, Double startLat, Double startLon) {
         Double lowestDistance = Double.MAX_VALUE;
         GHPoint3D nearestPoint = null;
@@ -225,14 +268,25 @@ public class BufferResource {
                     nearestPoint = point;
                     nearestEdge = edge;
                 }
-                ;
             }
         }
 
         return new BufferFeature(nearestEdge, nearestPoint, 0.0);
     }
 
-    private BufferFeature computeEdgeAtDistanceThreshhold(final BufferFeature startFeature, Double threshholdDistance,
+    /**
+     * Iterates along the flow of a road given a starting feature until hitting the denoted threshold.
+     * Usually only selects adjacent roads which have the matching road name, but certain road types like
+     * roundabouts have separate logic.
+     * 
+     * @param startFeature buffer feature to start at
+     * @param thresholdDistance maximum distance in meters
+     * @param roadName name of road
+     * @param upstreamPath direction to build path - either along or against road's flow
+     * @param upstreamStart initial 'launch' direction - used only for a bidirectional start
+     * @return buffer feature at specified distance away from start
+    */
+    private BufferFeature computeEdgeAtDistanceThreshold(final BufferFeature startFeature, Double thresholdDistance,
             String roadName, Boolean upstreamPath, Boolean upstreamStart) {
         List<Integer> usedEdges = new ArrayList<Integer>() {
             {
@@ -248,17 +302,18 @@ public class BufferResource {
                 startFeature.getPoint().getLon(),
                 nodeAccess.getLat(currentNode), nodeAccess.getLon(currentNode));
         Double previousDistance = 0.0;
+        Integer currentEdge = -1;
 
-        if (currentDistance >= threshholdDistance) {
+        if (currentDistance >= thresholdDistance) {
             return startFeature;
         }
 
-        while (true) {
+        while (currentDistance < thresholdDistance) {
             EdgeIterator iterator = edgeExplorer.setBaseNode(currentNode);
             List<Integer> potentialEdges = new ArrayList<Integer>();
             List<Integer> potentialRoundaboutEdges = new ArrayList<Integer>();
             List<Integer> potentialRoundaboutEdgesWithoutName = new ArrayList<Integer>();
-            Integer currentEdge = -1;
+            currentEdge = -1;
 
             while (iterator.next()) {
                 String[] roadNames = sanitizeRoadNames(iterator.getName());
@@ -271,7 +326,7 @@ public class BufferResource {
                     // Temp has proper road name, isn't part of a roundabout, and bidirectional.
                     // Higher priority escape.
                     if (Arrays.stream(roadNames).anyMatch(roadName::equals)
-                            && !tempState.get(flagEncoder.getBooleanEncodedValue("roundabout"))
+                            && !tempState.get(carFlagEncoder.getBooleanEncodedValue("roundabout"))
                             && isBidirectional(tempState)) {
                         currentEdge = tempEdge;
                         usedEdges.add(tempEdge);
@@ -281,18 +336,18 @@ public class BufferResource {
                     // Temp has proper road name and isn't part of a roundabout. Lower priority
                     // escape.
                     else if (Arrays.stream(roadNames).anyMatch(roadName::equals)
-                            && !tempState.get(flagEncoder.getBooleanEncodedValue("roundabout"))) {
+                            && !tempState.get(carFlagEncoder.getBooleanEncodedValue("roundabout"))) {
                         potentialEdges.add(tempEdge);
                     }
 
                     // Temp has proper road name and is part of a roundabout. Higher entry priority.
                     else if (Arrays.stream(roadNames).anyMatch(roadName::equals)
-                            && tempState.get(flagEncoder.getBooleanEncodedValue("roundabout"))) {
+                            && tempState.get(carFlagEncoder.getBooleanEncodedValue("roundabout"))) {
                         potentialRoundaboutEdges.add(tempEdge);
                     }
 
                     // Temp is part of a roundabout. Lower entry priority.
-                    else if (tempState.get(flagEncoder.getBooleanEncodedValue("roundabout"))) {
+                    else if (tempState.get(carFlagEncoder.getBooleanEncodedValue("roundabout"))) {
                         potentialRoundaboutEdgesWithoutName.add(tempEdge);
                     }
                 }
@@ -350,19 +405,33 @@ public class BufferResource {
             currentDistance += DistancePlaneProjection.DIST_PLANE.calcDist(nodeAccess.getLat(currentNode),
                     nodeAccess.getLon(currentNode), nodeAccess.getLat(otherNode), nodeAccess.getLon(otherNode));
 
-            if (currentDistance >= threshholdDistance) {
-                return new BufferFeature(currentEdge,
-                        new GHPoint3D(nodeAccess.getLat(currentNode), nodeAccess.getLon(currentNode), 0),
-                        previousDistance);
+            // Break before moving to next node in case hitting the threshold
+            if (currentDistance >= thresholdDistance) {
+                break;
             }
 
             // Move to next node
             currentNode = otherNode;
             currentState = graph.getEdgeIteratorState(currentEdge, Integer.MIN_VALUE);
         }
+
+        return new BufferFeature(currentEdge,
+                        new GHPoint3D(nodeAccess.getLat(currentNode), nodeAccess.getLon(currentNode), 0),
+                        previousDistance);
     }
 
-    private GHPoint3D computePointAtDistanceThreshhold(BufferFeature startFeature, Double threshholdDistance,
+    /**
+     * Iterates along the way geometry of a given edge until hitting the denoted threshold. Has separate
+     * logic to break up edges where the original start feature is along the same edge (to ensure directionality).
+     * 
+     * @param startFeature original starting buffer feature
+     * @param thresholdDistance maximum distance in meters
+     * @param finalEdge buffer feature of edge at distance threshold
+     * @param upstreamPath direction to build path - either along or against road's flow
+     * @param upstreamStart initial 'launch' direction - used only for a bidirectional start
+     * @return GHPoint3D at specified distance
+    */
+    private GHPoint3D computePointAtDistanceThreshold(BufferFeature startFeature, Double thresholdDistance,
             BufferFeature finalEdge, Boolean upstreamPath, Boolean upstreamStart) {
         EdgeIteratorState finalState = graph.getEdgeIteratorState(finalEdge.getEdge(), Integer.MIN_VALUE);
         PointList pointList = finalState.fetchWayGeometry(FetchMode.ALL);
@@ -412,10 +481,10 @@ public class BufferResource {
         for (GHPoint3D currentPoint : pointList) {
             // Filter zero-points made by PointList() scaling
             if (currentPoint.lat != 0 && currentPoint.lon != 0) {
-                // Check if exceeds threshholdDistance
+                // Check if exceeds thresholdDistance
                 currentDistance += DistancePlaneProjection.DIST_PLANE.calcDist(currentPoint.getLat(),
                         currentPoint.getLon(), previousPoint.getLat(), previousPoint.getLon());
-                if (currentDistance >= threshholdDistance) {
+                if (currentDistance >= thresholdDistance) {
                     return currentPoint;
                 }
 
@@ -427,6 +496,15 @@ public class BufferResource {
         return previousPoint;
     }
 
+    /**
+     * Checks if the next edge is going the same direction as the current edge. Prioritizes bidirectional
+     * roads to deal with a road where one-ways converge (e.g. -<)
+     * 
+     * @param currentState current edge
+     * @param tempState edge to test
+     * @param upstreamPath direction to build path - either along or against road's flow
+     * @return true if along the flow, false if roads converge
+    */
     private Boolean hasProperFlow(EdgeIteratorState currentState, EdgeIteratorState tempState, Boolean upstreamPath) {
         // Going into a bidirectional road always has proper flow
         if (isBidirectional(tempState)) {
@@ -459,23 +537,28 @@ public class BufferResource {
                 }
             }
         }
-
-        // OLD LOGIC: BAD! Doesn't account for coming from a bidirectional road
-        // return isBidirectional(state) || (state.getBaseNode() == currentNode) ==
-        // upstreamPath;
     }
 
+    /**
+     * Checks if the road has access flags going in both directions.
+     * 
+     * @param state edge under question
+     * @return true if road is bidirectional
+    */
     private Boolean isBidirectional(EdgeIteratorState state) {
-        return state.get(flagEncoder.getAccessEnc()) && state.getReverse(flagEncoder.getAccessEnc());
+        return state.get(carFlagEncoder.getAccessEnc()) && state.getReverse(carFlagEncoder.getAccessEnc());
     }
 
-    private Response createGeoJsonResponse(List<Point> points, StopWatch sw) {
+    /**
+     * Formats a list of lineStrings as a geoJson
+    */
+    private Response createGeoJsonResponse(List<LineString> lineStrings, StopWatch sw) {
         sw.stop();
 
         List<JsonFeature> features = new ArrayList<>();
-        for (Point point : points) {
+        for (LineString lineString : lineStrings) {
             JsonFeature feature = new JsonFeature();
-            feature.setGeometry(point);
+            feature.setGeometry(lineString);
             features.add(feature);
         }
 
@@ -484,39 +567,5 @@ public class BufferResource {
         json.putPOJO("copyrights", ResponsePathSerializer.COPYRIGHTS);
         json.putPOJO("features", features);
         return Response.ok(json).header("X-GH-Took", "" + sw.getSeconds() * 1000).build();
-    }
-}
-
-class BufferFeature {
-    private Integer edge;
-    private GHPoint3D point;
-    private Double distance;
-
-    public BufferFeature(Integer edge, GHPoint3D point, Double distance) {
-        this.edge = edge;
-        this.point = point;
-        this.distance = distance;
-    }
-
-    public BufferFeature(Integer edge, GHPoint3D point) {
-        this.edge = edge;
-        this.point = point;
-    }
-
-    public BufferFeature(Integer edge, Double distance) {
-        this.edge = edge;
-        this.distance = distance;
-    }
-
-    public Integer getEdge() {
-        return this.edge;
-    }
-
-    public GHPoint3D getPoint() {
-        return this.point;
-    }
-
-    public Double getDistance() {
-        return this.distance;
     }
 }
