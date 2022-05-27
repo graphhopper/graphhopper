@@ -121,7 +121,7 @@ public class BridgePathFinder {
                         }
                     }
                 }
-                // We arrived at some node that is not the center node. We do not expand the search as we oare only
+                // We arrived at some node that is not the center node. We do not expand the search as we are only
                 // concerned with finding bridge paths.
             }
         }

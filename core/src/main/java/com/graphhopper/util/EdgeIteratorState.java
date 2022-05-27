@@ -90,6 +90,11 @@ public interface EdgeIteratorState {
     int getEdgeKey();
 
     /**
+     * Like #getEdgeKey, but returns the reverse key. For loops the reverse key is the same as the key.
+     */
+    int getReverseEdgeKey();
+
+    /**
      * Returns the node used to instantiate the EdgeIterator. Often only used for convenience reasons.
      * Do not confuse this with a <i>source node</i> of a directed edge.
      *

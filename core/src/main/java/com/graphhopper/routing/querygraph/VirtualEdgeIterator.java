@@ -74,6 +74,11 @@ class VirtualEdgeIterator implements EdgeIterator {
     }
 
     @Override
+    public int getReverseEdgeKey() {
+        return getCurrentEdge().getReverseEdgeKey();
+    }
+
+    @Override
     public int getBaseNode() {
         return getCurrentEdge().getBaseNode();
     }

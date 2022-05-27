@@ -203,11 +203,6 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
     }
 
     @Override
-    protected int getOtherNode(int edge, int node) {
-        return graph.getOtherNode(edge, node);
-    }
-
-    @Override
     protected Path extractPath() {
         if (finished())
             return createPathExtractor(graph, weighting).extract(bestFwdEntry, bestBwdEntry, bestWeight);

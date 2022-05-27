@@ -47,10 +47,10 @@ class CHPreparationGraphTest {
         pg.addShortcut(3, 4, 1, 3, 1, 3, 16, 2);
         pg.disconnect(0);
         PrepareGraphEdgeIterator iter = pg.createOutEdgeExplorer().setBaseNode(3);
-        String res = "";
+        StringBuilder res = new StringBuilder();
         while (iter.next()) {
-            res += iter.toString() + ",";
+            res.append(iter).append(",");
         }
-        assertEquals("3-4,", res);
+        assertEquals("3-4 16.0,", res.toString());
     }
 }
