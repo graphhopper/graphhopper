@@ -31,6 +31,8 @@ public interface FlagEncoder extends EncodedValueLookup {
 
     boolean isMotorVehicle();
 
+    boolean isHGV();
+
     /**
      * @return the maximum speed in km/h
      */
