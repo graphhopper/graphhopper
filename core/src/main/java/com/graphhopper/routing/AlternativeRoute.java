@@ -55,6 +55,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * </li>
  * </ul>
  *
+ * Note: This algorithm is quite slow and alternatives are only really practical in combination with CH, see #2566
+ *
  * @author Peter Karich
  */
 public class AlternativeRoute implements RoutingAlgorithm {
