@@ -46,8 +46,10 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
     public AbstractBidirCHAlgo(RoutingCHGraph graph, TraversalMode tMode) {
         super(tMode);
         this.graph = graph;
-        if (graph.hasTurnCosts() && !tMode.isEdgeBased())
-            throw new IllegalStateException("Weightings supporting turn costs cannot be used with node-based traversal mode");
+// ORS-GH MOD START: disable checking for turn costs in order to facilitate computing core landmarks
+//        if (graph.hasTurnCosts() && !tMode.isEdgeBased())
+//            throw new IllegalStateException("Weightings supporting turn costs cannot be used with node-based traversal mode");
+// ORS-GH MOD END
         this.nodeAccess = graph.getBaseGraph().getNodeAccess();
         outEdgeExplorer = graph.createOutEdgeExplorer();
         inEdgeExplorer = graph.createInEdgeExplorer();
