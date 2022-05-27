@@ -47,9 +47,7 @@ public enum TraversalMode {
      */
     public final int createTraversalId(EdgeIteratorState edgeState, boolean reverse) {
         if (edgeBased)
-            return (reverse && edgeState.getBaseNode() != edgeState.getAdjNode())
-                    ? GHUtility.reverseEdgeKey(edgeState.getEdgeKey())
-                    : edgeState.getEdgeKey();
+            return reverse ? edgeState.getReverseEdgeKey() : edgeState.getEdgeKey();
         return edgeState.getAdjNode();
     }
 

@@ -147,7 +147,7 @@ class QueryOverlayBuilder {
                 GHPoint3D prevPoint = fullPL.get(0);
                 int adjNode = closestEdge.getAdjNode();
                 int origEdgeKey = closestEdge.getEdgeKey();
-                int origRevEdgeKey = GHUtility.reverseEdgeKey(origEdgeKey);
+                int origRevEdgeKey = closestEdge.getReverseEdgeKey();
                 int prevWayIndex = 1;
                 int prevNodeId = baseNode;
                 int virtNodeId = queryOverlay.getVirtualNodes().size() + firstVirtualNodeId;

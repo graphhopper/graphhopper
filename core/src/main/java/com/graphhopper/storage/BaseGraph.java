@@ -949,6 +949,11 @@ public class BaseGraph implements Graph, Closeable {
         }
 
         @Override
+        public int getReverseEdgeKey() {
+            return baseNode == adjNode ? getEdgeKey() : GHUtility.reverseEdgeKey(getEdgeKey());
+        }
+
+        @Override
         public String getName() {
             int stringIndexRef = store.getNameRef(edgePointer);
             String name = baseGraph.stringIndex.get(stringIndexRef, STRING_IDX_NAME_KEY);
