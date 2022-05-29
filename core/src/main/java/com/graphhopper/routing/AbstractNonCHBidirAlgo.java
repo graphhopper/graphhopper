@@ -168,16 +168,9 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
             } else if (entry.getWeightOfVisitedPath() > weight) {
                 // flagging this entry, so it will be ignored when it is polled the next time
                 entry.setDeleted();
-                boolean isBestEntry = reverse ? (entry == bestBwdEntry) : (entry == bestFwdEntry);
                 entry = createEntry(iter, weight, currEdge, reverse);
                 bestWeightMap.put(traversalId, entry);
                 prioQueue.add(entry);
-                // if this is the best entry we need to update the best reference as well
-                if (isBestEntry)
-                    if (reverse)
-                        bestBwdEntry = entry;
-                    else
-                        bestFwdEntry = entry;
             } else
                 continue;
 

@@ -23,6 +23,7 @@ import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.EdgeIterator;
 
 import java.util.Arrays;
 
@@ -39,6 +40,7 @@ public class LMApproximator implements WeightApproximator {
     private int[] weightsFromActiveLandmarksToT;
     private int[] weightsFromTToActiveLandmarks;
     private double epsilon = 1;
+    private int t;
     private int towerNodeNextToT = -1;
     private double weightFromTToTowerNode;
     private boolean recalculateActiveLandmarks = true;
@@ -86,13 +88,19 @@ public class LMApproximator implements WeightApproximator {
         if (!recalculateActiveLandmarks && fallback || lms.isEmpty())
             return fallBackApproximation.approximate(v);
 
-        if (v >= maxBaseNodes) {
-            // handle virtual node
+        if (v == t || v == towerNodeNextToT)
             return 0;
-        }
 
-        if (v == towerNodeNextToT)
-            return 0;
+        if (v >= maxBaseNodes) {
+            // handle virtual node (unless it is t, in which case ^^)
+            EdgeIterator edgeIterator = graph.createEdgeExplorer().setBaseNode(v);
+            double approx = Double.MAX_VALUE;
+            while (edgeIterator.next()) {
+                double a = approximate(edgeIterator.getAdjNode()) + weighting.calcEdgeWeight(edgeIterator, reverse);
+                if (a < approx) approx = a;
+            }
+            return approx;
+        }
 
         // select better active landmarks, LATER: use 'success' statistics about last active landmark
         // we have to update the priority queues and the maps if done in the middle of the search http://cstheory.stackexchange.com/q/36355/13229
@@ -168,6 +176,7 @@ public class LMApproximator implements WeightApproximator {
     @Override
     public void setTo(int t) {
         this.fallBackApproximation.setTo(t);
+        this.t = t;
         findClosestRealNode(t);
     }
 

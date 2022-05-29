@@ -1581,7 +1581,7 @@ public class GraphHopperTest {
         testCrossQueryAssert(profile3, hopper, 815.2, 158, true);
 
         // LM (should be the same as flex, but with less visited nodes!)
-        testCrossQueryAssert(profile1, hopper, 528.3, 74, false);
+        testCrossQueryAssert(profile1, hopper, 528.3, 76, false);
         testCrossQueryAssert(profile2, hopper, 635.8, 124, false);
         // this is actually interesting: the number of visited nodes *increases* once again (while it strictly decreases
         // with rising distance factor for flex): cross-querying 'works', but performs *worse*, because the landmarks

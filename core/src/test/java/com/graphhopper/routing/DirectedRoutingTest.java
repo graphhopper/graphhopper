@@ -39,7 +39,6 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -182,13 +181,11 @@ public class DirectedRoutingTest {
                     new Fixture(Algo.ASTAR, INFINITE_U_TURN_COSTS, false, false),
                     new Fixture(Algo.CH_ASTAR, INFINITE_U_TURN_COSTS, true, false),
                     new Fixture(Algo.CH_DIJKSTRA, INFINITE_U_TURN_COSTS, true, false),
-                    // todo: LM+directed still fails sometimes, #1971,
-//                  new Fixture(Algo.LM, INFINITE_U_TURN_COSTS, false, true),
+                    new Fixture(Algo.LM, INFINITE_U_TURN_COSTS, false, true),
                     new Fixture(Algo.ASTAR, 40, false, false),
                     new Fixture(Algo.CH_ASTAR, 40, true, false),
-                    new Fixture(Algo.CH_DIJKSTRA, 40, true, false)
-                    // todo: LM+directed still fails sometimes, #1971,
-//                  new Fixture(Algo.LM, 40, false, true),
+                    new Fixture(Algo.CH_DIJKSTRA, 40, true, false),
+                    new Fixture(Algo.LM, 40, false, true)
             ).map(Arguments::of);
         }
     }
@@ -291,12 +288,9 @@ public class DirectedRoutingTest {
         }
     }
 
-    @Disabled("todo: fix this, #1971")
     @Test
     public void issue_2581() {
         Fixture f = new Fixture(Algo.LM, 40, false, true);
-        // this test failed with 'forward and backward entries must have same adjacent nodes' before #2581 was fixed.
-        // but it still fails with a wrong shortest path weight, probably because of #1971.
         NodeAccess na = f.graph.getNodeAccess();
         na.setNode(0, 49.406624, 9.703301);
         na.setNode(1, 49.404040, 9.704504);
