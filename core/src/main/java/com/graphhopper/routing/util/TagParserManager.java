@@ -31,7 +31,6 @@ import com.graphhopper.util.PMap;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.graphhopper.routing.util.EncodingManager.isValidEncodedValue;
 import static com.graphhopper.util.Helper.toLowerCase;
 import static java.util.Collections.emptyMap;
 
@@ -277,31 +276,31 @@ public class TagParserManager implements EncodedValueLookup {
             }
 
             for (EncodedValue ev : encodedValueMap.values()) {
-                em.addEncodedValue(ev, false);
+                em.addEncodedValue(ev);
             }
 
             if (!em.hasEncodedValue(Roundabout.KEY)) {
-                em.addEncodedValue(Roundabout.create(), false);
+                em.addEncodedValue(Roundabout.create());
                 _addEdgeTagParser(new OSMRoundaboutParser(em.getBooleanEncodedValue(Roundabout.KEY)));
             }
             if (!em.hasEncodedValue(RoadClass.KEY)) {
-                em.addEncodedValue(new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class), false);
+                em.addEncodedValue(new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class));
                 _addEdgeTagParser(new OSMRoadClassParser(em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class)));
             }
             if (!em.hasEncodedValue(RoadClassLink.KEY)) {
-                em.addEncodedValue(new SimpleBooleanEncodedValue(RoadClassLink.KEY), false);
+                em.addEncodedValue(new SimpleBooleanEncodedValue(RoadClassLink.KEY));
                 _addEdgeTagParser(new OSMRoadClassLinkParser(em.getBooleanEncodedValue(RoadClassLink.KEY)));
             }
             if (!em.hasEncodedValue(RoadEnvironment.KEY)) {
-                em.addEncodedValue(new EnumEncodedValue<>(RoadEnvironment.KEY, RoadEnvironment.class), false);
+                em.addEncodedValue(new EnumEncodedValue<>(RoadEnvironment.KEY, RoadEnvironment.class));
                 _addEdgeTagParser(new OSMRoadEnvironmentParser(em.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class)));
             }
             if (!em.hasEncodedValue(MaxSpeed.KEY)) {
-                em.addEncodedValue(MaxSpeed.create(), false);
+                em.addEncodedValue(MaxSpeed.create());
                 _addEdgeTagParser(new OSMMaxSpeedParser(em.getDecimalEncodedValue(MaxSpeed.KEY)));
             }
             if (!em.hasEncodedValue(RoadAccess.KEY)) {
-                em.addEncodedValue(new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class), false);
+                em.addEncodedValue(new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class));
                 // TODO introduce road_access for different vehicles? But how to create it in DefaultTagParserFactory?
                 _addEdgeTagParser(new OSMRoadAccessParser(em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
             }
@@ -310,32 +309,22 @@ public class TagParserManager implements EncodedValueLookup {
                 dateRangeParser = new DateRangeParser(DateRangeParser.createCalendar());
 
             for (VehicleTagParser encoder : flagEncoderMap.values()) {
-                if (encoder instanceof RoadsTagParser) {
-                    // TODO Later these EncodedValues can be added independently of RoadsFlagEncoder. Maybe add a foot_access and hgv_access? and remove the others "xy$access"
-                    if (!em.hasEncodedValue("car_access")) {
-                        em.addEncodedValue(new SimpleBooleanEncodedValue("car_access", true), false);
-                        _addEdgeTagParser(new OSMAccessParser(em.getBooleanEncodedValue("car_access"), em.getBooleanEncodedValue(Roundabout.KEY), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR), TransportationMode.CAR));
-                    }
-                    if (!em.hasEncodedValue("bike_access")) {
-                        em.addEncodedValue(new SimpleBooleanEncodedValue("bike_access", true), false);
-                        _addEdgeTagParser(new OSMAccessParser(em.getBooleanEncodedValue("bike_access"), em.getBooleanEncodedValue(Roundabout.KEY), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE), TransportationMode.BIKE));
-                    }
-                } else if (encoder instanceof BikeCommonTagParser) {
+                if (encoder instanceof BikeCommonTagParser) {
                     if (!em.hasEncodedValue(RouteNetwork.key("bike"))) {
-                        em.addEncodedValue(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class), false);
+                        em.addEncodedValue(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class));
                         _addRelationTagParser(new OSMBikeNetworkTagParser(em.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), em.relationConfig));
                     }
                     if (!em.hasEncodedValue(GetOffBike.KEY)) {
-                        em.addEncodedValue(GetOffBike.create(), false);
+                        em.addEncodedValue(GetOffBike.create());
                         _addEdgeTagParser(new OSMGetOffBikeParser(em.getBooleanEncodedValue(GetOffBike.KEY)));
                     }
                     if (!em.hasEncodedValue(Smoothness.KEY)) {
-                        em.addEncodedValue(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class), false);
+                        em.addEncodedValue(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class));
                         _addEdgeTagParser(new OSMSmoothnessParser(em.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)));
                     }
                 } else if (encoder instanceof FootTagParser) {
                     if (!em.hasEncodedValue(RouteNetwork.key("foot")))
-                        em.addEncodedValue(new EnumEncodedValue<>(FootNetwork.KEY, RouteNetwork.class), false);
+                        em.addEncodedValue(new EnumEncodedValue<>(FootNetwork.KEY, RouteNetwork.class));
                     _addRelationTagParser(new OSMFootNetworkTagParser(em.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), em.relationConfig));
                 }
             }
@@ -396,18 +385,13 @@ public class TagParserManager implements EncodedValueLookup {
         List<EncodedValue> list = new ArrayList<>();
         encoder.createEncodedValues(list);
         for (EncodedValue ev : list)
-            addEncodedValue(ev, true);
+            addEncodedValue(ev);
         edgeEncoders.add(encoder);
     }
 
-    private void addEncodedValue(EncodedValue ev, boolean withNamespace) {
-        String normalizedKey = ev.getName().replaceAll(SPECIAL_SEPARATOR, "_");
-        if (hasEncodedValue(normalizedKey))
-            throw new IllegalStateException("EncodedValue " + ev.getName() + " collides with " + normalizedKey);
-        if (!withNamespace && !isSharedEncodedValues(ev))
-            throw new IllegalArgumentException("EncodedValue " + ev.getName() + " must not contain namespace character '" + SPECIAL_SEPARATOR + "'");
-        if (withNamespace && isSharedEncodedValues(ev))
-            throw new IllegalArgumentException("EncodedValue " + ev.getName() + " must contain namespace character '" + SPECIAL_SEPARATOR + "'");
+    private void addEncodedValue(EncodedValue ev) {
+        if (hasEncodedValue(ev.getName()))
+            throw new IllegalStateException("EncodedValue " + ev.getName() + " collides with " + ev.getName());
         ev.init(edgeConfig);
         encodedValueMap.put(ev.getName(), ev);
     }
@@ -570,12 +554,6 @@ public class TagParserManager implements EncodedValueLookup {
         if (ev == null)
             throw new IllegalArgumentException("Cannot find EncodedValue " + key + " in collection: " + ev);
         return (T) ev;
-    }
-
-    private static final String SPECIAL_SEPARATOR = "$";
-
-    private static boolean isSharedEncodedValues(EncodedValue ev) {
-        return isValidEncodedValue(ev.getName()) && !ev.getName().contains(SPECIAL_SEPARATOR);
     }
 
 }

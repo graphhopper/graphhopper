@@ -39,10 +39,6 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMRoadEnvironmentParser(lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class));
         else if (name.equals(RoadAccess.KEY))
             return new OSMRoadAccessParser(lookup.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR));
-        else if (name.equals("car_access"))
-            return new OSMAccessParser(lookup.getBooleanEncodedValue("car_access"), lookup.getBooleanEncodedValue(Roundabout.KEY), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR), TransportationMode.CAR);
-        else if (name.equals("bike_access"))
-            return new OSMAccessParser(lookup.getBooleanEncodedValue("bike_access"), lookup.getBooleanEncodedValue(Roundabout.KEY), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE), TransportationMode.BIKE);
         else if (name.equals(MaxSpeed.KEY))
             return new OSMMaxSpeedParser(lookup.getDecimalEncodedValue(MaxSpeed.KEY));
         else if (name.equals(MaxWeight.KEY))
