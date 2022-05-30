@@ -202,7 +202,7 @@ class CustomWeightingTest {
         EdgeIteratorState edge50 = graph.edge(1, 2).setDistance(10).set(avSpeedEnc, 50).set(accessEnc, true, true);
 
         CustomModel vehicleModel = new CustomModel();
-        vehicleModel.addToPriority(If("car$average_speed > 40", MULTIPLY, 0.5));
+        vehicleModel.addToPriority(If("car_average_speed > 40", MULTIPLY, 0.5));
 
         assertEquals(1.60, createWeighting(vehicleModel).calcEdgeWeight(edge40, false), 0.01);
         assertEquals(2.14, createWeighting(vehicleModel).calcEdgeWeight(edge50, false), 0.01);

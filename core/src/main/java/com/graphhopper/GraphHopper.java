@@ -594,12 +594,7 @@ public class GraphHopper {
         flagEncodersMap.forEach((name, encoderStr) -> {
             VehicleTagParser vehicleTagParser = vehicleTagParserFactory.createParser(encodingManager, name, new PMap(encoderStr));
             vehicleTagParser.init(dateRangeParser);
-            if (vehicleTagParser instanceof RoadsTagParser) {
-                if (encodingManager.hasEncodedValue("car_access") && !encodedValueStrings.contains("car_access"))
-                    osmParsers.addWayTagParser(new OSMAccessParser(encodingManager.getBooleanEncodedValue("car_access"), encodingManager.getBooleanEncodedValue(Roundabout.KEY), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR), TransportationMode.CAR));
-                if (encodingManager.hasEncodedValue("bike_access") && !encodedValueStrings.contains("bike_access"))
-                    osmParsers.addWayTagParser(new OSMAccessParser(encodingManager.getBooleanEncodedValue("bike_access"), encodingManager.getBooleanEncodedValue(Roundabout.KEY), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE), TransportationMode.BIKE));
-            } else if (vehicleTagParser instanceof BikeCommonTagParser) {
+            if (vehicleTagParser instanceof BikeCommonTagParser) {
                 if (encodingManager.hasEncodedValue(BikeNetwork.KEY))
                     osmParsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig));
                 if (encodingManager.hasEncodedValue(GetOffBike.KEY))
