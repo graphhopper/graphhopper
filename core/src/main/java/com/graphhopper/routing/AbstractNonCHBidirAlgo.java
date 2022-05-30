@@ -167,6 +167,10 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
                 prioQueue.add(entry);
             } else if (entry.getWeightOfVisitedPath() > weight) {
                 // flagging this entry, so it will be ignored when it is polled the next time
+                // this is possibly one of the labels we keep in bestFwdEntry / bestBwdEntry
+                // but we do not update these here. that will happen in the next iteration, in
+                // the updateBestPath block below.
+                // (one of those two labels is one step "behind" the label we are currently expanding)
                 entry.setDeleted();
                 entry = createEntry(iter, weight, currEdge, reverse);
                 bestWeightMap.put(traversalId, entry);
