@@ -28,6 +28,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 
 import java.util.Arrays;
+import java.util.concurrent.Callable;
 
 /**
  * This class is a weight approximation based on precalculated landmarks.
@@ -97,7 +98,31 @@ public class LMApproximator implements WeightApproximator {
 
         if (v >= maxBaseNodes) {
             // handle virtual node (unless it is t, in which case ^^)
-            return queryGraphNodeApproximations.get(v);
+            return new Callable<Double>() {
+                double w;
+                int j;
+
+                @Override
+                public Double call() {
+                    Dijkstra dijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED) {
+
+                        @Override
+                        protected boolean finished() {
+                            j = currEdge.adjNode;
+                            w = currEdge.weight;
+                            return currEdge.adjNode < maxBaseNodes;
+                        }
+
+                        // We only expect a very short search
+                        @Override
+                        protected void initCollections(int size) {
+                            super.initCollections(2);
+                        }
+                    };
+                    dijkstra.calcPath(v, -1);
+                    return approximate(j) + w;
+                }
+            }.call();
         }
 
         // select better active landmarks, LATER: use 'success' statistics about last active landmark
@@ -176,33 +201,6 @@ public class LMApproximator implements WeightApproximator {
         this.fallBackApproximation.setTo(t);
         this.t = t;
         findClosestRealNode(t);
-        new Runnable() {
-            double w;
-            int j;
-
-            @Override
-            public void run() {
-                for (int i = maxBaseNodes; i < graph.getNodes(); i++) {
-                    Dijkstra dijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED) {
-
-                        @Override
-                        protected boolean finished() {
-                            j = currEdge.adjNode;
-                            w = currEdge.weight;
-                            return currEdge.adjNode < maxBaseNodes;
-                        }
-
-                        // We only expect a very short search
-                        @Override
-                        protected void initCollections(int size) {
-                            super.initCollections(2);
-                        }
-                    };
-                    dijkstra.calcPath(i, -1);
-                    queryGraphNodeApproximations.put(i, approximate(j) + w);
-                }
-            }
-        }.run();
     }
 
     private void findClosestRealNode(int t) {
