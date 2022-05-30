@@ -147,7 +147,6 @@ public class MapMatchingTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testLongTrackWithLotsOfPoints(PMap hints) {
-        // OK with 1000 visited nodes:
         MapMatching mapMatching = new MapMatching(graphHopper, hints);
         ResponsePath route = graphHopper.route(new GHRequest(
                 new GHPoint(51.23, 12.18),
@@ -159,6 +158,17 @@ public class MapMatchingTest {
         assertEquals(route.getDistance(), mr.getMatchLength(), 2);
         // GraphHopper travel times aren't exactly additive
         assertThat(Math.abs(route.getTime() - mr.getMatchMillis()), is(lessThan(1000L)));
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void testLongTrackWithTwoPoints(PMap hints) {
+        MapMatching mapMatching = new MapMatching(graphHopper, hints);
+        List<Observation> inputGPXEntries = Arrays.asList(
+                new Observation(new GHPoint(51.23, 12.18)),
+                new Observation(new GHPoint(51.45, 12.59)));
+        MatchResult mr = mapMatching.match(inputGPXEntries);
+        assertEquals(57553.0, mr.getMatchLength(), 1.0);
     }
 
     @ParameterizedTest
