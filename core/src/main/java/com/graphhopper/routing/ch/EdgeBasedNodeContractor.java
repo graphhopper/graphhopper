@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Locale;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
-import static com.graphhopper.util.GHUtility.getEdgeFromEdgeKey;
 import static com.graphhopper.util.GHUtility.reverseEdgeKey;
 import static com.graphhopper.util.Helper.nf;
 
@@ -247,8 +246,8 @@ class EdgeBasedNodeContractor implements NodeContractor {
             int shortcut = chBuilder.addShortcutEdgeBased(node, iter.getAdjNode(),
                     PrepareEncoder.getScFwdDir(), iter.getWeight(),
                     iter.getSkipped1(), iter.getSkipped2(),
-                    getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()),
-                    getEdgeFromEdgeKey(iter.getOrigEdgeKeyLast()));
+                    iter.getOrigEdgeKeyFirst(),
+                    iter.getOrigEdgeKeyLast());
             prepareGraph.setShortcutForPrepareEdge(iter.getPrepareEdge(), prepareGraph.getOriginalEdges() + shortcut);
             addedShortcutsCount++;
         }
@@ -265,8 +264,8 @@ class EdgeBasedNodeContractor implements NodeContractor {
             int shortcut = chBuilder.addShortcutEdgeBased(node, iter.getAdjNode(),
                     PrepareEncoder.getScBwdDir(), iter.getWeight(),
                     iter.getSkipped1(), iter.getSkipped2(),
-                    getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()),
-                    getEdgeFromEdgeKey(iter.getOrigEdgeKeyLast()));
+                    iter.getOrigEdgeKeyFirst(),
+                    iter.getOrigEdgeKeyLast());
             prepareGraph.setShortcutForPrepareEdge(iter.getPrepareEdge(), prepareGraph.getOriginalEdges() + shortcut);
             addedShortcutsCount++;
         }

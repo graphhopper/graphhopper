@@ -69,7 +69,7 @@ public class EdgeBasedWitnessPathSearcher {
     private double[] weights;
     private int[] parents;
     private int[] adjNodesAndIsPathToCenters;
-    private IntArrayList changedEdges;
+    private IntArrayList changedEdgeKeys;
     private IntFloatBinaryHeap dijkstraHeap;
 
     // statistics to analyze performance
@@ -103,7 +103,7 @@ public class EdgeBasedWitnessPathSearcher {
         weights[sourceEdgeKey] = 0;
         parents[sourceEdgeKey] = -1;
         setAdjNodeAndPathToCenter(sourceEdgeKey, sourceNode, true);
-        changedEdges.add(sourceEdgeKey);
+        changedEdgeKeys.add(sourceEdgeKey);
         dijkstraHeap.insert(0, sourceEdgeKey);
     }
 
@@ -160,7 +160,7 @@ public class EdgeBasedWitnessPathSearcher {
                     weights[key] = weight;
                     parents[key] = currKey;
                     setAdjNodeAndPathToCenter(key, iter.getAdjNode(), isPathToCenter);
-                    changedEdges.add(key);
+                    changedEdgeKeys.add(key);
                     dijkstraHeap.insert(weight, key);
                     if (iter.getAdjNode() == targetNode && (!isPathToCenter(currKey) || parents[currKey] < 0))
                         foundWeight = Math.min(foundWeight, weight + calcTurnWeight(key, targetNode, targetEdgeKey));
@@ -191,8 +191,8 @@ public class EdgeBasedWitnessPathSearcher {
         // update stats using values of last search
         stats.numPolls += numPolls;
         stats.maxPolls = Math.max(stats.maxPolls, numPolls);
-        stats.numExplored += changedEdges.size();
-        stats.maxExplored = Math.max(stats.maxExplored, changedEdges.size());
+        stats.numExplored += changedEdgeKeys.size();
+        stats.maxExplored = Math.max(stats.maxExplored, changedEdgeKeys.size());
         stats.numUpdates += numUpdates;
         stats.maxUpdates = Math.max(stats.maxUpdates, numUpdates);
         reset();
@@ -217,7 +217,7 @@ public class EdgeBasedWitnessPathSearcher {
         weights = null;
         parents = null;
         adjNodesAndIsPathToCenters = null;
-        changedEdges.release();
+        changedEdgeKeys.release();
         dijkstraHeap = null;
     }
 
@@ -234,7 +234,7 @@ public class EdgeBasedWitnessPathSearcher {
     }
 
     private void initCollections() {
-        changedEdges = new IntArrayList(1000);
+        changedEdgeKeys = new IntArrayList(1000);
         dijkstraHeap = new IntFloatBinaryHeap(1000);
     }
 
@@ -245,9 +245,9 @@ public class EdgeBasedWitnessPathSearcher {
     }
 
     private void resetShortestPathTree() {
-        for (int i = 0; i < changedEdges.size(); ++i)
-            resetEntry(changedEdges.get(i));
-        changedEdges.elementsCount = 0;
+        for (int i = 0; i < changedEdgeKeys.size(); ++i)
+            resetEntry(changedEdgeKeys.get(i));
+        changedEdgeKeys.elementsCount = 0;
         dijkstraHeap.clear();
     }
 

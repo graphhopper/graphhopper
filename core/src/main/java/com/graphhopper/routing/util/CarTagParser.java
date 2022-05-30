@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -27,6 +28,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static com.graphhopper.routing.util.EncodingManager.getKey;
+
 /**
  * Defines bit layout for cars. (speed, access, ferries, ...)
  *
@@ -34,6 +37,7 @@ import java.util.Set;
  * @author Nop
  */
 public class CarTagParser extends VehicleTagParser {
+    public static final double CAR_MAX_SPEED = 140;
     protected final Map<String, Integer> trackTypeSpeedMap = new HashMap<>();
     protected final Set<String> badSurfaceSpeedMap = new HashSet<>();
     // This value determines the maximal possible on roads with bad surfaces
@@ -46,34 +50,24 @@ public class CarTagParser extends VehicleTagParser {
      */
     protected final Map<String, Integer> defaultSpeedMap = new HashMap<>();
 
-    public CarTagParser() {
-        this(new PMap());
+    public CarTagParser(EncodedValueLookup lookup, PMap properties) {
+        this(
+                lookup.getBooleanEncodedValue(getKey(properties.getString("name", "car"), "access")),
+                lookup.getDecimalEncodedValue(getKey(properties.getString("name", "car"), "average_speed")),
+                lookup.hasEncodedValue(TurnCost.key(properties.getString("name", "car"))) ? lookup.getDecimalEncodedValue(TurnCost.key(properties.getString("name", "car"))) : null,
+                lookup.getBooleanEncodedValue(Roundabout.KEY),
+                properties,
+                TransportationMode.CAR,
+                lookup.getDecimalEncodedValue(getKey(properties.getString("name", "car"), "average_speed")).getNextStorableValue(CAR_MAX_SPEED)
+        );
     }
 
-    public CarTagParser(int speedBits, double speedFactor, int maxTurnCosts) {
-        this("car", speedBits, speedFactor, maxTurnCosts);
-    }
-
-    public CarTagParser(String name, int speedBits, double speedFactor, int maxTurnCosts) {
-        this(name, speedBits, speedFactor, maxTurnCosts, false);
-    }
-
-    public CarTagParser(int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
-        this("car", speedBits, speedFactor, maxTurnCosts, speedTwoDirections);
-    }
-
-    public CarTagParser(String name, int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
-        this(new PMap().putObject("name", name).putObject("speed_bits", speedBits).putObject("speed_factor", speedFactor).
-                putObject("max_turn_costs", maxTurnCosts).putObject("speed_two_directions", speedTwoDirections));
-    }
-
-    public CarTagParser(PMap properties) {
-        super(properties.getString("name", "car"),
-                properties.getInt("speed_bits", 5),
-                properties.getDouble("speed_factor", 5),
-                properties.getBool("speed_two_directions", false),
-                properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0));
-
+    public CarTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue turnCostEnc,
+                        BooleanEncodedValue roundaboutEnc, PMap properties,
+                        TransportationMode transportationMode, double maxPossibleSpeed) {
+        super(accessEnc, speedEnc,
+                properties.getString("name", "car"), roundaboutEnc,
+                turnCostEnc, transportationMode, maxPossibleSpeed);
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
         restrictedValues.add("no");
@@ -145,12 +139,6 @@ public class CarTagParser extends VehicleTagParser {
 
         // limit speed on bad surfaces to 30 km/h
         badSurfaceSpeed = 30;
-        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(properties.getDouble("max_speed", 140));
-    }
-
-    @Override
-    public TransportationMode getTransportationMode() {
-        return TransportationMode.CAR;
     }
 
     protected double getSpeed(ReaderWay way) {

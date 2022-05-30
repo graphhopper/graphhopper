@@ -686,7 +686,6 @@ public class QueryGraphTest {
         EdgeExplorer explorer = g.createEdgeExplorer();
         EdgeIterator iter = explorer.setBaseNode(1);
         assertTrue(iter.next());
-        int origEdgeId = iter.getEdge();
         Snap res = createLocationResult(2, 1.5, iter, 1, PILLAR);
         QueryGraph queryGraph = lookup(res);
 
@@ -696,14 +695,14 @@ public class QueryGraphTest {
         EdgeExplorer qGraphExplorer = queryGraph.createEdgeExplorer();
         iter = qGraphExplorer.setBaseNode(3);
         assertTrue(iter.next());
+        assertEquals(2, iter.getEdge());
         assertEquals(0, iter.getAdjNode());
-        assertEquals(GHUtility.createEdgeKey(1, 0, origEdgeId, false),
-                ((VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(iter.getEdge(), 0)).getOriginalEdgeKey());
+        assertEquals(3, ((VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(iter.getEdge(), 0)).getOriginalEdgeKey());
 
         assertTrue(iter.next());
+        assertEquals(3, iter.getEdge());
         assertEquals(1, iter.getAdjNode());
-        assertEquals(GHUtility.createEdgeKey(0, 1, origEdgeId, false),
-                ((VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(iter.getEdge(), 1)).getOriginalEdgeKey());
+        assertEquals(2, ((VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(iter.getEdge(), 1)).getOriginalEdgeKey());
     }
 
     @Test

@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -53,39 +54,34 @@ public class EncodingManagerTest {
 
     @Test
     public void testSupportFords() {
-        // 1) no encoder crossing fords
         String flagEncoderStrings = "car,bike,foot";
         EncodingManager manager = EncodingManager.create(flagEncoderStrings);
 
-        assertFalse(((CarTagParser) manager.getEncoder("car")).isBlockFords());
-        assertFalse(((BikeTagParser) manager.getEncoder("bike")).isBlockFords());
-        assertFalse(((FootTagParser) manager.getEncoder("foot")).isBlockFords());
+        // 1) default -> no block fords
+        assertFalse(new CarTagParser(manager, new PMap()).isBlockFords());
+        assertFalse(new BikeTagParser(manager, new PMap()).isBlockFords());
+        assertFalse(new FootTagParser(manager, new PMap()).isBlockFords());
 
-        // 2) two encoders crossing fords
-        flagEncoderStrings = "car, bike|block_fords=true, foot|block_fords=false";
-        manager = EncodingManager.create(flagEncoderStrings);
+        // 2) true
+        assertTrue(new CarTagParser(manager, new PMap("block_fords=true")).isBlockFords());
+        assertTrue(new BikeTagParser(manager, new PMap("block_fords=true")).isBlockFords());
+        assertTrue(new FootTagParser(manager, new PMap("block_fords=true")).isBlockFords());
 
-        assertFalse(((CarTagParser) manager.getEncoder("car")).isBlockFords());
-        assertTrue(((BikeTagParser) manager.getEncoder("bike")).isBlockFords());
-        assertFalse(((FootTagParser) manager.getEncoder("foot")).isBlockFords());
-
-        // 2) Try combined with another tag
-        flagEncoderStrings = "car|turn_costs=true|block_fords=true, bike, foot|block_fords=false";
-        manager = EncodingManager.create(flagEncoderStrings);
-
-        assertTrue(((CarTagParser) manager.getEncoder("car")).isBlockFords());
-        assertFalse(((BikeTagParser) manager.getEncoder("bike")).isBlockFords());
-        assertFalse(((FootTagParser) manager.getEncoder("foot")).isBlockFords());
+        // 3) false
+        assertFalse(new CarTagParser(manager, new PMap("block_fords=false")).isBlockFords());
+        assertFalse(new BikeTagParser(manager, new PMap("block_fords=false")).isBlockFords());
+        assertFalse(new FootTagParser(manager, new PMap("block_fords=false")).isBlockFords());
     }
 
     @Test
     public void validEV() {
-        for (String str : Arrays.asList("blup_test", "test", "test12", "tes$0", "car_test_test", "small_car$average_speed")) {
+        for (String str : Arrays.asList("blup_test", "test", "test12", "car_test_test")) {
             assertTrue(EncodingManager.isValidEncodedValue(str), str);
         }
 
-        for (String str : Arrays.asList("Test", "12test", "test|3", "car__test", "blup_te.st_", "car___test", "car$$access",
-                "test{34", "truck__average_speed", "blup.test", "test,21", "täst", "blup.two.three", "blup..test")) {
+        for (String str : Arrays.asList("Test", "12test", "test|3", "car__test", "small_car$average_speed", "tes$0",
+                "blup_te.st_", "car___test", "car$$access", "test{34", "truck__average_speed", "blup.test", "test,21",
+                "täst", "blup.two.three", "blup..test")) {
             assertFalse(EncodingManager.isValidEncodedValue(str), str);
         }
 

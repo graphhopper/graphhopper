@@ -29,11 +29,9 @@ import com.graphhopper.routing.ev.EncodedValueLookup;
  */
 public interface FlagEncoder extends EncodedValueLookup {
 
-    default boolean isMotorVehicle() {
-        return getTransportationMode().isMotorVehicle();
-    }
+    boolean isMotorVehicle();
 
-    TransportationMode getTransportationMode();
+    boolean isHGV();
 
     /**
      * @return the maximum speed in km/h
@@ -50,13 +48,14 @@ public interface FlagEncoder extends EncodedValueLookup {
      */
     DecimalEncodedValue getAverageSpeedEnc();
 
+    DecimalEncodedValue getPriorityEnc();
+
+    DecimalEncodedValue getCurvatureEnc();
+
+    DecimalEncodedValue getTurnCostEnc();
+
     boolean supportsTurnCosts();
 
-    /**
-     * Returns true if the feature class is supported like TurnWeighting or PriorityWeighting.
-     * Use support(String) instead.
-     */
-    boolean supports(Class<?> feature);
 
     /**
      * @return true if already registered in an EncodingManager

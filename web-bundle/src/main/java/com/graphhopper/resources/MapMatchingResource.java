@@ -166,7 +166,7 @@ public class MapMatchingResource {
                     for (EdgeMatch em : matchResult.getEdgeMatches()) {
                         EdgeIteratorState edge = em.getEdgeState();
                         // encode edges as traversal keys which includes orientation, decode simply by multiplying with 0.5
-                        traversalKeylist.add(GHUtility.createEdgeKey(edge.getBaseNode(), edge.getAdjNode(), edge.getEdge(), false));
+                        traversalKeylist.add(edge.getEdgeKey());
                     }
                     map.putPOJO("traversal_keys", traversalKeylist);
                 }

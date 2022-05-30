@@ -109,10 +109,13 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
 
     @Override
     boolean fillEdgesFrom() {
-        if (pqOpenSetFrom.isEmpty()) {
-            return false;
+        while (true) {
+            if (pqOpenSetFrom.isEmpty())
+                return false;
+            currFrom = pqOpenSetFrom.poll();
+            if (!currFrom.isDeleted())
+                break;
         }
-        currFrom = pqOpenSetFrom.poll();
         visitedCountFrom++;
         if (fromEntryCanBeSkipped()) {
             return true;
@@ -127,10 +130,13 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
 
     @Override
     boolean fillEdgesTo() {
-        if (pqOpenSetTo.isEmpty()) {
-            return false;
+        while (true) {
+            if (pqOpenSetTo.isEmpty())
+                return false;
+            currTo = pqOpenSetTo.poll();
+            if (!currTo.isDeleted())
+                break;
         }
-        currTo = pqOpenSetTo.poll();
         visitedCountTo++;
         if (toEntryCanBeSkipped()) {
             return true;
@@ -160,9 +166,18 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
                 bestWeightMap.put(traversalId, entry);
                 prioQueue.add(entry);
             } else if (entry.getWeightOfVisitedPath() > weight) {
-                prioQueue.remove(entry);
-                updateEntry(entry, iter, weight, currEdge, reverse);
+                // flagging this entry, so it will be ignored when it is polled the next time
+                entry.setDeleted();
+                boolean isBestEntry = reverse ? (entry == bestBwdEntry) : (entry == bestFwdEntry);
+                entry = createEntry(iter, weight, currEdge, reverse);
+                bestWeightMap.put(traversalId, entry);
                 prioQueue.add(entry);
+                // if this is the best entry we need to update the best reference as well
+                if (isBestEntry)
+                    if (reverse)
+                        bestBwdEntry = entry;
+                    else
+                        bestFwdEntry = entry;
             } else
                 continue;
 
@@ -176,12 +191,6 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         }
     }
 
-    protected void updateEntry(SPTEntry entry, EdgeIteratorState edge, double weight, SPTEntry parent, boolean reverse) {
-        entry.edge = edge.getEdge();
-        entry.weight = weight;
-        entry.parent = parent;
-    }
-
     protected double calcWeight(EdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {
         // note that for node-based routing the weights will be wrong in case the weighting is returning non-zero
         // turn weights, see discussion in #1960
@@ -191,11 +200,6 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
     @Override
     protected double getInEdgeWeight(SPTEntry entry) {
         return weighting.calcEdgeWeight(graph.getEdgeIteratorState(entry.edge, entry.adjNode), false);
-    }
-
-    @Override
-    protected int getOtherNode(int edge, int node) {
-        return graph.getOtherNode(edge, node);
     }
 
     @Override

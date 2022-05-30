@@ -1,5 +1,7 @@
 ### 6.0 [not yet released]
-- don't allow cars or motorcycles to use ways tagged with service=emergency_access (#2484) 
+- replaced car$access with car_access (and same for <vehicle>$average_speed and <vehicle>$priority)
+- don't allow cars or motorcycles to use ways tagged with service=emergency_access (#2484)
+- faster flexible routing, especially in conjunction with turn costs (#2571)
 
 ### 5.0 [23 Mar 2022]
 

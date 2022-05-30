@@ -25,11 +25,14 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
+import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.CountryParser;
+import com.graphhopper.routing.util.parsers.OSMBikeNetworkTagParser;
+import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
@@ -491,7 +494,10 @@ public class OSMReaderTest {
 
     @Test
     public void testRelation() {
-        TagParserManager manager = TagParserManager.create("bike");
+        EncodingManager manager = EncodingManager.create("bike");
+        EnumEncodedValue<RouteNetwork> bikeNetworkEnc = manager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class);
+        OSMParsers osmParsers = new OSMParsers()
+                .addRelationTagParser(relConf -> new OSMBikeNetworkTagParser(bikeNetworkEnc, relConf));
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 1, ""));
         osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 2, ""));
@@ -500,17 +506,17 @@ public class OSMReaderTest {
         osmRel.setTag("network", "lcn");
 
         IntsRef flags = manager.createRelationFlags();
-        manager.handleRelationTags(osmRel, flags);
+        osmParsers.handleRelationTags(osmRel, flags);
         assertFalse(flags.isEmpty());
 
         // unchanged network
         IntsRef before = IntsRef.deepCopyOf(flags);
-        manager.handleRelationTags(osmRel, flags);
+        osmParsers.handleRelationTags(osmRel, flags);
         assertEquals(before, flags);
 
         // overwrite network
         osmRel.setTag("network", "ncn");
-        manager.handleRelationTags(osmRel, flags);
+        osmParsers.handleRelationTags(osmRel, flags);
         assertNotEquals(before, flags);
     }
 
@@ -660,15 +666,24 @@ public class OSMReaderTest {
         GraphHopper hopper = new GraphHopper();
         hopper.setFlagEncoderFactory((name, config) -> {
             if (name.equals("truck")) {
-                return new CarTagParser(new PMap(config).putObject("name", "truck")) {
-                    @Override
-                    public TransportationMode getTransportationMode() {
-                        return TransportationMode.HGV;
-                    }
-                };
+                return FlagEncoders.createCar(new PMap(config).putObject("name", "truck"));
             } else {
                 return new DefaultFlagEncoderFactory().createFlagEncoder(name, config);
             }
+        });
+        hopper.setVehicleTagParserFactory((lookup, name, config) -> {
+            if (name.equals("truck")) {
+                return new CarTagParser(
+                        lookup.getBooleanEncodedValue(EncodingManager.getKey("truck", "access")),
+                        lookup.getDecimalEncodedValue(EncodingManager.getKey("truck", "average_speed")),
+                        lookup.hasEncodedValue(TurnCost.key("truck")) ? lookup.getDecimalEncodedValue(TurnCost.key("truck")) : null,
+                        lookup.getBooleanEncodedValue(Roundabout.KEY),
+                        config,
+                        TransportationMode.HGV,
+                        120
+                );
+            }
+            return new DefaultVehicleTagParserFactory().createParser(lookup, name, config);
         });
         hopper.setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
                 setGraphHopperLocation(dir).
@@ -911,10 +926,15 @@ public class OSMReaderTest {
 
     @Test
     public void testCountries() throws IOException {
-        TagParserManager em = TagParserManager.create("car");
+        EncodingManager em = EncodingManager.create("car");
         EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
-        BaseGraph graph = new BaseGraph.Builder(em.getEncodingManager()).create();
-        OSMReader reader = new OSMReader(graph, em, new OSMReaderConfig());
+        OSMParsers osmParsers = new OSMParsers();
+        osmParsers.addWayTagParser(new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
+        CarTagParser parser = new CarTagParser(em, new PMap());
+        parser.init(new DateRangeParser());
+        osmParsers.addVehicleTagParser(parser);
+        BaseGraph graph = new BaseGraph.Builder(em).create();
+        OSMReader reader = new OSMReader(graph, em, osmParsers, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
         reader.setAreaIndex(createCountryIndex());
         // there are two edges, both with highway=track, one in Berlin, one in Paris
@@ -934,13 +954,17 @@ public class OSMReaderTest {
     public void testCurvedWayAlongBorder() throws IOException {
         // see https://discuss.graphhopper.com/t/country-of-way-is-wrong-on-road-near-border-with-curvature/6908/2
         EnumEncodedValue<Country> countryEnc = new EnumEncodedValue<>(Country.KEY, Country.class);
-        TagParserManager em = TagParserManager.start()
+        EncodingManager em = EncodingManager.start()
                 .add(FlagEncoders.createCar())
                 .add(countryEnc)
-                .add(new CountryParser(countryEnc))
                 .build();
-        BaseGraph graph = new BaseGraph.Builder(em.getEncodingManager()).create();
-        OSMReader reader = new OSMReader(graph, em, new OSMReaderConfig());
+        CarTagParser carParser = new CarTagParser(em, new PMap());
+        carParser.init(new DateRangeParser());
+        OSMParsers osmParsers = new OSMParsers()
+                .addWayTagParser(new CountryParser(countryEnc))
+                .addVehicleTagParser(carParser);
+        BaseGraph graph = new BaseGraph.Builder(em).create();
+        OSMReader reader = new OSMReader(graph, em, osmParsers, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
         reader.setAreaIndex(createCountryIndex());
         reader.setFile(new File(getClass().getResource("test-osm12.xml").getFile()));

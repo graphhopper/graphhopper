@@ -23,8 +23,6 @@ import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
-import io.dropwizard.jersey.params.IntParam;
-import io.dropwizard.jersey.params.LongParam;
 import org.hibernate.validator.constraints.Range;
 import org.locationtech.jts.geom.*;
 import org.slf4j.Logger;
@@ -40,6 +38,8 @@ import javax.ws.rs.core.UriInfo;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.OptionalInt;
+import java.util.OptionalLong;
 import java.util.function.ToDoubleFunction;
 
 import static com.graphhopper.resources.IsochroneResource.ResponseType.geojson;
@@ -71,12 +71,12 @@ public class IsochroneResource {
     public Response doGet(
             @Context UriInfo uriInfo,
             @QueryParam("profile") String profileName,
-            @QueryParam("buckets") @Range(min = 1, max = 20) @DefaultValue("1") IntParam nBuckets,
+            @QueryParam("buckets") @Range(min = 1, max = 20) @DefaultValue("1") OptionalInt nBuckets,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
             @QueryParam("point") @NotNull GHPointParam point,
-            @QueryParam("time_limit") @DefaultValue("600") LongParam timeLimitInSeconds,
-            @QueryParam("distance_limit") @DefaultValue("-1") LongParam distanceLimitInMeter,
-            @QueryParam("weight_limit") @DefaultValue("-1") LongParam weightLimit,
+            @QueryParam("time_limit") @DefaultValue("600") OptionalLong timeLimitInSeconds,
+            @QueryParam("distance_limit") @DefaultValue("-1") OptionalLong distanceLimitInMeter,
+            @QueryParam("weight_limit") @DefaultValue("-1") OptionalLong weightLimit,
             @QueryParam("type") @DefaultValue("json") ResponseType respType,
             @QueryParam("tolerance") @DefaultValue("0") double toleranceInMeter,
             @QueryParam("full_geometry") @DefaultValue("false") boolean fullGeometry) {
@@ -111,29 +111,24 @@ public class IsochroneResource {
         ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, queryGraph.wrapWeighting(weighting), reverseFlow, traversalMode);
 
         double limit;
-        if (weightLimit.get() > 0) {
-            limit = weightLimit.get();
-            shortestPathTree.setWeightLimit(limit + Math.max(limit * 0.14, 2_000));
-        } else if (distanceLimitInMeter.get() > 0) {
-            limit = distanceLimitInMeter.get();
-            shortestPathTree.setDistanceLimit(limit + Math.max(limit * 0.14, 2_000));
-        } else {
-            limit = timeLimitInSeconds.get() * 1000;
-            shortestPathTree.setTimeLimit(limit + Math.max(limit * 0.14, 200_000));
-        }
-        ArrayList<Double> zs = new ArrayList<>();
-        double delta = limit / nBuckets.get();
-        for (int i = 0; i < nBuckets.get(); i++) {
-            zs.add((i + 1) * delta);
-        }
-
         ToDoubleFunction<ShortestPathTree.IsoLabel> fz;
-        if (weightLimit.get() > 0) {
+        if (weightLimit.orElseThrow(() -> new IllegalArgumentException("query param weight_limit is not a number.")) > 0) {
+            limit = weightLimit.getAsLong();
+            shortestPathTree.setWeightLimit(limit + Math.max(limit * 0.14, 2_000));
             fz = l -> l.weight;
-        } else if (distanceLimitInMeter.get() > 0) {
+        } else if (distanceLimitInMeter.orElseThrow(() -> new IllegalArgumentException("query param distance_limit is not a number.")) > 0) {
+            limit = distanceLimitInMeter.getAsLong();
+            shortestPathTree.setDistanceLimit(limit + Math.max(limit * 0.14, 2_000));
             fz = l -> l.distance;
         } else {
+            limit = timeLimitInSeconds.orElseThrow(() -> new IllegalArgumentException("query param time_limit is not a number.")) * 1000d;
+            shortestPathTree.setTimeLimit(limit + Math.max(limit * 0.14, 200_000));
             fz = l -> l.time;
+        }
+        ArrayList<Double> zs = new ArrayList<>();
+        double delta = limit / nBuckets.orElseThrow(() -> new IllegalArgumentException("query param buckets is not a number."));
+        for (int i = 0; i < nBuckets.getAsInt(); i++) {
+            zs.add((i + 1) * delta);
         }
 
         Triangulator.Result result = triangulator.triangulate(snap, queryGraph, shortestPathTree, fz, degreesFromMeters(toleranceInMeter));

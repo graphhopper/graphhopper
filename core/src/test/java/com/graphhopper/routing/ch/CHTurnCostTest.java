@@ -674,6 +674,7 @@ public class CHTurnCostTest {
 
     @Test
     public void testFindPath_bug2() {
+        // 1 = 0 - 3 - 2 - 4
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 3).setDistance(24.001000));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(6.087000));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(6.067000));
@@ -1129,6 +1130,46 @@ public class CHTurnCostTest {
         // we accepted 1-2-3-4-3 as a witness path and thus no path was found
         prepareCH(0, 5, 2, 1, 3, 4);
         compareCHQueryWithDijkstra(0, 5);
+    }
+
+    @Test
+    void testBestFwdBwdEntryUpdate() {
+        // 2-3
+        // | |
+        // 0-4-1
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(2, 0).setDistance(800.22));
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(3, 4).setDistance(478.84));
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(0, 4).setDistance(547.08));
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(4, 1).setDistance(288.95));
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(2, 3).setDistance(90));
+        graph.freeze();
+        prepareCH(1, 3, 0, 2, 4);
+        compareCHQueryWithDijkstra(1, 2);
+    }
+
+    @Test
+    void testEdgeKeyBug() {
+        // 1 - 2 - 0 - 4
+        //          \ /
+        //           3
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(0, 3).setDistance(100)); // edgeId=0
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(4, 3).setDistance(100)); // edgeId=1
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(0, 4).setDistance(100)); // edgeId=2
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(1, 2).setDistance(100)); // edgeId=3
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(0, 2).setDistance(100)); // edgeId=4
+        graph.freeze();
+        prepareCH(2, 0, 1, 3, 4);
+        assertEquals(2, chGraph.getShortcuts());
+        RoutingCHEdgeIteratorState chEdge = chGraph.getEdgeIteratorState(6, 4);
+        assertEquals(3, chEdge.getBaseNode());
+        assertEquals(4, chEdge.getAdjNode());
+        assertEquals(2, chEdge.getSkippedEdge1());
+        assertEquals(0, chEdge.getSkippedEdge2());
+        // the first edge is 4-0 (edge 2 against the storage direction) -> key is 2*2+1=5
+        assertEquals(5, chEdge.getOrigEdgeKeyFirst());
+        // the second is 0-3 (edge 0 in storage direction) -> key is 2*0=0
+        assertEquals(0, chEdge.getOrigEdgeKeyLast());
+        compareCHQueryWithDijkstra(1, 3);
     }
 
     /**

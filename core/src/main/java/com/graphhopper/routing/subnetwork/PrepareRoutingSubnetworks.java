@@ -33,6 +33,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
+import static com.graphhopper.util.GHUtility.getEdgeFromEdgeKey;
+
 /**
  * Detects and marks 'subnetworks' with a dedicated subnetwork encoded value. Subnetworks are parts of the road network
  * that are not connected to the rest of the network and that are below a certain size. These can be isolated nodes with
@@ -159,7 +161,7 @@ public class PrepareRoutingSubnetworks {
             return 0;
 
         // now get edge again but in stored direction so that subnetwork EV is not overwritten (as it is unidirectional)
-        EdgeIteratorState edgeState = graph.getEdgeIteratorState(EdgeBasedTarjanSCC.getEdgeFromKey(edgeKey), Integer.MIN_VALUE);
+        EdgeIteratorState edgeState = graph.getEdgeIteratorState(getEdgeFromEdgeKey(edgeKey), Integer.MIN_VALUE);
         if (!edgeState.get(subnetworkEnc)) {
             edgeState.set(subnetworkEnc, true);
             return 1;

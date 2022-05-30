@@ -18,8 +18,8 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
@@ -38,8 +38,14 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class MotorcycleTagParserTest {
     private final EncodingManager em = EncodingManager.create("motorcycle,foot");
-    private final MotorcycleTagParser parser = (MotorcycleTagParser) em.getEncoder("motorcycle");
-    private final BooleanEncodedValue accessEnc = parser.getAccessEnc();
+    private final FlagEncoder encoder = em.getEncoder("motorcycle");
+    private final MotorcycleTagParser parser;
+    private final BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+
+    public MotorcycleTagParserTest() {
+        parser = new MotorcycleTagParser(em, new PMap());
+        parser.init(new DateRangeParser());
+    }
 
     private Graph initExampleGraph() {
         BaseGraph gs = new BaseGraph.Builder(em).set3D(true).create();
@@ -51,7 +57,7 @@ public class MotorcycleTagParserTest {
                 setWayGeometry(Helper.createPointList3D(51.1, 12.0011, 49, 51.1, 12.0015, 55));
         edge.setDistance(100);
 
-        edge.set(accessEnc, true, true).set(parser.getAverageSpeedEnc(), 10.0, 15.0);
+        edge.set(accessEnc, true, true).set(encoder.getAverageSpeedEnc(), 10.0, 15.0);
         return gs;
     }
 
@@ -185,7 +191,6 @@ public class MotorcycleTagParserTest {
         IntsRef flags = parser.handleWayTags(em.createEdgeFlags(), way);
         edge.setFlags(flags);
         parser.applyWayTags(way, edge);
-        DecimalEncodedValue curvatureEnc = parser.getDecimalEncodedValue(EncodingManager.getKey(parser, "curvature"));
-        return edge.get(curvatureEnc);
+        return edge.get(encoder.getCurvatureEnc());
     }
 }

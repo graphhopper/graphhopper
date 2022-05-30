@@ -114,7 +114,7 @@ class CustomModelParserTest {
                 set(roadClassEnc, SECONDARY).set(avgSpeedEnc, 40);
 
         CustomModel customModel = new CustomModel();
-        customModel.addToPriority(If("(road_class == PRIMARY || car$access == true) && car$average_speed > 50", MULTIPLY, 0.9));
+        customModel.addToPriority(If("(road_class == PRIMARY || car_access == true) && car_average_speed > 50", MULTIPLY, 0.9));
         CustomWeighting.Parameters parameters = CustomModelParser.createWeightingParameters(customModel, encodingManager,
                 avgSpeedEnc, encoder.getMaxSpeed(), null);
         assertEquals(0.9, parameters.getEdgeToPriorityMapping().get(primary, false), 0.01);
