@@ -33,7 +33,6 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -145,18 +144,9 @@ public class MapMatchingTest {
         assertEquals(142, mr.getEdgeMatches().size());
     }
 
-    /**
-     * This test is to check behavior over large separated routes: it should
-     * work if the user sets the maxVisitedNodes large enough. Input path:
-     * https://graphhopper.com/maps/?point=51.23%2C12.18&point=51.45%2C12.59&layer=Lyrk
-     * <p>
-     * Update: Seems to me that this test only tests a long route, not one with
-     * distant input points. createRandomGPXEntries currently creates very close input points.
-     * The length of the route doesn't seem to matter.
-     */
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
-    public void testDistantPoints(PMap hints) {
+    public void testLongTrackWithLotsOfPoints(PMap hints) {
         // OK with 1000 visited nodes:
         MapMatching mapMatching = new MapMatching(graphHopper, hints);
         ResponsePath route = graphHopper.route(new GHRequest(
@@ -169,22 +159,8 @@ public class MapMatchingTest {
         assertEquals(route.getDistance(), mr.getMatchLength(), 2);
         // GraphHopper travel times aren't exactly additive
         assertThat(Math.abs(route.getTime() - mr.getMatchMillis()), is(lessThan(1000L)));
-
-        // not OK when we only allow a small number of visited nodes:
-        PMap opts = new PMap(hints).putObject(Parameters.Routing.MAX_VISITED_NODES, 1);
-        mapMatching = new MapMatching(graphHopper, opts);
-        try {
-            mr = mapMatching.match(inputGPXEntries);
-            fail("Expected sequence to be broken due to maxVisitedNodes being too small");
-        } catch (RuntimeException e) {
-            assertTrue(e.getMessage().startsWith("Sequence is broken for submitted track"));
-        }
     }
 
-    /**
-     * This test is to check behavior over short tracks. GPX input:
-     * https://graphhopper.com/maps/?point=51.342422%2C12.3613358&point=51.3423281%2C12.3613358&layer=Lyrk
-     */
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testClosePoints(PMap hints) {
@@ -202,15 +178,9 @@ public class MapMatchingTest {
         assertThat(Math.abs(route.getTime() - mr.getMatchMillis()), is(lessThan(1000L)));
     }
 
-    /**
-     * This test is to check what happens when two GPX entries are on one edge
-     * which is longer than 'separatedSearchDistance' - which is always 66m. GPX
-     * input:
-     * https://graphhopper.com/maps/?point=51.359723%2C12.360108&point=51.358748%2C12.358798&point=51.358001%2C12.357597&point=51.358709%2C12.356511&layer=Lyrk
-     */
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
-    public void testSmallSeparatedSearchDistance(PMap hints) throws IOException {
+    public void testTour3WithLongEdge(PMap hints) throws IOException {
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour3-with-long-edge.gpx"), Gpx.class);
         MapMatching mapMatching = new MapMatching(graphHopper, hints);
         mapMatching.setMeasurementErrorSigma(20);
