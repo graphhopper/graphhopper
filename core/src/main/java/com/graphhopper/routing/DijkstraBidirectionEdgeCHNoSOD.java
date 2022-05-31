@@ -40,6 +40,7 @@ public class DijkstraBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoS
 
     @Override
     protected void updateEntry(SPTEntry entry, int edge, int adjNode, int incEdge, double weight, SPTEntry parent, boolean reverse) {
+        assert entry.adjNode == adjNode;
         entry.edge = edge;
         ((CHEntry) entry).incEdge = incEdge;
         entry.weight = weight;

@@ -18,7 +18,6 @@
 
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -101,8 +100,8 @@ public class EdgeBasedNodeContractorTest {
         contractNodes(5, 6, 3, 2, 9, 1, 8, 4, 7, 0);
         checkShortcuts(
                 createShortcut(2, 8, edge8to3, edge3to2, 5, false, true),
-                createShortcut(8, 7, edge8to3.getEdge(), edge2to7.getEdge(), 6, edge2to7.getEdge(), 6, true, false),
-                createShortcut(7, 7, edge7to8.getEdge(), edge2to7.getEdge(), edge7to8.getEdge(), 7, 8, true, false)
+                createShortcut(8, 7, edge8to3.getEdgeKey(), edge2to7.getEdgeKey(), 6, edge2to7.getEdge(), 6, true, false),
+                createShortcut(7, 7, edge7to8.getEdgeKey(), edge2to7.getEdgeKey(), edge7to8.getEdge(), 7, 8, true, false)
         );
     }
 
@@ -131,7 +130,7 @@ public class EdgeBasedNodeContractorTest {
                 // from contracting node 3: two shortcuts:
                 // 1) in case we come from 1->6 (cant turn left)
                 // 2) in case we come from 2->6 (going via node 0 would be more expensive)
-                createShortcut(5, 6, e6to0.getEdge(), e3to5.getEdge(), 7, e3to5.getEdge(), 11, false, true),
+                createShortcut(5, 6, e6to0.getEdgeKey(), e3to5.getEdgeKey(), 7, e3to5.getEdge(), 11, false, true),
                 createShortcut(5, 6, e6to3, e3to5, 3, false, true)
         );
     }
@@ -156,7 +155,7 @@ public class EdgeBasedNodeContractorTest {
                 // from contraction of node 2
                 // It might look like it is always better to go directly from 4 to 2, but when we come from edge (2->4)
                 // we may not do a u-turn at 4.
-                createShortcut(3, 4, e0to4.getEdge(), e2to3.getEdge(), 5, e2to3.getEdge(), 10, false, true),
+                createShortcut(3, 4, e0to4.getEdgeKey(), e2to3.getEdgeKey(), 5, e2to3.getEdge(), 10, false, true),
                 createShortcut(3, 4, e2to4, e2to3, 4, false, true)
         );
     }
@@ -171,7 +170,7 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 0).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 4).setDistance(2));
         final EdgeIteratorState e4to6 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 6).setDistance(2));
-        final EdgeIteratorState e3to6 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 3).setDistance(1));
+        final EdgeIteratorState e6to3 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 3).setDistance(1));
         final EdgeIteratorState e3to4 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(1));
         final EdgeIteratorState e4to5 = GHUtility.setSpeed(60, true, false, encoder, graph.edge(4, 5).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 2).setDistance(2));
@@ -186,12 +185,12 @@ public class EdgeBasedNodeContractorTest {
         contractAllNodesInOrder();
         checkShortcuts(
                 // from contraction of node 3
-                createShortcut(4, 6, e3to4, e3to6, 6, true, false),
-                createShortcut(4, 6, e3to6, e3to4, 4, false, true),
+                createShortcut(4, 6, e3to4.detach(true), e6to3.detach(true), 6, true, false),
+                createShortcut(4, 6, e6to3, e3to4, 4, false, true),
                 // from contraction of node 4
                 // two 'parallel' shortcuts to preserve shortest paths to 5 when coming from 4->6 and 3->6 !!
-                createShortcut(5, 6, e3to6.getEdge(), e4to5.getEdge(), 8, e4to5.getEdge(), 5, false, true),
-                createShortcut(5, 6, e4to6, e4to5, 3, false, true)
+                createShortcut(5, 6, e6to3.getEdgeKey(), e4to5.getEdgeKey(), 8, e4to5.getEdge(), 5, false, true),
+                createShortcut(5, 6, e4to6.detach(true), e4to5, 3, false, true)
         );
     }
 
@@ -321,7 +320,7 @@ public class EdgeBasedNodeContractorTest {
         contractNodes(2, 0, 4, 1, 3);
         // there should be only one shortcut
         checkShortcuts(
-                createShortcut(1, 3, 1, 3, 1, 3, 2)
+                createShortcut(1, 3, 2, 6, 1, 3, 2)
         );
     }
 
@@ -338,7 +337,7 @@ public class EdgeBasedNodeContractorTest {
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 4, 1, 3);
         checkShortcuts(
-                createShortcut(1, 3, 2, 3, 2, 3, 2)
+                createShortcut(1, 3, 4, 6, 2, 3, 2)
         );
     }
 
@@ -421,8 +420,8 @@ public class EdgeBasedNodeContractorTest {
                 // note that for now we add a shortcut for each direction. using fwd/bwd flags would be more efficient,
                 // but requires a more sophisticated way to determine the 'first' and 'last' original edges at various
                 // places
-                createShortcut(3, 4, e3to2, e2to4, 12, true, false),
-                createShortcut(3, 4, e2to4, e3to2, 12, false, true)
+                createShortcut(3, 4, 2, 4, 1, 2, 12, true, false),
+                createShortcut(3, 4, 5, 3, 2, 1, 12, false, true)
         );
     }
 
@@ -430,17 +429,17 @@ public class EdgeBasedNodeContractorTest {
     public void testContractNode_twoNormalEdges_bidirectional_differentCosts() {
         // 0 -- 3 -- 2 -- 4 -- 1
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 3).setDistance(1));
-        final EdgeIteratorState e2to3 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 2).setDistance(3));
+        final EdgeIteratorState e3to2 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 2).setDistance(3));
         final EdgeIteratorState e2to4 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 4).setDistance(5));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 1).setDistance(1));
-        setTurnCost(e2to3, e2to4, 2, 4);
-        setTurnCost(e2to4, e2to3, 2, 7);
+        setTurnCost(e3to2, e2to4, 2, 4);
+        setTurnCost(e2to4, e3to2, 2, 7);
         freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 3, 4);
         checkShortcuts(
-                createShortcut(3, 4, e2to3, e2to4, 12, true, false),
-                createShortcut(3, 4, e2to4, e2to3, 15, false, true)
+                createShortcut(3, 4, e3to2, e2to4, 12, true, false),
+                createShortcut(3, 4, e2to4.detach(true), e3to2.detach(true), 15, false, true)
         );
     }
 
@@ -490,7 +489,7 @@ public class EdgeBasedNodeContractorTest {
             // the first (this is important for path unpacking)
             checkShortcuts(
                     createShortcut(2, 3, e3to2, e2to2, 7, false, true),
-                    createShortcut(3, 4, e3to2.getEdge(), e2to4.getEdge(), 5, e2to4.getEdge(), 13, true, false));
+                    createShortcut(3, 4, e3to2.getEdgeKey(), e2to4.getEdgeKey(), 5, e2to4.getEdge(), 13, true, false));
         } else {
             // taking the loop would be worse, so the path is just 3-2-4 and we only need a single shortcut
             checkShortcuts(
@@ -516,7 +515,7 @@ public class EdgeBasedNodeContractorTest {
         checkShortcuts(
                 // from contracting node 3
                 createShortcut(4, 7, e7to3, e3to4, 3, false, true),
-                createShortcut(4, 5, e3to4, e3to5, 3, true, false)
+                createShortcut(4, 5, e3to4.detach(true), e3to5, 3, true, false)
                 // important! no shortcut from 7 to 5 when contracting node 4, because it includes a u-turn
         );
     }
@@ -534,8 +533,8 @@ public class EdgeBasedNodeContractorTest {
         // direct turn is restricted, so we take the left loop -> two extra shortcuts
         GraphWithTwoLoops g = new GraphWithTwoLoops(2, maxCost, 1, 2, 3, maxCost);
         g.contractAndCheckShortcuts(
-                createShortcut(6, 7, g.e7to6.getEdge(), g.e1to6.getEdge(), g.e7to6.getEdge(), g.getScEdge(3), 12, false, true),
-                createShortcut(7, 8, g.e7to6.getEdge(), g.e6to8.getEdge(), g.getScEdge(4), g.e6to8.getEdge(), 20, true, false)
+                createShortcut(6, 7, g.e7to6.getEdgeKey(), g.e1to6.getEdgeKey(), g.e7to6.getEdge(), g.getScEdge(3), 12, false, true),
+                createShortcut(7, 8, g.e7to6.getEdgeKey(), g.e6to8.getEdgeKey(), g.getScEdge(4), g.e6to8.getEdge(), 20, true, false)
         );
     }
 
@@ -544,8 +543,8 @@ public class EdgeBasedNodeContractorTest {
         // direct turn is restricted, going on left loop is expensive, so we take the right loop -> two extra shortcuts
         GraphWithTwoLoops g = new GraphWithTwoLoops(8, 1, 1, 2, 3, maxCost);
         g.contractAndCheckShortcuts(
-                createShortcut(6, 7, g.e7to6.getEdge(), g.e3to6.getEdge(), g.e7to6.getEdge(), g.getScEdge(2), 12, false, true),
-                createShortcut(7, 8, g.e7to6.getEdge(), g.e6to8.getEdge(), g.getScEdge(4), g.e6to8.getEdge(), 21, true, false)
+                createShortcut(6, 7, g.e7to6.getEdgeKey(), g.e3to6.getEdgeKey(), g.e7to6.getEdge(), g.getScEdge(2), 12, false, true),
+                createShortcut(7, 8, g.e7to6.getEdgeKey(), g.e6to8.getEdgeKey(), g.getScEdge(4), g.e6to8.getEdge(), 21, true, false)
         );
     }
 
@@ -554,9 +553,9 @@ public class EdgeBasedNodeContractorTest {
         // multiple turns are restricted, it is best to take the left and the right loop -> three extra shortcuts
         GraphWithTwoLoops g = new GraphWithTwoLoops(3, maxCost, 1, maxCost, 3, maxCost);
         g.contractAndCheckShortcuts(
-                createShortcut(6, 7, g.e7to6.getEdge(), g.e1to6.getEdge(), g.e7to6.getEdge(), g.getScEdge(3), 13, false, true),
-                createShortcut(6, 7, g.e7to6.getEdge(), g.e3to6.getEdge(), g.getScEdge(5), g.getScEdge(2), 24, false, true),
-                createShortcut(7, 8, g.e7to6.getEdge(), g.e6to8.getEdge(), g.getScEdge(4), g.e6to8.getEdge(), 33, true, false)
+                createShortcut(6, 7, g.e7to6.getEdgeKey(), g.e1to6.getEdgeKey(), g.e7to6.getEdge(), g.getScEdge(3), 13, false, true),
+                createShortcut(6, 7, g.e7to6.getEdgeKey(), g.e3to6.getEdgeKey(), g.getScEdge(5), g.getScEdge(2), 24, false, true),
+                createShortcut(7, 8, g.e7to6.getEdgeKey(), g.e6to8.getEdgeKey(), g.getScEdge(4), g.e6to8.getEdge(), 33, true, false)
         );
     }
 
@@ -565,9 +564,9 @@ public class EdgeBasedNodeContractorTest {
         // multiple turns are restricted, it is best to take the right and the left loop -> three extra shortcuts
         GraphWithTwoLoops g = new GraphWithTwoLoops(maxCost, 5, 4, 2, maxCost, maxCost);
         g.contractAndCheckShortcuts(
-                createShortcut(6, 7, g.e7to6.getEdge(), g.e3to6.getEdge(), g.e7to6.getEdge(), g.getScEdge(2), 16, false, true),
-                createShortcut(6, 7, g.e7to6.getEdge(), g.e1to6.getEdge(), g.getScEdge(5), g.getScEdge(3), 25, false, true),
-                createShortcut(7, 8, g.e7to6.getEdge(), g.e6to8.getEdge(), g.getScEdge(4), g.e6to8.getEdge(), 33, true, false)
+                createShortcut(6, 7, g.e7to6.getEdgeKey(), g.e3to6.getEdgeKey(), g.e7to6.getEdge(), g.getScEdge(2), 16, false, true),
+                createShortcut(6, 7, g.e7to6.getEdgeKey(), g.e1to6.getEdgeKey(), g.getScEdge(5), g.getScEdge(3), 25, false, true),
+                createShortcut(7, 8, g.e7to6.getEdgeKey(), g.e6to8.getEdgeKey(), g.getScEdge(4), g.e6to8.getEdge(), 33, true, false)
         );
     }
 
@@ -614,9 +613,9 @@ public class EdgeBasedNodeContractorTest {
             HashSet<Shortcut> expectedShortcuts = new HashSet<>();
             expectedShortcuts.addAll(Arrays.asList(
                     createShortcut(1, 6, e6to0, e0to1, 7, false, true),
-                    createShortcut(6, 6, e6to0.getEdge(), e1to6.getEdge(), getScEdge(0), e1to6.getEdge(), 9, true, false),
+                    createShortcut(6, 6, e6to0.getEdgeKey(), e1to6.getEdgeKey(), getScEdge(0), e1to6.getEdge(), 9, true, false),
                     createShortcut(3, 6, e6to2, e2to3, 3, false, true),
-                    createShortcut(6, 6, e6to2.getEdge(), e3to6.getEdge(), getScEdge(1), e3to6.getEdge(), 10, true, false)
+                    createShortcut(6, 6, e6to2.getEdgeKey(), e3to6.getEdgeKey(), getScEdge(1), e3to6.getEdge(), 10, true, false)
             ));
             expectedShortcuts.addAll(Arrays.asList(shortcuts));
             checkShortcuts(expectedShortcuts);
@@ -721,7 +720,7 @@ public class EdgeBasedNodeContractorTest {
         final int numEdges = 6;
         checkShortcuts(
                 createShortcut(1, 2, g.e2to0, g.e0to1, 3, false, true),
-                createShortcut(2, 2, g.e2to0.getEdge(), g.e1to2.getEdge(), numEdges, g.e1to2.getEdge(), 4, true, false)
+                createShortcut(2, 2, g.e2to0.getEdgeKey(), g.e1to2.getEdgeKey(), numEdges, g.e1to2.getEdge(), 4, true, false)
         );
     }
 
@@ -882,7 +881,7 @@ public class EdgeBasedNodeContractorTest {
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 5, 4, 3);
         // we might come from (5->1) so we still need a way back to (3->4) -> we need a shortcut
-        Shortcut expectedShortcuts = createShortcut(1, 3, 1, 2, 1, 2, 2);
+        Shortcut expectedShortcuts = createShortcut(1, 3, 2, 4, 1, 2, 2);
         checkShortcuts(expectedShortcuts);
     }
 
@@ -926,12 +925,12 @@ public class EdgeBasedNodeContractorTest {
         contractNodes(2, 6, 3, 5, 4, 0, 8, 10, 11, 1, 7, 9);
         // note that the shortcut edge ids depend on the insertion order which might change when changing the implementation
         checkShortcuts(
-                createShortcut(3, 1, 1, 2, 1, 2, 2, false, true),
-                createShortcut(1, 9, 1, 8, 1, 8, 2, true, false),
-                createShortcut(5, 7, 5, 6, 5, 6, 2, true, false),
-                createShortcut(7, 9, 9, 6, 9, 6, 2, false, true),
-                createShortcut(4, 1, 1, 3, 12, 3, 3, false, true),
-                createShortcut(4, 7, 4, 6, 4, 13, 3, true, false)
+                createShortcut(3, 1, 2, 4, 1, 2, 2, false, true),
+                createShortcut(1, 9, 2, 16, 1, 8, 2, true, false),
+                createShortcut(5, 7, 10, 12, 5, 6, 2, true, false),
+                createShortcut(7, 9, 18, 12, 9, 6, 2, false, true),
+                createShortcut(4, 1, 2, 6, 12, 3, 3, false, true),
+                createShortcut(4, 7, 8, 12, 4, 13, 3, true, false)
         );
     }
 
@@ -977,7 +976,7 @@ public class EdgeBasedNodeContractorTest {
         setMaxLevelOnAllNodes();
         contractNodes(3, 0, 5, 1, 4, 2);
         checkShortcuts(
-                createShortcut(4, 2, 2, 3, 2, 3, 2, false, true)
+                createShortcut(4, 2, 4, 6, 2, 3, 2, false, true)
         );
     }
 
@@ -1001,14 +1000,14 @@ public class EdgeBasedNodeContractorTest {
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 5, 1, 4, 3);
         checkShortcuts(
-                createShortcut(1, 3, 1, 2, 1, 2, 2)
+                createShortcut(1, 3, 2, 4, 1, 2, 2)
         );
     }
 
     @Test
     public void testNodeContraction_parallelEdges_onlyOneLoopShortcutNeeded() {
+        //  /--\
         // 0 -- 1 -- 2
-        //  \--/
         EdgeIteratorState edge0 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(2));
         EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 0).setDistance(4));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(5));
@@ -1019,7 +1018,7 @@ public class EdgeBasedNodeContractorTest {
         contractNodes(0, 2, 1);
         // it is sufficient to be able to travel the 1-0-1 loop in one (the cheaper) direction
         checkShortcuts(
-                createShortcut(1, 1, 0, 1, 0, 1, 7)
+                createShortcut(1, 1, 1, 3, 0, 1, 7)
         );
     }
 
@@ -1049,18 +1048,18 @@ public class EdgeBasedNodeContractorTest {
         checkNumShortcuts(11);
         checkShortcuts(
                 // from node 4 contraction
-                createShortcut(5, 3, 5, 4, 5, 4, 66, true, false),
-                createShortcut(5, 3, 4, 5, 4, 5, 66, false, true),
-                createShortcut(3, 2, 1, 4, 1, 4, 29, false, true),
-                createShortcut(3, 2, 4, 1, 4, 1, 29, true, false),
-                createShortcut(5, 2, 1, 5, 1, 5, 75, false, true),
-                createShortcut(5, 2, 5, 1, 5, 1, 75, true, false),
+                createShortcut(5, 3, 11, 9, 5, 4, 66, true, false),
+                createShortcut(5, 3, 8, 10, 4, 5, 66, false, true),
+                createShortcut(3, 2, 2, 9, 1, 4, 29, false, true),
+                createShortcut(3, 2, 8, 3, 4, 1, 29, true, false),
+                createShortcut(5, 2, 2, 10, 1, 5, 75, false, true),
+                createShortcut(5, 2, 11, 3, 5, 1, 75, true, false),
                 // from node 5 contraction
-                createShortcut(2, 2, 3, 2, 3, 2, 99, true, false),
-                createShortcut(2, 2, 3, 1, 3, 6, 134, true, false),
-                createShortcut(2, 2, 1, 2, 8, 2, 114, true, false),
-                createShortcut(3, 2, 2, 4, 2, 7, 106, false, true),
-                createShortcut(3, 2, 4, 2, 9, 2, 105, true, false)
+                createShortcut(2, 2, 6, 5, 3, 2, 99, true, false),
+                createShortcut(2, 2, 6, 3, 3, 6, 134, true, false),
+                createShortcut(2, 2, 2, 5, 8, 2, 114, true, false),
+                createShortcut(3, 2, 4, 9, 2, 7, 106, false, true),
+                createShortcut(3, 2, 8, 5, 9, 2, 105, true, false)
         );
     }
 
@@ -1073,9 +1072,9 @@ public class EdgeBasedNodeContractorTest {
         setMaxLevelOnAllNodes();
         contractNodes(1, 0);
         checkShortcuts(
-                createShortcut(0, 0, 1, 2, 1, 2, 5.5),
-                createShortcut(0, 0, 0, 2, 0, 2, 4.5),
-                createShortcut(0, 0, 0, 1, 0, 1, 3.0)
+                createShortcut(0, 0, 2, 5, 1, 2, 5.5),
+                createShortcut(0, 0, 0, 5, 0, 2, 4.5),
+                createShortcut(0, 0, 0, 3, 0, 1, 3.0)
         );
     }
 
@@ -1117,8 +1116,8 @@ public class EdgeBasedNodeContractorTest {
         setTurnCost(3, 2, 4, 2);
         contractNodes(2, 0, 1, 4, 3);
         checkShortcuts(
-                createShortcut(4, 3, 3, 2, 3, 2, 6, true, false),
-                createShortcut(4, 3, 2, 3, 2, 3, 4, false, true)
+                createShortcut(4, 3, 7, 5, 3, 2, 6, true, false),
+                createShortcut(4, 3, 4, 6, 2, 3, 4, false, true)
         );
     }
 
@@ -1144,8 +1143,8 @@ public class EdgeBasedNodeContractorTest {
         setRestriction(0, 3, 1);
         contractNodes(4, 0, 1, 2, 3);
         checkShortcuts(
-                createShortcut(2, 3, 1, 2, 1, 2, 600, false, true),
-                createShortcut(3, 3, 1, 1, 1, 1, 260, true, false)
+                createShortcut(2, 3, 2, 4, 1, 2, 600, false, true),
+                createShortcut(3, 3, 2, 3, 1, 1, 260, true, false)
         );
     }
 
@@ -1199,7 +1198,7 @@ public class EdgeBasedNodeContractorTest {
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 3, 4);
         checkShortcuts(
-                createShortcut(1, 3, 1, 2, 1, 2, 145.847)
+                createShortcut(1, 3, 2, 4, 1, 2, 145.847)
         );
     }
 
@@ -1216,7 +1215,7 @@ public class EdgeBasedNodeContractorTest {
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 3);
         checkShortcuts(
-                createShortcut(1, 3, 1, 2, 1, 2, 2)
+                createShortcut(1, 3, 2, 4, 1, 2, 2)
         );
     }
 
@@ -1235,7 +1234,7 @@ public class EdgeBasedNodeContractorTest {
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 4, 3);
         checkShortcuts(
-                createShortcut(1, 3, 1, 2, 1, 2, 2)
+                createShortcut(1, 3, 2, 4, 1, 2, 2)
         );
     }
 
@@ -1253,7 +1252,7 @@ public class EdgeBasedNodeContractorTest {
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 3);
         checkShortcuts(
-                createShortcut(1, 3, 1, 2, 1, 2, 2)
+                createShortcut(1, 3, 2, 4, 1, 2, 2)
         );
     }
 
@@ -1273,7 +1272,7 @@ public class EdgeBasedNodeContractorTest {
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 4, 3);
         checkShortcuts(
-                createShortcut(1, 3, 1, 2, 1, 2, 2)
+                createShortcut(1, 3, 2, 4, 1, 2, 2)
         );
     }
 
@@ -1293,7 +1292,7 @@ public class EdgeBasedNodeContractorTest {
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 4, 3);
         checkShortcuts(
-                createShortcut(1, 3, 1, 4, 1, 4, 2)
+                createShortcut(1, 3, 2, 8, 1, 4, 2)
         );
     }
 
@@ -1317,7 +1316,7 @@ public class EdgeBasedNodeContractorTest {
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 4, 3);
         checkShortcuts(
-                createShortcut(1, 3, 3, 5, 3, 5, 2)
+                createShortcut(1, 3, 6, 10, 3, 5, 2)
         );
     }
 
@@ -1344,8 +1343,8 @@ public class EdgeBasedNodeContractorTest {
         // connects the same nodes and is not a bridge path. this needs special handling in our edge-based witness path
         // searcher.
         checkShortcuts(
-                createShortcut(4, 5, 0, 2, 0, 2, 200, false, true),
-                createShortcut(4, 5, 2, 0, 2, 0, 200, true, false)
+                createShortcut(4, 5, 0, 4, 0, 2, 200, false, true),
+                createShortcut(4, 5, 5, 1, 2, 0, 200, true, false)
         );
     }
 
@@ -1409,8 +1408,8 @@ public class EdgeBasedNodeContractorTest {
         setMaxLevelOnAllNodes();
         contractNodes(0, 5, 2, 1, 3, 4);
         checkShortcuts(
-                createShortcut(1, 3, 1, 2, 1, 2, 17.497, true, false),
-                createShortcut(1, 3, 2, 1, 2, 1, 17.497, false, true)
+                createShortcut(1, 3, 2, 4, 1, 2, 17.497, true, false),
+                createShortcut(1, 3, 5, 3, 2, 1, 17.497, false, true)
         );
     }
 
@@ -1464,7 +1463,7 @@ public class EdgeBasedNodeContractorTest {
 
     private void setTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, double cost) {
         double cost1 = cost >= maxCost ? Double.POSITIVE_INFINITY : cost;
-        graph.getTurnCostStorage().set(((EncodedValueLookup) encoder).getDecimalEncodedValue(TurnCost.key("car")), inEdge.getEdge(), viaNode, outEdge.getEdge(), cost1);
+        graph.getTurnCostStorage().set(encoder.getDecimalEncodedValue(TurnCost.key("car")), inEdge.getEdge(), viaNode, outEdge.getEdge(), cost1);
     }
 
     private EdgeIteratorState getEdge(int from, int to) {
@@ -1476,15 +1475,15 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private Shortcut createShortcut(int from, int to, EdgeIteratorState edge1, EdgeIteratorState edge2, double weight, boolean fwd, boolean bwd) {
-        return createShortcut(from, to, edge1.getEdge(), edge2.getEdge(), edge1.getEdge(), edge2.getEdge(), weight, fwd, bwd);
+        return createShortcut(from, to, edge1.getEdgeKey(), edge2.getEdgeKey(), edge1.getEdge(), edge2.getEdge(), weight, fwd, bwd);
     }
 
-    private Shortcut createShortcut(int from, int to, int firstOrigEdge, int lastOrigEdge, int skipEdge1, int skipEdge2, double weight) {
-        return createShortcut(from, to, firstOrigEdge, lastOrigEdge, skipEdge1, skipEdge2, weight, true, false);
+    private Shortcut createShortcut(int from, int to, int firstOrigEdgeKey, int lastOrigEdgeKey, int skipEdge1, int skipEdge2, double weight) {
+        return createShortcut(from, to, firstOrigEdgeKey, lastOrigEdgeKey, skipEdge1, skipEdge2, weight, true, false);
     }
 
-    private Shortcut createShortcut(int from, int to, int firstOrigEdge, int lastOrigEdge, int skipEdge1, int skipEdge2, double weight, boolean fwd, boolean bwd) {
-        return new Shortcut(from, to, firstOrigEdge, lastOrigEdge, skipEdge1, skipEdge2, weight, fwd, bwd);
+    private Shortcut createShortcut(int from, int to, int firstOrigEdgeKey, int lastOrigEdgeKey, int skipEdge1, int skipEdge2, double weight, boolean fwd, boolean bwd) {
+        return new Shortcut(from, to, firstOrigEdgeKey, lastOrigEdgeKey, skipEdge1, skipEdge2, weight, fwd, bwd);
     }
 
     /**
@@ -1512,7 +1511,7 @@ public class EdgeBasedNodeContractorTest {
             long ptr = chStore.toShortcutPointer(i);
             shortcuts.add(new Shortcut(
                     chStore.getNodeA(ptr), chStore.getNodeB(ptr),
-                    chStore.getOrigEdgeFirst(ptr), chStore.getOrigEdgeLast(ptr),
+                    chStore.getOrigEdgeKeyFirst(ptr), chStore.getOrigEdgeKeyLast(ptr),
                     chStore.getSkippedEdge1(ptr), chStore.getSkippedEdge2(ptr),
                     chStore.getWeight(ptr),
                     chStore.getFwdAccess(ptr), chStore.getBwdAccess(ptr)
@@ -1532,20 +1531,20 @@ public class EdgeBasedNodeContractorTest {
     private static class Shortcut {
         int baseNode;
         int adjNode;
-        int firstOrigEdge;
-        int lastOrigEdge;
+        int firstOrigEdgeKey;
+        int lastOrigEdgeKey;
         double weight;
         boolean fwd;
         boolean bwd;
         int skipEdge1;
         int skipEdge2;
 
-        public Shortcut(int baseNode, int adjNode, int firstOrigEdge, int lastOrigEdge, int skipEdge1, int skipEdge2, double weight,
+        public Shortcut(int baseNode, int adjNode, int firstOrigEdgeKey, int lastOrigEdgeKey, int skipEdge1, int skipEdge2, double weight,
                         boolean fwd, boolean bwd) {
             this.baseNode = baseNode;
             this.adjNode = adjNode;
-            this.firstOrigEdge = firstOrigEdge;
-            this.lastOrigEdge = lastOrigEdge;
+            this.firstOrigEdgeKey = firstOrigEdgeKey;
+            this.lastOrigEdgeKey = lastOrigEdgeKey;
             this.weight = weight;
             this.fwd = fwd;
             this.bwd = bwd;
@@ -1560,8 +1559,8 @@ public class EdgeBasedNodeContractorTest {
             Shortcut shortcut = (Shortcut) o;
             return baseNode == shortcut.baseNode &&
                     adjNode == shortcut.adjNode &&
-                    firstOrigEdge == shortcut.firstOrigEdge &&
-                    lastOrigEdge == shortcut.lastOrigEdge &&
+                    firstOrigEdgeKey == shortcut.firstOrigEdgeKey &&
+                    lastOrigEdgeKey == shortcut.lastOrigEdgeKey &&
                     Double.compare(shortcut.weight, weight) == 0 &&
                     fwd == shortcut.fwd &&
                     bwd == shortcut.bwd &&
@@ -1571,7 +1570,7 @@ public class EdgeBasedNodeContractorTest {
 
         @Override
         public int hashCode() {
-            return Objects.hash(baseNode, adjNode, firstOrigEdge, lastOrigEdge, weight, fwd, bwd,
+            return Objects.hash(baseNode, adjNode, firstOrigEdgeKey, lastOrigEdgeKey, weight, fwd, bwd,
                     skipEdge1, skipEdge2);
         }
 
@@ -1580,8 +1579,8 @@ public class EdgeBasedNodeContractorTest {
             return "Shortcut{" +
                     "baseNode=" + baseNode +
                     ", adjNode=" + adjNode +
-                    ", firstOrigEdge=" + firstOrigEdge +
-                    ", lastOrigEdge=" + lastOrigEdge +
+                    ", firstOrigEdgeKey=" + firstOrigEdgeKey +
+                    ", lastOrigEdgeKey=" + lastOrigEdgeKey +
                     ", weight=" + weight +
                     ", fwd=" + fwd +
                     ", bwd=" + bwd +

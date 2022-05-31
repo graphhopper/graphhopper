@@ -473,7 +473,7 @@ public class CHPreparationGraph {
 
         @Override
         public String toString() {
-            return currEdge == null ? "not_started" : getBaseNode() + "-" + getAdjNode();
+            return currEdge == null ? "not_started" : currEdge.toString();
         }
 
         private boolean nodeAisBase() {
@@ -578,14 +578,12 @@ public class CHPreparationGraph {
 
         @Override
         public int getOrigEdgeKeyFirstAB() {
-            int key = prepareEdge << 1;
-            return nodeA > nodeB ? key + 1 : key;
+            return GHUtility.createEdgeKey(prepareEdge, nodeA == nodeB, false);
         }
 
         @Override
         public int getOrigEdgeKeyFirstBA() {
-            int key = prepareEdge << 1;
-            return nodeB > nodeA ? key + 1 : key;
+            return GHUtility.createEdgeKey(prepareEdge, nodeA == nodeB, true);
         }
 
         @Override
@@ -858,14 +856,14 @@ public class CHPreparationGraph {
     private static class OrigGraph {
         // we store a list of 'edges' in the format: adjNode|edgeId|accessFlags, we use two ints for each edge
         private final IntArrayList adjNodes;
-        private final IntArrayList edgesAndFlags;
+        private final IntArrayList keysAndFlags;
         // for each node we store the index at which the edges for this node begin in the above edge list
         private final IntArrayList firstEdgesByNode;
 
-        private OrigGraph(IntArrayList firstEdgesByNode, IntArrayList adjNodes, IntArrayList edgesAndFlags) {
+        private OrigGraph(IntArrayList firstEdgesByNode, IntArrayList adjNodes, IntArrayList keysAndFlags) {
             this.firstEdgesByNode = firstEdgesByNode;
             this.adjNodes = adjNodes;
-            this.edgesAndFlags = edgesAndFlags;
+            this.keysAndFlags = keysAndFlags;
         }
 
         PrepareGraphOrigEdgeExplorer createOutOrigEdgeExplorer() {
@@ -879,20 +877,20 @@ public class CHPreparationGraph {
         static class Builder {
             private final IntArrayList fromNodes = new IntArrayList();
             private final IntArrayList toNodes = new IntArrayList();
-            private final IntArrayList edgesAndFlags = new IntArrayList();
+            private final IntArrayList keysAndFlags = new IntArrayList();
             private int maxFrom = -1;
             private int maxTo = -1;
 
             void addEdge(int from, int to, int edge, boolean fwd, boolean bwd) {
                 fromNodes.add(from);
                 toNodes.add(to);
-                edgesAndFlags.add(getEdgeWithFlags(edge, fwd, bwd));
+                keysAndFlags.add(getKeyWithFlags(GHUtility.createEdgeKey(edge, from == to, false), fwd, bwd));
                 maxFrom = Math.max(maxFrom, from);
                 maxTo = Math.max(maxTo, to);
 
                 fromNodes.add(to);
                 toNodes.add(from);
-                edgesAndFlags.add(getEdgeWithFlags(edge, bwd, fwd));
+                keysAndFlags.add(getKeyWithFlags(GHUtility.createEdgeKey(edge, from == to, true), bwd, fwd));
                 maxFrom = Math.max(maxFrom, to);
                 maxTo = Math.max(maxTo, from);
             }
@@ -901,21 +899,21 @@ public class CHPreparationGraph {
                 int[] sortOrder = IndirectSort.mergesort(0, fromNodes.elementsCount, new IndirectComparator.AscendingIntComparator(fromNodes.buffer));
                 sortAndTrim(fromNodes, sortOrder);
                 sortAndTrim(toNodes, sortOrder);
-                sortAndTrim(edgesAndFlags, sortOrder);
-                return new OrigGraph(buildFirstEdgesByNode(), toNodes, edgesAndFlags);
+                sortAndTrim(keysAndFlags, sortOrder);
+                return new OrigGraph(buildFirstEdgesByNode(), toNodes, keysAndFlags);
             }
 
-            private int getEdgeWithFlags(int edge, boolean fwd, boolean bwd) {
-                // we use only 30 bits for the edge Id and store two access flags along with the same int
-                if (edge >= Integer.MAX_VALUE >> 2)
+            private int getKeyWithFlags(int key, boolean fwd, boolean bwd) {
+                // we use only 30 bits for the key and store two access flags along with the same int
+                if (key >= Integer.MAX_VALUE >> 2)
                     throw new IllegalArgumentException("Maximum edge ID exceeded: " + Integer.MAX_VALUE);
-                edge <<= 1;
+                key <<= 1;
                 if (fwd)
-                    edge++;
-                edge <<= 1;
+                    key++;
+                key <<= 1;
                 if (bwd)
-                    edge++;
-                return edge;
+                    key++;
+                return key;
             }
 
             private IntArrayList buildFirstEdgesByNode() {
@@ -985,8 +983,7 @@ public class CHPreparationGraph {
 
         @Override
         public int getOrigEdgeKeyFirst() {
-            int e = graph.edgesAndFlags.get(index);
-            return GHUtility.createEdgeKey(node, getAdjNode(), e >> 2, false);
+            return graph.keysAndFlags.get(index) >> 2;
         }
 
         @Override
@@ -995,7 +992,7 @@ public class CHPreparationGraph {
         }
 
         private boolean hasAccess() {
-            int e = graph.edgesAndFlags.get(index);
+            int e = graph.keysAndFlags.get(index);
             if (reverse) {
                 return (e & 0b01) == 0b01;
             } else {

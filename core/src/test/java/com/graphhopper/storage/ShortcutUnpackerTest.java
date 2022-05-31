@@ -82,12 +82,12 @@ public class ShortcutUnpackerTest {
             graph.getTurnCostStorage().set(((EncodedValueLookup) encodingManager).getDecimalEncodedValue(TurnCost.key(encoder.toString())), fromEdge, viaNode, toEdge, cost);
         }
 
-        private void shortcut(int baseNode, int adjNode, int skip1, int skip2, int origFirst, int origLast, boolean reverse) {
+        private void shortcut(int baseNode, int adjNode, int skip1, int skip2, int origKeyFirst, int origKeyLast, boolean reverse) {
             // shortcut weight/distance is not important for us here
             double weight = 1;
             int flags = reverse ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir();
             if (edgeBased) {
-                chBuilder.addShortcutEdgeBased(baseNode, adjNode, flags, weight, skip1, skip2, origFirst, origLast);
+                chBuilder.addShortcutEdgeBased(baseNode, adjNode, flags, weight, skip1, skip2, origKeyFirst, origKeyLast);
             } else {
                 chBuilder.addShortcutNodeBased(baseNode, adjNode, flags, weight, skip1, skip2);
             }
@@ -119,11 +119,11 @@ public class ShortcutUnpackerTest {
         f.freeze();
 
         f.setCHLevels(1, 3, 5, 4, 2, 0, 6);
-        f.shortcut(4, 2, 2, 3, 2, 3, true);
-        f.shortcut(4, 6, 4, 5, 4, 5, false);
-        f.shortcut(2, 0, 0, 1, 0, 1, true);
-        f.shortcut(2, 6, 6, 7, 2, 5, false);
-        f.shortcut(0, 6, 8, 9, 0, 5, false);
+        f.shortcut(4, 2, 2, 3, 4, 6, true);
+        f.shortcut(4, 6, 4, 5, 8, 10, false);
+        f.shortcut(2, 0, 0, 1, 0, 2, true);
+        f.shortcut(2, 6, 6, 7, 4, 10, false);
+        f.shortcut(0, 6, 8, 9, 0, 10, false);
 
         {
             // unpack the shortcut 0->6, traverse original edges in 'forward' order (from node 0 to 6)
@@ -207,11 +207,11 @@ public class ShortcutUnpackerTest {
         f.freeze();
 
         f.setCHLevels(2, 4, 3, 1, 5, 0);
-        f.shortcut(3, 1, 1, 2, 1, 2, true);
-        f.shortcut(3, 1, 3, 4, 3, 4, false);
-        f.shortcut(1, 1, 6, 7, 1, 4, false);
-        f.shortcut(1, 0, 0, 8, 0, 4, true);
-        f.shortcut(5, 0, 9, 5, 0, 5, true);
+        f.shortcut(3, 1, 1, 2, 2, 4, true);
+        f.shortcut(3, 1, 3, 4, 6, 8, false);
+        f.shortcut(1, 1, 6, 7, 2, 8, false);
+        f.shortcut(1, 0, 0, 8, 0, 8, true);
+        f.shortcut(5, 0, 9, 5, 0, 10, true);
 
         {
             // unpack the shortcut 0->5, traverse original edges in 'forward' order (from node 0 to 5)
@@ -301,11 +301,11 @@ public class ShortcutUnpackerTest {
         f.setTurnCost(edge0.getEdge(), 0, PREV_EDGE, 1.0);
 
         f.setCHLevels(1, 3, 5, 4, 2, 0, 6);
-        f.shortcut(4, 2, 2, 3, 2, 3, true);
-        f.shortcut(4, 6, 4, 5, 4, 5, false);
-        f.shortcut(2, 0, 0, 1, 0, 1, true);
-        f.shortcut(2, 6, 6, 7, 2, 5, false);
-        f.shortcut(0, 6, 8, 9, 0, 5, false);
+        f.shortcut(4, 2, 2, 3, 4, 6, true);
+        f.shortcut(4, 6, 4, 5, 8, 10, false);
+        f.shortcut(2, 0, 0, 1, 0, 2, true);
+        f.shortcut(2, 6, 6, 7, 4, 10, false);
+        f.shortcut(0, 6, 8, 9, 0, 10, false);
 
         {
             // unpack the shortcut 0->6, traverse original edges in 'forward' order (from node 0 to 6)

@@ -49,7 +49,7 @@ public class AccessFilterTest {
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
         chBuilder.setIdentityLevels();
-        chBuilder.addShortcutEdgeBased(0, 0, PrepareEncoder.getScFwdDir(), 5, 0, 2, 0, 2);
+        chBuilder.addShortcutEdgeBased(0, 0, PrepareEncoder.getScFwdDir(), 5, 0, 2, 0, 5);
         RoutingCHGraph chGraph = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
         RoutingCHEdgeExplorer outExplorer = chGraph.createOutEdgeExplorer();
         RoutingCHEdgeExplorer inExplorer = chGraph.createInEdgeExplorer();
