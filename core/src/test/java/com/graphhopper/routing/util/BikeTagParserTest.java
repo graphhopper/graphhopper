@@ -597,7 +597,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way = new ReaderWay(1);
         way.setTag("highway", "residential");
         way.setTag("maxspeed", "15");
-        // todonow!! speed is larger than maxspeed
+        // todo: speed is larger than maxspeed tag due to rounding and storable max speed is 30
         assertPriorityAndSpeed(PREFER.getValue(), 16, way);
     }
 
