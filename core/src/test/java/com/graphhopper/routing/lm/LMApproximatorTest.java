@@ -21,10 +21,12 @@ package com.graphhopper.routing.lm;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.Subnetwork;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoders;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.*;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
@@ -44,10 +46,9 @@ public class LMApproximatorTest {
     }
 
     private void run(long seed) {
-        Directory dir = new RAMDirectory();
-        FlagEncoder encoder = FlagEncoders.createCar(new PMap("turn_costs=true"));
+        FlagEncoder encoder = FlagEncoders.createCar(new PMap("turn_costs=true|speed_two_directions=true"));
         EncodingManager encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
-        BaseGraph graph = new BaseGraph.Builder(encodingManager).setDir(dir).withTurnCosts(true).create();
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
 
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true,
@@ -55,75 +56,83 @@ public class LMApproximatorTest {
 
         Weighting weighting = new FastestWeighting(encoder);
 
-        PrepareLandmarks lm = new PrepareLandmarks(dir, graph, encodingManager, new LMConfig("car", weighting), 16);
+        PrepareLandmarks lm = new PrepareLandmarks(new RAMDirectory(), graph, encodingManager, new LMConfig("car", weighting), 16);
         lm.setMaximumWeight(10000);
         lm.doWork();
         LandmarkStorage landmarkStorage = lm.getLandmarkStorage();
 
         for (int t = 0; t < graph.getNodes(); t++) {
-            LMApproximator lmApproximator = new LMApproximator(graph, weighting, graph.getNodes(), landmarkStorage, 8, landmarkStorage.getFactor(), false);
+            LMApproximator lmApproximator = LMApproximator.forLandmarks(graph, landmarkStorage, 8);
             WeightApproximator reverseLmApproximator = lmApproximator.reverse();
             BeelineWeightApproximator beelineApproximator = new BeelineWeightApproximator(graph.getNodeAccess(), weighting);
             WeightApproximator reverseBeelineApproximator = beelineApproximator.reverse();
             PerfectApproximator perfectApproximator = new PerfectApproximator(graph, weighting, TraversalMode.NODE_BASED, false);
             PerfectApproximator reversePerfectApproximator = new PerfectApproximator(graph, weighting, TraversalMode.NODE_BASED, true);
-            BalancedWeightApproximator balancedWeightApproximator = new BalancedWeightApproximator(new LMApproximator(graph, weighting, graph.getNodes(), landmarkStorage, 8, landmarkStorage.getFactor(), false));
+            BalancedWeightApproximator balancedWeightApproximator = new BalancedWeightApproximator(lmApproximator);
 
             lmApproximator.setTo(t);
-            beelineApproximator.setTo(t);
             reverseLmApproximator.setTo(t);
+            beelineApproximator.setTo(t);
             reverseBeelineApproximator.setTo(t);
             perfectApproximator.setTo(t);
             reversePerfectApproximator.setTo(t);
             balancedWeightApproximator.setFromTo(0, t);
+
             int nOverApproximatedWeights = 0;
             int nInconsistentWeights = 0;
             for (int v = 0; v < graph.getNodes(); v++) {
                 Dijkstra dijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED);
                 Path path = dijkstra.calcPath(v, t);
                 if (path.isFound()) {
-                    // Give the beelineApproximator some slack, because the map distance of an edge
-                    // can be _smaller_ than its Euklidean distance, due to rounding.
-                    double slack = path.getEdgeCount() * (1 / 1000.0);
+                    // admissibility: the approximators must never overapproximate the remaining weight to the target
                     double realRemainingWeight = path.getWeight();
                     double approximatedRemainingWeight = lmApproximator.approximate(v);
-                    if (approximatedRemainingWeight - slack > realRemainingWeight) {
+                    if (approximatedRemainingWeight > realRemainingWeight) {
                         System.out.printf("LM: %f\treal: %f\n", approximatedRemainingWeight, realRemainingWeight);
                         nOverApproximatedWeights++;
                     }
+                    // Give the beelineApproximator some slack, because the map distance of an edge
+                    // can be _smaller_ than its Euklidean distance, due to rounding.
+                    double slack = path.getEdgeCount() * (1 / 1000.0);
                     double beelineApproximatedRemainingWeight = beelineApproximator.approximate(v);
                     if (beelineApproximatedRemainingWeight - slack > realRemainingWeight) {
                         System.out.printf("beeline: %f\treal: %f\n", beelineApproximatedRemainingWeight, realRemainingWeight);
                         nOverApproximatedWeights++;
                     }
-                    double approximate = perfectApproximator.approximate(v);
-                    if (approximate > realRemainingWeight) {
-                        System.out.printf("perfect: %f\treal: %f\n", approximate, realRemainingWeight);
+                    double perfectApproximatedRemainingWeight = perfectApproximator.approximate(v);
+                    if (perfectApproximatedRemainingWeight > realRemainingWeight) {
+                        System.out.printf("perfect: %f\treal: %f\n", perfectApproximatedRemainingWeight, realRemainingWeight);
                         nOverApproximatedWeights++;
                     }
 
-                    // Triangle inequality for approximator. This is what makes it 'consistent'.
+                    // Triangle inequality for approximator. This is what makes it 'feasible' (or 'monotone/consistent').
                     // That's a requirement for normal A*-implementations, because if it is violated,
-                    // the heap-weight of settled nodes can decrease, and that would mean our
-                    // stopping criterion is not sufficient.
-                    EdgeIterator neighbors = graph.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc())).setBaseNode(v);
-                    while (neighbors.next()) {
-                        int w = neighbors.getAdjNode();
-                        double vw = weighting.calcEdgeWeight(neighbors, false);
+                    // the heap-weight of settled nodes can decrease. In this case nodes potentially have to be expanded
+                    // multiple times as we do not know for certain the shortest path weight of a settled node. And that
+                    // could mean our stopping criterion is not sufficient.
+                    EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(v);
+                    while (iter.next()) {
+                        int w = iter.getAdjNode();
+                        double vw = weighting.calcEdgeWeightWithAccess(iter, false);
                         double vwApprox = lmApproximator.approximate(v) - lmApproximator.approximate(w);
-                        if (vwApprox - lm.getLandmarkStorage().getFactor() > vw) {
-                            System.out.printf("%f\t%f\n", vwApprox - lm.getLandmarkStorage().getFactor(), vw);
+                        // we do not try to enforce the inequality relation strictly, but allow a numeric tolerance.
+                        // this is required because we do not store the LM weights exactly, and we account for this
+                        // imprecision in the stopping criterion of the bidirectional A* algorithm. But the imprecision
+                        // must be limited to a known extent. An approximately feasible approximator is still much
+                        // better than an infeasible one.
+                        if (vwApprox - lmApproximator.getSlack() > vw) {
+                            System.out.printf("LM not feasible: %f\t%f\n", vwApprox - lmApproximator.getSlack(), vw);
                             nInconsistentWeights++;
                         }
                     }
 
-                    neighbors = graph.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc())).setBaseNode(v);
-                    while (neighbors.next()) {
-                        int w = neighbors.getAdjNode();
-                        double vw = weighting.calcEdgeWeight(neighbors, false);
+                    iter = graph.createEdgeExplorer().setBaseNode(v);
+                    while (iter.next()) {
+                        int w = iter.getAdjNode();
+                        double vw = weighting.calcEdgeWeightWithAccess(iter, false);
                         double vwApprox = balancedWeightApproximator.approximate(v, false) - balancedWeightApproximator.approximate(w, false);
-                        if (vwApprox - lm.getLandmarkStorage().getFactor() > vw) {
-                            System.out.printf("%f\t%f\n", vwApprox - lm.getLandmarkStorage().getFactor(), vw);
+                        if (vwApprox - balancedWeightApproximator.getSlack() > vw) {
+                            System.out.printf("Balanced not feasible: %f\t%f\n", vwApprox - balancedWeightApproximator.getSlack(), vw);
                             nInconsistentWeights++;
                         }
                     }
@@ -131,15 +140,15 @@ public class LMApproximatorTest {
                 Dijkstra reverseDijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED);
                 Path reversePath = reverseDijkstra.calcPath(t, v);
                 if (reversePath.isFound()) {
-                    // Give the beelineApproximator some slack, because the map distance of an edge
-                    // can be _smaller_ than its Euklidean distance, due to rounding.
-                    double slack = reversePath.getEdgeCount() * (1 / 1000.0);
                     double realRemainingWeight = reversePath.getWeight();
                     double approximatedRemainingWeight = reverseLmApproximator.approximate(v);
-                    if (approximatedRemainingWeight - slack > realRemainingWeight) {
+                    if (approximatedRemainingWeight > realRemainingWeight) {
                         System.out.printf("LM: %f\treal: %f\n", approximatedRemainingWeight, realRemainingWeight);
                         nOverApproximatedWeights++;
                     }
+                    // Give the beelineApproximator some slack, because the map distance of an edge
+                    // can be _smaller_ than its Euklidean distance, due to rounding.
+                    double slack = reversePath.getEdgeCount() * (1 / 1000.0);
                     double beelineApproximatedRemainingWeight = reverseBeelineApproximator.approximate(v);
                     if (beelineApproximatedRemainingWeight - slack > realRemainingWeight) {
                         System.out.printf("beeline: %f\treal: %f\n", beelineApproximatedRemainingWeight, realRemainingWeight);
@@ -154,8 +163,8 @@ public class LMApproximatorTest {
 
             }
 
-            assertEquals(0, nOverApproximatedWeights, "too many over approximated weights, seed: " + seed);
-            assertEquals(0, nInconsistentWeights, "too many inconsistent weights, seed: " + seed);
+            assertEquals(0, nOverApproximatedWeights, "too many over approximated weights: " + nOverApproximatedWeights + ", seed: " + seed);
+            assertEquals(0, nInconsistentWeights, "too many inconsistent weights, " + nInconsistentWeights + ", seed: " + seed);
         }
     }
 
