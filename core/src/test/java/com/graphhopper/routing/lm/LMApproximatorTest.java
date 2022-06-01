@@ -21,18 +21,21 @@ package com.graphhopper.routing.lm;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.Subnetwork;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
-import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.*;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.index.LocationIndexTree;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
+import com.graphhopper.util.shapes.BBox;
 import org.junit.jupiter.api.RepeatedTest;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -51,23 +54,40 @@ public class LMApproximatorTest {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
 
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true,
-                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, 0.7, 0.8, 0.8);
+        // todo: try with more nodes and also using one-ways (pBothDir<1) and different speeds (speed=null)
+        //       and maybe even with loops (or maybe not, because we don't want loops anyway)
+        GHUtility.buildRandomGraph(graph, rnd, 20, 2.2, false, true,
+                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), 60.0, 0, 1.0, 0);
 
         Weighting weighting = new FastestWeighting(encoder);
 
-        PrepareLandmarks lm = new PrepareLandmarks(new RAMDirectory(), graph, encodingManager, new LMConfig("car", weighting), 16);
-        lm.setMaximumWeight(10000);
-        lm.doWork();
-        LandmarkStorage landmarkStorage = lm.getLandmarkStorage();
+        // todo: try with more landmarks, but first make it work with one...
+        int landmarks = 1;
+        LandmarkStorage landmarkStorage = new LandmarkStorage(graph, encodingManager, new RAMDirectory(), new LMConfig("car", weighting), landmarks);
+        landmarkStorage.setMaximumWeight(10000);
+        landmarkStorage.createLandmarks();
 
-        for (int t = 0; t < graph.getNodes(); t++) {
-            LMApproximator lmApproximator = LMApproximator.forLandmarks(graph, landmarkStorage, 8);
+        // create query graph
+        LocationIndexTree locationIndex = new LocationIndexTree(graph, graph.getDirectory());
+        locationIndex.prepareIndex();
+        BBox bounds = graph.getBounds();
+        final int numSnaps = 10;
+        List<Snap> snaps = new ArrayList<>();
+        for (int i = 0; i < numSnaps; i++) {
+            double lat = rnd.nextDouble() * (bounds.maxLat - bounds.minLat) + bounds.minLat;
+            double lon = rnd.nextDouble() * (bounds.maxLon - bounds.minLon) + bounds.minLon;
+            Snap snap = locationIndex.findClosest(lat, lon, EdgeFilter.ALL_EDGES);
+            snaps.add(snap);
+        }
+        QueryGraph queryGraph = QueryGraph.create(graph, snaps);
+
+        for (int t = 0; t < queryGraph.getNodes(); t++) {
+            LMApproximator lmApproximator = LMApproximator.forLandmarks(queryGraph, landmarkStorage, Math.min(landmarks, 8));
             WeightApproximator reverseLmApproximator = lmApproximator.reverse();
-            BeelineWeightApproximator beelineApproximator = new BeelineWeightApproximator(graph.getNodeAccess(), weighting);
+            BeelineWeightApproximator beelineApproximator = new BeelineWeightApproximator(queryGraph.getNodeAccess(), weighting);
             WeightApproximator reverseBeelineApproximator = beelineApproximator.reverse();
-            PerfectApproximator perfectApproximator = new PerfectApproximator(graph, weighting, TraversalMode.NODE_BASED, false);
-            PerfectApproximator reversePerfectApproximator = new PerfectApproximator(graph, weighting, TraversalMode.NODE_BASED, true);
+            PerfectApproximator perfectApproximator = new PerfectApproximator(queryGraph, weighting, TraversalMode.NODE_BASED, false);
+            PerfectApproximator reversePerfectApproximator = new PerfectApproximator(queryGraph, weighting, TraversalMode.NODE_BASED, true);
             BalancedWeightApproximator balancedWeightApproximator = new BalancedWeightApproximator(lmApproximator);
 
             lmApproximator.setTo(t);
@@ -80,8 +100,8 @@ public class LMApproximatorTest {
 
             int nOverApproximatedWeights = 0;
             int nInconsistentWeights = 0;
-            for (int v = 0; v < graph.getNodes(); v++) {
-                Dijkstra dijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED);
+            for (int v = 0; v < queryGraph.getNodes(); v++) {
+                Dijkstra dijkstra = new Dijkstra(queryGraph, weighting, TraversalMode.NODE_BASED);
                 Path path = dijkstra.calcPath(v, t);
                 if (path.isFound()) {
                     // admissibility: the approximators must never overapproximate the remaining weight to the target
@@ -110,7 +130,7 @@ public class LMApproximatorTest {
                     // the heap-weight of settled nodes can decrease. In this case nodes potentially have to be expanded
                     // multiple times as we do not know for certain the shortest path weight of a settled node. And that
                     // could mean our stopping criterion is not sufficient.
-                    EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(v);
+                    EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(v);
                     while (iter.next()) {
                         int w = iter.getAdjNode();
                         double vw = weighting.calcEdgeWeightWithAccess(iter, false);
@@ -120,24 +140,28 @@ public class LMApproximatorTest {
                         // imprecision in the stopping criterion of the bidirectional A* algorithm. But the imprecision
                         // must be limited to a known extent. An approximately feasible approximator is still much
                         // better than an infeasible one.
-                        if (vwApprox - lmApproximator.getSlack() > vw) {
-                            System.out.printf("LM not feasible: %f\t%f\n", vwApprox - lmApproximator.getSlack(), vw);
+                        double reducedWeight = vw - vwApprox + lmApproximator.getSlack();
+                        if (reducedWeight < 0) {
+                            boolean virtual = queryGraph.isVirtualNode(iter.getBaseNode()) || queryGraph.isVirtualNode(iter.getAdjNode());
+                            System.out.printf("LM not feasible%s! reduced weight: %f\tvw: %f\tvwApprox: %f\tslack: %f\n", (virtual ? " on query graph" : ""), reducedWeight, vw, vwApprox, lmApproximator.getSlack());
                             nInconsistentWeights++;
                         }
                     }
 
-                    iter = graph.createEdgeExplorer().setBaseNode(v);
+                    iter = queryGraph.createEdgeExplorer().setBaseNode(v);
                     while (iter.next()) {
                         int w = iter.getAdjNode();
                         double vw = weighting.calcEdgeWeightWithAccess(iter, false);
                         double vwApprox = balancedWeightApproximator.approximate(v, false) - balancedWeightApproximator.approximate(w, false);
-                        if (vwApprox - balancedWeightApproximator.getSlack() > vw) {
-                            System.out.printf("Balanced not feasible: %f\t%f\n", vwApprox - balancedWeightApproximator.getSlack(), vw);
+                        double reducedWeight = vw - vwApprox + balancedWeightApproximator.getSlack();
+                        if (reducedWeight < 0) {
+                            boolean virtual = queryGraph.isVirtualNode(iter.getBaseNode()) || queryGraph.isVirtualNode(iter.getAdjNode());
+                            System.out.printf("Balanced not feasible%s! reduced weight: %f\tw: %f\tvwApprox: %f\tslack: %f\n", (virtual ? " on query graph" : ""), reducedWeight, vw, vwApprox, balancedWeightApproximator.getSlack());
                             nInconsistentWeights++;
                         }
                     }
                 }
-                Dijkstra reverseDijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED);
+                Dijkstra reverseDijkstra = new Dijkstra(queryGraph, weighting, TraversalMode.NODE_BASED);
                 Path reversePath = reverseDijkstra.calcPath(t, v);
                 if (reversePath.isFound()) {
                     double realRemainingWeight = reversePath.getWeight();
