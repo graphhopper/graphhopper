@@ -22,7 +22,6 @@ import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.Toll;
-import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.storage.IntsRef;
 
@@ -63,7 +62,7 @@ public class OSMTollParser implements TagParser {
         
         CountryRule countryRule = readerWay.getTag("country_rule", null);
         if (countryRule != null)
-            toll = countryRule.getToll(readerWay, TransportationMode.CAR, toll);
+            toll = countryRule.getToll(readerWay, toll);
         
         tollEnc.setEnum(false, edgeFlags, toll);
         

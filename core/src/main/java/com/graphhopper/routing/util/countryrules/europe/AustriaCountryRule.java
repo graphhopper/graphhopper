@@ -75,8 +75,8 @@ public class AustriaCountryRule implements CountryRule {
     }
     
     @Override
-    public Toll getToll(ReaderWay readerWay, TransportationMode transportationMode, Toll currentToll) {
-        if (!transportationMode.isMotorVehicle() || currentToll != Toll.MISSING) {
+    public Toll getToll(ReaderWay readerWay, Toll currentToll) {
+        if (currentToll != Toll.MISSING) {
             return currentToll;
         }
 

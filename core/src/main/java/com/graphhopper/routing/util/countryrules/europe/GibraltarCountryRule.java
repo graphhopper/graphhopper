@@ -20,14 +20,13 @@ package com.graphhopper.routing.util.countryrules.europe;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.Toll;
-import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 
 public class GibraltarCountryRule implements CountryRule {
     
     @Override
-    public Toll getToll(ReaderWay readerWay, TransportationMode transportationMode, Toll currentToll) {
-        if (!transportationMode.isMotorVehicle() || currentToll != Toll.MISSING) {
+    public Toll getToll(ReaderWay readerWay, Toll currentToll) {
+        if (currentToll != Toll.MISSING) {
             return currentToll;
         }
         
