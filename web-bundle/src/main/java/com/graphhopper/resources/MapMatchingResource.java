@@ -118,15 +118,15 @@ public class MapMatchingResource {
         MatchResult matchResult = matching.match(measurements);
 
         // TODO: Request logging and timing should perhaps be done somewhere outside
-        float took = sw.stop().getMillis();
+        long took = sw.stop().getMillis();
         String infoStr = request.getRemoteAddr() + " " + request.getLocale() + " " + request.getHeader("User-Agent");
-        String logStr = request.getQueryString() + ", " + infoStr + ", took:" + took + "s, entries:" + measurements.size() +
+        String logStr = request.getQueryString() + ", " + infoStr + ", took:" + took + "ms, entries:" + measurements.size() +
                 ", profile: " + profile + ", " + weightingVehicleLogStr;
         logger.info(logStr);
 
         if ("extended_json".equals(outType)) {
             return Response.ok(convertToTree(matchResult, enableElevation, pointsEncoded)).
-                    header("X-GH-Took", "" + Math.round(took * 1000)).
+                    header("X-GH-Took", "" + Math.round(took)).
                     build();
         } else {
             Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
@@ -150,7 +150,7 @@ public class MapMatchingResource {
                         .map(Date::getTime)
                         .orElse(System.currentTimeMillis());
                 return Response.ok(GpxConversions.createGPX(rsp.getBest().getInstructions(), gpx.trk.get(0).name != null ? gpx.trk.get(0).name : "", time, enableElevation, withRoute, withTrack, false, Constants.VERSION, tr), "application/gpx+xml").
-                        header("X-GH-Took", "" + Math.round(took * 1000)).
+                        header("X-GH-Took", "" + Math.round(took)).
                         build();
             } else {
                 ObjectNode map = ResponsePathSerializer.jsonObject(rsp, instructions, calcPoints, enableElevation, pointsEncoded, took);
@@ -171,7 +171,7 @@ public class MapMatchingResource {
                     map.putPOJO("traversal_keys", traversalKeylist);
                 }
                 return Response.ok(map).
-                        header("X-GH-Took", "" + Math.round(took * 1000)).
+                        header("X-GH-Took", "" + Math.round(took)).
                         build();
             }
         }
