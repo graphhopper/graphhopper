@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.lm;
 
+import com.carrotsearch.hppc.IntDoubleHashMap;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BeelineWeightApproximator;
@@ -25,6 +26,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 
 import java.util.Arrays;
+import java.util.concurrent.Callable;
 
 /**
  * This class is a weight approximation based on precalculated landmarks.
@@ -35,10 +37,12 @@ public class LMApproximator implements WeightApproximator {
 
     private final LandmarkStorage lms;
     private final Weighting weighting;
+    private final IntDoubleHashMap queryGraphNodeApproximations;
     private int[] activeLandmarkIndices;
     private int[] weightsFromActiveLandmarksToT;
     private int[] weightsFromTToActiveLandmarks;
     private double epsilon = 1;
+    private int t;
     private int towerNodeNextToT = -1;
     private double weightFromTToTowerNode;
     private boolean recalculateActiveLandmarks = true;
@@ -71,6 +75,7 @@ public class LMApproximator implements WeightApproximator {
         this.weighting = weighting;
         this.fallBackApproximation = new BeelineWeightApproximator(graph.getNodeAccess(), weighting);
         this.maxBaseNodes = maxBaseNodes;
+        this.queryGraphNodeApproximations = new IntDoubleHashMap();
     }
 
     /**
@@ -86,13 +91,37 @@ public class LMApproximator implements WeightApproximator {
         if (!recalculateActiveLandmarks && fallback || lms.isEmpty())
             return fallBackApproximation.approximate(v);
 
-        if (v >= maxBaseNodes) {
-            // handle virtual node
+        if (v == t || v == towerNodeNextToT)
             return 0;
-        }
 
-        if (v == towerNodeNextToT)
-            return 0;
+        if (v >= maxBaseNodes) {
+            // handle virtual node (unless it is t, in which case ^^)
+            return new Callable<Double>() {
+                double w;
+                int j;
+
+                @Override
+                public Double call() {
+                    Dijkstra dijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED) {
+
+                        @Override
+                        protected boolean finished() {
+                            j = currEdge.adjNode;
+                            w = currEdge.weight;
+                            return currEdge.adjNode < maxBaseNodes;
+                        }
+
+                        // We only expect a very short search
+                        @Override
+                        protected void initCollections(int size) {
+                            super.initCollections(2);
+                        }
+                    };
+                    dijkstra.calcPath(v, -1);
+                    return approximate(j) + w;
+                }
+            }.call();
+        }
 
         // select better active landmarks, LATER: use 'success' statistics about last active landmark
         // we have to update the priority queues and the maps if done in the middle of the search http://cstheory.stackexchange.com/q/36355/13229
@@ -168,6 +197,7 @@ public class LMApproximator implements WeightApproximator {
     @Override
     public void setTo(int t) {
         this.fallBackApproximation.setTo(t);
+        this.t = t;
         findClosestRealNode(t);
     }
 
