@@ -80,6 +80,11 @@ public abstract class GHMatrixAbstractRequester {
     }
 
     protected JsonNode createPostRequest(GHMRequest ghRequest) {
+        if (ghRequest.getHints().getObject("profile", null) != null)
+            throw new IllegalArgumentException("use setProfile instead of hint 'profile'");
+        if (ghRequest.getHints().getObject("fail_fast", null) != null)
+            throw new IllegalArgumentException("use setFailFast instead of hint 'fail_fast'");
+
         ObjectNode requestJson = objectMapper.createObjectNode();
         if (ghRequest.getPoints() != null) {
             if (ghRequest.getFromPoints() != null)

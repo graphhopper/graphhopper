@@ -38,8 +38,6 @@ public class GraphHopperMatrixWeb {
     public MatrixResponse route(GHMRequest request) {
         if (!Helper.isEmpty(key))
             request.getHints().putObject(KEY, key);
-        // todonow
-//        request.compactPointHints();
         return requester.route(request);
     }
 }

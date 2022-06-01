@@ -132,9 +132,6 @@ public class GHMRequest {
     // a good trick to serialize unknown properties into the HintsMap
     @JsonAnySetter
     public GHMRequest putHint(String fieldName, Object value) {
-        if (profile != null && "profile".equals(fieldName))
-            throw new IllegalArgumentException("use 'profile' only explicitly");
-
         hints.putObject(fieldName, value);
         return this;
     }
@@ -143,11 +140,6 @@ public class GHMRequest {
         return hints;
     }
 
-    /**
-     * Currently: weights, times, distances and paths possible. Where paths is
-     * the most expensive to calculate and limited to maximum 10*10 points (via
-     * API end point).
-     */
     /**
      * Possible values are 'weights', 'times', 'distances'
      */

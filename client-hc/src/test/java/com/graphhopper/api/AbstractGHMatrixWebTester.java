@@ -11,7 +11,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -186,9 +185,9 @@ public abstract class AbstractGHMatrixWebTester {
     }
 
     @Test
-    public void noVehicleWhenNotSpecified() {
+    public void noProfileWhenNotSpecified() {
         GHMatrixBatchRequester requester = new GHMatrixBatchRequester("url");
-        JsonNode json = requester.createPostRequest(new GHMRequest().setOutArrays(Collections.singletonList("weights")).setPoints(Arrays.asList(new GHPoint(11,12))));
+        JsonNode json = requester.createPostRequest(new GHMRequest().setOutArrays(Collections.singletonList("weights")).setPoints(Arrays.asList(new GHPoint(11, 12))));
         assertEquals("{\"points\":[[12.0,11.0]],\"out_arrays\":[\"weights\"],\"fail_fast\":true}", json.toString());
     }
 
@@ -196,11 +195,15 @@ public abstract class AbstractGHMatrixWebTester {
     public void hasHintsWhenSpecified() {
         GHMatrixAbstractRequester requester = createRequester("url");
         GHMRequest ghmRequest = new GHMRequest();
-        ghmRequest.putHint("vehicle", "my_car").putHint("profile", "my_profile");
+        ghmRequest.putHint("some_property", "value");
         ghmRequest.setOutArrays(Collections.singletonList("weights"));
-        ghmRequest.setPoints(Arrays.asList(new GHPoint(11,12)));
+        ghmRequest.setPoints(Arrays.asList(new GHPoint(11, 12)));
         JsonNode json = requester.createPostRequest(ghmRequest);
-        assertEquals("{\"points\":[[12.0,11.0]],\"out_arrays\":[\"weights\"],\"fail_fast\":true,\"vehicle\":\"my_car\",\"profile\":\"my_profile\"}", json.toString());
+        assertEquals("{\"points\":[[12.0,11.0]],\"out_arrays\":[\"weights\"],\"fail_fast\":true,\"some_property\":\"value\"}", json.toString());
+
+        ghmRequest.putHint("profile", "car");
+        Exception ex = assertThrows(IllegalArgumentException.class, () -> requester.createPostRequest(ghmRequest));
+        assertTrue(ex.getMessage().contains("use setProfile"), ex.getMessage());
     }
 
     public static String readFile(Reader simpleReader) throws IOException {

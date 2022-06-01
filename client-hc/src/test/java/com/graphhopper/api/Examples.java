@@ -36,8 +36,8 @@ public class Examples {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(49.6724, 11.3494)).
                 addPoint(new GHPoint(49.6550, 11.4180));
-        // Set vehicle like car, bike, foot, ...
-        req.putHint("vehicle", "bike");
+        // Set profile like car, bike, foot, ...
+        req.setProfile("bike");
         // Optionally enable/disable elevation in output PointList, currently bike and foot support elevation, default is false
         req.putHint("elevation", false);
         // Optionally enable/disable turn instruction information, defaults is true
@@ -93,7 +93,7 @@ public class Examples {
 
         GHMRequest ghmRequest = new GHMRequest();
         ghmRequest.setOutArrays(Arrays.asList("distances", "times"));
-        ghmRequest.putHint("vehicle", "car");
+        ghmRequest.setProfile("car");
 
         // Option 1: init points for a symmetric matrix
         List<GHPoint> allPoints = Arrays.asList(new GHPoint(49.6724, 11.3494), new GHPoint(49.6550, 11.4180));
@@ -107,7 +107,7 @@ public class Examples {
         // Option 2: for an asymmetric matrix do:
         ghmRequest = new GHMRequest();
         ghmRequest.setOutArrays(Arrays.asList("distances", "times"));
-        ghmRequest.putHint("vehicle", "car");
+        ghmRequest.setProfile("car");
         ghmRequest.setFromPoints(Arrays.asList(new GHPoint(49.6724, 11.3494)));
         // or init e.g. a one-to-many matrix:
         ghmRequest.setToPoints(Arrays.asList(new GHPoint(49.6724, 11.3494), new GHPoint(49.6550, 11.4180)));
