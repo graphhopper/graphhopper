@@ -129,7 +129,7 @@ public class RouteResource {
 
         GHResponse ghResponse = graphHopper.route(request);
 
-        long took = sw.stop().getNanos() / 1_000_000;
+        long took = sw.stop().getMillis();
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String logStr = httpReq.getQueryString() + " " + infoStr + " " + points + ", took: "
                 + String.format("%.1f", (double) took) + "ms, algo: " + algoStr + ", profile: " + profileName + ", " + weightingVehicleLogStr;
@@ -180,7 +180,7 @@ public class RouteResource {
         boolean calcPoints = request.getHints().getBool(CALC_POINTS, true);
         boolean pointsEncoded = request.getHints().getBool("points_encoded", true);
 
-        long took = sw.stop().getNanos() / 1_000_000;
+        long took = sw.stop().getMillis();
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String queryString = httpReq.getQueryString() == null ? "" : (httpReq.getQueryString() + " ");
         // todo: vehicle/weighting will always be empty at this point...
