@@ -25,7 +25,7 @@ spec:
                 values: ["amd64"]
       containers:
       - name: graphhopper
-        image: ghcr.io/bikehopper/graphhopper@sha256:160a0da296ad05cf224d988e537a2a3c504bbc14b1acfe5d9d5b2f3b4c5cfc4d
+        image: ghcr.io/bikehopper/graphhopper@sha256:9de24f317f3e45f5b4f1e13ad94d0166ade0f448bfcb01ed3bd8b9516a49b96e
         ports:
           - containerPort: 8989
           - name: health-port
