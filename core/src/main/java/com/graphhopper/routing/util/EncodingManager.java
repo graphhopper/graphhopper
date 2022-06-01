@@ -169,6 +169,10 @@ public class EncodingManager implements EncodedValueLookup {
 
             for (VehicleEncodedValues encoder : flagEncoderMap.values()) {
                 em.addEncoder(encoder);
+                em.addEncoderEncodedValues(encoder);
+            }
+            for (VehicleEncodedValues encoder : flagEncoderMap.values()) {
+                em.addEncoderTurnCostEncodedValues(encoder);
             }
 
             if (em.encodedValueMap.isEmpty())
@@ -203,16 +207,22 @@ public class EncodingManager implements EncodedValueLookup {
 
     private void addEncoder(VehicleEncodedValues encoder) {
         encoder.setEncodedValueLookup(this);
+        edgeEncoders.add(encoder);
+    }
+
+    private void addEncoderTurnCostEncodedValues(VehicleEncodedValues encoder) {
+        List<EncodedValue> list = new ArrayList<>();
+        encoder.createTurnCostEncodedValues(list);
+        for (EncodedValue ev : list)
+            addTurnCostEncodedValue(ev);
+    }
+
+    private void addEncoderEncodedValues(VehicleEncodedValues encoder) {
         List<EncodedValue> list = new ArrayList<>();
         encoder.createEncodedValues(list);
         for (EncodedValue ev : list) {
             addEncodedValue(ev);
         }
-        list = new ArrayList<>();
-        encoder.createTurnCostEncodedValues(list);
-        for (EncodedValue ev : list)
-            addTurnCostEncodedValue(ev);
-        edgeEncoders.add(encoder);
     }
 
     private void addEncodedValue(EncodedValue ev) {
