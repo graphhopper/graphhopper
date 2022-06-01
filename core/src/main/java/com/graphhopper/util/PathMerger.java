@@ -135,7 +135,7 @@ public class PathMerger {
                 }
 
                 fullPoints.add(tmpPoints);
-                responsePath.addPathDetails(PathDetailsFromEdges.calcDetails(path, evLookup, weighting, requestedPathDetails, pathBuilderFactory, origPoints));
+                responsePath.addPathDetails(PathDetailsFromEdges.calcDetails(path, evLookup, weighting, requestedPathDetails, pathBuilderFactory, origPoints, graph));
                 origPoints = fullPoints.size();
             }
 
