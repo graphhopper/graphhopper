@@ -26,6 +26,8 @@ public interface RoutingCHGraph {
 
     int getEdges();
 
+    int getShortcuts();
+
     /**
      * Traverses the base edges and shortcuts at a given node. This will only include shortcuts coming from higher
      * level nodes, but *all* base edges with finite weight.
@@ -33,7 +35,7 @@ public interface RoutingCHGraph {
     RoutingCHEdgeExplorer createInEdgeExplorer();
 
     /**
-     * @see #createInEdgeExplorer(), but here the shortcuts/edges are going out of the given node.
+     * @see #createInEdgeExplorer() but here the shortcuts/edges are going out of the given node.
      */
     RoutingCHEdgeExplorer createOutEdgeExplorer();
 
@@ -56,4 +58,7 @@ public interface RoutingCHGraph {
     boolean isEdgeBased();
 
     Weighting getWeighting();
+
+    // todo: would like to get rid of this
+    void close();
 }

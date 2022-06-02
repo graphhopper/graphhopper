@@ -18,8 +18,6 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.Toll;
 import com.graphhopper.routing.util.countryrules.CountryRule;
@@ -34,21 +32,12 @@ public class OSMTollParser implements TagParser {
     private static final List<String> HGV_TAGS = Collections.unmodifiableList(Arrays.asList("toll:hgv", "toll:N2", "toll:N3"));
     private final EnumEncodedValue<Toll> tollEnc;
 
-    public OSMTollParser() {
-        this(new EnumEncodedValue<>(Toll.KEY, Toll.class));
-    }
-
     public OSMTollParser(EnumEncodedValue<Toll> tollEnc) {
         this.tollEnc = tollEnc;
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> list) {
-        list.add(tollEnc);
-    }
-
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
         Toll toll;
         if (readerWay.hasTag("toll", "yes")) {
             toll = Toll.ALL;

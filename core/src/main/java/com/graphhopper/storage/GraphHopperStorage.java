@@ -21,18 +21,12 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.util.Constants;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * This class manages all storage related methods and delegates the calls to the associated graphs.
@@ -42,26 +36,16 @@ import java.util.stream.Collectors;
  * <p>
  *
  * @author Peter Karich
- * @see GraphBuilder to create a (CH)Graph easier
  */
 public final class GraphHopperStorage implements Graph, Closeable {
-    private static final Logger LOGGER = LoggerFactory.getLogger(GraphHopperStorage.class);
     private final Directory dir;
     private final EncodingManager encodingManager;
     private final StorableProperties properties;
     private final BaseGraph baseGraph;
-    // same flush order etc
-    private final Collection<CHEntry> chEntries;
-    private final int segmentSize;
 
-    public GraphHopperStorage(Directory dir, EncodingManager encodingManager, boolean withElevation) {
-        this(dir, encodingManager, withElevation, false);
-    }
-
-    public GraphHopperStorage(Directory dir, EncodingManager encodingManager, boolean withElevation, boolean withTurnCosts) {
-        this(dir, encodingManager, withElevation, withTurnCosts, -1);
-    }
-
+    /**
+     * Use {@link GraphBuilder} to create a graph
+     */
     public GraphHopperStorage(Directory dir, EncodingManager encodingManager, boolean withElevation, boolean withTurnCosts, int segmentSize) {
         if (encodingManager == null)
             throw new IllegalArgumentException("EncodingManager needs to be non-null since 0.7. Create one using EncodingManager.create or EncodingManager.create(flagEncoderFactory, ghLocation)");
@@ -69,130 +53,7 @@ public final class GraphHopperStorage implements Graph, Closeable {
         this.encodingManager = encodingManager;
         this.dir = dir;
         this.properties = new StorableProperties(dir);
-        this.segmentSize = segmentSize;
         baseGraph = new BaseGraph(dir, encodingManager.getIntsForFlags(), withElevation, withTurnCosts, segmentSize);
-        chEntries = new ArrayList<>();
-    }
-
-    /**
-     * Adds a {@link CHStorage} for the given {@link CHConfig}. You need to call this method before calling {@link #create(long)}
-     * or {@link #loadExisting()}.
-     */
-    public GraphHopperStorage addCHGraph(CHConfig chConfig) {
-        baseGraph.checkNotInitialized();
-        if (getCHConfigs().contains(chConfig))
-            throw new IllegalArgumentException("For the given CH profile a CHStorage already exists: '" + chConfig.getName() + "'");
-        if (chConfig.getWeighting() == null)
-            throw new IllegalStateException("Weighting for CHConfig must not be null");
-
-        CHStorage store = new CHStorage(dir, chConfig.getName(), segmentSize, chConfig.isEdgeBased());
-        store.setLowShortcutWeightConsumer(s -> {
-            // we just log these to find mapping errors
-            NodeAccess nodeAccess = baseGraph.getNodeAccess();
-            LOGGER.warn("Setting weights smaller than " + s.minWeight + " is not allowed. " +
-                    "You passed: " + s.weight + " for the shortcut " +
-                    " nodeA (" + nodeAccess.getLat(s.nodeA) + "," + nodeAccess.getLon(s.nodeA) +
-                    " nodeB " + nodeAccess.getLat(s.nodeB) + "," + nodeAccess.getLon(s.nodeB));
-        });
-
-        chEntries.add(new CHEntry(chConfig, store, new RoutingCHGraphImpl(baseGraph, store, chConfig.getWeighting())));
-        return this;
-    }
-
-    /**
-     * @see #addCHGraph(CHConfig)
-     */
-    public GraphHopperStorage addCHGraphs(List<CHConfig> chConfigs) {
-        for (CHConfig chConfig : chConfigs)
-            addCHGraph(chConfig);
-        return this;
-    }
-
-    /**
-     * @return the (only) {@link CHStorage}, or error if there are none or multiple ones
-     */
-    public CHStorage getCHStore() {
-        return getCHEntry().chStore;
-    }
-
-    /**
-     * @return the {@link CHStorage} for the specified profile name, or null if it does not exist
-     */
-    public CHStorage getCHStore(String chName) {
-        CHEntry chEntry = getCHEntry(chName);
-        return chEntry == null ? null : chEntry.chStore;
-    }
-
-    /**
-     * @return the (only) {@link CHConfig}, or error if there are none or multiple ones
-     */
-    public CHConfig getCHConfig() {
-        // todo: there is no need to expose CHConfig. The RoutingCHGraphs already keep a reference to their weighting.
-        return getCHEntry().chConfig;
-    }
-
-    /**
-     * @return the {@link CHConfig} for the specified profile name, or null if it does not exist
-     */
-    public CHConfig getCHConfig(String chName) {
-        CHEntry chEntry = getCHEntry(chName);
-        return chEntry == null ? null : chEntry.chConfig;
-    }
-
-    /**
-     * @return the (only) {@link RoutingCHGraph}, or error if there are none or multiple ones
-     */
-    public RoutingCHGraph getRoutingCHGraph() {
-        return getCHEntry().chGraph;
-    }
-
-    /**
-     * @return the {@link RoutingCHGraph} for the specified profile name, or null if it does not exist
-     */
-    public RoutingCHGraph getRoutingCHGraph(String chName) {
-        CHEntry chEntry = getCHEntry(chName);
-        return chEntry == null ? null : chEntry.chGraph;
-    }
-
-    private CHEntry getCHEntry() {
-        if (chEntries.isEmpty()) {
-            throw new IllegalStateException("There are no CHs");
-        } else if (chEntries.size() > 1) {
-            throw new IllegalStateException("There are multiple CHs, use get...(name) to retrieve a specific one");
-        } else {
-            return chEntries.iterator().next();
-        }
-    }
-
-    public CHEntry getCHEntry(String chName) {
-        for (CHEntry cg : chEntries) {
-            if (cg.chConfig.getName().equals(chName))
-                return cg;
-        }
-        return null;
-    }
-
-    public List<String> getCHGraphNames() {
-        return chEntries.stream().map(ch -> ch.chConfig.getName()).collect(Collectors.toList());
-    }
-
-    public boolean isCHPossible() {
-        return !chEntries.isEmpty();
-    }
-
-    public List<CHConfig> getCHConfigs() {
-        return chEntries.stream().map(c -> c.chConfig).collect(Collectors.toList());
-    }
-
-    public List<CHConfig> getCHConfigs(boolean edgeBased) {
-        List<CHConfig> result = new ArrayList<>();
-        List<CHConfig> chConfigs = getCHConfigs();
-        for (CHConfig profile : chConfigs) {
-            if (edgeBased == profile.isEdgeBased()) {
-                result.add(profile);
-            }
-        }
-        return result;
     }
 
     /**
@@ -211,25 +72,12 @@ public final class GraphHopperStorage implements Graph, Closeable {
             throw new IllegalStateException("EncodingManager can only be null if you call loadExisting");
 
         dir.create();
-        long initSize = Math.max(byteCount, 100);
-        properties.create(100);
 
+        properties.create(100);
         properties.put("graph.encoded_values", encodingManager.toEncodedValuesAsString());
         properties.put("graph.flag_encoders", encodingManager.toFlagEncodersAsString());
 
-        properties.put("graph.dimension", baseGraph.nodeAccess.getDimension());
-        properties.putCurrentVersions();
-
-        baseGraph.create(initSize);
-
-        chEntries.forEach(ch -> ch.chStore.create());
-
-        List<CHConfig> chConfigs = getCHConfigs();
-        List<String> chProfileNames = new ArrayList<>(chConfigs.size());
-        for (CHConfig chConfig : chConfigs) {
-            chProfileNames.add(chConfig.getName());
-        }
-        properties.put("graph.ch.profiles", chProfileNames.toString());
+        baseGraph.create(Math.max(byteCount, 100));
         return this;
     }
 
@@ -244,14 +92,16 @@ public final class GraphHopperStorage implements Graph, Closeable {
     public boolean loadExisting() {
         baseGraph.checkNotInitialized();
         if (properties.loadExisting()) {
-            properties.checkVersions(false);
+            if (properties.containsVersion())
+                throw new IllegalStateException("The GraphHopper file format is not compatible with the data you are " +
+                        "trying to load. You either need to use an older version of GraphHopper or run a new import");
             // check encoding for compatibility
             String flagEncodersStr = properties.get("graph.flag_encoders");
 
             if (!encodingManager.toFlagEncodersAsString().equalsIgnoreCase(flagEncodersStr)) {
-                throw new IllegalStateException("Encoding does not match:"
+                throw new IllegalStateException("Flag encoders do not match:"
                         + "\nGraphhopper config: " + encodingManager.toFlagEncodersAsString()
-                        + "\nGraph: " + flagEncodersStr
+                        + "\nLoaded graph:       " + flagEncodersStr
                         + "\nChange configuration to match the graph or delete " + dir.getLocation());
             }
 
@@ -259,43 +109,16 @@ public final class GraphHopperStorage implements Graph, Closeable {
             if (!encodingManager.toEncodedValuesAsString().equalsIgnoreCase(encodedValueStr)) {
                 throw new IllegalStateException("Encoded values do not match:"
                         + "\nGraphhopper config: " + encodingManager.toEncodedValuesAsString()
-                        + "\nGraph: " + encodedValueStr
+                        + "\nLoaded graph:       " + encodedValueStr
                         + "\nChange configuration to match the graph or delete " + dir.getLocation());
             }
-
-            String dim = properties.get("graph.dimension");
-            baseGraph.loadExisting(dim);
-
-            checkIfConfiguredAndLoadedWeightingsCompatible();
-
-            chEntries.forEach(cg -> {
-                if (!cg.chStore.loadExisting())
-                    throw new IllegalStateException("Cannot load " + cg);
-            });
-
+            baseGraph.loadExisting();
             return true;
         }
         return false;
     }
 
-    private void checkIfConfiguredAndLoadedWeightingsCompatible() {
-        String loadedStr = properties.get("graph.ch.profiles");
-        List<String> loaded = Helper.parseList(loadedStr);
-        List<CHConfig> configured = getCHConfigs();
-        List<String> configuredNames = new ArrayList<>(configured.size());
-        for (CHConfig p : configured) {
-            configuredNames.add(p.getName());
-        }
-        for (String configuredName : configuredNames) {
-            if (!loaded.contains(configuredName)) {
-                throw new IllegalStateException("Configured CH profile: '" + configuredName + "' is not contained in loaded CH profiles: '" + loadedStr + "'.\n" +
-                        "You configured: " + configuredNames);
-            }
-        }
-    }
-
     public void flush() {
-        chEntries.stream().map(ch -> ch.chStore).filter(s -> !s.isClosed()).forEach(CHStorage::flush);
         baseGraph.flush();
         properties.flush();
     }
@@ -304,7 +127,6 @@ public final class GraphHopperStorage implements Graph, Closeable {
     public void close() {
         properties.close();
         baseGraph.close();
-        chEntries.stream().map(ch -> ch.chStore).filter(s -> !s.isClosed()).forEach(CHStorage::close);
     }
 
     public boolean isClosed() {
@@ -312,9 +134,7 @@ public final class GraphHopperStorage implements Graph, Closeable {
     }
 
     public long getCapacity() {
-        long cnt = baseGraph.getCapacity() + properties.getCapacity();
-        long cgs = chEntries.stream().mapToLong(ch -> ch.chStore.getCapacity()).sum();
-        return cnt + cgs;
+        return baseGraph.getCapacity() + properties.getCapacity();
     }
 
     /**
@@ -325,13 +145,6 @@ public final class GraphHopperStorage implements Graph, Closeable {
         if (isFrozen())
             return;
         baseGraph.freeze();
-        chEntries.forEach(ch -> {
-            // we use a rather small value here. this might result in more allocations later, but they should
-            // not matter that much. if we expect a too large value the shortcuts DataAccess will end up
-            // larger than needed, because we do not do something like trimToSize in the end.
-            double expectedShortcuts = 0.3 * baseGraph.getEdges();
-            ch.chStore.init(baseGraph.getNodes(), (int) expectedShortcuts);
-        });
     }
 
     public boolean isFrozen() {
@@ -339,22 +152,26 @@ public final class GraphHopperStorage implements Graph, Closeable {
     }
 
     public String toDetailsString() {
-        String str = baseGraph.toDetailsString();
-        for (CHEntry ch : chEntries) {
-            str += ", " + ch.chStore.toDetailsString();
-        }
-
-        return str;
+        return baseGraph.toDetailsString();
     }
 
     @Override
     public String toString() {
-        return (isCHPossible() ? "CH|" : "")
-                + encodingManager
+        return encodingManager
                 + "|" + getDirectory().getDefaultType()
                 + "|" + baseGraph.nodeAccess.getDimension() + "D"
                 + "|" + (baseGraph.supportsTurnCosts() ? baseGraph.turnCostStorage : "no_turn_cost")
-                + "|" + getProperties().versionsToString();
+                + "|" + getVersionsString();
+    }
+
+    private String getVersionsString() {
+        return "nodes:" + Constants.VERSION_NODE +
+                ",edges:" + Constants.VERSION_EDGE +
+                ",geometry:" + Constants.VERSION_GEOMETRY +
+                ",location_index:" + Constants.VERSION_LOCATION_IDX +
+                ",string_index:" + Constants.VERSION_STRING_IDX +
+                ",nodesCH:" + Constants.VERSION_NODE_CH +
+                ",shortcuts:" + Constants.VERSION_SHORTCUT;
     }
 
     // now delegate all Graph methods to BaseGraph to avoid ugly programming flow ala
@@ -362,7 +179,7 @@ public final class GraphHopperStorage implements Graph, Closeable {
     // Graph g = storage.getBaseGraph();
     // instead directly the storage can be used to traverse the base graph
     @Override
-    public Graph getBaseGraph() {
+    public BaseGraph getBaseGraph() {
         return baseGraph;
     }
 
@@ -434,19 +251,8 @@ public final class GraphHopperStorage implements Graph, Closeable {
     /**
      * Flush and free base graph resources like way geometries and StringIndex
      */
-    public void flushAndCloseEarly() {
+    public void flushAndCloseGeometryAndNameStorage() {
         baseGraph.flushAndCloseGeometryAndNameStorage();
     }
 
-    private static class CHEntry {
-        CHConfig chConfig;
-        CHStorage chStore;
-        RoutingCHGraphImpl chGraph;
-
-        public CHEntry(CHConfig chConfig, CHStorage chStore, RoutingCHGraphImpl chGraph) {
-            this.chConfig = chConfig;
-            this.chStore = chStore;
-            this.chGraph = chGraph;
-        }
-    }
 }

@@ -4,11 +4,8 @@ import com.conveyal.gtfs.model.Stop;
 import com.google.protobuf.ByteString;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.gtfs.GtfsStorage;
-import com.graphhopper.gtfs.GtfsStorageI;
-import com.graphhopper.gtfs.PtEncodedValues;
+import com.graphhopper.gtfs.PtGraph;
 import com.graphhopper.matching.MatchResult;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.BBox;
 import com.wdtinc.mapbox_vector_tile.VectorTile;
@@ -72,13 +69,10 @@ public class PtMVTResource {
             throw new IllegalStateException("Invalid bbox " + bbox);
 
         List<Geometry> features = new ArrayList<>();
-        PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopper.getEncodingManager());
-        graphHopper.getLocationIndex().query(bbox, edgeId -> {
-            EdgeIteratorState edge = graphHopper.getGraphHopperStorage().getEdgeIteratorStateForKey(edgeId * 2);
-            EdgeIterator i = graphHopper.getGraphHopperStorage().createEdgeExplorer().setBaseNode(edge.getBaseNode());
-            while (i.next()) {
-                if (i.get(ptEncodedValues.getTypeEnc()) == GtfsStorage.EdgeType.EXIT_PT) {
-                    GtfsStorageI.PlatformDescriptor fromPlatformDescriptor = gtfsStorage.getPlatformDescriptorByEdge().get(i.getEdge());
+        gtfsStorage.getStopIndex().query(bbox, edgeId -> {
+            for (PtGraph.PtEdge ptEdge : gtfsStorage.getPtGraph().backEdgesAround(edgeId)) {
+                if (ptEdge.getType() == GtfsStorage.EdgeType.EXIT_PT) {
+                    GtfsStorage.PlatformDescriptor fromPlatformDescriptor = ptEdge.getAttrs().platformDescriptor;
                     Stop stop = gtfsStorage.getGtfsFeeds().get(fromPlatformDescriptor.feed_id).stops.get(fromPlatformDescriptor.stop_id);
                     Map<String, Object> properties = new HashMap<>(2);
                     properties.put("feed_id", fromPlatformDescriptor.feed_id);

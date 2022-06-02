@@ -18,7 +18,7 @@
 package com.graphhopper.storage.index;
 
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
@@ -53,7 +53,7 @@ public class Snap {
 
     /**
      * Returns the closest matching node. This is either a tower node of the base graph
-     * or a virtual node (see also {@link QueryGraph#create(Graph, List)}).
+     * or a virtual node (see also {@link QueryGraph#create(BaseGraph, List)}).
      *
      * @return {@link #INVALID_NODE} if nothing found, this should be avoided via a call of 'isValid'
      */

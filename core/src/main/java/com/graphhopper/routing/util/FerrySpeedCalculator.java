@@ -1,79 +1,45 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class FerrySpeedCalculator {
+    private final double unknownSpeed, minSpeed, maxSpeed;
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final double speedFactor;
-    private final double unknownSpeed, longSpeed, shortSpeed, maxSpeed;
-
-    public FerrySpeedCalculator(double speedFactor, double maxSpeed, double longSpeed, double shortSpeed, double unknownSpeed) {
-        this.speedFactor = speedFactor;
-        this.unknownSpeed = unknownSpeed;
-        this.longSpeed = longSpeed;
-        this.shortSpeed = shortSpeed;
+    public FerrySpeedCalculator(double minSpeed, double maxSpeed, double unknownSpeed) {
+        this.minSpeed = minSpeed;
         this.maxSpeed = maxSpeed;
+        this.unknownSpeed = unknownSpeed;
     }
 
-    /**
-     * Special handling for ferry ways.
-     */
     public double getSpeed(ReaderWay way) {
-        long duration = 0;
+        // todo: We currently face two problems related to ferry speeds:
+        //       1) We cannot account for waiting times for short ferries (when we do the ferry speed is slower than the slowest we can store)
+        //       2) When the ferry speed is larger than the maximum speed of the encoder (like 15km/h for foot) the
+        //          ferry speed will be faster than what we can store.
 
-        try {
-            // During the reader process we have converted the duration value into a artificial tag called "duration:seconds".
-            duration = Long.parseLong(way.getTag("duration:seconds"));
-        } catch (Exception ex) {
-        }
-        // seconds to hours
-        double durationInHours = duration / 60d / 60d;
-        // Check if our graphhopper specific artificially created estimated_distance way tag is present
-        Number estimatedLength = way.getTag("estimated_distance", null);
-        if (durationInHours > 0)
-            try {
-                if (estimatedLength != null) {
-                    double estimatedLengthInKm = estimatedLength.doubleValue() / 1000;
-                    // If duration AND distance is available we can calculate the speed more precisely
-                    // and set both speed to the same value. Factor 1.4 slower because of waiting time!
-                    double calculatedTripSpeed = estimatedLengthInKm / durationInHours / 1.4;
-                    // Plausibility check especially for the case of wrongly used PxM format with the intention to
-                    // specify the duration in minutes, but actually using months
-                    if (calculatedTripSpeed > 0.01d) {
-                        if (calculatedTripSpeed > maxSpeed) {
-                            return maxSpeed;
-                        }
-                        // If the speed is lower than the speed we can store, we have to set it to the minSpeed, but > 0
-                        if (Math.round(calculatedTripSpeed) < speedFactor / 2) {
-                            return speedFactor / 2;
-                        }
-
-                        return Math.round(calculatedTripSpeed);
-                    } else {
-                        long lastId = way.getNodes().isEmpty() ? -1 : way.getNodes().get(way.getNodes().size() - 1);
-                        long firstId = way.getNodes().isEmpty() ? -1 : way.getNodes().get(0);
-                        if (firstId != lastId)
-                            logger.warn("Unrealistic long duration ignored in way with way ID=" + way.getId() + " : Duration tag value="
-                                    + way.getTag("duration") + " (=" + Math.round(duration / 60d) + " minutes)");
-                        durationInHours = 0;
-                    }
-                }
-            } catch (Exception ex) {
-            }
-
-        if (durationInHours == 0) {
-            if (estimatedLength != null && estimatedLength.doubleValue() <= 300)
-                return speedFactor / 2;
-            // unknown speed -> put penalty on ferry transport
-            return unknownSpeed;
-        } else if (durationInHours > 1) {
-            // lengthy ferries should be faster than short trip ferry
-            return longSpeed;
+        // OSMReader adds the artificial 'speed_from_duration', 'duration:seconds' and 'way_distance' tags that we can
+        // use to set the ferry speed. Otherwise we need to use fallback values.
+        double speedInKmPerHour = way.getTag("speed_from_duration", Double.NaN);
+        if (!Double.isNaN(speedInKmPerHour)) {
+            // we reduce the speed to account for waiting time (we increase the duration by 40%)
+            double speedWithWaitingTime = speedInKmPerHour / 1.4;
+            return Math.round(Math.max(minSpeed, Math.min(speedWithWaitingTime, maxSpeed)));
         } else {
-            return shortSpeed;
+            // we have no speed value to work with because there was no valid duration tag.
+            // we have to take a guess based on the distance.
+            double wayDistance = way.getTag("edge_distance", Double.NaN);
+            if (Double.isNaN(wayDistance))
+                throw new IllegalStateException("No 'edge_distance' set for edge created for way: " + way.getId());
+            else if (wayDistance < 500)
+                // Use the slowest possible speed for very short ferries. Note that sometimes these aren't really ferries
+                // that take you from one harbour to another, but rather ways that only represent the beginning of a
+                // longer ferry connection and that are used by multiple different connections, like here: https://www.openstreetmap.org/way/107913687
+                // It should not matter much which speed we use in this case, so we have no special handling for these.
+                return minSpeed;
+            else {
+                // todo: distinguish speed based on the distance of the ferry, see #2532
+                return unknownSpeed;
+            }
         }
     }
 }

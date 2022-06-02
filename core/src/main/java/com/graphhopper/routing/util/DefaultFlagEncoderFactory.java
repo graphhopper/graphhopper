@@ -27,35 +27,38 @@ import com.graphhopper.util.PMap;
 public class DefaultFlagEncoderFactory implements FlagEncoderFactory {
     @Override
     public FlagEncoder createFlagEncoder(String name, PMap configuration) {
+        if (name.equals(ROADS))
+            return FlagEncoders.createRoads();
+
         if (name.equals(CAR))
-            return new CarFlagEncoder(configuration);
+            return FlagEncoders.createCar(configuration);
 
         if (name.equals(CAR4WD))
-            return new Car4WDFlagEncoder(configuration);
+            return FlagEncoders.createCar4wd(configuration);
 
         if (name.equals(BIKE))
-            return new BikeFlagEncoder(configuration);
+            return FlagEncoders.createBike(configuration);
 
         if (name.equals(BIKE2))
-            return new Bike2WeightFlagEncoder(configuration);
+            return FlagEncoders.createBike2(configuration);
 
         if (name.equals(RACINGBIKE))
-            return new RacingBikeFlagEncoder(configuration);
+            return FlagEncoders.createRacingBike(configuration);
 
         if (name.equals(MOUNTAINBIKE))
-            return new MountainBikeFlagEncoder(configuration);
+            return FlagEncoders.createMountainBike(configuration);
 
         if (name.equals(FOOT))
-            return new FootFlagEncoder(configuration);
+            return FlagEncoders.createFoot(configuration);
 
         if (name.equals(HIKE))
-            return new HikeFlagEncoder(configuration);
+            return FlagEncoders.createHike(configuration);
 
         if (name.equals(MOTORCYCLE))
-            return new MotorcycleFlagEncoder(configuration);
+            return FlagEncoders.createMotorcycle(configuration);
 
         if (name.equals(WHEELCHAIR))
-            return new WheelchairFlagEncoder(configuration);
+            return FlagEncoders.createWheelchair(configuration);
 
         throw new IllegalArgumentException("entry in encoder list not supported: " + name);
     }

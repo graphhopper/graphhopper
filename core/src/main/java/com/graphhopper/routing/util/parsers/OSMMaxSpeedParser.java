@@ -18,23 +18,18 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.MaxSpeed;
+import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
-import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.IntsRef;
-
-import java.util.List;
 
 import static com.graphhopper.routing.ev.MaxSpeed.UNSET_SPEED;
 
 public class OSMMaxSpeedParser implements TagParser {
 
     protected final DecimalEncodedValue carMaxSpeedEnc;
-
-    public OSMMaxSpeedParser() {
-        this(MaxSpeed.create());
-    }
 
     public OSMMaxSpeedParser(DecimalEncodedValue carMaxSpeedEnc) {
         if (!carMaxSpeedEnc.isStoreTwoDirections())
@@ -44,12 +39,7 @@ public class OSMMaxSpeedParser implements TagParser {
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> list) {
-        list.add(carMaxSpeedEnc);
-    }
-
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
 
         CountryRule countryRule = way.getTag("country_rule", null);
@@ -78,7 +68,7 @@ public class OSMMaxSpeedParser implements TagParser {
         carMaxSpeedEnc.setDecimal(true, edgeFlags, bwdSpeed);
         return edgeFlags;
     }
-    
+
     /**
      * @return <i>true</i> if the given speed is not {@link Double#NaN}
      */

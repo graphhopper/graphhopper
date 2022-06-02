@@ -24,11 +24,16 @@ import com.graphhopper.json.Statement;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.SkadiProvider;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.ev.Subnetwork;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.DefaultSnapFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
-import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
+import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
+import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.IntsRef;
@@ -39,6 +44,7 @@ import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.details.PathDetail;
+import com.graphhopper.util.exceptions.MaximumNodesExceededException;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
@@ -94,8 +100,8 @@ public class GraphHopperTest {
             ASTAR + ",false,444",
             DIJKSTRA_BI + ",false,228",
             ASTAR_BI + ",false,184",
-            ASTAR_BI + ",true,36",
-            DIJKSTRA_BI + ",true,30"
+            ASTAR_BI + ",true,49",
+            DIJKSTRA_BI + ",true,48"
     })
     public void testMonacoDifferentAlgorithms(String algo, boolean withCH, int expectedVisitedNodes) {
         final String vehicle = "car";
@@ -283,7 +289,8 @@ public class GraphHopperTest {
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
                 setProfiles(profile).
-                setStoreOnFlush(true);
+                setStoreOnFlush(true).
+                setAllowWrites(false);
         if (ch) {
             hopper.getCHPreparationHandler()
                     .setCHProfiles(new CHProfile(profileName));
@@ -307,7 +314,7 @@ public class GraphHopperTest {
             ResponsePath bestPath = rsp.getBest();
             long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
             assertNotEquals(sum, 0);
-            assertTrue(sum < 125, "Too many nodes visited " + sum);
+            assertTrue(sum < 155, "Too many nodes visited " + sum);
             assertEquals(3535, bestPath.getDistance(), 1);
             assertEquals(115, bestPath.getPoints().size());
         }
@@ -353,6 +360,11 @@ public class GraphHopperTest {
     @Test
     public void testImportThenLoadLM() {
         testImportCloseAndLoad(false, true, false, false);
+    }
+
+    @Test
+    public void testImportThenLoadLMWithCustom() {
+        testImportCloseAndLoad(false, true, false, true);
     }
 
     @Test
@@ -848,7 +860,10 @@ public class GraphHopperTest {
         GHResponse rsp = hopper.route(req);
 
         assertTrue(rsp.hasErrors());
-        assertTrue(rsp.getErrors().toString().contains("maximum nodes exceeded"), rsp.getErrors().toString());
+        Throwable throwable = rsp.getErrors().get(0);
+        assertTrue(throwable instanceof MaximumNodesExceededException);
+        Object nodesDetail = ((MaximumNodesExceededException) throwable).getDetails().get(MaximumNodesExceededException.NODES_KEY);
+        assertEquals(5, nodesDetail);
 
         req = new GHRequest(from, to).setProfile(profile);
         rsp = hopper.route(req);
@@ -1038,13 +1053,22 @@ public class GraphHopperTest {
                 setStoreOnFlush(true);
 
         if (!withTunnelInterpolation) {
-            hopper.getEncodingManagerBuilder().add(new OSMRoadEnvironmentParser() {
+            hopper.setTagParserFactory(new DefaultTagParserFactory() {
                 @Override
-                public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
-                    // do not change RoadEnvironment to avoid triggering tunnel interpolation
-                    return edgeFlags;
+                public TagParser create(EncodedValueLookup lookup, String name) {
+                    TagParser parser = super.create(lookup, name);
+                    if (name.equals("road_environment"))
+                        parser = new OSMRoadEnvironmentParser(lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class)) {
+                            @Override
+                            public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+                                // do not change RoadEnvironment to avoid triggering tunnel interpolation
+                                return edgeFlags;
+                            }
+                        };
+                    return parser;
                 }
-            }).addIfAbsent(new DefaultFlagEncoderFactory(), vehicle);
+            });
+            hopper.setEncodedValuesString("road_environment");
         }
 
         hopper.setElevationProvider(new SRTMProvider(DIR));
@@ -1196,6 +1220,7 @@ public class GraphHopperTest {
         assertEquals("turn right onto Margarethenstraße", il.get(3).getTurnDescription(tr));
         assertEquals("keep left onto Hoher Markt", il.get(4).getTurnDescription(tr));
         assertEquals("turn right onto Wegscheid", il.get(6).getTurnDescription(tr));
+        assertEquals("continue onto Wegscheid", il.get(7).getTurnDescription(tr));
         assertEquals("turn right onto Ringstraße, L73", il.get(8).getTurnDescription(tr));
         assertEquals("keep left onto Eyblparkstraße", il.get(9).getTurnDescription(tr));
         assertEquals("keep left onto Austraße", il.get(10).getTurnDescription(tr));
@@ -1234,7 +1259,7 @@ public class GraphHopperTest {
         hopper.setMinNetworkSize(0);
         hopper.importOrLoad();
 
-        assertEquals(2, hopper.getCHPreparationHandler().getPreparations().size());
+        assertEquals(2, hopper.getCHGraphs().size());
 
         GHResponse rsp = hopper.route(new GHRequest(43.745084, 7.430513, 43.745247, 7.430347)
                 .setProfile(profile1));
@@ -1280,7 +1305,7 @@ public class GraphHopperTest {
         hopper.setMinNetworkSize(0);
         hopper.importOrLoad();
 
-        assertEquals(2, hopper.getCHPreparationHandler().getPreparations().size());
+        assertEquals(2, hopper.getCHGraphs().size());
         GHResponse rsp = hopper.route(new GHRequest(52.513505, 13.350443, 52.513505, 13.350245)
                 .setProfile(profile1));
 
@@ -1370,7 +1395,7 @@ public class GraphHopperTest {
         // identify the number of counts to compare with none-CH foot route which had nearly 700 counts
         long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
         assertNotEquals(sum, 0);
-        assertTrue(sum < 120, "Too many nodes visited " + sum);
+        assertTrue(sum < 147, "Too many nodes visited " + sum);
         assertEquals(3437.1, bestPath.getDistance(), .1);
         assertEquals(85, bestPath.getPoints().size());
 
@@ -1490,7 +1515,7 @@ public class GraphHopperTest {
 
         GHResponse rsp = hopper.route(req);
         long chSum = rsp.getHints().getLong("visited_nodes.sum", 0);
-        assertTrue(chSum < 60, "Too many visited nodes for ch mode " + chSum);
+        assertTrue(chSum < 70, "Too many visited nodes for ch mode " + chSum);
         ResponsePath bestPath = rsp.getBest();
         assertEquals(3587, bestPath.getDistance(), 1);
         assertEquals(91, bestPath.getPoints().size());
@@ -1529,7 +1554,6 @@ public class GraphHopperTest {
         final String profile1 = "p1";
         final String profile2 = "p2";
         final String profile3 = "p3";
-        final String vehicle = "car";
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
@@ -1571,6 +1595,53 @@ public class GraphHopperTest {
         assertEquals(expectedWeight, response.getBest().getRouteWeight(), 0.1);
         int visitedNodes = response.getHints().getInt("visited_nodes.sum", 0);
         assertEquals(expectedVisitedNodes, visitedNodes);
+    }
+
+    @Test
+    public void testLMConstraintsForCustomProfiles() {
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile(MONACO).
+                setProfiles(
+                        new CustomProfile("p1").setCustomModel(new CustomModel().setDistanceInfluence(100)).setVehicle("car"),
+                        new CustomProfile("p2").setCustomModel(new CustomModel().setDistanceInfluence(100)).setVehicle("car")).
+                setStoreOnFlush(true);
+
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("p1"));
+        hopper.setMinNetworkSize(0);
+        hopper.importOrLoad();
+
+        GHResponse response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
+                setProfile("p1").putHint("lm.disable", false));
+        assertEquals(3587, response.getBest().getDistance(), 1);
+
+        // use smaller distance influence to force violating the LM constraint
+        final CustomModel customModel = new CustomModel().setDistanceInfluence(0);
+        response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
+                setCustomModel(customModel).
+                setProfile("p1").putHint("lm.disable", false));
+        assertTrue(response.hasErrors(), response.getErrors().toString());
+        assertEquals(IllegalArgumentException.class, response.getErrors().get(0).getClass());
+
+        // but disabling LM must make it working as no LM is used
+        response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
+                setCustomModel(customModel).
+                setProfile("p1").putHint("lm.disable", true));
+        assertFalse(response.hasErrors(), response.getErrors().toString());
+        assertEquals(3587, response.getBest().getDistance(), 1);
+
+        // currently required to disable LM for p2 too, see #1904 (default is LM for *all* profiles once LM preparation is enabled for any profile)
+        response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
+                setCustomModel(customModel).
+                setProfile("p2"));
+        assertTrue(response.getErrors().get(0).toString().contains("Cannot find LM preparation for the requested profile: 'p2'"), response.getErrors().toString());
+        assertEquals(IllegalArgumentException.class, response.getErrors().get(0).getClass());
+
+        response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
+                setCustomModel(customModel).
+                setProfile("p2").putHint("lm.disable", true));
+        assertFalse(response.hasErrors(), response.getErrors().toString());
+        assertEquals(3587, response.getBest().getDistance(), 1);
     }
 
     @Test
@@ -2110,9 +2181,6 @@ public class GraphHopperTest {
     public void simplifyWithInstructionsAndPathDetails() {
         final String profile = "profile";
         GraphHopper hopper = new GraphHopper();
-        hopper.getEncodingManagerBuilder().setEnableInstructions(true)
-                .add(new OSMMaxSpeedParser())
-                .add(new CarFlagEncoder());
         hopper.setOSMFile(BAYREUTH).
                 setProfiles(new Profile(profile).setVehicle("car").setWeighting("fastest")).
                 setGraphHopperLocation(GH_LOCATION);
@@ -2404,4 +2472,122 @@ public class GraphHopperTest {
         // since GermanyCountryRule avoids TRACK roads the route will now be much longer as it goes around the forest
         assertEquals(4186, distance, 1);
     }
+
+    @Test
+    void curbsideWithSubnetwork_issue2502() {
+        final String profile = "profile";
+        GraphHopper hopper = new GraphHopper()
+                .setProfiles(new Profile(profile).setVehicle("car").setWeighting("fastest").setTurnCosts(true)
+                        .setTurnCosts(true).putHint(U_TURN_COSTS, 80))
+                .setGraphHopperLocation(GH_LOCATION)
+                .setMinNetworkSize(200)
+                .setOSMFile(DIR + "/one_way_dead_end.osm.pbf");
+        hopper.importOrLoad();
+        GHPoint pointA = new GHPoint(28.77428, -81.61593);
+        GHPoint pointB = new GHPoint(28.773038, -81.611595);
+        {
+            // A->B
+            GHRequest request = new GHRequest(pointA, pointB);
+            request.setProfile(profile);
+            request.setCurbsides(Arrays.asList("right", "right"));
+            GHResponse response = hopper.route(request);
+            assertFalse(response.hasErrors(), response.getErrors().toString());
+            double distance = response.getBest().getDistance();
+            assertEquals(382, distance, 1);
+        }
+        {
+            // B->A
+            // point B is close to a tiny one-way dead end street. it should be marked as subnetwork and excluded
+            // when the curbside constraints are evaluated. this should make the snap a tower snap such that the curbside
+            // constraint won't result in a connection not found error
+            GHRequest request = new GHRequest(pointB, pointA);
+            request.setProfile(profile);
+            request.setCurbsides(Arrays.asList("right", "right"));
+            GHResponse response = hopper.route(request);
+            assertFalse(response.hasErrors(), response.getErrors().toString());
+            double distance = response.getBest().getDistance();
+            assertEquals(2318, distance, 1);
+        }
+    }
+
+    @Test
+    void averageSpeedPathDetailBug() {
+        final String profile = "profile";
+        GraphHopper hopper = new GraphHopper()
+                .setProfiles(new Profile(profile).setVehicle("car").setWeighting("fastest").setTurnCosts(true).putHint(U_TURN_COSTS, 80))
+                .setGraphHopperLocation(GH_LOCATION)
+                .setMinNetworkSize(200)
+                .setOSMFile(BAYREUTH);
+        hopper.importOrLoad();
+        GHPoint pointA = new GHPoint(50.020562, 11.500196);
+        GHPoint pointB = new GHPoint(50.019935, 11.500567);
+        GHPoint pointC = new GHPoint(50.022027, 11.498255);
+        GHRequest request = new GHRequest(Arrays.asList(pointA, pointB, pointC));
+        request.setProfile(profile);
+        request.setPathDetails(Collections.singletonList("average_speed"));
+        // this used to fail, because we did not wrap the weighting for query graph and so we tried calculating turn costs for virtual nodes
+        GHResponse response = hopper.route(request);
+        assertFalse(response.hasErrors(), response.getErrors().toString());
+        double distance = response.getBest().getDistance();
+        assertEquals(467, distance, 1);
+    }
+
+    @Test
+    public void testLoadGraph_implicitEncodedValues_issue1862() {
+        GraphHopper hopper = new GraphHopper()
+                .setProfiles(
+                        new Profile("p_car").setVehicle("car").setWeighting("fastest"),
+                        new Profile("p_bike").setVehicle("bike").setWeighting("fastest")
+                )
+                .setGraphHopperLocation(GH_LOCATION)
+                .setOSMFile(BAYREUTH);
+        hopper.importOrLoad();
+        int nodes = hopper.getGraphHopperStorage().getNodes();
+        hopper.close();
+
+        // load without configured FlagEncoders
+        hopper = new GraphHopper();
+        hopper.setProfiles(Arrays.asList(
+                new Profile("p_car").setVehicle("car").setWeighting("fastest"),
+                new Profile("p_bike").setVehicle("bike").setWeighting("fastest"))
+        );
+        hopper.setGraphHopperLocation(GH_LOCATION);
+        assertTrue(hopper.load());
+        hopper.getGraphHopperStorage();
+        assertEquals(nodes, hopper.getGraphHopperStorage().getNodes());
+        hopper.close();
+
+        // load via explicitly configured FlagEncoders
+        hopper = new GraphHopper();
+        hopper.setFlagEncodersString("car,bike");
+        hopper.setProfiles(Arrays.asList(
+                new Profile("p_car").setVehicle("car").setWeighting("fastest"),
+                new Profile("p_bike").setVehicle("bike").setWeighting("fastest"))
+        );
+        hopper.setGraphHopperLocation(GH_LOCATION);
+        assertTrue(hopper.load());
+        assertEquals(nodes, hopper.getGraphHopperStorage().getNodes());
+        hopper.close();
+    }
+
+    @Test
+    void testLoadingWithAnotherSpeedFactorFails() {
+        {
+            GraphHopper hopper = new GraphHopper()
+                    .setFlagEncodersString("car|speed_factor=7")
+                    .setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"))
+                    .setGraphHopperLocation(GH_LOCATION)
+                    .setOSMFile(BAYREUTH);
+            hopper.importOrLoad();
+        }
+        {
+            GraphHopper hopper = new GraphHopper()
+                    .setFlagEncodersString("car|speed_factor=9")
+                    .setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"))
+                    .setGraphHopperLocation(GH_LOCATION);
+            IllegalStateException ex = assertThrows(IllegalStateException.class, hopper::load);
+            assertTrue(ex.getMessage().contains("Flag encoders do not match"), ex.getMessage());
+        }
+    }
+
 }

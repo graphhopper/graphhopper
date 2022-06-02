@@ -28,15 +28,14 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.lm.PrepareLandmarks;
+import com.graphhopper.routing.lm.LMRoutingAlgorithmFactory;
+import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHConfig;
-import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -71,7 +70,7 @@ import java.util.Random;
  */
 public class MiniGraphUI {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final Graph graph;
+    private final BaseGraph graph;
     private final NodeAccess na;
     private final MapLayer pathLayer;
     private final FlagEncoder encoder;
@@ -116,7 +115,7 @@ public class MiniGraphUI {
     }
 
     public MiniGraphUI(GraphHopper hopper, boolean debug, boolean useCH) {
-        this.graph = hopper.getGraphHopperStorage();
+        this.graph = hopper.getGraphHopperStorage().getBaseGraph();
         this.na = graph.getNodeAccess();
         encoder = hopper.getEncodingManager().fetchEdgeEncoders().get(0);
         avSpeedEnc = encoder.getAverageSpeedEnc();
@@ -336,16 +335,15 @@ public class MiniGraphUI {
     private RoutingAlgorithm createAlgo(GraphHopper hopper) {
         Profile profile = hopper.getProfiles().iterator().next();
         if (useCH) {
-            RoutingCHGraph chGraph = hopper.getGraphHopperStorage().getRoutingCHGraph(profile.getName());
+            RoutingCHGraph chGraph = hopper.getCHGraphs().get(profile.getName());
             logger.info("CH algo, profile: " + profile.getName());
             QueryGraph qGraph = QueryGraph.create(hopper.getGraphHopperStorage(), fromRes, toRes);
             QueryRoutingCHGraph queryRoutingCHGraph = new QueryRoutingCHGraph(chGraph, qGraph);
             return new CHDebugAlgo(queryRoutingCHGraph, mg);
         } else {
-            Weighting weighting = hopper.createWeighting(profile, new PMap());
-            final PrepareLandmarks preparation = hopper.getLMPreparationHandler().getPreparation(profile.getName());
+            LandmarkStorage landmarks = hopper.getLandmarks().get(profile.getName());
             RoutingAlgorithmFactory algoFactory = (g, w, opts) -> {
-                RoutingAlgorithm algo = preparation.getRoutingAlgorithmFactory().createAlgo(g, w, opts);
+                RoutingAlgorithm algo = new LMRoutingAlgorithmFactory(landmarks).createAlgo(g, w, opts);
                 if (algo instanceof AStarBidirection) {
                     return new DebugAStarBi(g, w, opts.getTraversalMode(), mg).
                             setApproximation(((AStarBidirection) algo).getApproximation());
@@ -359,9 +357,9 @@ public class MiniGraphUI {
                 return algo;
             };
             AlgorithmOptions algoOpts = new AlgorithmOptions().setAlgorithm(Algorithms.ASTAR_BI);
-            logger.info("algoOpts:" + algoOpts + ", weighting: " + weighting);
+            logger.info("algoOpts:" + algoOpts + ", weighting: " + landmarks.getWeighting() + ", profile: " + profile.getName());
             QueryGraph qGraph = QueryGraph.create(graph, fromRes, toRes);
-            return algoFactory.createAlgo(qGraph, weighting, algoOpts);
+            return algoFactory.createAlgo(qGraph, landmarks.getWeighting(), algoOpts);
         }
     }
 

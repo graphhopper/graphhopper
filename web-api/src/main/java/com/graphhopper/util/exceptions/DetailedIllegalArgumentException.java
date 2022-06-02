@@ -24,6 +24,8 @@ import java.util.Map;
  */
 public class DetailedIllegalArgumentException extends IllegalArgumentException implements GHException {
 
+    private static final long serialVersionUID = 1L;
+    
     private final Map<String, Object> details;
 
     public DetailedIllegalArgumentException(String message, Map<String, Object> details) {
