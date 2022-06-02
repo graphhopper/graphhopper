@@ -17,6 +17,9 @@
  */
 package com.graphhopper.routing.util.parsers;
 
+import java.util.Collections;
+import java.util.List;
+
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.storage.IntsRef;
 
@@ -25,6 +28,12 @@ import com.graphhopper.storage.IntsRef;
  * has one corresponding EncodedValue but more are possible too.
  */
 public interface TagParser {
+    
+    List<String> getProvidedEncodedValues();
+    
+    default List<String> getRequiredEncodedValues() {
+        return Collections.emptyList();
+    }
 
     IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags);
 }
