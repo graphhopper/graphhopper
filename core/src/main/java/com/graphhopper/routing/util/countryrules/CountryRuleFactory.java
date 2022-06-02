@@ -39,7 +39,7 @@ public class CountryRuleFactory {
         rules.put(AUT, new AustriaCountryRule());
         rules.put(BEL, new BelgiumCountryRule());
         rules.put(BGR, new BulgariaCountryRule());
-        // BIH
+        rules.put(BIH, new BosniaHerzegovinaCountryRule());
         rules.put(BLR, new BelarusCountryRule());
         rules.put(CHE, new SwitzerlandCountryRule());
         rules.put(CZE, new CzechiaCountryRule());
@@ -52,12 +52,12 @@ public class CountryRuleFactory {
         rules.put(FRO, new FaroeIslandsCountryRule());
         rules.put(GGY, new GuernseyCountryRule());
         rules.put(GIB, new GibraltarCountryRule());
-        // GBR
+        rules.put(GBR, new UnitedKingdomCountryRule());
         rules.put(GRC, new GreeceCountryRule());
         rules.put(HRV, new CroatiaCountryRule());
         rules.put(HUN, new HungaryCountryRule());
         rules.put(IMN, new IsleOfManCountryRule());
-        // IRL
+        rules.put(IRL, new IrelandCountryRule());
         rules.put(ISL, new IcelandCountryRule());
         rules.put(ITA, new ItalyCountryRule());
         rules.put(JEY, new JerseyCountryRule());
@@ -66,16 +66,16 @@ public class CountryRuleFactory {
         rules.put(LUX, new LuxembourgCountryRule());
         rules.put(LVA, new LatviaCountryRule());
         rules.put(MCO, new MonacoCountryRule());
-        // MDA
-        // MKD
+        rules.put(MDA, new MoldovaCountryRule());
+        rules.put(MKD, new NorthMacedoniaCountryRule());
         rules.put(MLT, new MaltaCountryRule());
-        // MNE
+        rules.put(MNE, new MontenegroCountryRule());
         rules.put(NLD, new NetherlandsCountryRule());
-        // NOR
+        rules.put(NOR, new NorwayCountryRule());
         rules.put(POL, new PolandCountryRule());
         rules.put(PRT, new PortugalCountryRule());
         rules.put(ROU, new RomaniaCountryRule());
-        // RUS
+        rules.put(RUS, new RussiaCountryRule());
         rules.put(SMR, new SanMarinoCountryRule());
         rules.put(SRB, new SerbiaCountryRule());
         rules.put(SVK, new SlovakiaCountryRule());
