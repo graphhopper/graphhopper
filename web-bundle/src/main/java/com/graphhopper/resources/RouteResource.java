@@ -129,10 +129,10 @@ public class RouteResource {
 
         GHResponse ghResponse = graphHopper.route(request);
 
-        long took = sw.stop().getMillis();
+        double took = sw.stop().getMillisWithFraction();
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String logStr = httpReq.getQueryString() + " " + infoStr + " " + points + ", took: "
-                + String.format("%.1f", (double) took) + "ms, algo: " + algoStr + ", profile: " + profileName + ", " + weightingVehicleLogStr;
+                + String.format("%.1f", took) + "ms, algo: " + algoStr + ", profile: " + profileName + ", " + weightingVehicleLogStr;
 
         if (ghResponse.hasErrors()) {
             logger.error(logStr + ", errors:" + ghResponse.getErrors());
@@ -180,14 +180,14 @@ public class RouteResource {
         boolean calcPoints = request.getHints().getBool(CALC_POINTS, true);
         boolean pointsEncoded = request.getHints().getBool("points_encoded", true);
 
-        long took = sw.stop().getMillis();
+        double took = sw.stop().getMillisWithFraction();
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String queryString = httpReq.getQueryString() == null ? "" : (httpReq.getQueryString() + " ");
         // todo: vehicle/weighting will always be empty at this point...
         String weightingVehicleLogStr = "weighting: " + request.getHints().getString("weighting", "")
                 + ", vehicle: " + request.getHints().getString("vehicle", "");
         String logStr = queryString + infoStr + " " + request.getPoints().size() + ", took: "
-                + String.format("%.1f", (double) took) + " ms, algo: " + request.getAlgorithm() + ", profile: " + request.getProfile()
+                + String.format("%.1f", took) + " ms, algo: " + request.getAlgorithm() + ", profile: " + request.getProfile()
                 + ", " + weightingVehicleLogStr
                 + ", custom_model: " + request.getCustomModel();
 
