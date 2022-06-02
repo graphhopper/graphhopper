@@ -23,6 +23,7 @@ import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class OSMMaxWeightParser implements TagParser {
@@ -31,6 +32,11 @@ public class OSMMaxWeightParser implements TagParser {
 
     public OSMMaxWeightParser(DecimalEncodedValue weightEncoder) {
         this.weightEncoder = weightEncoder;
+    }
+    
+    @Override
+    public List<String> getProvidedEncodedValues() {
+        return Collections.singletonList(weightEncoder.getName());
     }
 
     @Override

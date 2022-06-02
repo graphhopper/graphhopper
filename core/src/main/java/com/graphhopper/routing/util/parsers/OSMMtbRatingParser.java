@@ -17,6 +17,9 @@
  */
 package com.graphhopper.routing.util.parsers;
 
+import java.util.Collections;
+import java.util.List;
+
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.storage.IntsRef;
@@ -33,6 +36,11 @@ public class OSMMtbRatingParser implements TagParser {
 
     public OSMMtbRatingParser(IntEncodedValue mtbRatingEnc) {
         this.mtbRatingEnc = mtbRatingEnc;
+    }
+    
+    @Override
+    public List<String> getProvidedEncodedValues() {
+        return Collections.singletonList(mtbRatingEnc.getName());
     }
 
     @Override

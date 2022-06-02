@@ -192,6 +192,13 @@ public class FootTagParser extends VehicleTagParser {
 
         return EncodingManager.Access.WAY;
     }
+    
+    @Override
+    public List<String> getProvidedEncodedValues() {
+        List<String> provided = new ArrayList<>(super.getProvidedEncodedValues());
+        provided.add(priorityWayEncoder.getName());
+        return provided;
+    }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {

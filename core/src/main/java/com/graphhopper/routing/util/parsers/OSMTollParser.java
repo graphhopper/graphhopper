@@ -35,6 +35,11 @@ public class OSMTollParser implements TagParser {
     public OSMTollParser(EnumEncodedValue<Toll> tollEnc) {
         this.tollEnc = tollEnc;
     }
+    
+    @Override
+    public List<String> getProvidedEncodedValues() {
+        return Collections.singletonList(tollEnc.getName());
+    }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {

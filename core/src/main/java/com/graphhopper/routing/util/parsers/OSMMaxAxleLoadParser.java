@@ -23,6 +23,7 @@ import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Collections;
+import java.util.List;
 
 public class OSMMaxAxleLoadParser implements TagParser {
 
@@ -30,6 +31,11 @@ public class OSMMaxAxleLoadParser implements TagParser {
 
     public OSMMaxAxleLoadParser(DecimalEncodedValue maxAxleLoadEncoder) {
         this.maxAxleLoadEncoder = maxAxleLoadEncoder;
+    }
+    
+    @Override
+    public List<String> getProvidedEncodedValues() {
+        return Collections.singletonList(maxAxleLoadEncoder.getName());
     }
 
     @Override

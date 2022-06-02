@@ -24,12 +24,20 @@ import com.graphhopper.storage.IntsRef;
 
 import static com.graphhopper.routing.ev.TrackType.MISSING;
 
+import java.util.Collections;
+import java.util.List;
+
 public class OSMTrackTypeParser implements TagParser {
 
     private final EnumEncodedValue<TrackType> trackTypeEnc;
 
     public OSMTrackTypeParser(EnumEncodedValue<TrackType> trackTypeEnc) {
         this.trackTypeEnc = trackTypeEnc;
+    }
+    
+    @Override
+    public List<String> getProvidedEncodedValues() {
+        return Collections.singletonList(trackTypeEnc.getName());
     }
 
     @Override

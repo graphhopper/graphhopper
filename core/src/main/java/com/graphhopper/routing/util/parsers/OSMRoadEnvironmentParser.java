@@ -24,12 +24,20 @@ import com.graphhopper.storage.IntsRef;
 
 import static com.graphhopper.routing.ev.RoadEnvironment.*;
 
+import java.util.Collections;
+import java.util.List;
+
 public class OSMRoadEnvironmentParser implements TagParser {
 
     private final EnumEncodedValue<RoadEnvironment> roadEnvEnc;
 
     public OSMRoadEnvironmentParser(EnumEncodedValue<RoadEnvironment> roadEnvEnc) {
         this.roadEnvEnc = roadEnvEnc;
+    }
+    
+    @Override
+    public List<String> getProvidedEncodedValues() {
+        return Collections.singletonList(roadEnvEnc.getName());
     }
 
     @Override

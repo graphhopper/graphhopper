@@ -17,6 +17,9 @@
  */
 package com.graphhopper.routing.util.parsers;
 
+import java.util.Collections;
+import java.util.List;
+
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.ev.EnumEncodedValue;
@@ -27,6 +30,11 @@ public class CountryParser implements TagParser {
 
     public CountryParser(EnumEncodedValue<Country> countryEnc) {
         this.countryEnc = countryEnc;
+    }
+    
+    @Override
+    public List<String> getProvidedEncodedValues() {
+        return Collections.singletonList(countryEnc.getName());
     }
 
     @Override

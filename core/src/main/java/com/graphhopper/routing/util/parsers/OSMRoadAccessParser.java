@@ -25,6 +25,7 @@ import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static com.graphhopper.routing.ev.RoadAccess.YES;
@@ -36,6 +37,11 @@ public class OSMRoadAccessParser implements TagParser {
     public OSMRoadAccessParser(EnumEncodedValue<RoadAccess> roadAccessEnc, List<String> restrictions) {
         this.roadAccessEnc = roadAccessEnc;
         this.restrictions = restrictions;
+    }
+    
+    @Override
+    public List<String> getProvidedEncodedValues() {
+        return Collections.singletonList(roadAccessEnc.getName());
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
@@ -24,6 +25,11 @@ public class OSMGetOffBikeParser implements TagParser {
     public OSMGetOffBikeParser(BooleanEncodedValue getOffBikeEnc, List<String> pushBikeTags) {
         offBikeEnc = getOffBikeEnc;
         pushBikeHighwayTags.addAll(pushBikeTags);
+    }
+    
+    @Override
+    public List<String> getProvidedEncodedValues() {
+        return Collections.singletonList(offBikeEnc.getName());
     }
 
     @Override

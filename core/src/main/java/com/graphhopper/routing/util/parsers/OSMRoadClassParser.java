@@ -24,12 +24,20 @@ import com.graphhopper.storage.IntsRef;
 
 import static com.graphhopper.routing.ev.RoadClass.OTHER;
 
+import java.util.Collections;
+import java.util.List;
+
 public class OSMRoadClassParser implements TagParser {
 
     protected final EnumEncodedValue<RoadClass> roadClassEnc;
 
     public OSMRoadClassParser(EnumEncodedValue<RoadClass> roadClassEnc) {
         this.roadClassEnc = roadClassEnc;
+    }
+    
+    @Override
+    public List<String> getProvidedEncodedValues() {
+        return Collections.singletonList(roadClassEnc.getName());
     }
 
     @Override

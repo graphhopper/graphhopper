@@ -17,6 +17,9 @@
  */
 package com.graphhopper.routing.util.parsers;
 
+import java.util.Collections;
+import java.util.List;
+
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.storage.IntsRef;
@@ -32,6 +35,11 @@ public class OSMHikeRatingParser implements TagParser {
 
     public OSMHikeRatingParser(IntEncodedValue sacScaleEnc) {
         this.sacScaleEnc = sacScaleEnc;
+    }
+    
+    @Override
+    public List<String> getProvidedEncodedValues() {
+        return Collections.singletonList(sacScaleEnc.getName());
     }
 
     @Override

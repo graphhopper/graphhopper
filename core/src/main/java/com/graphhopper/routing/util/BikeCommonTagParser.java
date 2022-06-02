@@ -268,6 +268,13 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
             return maxPossibleSpeed;
         return speed;
     }
+    
+    @Override
+    public List<String> getProvidedEncodedValues() {
+        List<String> provided = new ArrayList<>(super.getProvidedEncodedValues());
+        provided.add(priorityEnc.getName());
+        return provided;
+    }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {

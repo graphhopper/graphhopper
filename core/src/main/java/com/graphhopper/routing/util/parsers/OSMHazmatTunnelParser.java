@@ -1,5 +1,8 @@
 package com.graphhopper.routing.util.parsers;
 
+import java.util.Collections;
+import java.util.List;
+
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.HazmatTunnel;
@@ -21,6 +24,11 @@ public class OSMHazmatTunnelParser implements TagParser {
 
     public OSMHazmatTunnelParser(EnumEncodedValue<HazmatTunnel> hazTunnelEnc) {
         this.hazTunnelEnc = hazTunnelEnc;
+    }
+    
+    @Override
+    public List<String> getProvidedEncodedValues() {
+        return Collections.singletonList(hazTunnelEnc.getName());
     }
 
     @Override

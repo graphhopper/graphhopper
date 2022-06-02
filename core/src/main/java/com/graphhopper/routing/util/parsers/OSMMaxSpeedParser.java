@@ -27,6 +27,9 @@ import com.graphhopper.storage.IntsRef;
 
 import static com.graphhopper.routing.ev.MaxSpeed.UNSET_SPEED;
 
+import java.util.Collections;
+import java.util.List;
+
 public class OSMMaxSpeedParser implements TagParser {
 
     protected final DecimalEncodedValue carMaxSpeedEnc;
@@ -36,6 +39,11 @@ public class OSMMaxSpeedParser implements TagParser {
             throw new IllegalArgumentException("EncodedValue for maxSpeed must be able to store two directions");
 
         this.carMaxSpeedEnc = carMaxSpeedEnc;
+    }
+    
+    @Override
+    public List<String> getProvidedEncodedValues() {
+        return Collections.singletonList(carMaxSpeedEnc.getName());
     }
 
     @Override

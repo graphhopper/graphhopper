@@ -23,6 +23,7 @@ import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class OSMMaxWidthParser implements TagParser {
@@ -31,6 +32,11 @@ public class OSMMaxWidthParser implements TagParser {
 
     public OSMMaxWidthParser(DecimalEncodedValue widthEncoder) {
         this.widthEncoder = widthEncoder;
+    }
+    
+    @Override
+    public List<String> getProvidedEncodedValues() {
+        return Collections.singletonList(widthEncoder.getName());
     }
 
     @Override

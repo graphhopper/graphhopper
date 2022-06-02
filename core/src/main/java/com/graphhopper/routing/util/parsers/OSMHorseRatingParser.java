@@ -17,6 +17,9 @@
  */
 package com.graphhopper.routing.util.parsers;
 
+import java.util.Collections;
+import java.util.List;
+
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.storage.IntsRef;
@@ -32,6 +35,11 @@ public class OSMHorseRatingParser implements TagParser {
 
     public OSMHorseRatingParser(IntEncodedValue horseScale) {
         this.horseScale = horseScale;
+    }
+    
+    @Override
+    public List<String> getProvidedEncodedValues() {
+        return Collections.singletonList(horseScale.getName());
     }
 
     @Override

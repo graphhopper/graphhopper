@@ -24,12 +24,20 @@ import com.graphhopper.storage.IntsRef;
 
 import static com.graphhopper.routing.ev.Surface.*;
 
+import java.util.Collections;
+import java.util.List;
+
 public class OSMSurfaceParser implements TagParser {
 
     private final EnumEncodedValue<Surface> surfaceEnc;
 
     public OSMSurfaceParser(EnumEncodedValue<Surface> surfaceEnc) {
         this.surfaceEnc = surfaceEnc;
+    }
+    
+    @Override
+    public List<String> getProvidedEncodedValues() {
+        return Collections.singletonList(surfaceEnc.getName());
     }
 
     @Override

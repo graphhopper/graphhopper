@@ -23,6 +23,7 @@ import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Collections;
+import java.util.List;
 
 public class OSMMaxLengthParser implements TagParser {
 
@@ -30,6 +31,11 @@ public class OSMMaxLengthParser implements TagParser {
 
     public OSMMaxLengthParser(DecimalEncodedValue lengthEncoder) {
         this.lengthEncoder = lengthEncoder;
+    }
+    
+    @Override
+    public List<String> getProvidedEncodedValues() {
+        return Collections.singletonList(lengthEncoder.getName());
     }
 
     @Override

@@ -17,6 +17,9 @@
  */
 package com.graphhopper.routing.util.parsers;
 
+import java.util.Collections;
+import java.util.List;
+
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.storage.IntsRef;
@@ -27,6 +30,11 @@ public class OSMRoadClassLinkParser implements TagParser {
 
     public OSMRoadClassLinkParser(BooleanEncodedValue linkEnc) {
         this.linkEnc = linkEnc;
+    }
+
+    @Override
+    public List<String> getProvidedEncodedValues() {
+        return Collections.singletonList(linkEnc.getName());
     }
 
     @Override

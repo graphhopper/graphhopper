@@ -27,6 +27,9 @@ import com.graphhopper.util.Helper;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 
+import java.util.Collections;
+import java.util.List;
+
 public class OSMBikeNetworkTagParser implements RelationTagParser {
     private final EnumEncodedValue<RouteNetwork> bikeRouteEnc;
     // used only for internal transformation from relations into edge flags
@@ -35,6 +38,11 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
     public OSMBikeNetworkTagParser(EnumEncodedValue<RouteNetwork> bikeRouteEnc, EncodedValue.InitializerConfig relConfig) {
         this.bikeRouteEnc = bikeRouteEnc;
         this.transformerRouteRelEnc.init(relConfig);
+    }
+    
+    @Override
+    public List<String> getProvidedEncodedValues() {
+        return Collections.singletonList(bikeRouteEnc.getName());
     }
 
     @Override

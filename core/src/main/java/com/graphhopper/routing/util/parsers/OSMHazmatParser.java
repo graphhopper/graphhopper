@@ -1,5 +1,8 @@
 package com.graphhopper.routing.util.parsers;
 
+import java.util.Collections;
+import java.util.List;
+
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.Hazmat;
@@ -11,6 +14,11 @@ public class OSMHazmatParser implements TagParser {
 
     public OSMHazmatParser(EnumEncodedValue<Hazmat> hazEnc) {
         this.hazEnc = hazEnc;
+    }
+    
+    @Override
+    public List<String> getProvidedEncodedValues() {
+        return Collections.singletonList(hazEnc.getName());
     }
 
     @Override

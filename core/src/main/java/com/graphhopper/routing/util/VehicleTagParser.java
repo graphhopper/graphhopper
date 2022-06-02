@@ -115,6 +115,14 @@ public abstract class VehicleTagParser implements TagParser {
     public ConditionalTagInspector getConditionalTagInspector() {
         return conditionalTagInspector;
     }
+    
+    @Override
+    public List<String> getProvidedEncodedValues() {
+        if (!supportsTurnCosts()) {
+            return Arrays.asList(accessEnc.getName(), avgSpeedEnc.getName());
+        }
+        return Arrays.asList(accessEnc.getName(), avgSpeedEnc.getName(), turnCostEnc.getName());
+    }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
